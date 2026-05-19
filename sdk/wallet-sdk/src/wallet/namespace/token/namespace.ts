@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AllocationNamespace } from './allocation/index.js'
-import { UtxoNamespace } from './utxos/index.js'
-import { TransferNamespace } from './transfer/index.js'
+import { UtxoNamespace, UtxoNamespaceExtended } from './utxos/index.js'
+import {
+    TransferNamespace,
+    TransferNameSpaceExtended,
+} from './transfer/index.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { PartyId } from '@canton-network/core-types'
 import { PrettyTransactions } from '@canton-network/core-tx-parser'
@@ -11,6 +14,12 @@ import { SDKContext } from '../../sdk.js'
 import { ParsedURL } from '../utils/url.js'
 
 export type TokenNamespaceConfig = {
+    tokenStandardService: TokenStandardService
+    registryUrls: ParsedURL[]
+    commonCtx: SDKContext
+}
+
+export type TokenNamespaceConfigExtended = {
     tokenStandardService: TokenStandardService
     registryUrls: ParsedURL[]
     validatorParty: PartyId
@@ -21,7 +30,7 @@ export class TokenNamespace {
     public readonly allocation: AllocationNamespace
     public readonly transfer: TransferNamespace
     public readonly utxos: UtxoNamespace
-    constructor(private readonly tokenContext: TokenNamespaceConfig) {
+    constructor(protected readonly tokenContext: TokenNamespaceConfig) {
         this.allocation = new AllocationNamespace(tokenContext)
         this.transfer = new TransferNamespace(tokenContext)
         this.utxos = new UtxoNamespace(tokenContext, this.transfer)
@@ -53,5 +62,15 @@ export class TokenNamespace {
             params.updateId,
             params.partyId
         )
+    }
+}
+
+export class TokenNamespaceExtended extends TokenNamespace {
+    public readonly transfer: TransferNameSpaceExtended
+    public readonly utxos: UtxoNamespaceExtended
+    constructor(protected readonly tokenContext: TokenNamespaceConfigExtended) {
+        super(tokenContext)
+        this.transfer = new TransferNameSpaceExtended(tokenContext)
+        this.utxos = new UtxoNamespaceExtended(tokenContext, this.transfer)
     }
 }

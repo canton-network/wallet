@@ -7,7 +7,10 @@ import { KeysNamespace } from '../namespace/keys/index.js'
 import { LedgerNamespace } from '../namespace/ledger/index.js'
 import { PartyNamespace } from '../namespace/party/index.js'
 import { UserNamespace } from '../namespace/user/index.js'
-import { TokenNamespace } from '../namespace/token/index.js'
+import {
+    TokenNamespace,
+    TokenNamespaceExtended,
+} from '../namespace/token/index.js'
 import { AssetNamespace } from '../namespace/asset/index.js'
 import { OfflineSDKContext, SDKContext } from '../sdk.js'
 import { SDKUtilsNamespace } from '../namespace/utils/index.js'
@@ -22,6 +25,7 @@ import {
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
+    TokenConfigExtended,
 } from './types/index.js'
 import {
     ScanClient,
@@ -80,7 +84,10 @@ const createNamespace: {
             validatorParty,
         })
     },
-    token: async (ctx: SDKContext, config: TokenConfig) => {
+    token: async (
+        ctx: SDKContext,
+        config: TokenConfig | TokenConfigExtended
+    ) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
@@ -88,6 +95,7 @@ const createNamespace: {
             auth,
             false
         )
+<<<<<<< HEAD
         const validatorParty = await getValidatorParty(
             new ParsedURL(ctx, config.validatorUrl),
             ctx.logger,
@@ -102,6 +110,33 @@ const createNamespace: {
             validatorParty,
             commonCtx: ctx,
         })
+=======
+        const registries = config.registries.map((registry) =>
+            toURL(registry, ctx.error)
+        )
+
+        if ('validatorUrl' in config) {
+            const validatorUrl = toURL(config.validatorUrl, ctx.error)
+            const validatorParty = await getValidatorParty(
+                validatorUrl,
+                ctx.logger,
+                auth
+            )
+
+            return new TokenNamespaceExtended({
+                tokenStandardService,
+                registryUrls: registries,
+                validatorParty,
+                commonCtx: ctx,
+            })
+        } else {
+            return new TokenNamespace({
+                tokenStandardService,
+                registryUrls: registries,
+                commonCtx: ctx,
+            })
+        }
+>>>>>>> fe66a118 (token namespace extended test)
     },
     asset: async (ctx: SDKContext, config: AssetConfig) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
@@ -195,7 +230,7 @@ export class ExtendedInitializedSDK<
         ? AmuletNamespace
         : never
     declare readonly token: ExtendedItems extends 'token'
-        ? TokenNamespace
+        ? TokenNamespace | TokenNamespaceExtended
         : never
     declare readonly asset: ExtendedItems extends 'asset'
         ? AssetNamespace
