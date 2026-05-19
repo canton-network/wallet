@@ -115,10 +115,7 @@ export class SDK {
 
         const userId = authenticatedUser?.user?.id ?? userIdFromAuthContext
         if (!userId) {
-            error.throw({
-                message: 'Not an authenticated user',
-                type: 'Unauthenticated',
-            })
+            throw Error(`Unauthenticated: Not an authenticated user`)
         }
 
         const defaultSynchronizerId = await getDefaultSynchronizerId(
@@ -128,7 +125,12 @@ export class SDK {
 
         const ctx: SDKContext = {
             ledgerProvider,
+<<<<<<< HEAD
             userId: userId!,
+=======
+            acsReader,
+            userId: userId,
+>>>>>>> 85e3c0fd (move featured app to subnamespace)
             logger,
             error,
             defaultSynchronizerId,
