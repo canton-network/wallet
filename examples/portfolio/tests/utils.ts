@@ -47,6 +47,13 @@ export const tap = async (
 ): Promise<void> => {
     await page.goto(`${BASE_URL}/settings`)
 
+    // Wait for window.canton provider to be injected (SDK re-initializes after navigation)
+    await page.waitForFunction(
+        () =>
+            (window as unknown as Record<string, unknown>).canton !== undefined,
+        { timeout: 15000 }
+    )
+
     // Wait for the DevNet Tap section to be visible
     await expect(page.getByText('DevNet Tap')).toBeVisible({ timeout: 10000 })
 
