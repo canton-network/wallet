@@ -1,20 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-const LOCALNET_APP_VALIDATOR_URL = new URL(
-    'http://localhost:2000/api/validator'
-)
+const LOCALNET_APP_VALIDATOR_URL = 'http://localhost:2000/api/validator'
 
-const LOCALNET_SCAN_API_URL = new URL('http://scan.localhost:4000/api/scan')
+const LOCALNET_SCAN_API_URL = 'http://scan.localhost:4000/api/scan'
 
-const LOCALNET_APP_USER_LEDGER_URL = new URL('http://localhost:2975')
+const LOCALNET_APP_USER_LEDGER_URL = 'http://localhost:2975'
 
-const LOCALNET_TOKEN_STANDARD_URL = new URL('http://localhost:5003')
+const LOCALNET_TOKEN_STANDARD_URL = 'http://localhost:5003'
 
 //scan proxy exposes the registry endpoints as well
-const LOCALNET_REGISTRY_API_URL = new URL(
-    LOCALNET_APP_VALIDATOR_URL.href + '/v0/scan-proxy'
-)
+const LOCALNET_REGISTRY_API_URL = LOCALNET_APP_VALIDATOR_URL + '/v0/scan-proxy'
+
 const LOCALNET_USER_ID = 'ledger-api-user'
 
 export const localNetStaticConfig = {
