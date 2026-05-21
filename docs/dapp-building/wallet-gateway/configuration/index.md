@@ -363,7 +363,7 @@ Networks is an array, so you can define multiple networks in a single configurat
 - _id_ (required): Unique identifier for the network. Should follow CAIP-2 format (e.g., `"canton:localnet"` or `"canton:production"`)
 - _name_ (required): User-friendly name displayed in the UI (e.g., `"Local Network"` or `"Production Network"`)
 - _description_ (optional): A description of the network shown to users
-- _synchronizerId_ (optional): The synchronizer ID used on the validator when allocating parties. Required only if your deployment uses party allocation via `adminAuth`; omit if you rely solely on existing parties and participant signing
+- _synchronizerId_ (required): The synchronizer ID used on the validator. If your validator has multiple synchronizers, create separate network configurations for each
 - _identityProviderId_ (required): Must match the `id` of an IDP defined in the `idps` section
 - _ledgerApi_ (required): Configuration object for the Ledger API:
     - _baseUrl_ (required): The base URL of the Canton validator's Ledger API (e.g., `"http://localhost:2975"` or `"https://ledger.example.com"`)
