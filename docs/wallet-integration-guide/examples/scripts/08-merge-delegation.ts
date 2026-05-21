@@ -5,9 +5,9 @@ import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import { readFile } from 'fs/promises'
 import {
-    TOKEN_NAMESPACE_CONFIG_EXTENDED,
-    TOKEN_PROVIDER_CONFIG_DEFAULT,
+    TOKEN_NAMESPACE_CONFIG,
     AMULET_NAMESPACE_CONFIG,
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-08-merge-delegation', level: 'info' })
@@ -32,7 +32,8 @@ if (!existsSync(spliceUtilTokenStandardWalletDarPath)) {
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-    token: TOKEN_NAMESPACE_CONFIG_EXTENDED,
+    validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
+    token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 

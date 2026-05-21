@@ -203,6 +203,8 @@ export class OfflineInitializedSDK implements OfflineSDKInterface {
 
 export class ExtendedInitializedSDK<
     ExtendedItems extends keyof ExtendedSDKOptions,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    Options = Record<string, never>,
 > extends InitializedSDK {
     // Declare the dynamically assigned properties
     // These are set via Object.assign in the constructor
@@ -231,10 +233,13 @@ export class ExtendedInitializedSDK<
         Object.assign(this, extendedInterface)
     }
 
-    static async create<ExtendedItems extends keyof ExtendedSDKOptions>(
+    static async create<
+        ExtendedItems extends keyof ExtendedSDKOptions,
+        Options = Record<string, never>,
+    >(
         ctx: SDKContext,
         config: Pick<ExtendedSDKOptions, ExtendedItems>
-    ): Promise<SDKInterface<ExtendedItems>> {
+    ): Promise<SDKInterface<ExtendedItems, Options>> {
         const configuredItems = {} as Pick<
             ExtendedFullSDKInterface,
             ExtendedItems
@@ -247,14 +252,14 @@ export class ExtendedInitializedSDK<
             )
         }
 
-        const instance = new ExtendedInitializedSDK<ExtendedItems>(
+        const instance = new ExtendedInitializedSDK<ExtendedItems, Options>(
             ctx,
             configuredItems,
             config
         )
         // Type assertion needed: TypeScript can't verify that Object.assign
         // properly adds all extended properties to match SDKInterface
-        return instance as SDKInterface<ExtendedItems>
+        return instance as SDKInterface<ExtendedItems, Options>
     }
 
     public override async extend<NewItems extends keyof ExtendedSDKOptions>(

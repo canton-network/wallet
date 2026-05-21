@@ -16,12 +16,6 @@ export type TokenConfig = {
     registries: URLInput[]
 }
 
-// export type TokenConfigExtended = {
-//     validatorUrl: URLInput
-//     auth: TokenProviderConfig
-//     registries: URLInput[]
-// }
-
 export type AssetConfig = {
     auth: TokenProviderConfig
     registries: URLInput[]

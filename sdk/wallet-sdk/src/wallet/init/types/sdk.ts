@@ -116,19 +116,6 @@ export type NullableExtendedFullSDKInterface = {
     [K in keyof ExtendedFullSDKInterface]: ExtendedFullSDKInterface[K] | null
 }
 
-// export type ExtendedSDKInterface<
-//     ExtendedItems extends keyof ExtendedSDKOptions,
-// > = {
-//     [K in keyof Pick<
-//         ExtendedSDKOptions,
-//         ExtendedItems
-//     >]: ExtendedFullSDKInterface[K]
-// } & {
-//     extend: <NewExtendedItems extends keyof ExtendedSDKOptions>(
-//         config: Pick<ExtendedSDKOptions, NewExtendedItems>
-//     ) => Promise<SDKInterface<NewExtendedItems | ExtendedItems>>
-// }
-
 export type ExtendedSDKInterface<
     ExtendedItems extends keyof ExtendedSDKOptions,
     Options = Record<string, never>,
