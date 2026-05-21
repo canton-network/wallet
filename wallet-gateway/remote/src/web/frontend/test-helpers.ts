@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi } from 'vitest'
+import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import type {
     Idp,
+    Network,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-user-rpc-client'
@@ -54,6 +56,44 @@ export function makeIdp(overrides: Partial<Idp> = {}): Idp {
     }
 }
 
+export function makeNetwork(overrides: Partial<Network> = {}): Network {
+    return {
+        id: 'net-1',
+        name: 'Test Network',
+        description: 'Test network description',
+        identityProviderId: 'idp-1',
+        ledgerApi: 'http://localhost:6865',
+        auth: {
+            method: 'client_credentials',
+            audience: 'audience',
+            scope: 'scope',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+        },
+        ...overrides,
+    }
+}
+
+export function makeStoreNetwork(
+    overrides: Partial<StoreNetwork> = {}
+): StoreNetwork {
+    return {
+        id: 'net-1',
+        name: 'Test Network',
+        description: 'Test network description',
+        identityProviderId: 'idp-1',
+        ledgerApi: { baseUrl: 'http://localhost:6865' },
+        auth: {
+            method: 'client_credentials',
+            audience: 'audience',
+            scope: 'scope',
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+        },
+        ...overrides,
+    }
+}
+
 export function mockListWalletsFlow(
     wallets: Wallet[],
     networkId = 'network1'
@@ -82,6 +122,29 @@ export function mockListWalletsFlow(
     })
 }
 
+export function mockNetworksPageFlow(
+    networks: Network[],
+    options: { isAdmin?: boolean } = {}
+): void {
+    mockRequest.mockImplementation(async ({ method }) => {
+        if (method === 'listNetworks') {
+            return { networks }
+        }
+        if (method === 'listSessions') {
+            return { sessions: [] }
+        }
+        if (method === 'getUser') {
+            return {
+                userId: 'user-1',
+                isAdmin: options.isAdmin ?? false,
+            }
+        }
+        if (method === 'addNetwork' || method === 'removeNetwork') {
+            return undefined
+        }
+        return undefined
+    })
+}
 export function mockIdpsPageFlow(
     idps: Idp[],
     options: { isAdmin?: boolean } = {}
@@ -101,4 +164,71 @@ export function mockIdpsPageFlow(
         }
         return undefined
     })
+}
+
+export function mockSettingsPageFlow(
+    options: {
+        networks?: Network[]
+        sessions?: { id: string; network: { id: string } }[]
+        idps?: Idp[]
+        isAdmin?: boolean
+        userId?: string
+        gatewayVersion?: string
+    } = {}
+): void {
+    const {
+        networks = [makeNetwork()],
+        sessions = [{ id: 'sess-1', network: { id: 'net-1' } }],
+        idps = [makeIdp()],
+        isAdmin = true,
+        userId = 'user-1',
+        gatewayVersion = '1.2.3',
+    } = options
+
+    mockRequest.mockImplementation(async ({ method }) => {
+        if (method === 'listNetworks') {
+            return { networks }
+        }
+        if (method === 'listSessions') {
+            return { sessions }
+        }
+        if (method === 'listIdps') {
+            return { idps }
+        }
+        if (method === 'getUser') {
+            return { userId, isAdmin }
+        }
+        if (
+            method === 'addNetwork' ||
+            method === 'removeNetwork' ||
+            method === 'addIdp' ||
+            method === 'removeIdp'
+        ) {
+            return undefined
+        }
+        return undefined
+    })
+
+    const originalFetch = globalThis.fetch.bind(globalThis)
+    vi.stubGlobal(
+        'fetch',
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+            const url =
+                typeof input === 'string'
+                    ? input
+                    : input instanceof URL
+                      ? input.href
+                      : input.url
+            if (url.includes('/.well-known/wallet-gateway-version')) {
+                return new Response(
+                    JSON.stringify({ version: gatewayVersion }),
+                    {
+                        status: 200,
+                        headers: { 'Content-Type': 'application/json' },
+                    }
+                )
+            }
+            return originalFetch(input, init)
+        }
+    )
 }
