@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { toURL } from '../common.js'
+import { parseAssets, ParsedURL } from '../namespace/utils/url.js'
 import { KeysNamespace } from '../namespace/keys/index.js'
 import { LedgerNamespace } from '../namespace/ledger/index.js'
 import { PartyNamespace } from '../namespace/party/index.js'
@@ -19,6 +19,7 @@ import {
     ExtendedFullSDKInterface,
     ExtendedSDKOptions,
     OfflineSDKInterface,
+    RegisteredPlugins,
     SDKInterface,
     TokenConfig,
 } from './types/index.js'
@@ -32,6 +33,7 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 import { SDKLogger } from '../logger/logger.js'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
+import { SDKPlugin } from './plugin.js'
 
 const createNamespace: {
     [K in keyof ExtendedSDKOptions]: (
@@ -40,18 +42,19 @@ const createNamespace: {
     ) => Promise<ExtendedFullSDKInterface[K]>
 } = {
     amulet: async (ctx: SDKContext, config: AmuletConfig) => {
-        const validatorUrl = toURL(config.validatorUrl, ctx.error)
-
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
-        const scanApiUrl = toURL(config.scanApiUrl, ctx.error)
         const scanProxyClient = new ScanProxyClient(
-            validatorUrl,
+            new ParsedURL(ctx, config.validatorUrl),
             ctx.logger,
             auth
         )
-        const scanClient = new ScanClient(scanApiUrl, ctx.logger, auth)
+        const scanClient = new ScanClient(
+            new ParsedURL(ctx, config.scanApiUrl),
+            ctx.logger,
+            auth
+        )
         const validatorParty = await getValidatorParty(
-            validatorUrl,
+            new ParsedURL(ctx, config.validatorUrl),
             ctx.logger,
             auth
         )
@@ -68,11 +71,10 @@ const createNamespace: {
             scanProxyClient,
             scanClient
         )
-        const registry = config.registryUrl
 
         return new AmuletNamespace({
             commonCtx: ctx,
-            registry,
+            registry: new ParsedURL(ctx, config.registryUrl),
             amuletService,
             tokenStandardService,
             validatorParty,
@@ -86,21 +88,17 @@ const createNamespace: {
             auth,
             false
         )
-        const validatorUrl = toURL(config.validatorUrl, ctx.error)
-
         const validatorParty = await getValidatorParty(
-            validatorUrl,
+            new ParsedURL(ctx, config.validatorUrl),
             ctx.logger,
             auth
         )
 
-        const registries = config.registries.map((registry) =>
-            toURL(registry, ctx.error)
-        )
-
         return new TokenNamespace({
             tokenStandardService,
-            registryUrls: registries,
+            registryUrls: config.registries.map(
+                (input) => new ParsedURL(ctx, input)
+            ),
             validatorParty,
             commonCtx: ctx,
         })
@@ -116,10 +114,15 @@ const createNamespace: {
 
         return new AssetNamespace({
             tokenStandardService,
-            registries: config.registries,
+            registries: config.registries.map(
+                (input) => new ParsedURL(ctx, input)
+            ),
             error: ctx.error,
-            list: await tokenStandardService.registriesToAssets(
-                config.registries.map((url) => url.href)
+            list: parseAssets(
+                ctx,
+                await tokenStandardService.registriesToAssets(
+                    config.registries.map((registry) => registry.toString())
+                )
             ),
         })
     },
@@ -128,7 +131,7 @@ const createNamespace: {
         return new EventsNamespace({
             commonCtx: ctx,
             auth,
-            websocketURL: config.websocketURL,
+            websocketURL: new ParsedURL(ctx, config.websocketURL),
         })
     },
 }
@@ -154,6 +157,24 @@ export class InitializedSDK implements BasicSDKInterface {
         config: Pick<ExtendedSDKOptions, ExtendedItems>
     ) {
         return await ExtendedInitializedSDK.create(this.ctx, config)
+    }
+
+    public registerPlugins<
+        P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
+    >(plugins: P): InitializedSDK & RegisteredPlugins<P> {
+        const newSDK = new InitializedSDK(this.ctx)
+
+        for (const name in plugins) {
+            const plugin = new plugins[name](this.ctx)
+            Object.defineProperty(newSDK, plugin.name, {
+                value: plugin,
+                writable: false,
+                enumerable: true,
+                configurable: false,
+            })
+        }
+
+        return newSDK as InitializedSDK & RegisteredPlugins<P>
     }
 }
 
@@ -229,7 +250,7 @@ export class ExtendedInitializedSDK<
             ...config,
         } as Pick<ExtendedSDKOptions, ExtendedItems | NewItems>
 
-        return await ExtendedInitializedSDK.create(this.ctx, mergedConfig)
+        return await super.extend(mergedConfig)
     }
 }
 

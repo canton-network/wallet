@@ -16,10 +16,7 @@ export class PreapprovalNamespace {
      * Transfer preapprovals allow receivers to automatically accept incoming transfers.
      */
     public readonly command: {
-        create: (args: {
-            parties: PreapprovalParties
-            // registryUrl?: URL
-        }) => Promise<{
+        create: (args: { parties: PreapprovalParties }) => Promise<{
             CreateCommand: LedgerTypes['CreateCommand']
         }>
         cancel: (args: {
@@ -156,6 +153,25 @@ export class PreapprovalNamespace {
             synchronizerId,
             actAs: [provider],
         })
+    }
+
+    /**
+     * Fetch TransferPreapproval from ScanProxy. This does NOT retry or wait.
+     * If you want additional logic for create/renew/cancel events and retry use fetchStatus instead
+     * @param receiverParty Receiver party id
+     * @returns Resolves with the preapproval or null, if not found
+     */
+    public async fetchQuick(receiverParty: PartyId) {
+        try {
+            return await this.ctx.amuletService.getTransferPreApprovalByParty(
+                receiverParty
+            )
+        } catch (e) {
+            if (isNotFoundError(e)) {
+                this.logger.info('Preapproval is no longer visible')
+                return null
+            }
+        }
     }
 
     /**
