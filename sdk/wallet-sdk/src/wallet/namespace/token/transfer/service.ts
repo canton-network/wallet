@@ -11,7 +11,7 @@ import { TransferAllocationChoiceParams, TransferParams } from './types.js'
 import { PreparedCommand } from '../../transactions/types.js'
 import { ProxyDelegationNamespace } from './proxyDelegation.js'
 import { findAsset } from '../../asset/index.js'
-import { parseAssets } from '../../utils/url.js'
+import { parseAssets, ParsedURL } from '../../utils/url.js'
 
 export class TransferNamespace {
     public readonly delegatedProxy: ProxyDelegationNamespace
@@ -32,7 +32,8 @@ export class TransferNamespace {
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createAcceptTransferInstruction(
                 params.transferInstructionCid,
-                params.registryUrl.href
+                new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
+                    .href
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -43,7 +44,8 @@ export class TransferNamespace {
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createWithdrawTransferInstruction(
                 params.transferInstructionCid,
-                params.registryUrl.href
+                new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
+                    .href
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -54,7 +56,8 @@ export class TransferNamespace {
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createRejectTransferInstruction(
                 params.transferInstructionCid,
-                params.registryUrl.href
+                new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
+                    .href
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -72,12 +75,12 @@ export class TransferNamespace {
             assets,
             params.instrumentId,
             this.sdkContext.commonCtx.error,
-            params.registryUrl
+            new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
         )
 
         if (!asset || asset === undefined) {
             throw new Error(
-                `Asset with id ${params.instrumentId} not found in asset list for registry URL: ${params.registryUrl.href}`
+                `Asset with id ${params.instrumentId} not found in asset list for registry URL: ${params.registryUrl.toString()}`
             )
         }
 

@@ -12,11 +12,12 @@ import { LedgerTypes } from '../../../sdk.js'
 import { FeaturedAppRight } from '../../amulet/types.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { LedgerNamespace } from '../../ledger/index.js'
+import { ParsedURL, URLInput } from '../../utils/url.js'
 
 type ProxyDelegationCommandArgs = {
     proxyCid: string
     transferInstructionCid: string
-    registryUrl?: URL
+    registryUrl?: URLInput
     featuredAppRight: FeaturedAppRight
     beneficiaries?: Beneficiaries[]
 }
@@ -114,7 +115,7 @@ export class ProxyDelegationNamespace {
         const [command, disclosedContracts] = await cb(
             proxyCid,
             transferInstructionCid,
-            registryUrl,
+            new ParsedURL(this.ctx.commonCtx, registryUrl),
             featuredAppRight.contract_id,
             [...beneficiaries, defaultBeneficiary]
         )
