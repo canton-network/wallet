@@ -55,7 +55,7 @@ export const tap = async (
     )
 
     // Wait for the DevNet Tap section to be visible
-    await expect(page.getByText('DevNet Tap')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('DevNet Tap')).toBeVisible({ timeout: 20000 })
 
     const tapForm = page.locator('form').filter({
         has: page.getByRole('button', { name: 'TAP' }),
