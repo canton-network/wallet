@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi } from 'vitest'
-import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    Transaction,
+    Wallet,
+} from '@canton-network/core-wallet-user-rpc-client'
 
 export const mockRequest = vi.fn()
 
@@ -14,13 +17,28 @@ export function makeWallet(overrides: Partial<Wallet> = {}): Wallet {
     return {
         primary: false,
         partyId: 'alice::1220abc',
-        status: 'initialized',
+        status: 'allocated',
         hint: 'alice',
         publicKey: 'pk',
         namespace: '1220abc',
         networkId: 'network1',
         signingProviderId: 'internal',
         rights: [],
+        ...overrides,
+    }
+}
+
+export function makeTransaction(
+    overrides: Partial<Transaction> = {}
+): Transaction {
+    return {
+        id: 'tx-1',
+        commandId: 'cmd-1',
+        status: 'pending',
+        preparedTransaction: 'prepared-tx-blob',
+        preparedTransactionHash: 'hash-abc',
+        createdAt: '2024-06-01T12:00:00.000Z',
+        origin: 'https://dapp.example',
         ...overrides,
     }
 }

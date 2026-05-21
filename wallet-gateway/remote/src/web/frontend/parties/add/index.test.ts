@@ -9,7 +9,7 @@ import {
     createMockUserClient,
     makeWallet,
     mockRequest,
-} from '../test-helpers.js'
+} from '../../test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
     () => ({
