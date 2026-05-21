@@ -25,16 +25,11 @@ import {
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
-    TokenConfigExtended,
 } from './types/index.js'
-import {
-    ScanClient,
-    ScanProxyClient,
-    ValidatorInternalClient,
-} from '@canton-network/core-splice-client'
+import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { SDKLogger } from '../logger/logger.js'
+
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
 import { SDKPlugin } from './plugin.js'
@@ -47,8 +42,14 @@ const createNamespace: {
 } = {
     amulet: async (ctx: SDKContext, config: AmuletConfig) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
+        if (!ctx.validatorUrl) {
+            ctx.error.throw({
+                type: 'BadRequest',
+                message: 'validatorURL must be provided in sdk options',
+            })
+        }
         const scanProxyClient = new ScanProxyClient(
-            new ParsedURL(ctx, config.validatorUrl),
+            new ParsedURL(ctx, ctx.validatorUrl),
             ctx.logger,
             auth
         )
@@ -57,12 +58,13 @@ const createNamespace: {
             ctx.logger,
             auth
         )
-        const validatorParty = await getValidatorParty(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
-        )
+        // const validatorParty = await getValidatorParty(
+        //     new ParsedURL(ctx, config.validatorUrl),
+        //     ctx.logger,
+        //     auth
+        // )
 
+        const validatorParty = await ctx.getValidatorParty(auth)
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
@@ -84,10 +86,7 @@ const createNamespace: {
             validatorParty,
         })
     },
-    token: async (
-        ctx: SDKContext,
-        config: TokenConfig | TokenConfigExtended
-    ) => {
+    token: async (ctx: SDKContext, config: TokenConfig) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
@@ -100,27 +99,21 @@ const createNamespace: {
             (input) => new ParsedURL(ctx, input)
         )
 
-        if ('validatorUrl' in config) {
-            const validatorUrl = new ParsedURL(ctx, config.validatorUrl)
-            const validatorParty = await getValidatorParty(
-                validatorUrl,
-                ctx.logger,
-                auth
-            )
-
+        if (ctx.validatorUrl !== undefined) {
+            const validatorParty = await ctx.getValidatorParty(auth)
             return new TokenNamespaceExtended({
                 tokenStandardService,
                 registryUrls: registries,
                 validatorParty,
                 commonCtx: ctx,
             })
-        } else {
-            return new TokenNamespace({
-                tokenStandardService,
-                registryUrls: registries,
-                commonCtx: ctx,
-            })
         }
+
+        return new TokenNamespace({
+            tokenStandardService,
+            registryUrls: registries,
+            commonCtx: ctx,
+        })
     },
     asset: async (ctx: SDKContext, config: AssetConfig) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
@@ -273,11 +266,11 @@ export class ExtendedInitializedSDK<
     }
 }
 
-async function getValidatorParty(
-    validatorUrl: URL,
-    logger: SDKLogger,
-    auth: AuthTokenProvider
-) {
-    const validator = new ValidatorInternalClient(validatorUrl, logger, auth)
-    return (await validator.get('/v0/validator-user')).party_id
-}
+// async function getValidatorParty(
+//     validatorUrl: URL,
+//     logger: SDKLogger,
+//     auth: AuthTokenProvider
+// ) {
+//     const validator = new ValidatorInternalClient(validatorUrl, logger, auth)
+//     return (await validator.get('/v0/validator-user')).party_id
+// }

@@ -19,11 +19,8 @@ export type TokenNamespaceConfig = {
     commonCtx: SDKContext
 }
 
-export type TokenNamespaceConfigExtended = {
-    tokenStandardService: TokenStandardService
-    registryUrls: ParsedURL[]
+export type TokenNamespaceConfigExtended = TokenNamespaceConfig & {
     validatorParty: PartyId
-    commonCtx: SDKContext
 }
 
 export class TokenNamespace {

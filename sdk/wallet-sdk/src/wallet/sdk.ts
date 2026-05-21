@@ -27,6 +27,8 @@ import {
 } from '@canton-network/core-ledger-client-types'
 import { AllowedLogAdapters } from './logger/types.js'
 import { DappLedgerRpc } from '@canton-network/core-provider-dapp'
+import { URLInput } from './namespace/utils/url.js'
+import { ValidatorInternalClient } from '@canton-network/core-splice-client'
 export * from './namespace/asset/index.js'
 export type * from './namespace/token/index.js'
 export type * from './namespace/amulet/index.js'
@@ -46,6 +48,8 @@ export type SDKContext = {
     logger: SDKLogger
     error: SDKErrorHandler
     defaultSynchronizerId: string
+    validatorUrl: URLInput | undefined
+    getValidatorParty: (auth: AuthTokenProvider) => Promise<string>
 }
 
 export type OfflineSDKContext = {
@@ -125,6 +129,9 @@ export class SDK {
             ledgerProvider,
             logger
         )
+        const validatorUrl = options.validatorUrl
+
+        const validatorPartyCache = new Map<string, string>()
 
         const ctx: SDKContext = {
             ledgerProvider,
@@ -132,6 +139,34 @@ export class SDK {
             logger,
             error,
             defaultSynchronizerId,
+            validatorUrl,
+            getValidatorParty: async (auth: AuthTokenProvider) => {
+                if (!validatorUrl) {
+                    error.throw({
+                        type: 'BadRequest',
+                        message:
+                            'validatorUrl must be provided in SDK options to use this feature',
+                    })
+                    throw new Error('unreachable')
+                }
+                //TODO: fix this later to use ParsedURL somehow without the ctx
+                const validatorUrlParsed: URL =
+                    typeof validatorUrl === 'string'
+                        ? new URL(validatorUrl)
+                        : validatorUrl
+
+                const cached = validatorPartyCache.get(validatorUrlParsed.href)
+                if (cached) return cached
+                const validator = new ValidatorInternalClient(
+                    validatorUrlParsed,
+                    logger,
+                    auth
+                )
+                const party = (await validator.get('/v0/validator-user'))
+                    .party_id
+                validatorPartyCache.set(validatorUrlParsed.href, party)
+                return party
+            },
         }
 
         const config = {} as Pick<

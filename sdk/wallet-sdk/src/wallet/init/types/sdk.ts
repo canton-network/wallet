@@ -21,12 +21,11 @@ import {
     AssetConfig,
     EventsConfig,
     TokenConfig,
-    TokenConfigExtended,
 } from './config.js'
 import { Provider } from '@canton-network/core-splice-provider'
 import { LedgerTypes } from '@canton-network/core-ledger-client-types'
 import { SDKPlugin } from '../plugin.js'
-
+import { URLInput } from '../../namespace/utils/url.js'
 // SDK OPTIONS
 
 /**
@@ -41,8 +40,9 @@ export type BasicSDKOptions<L extends LedgerTypes> = Readonly<
     {
         websocketUrl?: URL | string // default to same host as ledgerClientUrl with ws protocol
         logAdapter?: AllowedLogAdapters
+        validatorUrl?: URLInput
     } & (
-        | { auth: TokenProviderConfig; ledgerClientUrl: URL | string }
+        | { auth: TokenProviderConfig; ledgerClientUrl: URLInput }
         | { ledgerProvider: Provider<L> }
     )
 >
@@ -63,7 +63,7 @@ export type ExtendedSDKOptions = EnforceKeys<
     (typeof EXTENDED_SDK_OPTION_KEYS)[number],
     Readonly<{
         amulet: AmuletConfig
-        token: TokenConfig | TokenConfigExtended
+        token: TokenConfig
         asset: AssetConfig
         events: EventsConfig
     }>
@@ -82,6 +82,10 @@ export type GetExtendedKeys<T> = {
 }[keyof ExtendedSDKOptions]
 
 // SDK INTERFACE
+
+type TokenNsFor<Options> = Options extends { validatorUrl: URLInput }
+    ? TokenNamespaceExtended
+    : TokenNamespace
 
 export type BasicSDKInterface<
     CurrentlyExtended extends keyof ExtendedSDKOptions = never,
@@ -112,13 +116,26 @@ export type NullableExtendedFullSDKInterface = {
     [K in keyof ExtendedFullSDKInterface]: ExtendedFullSDKInterface[K] | null
 }
 
+// export type ExtendedSDKInterface<
+//     ExtendedItems extends keyof ExtendedSDKOptions,
+// > = {
+//     [K in keyof Pick<
+//         ExtendedSDKOptions,
+//         ExtendedItems
+//     >]: ExtendedFullSDKInterface[K]
+// } & {
+//     extend: <NewExtendedItems extends keyof ExtendedSDKOptions>(
+//         config: Pick<ExtendedSDKOptions, NewExtendedItems>
+//     ) => Promise<SDKInterface<NewExtendedItems | ExtendedItems>>
+// }
+
 export type ExtendedSDKInterface<
     ExtendedItems extends keyof ExtendedSDKOptions,
+    Options = Record<string, never>,
 > = {
-    [K in keyof Pick<
-        ExtendedSDKOptions,
-        ExtendedItems
-    >]: ExtendedFullSDKInterface[K]
+    [K in ExtendedItems]: K extends 'token'
+        ? TokenNsFor<Options>
+        : ExtendedFullSDKInterface[K & keyof ExtendedFullSDKInterface]
 } & {
     extend: <NewExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, NewExtendedItems>
@@ -127,7 +144,9 @@ export type ExtendedSDKInterface<
 
 export type SDKInterface<
     ExtendedItems extends keyof ExtendedFullSDKInterface = never,
-> = BasicSDKInterface<ExtendedItems> & ExtendedSDKInterface<ExtendedItems>
+    Options = Record<string, never>,
+> = BasicSDKInterface<ExtendedItems> &
+    ExtendedSDKInterface<ExtendedItems, Options>
 
 export type OfflineSDKInterface = Readonly<{
     keys: KeysNamespace
