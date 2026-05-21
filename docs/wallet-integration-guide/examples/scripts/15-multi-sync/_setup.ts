@@ -34,7 +34,8 @@ import {
 
 const DARS_PATH = '../../../../../.localnet/dars'
 const TRADING_APP_DAR = 'splice-token-test-trading-app-1.0.0.dar'
-const TEST_TOKEN_V1_DAR = 'splice-test-token-v1-1.0.0.dar'
+const TEST_TOKEN_V1_DAR_LOCAL_PATH =
+    './daml/splice-test-token-v1/splice-test-token-v1-1.0.0.dar'
 
 export type PartyInfo = Omit<
     GenerateTransactionResponse,
@@ -145,23 +146,24 @@ export async function setupMultiSyncTrade(
 
     const here = path.dirname(fileURLToPath(import.meta.url))
     const darsDir = path.join(here, DARS_PATH)
+    const testTokenV1DarPath = path.join(here, TEST_TOKEN_V1_DAR_LOCAL_PATH)
     for (const [darPath, darName] of [
         [path.join(darsDir, TRADING_APP_DAR), TRADING_APP_DAR],
-        [path.join(darsDir, TEST_TOKEN_V1_DAR), TEST_TOKEN_V1_DAR],
+        [testTokenV1DarPath, TEST_TOKEN_V1_DAR_LOCAL_PATH],
     ] as [string, string][]) {
         try {
             await fs.stat(darPath)
         } catch {
             throw new Error(
                 `Required DAR not found: ${darPath}\n` +
-                    `  "${darName}" must be present in .localnet/dars/.`
+                    `  "${darName}" must be present at the expected path.`
             )
         }
     }
 
     const [tradingAppDar, testTokenV1Dar] = await Promise.all([
         fs.readFile(path.join(darsDir, TRADING_APP_DAR)),
-        fs.readFile(path.join(darsDir, TEST_TOKEN_V1_DAR)),
+        fs.readFile(testTokenV1DarPath),
     ])
 
     await Promise.all(
