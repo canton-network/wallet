@@ -92,6 +92,8 @@ This downloads and runs the latest version each time, useful for testing or one-
 
     Open the web UI in your browser to confirm it's running.
 
+    For production-style setups, also confirm you can see expected wallets after login — see [Troubleshooting: Post-deployment verification](../troubleshooting/index.md#post-deployment-verification).
+
 ## Command Line Options
 
 The Wallet Gateway supports the following command-line options:
