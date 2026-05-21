@@ -58,12 +58,6 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 import './index.js'
 import { ApproveUi } from './index.js'
 
-async function flushMicrotasks(rounds = 20): Promise<void> {
-    for (let i = 0; i < rounds; i++) {
-        await Promise.resolve()
-    }
-}
-
 function mockApproveState(
     transaction = makeTransaction(),
     wallet = makeWallet({
@@ -165,17 +159,19 @@ describe('UserUiApprove', () => {
         )
         await waitUntil(() => el.commandId === 'cmd-1')
 
-        vi.useFakeTimers()
         el.shadowRoot
             ?.querySelector('wg-transaction-detail')
             ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
 
-        await flushMicrotasks()
-        await vi.advanceTimersByTimeAsync(2000)
-
-        expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'execute' })
+        await waitUntil(() =>
+            mockRequest.mock.calls.some((c) => c[0]?.method === 'execute')
         )
+        await waitUntil(
+            () => setLocationHref.mock.calls.length > 0,
+            'redirect after approve',
+            { timeout: 3000 }
+        )
+
         expect(showToast).toHaveBeenCalledWith(
             '',
             'Activity executed successfully',
@@ -267,13 +263,20 @@ describe('UserUiApprove', () => {
         )
         await waitUntil(() => el.commandId === 'cmd-1')
 
-        vi.useFakeTimers()
         el.shadowRoot
             ?.querySelector('wg-transaction-detail')
             ?.dispatchEvent(new TransactionDeleteEvent('cmd-1'))
 
-        await flushMicrotasks()
-        await vi.advanceTimersByTimeAsync(2000)
+        await waitUntil(() =>
+            mockRequest.mock.calls.some(
+                (c) => c[0]?.method === 'deleteTransaction'
+            )
+        )
+        await waitUntil(
+            () => setLocationHref.mock.calls.length > 0,
+            'redirect after reject',
+            { timeout: 3000 }
+        )
 
         expect(mockRequest).toHaveBeenCalledWith(
             expect.objectContaining({ method: 'deleteTransaction' })
