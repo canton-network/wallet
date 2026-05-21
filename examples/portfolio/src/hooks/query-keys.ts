@@ -38,9 +38,5 @@ export const queryKeys = {
 
     isDevNet: {
         all: ['isDevNet'],
-        forSession: (sessionToken: string | undefined) => [
-            'isDevNet',
-            sessionToken,
-        ],
     },
 }
