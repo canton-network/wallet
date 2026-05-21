@@ -95,28 +95,13 @@ const createNamespace: {
             auth,
             false
         )
-<<<<<<< HEAD
-        const validatorParty = await getValidatorParty(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
-        )
 
-        return new TokenNamespace({
-            tokenStandardService,
-            registryUrls: config.registries.map(
-                (input) => new ParsedURL(ctx, input)
-            ),
-            validatorParty,
-            commonCtx: ctx,
-        })
-=======
-        const registries = config.registries.map((registry) =>
-            toURL(registry, ctx.error)
+        const registries = config.registries.map(
+            (input) => new ParsedURL(ctx, input)
         )
 
         if ('validatorUrl' in config) {
-            const validatorUrl = toURL(config.validatorUrl, ctx.error)
+            const validatorUrl = new ParsedURL(ctx, config.validatorUrl)
             const validatorParty = await getValidatorParty(
                 validatorUrl,
                 ctx.logger,
@@ -136,7 +121,6 @@ const createNamespace: {
                 commonCtx: ctx,
             })
         }
->>>>>>> fe66a118 (token namespace extended test)
     },
     asset: async (ctx: SDKContext, config: AssetConfig) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
