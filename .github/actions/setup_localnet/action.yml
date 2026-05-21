@@ -1,0 +1,38 @@
+name: 'Setup Localnet'
+description: 'Restore cached Localnet environment and optionally start services'
+inputs:
+    network:
+        description: 'Network type: devnet or mainnet'
+        required: true
+    splice_version:
+        description: 'Splice version (required)'
+        required: true
+    start_services:
+        description: 'Whether to start Localnet services after setup'
+        required: false
+        default: 'true'
+runs:
+    using: 'composite'
+    steps:
+        - name: Cache Localnet files
+          uses: actions/cache/restore@v5
+          with:
+              path: |
+                  .localnet/docker-compose/localnet
+                  .localnet/dars
+                  /tmp/docker-images
+              key: ${{ runner.os }}-localnet-${{ inputs.splice_version }}
+              fail-on-cache-miss: true
+
+        - name: Load cached Docker images
+          shell: bash
+          run: |
+              if [ -f /tmp/docker-images/images.tar ]; then
+                docker load -i /tmp/docker-images/images.tar
+                echo "Docker images loaded from cache."
+              fi
+
+        - name: Start Localnet
+          if: ${{ inputs.start_services == 'true' }}
+          shell: bash
+          run: yarn start:localnet -- --network=${{ inputs.network }}
