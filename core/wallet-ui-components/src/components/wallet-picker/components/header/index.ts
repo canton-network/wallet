@@ -1,11 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html, LitElement } from 'lit'
+import { CSSResultGroup, html, LitElement } from 'lit'
 import { customElement } from 'lit/decorators.js'
+import { BaseElement } from '../../../../internal/base-element'
+import styles from './styles'
 
 @customElement('wallet-picker-header')
 export class WalletPickerHeader extends LitElement {
+    static styles: CSSResultGroup = [BaseElement.styles, styles]
+
     constructor() {
         super()
     }

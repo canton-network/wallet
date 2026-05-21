@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { WalletPickerEntry } from '@canton-network/core-types'
-import { html, LitElement, nothing } from 'lit'
+import { CSSResultGroup, html, LitElement, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import { BaseElement } from '../../../../internal/base-element'
+import styles from './styles'
 
 @customElement('wallet-picker-card')
 export class WalletPickerCard extends LitElement {
+    static styles: CSSResultGroup = [BaseElement.styles, styles]
+
     @property({ type: Object })
     entry!: WalletPickerEntry
 

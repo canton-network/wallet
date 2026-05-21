@@ -108,6 +108,19 @@ export class WalletPicker extends LitElement {
         this.render()
     }
 
+    private get viewTitle() {
+        switch (this.state) {
+            case 'connected':
+                return 'Connected'
+            case 'connecting':
+                return 'Connecting...'
+            case 'error':
+                return 'Connection Failed'
+            default:
+                return 'Connect a Wallet'
+        }
+    }
+
     private loadEntries(): void {
         const stored = localStorage.getItem('splice_wallet_picker_entries')
         if (!stored) return
@@ -227,28 +240,35 @@ export class WalletPicker extends LitElement {
     render() {
         const allEntries = this.getAllEntries()
 
-        console.log(allEntries, this.state)
+        return html`
+            <div class="view-container">
+                <wallet-picker-header></wallet-picker-header>
+                <div class="view-title">${this.viewTitle}</div>
 
-        switch (this.state) {
-            case 'connecting':
-                return html`<wallet-picker-connecting
-                    .entry=${this.selectedEntry}
-                    .wcUri=${this.wcUri || ''}
-                    .wcQrDataUrl=${this.wcQrDataUrl || ''}
-                ></wallet-picker-connecting>`
-            case 'connected':
-                return html`<wallet-picker-connected
-                    .entryName=${this.selectedEntry?.name || ''}
-                ></wallet-picker-connected>`
-            case 'error':
-                return html`<wallet-picker-error
-                    .message=${this.errorMessage}
-                ></wallet-picker-error>`
-            default:
-                return html`<wallet-picker-list
-                    .entries=${allEntries}
-                ></wallet-picker-list>`
-        }
+                ${this.state === 'list' || !this.state
+                    ? html`<wallet-picker-list
+                          .entries=${allEntries}
+                      ></wallet-picker-list>`
+                    : html`
+                          <div class="status-view">
+                              ${this.state === 'connecting' &&
+                              html`<wallet-picker-connecting
+                                  .entry=${this.selectedEntry}
+                                  .wcUri=${this.wcUri || ''}
+                                  .wcQrDataUrl=${this.wcQrDataUrl || ''}
+                              ></wallet-picker-connecting>`}
+                              ${this.state === 'connected' &&
+                              html`<wallet-picker-connected
+                                  .entryName=${this.selectedEntry?.name || ''}
+                              ></wallet-picker-connected>`}
+                              ${this.state === 'error' &&
+                              html`<wallet-picker-error
+                                  .message=${this.errorMessage}
+                              ></wallet-picker-error>`}
+                          </div>
+                      `}
+            </div>
+        `
     }
 
     connectedCallback(): void {

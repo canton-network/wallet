@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { WalletPickerEntry } from '@canton-network/core-types'
-import { html, LitElement } from 'lit'
+import { CSSResultGroup, html, LitElement } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import { BaseElement } from '../../../../internal/base-element'
+import styles from './styles'
 
 @customElement('wallet-picker-list')
 export class WalletPickerList extends LitElement {
+    static styles: CSSResultGroup = [BaseElement.styles, styles]
+
     @property({ type: Array })
     entries: WalletPickerEntry[] = []
 
     render() {
-        return html`<div class="view-container">
-            <wallet-picker-header></wallet-picker-header>
-            <div class="view-title">Connect a Wallet</div>
+        return html`
             <div class="wallet-list">
                 ${
                     this.entries.length
@@ -71,8 +73,7 @@ export class WalletPickerList extends LitElement {
                     <input class="custom-url-input" type="text" placeholder="Wallet API URL" @keydown=${this.handleInputKeydown} />
                     <button class=btn-add" @click=${this.handleConnect}>Connect</button>
                 </div>
-            </div>
-        </div>`
+            </div>`
     }
 
     private handleConnect() {
