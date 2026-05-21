@@ -3,6 +3,7 @@
 
 import { vi } from 'vitest'
 import type {
+    Idp,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-user-rpc-client'
@@ -43,6 +44,16 @@ export function makeTransaction(
     }
 }
 
+export function makeIdp(overrides: Partial<Idp> = {}): Idp {
+    return {
+        id: 'idp-1',
+        type: 'oauth',
+        issuer: 'https://issuer.example',
+        configUrl: 'https://config.example/.well-known/openid-configuration',
+        ...overrides,
+    }
+}
+
 export function mockListWalletsFlow(
     wallets: Wallet[],
     networkId = 'network1'
@@ -66,6 +77,27 @@ export function mockListWalletsFlow(
                 return []
             }
             return wallets
+        }
+        return undefined
+    })
+}
+
+export function mockIdpsPageFlow(
+    idps: Idp[],
+    options: { isAdmin?: boolean } = {}
+): void {
+    mockRequest.mockImplementation(async ({ method }) => {
+        if (method === 'listIdps') {
+            return { idps }
+        }
+        if (method === 'getUser') {
+            return {
+                userId: 'user-1',
+                isAdmin: options.isAdmin ?? false,
+            }
+        }
+        if (method === 'addIdp' || method === 'removeIdp') {
+            return undefined
         }
         return undefined
     })
