@@ -37,10 +37,12 @@ import type {
     AccountsChangedEvent,
     TxChangedEvent,
     RpcTypes as DappRpcTypes,
+    MessageSignatureEvent,
+    SignMessageParams,
+    SignMessageResult,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import { DappClient } from './client'
 import { ExtensionAdapter } from './adapter/extension-adapter'
-import { InjectedAdapter } from './adapter/injected-adapter'
 import {
     RemoteAdapter,
     type RemoteAdapterConfig,
@@ -49,7 +51,6 @@ import * as storage from './storage'
 import { clearAllLocalState } from './util'
 import defaultGatewayList from './gateways.json'
 import { CANTON_LOGO_PNG } from './assets'
-import { discoverInjectedProviders } from './injected-discovery'
 import { requestAnnouncedProviders } from './announce-discovery'
 
 export interface DappSDKConnectOptions<
@@ -104,30 +105,6 @@ export class DappSDK {
         }
     }
 
-    private async registerInjectedNamespaceAdapters(
-        discovery: DiscoveryClient
-    ): Promise<void> {
-        const existingIds = new Set(
-            discovery.listAdapters().map((a) => a.providerId as string)
-        )
-
-        const injected = discoverInjectedProviders()
-        for (const item of injected) {
-            const id = `browser:${item.id}`
-            if (existingIds.has(id)) continue
-
-            const key = `${item.id} (injected)`
-            const adapter = new InjectedAdapter({
-                id: item.id,
-                name: key,
-                provider: item.provider,
-                description: `Injected provider from window.${item.id}`,
-            })
-            discovery.registerAdapter(adapter)
-            existingIds.add(id)
-        }
-    }
-
     private async registerAnnouncedAdapters(
         discovery: DiscoveryClient
     ): Promise<void> {
@@ -170,8 +147,7 @@ export class DappSDK {
             await this.registerAdapters(this.discovery, initAdapters)
         }
 
-        // These can appear after initial create() (injected providers, extensions).
-        await this.registerInjectedNamespaceAdapters(this.discovery)
+        // Extensions can announce after initial create().
         await this.registerAnnouncedAdapters(this.discovery)
 
         await this.discovery.restorePersistedSessionIfNeeded()
@@ -359,7 +335,6 @@ export class DappSDK {
         }
 
         const discovery = this.discovery!
-        await this.registerInjectedNamespaceAdapters(discovery)
         await this.registerAnnouncedAdapters(discovery)
 
         clearAllLocalState()
@@ -528,6 +503,10 @@ export class DappSDK {
         return this.requireClient().prepareExecuteAndWait(params)
     }
 
+    async signMessage(params: SignMessageParams): Promise<SignMessageResult> {
+        return this.requireClient().signMessage(params)
+    }
+
     async ledgerApi(params: LedgerApiParams): Promise<LedgerApiResult> {
         return this.requireClient().ledgerApi(params)
     }
@@ -552,6 +531,12 @@ export class DappSDK {
 
     async onTxChanged(listener: EventListener<TxChangedEvent>): Promise<void> {
         this.requireClient().onTxChanged(listener)
+    }
+
+    async onMessageSignature(
+        listener: EventListener<MessageSignatureEvent>
+    ): Promise<void> {
+        this.requireClient().onMessageSignature(listener)
     }
 
     async removeOnStatusChanged(
@@ -580,6 +565,13 @@ export class DappSDK {
     ): Promise<void> {
         if (!this.client) return
         this.client.removeOnTxChanged(listener)
+    }
+
+    async removeOnMessageSignature(
+        listener: EventListener<MessageSignatureEvent>
+    ): Promise<void> {
+        if (!this.client) return
+        this.client.removeOnMessageSignature(listener)
     }
 }
 
@@ -647,6 +639,9 @@ export const onTxChanged = (
     listener: EventListener<TxChangedEvent>
 ): Promise<void> => sdk.onTxChanged(listener)
 
+export const onMessageSignature = (
+    listener: EventListener<MessageSignatureEvent>
+): Promise<void> => sdk.onMessageSignature(listener)
 export const removeOnStatusChanged = (
     listener: EventListener<StatusEvent>
 ): Promise<void> => sdk.removeOnStatusChanged(listener)
@@ -662,6 +657,10 @@ export const removeOnConnected = (
 export const removeOnTxChanged = (
     listener: EventListener<TxChangedEvent>
 ): Promise<void> => sdk.removeOnTxChanged(listener)
+
+export const removeOnMessageSignature = (
+    listener: EventListener<MessageSignatureEvent>
+): Promise<void> => sdk.removeOnMessageSignature(listener)
 
 function createDefaultAdapters(
     defaultGatewayConfigs: RemoteAdapterConfig[]

@@ -3,11 +3,11 @@
 **`@canton-network/dapp-sdk`** — TypeScript SDK for building decentralized applications on the [Canton Network](https://www.canton.network/). Connect users to Canton wallets, manage accounts, sign messages, and execute transactions — all through a vendor-neutral interface defined by [CIP-0103](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md).
 
 > [!IMPORTANT]
-> This project is under active development and may introduce breaking changes until version 1.0.0. Migration guides for each release are published in [Discussions](https://github.com/canton-network/wallet-gateway/discussions).
+> This project is under active development and may introduce breaking changes until version 1.0.0. Migration guides for each release are published in [Discussions](https://github.com/canton-network/wallet/discussions).
 
 ## Features
 
-- **Wallet Discovery** — Remote gateways, `window.*` namespace scanning, EIP-6963-style `canton:announceProvider` events, and pluggable adapters
+- **Wallet Discovery** — Remote gateways, EIP-6963-style `canton:announceProvider` events, and pluggable adapters
 - **Wallet Picker UI** — Built-in, framework-agnostic Web Component that lets users choose a wallet, enter custom gateway URLs, and manage recently used connections
 - **Wallet Connectivity** — Connect, disconnect, and monitor connection status
 - **Account Management** — List accounts and respond to account changes
@@ -74,22 +74,22 @@ The SDK is built around three layers:
 ┌──────────────────────────────────────────────┐
 │  DappClient                                  │
 │  Thin wrapper: typed RPC helpers, events,    │
-│  window.canton injection, session persist    │
+│  session persist                             │
 ├──────────────────────────────────────────────┤
 │  DiscoveryClient                             │
 │  Adapter registry, session restore,          │
 │  wallet picker integration                   │
 ├──────────────────────────────────────────────┤
 │  ProviderAdapter implementations             │
-│  ExtensionAdapter, InjectedAdapter           │
-│  (browser / postMessage, window.* inject)    │
+│  ExtensionAdapter (announce protocol)        │
+│  (browser / postMessage)                     │
 │  RemoteAdapter (HTTP/SSE gateway)            │
 └──────────────────────────────────────────────┘
 ```
 
 ## Wallet providers
 
-Wallet and extension authors: see **[Wallet providers (discovery)](https://github.com/canton-network/wallet-gateway/blob/main/docs/dapp-building/dapp-sdk/provider.md)** in the dApp Building docs for how to appear in the picker (`RemoteAdapter`, `window.*` scan, `canton:announceProvider`, and `additionalAdapters`).
+Wallet and extension authors: see **[Wallet providers (discovery)](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/provider.md)** in the dApp Building docs for how to appear in the picker (`RemoteAdapter`, `canton:announceProvider`, and `additionalAdapters`).
 
 ## Usage
 
@@ -163,23 +163,6 @@ const client = new DappClient(provider)
 const result = await client.connect()
 ```
 
-### Provider API
-
-The SDK also exposes a CIP-103 provider on `window.canton` (injected by default when a `DappClient` is created):
-
-```typescript
-const provider = window.canton
-
-const result = await provider.request({ method: 'connect' })
-const accounts = await provider.request({ method: 'listAccounts' })
-
-provider.on('statusChanged', (event) => {
-    console.log('Status:', event.connection.isConnected)
-})
-
-provider.removeListener('statusChanged', listener)
-```
-
 ## API Reference
 
 ### DappClient
@@ -203,7 +186,6 @@ provider.removeListener('statusChanged', listener)
 
 | Option         | Type           | Default    | Description                                                               |
 | -------------- | -------------- | ---------- | ------------------------------------------------------------------------- |
-| `injectGlobal` | `boolean`      | `true`     | Inject the provider into `window.canton`                                  |
 | `providerType` | `ProviderType` | `'remote'` | Affects `open()` routing (`'browser'` uses postMessage, others use popup) |
 
 ### DiscoveryClient
@@ -221,22 +203,21 @@ provider.removeListener('statusChanged', listener)
 
 ### Built-in Adapters
 
-| Adapter            | Provider Type | Transport        | Description                                                                                                                                                                              |
-| ------------------ | ------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ExtensionAdapter` | `'browser'`   | `postMessage`    | Browser extensions (announced wallets or dApp-registered; optional explicit slot).                                                                                                       |
-| `InjectedAdapter`  | `'browser'`   | in-page `window` | Created when namespace scan finds a provider on `window` ([Wallet providers guide](https://github.com/canton-network/wallet-gateway/blob/main/docs/dapp-building/dapp-sdk/provider.md)). |
-| `RemoteAdapter`    | `'remote'`    | HTTP/SSE         | CIP-103 Wallet Gateways over the network.                                                                                                                                                |
+| Adapter            | Provider Type | Transport     | Description                                                                                                                                                                         |
+| ------------------ | ------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExtensionAdapter` | `'browser'`   | `postMessage` | Browser extensions discovered via `canton:announceProvider` ([Wallet providers guide](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/provider.md)). |
+| `RemoteAdapter`    | `'remote'`    | HTTP/SSE      | CIP-103 Wallet Gateways over the network.                                                                                                                                           |
 
 ## Documentation
 
 Full documentation, including detailed usage guides, API reference, and configuration for the Wallet Gateway:
 
-- [dApp Building Guide](https://github.com/canton-network/wallet-gateway/tree/main/docs/dapp-building)
-- [dApp SDK Documentation](https://github.com/canton-network/wallet-gateway/tree/main/docs/dapp-building/dapp-sdk)
-- [Wallet providers (discovery)](https://github.com/canton-network/wallet-gateway/blob/main/docs/dapp-building/dapp-sdk/provider.md)
-- [API Specifications (OpenRPC)](https://github.com/canton-network/wallet-gateway/tree/main/api-specs)
-- [Example dApps](https://github.com/canton-network/wallet-gateway/tree/main/examples)
+- [dApp Building Guide](https://github.com/canton-network/wallet/tree/main/docs/dapp-building)
+- [dApp SDK Documentation](https://github.com/canton-network/wallet/tree/main/docs/dapp-building/dapp-sdk)
+- [Wallet providers (discovery)](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/provider.md)
+- [API Specifications (OpenRPC)](https://github.com/canton-network/wallet/tree/main/api-specs)
+- [Example dApps](https://github.com/canton-network/wallet/tree/main/examples)
 
 ## License
 
-[Apache-2.0](https://github.com/canton-network/wallet-gateway/blob/main/LICENSE)
+[Apache-2.0](https://github.com/canton-network/wallet/blob/main/LICENSE)

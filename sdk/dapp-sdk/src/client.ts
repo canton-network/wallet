@@ -5,7 +5,6 @@ import type {
     Provider,
     EventListener,
 } from '@canton-network/core-splice-provider'
-import { injectProvider } from '@canton-network/core-provider-dapp'
 import { WalletEvent, type SpliceMessage } from '@canton-network/core-types'
 import type {
     AccountsChangedEvent,
@@ -14,9 +13,12 @@ import type {
     LedgerApiParams,
     LedgerApiResult,
     ListAccountsResult,
+    MessageSignatureEvent,
     PrepareExecuteAndWaitResult,
     PrepareExecuteParams,
     ProviderType,
+    SignMessageParams,
+    SignMessageResult,
     StatusEvent,
     TxChangedEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
@@ -24,8 +26,6 @@ import { popup } from '@canton-network/core-wallet-ui-components'
 import { clearAllLocalState } from './util'
 
 export interface DappClientOptions {
-    /** Inject provider into `window.canton`. Defaults to true. */
-    injectGlobal?: boolean | undefined
     /** Provider type hint — affects `open()` routing. Defaults to `'remote'`. */
     providerType?: ProviderType | undefined
     /** Optional routing key for extension open messages. */
@@ -37,7 +37,7 @@ export interface DappClientOptions {
  * `Provider<DappRpcTypes>`.
  *
  * It exposes typed RPC helpers, event subscription shortcuts,
- * `window.canton` injection, and session-persistence listeners.
+ * and session-persistence listeners.
  *
  * How to obtain a provider is **not** this class's concern.
  * Use `DiscoveryClient` + the wallet picker, or construct any
@@ -53,10 +53,6 @@ export class DappClient {
     ) {
         this.provider = provider
         this.options = options
-
-        if (options.injectGlobal !== false) {
-            injectProvider(provider)
-        }
     }
 
     // ── Provider access ───────────────────────────────────
@@ -92,6 +88,10 @@ export class DappClient {
         })
     }
 
+    async signMessage(params: SignMessageParams): Promise<SignMessageResult> {
+        return this.provider.request({ method: 'signMessage', params })
+    }
+
     async ledgerApi(params: LedgerApiParams): Promise<LedgerApiResult> {
         return this.provider.request({ method: 'ledgerApi', params })
     }
@@ -114,6 +114,10 @@ export class DappClient {
         this.provider.on<TxChangedEvent>('txChanged', listener)
     }
 
+    onMessageSignature(listener: EventListener<MessageSignatureEvent>): void {
+        this.provider.on<MessageSignatureEvent>('messageSignature', listener)
+    }
+
     removeOnStatusChanged(listener: EventListener<StatusEvent>): void {
         this.provider.removeListener<StatusEvent>('statusChanged', listener)
     }
@@ -133,6 +137,15 @@ export class DappClient {
 
     removeOnTxChanged(listener: EventListener<TxChangedEvent>): void {
         this.provider.removeListener<TxChangedEvent>('txChanged', listener)
+    }
+
+    removeOnMessageSignature(
+        listener: EventListener<MessageSignatureEvent>
+    ): void {
+        this.provider.removeListener<MessageSignatureEvent>(
+            'messageSignature',
+            listener
+        )
     }
 
     // ── Open wallet UI ─────────────────────────────────────
