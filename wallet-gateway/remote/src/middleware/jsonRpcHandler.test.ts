@@ -2,10 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Request, Response } from 'express'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
+import type { JsonRpcResponse } from '@canton-network/core-types'
 import { rpcErrors, toHttpErrorCode } from '@canton-network/core-rpc-errors'
 import { handleRpcError, jsonRpcHandler } from './jsonRpcHandler.js'
+
+function errorPayload(body: JsonRpcResponse) {
+    if (!('error' in body)) {
+        throw new Error('expected JSON-RPC error response')
+    }
+    return body.error
+}
 
 describe.skip('jsonRpcHandler', () => {
     const logger = pino({ level: 'silent' }, sink())
@@ -47,10 +56,7 @@ describe.skip('jsonRpcHandler', () => {
         // Make the mocked status() return this fake res object so .json() can be called after it.
         res.status.mockReturnValue(res)
 
-        return res as unknown as Response & {
-            status: ReturnType<typeof vi.fn>
-            json: ReturnType<typeof vi.fn>
-        }
+        return res as unknown as Response
     }
 
     it('delegates to next() if method is not POST', () => {
@@ -60,7 +66,7 @@ describe.skip('jsonRpcHandler', () => {
         const req = {
             method: 'GET',
             body: {},
-        } as unknown as Request
+        } as Request
 
         handler(req, res, next)
 
@@ -75,7 +81,7 @@ describe.skip('jsonRpcHandler', () => {
         const req = {
             method: 'POST',
             body: { jsonrpc: '1.0', method: 'resolve', id: 1 },
-        } as unknown as Request
+        } as Request
 
         handler(req, res, next)
 
@@ -104,12 +110,12 @@ describe.skip('jsonRpcHandler', () => {
                 method: 'missing',
                 params: [],
             },
-        } as unknown as Request
+        } as Request
 
         handler(req, res, next)
 
         expect(res.status).toHaveBeenCalled()
-        const payload = res.json.mock.calls[0][0]
+        const payload = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0]
         expect(payload.id).toBeNull()
         expect(payload.error.message).toContain('missing')
     })
@@ -127,7 +133,7 @@ describe.skip('jsonRpcHandler', () => {
                 params: { x: 1 },
             },
             authContext: { userId: 'u', accessToken: 't' },
-        } as unknown as Request
+        } as Request
 
         handler(req, res, next)
 
@@ -151,7 +157,7 @@ describe.skip('jsonRpcHandler', () => {
                 method: 'wrong_method',
                 params: [],
             },
-        } as unknown as Request
+        } as Request
 
         handler(req, res, next)
 
@@ -179,7 +185,7 @@ describe.skip('jsonRpcHandler', () => {
                 method: 'rpcBoom',
                 params: [],
             },
-        } as unknown as Request
+        } as Request
 
         handler(req, res, next)
 
@@ -238,7 +244,7 @@ describe('handleRpcError', () => {
         const [status, body] = handleRpcError(new Error('x'), null, logger)
 
         expect(status).toBe(500)
-        expect(body.error).toMatchObject({
+        expect(errorPayload(body)).toMatchObject({
             message: 'x',
         })
     })
@@ -247,7 +253,7 @@ describe('handleRpcError', () => {
         const [status, body] = handleRpcError('plain', 0, logger)
 
         expect(status).toBe(500)
-        expect(body.error).toMatchObject({
+        expect(errorPayload(body)).toMatchObject({
             message: 'plain',
         })
     })
@@ -278,7 +284,7 @@ describe('handleRpcError', () => {
         const [status, body] = handleRpcError(ledgerErr, null, logger)
 
         expect(status).toBe(500)
-        expect(body.error).toMatchObject({
+        expect(errorPayload(body)).toMatchObject({
             code: rpcErrors.internal().code,
             message: 'something went wrong',
             data: ledgerErr,
@@ -294,7 +300,7 @@ describe('handleRpcError', () => {
         )
 
         expect(status).toBe(500)
-        expect(body.error).toMatchObject({
+        expect(errorPayload(body)).toMatchObject({
             code: rpcErrors.internal().code,
             message: 'Something went wrong while calling wrongMethod',
             data: { foo: 'bar' },

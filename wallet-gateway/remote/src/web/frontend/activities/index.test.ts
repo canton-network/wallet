@@ -62,6 +62,12 @@ function makeTransactions(count: number) {
     )
 }
 
+function getTransactionCards(el: UserUiActivities) {
+    return Array.from(
+        el.shadowRoot?.querySelectorAll('wg-transaction-card') ?? []
+    ) as unknown as Array<{ transactionId: string }>
+}
+
 describe('UserUiActivities', () => {
     beforeEach(() => {
         mockCreateUserClient.mockReset()
@@ -123,7 +129,12 @@ describe('UserUiActivities', () => {
         await waitUntil(() => el.transactions.length === 5)
 
         expect(el.shadowRoot?.querySelector('wg-pagination')).not.toBeNull()
-        expect(el.pagedTransactions.length).toBe(4)
+        expect(getTransactionCards(el).map((c) => c.transactionId)).toEqual([
+            'tx-1',
+            'tx-2',
+            'tx-3',
+            'tx-4',
+        ])
     })
 
     it('updates current page when pagination emits page-change', async () => {
@@ -136,11 +147,19 @@ describe('UserUiActivities', () => {
         )
         await waitUntil(() => el.transactions.length === 5)
 
-        const pagination = el.shadowRoot?.querySelector('wg-pagination')
+        const pagination = el.shadowRoot?.querySelector(
+            'wg-pagination'
+        ) as HTMLElement & { page: number }
         pagination!.dispatchEvent(new PageChangeEvent(2))
 
-        expect(el.currentPage).toBe(2)
-        expect(el.pagedTransactions[0]?.id).toBe('tx-5')
+        await waitUntil(
+            () => getTransactionCards(el)[0]?.transactionId === 'tx-5',
+            'page 2 rendered'
+        )
+
+        expect(pagination!.page).toBe(2)
+        expect(getTransactionCards(el)).toHaveLength(1)
+        expect(getTransactionCards(el)[0]?.transactionId).toBe('tx-5')
     })
 
     it('navigates to approve page when a card emits transaction-review', async () => {
