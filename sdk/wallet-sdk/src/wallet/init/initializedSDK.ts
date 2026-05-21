@@ -58,13 +58,12 @@ const createNamespace: {
             ctx.logger,
             auth
         )
-        // const validatorParty = await getValidatorParty(
-        //     new ParsedURL(ctx, config.validatorUrl),
-        //     ctx.logger,
-        //     auth
-        // )
 
-        const validatorParty = await ctx.getValidatorParty(auth)
+        const parsedValidatorURL = new ParsedURL(ctx, ctx.validatorUrl)
+        const validatorParty = await ctx.getValidatorParty(
+            auth,
+            parsedValidatorURL
+        )
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
@@ -100,7 +99,11 @@ const createNamespace: {
         )
 
         if (ctx.validatorUrl !== undefined) {
-            const validatorParty = await ctx.getValidatorParty(auth)
+            const parsedValidatorURL = new ParsedURL(ctx, ctx.validatorUrl)
+            const validatorParty = await ctx.getValidatorParty(
+                auth,
+                parsedValidatorURL
+            )
             return new TokenNamespaceExtended({
                 tokenStandardService,
                 registryUrls: registries,
@@ -265,12 +268,3 @@ export class ExtendedInitializedSDK<
         return await super.extend(mergedConfig)
     }
 }
-
-// async function getValidatorParty(
-//     validatorUrl: URL,
-//     logger: SDKLogger,
-//     auth: AuthTokenProvider
-// ) {
-//     const validator = new ValidatorInternalClient(validatorUrl, logger, auth)
-//     return (await validator.get('/v0/validator-user')).party_id
-// }

@@ -49,7 +49,10 @@ export type SDKContext = {
     error: SDKErrorHandler
     defaultSynchronizerId: string
     validatorUrl: URLInput | undefined
-    getValidatorParty: (auth: AuthTokenProvider) => Promise<string>
+    getValidatorParty: (
+        auth: AuthTokenProvider,
+        validatorUrlParsed: URL
+    ) => Promise<string>
 }
 
 export type OfflineSDKContext = {
@@ -140,7 +143,10 @@ export class SDK {
             error,
             defaultSynchronizerId,
             validatorUrl,
-            getValidatorParty: async (auth: AuthTokenProvider) => {
+            getValidatorParty: async (
+                auth: AuthTokenProvider,
+                validatorUrlParsed: URL
+            ) => {
                 if (!validatorUrl) {
                     error.throw({
                         type: 'BadRequest',
@@ -149,11 +155,6 @@ export class SDK {
                     })
                     throw new Error('unreachable')
                 }
-                //TODO: fix this later to use ParsedURL somehow without the ctx
-                const validatorUrlParsed: URL =
-                    typeof validatorUrl === 'string'
-                        ? new URL(validatorUrl)
-                        : validatorUrl
 
                 const cached = validatorPartyCache.get(validatorUrlParsed.href)
                 if (cached) return cached
