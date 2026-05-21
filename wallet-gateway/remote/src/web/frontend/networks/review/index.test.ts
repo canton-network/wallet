@@ -6,6 +6,7 @@ import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import {
     NetworkDeleteEvent,
+    NetworkEditCancelEvent,
     NetworkEditSaveEvent,
 } from '@canton-network/core-wallet-ui-components'
 import {
@@ -99,6 +100,39 @@ describe('UserUiReviewNetwork', () => {
 
         expect(mockRequest).toHaveBeenCalledWith(
             expect.objectContaining({ method: 'addNetwork' })
+        )
+    })
+
+    it('navigates back when the URL has no network id', async () => {
+        history.replaceState({}, '', '?')
+
+        const el = await fixture<UserUiReviewNetwork>(
+            html`<user-ui-review-network></user-ui-review-network>`
+        )
+
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks')
+        )
+        expect(el.network).toBeNull()
+        expect(el.shadowRoot?.querySelector('network-form')).toBeNull()
+        expect(handleErrorToast).not.toHaveBeenCalled()
+    })
+
+    it('navigates back when the form emits network-edit-cancel', async () => {
+        const el = await fixture<UserUiReviewNetwork>(
+            html`<user-ui-review-network></user-ui-review-network>`
+        )
+        await waitUntil(() => el.network !== null)
+
+        setLocationHref.mockClear()
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(new NetworkEditCancelEvent())
+
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks')
         )
     })
 
