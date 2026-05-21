@@ -390,6 +390,7 @@ jobs:
               with:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  multi_sync: 'false'
 
             - name: Start remote WK
               run: yarn pm2 start ecosystem.ci.config.js --env development
