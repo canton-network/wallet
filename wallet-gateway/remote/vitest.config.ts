@@ -27,7 +27,25 @@ export default defineConfig({
                     name: 'node',
                     environment: 'node',
                     include: ['src/**/*.test.ts'],
+                    exclude: ['src/web/frontend/**/*.test.ts'],
                     setupFiles: ['./vitest.setup.ts'],
+                },
+            }),
+            defineProject({
+                test: {
+                    name: 'browser',
+                    include: ['src/web/frontend/**/*.test.ts'],
+                    setupFiles: ['./vitest.setup.browser.ts'],
+                    browser: {
+                        enabled: true,
+                        provider: playwright({
+                            trace: 'off',
+                            screenshot: 'off',
+                            video: 'off',
+                        }),
+                        instances: [{ browser: 'chromium' }],
+                        headless: true,
+                    },
                 },
             }),
         ],
