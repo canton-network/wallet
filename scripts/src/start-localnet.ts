@@ -8,6 +8,7 @@ import { getRepoRoot, getNetworkArg, SUPPORTED_VERSIONS } from './lib/utils.js'
 
 const args = process.argv.slice(2)
 const command = args[0]
+const multiSync = !args.includes('--no-multi-sync')
 const rootDir = getRepoRoot()
 const LOCALNET_DIR = path.join(rootDir, '.localnet/docker-compose/localnet')
 const GENERATED_COMPOSE_OVERRIDE = path.join(
@@ -61,8 +62,7 @@ const composeBase = [
     'app-provider',
     '--profile',
     'app-user',
-    '--profile',
-    'multi-sync',
+    ...(multiSync ? ['--profile', 'multi-sync'] : []),
 ]
 
 const network = getNetworkArg()
