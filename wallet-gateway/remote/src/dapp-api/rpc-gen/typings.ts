@@ -13,12 +13,64 @@ export type CommandId = string
 type AlwaysTrue = any
 /**
  *
- * Structure representing JS commands for transaction execution
+ * Inner shape is defined by the Canton Ledger API CreateCommand schema; do not re-specify here.
  *
  */
-export interface JsCommands {
+export interface CreateCommandPayload {
     [key: string]: any
 }
+export interface CreateCommand {
+    CreateCommand: CreateCommandPayload
+}
+/**
+ *
+ * Inner shape is defined by the Canton Ledger API ExerciseCommand schema; do not re-specify here.
+ *
+ */
+export interface ExerciseCommandPayload {
+    [key: string]: any
+}
+export interface ExerciseCommand {
+    ExerciseCommand: ExerciseCommandPayload
+}
+/**
+ *
+ * Inner shape is defined by the Canton Ledger API CreateAndExerciseCommand schema; do not re-specify here.
+ *
+ */
+export interface CreateAndExerciseCommandPayload {
+    [key: string]: any
+}
+export interface CreateAndExerciseCommand {
+    CreateAndExerciseCommand: CreateAndExerciseCommandPayload
+}
+/**
+ *
+ * Inner shape is defined by the Canton Ledger API ExerciseByKeyCommand schema; do not re-specify here.
+ *
+ */
+export interface ExerciseByKeyCommandPayload {
+    [key: string]: any
+}
+export interface ExerciseByKeyCommand {
+    ExerciseByKeyCommand: ExerciseByKeyCommandPayload
+}
+/**
+ *
+ * A Daml command atom. Mirror of the Canton Ledger API Command union; inner shapes are intentionally opaque so the dApp layer never drifts from the Ledger API contract.
+ *
+ */
+export type Command =
+    | CreateCommand
+    | ExerciseCommand
+    | CreateAndExerciseCommand
+    | ExerciseByKeyCommand
+/**
+ *
+ * Non-empty array of Daml command atoms to submit atomically as a single transaction.
+ *
+ */
+export type Commands = Command[]
 /**
  *
  * The party that signed the transaction.
@@ -230,10 +282,10 @@ export interface Session {
 }
 /**
  *
- * The signature of the transaction.
+ * The unique identifier of the message associated with the message to be signed.
  *
  */
-export type Signature = string
+export type MessageId = string
 /**
  *
  * Set as primary wallet for dApp usage.
@@ -323,7 +375,7 @@ export type PartyLevelRight = any
 export type Rights = PartyLevelRight[]
 /**
  *
- * The status of the transaction.
+ * The status of the message signature.
  *
  */
 export type StatusPending = 'pending'
@@ -338,10 +390,16 @@ export interface TxChangedPendingEvent {
 }
 /**
  *
- * The status of the transaction.
+ * The status of the message signature.
  *
  */
 export type StatusSigned = 'signed'
+/**
+ *
+ * The signature of the message.
+ *
+ */
+export type Signature = string
 /**
  *
  * The identifier of the provider that signed the transaction.
@@ -402,7 +460,7 @@ export interface TxChangedExecutedEvent {
 }
 /**
  *
- * The status of the transaction.
+ * The status of the message signature.
  *
  */
 export type StatusFailed = 'failed'
@@ -417,12 +475,40 @@ export interface TxChangedFailedEvent {
 }
 /**
  *
+ * Event emitted when a message signature is requested.
+ *
+ */
+export interface MessageSignaturePendingEvent {
+    status: StatusPending
+    messageId: MessageId
+}
+/**
+ *
+ * Event emitted when a message signature is completed.
+ *
+ */
+export interface MessageSignatureSignedEvent {
+    status: StatusSigned
+    messageId: MessageId
+    signature: Signature
+}
+/**
+ *
+ * Event emitted when a message signature has failed.
+ *
+ */
+export interface MessageSignatureFailedEvent {
+    status: StatusFailed
+    messageId: MessageId
+}
+/**
+ *
  * Structure representing the request for prepare and execute calls
  *
  */
 export interface PrepareExecuteParams {
     commandId?: CommandId
-    commands: JsCommands
+    commands: Commands
     actAs?: ActAs
     readAs?: ReadAs
     disclosedContracts?: DisclosedContracts
@@ -464,13 +550,9 @@ export type Null = null
 export interface PrepareExecuteResult {
     userUrl: UserUrl
 }
-/**
- *
- * Result of signing a message.
- *
- */
 export interface SignMessageResult {
-    signature: Signature
+    messageId: MessageId
+    userUrl: UserUrl
 }
 /**
  *
@@ -504,6 +586,15 @@ export type TxChangedEvent =
     | TxChangedFailedEvent
 /**
  *
+ * Event emitted when a message signature is requested or completed.
+ *
+ */
+export type MessageSignatureEvent =
+    | MessageSignaturePendingEvent
+    | MessageSignatureSignedEvent
+    | MessageSignatureFailedEvent
+/**
+ *
  * Generated! Represents an alias to any of the provided schemas
  *
  */
@@ -526,3 +617,4 @@ export type AccountsChanged = () => Promise<AccountsChangedEvent>
 export type GetPrimaryAccount = () => Promise<Wallet>
 export type ListAccounts = () => Promise<ListAccountsResult>
 export type TxChanged = () => Promise<TxChangedEvent>
+export type MessageSignature = () => Promise<MessageSignatureEvent>

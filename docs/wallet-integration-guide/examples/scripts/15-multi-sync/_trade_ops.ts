@@ -426,8 +426,7 @@ export async function allocateAmuletForAlice(
                 id: 'Amulet',
                 displayName: 'Amulet',
                 symbol: 'CC',
-                registryUrl:
-                    localNetStaticConfig.LOCALNET_REGISTRY_API_URL.href,
+                registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
                 admin: amuletAdmin,
             },
             inputUtxos: [amuletHoldingCid],
@@ -499,7 +498,7 @@ export async function allocateTokenForBob(
                 id: 'TestToken',
                 displayName: 'TestToken',
                 symbol: 'TT',
-                registryUrl: LOCALNET_TEST_TOKEN_REGISTRY_URL.href,
+                registryUrl: LOCALNET_TEST_TOKEN_REGISTRY_URL,
                 admin: tokenAdmin.partyId,
             },
             inputUtxos: [tokenHolding.contractId],
