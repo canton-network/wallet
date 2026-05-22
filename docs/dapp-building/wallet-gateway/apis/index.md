@@ -36,7 +36,8 @@ The User API enables users to manage their wallets, configure networks, manage i
 | Sessions           | `addSession()`         | Create a new session (unauthenticated, used for initial connection) |
 |                    | `removeSession()`      | End the current session                                             |
 |                    | `listSessions()`       | List sessions for the current user                                  |
-| Networks           | `listNetworks()`       | List all configured networks                                        |
+| Networks           | `listNetworks()`       | List configured networks (public metadata only, no auth secrets)    |
+|                    | `getNetwork()`         | Get full network configuration including auth (admin only)          |
 |                    | `addNetwork()`         | Add a new network configuration                                     |
 |                    | `removeNetwork()`      | Remove a network configuration                                      |
 | Identity Providers | `listIdps()`           | List all identity providers                                         |

@@ -82,6 +82,23 @@ export interface Network {
 }
 /**
  *
+ * Network metadata exposed by listNetworks without sensitive auth configuration
+ *
+ */
+export interface PublicNetwork {
+    id: NetworkId
+    name: Name
+    description: Description
+    synchronizerId?: SynchronizerId
+    identityProviderId: IdentityProviderId
+    ledgerApi: LedgerApi
+    authMethod: Method
+    clientId?: ClientId
+    scope?: Scope
+    audience?: Audience
+}
+/**
+ *
  * Ledger api url
  *
  */
@@ -180,6 +197,7 @@ export type MessageId = string
 export type Signature = string
 export type SignedBy = string
 export type Networks = Network[]
+export type PublicNetworks = PublicNetwork[]
 export type Idps = Idp[]
 /**
  *
@@ -485,7 +503,13 @@ export interface DeleteTransactionParams {
  */
 export type Null = null
 export interface ListNetworksResult {
-    networks: Networks
+    networks: PublicNetworks
+}
+export interface GetNetworkParams {
+    networkId: NetworkId
+}
+export interface GetNetworkResult {
+    network: Network
 }
 export interface ListIdpsResult {
     idps: Idps
@@ -581,6 +605,7 @@ export interface GetUserResult {
 export type AddNetwork = (params: AddNetworkParams) => Promise<Null>
 export type RemoveNetwork = (params: RemoveNetworkParams) => Promise<Null>
 export type ListNetworks = () => Promise<ListNetworksResult>
+export type GetNetwork = (params: GetNetworkParams) => Promise<GetNetworkResult>
 export type AddIdp = (params: AddIdpParams) => Promise<Null>
 export type RemoveIdp = (params: RemoveIdpParams) => Promise<Null>
 export type ListIdps = () => Promise<ListIdpsResult>
@@ -645,6 +670,11 @@ export type RpcTypes = {
     listNetworks: {
         params: Params<ListNetworks>
         result: Result<ListNetworks>
+    }
+
+    getNetwork: {
+        params: Params<GetNetwork>
+        result: Result<GetNetwork>
     }
 
     addIdp: {

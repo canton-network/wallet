@@ -12,11 +12,9 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import {
-    Network,
-    Auth as ApiAuth,
-} from '@canton-network/core-wallet-user-rpc-client'
+import { Auth as ApiAuth } from '@canton-network/core-wallet-user-rpc-client'
 import { Auth } from '@canton-network/core-wallet-auth'
+import { Network } from '@canton-network/core-wallet-store'
 import { createUserClient } from '../../rpc-client'
 import { stateManager } from '../../state-manager'
 import '../../index'
@@ -68,19 +66,15 @@ export class UserUiReviewNetwork extends BaseElement {
                 stateManager.accessToken.get()
             )
             const result = await userClient.request({
-                method: 'listNetworks',
+                method: 'getNetwork',
+                params: { networkId },
             })
 
-            const found = result.networks.find(
-                (n: Network) => n.id === networkId
-            )
-            if (!found) {
-                handleErrorToast(new Error(`Network "${networkId}" not found`))
-                this.navigateBack()
-                return
+            const apiNetwork = result.network
+            this.network = {
+                ...apiNetwork,
+                ledgerApi: { baseUrl: apiNetwork.ledgerApi },
             }
-
-            this.network = found
         } catch (error) {
             handleErrorToast(error)
             this.navigateBack()

@@ -32,6 +32,10 @@ import {
     Null,
     ListTransactionsResult,
     GetUserResult,
+    GetNetworkParams,
+    GetNetworkResult,
+    Network as ApiNetwork,
+    PublicNetwork,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -40,6 +44,7 @@ import {
     assertConnected,
     AuthContext,
     authSchema,
+    Auth,
     AuthTokenProvider,
     fetchOidcUserInfo,
     idpSchema,
@@ -174,11 +179,15 @@ export const userController = (
         listNetworks: async () => {
             const networks = await store.listNetworks()
             return {
-                networks: networks.map((n) => ({
-                    ...n,
-                    ledgerApi: n.ledgerApi.baseUrl,
-                })),
+                networks: networks.map(toPublicNetwork),
             }
+        },
+        getNetwork: async (
+            params: GetNetworkParams
+        ): Promise<GetNetworkResult> => {
+            assertAdmin()
+            const network = await store.getNetwork(params.networkId)
+            return { network: toApiNetwork(network) }
         },
         addIdp: async (params: AddIdpParams) => {
             assertAdmin()
@@ -1068,4 +1077,64 @@ export const userController = (
             return null
         },
     })
+}
+
+function toApiAuth(auth: Auth): ApiNetwork['auth'] {
+    const base = {
+        method: auth.method,
+        audience: auth.audience,
+        scope: auth.scope,
+        clientId: auth.clientId,
+    }
+
+    if (auth.method === 'self_signed') {
+        return {
+            ...base,
+            issuer: auth.issuer,
+            clientSecret: auth.clientSecret,
+        }
+    }
+
+    if (auth.method === 'client_credentials') {
+        return {
+            ...base,
+            clientSecret: auth.clientSecret,
+        }
+    }
+
+    return base
+}
+
+function toApiNetwork(network: Network): ApiNetwork {
+    return {
+        id: network.id,
+        name: network.name,
+        description: network.description,
+        synchronizerId: network.synchronizerId,
+        identityProviderId: network.identityProviderId,
+        ledgerApi: network.ledgerApi.baseUrl,
+        auth: toApiAuth(network.auth),
+        ...(network.adminAuth
+            ? { adminAuth: toApiAuth(network.adminAuth) }
+            : {}),
+    }
+}
+
+function toPublicNetwork(network: Network): PublicNetwork {
+    const auth = network.auth
+
+    return {
+        id: network.id,
+        name: network.name,
+        description: network.description,
+        synchronizerId: network.synchronizerId,
+        identityProviderId: network.identityProviderId,
+        ledgerApi: network.ledgerApi.baseUrl,
+        authMethod: auth.method,
+        ...(auth.method !== 'client_credentials' && {
+            clientId: auth.clientId,
+            scope: auth.scope,
+            audience: auth.audience,
+        }),
+    }
 }

@@ -4,6 +4,7 @@
 import { AddNetwork } from './typings.js'
 import { RemoveNetwork } from './typings.js'
 import { ListNetworks } from './typings.js'
+import { GetNetwork } from './typings.js'
 import { AddIdp } from './typings.js'
 import { RemoveIdp } from './typings.js'
 import { ListIdps } from './typings.js'
@@ -32,6 +33,7 @@ export type Methods = {
     addNetwork: AddNetwork
     removeNetwork: RemoveNetwork
     listNetworks: ListNetworks
+    getNetwork: GetNetwork
     addIdp: AddIdp
     removeIdp: RemoveIdp
     listIdps: ListIdps
@@ -62,6 +64,7 @@ function buildController(methods: Methods) {
         addNetwork: methods.addNetwork,
         removeNetwork: methods.removeNetwork,
         listNetworks: methods.listNetworks,
+        getNetwork: methods.getNetwork,
         addIdp: methods.addIdp,
         removeIdp: methods.removeIdp,
         listIdps: methods.listIdps,

@@ -8,7 +8,6 @@ import express from 'express'
 import request from 'supertest'
 import { user } from './server.js'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { Network } from '@canton-network/core-wallet-store'
 import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { pino } from 'pino'
@@ -48,7 +47,7 @@ test('call listNetworks rpc', async () => {
 
     expect(response.statusCode).toBe(200)
     expect(json.networks.length).toBe(6)
-    expect(json.networks.map((n: Network) => n.name)).toStrictEqual([
+    expect(json.networks.map((n: { name: string }) => n.name)).toStrictEqual([
         'Local (OAuth IDP)',
         'Local (OAuth IDP - 2)',
         'Local (OAuth IDP - Client Credentials)',
@@ -56,4 +55,10 @@ test('call listNetworks rpc', async () => {
         'Devnet (Auth0)',
         'LocalNet',
     ])
+
+    for (const network of json.networks) {
+        expect(network).not.toHaveProperty('auth')
+        expect(network).not.toHaveProperty('adminAuth')
+        expect(network).toHaveProperty('authMethod')
+    }
 })
