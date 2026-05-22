@@ -73,8 +73,9 @@ export interface MultiSyncSetup {
  *     actAs rights on the P1/P2 users so each trader participant can prepare the
  *     co-signed TradeSettlementAgreement)
  *   - Registers alice (P1) and bob (P2) on app-synchronizer
- *   - Registers tokenAdmin (P3) on app-synchronizer (secondary — needed so tokenAdmin
- *     is a valid informee for app-sync transactions; P3 is connected to both synchronizers)
+ *   - Registers tokenAdmin (P3) and the venue (P3) on app-synchronizer as secondaries
+ *     — needed so both are valid informees for app-sync transactions (the venue is an
+ *     observer of Bob's app-sync TokenAllocation); P3 is connected to both synchronizers
  *   - Connects the scan proxy and returns the Amulet admin party ID
  */
 export async function setupMultiSyncTrade(
@@ -172,12 +173,14 @@ export async function setupMultiSyncTrade(
         ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].map((ctx) =>
             vetDar(ctx.ledgerProvider, tradingAppDar, globalSynchronizerId)
         ),
-        ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].map((ctx) =>
-            vetDar(ctx.ledgerProvider, testTokenV1Dar, appSynchronizerId)
+        ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].flatMap((ctx) =>
+            [appSynchronizerId, globalSynchronizerId].map((sid) =>
+                vetDar(ctx.ledgerProvider, testTokenV1Dar, sid)
+            )
         ),
     ])
     logger.info(
-        'DARs vetted: trading-app-v2 on global only; test-token-v1 on app-sync only'
+        'DARs vetted: trading-app-v2 on global only; test-token-v1 on app-sync + global (global = transit only)'
     )
 
     const aliceKey = p1Sdk.keys.generate()
@@ -272,8 +275,17 @@ export async function setupMultiSyncTrade(
             })
             .sign(tokenAdmin.keyPair.privateKey)
             .execute({ grantUserRights: false }),
+        p3Sdk.party.external
+            .create(tradingApp.keyPair.publicKey, {
+                partyHint: tradingApp.partyId.split('::')[0],
+                synchronizerId: appSynchronizerId,
+            })
+            .sign(tradingApp.keyPair.privateKey)
+            .execute({ grantUserRights: false }),
     ])
-    logger.info('Alice, Bob, and TokenAdmin registered on app-synchronizer')
+    logger.info(
+        'Alice, Bob, TokenAdmin, and the venue registered on app-synchronizer'
+    )
 
     await Promise.all([
         p1Sdk.user.rights.grant({

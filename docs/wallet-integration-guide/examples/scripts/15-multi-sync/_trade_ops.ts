@@ -195,44 +195,23 @@ export async function createTokenRulesAndMintForBob(
         bob,
         tokenAdmin,
         appSynchronizerId,
-        globalSynchronizerId,
     } = setup
 
-    // Create TokenRules on both synchronizers in parallel via p3Sdk.
-    // P3 (sv) is connected to both global and app-synchronizer, so p3Sdk can submit
-    // as tokenAdmin (primary on P3) to either synchronizer without any secondary registrations.
-    await Promise.all([
-        p3Sdk.ledger
-            .prepare({
-                partyId: tokenAdmin.partyId,
-                commands: {
-                    CreateCommand: {
-                        templateId: `${TEST_TOKEN_PREFIX}:TokenRules`,
-                        createArguments: { admin: tokenAdmin.partyId },
-                    },
+    await p3Sdk.ledger
+        .prepare({
+            partyId: tokenAdmin.partyId,
+            commands: {
+                CreateCommand: {
+                    templateId: `${TEST_TOKEN_PREFIX}:TokenRules`,
+                    createArguments: { admin: tokenAdmin.partyId },
                 },
-                disclosedContracts: [],
-                synchronizerId: globalSynchronizerId,
-            })
-            .sign(tokenAdmin.keyPair.privateKey)
-            .execute({ partyId: tokenAdmin.partyId }),
-        p3Sdk.ledger
-            .prepare({
-                partyId: tokenAdmin.partyId,
-                commands: {
-                    CreateCommand: {
-                        templateId: `${TEST_TOKEN_PREFIX}:TokenRules`,
-                        createArguments: { admin: tokenAdmin.partyId },
-                    },
-                },
-                disclosedContracts: [],
-                synchronizerId: appSynchronizerId,
-            })
-            .sign(tokenAdmin.keyPair.privateKey)
-            .execute({ partyId: tokenAdmin.partyId }),
-    ])
+            },
+            disclosedContracts: [],
+            synchronizerId: appSynchronizerId,
+        })
+        .sign(tokenAdmin.keyPair.privateKey)
+        .execute({ partyId: tokenAdmin.partyId })
 
-    // Mint Token on app-synchronizer via p3Sdk (P3/sv is connected to both synchronizers).
     await p3Sdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
@@ -270,8 +249,6 @@ export async function createTokenRulesAndMintForBob(
     if (!adminTokenCid)
         throw new Error('TokenAdmin Token holding not found after mint')
 
-    // Transfer Token from tokenAdmin to Bob on app-synchronizer.
-    // The registry returns the app-sync TokenRules as the transfer factory.
     const [transferCommand, transferDisclosed] =
         await p3Sdk.token.transfer.create({
             sender: tokenAdmin.partyId,
@@ -324,7 +301,7 @@ export async function createTokenRulesAndMintForBob(
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        `TokenAdmin: TokenRules created on global + app synchronizers; Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer`
+        `TokenAdmin: TokenRules created on app-synchronizer only; Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer`
     )
 }
 
@@ -467,7 +444,6 @@ export async function createSettlementAgreement(
                     prepared.preparedTransactionHash,
                     p.keyPair.privateKey
                 ),
-                // The fingerprint is the namespace part of the party id.
                 signedBy: p.partyId.split('::')[1],
                 format: 'SIGNATURE_FORMAT_CONCAT',
                 signingAlgorithmSpec: 'SIGNING_ALGORITHM_SPEC_ED25519',
@@ -596,7 +572,7 @@ export async function allocateTokenForBob(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<{ legId: string }> {
-    const { p2Sdk, tokenNamespaceP2, bob, tokenAdmin, globalSynchronizerId } =
+    const { p2Sdk, tokenNamespaceP2, bob, tokenAdmin, appSynchronizerId } =
         setup
 
     const pendingRequests = await tokenNamespaceP2.allocation.request.pending(
@@ -651,15 +627,42 @@ export async function allocateTokenForBob(
             partyId: bob.partyId,
             commands: [command],
             disclosedContracts: disclosedFromHelper,
-            synchronizerId: globalSynchronizerId,
+            synchronizerId: appSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        'Bob: TestToken allocated for leg-1 (global synchronizer; input auto-reassigned app-sync → global)'
+        'Bob: TestToken allocated for leg-1 (app-synchronizer; reassigns to global before settlement)'
     )
     return { legId }
+}
+
+/**
+ * Reassigns Bob's TestToken allocation from the app-synchronizer to global so the
+ * atomic `OTCTrade_Settle` — which runs on global — can consume it.
+ *
+ * This is done as an explicit reassignment rather than relying on the settle's
+ * auto-reassignment: `OTCTrade_Settle` is submitted by the venue alone, and the
+ * venue is only an *observer* of the `TokenAllocation`. Canton requires the
+ * submitter of a reassignment to be a stakeholder of the contract, so the
+ * reassignment is submitted by Bob, a *signatory* of the `TokenAllocation`.
+ */
+export async function reassignTokenAllocationToGlobal(
+    setup: MultiSyncSetup,
+    allocationCid: string,
+    logger: Logger
+): Promise<void> {
+    const { p2Sdk, bob, appSynchronizerId, globalSynchronizerId } = setup
+    await p2Sdk.ledger.internal.reassign({
+        submitter: bob.partyId,
+        contractId: allocationCid,
+        source: appSynchronizerId,
+        target: globalSynchronizerId,
+    })
+    logger.info(
+        'Bob: TokenAllocation reassigned app-synchronizer → global for settlement'
+    )
 }
 
 export interface SettleParams {
@@ -835,11 +838,6 @@ export async function aliceSelfTransferToApp(
             registryUrl: LOCALNET_TEST_TOKEN_REGISTRY_URL,
             inputUtxos: [aliceTokenCid],
         })
-
-    // Alice's Token is on global after settlement; targeting app-sync causes Canton to
-    // auto-reassign it. Alice is the owner/stakeholder of her Token, so this is allowed.
-    // The registry returns the app-sync TokenRules as the factory, which is already on
-    // app-sync — no PRESCRIBED_SYNCHRONIZER_ID_MISMATCH.
     await p1Sdk.ledger
         .prepare({
             partyId: alice.partyId,
@@ -891,9 +889,6 @@ export async function bobSelfTransferToApp(
                 inputUtxos: [token.contractId],
             })
 
-        // Bob's Token is on global after the allocation; targeting app-sync causes
-        // Canton to auto-reassign it. Bob is the owner/stakeholder, so this is allowed.
-        // The registry returns the app-sync TokenRules as the factory.
         await p2Sdk.ledger
             .prepare({
                 partyId: bob.partyId,
@@ -906,4 +901,50 @@ export async function bobSelfTransferToApp(
     }
 
     logger.info(`Bob: TestToken self-transferred on app-synchronizer`)
+}
+
+/**
+ * Verifies the post-trade end state: every TestToken holding of Alice and Bob
+ * lives on the app-synchronizer, not global.
+ *
+ * The atomic OTCTrade_Settle runs on global and therefore creates the receiver
+ * holdings on global for a moment; the self-transfer steps reassign them home.
+ * This assertion turns "should be on app-sync" into a guarantee — it throws if
+ * any TestToken holding owned by Alice or Bob is still on another synchronizer.
+ */
+export async function assertTokensOnAppSync(
+    setup: MultiSyncSetup,
+    logger: Logger
+): Promise<void> {
+    const { p1Sdk, p2Sdk, alice, bob, appSynchronizerId } = setup
+    const checks: { sdk: MultiSyncSetup['p1Sdk']; party: PartyInfo }[] = [
+        { sdk: p1Sdk, party: alice },
+        { sdk: p2Sdk, party: bob },
+    ]
+    for (const { sdk, party } of checks) {
+        const name = party.partyId.split('::')[0]
+        const tokens = await sdk.ledger.acs.read({
+            templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+            parties: [party.partyId],
+            filterByParty: true,
+        })
+        const owned = tokens.filter(
+            (c) =>
+                (c as { createArgument?: { holding?: { owner?: string } } })
+                    .createArgument?.holding?.owner === party.partyId
+        )
+        const offAppSync = owned.filter(
+            (c) => c.synchronizerId !== appSynchronizerId
+        )
+        if (offAppSync.length > 0)
+            throw new Error(
+                `${name} has ${offAppSync.length} TestToken holding(s) not on the ` +
+                    `app-synchronizer: ${offAppSync
+                        .map((c) => `${c.contractId.substring(0, 16)}…`)
+                        .join(', ')}`
+            )
+        logger.info(
+            `${name}: all ${owned.length} TestToken holding(s) on the app-synchronizer ✓`
+        )
+    }
 }

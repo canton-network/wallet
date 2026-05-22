@@ -11,11 +11,18 @@ import {
     createSettlementAgreement,
     allocateAmuletForAlice,
     allocateTokenForBob,
+    reassignTokenAllocationToGlobal,
     settleOtcTradeV2,
     aliceSelfTransferToApp,
     bobSelfTransferToApp,
     buildContractReadSpec,
+    assertTokensOnAppSync,
 } from './_trade_ops.js'
+import {
+    assertDarVetting,
+    assertStepContracts,
+    TEMPLATES,
+} from './_assertions.js'
 
 // Multi-Synchronizer DvP via the v2 OTC trading app.
 // Alice pays 100 Amulet on global; Bob delivers 20 TestToken (home: app-synchronizer).
@@ -30,19 +37,21 @@ const logger = pino({ name: 'v1-15-multi-sync-trade', level: 'info' })
 // Step 3: Allocate parties for Alice (P1), Bob (P2), TradingApp (P3), and TokenAdmin (P3)
 const setup = await setupMultiSyncTrade(logger)
 const {
+    p1Sdk,
+    p2Sdk,
+    p3Sdk,
     tokenNamespaceP2,
     alice,
     bob,
+    tradingApp,
     tokenAdmin,
     synchronizers,
     globalSynchronizerId,
     appSynchronizerId,
 } = setup
 
-// Start the Token Standard registry server now that tokenAdmin party ID is known.
-// The server must be up before wallet-SDK calls for allocation and transfer factory.
-// The registry uses P3's ledger URL: P3 (sv) hosts tokenAdmin on both synchronizers,
-// so it can read TokenRules on both global and app-synchronizer.
+await assertDarVetting(setup, logger)
+
 const REGISTRY_PORT = parseInt(process.env['REGISTRY_PORT'] ?? '5975', 10)
 const registry = await startRegistry({
     tokenAdminPartyId: tokenAdmin.partyId,
@@ -57,7 +66,7 @@ const allPartySpecs = buildContractReadSpec(setup)
 
 // ── Step 4–5: Init holdings ─────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)
-// Step 5:  TokenAdmin creates TokenRules on global + app, self-mints Token,
+// Step 5:  TokenAdmin creates TokenRules on the app-synchronizer, self-mints Token,
 //          offers to Bob and Bob accepts — Bob's TestToken lands on app-synchronizer
 await Promise.all([
     mintAmuletForAlice(setup, logger),
@@ -66,6 +75,37 @@ await Promise.all([
 
 logger.info('Contracts after setup:')
 await logAllContracts(logger, synchronizers, allPartySpecs)
+
+await assertStepContracts(
+    p1Sdk,
+    [TEMPLATES.amulet],
+    [alice.partyId],
+    globalSynchronizerId,
+    'Step 4 — Alice Amulet',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
+await assertStepContracts(
+    p3Sdk,
+    [TEMPLATES.tokenRules],
+    [tokenAdmin.partyId],
+    appSynchronizerId,
+    'Step 5 — TokenRules',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
+await assertStepContracts(
+    p2Sdk,
+    [TEMPLATES.token],
+    [bob.partyId],
+    appSynchronizerId,
+    'Step 5 — Bob TestToken holding',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
 
 // ── Step 6: Venue creates the v2 OTCTrade and requests allocations ──────────
 // The v2 OTCTrade is signatory-venue-only; OTCTrade_RequestAllocations issues an
@@ -98,16 +138,48 @@ const bobAgreementCid = await createSettlementAgreement(
 logger.info('Contracts after trade initiation:')
 await logAllContracts(logger, synchronizers, allPartySpecs)
 
+await assertStepContracts(
+    p3Sdk,
+    [TEMPLATES.otcTrade, TEMPLATES.otcTradeAllocationRequest],
+    [tradingApp.partyId],
+    globalSynchronizerId,
+    'Step 6 — OTCTrade + allocation requests',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
+await assertStepContracts(
+    p3Sdk,
+    [TEMPLATES.tradeSettlementAgreement],
+    [tradingApp.partyId],
+    globalSynchronizerId,
+    'Step 7 — TradeSettlementAgreements',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
+
 // ── Steps 8–9: Allocate in parallel ────────────────────────────────────────
 // Step 8: Alice allocates Amulet for leg-0 (global synchronizer)
-// Step 9: Bob allocates TestToken for leg-1 (global synchronizer; the input Token
-//         auto-reassigns app-sync → global — no explicit reassignment)
+// Step 9: Bob allocates TestToken for leg-1 on the app-synchronizer; the resulting
+//         TokenAllocation reassigns app-sync → global when OTCTrade_Settle consumes it
 const [legIdAlice, { legId: legIdBob }] = await Promise.all([
     allocateAmuletForAlice(setup, logger),
     allocateTokenForBob(setup, logger),
 ])
 logger.info('Contracts after allocations:')
 await logAllContracts(logger, synchronizers, allPartySpecs)
+
+await assertStepContracts(
+    p2Sdk,
+    [TEMPLATES.tokenAllocation],
+    [bob.partyId],
+    appSynchronizerId,
+    'Step 9 — Bob TokenAllocation',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
 
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────
 const allocationsBob = await tokenNamespaceP2.allocation.pending(bob.partyId)
@@ -117,7 +189,13 @@ const testTokenAllocation = allocationsBob.find(
 if (!testTokenAllocation) throw new Error('TestToken allocation not found')
 const testTokenAllocationCid = testTokenAllocation.contractId
 
-// ── Step 10b: TradingApp settles the OTCTrade ──────────────────────────────
+// ── Step 10b: Reassign Bob's TokenAllocation app-sync → global ─────────────
+// OTCTrade_Settle runs on global and consumes the TokenAllocation, so it must be
+// moved there first. Submitted by Bob (a signatory of the allocation) — the venue,
+// which submits the settle, is only an observer and cannot drive the reassignment.
+await reassignTokenAllocationToGlobal(setup, testTokenAllocationCid, logger)
+
+// ── Step 10c: TradingApp settles the OTCTrade ──────────────────────────────
 await settleOtcTradeV2(
     setup,
     {
@@ -134,6 +212,17 @@ await settleOtcTradeV2(
 logger.info('Contracts after settlement:')
 await logAllContracts(logger, synchronizers, allPartySpecs)
 
+await assertStepContracts(
+    p3Sdk,
+    [TEMPLATES.tokenRules],
+    [tokenAdmin.partyId],
+    appSynchronizerId,
+    'Step 10 — TokenRules still on app-synchronizer after settlement',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
+
 // ── Step 11: Self-transfer TestTokens back to app-synchronizer ─────────────
 await Promise.all([
     aliceSelfTransferToApp(setup, logger),
@@ -141,6 +230,18 @@ await Promise.all([
 ])
 logger.info('Final contract state:')
 await logAllContracts(logger, synchronizers, allPartySpecs)
+
+await assertTokensOnAppSync(setup, logger)
+await assertStepContracts(
+    p3Sdk,
+    [TEMPLATES.tokenRules],
+    [tokenAdmin.partyId],
+    appSynchronizerId,
+    'Step 12 — TokenRules on app-synchronizer',
+    synchronizers,
+    logger,
+    { requireNonEmpty: true }
+)
 
 await registry.stop()
 logger.info('Token Standard registry server stopped')
