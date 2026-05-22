@@ -9,6 +9,7 @@ import {
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 import { stateManager } from '../state-manager'
 import '../index'
 
@@ -111,7 +112,7 @@ export class UserUiSignMessage extends BaseElement {
             if (shouldClose && window.opener) {
                 window.close()
             } else {
-                window.location.href = toRelHref('/activities')
+                setLocationHref(toRelHref('/activities'))
             }
         }, 500)
     }

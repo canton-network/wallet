@@ -151,13 +151,15 @@ describe('UserUiApprove', () => {
         expect(el.shadowRoot?.querySelector('.alert-warning')).not.toBeNull()
     })
 
-    it('executes signed transaction and navigates to activities', async () => {
+    it('redirects to activities after approve when closeafteraction is not set', async () => {
         mockApproveState()
 
         const el = await fixture<ApproveUi>(
             html`<user-ui-approve></user-ui-approve>`
         )
         await waitUntil(() => el.commandId === 'cmd-1')
+
+        const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
 
         el.shadowRoot
             ?.querySelector('wg-transaction-detail')
@@ -177,9 +179,47 @@ describe('UserUiApprove', () => {
             'Activity executed successfully',
             'success'
         )
+        expect(closeSpy).not.toHaveBeenCalled()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining('/activities')
         )
+        expect(el.disabled).toBe(true)
+        closeSpy.mockRestore()
+    })
+
+    it('closes the window after approve when opened from a dApp with closeafteraction', async () => {
+        history.replaceState({}, '', '?transactionId=tx-1&closeafteraction')
+        mockApproveState()
+
+        const el = await fixture<ApproveUi>(
+            html`<user-ui-approve></user-ui-approve>`
+        )
+        await waitUntil(() => el.commandId === 'cmd-1')
+
+        setLocationHref.mockClear()
+        const openerGet = vi
+            .spyOn(window, 'opener', 'get')
+            .mockReturnValue({} as Window)
+        const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
+
+        el.shadowRoot
+            ?.querySelector('wg-transaction-detail')
+            ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
+
+        await waitUntil(() =>
+            mockRequest.mock.calls.some((c) => c[0]?.method === 'execute')
+        )
+        await waitUntil(
+            () => closeSpy.mock.calls.length > 0,
+            'close popup after approve',
+            { timeout: 3000 }
+        )
+
+        openerGet.mockRestore()
+        closeSpy.mockRestore()
+
+        expect(setLocationHref).not.toHaveBeenCalled()
+        expect(el.disabled).toBe(true)
     })
 
     it('shows info toast when sign returns pending', async () => {
