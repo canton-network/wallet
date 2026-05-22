@@ -1,10 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { randomUUID } from 'node:crypto'
 import type { Logger } from 'pino'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
+import { signTransactionHash } from '@canton-network/core-signing-lib'
 import type { ContractSpec } from '../utils/index.js'
-import type { MultiSyncSetup } from './_setup.js'
+import type { MultiSyncSetup, PartyInfo } from './_setup.js'
 import {
     PARTY_HINT_ALICE,
     PARTY_HINT_BOB,
@@ -13,23 +15,78 @@ import {
     LOCALNET_TEST_TOKEN_REGISTRY_URL,
 } from './_config.js'
 
-// ── ACS contract entry (as returned by ledger.acs.read) ───────────────────────
-
-interface AcsContractEntry {
-    contractId: string
-    templateId: string
-    createdEventBlob?: string
-    synchronizerId: string
-}
-
 export const AMULET_TEMPLATE_ID = '#splice-amulet:Splice.Amulet:Amulet'
 export const TEST_TOKEN_PREFIX =
     '#splice-test-token-v1:Splice.Testing.Tokens.TestTokenV1'
 export const TRADING_APP_PREFIX =
-    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp'
+    '#splice-token-test-trading-app-v2:Splice.Testing.Apps.TradingAppV2'
 
-const TRANSFER_FACTORY_IFACE =
-    '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory'
+export const ALICE_AMULET_TAP_AMOUNT = '2000000'
+export const BOB_TOKEN_MINT_AMOUNT = '500'
+export const TRADE_AMULET_AMOUNT = '100'
+export const TRADE_TOKEN_AMOUNT = '20'
+
+const MS_1_HOUR = 60 * 60 * 1000
+
+// Splice.Api.Token.HoldingV2:Account
+export interface V2Account {
+    owner: string | null
+    provider: string | null
+    id: string
+}
+// Splice.Api.Token.AllocationV2:TransferLeg
+export interface V2TransferLeg {
+    transferLegId: string
+    sender: V2Account
+    receiver: V2Account
+    amount: string
+    instrumentId: string
+    meta: { values: Record<string, string> }
+}
+// Splice.Testing.Apps.TradingAppV2:TradeLeg
+export interface V2TradeLeg {
+    admin: string
+    leg: V2TransferLeg
+}
+
+/** A regular (non-delegated) account: just an owner, no provider, empty id. */
+function account(partyId: string): V2Account {
+    return { owner: partyId, provider: null, id: '' }
+}
+
+/**
+ * Builds the two DvP transfer legs for the OTCTrade:
+ *   leg-0: Alice → Bob, 100 Amulet     (instrument admin: Amulet DSO)
+ *   leg-1: Bob → Alice, 20 TestToken   (instrument admin: tokenAdmin)
+ */
+export function buildTradeLegs(setup: MultiSyncSetup): V2TradeLeg[] {
+    const { alice, bob, tokenAdmin, amuletAdmin } = setup
+    return [
+        {
+            admin: amuletAdmin,
+            leg: {
+                transferLegId: 'leg-0',
+                sender: account(alice.partyId),
+                receiver: account(bob.partyId),
+                amount: TRADE_AMULET_AMOUNT,
+                instrumentId: 'Amulet',
+                meta: { values: {} },
+            },
+        },
+        {
+            admin: tokenAdmin.partyId,
+            leg: {
+                transferLegId: 'leg-1',
+                sender: account(bob.partyId),
+                receiver: account(alice.partyId),
+                amount: TRADE_TOKEN_AMOUNT,
+                instrumentId: 'TestToken',
+                meta: { values: {} },
+            },
+        },
+    ]
+}
+
 export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
     const { p1Sdk, p2Sdk, p3Sdk, alice, bob, tradingApp, tokenAdmin } = setup
     return [
@@ -39,15 +96,18 @@ export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
             templateIds: [
                 AMULET_TEMPLATE_ID,
                 `${TEST_TOKEN_PREFIX}:Token`,
-                `${TRADING_APP_PREFIX}:OTCTradeProposal`,
-                `${TRADING_APP_PREFIX}:OTCTrade`,
+                `${TRADING_APP_PREFIX}:OTCTradeAllocationRequest`,
             ],
             parties: [alice.partyId],
         },
         {
             label: PARTY_HINT_BOB,
             sdk: p2Sdk,
-            templateIds: [AMULET_TEMPLATE_ID, `${TEST_TOKEN_PREFIX}:Token`],
+            templateIds: [
+                AMULET_TEMPLATE_ID,
+                `${TEST_TOKEN_PREFIX}:Token`,
+                `${TRADING_APP_PREFIX}:OTCTradeAllocationRequest`,
+            ],
             parties: [bob.partyId],
         },
         {
@@ -60,22 +120,14 @@ export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
             label: PARTY_HINT_TRADING_APP,
             sdk: p3Sdk,
             templateIds: [
-                `${TRADING_APP_PREFIX}:OTCTradeProposal`,
                 `${TRADING_APP_PREFIX}:OTCTrade`,
+                `${TRADING_APP_PREFIX}:OTCTradeAllocationRequest`,
+                `${TRADING_APP_PREFIX}:TradeSettlementAgreement`,
             ],
             parties: [tradingApp.partyId],
         },
     ]
 }
-
-export const ALICE_AMULET_TAP_AMOUNT = '2000000'
-export const BOB_TOKEN_MINT_AMOUNT = '500'
-export const TRADE_AMULET_AMOUNT = '100'
-export const TRADE_TOKEN_AMOUNT = '20'
-
-const MS_30_MIN = 30 * 60 * 1000
-const MS_1_HOUR = 60 * 60 * 1000
-const MS_24_HOURS = 24 * 60 * 60 * 1000
 
 export async function mintAmuletForAlice(
     setup: MultiSyncSetup,
@@ -276,79 +328,59 @@ export async function createTokenRulesAndMintForBob(
     )
 }
 
-export async function createAndInitiateOtcTrade(
+/**
+ * Venue creates the v2 `OTCTrade` and requests allocations from the traders.
+ *
+ * The v2 trading app splits the trade into single-signatory steps:
+ *   1. Venue creates `OTCTrade` — signatory is the venue ONLY (no trader approval
+ *      dance like the v1 `OTCTradeProposal`). Single-party submission.
+ *   2. Venue exercises `OTCTrade_RequestAllocations` (nonconsuming) → one
+ *      `OTCTradeAllocationRequest` per authorizing account. Traders observe these
+ *      requests and allocate against them.
+ *
+ * Because `OTCTrade` carries only the venue's authority, settling V1 assets later
+ * needs the `TradeSettlementAgreement` infrastructure (see createSettlementAgreement).
+ */
+export async function createOtcTradeAndRequestAllocations(
     setup: MultiSyncSetup,
-    transferLegs: Record<string, unknown>,
+    tradeLegs: V2TradeLeg[],
     logger: Logger
-): Promise<string> {
-    const {
-        p1Sdk,
-        p2Sdk,
-        p3Sdk,
-        alice,
-        bob,
-        tradingApp,
-        globalSynchronizerId,
-    } = setup
+): Promise<{ otcTradeCid: string; allocationRequestCids: string[] }> {
+    const { p3Sdk, tradingApp, globalSynchronizerId } = setup
 
-    const readProposalCid = async (
-        sdk: typeof p1Sdk,
-        party: string
-    ): Promise<string> => {
-        const contracts = await sdk.ledger.acs.read({
-            templateIds: [`${TRADING_APP_PREFIX}:OTCTradeProposal`],
-            parties: [party],
-            filterByParty: true,
-        })
-        if (!contracts.length) throw new Error('OTCTradeProposal not found')
-        return contracts[0].contractId
-    }
+    const now = Date.now()
+    const createdAt = new Date(now).toISOString()
+    const settleAt = new Date(now + MS_1_HOUR).toISOString()
 
-    await p1Sdk.ledger
+    await p3Sdk.ledger
         .prepare({
-            partyId: alice.partyId,
+            partyId: tradingApp.partyId,
             commands: {
                 CreateCommand: {
-                    templateId: `${TRADING_APP_PREFIX}:OTCTradeProposal`,
+                    templateId: `${TRADING_APP_PREFIX}:OTCTrade`,
                     createArguments: {
                         venue: tradingApp.partyId,
-                        tradeCid: null,
-                        transferLegs,
-                        approvers: [alice.partyId],
+                        tradeLegs,
+                        createdAt,
+                        settleAt,
+                        settlementDeadline: null,
                     },
                 },
             },
             disclosedContracts: [],
             synchronizerId: globalSynchronizerId,
         })
-        .sign(alice.keyPair.privateKey)
-        .execute({ partyId: alice.partyId })
-    logger.info(
-        `Alice: OTCTradeProposal created (leg-0: ${TRADE_AMULET_AMOUNT} Amulet → Bob, leg-1: ${TRADE_TOKEN_AMOUNT} TestToken → Alice)`
-    )
+        .sign(tradingApp.keyPair.privateKey)
+        .execute({ partyId: tradingApp.partyId })
 
-    await p2Sdk.ledger
-        .prepare({
-            partyId: bob.partyId,
-            commands: [
-                {
-                    ExerciseCommand: {
-                        templateId: `${TRADING_APP_PREFIX}:OTCTradeProposal`,
-                        contractId: await readProposalCid(p2Sdk, bob.partyId),
-                        choice: 'OTCTradeProposal_Accept',
-                        choiceArgument: { approver: bob.partyId },
-                    },
-                },
-            ],
-            disclosedContracts: [],
-            synchronizerId: globalSynchronizerId,
-        })
-        .sign(bob.keyPair.privateKey)
-        .execute({ partyId: bob.partyId })
-    logger.info('Bob: OTCTradeProposal_Accept executed')
-
-    const prepareUntil = new Date(Date.now() + MS_30_MIN).toISOString()
-    const settleBefore = new Date(Date.now() + MS_1_HOUR).toISOString()
+    const otcTradeContracts = await p3Sdk.ledger.acs.read({
+        templateIds: [`${TRADING_APP_PREFIX}:OTCTrade`],
+        parties: [tradingApp.partyId],
+        filterByParty: true,
+    })
+    const otcTradeCid = otcTradeContracts[0]?.contractId
+    if (!otcTradeCid) throw new Error('OTCTrade not found after creation')
+    logger.info('TradingApp: OTCTrade created (leg-0 Amulet, leg-1 TestToken)')
 
     await p3Sdk.ledger
         .prepare({
@@ -356,13 +388,10 @@ export async function createAndInitiateOtcTrade(
             commands: [
                 {
                     ExerciseCommand: {
-                        templateId: `${TRADING_APP_PREFIX}:OTCTradeProposal`,
-                        contractId: await readProposalCid(
-                            p3Sdk,
-                            tradingApp.partyId
-                        ),
-                        choice: 'OTCTradeProposal_InitiateSettlement',
-                        choiceArgument: { prepareUntil, settleBefore },
+                        templateId: `${TRADING_APP_PREFIX}:OTCTrade`,
+                        contractId: otcTradeCid,
+                        choice: 'OTCTrade_RequestAllocations',
+                        choiceArgument: {},
                     },
                 },
             ],
@@ -371,19 +400,122 @@ export async function createAndInitiateOtcTrade(
         })
         .sign(tradingApp.keyPair.privateKey)
         .execute({ partyId: tradingApp.partyId })
-    logger.info(
-        'TradingApp: OTCTradeProposal_InitiateSettlement executed → OTCTrade created'
-    )
 
-    const otcTradeContracts = await p3Sdk.ledger.acs.read({
-        templateIds: [`${TRADING_APP_PREFIX}:OTCTrade`],
+    const allocationRequests = await p3Sdk.ledger.acs.read({
+        templateIds: [`${TRADING_APP_PREFIX}:OTCTradeAllocationRequest`],
         parties: [tradingApp.partyId],
         filterByParty: true,
     })
-    const otcTradeCid = otcTradeContracts[0]?.contractId
-    if (!otcTradeCid)
-        throw new Error('OTCTrade contract not found after initiation')
-    return otcTradeCid
+    const allocationRequestCids = allocationRequests.map((c) => c.contractId)
+    if (allocationRequestCids.length === 0)
+        throw new Error('No OTCTradeAllocationRequest created')
+    logger.info(
+        `TradingApp: OTCTrade_RequestAllocations executed → ${allocationRequestCids.length} allocation request(s)`
+    )
+
+    return { otcTradeCid, allocationRequestCids }
+}
+
+/**
+ * Creates a `TradeSettlementAgreement` between the venue and a single trader.
+ *
+ * This contract is `signatory venue, trader`, so creating it needs the authority
+ * of BOTH parties — it cannot be a single-party submission. The wallet SDK only
+ * exposes single-party `prepare().sign().execute()`, so we drive the interactive
+ * submission flow by hand: prepare once with `actAs: [venue, trader]`, have each
+ * party sign the prepared-transaction hash, then submit `executeAndWait` with both
+ * party signatures.
+ *
+ * `preparingSdk` must be the trader's own participant SDK (P1 for Alice, P2 for Bob):
+ * the preparing participant has to be able to act for both `actAs` parties, and the
+ * setup co-hosts the venue on P1/P2 exactly so the trader participant can do this.
+ *
+ * The agreement gives the venue the standing it needs to drive V1 allocation
+ * settlement on the trader's behalf inside `OTCTrade_Settle`.
+ */
+export async function createSettlementAgreement(
+    setup: MultiSyncSetup,
+    preparingSdk: MultiSyncSetup['p1Sdk'],
+    preparingSdkCtx: MultiSyncSetup['p1SdkCtx'],
+    trader: PartyInfo,
+    logger: Logger
+): Promise<string> {
+    const { tradingApp, globalSynchronizerId } = setup
+
+    const prepared = await preparingSdk.ledger.internal.prepare({
+        commands: [
+            {
+                CreateCommand: {
+                    templateId: `${TRADING_APP_PREFIX}:TradeSettlementAgreement`,
+                    createArguments: {
+                        venue: tradingApp.partyId,
+                        trader: trader.partyId,
+                    },
+                },
+            },
+        ],
+        actAs: [tradingApp.partyId, trader.partyId],
+        synchronizerId: globalSynchronizerId,
+        disclosedContracts: [],
+    })
+
+    const partySignatures = [tradingApp, trader].map((p) => ({
+        party: p.partyId,
+        signatures: [
+            {
+                signature: signTransactionHash(
+                    prepared.preparedTransactionHash,
+                    p.keyPair.privateKey
+                ),
+                // The fingerprint is the namespace part of the party id.
+                signedBy: p.partyId.split('::')[1],
+                format: 'SIGNATURE_FORMAT_CONCAT',
+                signingAlgorithmSpec: 'SIGNING_ALGORITHM_SPEC_ED25519',
+            },
+        ],
+    }))
+
+    const ledgerProvider = preparingSdkCtx.ledgerProvider as unknown as {
+        request: (opts: {
+            method: string
+            params: Record<string, unknown>
+        }) => Promise<unknown>
+    }
+    await ledgerProvider.request({
+        method: 'ledgerApi',
+        params: {
+            resource: '/v2/interactive-submission/executeAndWait',
+            requestMethod: 'post',
+            body: {
+                userId: preparingSdkCtx.userId,
+                preparedTransaction: prepared.preparedTransaction,
+                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V2',
+                submissionId: randomUUID(),
+                deduplicationPeriod: { Empty: {} },
+                partySignatures: { signatures: partySignatures },
+            },
+        },
+    })
+
+    const agreements = await preparingSdk.ledger.acs.read({
+        templateIds: [`${TRADING_APP_PREFIX}:TradeSettlementAgreement`],
+        parties: [trader.partyId],
+        filterByParty: true,
+    })
+    const agreement = agreements.find(
+        (c) =>
+            (c as unknown as { createArgument?: { trader?: string } })
+                .createArgument?.trader === trader.partyId
+    )
+    if (!agreement)
+        throw new Error(
+            `TradeSettlementAgreement not found for trader ${trader.partyId}`
+        )
+
+    logger.info(
+        `TradeSettlementAgreement created: venue + ${trader.partyId.split('::')[0]}`
+    )
+    return agreement.contractId
 }
 
 export async function allocateAmuletForAlice(
@@ -392,7 +524,7 @@ export async function allocateAmuletForAlice(
 ): Promise<string> {
     const {
         p1Sdk,
-        tokenNamespaceP1: tokenNamespaceP1,
+        tokenNamespaceP1,
         alice,
         globalSynchronizerId,
         amuletAdmin,
@@ -401,11 +533,24 @@ export async function allocateAmuletForAlice(
     const pendingRequests = await tokenNamespaceP1.allocation.request.pending(
         alice.partyId
     )
-    const requestView = pendingRequests[0].interfaceViewValue!
-    const legId = Object.keys(requestView.transferLegs).find(
-        (key) => requestView.transferLegs[key].sender === alice.partyId
-    )!
-    if (!legId) throw new Error('No transfer leg found for Alice')
+    let requestView:
+        | (typeof pendingRequests)[number]['interfaceViewValue']
+        | undefined = undefined
+    let legId: string | undefined = undefined
+    for (const req of pendingRequests) {
+        const view = req.interfaceViewValue
+        if (!view) continue
+        const found = Object.keys(view.transferLegs).find(
+            (key) => view.transferLegs[key].sender === alice.partyId
+        )
+        if (found) {
+            requestView = view
+            legId = found
+            break
+        }
+    }
+    if (!requestView || !legId)
+        throw new Error('No transfer leg found for Alice')
 
     const amuletHoldings = await p1Sdk.ledger.acs.read({
         templateIds: [AMULET_TEMPLATE_ID],
@@ -457,35 +602,31 @@ export async function allocateTokenForBob(
     const pendingRequests = await tokenNamespaceP2.allocation.request.pending(
         bob.partyId
     )
-    const requestView = pendingRequests[0].interfaceViewValue!
-    const legId = Object.keys(requestView.transferLegs).find(
-        (key) => requestView.transferLegs[key].sender === bob.partyId
-    )!
-    if (!legId) throw new Error('No transfer leg found for Bob')
+    let requestView:
+        | (typeof pendingRequests)[number]['interfaceViewValue']
+        | undefined = undefined
+    let legId: string | undefined = undefined
+    for (const req of pendingRequests) {
+        const view = req.interfaceViewValue
+        if (!view) continue
+        const found = Object.keys(view.transferLegs).find(
+            (key) => view.transferLegs[key].sender === bob.partyId
+        )
+        if (found) {
+            requestView = view
+            legId = found
+            break
+        }
+    }
+    if (!requestView || !legId) throw new Error('No transfer leg found for Bob')
 
     const tokenHoldings = await p2Sdk.ledger.acs.read({
         templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
         parties: [bob.partyId],
         filterByParty: true,
     })
-
     const tokenHolding = tokenHoldings[0]
     if (!tokenHolding) throw new Error('Token holding not found for Bob')
-
-    // Explicitly reassign Bob's token from app-synchronizer to global before allocation.
-    // Canton requires the submitter to be a stakeholder of a contract already on the
-    // target synchronizer (SUBMITTER_ALWAYS_STAKEHOLDER policy). Without this step,
-    // Bob has no contracts on global, so the allocation submission would be rejected.
-    // P2 qualifies as the reassigning participant: it hosts both bob and tokenAdmin
-    // on both synchronizers.
-    if (tokenHolding.synchronizerId !== globalSynchronizerId) {
-        await p2Sdk.ledger.internal.reassign({
-            submitter: bob.partyId,
-            contractId: tokenHolding.contractId,
-            source: tokenHolding.synchronizerId,
-            target: globalSynchronizerId,
-        })
-    }
 
     const [command, disclosedFromHelper] =
         await tokenNamespaceP2.allocation.instruction.create({
@@ -516,7 +657,7 @@ export async function allocateTokenForBob(
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        'Bob: TestToken allocated for leg-1 (global synchronizer, single-party)'
+        'Bob: TestToken allocated for leg-1 (global synchronizer; input auto-reassigned app-sync → global)'
     )
     return { legId }
 }
@@ -526,22 +667,49 @@ export interface SettleParams {
     legIdAlice: string
     legIdBob: string
     testTokenAllocationCid: string
+    aliceAgreementCid: string
+    bobAgreementCid: string
+    allocationRequestCids: string[]
 }
 
-export async function settleOtcTrade(
+/**
+ * Venue settles the trade with the v2 `OTCTrade_Settle` choice.
+ *
+ * Both legs are V1-token-standard assets (Amulet and the v1 TestToken), so each is
+ * settled through the `SettlementBatchV1` path: per leg the venue supplies the V1
+ * allocation, the registry-provided choice context (`extraArgs`), and the sender's
+ * and receiver's `TradeSettlementAgreement`s — the latter carry the trader authority
+ * needed to exercise `Allocation_ExecuteTransfer`.
+ *
+ * `OTCTrade_Settle` is a single atomic transaction on the global synchronizer, so the
+ * Token allocation must be on global at this point (the allocation step above moved
+ * it there). After settlement the Token holdings are on global; the self-transfer
+ * step returns them to the app-synchronizer.
+ */
+export async function settleOtcTradeV2(
     setup: MultiSyncSetup,
     params: SettleParams,
     logger: Logger
 ): Promise<void> {
     const {
         p3Sdk,
-        tokenNamespaceP1: tokenNamespaceP1,
+        tokenNamespaceP1,
         tokenNamespaceP2,
         alice,
         tradingApp,
+        tokenAdmin,
+        amuletAdmin,
         globalSynchronizerId,
     } = setup
-    const { otcTradeCid, legIdAlice, legIdBob, testTokenAllocationCid } = params
+    const {
+        otcTradeCid,
+        legIdAlice,
+        legIdBob,
+        testTokenAllocationCid,
+        aliceAgreementCid,
+        bobAgreementCid,
+        allocationRequestCids,
+    } = params
 
     const allocationsAlice = await tokenNamespaceP1.allocation.pending(
         alice.partyId
@@ -562,36 +730,48 @@ export async function settleOtcTrade(
         }),
     ])
 
-    const allocationsWithContext = {
-        [legIdAlice]: {
-            _1: amuletAllocation.contractId,
-            _2: {
-                context: {
-                    ...(amuletExecCtx.choiceContextData ?? {}),
-                    values:
-                        (amuletExecCtx.choiceContextData?.values as Record<
-                            string,
-                            unknown
-                        >) ?? {},
+    const toExtraArgs = (ctx: {
+        choiceContextData?: { values?: Record<string, unknown> }
+    }) => ({
+        context: { values: ctx.choiceContextData?.values ?? {} },
+        meta: { values: {} },
+    })
+
+    const batchesByAdmin = [
+        [
+            amuletAdmin,
+            {
+                tag: 'SettlementBatchV1',
+                value: {
+                    allocationsWithContext: {
+                        [legIdAlice]: {
+                            allocationCid: amuletAllocation.contractId,
+                            extraArgs: toExtraArgs(amuletExecCtx),
+                            // leg-0 sender = Alice, receiver = Bob
+                            senderAgreementCid: aliceAgreementCid,
+                            receiverAgreementCid: bobAgreementCid,
+                        },
+                    },
                 },
-                meta: { values: {} },
             },
-        },
-        [legIdBob]: {
-            _1: testTokenAllocationCid,
-            _2: {
-                context: {
-                    ...(tokenExecCtx.choiceContextData ?? {}),
-                    values:
-                        (tokenExecCtx.choiceContextData?.values as Record<
-                            string,
-                            unknown
-                        >) ?? {},
+        ],
+        [
+            tokenAdmin.partyId,
+            {
+                tag: 'SettlementBatchV1',
+                value: {
+                    allocationsWithContext: {
+                        [legIdBob]: {
+                            allocationCid: testTokenAllocationCid,
+                            extraArgs: toExtraArgs(tokenExecCtx),
+                            senderAgreementCid: bobAgreementCid,
+                            receiverAgreementCid: aliceAgreementCid,
+                        },
+                    },
                 },
-                meta: { values: {} },
             },
-        },
-    }
+        ],
+    ]
 
     const disclosedContracts = [
         ...(amuletExecCtx.disclosedContracts ?? []).map((c) => ({
@@ -613,7 +793,10 @@ export async function settleOtcTrade(
                         templateId: `${TRADING_APP_PREFIX}:OTCTrade`,
                         contractId: otcTradeCid,
                         choice: 'OTCTrade_Settle',
-                        choiceArgument: { allocationsWithContext },
+                        choiceArgument: {
+                            batchesByAdmin,
+                            allocationRequests: allocationRequestCids,
+                        },
                     },
                 },
             ],
@@ -624,7 +807,7 @@ export async function settleOtcTrade(
         .execute({ partyId: tradingApp.partyId })
 
     logger.info(
-        `TradingApp: OTCTrade settled — ${TRADE_AMULET_AMOUNT} Amulet transferred to Bob, ${TRADE_TOKEN_AMOUNT} TestToken transferred to Alice`
+        `TradingApp: OTCTrade_Settle executed — ${TRADE_AMULET_AMOUNT} Amulet → Bob, ${TRADE_TOKEN_AMOUNT} TestToken → Alice`
     )
 }
 
@@ -708,7 +891,7 @@ export async function bobSelfTransferToApp(
                 inputUtxos: [token.contractId],
             })
 
-        // Bob's Token is on global after the allocation reassignment; targeting app-sync causes
+        // Bob's Token is on global after the allocation; targeting app-sync causes
         // Canton to auto-reassign it. Bob is the owner/stakeholder, so this is allowed.
         // The registry returns the app-sync TokenRules as the factory.
         await p2Sdk.ledger

@@ -31,9 +31,8 @@ import {
     PARTY_HINT_TRADING_APP,
     PARTY_HINT_TOKEN_ADMIN,
 } from './_config.js'
-
-const DARS_PATH = '../../../../../.localnet/dars'
-const TRADING_APP_DAR = 'splice-token-test-trading-app-1.0.0.dar'
+const TRADING_APP_V2_DAR_LOCAL_PATH =
+    './daml/splice-token-test-trading-app-v2/splice-token-test-trading-app-v2-1.0.0.dar'
 const TEST_TOKEN_V1_DAR_LOCAL_PATH =
     './daml/splice-test-token-v1/splice-test-token-v1-1.0.0.dar'
 
@@ -70,6 +69,9 @@ export interface MultiSyncSetup {
  *   - Creates SDK instances for P1 (app-user), P2 (app-provider), P3 (sv)
  *   - Discovers global + app synchronizer IDs from P1
  *   - Allocates alice (P1), bob (P2), tradingApp + tokenAdmin (P3) on global synchronizer
+ *     (tradingApp is co-hosted on P1 + P2 in the same allocation, then granted
+ *     actAs rights on the P1/P2 users so each trader participant can prepare the
+ *     co-signed TradeSettlementAgreement)
  *   - Registers alice (P1) and bob (P2) on app-synchronizer
  *   - Registers tokenAdmin (P3) on app-synchronizer (secondary — needed so tokenAdmin
  *     is a valid informee for app-sync transactions; P3 is connected to both synchronizers)
@@ -145,10 +147,10 @@ export async function setupMultiSyncTrade(
     }
 
     const here = path.dirname(fileURLToPath(import.meta.url))
-    const darsDir = path.join(here, DARS_PATH)
+    const tradingAppV2DarPath = path.join(here, TRADING_APP_V2_DAR_LOCAL_PATH)
     const testTokenV1DarPath = path.join(here, TEST_TOKEN_V1_DAR_LOCAL_PATH)
     for (const [darPath, darName] of [
-        [path.join(darsDir, TRADING_APP_DAR), TRADING_APP_DAR],
+        [tradingAppV2DarPath, TRADING_APP_V2_DAR_LOCAL_PATH],
         [testTokenV1DarPath, TEST_TOKEN_V1_DAR_LOCAL_PATH],
     ] as [string, string][]) {
         try {
@@ -162,25 +164,22 @@ export async function setupMultiSyncTrade(
     }
 
     const [tradingAppDar, testTokenV1Dar] = await Promise.all([
-        fs.readFile(path.join(darsDir, TRADING_APP_DAR)),
+        fs.readFile(tradingAppV2DarPath),
         fs.readFile(testTokenV1DarPath),
     ])
 
-    await Promise.all(
-        [p1SdkCtx, p2SdkCtx, p3SdkCtx].flatMap((ctx) =>
-            [globalSynchronizerId, appSynchronizerId].flatMap((sid) =>
-                [tradingAppDar, testTokenV1Dar].map((dar) =>
-                    vetDar(ctx.ledgerProvider, dar, sid)
-                )
-            )
-        )
+    await Promise.all([
+        ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].map((ctx) =>
+            vetDar(ctx.ledgerProvider, tradingAppDar, globalSynchronizerId)
+        ),
+        ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].map((ctx) =>
+            vetDar(ctx.ledgerProvider, testTokenV1Dar, appSynchronizerId)
+        ),
+    ])
+    logger.info(
+        'DARs vetted: trading-app-v2 on global only; test-token-v1 on app-sync only'
     )
-    logger.info('DARs vetted: P1+P2+P3 on both synchronizers')
 
-    // Allocate parties on global synchronizer: alice on P1, bob on P2, tradingApp + tokenAdmin on P3.
-    // tokenAdmin is primary on P3/global; a secondary registration on P3/app-sync follows below,
-    // because participant connectivity ≠ party registration — tokenAdmin must be explicitly
-    // registered on app-sync to be a valid informee for transactions targeting that synchronizer.
     const aliceKey = p1Sdk.keys.generate()
     const bobKey = p1Sdk.keys.generate()
     const tradingAppKey = p1Sdk.keys.generate()
@@ -206,10 +205,23 @@ export async function setupMultiSyncTrade(
             })
             .sign(bobKey.privateKey)
             .execute(),
+
         p3Sdk.party.external
             .create(tradingAppKey.publicKey, {
                 partyHint: PARTY_HINT_TRADING_APP,
                 synchronizerId: globalSynchronizerId,
+                confirmingParticipantEndpoints: [
+                    {
+                        url: new URL(
+                            localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL
+                        ),
+                        tokenProviderConfig: TOKEN_PROVIDER_CONFIG_DEFAULT,
+                    },
+                    {
+                        url: new URL(LOCALNET_BOB_LEDGER_URL),
+                        tokenProviderConfig: TOKEN_PROVIDER_CONFIG_DEFAULT,
+                    },
+                ],
             })
             .sign(tradingAppKey.privateKey)
             .execute(),
@@ -237,15 +249,6 @@ export async function setupMultiSyncTrade(
         `Parties allocated — alice: ${alice.partyId} (P1), bob: ${bob.partyId} (P2), tradingApp: ${tradingApp.partyId} (P3), tokenAdmin: ${tokenAdmin.partyId} (P3)`
     )
 
-    // Register alice (P1) and bob (P2) on app-synchronizer, and tokenAdmin on P3/app-sync.
-    // Participant connectivity ≠ party registration: even though P3 (sv) is connected to
-    // app-synchronizer, tokenAdmin must be explicitly registered there for it to be a valid
-    // informee in transactions targeting app-sync (TokenRules creation, mint, transfer).
-    //
-    // alice + bob can be registered in parallel (different participants).
-    // tokenAdmin's P3 registrations must be sequential: the primary on global runs first
-    // (in the Promise.all above), then the secondary on app-sync here — Canton rejects
-    // concurrent allocations of the same party on the same participant.
     await Promise.all([
         p1Sdk.party.external
             .create(alice.keyPair.publicKey, {
@@ -261,11 +264,7 @@ export async function setupMultiSyncTrade(
             })
             .sign(bob.keyPair.privateKey)
             .execute({ grantUserRights: false }),
-        // tokenAdmin secondary on P3 for app-sync.
-        // grantUserRights: false — actAs rights already granted by the P3 primary on global.
-        // Required so tokenAdmin is a valid informee for app-sync transactions, and so P3
-        // qualifies as a reassigning participant (hosts tokenAdmin on both syncs) for the
-        // Bob Token reassignment (app-sync → global) before the DvP allocation.
+
         p3Sdk.party.external
             .create(tokenAdmin.keyPair.publicKey, {
                 partyHint: tokenAdmin.partyId.split('::')[0],
@@ -275,6 +274,16 @@ export async function setupMultiSyncTrade(
             .execute({ grantUserRights: false }),
     ])
     logger.info('Alice, Bob, and TokenAdmin registered on app-synchronizer')
+
+    await Promise.all([
+        p1Sdk.user.rights.grant({
+            userRights: { actAs: [tradingApp.partyId] },
+        }),
+        p2Sdk.user.rights.grant({
+            userRights: { actAs: [tradingApp.partyId] },
+        }),
+    ])
+    logger.info('Venue (tradingApp) actAs rights granted on P1 and P2')
 
     const auth = new AuthTokenProvider(TOKEN_PROVIDER_CONFIG_DEFAULT, logger)
     const scanProxy = new ScanProxyClient(

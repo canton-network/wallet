@@ -1,6 +1,22 @@
 # Example 15: Multi-Synchronizer DvP Trade
 
-This example implements a Delivery vs Payment (DvP) flow across two synchronizers: Amulet on the global synchronizer and a Token instrument on a private app-synchronizer, settled via the OTC Trading App using only single-party submissions.
+This example implements a Delivery vs Payment (DvP) flow across two synchronizers using the **v2 OTC trading app** (`splice-token-test-trading-app-v2`): Alice pays 100 Amulet on the global synchronizer, and Bob delivers 20 TestToken whose home is a private app-synchronizer.
+
+## DAR vetting placement
+
+The two apps are vetted only where they belong:
+
+- **Trading-app v2 DAR → global synchronizer only.** The venue, the `OTCTrade`, and the `OTCTradeAllocationRequest`s all live on global, and `OTCTrade_Settle` runs there.
+- **TestToken v1 DAR → app-synchronizer (its home) and global (transit only).** The Token is minted on, and returns to, the private app-synchronizer. It is also vetted on global because `OTCTrade_Settle` is a single atomic Daml transaction on global that touches the Token allocation — Canton requires every package referenced by a transaction, and every package of a contract reassigned onto a synchronizer, to be vetted there. An atomic cross-synchronizer DvP cannot avoid vetting the Token package on the settlement synchronizer.
+
+## Flow
+
+1. Mint Amulet for Alice (global); mint TestToken for Bob (app-synchronizer).
+2. The venue creates the v2 `OTCTrade` (signatory: venue only) and exercises `OTCTrade_RequestAllocations`.
+3. The venue and each trader co-sign a `TradeSettlementAgreement` — the v2 trading app needs it to settle V1 token-standard assets.
+4. Alice allocates Amulet; Bob allocates TestToken. Bob's Token auto-reassigns app-sync → global (no explicit reassignment) because he already holds global-synchronizer contracts.
+5. The venue settles via `OTCTrade_Settle` (`SettlementBatchV1` for both legs).
+6. Alice and Bob self-transfer their TestToken holdings back to the app-synchronizer.
 
 ## Running Locally
 
