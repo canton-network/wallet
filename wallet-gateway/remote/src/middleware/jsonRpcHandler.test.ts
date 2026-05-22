@@ -16,7 +16,12 @@ function errorPayload(body: JsonRpcResponse) {
     return body.error
 }
 
-describe.skip('jsonRpcHandler', () => {
+async function waitForRpcResponse(res: Response) {
+    const json = res.json as ReturnType<typeof vi.fn>
+    await vi.waitUntil(() => json.mock.calls.length > 0)
+}
+
+describe('jsonRpcHandler', () => {
     const logger = pino({ level: 'silent' }, sink())
 
     type TestController = {
@@ -84,6 +89,7 @@ describe.skip('jsonRpcHandler', () => {
         } as Request
 
         handler(req, res, next)
+        await waitForRpcResponse(res)
 
         expect(next).not.toHaveBeenCalled()
         expect(res.status).toHaveBeenCalled()
@@ -113,6 +119,7 @@ describe.skip('jsonRpcHandler', () => {
         } as Request
 
         handler(req, res, next)
+        await waitForRpcResponse(res)
 
         expect(res.status).toHaveBeenCalled()
         const payload = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0]
@@ -129,13 +136,14 @@ describe.skip('jsonRpcHandler', () => {
             body: {
                 jsonrpc: '2.0',
                 id: 7,
-                method: 'ping',
+                method: 'resolve',
                 params: { x: 1 },
             },
             authContext: { userId: 'u', accessToken: 't' },
         } as Request
 
         handler(req, res, next)
+        await waitForRpcResponse(res)
 
         expect(resolve).toHaveBeenCalledWith({ x: 1 })
         expect(res.json).toHaveBeenCalledWith({
@@ -154,20 +162,22 @@ describe.skip('jsonRpcHandler', () => {
             body: {
                 jsonrpc: '2.0',
                 id: 'rid',
-                method: 'wrong_method',
+                method: 'reject',
                 params: [],
             },
         } as Request
 
         handler(req, res, next)
+        await waitForRpcResponse(res)
 
+        expect(reject).toHaveBeenCalled()
         expect(res.status).toHaveBeenCalledWith(500)
         expect(res.json).toHaveBeenCalledWith(
             expect.objectContaining({
                 jsonrpc: '2.0',
-                id: 'id',
+                id: 'rid',
                 error: expect.objectContaining({
-                    message: 'bad params',
+                    message: 'error',
                 }),
             })
         )
@@ -182,14 +192,18 @@ describe.skip('jsonRpcHandler', () => {
             body: {
                 jsonrpc: '2.0',
                 id: 0,
-                method: 'rpcBoom',
+                method: 'rpcError',
                 params: [],
             },
         } as Request
 
         handler(req, res, next)
+        await waitForRpcResponse(res)
 
-        expect(res.status).not.toHaveBeenCalledWith(500)
+        expect(rpcError).toHaveBeenCalled()
+        expect(res.status).toHaveBeenCalledWith(
+            toHttpErrorCode(rpcErrors.invalidParams().code)
+        )
         expect(res.json).toHaveBeenCalledWith(
             expect.objectContaining({
                 jsonrpc: '2.0',
