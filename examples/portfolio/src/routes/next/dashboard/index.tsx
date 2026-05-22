@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { PillButton } from '@components/ui/PillButton'
 import { Box, Typography } from '@mui/material'
 import { createFileRoute } from '@tanstack/react-router'
 import { AllAssetsContent } from '@components/dashboard/all-assets-content'
+import { TransferDialog } from '@components/next/transfer-dialog'
 import { useAllAccountAssets } from '@hooks/useAllAccountAssets'
 
 export const Route = createFileRoute('/next/dashboard/')({
@@ -10,6 +12,7 @@ export const Route = createFileRoute('/next/dashboard/')({
 
 function RouteComponent() {
     const allAccountAssets = useAllAccountAssets()
+    const [transferOpen, setTransferOpen] = useState(false)
 
     return (
         <Box sx={{ px: 5.5, py: 7.5 }}>
@@ -25,7 +28,9 @@ function RouteComponent() {
                     Dashboard
                 </Typography>
 
-                <PillButton>Transfer</PillButton>
+                <PillButton type="button" onClick={() => setTransferOpen(true)}>
+                    Transfer
+                </PillButton>
             </Box>
 
             <Typography variant="h5" component="h2" sx={{ mb: 2 }}>
@@ -33,6 +38,11 @@ function RouteComponent() {
             </Typography>
 
             <AllAssetsContent {...allAccountAssets} />
+
+            <TransferDialog
+                open={transferOpen}
+                onClose={() => setTransferOpen(false)}
+            />
         </Box>
     )
 }
