@@ -32,20 +32,15 @@ function safeAlias(syncId: string, s: SynchronizerMap): string {
  * Step 1 — vetting placement.
  *
  * Asserts that, before the trade runs:
- *   - the TestToken DAR (`splice-test-token-v1`) is vetted on the app-synchronizer
- *     ONLY — vetted there (its home) and NOT on the global synchronizer, and
+ *   - the TestToken DAR (`splice-test-token-v1`) is vetted on BOTH the
+ *     app-synchronizer (its home for Token holdings) and the global synchronizer
+ *     (required so that `TokenAllocation` can be reassigned onto global for
+ *     settlement), and
  *   - the trading-app DAR (`splice-token-test-trading-app-v2`) is vetted on the
  *     global synchronizer ONLY — vetted there and NOT on the app-synchronizer.
  *
  * Uses `POST /v2/package-vetting/list`, which reports the synchronizer-wide
  * vetting topology, queried here via P3 (connected to both synchronizers).
- *
- * NOTE: the "TestToken DAR not on global" check is intentionally strict and will
- * FAIL while `_setup.ts` vets `splice-test-token-v1` on global as well. Global
- * vetting is currently required so the `TokenAllocation` can be reassigned onto
- * global and consumed by the atomic `OTCTrade_Settle`. This assertion therefore
- * acts as a deliberate red marker: it stays red until the example no longer
- * needs the token package on the global synchronizer.
  */
 export async function assertDarVetting(
     setup: MultiSyncSetup,
@@ -75,16 +70,15 @@ export async function assertDarVetting(
             `Vetting assertion failed: ${TEST_TOKEN_PACKAGE} is not vetted on the app-synchronizer`
         )
 
-    // … and must NOT be vetted on the global synchronizer (private-sync only).
+    // … and must ALSO be vetted on the global synchronizer (TokenAllocation reassignment).
     const tokenOnGlobal = await vettingParticipants(
         TEST_TOKEN_PACKAGE,
         globalSynchronizerId
     )
-    if (tokenOnGlobal.length > 0)
+    if (tokenOnGlobal.length === 0)
         throw new Error(
             `Vetting assertion failed: ${TEST_TOKEN_PACKAGE} must be vetted on the ` +
-                `app-synchronizer ONLY, but ${tokenOnGlobal.length} participant(s) ` +
-                `have it vetted on the global synchronizer`
+                `global synchronizer (for TokenAllocation reassignment) but no participant has it vetted there`
         )
 
     const tradingOnGlobal = await vettingParticipants(
@@ -107,9 +101,8 @@ export async function assertDarVetting(
         )
 
     logger.info(
-        `Step 1 vetting OK — ${TEST_TOKEN_PACKAGE}: app-synchronizer only ` +
-            `(${tokenOnApp.length} participant(s)); ${TRADING_APP_PACKAGE}: global only ` +
-            `(${tradingOnGlobal.length} participant(s))`
+        `Step 1 vetting OK — ${TEST_TOKEN_PACKAGE}: app-synchronizer (${tokenOnApp.length}) + global (${tokenOnGlobal.length}) participant(s); ` +
+            `${TRADING_APP_PACKAGE}: global only (${tradingOnGlobal.length} participant(s))`
     )
 }
 
