@@ -89,6 +89,7 @@ type TokenNsFor<Options> = Options extends { validatorUrl: URLInput }
 
 export type BasicSDKInterface<
     CurrentlyExtended extends keyof ExtendedSDKOptions = never,
+    Options = Record<string, never>,
 > = Readonly<{
     keys: KeysNamespace
     ledger: LedgerNamespace
@@ -97,12 +98,12 @@ export type BasicSDKInterface<
     utils: SDKUtilsNamespace
     extend: <ExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, ExtendedItems>
-    ) => Promise<SDKInterface<ExtendedItems | CurrentlyExtended>>
+    ) => Promise<SDKInterface<ExtendedItems | CurrentlyExtended, Options>>
     registerPlugins: <
         P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
     >(
         plugins: P
-    ) => BasicSDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
+    ) => BasicSDKInterface<CurrentlyExtended, Options> & RegisteredPlugins<P>
 }>
 
 export type ExtendedFullSDKInterface = Readonly<{
@@ -126,13 +127,13 @@ export type ExtendedSDKInterface<
 } & {
     extend: <NewExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, NewExtendedItems>
-    ) => Promise<SDKInterface<NewExtendedItems | ExtendedItems>>
+    ) => Promise<SDKInterface<NewExtendedItems | ExtendedItems, Options>>
 }
 
 export type SDKInterface<
     ExtendedItems extends keyof ExtendedFullSDKInterface = never,
     Options = Record<string, never>,
-> = BasicSDKInterface<ExtendedItems> &
+> = BasicSDKInterface<ExtendedItems, Options> &
     ExtendedSDKInterface<ExtendedItems, Options>
 
 export type OfflineSDKInterface = Readonly<{
