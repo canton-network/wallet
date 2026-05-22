@@ -34,6 +34,8 @@ import {
     GetUserResult,
     GetNetworkParams,
     GetNetworkResult,
+    SelfSignedAccessTokenParams,
+    SelfSignedAccessTokenResult,
     Network as ApiNetwork,
     PublicNetwork,
 } from './rpc-gen/typings.js'
@@ -188,6 +190,39 @@ export const userController = (
             assertAdmin()
             const network = await store.getNetwork(params.networkId)
             return { network: toApiNetwork(network) }
+        },
+        selfSignedAccessToken: async (
+            params: SelfSignedAccessTokenParams
+        ): Promise<SelfSignedAccessTokenResult> => {
+            const network = (await store.listNetworks()).find(
+                (n) => n.id === params.networkId
+            )
+            if (!network) {
+                throw new Error(`Network "${params.networkId}" not found`)
+            }
+            const auth = network.auth
+
+            if (auth.method !== 'self_signed') {
+                throw new Error(
+                    'Network does not use self_signed authentication'
+                )
+            }
+
+            const accessToken = await new AuthTokenProvider(
+                {
+                    method: 'self_signed',
+                    issuer: auth.issuer,
+                    credentials: {
+                        clientId: params.clientId,
+                        clientSecret: auth.clientSecret,
+                        scope: auth.scope,
+                        audience: auth.audience,
+                    },
+                },
+                logger
+            ).getAccessToken()
+
+            return { accessToken }
         },
         addIdp: async (params: AddIdpParams) => {
             assertAdmin()

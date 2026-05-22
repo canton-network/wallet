@@ -5,6 +5,7 @@ import { AddNetwork } from './typings.js'
 import { RemoveNetwork } from './typings.js'
 import { ListNetworks } from './typings.js'
 import { GetNetwork } from './typings.js'
+import { SelfSignedAccessToken } from './typings.js'
 import { AddIdp } from './typings.js'
 import { RemoveIdp } from './typings.js'
 import { ListIdps } from './typings.js'
@@ -34,6 +35,7 @@ export type Methods = {
     removeNetwork: RemoveNetwork
     listNetworks: ListNetworks
     getNetwork: GetNetwork
+    selfSignedAccessToken: SelfSignedAccessToken
     addIdp: AddIdp
     removeIdp: RemoveIdp
     listIdps: ListIdps
@@ -65,6 +67,7 @@ function buildController(methods: Methods) {
         removeNetwork: methods.removeNetwork,
         listNetworks: methods.listNetworks,
         getNetwork: methods.getNetwork,
+        selfSignedAccessToken: methods.selfSignedAccessToken,
         addIdp: methods.addIdp,
         removeIdp: methods.removeIdp,
         listIdps: methods.listIdps,

@@ -120,6 +120,49 @@
             "description": "Returns full network configuration including auth details. Admin only."
         },
         {
+            "name": "selfSignedAccessToken",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "SelfSignedAccessTokenParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Network ID"
+                            },
+                            "clientId": {
+                                "title": "clientId",
+                                "type": "string",
+                                "description": "Client ID used as the JWT subject"
+                            }
+                        },
+                        "required": ["networkId", "clientId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "SelfSignedAccessTokenResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "accessToken": {
+                            "title": "accessToken",
+                            "type": "string",
+                            "description": "Self-signed JWT access token"
+                        }
+                    },
+                    "required": ["accessToken"]
+                }
+            },
+            "description": "Mints a self-signed access token using server-side network credentials. Used for login on self-signed networks."
+        },
+        {
             "name": "addIdp",
             "description": "Adds a new identity provider.",
             "params": [

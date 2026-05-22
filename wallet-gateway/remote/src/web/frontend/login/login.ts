@@ -12,10 +12,6 @@ import {
     WgLoginForm,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import {
-    AuthTokenProvider,
-    ClientCredentials,
-} from '@canton-network/core-wallet-auth'
 import { createUserClient } from '../rpc-client'
 import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '../state-manager'
@@ -111,12 +107,7 @@ export class LoginUI extends BaseElement {
 
         try {
             if (selectedIdp.type === 'self_signed') {
-                await this.selfSign({
-                    clientId,
-                    clientSecret: '',
-                    scope: selectedNetwork.scope ?? '',
-                    audience: selectedNetwork.audience ?? '',
-                } as ClientCredentials)
+                await this.selfSign(selectedNetwork.id, clientId)
                 redirectToIntendedOrDefault()
                 return
             }
@@ -185,21 +176,22 @@ export class LoginUI extends BaseElement {
         }
     }
 
-    protected async selfSign(credentials: ClientCredentials) {
-        const token_provider = new AuthTokenProvider(
-            { method: 'self_signed', issuer: 'unsafe-auth', credentials },
-            console
+    protected async selfSign(networkId: string, clientId: string) {
+        const userClient = await createUserClient(
+            stateManager.accessToken.get()
         )
-        const access_token = await token_provider.getAccessToken()
+        const { accessToken } = await userClient.request({
+            method: 'selfSignedAccessToken',
+            params: { networkId, clientId },
+        })
 
-        const payload = JSON.parse(atob(access_token.split('.')[1]))
+        const payload = JSON.parse(atob(accessToken.split('.')[1]))
         stateManager.expirationDate.set(
             new Date(payload.exp * 1000).toISOString()
         )
-        stateManager.accessToken.set(access_token)
+        stateManager.accessToken.set(accessToken)
 
-        const networkId = stateManager.networkId.get() || ''
-        addUserSession(access_token, networkId)
+        addUserSession(accessToken, networkId)
     }
 
     protected render() {

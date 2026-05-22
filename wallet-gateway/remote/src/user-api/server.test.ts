@@ -62,3 +62,45 @@ test('call listNetworks rpc', async () => {
         expect(network).toHaveProperty('authMethod')
     }
 })
+
+test('selfSignedAccessToken rpc', async () => {
+    const drivers = {}
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+
+    const { publicUrl } = deriveUrls(config)
+    const response = await request(
+        user(
+            '/api/v0/user',
+            app,
+            pino(sink()),
+            config.kernel,
+            publicUrl,
+            notificationService,
+            drivers,
+            store
+        )
+    )
+        .post('/api/v0/user')
+        .send({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'selfSignedAccessToken',
+            params: {
+                networkId: 'canton:local-self-signed',
+                clientId: 'test-user',
+            },
+        })
+        .set('Accept', 'application/json')
+
+    expect(response.statusCode).toBe(200)
+    const { accessToken } = response.body.result
+    expect(typeof accessToken).toBe('string')
+
+    const payload = JSON.parse(
+        Buffer.from(accessToken.split('.')[1], 'base64url').toString()
+    )
+    expect(payload.sub).toBe('test-user')
+    expect(payload.iss).toBe('self-signed')
+})

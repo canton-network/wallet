@@ -12,9 +12,11 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import { Auth as ApiAuth } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    Auth as ApiAuth,
+    Network,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { Auth } from '@canton-network/core-wallet-auth'
-import { Network } from '@canton-network/core-wallet-store'
 import { createUserClient } from '../../rpc-client'
 import { stateManager } from '../../state-manager'
 import '../../index'
@@ -69,12 +71,7 @@ export class UserUiReviewNetwork extends BaseElement {
                 method: 'getNetwork',
                 params: { networkId },
             })
-
-            const apiNetwork = result.network
-            this.network = {
-                ...apiNetwork,
-                ledgerApi: { baseUrl: apiNetwork.ledgerApi },
-            }
+            this.network = result.network
         } catch (error) {
             handleErrorToast(error)
             this.navigateBack()
