@@ -49,7 +49,10 @@ import { UserUiReviewNetwork } from './index.js'
 const network = makeNetwork({ id: 'net-review', name: 'Review Net' })
 
 describe('UserUiReviewNetwork', () => {
-    beforeEach(() => {
+    let el: UserUiReviewNetwork
+    const componentFixture = html`<user-ui-review-network></user-ui-review-network>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
@@ -60,18 +63,16 @@ describe('UserUiReviewNetwork', () => {
             'confirm',
             vi.fn(() => true)
         )
+        el = await fixture<UserUiReviewNetwork>(componentFixture)
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
     })
 
     it('loads and renders the review form for the network in the URL', async () => {
-        const el = await fixture<UserUiReviewNetwork>(
-            html`<user-ui-review-network></user-ui-review-network>`
-        )
-
         await waitUntil(() => el.network?.id === 'net-review')
 
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
@@ -81,9 +82,6 @@ describe('UserUiReviewNetwork', () => {
     })
 
     it('calls addNetwork when the form is saved', async () => {
-        const el = await fixture<UserUiReviewNetwork>(
-            html`<user-ui-review-network></user-ui-review-network>`
-        )
         await waitUntil(() => el.network !== null)
 
         el.shadowRoot
@@ -105,10 +103,7 @@ describe('UserUiReviewNetwork', () => {
 
     it('navigates back when the URL has no network id', async () => {
         history.replaceState({}, '', '?')
-
-        const el = await fixture<UserUiReviewNetwork>(
-            html`<user-ui-review-network></user-ui-review-network>`
-        )
+        el = await fixture<UserUiReviewNetwork>(componentFixture)
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
@@ -121,9 +116,6 @@ describe('UserUiReviewNetwork', () => {
     })
 
     it('navigates back when the form emits network-edit-cancel', async () => {
-        const el = await fixture<UserUiReviewNetwork>(
-            html`<user-ui-review-network></user-ui-review-network>`
-        )
         await waitUntil(() => el.network !== null)
 
         setLocationHref.mockClear()
@@ -137,9 +129,6 @@ describe('UserUiReviewNetwork', () => {
     })
 
     it('calls removeNetwork when delete is confirmed', async () => {
-        const el = await fixture<UserUiReviewNetwork>(
-            html`<user-ui-review-network></user-ui-review-network>`
-        )
         await waitUntil(() => el.network !== null)
 
         el.shadowRoot

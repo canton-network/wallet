@@ -81,7 +81,10 @@ const selfSignedNetwork = makeNetwork({
 const selfSignedIdp = makeIdp({ id: 'idp-1', type: 'self_signed' })
 
 describe('LoginUI', () => {
-    beforeEach(() => {
+    let el: LoginUI
+    const componentFixture = html`<user-ui-login></user-ui-login>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
@@ -97,15 +100,15 @@ describe('LoginUI', () => {
             }
             return undefined
         })
+        el = await fixture<LoginUI>(componentFixture)
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
     it('renders the login form with loaded networks and idps', async () => {
-        const el = await fixture<LoginUI>(html`<user-ui-login></user-ui-login>`)
-
         await waitUntil(() => el.networks.length === 1)
 
         expect(el.shadowRoot?.querySelector('wg-login-form')).not.toBeNull()
@@ -113,7 +116,6 @@ describe('LoginUI', () => {
     })
 
     it('redirects after self-signed connect succeeds', async () => {
-        const el = await fixture<LoginUI>(html`<user-ui-login></user-ui-login>`)
         await waitUntil(() => el.networks.length === 1)
 
         el.shadowRoot
@@ -136,8 +138,7 @@ describe('LoginUI', () => {
 
     it('calls handleErrorToast when loading networks fails', async () => {
         mockRequest.mockRejectedValue(new Error('list failed'))
-
-        await fixture<LoginUI>(html`<user-ui-login></user-ui-login>`)
+        el = await fixture<LoginUI>(componentFixture)
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 

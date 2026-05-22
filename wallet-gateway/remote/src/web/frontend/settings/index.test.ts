@@ -49,7 +49,10 @@ async function ready(el: UserUiSettings) {
 }
 
 describe('UserUiSettings', () => {
-    beforeEach(() => {
+    let el: UserUiSettings
+    const componentFixture = html`<user-ui-settings></user-ui-settings>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
@@ -59,19 +62,17 @@ describe('UserUiSettings', () => {
             'confirm',
             vi.fn(() => true)
         )
+        el = await fixture<UserUiSettings>(componentFixture)
+        await ready(el)
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
     })
 
     it('renders gateway version, user info, and admin sections', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         expect(el.shadowRoot?.textContent).toContain('v2.0.0')
         expect(el.shadowRoot?.textContent).toContain('user-1')
         expect(el.shadowRoot?.textContent).toContain('Admin')
@@ -82,11 +83,8 @@ describe('UserUiSettings', () => {
 
     it('shows unknown_version when the version endpoint returns no version', async () => {
         mockSettingsPageFlow({ gatewayVersion: '' })
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
+        el = await fixture<UserUiSettings>(componentFixture)
         await ready(el)
-
         expect(el.shadowRoot?.textContent).toContain('unknown_version')
     })
 
@@ -107,10 +105,7 @@ describe('UserUiSettings', () => {
             }
             return undefined
         })
-
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
+        el = await fixture<UserUiSettings>(componentFixture)
         await ready(el)
 
         expect(el.isAdmin).toBe(false)
@@ -120,11 +115,8 @@ describe('UserUiSettings', () => {
 
     it('shows settings in read-only mode for non-admin users', async () => {
         mockSettingsPageFlow({ isAdmin: false })
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
+        el = await fixture<UserUiSettings>(componentFixture)
         await ready(el)
-
         const networks = el.shadowRoot?.querySelector('wg-networks') as
             | (HTMLElement & { readonly: boolean })
             | null
@@ -136,11 +128,6 @@ describe('UserUiSettings', () => {
     })
 
     it('shows settings in write mode for admin users', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         const networks = el.shadowRoot?.querySelector('wg-networks') as
             | (HTMLElement & { readonly: boolean })
             | null
@@ -152,11 +139,6 @@ describe('UserUiSettings', () => {
     })
 
     it('adds a network when wg-networks emits network-edit-save', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         const network = makeStoreNetwork({
             id: 'net-new',
             synchronizerId: 'sync-1',
@@ -195,11 +177,6 @@ describe('UserUiSettings', () => {
     })
 
     it('adds a network when auth fields are partially omitted', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         const network = makeStoreNetwork({
             auth: { method: 'client_credentials' } as ReturnType<
                 typeof makeStoreNetwork
@@ -228,11 +205,6 @@ describe('UserUiSettings', () => {
     })
 
     it('adds a network without adminAuth using default credentials', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         el.shadowRoot
             ?.querySelector('wg-networks')
             ?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
@@ -273,11 +245,6 @@ describe('UserUiSettings', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         el.shadowRoot
             ?.querySelector('wg-networks')
             ?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
@@ -288,11 +255,6 @@ describe('UserUiSettings', () => {
     })
 
     it('removes a network when delete is confirmed', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         const network = makeStoreNetwork({ id: 'net-del', name: 'Remove Me' })
         el.shadowRoot
             ?.querySelector('wg-networks')
@@ -315,10 +277,7 @@ describe('UserUiSettings', () => {
             'confirm',
             vi.fn(() => false)
         )
-
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
+        el = await fixture<UserUiSettings>(componentFixture)
         await ready(el)
 
         el.shadowRoot
@@ -356,11 +315,6 @@ describe('UserUiSettings', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         el.shadowRoot
             ?.querySelector('wg-networks')
             ?.dispatchEvent(
@@ -373,11 +327,6 @@ describe('UserUiSettings', () => {
     })
 
     it('adds an identity provider when wg-idps emits idp-add', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         const idp = makeIdp({ id: 'idp-new' })
         el.shadowRoot
             ?.querySelector('wg-idps')
@@ -396,11 +345,6 @@ describe('UserUiSettings', () => {
     })
 
     it('removes an identity provider when wg-idps emits delete', async () => {
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         const idp = makeIdp({ id: 'idp-del' })
         el.shadowRoot
             ?.querySelector('wg-idps')
@@ -438,11 +382,6 @@ describe('UserUiSettings', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
-
         el.shadowRoot
             ?.querySelector('wg-idps')
             ?.dispatchEvent(new IdpAddEvent(makeIdp()))
@@ -471,11 +410,6 @@ describe('UserUiSettings', () => {
             }
             return undefined
         })
-
-        const el = await fixture<UserUiSettings>(
-            html`<user-ui-settings></user-ui-settings>`
-        )
-        await ready(el)
 
         el.shadowRoot
             ?.querySelector('wg-idps')

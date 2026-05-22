@@ -42,23 +42,24 @@ import './index.js'
 import { UserUiAddIdp } from './index.js'
 
 describe('UserUiAddIdp', () => {
-    beforeEach(() => {
+    let el: UserUiAddIdp
+    const componentFixture = html`<user-ui-add-idp></user-ui-add-idp>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockIdpsPageFlow([])
+        el = await fixture<UserUiAddIdp>(componentFixture)
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
-    it('renders the add identity provider form', async () => {
-        const el = await fixture<UserUiAddIdp>(
-            html`<user-ui-add-idp></user-ui-add-idp>`
-        )
-
+    it('renders the add identity provider form', () => {
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
             'Add a new identity provider'
         )
@@ -66,10 +67,6 @@ describe('UserUiAddIdp', () => {
     })
 
     it('calls addIdp when the form is saved', async () => {
-        const el = await fixture<UserUiAddIdp>(
-            html`<user-ui-add-idp></user-ui-add-idp>`
-        )
-
         const idp = makeIdp({ id: 'new-idp' })
         el.shadowRoot
             ?.querySelector('idp-form')

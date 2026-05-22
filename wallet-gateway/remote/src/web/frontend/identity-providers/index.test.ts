@@ -50,6 +50,9 @@ function makeIdps(count: number) {
 }
 
 describe('UserUiIdentityProviders', () => {
+    let el: UserUiIdentityProviders
+    const componentFixture = html`<user-ui-identity-providers></user-ui-identity-providers>`
+
     beforeEach(() => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
@@ -58,15 +61,14 @@ describe('UserUiIdentityProviders', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
     it('renders identity provider cards after loading', async () => {
         mockIdpsPageFlow([makeIdp(), makeIdp({ id: 'idp-2' })])
 
-        const el = await fixture<UserUiIdentityProviders>(
-            html`<user-ui-identity-providers></user-ui-identity-providers>`
-        )
+        el = await fixture<UserUiIdentityProviders>(componentFixture)
 
         await waitUntil(() => getIdpCards(el).length === 2)
 
@@ -79,9 +81,7 @@ describe('UserUiIdentityProviders', () => {
     it('shows empty state when there are no identity providers', async () => {
         mockIdpsPageFlow([])
 
-        const el = await fixture<UserUiIdentityProviders>(
-            html`<user-ui-identity-providers></user-ui-identity-providers>`
-        )
+        el = await fixture<UserUiIdentityProviders>(componentFixture)
 
         await waitUntil(() =>
             el.shadowRoot?.textContent?.includes(
@@ -95,9 +95,7 @@ describe('UserUiIdentityProviders', () => {
     it('paginates identity providers on the first page', async () => {
         mockIdpsPageFlow(makeIdps(5))
 
-        const el = await fixture<UserUiIdentityProviders>(
-            html`<user-ui-identity-providers></user-ui-identity-providers>`
-        )
+        el = await fixture<UserUiIdentityProviders>(componentFixture)
 
         await waitUntil(() => el.idps.length === 5)
 
@@ -114,9 +112,7 @@ describe('UserUiIdentityProviders', () => {
     it('updates rendered cards when pagination changes page', async () => {
         mockIdpsPageFlow(makeIdps(5))
 
-        const el = await fixture<UserUiIdentityProviders>(
-            html`<user-ui-identity-providers></user-ui-identity-providers>`
-        )
+        el = await fixture<UserUiIdentityProviders>(componentFixture)
         await waitUntil(() => el.idps.length === 5)
 
         const pagination = el.shadowRoot?.querySelector('wg-pagination') as

@@ -227,7 +227,10 @@ describe('addUserSession', () => {
 })
 
 describe('UserApp', () => {
-    beforeEach(() => {
+    let el: UserApp
+    const componentFixture = html`<user-app></user-app>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         setLocationHref.mockReset()
@@ -236,19 +239,16 @@ describe('UserApp', () => {
         mockSessionList()
         setPath('/parties')
         vi.stubGlobal('opener', null)
+        el = await fixture<UserApp>(componentFixture)
     })
 
     afterEach(() => {
         vi.unstubAllGlobals()
-    })
-
-    afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
-    it('renders layout with the connected network name', async () => {
-        const el = await fixture<UserApp>(html`<user-app></user-app>`)
-
+    it('renders layout with the connected network name', () => {
         const layout = el.shadowRoot?.querySelector(
             'app-layout'
         ) as HTMLElement & {
@@ -261,7 +261,7 @@ describe('UserApp', () => {
 
     it('redirects to login on logout when there is no access token', async () => {
         authState.accessToken = undefined
-        const el = await fixture<UserApp>(html`<user-app></user-app>`)
+        el = await fixture<UserApp>(componentFixture)
 
         const header = el.shadowRoot
             ?.querySelector('app-layout')
@@ -287,7 +287,7 @@ describe('UserApp', () => {
             }
             return undefined
         })
-        const el = await fixture<UserApp>(html`<user-app></user-app>`)
+        el = await fixture<UserApp>(componentFixture)
         setLocationHref.mockClear()
 
         el.shadowRoot
@@ -316,6 +316,7 @@ describe('UserUI', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
@@ -349,6 +350,7 @@ describe('UserUIAuthRedirect', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
         vi.useRealTimers()

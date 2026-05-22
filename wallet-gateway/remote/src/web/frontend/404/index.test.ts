@@ -12,6 +12,7 @@ import { NotFoundUi } from './index.js'
 
 describe('NotFoundUi', () => {
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 

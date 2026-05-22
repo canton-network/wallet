@@ -50,6 +50,9 @@ function makeRpcTransportError(rpcMessage: string) {
 }
 
 describe('UserUiSignMessage', () => {
+    let el: UserUiSignMessage
+    const componentFixture = html`<user-ui-sign-message></user-ui-sign-message>`
+
     beforeEach(() => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
@@ -63,6 +66,7 @@ describe('UserUiSignMessage', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
     })
@@ -70,9 +74,7 @@ describe('UserUiSignMessage', () => {
     it('shows an error when messageId is missing from the URL', async () => {
         history.replaceState({}, '', '/sign-message')
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
 
         await waitUntil(() => el.loadError !== null)
 
@@ -95,9 +97,7 @@ describe('UserUiSignMessage', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
 
         await waitUntil(() => el.message === 'Hello, Canton')
 
@@ -123,9 +123,7 @@ describe('UserUiSignMessage', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
         await waitUntil(() => el.message === 'Sign me')
 
         el.shadowRoot?.querySelector<HTMLButtonElement>('.btn-primary')?.click()
@@ -164,9 +162,7 @@ describe('UserUiSignMessage', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
         await waitUntil(() => el.message === 'Sign me')
 
         el.shadowRoot
@@ -206,9 +202,7 @@ describe('UserUiSignMessage', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
         await waitUntil(() => el.message === 'Sign me')
 
         el.shadowRoot?.querySelector<HTMLButtonElement>('.btn-primary')?.click()
@@ -239,9 +233,7 @@ describe('UserUiSignMessage', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
         await waitUntil(() => el.message === 'Sign me')
 
         el.shadowRoot
@@ -271,9 +263,7 @@ describe('UserUiSignMessage', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
         await waitUntil(() => el.message === 'Sign me')
 
         setLocationHref.mockClear()
@@ -313,9 +303,7 @@ describe('UserUiSignMessage', () => {
             return undefined
         })
 
-        const el = await fixture<UserUiSignMessage>(
-            html`<user-ui-sign-message></user-ui-sign-message>`
-        )
+        el = await fixture<UserUiSignMessage>(componentFixture)
         await waitUntil(() => el.message === 'Sign me')
 
         const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})

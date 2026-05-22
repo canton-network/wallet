@@ -69,6 +69,9 @@ function getTransactionCards(el: UserUiActivities) {
 }
 
 describe('UserUiActivities', () => {
+    let el: UserUiActivities
+    const componentFixture = html`<user-ui-activities></user-ui-activities>`
+
     beforeEach(() => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
@@ -79,6 +82,7 @@ describe('UserUiActivities', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
@@ -87,9 +91,7 @@ describe('UserUiActivities', () => {
             transactions: makeTransactions(2),
         })
 
-        const el = await fixture<UserUiActivities>(
-            html`<user-ui-activities></user-ui-activities>`
-        )
+        el = await fixture<UserUiActivities>(componentFixture)
 
         await waitUntil(
             () => el.transactions.length === 2,
@@ -108,9 +110,7 @@ describe('UserUiActivities', () => {
     it('shows empty state when there are no transactions', async () => {
         mockRequest.mockResolvedValue({ transactions: [] })
 
-        const el = await fixture<UserUiActivities>(
-            html`<user-ui-activities></user-ui-activities>`
-        )
+        el = await fixture<UserUiActivities>(componentFixture)
 
         await waitUntil(() => !el.loading)
 
@@ -122,9 +122,7 @@ describe('UserUiActivities', () => {
             transactions: makeTransactions(5),
         })
 
-        const el = await fixture<UserUiActivities>(
-            html`<user-ui-activities></user-ui-activities>`
-        )
+        el = await fixture<UserUiActivities>(componentFixture)
 
         await waitUntil(() => el.transactions.length === 5)
 
@@ -142,9 +140,7 @@ describe('UserUiActivities', () => {
             transactions: makeTransactions(5),
         })
 
-        const el = await fixture<UserUiActivities>(
-            html`<user-ui-activities></user-ui-activities>`
-        )
+        el = await fixture<UserUiActivities>(componentFixture)
         await waitUntil(() => el.transactions.length === 5)
 
         const pagination = el.shadowRoot?.querySelector(
@@ -167,9 +163,7 @@ describe('UserUiActivities', () => {
             transactions: makeTransactions(1),
         })
 
-        const el = await fixture<UserUiActivities>(
-            html`<user-ui-activities></user-ui-activities>`
-        )
+        el = await fixture<UserUiActivities>(componentFixture)
         await waitUntil(() => el.transactions.length === 1)
 
         const card = el.shadowRoot?.querySelector('wg-transaction-card')
@@ -186,9 +180,7 @@ describe('UserUiActivities', () => {
     it('calls handleErrorToast when listing transactions fails', async () => {
         mockRequest.mockRejectedValue(new Error('list failed'))
 
-        const el = await fixture<UserUiActivities>(
-            html`<user-ui-activities></user-ui-activities>`
-        )
+        el = await fixture<UserUiActivities>(componentFixture)
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 

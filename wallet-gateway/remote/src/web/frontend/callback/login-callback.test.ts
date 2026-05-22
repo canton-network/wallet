@@ -91,6 +91,9 @@ function expectNoAuthSideEffects() {
 }
 
 describe('LoginCallback', () => {
+    let el: LoginCallback
+    const componentFixture = html`<login-callback></login-callback>`
+
     beforeEach(() => {
         mockRedirectToIntendedOrDefault.mockReset()
         mockAddUserSession.mockClear()
@@ -102,37 +105,34 @@ describe('LoginCallback', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         sessionStorage.clear()
         vi.unstubAllGlobals()
     })
 
     it('renders the logged-in heading', async () => {
-        const el = await fixture<LoginCallback>(
-            html`<login-callback></login-callback>`
-        )
+        el = await fixture<LoginCallback>(componentFixture)
 
         expect(el.shadowRoot?.textContent).toContain('Logged in!')
     })
 
     it('does nothing when both code and state are missing', async () => {
-        await fixture<LoginCallback>(html`<login-callback></login-callback>`)
+        el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
     })
 
     it('does nothing when only the authorization code is present', async () => {
         setCallbackUrl('auth-code-only')
-
-        await fixture<LoginCallback>(html`<login-callback></login-callback>`)
+        el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
     })
 
     it('does nothing when only the state parameter is present', async () => {
         setCallbackUrl(undefined, oauthState)
-
-        await fixture<LoginCallback>(html`<login-callback></login-callback>`)
+        el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
     })
@@ -140,8 +140,7 @@ describe('LoginCallback', () => {
     it('does nothing when the PKCE verifier is missing from session storage', async () => {
         setCallbackUrl('auth-code', oauthState)
         stubOAuthFetch(tokenWithExpiry())
-
-        await fixture<LoginCallback>(html`<login-callback></login-callback>`)
+        el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
     })
@@ -151,7 +150,7 @@ describe('LoginCallback', () => {
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
         stubOAuthFetch()
 
-        await fixture<LoginCallback>(html`<login-callback></login-callback>`)
+        el = await fixture<LoginCallback>(componentFixture)
 
         await waitUntil(() =>
             (vi.mocked(fetch) as ReturnType<typeof vi.fn>).mock.calls.some(
@@ -170,7 +169,7 @@ describe('LoginCallback', () => {
         const accessToken = tokenWithExpiry()
         stubOAuthFetch(accessToken)
 
-        await fixture<LoginCallback>(html`<login-callback></login-callback>`)
+        el = await fixture<LoginCallback>(componentFixture)
 
         await waitUntil(() => mockAddUserSession.mock.calls.length > 0)
 
@@ -184,7 +183,7 @@ describe('LoginCallback', () => {
         const accessToken = tokenWithExpiry()
         stubOAuthFetch(accessToken)
 
-        await fixture<LoginCallback>(html`<login-callback></login-callback>`)
+        el = await fixture<LoginCallback>(componentFixture)
 
         await waitUntil(() => mockAccessTokenSet.mock.calls.length > 0)
 

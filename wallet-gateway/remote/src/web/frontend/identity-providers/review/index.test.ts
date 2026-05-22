@@ -47,7 +47,10 @@ import { UserUiReviewIdp } from './index.js'
 const idp = makeIdp({ id: 'idp-review' })
 
 describe('UserUiReviewIdp', () => {
-    beforeEach(() => {
+    let el: UserUiReviewIdp
+    const componentFixture = html`<user-ui-review-idp></user-ui-review-idp>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
@@ -58,18 +61,16 @@ describe('UserUiReviewIdp', () => {
             'confirm',
             vi.fn(() => true)
         )
+        el = await fixture<UserUiReviewIdp>(componentFixture)
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
     })
 
     it('loads and renders the review form for the idp in the URL', async () => {
-        const el = await fixture<UserUiReviewIdp>(
-            html`<user-ui-review-idp></user-ui-review-idp>`
-        )
-
         await waitUntil(() => el.idp?.id === 'idp-review')
 
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
@@ -79,9 +80,6 @@ describe('UserUiReviewIdp', () => {
     })
 
     it('calls addIdp when the form is saved', async () => {
-        const el = await fixture<UserUiReviewIdp>(
-            html`<user-ui-review-idp></user-ui-review-idp>`
-        )
         await waitUntil(() => el.idp !== null)
 
         el.shadowRoot
@@ -98,9 +96,6 @@ describe('UserUiReviewIdp', () => {
     })
 
     it('calls removeIdp when delete is confirmed', async () => {
-        const el = await fixture<UserUiReviewIdp>(
-            html`<user-ui-review-idp></user-ui-review-idp>`
-        )
         await waitUntil(() => el.idp !== null)
 
         el.shadowRoot

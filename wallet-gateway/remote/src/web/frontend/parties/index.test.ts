@@ -50,7 +50,10 @@ import './index.js'
 import { UserUiParties, WALLET_CREATION_STATUS_CODE } from './index.js'
 
 describe('UserUiParties', () => {
-    beforeEach(() => {
+    let el: UserUiParties
+    const componentFixture = html`<user-ui-parties></user-ui-parties>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         showToast.mockReset()
@@ -68,18 +71,17 @@ describe('UserUiParties', () => {
                 primary: true,
             }),
         ])
+        history.replaceState({}, '', '/parties')
+        el = await fixture<UserUiParties>(componentFixture)
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.clearAllMocks()
     })
 
     it('renders parties header and wallet cards after loading wallets', async () => {
-        const el = await fixture<UserUiParties>(
-            html`<user-ui-parties></user-ui-parties>`
-        )
-
         await waitUntil(
             () => el.wallets !== undefined && el.wallets.length === 2,
             'wallets loaded'
@@ -90,9 +92,6 @@ describe('UserUiParties', () => {
     })
 
     it('navigates to add party page when New is clicked', async () => {
-        const el = await fixture<UserUiParties>(
-            html`<user-ui-parties></user-ui-parties>`
-        )
         await waitUntil(() => el.client !== null)
 
         const newBtn = el.shadowRoot?.querySelector(
@@ -109,7 +108,7 @@ describe('UserUiParties', () => {
         history.replaceState({}, '', '?createPartyStatus=1')
         const replaceState = vi.spyOn(history, 'replaceState')
 
-        await fixture<UserUiParties>(html`<user-ui-parties></user-ui-parties>`)
+        el = await fixture<UserUiParties>(componentFixture)
 
         expect(showToast).toHaveBeenCalledWith(
             'Party created',
@@ -127,7 +126,7 @@ describe('UserUiParties', () => {
             `?createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED}`
         )
 
-        await fixture<UserUiParties>(html`<user-ui-parties></user-ui-parties>`)
+        el = await fixture<UserUiParties>(componentFixture)
 
         expect(showToast).toHaveBeenCalledWith(
             'Party creation pending',
@@ -137,9 +136,6 @@ describe('UserUiParties', () => {
     })
 
     it('calls setPrimaryWallet when wallet-set-primary is dispatched', async () => {
-        const el = await fixture<UserUiParties>(
-            html`<user-ui-parties></user-ui-parties>`
-        )
         await waitUntil(() => el.wallets !== undefined)
 
         mockRequest.mockImplementation(async ({ method }) => {
@@ -172,9 +168,6 @@ describe('UserUiParties', () => {
     })
 
     it('shows success toast when allocatePartyForWallet returns allocated', async () => {
-        const el = await fixture<UserUiParties>(
-            html`<user-ui-parties></user-ui-parties>`
-        )
         await waitUntil(() => el.client !== null)
 
         mockRequest.mockImplementation(async ({ method }) => {
@@ -207,9 +200,6 @@ describe('UserUiParties', () => {
     })
 
     it('calls handleErrorToast when allocatePartyForWallet fails', async () => {
-        const el = await fixture<UserUiParties>(
-            html`<user-ui-parties></user-ui-parties>`
-        )
         await waitUntil(() => el.client !== null)
 
         mockRequest.mockImplementation(async ({ method }) => {

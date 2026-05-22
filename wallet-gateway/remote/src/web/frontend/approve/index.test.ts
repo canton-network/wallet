@@ -92,6 +92,9 @@ function mockApproveState(
 }
 
 describe('UserUiApprove', () => {
+    let el: ApproveUi
+    const componentFixture = html`<user-ui-approve></user-ui-approve>`
+
     beforeEach(() => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
@@ -108,118 +111,168 @@ describe('UserUiApprove', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
         vi.useRealTimers()
     })
 
-    it('loads transaction details from the URL and renders the detail view', async () => {
-        mockApproveState()
+    describe('with default approve state', () => {
+        beforeEach(async () => {
+            mockApproveState()
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(
+                () => el.commandId === 'cmd-1',
+                'transaction loaded'
+            )
+        })
 
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
+        it('loads transaction details from the URL and renders the detail view', () => {
+            expect(el.transactionId).toBe('tx-1')
+            expect(el.txHash).toBe('hash-abc')
+            expect(parsePreparedTransaction).toHaveBeenCalledWith(
+                'prepared-tx-blob'
+            )
+            expect(
+                el.shadowRoot?.querySelector('wg-transaction-detail')
+            ).not.toBeNull()
+        })
 
-        await waitUntil(() => el.commandId === 'cmd-1', 'transaction loaded')
+        it('redirects to activities after approve when closeafteraction is not set', async () => {
+            const closeSpy = vi
+                .spyOn(window, 'close')
+                .mockImplementation(() => {})
 
-        expect(el.transactionId).toBe('tx-1')
-        expect(el.txHash).toBe('hash-abc')
-        expect(parsePreparedTransaction).toHaveBeenCalledWith(
-            'prepared-tx-blob'
-        )
-        expect(
-            el.shadowRoot?.querySelector('wg-transaction-detail')
-        ).not.toBeNull()
+            el.shadowRoot
+                ?.querySelector('wg-transaction-detail')
+                ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
+
+            await waitUntil(() =>
+                mockRequest.mock.calls.some((c) => c[0]?.method === 'execute')
+            )
+            await waitUntil(
+                () => setLocationHref.mock.calls.length > 0,
+                'redirect after approve',
+                { timeout: 3000 }
+            )
+
+            expect(showToast).toHaveBeenCalledWith(
+                '',
+                'Activity executed successfully',
+                'success'
+            )
+            expect(closeSpy).not.toHaveBeenCalled()
+            expect(setLocationHref).toHaveBeenCalledWith(
+                expect.stringContaining('/activities')
+            )
+            expect(el.disabled).toBe(true)
+            closeSpy.mockRestore()
+        })
+
+        it('deletes transaction when reject is confirmed', async () => {
+            el.shadowRoot
+                ?.querySelector('wg-transaction-detail')
+                ?.dispatchEvent(new TransactionDeleteEvent('cmd-1'))
+
+            await waitUntil(() =>
+                mockRequest.mock.calls.some(
+                    (c) => c[0]?.method === 'deleteTransaction'
+                )
+            )
+            await waitUntil(
+                () => setLocationHref.mock.calls.length > 0,
+                'redirect after reject',
+                { timeout: 3000 }
+            )
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.objectContaining({ method: 'deleteTransaction' })
+            )
+            expect(showToast).toHaveBeenCalledWith(
+                '',
+                'Activity rejected successfully',
+                'success'
+            )
+            expect(setLocationHref).toHaveBeenCalledWith(
+                expect.stringContaining('/activities')
+            )
+        })
     })
 
-    it('shows read-only warning when primary wallet cannot submit', async () => {
-        mockApproveState(
-            makeTransaction(),
-            makeWallet({
-                primary: true,
-                rights: [PartyLevelRight.CanReadAs],
-            })
-        )
+    describe('with closeafteraction in the URL', () => {
+        beforeEach(async () => {
+            history.replaceState({}, '', '?transactionId=tx-1&closeafteraction')
+            mockApproveState()
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.commandId === 'cmd-1')
+        })
 
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
+        it('closes the window after approve when opened from a dApp', async () => {
+            setLocationHref.mockClear()
+            const openerGet = vi
+                .spyOn(window, 'opener', 'get')
+                .mockReturnValue({} as Window)
+            const closeSpy = vi
+                .spyOn(window, 'close')
+                .mockImplementation(() => {})
 
-        await waitUntil(() => el.canSubmit === false)
+            el.shadowRoot
+                ?.querySelector('wg-transaction-detail')
+                ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
 
-        expect(el.walletCapabilityMessage).toContain('read-only')
-        expect(el.shadowRoot?.querySelector('.alert-warning')).not.toBeNull()
+            await waitUntil(() =>
+                mockRequest.mock.calls.some((c) => c[0]?.method === 'execute')
+            )
+            await waitUntil(
+                () => closeSpy.mock.calls.length > 0,
+                'close popup after approve',
+                { timeout: 3000 }
+            )
+
+            openerGet.mockRestore()
+            closeSpy.mockRestore()
+
+            expect(setLocationHref).not.toHaveBeenCalled()
+            expect(el.disabled).toBe(true)
+        })
     })
 
-    it('redirects to activities after approve when closeafteraction is not set', async () => {
-        mockApproveState()
+    describe('with read-only wallet', () => {
+        beforeEach(async () => {
+            mockApproveState(
+                makeTransaction(),
+                makeWallet({
+                    primary: true,
+                    rights: [PartyLevelRight.CanReadAs],
+                })
+            )
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.canSubmit === false)
+        })
 
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
-        await waitUntil(() => el.commandId === 'cmd-1')
+        it('shows read-only warning when primary wallet cannot submit', () => {
+            expect(el.walletCapabilityMessage).toContain('read-only')
+            expect(
+                el.shadowRoot?.querySelector('.alert-warning')
+            ).not.toBeNull()
+        })
 
-        const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
+        it('does not sign when wallet is read-only', async () => {
+            el.shadowRoot
+                ?.querySelector('wg-transaction-detail')
+                ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
 
-        el.shadowRoot
-            ?.querySelector('wg-transaction-detail')
-            ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
+            await waitUntil(() => showToast.mock.calls.length > 0)
 
-        await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'execute')
-        )
-        await waitUntil(
-            () => setLocationHref.mock.calls.length > 0,
-            'redirect after approve',
-            { timeout: 3000 }
-        )
-
-        expect(showToast).toHaveBeenCalledWith(
-            '',
-            'Activity executed successfully',
-            'success'
-        )
-        expect(closeSpy).not.toHaveBeenCalled()
-        expect(setLocationHref).toHaveBeenCalledWith(
-            expect.stringContaining('/activities')
-        )
-        expect(el.disabled).toBe(true)
-        closeSpy.mockRestore()
-    })
-
-    it('closes the window after approve when opened from a dApp with closeafteraction', async () => {
-        history.replaceState({}, '', '?transactionId=tx-1&closeafteraction')
-        mockApproveState()
-
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
-        await waitUntil(() => el.commandId === 'cmd-1')
-
-        setLocationHref.mockClear()
-        const openerGet = vi
-            .spyOn(window, 'opener', 'get')
-            .mockReturnValue({} as Window)
-        const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {})
-
-        el.shadowRoot
-            ?.querySelector('wg-transaction-detail')
-            ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'execute')
-        )
-        await waitUntil(
-            () => closeSpy.mock.calls.length > 0,
-            'close popup after approve',
-            { timeout: 3000 }
-        )
-
-        openerGet.mockRestore()
-        closeSpy.mockRestore()
-
-        expect(setLocationHref).not.toHaveBeenCalled()
-        expect(el.disabled).toBe(true)
+            expect(mockRequest).not.toHaveBeenCalledWith(
+                expect.objectContaining({ method: 'sign' })
+            )
+            expect(showToast).toHaveBeenCalledWith(
+                'Read-only wallet',
+                expect.any(String),
+                'error'
+            )
+        })
     })
 
     it('shows info toast when sign returns pending', async () => {
@@ -245,10 +298,7 @@ describe('UserUiApprove', () => {
             }
             return undefined
         })
-
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
+        el = await fixture<ApproveUi>(componentFixture)
         await waitUntil(() => el.commandId === 'cmd-1')
 
         el.shadowRoot
@@ -265,82 +315,13 @@ describe('UserUiApprove', () => {
         expect(setLocationHref).not.toHaveBeenCalled()
     })
 
-    it('does not sign when wallet is read-only', async () => {
-        mockApproveState(
-            makeTransaction(),
-            makeWallet({
-                primary: true,
-                rights: [PartyLevelRight.CanReadAs],
-            })
-        )
-
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
-        await waitUntil(() => el.canSubmit === false)
-
-        el.shadowRoot
-            ?.querySelector('wg-transaction-detail')
-            ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
-
-        await waitUntil(() => showToast.mock.calls.length > 0)
-
-        expect(mockRequest).not.toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'sign' })
-        )
-        expect(showToast).toHaveBeenCalledWith(
-            'Read-only wallet',
-            expect.any(String),
-            'error'
-        )
-    })
-
-    it('deletes transaction when reject is confirmed', async () => {
-        mockApproveState()
-
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
-        await waitUntil(() => el.commandId === 'cmd-1')
-
-        el.shadowRoot
-            ?.querySelector('wg-transaction-detail')
-            ?.dispatchEvent(new TransactionDeleteEvent('cmd-1'))
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some(
-                (c) => c[0]?.method === 'deleteTransaction'
-            )
-        )
-        await waitUntil(
-            () => setLocationHref.mock.calls.length > 0,
-            'redirect after reject',
-            { timeout: 3000 }
-        )
-
-        expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'deleteTransaction' })
-        )
-        expect(showToast).toHaveBeenCalledWith(
-            '',
-            'Activity rejected successfully',
-            'success'
-        )
-        expect(setLocationHref).toHaveBeenCalledWith(
-            expect.stringContaining('/activities')
-        )
-    })
-
     it('does not delete when reject confirmation is cancelled', async () => {
         vi.stubGlobal(
             'confirm',
             vi.fn(() => false)
         )
         mockApproveState()
-
-        const el = await fixture<ApproveUi>(
-            html`<user-ui-approve></user-ui-approve>`
-        )
+        el = await fixture<ApproveUi>(componentFixture)
         await waitUntil(() => el.commandId === 'cmd-1')
 
         el.shadowRoot

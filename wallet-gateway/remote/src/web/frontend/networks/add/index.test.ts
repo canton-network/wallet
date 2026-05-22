@@ -42,23 +42,24 @@ import './index.js'
 import { UserUiAddNetwork } from './index.js'
 
 describe('UserUiAddNetwork', () => {
-    beforeEach(() => {
+    let el: UserUiAddNetwork
+    const componentFixture = html`<user-ui-add-network></user-ui-add-network>`
+
+    beforeEach(async () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockNetworksPageFlow([])
+        el = await fixture<UserUiAddNetwork>(componentFixture)
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
-    it('renders the add-network form', async () => {
-        const el = await fixture<UserUiAddNetwork>(
-            html`<user-ui-add-network></user-ui-add-network>`
-        )
-
+    it('renders the add-network form', () => {
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
             'Add a new network'
         )
@@ -66,10 +67,6 @@ describe('UserUiAddNetwork', () => {
     })
 
     it('calls addNetwork when the form is saved', async () => {
-        const el = await fixture<UserUiAddNetwork>(
-            html`<user-ui-add-network></user-ui-add-network>`
-        )
-
         const form = el.shadowRoot?.querySelector('network-form')
         form?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
 

@@ -50,6 +50,9 @@ function makeNetworks(count: number) {
 }
 
 describe('UserUiNetworks', () => {
+    let el: UserUiNetworks
+    const componentFixture = html`<user-ui-networks></user-ui-networks>`
+
     beforeEach(() => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
@@ -58,15 +61,14 @@ describe('UserUiNetworks', () => {
     })
 
     afterEach(() => {
+        // make sure toast is gone from DOM
         document.body.innerHTML = ''
     })
 
     it('renders network cards after loading', async () => {
         mockNetworksPageFlow([makeNetwork(), makeNetwork({ id: 'net-2' })])
 
-        const el = await fixture<UserUiNetworks>(
-            html`<user-ui-networks></user-ui-networks>`
-        )
+        el = await fixture<UserUiNetworks>(componentFixture)
 
         await waitUntil(() => getNetworkCards(el).length === 2)
 
@@ -77,9 +79,7 @@ describe('UserUiNetworks', () => {
     it('shows empty state when there are no networks', async () => {
         mockNetworksPageFlow([])
 
-        const el = await fixture<UserUiNetworks>(
-            html`<user-ui-networks></user-ui-networks>`
-        )
+        el = await fixture<UserUiNetworks>(componentFixture)
 
         await waitUntil(() =>
             el.shadowRoot?.textContent?.includes('No networks configured')
@@ -91,9 +91,7 @@ describe('UserUiNetworks', () => {
     it('shows the add button for admin users', async () => {
         mockNetworksPageFlow([makeNetwork()], { isAdmin: true })
 
-        const el = await fixture<UserUiNetworks>(
-            html`<user-ui-networks></user-ui-networks>`
-        )
+        el = await fixture<UserUiNetworks>(componentFixture)
 
         await waitUntil(() => getNetworkCards(el).length === 1)
 
@@ -103,9 +101,7 @@ describe('UserUiNetworks', () => {
     it('hides the add button for non-admin users', async () => {
         mockNetworksPageFlow([makeNetwork()], { isAdmin: false })
 
-        const el = await fixture<UserUiNetworks>(
-            html`<user-ui-networks></user-ui-networks>`
-        )
+        el = await fixture<UserUiNetworks>(componentFixture)
 
         await waitUntil(() => getNetworkCards(el).length === 1)
 
@@ -115,9 +111,7 @@ describe('UserUiNetworks', () => {
     it('paginates networks on the first page', async () => {
         mockNetworksPageFlow(makeNetworks(4))
 
-        const el = await fixture<UserUiNetworks>(
-            html`<user-ui-networks></user-ui-networks>`
-        )
+        el = await fixture<UserUiNetworks>(componentFixture)
 
         await waitUntil(() => el.networks.length === 4)
 
@@ -132,9 +126,7 @@ describe('UserUiNetworks', () => {
     it('updates rendered cards when pagination changes page', async () => {
         mockNetworksPageFlow(makeNetworks(4))
 
-        const el = await fixture<UserUiNetworks>(
-            html`<user-ui-networks></user-ui-networks>`
-        )
+        el = await fixture<UserUiNetworks>(componentFixture)
         await waitUntil(() => el.networks.length === 4)
 
         const pagination = el.shadowRoot?.querySelector('wg-pagination') as
