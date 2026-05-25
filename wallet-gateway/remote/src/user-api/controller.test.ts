@@ -29,7 +29,7 @@ const mockNetworkStatus = vi.hoisted(() =>
     vi.fn().mockResolvedValue({
         isConnected: true,
         reason: undefined,
-        cantonVersion: 'test-version',
+        cantonVersion: '3.4',
     })
 )
 
@@ -256,7 +256,7 @@ describe('userController', () => {
         mockNetworkStatus.mockResolvedValue({
             isConnected: true,
             reason: undefined,
-            cantonVersion: 'test-version',
+            cantonVersion: '3.4',
         })
         walletAllocationMocks.createWallet.mockReset()
         walletAllocationMocks.allocateParty.mockReset()
