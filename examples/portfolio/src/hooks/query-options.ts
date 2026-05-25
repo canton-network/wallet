@@ -38,7 +38,7 @@ export const useAllocationsQueryOptions = (party: string | undefined) => {
 export const useIsDevNetQueryOptions = (sessionToken: string | undefined) => {
     const { isDevNet } = usePortfolio()
     return queryOptions({
-        queryKey: queryKeys.isDevNet.forSession(sessionToken),
+        queryKey: queryKeys.isDevNet.all,
         queryFn: async () =>
             sessionToken ? isDevNet({ sessionToken }) : false,
         enabled: !!sessionToken,

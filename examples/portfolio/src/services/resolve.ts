@@ -102,7 +102,7 @@ const tokenStandardClients = new Map()
 const tokenStandardService: { singleton: TokenStandardService | undefined } = {
     singleton: undefined,
 }
-const amuletServices = new Map()
+const amuletServices = new Map<string, AmuletService>()
 const transactionHistoryServices = new Map()
 
 // Can be called to reset clients on disconnects.
@@ -141,8 +141,8 @@ export const resolveAmuletService = async ({
 }: {
     sessionToken: string
 }): Promise<AmuletService> => {
-    const key = sessionToken
-    if (amuletServices.has(key)) return amuletServices.get(key)
+    const key = 'current-session'
+    if (amuletServices.has(key)) return amuletServices.get(key)!
     const tokenStandardService = await resolveTokenStandardService()
     const amuletService = await createAmuletService({
         sessionToken,
