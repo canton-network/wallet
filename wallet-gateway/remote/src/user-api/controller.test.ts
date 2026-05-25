@@ -173,6 +173,16 @@ const session: Session = {
     accessToken: 'session-token',
 }
 
+const pendingTransaction: Transaction = {
+    id: 'tx-1',
+    commandId: 'cmd-1',
+    status: 'pending',
+    preparedTransaction: 'blob',
+    preparedTransactionHash: 'hash',
+    origin: null,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+}
+
 const primaryWallet: Wallet = {
     primary: true,
     partyId: 'party::namespace',
@@ -260,7 +270,9 @@ describe('userController', () => {
         walletSyncMocks.isWalletSyncNeeded.mockResolvedValue(false)
         transactionServiceMocks.signWithParticipant.mockReset()
         transactionServiceMocks.signWithWalletKernel.mockReset()
+        transactionServiceMocks.executeWithParticipant.mockReset()
         transactionServiceMocks.executeWithExternal.mockReset()
+        transactionServiceMocks.executeWithDfns.mockReset()
         mockFetchOidcUserInfo.mockReset()
     })
 
@@ -469,6 +481,27 @@ describe('userController', () => {
 
             await controller.removeIdp({ identityProviderId: 'idp-new' })
             expect(removeIdpSpy).toHaveBeenCalledWith('idp-new')
+        })
+
+        it('updates an existing idp for the admin user', async () => {
+            const store = await createStore(logger, adminAuth)
+            const updateIdpSpy = vi.spyOn(store, 'updateIdp')
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId
+            )
+
+            const updatedIdp: Idp = {
+                ...idp,
+                issuer: 'http://auth-updated',
+            }
+            await controller.addIdp({ idp: updatedIdp })
+
+            expect(updateIdpSpy).toHaveBeenCalledWith(updatedIdp)
         })
 
         it('lists idps from the store', async () => {
@@ -708,15 +741,7 @@ describe('userController', () => {
     })
 
     describe('transactions', () => {
-        const transaction: Transaction = {
-            id: 'tx-1',
-            commandId: 'cmd-1',
-            status: 'pending',
-            preparedTransaction: 'blob',
-            preparedTransactionHash: 'hash',
-            origin: null,
-            createdAt: new Date('2026-01-01T00:00:00.000Z'),
-        }
+        const transaction = pendingTransaction
 
         it('returns transaction details via getTransaction', async () => {
             const store = await createStore(logger, auth)
@@ -841,6 +866,96 @@ describe('userController', () => {
         })
     })
 
+    describe('execute', () => {
+        const executeParams = {
+            signature: 'sig',
+            partyId: primaryWallet.partyId,
+            transactionId: pendingTransaction.id,
+            signedBy: primaryWallet.namespace,
+        }
+
+        it('delegates to TransactionService.executeWithParticipant', async () => {
+            const store = await createStore(logger, auth)
+            await store.removeWallet(primaryWallet.partyId)
+            await store.addWallet(participantWallet)
+            await store.setTransaction(pendingTransaction)
+            transactionServiceMocks.executeWithParticipant.mockResolvedValue({
+                commandId: pendingTransaction.commandId,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {
+                    [SigningProvider.PARTICIPANT]: {
+                        controller: vi.fn(() => ({})),
+                    },
+                }
+            )
+
+            const result = await controller.execute({
+                ...executeParams,
+                partyId: participantWallet.partyId,
+            })
+
+            expect(
+                transactionServiceMocks.executeWithParticipant
+            ).toHaveBeenCalledWith(
+                regularUserId,
+                {
+                    ...executeParams,
+                    partyId: participantWallet.partyId,
+                },
+                expect.objectContaining({ id: pendingTransaction.id }),
+                expect.objectContaining({
+                    getWithRetry: ledgerMocks.getWithRetry,
+                }),
+                expect.objectContaining({ id: storeNetwork.id })
+            )
+            expect(result).toEqual({ commandId: pendingTransaction.commandId })
+            expect(
+                transactionServiceMocks.executeWithExternal
+            ).not.toHaveBeenCalled()
+        })
+
+        it('delegates to TransactionService.executeWithExternal', async () => {
+            const store = await createStore(logger, auth)
+            await store.setTransaction(pendingTransaction)
+            transactionServiceMocks.executeWithExternal.mockResolvedValue({
+                commandId: pendingTransaction.commandId,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {
+                    [SigningProvider.WALLET_KERNEL]: {
+                        controller: vi.fn(() => ({})),
+                    },
+                }
+            )
+
+            const result = await controller.execute(executeParams)
+
+            expect(
+                transactionServiceMocks.executeWithExternal
+            ).toHaveBeenCalledWith(
+                regularUserId,
+                executeParams,
+                expect.objectContaining({ id: pendingTransaction.id }),
+                expect.objectContaining({
+                    getWithRetry: ledgerMocks.getWithRetry,
+                })
+            )
+            expect(result).toEqual({ commandId: pendingTransaction.commandId })
+            expect(
+                transactionServiceMocks.executeWithParticipant
+            ).not.toHaveBeenCalled()
+        })
+    })
+
     describe('sessions', () => {
         it('returns an empty list when there is no session', async () => {
             const store = await createStore(logger, auth, {
@@ -941,6 +1056,10 @@ describe('userController', () => {
     })
 
     describe('createWallet', () => {
+        const walletKernelDriver = {
+            [SigningProvider.WALLET_KERNEL]: { controller: vi.fn() },
+        }
+
         it('throws when no network session exists', async () => {
             const store = await createStore(logger, auth, {
                 withSession: false,
@@ -976,6 +1095,480 @@ describe('userController', () => {
                     signingProviderId: SigningProvider.WALLET_KERNEL,
                 })
             ).rejects.toThrow('Signing provider wallet-kernel not supported')
+        })
+
+        it('creates a wallet when the signing provider is configured', async () => {
+            const authWithEmail = { ...auth, email: 'user@example.com' }
+            const store = await createStore(logger, authWithEmail)
+            const newWallet: Wallet = {
+                ...primaryWallet,
+                partyId: 'party::new',
+                primary: false,
+            }
+            walletAllocationMocks.createWallet.mockResolvedValue(newWallet)
+            const notifier = notificationService.getNotifier(auth.userId)
+            const emitSpy = vi.spyOn(notifier, 'emit')
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithEmail,
+                walletKernelDriver
+            )
+
+            const result = await controller.createWallet({
+                partyHint: 'alice',
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+                primary: false,
+            })
+
+            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
+                regularUserId,
+                'user@example.com',
+                'alice',
+                false,
+                SigningProvider.WALLET_KERNEL
+            )
+            expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
+            expect(emitSpy).toHaveBeenCalledWith(
+                'accountsChanged',
+                expect.any(Array)
+            )
+            expect(result.wallet).toEqual(newWallet)
+            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
+        })
+
+        it('uses email from auth context without calling OIDC userinfo', async () => {
+            const authWithEmail = { ...auth, email: 'direct@example.com' }
+            const store = await createStore(logger, authWithEmail)
+            walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithEmail,
+                walletKernelDriver
+            )
+
+            await controller.createWallet({
+                partyHint: 'bob',
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+            })
+
+            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
+            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
+                regularUserId,
+                'direct@example.com',
+                'bob',
+                false,
+                SigningProvider.WALLET_KERNEL
+            )
+        })
+
+        it('resolves email from OIDC userinfo when not in auth context', async () => {
+            mockFetchOidcUserInfo.mockResolvedValue({
+                email: 'from-oidc@example.com',
+            })
+            const store = await createStore(logger, auth)
+            walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                walletKernelDriver
+            )
+
+            await controller.createWallet({
+                partyHint: 'alice',
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+            })
+
+            expect(mockFetchOidcUserInfo).toHaveBeenCalledWith(
+                idp.configUrl,
+                auth.accessToken
+            )
+            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
+                regularUserId,
+                'from-oidc@example.com',
+                'alice',
+                false,
+                SigningProvider.WALLET_KERNEL
+            )
+        })
+
+        it('does not resolve email from OIDC when idp is not oauth', async () => {
+            const selfSignedIdp: Idp = {
+                id: 'idp1',
+                type: 'self_signed',
+                issuer: 'self',
+            }
+            const store = new StoreInternal(
+                { idps: [selfSignedIdp], networks: [storeNetwork] },
+                logger,
+                auth
+            )
+            await store.setSession(session)
+            await store.removeWallet(primaryWallet.partyId)
+            await store.addWallet({
+                ...primaryWallet,
+                signingProviderId: SigningProvider.BLOCKDAEMON,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {
+                    [SigningProvider.BLOCKDAEMON]: {
+                        controller: vi.fn(() => ({})),
+                    },
+                }
+            )
+
+            await expect(
+                controller.sign({
+                    transactionId: pendingTransaction.id,
+                    partyId: primaryWallet.partyId,
+                })
+            ).rejects.toThrow('Email is required for Blockdaemon')
+
+            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
+        })
+
+        it('continues without email when OIDC userinfo lookup fails', async () => {
+            mockFetchOidcUserInfo.mockRejectedValue(
+                new Error('OIDC unavailable')
+            )
+            const store = await createStore(logger, auth)
+            walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                walletKernelDriver
+            )
+
+            await controller.createWallet({
+                partyHint: 'alice',
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+            })
+
+            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
+                regularUserId,
+                undefined,
+                'alice',
+                false,
+                SigningProvider.WALLET_KERNEL
+            )
+        })
+
+        it('returns undefined without calling OIDC when no current network', async () => {
+            const store = await createStore(logger, auth)
+            let getCurrentNetworkCalls = 0
+            vi.spyOn(store, 'getCurrentNetwork').mockImplementation(
+                async () => {
+                    getCurrentNetworkCalls += 1
+                    if (getCurrentNetworkCalls === 1) {
+                        return undefined as unknown as StoreNetwork
+                    }
+                    return storeNetwork
+                }
+            )
+            walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                walletKernelDriver
+            )
+
+            await controller.createWallet({
+                partyHint: 'alice',
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+            })
+
+            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
+            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
+                regularUserId,
+                undefined,
+                'alice',
+                false,
+                SigningProvider.WALLET_KERNEL
+            )
+        })
+    })
+
+    describe('allocatePartyForWallet', () => {
+        const walletKernelDriver = {
+            [SigningProvider.WALLET_KERNEL]: { controller: vi.fn() },
+        }
+
+        it('allocates a party for an existing wallet', async () => {
+            const authWithEmail = { ...auth, email: 'user@example.com' }
+            const store = await createStore(logger, authWithEmail)
+            const notifier = notificationService.getNotifier(auth.userId)
+            const emitSpy = vi.spyOn(notifier, 'emit')
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithEmail,
+                walletKernelDriver
+            )
+
+            const result = await controller.allocatePartyForWallet({
+                partyId: primaryWallet.partyId,
+            })
+
+            expect(walletAllocationMocks.allocateParty).toHaveBeenCalledWith(
+                regularUserId,
+                'user@example.com',
+                primaryWallet,
+                SigningProvider.WALLET_KERNEL
+            )
+            expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
+            expect(emitSpy).toHaveBeenCalledWith(
+                'accountsChanged',
+                expect.any(Array)
+            )
+            expect(result.wallet).toMatchObject({
+                partyId: primaryWallet.partyId,
+                networkId: storeNetwork.id,
+            })
+        })
+
+        it('throws when the wallet is not found', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                walletKernelDriver
+            )
+
+            await expect(
+                controller.allocatePartyForWallet({
+                    partyId: 'party::missing',
+                })
+            ).rejects.toThrow('Wallet not found for party party::missing')
+        })
+
+        it('throws when the signing provider is not configured', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(
+                controller.allocatePartyForWallet({
+                    partyId: primaryWallet.partyId,
+                })
+            ).rejects.toThrow('Signing provider wallet-kernel not supported')
+        })
+    })
+
+    describe('syncWallets', () => {
+        it('syncs wallets and returns the result without emitting when nothing changed', async () => {
+            const store = await createStore(logger, auth)
+            const notifier = notificationService.getNotifier(auth.userId)
+            const emitSpy = vi.spyOn(notifier, 'emit')
+            const emptyResult = { added: [], updated: [], disabled: [] }
+            walletSyncMocks.syncWallets.mockResolvedValue(emptyResult)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const result = await controller.syncWallets()
+
+            expect(walletSyncMocks.syncWallets).toHaveBeenCalledOnce()
+            expect(result).toEqual(emptyResult)
+            expect(emitSpy).not.toHaveBeenCalledWith(
+                'accountsChanged',
+                expect.anything()
+            )
+        })
+
+        it('throws when admin auth is not configured', async () => {
+            const networkWithoutAdmin: StoreNetwork = {
+                ...storeNetwork,
+                adminAuth: undefined,
+            }
+            const store = new StoreInternal(
+                { idps: [idp], networks: [networkWithoutAdmin] },
+                logger,
+                auth
+            )
+            await store.setSession(session)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(controller.syncWallets()).rejects.toThrow(
+                'No admin auth configured'
+            )
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
+        })
+
+        it('throws when auth context is missing', async () => {
+            const store = await createStore(logger, auth, {
+                withSession: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            await expect(controller.syncWallets()).rejects.toThrow()
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
+        })
+
+        it('emits accountsChanged when wallets are added and disabled during sync', async () => {
+            const store = await createStore(logger, auth)
+            const notifier = notificationService.getNotifier(auth.userId)
+            const emitSpy = vi.spyOn(notifier, 'emit')
+            const addedWallet: Wallet = {
+                ...primaryWallet,
+                partyId: 'party::added',
+            }
+            const disabledWallet: Wallet = {
+                ...primaryWallet,
+                partyId: 'party::disabled',
+                status: 'removed',
+            }
+            const syncResult = {
+                added: [addedWallet],
+                updated: [],
+                disabled: [disabledWallet],
+            }
+            walletSyncMocks.syncWallets.mockResolvedValue(syncResult)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const result = await controller.syncWallets()
+
+            expect(result).toEqual(syncResult)
+            expect(emitSpy).toHaveBeenCalledWith(
+                'accountsChanged',
+                expect.arrayContaining([
+                    expect.objectContaining({ partyId: primaryWallet.partyId }),
+                ])
+            )
+        })
+
+        it('does not emit accountsChanged when only wallets are added', async () => {
+            const store = await createStore(logger, auth)
+            const notifier = notificationService.getNotifier(auth.userId)
+            const emitSpy = vi.spyOn(notifier, 'emit')
+            walletSyncMocks.syncWallets.mockResolvedValue({
+                added: [{ ...primaryWallet, partyId: 'party::added' }],
+                updated: [],
+                disabled: [],
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await controller.syncWallets()
+
+            expect(emitSpy).not.toHaveBeenCalledWith(
+                'accountsChanged',
+                expect.anything()
+            )
+        })
+    })
+
+    describe('isWalletSyncNeeded', () => {
+        it('returns false when wallet sync is not needed', async () => {
+            const store = await createStore(logger, auth)
+            walletSyncMocks.isWalletSyncNeeded.mockResolvedValue(false)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const result = await controller.isWalletSyncNeeded()
+
+            expect(walletSyncMocks.isWalletSyncNeeded).toHaveBeenCalledOnce()
+            expect(result).toEqual({ walletSyncNeeded: false })
+        })
+
+        it('returns true when wallet sync is needed', async () => {
+            const store = await createStore(logger, auth)
+            walletSyncMocks.isWalletSyncNeeded.mockResolvedValue(true)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const result = await controller.isWalletSyncNeeded()
+
+            expect(walletSyncMocks.isWalletSyncNeeded).toHaveBeenCalledOnce()
+            expect(result).toEqual({ walletSyncNeeded: true })
+        })
+
+        it('throws when admin auth is not configured', async () => {
+            const networkWithoutAdmin: StoreNetwork = {
+                ...storeNetwork,
+                adminAuth: undefined,
+            }
+            const store = new StoreInternal(
+                { idps: [idp], networks: [networkWithoutAdmin] },
+                logger,
+                auth
+            )
+            await store.setSession(session)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(controller.isWalletSyncNeeded()).rejects.toThrow(
+                'No admin auth configured'
+            )
+            expect(walletSyncMocks.isWalletSyncNeeded).not.toHaveBeenCalled()
+        })
+
+        it('throws when auth context is missing', async () => {
+            const store = await createStore(logger, auth, {
+                withSession: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            await expect(controller.isWalletSyncNeeded()).rejects.toThrow()
+            expect(walletSyncMocks.isWalletSyncNeeded).not.toHaveBeenCalled()
         })
     })
 })
