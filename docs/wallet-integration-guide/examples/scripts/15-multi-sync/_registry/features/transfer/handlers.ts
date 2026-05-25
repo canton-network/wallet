@@ -4,21 +4,10 @@
 /**
  * TestToken implementation of TransferHandlers.
  *
- * Resolves the TransferFactory by looking up the live TokenRules contract from the
+ * Resolves the TransferFactory by looking up the live CompositionRules contract from the
  * ledger ACS, then exposes it as a disclosed contract in the choice context.
- *
- * transferKind is inferred from the choiceArguments:
- *  - 'self'  when sender === receiver (self-transfer, typically to move a token
- *             across synchronizers — Canton auto-reassigns the holding)
- *  - 'offer' otherwise (creates a TokenTransferOffer the receiver must accept)
- *
- * Synchronizer selection:
- *  - All transfers (self or offer) use the app-synchronizer TokenRules as the factory,
- *    because Token holdings live on app-sync. Disclosed TokenRules must match the
- *    transaction target synchronizer to avoid PRESCRIBED_SYNCHRONIZER_ID_MISMATCH.
- *
- * Accept/reject/withdraw context endpoints return an empty context — no extra
- * contracts need to be disclosed for those choices.
+ * CompositionRules is used instead of TokenRules so that splice-test-token-v1 stays
+ * on the app-synchronizer only (never on global).
  */
 
 import type {

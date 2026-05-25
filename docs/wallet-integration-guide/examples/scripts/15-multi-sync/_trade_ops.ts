@@ -20,6 +20,8 @@ export const TEST_TOKEN_PREFIX =
     '#splice-test-token-v1:Splice.Testing.Tokens.TestTokenV1'
 export const TRADING_APP_PREFIX =
     '#splice-token-test-trading-app-v2:Splice.Testing.Apps.TradingAppV2'
+export const COMPOSITION_TOKEN_PREFIX =
+    '#splice-test-token-composition:Splice.Testing.Tokens.TokenComposition'
 
 export const ALICE_AMULET_TAP_AMOUNT = '2000000'
 export const BOB_TOKEN_MINT_AMOUNT = '500'
@@ -106,6 +108,7 @@ export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
             templateIds: [
                 AMULET_TEMPLATE_ID,
                 `${TEST_TOKEN_PREFIX}:Token`,
+                `${COMPOSITION_TOKEN_PREFIX}:CompositionToken`,
                 `${TRADING_APP_PREFIX}:OTCTradeAllocationRequest`,
             ],
             parties: [bob.partyId],
@@ -113,7 +116,10 @@ export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
         {
             label: PARTY_HINT_TOKEN_ADMIN,
             sdk: p3Sdk,
-            templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
+            templateIds: [
+                `${TEST_TOKEN_PREFIX}:TokenRules`,
+                `${COMPOSITION_TOKEN_PREFIX}:CompositionRules`,
+            ],
             parties: [tokenAdmin.partyId],
         },
         {
@@ -195,6 +201,7 @@ export async function createTokenRulesAndMintForBob(
         bob,
         tokenAdmin,
         appSynchronizerId,
+        globalSynchronizerId,
     } = setup
 
     await p3Sdk.ledger
@@ -215,10 +222,40 @@ export async function createTokenRulesAndMintForBob(
     await p3Sdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
+            commands: {
+                CreateCommand: {
+                    templateId: `${COMPOSITION_TOKEN_PREFIX}:CompositionRules`,
+                    createArguments: { admin: tokenAdmin.partyId },
+                },
+            },
+            disclosedContracts: [],
+            synchronizerId: appSynchronizerId,
+        })
+        .sign(tokenAdmin.keyPair.privateKey)
+        .execute({ partyId: tokenAdmin.partyId })
+
+    await p3Sdk.ledger
+        .prepare({
+            partyId: tokenAdmin.partyId,
+            commands: {
+                CreateCommand: {
+                    templateId: `${COMPOSITION_TOKEN_PREFIX}:CompositionRules`,
+                    createArguments: { admin: tokenAdmin.partyId },
+                },
+            },
+            disclosedContracts: [],
+            synchronizerId: globalSynchronizerId,
+        })
+        .sign(tokenAdmin.keyPair.privateKey)
+        .execute({ partyId: tokenAdmin.partyId })
+
+    await p3Sdk.ledger
+        .prepare({
+            partyId: tokenAdmin.partyId,
             commands: [
                 {
                     CreateCommand: {
-                        templateId: `${TEST_TOKEN_PREFIX}:Token`,
+                        templateId: `${COMPOSITION_TOKEN_PREFIX}:CompositionToken`,
                         createArguments: {
                             holding: {
                                 owner: tokenAdmin.partyId,
@@ -241,13 +278,15 @@ export async function createTokenRulesAndMintForBob(
         .execute({ partyId: tokenAdmin.partyId })
 
     const adminTokenHoldings = await p3Sdk.ledger.acs.read({
-        templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
         parties: [tokenAdmin.partyId],
         filterByParty: true,
     })
     const adminTokenCid = adminTokenHoldings[0]?.contractId
     if (!adminTokenCid)
-        throw new Error('TokenAdmin Token holding not found after mint')
+        throw new Error(
+            'TokenAdmin CompositionToken holding not found after mint'
+        )
 
     const [transferCommand, transferDisclosed] =
         await p3Sdk.token.transfer.create({
@@ -273,7 +312,9 @@ export async function createTokenRulesAndMintForBob(
     const deadline = Date.now() + 30_000
     while (!transferOfferCid && Date.now() < deadline) {
         const transferOffers = await p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:TokenTransferOffer`],
+            templateIds: [
+                `${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`,
+            ],
             parties: [bob.partyId],
             filterByParty: true,
         })
@@ -282,7 +323,7 @@ export async function createTokenRulesAndMintForBob(
             await new Promise((res) => setTimeout(res, 2_000))
     }
     if (!transferOfferCid)
-        throw new Error('TokenTransferOffer not found for Bob after 30s')
+        throw new Error('CompositionTransferOffer not found for Bob after 30s')
 
     const [acceptCommand, acceptDisclosed] =
         await tokenNamespaceP2.transfer.accept({
@@ -301,7 +342,7 @@ export async function createTokenRulesAndMintForBob(
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        `TokenAdmin: TokenRules created on app-synchronizer only; Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer`
+        `TokenAdmin: TokenRules on app-sync only; CompositionRules on both syncs; Bob: ${BOB_TOKEN_MINT_AMOUNT} CompositionToken minted on app-synchronizer`
     )
 }
 
@@ -597,12 +638,13 @@ export async function allocateTokenForBob(
     if (!requestView || !legId) throw new Error('No transfer leg found for Bob')
 
     const tokenHoldings = await p2Sdk.ledger.acs.read({
-        templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
         parties: [bob.partyId],
         filterByParty: true,
     })
     const tokenHolding = tokenHoldings[0]
-    if (!tokenHolding) throw new Error('Token holding not found for Bob')
+    if (!tokenHolding)
+        throw new Error('CompositionToken holding not found for Bob')
 
     const [command, disclosedFromHelper] =
         await tokenNamespaceP2.allocation.instruction.create({
@@ -821,13 +863,15 @@ export async function aliceSelfTransferToApp(
     const { p1Sdk, tokenNamespaceP1, alice, appSynchronizerId } = setup
 
     const aliceTokens = await p1Sdk.ledger.acs.read({
-        templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
         parties: [alice.partyId],
         filterByParty: true,
     })
     const aliceTokenCid = aliceTokens[0]?.contractId
     if (!aliceTokenCid)
-        throw new Error('Alice: Token holding not found after settlement')
+        throw new Error(
+            'Alice: CompositionToken holding not found after settlement'
+        )
 
     const [transferCommand, transferDisclosed] =
         await tokenNamespaceP1.transfer.create({
@@ -860,13 +904,13 @@ export async function bobSelfTransferToApp(
     const { p2Sdk, tokenNamespaceP2, bob, appSynchronizerId } = setup
 
     const bobTokens = await p2Sdk.ledger.acs.read({
-        templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
         parties: [bob.partyId],
         filterByParty: true,
     })
 
     if (bobTokens.length === 0) {
-        logger.info('Bob: no TestToken holdings to self-transfer')
+        logger.info('Bob: no CompositionToken holdings to self-transfer')
         return
     }
 
@@ -924,7 +968,7 @@ export async function assertTokensOnAppSync(
     for (const { sdk, party } of checks) {
         const name = party.partyId.split('::')[0]
         const tokens = await sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+            templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
             parties: [party.partyId],
             filterByParty: true,
         })

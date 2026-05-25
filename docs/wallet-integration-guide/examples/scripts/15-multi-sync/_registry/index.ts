@@ -21,7 +21,11 @@ import {
     type ServerResponse,
 } from 'node:http'
 import type { Logger } from 'pino'
-import { buildLedgerClient, readTokenRules } from './ledger.js'
+import {
+    buildLedgerClient,
+    readTokenRules,
+    readCompositionRules,
+} from './ledger.js'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
 import type { TokenRulesContract } from './ledger.js'
 import { createRouter, respond, readBody } from './http/router.js'
@@ -165,18 +169,31 @@ export async function startRegistry(
         return all.find((c) => c.synchronizerId === synchronizerId) ?? all[0]!
     }
 
+    async function getCompositionRules(
+        synchronizerId?: string
+    ): Promise<TokenRulesContract | null> {
+        const all = await readCompositionRules(
+            ledgerClient,
+            tokenAdminPartyId,
+            logger
+        )
+        if (all.length === 0) return null
+        if (!synchronizerId) return all[0]!
+        return all.find((c) => c.synchronizerId === synchronizerId) ?? all[0]!
+    }
+
     const metadata = createMetadataHandlers({
         tokenAdminPartyId,
         supportedApis: SUPPORTED_APIS,
         instrumentId: TEST_TOKEN_INSTRUMENT_ID,
     })
     const transfer = createTransferHandlers({
-        getTokenRules,
+        getTokenRules: getCompositionRules,
         appSynchronizerId,
     })
     const allocInstr = createAllocationInstructionHandlers({
-        getTokenRules,
-        globalSynchronizerId,
+        getTokenRules: getCompositionRules,
+        appSynchronizerId,
     })
     const alloc = createAllocationHandlers()
 

@@ -35,6 +35,8 @@ const TRADING_APP_V2_DAR_LOCAL_PATH =
     './daml/splice-token-test-trading-app-v2/splice-token-test-trading-app-v2-1.0.0.dar'
 const TEST_TOKEN_V1_DAR_LOCAL_PATH =
     './daml/splice-test-token-v1/splice-test-token-v1-1.0.0.dar'
+const COMPOSITION_TOKEN_DAR_LOCAL_PATH =
+    './daml/splice-test-token-composition/.daml/dist/splice-test-token-composition-1.0.0.dar'
 
 export type PartyInfo = Omit<
     GenerateTransactionResponse,
@@ -150,9 +152,14 @@ export async function setupMultiSyncTrade(
     const here = path.dirname(fileURLToPath(import.meta.url))
     const tradingAppV2DarPath = path.join(here, TRADING_APP_V2_DAR_LOCAL_PATH)
     const testTokenV1DarPath = path.join(here, TEST_TOKEN_V1_DAR_LOCAL_PATH)
+    const compositionTokenDarPath = path.join(
+        here,
+        COMPOSITION_TOKEN_DAR_LOCAL_PATH
+    )
     for (const [darPath, darName] of [
         [tradingAppV2DarPath, TRADING_APP_V2_DAR_LOCAL_PATH],
         [testTokenV1DarPath, TEST_TOKEN_V1_DAR_LOCAL_PATH],
+        [compositionTokenDarPath, COMPOSITION_TOKEN_DAR_LOCAL_PATH],
     ] as [string, string][]) {
         try {
             await fs.stat(darPath)
@@ -164,23 +171,29 @@ export async function setupMultiSyncTrade(
         }
     }
 
-    const [tradingAppDar, testTokenV1Dar] = await Promise.all([
-        fs.readFile(tradingAppV2DarPath),
-        fs.readFile(testTokenV1DarPath),
-    ])
+    const [tradingAppDar, testTokenV1Dar, compositionTokenDar] =
+        await Promise.all([
+            fs.readFile(tradingAppV2DarPath),
+            fs.readFile(testTokenV1DarPath),
+            fs.readFile(compositionTokenDarPath),
+        ])
 
     await Promise.all([
         ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].map((ctx) =>
             vetDar(ctx.ledgerProvider, tradingAppDar, globalSynchronizerId)
         ),
+        ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].map((ctx) =>
+            vetDar(ctx.ledgerProvider, testTokenV1Dar, appSynchronizerId)
+        ),
+
         ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].flatMap((ctx) =>
             [appSynchronizerId, globalSynchronizerId].map((sid) =>
-                vetDar(ctx.ledgerProvider, testTokenV1Dar, sid)
+                vetDar(ctx.ledgerProvider, compositionTokenDar, sid)
             )
         ),
     ])
     logger.info(
-        'DARs vetted: trading-app-v2 on global only; test-token-v1 on app-sync + global (global = transit only)'
+        'DARs vetted: trading-app-v2 on global only; test-token-v1 on app-sync only; composition-token on both'
     )
 
     const aliceKey = p1Sdk.keys.generate()

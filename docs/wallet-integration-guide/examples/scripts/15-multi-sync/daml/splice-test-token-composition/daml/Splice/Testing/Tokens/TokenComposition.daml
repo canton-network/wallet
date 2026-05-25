@@ -1,0 +1,334 @@
+-- Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+-- | Token Composition — a self-contained V1 token implementation vetted on
+-- BOTH the global synchronizer and the private app-synchronizer.
+--
+-- Design goals
+-- ─────────────
+-- 1. NO dependency on splice-test-token-v1 or splice-token-test-trading-app-v2.
+--    This package references only token standard API interfaces, which are
+--    already vetted everywhere.  Adding this package to global-sync therefore
+--    does NOT force TokenRules or TradingApp to follow.
+--
+-- 2. Enforces the sync-placement invariants in example 15:
+--    • TokenRules (splice-test-token-v1) → app-synchronizer ONLY
+--    • TradingApp  (splice-token-test-trading-app-v2) → global-sync ONLY
+--    • THIS package → global-sync + app-synchronizer
+--
+-- 3. Why this matters:
+--    OTCTrade_Settle runs on global-sync and needs to exercise V1.Allocation
+--    on Bob's token allocation.  If Bob's allocation is a CompositionAllocation
+--    (from THIS package, vetted on global), P3 can resolve it during the
+--    prepare step without ever needing splice-test-token-v1 on global.
+--    TokenRules stays strictly private; the composition factory is the only
+--    cross-sync-visible factory.
+--
+-- Templates
+-- ─────────
+-- • CompositionToken         — the token holding
+-- • CompositionTransferOffer — pending transfer instruction
+-- • CompositionAllocation    — allocation (implements V1.Allocation)
+-- • CompositionRules         — AllocationFactory + TransferFactory
+--                              (intended to live on BOTH synchronizers)
+module Splice.Testing.Tokens.TokenComposition where
+
+import DA.Optional (isNone, optionalToList)
+
+import Splice.Api.Token.MetadataV1
+import Splice.Api.Token.HoldingV1 qualified as V1
+import Splice.Api.Token.AllocationV1 qualified as V1
+import Splice.Api.Token.AllocationInstructionV1 qualified as V1
+import Splice.Api.Token.TransferInstructionV1 qualified as V1
+
+
+-- | A composition token holding.
+-- Signatories: both the instrument admin and the token owner —
+-- identical to TestTokenV1.Token so the pattern is familiar.
+template CompositionToken
+  with
+    holding : V1.HoldingView
+  where
+    signatory holding.owner, holding.instrumentId.admin
+
+    ensure
+      holding.amount > 0.0 &&   -- positive amounts only
+      isNone holding.lock        -- no locked holdings
+
+    interface instance V1.Holding for CompositionToken where
+      view = holding
+
+
+-- | Pending transfer offer for a CompositionToken.
+-- Acts as both the transfer instruction and the escrowed holding.
+template CompositionTransferOffer
+  with
+    transfer : V1.Transfer
+  where
+    ensure transfer.amount > 0.0 && transfer.requestedAt <= transfer.executeBefore
+
+    signatory transfer.sender, transfer.instrumentId.admin
+    observer  transfer.receiver
+
+    interface instance V1.Holding for CompositionTransferOffer where
+      view = transferHoldingView transfer
+
+    interface instance V1.TransferInstruction for CompositionTransferOffer where
+      view = V1.TransferInstructionView with
+        originalInstructionCid = None
+        transfer
+        status = V1.TransferPendingReceiverAcceptance
+        meta   = emptyMetadata
+
+      transferInstruction_withdrawImpl _self _arg = do
+        tokenCid <- create CompositionToken with
+          holding = (transferHoldingView transfer) with lock = None
+        pure V1.TransferInstructionResult with
+          output          = V1.TransferInstructionResult_Failed
+          senderChangeCids = [toInterfaceContractId tokenCid]
+          meta            = emptyMetadata
+
+      transferInstruction_rejectImpl _self _arg = do
+        tokenCid <- create CompositionToken with
+          holding = (transferHoldingView transfer) with lock = None
+        pure V1.TransferInstructionResult with
+          output           = V1.TransferInstructionResult_Failed
+          senderChangeCids = [toInterfaceContractId tokenCid]
+          meta             = emptyMetadata
+
+      transferInstruction_updateImpl _self _arg =
+        fail "CompositionTransferOffer: TransferInstruction_Update not supported"
+
+      transferInstruction_acceptImpl _self _arg = do
+        tokenCid <- create CompositionToken with
+          holding = (transferHoldingView transfer) with
+            owner = transfer.receiver
+            lock  = None
+        pure V1.TransferInstructionResult with
+          senderChangeCids = []
+          output           = V1.TransferInstructionResult_Completed with
+            receiverHoldingCids = [toInterfaceContractId tokenCid]
+          meta             = emptyMetadata
+
+
+-- | Allocation of a CompositionToken for a specific settlement.
+-- Implements V1.Allocation so it can be passed directly to SettlementBatchV1
+-- as `allocationCid` — no proxy contract needed.
+--
+-- Because THIS package is vetted on global-sync, P3 (the sv node) can resolve
+-- this type during OTCTrade_Settle preparation without requiring
+-- splice-test-token-v1 to be vetted on global.
+template CompositionAllocation
+  with
+    allocation : V1.AllocationSpecification
+  where
+    signatory allocation.transferLeg.sender, allocation.transferLeg.instrumentId.admin
+    observer  allocation.settlement.executor
+
+    ensure
+      allocation.transferLeg.amount > 0.0 &&
+      allocation.settlement.allocateBefore <= allocation.settlement.settleBefore
+
+    interface instance V1.Holding for CompositionAllocation where
+      view = allocationHoldingView allocation
+
+    interface instance V1.Allocation for CompositionAllocation where
+      view = V1.AllocationView with
+        allocation
+        holdingCids = []
+        meta        = emptyMetadata
+
+      allocation_withdrawImpl _self _arg = do
+        tokenCid <- create CompositionToken with
+          holding = (allocationHoldingView allocation) with lock = None
+        pure V1.Allocation_WithdrawResult with
+          senderHoldingCids = [toInterfaceContractId tokenCid]
+          meta              = emptyMetadata
+
+      allocation_cancelImpl _self _arg = do
+        tokenCid <- create CompositionToken with
+          holding = (allocationHoldingView allocation) with lock = None
+        pure V1.Allocation_CancelResult with
+          senderHoldingCids = [toInterfaceContractId tokenCid]
+          meta              = emptyMetadata
+
+      allocation_executeTransferImpl _self _arg = do
+        tokenCid <- create CompositionToken with
+          holding = (allocationHoldingView allocation) with
+            owner = allocation.transferLeg.receiver
+            lock  = None
+        pure V1.Allocation_ExecuteTransferResult with
+          senderHoldingCids   = []
+          receiverHoldingCids = [toInterfaceContractId tokenCid]
+          meta                = emptyMetadata
+
+
+-- | The composition factory — provides both AllocationFactory and TransferFactory.
+--
+-- VETTING CONTRACT
+-- ────────────────
+-- This template is the cross-sync bridge.  It is created on the
+-- app-synchronizer (to exercise allocation there) AND on the
+-- global-synchronizer (so P3 can resolve it during OTCTrade_Settle).
+-- Having CompositionRules on BOTH synchronizers is safe because:
+--   • It contains no sensitive business rules (those live in TokenRules on private sync).
+--   • It depends only on token standard API interfaces.
+--   • Vetting it on global does NOT pull TokenRules or TradingApp onto global.
+template CompositionRules
+  with
+    admin : Party
+  where
+    signatory admin
+
+    interface instance V1.TransferFactory for CompositionRules where
+      view = V1.TransferFactoryView with admin; meta = emptyMetadata
+
+      transferFactory_publicFetchImpl _self _arg =
+        pure V1.TransferFactoryView with admin; meta = emptyMetadata
+
+      transferFactory_transferImpl _self arg = do
+        let transfer = arg.transfer
+        assertMsg "Instrument admin must match factory admin"
+          (transfer.instrumentId.admin == admin)
+        assertMsg "Transfer expectedAdmin must match factory admin"
+          (arg.expectedAdmin == admin)
+        assertMsg "Transfer amount must be positive"
+          (transfer.amount > 0.0)
+        now <- getTime
+        assertMsg "Transfer.requestedAt must not be in the future"
+          (transfer.requestedAt <= now)
+        assertMsg "Transfer.executeBefore must not be in the past"
+          (transfer.executeBefore > now)
+
+        optSenderChangeCid <- consumeCompositionHoldings
+          transfer.sender
+          transfer.inputHoldingCids
+          transfer.amount
+          transfer.instrumentId
+        let senderChangeCids = optionalToList (toInterfaceContractId <$> optSenderChangeCid)
+        if transfer.receiver == transfer.sender
+          then do
+            splitCid <- create CompositionToken with
+              holding = (transferHoldingView transfer) with lock = None
+            pure V1.TransferInstructionResult with
+              senderChangeCids
+              output = V1.TransferInstructionResult_Completed with
+                receiverHoldingCids = [toInterfaceContractId splitCid]
+              meta = emptyMetadata
+          else do
+            instrCid <- create CompositionTransferOffer with transfer
+            pure V1.TransferInstructionResult with
+              senderChangeCids
+              output = V1.TransferInstructionResult_Pending with
+                transferInstructionCid = toInterfaceContractId instrCid
+              meta = emptyMetadata
+
+    interface instance V1.AllocationFactory for CompositionRules where
+      view = V1.AllocationFactoryView with admin; meta = emptyMetadata
+
+      allocationFactory_publicFetchImpl _self _arg =
+        pure V1.AllocationFactoryView with admin; meta = emptyMetadata
+
+      allocationFactory_allocateImpl _self arg = do
+        let V1.AllocationFactory_Allocate
+              { allocation
+              , requestedAt
+              , inputHoldingCids
+              } = arg
+        let settlement  = allocation.settlement
+        let transferLeg = allocation.transferLeg
+
+        assertMsg "AllocationFactory expectedAdmin must match factory admin"
+          (arg.expectedAdmin == admin)
+        assertMsg "Instrument admin must match factory admin"
+          (transferLeg.instrumentId.admin == admin)
+        assertMsg "Transfer amount must be positive"
+          (transferLeg.amount > 0.0)
+        assertMsg "At least one input holding must be provided"
+          (not $ null inputHoldingCids)
+        assertMsg "allocateBefore must not be in the past before settleBefore"
+          (settlement.allocateBefore <= settlement.settleBefore)
+        now <- getTime
+        assertMsg "Allocation.settlement.requestedAt must not be in the future"
+          (settlement.requestedAt <= now)
+        assertMsg "Allocation.settlement.allocateBefore must not be in the past"
+          (settlement.allocateBefore > now)
+        assertMsg "requestedAt must not be in the future"
+          (requestedAt <= now)
+
+        optSenderChangeCid <- consumeCompositionHoldings
+          transferLeg.sender
+          inputHoldingCids
+          transferLeg.amount
+          transferLeg.instrumentId
+        allocationCid <- toInterfaceContractId <$> create CompositionAllocation with
+          allocation = arg.allocation
+
+        pure V1.AllocationInstructionResult with
+          senderChangeCids = optionalToList (toInterfaceContractId <$> optSenderChangeCid)
+          output           = V1.AllocationInstructionResult_Completed with allocationCid
+          meta             = emptyMetadata
+
+
+-- ── Internal helpers ──────────────────────────────────────────────────────────
+
+-- | Consume composition holdings up to `amount`, returning a change contract
+-- if there is a remainder.  Verifies that each input belongs to `sender` and
+-- matches `instrumentId`.
+consumeCompositionHoldings
+  : Party
+  -> [ContractId V1.Holding]
+  -> Decimal
+  -> V1.InstrumentId
+  -> Update (Optional (ContractId CompositionToken))
+consumeCompositionHoldings sender inputCids amount instrumentId = do
+  inputAmounts <- forA inputCids $ \cid -> do
+    holding <- fetch cid
+    archive cid
+    let v = view holding
+    assertMsg ("Holding owner (" <> show v.owner <>
+               ") must match transfer sender (" <> show sender <> ")")
+      (v.owner == sender)
+    assertMsg ("Holding instrumentId (" <> show v.instrumentId <>
+               ") must match transfer instrumentId (" <> show instrumentId <> ")")
+      (v.instrumentId == instrumentId)
+    pure v.amount
+  let total = sum inputAmounts
+  assertMsg ("Total input (" <> show total <>
+             ") < required amount (" <> show amount <> ")")
+    (total >= amount)
+  let remainder = total - amount
+  if remainder == 0.0
+    then pure None
+    else Some <$> create CompositionToken with
+      holding = V1.HoldingView with
+        owner        = sender
+        amount       = remainder
+        instrumentId = instrumentId
+        lock         = None
+        meta         = emptyMetadata
+
+-- | Build a HoldingView for a pending allocation (locked).
+allocationHoldingView : V1.AllocationSpecification -> V1.HoldingView
+allocationHoldingView spec =
+  V1.HoldingView with
+    owner        = spec.transferLeg.sender
+    amount       = spec.transferLeg.amount
+    instrumentId = spec.transferLeg.instrumentId
+    lock         = Some V1.Lock with
+      holders     = [spec.transferLeg.sender, spec.transferLeg.instrumentId.admin]
+      expiresAt   = Some spec.settlement.settleBefore
+      expiresAfter = None
+      context     = Some ("composition allocation for settlement of "
+                         <> spec.settlement.settlementRef.id)
+    meta         = emptyMetadata
+
+-- | Build a HoldingView for a transfer offer (sender's escrow).
+transferHoldingView : V1.Transfer -> V1.HoldingView
+transferHoldingView t =
+  V1.HoldingView with
+    owner        = t.sender
+    amount       = t.amount
+    instrumentId = t.instrumentId
+    lock         = None
+    meta         = emptyMetadata

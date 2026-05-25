@@ -16,6 +16,8 @@ import type { Logger } from 'pino'
 
 export const TOKEN_RULES_TEMPLATE_ID =
     '#splice-test-token-v1:Splice.Testing.Tokens.TestTokenV1:TokenRules'
+export const COMPOSITION_RULES_TEMPLATE_ID =
+    '#splice-test-token-composition:Splice.Testing.Tokens.TokenComposition:CompositionRules'
 
 export interface TokenRulesContract {
     contractId: string
@@ -119,4 +121,69 @@ export async function readTokenRules(
 
 export function invalidateCache(): void {
     cache = null
+}
+
+let compositionCache: Cache | null = null
+
+/**
+ * Reads `CompositionRules` contracts visible to `tokenAdminPartyId`.
+ * These are vetted on BOTH synchronizers and act as the cross-sync factory bridge.
+ */
+export async function readCompositionRules(
+    client: LedgerClient,
+    tokenAdminPartyId: string,
+    logger: Logger
+): Promise<TokenRulesContract[]> {
+    const now = Date.now()
+    if (compositionCache && now < compositionCache.expireAt) {
+        logger.debug('CompositionRules cache hit')
+        return compositionCache.contracts
+    }
+
+    logger.debug('Fetching CompositionRules from ledger ACS…')
+
+    const ledgerEnd = await client.get('/v2/state/ledger-end')
+    const offset = ledgerEnd.offset ?? 0
+
+    const rawAcs = await client.activeContracts({
+        offset,
+        templateIds: [COMPOSITION_RULES_TEMPLATE_ID],
+        parties: [tokenAdminPartyId],
+    })
+
+    const contracts: TokenRulesContract[] = rawAcs
+        .filter(
+            (entry) =>
+                entry.contractEntry != null &&
+                'JsActiveContract' in entry.contractEntry
+        )
+        .map((entry) => {
+            const jsAC = (
+                entry.contractEntry as {
+                    JsActiveContract: {
+                        createdEvent: {
+                            contractId: string
+                            templateId: string
+                            createdEventBlob: string
+                        }
+                        synchronizerId: string
+                    }
+                }
+            ).JsActiveContract
+
+            return {
+                contractId: jsAC.createdEvent.contractId,
+                templateId: jsAC.createdEvent.templateId,
+                createdEventBlob: jsAC.createdEvent.createdEventBlob,
+                synchronizerId: jsAC.synchronizerId,
+            }
+        })
+
+    logger.debug(
+        { count: contracts.length },
+        'CompositionRules contracts fetched from ledger'
+    )
+
+    compositionCache = { contracts, expireAt: now + CACHE_TTL_MS }
+    return contracts
 }

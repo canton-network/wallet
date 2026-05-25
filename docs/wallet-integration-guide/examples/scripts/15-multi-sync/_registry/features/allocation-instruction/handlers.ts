@@ -4,12 +4,14 @@
 /**
  * TestToken implementation of AllocationInstructionHandlers.
  *
- * Resolves the AllocationFactory by looking up the live TokenRules contract on the
- * *global* synchronizer from the ledger ACS. For trade settlement the token must
- * be allocated on the global (trade) synchronizer, so we always return the
- * TokenRules contract that lives there.  The TokenRules contract is also included
- * as a disclosed contract so the wallet SDK can pass it through to the Ledger API
- * when exercising AllocationFactory_Allocate via the interface.
+ * Resolves the AllocationFactory by looking up the live CompositionRules contract on the
+ * *app-synchronizer*. The allocation transaction is submitted to app-sync (where the
+ * CompositionToken holding lives), so the disclosed factory must target the same sync to
+ * avoid PRESCRIBED_SYNCHRONIZER_ID_MISMATCH.
+ *
+ * After allocation, the CompositionAllocation is explicitly reassigned to global-sync
+ * (by `reassignTokenAllocationToGlobal`) so that `OTCTrade_Settle` on global can
+ * consume it atomically.
  */
 
 import type {
@@ -24,7 +26,7 @@ export interface AllocationInstructionHandlerContext {
         synchronizerId?: string
     ) => Promise<TokenRulesContract | null>
 
-    globalSynchronizerId: string
+    appSynchronizerId: string
 }
 
 export function createAllocationInstructionHandlers(
@@ -34,7 +36,7 @@ export function createAllocationInstructionHandlers(
         getAllocationFactory: async (
             _req: GetFactoryRequest
         ): Promise<FactoryWithChoiceContext | null> => {
-            const tokenRules = await ctx.getTokenRules(ctx.globalSynchronizerId)
+            const tokenRules = await ctx.getTokenRules(ctx.appSynchronizerId)
             if (!tokenRules) return null
             return {
                 factoryId: tokenRules.contractId,

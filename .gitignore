@@ -50,3 +50,10 @@ __screenshots__/
 
 # python
 **/__pycache__/
+
+# DAML build artifacts (keep .daml/dist/ for DARs)
+**/.daml/dependencies/
+**/.daml/interfaces/
+**/.daml/package-database/
+**/.daml/setup-package-db.lock
+**/.daml/cache/
