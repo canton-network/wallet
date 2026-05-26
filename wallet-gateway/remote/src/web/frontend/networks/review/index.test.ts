@@ -56,6 +56,7 @@ describe('UserUiReviewNetwork', () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
+        setLocationHref.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockNetworksPageFlow([network])
         history.replaceState({}, '', '?id=net-review')
@@ -149,5 +150,158 @@ describe('UserUiReviewNetwork', () => {
                 params: { networkName: 'net-review' },
             })
         )
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks/')
+        )
+    })
+
+    it('navigates back when the network is not found', async () => {
+        history.replaceState({}, '', '?id=missing-net')
+        el = await fixture<UserUiReviewNetwork>(componentFixture)
+
+        await waitUntil(() => handleErrorToast.mock.calls.length > 0)
+
+        expect(handleErrorToast).toHaveBeenCalled()
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks')
+        )
+        expect(el.network).toBeNull()
+    })
+
+    it('navigates back when loading networks fails', async () => {
+        mockRequest.mockRejectedValue(new Error('list failed'))
+        el = await fixture<UserUiReviewNetwork>(componentFixture)
+
+        await waitUntil(() => handleErrorToast.mock.calls.length > 0)
+
+        expect(handleErrorToast).toHaveBeenCalled()
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks')
+        )
+    })
+
+    it('navigates to the list after a successful save', async () => {
+        await waitUntil(() => el.network !== null)
+
+        setLocationHref.mockClear()
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(
+                new NetworkEditSaveEvent(
+                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
+                )
+            )
+
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks/')
+        )
+    })
+
+    it('calls handleErrorToast when save fails', async () => {
+        await waitUntil(() => el.network !== null)
+
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listNetworks') {
+                return { networks: [network] }
+            }
+            if (method === 'addNetwork') {
+                throw new Error('save failed')
+            }
+            return undefined
+        })
+
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(
+                new NetworkEditSaveEvent(
+                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
+                )
+            )
+
+        await waitUntil(() => handleErrorToast.mock.calls.length > 0)
+
+        expect(handleErrorToast).toHaveBeenCalled()
+    })
+
+    it('does not delete when confirmation is declined', async () => {
+        await waitUntil(() => el.network !== null)
+        vi.mocked(confirm).mockReturnValue(false)
+
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(
+                new NetworkDeleteEvent(
+                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
+                )
+            )
+
+        expect(
+            mockRequest.mock.calls.some((c) => c[0]?.method === 'removeNetwork')
+        ).toBe(false)
+    })
+
+    it('calls handleErrorToast when delete fails', async () => {
+        await waitUntil(() => el.network !== null)
+
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listNetworks') {
+                return { networks: [network] }
+            }
+            if (method === 'removeNetwork') {
+                throw new Error('delete failed')
+            }
+            return undefined
+        })
+
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(
+                new NetworkDeleteEvent(
+                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
+                )
+            )
+
+        await waitUntil(() => handleErrorToast.mock.calls.length > 0)
+
+        expect(handleErrorToast).toHaveBeenCalled()
+    })
+
+    it('includes synchronizerId and adminAuth when saving a network', async () => {
+        await waitUntil(() => el.network !== null)
+
+        const storeNetwork = makeStoreNetwork({
+            id: 'net-review',
+            name: 'Review Net',
+            synchronizerId: 'sync::456',
+            adminAuth: {
+                method: 'client_credentials',
+                audience: 'admin-aud',
+                scope: 'admin-scope',
+                clientId: 'admin-client',
+                clientSecret: 'admin-secret',
+            },
+        })
+
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(new NetworkEditSaveEvent(storeNetwork))
+
+        await waitUntil(() =>
+            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
+        )
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            method: 'addNetwork',
+            params: {
+                network: expect.objectContaining({
+                    synchronizerId: 'sync::456',
+                    adminAuth: expect.objectContaining({
+                        clientId: 'admin-client',
+                    }),
+                }),
+            },
+        })
     })
 })

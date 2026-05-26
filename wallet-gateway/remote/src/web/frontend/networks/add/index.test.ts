@@ -49,6 +49,7 @@ describe('UserUiAddNetwork', () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
+        setLocationHref.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockNetworksPageFlow([])
         el = await fixture<UserUiAddNetwork>(componentFixture)
@@ -77,5 +78,105 @@ describe('UserUiAddNetwork', () => {
         expect(mockRequest).toHaveBeenCalledWith(
             expect.objectContaining({ method: 'addNetwork' })
         )
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks/')
+        )
+    })
+
+    it('navigates back when Back is clicked', () => {
+        const backBtn = el.shadowRoot?.querySelector(
+            '.page-header button'
+        ) as HTMLButtonElement
+        backBtn.click()
+
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('/networks')
+        )
+    })
+
+    it('calls handleErrorToast and clears loading when addNetwork fails', async () => {
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'addNetwork') {
+                throw new Error('add failed')
+            }
+            return undefined
+        })
+
+        el.loading = true
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
+
+        await waitUntil(() => handleErrorToast.mock.calls.length > 0)
+
+        expect(handleErrorToast).toHaveBeenCalled()
+        expect(el.loading).toBe(false)
+        expect(setLocationHref).not.toHaveBeenCalled()
+    })
+
+    it('includes synchronizerId and adminAuth when saving a network', async () => {
+        const network = makeStoreNetwork({
+            synchronizerId: 'sync::123',
+            adminAuth: {
+                method: 'client_credentials',
+                audience: 'admin-aud',
+                scope: 'admin-scope',
+                clientId: 'admin-client',
+                clientSecret: 'admin-secret',
+            },
+        })
+
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(new NetworkEditSaveEvent(network))
+
+        await waitUntil(() =>
+            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
+        )
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            method: 'addNetwork',
+            params: {
+                network: expect.objectContaining({
+                    synchronizerId: 'sync::123',
+                    adminAuth: expect.objectContaining({
+                        clientId: 'admin-client',
+                    }),
+                }),
+            },
+        })
+    })
+
+    it('uses default adminAuth when adminAuth is omitted', async () => {
+        const network = makeStoreNetwork()
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { adminAuth: _adminAuth, ...networkWithoutAdmin } = network
+
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(
+                new NetworkEditSaveEvent(
+                    networkWithoutAdmin as ReturnType<typeof makeStoreNetwork>
+                )
+            )
+
+        await waitUntil(() =>
+            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
+        )
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            method: 'addNetwork',
+            params: {
+                network: expect.objectContaining({
+                    adminAuth: {
+                        method: 'client_credentials',
+                        audience: '',
+                        scope: '',
+                        clientId: '',
+                        clientSecret: '',
+                    },
+                }),
+            },
+        })
     })
 })
