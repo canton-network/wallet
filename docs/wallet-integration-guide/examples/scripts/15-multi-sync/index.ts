@@ -2,8 +2,17 @@ import pino from 'pino'
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
 import {
+    PARTY_HINT_ALICE,
+    PARTY_HINT_BOB,
+    PARTY_HINT_TRADING_APP,
+    PARTY_HINT_TOKEN_ADMIN,
+} from './_config.js'
+import {
+    AMULET_TEMPLATE_ID,
+    TEST_TOKEN_PREFIX,
     TRADE_AMULET_AMOUNT,
     TRADE_TOKEN_AMOUNT,
+    TRADING_APP_PREFIX,
     mintAmuletForAlice,
     createTokenRulesAndMintForBob,
     createAndInitiateOtcTrade,
@@ -12,7 +21,6 @@ import {
     settleOtcTrade,
     aliceSelfTransferToApp,
     bobSelfTransferToApp,
-    buildContractReadSpec,
 } from './_trade_ops.js'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
@@ -25,10 +33,53 @@ const logger = pino({ name: 'v1-15-multi-sync-trade', level: 'info' })
 // Step 2: Vet DARs on both synchronizers for P1+P2; global only for P3 (sv is not connected to app-synchronizer)
 // Step 3: Allocate parties for Alice (P1), Bob (P2), TradingApp (P3), and TokenAdmin (P3)
 const setup = await setupMultiSyncTrade(logger)
-const { tokenNamespaceP2, alice, bob, tokenAdmin, synchronizers, amuletAdmin } =
-    setup
+const {
+    p1Sdk,
+    p2Sdk,
+    p3Sdk,
+    tokenNamespaceP2,
+    alice,
+    bob,
+    tradingApp,
+    tokenAdmin,
+    synchronizers,
+    amuletAdmin,
+} = setup
 
-const allPartySpecs = buildContractReadSpec(setup)
+const allPartySpecs = [
+    {
+        label: PARTY_HINT_ALICE,
+        sdk: p1Sdk,
+        templateIds: [
+            AMULET_TEMPLATE_ID,
+            `${TEST_TOKEN_PREFIX}:Token`,
+            `${TRADING_APP_PREFIX}:OTCTradeProposal`,
+            `${TRADING_APP_PREFIX}:OTCTrade`,
+        ],
+        parties: [alice.partyId],
+    },
+    {
+        label: PARTY_HINT_BOB,
+        sdk: p2Sdk,
+        templateIds: [AMULET_TEMPLATE_ID, `${TEST_TOKEN_PREFIX}:Token`],
+        parties: [bob.partyId],
+    },
+    {
+        label: PARTY_HINT_TOKEN_ADMIN,
+        sdk: p2Sdk,
+        templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
+        parties: [tokenAdmin.partyId],
+    },
+    {
+        label: PARTY_HINT_TRADING_APP,
+        sdk: p3Sdk,
+        templateIds: [
+            `${TRADING_APP_PREFIX}:OTCTradeProposal`,
+            `${TRADING_APP_PREFIX}:OTCTrade`,
+        ],
+        parties: [tradingApp.partyId],
+    },
+]
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)
