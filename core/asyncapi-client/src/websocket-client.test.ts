@@ -7,7 +7,7 @@ import { WebSocketClient } from './websocket-client.js'
 
 const MOCK_CHANNELS = vi.hoisted(() => ({
     v2_updates: '/v2/updates',
-    v2_command_completions: '/v2/completions',
+    v2_commands_completions: '/v2/commands/completions',
 }))
 
 const mockTransactionFilterBySetup = vi.hoisted(() =>
@@ -69,16 +69,16 @@ async function collectAll<T>(gen: AsyncIterableIterator<T>): Promise<T[]> {
     for await (const item of gen) results.push(item)
     return results
 }
-let WsMock: Mock
+let wsMock: Mock
 
 describe('Async api service', () => {
     beforeEach(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        WsMock = vi.fn(function (_url: string, _protocols: string[]) {
+        wsMock = vi.fn(function (_url: string, _protocols: string[]) {
             lastWsInstance = new MockWebSocket()
             return lastWsInstance
         })
-        vi.stubGlobal('WebSocket', WsMock)
+        vi.stubGlobal('WebSocket', wsMock)
     })
 
     afterEach(() => {
@@ -108,9 +108,9 @@ describe('Async api service', () => {
 
         const collectPromise = collectAll(gen)
 
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
 
-        expect(WsMock).toHaveBeenCalledWith(`wss://ledger/v2/updates`, [
+        expect(wsMock).toHaveBeenCalledWith(`wss://ledger/v2/updates`, [
             'jwt.token.test-token',
             'daml.ws.auth',
         ])
@@ -133,7 +133,7 @@ describe('Async api service', () => {
 
         const collectPromise = collectAll(gen)
 
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
         lastWsInstance.triggerOpen()
 
         await vi.waitFor(() =>
@@ -158,9 +158,9 @@ describe('Async api service', () => {
         })
 
         const collectPromise = collectAll(gen)
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
 
-        const [[url]] = WsMock.mock.calls
+        const [[url]] = wsMock.mock.calls
         expect(url).toBe(`wss://fake/v2/updates`)
         lastWsInstance.triggerOpen()
         lastWsInstance.triggerClose()
@@ -178,7 +178,7 @@ describe('Async api service', () => {
         })
 
         const collectPromise = collectAll(gen)
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
 
         lastWsInstance.triggerOpen()
         await vi.waitFor(() => expect(lastWsInstance.send).toHaveBeenCalled())
@@ -205,7 +205,7 @@ describe('Async api service', () => {
         })
 
         const collectPromise = collectAll(gen)
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
 
         lastWsInstance.triggerOpen()
         await vi.waitFor(() => expect(lastWsInstance.send).toHaveBeenCalled())
@@ -234,7 +234,7 @@ describe('Async api service', () => {
         })
 
         const collectPromise = collectAll(gen)
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
 
         lastWsInstance.triggerOpen()
         await vi.waitFor(() => expect(lastWsInstance.send).toHaveBeenCalled())
@@ -262,7 +262,9 @@ describe('Async api service', () => {
 
         const collectPromise = collectAll(gen)
 
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
+        const [[url]] = wsMock.mock.calls
+        expect(url).toBe(`wss://fake/v2/commands/completions`)
         lastWsInstance.triggerOpen()
         await vi.waitFor(() => expect(lastWsInstance.send).toHaveBeenCalled())
 
@@ -284,7 +286,7 @@ describe('Async api service', () => {
 
         const collectPromise = collectAll(gen)
 
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
         lastWsInstance.triggerOpen()
         lastWsInstance.triggerMessage({ offset: 1, event: 'a' })
         lastWsInstance.triggerMessage({ offset: 2, event: 'b' })
@@ -307,7 +309,7 @@ describe('Async api service', () => {
 
         const collectPromise = collectAll(gen)
 
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
         lastWsInstance.triggerOpen()
         lastWsInstance.triggerError()
 
@@ -323,7 +325,7 @@ describe('Async api service', () => {
 
         const collectPromise = collectAll(gen)
 
-        await vi.waitFor(() => expect(WsMock).toHaveBeenCalled())
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalled())
         lastWsInstance.triggerOpen()
         lastWsInstance.triggerMessage({ offset: 1, event: 'a' })
         lastWsInstance.triggerMessage({ offset: 2, event: 'b' })
