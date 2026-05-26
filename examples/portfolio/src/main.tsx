@@ -11,7 +11,6 @@ import ReactDOM from 'react-dom/client'
 import { RegistryServiceProvider } from './contexts/RegistriesServiceProvider'
 import { ConnectionProvider } from './contexts/ConnectionProvider'
 import { PortfolioProvider } from './contexts/PortfolioProvider'
-import { WalletSdkProvider } from './contexts/WalletSdkProvider'
 import { AppThemeProvider } from './contexts/theme-provider'
 import { Toaster } from 'sonner'
 
@@ -51,15 +50,13 @@ if (rootElement && !rootElement.innerHTML) {
                     <QueryClientProvider client={queryClient}>
                         <RegistryServiceProvider>
                             <ConnectionProvider>
-                                <WalletSdkProvider>
-                                    <PortfolioProvider>
-                                        <RouterProvider
-                                            router={router}
-                                            context={{ queryClient }}
-                                        />
-                                        <Toaster richColors />
-                                    </PortfolioProvider>
-                                </WalletSdkProvider>
+                                <PortfolioProvider>
+                                    <RouterProvider
+                                        router={router}
+                                        context={{ queryClient }}
+                                    />
+                                    <Toaster richColors />
+                                </PortfolioProvider>
                             </ConnectionProvider>
                         </RegistryServiceProvider>
                     </QueryClientProvider>

@@ -31,7 +31,7 @@ import type { PartyId } from '@canton-network/core-types'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useRegistryUrls } from '@contexts/RegistryServiceContext'
-import { useWalletSdk } from '@contexts/WalletSdkContext'
+import { useWalletSdk } from '../hooks/useWalletSdk'
 import { usePrimaryAccount } from '@hooks/useAccounts'
 
 type PreapprovalFormData = {
@@ -53,6 +53,7 @@ const createPreapprovalContracts = async ({
     instrumentAdmin,
     assets,
 }: CreatePreapprovalContractsInput): Promise<void> => {
+    // TODO: implement me. Use the lib from utilities
     void receiver
     void operatorParty
     void instrumentAdmin
@@ -74,7 +75,6 @@ const getAssetKey = (asset: AssetBody) =>
 const formatRegistryOption = (partyId: string, registryUrl: string) =>
     `${partyId} — ${registryUrl}`
 
-// TODO: Render with a key derived from party/sdk/registry state to keep in sync
 export function PreapprovalContractSettings() {
     const registryUrls = useRegistryUrls()
     const primaryParty = usePrimaryAccount()?.partyId
@@ -111,28 +111,6 @@ export function PreapprovalContractSettings() {
             const selectedAssets = fetchedAssets.filter((asset) =>
                 formData.selectedAssetKeys.includes(getAssetKey(asset))
             )
-            // if (selectedAssets.length === 0) {
-            //     toast.error('Select at least one asset')
-            //     return
-            // }
-
-            // const instrumentAdmins = new Set(
-            //     selectedAssets.map((asset) => asset.admin)
-            // )
-            // if (instrumentAdmins.size !== 1) {
-            //     toast.error(
-            //         'Selected assets must belong to one instrument admin'
-            //     )
-            //     return
-            // }
-
-            // const registryStillConfigured = registryOptions.some(
-            //     ([, registryUrl]) => registryUrl === formData.registryUrl
-            // )
-            // if (!registryStillConfigured) {
-            //     toast.error('Selected registry is no longer configured')
-            //     return
-            // }
 
             await createPreapprovalContracts({
                 receiver: primaryParty,
@@ -146,10 +124,6 @@ export function PreapprovalContractSettings() {
 
     const handleFetchAssets = () => {
         const registryUrl = form.getFieldValue('registryUrl')
-        // if (!registryUrl) {
-        //     toast.error('Select a registry')
-        //     return
-        // }
 
         if (!sdk) {
             toast.error('Wallet SDK is not ready')
