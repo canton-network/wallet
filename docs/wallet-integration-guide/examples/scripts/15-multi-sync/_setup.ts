@@ -6,6 +6,12 @@ import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
 import type { Logger } from 'pino'
 import {
+    LOCALNET_BOB_LEDGER_URL,
+    LOCALNET_TRADING_APP_LEDGER_URL,
+    PARTY_HINT_ALICE,
+    PARTY_HINT_BOB,
+    PARTY_HINT_TRADING_APP,
+    PARTY_HINT_TOKEN_ADMIN,
     localNetStaticConfig,
     SDK,
     type SDKInterface,
@@ -24,14 +30,6 @@ import {
     resolveGlobalSynchronizerId,
 } from '../utils/index.js'
 import type { SynchronizerMap } from '../utils/index.js'
-import {
-    LOCALNET_BOB_LEDGER_URL,
-    LOCALNET_TRADING_APP_LEDGER_URL,
-    PARTY_HINT_ALICE,
-    PARTY_HINT_BOB,
-    PARTY_HINT_TRADING_APP,
-    PARTY_HINT_TOKEN_ADMIN,
-} from './_config.js'
 
 export type PartyInfo = Omit<
     GenerateTransactionResponse,

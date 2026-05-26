@@ -8,6 +8,8 @@ const LOCALNET_APP_VALIDATOR_URL = new URL(
 const LOCALNET_SCAN_API_URL = new URL('http://scan.localhost:4000/api/scan')
 
 const LOCALNET_APP_USER_LEDGER_URL = new URL('http://localhost:2975')
+const LOCALNET_BOB_LEDGER_URL = new URL('http://localhost:3975')
+const LOCALNET_TRADING_APP_LEDGER_URL = new URL('http://localhost:4975')
 
 const LOCALNET_TOKEN_STANDARD_URL = new URL('http://localhost:5003')
 
@@ -17,11 +19,20 @@ const LOCALNET_REGISTRY_API_URL = new URL(
 )
 const LOCALNET_USER_ID = 'ledger-api-user'
 
+export const PARTY_HINT_ALICE = 'Alice'
+export const PARTY_HINT_BOB = 'Bob'
+export const PARTY_HINT_TRADING_APP = 'TradingApp'
+export const PARTY_HINT_TOKEN_ADMIN = 'TokenAdmin'
+
 export const localNetStaticConfig = {
     LOCALNET_APP_VALIDATOR_URL,
     LOCALNET_SCAN_API_URL,
     LOCALNET_REGISTRY_API_URL,
     LOCALNET_APP_USER_LEDGER_URL,
+    LOCALNET_BOB_LEDGER_URL,
+    LOCALNET_TRADING_APP_LEDGER_URL,
     LOCALNET_TOKEN_STANDARD_URL,
     LOCALNET_USER_ID,
 }
+
+export { LOCALNET_BOB_LEDGER_URL, LOCALNET_TRADING_APP_LEDGER_URL }
