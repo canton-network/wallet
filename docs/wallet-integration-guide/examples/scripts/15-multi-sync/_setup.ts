@@ -18,6 +18,7 @@ import type { GenerateTransactionResponse } from '@canton-network/core-ledger-cl
 import { ScanProxyClient } from '@canton-network/wallet-sdk'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import {
+    AMULET_NAMESPACE_CONFIG,
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     resolveGlobalSynchronizerId,
@@ -45,7 +46,7 @@ const TRADING_APP_DAR_RELATIVE_PATH =
     '../../../../../.localnet/dars/splice-token-test-trading-app-1.0.1.dar'
 
 export interface MultiSyncSetup {
-    p1Sdk: SDKInterface<'token'>
+    p1Sdk: SDKInterface<'token' | 'amulet'>
     p2Sdk: SDKInterface<'token'>
     p3Sdk: SDKInterface<'token'>
     p1SdkCtx: SDKContext
@@ -106,6 +107,7 @@ export async function setupMultiSyncTrade(
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
             ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            amulet: AMULET_NAMESPACE_CONFIG,
             token: TOKEN_NAMESPACE_CONFIG,
         }),
         SDK.create({

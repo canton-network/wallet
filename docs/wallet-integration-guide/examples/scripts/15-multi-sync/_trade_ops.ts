@@ -3,6 +3,7 @@
 
 import type { Logger } from 'pino'
 import { TRANSFER_FACTORY_INTERFACE_ID } from '@canton-network/core-token-standard'
+import type { SDKInterface } from '@canton-network/wallet-sdk'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { MultiSyncSetup } from './_setup.js'
 
@@ -36,47 +37,15 @@ export async function mintAmuletForAlice(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p1Sdk, alice, globalSynchronizerId, scanProxy } = setup
-    const [amuletRulesContract, activeRoundContract] = await Promise.all([
-        scanProxy.getAmuletRules(),
-        scanProxy.getActiveOpenMiningRound(),
-    ])
-    if (!activeRoundContract) throw new Error('No active OpenMiningRound found')
-    const amuletRulesCid = amuletRulesContract.contract_id
-    const openMiningRoundCid = activeRoundContract.contract_id
+    const { p1Sdk, alice, globalSynchronizerId } = setup
+    const [aliceTapCreateCommand, aliceTapCreateDisclosedContracts] =
+        await p1Sdk.amulet.tap(alice.partyId, ALICE_AMULET_TAP_AMOUNT)
 
     await p1Sdk.ledger
         .prepare({
             partyId: alice.partyId,
-            commands: [
-                {
-                    ExerciseCommand: {
-                        templateId:
-                            '#splice-amulet:Splice.AmuletRules:AmuletRules',
-                        contractId: amuletRulesCid,
-                        choice: 'AmuletRules_DevNet_Tap',
-                        choiceArgument: {
-                            receiver: alice.partyId,
-                            amount: ALICE_AMULET_TAP_AMOUNT,
-                            openRound: openMiningRoundCid,
-                        },
-                    },
-                },
-            ],
-            disclosedContracts: [
-                {
-                    templateId: amuletRulesContract.template_id,
-                    contractId: amuletRulesCid,
-                    createdEventBlob: amuletRulesContract.created_event_blob,
-                    synchronizerId: globalSynchronizerId,
-                },
-                {
-                    templateId: activeRoundContract.template_id,
-                    contractId: openMiningRoundCid,
-                    createdEventBlob: activeRoundContract.created_event_blob,
-                    synchronizerId: globalSynchronizerId,
-                },
-            ],
+            commands: aliceTapCreateCommand,
+            disclosedContracts: aliceTapCreateDisclosedContracts,
             synchronizerId: globalSynchronizerId,
         })
         .sign(alice.keyPair.privateKey)
@@ -276,7 +245,7 @@ export async function createAndInitiateOtcTrade(
     } = setup
 
     const readProposalCid = async (
-        sdk: typeof p1Sdk,
+        sdk: SDKInterface<'token'>,
         party: string
     ): Promise<string> => {
         const contracts = await sdk.ledger.acs.read({
