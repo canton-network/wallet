@@ -11,13 +11,17 @@ import {
     mockRequest,
 } from '../../test-helpers.js'
 
-const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
-    () => ({
-        mockCreateUserClient: vi.fn(),
-        handleErrorToast: vi.fn(),
-        setLocationHref: vi.fn(),
-    })
-)
+const {
+    mockCreateUserClient,
+    handleErrorToast,
+    setLocationHref,
+    mockNetworkIdGet,
+} = vi.hoisted(() => ({
+    mockCreateUserClient: vi.fn(),
+    handleErrorToast: vi.fn(),
+    setLocationHref: vi.fn(),
+    mockNetworkIdGet: vi.fn<() => string | undefined>(() => 'network1'),
+}))
 
 vi.mock('../../index.js', () => ({}))
 vi.mock('../../navigation.js', () => ({ setLocationHref }))
@@ -27,7 +31,7 @@ vi.mock('../../rpc-client.js', () => ({
 vi.mock('../../state-manager.js', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
-        networkId: { get: () => 'network1' },
+        networkId: { get: mockNetworkIdGet },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
@@ -54,6 +58,8 @@ describe('UserUiAddParty', () => {
         mockRequest.mockReset()
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
+        mockNetworkIdGet.mockReset()
+        mockNetworkIdGet.mockReturnValue('network1')
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listSessions') {
@@ -120,7 +126,9 @@ describe('UserUiAddParty', () => {
         })
 
         const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
-        form!.dispatchEvent(new WalletCreateEvent('my-party', 'internal', true))
+        form!.dispatchEvent(
+            new WalletCreateEvent('my-party', 'participant', true)
+        )
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
@@ -153,7 +161,7 @@ describe('UserUiAddParty', () => {
 
         const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
         form!.dispatchEvent(
-            new WalletCreateEvent('pending-party', 'internal', false)
+            new WalletCreateEvent('pending-party', 'participant', false)
         )
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
@@ -185,12 +193,74 @@ describe('UserUiAddParty', () => {
         el.loading = true
         const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
         form!.dispatchEvent(
-            new WalletCreateEvent('fail-party', 'internal', false)
+            new WalletCreateEvent('fail-party', 'participant', false)
         )
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
         expect(el.loading).toBe(false)
+    })
+
+    it('redirects with removed status when wallet creation is rejected', async () => {
+        await waitUntil(() => el.networkIds.length === 1)
+
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listSessions') {
+                return {
+                    sessions: [
+                        { id: 's', network: { id: 'network1', name: 'n' } },
+                    ],
+                }
+            }
+            if (method === 'createWallet') {
+                return { wallet: makeWallet({ status: 'removed' }) }
+            }
+            return undefined
+        })
+
+        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
+        form!.dispatchEvent(
+            new WalletCreateEvent('removed-party', 'participant', false)
+        )
+
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining(
+                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_REMOVED}`
+            )
+        )
+    })
+
+    it('uses networkId from state when listSessions fails', async () => {
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listSessions') {
+                throw new Error('sessions unavailable')
+            }
+            return undefined
+        })
+
+        el = await fixture<UserUiAddParty>(componentFixture)
+
+        await waitUntil(() => el.networkIds.length === 1)
+
+        expect(el.networkIds).toEqual(['network1'])
+    })
+
+    it('leaves networkIds empty when there is no session and no stored network', async () => {
+        mockNetworkIdGet.mockReturnValue(undefined)
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listSessions') {
+                return { sessions: [] }
+            }
+            return undefined
+        })
+
+        el = await fixture<UserUiAddParty>(componentFixture)
+
+        await waitUntil(() => el.networkIds.length === 0)
+
+        expect(el.networkIds).toEqual([])
     })
 })

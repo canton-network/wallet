@@ -223,4 +223,122 @@ describe('UserUiParties', () => {
         expect(handleErrorToast).toHaveBeenCalled()
         expect(el.loading).toBe(false)
     })
+
+    it('shows error toast for WALLET_REMOVED status param', async () => {
+        history.replaceState(
+            {},
+            '',
+            `?createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_REMOVED}`
+        )
+
+        el = await fixture<UserUiParties>(componentFixture)
+
+        expect(showToast).toHaveBeenCalledWith(
+            'Party creation rejected',
+            expect.stringContaining('unsuccessful'),
+            'error'
+        )
+    })
+
+    it('does not show a creation toast when createPartyStatus is absent', async () => {
+        history.replaceState({}, '', '/parties')
+
+        el = await fixture<UserUiParties>(componentFixture)
+
+        expect(showToast).not.toHaveBeenCalled()
+    })
+
+    it('shows removed toast when allocatePartyForWallet returns removed', async () => {
+        await waitUntil(() => el.client !== null)
+
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listSessions') {
+                return { sessions: [{ id: 's', network: { id: 'network1' } }] }
+            }
+            if (method === 'listWallets') {
+                return [makeWallet({ status: 'initialized' })]
+            }
+            if (method === 'allocatePartyForWallet') {
+                return { wallet: makeWallet({ status: 'removed' }) }
+            }
+            return undefined
+        })
+
+        const card = el.shadowRoot?.querySelector('wg-wallet-card')
+        card!.dispatchEvent(new WalletAllocateEvent(makeWallet()))
+
+        await waitUntil(() => showToast.mock.calls.length > 0)
+
+        expect(showToast).toHaveBeenCalledWith(
+            'Party removed',
+            expect.stringContaining('unsuccessful'),
+            'error'
+        )
+    })
+
+    it('shows pending toast when allocatePartyForWallet returns initialized', async () => {
+        await waitUntil(() => el.client !== null)
+
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listSessions') {
+                return { sessions: [{ id: 's', network: { id: 'network1' } }] }
+            }
+            if (method === 'listWallets') {
+                return [makeWallet({ status: 'initialized' })]
+            }
+            if (method === 'allocatePartyForWallet') {
+                return { wallet: makeWallet({ status: 'initialized' }) }
+            }
+            return undefined
+        })
+
+        const card = el.shadowRoot?.querySelector('wg-wallet-card')
+        card!.dispatchEvent(new WalletAllocateEvent(makeWallet()))
+
+        await waitUntil(() => showToast.mock.calls.length > 0)
+
+        expect(showToast).toHaveBeenCalledWith(
+            'Transaction pending',
+            expect.stringContaining('signing provider'),
+            'info'
+        )
+    })
+
+    it('loads wallets using networkId from stateManager when listSessions fails', async () => {
+        mockRequest.mockImplementation(async ({ method, params }) => {
+            if (method === 'listSessions') {
+                throw new Error('sessions unavailable')
+            }
+            if (method === 'listWallets') {
+                expect(params).toEqual({ filter: { networkIds: ['network1'] } })
+                return [makeWallet({ partyId: 'bob::ns', status: 'allocated' })]
+            }
+            return undefined
+        })
+
+        el = await fixture<UserUiParties>(componentFixture)
+
+        await waitUntil(() => el.wallets?.length === 1)
+
+        expect(el.wallets![0]!.partyId).toBe('bob::ns')
+    })
+
+    it('reloads wallets when sync-success event is dispatched', async () => {
+        await waitUntil(() => el.wallets !== undefined)
+
+        const initialCallCount = mockRequest.mock.calls.filter(
+            (c) => c[0]?.method === 'listWallets'
+        ).length
+
+        el.shadowRoot
+            ?.querySelector('wg-wallets-sync')
+            ?.dispatchEvent(new Event('sync-success'))
+
+        await waitUntil(
+            () =>
+                mockRequest.mock.calls.filter(
+                    (c) => c[0]?.method === 'listWallets'
+                ).length > initialCallCount
+        )
+    })
 })
