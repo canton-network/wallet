@@ -214,7 +214,7 @@ export class WgLoginForm extends BaseElement {
             )?.value || this.selectedNetwork.clientId
 
         this.dispatchEvent(
-            new LoginConnectEvent(this.selectedNetwork, idp, clientId)
+            new LoginConnectEvent(this.selectedNetwork, idp, clientId || '')
         )
     }
 
