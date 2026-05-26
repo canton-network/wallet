@@ -1,12 +1,12 @@
 import pino from 'pino'
-import { logAllContracts } from '../utils/index.js'
-import { setupMultiSyncTrade } from './_setup.js'
 import {
     PARTY_HINT_ALICE,
     PARTY_HINT_BOB,
     PARTY_HINT_TRADING_APP,
     PARTY_HINT_TOKEN_ADMIN,
-} from './_config.js'
+} from '@canton-network/wallet-sdk'
+import { logAllContracts } from '../utils/index.js'
+import { setupMultiSyncTrade } from './_setup.js'
 import {
     AMULET_TEMPLATE_ID,
     TEST_TOKEN_PREFIX,
