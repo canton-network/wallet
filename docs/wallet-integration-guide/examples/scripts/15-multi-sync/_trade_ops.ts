@@ -2,15 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
+import { TRANSFER_FACTORY_INTERFACE_ID } from '@canton-network/core-token-standard'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
-import type { ContractSpec } from '../utils/index.js'
 import type { MultiSyncSetup } from './_setup.js'
-import {
-    PARTY_HINT_ALICE,
-    PARTY_HINT_BOB,
-    PARTY_HINT_TRADING_APP,
-    PARTY_HINT_TOKEN_ADMIN,
-} from './_config.js'
 
 // ── ACS contract entry (as returned by ledger.acs.read) ───────────────────────
 
@@ -28,46 +22,6 @@ export const TEST_TOKEN_PREFIX =
     '#splice-test-token-v1:Splice.Testing.Tokens.TestTokenV1'
 export const TRADING_APP_PREFIX =
     '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp'
-
-const TRANSFER_FACTORY_IFACE =
-    '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory'
-export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
-    const { p1Sdk, p2Sdk, p3Sdk, alice, bob, tradingApp, tokenAdmin } = setup
-    return [
-        {
-            label: PARTY_HINT_ALICE,
-            sdk: p1Sdk,
-            templateIds: [
-                AMULET_TEMPLATE_ID,
-                `${TEST_TOKEN_PREFIX}:Token`,
-                `${TRADING_APP_PREFIX}:OTCTradeProposal`,
-                `${TRADING_APP_PREFIX}:OTCTrade`,
-            ],
-            parties: [alice.partyId],
-        },
-        {
-            label: PARTY_HINT_BOB,
-            sdk: p2Sdk,
-            templateIds: [AMULET_TEMPLATE_ID, `${TEST_TOKEN_PREFIX}:Token`],
-            parties: [bob.partyId],
-        },
-        {
-            label: PARTY_HINT_TOKEN_ADMIN,
-            sdk: p2Sdk,
-            templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
-            parties: [tokenAdmin.partyId],
-        },
-        {
-            label: PARTY_HINT_TRADING_APP,
-            sdk: p3Sdk,
-            templateIds: [
-                `${TRADING_APP_PREFIX}:OTCTradeProposal`,
-                `${TRADING_APP_PREFIX}:OTCTrade`,
-            ],
-            parties: [tradingApp.partyId],
-        },
-    ]
-}
 
 export const ALICE_AMULET_TAP_AMOUNT = '2000000'
 export const BOB_TOKEN_MINT_AMOUNT = '500'
@@ -232,7 +186,7 @@ export async function createTokenRulesAndMintForBob(
             commands: [
                 {
                     ExerciseCommand: {
-                        templateId: TRANSFER_FACTORY_IFACE,
+                        templateId: TRANSFER_FACTORY_INTERFACE_ID,
                         contractId: appTokenRules.contractId,
                         choice: 'TransferFactory_Transfer',
                         choiceArgument: {
@@ -706,7 +660,7 @@ export async function aliceSelfTransferToApp(
             commands: [
                 {
                     ExerciseCommand: {
-                        templateId: TRANSFER_FACTORY_IFACE,
+                        templateId: TRANSFER_FACTORY_INTERFACE_ID,
                         contractId: tokenRules.contractId,
                         choice: 'TransferFactory_Transfer',
                         choiceArgument: {
@@ -810,7 +764,7 @@ export async function bobSelfTransferToApp(
                 commands: [
                     {
                         ExerciseCommand: {
-                            templateId: TRANSFER_FACTORY_IFACE,
+                            templateId: TRANSFER_FACTORY_INTERFACE_ID,
                             contractId: tokenRules.contractId,
                             choice: 'TransferFactory_Transfer',
                             choiceArgument: {
