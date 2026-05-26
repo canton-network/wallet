@@ -1,8 +1,7 @@
 -- Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 -- SPDX-License-Identifier: Apache-2.0
 
--- | Token Composition — a self-contained V1 token implementation vetted on
--- BOTH the global synchronizer and the private app-synchronizer.
+-- | Token Composition — cross-sync factories for Allocation and Transfer.
 --
 -- Design goals
 -- ─────────────
@@ -26,14 +25,14 @@
 --
 -- Templates
 -- ─────────
--- • CompositionToken         — the token holding
--- • CompositionTransferOffer — pending transfer instruction
+-- • CompositionTransferOffer — pending transfer instruction (also used as
+--                              the settled receiver holding after allocation)
 -- • CompositionAllocation    — allocation (implements V1.Allocation)
 -- • CompositionRules         — AllocationFactory + TransferFactory
 --                              (intended to live on BOTH synchronizers)
 module Splice.Testing.Tokens.TokenComposition where
 
-import DA.Optional (isNone, optionalToList)
+import DA.Optional (optionalToList)
 
 import Splice.Api.Token.MetadataV1
 import Splice.Api.Token.HoldingV1 qualified as V1
@@ -42,25 +41,10 @@ import Splice.Api.Token.AllocationInstructionV1 qualified as V1
 import Splice.Api.Token.TransferInstructionV1 qualified as V1
 
 
--- | A composition token holding.
--- Signatories: both the instrument admin and the token owner —
--- identical to TestTokenV1.Token so the pattern is familiar.
-template CompositionToken
-  with
-    holding : V1.HoldingView
-  where
-    signatory holding.owner, holding.instrumentId.admin
-
-    ensure
-      holding.amount > 0.0 &&   -- positive amounts only
-      isNone holding.lock        -- no locked holdings
-
-    interface instance V1.Holding for CompositionToken where
-      view = holding
-
-
--- | Pending transfer offer for a CompositionToken.
+-- | Pending transfer offer for a composition token.
 -- Acts as both the transfer instruction and the escrowed holding.
+-- Also used as the receiver holding produced by CompositionAllocation
+-- settlement — the receiver accepts it to complete the transfer.
 template CompositionTransferOffer
   with
     transfer : V1.Transfer
@@ -81,33 +65,36 @@ template CompositionTransferOffer
         meta   = emptyMetadata
 
       transferInstruction_withdrawImpl _self _arg = do
-        tokenCid <- create CompositionToken with
-          holding = (transferHoldingView transfer) with lock = None
-        pure V1.TransferInstructionResult with
-          output          = V1.TransferInstructionResult_Failed
-          senderChangeCids = [toInterfaceContractId tokenCid]
-          meta            = emptyMetadata
-
-      transferInstruction_rejectImpl _self _arg = do
-        tokenCid <- create CompositionToken with
-          holding = (transferHoldingView transfer) with lock = None
+        -- Return funds to sender as a self-offer (sender == receiver)
+        returnOffer <- create CompositionTransferOffer with
+          transfer = transfer with receiver = transfer.sender
         pure V1.TransferInstructionResult with
           output           = V1.TransferInstructionResult_Failed
-          senderChangeCids = [toInterfaceContractId tokenCid]
+          senderChangeCids = [toInterfaceContractId returnOffer]
+          meta             = emptyMetadata
+
+      transferInstruction_rejectImpl _self _arg = do
+        -- Return funds to sender as a self-offer (sender == receiver)
+        returnOffer <- create CompositionTransferOffer with
+          transfer = transfer with receiver = transfer.sender
+        pure V1.TransferInstructionResult with
+          output           = V1.TransferInstructionResult_Failed
+          senderChangeCids = [toInterfaceContractId returnOffer]
           meta             = emptyMetadata
 
       transferInstruction_updateImpl _self _arg =
         fail "CompositionTransferOffer: TransferInstruction_Update not supported"
 
       transferInstruction_acceptImpl _self _arg = do
-        tokenCid <- create CompositionToken with
-          holding = (transferHoldingView transfer) with
-            owner = transfer.receiver
-            lock  = None
+        -- Create a self-accepted offer for the receiver (completed transfer)
+        receiverOffer <- create CompositionTransferOffer with
+          transfer = transfer with
+            sender   = transfer.receiver
+            receiver = transfer.receiver
         pure V1.TransferInstructionResult with
           senderChangeCids = []
           output           = V1.TransferInstructionResult_Completed with
-            receiverHoldingCids = [toInterfaceContractId tokenCid]
+            receiverHoldingCids = [toInterfaceContractId receiverOffer]
           meta             = emptyMetadata
 
 
@@ -139,27 +126,55 @@ template CompositionAllocation
         meta        = emptyMetadata
 
       allocation_withdrawImpl _self _arg = do
-        tokenCid <- create CompositionToken with
-          holding = (allocationHoldingView allocation) with lock = None
+        -- Return funds to sender as a self-offer
+        let leg = allocation.transferLeg
+        returnOffer <- create CompositionTransferOffer with
+          transfer = V1.Transfer with
+            sender            = leg.sender
+            receiver          = leg.sender
+            amount            = leg.amount
+            instrumentId      = leg.instrumentId
+            requestedAt       = allocation.settlement.requestedAt
+            executeBefore     = allocation.settlement.settleBefore
+            inputHoldingCids  = []
+            meta              = emptyMetadata
         pure V1.Allocation_WithdrawResult with
-          senderHoldingCids = [toInterfaceContractId tokenCid]
+          senderHoldingCids = [toInterfaceContractId returnOffer]
           meta              = emptyMetadata
 
       allocation_cancelImpl _self _arg = do
-        tokenCid <- create CompositionToken with
-          holding = (allocationHoldingView allocation) with lock = None
+        -- Return funds to sender as a self-offer
+        let leg = allocation.transferLeg
+        returnOffer <- create CompositionTransferOffer with
+          transfer = V1.Transfer with
+            sender            = leg.sender
+            receiver          = leg.sender
+            amount            = leg.amount
+            instrumentId      = leg.instrumentId
+            requestedAt       = allocation.settlement.requestedAt
+            executeBefore     = allocation.settlement.settleBefore
+            inputHoldingCids  = []
+            meta              = emptyMetadata
         pure V1.Allocation_CancelResult with
-          senderHoldingCids = [toInterfaceContractId tokenCid]
+          senderHoldingCids = [toInterfaceContractId returnOffer]
           meta              = emptyMetadata
 
       allocation_executeTransferImpl _self _arg = do
-        tokenCid <- create CompositionToken with
-          holding = (allocationHoldingView allocation) with
-            owner = allocation.transferLeg.receiver
-            lock  = None
+        -- Create a transfer offer for the receiver; they accept it to finalize
+        let leg = allocation.transferLeg
+        receiverOffer <- create CompositionTransferOffer with
+          transfer = V1.Transfer with
+            sender            = leg.sender
+            receiver          = leg.receiver
+            amount            = leg.amount
+            instrumentId      = leg.instrumentId
+            requestedAt       = allocation.settlement.requestedAt
+            executeBefore     = allocation.settlement.settleBefore
+            inputHoldingCids  = []
+            meta              = emptyMetadata
         pure V1.Allocation_ExecuteTransferResult with
           senderHoldingCids   = []
-          receiverHoldingCids = [toInterfaceContractId tokenCid]
+          receiverHoldingCids = [toInterfaceContractId receiverOffer]
           meta                = emptyMetadata
 
 
@@ -205,23 +220,15 @@ template CompositionRules
           transfer.inputHoldingCids
           transfer.amount
           transfer.instrumentId
+          transfer.requestedAt
+          transfer.executeBefore
         let senderChangeCids = optionalToList (toInterfaceContractId <$> optSenderChangeCid)
-        if transfer.receiver == transfer.sender
-          then do
-            splitCid <- create CompositionToken with
-              holding = (transferHoldingView transfer) with lock = None
-            pure V1.TransferInstructionResult with
-              senderChangeCids
-              output = V1.TransferInstructionResult_Completed with
-                receiverHoldingCids = [toInterfaceContractId splitCid]
-              meta = emptyMetadata
-          else do
-            instrCid <- create CompositionTransferOffer with transfer
-            pure V1.TransferInstructionResult with
-              senderChangeCids
-              output = V1.TransferInstructionResult_Pending with
-                transferInstructionCid = toInterfaceContractId instrCid
-              meta = emptyMetadata
+        instrCid <- create CompositionTransferOffer with transfer
+        pure V1.TransferInstructionResult with
+          senderChangeCids
+          output = V1.TransferInstructionResult_Pending with
+            transferInstructionCid = toInterfaceContractId instrCid
+          meta = emptyMetadata
 
     interface instance V1.AllocationFactory for CompositionRules where
       view = V1.AllocationFactoryView with admin; meta = emptyMetadata
@@ -261,6 +268,8 @@ template CompositionRules
           inputHoldingCids
           transferLeg.amount
           transferLeg.instrumentId
+          settlement.requestedAt
+          settlement.settleBefore
         allocationCid <- toInterfaceContractId <$> create CompositionAllocation with
           allocation = arg.allocation
 
@@ -272,7 +281,7 @@ template CompositionRules
 
 -- ── Internal helpers ──────────────────────────────────────────────────────────
 
--- | Consume composition holdings up to `amount`, returning a change contract
+-- | Consume composition holdings up to `amount`, returning a change offer
 -- if there is a remainder.  Verifies that each input belongs to `sender` and
 -- matches `instrumentId`.
 consumeCompositionHoldings
@@ -280,8 +289,10 @@ consumeCompositionHoldings
   -> [ContractId V1.Holding]
   -> Decimal
   -> V1.InstrumentId
-  -> Update (Optional (ContractId CompositionToken))
-consumeCompositionHoldings sender inputCids amount instrumentId = do
+  -> Time   -- requestedAt for the change offer
+  -> Time   -- executeBefore for the change offer
+  -> Update (Optional (ContractId CompositionTransferOffer))
+consumeCompositionHoldings sender inputCids amount instrumentId requestedAt executeBefore = do
   inputAmounts <- forA inputCids $ \cid -> do
     holding <- fetch cid
     archive cid
@@ -300,13 +311,16 @@ consumeCompositionHoldings sender inputCids amount instrumentId = do
   let remainder = total - amount
   if remainder == 0.0
     then pure None
-    else Some <$> create CompositionToken with
-      holding = V1.HoldingView with
-        owner        = sender
-        amount       = remainder
-        instrumentId = instrumentId
-        lock         = None
-        meta         = emptyMetadata
+    else Some <$> create CompositionTransferOffer with
+      transfer = V1.Transfer with
+        sender           = sender
+        receiver         = sender
+        amount           = remainder
+        instrumentId     = instrumentId
+        requestedAt      = requestedAt
+        executeBefore    = executeBefore
+        inputHoldingCids = []
+        meta             = emptyMetadata
 
 -- | Build a HoldingView for a pending allocation (locked).
 allocationHoldingView : V1.AllocationSpecification -> V1.HoldingView

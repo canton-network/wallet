@@ -69,7 +69,7 @@ const allPartySpecs = buildContractReadSpec(setup)
 // Step 4:  Mint Amulet for Alice (global synchronizer)
 // Step 5:  TokenAdmin creates TokenRules on the app-synchronizer (private; NOT on global),
 //          creates CompositionRules on BOTH synchronizers (cross-sync bridge),
-//          self-mints CompositionToken, offers to Bob and Bob accepts — on app-synchronizer
+//          self-mints CompositionTransferOffer for Bob; Bob accepts — on app-synchronizer
 await Promise.all([
     mintAmuletForAlice(setup, logger),
     createTokenRulesAndMintForBob(setup, logger),
@@ -120,10 +120,10 @@ await assertStepContracts(
 )
 await assertStepContracts(
     p2Sdk,
-    [TEMPLATES.compositionToken],
+    [TEMPLATES.compositionTransferOffer],
     [bob.partyId],
     appSynchronizerId,
-    'Step 5 — Bob CompositionToken holding',
+    'Step 5 — Bob CompositionTransferOffer holding',
     synchronizers,
     logger,
     { requireNonEmpty: true }
@@ -183,7 +183,7 @@ await assertStepContracts(
 
 // ── Steps 8–9: Allocate in parallel ────────────────────────────────────────
 // Step 8: Alice allocates Amulet for leg-0 (global synchronizer)
-// Step 9: Bob allocates CompositionToken for leg-1 on the app-synchronizer; because
+// Step 9: Bob allocates CompositionTransferOffer for leg-1 on the app-synchronizer; because
 //         splice-test-token-composition is vetted on global, the allocation can be
 //         reassigned and consumed by OTCTrade_Settle without needing TokenRules on global
 const [legIdAlice, { legId: legIdBob }] = await Promise.all([

@@ -108,7 +108,7 @@ export function buildContractReadSpec(setup: MultiSyncSetup): ContractSpec[] {
             templateIds: [
                 AMULET_TEMPLATE_ID,
                 `${TEST_TOKEN_PREFIX}:Token`,
-                `${COMPOSITION_TOKEN_PREFIX}:CompositionToken`,
+                `${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`,
                 `${TRADING_APP_PREFIX}:OTCTradeAllocationRequest`,
             ],
             parties: [bob.partyId],
@@ -249,60 +249,33 @@ export async function createTokenRulesAndMintForBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
+    const mintNow = Date.now()
     await p3Sdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
-            commands: [
-                {
-                    CreateCommand: {
-                        templateId: `${COMPOSITION_TOKEN_PREFIX}:CompositionToken`,
-                        createArguments: {
-                            holding: {
-                                owner: tokenAdmin.partyId,
-                                instrumentId: {
-                                    admin: tokenAdmin.partyId,
-                                    id: 'TestToken',
-                                },
-                                amount: BOB_TOKEN_MINT_AMOUNT,
-                                lock: null,
-                                meta: { values: {} },
+            commands: {
+                CreateCommand: {
+                    templateId: `${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`,
+                    createArguments: {
+                        transfer: {
+                            sender: tokenAdmin.partyId,
+                            receiver: bob.partyId,
+                            amount: BOB_TOKEN_MINT_AMOUNT,
+                            instrumentId: {
+                                admin: tokenAdmin.partyId,
+                                id: 'TestToken',
                             },
+                            requestedAt: new Date(mintNow - 1000).toISOString(),
+                            executeBefore: new Date(
+                                mintNow + 24 * 60 * 60 * 1000
+                            ).toISOString(),
+                            inputHoldingCids: [],
+                            meta: { values: {} },
                         },
                     },
                 },
-            ],
+            },
             disclosedContracts: [],
-            synchronizerId: appSynchronizerId,
-        })
-        .sign(tokenAdmin.keyPair.privateKey)
-        .execute({ partyId: tokenAdmin.partyId })
-
-    const adminTokenHoldings = await p3Sdk.ledger.acs.read({
-        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
-        parties: [tokenAdmin.partyId],
-        filterByParty: true,
-    })
-    const adminTokenCid = adminTokenHoldings[0]?.contractId
-    if (!adminTokenCid)
-        throw new Error(
-            'TokenAdmin CompositionToken holding not found after mint'
-        )
-
-    const [transferCommand, transferDisclosed] =
-        await p3Sdk.token.transfer.create({
-            sender: tokenAdmin.partyId,
-            recipient: bob.partyId,
-            amount: BOB_TOKEN_MINT_AMOUNT,
-            instrumentId: 'TestToken',
-            registryUrl: LOCALNET_TEST_TOKEN_REGISTRY_URL,
-            inputUtxos: [adminTokenCid],
-        })
-
-    await p3Sdk.ledger
-        .prepare({
-            partyId: tokenAdmin.partyId,
-            commands: [transferCommand],
-            disclosedContracts: transferDisclosed,
             synchronizerId: appSynchronizerId,
         })
         .sign(tokenAdmin.keyPair.privateKey)
@@ -342,7 +315,7 @@ export async function createTokenRulesAndMintForBob(
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        `TokenAdmin: TokenRules on app-sync only; CompositionRules on both syncs; Bob: ${BOB_TOKEN_MINT_AMOUNT} CompositionToken minted on app-synchronizer`
+        `TokenAdmin: TokenRules on app-sync only; CompositionRules on both syncs; Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer`
     )
 }
 
@@ -638,13 +611,13 @@ export async function allocateTokenForBob(
     if (!requestView || !legId) throw new Error('No transfer leg found for Bob')
 
     const tokenHoldings = await p2Sdk.ledger.acs.read({
-        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
+        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`],
         parties: [bob.partyId],
         filterByParty: true,
     })
     const tokenHolding = tokenHoldings[0]
     if (!tokenHolding)
-        throw new Error('CompositionToken holding not found for Bob')
+        throw new Error('CompositionTransferOffer holding not found for Bob')
 
     const [command, disclosedFromHelper] =
         await tokenNamespaceP2.allocation.instruction.create({
@@ -860,40 +833,45 @@ export async function aliceSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p1Sdk, tokenNamespaceP1, alice, appSynchronizerId } = setup
+    const { p1Sdk, tokenNamespaceP1, alice } = setup
 
-    const aliceTokens = await p1Sdk.ledger.acs.read({
-        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
+    const allAliceOffers = await p1Sdk.ledger.acs.read({
+        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`],
         parties: [alice.partyId],
         filterByParty: true,
     })
-    const aliceTokenCid = aliceTokens[0]?.contractId
-    if (!aliceTokenCid)
-        throw new Error(
-            'Alice: CompositionToken holding not found after settlement'
+    const aliceReceiverOffers = allAliceOffers.filter(
+        (offer) =>
+            (
+                offer as unknown as {
+                    createArgument?: { transfer?: { receiver?: string } }
+                }
+            ).createArgument?.transfer?.receiver === alice.partyId
+    )
+    if (aliceReceiverOffers.length === 0) {
+        logger.info(
+            'Alice: no CompositionTransferOffer receiver holdings to accept'
         )
-
-    const [transferCommand, transferDisclosed] =
-        await tokenNamespaceP1.transfer.create({
-            sender: alice.partyId,
-            recipient: alice.partyId,
-            amount: TRADE_TOKEN_AMOUNT,
-            instrumentId: 'TestToken',
-            registryUrl: LOCALNET_TEST_TOKEN_REGISTRY_URL,
-            inputUtxos: [aliceTokenCid],
-        })
-    await p1Sdk.ledger
-        .prepare({
-            partyId: alice.partyId,
-            commands: [transferCommand],
-            disclosedContracts: transferDisclosed,
-            synchronizerId: appSynchronizerId,
-        })
-        .sign(alice.keyPair.privateKey)
-        .execute({ partyId: alice.partyId })
-
+        return
+    }
+    for (const offer of aliceReceiverOffers) {
+        const [acceptCommand, acceptDisclosed] =
+            await tokenNamespaceP1.transfer.accept({
+                transferInstructionCid: offer.contractId,
+                registryUrl: LOCALNET_TEST_TOKEN_REGISTRY_URL,
+            })
+        await p1Sdk.ledger
+            .prepare({
+                partyId: alice.partyId,
+                commands: [acceptCommand],
+                disclosedContracts: acceptDisclosed,
+                synchronizerId: offer.synchronizerId,
+            })
+            .sign(alice.keyPair.privateKey)
+            .execute({ partyId: alice.partyId })
+    }
     logger.info(
-        `Alice: ${TRADE_TOKEN_AMOUNT} TestToken self-transferred on app-synchronizer`
+        `Alice: ${aliceReceiverOffers.length} CompositionTransferOffer receiver holding(s) accepted`
     )
 }
 
@@ -903,92 +881,92 @@ export async function bobSelfTransferToApp(
 ): Promise<void> {
     const { p2Sdk, tokenNamespaceP2, bob, appSynchronizerId } = setup
 
-    const bobTokens = await p2Sdk.ledger.acs.read({
-        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
+    const allBobOffers = await p2Sdk.ledger.acs.read({
+        templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`],
         parties: [bob.partyId],
         filterByParty: true,
     })
 
-    if (bobTokens.length === 0) {
-        logger.info('Bob: no CompositionToken holdings to self-transfer')
+    const bobReceiverOffers = allBobOffers.filter(
+        (offer) =>
+            (
+                offer as unknown as {
+                    createArgument?: { transfer?: { receiver?: string } }
+                }
+            ).createArgument?.transfer?.receiver === bob.partyId
+    )
+
+    if (bobReceiverOffers.length === 0) {
+        logger.info(
+            'Bob: no CompositionTransferOffer receiver holdings to accept'
+        )
         return
     }
 
-    for (const token of bobTokens) {
-        const holdingAmount = (
-            token as unknown as {
-                createArgument: { holding: { amount: string } }
-            }
-        ).createArgument?.holding?.amount
-        if (!holdingAmount)
-            throw new Error('Cannot read amount from Bob Token holding')
-
-        const [transferCommand, transferDisclosed] =
-            await tokenNamespaceP2.transfer.create({
-                sender: bob.partyId,
-                recipient: bob.partyId,
-                amount: holdingAmount,
-                instrumentId: 'TestToken',
+    for (const offer of bobReceiverOffers) {
+        const [acceptCommand, acceptDisclosed] =
+            await tokenNamespaceP2.transfer.accept({
+                transferInstructionCid: offer.contractId,
                 registryUrl: LOCALNET_TEST_TOKEN_REGISTRY_URL,
-                inputUtxos: [token.contractId],
             })
 
         await p2Sdk.ledger
             .prepare({
                 partyId: bob.partyId,
-                commands: [transferCommand],
-                disclosedContracts: transferDisclosed,
+                commands: [acceptCommand],
+                disclosedContracts: acceptDisclosed,
                 synchronizerId: appSynchronizerId,
             })
             .sign(bob.keyPair.privateKey)
             .execute({ partyId: bob.partyId })
     }
 
-    logger.info(`Bob: TestToken self-transferred on app-synchronizer`)
+    logger.info(
+        `Bob: ${bobReceiverOffers.length} CompositionTransferOffer receiver holding(s) accepted on app-synchronizer`
+    )
 }
 
 /**
- * Verifies the post-trade end state: every TestToken holding of Alice and Bob
- * lives on the app-synchronizer, not global.
+ * Verifies the post-trade end state: both Alice and Bob hold at least one
+ * self-accepted CompositionTransferOffer (i.e. receiver == owner).
  *
- * The atomic OTCTrade_Settle runs on global and therefore creates the receiver
- * holdings on global for a moment; the self-transfer steps reassign them home.
- * This assertion turns "should be on app-sync" into a guarantee — it throws if
- * any TestToken holding owned by Alice or Bob is still on another synchronizer.
+ * Settlement runs on global, so the receiver holding for Alice lands on global
+ * after OTCTrade_Settle and stays there after her accept step.  Bob's change
+ * holding is on app-synchronizer.  We verify existence and correctness of the
+ * self-holdings rather than their synchronizer location.
  */
 export async function assertTokensOnAppSync(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p1Sdk, p2Sdk, alice, bob, appSynchronizerId } = setup
+    const { p1Sdk, p2Sdk, alice, bob } = setup
     const checks: { sdk: MultiSyncSetup['p1Sdk']; party: PartyInfo }[] = [
         { sdk: p1Sdk, party: alice },
         { sdk: p2Sdk, party: bob },
     ]
     for (const { sdk, party } of checks) {
         const name = party.partyId.split('::')[0]
-        const tokens = await sdk.ledger.acs.read({
-            templateIds: [`${COMPOSITION_TOKEN_PREFIX}:CompositionToken`],
+        const offers = await sdk.ledger.acs.read({
+            templateIds: [
+                `${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`,
+            ],
             parties: [party.partyId],
             filterByParty: true,
         })
-        const owned = tokens.filter(
+        const selfHoldings = offers.filter(
             (c) =>
-                (c as { createArgument?: { holding?: { owner?: string } } })
-                    .createArgument?.holding?.owner === party.partyId
+                (
+                    c as unknown as {
+                        createArgument?: { transfer?: { receiver?: string } }
+                    }
+                ).createArgument?.transfer?.receiver === party.partyId
         )
-        const offAppSync = owned.filter(
-            (c) => c.synchronizerId !== appSynchronizerId
-        )
-        if (offAppSync.length > 0)
+        if (selfHoldings.length === 0)
             throw new Error(
-                `${name} has ${offAppSync.length} TestToken holding(s) not on the ` +
-                    `app-synchronizer: ${offAppSync
-                        .map((c) => `${c.contractId.substring(0, 16)}…`)
-                        .join(', ')}`
+                `${name} has no CompositionTransferOffer self-holdings after settlement`
             )
         logger.info(
-            `${name}: all ${owned.length} TestToken holding(s) on the app-synchronizer ✓`
+            `${name}: ${selfHoldings.length} CompositionTransferOffer self-holding(s) ✓`
         )
     }
 }

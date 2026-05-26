@@ -178,6 +178,9 @@ export async function setupMultiSyncTrade(
             fs.readFile(compositionTokenDarPath),
         ])
 
+    logger.info(
+        'Vetting DARs — this may take a few minutes on a freshly started localnet while Canton initialises…'
+    )
     await Promise.all([
         ...[p1SdkCtx, p2SdkCtx, p3SdkCtx].map((ctx) =>
             vetDar(ctx.ledgerProvider, tradingAppDar, globalSynchronizerId)

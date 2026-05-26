@@ -228,7 +228,6 @@ export const TEMPLATES = {
     token: `${TEST_TOKEN_PREFIX}:Token`,
     tokenRules: `${TEST_TOKEN_PREFIX}:TokenRules`,
     tokenAllocation: `${TEST_TOKEN_PREFIX}:TokenAllocation`,
-    compositionToken: `${COMPOSITION_TOKEN_PREFIX}:CompositionToken`,
     compositionTransferOffer: `${COMPOSITION_TOKEN_PREFIX}:CompositionTransferOffer`,
     compositionAllocation: `${COMPOSITION_TOKEN_PREFIX}:CompositionAllocation`,
     compositionRules: `${COMPOSITION_TOKEN_PREFIX}:CompositionRules`,
