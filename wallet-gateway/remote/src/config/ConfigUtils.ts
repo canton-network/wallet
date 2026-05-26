@@ -8,9 +8,10 @@ import { Env } from '../env.js'
 export class ConfigUtils {
     static loadConfigFile(filePath: string): Config {
         if (existsSync(filePath)) {
-            const rawConfig = rawConfigSchema.parse(
-                JSON.parse(readFileSync(filePath, 'utf-8'))
-            )
+            const rawJson = JSON.parse(readFileSync(filePath, 'utf-8'))
+            const normalizedJson = normalizeLedgerApiBaseUrls(rawJson)
+
+            const rawConfig = rawConfigSchema.parse(normalizedJson)
 
             const config = resolveRawConfig(rawConfig)
 
@@ -60,6 +61,77 @@ export class ConfigUtils {
             throw new Error("Supplied file path doesn't exist " + filePath)
         }
     }
+}
+
+function normalizeLedgerApiBaseUrls(input: unknown): unknown {
+    if (!input || typeof input !== 'object') {
+        return input
+    }
+
+    const candidate = input as {
+        bootstrap?: { networks?: Array<{ ledgerApi?: { baseUrl?: string } }> }
+    }
+
+    const networks = candidate.bootstrap?.networks
+    if (!Array.isArray(networks)) {
+        return input
+    }
+
+    for (const network of networks) {
+        const baseUrl = network.ledgerApi?.baseUrl
+        if (typeof baseUrl === 'string') {
+            network.ledgerApi!.baseUrl = normalizeBaseUrl(baseUrl)
+        }
+    }
+
+    return input
+}
+
+function normalizeBaseUrl(baseUrl: string): string {
+    const trimmed = baseUrl.trim()
+
+    if (trimmed.length === 0) {
+        return baseUrl
+    }
+
+    if (trimmed.includes('://')) {
+        return normalizeUrlWithProtocol(new URL(trimmed))
+    }
+
+    const withDefaultProtocol = new URL(`http://${trimmed}`)
+    const hasExplicitPort = hasPortInAuthority(trimmed)
+    if (!hasExplicitPort) {
+        withDefaultProtocol.port = '80'
+    }
+
+    return normalizeUrlWithProtocol(withDefaultProtocol)
+}
+
+function hasPortInAuthority(rawValue: string): boolean {
+    const authority = rawValue.split(/[/?#]/)[0]
+
+    // IPv6 literal with explicit port, e.g. [::1]:5003
+    if (authority.startsWith('[')) {
+        return authority.includes(']:')
+    }
+
+    return authority.includes(':')
+}
+
+function normalizeUrlWithProtocol(url: URL): string {
+    const defaultPort =
+        url.protocol === 'http:' ? '80' : url.protocol === 'https:' ? '443' : ''
+    const port = url.port || defaultPort
+    const hostname = url.hostname.includes(':')
+        ? `[${url.hostname}]`
+        : url.hostname
+    const authority = port ? `${hostname}:${port}` : hostname
+    const path =
+        url.pathname === '/' && !url.search && !url.hash
+            ? ''
+            : `${url.pathname}${url.search}${url.hash}`
+
+    return `${url.protocol}//${authority}${path}`
 }
 
 type RawNetworkAuth = NonNullable<

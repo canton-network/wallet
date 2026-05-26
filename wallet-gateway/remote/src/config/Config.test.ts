@@ -3,6 +3,9 @@
 
 import { expect, test } from 'vitest'
 import { ConfigUtils } from './ConfigUtils.js'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 test('config from json file', async () => {
     const resp = ConfigUtils.loadConfigFile('../test/config.json')
@@ -26,5 +29,28 @@ test('config from json file', async () => {
         expect(resp.bootstrap.networks[4].adminAuth.clientSecret).toBe(
             'devnet_secret_testval'
         )
+    }
+})
+
+test('normalizes host-only or partial ledgerApi.baseUrl values', async () => {
+    const config = JSON.parse(readFileSync('../test/config.json', 'utf-8'))
+
+    const inputToExpected: Array<[string, string]> = [
+        ['127.0.0.1', 'http://127.0.0.1:80'],
+        ['http://127.0.0.1', 'http://127.0.0.1:80'],
+        ['https://127.0.0.1', 'https://127.0.0.1:443'],
+        ['127.0.0.1:5003', 'http://127.0.0.1:5003'],
+    ]
+
+    for (const [input, expected] of inputToExpected) {
+        const tempConfig = structuredClone(config)
+        tempConfig.bootstrap.networks[0].ledgerApi.baseUrl = input
+
+        const tempDir = mkdtempSync(join(tmpdir(), 'wg-config-'))
+        const tempFile = join(tempDir, 'config.json')
+        writeFileSync(tempFile, JSON.stringify(tempConfig), 'utf-8')
+
+        const loaded = ConfigUtils.loadConfigFile(tempFile)
+        expect(loaded.bootstrap.networks[0].ledgerApi.baseUrl).toBe(expected)
     }
 })
