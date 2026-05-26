@@ -130,8 +130,7 @@ export async function setupMultiSyncTrade(
         .sdkContext
 
     // Discover synchronizer IDs from P1 (they are topology-wide, not per-participant)
-    const connectedSyncResponse =
-        await p1Sdk.ledger.state.connectedSynchronizers({})
+    const connectedSyncResponse = await p1Sdk.ledger.connectedSynchronizers({})
     const allSynchronizers = connectedSyncResponse.connectedSynchronizers ?? []
     if (allSynchronizers.length < 2)
         throw new Error(
