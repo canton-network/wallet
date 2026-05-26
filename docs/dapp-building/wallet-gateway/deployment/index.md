@@ -91,7 +91,7 @@ The following config is incomplete, but highlights specific fields of note to co
 ```yaml
 kernel:
     # Set the publically accessible URL that users would use to connect to the deployed Wallet Gateway.
-    # Subpath routing is also supported as of v1.3.1
+    # Subpath routing is also supported
     publicUrl: 'https://wallet.example.com/subpath'
 server:
     # In a Helm/k8s setup, we recommend leaving the port set to the default `3030` value,
