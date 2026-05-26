@@ -11,6 +11,7 @@ import {
     type SDKInterface,
     type SDKContext,
     type TokenNamespace,
+    vetPackage,
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
@@ -20,7 +21,6 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     resolveGlobalSynchronizerId,
-    vetDar,
 } from '../utils/index.js'
 import type { SynchronizerMap } from '../utils/index.js'
 import {
@@ -173,10 +173,10 @@ export async function setupMultiSyncTrade(
         [testTokenV1Dar, tradingAppDar].flatMap((dar) => [
             ...[p1SdkCtx, p2SdkCtx].flatMap((ctx) =>
                 [globalSynchronizerId, appSynchronizerId].map((sid) =>
-                    vetDar(ctx.ledgerProvider, dar, sid)
+                    vetPackage(ctx.ledgerProvider, dar, sid)
                 )
             ),
-            vetDar(p3SdkCtx.ledgerProvider, dar, globalSynchronizerId),
+            vetPackage(p3SdkCtx.ledgerProvider, dar, globalSynchronizerId),
         ])
     )
     logger.info(
