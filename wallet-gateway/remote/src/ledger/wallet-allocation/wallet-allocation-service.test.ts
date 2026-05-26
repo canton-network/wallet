@@ -78,13 +78,16 @@ function createFireblocksDriver(options: {
         controller: vi.fn().mockReturnValue({
             getKeys: vi
                 .fn<
-                    () => Promise<{
-                        keys: Array<{
-                            id: string
-                            name: string
-                            publicKey: string
-                        }>
-                    }>
+                    () => Promise<
+                        | {
+                              keys: Array<{
+                                  id: string
+                                  name: string
+                                  publicKey: string
+                              }>
+                          }
+                        | { error: string; error_description: string }
+                    >
                 >()
                 .mockResolvedValue(getKeysResult),
             signTransaction: vi
