@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
+import { AMULET_TEMPLATE_ID } from '@canton-network/core-amulet-service'
 import { TRANSFER_FACTORY_INTERFACE_ID } from '@canton-network/core-token-standard'
 import type { SDKInterface } from '@canton-network/wallet-sdk'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
@@ -18,7 +19,8 @@ interface AcsContractEntry {
 
 // ── Template / interface identifiers ─────────────────────────────────────────
 
-export const AMULET_TEMPLATE_ID = '#splice-amulet:Splice.Amulet:Amulet'
+export { AMULET_TEMPLATE_ID }
+
 export const TEST_TOKEN_PREFIX =
     '#splice-test-token-v1:Splice.Testing.Tokens.TestTokenV1'
 export const TRADING_APP_PREFIX =

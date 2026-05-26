@@ -41,6 +41,7 @@
         "vitest": "^4.1.2"
     },
     "dependencies": {
+        "@canton-network/core-amulet-service": "workspace:^",
         "@canton-network/core-ledger-client": "workspace:^",
         "@canton-network/core-ledger-client-types": "workspace:^",
         "@canton-network/core-ledger-proto": "workspace:^",
