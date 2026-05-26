@@ -440,18 +440,12 @@ export async function allocateTokenForBob(
     if (!tokenRulesOnGlobal)
         throw new Error('TokenRules not found on global synchronizer')
 
-    // Explicitly reassign Bob's token from app-synchronizer to global before allocation.
-    // Canton requires the submitter to be a stakeholder of a contract already on the
-    // target synchronizer (SUBMITTER_ALWAYS_STAKEHOLDER policy). Without this step,
-    // Bob has no contracts on global, so the allocation submission would be rejected.
-    if (tokenHolding.synchronizerId !== globalSynchronizerId) {
-        await p2Sdk.ledger.internal.reassign({
-            submitter: bob.partyId,
-            contractId: tokenHolding.contractId,
-            source: tokenHolding.synchronizerId,
-            target: globalSynchronizerId,
-        })
-    }
+    await p2Sdk.ledger.internal.reassign({
+        submitter: bob.partyId,
+        contractId: tokenHolding.contractId,
+        source: tokenHolding.synchronizerId,
+        target: globalSynchronizerId,
+    })
 
     const [command, disclosedFromHelper] =
         await tokenNamespaceP2.allocation.instruction.create({
