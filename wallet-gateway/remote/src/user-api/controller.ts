@@ -189,7 +189,7 @@ export const userController = (
         ): Promise<GetNetworkResult> => {
             assertAdmin()
             const network = await store.getNetwork(params.networkId)
-            return { network: toApiNetwork(network) }
+            return { network: toNetworkDto(network) }
         },
         selfSignedAccessToken: async (
             params: SelfSignedAccessTokenParams
@@ -1128,7 +1128,7 @@ export const userController = (
     })
 }
 
-function toApiAuth(auth: Auth): ApiNetwork['auth'] {
+function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     const base = {
         method: auth.method,
         audience: auth.audience,
@@ -1154,7 +1154,7 @@ function toApiAuth(auth: Auth): ApiNetwork['auth'] {
     return base
 }
 
-function toApiNetwork(network: Network): ApiNetwork {
+function toNetworkDto(network: Network): ApiNetwork {
     return {
         id: network.id,
         name: network.name,
@@ -1162,9 +1162,9 @@ function toApiNetwork(network: Network): ApiNetwork {
         synchronizerId: network.synchronizerId,
         identityProviderId: network.identityProviderId,
         ledgerApi: network.ledgerApi.baseUrl,
-        auth: toApiAuth(network.auth),
+        auth: toAuthDto(network.auth),
         ...(network.adminAuth
-            ? { adminAuth: toApiAuth(network.adminAuth) }
+            ? { adminAuth: toAuthDto(network.adminAuth) }
             : {}),
     }
 }
