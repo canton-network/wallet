@@ -4,11 +4,10 @@ This section outlines some recommendations for production deployments of the Wal
 
 The service is available in both Docker and Helm variants. Images and charts are **public** on GitHub Container Registry — no access request is required.
 
-- **Packages**: https://github.com/orgs/digital-asset/packages?repo_name=wallet-gateway (Docker and Helm)
-- **Docker image**: `ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:v<VERSION>`
-- **Helm chart**: `ghcr.io/digital-asset/wallet-gateway/helm/wallet-gateway:v<VERSION>`
+- **Docker Registry**: `ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION>`
+- **Helm Repository**: `ghcr.io/digital-asset/wallet-gateway/helm/wallet-gateway:<VERSION>`
 
-Note that we don't currently publish `latest` tags. To pick a version, check either:
+Replace `<VERSION>` with the version you want to deploy. We don't currently publish `latest` tags. To determine which version to use, check either
 
 - The latest tag on GHCR: https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fdocker%2Fwallet-gateway
 - The matching NPM package: https://www.npmjs.com/package/@canton-network/wallet-gateway-remote
@@ -25,10 +24,10 @@ To run the Docker container, a configuration file must be supplied for the Walle
 
 ```shell
 # via Docker
-docker run --rm ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0 --config-example > config.json
+docker run --rm ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION> --config-example > config.json
 
 # alternatively, generate a sample config file via NPM
-npx @canton-network/wallet-gateway-remote@0.20.0 --config-example > config.json
+npx @canton-network/wallet-gateway-remote@<VERSION> --config-example > config.json
 ```
 
 With the default config file, start the service:
@@ -36,7 +35,7 @@ With the default config file, start the service:
 ```shell
 docker run -p 3030:3030 \
     -v ${PWD}/config.json:/app/config.json:ro \
-    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0
+    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION>
 ```
 
 If all went well, the Wallet Gateway login page can be opened in a browser at http://localhost:3030.
@@ -113,7 +112,7 @@ The following config is incomplete, but highlights specific fields of note to co
 ```yaml
 kernel:
     # Set the publically accessible URL that users would use to connect to the deployed Wallet Gateway.
-    # Subpath routing is also supported as of v0.20.0
+    # Subpath routing is also supported
     publicUrl: 'https://wallet.example.com/subpath'
 server:
     # In a Helm/k8s setup, we recommend leaving the port set to the default `3030` value,
@@ -185,7 +184,7 @@ Then start the container with the volume mount
 docker run -p 3030:3030 \
     -v ${PWD}/config.json:/app/config.json:ro \
     -v ${PWD}/data:/data \
-    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0
+    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION>
 ```
 
 ### PostgreSQL
@@ -211,6 +210,6 @@ JSON logging can be enabled via the `--log-format` CLI flag (values: `"pretty" (
 ```shell
 docker run -p 3030:3030 \
     -v ${PWD}/config.json:/app/config.json:ro \
-    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0 \
+    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION> \
     --log-format=json
 ```
