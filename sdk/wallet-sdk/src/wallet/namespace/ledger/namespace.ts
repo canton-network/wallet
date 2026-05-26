@@ -3,7 +3,12 @@
 
 import { LedgerTypes, SDKContext } from '../../sdk.js'
 import { v4 } from 'uuid'
-import { PrepareOptions, ExecuteOptions, AcsRequestOptions } from './types.js'
+import {
+    PrepareOptions,
+    ExecuteOptions,
+    AcsRequestOptions,
+    ConnectedSynchronizersOptions,
+} from './types.js'
 import { PreparedTransaction } from '../transactions/prepared.js'
 import { SignedTransaction } from '../transactions/signed.js'
 import { Ops } from '@canton-network/core-provider-ledger'
@@ -11,21 +16,54 @@ import { DarNamespace } from './dar/client.js'
 import { InternalLedgerNamespace } from './internal/index.js'
 import { PreparedTransactionNamespace } from './hash/namespace.js'
 import { AcsOptions, ACSReader } from '@canton-network/core-acs-reader'
-import { State } from '../state/index.js'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace
     public readonly internal: InternalLedgerNamespace
     public readonly preparedTransaction: PreparedTransactionNamespace
     public readonly acsReader: ACSReader
-    public readonly state: State
 
     constructor(private readonly sdkContext: SDKContext) {
         this.dar = new DarNamespace(sdkContext)
         this.internal = new InternalLedgerNamespace(sdkContext)
         this.preparedTransaction = new PreparedTransactionNamespace(sdkContext)
         this.acsReader = new ACSReader(sdkContext.ledgerProvider)
-        this.state = new State(sdkContext)
+    }
+
+    /**
+     * Returns connected synchronizers visible to the caller, optionally filtered
+     * by party, participant, or identity provider.
+     *
+     * Uses the Ledger API endpoint GET /v2/state/connected-synchronizers.
+     */
+    public async connectedSynchronizers(
+        options?: ConnectedSynchronizersOptions
+    ) {
+        this.sdkContext.logger.debug(
+            { options },
+            'Fetching connected synchronizers'
+        )
+
+        return this.sdkContext.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
+            {
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/state/connected-synchronizers',
+                    requestMethod: 'get',
+                    query: {
+                        ...(options?.party !== undefined && {
+                            party: options.party,
+                        }),
+                        ...(options?.participantId !== undefined && {
+                            participantId: options.participantId,
+                        }),
+                        ...(options?.identityProviderId !== undefined && {
+                            identityProviderId: options.identityProviderId,
+                        }),
+                    },
+                },
+            }
+        )
     }
 
     public async ledgerEnd() {
