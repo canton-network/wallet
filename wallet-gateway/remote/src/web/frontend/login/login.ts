@@ -21,6 +21,7 @@ import {
     ClientCredentials,
 } from '@canton-network/core-wallet-auth'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
+import { setLocationHref } from '../navigation.js'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -161,7 +162,9 @@ export class LoginUI extends BaseElement {
                     this.connectingMessage = `Redirecting to ${selectedNetwork.name}...`
 
                     setTimeout(() => {
-                        window.location.href = `${config.authorization_endpoint}?${params.toString()}`
+                        setLocationHref(
+                            `${config.authorization_endpoint}?${params.toString()}`
+                        )
                     }, 250)
                     return
                 }

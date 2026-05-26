@@ -18,6 +18,7 @@ import {
 } from '@canton-network/core-wallet-user-rpc-client'
 import { Auth } from '@canton-network/core-wallet-auth'
 import { createUserClient } from '../../rpc-client'
+import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 
@@ -90,7 +91,7 @@ export class UserUiReviewNetwork extends BaseElement {
     }
 
     private navigateBack() {
-        window.location.href = toRelHref('/networks')
+        setLocationHref(toRelHref('/networks'))
     }
 
     private toApiAuth(auth: Auth): ApiAuth {
@@ -138,7 +139,7 @@ export class UserUiReviewNetwork extends BaseElement {
                 },
             })
 
-            window.location.href = toRelPath('/networks/')
+            setLocationHref(toRelPath('/networks/'))
         } catch (error) {
             handleErrorToast(error)
         }
@@ -156,7 +157,7 @@ export class UserUiReviewNetwork extends BaseElement {
                 params: { networkName: e.network.id },
             })
 
-            window.location.href = toRelPath('/networks/')
+            setLocationHref(toRelPath('/networks/'))
         } catch (error) {
             handleErrorToast(error)
         }
