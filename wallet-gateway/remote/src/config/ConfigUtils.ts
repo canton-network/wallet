@@ -9,7 +9,7 @@ export class ConfigUtils {
     static loadConfigFile(filePath: string): Config {
         if (existsSync(filePath)) {
             const rawJson = JSON.parse(readFileSync(filePath, 'utf-8'))
-            const normalizedJson = normalizeLedgerApiBaseUrls(rawJson)
+            const normalizedJson = normalizeConfigUrls(rawJson)
 
             const rawConfig = rawConfigSchema.parse(normalizedJson)
 
@@ -63,28 +63,54 @@ export class ConfigUtils {
     }
 }
 
-function normalizeLedgerApiBaseUrls(input: unknown): unknown {
+function normalizeConfigUrls(input: unknown): unknown {
     if (!input || typeof input !== 'object') {
         return input
     }
 
     const candidate = input as {
-        bootstrap?: { networks?: Array<{ ledgerApi?: { baseUrl?: string } }> }
+        bootstrap?: {
+            idps?: Array<{ issuer?: string }>
+            networks?: Array<{ ledgerApi?: { baseUrl?: string } }>
+        }
+    }
+
+    const idps = candidate.bootstrap?.idps
+    if (Array.isArray(idps)) {
+        for (const idp of idps) {
+            const issuer = idp.issuer
+            if (typeof issuer === 'string' && shouldNormalizeAsUrl(issuer)) {
+                idp.issuer = normalizeBaseUrl(issuer)
+            }
+        }
     }
 
     const networks = candidate.bootstrap?.networks
-    if (!Array.isArray(networks)) {
-        return input
-    }
-
-    for (const network of networks) {
-        const baseUrl = network.ledgerApi?.baseUrl
-        if (typeof baseUrl === 'string') {
-            network.ledgerApi!.baseUrl = normalizeBaseUrl(baseUrl)
+    if (Array.isArray(networks)) {
+        for (const network of networks) {
+            const baseUrl = network.ledgerApi?.baseUrl
+            if (typeof baseUrl === 'string') {
+                network.ledgerApi!.baseUrl = normalizeBaseUrl(baseUrl)
+            }
         }
     }
 
     return input
+}
+
+function shouldNormalizeAsUrl(value: string): boolean {
+    const trimmed = value.trim()
+
+    // Preserve non-URL issuers for self-signed setups, e.g. "unsafe-auth".
+    if (
+        !trimmed.includes('://') &&
+        !trimmed.includes('.') &&
+        !trimmed.includes(':')
+    ) {
+        return trimmed.toLowerCase() === 'localhost'
+    }
+
+    return true
 }
 
 function normalizeBaseUrl(baseUrl: string): string {

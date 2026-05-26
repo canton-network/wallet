@@ -54,3 +54,41 @@ test('normalizes host-only or partial ledgerApi.baseUrl values', async () => {
         expect(loaded.bootstrap.networks[0].ledgerApi.baseUrl).toBe(expected)
     }
 })
+
+test('normalizes host-only or partial OAuth IDP issuer values', async () => {
+    const config = JSON.parse(readFileSync('../test/config.json', 'utf-8'))
+
+    const inputToExpected: Array<[string, string]> = [
+        ['127.0.0.1', 'http://127.0.0.1:80'],
+        ['http://127.0.0.1', 'http://127.0.0.1:80'],
+        ['https://127.0.0.1', 'https://127.0.0.1:443'],
+        ['127.0.0.1:5003', 'http://127.0.0.1:5003'],
+    ]
+
+    for (const [input, expected] of inputToExpected) {
+        const tempConfig = structuredClone(config)
+        tempConfig.bootstrap.idps[0].issuer = input
+
+        const tempDir = mkdtempSync(join(tmpdir(), 'wg-config-'))
+        const tempFile = join(tempDir, 'config.json')
+        writeFileSync(tempFile, JSON.stringify(tempConfig), 'utf-8')
+
+        const loaded = ConfigUtils.loadConfigFile(tempFile)
+        expect(loaded.bootstrap.idps[0].issuer).toBe(expected)
+    }
+})
+
+test('keeps non-url self-signed IDP issuer unchanged', async () => {
+    const config = JSON.parse(readFileSync('../test/config.json', 'utf-8'))
+    const expectedIssuer = 'unsafe-auth'
+
+    const tempConfig = structuredClone(config)
+    tempConfig.bootstrap.idps[2].issuer = expectedIssuer
+
+    const tempDir = mkdtempSync(join(tmpdir(), 'wg-config-'))
+    const tempFile = join(tempDir, 'config.json')
+    writeFileSync(tempFile, JSON.stringify(tempConfig), 'utf-8')
+
+    const loaded = ConfigUtils.loadConfigFile(tempFile)
+    expect(loaded.bootstrap.idps[2].issuer).toBe(expectedIssuer)
+})
