@@ -191,7 +191,7 @@ export class LoginUI extends BaseElement {
         )
         stateManager.accessToken.set(accessToken)
 
-        addUserSession(accessToken, networkId)
+        await addUserSession(accessToken, networkId)
     }
 
     protected render() {

@@ -7,6 +7,7 @@ import cors from 'cors'
 import express from 'express'
 import request from 'supertest'
 import { user } from './server.js'
+import { jwtAuthService } from '../auth/jwt-auth-service.js'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.js'
 import { NotificationService } from '../notification/NotificationService.js'
@@ -102,5 +103,42 @@ test('selfSignedAccessToken rpc', async () => {
         Buffer.from(accessToken.split('.')[1], 'base64url').toString()
     )
     expect(payload.sub).toBe('test-user')
-    expect(payload.iss).toBe('self-signed')
+    expect(payload.iss).toBe('unsafe-auth')
+})
+
+test('selfSignedAccessToken token is accepted by jwt auth', async () => {
+    const authService = jwtAuthService(store, pino(sink()))
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+
+    const { publicUrl } = deriveUrls(config)
+    const mintResponse = await request(
+        user(
+            '/api/v0/user',
+            app,
+            pino(sink()),
+            config.kernel,
+            publicUrl,
+            notificationService,
+            {},
+            store
+        )
+    )
+        .post('/api/v0/user')
+        .send({
+            jsonrpc: '2.0',
+            id: 2,
+            method: 'selfSignedAccessToken',
+            params: {
+                networkId: 'canton:local-self-signed',
+                clientId: 'test-user',
+            },
+        })
+
+    const accessToken = mintResponse.body.result.accessToken
+    const context = await authService.verifyToken(`Bearer ${accessToken}`)
+
+    expect(context?.userId).toBe('test-user')
+    expect(context?.accessToken).toBe(accessToken)
 })

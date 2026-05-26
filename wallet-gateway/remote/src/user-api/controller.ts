@@ -208,10 +208,24 @@ export const userController = (
                 )
             }
 
+            const idp = (await store.listIdps()).find(
+                (idp) => idp.id === network.identityProviderId
+            )
+            if (!idp) {
+                throw new Error(
+                    `Identity provider "${network.identityProviderId}" not found`
+                )
+            }
+            if (idp.type !== 'self_signed') {
+                throw new Error(
+                    'Identity provider is not configured for self_signed authentication'
+                )
+            }
+
             const accessToken = await new AuthTokenProvider(
                 {
                     method: 'self_signed',
-                    issuer: auth.issuer,
+                    issuer: idp.issuer,
                     credentials: {
                         clientId: params.clientId,
                         clientSecret: auth.clientSecret,
