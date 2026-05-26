@@ -9,7 +9,6 @@ import {
     AssetConfig,
 } from '@canton-network/wallet-sdk'
 
-export { vetDar } from './dar.js'
 export { syncAlias, logAllContracts } from './acs-logger.js'
 export type { ContractReadSpec as ContractSpec } from './acs-logger.js'
 export function getActiveContractCid(entry: JSContractEntry) {
