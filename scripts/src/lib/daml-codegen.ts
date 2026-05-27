@@ -153,15 +153,31 @@ export function runDamlCodegen(workingDir: string, darFileName: string): void {
 }
 
 /**
+ * Build a Daml package without generating JS bindings.
+ * Used for packages that are only needed as data-dependencies by other packages.
+ */
+export function buildDamlPackage(destDir: string): void {
+    const damlYamlPath = path.join(destDir, 'daml.yaml')
+    if (!fs.existsSync(damlYamlPath)) {
+        throw new Error(`Missing daml.yaml in Daml project: ${damlYamlPath}`)
+    }
+    const damlFiles = getAllFilesWithExtension(destDir, '.daml')
+    if (damlFiles.length === 0) {
+        throw new Error(`No Daml source files found in ${destDir}`)
+    }
+    runDamlBuild(destDir)
+}
+
+/**
  * Generate DAML JavaScript bindings from an existing DAML project at destination
  * Uses DPM (Daml Package Manager) for the complete workflow:
- * 1. Validate destination contains a DAML project
- * 2. Build DAR with dpm build
- * 3. Generate JS bindings with dpm codegen js
+ * builds with dpm build, then generates TypeScript bindings with dpm codegen-js
  */
 export async function generateDamlJsBindings(
     config: DamlCodegenConfig
 ): Promise<void> {
+    const darFileName = `${config.packageName}-${config.version}.dar`
+
     const damlYamlPath = path.join(config.destDir, 'daml.yaml')
     if (!fs.existsSync(damlYamlPath)) {
         throw new Error(
@@ -171,16 +187,9 @@ export async function generateDamlJsBindings(
 
     const damlFiles = getAllFilesWithExtension(config.destDir, '.daml')
     if (damlFiles.length === 0) {
-        console.log(
-            warn(
-                `No .daml files found in ${config.destDir}. Skipping build and codegen.`
-            )
-        )
-        return
+        throw new Error(`No Daml source files found in ${config.destDir}`)
     }
 
     runDamlBuild(config.destDir)
-
-    const darFileName = `${config.packageName}-${config.version}.dar`
     runDamlCodegen(config.destDir, darFileName)
 }

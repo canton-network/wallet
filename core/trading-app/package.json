@@ -1,0 +1,51 @@
+{
+    "name": "@canton-network/core-trading-app",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "DAML codegen JS for splice-token-test-trading-app",
+    "license": "Apache-2.0",
+    "packageManager": "yarn@4.9.4",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "browser": "./dist/index.browser.js",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "yarn clean && rollup -c && yarn clean:types-tmp",
+        "clean:types-tmp": "rm -rf dist/types",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@daml/types": "^3.5.0",
+        "@mojotech/json-type-validation": "^3.1.0"
+    },
+    "devDependencies": {
+        "@rollup/plugin-alias": "^5.0.0",
+        "@rollup/plugin-commonjs": "^29.0.0",
+        "@rollup/plugin-json": "^6.1.0",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@rollup/plugin-typescript": "^12.3.0",
+        "rollup": "^4.59.0",
+        "rollup-plugin-dts": "^6.3.0",
+        "tslib": "^2.8.1",
+        "typescript": "^5.9.3"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/trading-app"
+    }
+}

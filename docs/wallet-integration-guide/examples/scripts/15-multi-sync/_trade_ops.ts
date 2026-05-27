@@ -6,6 +6,9 @@ import { AMULET_TEMPLATE_ID } from '@canton-network/core-amulet-service'
 import { TRANSFER_FACTORY_INTERFACE_ID } from '@canton-network/core-token-standard'
 import type { SDKInterface } from '@canton-network/wallet-sdk'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
+import * as SpliceTestTokenV1 from '@canton-network/core-test-token'
+import type { Splice as SpliceTestTokenTypes } from '@canton-network/core-test-token'
+import * as SpliceTokenTestTradingApp from '@canton-network/core-trading-app'
 import type { MultiSyncSetup } from './_setup.js'
 
 // ── ACS contract entry (as returned by ledger.acs.read) ───────────────────────
@@ -21,10 +24,9 @@ interface AcsContractEntry {
 
 export { AMULET_TEMPLATE_ID }
 
-export const TEST_TOKEN_PREFIX =
-    '#splice-test-token-v1:Splice.Testing.Tokens.TestTokenV1'
-export const TRADING_APP_PREFIX =
-    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp'
+export const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
+export const TradingApp =
+    SpliceTokenTestTradingApp.Splice.Testing.Apps.TradingApp
 
 export const ALICE_AMULET_TAP_AMOUNT = '2000000'
 export const BOB_TOKEN_MINT_AMOUNT = '500'
@@ -72,7 +74,7 @@ export async function createTokenRulesAndMintForBob(
                 partyId: tokenAdmin.partyId,
                 commands: {
                     CreateCommand: {
-                        templateId: `${TEST_TOKEN_PREFIX}:TokenRules`,
+                        templateId: TestTokenV1.TokenRules.templateId,
                         createArguments: { admin: tokenAdmin.partyId },
                     },
                 },
@@ -86,7 +88,7 @@ export async function createTokenRulesAndMintForBob(
                 partyId: tokenAdmin.partyId,
                 commands: {
                     CreateCommand: {
-                        templateId: `${TEST_TOKEN_PREFIX}:TokenRules`,
+                        templateId: TestTokenV1.TokenRules.templateId,
                         createArguments: { admin: tokenAdmin.partyId },
                     },
                 },
@@ -104,7 +106,7 @@ export async function createTokenRulesAndMintForBob(
             commands: [
                 {
                     CreateCommand: {
-                        templateId: `${TEST_TOKEN_PREFIX}:Token`,
+                        templateId: TestTokenV1.Token.templateId,
                         createArguments: {
                             holding: {
                                 owner: tokenAdmin.partyId,
@@ -129,12 +131,12 @@ export async function createTokenRulesAndMintForBob(
     // Read tokenAdmin's contracts via P2 (P2 is connected to both synchronizers)
     const [tokenRulesContracts, adminTokenHoldings] = await Promise.all([
         p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
+            templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         }),
         p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+            templateIds: [TestTokenV1.Token.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         }),
@@ -192,7 +194,7 @@ export async function createTokenRulesAndMintForBob(
         .execute({ partyId: tokenAdmin.partyId })
 
     const transferOffers = await p2Sdk.ledger.acs.read({
-        templateIds: [`${TEST_TOKEN_PREFIX}:TokenTransferOffer`],
+        templateIds: [TestTokenV1.TokenTransferOffer.templateId],
         parties: [bob.partyId],
         filterByParty: true,
     })
@@ -251,7 +253,7 @@ export async function createAndInitiateOtcTrade(
         party: string
     ): Promise<string> => {
         const contracts = await sdk.ledger.acs.read({
-            templateIds: [`${TRADING_APP_PREFIX}:OTCTradeProposal`],
+            templateIds: [TradingApp.OTCTradeProposal.templateId],
             parties: [party],
             filterByParty: true,
         })
@@ -264,7 +266,7 @@ export async function createAndInitiateOtcTrade(
             partyId: alice.partyId,
             commands: {
                 CreateCommand: {
-                    templateId: `${TRADING_APP_PREFIX}:OTCTradeProposal`,
+                    templateId: TradingApp.OTCTradeProposal.templateId,
                     createArguments: {
                         venue: tradingApp.partyId,
                         tradeCid: null,
@@ -288,7 +290,7 @@ export async function createAndInitiateOtcTrade(
             commands: [
                 {
                     ExerciseCommand: {
-                        templateId: `${TRADING_APP_PREFIX}:OTCTradeProposal`,
+                        templateId: TradingApp.OTCTradeProposal.templateId,
                         contractId: await readProposalCid(p2Sdk, bob.partyId),
                         choice: 'OTCTradeProposal_Accept',
                         choiceArgument: { approver: bob.partyId },
@@ -311,7 +313,7 @@ export async function createAndInitiateOtcTrade(
             commands: [
                 {
                     ExerciseCommand: {
-                        templateId: `${TRADING_APP_PREFIX}:OTCTradeProposal`,
+                        templateId: TradingApp.OTCTradeProposal.templateId,
                         contractId: await readProposalCid(
                             p3Sdk,
                             tradingApp.partyId
@@ -331,7 +333,7 @@ export async function createAndInitiateOtcTrade(
     )
 
     const otcTradeContracts = await p3Sdk.ledger.acs.read({
-        templateIds: [`${TRADING_APP_PREFIX}:OTCTrade`],
+        templateIds: [TradingApp.OTCTrade.templateId],
         parties: [tradingApp.partyId],
         filterByParty: true,
     })
@@ -420,13 +422,13 @@ export async function allocateTokenForBob(
 
     const [tokenHoldings, tokenRulesContracts] = await Promise.all([
         p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+            templateIds: [TestTokenV1.Token.templateId],
             parties: [bob.partyId],
             filterByParty: true,
         }),
         // Read tokenAdmin's TokenRules via P2 (P2 is connected to both synchronizers)
         p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
+            templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         }),
@@ -561,7 +563,7 @@ export async function settleOtcTrade(
             commands: [
                 {
                     ExerciseCommand: {
-                        templateId: `${TRADING_APP_PREFIX}:OTCTrade`,
+                        templateId: TradingApp.OTCTrade.templateId,
                         contractId: otcTradeCid,
                         choice: 'OTCTrade_Settle',
                         choiceArgument: { allocationsWithContext },
@@ -587,13 +589,13 @@ export async function aliceSelfTransferToApp(
 
     const [aliceTokens, tokenRulesContracts] = await Promise.all([
         p1Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+            templateIds: [TestTokenV1.Token.templateId],
             parties: [alice.partyId],
             filterByParty: true,
         }),
         // Read tokenAdmin's TokenRules via P2 (sv/P3 is global-only)
         p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
+            templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         }),
@@ -682,13 +684,13 @@ export async function bobSelfTransferToApp(
 
     const [bobTokens, tokenRulesContracts] = await Promise.all([
         p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:Token`],
+            templateIds: [TestTokenV1.Token.templateId],
             parties: [bob.partyId],
             filterByParty: true,
         }),
         // Read tokenAdmin's TokenRules via P2 (sv/P3 is global-only)
         p2Sdk.ledger.acs.read({
-            templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
+            templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         }),
@@ -706,9 +708,9 @@ export async function bobSelfTransferToApp(
     for (const token of bobTokens) {
         const holdingAmount = (
             token as unknown as {
-                createArgument: { holding: { amount: string } }
+                createArgument: SpliceTestTokenTypes.Testing.Tokens.TestTokenV1.Token
             }
-        ).createArgument?.holding?.amount
+        ).createArgument.holding.amount
         if (!holdingAmount)
             throw new Error('Cannot read amount from Bob Token holding')
 

@@ -1,18 +1,9 @@
 import pino from 'pino'
-import {
-    PARTY_HINT_ALICE,
-    PARTY_HINT_BOB,
-    PARTY_HINT_TRADING_APP,
-    PARTY_HINT_TOKEN_ADMIN,
-} from '@canton-network/wallet-sdk'
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
 import {
-    AMULET_TEMPLATE_ID,
-    TEST_TOKEN_PREFIX,
     TRADE_AMULET_AMOUNT,
     TRADE_TOKEN_AMOUNT,
-    TRADING_APP_PREFIX,
     mintAmuletForAlice,
     createTokenRulesAndMintForBob,
     createAndInitiateOtcTrade,
@@ -46,41 +37,6 @@ const {
     amuletAdmin,
 } = setup
 
-const allPartySpecs = [
-    {
-        label: PARTY_HINT_ALICE,
-        sdk: p1Sdk,
-        templateIds: [
-            AMULET_TEMPLATE_ID,
-            `${TEST_TOKEN_PREFIX}:Token`,
-            `${TRADING_APP_PREFIX}:OTCTradeProposal`,
-            `${TRADING_APP_PREFIX}:OTCTrade`,
-        ],
-        parties: [alice.partyId],
-    },
-    {
-        label: PARTY_HINT_BOB,
-        sdk: p2Sdk,
-        templateIds: [AMULET_TEMPLATE_ID, `${TEST_TOKEN_PREFIX}:Token`],
-        parties: [bob.partyId],
-    },
-    {
-        label: PARTY_HINT_TOKEN_ADMIN,
-        sdk: p2Sdk,
-        templateIds: [`${TEST_TOKEN_PREFIX}:TokenRules`],
-        parties: [tokenAdmin.partyId],
-    },
-    {
-        label: PARTY_HINT_TRADING_APP,
-        sdk: p3Sdk,
-        templateIds: [
-            `${TRADING_APP_PREFIX}:OTCTradeProposal`,
-            `${TRADING_APP_PREFIX}:OTCTrade`,
-        ],
-        parties: [tradingApp.partyId],
-    },
-]
-
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)
 // Steps 5a–5e: TokenAdmin creates TokenRules on global + app, self-mints Token,
@@ -92,7 +48,12 @@ await Promise.all([
 ])
 
 logger.info('Contracts after setup:')
-await logAllContracts(logger, synchronizers, allPartySpecs)
+await logAllContracts(logger, synchronizers, [
+    { sdk: p1Sdk, parties: [alice.partyId] },
+    { sdk: p2Sdk, parties: [bob.partyId] },
+    { sdk: p2Sdk, parties: [tokenAdmin.partyId] },
+    { sdk: p3Sdk, parties: [tradingApp.partyId] },
+])
 
 // ── OTC trade terms ───────────────────────────────────────────────────────────
 const transferLegs = {
@@ -115,8 +76,12 @@ const transferLegs = {
 // ── Steps 6a–6c + 7: Propose → Accept → Initiate settlement → Read OTCTrade ─
 const otcTradeCid = await createAndInitiateOtcTrade(setup, transferLegs, logger)
 logger.info('Contracts after trade initiation:')
-await logAllContracts(logger, synchronizers, allPartySpecs)
-
+await logAllContracts(logger, synchronizers, [
+    { sdk: p1Sdk, parties: [alice.partyId] },
+    { sdk: p2Sdk, parties: [bob.partyId] },
+    { sdk: p2Sdk, parties: [tokenAdmin.partyId] },
+    { sdk: p3Sdk, parties: [tradingApp.partyId] },
+])
 // ── Steps 8–9: Allocate in parallel ────────────────────────────────────────
 // Step 8:  Alice allocates Amulet for leg-0 (global synchronizer)
 // Step 9: Bob allocates TestToken for leg-1 (global synchronizer)
@@ -125,8 +90,12 @@ const [legIdAlice, { legId: legIdBob }] = await Promise.all([
     allocateTokenForBob(setup, logger),
 ])
 logger.info('Contracts after allocations:')
-await logAllContracts(logger, synchronizers, allPartySpecs)
-
+await logAllContracts(logger, synchronizers, [
+    { sdk: p1Sdk, parties: [alice.partyId] },
+    { sdk: p2Sdk, parties: [bob.partyId] },
+    { sdk: p2Sdk, parties: [tokenAdmin.partyId] },
+    { sdk: p3Sdk, parties: [tradingApp.partyId] },
+])
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────────────
 const allocationsBob = await tokenNamespaceP2.allocation.pending(bob.partyId)
 const testTokenAllocation = allocationsBob.find(
@@ -142,12 +111,21 @@ await settleOtcTrade(
     logger
 )
 logger.info('Contracts after settlement:')
-await logAllContracts(logger, synchronizers, allPartySpecs)
-
+await logAllContracts(logger, synchronizers, [
+    { sdk: p1Sdk, parties: [alice.partyId] },
+    { sdk: p2Sdk, parties: [bob.partyId] },
+    { sdk: p2Sdk, parties: [tokenAdmin.partyId] },
+    { sdk: p3Sdk, parties: [tradingApp.partyId] },
+])
 // ── Step 11: Self-transfer TestTokens back to app-synchronizer ─────────────────
 await Promise.all([
     aliceSelfTransferToApp(setup, logger),
     bobSelfTransferToApp(setup, logger),
 ])
 logger.info('Final contract state:')
-await logAllContracts(logger, synchronizers, allPartySpecs)
+await logAllContracts(logger, synchronizers, [
+    { sdk: p1Sdk, parties: [alice.partyId] },
+    { sdk: p2Sdk, parties: [bob.partyId] },
+    { sdk: p2Sdk, parties: [tokenAdmin.partyId] },
+    { sdk: p3Sdk, parties: [tradingApp.partyId] },
+])
