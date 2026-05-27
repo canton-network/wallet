@@ -75,7 +75,8 @@ export class ExternalPartyNamespace {
                 logger: this.logger,
             },
             partyCreationPromise,
-            options
+            options,
+            publicKey
         )
     }
 
