@@ -61,8 +61,6 @@ export class ClientCredentialsService {
             body: params.toString(),
         })
 
-        console.log(params.toString())
-
         if (!res.ok) {
             this.logger?.error(
                 { status: res.status, statusText: res.statusText },
