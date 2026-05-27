@@ -4,23 +4,71 @@
 import { expect, test } from 'vitest'
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
 import {
+    computeMultiHashForTopology,
+    computeSha256CantonHash,
     decodePreparedTransaction,
     decodeTopologyTransaction,
     hashPreparedTransaction,
+    ParsedTransactionInfo,
+    parsePreparedTransaction,
+    validateAuthorizedPartyIds,
 } from '.'
 import camelcaseKeys from 'camelcase-keys'
 import createPingFixture from './fixtures/create_ping_prepared_response.json'
+import { fromBase64, toBase64 } from './utils'
+import { computePreparedTransaction } from './hashing_scheme_v2'
+
+const parsedTxInfo: ParsedTransactionInfo = {
+    jsonString:
+        '{\n  "transaction": {\n    "version": "2.1",\n    "roots": [\n      "0"\n    ],\n    "nodes": [\n      {\n        "nodeId": "0",\n        "versionedNode": {\n          "oneofKind": "v1",\n          "v1": {\n            "nodeType": {\n              "oneofKind": "create",\n              "create": {\n                "lfVersion": "2.1",\n                "contractId": "00550802ddb16371f5fc6d364e6cd4b3283a9eb5c0ccb121ae368cdebbad0fbf56",\n                "packageName": "AdminWorkflows",\n                "signatories": [\n                  "operator::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"\n                ],\n                "stakeholders": [\n                  "operator::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",\n                  "participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"\n                ],\n                "templateId": {\n                  "packageId": "2a38b963f6abf45b76c702f9700bfd9060555872af915ef7f8f68795e2c831bd",\n                  "moduleName": "Canton.Internal.Ping",\n                  "entityName": "Ping"\n                },\n                "argument": {\n                  "sum": {\n                    "oneofKind": "record",\n                    "record": {\n                      "fields": [\n                        {\n                          "label": "id",\n                          "value": {\n                            "sum": {\n                              "oneofKind": "text",\n                              "text": "ping_id"\n                            }\n                          }\n                        },\n                        {\n                          "label": "initiator",\n                          "value": {\n                            "sum": {\n                              "oneofKind": "party",\n                              "party": "operator::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"\n                            }\n                          }\n                        },\n                        {\n                          "label": "responder",\n                          "value": {\n                            "sum": {\n                              "oneofKind": "party",\n                              "party": "participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"\n                            }\n                          }\n                        }\n                      ],\n                      "recordId": {\n                        "packageId": "2a38b963f6abf45b76c702f9700bfd9060555872af915ef7f8f68795e2c831bd",\n                        "moduleName": "Canton.Internal.Ping",\n                        "entityName": "Ping"\n                      }\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ],\n    "nodeSeeds": [\n      {\n        "nodeId": 0,\n        "seed": {\n          "0": 107,\n          "1": 218,\n          "2": 162,\n          "3": 83,\n          "4": 81,\n          "5": 20,\n          "6": 81,\n          "7": 157,\n          "8": 117,\n          "9": 169,\n          "10": 235,\n          "11": 45,\n          "12": 68,\n          "13": 201,\n          "14": 116,\n          "15": 34,\n          "16": 7,\n          "17": 175,\n          "18": 92,\n          "19": 125,\n          "20": 238,\n          "21": 116,\n          "22": 144,\n          "23": 156,\n          "24": 52,\n          "25": 121,\n          "26": 131,\n          "27": 117,\n          "28": 80,\n          "29": 93,\n          "30": 253,\n          "31": 158\n        }\n      }\n    ]\n  },\n  "metadata": {\n    "synchronizerId": "wallet::1220e7b23ea52eb5c672fb0b1cdbc916922ffed3dd7676c223a605664315e2d43edd",\n    "mediatorGroup": 0,\n    "transactionUuid": "a328162e-728e-4e05-ac78-b34f070983ba",\n    "preparationTime": "1754534109899822",\n    "inputContracts": [],\n    "globalKeyMapping": [],\n    "submitterInfo": {\n      "actAs": [\n        "operator::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"\n      ],\n      "commandId": "f2ec4d8f-ccc1-402b-b278-7556fdd2b412"\n    }\n  }\n}',
+    isCreate: true,
+    isExercise: false,
+    packageName: 'AdminWorkflows',
+    signatories: [
+        'operator::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
+    ],
+    stakeholders: [
+        'operator::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
+        'participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
+    ],
+    moduleName: 'Canton.Internal.Ping',
+    entityName: 'Ping',
+    templateId: 'AdminWorkflows:Canton.Internal.Ping:Ping',
+}
 
 test('decode a base 64 encoded prepared tx', async () => {
     const base64EncodedPreparedTx =
         'Cp8GCgMyLjESATAa8AUKATDCPukFCuYFCgMyLjESQjAwNTUwODAyZGRiMTYzNzFmNWZjNmQzNjRlNmNkNGIzMjgzYTllYjVjMGNjYjEyMWFlMzY4Y2RlYmJhZDBmYmY1NhoOQWRtaW5Xb3JrZmxvd3MiXgpAMmEzOGI5NjNmNmFiZjQ1Yjc2YzcwMmY5NzAwYmZkOTA2MDU1NTg3MmFmOTE1ZWY3ZjhmNjg3OTVlMmM4MzFiZBIUQ2FudG9uLkludGVybmFsLlBpbmcaBFBpbmcqtgJyswIKXgpAMmEzOGI5NjNmNmFiZjQ1Yjc2YzcwMmY5NzAwYmZkOTA2MDU1NTg3MmFmOTE1ZWY3ZjhmNjg3OTVlMmM4MzFiZBIUQ2FudG9uLkludGVybmFsLlBpbmcaBFBpbmcSDwoCaWQSCUIHcGluZ19pZBJdCglpbml0aWF0b3ISUDpOb3BlcmF0b3I6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0EmEKCXJlc3BvbmRlchJUOlJwYXJ0aWNpcGFudDE6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Mk5vcGVyYXRvcjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQ6Tm9wZXJhdG9yOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNDpScGFydGljaXBhbnQxOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNCIiEiBr2qJTURRRnXWp6y1EyXQiB69cfe50kJw0eYN1UF39nhL1ARJ2Ck5vcGVyYXRvcjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQSJGYyZWM0ZDhmLWNjYzEtNDAyYi1iMjc4LTc1NTZmZGQyYjQxMhpMd2FsbGV0OjoxMjIwZTdiMjNlYTUyZWI1YzY3MmZiMGIxY2RiYzkxNjkyMmZmZWQzZGQ3Njc2YzIyM2E2MDU2NjQzMTVlMmQ0M2VkZCokYTMyODE2MmUtNzI4ZS00ZTA1LWFjNzgtYjM0ZjA3MDk4M2JhMK7Y9/LU944D'
 
-    const preparedTx = decodePreparedTransaction(base64EncodedPreparedTx)
+    const preparedTx: PreparedTransaction = decodePreparedTransaction(
+        base64EncodedPreparedTx
+    )
 
     const camelCasePreparedTx = camelcaseKeys(createPingFixture, { deep: true })
     const message = PreparedTransaction.fromJson(camelCasePreparedTx)
 
+    const authorizedPartyId =
+        'operator::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424'
+
+    const validationResult = validateAuthorizedPartyIds(preparedTx, [
+        authorizedPartyId,
+    ])
+
+    expect(validationResult[authorizedPartyId].isAuthorized).toBeTruthy()
+    expect(validationResult[authorizedPartyId].locations).toStrictEqual([
+        'metadata.submitterInfo.actAs',
+        'transaction.nodes.0.create.signatories',
+        'transaction.nodes.0.create.stakeholders',
+    ])
+    const res = parsePreparedTransaction(base64EncodedPreparedTx)
+    expect(res).toStrictEqual(parsedTxInfo)
+
     expect(preparedTx).toStrictEqual(message)
+
+    const preparedTxHash = 'D8D0WGX3KgYcY/bkHDcm6OxHpgvTX8TQlDUeGIZtBzo='
+    const calculatedPreparedTxHash =
+        await computePreparedTransaction(preparedTx)
+    expect(preparedTxHash).toEqual(toBase64(calculatedPreparedTxHash))
 })
 
 test('hash from preparedTx ledger api call should match calculated hash', async () => {
@@ -95,5 +143,26 @@ test('decode a base 64 encoded topology tx', async () => {
 
     expect(decodedNameSpaceDelegation.mapping?.mapping.oneofKind).toBe(
         'namespaceDelegation'
+    )
+
+    const preparedTxsBase64 = [
+        namespaceDelegationBase64,
+        partyToKeyMappingBase64,
+        partyToParticipantMappingBase64,
+    ]
+    const normalized: Uint8Array<ArrayBufferLike>[] = preparedTxsBase64.map(
+        (tx) => fromBase64(tx)
+    )
+
+    const rawHashes = await Promise.all(
+        normalized.map((tx) => computeSha256CantonHash(11, tx))
+    )
+    const combinedHashes = await computeMultiHashForTopology(rawHashes)
+
+    const computedHash = await computeSha256CantonHash(55, combinedHashes)
+
+    const multiHashBase64Encoded = toBase64(computedHash)
+    expect(multiHashBase64Encoded).toEqual(
+        'EiBefjKeCdX5CEnZ/m1dFoOggc1HUca747UYUDkbKjciDA=='
     )
 })
