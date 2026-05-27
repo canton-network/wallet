@@ -14,8 +14,8 @@
         "@canton-network/core-types": "workspace:^",
         "@canton-network/dapp-sdk": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
-        "react": "^19.2.4",
-        "react-dom": "^19.2.4"
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6"
     },
     "devDependencies": {
         "@canton-network/core-tx-visualizer": "workspace:^",
@@ -23,18 +23,18 @@
         "@canton-network/core-wallet-ui-components": "workspace:^",
         "@eslint/js": "^10.0.1",
         "@playwright/test": "^1.58.2",
-        "@types/node": "^25.3.3",
-        "@types/react": "^19.2.14",
+        "@types/node": "^25.3.5",
+        "@types/react": "^19.2.15",
         "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^5.1.4",
-        "eslint": "^10.0.2",
+        "eslint": "^10.0.3",
         "eslint-plugin-react-hooks": "^7.0.1",
         "eslint-plugin-react-refresh": "^0.5.2",
         "globals": "^17.4.0",
-        "nx": "^22.5.3",
+        "nx": "^22.5.4",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.56.1",
-        "vite": "^7.3.2"
+        "vite": "^7.3.3"
     },
     "nx": {
         "targets": {
