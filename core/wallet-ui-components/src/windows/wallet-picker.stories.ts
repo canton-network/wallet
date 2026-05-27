@@ -21,12 +21,6 @@ const MOCK_ENTRIES: WalletPickerEntry[] = [
         icon: '/images/logos/canton-logo.png',
     },
     {
-        providerId: '5n-loop',
-        name: '5N Loop Wallet',
-        type: 'remote',
-        icon: '/images/logos/5n-logo.png',
-    },
-    {
         providerId: 'bron',
         name: 'Bron',
         type: 'remote',
