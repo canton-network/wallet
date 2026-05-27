@@ -57,7 +57,6 @@
         "examples/*",
         "example-scripts",
         "sdk/**",
-        "sdk-support/**",
         "scripts",
         "mock-oauth2",
         "wallet-gateway/**"
