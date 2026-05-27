@@ -16,10 +16,7 @@ export class PreapprovalNamespace {
      * Transfer preapprovals allow receivers to automatically accept incoming transfers.
      */
     public readonly command: {
-        create: (args: {
-            parties: PreapprovalParties
-            // registryUrl?: URL
-        }) => Promise<{
+        create: (args: { parties: PreapprovalParties }) => Promise<{
             CreateCommand: LedgerTypes['CreateCommand']
         }>
         cancel: (args: {
@@ -159,6 +156,25 @@ export class PreapprovalNamespace {
     }
 
     /**
+     * Fetch TransferPreapproval from ScanProxy. This does NOT retry or wait.
+     * If you want additional logic for create/renew/cancel events and retry use fetchStatus instead
+     * @param receiverParty Receiver party id
+     * @returns Resolves with the preapproval or null, if not found
+     */
+    public async fetchQuick(receiverParty: PartyId) {
+        try {
+            return await this.ctx.amuletService.getTransferPreApprovalByParty(
+                receiverParty
+            )
+        } catch (e) {
+            if (isNotFoundError(e)) {
+                this.logger.info('Preapproval is no longer visible')
+                return null
+            }
+        }
+    }
+
+    /**
      * Wait for Scan Proxy to show a receiver's TransferPreapproval, or for its CID to change after renewal,
      * or for it to disappear after cancel.
      *
@@ -173,7 +189,7 @@ export class PreapprovalNamespace {
      * @param receiverParty Receiver party id.
      * @param options Optional settings.
      * @param options.oldCid Resolve only when CID differs from this value (post-renew).
-     * @param options.expectGone Set true to resolve when no preapproval is returned (post-cancel).
+     * @param options.cancelled Set true to resolve when no preapproval is returned (post-cancel).
      * @param options.intervalMs Poll interval in milliseconds. Default is 15000.
      * @param options.timeoutMs Maximum wait time in milliseconds. Default is 300000.
      * @returns Resolves with the preapproval (for create/renew) or null (for cancelled).

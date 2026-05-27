@@ -9,6 +9,7 @@ import { TokenStandardClient } from '@canton-network/core-token-standard'
 import { ScanProxyClient } from '@canton-network/core-splice-client'
 import { TransactionHistoryService } from './transaction-history-service'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
+import * as sdk from '@canton-network/dapp-sdk'
 import {
     AuthTokenProvider,
     type AccessTokenProvider,
@@ -17,11 +18,12 @@ import {
 // This module allows us to resolve (i.e. get an instance of) the different
 // dependency services used throughout the project.
 
-const resolveLedgerProvider = () => {
-    if (window.canton) {
-        return window.canton as unknown as LedgerProvider
+export const resolveLedgerProvider = () => {
+    const provider = sdk.getConnectedProvider()
+    if (provider) {
+        return provider as unknown as LedgerProvider
     } else {
-        throw new Error('window.canton is not available')
+        throw new Error('Dapp Provider is not available')
     }
 }
 
@@ -59,6 +61,23 @@ const createTokenStandardService = async ({
     return tokenStandardService
 }
 
+const DEFAULT_SCAN_PROXY_URL = 'http://localhost:2000/api/validator'
+
+const resolveScanProxyUrl = (): URL => {
+    const scanProxyUrl = new URL(
+        import.meta.env.VITE_SCAN_PROXY_URL ?? DEFAULT_SCAN_PROXY_URL
+    )
+
+    if (scanProxyUrl.protocol === 'http:') {
+        logger.warn(
+            { scanProxyUrl: scanProxyUrl.toString() },
+            'Using a non-TLS scan proxy endpoint. This is acceptable only in trusted environments. Set VITE_SCAN_PROXY_URL to an HTTPS endpoint if the scan proxy is reachable over an untrusted network.'
+        )
+    }
+
+    return scanProxyUrl
+}
+
 const createAmuletService = async ({
     sessionToken,
     tokenStandardService,
@@ -67,7 +86,7 @@ const createAmuletService = async ({
     tokenStandardService: TokenStandardService
 }): Promise<AmuletService> => {
     const scanProxyClient = new ScanProxyClient(
-        new URL('http://localhost:2000/api/validator'),
+        resolveScanProxyUrl(),
         logger,
         AuthTokenProvider.fromToken(sessionToken, logger)
     )
@@ -83,7 +102,7 @@ const tokenStandardClients = new Map()
 const tokenStandardService: { singleton: TokenStandardService | undefined } = {
     singleton: undefined,
 }
-const amuletServices = new Map()
+const amuletServices = new Map<string, AmuletService>()
 const transactionHistoryServices = new Map()
 
 // Can be called to reset clients on disconnects.
@@ -122,8 +141,8 @@ export const resolveAmuletService = async ({
 }: {
     sessionToken: string
 }): Promise<AmuletService> => {
-    const key = sessionToken
-    if (amuletServices.has(key)) return amuletServices.get(key)
+    const key = 'current-session'
+    if (amuletServices.has(key)) return amuletServices.get(key)!
     const tokenStandardService = await resolveTokenStandardService()
     const amuletService = await createAmuletService({
         sessionToken,

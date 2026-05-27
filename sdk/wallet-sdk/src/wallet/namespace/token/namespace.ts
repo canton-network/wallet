@@ -8,10 +8,11 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 import { PartyId } from '@canton-network/core-types'
 import { PrettyTransactions } from '@canton-network/core-tx-parser'
 import { SDKContext } from '../../sdk.js'
+import { ParsedURL } from '../utils/url.js'
 
 export type TokenNamespaceConfig = {
     tokenStandardService: TokenStandardService
-    registryUrls: URL[]
+    registryUrls: ParsedURL[]
     validatorParty: PartyId
     commonCtx: SDKContext
 }
@@ -39,6 +40,18 @@ export class TokenNamespace {
             params.partyId,
             params.afterOffset,
             params.beforeOffset
+        )
+    }
+
+    /** Gets transaction info parsed in a way relevant to token standard transfer flows
+     * @param updateId id of queried transaction
+     * @param partyId for transaction
+     * @returns A promise that resolves to a transaction
+     */
+    async transactionsById(params: { updateId: string; partyId: PartyId }) {
+        return await this.tokenContext.tokenStandardService.getTransactionById(
+            params.updateId,
+            params.partyId
         )
     }
 }
