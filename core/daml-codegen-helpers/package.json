@@ -26,7 +26,7 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@types/node": "^25.0.10",
+        "@types/node": "^25.9.1",
         "@vitest/browser-playwright": "^4.1.7",
         "@vitest/coverage-v8": "^4.1.7",
         "tsup": "^8.5.1",
