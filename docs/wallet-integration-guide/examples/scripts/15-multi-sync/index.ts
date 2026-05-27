@@ -1,18 +1,15 @@
 import pino from 'pino'
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
+import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
+import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
+import { createTokenRulesAndMintForBob } from './_token_setup.js'
+import { allocateTokenForBob } from './_token_allocation.js'
 import {
-    TRADE_AMULET_AMOUNT,
-    TRADE_TOKEN_AMOUNT,
-    mintAmuletForAlice,
-    createTokenRulesAndMintForBob,
-    createAndInitiateOtcTrade,
-    allocateAmuletForAlice,
-    allocateTokenForBob,
-    settleOtcTrade,
     aliceSelfTransferToApp,
     bobSelfTransferToApp,
-} from './_trade_ops.js'
+} from './_token_transfer.js'
+import { createAndInitiateOtcTrade, settleOtcTrade } from './_trade_ops.js'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
 // P1 = app-user (Alice), P2 = app-provider (Bob), P3 = sv (TradingApp).

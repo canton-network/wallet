@@ -15,7 +15,12 @@ export class InternalLedgerNamespace {
      * `/v2/commands/submit-and-wait-for-reassignment`.
      */
     async reassign(params: ReassignParams): Promise<void> {
-        const { submitter, contractId, source, target } = params
+        const { submitter, contractId, source, target, skipIfAlreadyOn } =
+            params
+
+        if (skipIfAlreadyOn && source === target) {
+            return
+        }
 
         // Phase 1: Unassign
         const unassignResponse =

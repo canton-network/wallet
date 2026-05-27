@@ -6,10 +6,6 @@ import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
 import type { Logger } from 'pino'
 import {
-    PARTY_HINT_ALICE,
-    PARTY_HINT_BOB,
-    PARTY_HINT_TRADING_APP,
-    PARTY_HINT_TOKEN_ADMIN,
     localNetStaticConfig,
     SDK,
     type SDKInterface,
@@ -74,7 +70,6 @@ export interface MultiSyncSetup {
 export async function setupMultiSyncTrade(
     logger: Logger
 ): Promise<MultiSyncSetup> {
-    // Create three SDK instances — one per participant node
     const [p1Sdk, p2Sdk, p3Sdk] = await Promise.all([
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
@@ -210,7 +205,6 @@ export async function setupMultiSyncTrade(
         `Parties allocated on global-synchronizer and registered on app-synchronizer — alice: ${alice.partyId} (P1), bob: ${bob.partyId} (P2), tradingApp: ${tradingApp.partyId} (P3), tokenAdmin: ${tokenAdmin.partyId} (P2)`
     )
 
-    // Connect scan proxy and discover Amulet admin
     const auth = new AuthTokenProvider(TOKEN_PROVIDER_CONFIG_DEFAULT, logger)
     const scanProxy = new ScanProxyClient(
         localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
