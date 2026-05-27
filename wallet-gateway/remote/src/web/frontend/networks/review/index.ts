@@ -13,8 +13,8 @@ import {
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 import {
-    Network,
     Auth as ApiAuth,
+    Network,
 } from '@canton-network/core-wallet-user-rpc-client'
 import { Auth } from '@canton-network/core-wallet-auth'
 import { createUserClient } from '../../rpc-client'
@@ -68,19 +68,10 @@ export class UserUiReviewNetwork extends BaseElement {
                 stateManager.accessToken.get()
             )
             const result = await userClient.request({
-                method: 'listNetworks',
+                method: 'getNetwork',
+                params: { networkId },
             })
-
-            const found = result.networks.find(
-                (n: Network) => n.id === networkId
-            )
-            if (!found) {
-                handleErrorToast(new Error(`Network "${networkId}" not found`))
-                this.navigateBack()
-                return
-            }
-
-            this.network = found
+            this.network = result.network
         } catch (error) {
             handleErrorToast(error)
             this.navigateBack()

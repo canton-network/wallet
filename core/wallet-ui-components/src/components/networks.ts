@@ -3,7 +3,10 @@
 
 import { html, css } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { Network, Session } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    PublicNetwork,
+    Session,
+} from '@canton-network/core-wallet-user-rpc-client'
 
 import { BaseElement } from '../internal/base-element'
 import { modalStyles } from '../styles/modal'
@@ -25,13 +28,13 @@ export class WgNetworks extends BaseElement {
         `,
     ]
 
-    @property({ type: Array }) accessor networks: Network[] = []
+    @property({ type: Array }) accessor networks: PublicNetwork[] = []
     @property({ type: Array }) accessor activeSessions: Session[] = []
     @property({ type: Boolean }) accessor readonly = false
     @state() accessor isModalOpen = false
-    @state() accessor editingNetwork: Network | null = null
+    @state() accessor editingNetwork: PublicNetwork | null = null
     @state() accessor authType: string =
-        this.editingNetwork?.auth?.method ?? 'authorization_code'
+        this.editingNetwork?.authMethod ?? 'authorization_code'
 
     connectedCallback(): void {
         super.connectedCallback()

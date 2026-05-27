@@ -368,7 +368,7 @@ Networks is an array, so you can define multiple networks in a single configurat
 - _ledgerApi_ (required): Configuration object for the Ledger API:
     - _baseUrl_ (required): The base URL of the Canton validator's Ledger API (e.g., `"http://localhost:2975"` or `"https://ledger.example.com"`)
 - _auth_ (required): Authentication configuration for normal ledger operations
-- _adminAuth_ (optional): Authentication configuration for admin operations. Only needed for operations requiring elevated privileges
+- _adminAuth_ (optional): Authentication configuration for admin operations (wallet sync, party allocation). See [Authentication: `auth` and `adminAuth`](#authentication-auth-and-adminauth) below.
 
 **Authentication Methods:**
 
@@ -486,6 +486,27 @@ Used for development and testing. The Gateway generates and signs JWT tokens loc
     }
 }
 ```
+
+## Authentication: `auth` and `adminAuth`
+
+Each network defines two independent OAuth configurations:
+
+|                           | `auth`                                                                                 | `adminAuth`                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Typical method**        | `authorization_code`                                                                   | `client_credentials`                                                            |
+| **Used by**               | End users logging into the User UI; tokens for ledger reads/writes in normal operation | Gateway background jobs: automatic wallet sync on first login, party allocation |
+| **Client ID**             | User-facing OAuth client                                                               | Service account / M2M client (often separate)                                   |
+| **Must match validator?** | `audience` and scopes must match ledger expectations                                   | Same                                                                            |
+
+**Can `clientId` be the same?** Yes, if a single OAuth client supports both authorization-code and client-credentials flows with the right scopes. Many deployments use a dedicated Wallet Gateway client for `auth` and reuse or separate `adminAuth` — either is valid.
+
+**Does `auth.clientId` need a wallet or party?** No. The client only needs to obtain tokens for users who already have ledger rights (or who will receive them via your IDP).
+
+**When is `adminAuth` required?** Required for automatic wallet sync when a user logs in and the Gateway has no wallets stored yet. Without valid `adminAuth`, `addSession` may fail with HTTP 500. If you only create wallets manually and never rely on sync, some flows may still call admin APIs — configure `adminAuth` unless you know your deployment does not need it.
+
+Store `adminAuth` secrets via `clientSecretEnv` and Kubernetes secrets (Helm `oauthSecrets`) rather than plain text in config files.
+
+For participant-only signing with no external custody, leave the Helm chart `signing: {}` block empty — see [Deployment](../deployment/index.md#signing-chart-values-signing-).
 
 ## Configuring Signing Store
 

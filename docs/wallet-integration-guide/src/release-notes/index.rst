@@ -3,6 +3,106 @@ Wallet SDK Release Notes
 
 Below are the release notes for the Wallet SDK versions, detailing new features, improvements, and bug fixes in each version.
 
+1.3.1
+-----
+
+**Released on May 20th, 2026**
+
+Version bump to align package metadata after repository migration. No functional changes.
+
+1.3.0
+-----
+
+**Released on May 20th, 2026**
+
+* plugin registration support in Wallet SDK v1
+
+*the Wallet SDK can now be extended with custom plugins using ``registerPlugins`` and ``SDKPlugin``. This makes it easier to add project-specific
+methods while still getting typed access to SDK context, logger and namespace functionality.*
+
+.. code-block:: javascript
+
+    import { SDK, SDKContext, SDKPlugin } from '@canton-network/wallet-sdk'
+
+    const sdk = (await SDK.create({
+        auth: {
+            method: 'self_signed',
+            issuer: 'unsafe-auth',
+            credentials: {
+                clientId: 'ledger-api-user',
+                clientSecret: 'unsafe',
+                audience: 'https://canton.network.global',
+                scope: '',
+            },
+        },
+        ledgerClientUrl: 'http://localhost:2975',
+    })).registerPlugins({
+        myPlugin: class extends SDKPlugin {
+            constructor(protected readonly ctx: SDKContext) {
+                super('myPlugin', ctx)
+            }
+        },
+    })
+
+* fetch transaction by update id in v1 token namespace
+
+*a dedicated ``transactionsById`` method has been added to ``sdk.token``, allowing retrieval of parsed token-standard transaction details from
+an ``updateId`` + ``partyId`` pair. This aligns with common post-submission lookup flows where you track from completion/update ids.*
+
+.. code-block:: javascript
+
+    const transaction = await sdk.token.transactionsById({
+        updateId: completion.updateId,
+        partyId: sender.partyId,
+    })
+
+* quick preapproval fetch support
+
+*the amulet preapproval namespace now includes ``fetchQuick`` for a single non-retrying lookup against scan proxy. This is useful when you want a
+fast current-state check without polling or wait semantics from ``fetchStatus``.*
+
+.. code-block:: javascript
+
+    const preapproval = await sdk.amulet.preapproval.fetchQuick(receiver.partyId)
+
+1.2.1
+-----
+
+**Released on May 13th, 2026**
+
+* fixes for Wallet SDK type inference
+
+*a typing issue around optional ``extend`` options and SDK initialization was fixed to improve TypeScript inference and reduce false-positive
+type errors in consumer projects.*
+
+* improved compatibility with unknown Canton versions
+
+*when a newer/unknown Canton version is detected, the SDK stack now warns and falls back to a compatible client version instead of failing
+immediately, making forward-compatibility smoother while still surfacing the warning.*
+
+* hardened unauthenticated connection error handling
+
+*minor exception handling edge cases in unauthenticated connection detection were fixed to avoid misleading failures.*
+
+1.2.0
+-----
+
+**Released on May 13th, 2026**
+
+* allow connecting to no-auth validator/ledger configurations
+
+*the initialization flow now handles setups where ``/v2/authenticated-user`` is unavailable and can derive ``userId`` from auth context when
+possible, enabling a smoother connection experience in no-auth and transitional environments.*
+
+* clearer error behavior for missing auth context
+
+*error handling during SDK initialization was improved to make missing authentication context issues easier to diagnose and resolve.*
+
+* improved merge UTXO precision under stress
+
+*merge UTXO logic was updated to ensure accumulated merge amounts are kept within expected decimal precision, improving reliability for
+heavy/batch merge scenarios.*
+
 1.1.0
 -----
 
