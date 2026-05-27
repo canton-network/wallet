@@ -89,8 +89,8 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                     }
                 }
             },
+            // TODO remove comment below and write a test once implemented
             // v8 ignore next -- @preserve
-            // TODO remove above comment and write a test once implemented
             signMessage: async (): Promise<SignMessageResult> => {
                 return {
                     error: 'not_allowed',
@@ -228,8 +228,8 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                 return params
             },
 
+            // TODO remove comment below and write a test once / if ever implemented
             // v8 ignore next -- @preserve
-            // TODO remove above comment and write a test once / if ever implemented
             subscribeTransactions: async (
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _params: SubscribeTransactionsParams
