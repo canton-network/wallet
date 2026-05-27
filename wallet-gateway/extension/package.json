@@ -17,10 +17,10 @@
     "devDependencies": {
         "@types/node": "^25.9.1",
         "@types/webextension-polyfill": "^0.12.5",
-        "esbuild": "^0.27.7",
+        "esbuild": "^0.28.0",
         "tsx": "^4.22.3",
         "typescript": "^5.9.3",
-        "web-ext": "^9.3.0"
+        "web-ext": "^10.2.0"
     },
     "dependencies": {
         "@canton-network/core-rpc-errors": "workspace:^",
