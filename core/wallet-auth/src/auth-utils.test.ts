@@ -24,6 +24,7 @@ import {
 import { Logger } from '@canton-network/core-types'
 import { Auth, Idp } from './config/schema.js'
 import { clientCredentialsService } from './client-credentials-service.js'
+import { SelfSignedTokenService } from './self-signed-token-service.js'
 
 vi.mock('./client-credentials-service.js', () => {
     return {
@@ -33,7 +34,7 @@ vi.mock('./client-credentials-service.js', () => {
     }
 })
 
-describe('AuthUtils', () => {
+describe('AuthTokenProvider', () => {
     beforeEach(() => {
         const fetchMock = vi.fn()
 
@@ -44,8 +45,6 @@ describe('AuthUtils', () => {
         vi.resetAllMocks()
     })
 
-    const expiredJwtToken =
-        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsZWRnZXItYXBpLXVzZXIiLCJhdWQiOiJodHRwczovL2NhbnRvbi5uZXR3b3JrLmdsb2JhbCIsInNjb3BlIjoiIiwiaWF0IjoxNzc5ODg1MTE1LCJleHAiOjE3Nzk4ODg3MTUsImlzcyI6InVuc2FmZS1hdXRoIn0.J81f_WAkogp3jbrbFcNcVMsehoE8y7jQfvAlmPQdQr0'
     const configUrl = 'http://idp/.well-known/openid-configuration'
     const tokenProviderConfig: TokenProviderConfig = {
         method: 'self_signed',
@@ -76,12 +75,11 @@ describe('AuthUtils', () => {
     })
 
     it('should test an auth token provider initialization with fromToken', async () => {
-        const authProvider = new AuthTokenProvider(
-            tokenProviderConfig,
-            mockLogger
+        const token = await SelfSignedTokenService.fetchToken(
+            mockLogger,
+            tokenProviderConfig.credentials,
+            tokenProviderConfig.issuer
         )
-
-        const token = await authProvider.getAccessToken()
 
         const authProviderFromToken = AuthTokenProvider.fromToken(
             token,
@@ -156,25 +154,32 @@ describe('AuthUtils', () => {
         expect(assertConnected(authContext)).toBe(authContext)
     })
 
-    it('should verify components of a jwt token correct', () => {
-        const userId = jwtUserId(expiredJwtToken)
-        const optionalEmail = jwtUserEmail(expiredJwtToken)
-        const isExpired = jwtExpired(expiredJwtToken)
+    it('should verify components of a jwt token correctly', async () => {
+        const token = await SelfSignedTokenService.fetchToken(
+            mockLogger,
+            tokenProviderConfig.credentials,
+            tokenProviderConfig.issuer
+        )
+
+        const userId = jwtUserId(token)
+        const optionalEmail = jwtUserEmail(token)
+        const isExpired = jwtExpired(token)
         expect(userId).toBe('ledger-api-user')
         expect(optionalEmail).toBeUndefined()
-        expect(isExpired).toBeTruthy()
+        expect(isExpired).toBeFalsy()
     })
-    it('should assert connected', () => {
+    it('should assert connected', async () => {
+        const token = await SelfSignedTokenService.fetchToken(
+            mockLogger,
+            tokenProviderConfig.credentials,
+            tokenProviderConfig.issuer
+        )
+
         const authContext = {
             userId: 'user',
-            accessToken: expiredJwtToken,
+            accessToken: token,
         }
         expect(assertConnected(authContext)).toBe(authContext)
-
-        //TODO: fix this
-        // expect(assertConnected(undefined)).rejects.toThrow(providerErrors.unauthorized({
-        //     message: 'User is not connected',
-        // }))
     })
 
     it('should fetch oidc user info if both the fetches return a correct config', async () => {
@@ -185,6 +190,12 @@ describe('AuthUtils', () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ;(window as any).global = window
         }
+
+        const token = await SelfSignedTokenService.fetchToken(
+            mockLogger,
+            tokenProviderConfig.credentials,
+            tokenProviderConfig.issuer
+        )
 
         global.fetch = vi.fn().mockImplementation((url) => {
             if (url.includes('openid-configuration')) {
@@ -203,32 +214,40 @@ describe('AuthUtils', () => {
             return Promise.reject('')
         })
 
-        const result = await fetchOidcUserInfo(configUrl, expiredJwtToken)
+        const result = await fetchOidcUserInfo(configUrl, token)
 
         expect(result).toStrictEqual(mockUserInfoResponse)
     })
 
     it('should throw an error if fetch config fails', async () => {
-        const mockResponse = { data: 'fake response' }
+        const token = await SelfSignedTokenService.fetchToken(
+            mockLogger,
+            tokenProviderConfig.credentials,
+            tokenProviderConfig.issuer
+        )
 
-        vi.mocked(fetch).mockResolvedValue({
-            ok: false,
-            json: async () => mockResponse,
-        } as Response)
+        global.fetch = vi.fn().mockImplementation(() => {
+            return Promise.resolve({
+                ok: false,
+                json: async () => '',
+                status: 400,
+                statusText: 'Bad request',
+            })
+        })
 
-        await expect(
-            fetchOidcUserInfo(configUrl, expiredJwtToken)
-        ).rejects.toThrow(
-            `Failed to fetch OIDC discovery document: undefined undefined`
+        await expect(fetchOidcUserInfo(configUrl, token)).rejects.toThrow(
+            `Failed to fetch OIDC discovery document: 400 Bad request`
         )
     })
 
     it('should throw an error if fetch userinfo fails', async () => {
         const mockConfigResponse = { userinfo_endpoint: 'https://userinfo' }
-        const mockUserInfoResponse = {
-            status: 'failed',
-            statusText: 'bad request',
-        }
+
+        const token = await SelfSignedTokenService.fetchToken(
+            mockLogger,
+            tokenProviderConfig.credentials,
+            tokenProviderConfig.issuer
+        )
 
         if (typeof global === 'undefined') {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -245,15 +264,17 @@ describe('AuthUtils', () => {
             if (url.includes('userinfo')) {
                 return Promise.resolve({
                     ok: false,
-                    json: async () => mockUserInfoResponse,
+                    json: async () => '',
+                    status: 400,
+                    statusText: 'Bad request',
                 })
             }
 
             return Promise.reject('')
         })
 
-        await expect(
-            fetchOidcUserInfo(configUrl, expiredJwtToken)
-        ).rejects.toThrow(`Failed to fetch OIDC userinfo: undefined undefined`)
+        await expect(fetchOidcUserInfo(configUrl, token)).rejects.toThrow(
+            `Failed to fetch OIDC userinfo: 400 Bad request`
+        )
     })
 })
