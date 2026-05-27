@@ -33,5 +33,5 @@ The Wallet Gateway enables transparent interaction between a dApp, Validator Nod
 - [Usage](usage/index.md)
 - [APIs](apis/index.md)
 - [Signing Providers](signing-providers/index.md)
-- [Deployment](deployment/index.md)
-- [Troubleshooting](troubleshooting/index.md)
+- [Deployment](deployment/index.md) — Docker/Helm images, exposure, persistence
+- [Troubleshooting](troubleshooting/index.md) — Verification checklist, auth/ledger debugging
