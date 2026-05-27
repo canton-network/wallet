@@ -74,13 +74,93 @@
                             "title": "networks",
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/Network"
+                                "$ref": "#/components/schemas/PublicNetwork"
                             }
                         }
                     },
                     "required": ["networks"]
                 }
-            }
+            },
+            "description": "Lists configured networks without sensitive authentication details."
+        },
+        {
+            "name": "getNetwork",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GetNetworkParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Network ID"
+                            }
+                        },
+                        "required": ["networkId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetNetworkResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "network": {
+                            "$ref": "#/components/schemas/Network"
+                        }
+                    },
+                    "required": ["network"]
+                }
+            },
+            "description": "Returns full network configuration including auth details. Admin only."
+        },
+        {
+            "name": "selfSignedAccessToken",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "SelfSignedAccessTokenParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Network ID"
+                            },
+                            "clientId": {
+                                "title": "clientId",
+                                "type": "string",
+                                "description": "Client ID used as the JWT subject"
+                            }
+                        },
+                        "required": ["networkId", "clientId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "SelfSignedAccessTokenResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "accessToken": {
+                            "title": "accessToken",
+                            "type": "string",
+                            "description": "Self-signed JWT access token"
+                        }
+                    },
+                    "required": ["accessToken"]
+                }
+            },
+            "description": "Mints a self-signed access token using server-side network credentials. Used for login on self-signed networks."
         },
         {
             "name": "addIdp",
@@ -876,6 +956,72 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The internal transaction identifier."
+            },
+            "PublicNetwork": {
+                "title": "PublicNetwork",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Network metadata exposed by listNetworks without sensitive auth configuration",
+                "properties": {
+                    "id": {
+                        "title": "networkId",
+                        "type": "string",
+                        "description": "Network ID"
+                    },
+                    "name": {
+                        "title": "name",
+                        "type": "string",
+                        "description": "Name of network"
+                    },
+                    "description": {
+                        "title": "description",
+                        "type": "string",
+                        "description": "Description of network"
+                    },
+                    "synchronizerId": {
+                        "title": "synchronizerId",
+                        "type": "string",
+                        "description": "Synchronizer ID"
+                    },
+                    "identityProviderId": {
+                        "title": "identityProviderId",
+                        "type": "string",
+                        "description": "Identity Provider ID"
+                    },
+                    "ledgerApi": {
+                        "title": "ledgerApi",
+                        "type": "string",
+                        "description": "Ledger api url"
+                    },
+                    "authMethod": {
+                        "title": "authMethod",
+                        "type": "string",
+                        "description": "Authentication method configured for this network"
+                    },
+                    "clientId": {
+                        "title": "clientId",
+                        "type": "string",
+                        "description": "OAuth or self-signed client ID used for user login"
+                    },
+                    "scope": {
+                        "title": "scope",
+                        "type": "string",
+                        "description": "OAuth scope used for user login"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string",
+                        "description": "OAuth audience used for user login"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "identityProviderId",
+                    "ledgerApi",
+                    "authMethod"
+                ]
             },
             "Network": {
                 "title": "Network",
