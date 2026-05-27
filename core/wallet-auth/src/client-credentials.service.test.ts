@@ -8,6 +8,7 @@ import {
     expect,
     beforeEach,
     type MockedFunction,
+    afterEach,
 } from 'vitest'
 import { ClientCredentialsService } from './client-credentials-service.js'
 import { ClientCredentials, OIDCConfig } from './auth-service.js'
@@ -31,9 +32,15 @@ describe('ClientCredentialsService', () => {
     >
 
     beforeEach(() => {
+        const fetchMock = vi.fn()
+        vi.stubGlobal('fetch', fetchMock)
         service = new ClientCredentialsService(configUrl, undefined)
         getOIDCConfigSpy = vi.spyOn(service, 'getOIDCConfig')
         fetchTokenEndpointSpy = vi.spyOn(service, 'fetchTokenEndpoint')
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
     })
 
     it('returns access_token on success', async () => {
@@ -81,5 +88,63 @@ describe('ClientCredentialsService', () => {
         await expect(service.fetchToken(credentials)).rejects.toThrow(
             'No access_token in token endpoint response'
         )
+    })
+
+    it('getOIDCConfig', async () => {
+        const mockData = { token_endpoint: 'http://idp/token' }
+        if (typeof global === 'undefined') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(window as any).global = window
+        }
+
+        global.fetch = vi.fn().mockImplementation((url) => {
+            if (url.includes('openid-configuration')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => mockData,
+                })
+            }
+            return Promise.reject('')
+        })
+
+        const result = await service.getOIDCConfig(
+            'http://idp/.well-known/openid-configuration'
+        )
+
+        expect(result).toStrictEqual(mockData)
+    })
+
+    it('fetchTokenEndpoint', async () => {
+        const mockData = { access_token: 'jwt' }
+        if (typeof global === 'undefined') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(window as any).global = window
+        }
+
+        global.fetch = vi.fn().mockImplementation((url) => {
+            if (url.includes('idp/token')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => mockData,
+                })
+            }
+            return Promise.reject('')
+        })
+
+        const result = await service.fetchTokenEndpoint(
+            'http://idp/token',
+            credentials
+        )
+
+        const params =
+            'grant_type=client_credentials&client_id=cid&client_secret=secret&scope=scope&audience=aud'
+        expect(fetch).toHaveBeenCalledWith('http://idp/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params,
+        })
+
+        const json = await result.json()
+        expect(json).toStrictEqual(mockData)
     })
 })
