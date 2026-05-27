@@ -4,19 +4,19 @@
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
-import { Network } from '@canton-network/core-wallet-store'
+import { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
 
 /** Emitted when the user clicks a network card to review it */
 export class NetworkCardReviewEvent extends Event {
-    constructor(public network: Network) {
+    constructor(public network: PublicNetwork) {
         super('network-review', { bubbles: true, composed: true })
     }
 }
 
 /** Emitted when the user clicks the "Delete" button on a network card */
 export class NetworkCardDeleteEvent extends Event {
-    constructor(public network: Network) {
+    constructor(public network: PublicNetwork) {
         super('delete', { bubbles: true, composed: true })
     }
 }
@@ -30,7 +30,7 @@ export class NetworkCardUpdateEvent extends Event {
 
 @customElement('network-card')
 export class NetworkCard extends BaseElement {
-    @property({ type: Object }) network: Network | null = null
+    @property({ type: Object }) network: PublicNetwork | null = null
     @property({ type: Boolean }) activeSession = false
     @property({ type: String }) accessToken = ''
     @property({ type: Boolean }) readonly = false
@@ -184,7 +184,7 @@ export class NetworkCard extends BaseElement {
 
                     <div class="meta-row">
                         <p class="meta-title">Auth</p>
-                        <p class="meta-value">${this.network.auth.method}</p>
+                        <p class="meta-value">${this.network.authMethod}</p>
                     </div>
 
                     ${syncId
