@@ -870,7 +870,7 @@ export const connection = (config: StoreConfig) => {
         case 'postgres':
             return new Kysely<DB>({
                 dialect: new PostgresDialect({
-                    pool: new pg.Pool(config.connection)
+                    pool: new pg.Pool(config.connection),
                 }),
                 plugins: [new CamelCasePlugin()],
             })
