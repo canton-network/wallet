@@ -17,7 +17,6 @@ describe('SigningAPIClient', () => {
     })
 
     function assertRequestAndGetInit(endpoint: string) {
-        // Assert post request and retrieve init ({ headers, body })
         const call = fetchMock.mock.calls.find((c) =>
             String(c[0]).endsWith(endpoint)
         )
