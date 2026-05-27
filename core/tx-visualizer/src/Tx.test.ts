@@ -1,18 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
-import { PreparedTransaction } from '@canton-network/core-ledger-proto'
+import { expect, test, it, describe } from 'vitest'
+import { PreparedTransaction, Value } from '@canton-network/core-ledger-proto'
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,
+    encodeValue,
+} from './hashing_scheme_v2.js'
+import {
     decodePreparedTransaction,
     decodeTopologyTransaction,
     hashPreparedTransaction,
     ParsedTransactionInfo,
     parsePreparedTransaction,
     validateAuthorizedPartyIds,
-} from '.'
+} from './index.js'
 import camelcaseKeys from 'camelcase-keys'
 import createPingFixture from './fixtures/create_ping_prepared_response.json'
 import { fromBase64, fromHex, toBase64, toHex } from './utils'
@@ -175,4 +178,187 @@ test(`should throw an error if when converting to hex if there's an invalid stri
     await expect(hashPreparedTransaction('badtx')).rejects.toThrow(
         'The string to be decoded is not correctly encoded'
     )
+})
+
+describe('encodeValue in hashing utils', () => {
+    it('should encode a unit value with prefix 0x00', async () => {
+        const input: Value = { sum: { oneofKind: 'unit', unit: {} } }
+        const result = await encodeValue(input)
+        expect(result).toEqual(Uint8Array.from([0]))
+    })
+
+    it('should encode a bool value with prefix 0x01', async () => {
+        const input: Value = { sum: { oneofKind: 'bool', bool: true } }
+        const result = await encodeValue(input)
+
+        expect(result[0]).toBe(0x01)
+    })
+
+    it('should encode an int64 value with prefix 0x02', async () => {
+        const input: Value = { sum: { oneofKind: 'int64', int64: '123' } }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x02)
+    })
+
+    it('should encode a numeric value with prefix 0x03', async () => {
+        const input: Value = { sum: { oneofKind: 'numeric', numeric: '12.34' } }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x03)
+    })
+
+    it('should encode a timestamp value with prefix 0x04', async () => {
+        const input: Value = {
+            sum: { oneofKind: 'timestamp', timestamp: '1609459200000' },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x04)
+    })
+
+    it('should encode a date value with prefix 0x05', async () => {
+        const input: Value = { sum: { oneofKind: 'date', date: 18628 } }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x05)
+    })
+
+    it('should encode a party value with prefix 0x06', async () => {
+        const input: Value = { sum: { oneofKind: 'party', party: 'Alice' } }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x06)
+    })
+
+    it('should encode a text value with prefix 0x07', async () => {
+        const input: Value = { sum: { oneofKind: 'text', text: 'hello' } }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x07)
+    })
+
+    it('should encode a contractId value with prefix 0x08', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'contractId',
+                contractId:
+                    '00550802ddb16371f5fc6d364e6cd4b3283a9eb5c0ccb121ae368cdebbad0fbf56',
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x08)
+    })
+
+    it('should recursively encode an optional value with prefix 0x09', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'optional',
+                optional: {
+                    value: { sum: { oneofKind: 'text', text: 'nested' } },
+                },
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x09)
+    })
+
+    it('should recursively encode a list value with prefix 0x0a', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'list',
+                list: {
+                    elements: [{ sum: { oneofKind: 'bool', bool: false } }],
+                },
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x0a)
+    })
+
+    it('should encode a textMap value with prefix 0x0b', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'textMap',
+                textMap: {
+                    entries: [
+                        {
+                            key: 'k',
+                            value: { sum: { oneofKind: 'text', text: 'v' } },
+                        },
+                    ],
+                },
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x0b)
+    })
+
+    it('should encode a record value with prefix 0x0c', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'record',
+                record: {
+                    recordId: {
+                        moduleName: 'M',
+                        entityName: 'R',
+                        packageId: '',
+                    },
+                    fields: [],
+                },
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x0c)
+    })
+
+    it('should encode a variant value with prefix 0x0d', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'variant',
+                variant: {
+                    variantId: {
+                        moduleName: 'M',
+                        entityName: 'V',
+                        packageId: '',
+                    },
+                    constructor: 'Left',
+                    value: { sum: { oneofKind: 'int64', int64: '1' } },
+                },
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x0d)
+    })
+
+    it('should encode an enum value with prefix 0x0e', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'enum',
+                enum: {
+                    enumId: {
+                        moduleName: 'M',
+                        entityName: 'E',
+                        packageId: '',
+                    },
+                    constructor: 'Red',
+                },
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x0e)
+    })
+
+    it('should encode a genMap value with prefix 0x0f', async () => {
+        const input: Value = {
+            sum: {
+                oneofKind: 'genMap',
+                genMap: { entries: [] },
+            },
+        }
+        const result = await encodeValue(input)
+        expect(result[0]).toBe(0x0f)
+    })
+
+    it('should throw an error for an undefined or unsupported oneofKind', async () => {
+        const input = { sum: { oneofKind: undefined } } as unknown as Value
+
+        await expect(encodeValue(input)).rejects.toThrow(
+            'Unsupported value type:'
+        )
+    })
 })
