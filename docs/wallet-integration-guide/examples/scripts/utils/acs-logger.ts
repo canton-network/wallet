@@ -6,9 +6,7 @@ import type { Logger } from 'pino'
 import type { SynchronizerMap } from './index.js'
 
 export type ContractReadSpec = {
-    label: string
     sdk: SDKInterface
-    templateIds: string[]
     parties: string[]
 }
 
@@ -33,8 +31,8 @@ export async function logAllContracts(
     specs: ContractReadSpec[]
 ): Promise<void> {
     const results = await Promise.all(
-        specs.map(({ sdk, templateIds, parties }) =>
-            sdk.ledger.acs.read({ templateIds, parties, filterByParty: true })
+        specs.map(({ sdk, parties }) =>
+            sdk.ledger.acs.read({ parties, filterByParty: true })
         )
     )
 
@@ -48,15 +46,13 @@ export async function logAllContracts(
     const rows: Row[] = []
     const seenCids = new Set<string>()
 
-    const isHolding = (template: string): boolean =>
-        template === 'Token' || template === 'Amulet'
-
     for (let i = 0; i < specs.length; i++) {
-        const { label } = specs[i]
+        const spec = specs[i]
+        const fallbackLabel = shortenParty(spec.parties[0])
         const contracts = results[i]
         if (contracts.length === 0) {
             rows.push({
-                label,
+                label: fallbackLabel,
                 template: '(none)',
                 amount: '-',
                 cid: '-',
@@ -73,12 +69,8 @@ export async function logAllContracts(
             const tplParts = (c.templateId ?? '').split(':')
             const template = tplParts[tplParts.length - 1] || c.templateId
             const amount = extractAmount(c.createArgument)
-            // For Token/Amulet rows, replace the participant label with the
-            // holding owner so the table reflects who actually owns the asset
-            // (not just whose ACS the contract appears in via signatory rules).
-            const rowLabel = isHolding(template)
-                ? shortenParty(extractOwner(c.createArgument)) || label
-                : label
+            const rowLabel =
+                shortenParty(extractOwner(c.createArgument)) || fallbackLabel
             rows.push({
                 label: rowLabel,
                 template,

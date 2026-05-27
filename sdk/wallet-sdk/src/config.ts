@@ -8,8 +8,8 @@ const LOCALNET_APP_VALIDATOR_URL = new URL(
 const LOCALNET_SCAN_API_URL = new URL('http://scan.localhost:4000/api/scan')
 
 const LOCALNET_APP_USER_LEDGER_URL = new URL('http://localhost:2975')
-const LOCALNET_BOB_LEDGER_URL = new URL('http://localhost:3975')
-const LOCALNET_TRADING_APP_LEDGER_URL = new URL('http://localhost:4975')
+const LOCALNET_APP_PROVIDER_LEDGER_URL = new URL('http://localhost:3975')
+const LOCALNET_SV_LEDGER_URL = new URL('http://localhost:4975')
 
 const LOCALNET_TOKEN_STANDARD_URL = new URL('http://localhost:5003')
 
@@ -29,10 +29,8 @@ export const localNetStaticConfig = {
     LOCALNET_SCAN_API_URL,
     LOCALNET_REGISTRY_API_URL,
     LOCALNET_APP_USER_LEDGER_URL,
-    LOCALNET_BOB_LEDGER_URL,
-    LOCALNET_TRADING_APP_LEDGER_URL,
+    LOCALNET_APP_PROVIDER_LEDGER_URL,
+    LOCALNET_SV_LEDGER_URL,
     LOCALNET_TOKEN_STANDARD_URL,
     LOCALNET_USER_ID,
 }
-
-export { LOCALNET_BOB_LEDGER_URL, LOCALNET_TRADING_APP_LEDGER_URL }

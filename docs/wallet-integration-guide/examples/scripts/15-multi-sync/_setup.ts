@@ -6,8 +6,6 @@ import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
 import type { Logger } from 'pino'
 import {
-    LOCALNET_BOB_LEDGER_URL,
-    LOCALNET_TRADING_APP_LEDGER_URL,
     PARTY_HINT_ALICE,
     PARTY_HINT_BOB,
     PARTY_HINT_TRADING_APP,
@@ -39,7 +37,8 @@ export type PartyInfo = Omit<
     keyPair: KeyPair
 }
 
-const TEST_TOKEN_V1_DAR = 'splice-test-token-v1-1.0.0.dar'
+const TEST_TOKEN_V1_DAR =
+    '../../../../../damljs/splice-test-token-v1/.daml/dist/splice-test-token-v1-1.0.0.dar'
 const TRADING_APP_DAR_RELATIVE_PATH =
     '../../../../../.localnet/dars/splice-token-test-trading-app-1.0.1.dar'
 
@@ -110,12 +109,13 @@ export async function setupMultiSyncTrade(
         }),
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
-            ledgerClientUrl: LOCALNET_BOB_LEDGER_URL,
+            ledgerClientUrl:
+                localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
             token: TOKEN_NAMESPACE_CONFIG,
         }),
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
-            ledgerClientUrl: LOCALNET_TRADING_APP_LEDGER_URL,
+            ledgerClientUrl: localNetStaticConfig.LOCALNET_SV_LEDGER_URL,
             token: TOKEN_NAMESPACE_CONFIG,
         }),
     ])
@@ -196,18 +196,18 @@ export async function setupMultiSyncTrade(
         allocatedTradingApp,
         allocatedTokenAdmin,
     ] = await Promise.all([
-        createOnSynchronizers(p1Sdk, aliceKey, PARTY_HINT_ALICE, [
+        createOnSynchronizers(p1Sdk, aliceKey, 'Alice', [
             globalSynchronizerId,
             appSynchronizerId,
         ]),
-        createOnSynchronizers(p2Sdk, bobKey, PARTY_HINT_BOB, [
+        createOnSynchronizers(p2Sdk, bobKey, 'Bob', [
             globalSynchronizerId,
             appSynchronizerId,
         ]),
-        createOnSynchronizers(p3Sdk, tradingAppKey, PARTY_HINT_TRADING_APP, [
+        createOnSynchronizers(p3Sdk, tradingAppKey, 'TradingApp', [
             globalSynchronizerId,
         ]),
-        createOnSynchronizers(p2Sdk, tokenAdminKey, PARTY_HINT_TOKEN_ADMIN, [
+        createOnSynchronizers(p2Sdk, tokenAdminKey, 'TokenAdmin', [
             globalSynchronizerId,
             appSynchronizerId,
         ]),
