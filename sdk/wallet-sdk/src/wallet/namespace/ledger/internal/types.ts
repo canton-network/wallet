@@ -43,4 +43,5 @@ export interface ReassignParams {
     contractId: string
     source: string
     target: string
+    skipIfAlreadyOn?: boolean
 }
