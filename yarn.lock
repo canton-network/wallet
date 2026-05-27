@@ -2396,20 +2396,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@canton-network/sdk-support-provider-adapter-loop@workspace:sdk-support/provider-adapter-loop":
-  version: 0.0.0-use.local
-  resolution: "@canton-network/sdk-support-provider-adapter-loop@workspace:sdk-support/provider-adapter-loop"
-  dependencies:
-    "@canton-network/core-splice-provider": "workspace:^"
-    "@canton-network/core-types": "workspace:^"
-    "@canton-network/core-wallet-dapp-rpc-client": "workspace:^"
-    "@canton-network/core-wallet-discovery": "workspace:^"
-    "@fivenorth/loop-sdk": "npm:^0.11.1"
-    tsup: "npm:^8.5.1"
-    typescript: "npm:^5.9.3"
-  languageName: unknown
-  linkType: soft
-
 "@canton-network/wallet-gateway-extension@workspace:wallet-gateway/extension":
   version: 0.0.0-use.local
   resolution: "@canton-network/wallet-gateway-extension@workspace:wallet-gateway/extension"
@@ -3462,22 +3448,6 @@ __metadata:
     platform: "npm:1.3.6"
     uuid: "npm:8.3.2"
   checksum: 10c0/f5429d146b2aee70b89d58c2297c3ffdda48ec56d9abdd6662a5add39acf58a6a33ab5916d88577991279e7a44fe9bc7647e01ae6ace29cf0db8b9a2f762fea5
-  languageName: node
-  linkType: hard
-
-"@fivenorth/loop-sdk@npm:^0.11.1":
-  version: 0.11.1
-  resolution: "@fivenorth/loop-sdk@npm:0.11.1"
-  dependencies:
-    "@types/qrcode": "npm:^1.5.6"
-    qrcode: "npm:^1.5.4"
-  peerDependencies:
-    node-forge: ^1.3.3
-    typescript: ^5
-  peerDependenciesMeta:
-    node-forge:
-      optional: true
-  checksum: 10c0/d69e351c5c7efea3cda8105c277646391e609bc61a52d7203645bd516374d5f4c41df28fbaaac84118e85e5e0e9eabefd7756174226cc2baa68f084fcdd64a72
   languageName: node
   linkType: hard
 
