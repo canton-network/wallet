@@ -13,13 +13,9 @@ import {
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
-import { Network, Idp } from '@canton-network/core-wallet-user-rpc-client'
+import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '../state-manager'
 import '../index'
-import {
-    AuthTokenProvider,
-    ClientCredentials,
-} from '@canton-network/core-wallet-auth'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
@@ -55,7 +51,7 @@ const createPkcePair = async (): Promise<{
 @customElement('user-ui-login')
 export class LoginUI extends BaseElement {
     @state()
-    accessor networks: Network[] = []
+    accessor networks: PublicNetwork[] = []
 
     @state()
     accessor idps: Idp[] = []
@@ -111,32 +107,26 @@ export class LoginUI extends BaseElement {
 
         try {
             if (selectedIdp.type === 'self_signed') {
-                await this.selfSign({
-                    clientId,
-                    clientSecret: selectedNetwork.auth.clientSecret || '',
-                    scope: selectedNetwork.auth.scope,
-                    audience: selectedNetwork.auth.audience,
-                } as ClientCredentials)
+                await this.selfSign(selectedNetwork.id, clientId)
                 redirectToIntendedOrDefault()
                 return
             }
 
             if (selectedIdp.type === 'oauth') {
-                if (selectedNetwork.auth.method === 'authorization_code') {
+                if (selectedNetwork.authMethod === 'authorization_code') {
                     const redirectUri = new URL(
                         toRelHref('/callback'),
                         window.location.origin
                     ).toString()
 
-                    const auth = selectedNetwork.auth
                     const config = await fetch(
                         selectedIdp.configUrl || ''
                     ).then((res) => res.json())
 
                     const statePayload = {
                         configUrl: selectedIdp.configUrl,
-                        clientId: auth.clientId,
-                        audience: auth.audience,
+                        clientId: selectedNetwork.clientId,
+                        audience: selectedNetwork.audience,
                         stateId: crypto.randomUUID(),
                     }
 
@@ -148,11 +138,11 @@ export class LoginUI extends BaseElement {
 
                     const params = new URLSearchParams({
                         response_type: 'code',
-                        client_id: auth.clientId || '',
+                        client_id: selectedNetwork.clientId || '',
                         redirect_uri: redirectUri,
                         nonce: crypto.randomUUID(),
-                        scope: auth.scope || '',
-                        audience: auth.audience || '',
+                        scope: selectedNetwork.scope || '',
+                        audience: selectedNetwork.audience || '',
                         state: btoa(JSON.stringify(statePayload)),
                         code_challenge: challenge,
                         code_challenge_method: 'S256',
@@ -186,21 +176,22 @@ export class LoginUI extends BaseElement {
         }
     }
 
-    protected async selfSign(credentials: ClientCredentials) {
-        const token_provider = new AuthTokenProvider(
-            { method: 'self_signed', issuer: 'unsafe-auth', credentials },
-            console
+    protected async selfSign(networkId: string, clientId: string) {
+        const userClient = await createUserClient(
+            stateManager.accessToken.get()
         )
-        const access_token = await token_provider.getAccessToken()
+        const { accessToken } = await userClient.request({
+            method: 'selfSignedAccessToken',
+            params: { networkId, clientId },
+        })
 
-        const payload = JSON.parse(atob(access_token.split('.')[1]))
+        const payload = JSON.parse(atob(accessToken.split('.')[1]))
         stateManager.expirationDate.set(
             new Date(payload.exp * 1000).toISOString()
         )
-        stateManager.accessToken.set(access_token)
+        stateManager.accessToken.set(accessToken)
 
-        const networkId = stateManager.networkId.get() || ''
-        addUserSession(access_token, networkId)
+        await addUserSession(accessToken, networkId)
     }
 
     protected render() {

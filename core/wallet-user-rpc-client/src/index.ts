@@ -179,7 +179,36 @@ export type MessageId = string
  */
 export type Signature = string
 export type SignedBy = string
-export type Networks = Network[]
+/**
+ *
+ * Authentication method configured for this network
+ *
+ */
+export type AuthMethod = string
+/**
+ *
+ * Network metadata exposed by listNetworks without sensitive auth configuration
+ *
+ */
+export interface PublicNetwork {
+    id: NetworkId
+    name: Name
+    description: Description
+    synchronizerId?: SynchronizerId
+    identityProviderId: IdentityProviderId
+    ledgerApi: LedgerApi
+    authMethod: AuthMethod
+    clientId?: ClientId
+    scope?: Scope
+    audience?: Audience
+}
+export type Networks = PublicNetwork[]
+/**
+ *
+ * The access token for the session.
+ *
+ */
+export type AccessToken = string
 export type Idps = Idp[]
 /**
  *
@@ -349,12 +378,6 @@ export interface MessageRaw {
     signature?: Signature
 }
 export type Messages = MessageRaw[]
-/**
- *
- * The access token for the session.
- *
- */
-export type AccessToken = string
 export type UserLevelRight = any
 /**
  *
@@ -426,6 +449,13 @@ export interface AddNetworkParams {
 export interface RemoveNetworkParams {
     networkName: NetworkName
 }
+export interface GetNetworkParams {
+    networkId: NetworkId
+}
+export interface SelfSignedAccessTokenParams {
+    networkId: NetworkId
+    clientId: ClientId
+}
 export interface AddIdpParams {
     idp: Idp
 }
@@ -486,6 +516,12 @@ export interface DeleteTransactionParams {
 export type Null = null
 export interface ListNetworksResult {
     networks: Networks
+}
+export interface GetNetworkResult {
+    network: Network
+}
+export interface SelfSignedAccessTokenResult {
+    accessToken: AccessToken
 }
 export interface ListIdpsResult {
     idps: Idps
@@ -581,6 +617,10 @@ export interface GetUserResult {
 export type AddNetwork = (params: AddNetworkParams) => Promise<Null>
 export type RemoveNetwork = (params: RemoveNetworkParams) => Promise<Null>
 export type ListNetworks = () => Promise<ListNetworksResult>
+export type GetNetwork = (params: GetNetworkParams) => Promise<GetNetworkResult>
+export type SelfSignedAccessToken = (
+    params: SelfSignedAccessTokenParams
+) => Promise<SelfSignedAccessTokenResult>
 export type AddIdp = (params: AddIdpParams) => Promise<Null>
 export type RemoveIdp = (params: RemoveIdpParams) => Promise<Null>
 export type ListIdps = () => Promise<ListIdpsResult>
@@ -645,6 +685,16 @@ export type RpcTypes = {
     listNetworks: {
         params: Params<ListNetworks>
         result: Result<ListNetworks>
+    }
+
+    getNetwork: {
+        params: Params<GetNetwork>
+        result: Result<GetNetwork>
+    }
+
+    selfSignedAccessToken: {
+        params: Params<SelfSignedAccessToken>
+        result: Result<SelfSignedAccessToken>
     }
 
     addIdp: {
