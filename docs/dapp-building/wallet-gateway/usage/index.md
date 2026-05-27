@@ -29,6 +29,41 @@ The Wallet Gateway serves a **Web UI** at the Gateway root URL (e.g. `http://loc
 
 Users **log out** via the layout logout control. Logout calls `removeSession`, clears local auth state, and redirects to `/login` (or closes the window if the UI was opened in a popup for approval).
 
+## Verifying a deployment
+
+After installing the Gateway (Docker or Helm), confirm the deployment is healthy — not only that login redirects succeed.
+
+1. Open the User UI at your configured `kernel.publicUrl`.
+2. Log in and navigate to **Wallets**. You should see wallets for parties your user can act as on the ledger (for example a validator operator party).
+3. Open **Parties** and refresh. A successful sync shows **Wallet sync complete**; an _Unexpected Error_ usually means ledger URL or token problems — see [Troubleshooting](../troubleshooting/index.md#post-deployment-verification).
+
+**Logged in!** alone does not prove ledger connectivity. Check for HTTP 500 responses to `addSession` in the browser network log.
+
+## Connecting hosted dApps
+
+Many Canton ecosystem dApps (registry apps, partner UIs) are **hosted centrally** and connect to **your** validator through **your** Wallet Gateway. You deploy the Gateway and participant; you do **not** need to deploy those UIs locally or point a Utility Helm chart `operatorApiUrl` at your node for Wallet Gateway-based flows.
+
+**Architecture:**
+
+```text
+┌─────────────────────┐     dApp API      ┌──────────────────┐     Ledger API    ┌─────────────────┐
+│ Hosted dApp UI      │ ────────────────► │ Your Wallet      │ ────────────────► │ Your Canton     │
+│ (e.g. registry,     │  {publicUrl}/     │ Gateway          │                   │ participant /   │
+│  partner utility)   │  api/v0/dapp      │                  │                   │ validator       │
+└─────────────────────┘                   └──────────────────┘                   └─────────────────┘
+        │                                         ▲
+        │ User approves txs                       │ User UI + OAuth
+        └─────────────────────────────────────────┘
+```
+
+**Wallet Gateway dApp URL** (entered in the hosted app's "connect wallet" or network settings):
+
+```text
+https://<your-gateway-host>/api/v0/dapp
+```
+
+Use the same host as `kernel.publicUrl` and the default `server.dappPath` (`/api/v0/dapp`). Subpath deployments must include the full public path prefix.
+
 ## When to use which interface
 
 - **User UI**: Best for end users. They log in, create and manage wallets, view transactions, and approve dApp requests. No code required.

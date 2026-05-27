@@ -375,7 +375,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async listIdps(): Promise<Array<Idp>> {
-        this.assertConnected()
         return this.systemStorage.idps
     }
 

@@ -31,27 +31,29 @@ The User API enables users to manage their wallets, configure networks, manage i
 
 **Methods:**
 
-| Category           | Method                 | Description                                                         |
-| ------------------ | ---------------------- | ------------------------------------------------------------------- |
-| Sessions           | `addSession()`         | Create a new session (unauthenticated, used for initial connection) |
-|                    | `removeSession()`      | End the current session                                             |
-|                    | `listSessions()`       | List sessions for the current user                                  |
-| Networks           | `listNetworks()`       | List all configured networks                                        |
-|                    | `addNetwork()`         | Add a new network configuration                                     |
-|                    | `removeNetwork()`      | Remove a network configuration                                      |
-| Identity Providers | `listIdps()`           | List all identity providers                                         |
-|                    | `addIdp()`             | Add a new identity provider                                         |
-|                    | `removeIdp()`          | Remove an identity provider                                         |
-| Wallets            | `createWallet()`       | Create a new wallet (party) on a network                            |
-|                    | `listWallets()`        | List all wallets for the current user                               |
-|                    | `setPrimaryWallet()`   | Set the primary wallet                                              |
-|                    | `removeWallet()`       | Remove a wallet                                                     |
-|                    | `syncWallets()`        | Sync wallets with the ledger                                        |
-|                    | `isWalletSyncNeeded()` | Check if wallet sync is needed                                      |
-| Transactions       | `sign()`               | Sign a transaction                                                  |
-|                    | `execute()`            | Execute a signed transaction                                        |
-|                    | `getTransaction()`     | Get a transaction by ID                                             |
-|                    | `listTransactions()`   | List transactions                                                   |
+| Category           | Method                    | Description                                                         |
+| ------------------ | ------------------------- | ------------------------------------------------------------------- |
+| Sessions           | `addSession()`            | Create a new session (unauthenticated, used for initial connection) |
+|                    | `removeSession()`         | End the current session                                             |
+|                    | `listSessions()`          | List sessions for the current user                                  |
+| Networks           | `listNetworks()`          | List configured networks (public metadata only, no auth secrets)    |
+|                    | `getNetwork()`            | Get full network configuration including auth (admin only)          |
+|                    | `selfSignedAccessToken()` | Mint a self-signed JWT for login (unauthenticated)                  |
+|                    | `addNetwork()`            | Add a new network configuration                                     |
+|                    | `removeNetwork()`         | Remove a network configuration                                      |
+| Identity Providers | `listIdps()`              | List all identity providers                                         |
+|                    | `addIdp()`                | Add a new identity provider                                         |
+|                    | `removeIdp()`             | Remove an identity provider                                         |
+| Wallets            | `createWallet()`          | Create a new wallet (party) on a network                            |
+|                    | `listWallets()`           | List all wallets for the current user                               |
+|                    | `setPrimaryWallet()`      | Set the primary wallet                                              |
+|                    | `removeWallet()`          | Remove a wallet                                                     |
+|                    | `syncWallets()`           | Sync wallets with the ledger                                        |
+|                    | `isWalletSyncNeeded()`    | Check if wallet sync is needed                                      |
+| Transactions       | `sign()`                  | Sign a transaction                                                  |
+|                    | `execute()`               | Execute a signed transaction                                        |
+|                    | `getTransaction()`        | Get a transaction by ID                                             |
+|                    | `listTransactions()`      | List transactions                                                   |
 
 **Authentication:**
 
@@ -60,6 +62,7 @@ Most User API methods require authentication via JWT token. However, the followi
 - `addSession()`
 - `listNetworks()`
 - `listIdps()`
+- `selfSignedAccessToken()`
 
 **Full API Specification:**
 

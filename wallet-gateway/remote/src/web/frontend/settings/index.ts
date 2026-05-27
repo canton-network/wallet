@@ -15,7 +15,7 @@ import {
 import { html, css } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
-    Network,
+    PublicNetwork,
     Session,
     Idp,
     Auth as ApiAuth,
@@ -41,7 +41,7 @@ export class UserUiSettings extends BaseElement {
         `,
     ]
 
-    @state() accessor networks: Network[] = []
+    @state() accessor networks: PublicNetwork[] = []
     @state() accessor sessions: Session[] = []
     @state() accessor idps: Idp[] = []
     @state() accessor client: UserApiClient | null = null
