@@ -97,14 +97,11 @@ describe('ClientCredentialsService', () => {
             ;(window as any).global = window
         }
 
-        global.fetch = vi.fn().mockImplementation((url) => {
-            if (url.includes('openid-configuration')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: async () => mockData,
-                })
-            }
-            return Promise.reject('')
+        global.fetch = vi.fn().mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockData,
+            })
         })
 
         const result = await service.getOIDCConfig(
@@ -114,6 +111,28 @@ describe('ClientCredentialsService', () => {
         expect(result).toStrictEqual(mockData)
     })
 
+    it('getOIDCConfig should throw an error if fetch fails', async () => {
+        const mockData = { token_endpoint: 'http://idp/token' }
+        if (typeof global === 'undefined') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(window as any).global = window
+        }
+
+        global.fetch = vi.fn().mockImplementation(() => {
+            return Promise.resolve({
+                ok: false,
+                status: 'Failed',
+                statusText: 'fetch request failed',
+                text: async () => 'error text here',
+                json: async () => mockData,
+            })
+        })
+
+        await expect(
+            service.getOIDCConfig('http://idp/.well-known/openid-configuration')
+        ).rejects.toThrow(`OIDC config error: Failed fetch request failed`)
+    })
+
     it('fetchTokenEndpoint', async () => {
         const mockData = { access_token: 'jwt' }
         if (typeof global === 'undefined') {
@@ -121,14 +140,11 @@ describe('ClientCredentialsService', () => {
             ;(window as any).global = window
         }
 
-        global.fetch = vi.fn().mockImplementation((url) => {
-            if (url.includes('idp/token')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: async () => mockData,
-                })
-            }
-            return Promise.reject('')
+        global.fetch = vi.fn().mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockData,
+            })
         })
 
         const result = await service.fetchTokenEndpoint(
@@ -146,5 +162,27 @@ describe('ClientCredentialsService', () => {
 
         const json = await result.json()
         expect(json).toStrictEqual(mockData)
+    })
+
+    it('fetchTokenEndpoint should fail with bad fetch response', async () => {
+        const mockData = { access_token: 'jwt' }
+        if (typeof global === 'undefined') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(window as any).global = window
+        }
+
+        global.fetch = vi.fn().mockImplementation(() => {
+            return Promise.resolve({
+                ok: false,
+                status: 'Failed',
+                statusText: 'fetch request failed',
+                text: async () => 'error text here',
+                json: async () => mockData,
+            })
+        })
+
+        await expect(
+            service.fetchTokenEndpoint('http://idp/token', credentials)
+        ).rejects.toThrow(`Token endpoint error: Failed fetch request failed`)
     })
 })
