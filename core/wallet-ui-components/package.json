@@ -32,16 +32,16 @@
         "@storybook/web-components-vite": "^10.2.14",
         "@types/bootstrap": "^5.2.10",
         "@types/fs-extra": "^11.0.4",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
-        "fs-extra": "^11.3.3",
+        "@vitest/browser-playwright": "^4.1.7",
+        "@vitest/coverage-v8": "^4.1.7",
+        "fs-extra": "^11.3.5",
         "playwright": "^1.58.2",
         "storybook": "^10.2.16",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
-        "vite": "^7.3.2",
+        "vite": "^7.3.3",
         "vite-plugin-dts": "^4.5.4",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.7"
     },
     "packageManager": "yarn@4.9.4",
     "dependencies": {
@@ -52,7 +52,7 @@
         "@canton-network/core-wallet-user-rpc-client": "workspace:^",
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.8",
-        "lit": "^3.3.2"
+        "lit": "^3.3.3"
     },
     "files": [
         "dist/**",

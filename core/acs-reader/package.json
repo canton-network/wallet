@@ -27,21 +27,21 @@
     },
     "devDependencies": {
         "@types/node": "^25.0.10",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
+        "@vitest/browser-playwright": "^4.1.7",
+        "@vitest/coverage-v8": "^4.1.7",
         "openapi-typescript": "^7.10.1",
         "playwright": "^1.58.2",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.7"
     },
     "dependencies": {
         "@canton-network/core-ledger-client-types": "workspace:^",
         "@canton-network/core-provider-ledger": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "bignumber.js": "^9.3.1",
-        "dayjs": "^1.11.19",
-        "openapi-fetch": "^0.15.0",
+        "dayjs": "^1.11.21",
+        "openapi-fetch": "^0.15.2",
         "pino": "^10.2.1",
         "typescript-lru-cache": "^2.0.0"
     },
