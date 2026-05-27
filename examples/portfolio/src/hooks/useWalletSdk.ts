@@ -5,21 +5,13 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import * as dappSdk from '@canton-network/dapp-sdk'
 import * as walletSdk from '@canton-network/wallet-sdk'
-import type { SDKInterface } from '@canton-network/wallet-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
 import { useRegistryUrls } from '../contexts/RegistryServiceContext'
 import { queryKeys } from './query-keys'
+import { WalletSDKUtilitiesPlugin } from '../../wallet-sdk-utility'
 
-type WalletSdk = SDKInterface<'asset'>
 
-type WalletSdkResult = {
-    sdk: WalletSdk | undefined
-    isLoading: boolean
-    error: string | undefined
-    refresh: () => void
-}
-
-export const useWalletSdk = (): WalletSdkResult => {
+export const useWalletSdk = () => {
     const { status } = useConnection()
     const registryUrls = useRegistryUrls()
     const sessionToken = status?.session?.accessToken
@@ -50,8 +42,8 @@ export const useWalletSdk = (): WalletSdkResult => {
                 throw new Error('Dapp provider is not available')
             }
 
-            return walletSdk.SDK.create({
-                ledgerProvider: provider as never, //TODO: check with mateusz
+            const sdk = (await walletSdk.SDK.create({
+                ledgerProvider: provider as never,
                 asset: {
                     auth: {
                         method: 'static',
@@ -61,12 +53,18 @@ export const useWalletSdk = (): WalletSdkResult => {
                         (url) => new URL(url)
                     ),
                 },
-            }) as Promise<WalletSdk>
+            }))
+
+            const pluginSDK = sdk.registerPlugins({
+                WalletSDKUtilitiesPluginName: WalletSDKUtilitiesPlugin
+            })
+
+            return pluginSDK
         },
     })
 
     return {
-        sdk: walletSdkQuery.data,
+        sdk: walletSdkQuery.data!,
         isLoading: walletSdkQuery.isLoading || walletSdkQuery.isFetching,
         error:
             walletSdkQuery.error instanceof Error

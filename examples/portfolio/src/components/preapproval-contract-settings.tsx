@@ -84,6 +84,7 @@ export function PreapprovalContractSettings() {
         error: walletSdkError,
         refresh,
     } = useWalletSdk()
+
     const [fetchedAssets, setFetchedAssets] = useState<AssetBody[]>([])
     const [hasFetchedAssets, setHasFetchedAssets] = useState(false)
 
