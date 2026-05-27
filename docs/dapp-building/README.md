@@ -21,5 +21,6 @@ Build decentralized applications (dApps) that interact with the **Canton Network
     - [Usage](wallet-gateway/usage/index.md)
     - [APIs](wallet-gateway/apis/index.md)
     - [Signing Providers](wallet-gateway/signing-providers/index.md)
+    - [Deployment](wallet-gateway/deployment/index.md)
     - [Troubleshooting](wallet-gateway/troubleshooting/index.md)
 - [Examples](examples/index.md) — Sample dApps (Ping and Portfolio) you can run and learn from

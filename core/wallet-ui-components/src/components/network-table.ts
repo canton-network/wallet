@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Network } from '@canton-network/core-wallet-store'
+import { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import { html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 
@@ -10,7 +10,7 @@ import { Session } from '@canton-network/core-wallet-user-rpc-client'
 
 @customElement('network-table')
 export class NetworkTable extends BaseElement {
-    @property({ type: Array }) networks: Network[] = []
+    @property({ type: Array }) networks: PublicNetwork[] = []
     @property({ type: Array }) activeSessions: Session[] = []
     @property({ type: Boolean }) readonly = false
 
