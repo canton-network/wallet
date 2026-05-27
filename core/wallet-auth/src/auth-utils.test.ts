@@ -44,7 +44,7 @@ describe('AuthUtils', () => {
         vi.resetAllMocks()
     })
 
-    const jwtToken =
+    const expiredJwtToken =
         'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsZWRnZXItYXBpLXVzZXIiLCJhdWQiOiJodHRwczovL2NhbnRvbi5uZXR3b3JrLmdsb2JhbCIsInNjb3BlIjoiIiwiaWF0IjoxNzc5ODg1MTE1LCJleHAiOjE3Nzk4ODg3MTUsImlzcyI6InVuc2FmZS1hdXRoIn0.J81f_WAkogp3jbrbFcNcVMsehoE8y7jQfvAlmPQdQr0'
     const configUrl = 'http://idp/.well-known/openid-configuration'
     const tokenProviderConfig: TokenProviderConfig = {
@@ -157,9 +157,9 @@ describe('AuthUtils', () => {
     })
 
     it('should verify components of a jwt token correct', () => {
-        const userId = jwtUserId(jwtToken)
-        const optionalEmail = jwtUserEmail(jwtToken)
-        const isExpired = jwtExpired(jwtToken)
+        const userId = jwtUserId(expiredJwtToken)
+        const optionalEmail = jwtUserEmail(expiredJwtToken)
+        const isExpired = jwtExpired(expiredJwtToken)
         expect(userId).toBe('ledger-api-user')
         expect(optionalEmail).toBeUndefined()
         expect(isExpired).toBeTruthy()
@@ -167,7 +167,7 @@ describe('AuthUtils', () => {
     it('should assert connected', () => {
         const authContext = {
             userId: 'user',
-            accessToken: jwtToken,
+            accessToken: expiredJwtToken,
         }
         expect(assertConnected(authContext)).toBe(authContext)
 
@@ -203,10 +203,9 @@ describe('AuthUtils', () => {
             return Promise.reject('')
         })
 
-        const result = await fetchOidcUserInfo(configUrl, jwtToken)
+        const result = await fetchOidcUserInfo(configUrl, expiredJwtToken)
 
         expect(result).toStrictEqual(mockUserInfoResponse)
-        vi.resetAllMocks()
     })
 
     it('should throw an error if fetch config fails', async () => {
@@ -217,7 +216,9 @@ describe('AuthUtils', () => {
             json: async () => mockResponse,
         } as Response)
 
-        await expect(fetchOidcUserInfo(configUrl, jwtToken)).rejects.toThrow(
+        await expect(
+            fetchOidcUserInfo(configUrl, expiredJwtToken)
+        ).rejects.toThrow(
             `Failed to fetch OIDC discovery document: undefined undefined`
         )
     })
@@ -251,9 +252,8 @@ describe('AuthUtils', () => {
             return Promise.reject('')
         })
 
-        await expect(fetchOidcUserInfo(configUrl, jwtToken)).rejects.toThrow(
-            `Failed to fetch OIDC userinfo: undefined undefined`
-        )
-        vi.resetAllMocks()
+        await expect(
+            fetchOidcUserInfo(configUrl, expiredJwtToken)
+        ).rejects.toThrow(`Failed to fetch OIDC userinfo: undefined undefined`)
     })
 })
