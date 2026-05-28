@@ -6,6 +6,7 @@ import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import type {
     Idp,
     Network,
+    PublicNetwork,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-user-rpc-client'
@@ -52,6 +53,20 @@ export function makeIdp(overrides: Partial<Idp> = {}): Idp {
         type: 'oauth',
         issuer: 'https://issuer.example',
         configUrl: 'https://config.example/.well-known/openid-configuration',
+        ...overrides,
+    }
+}
+
+export function makePublicNetwork(
+    overrides: Partial<PublicNetwork> = {}
+): PublicNetwork {
+    return {
+        id: 'net-1',
+        name: 'Test Network',
+        description: 'Test network description',
+        identityProviderId: 'idp-1',
+        ledgerApi: 'http://localhost:6865',
+        authMethod: 'client_credentials',
         ...overrides,
     }
 }
