@@ -19,11 +19,6 @@ const LOCALNET_REGISTRY_API_URL = new URL(
 )
 const LOCALNET_USER_ID = 'ledger-api-user'
 
-export const PARTY_HINT_ALICE = 'Alice'
-export const PARTY_HINT_BOB = 'Bob'
-export const PARTY_HINT_TRADING_APP = 'TradingApp'
-export const PARTY_HINT_TOKEN_ADMIN = 'TokenAdmin'
-
 export const localNetStaticConfig = {
     LOCALNET_APP_VALIDATOR_URL,
     LOCALNET_SCAN_API_URL,
