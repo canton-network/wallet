@@ -203,6 +203,29 @@ store:
         password: "<DB_PASSWORD>"
 ```
 
+If your PostgreSQL server requires TLS/SSL, add an `ssl` block. This is passed through to the underlying Node.js `pg` driver.
+
+```yaml
+store:
+    connection:
+        type: "postgres",
+        host: "<HOST_NAME>",
+        port: 5432,
+        database: "<DB_NAME>",
+        user: "<DB_USERNAME>",
+        password: "<DB_PASSWORD>",
+        # For production, prefer certificate verification (provide your CA bundle).
+        ssl:
+            rejectUnauthorized: true
+            ca: |
+                -----BEGIN CERTIFICATE-----
+                ...
+                -----END CERTIFICATE-----
+```
+
+> [!NOTE]
+> This section is about TLS between the Wallet Gateway and PostgreSQL. For browser/client HTTPS, terminate TLS in your ingress/load balancer and set `kernel.publicUrl` to the external `https://...` URL.
+
 ## Logging
 
 JSON logging can be enabled via the `--log-format` CLI flag (values: `"pretty" (default) | "json"`):
