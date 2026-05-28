@@ -7,8 +7,8 @@ import cors from 'cors'
 import express from 'express'
 import request from 'supertest'
 import { user } from './server.js'
+import { jwtAuthService } from '../auth/jwt-auth-service.js'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { Network } from '@canton-network/core-wallet-store'
 import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { pino } from 'pino'
@@ -48,7 +48,7 @@ test('call listNetworks rpc', async () => {
 
     expect(response.statusCode).toBe(200)
     expect(json.networks.length).toBe(6)
-    expect(json.networks.map((n: Network) => n.name)).toStrictEqual([
+    expect(json.networks.map((n: { name: string }) => n.name)).toStrictEqual([
         'Local (OAuth IDP)',
         'Local (OAuth IDP - 2)',
         'Local (OAuth IDP - Client Credentials)',
@@ -56,4 +56,89 @@ test('call listNetworks rpc', async () => {
         'Devnet (Auth0)',
         'LocalNet',
     ])
+
+    for (const network of json.networks) {
+        expect(network).not.toHaveProperty('auth')
+        expect(network).not.toHaveProperty('adminAuth')
+        expect(network).toHaveProperty('authMethod')
+    }
+})
+
+test('selfSignedAccessToken rpc', async () => {
+    const drivers = {}
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+
+    const { publicUrl } = deriveUrls(config)
+    const response = await request(
+        user(
+            '/api/v0/user',
+            app,
+            pino(sink()),
+            config.kernel,
+            publicUrl,
+            notificationService,
+            drivers,
+            store
+        )
+    )
+        .post('/api/v0/user')
+        .send({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'selfSignedAccessToken',
+            params: {
+                networkId: 'canton:local-self-signed',
+                clientId: 'test-user',
+            },
+        })
+        .set('Accept', 'application/json')
+
+    expect(response.statusCode).toBe(200)
+    const { accessToken } = response.body.result
+    expect(typeof accessToken).toBe('string')
+
+    const payload = JSON.parse(
+        Buffer.from(accessToken.split('.')[1], 'base64url').toString()
+    )
+    expect(payload.sub).toBe('test-user')
+    expect(payload.iss).toBe('unsafe-auth')
+})
+
+test('selfSignedAccessToken token is accepted by jwt auth', async () => {
+    const authService = jwtAuthService(store, pino(sink()))
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+
+    const { publicUrl } = deriveUrls(config)
+    const mintResponse = await request(
+        user(
+            '/api/v0/user',
+            app,
+            pino(sink()),
+            config.kernel,
+            publicUrl,
+            notificationService,
+            {},
+            store
+        )
+    )
+        .post('/api/v0/user')
+        .send({
+            jsonrpc: '2.0',
+            id: 2,
+            method: 'selfSignedAccessToken',
+            params: {
+                networkId: 'canton:local-self-signed',
+                clientId: 'test-user',
+            },
+        })
+
+    const accessToken = mintResponse.body.result.accessToken
+    const context = await authService.verifyToken(`Bearer ${accessToken}`)
+
+    expect(context?.userId).toBe('test-user')
+    expect(context?.accessToken).toBe(accessToken)
 })

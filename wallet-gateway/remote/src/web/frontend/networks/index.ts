@@ -12,15 +12,19 @@ import {
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 
-import { Network, Session } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    PublicNetwork,
+    Session,
+} from '@canton-network/core-wallet-user-rpc-client'
 
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 
 @customElement('user-ui-networks')
 export class UserUiNetworks extends BaseElement {
-    @state() accessor networks: Network[] = []
+    @state() accessor networks: PublicNetwork[] = []
     @state() accessor sessions: Session[] = []
     @state() accessor isAdmin = false
     @state() accessor currentPage = 1
@@ -105,7 +109,9 @@ export class UserUiNetworks extends BaseElement {
     }
 
     private _onReview(e: NetworkCardReviewEvent) {
-        window.location.href = `${toRelPath('/networks/review/')}?id=${encodeURIComponent(e.network.id)}`
+        setLocationHref(
+            `${toRelPath('/networks/review/')}?id=${encodeURIComponent(e.network.id)}`
+        )
     }
 
     private _onPageChange(e: PageChangeEvent) {
@@ -123,8 +129,7 @@ export class UserUiNetworks extends BaseElement {
                               class="btn btn-primary btn-sm rounded-pill btn-add"
                               type="button"
                               @click=${() =>
-                                  (window.location.href =
-                                      toRelPath('/networks/add/'))}
+                                  setLocationHref(toRelPath('/networks/add/'))}
                           >
                               <span aria-hidden="true">+</span>
                               New

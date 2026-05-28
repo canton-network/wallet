@@ -2,15 +2,21 @@
 
 This section outlines some recommendations for production deployments of the Wallet Gateway service.
 
-The service is available in both Docker and Helm variants:
+The service is available in both Docker and Helm variants. Images and charts are **public** on GitHub Container Registry — no access request is required.
 
-- **Docker Registry**: `ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0`
-- **Helm Repository**: `ghcr.io/digital-asset/wallet-gateway/helm/wallet-gateway:0.20.0`
+- **Docker Registry**: `ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION>`
+- **Helm Repository**: `ghcr.io/digital-asset/wallet-gateway/helm/wallet-gateway:<VERSION>`
 
-Note that we don't currently publish `latest` tags. To determine which version to use, check either
+Replace `<VERSION>` with the version you want to deploy. We don't currently publish `latest` tags. To determine which version to use, check either
 
-- The latest version displayed on the GHCR repo: https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fdocker%2Fwallet-gateway
-- The version corresponding to the NPM package: https://www.npmjs.com/package/@canton-network/wallet-gateway-remote
+- The latest tag on GHCR: https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fdocker%2Fwallet-gateway
+- The matching NPM package: https://www.npmjs.com/package/@canton-network/wallet-gateway-remote
+
+### Expose the service for users and dApps
+
+The Wallet Gateway must be reachable over HTTPS from browsers that open the **User UI** and from **hosted dApps** that connect via the dApp API. In Kubernetes, expose it with an Ingress or LoadBalancer that terminates TLS and forwards to the pod port (default `3030`). Set `kernel.publicUrl` to that external URL so OAuth redirects and discovery work correctly.
+
+After deployment, follow the [verification checklist](../troubleshooting/index.md#post-deployment-verification) in Troubleshooting.
 
 ## Docker
 
@@ -18,10 +24,10 @@ To run the Docker container, a configuration file must be supplied for the Walle
 
 ```shell
 # via Docker
-docker run --rm ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0 --config-example > config.json
+docker run --rm ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION> --config-example > config.json
 
 # alternatively, generate a sample config file via NPM
-npx @canton-network/wallet-gateway-remote@0.20.0 --config-example > config.json
+npx @canton-network/wallet-gateway-remote@<VERSION> --config-example > config.json
 ```
 
 With the default config file, start the service:
@@ -29,7 +35,7 @@ With the default config file, start the service:
 ```shell
 docker run -p 3030:3030 \
     -v ${PWD}/config.json:/app/config.json:ro \
-    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0
+    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION>
 ```
 
 If all went well, the Wallet Gateway login page can be opened in a browser at http://localhost:3030.
@@ -40,7 +46,22 @@ An official Helm chart is available for Kubernetes deployments. The full values.
 
 The config is then specified as YAML, but otherwise uses the same schema as `config.json`.
 
-Signing providers can be configured directly in the chart values:
+### Signing chart values (`signing: {}`)
+
+The Helm chart `signing` block configures **optional** external signing drivers (Blockdaemon, Dfns, Fireblocks). Leaving it empty is the common case for **participant-based signing**:
+
+```yaml
+signing: {}
+```
+
+With `signing: {}` (or with external drivers omitted), the Gateway still offers:
+
+- **Participant** — signs via your Canton participant node (typical for validator / operator deployments)
+- **Wallet Gateway (internal)** — not recommended for production
+
+You do **not** need participant-specific fields under `signing` when the participant node handles keys. Add entries under `signing` only when enabling an external custody provider.
+
+Signing providers can also be configured explicitly in the chart values:
 
 ```yaml
 signing:
@@ -91,7 +112,7 @@ The following config is incomplete, but highlights specific fields of note to co
 ```yaml
 kernel:
     # Set the publically accessible URL that users would use to connect to the deployed Wallet Gateway.
-    # Subpath routing is also supported as of v0.20.0
+    # Subpath routing is also supported
     publicUrl: 'https://wallet.example.com/subpath'
 server:
     # In a Helm/k8s setup, we recommend leaving the port set to the default `3030` value,
@@ -139,7 +160,9 @@ See [Signing Providers](../signing-providers/index.md) for more information.
 
 ### SQLite
 
-The default config uses `sqlite` as a persistent data store for the Wallet Gateway. To prevent the data from being reset across container restarts, the sqlite files must be mounted to a volume.
+The default config uses `sqlite` as a persistent data store for the Wallet Gateway. This is acceptable for evaluation and short-lived environments, but **PostgreSQL is recommended for production** (concurrent access, backups, and operational tooling).
+
+SQLite stores data in local files. Without a persistent volume, all sessions and wallet state are lost when the pod is recreated. Even with a volume, plan backups if you rely on this store in non-dev environments.
 
 First, configure the stores to point somewhere in the container:
 
@@ -161,7 +184,7 @@ Then start the container with the volume mount
 docker run -p 3030:3030 \
     -v ${PWD}/config.json:/app/config.json:ro \
     -v ${PWD}/data:/data \
-    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0
+    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION>
 ```
 
 ### PostgreSQL
@@ -187,6 +210,6 @@ JSON logging can be enabled via the `--log-format` CLI flag (values: `"pretty" (
 ```shell
 docker run -p 3030:3030 \
     -v ${PWD}/config.json:/app/config.json:ro \
-    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:0.20.0 \
+    ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:<VERSION> \
     --log-format=json
 ```
