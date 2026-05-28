@@ -13,21 +13,18 @@ import {
  *   Obtain via `(sdk.ledger as any).sdkContext.ledgerProvider`.
  * @param darBytes - Raw DAR file bytes.
  * @param synchronizerId - The synchronizer on which the package should be vetted.
- * @param vetAllPackages - When true (default) all packages inside the DAR are
- *   vetted, not only the main dalf. Matches the behaviour of `dar.upload`.
  */
-export async function vetPackage(
+export async function vetDar(
     ledgerProvider: AbstractLedgerProvider,
     darBytes: Uint8Array | Buffer,
-    synchronizerId: string,
-    vetAllPackages = true
+    synchronizerId: string
 ): Promise<void> {
     await ledgerProvider.request<Ops.PostV2Packages>({
         method: 'ledgerApi',
         params: {
             resource: '/v2/packages',
             requestMethod: 'post',
-            query: { synchronizerId, vetAllPackages },
+            query: { synchronizerId, vetAllPackages: true },
             body: darBytes as never,
             headers: { 'Content-Type': 'application/octet-stream' },
         },
