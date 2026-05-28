@@ -44,13 +44,13 @@ export async function allocateTokenForBob(
     if (!tokenRulesOnGlobal)
         throw new Error('TokenRules not found on global synchronizer')
 
-    // await p2Sdk.ledger.internal.reassign({
-    //     submitter: bob.partyId,
-    //     contractId: tokenHolding.contractId,
-    //     source: tokenHolding.synchronizerId,
-    //     target: globalSynchronizerId,
-    //     skipIfAlreadyOn: true,
-    // })
+    await p2Sdk.ledger.internal.reassign({
+        submitter: bob.partyId,
+        contractId: tokenHolding.contractId,
+        source: tokenHolding.synchronizerId,
+        target: globalSynchronizerId,
+        skipIfAlreadyOn: true,
+    })
 
     const [command, disclosedFromHelper] =
         await tokenNamespaceP2.allocation.instruction.create({
