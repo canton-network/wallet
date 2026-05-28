@@ -261,9 +261,7 @@ describe('UserUiSettings', () => {
         const network = makePublicNetwork({ id: 'net-del', name: 'Remove Me' })
         el.shadowRoot
             ?.querySelector('wg-networks')
-            ?.dispatchEvent(
-                new NetworkCardDeleteEvent(toPublicNetwork(network))
-            )
+            ?.dispatchEvent(new NetworkCardDeleteEvent(network))
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'removeNetwork')
