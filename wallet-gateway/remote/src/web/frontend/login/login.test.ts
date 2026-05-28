@@ -11,7 +11,7 @@ import {
 import {
     createMockUserClient,
     makeIdp,
-    makeNetwork,
+    makePublicNetwork,
     mockRequest,
 } from '../test-helpers.js'
 
@@ -85,29 +85,21 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 import './login.js'
 import { LoginUI } from './login.js'
 
-const selfSignedNetwork = makeNetwork({
+const selfSignedNetwork = makePublicNetwork({
     id: 'net-1',
     name: 'Self Signed Network',
-    auth: {
-        method: 'client_credentials',
-        audience: 'aud',
-        scope: 'scope',
-        clientId: 'client-id',
-        clientSecret: 'secret',
-    },
+    authMethod: 'client_credentials',
 })
 const selfSignedIdp = makeIdp({ id: 'idp-1', type: 'self_signed' })
 
 const oauthConfigUrl = 'https://idp.example/.well-known/openid-configuration'
-const oauthNetwork = makeNetwork({
+const oauthNetwork = makePublicNetwork({
     id: 'net-oauth',
     name: 'OAuth Network',
-    auth: {
-        method: 'authorization_code',
-        audience: 'audience',
-        scope: 'openid profile',
-        clientId: 'oauth-client-id',
-    },
+    authMethod: 'authorization_code',
+    audience: 'audience',
+    scope: 'openid profile',
+    clientId: 'oauth-client-id',
 })
 const oauthIdp = makeIdp({
     id: 'idp-oauth',
@@ -176,6 +168,9 @@ describe('LoginUI', () => {
             if (method === 'listIdps') {
                 return { idps: [selfSignedIdp] }
             }
+            if (method === 'selfSignedAccessToken') {
+                return { accessToken: defaultAccessToken }
+            }
             return undefined
         })
         el = await fixture<LoginUI>(componentFixture)
@@ -219,14 +214,12 @@ describe('LoginUI', () => {
     it('uses an empty client secret when the network omits one', async () => {
         await waitUntil(() => el.networks.length === 1)
 
-        const networkWithoutSecret = makeNetwork({
+        const networkWithoutSecret = makePublicNetwork({
             id: 'net-1',
-            auth: {
-                method: 'client_credentials',
-                audience: 'aud',
-                scope: 'scope',
-                clientId: 'client-id',
-            },
+            authMethod: 'client_credentials',
+            audience: 'aud',
+            scope: 'scope',
+            clientId: 'client-id',
         })
 
         dispatchConnect(el, networkWithoutSecret, selfSignedIdp, 'client-id')
@@ -235,7 +228,12 @@ describe('LoginUI', () => {
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
         )
 
-        expect(mockGetAccessToken).toHaveBeenCalled()
+        expect(mockRequest).toHaveBeenCalledWith(
+            expect.objectContaining({
+                method: 'selfSignedAccessToken',
+                params: { networkId: 'net-1', clientId: 'client-id' },
+            })
+        )
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
 
@@ -291,7 +289,18 @@ describe('LoginUI', () => {
 
     it('shows a form error when connect fails', async () => {
         await waitUntil(() => el.networks.length === 1)
-        mockGetAccessToken.mockRejectedValue(new Error('auth failed'))
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listNetworks') {
+                return { networks: [selfSignedNetwork] }
+            }
+            if (method === 'listIdps') {
+                return { idps: [selfSignedIdp] }
+            }
+            if (method === 'selfSignedAccessToken') {
+                throw new Error('auth failed')
+            }
+            return undefined
+        })
 
         dispatchConnect(el)
 

@@ -3,9 +3,14 @@
 
 import { vi } from 'vitest'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import {
+    NetworkDeleteEvent,
+    NetworkEditSaveEvent,
+} from '@canton-network/core-wallet-ui-components'
 import type {
     Idp,
     Network,
+    PublicNetwork,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-user-rpc-client'
@@ -74,6 +79,26 @@ export function makeNetwork(overrides: Partial<Network> = {}): Network {
     }
 }
 
+export function makePublicNetwork(
+    overrides: Partial<PublicNetwork> = {}
+): PublicNetwork {
+    return {
+        id: 'net-1',
+        name: 'Test Network',
+        description: 'Test network description',
+        identityProviderId: 'idp-1',
+        ledgerApi: 'http://localhost:6865',
+        authMethod: 'client_credentials',
+        ...overrides,
+    }
+}
+
+function withoutUndefinedKeys<T extends object>(value: Partial<T>): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(value).filter(([, v]) => v !== undefined)
+    ) as Partial<T>
+}
+
 export function makeStoreNetwork(
     overrides: Partial<StoreNetwork> = {}
 ): StoreNetwork {
@@ -90,7 +115,56 @@ export function makeStoreNetwork(
             clientId: 'client-id',
             clientSecret: 'client-secret',
         },
-        ...overrides,
+        ...withoutUndefinedKeys(overrides),
+    } as StoreNetwork
+}
+
+function toFormNetwork(network: object): StoreNetwork {
+    return network as unknown as StoreNetwork
+}
+
+export function networkEditSaveEvent(
+    overrides: Partial<StoreNetwork> = {}
+): NetworkEditSaveEvent {
+    return new NetworkEditSaveEvent(toFormNetwork(makeStoreNetwork(overrides)))
+}
+
+export function networkEditSaveEventFrom(
+    network: StoreNetwork
+): NetworkEditSaveEvent {
+    return new NetworkEditSaveEvent(toFormNetwork(network))
+}
+
+export function networkDeleteEvent(
+    overrides: Partial<StoreNetwork> = {}
+): NetworkDeleteEvent {
+    return new NetworkDeleteEvent(toFormNetwork(makeStoreNetwork(overrides)))
+}
+
+export function toPublicNetwork(
+    network: StoreNetwork | Network
+): PublicNetwork {
+    const auth = network.auth
+    const ledgerApi =
+        typeof network.ledgerApi === 'string'
+            ? network.ledgerApi
+            : network.ledgerApi.baseUrl
+
+    return {
+        id: network.id,
+        name: network.name,
+        description: network.description,
+        identityProviderId: network.identityProviderId,
+        ledgerApi,
+        authMethod: auth.method,
+        ...(network.synchronizerId !== undefined && {
+            synchronizerId: network.synchronizerId,
+        }),
+        ...(auth.method !== 'client_credentials' && {
+            clientId: auth.clientId,
+            scope: auth.scope,
+            audience: auth.audience,
+        }),
     }
 }
 
@@ -123,7 +197,7 @@ export function mockListWalletsFlow(
 }
 
 export function mockNetworksPageFlow(
-    networks: Network[],
+    networks: PublicNetwork[],
     options: { isAdmin?: boolean } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
@@ -145,6 +219,31 @@ export function mockNetworksPageFlow(
         return undefined
     })
 }
+export function mockReviewNetworkFlow(
+    overrides: Partial<Network> = {},
+    options: { isAdmin?: boolean } = {}
+): Network {
+    const network = makeNetwork(overrides)
+
+    mockRequest.mockImplementation(async ({ method }) => {
+        if (method === 'getNetwork') {
+            return { network }
+        }
+        if (method === 'getUser') {
+            return {
+                userId: 'user-1',
+                isAdmin: options.isAdmin ?? true,
+            }
+        }
+        if (method === 'addNetwork' || method === 'removeNetwork') {
+            return undefined
+        }
+        return undefined
+    })
+
+    return network
+}
+
 export function mockIdpsPageFlow(
     idps: Idp[],
     options: { isAdmin?: boolean } = {}
@@ -168,7 +267,7 @@ export function mockIdpsPageFlow(
 
 export function mockSettingsPageFlow(
     options: {
-        networks?: Network[]
+        networks?: PublicNetwork[]
         sessions?: { id: string; network: { id: string } }[]
         idps?: Idp[]
         isAdmin?: boolean
@@ -177,7 +276,7 @@ export function mockSettingsPageFlow(
     } = {}
 ): void {
     const {
-        networks = [makeNetwork()],
+        networks = [makePublicNetwork()],
         sessions = [{ id: 'sess-1', network: { id: 'net-1' } }],
         idps = [makeIdp()],
         isAdmin = true,
