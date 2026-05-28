@@ -330,6 +330,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'listNetworks',
             'listIdps',
             'getUser',
+            'selfSignedAccessToken',
         ],
     }
 

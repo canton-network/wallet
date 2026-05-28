@@ -2,8 +2,8 @@
 
 Build decentralized applications (dApps) that interact with the **Canton Network** through the **Wallet Gateway**. Use the **dApp SDK** in your frontend to connect users to their wallets, and the Wallet Gateway to mediate between your dApp, Canton validator nodes, and signing providers.
 
-> [!IMPORTANT]
-> This project is under active development and may introduce breaking changes until version 1.0.0. Migration guides for each release are published in [Discussions](https://github.com/canton-network/wallet/discussions).
+> [!NOTE]
+> Migration guides for each release are published in [Discussions](https://github.com/canton-network/wallet/discussions).
 
 ## Contents
 
@@ -21,5 +21,6 @@ Build decentralized applications (dApps) that interact with the **Canton Network
     - [Usage](wallet-gateway/usage/index.md)
     - [APIs](wallet-gateway/apis/index.md)
     - [Signing Providers](wallet-gateway/signing-providers/index.md)
+    - [Deployment](wallet-gateway/deployment/index.md)
     - [Troubleshooting](wallet-gateway/troubleshooting/index.md)
 - [Examples](examples/index.md) — Sample dApps (Ping and Portfolio) you can run and learn from
