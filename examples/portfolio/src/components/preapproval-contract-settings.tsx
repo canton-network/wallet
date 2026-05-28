@@ -27,37 +27,17 @@ import {
 } from '@mui/material'
 import { useForm } from '@tanstack/react-form'
 import type { AssetBody } from '@canton-network/wallet-sdk'
-import type { PartyId } from '@canton-network/core-types'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useRegistryUrls } from '@contexts/RegistryServiceContext'
-import { useWalletSdk } from '../hooks/useWalletSdk'
+import { useWalletSdk } from '@hooks/useWalletSdk'
 import { usePrimaryAccount } from '@hooks/useAccounts'
+import { useCreatePreapprovalContracts } from '@hooks/useCreatePreapprovalContracts'
 
 type PreapprovalFormData = {
     registryUrl: string
     operatorParty: string
     selectedAssetKeys: string[]
-}
-
-type CreatePreapprovalContractsInput = {
-    receiver: PartyId
-    operatorParty: PartyId
-    instrumentAdmin: PartyId
-    assets: AssetBody[]
-}
-
-const createPreapprovalContracts = async ({
-    receiver,
-    operatorParty,
-    instrumentAdmin,
-    assets,
-}: CreatePreapprovalContractsInput): Promise<void> => {
-    // TODO: implement me. Use the lib from utilities
-    void receiver
-    void operatorParty
-    void instrumentAdmin
-    void assets
 }
 
 const registryUrlValidator = z.string().min(1, 'Select a registry')
@@ -84,6 +64,8 @@ export function PreapprovalContractSettings() {
         error: walletSdkError,
         refresh,
     } = useWalletSdk()
+
+    const createPreapprovalContractsMutation = useCreatePreapprovalContracts()
 
     const [fetchedAssets, setFetchedAssets] = useState<AssetBody[]>([])
     const [hasFetchedAssets, setHasFetchedAssets] = useState(false)
@@ -113,13 +95,13 @@ export function PreapprovalContractSettings() {
                 formData.selectedAssetKeys.includes(getAssetKey(asset))
             )
 
-            await createPreapprovalContracts({
+            await createPreapprovalContractsMutation.mutateAsync({
                 receiver: primaryParty,
-                operatorParty: formData.operatorParty.trim(),
+                operator: formData.operatorParty.trim(),
                 instrumentAdmin: selectedAssets[0].admin,
                 assets: selectedAssets,
             })
-            toast.success('Mock Preapproval contract created')
+            toast.success('Preapproval contract created')
         },
     })
 
@@ -531,9 +513,12 @@ export function PreapprovalContractSettings() {
                             })}
                         >
                             {({ canSubmit, isSubmitting, values }) => {
+                                const isCreating =
+                                    isSubmitting ||
+                                    createPreapprovalContractsMutation.isPending
                                 const createDisabled =
                                     !canSubmit ||
-                                    isSubmitting ||
+                                    isCreating ||
                                     !primaryParty ||
                                     !sdk ||
                                     isWalletSdkLoading ||
@@ -549,9 +534,7 @@ export function PreapprovalContractSettings() {
                                             minWidth: 160,
                                         }}
                                     >
-                                        {isSubmitting
-                                            ? 'Creating...'
-                                            : 'Create'}
+                                        {isCreating ? 'Creating...' : 'Create'}
                                     </Button>
                                 ) : null
                             }}

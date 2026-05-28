@@ -8,7 +8,10 @@ import * as walletSdk from '@canton-network/wallet-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
 import { useRegistryUrls } from '../contexts/RegistryServiceContext'
 import { queryKeys } from './query-keys'
-import { WalletSDKUtilitiesPlugin, WalletSDKUtilitiesPluginName } from '@lib/wallet-sdk-utility/src/extension'
+import {
+    WalletSDKUtilitiesPlugin,
+    WalletSDKUtilitiesPluginName,
+} from '@lib/wallet-sdk-utility/src/extension'
 
 export const useWalletSdk = () => {
     const { status } = useConnection()

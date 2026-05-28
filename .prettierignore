@@ -12,3 +12,5 @@ core/wallet-dapp-rpc-client/docs/*
 core/wallet-dapp-remote-rpc-client/docs/*
 **/routetree.gen.ts
 damljs/*
+# TODO: remove as part of issue #1901
+examples/portfolio/src/lib/wallet-sdk-utility/src/codegen/*
