@@ -8,8 +8,7 @@ import * as walletSdk from '@canton-network/wallet-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
 import { useRegistryUrls } from '../contexts/RegistryServiceContext'
 import { queryKeys } from './query-keys'
-import { WalletSDKUtilitiesPlugin } from '../../wallet-sdk-utility'
-
+import { WalletSDKUtilitiesPlugin, WalletSDKUtilitiesPluginName } from '@lib/wallet-sdk-utility/src/extension'
 
 export const useWalletSdk = () => {
     const { status } = useConnection()
@@ -42,7 +41,7 @@ export const useWalletSdk = () => {
                 throw new Error('Dapp provider is not available')
             }
 
-            const sdk = (await walletSdk.SDK.create({
+            const sdk = await walletSdk.SDK.create({
                 ledgerProvider: provider as never,
                 asset: {
                     auth: {
@@ -53,10 +52,10 @@ export const useWalletSdk = () => {
                         (url) => new URL(url)
                     ),
                 },
-            }))
+            })
 
             const pluginSDK = sdk.registerPlugins({
-                WalletSDKUtilitiesPluginName: WalletSDKUtilitiesPlugin
+                [WalletSDKUtilitiesPluginName]: WalletSDKUtilitiesPlugin,
             })
 
             return pluginSDK

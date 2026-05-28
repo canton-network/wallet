@@ -1,3 +1,0 @@
-[submodule "examples/portfolio/wallet-sdk-utility"]
-	path = examples/portfolio/wallet-sdk-utility
-	url = git@github.com:mateuszpiatkowski-da/wallet-sdk-extension-example.git
