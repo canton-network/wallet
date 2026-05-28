@@ -8,14 +8,16 @@ import {
     IdpAddEvent,
     IdpCardDeleteEvent,
     NetworkCardDeleteEvent,
-    NetworkEditSaveEvent,
 } from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeIdp,
     makeStoreNetwork,
+    toPublicNetwork,
     mockRequest,
     mockSettingsPageFlow,
+    networkEditSaveEvent,
+    networkEditSaveEventFrom,
 } from '../test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast } = vi.hoisted(() => ({
@@ -153,7 +155,7 @@ describe('UserUiSettings', () => {
 
         el.shadowRoot
             ?.querySelector('wg-networks')
-            ?.dispatchEvent(new NetworkEditSaveEvent(network))
+            ?.dispatchEvent(networkEditSaveEventFrom(network))
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
@@ -185,7 +187,7 @@ describe('UserUiSettings', () => {
 
         el.shadowRoot
             ?.querySelector('wg-networks')
-            ?.dispatchEvent(new NetworkEditSaveEvent(network))
+            ?.dispatchEvent(networkEditSaveEventFrom(network))
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
@@ -207,7 +209,7 @@ describe('UserUiSettings', () => {
     it('adds a network without adminAuth using default credentials', async () => {
         el.shadowRoot
             ?.querySelector('wg-networks')
-            ?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
+            ?.dispatchEvent(networkEditSaveEvent())
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
@@ -247,7 +249,7 @@ describe('UserUiSettings', () => {
 
         el.shadowRoot
             ?.querySelector('wg-networks')
-            ?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
+            ?.dispatchEvent(networkEditSaveEvent())
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
@@ -258,7 +260,9 @@ describe('UserUiSettings', () => {
         const network = makeStoreNetwork({ id: 'net-del', name: 'Remove Me' })
         el.shadowRoot
             ?.querySelector('wg-networks')
-            ?.dispatchEvent(new NetworkCardDeleteEvent(network))
+            ?.dispatchEvent(
+                new NetworkCardDeleteEvent(toPublicNetwork(network))
+            )
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'removeNetwork')
@@ -284,7 +288,9 @@ describe('UserUiSettings', () => {
             ?.querySelector('wg-networks')
             ?.dispatchEvent(
                 new NetworkCardDeleteEvent(
-                    makeStoreNetwork({ id: 'net-del', name: 'Keep Me' })
+                    toPublicNetwork(
+                        makeStoreNetwork({ id: 'net-del', name: 'Keep Me' })
+                    )
                 )
             )
 
@@ -318,7 +324,9 @@ describe('UserUiSettings', () => {
         el.shadowRoot
             ?.querySelector('wg-networks')
             ?.dispatchEvent(
-                new NetworkCardDeleteEvent(makeStoreNetwork({ id: 'net-del' }))
+                new NetworkCardDeleteEvent(
+                    toPublicNetwork(makeStoreNetwork({ id: 'net-del' }))
+                )
             )
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
