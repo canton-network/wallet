@@ -99,7 +99,6 @@ function withoutUndefinedKeys<T extends object>(value: Partial<T>): Partial<T> {
     ) as Partial<T>
 }
 
-/** Store shape used by network-form events (NetworkEditSaveEvent / NetworkDeleteEvent). */
 export function makeStoreNetwork(
     overrides: Partial<StoreNetwork> = {}
 ): StoreNetwork {
