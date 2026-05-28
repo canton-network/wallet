@@ -16,7 +16,7 @@ export async function aliceSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p1Sdk, p2Sdk, alice, tokenAdmin, appSynchronizerId } = setup
+    const { p1Sdk, p2Sdk, alice, tokenAdmin } = setup
 
     const [aliceTokens, tokenRulesContracts] = await Promise.all([
         p1Sdk.ledger.acs.read({
@@ -34,17 +34,12 @@ export async function aliceSelfTransferToApp(
     if (!aliceToken)
         throw new Error('Alice: Token holding not found after settlement')
     const tokenRules = tokenRulesContracts.find(
-        (c) => c.synchronizerId === appSynchronizerId
+        (c) => c.synchronizerId === aliceToken.synchronizerId
     )
-    if (!tokenRules) throw new Error('TokenRules not found on app-synchronizer')
-
-    await p1Sdk.ledger.internal.reassign({
-        submitter: alice.partyId,
-        contractId: aliceToken.contractId,
-        source: aliceToken.synchronizerId,
-        target: appSynchronizerId,
-        skipIfAlreadyOn: true,
-    })
+    if (!tokenRules)
+        throw new Error(
+            `TokenRules not found on synchronizer ${aliceToken.synchronizerId}`
+        )
 
     await p1Sdk.ledger
         .prepare({
@@ -72,7 +67,7 @@ export async function aliceSelfTransferToApp(
                     synchronizerId: tokenRules.synchronizerId,
                 },
             ],
-            synchronizerId: appSynchronizerId,
+            synchronizerId: aliceToken.synchronizerId,
         })
         .sign(alice.keyPair.privateKey)
         .execute({ partyId: alice.partyId })
@@ -86,7 +81,7 @@ export async function bobSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p2Sdk, bob, tokenAdmin, appSynchronizerId } = setup
+    const { p2Sdk, bob, tokenAdmin } = setup
 
     const [bobTokens, tokenRulesContracts] = await Promise.all([
         p2Sdk.ledger.acs.read({
@@ -105,10 +100,6 @@ export async function bobSelfTransferToApp(
         logger.info('Bob: no TestToken holdings to self-transfer')
         return
     }
-    const tokenRules = tokenRulesContracts.find(
-        (c) => c.synchronizerId === appSynchronizerId
-    )
-    if (!tokenRules) throw new Error('TokenRules not found on app-synchronizer')
 
     for (const token of bobTokens) {
         const holdingAmount = (
@@ -119,13 +110,13 @@ export async function bobSelfTransferToApp(
         if (!holdingAmount)
             throw new Error('Cannot read amount from Bob Token holding')
 
-        await p2Sdk.ledger.internal.reassign({
-            submitter: bob.partyId,
-            contractId: token.contractId,
-            source: token.synchronizerId,
-            target: appSynchronizerId,
-            skipIfAlreadyOn: true,
-        })
+        const tokenRules = tokenRulesContracts.find(
+            (c) => c.synchronizerId === token.synchronizerId
+        )
+        if (!tokenRules)
+            throw new Error(
+                `TokenRules not found on synchronizer ${token.synchronizerId}`
+            )
 
         await p2Sdk.ledger
             .prepare({
@@ -153,7 +144,7 @@ export async function bobSelfTransferToApp(
                         synchronizerId: tokenRules.synchronizerId,
                     },
                 ],
-                synchronizerId: appSynchronizerId,
+                synchronizerId: token.synchronizerId,
             })
             .sign(bob.keyPair.privateKey)
             .execute({ partyId: bob.partyId })

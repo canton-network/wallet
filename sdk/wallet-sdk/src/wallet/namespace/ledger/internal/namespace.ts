@@ -93,34 +93,48 @@ export class InternalLedgerNamespace {
             unassignedEvent.JsUnassignedEvent.value.reassignmentId
 
         // Phase 2: Assign
-        await this.ctx.ledgerProvider.request<Ops.PostV2CommandsSubmitAndWaitForReassignment>(
-            {
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/commands/submit-and-wait-for-reassignment',
-                    requestMethod: 'post',
-                    body: {
-                        reassignmentCommands: {
-                            commandId: v4(),
-                            submitter,
-                            commands: [
-                                {
-                                    command: {
-                                        AssignCommand: {
-                                            value: {
-                                                reassignmentId,
-                                                source,
-                                                target,
+        try {
+            await this.ctx.ledgerProvider.request<Ops.PostV2CommandsSubmitAndWaitForReassignment>(
+                {
+                    method: 'ledgerApi',
+                    params: {
+                        resource:
+                            '/v2/commands/submit-and-wait-for-reassignment',
+                        requestMethod: 'post',
+                        body: {
+                            reassignmentCommands: {
+                                commandId: v4(),
+                                submitter,
+                                commands: [
+                                    {
+                                        command: {
+                                            AssignCommand: {
+                                                value: {
+                                                    reassignmentId,
+                                                    source,
+                                                    target,
+                                                },
                                             },
                                         },
                                     },
-                                },
-                            ],
+                                ],
+                            },
                         },
                     },
-                },
-            }
-        )
+                }
+            )
+        } catch (e) {
+            throw Object.assign(
+                new Error(
+                    `Phase 2 (Assign) failed for contract ${contractId} ` +
+                        `(reassignmentId: ${reassignmentId}). ` +
+                        `The contract is in-flight on source synchronizer "${source}" and must be ` +
+                        `assigned to "${target}" using the reassignmentId above.`,
+                    { cause: e }
+                ),
+                { reassignmentId, source, target, contractId }
+            )
+        }
     }
 
     public async submit(
