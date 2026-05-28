@@ -9,7 +9,8 @@ import {
     aliceSelfTransferToApp,
     bobSelfTransferToApp,
 } from './_token_transfer.js'
-import { createAndInitiateOtcTrade, settleOtcTrade } from './_trade_ops.js'
+import { createAndInitiateOtcTrade } from './_trade_propose.js'
+import { settleOtcTrade } from './_trade_settle.js'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
 // P1 = app-user (Alice), P2 = app-provider (Bob), P3 = sv (TradingApp).
@@ -102,11 +103,27 @@ if (!testTokenAllocation) throw new Error('TestToken allocation not found')
 const testTokenAllocationCid = testTokenAllocation.contractId
 
 // ── Step 10b: TradingApp settles the OTCTrade ─────────────────────────────────
-await settleOtcTrade(
-    setup,
-    { otcTradeCid, legIdAlice, legIdBob, testTokenAllocationCid },
-    logger
-)
+try {
+    await settleOtcTrade(
+        setup,
+        { otcTradeCid, legIdAlice, legIdBob, testTokenAllocationCid },
+        logger
+    )
+} catch (e) {
+    logger.error(
+        { err: e },
+        'Settlement failed — compensation applied, funds returned'
+    )
+    await bobSelfTransferToApp(setup, logger)
+    logger.info('Contracts after settlement failure (compensation applied):')
+    await logAllContracts(logger, synchronizers, [
+        { sdk: p1Sdk, parties: [alice.partyId] },
+        { sdk: p2Sdk, parties: [bob.partyId] },
+        { sdk: p2Sdk, parties: [tokenAdmin.partyId] },
+        { sdk: p3Sdk, parties: [tradingApp.partyId] },
+    ])
+    process.exit(1)
+}
 logger.info('Contracts after settlement:')
 await logAllContracts(logger, synchronizers, [
     { sdk: p1Sdk, parties: [alice.partyId] },
