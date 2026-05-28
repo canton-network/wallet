@@ -4,17 +4,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import {
-    NetworkDeleteEvent,
-    NetworkEditCancelEvent,
-    NetworkEditSaveEvent,
-} from '@canton-network/core-wallet-ui-components'
+import { NetworkEditCancelEvent } from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeNetwork,
     makeStoreNetwork,
-    mockNetworksPageFlow,
+    mockReviewNetworkFlow,
     mockRequest,
+    networkDeleteEvent,
+    networkEditSaveEvent,
+    networkEditSaveEventFrom,
 } from '../../test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
@@ -46,8 +45,6 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 import './index.js'
 import { UserUiReviewNetwork } from './index.js'
 
-const network = makeNetwork({ id: 'net-review', name: 'Review Net' })
-
 describe('UserUiReviewNetwork', () => {
     let el: UserUiReviewNetwork
     const componentFixture = html`<user-ui-review-network></user-ui-review-network>`
@@ -58,7 +55,7 @@ describe('UserUiReviewNetwork', () => {
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
-        mockNetworksPageFlow([network])
+        mockReviewNetworkFlow({ id: 'net-review', name: 'Review Net' })
         history.replaceState({}, '', '?id=net-review')
         vi.stubGlobal(
             'confirm',
@@ -88,9 +85,7 @@ describe('UserUiReviewNetwork', () => {
         el.shadowRoot
             ?.querySelector('network-form')
             ?.dispatchEvent(
-                new NetworkEditSaveEvent(
-                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
-                )
+                networkEditSaveEvent({ id: 'net-review', name: 'Review Net' })
             )
 
         await waitUntil(() =>
@@ -135,9 +130,7 @@ describe('UserUiReviewNetwork', () => {
         el.shadowRoot
             ?.querySelector('network-form')
             ?.dispatchEvent(
-                new NetworkDeleteEvent(
-                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
-                )
+                networkDeleteEvent({ id: 'net-review', name: 'Review Net' })
             )
 
         await waitUntil(() =>
@@ -156,6 +149,12 @@ describe('UserUiReviewNetwork', () => {
     })
 
     it('navigates back when the network is not found', async () => {
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'getNetwork') {
+                throw new Error('Network not found')
+            }
+            return undefined
+        })
         history.replaceState({}, '', '?id=missing-net')
         el = await fixture<UserUiReviewNetwork>(componentFixture)
 
@@ -169,7 +168,13 @@ describe('UserUiReviewNetwork', () => {
     })
 
     it('navigates back when loading networks fails', async () => {
-        mockRequest.mockRejectedValue(new Error('list failed'))
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'getNetwork') {
+                throw new Error('list failed')
+            }
+            return undefined
+        })
+        history.replaceState({}, '', '?id=net-review')
         el = await fixture<UserUiReviewNetwork>(componentFixture)
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
@@ -187,9 +192,7 @@ describe('UserUiReviewNetwork', () => {
         el.shadowRoot
             ?.querySelector('network-form')
             ?.dispatchEvent(
-                new NetworkEditSaveEvent(
-                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
-                )
+                networkEditSaveEvent({ id: 'net-review', name: 'Review Net' })
             )
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
@@ -203,8 +206,13 @@ describe('UserUiReviewNetwork', () => {
         await waitUntil(() => el.network !== null)
 
         mockRequest.mockImplementation(async ({ method }) => {
-            if (method === 'listNetworks') {
-                return { networks: [network] }
+            if (method === 'getNetwork') {
+                return {
+                    network: makeNetwork({
+                        id: 'net-review',
+                        name: 'Review Net',
+                    }),
+                }
             }
             if (method === 'addNetwork') {
                 throw new Error('save failed')
@@ -215,9 +223,7 @@ describe('UserUiReviewNetwork', () => {
         el.shadowRoot
             ?.querySelector('network-form')
             ?.dispatchEvent(
-                new NetworkEditSaveEvent(
-                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
-                )
+                networkEditSaveEvent({ id: 'net-review', name: 'Review Net' })
             )
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
@@ -232,9 +238,7 @@ describe('UserUiReviewNetwork', () => {
         el.shadowRoot
             ?.querySelector('network-form')
             ?.dispatchEvent(
-                new NetworkDeleteEvent(
-                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
-                )
+                networkDeleteEvent({ id: 'net-review', name: 'Review Net' })
             )
 
         expect(
@@ -246,8 +250,13 @@ describe('UserUiReviewNetwork', () => {
         await waitUntil(() => el.network !== null)
 
         mockRequest.mockImplementation(async ({ method }) => {
-            if (method === 'listNetworks') {
-                return { networks: [network] }
+            if (method === 'getNetwork') {
+                return {
+                    network: makeNetwork({
+                        id: 'net-review',
+                        name: 'Review Net',
+                    }),
+                }
             }
             if (method === 'removeNetwork') {
                 throw new Error('delete failed')
@@ -258,9 +267,7 @@ describe('UserUiReviewNetwork', () => {
         el.shadowRoot
             ?.querySelector('network-form')
             ?.dispatchEvent(
-                new NetworkDeleteEvent(
-                    makeStoreNetwork({ id: 'net-review', name: 'Review Net' })
-                )
+                networkDeleteEvent({ id: 'net-review', name: 'Review Net' })
             )
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
@@ -286,7 +293,7 @@ describe('UserUiReviewNetwork', () => {
 
         el.shadowRoot
             ?.querySelector('network-form')
-            ?.dispatchEvent(new NetworkEditSaveEvent(storeNetwork))
+            ?.dispatchEvent(networkEditSaveEventFrom(storeNetwork))
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')

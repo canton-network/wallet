@@ -7,7 +7,7 @@ import { html } from 'lit'
 import { PageChangeEvent } from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
-    makeNetwork,
+    makePublicNetwork,
     mockNetworksPageFlow,
     mockRequest,
 } from '../test-helpers.js'
@@ -45,7 +45,7 @@ function getNetworkCards(el: UserUiNetworks) {
 
 function makeNetworks(count: number) {
     return Array.from({ length: count }, (_, i) =>
-        makeNetwork({ id: `net-${i + 1}`, name: `Network ${i + 1}` })
+        makePublicNetwork({ id: `net-${i + 1}`, name: `Network ${i + 1}` })
     )
 }
 
@@ -66,7 +66,10 @@ describe('UserUiNetworks', () => {
     })
 
     it('renders network cards after loading', async () => {
-        mockNetworksPageFlow([makeNetwork(), makeNetwork({ id: 'net-2' })])
+        mockNetworksPageFlow([
+            makePublicNetwork(),
+            makePublicNetwork({ id: 'net-2' }),
+        ])
 
         el = await fixture<UserUiNetworks>(componentFixture)
 
@@ -89,7 +92,7 @@ describe('UserUiNetworks', () => {
     })
 
     it('shows the add button for admin users', async () => {
-        mockNetworksPageFlow([makeNetwork()], { isAdmin: true })
+        mockNetworksPageFlow([makePublicNetwork()], { isAdmin: true })
 
         el = await fixture<UserUiNetworks>(componentFixture)
 
@@ -99,7 +102,7 @@ describe('UserUiNetworks', () => {
     })
 
     it('hides the add button for non-admin users', async () => {
-        mockNetworksPageFlow([makeNetwork()], { isAdmin: false })
+        mockNetworksPageFlow([makePublicNetwork()], { isAdmin: false })
 
         el = await fixture<UserUiNetworks>(componentFixture)
 

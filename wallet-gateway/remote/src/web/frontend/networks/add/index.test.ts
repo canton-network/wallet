@@ -4,12 +4,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { NetworkEditSaveEvent } from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeStoreNetwork,
     mockNetworksPageFlow,
     mockRequest,
+    networkEditSaveEvent,
+    networkEditSaveEventFrom,
 } from '../../test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
@@ -69,7 +70,7 @@ describe('UserUiAddNetwork', () => {
 
     it('calls addNetwork when the form is saved', async () => {
         const form = el.shadowRoot?.querySelector('network-form')
-        form?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
+        form?.dispatchEvent(networkEditSaveEvent())
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
@@ -105,7 +106,7 @@ describe('UserUiAddNetwork', () => {
         el.loading = true
         el.shadowRoot
             ?.querySelector('network-form')
-            ?.dispatchEvent(new NetworkEditSaveEvent(makeStoreNetwork()))
+            ?.dispatchEvent(networkEditSaveEvent())
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
@@ -128,7 +129,7 @@ describe('UserUiAddNetwork', () => {
 
         el.shadowRoot
             ?.querySelector('network-form')
-            ?.dispatchEvent(new NetworkEditSaveEvent(network))
+            ?.dispatchEvent(networkEditSaveEventFrom(network))
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
@@ -155,7 +156,7 @@ describe('UserUiAddNetwork', () => {
         el.shadowRoot
             ?.querySelector('network-form')
             ?.dispatchEvent(
-                new NetworkEditSaveEvent(
+                networkEditSaveEventFrom(
                     networkWithoutAdmin as ReturnType<typeof makeStoreNetwork>
                 )
             )
