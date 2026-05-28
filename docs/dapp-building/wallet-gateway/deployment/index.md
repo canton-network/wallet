@@ -203,6 +203,98 @@ store:
         password: "<DB_PASSWORD>"
 ```
 
+### Local PostgreSQL over TLS (Docker)
+
+For local development you can run PostgreSQL in Docker with TLS enabled and point the Wallet Gateway `store` / `signingStore` at it.
+
+> [!NOTE]
+> This configures TLS between the Wallet Gateway and PostgreSQL. It does **not** configure HTTPS for browsers. For browser/client HTTPS, terminate TLS in your reverse proxy/ingress and set `kernel.publicUrl` to the external `https://...` URL.
+
+#### 1) Create TLS files for Postgres (self-signed)
+
+```bash
+mkdir -p .dev/postgres-tls
+cd .dev/postgres-tls
+
+# server key + cert (CN=localhost)
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout server.key -out server.crt -days 365 \
+  -subj "/CN=localhost"
+
+# Postgres requires strict key perms
+chmod 600 server.key
+
+# pg_hba: allow local socket (for init), enforce TLS for TCP
+cat > pg_hba.conf <<'EOF'
+# TYPE  DATABASE  USER  ADDRESS       METHOD
+local   all       all                 scram-sha-256
+hostssl all       all   0.0.0.0/0     scram-sha-256
+hostssl all       all   ::/0          scram-sha-256
+EOF
+
+cd ../..
+```
+
+#### 2) Run Postgres with TLS enabled
+
+```bash
+docker rm -f local-postgres 2>/dev/null || true
+
+docker run --name local-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=app_db \
+  -e POSTGRES_INITDB_ARGS="--auth-host=scram-sha-256 --auth-local=scram-sha-256" \
+  -p 5432:5432 \
+  -v "$PWD/.dev/postgres-tls/server.crt:/var/lib/postgresql/server.crt:ro" \
+  -v "$PWD/.dev/postgres-tls/server.key:/var/lib/postgresql/server.key:ro" \
+  -v "$PWD/.dev/postgres-tls/pg_hba.conf:/var/lib/postgresql/pg_hba.conf:ro" \
+  -d postgres:16 \
+  -c ssl=on \
+  -c ssl_cert_file=/var/lib/postgresql/server.crt \
+  -c ssl_key_file=/var/lib/postgresql/server.key \
+  -c hba_file=/var/lib/postgresql/pg_hba.conf
+```
+
+#### 3) Verify TLS works
+
+```bash
+docker exec -e PGPASSWORD=postgres local-postgres \
+  psql "host=127.0.0.1 port=5432 user=postgres dbname=app_db sslmode=require" \
+  -c "select current_setting('ssl') as ssl_on;"
+```
+
+Expected: `ssl_on` = `on`.
+
+#### 4) Configure Wallet Gateway stores to use TLS
+
+```json
+{
+    "store": {
+        "connection": {
+            "type": "postgres",
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "postgres",
+            "database": "app_db",
+            "ssl": { "rejectUnauthorized": false }
+        }
+    },
+    "signingStore": {
+        "connection": {
+            "type": "postgres",
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "postgres",
+            "database": "app_signing_db",
+            "ssl": { "rejectUnauthorized": false }
+        }
+    }
+}
+```
+
 If your PostgreSQL server requires TLS/SSL, add an `ssl` block. This is passed through to the underlying Node.js `pg` driver.
 
 ```yaml
@@ -222,9 +314,6 @@ store:
                 ...
                 -----END CERTIFICATE-----
 ```
-
-> [!NOTE]
-> This section is about TLS between the Wallet Gateway and PostgreSQL. For browser/client HTTPS, terminate TLS in your ingress/load balancer and set `kernel.publicUrl` to the external `https://...` URL.
 
 ## Logging
 
