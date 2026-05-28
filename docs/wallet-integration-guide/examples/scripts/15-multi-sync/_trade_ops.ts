@@ -127,8 +127,19 @@ export async function settleOtcTrade(
     params: SettleParams,
     logger: Logger
 ): Promise<void> {
-    const { p3Sdk, tokenNamespaceP1, alice, tradingApp, globalSynchronizerId } =
-        setup
+    const {
+        p1Sdk,
+        p2Sdk,
+        p3Sdk,
+        tokenNamespaceP1,
+        tokenNamespaceP2,
+        alice,
+        bob,
+        tradingApp,
+        tokenAdmin,
+        globalSynchronizerId,
+        amuletAdmin,
+    } = setup
     const { otcTradeCid, legIdAlice, legIdBob, testTokenAllocationCid } = params
 
     const allocationsAlice = await tokenNamespaceP1.allocation.pending(
@@ -169,20 +180,92 @@ export async function settleOtcTrade(
         (c) => ({ ...c, synchronizerId: '' })
     )
 
-    await p3Sdk.ledger
-        .prepare({
-            partyId: tradingApp.partyId,
-            commands: [
-                buildSettleOtcTradeCommand({
-                    tradeCid: otcTradeCid,
-                    allocationsWithContext,
-                }),
-            ],
-            disclosedContracts,
-            synchronizerId: globalSynchronizerId,
-        })
-        .sign(tradingApp.keyPair.privateKey)
-        .execute({ partyId: tradingApp.partyId })
+    try {
+        await p3Sdk.ledger
+            .prepare({
+                partyId: tradingApp.partyId,
+                commands: [
+                    buildSettleOtcTradeCommand({
+                        tradeCid: otcTradeCid,
+                        allocationsWithContext,
+                    }),
+                ],
+                disclosedContracts,
+                synchronizerId: globalSynchronizerId,
+            })
+            .sign(tradingApp.keyPair.privateKey)
+            .execute({ partyId: tradingApp.partyId })
+    } catch (settleError) {
+        logger.error(
+            { err: settleError },
+            'Settlement failed — withdrawing allocations to return funds'
+        )
+        try {
+            await Promise.all([
+                (async () => {
+                    const [cmd, disclosed] =
+                        await tokenNamespaceP1.allocation.withdraw({
+                            allocationCid: amuletAllocation.contractId,
+                            asset: {
+                                id: 'Amulet',
+                                displayName: 'Amulet',
+                                symbol: 'CC',
+                                registryUrl:
+                                    localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+                                admin: amuletAdmin,
+                            },
+                        })
+                    await p1Sdk.ledger
+                        .prepare({
+                            partyId: alice.partyId,
+                            commands: [cmd],
+                            disclosedContracts: disclosed,
+                            synchronizerId: globalSynchronizerId,
+                        })
+                        .sign(alice.keyPair.privateKey)
+                        .execute({ partyId: alice.partyId })
+                    logger.info(
+                        'Alice: Amulet allocation withdrawn — funds returned'
+                    )
+                })(),
+                (async () => {
+                    const [cmd, disclosed] =
+                        await tokenNamespaceP2.allocation.withdraw({
+                            allocationCid: testTokenAllocationCid,
+                            asset: {
+                                id: 'TestToken',
+                                displayName: 'TestToken',
+                                symbol: 'TT',
+                                registryUrl: new URL('http://unused.invalid'),
+                                admin: tokenAdmin.partyId,
+                            },
+                            prefetchedRegistryChoiceContext: {
+                                choiceContextData: {},
+                                disclosedContracts: [],
+                            },
+                        })
+                    await p2Sdk.ledger
+                        .prepare({
+                            partyId: bob.partyId,
+                            commands: [cmd],
+                            disclosedContracts: disclosed,
+                            synchronizerId: globalSynchronizerId,
+                        })
+                        .sign(bob.keyPair.privateKey)
+                        .execute({ partyId: bob.partyId })
+                    logger.info(
+                        'Bob: TestToken allocation withdrawn — funds returned'
+                    )
+                })(),
+            ])
+        } catch (compensationError) {
+            logger.error(
+                { err: compensationError },
+                'Compensation failed — manual intervention required to withdraw allocations'
+            )
+        }
+        throw settleError
+    }
 
     logger.info(
         `TradingApp: OTCTrade settled — ${TRADE_AMULET_AMOUNT} Amulet transferred to Bob, ${TRADE_TOKEN_AMOUNT} TestToken transferred to Alice`
