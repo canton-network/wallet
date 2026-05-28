@@ -171,6 +171,9 @@ describe('LoginUI', () => {
             if (method === 'listIdps') {
                 return { idps: [selfSignedIdp] }
             }
+            if (method === 'selfSignedAccessToken') {
+                return { accessToken: defaultAccessToken }
+            }
             return undefined
         })
         el = await fixture<LoginUI>(componentFixture)
@@ -228,7 +231,12 @@ describe('LoginUI', () => {
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
         )
 
-        expect(mockGetAccessToken).toHaveBeenCalled()
+        expect(mockRequest).toHaveBeenCalledWith(
+            expect.objectContaining({
+                method: 'selfSignedAccessToken',
+                params: { networkId: 'net-1', clientId: 'client-id' },
+            })
+        )
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
 
@@ -284,7 +292,18 @@ describe('LoginUI', () => {
 
     it('shows a form error when connect fails', async () => {
         await waitUntil(() => el.networks.length === 1)
-        mockGetAccessToken.mockRejectedValue(new Error('auth failed'))
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listNetworks') {
+                return { networks: [selfSignedNetwork] }
+            }
+            if (method === 'listIdps') {
+                return { idps: [selfSignedIdp] }
+            }
+            if (method === 'selfSignedAccessToken') {
+                throw new Error('auth failed')
+            }
+            return undefined
+        })
 
         dispatchConnect(el)
 
