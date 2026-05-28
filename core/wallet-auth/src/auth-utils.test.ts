@@ -22,9 +22,8 @@ import { Logger } from '@canton-network/core-types'
 import { SelfSignedTokenService } from './self-signed-token-service.js'
 
 describe('Auth Utils', () => {
+    const fetchMock = vi.fn()
     beforeEach(() => {
-        const fetchMock = vi.fn()
-
         vi.stubGlobal('fetch', fetchMock)
     })
 
@@ -82,18 +81,13 @@ describe('Auth Utils', () => {
         const mockConfigResponse = { userinfo_endpoint: 'https://userinfo' }
         const mockUserInfoResponse = { userInfo: 'user-id' }
 
-        if (typeof global === 'undefined') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(window as any).global = window
-        }
-
         const token = await SelfSignedTokenService.fetchToken(
             mockLogger,
             tokenProviderConfig.credentials,
             tokenProviderConfig.issuer
         )
 
-        global.fetch = vi.fn().mockImplementation((url) => {
+        fetchMock.mockImplementation((url) => {
             if (url.includes('openid-configuration')) {
                 return Promise.resolve({
                     ok: true,
@@ -122,7 +116,7 @@ describe('Auth Utils', () => {
             tokenProviderConfig.issuer
         )
 
-        global.fetch = vi.fn().mockImplementation(() => {
+        fetchMock.mockImplementation(() => {
             return Promise.resolve({
                 ok: false,
                 json: async () => '',
@@ -145,12 +139,7 @@ describe('Auth Utils', () => {
             tokenProviderConfig.issuer
         )
 
-        if (typeof global === 'undefined') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(window as any).global = window
-        }
-
-        global.fetch = vi.fn().mockImplementation((url) => {
+        fetchMock.mockImplementation((url) => {
             if (url.includes('openid-configuration')) {
                 return Promise.resolve({
                     ok: true,
