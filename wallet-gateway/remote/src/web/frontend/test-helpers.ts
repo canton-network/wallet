@@ -93,20 +93,6 @@ export function makeNetwork(overrides: Partial<Network> = {}): Network {
     }
 }
 
-export function makePublicNetwork(
-    overrides: Partial<PublicNetwork> = {}
-): PublicNetwork {
-    return {
-        id: 'net-1',
-        name: 'Test Network',
-        description: 'Test network description',
-        identityProviderId: 'idp-1',
-        ledgerApi: 'http://localhost:6865',
-        authMethod: 'client_credentials',
-        ...overrides,
-    }
-}
-
 function withoutUndefinedKeys<T extends object>(value: Partial<T>): Partial<T> {
     return Object.fromEntries(
         Object.entries(value).filter(([, v]) => v !== undefined)
