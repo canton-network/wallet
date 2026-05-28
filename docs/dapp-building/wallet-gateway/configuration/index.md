@@ -189,6 +189,7 @@ For production deployments, PostgreSQL is recommended due to its robustness, con
 - _user_ (required): The database user to connect with
 - _password_ (required): The password for the database user
 - _database_ (required): The name of the database to use (must exist)
+- _ssl_ (optional): Additional TLS/SSL settings for the PostgreSQL connection. This is passed through to the underlying Node.js `pg` driver.
 
 **Example:**
 
@@ -202,6 +203,66 @@ For production deployments, PostgreSQL is recommended due to its robustness, con
             "user": "wallet_gateway",
             "password": "secure-password",
             "database": "wallet_gateway_db"
+        }
+    }
+}
+```
+
+### PostgreSQL over TLS/SSL
+
+If your PostgreSQL server requires TLS (common in managed databases and hardened deployments), configure `ssl` under both `store.connection` and (if used) `signingStore.connection`.
+
+> [!IMPORTANT]
+> The Wallet Gateway does **not** need the PostgreSQL server's private key. The server keeps `server.key`. The Wallet Gateway only configures client-side TLS behavior.
+
+**Local testing (self-signed server cert, encryption only):**
+
+```json
+{
+    "store": {
+        "connection": {
+            "type": "postgres",
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "postgres",
+            "database": "app_db",
+            "ssl": { "rejectUnauthorized": false }
+        }
+    },
+    "signingStore": {
+        "connection": {
+            "type": "postgres",
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "postgres",
+            "database": "app_signing_db",
+            "ssl": { "rejectUnauthorized": false }
+        }
+    }
+}
+```
+
+**Production (verify server certificate):**
+
+- Set `ssl.rejectUnauthorized: true`
+- Provide the CA certificate PEM that signed the server certificate via `ssl.ca` (string PEM)
+
+```json
+{
+    "store": {
+        "connection": {
+            "type": "postgres",
+            "host": "db.example.com",
+            "port": 5432,
+            "user": "wallet_gateway",
+            "password": "secure-password",
+            "database": "wallet_gateway_db",
+            "ssl": {
+                "rejectUnauthorized": true,
+                "ca": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+            }
         }
     }
 }
