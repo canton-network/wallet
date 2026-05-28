@@ -487,7 +487,7 @@ describe('DfnsSigningDriver', () => {
         const controller = createTestDriver().controller(TEST_USER_ID)
         const validConfig = {
             orgId: 'or-new-org-id',
-            baseUrl: 'https://api.dfns.ninja',
+            baseUrl: 'https://api.dfns.io',
             credentials: {
                 credId: 'new-cred',
                 privateKey: 'new-key',
