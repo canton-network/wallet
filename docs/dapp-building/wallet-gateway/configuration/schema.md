@@ -210,7 +210,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                 "password",
                                 "database"
                             ],
-                            "additionalProperties": false
+                            "additionalProperties": {}
                         }
                     ]
                 }

@@ -178,9 +178,8 @@ export const storeConfigSchema = z.object({
             type: z.literal('sqlite'),
             database: z.string(),
         }),
-        // the postgres driver exposes lots of fields; add validation for some of the most
-        // important ones, but it's probably too much effort to try to keep up with all
-        // the different flags that could potentially be exposed
+        // Add validation for some of the most important properties of the postgres driver,
+        // but allow for any additional properties to be passed in (e.g. `ssl` for TLS).
         z.looseObject({
             type: z.literal('postgres'),
             host: z.string(),
