@@ -62,7 +62,6 @@ jobs:
                       .pnp.loader.mjs
                       core/**/dist/
                       sdk/**/dist/
-                      sdk-support/**/dist/
                       wallet-gateway/**/dist/
                       damljs
                       .nx/cache
