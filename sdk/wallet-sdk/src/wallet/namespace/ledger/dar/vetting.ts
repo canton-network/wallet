@@ -7,18 +7,7 @@ import {
 } from '@canton-network/core-provider-ledger'
 
 /**
- * Vet a DAR package on a specific synchronizer.
- *
- * Unlike {@link DarNamespace.upload}, this function always POSTs the DAR to
- * the ledger API regardless of whether the package bytes have already been
- * uploaded on another synchronizer. The server deduplicates the binary
- * payload, but a POST is required for each synchronizer that should have the
- * package vetted. Use this when the same package must be available on multiple
- * synchronizers (e.g. global + app-synchronizer in a multi-synchronizer setup).
- *
- * Typical usage pattern:
- *   1. Upload the DAR on the primary synchronizer with `sdk.ledger.dar.upload`.
- *   2. Call `vetPackage` for each additional synchronizer that needs vetting.
+ * Vets a DAR package on the specified synchronizer.
  *
  * @param ledgerProvider - The ledger provider for the target participant node.
  *   Obtain via `(sdk.ledger as any).sdkContext.ledgerProvider`.
