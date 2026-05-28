@@ -174,7 +174,7 @@ test('decode a base 64 encoded topology tx', async () => {
     )
 })
 
-test(`should throw an error if when converting to hex if there's an invalid string length`, async () => {
+test(`should throw an error when converting invalid base64 to hex`, async () => {
     await expect(hashPreparedTransaction('badtx')).rejects.toThrow(
         'The string to be decoded is not correctly encoded'
     )
