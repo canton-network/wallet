@@ -429,7 +429,7 @@
                 "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/cbtc-network::12205af3b949a04776fc48cdcc05a060f6bda2e470632935f375d1049a8546a3b262/registry/"
             ],
             "linkToDAR": "https://github.com/DLC-link/cbtc-lib/tree/main/cbtc-dars/dars/cbtc",
-            "assetLogo": "https://www.bitsafe.finance/cbtc-logo.svg"
+            "assetLogo": "https://raw.githubusercontent.com/DLC-link/cbtc-lib/cbtc-1.2.0/assets/cbtc-logo.svg"
         }
     ],
     "TestNet": [
@@ -862,7 +862,7 @@
                 "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/cbtc-network::12201b1741b63e2494e4214cf0bedc3d5a224da53b3bf4d76dba468f8e97eb15508f/registry/"
             ],
             "linkToDAR": "https://github.com/DLC-link/cbtc-lib/tree/main/cbtc-dars/dars/cbtc",
-            "assetLogo": "https://www.bitsafe.finance/cbtc-logo.svg"
+            "assetLogo": "https://raw.githubusercontent.com/DLC-link/cbtc-lib/cbtc-1.2.0/assets/cbtc-logo.svg"
         }
     ],
     "DevNet": [
@@ -1296,7 +1296,7 @@
                 "https://api.utilities.digitalasset-dev.com/api/token-standard/v0/registrars/cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff/registry/"
             ],
             "linkToDAR": "https://github.com/DLC-link/cbtc-lib/tree/main/cbtc-dars/dars/cbtc",
-            "assetLogo": "https://www.bitsafe.finance/cbtc-logo.svg"
+            "assetLogo": "https://raw.githubusercontent.com/DLC-link/cbtc-lib/cbtc-1.2.0/assets/cbtc-logo.svg"
         }
     ]
 }
