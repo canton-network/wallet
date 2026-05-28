@@ -3,9 +3,11 @@ import {
     type PreparedCommand,
     type SDKContext,
 } from '@canton-network/wallet-sdk'
-import * as CodegenUtility from './codegen/utility-registry-app-v0-0.7.0/lib'
+import type { TransferPreapproval } from './codegen/utility-registry-app-v0-0.7.0/lib/Utility/Registry/App/V0/Model/TransferPreapproval/module'
 
 export const WalletSDKUtilitiesPluginName = 'utilities'
+const TRANSFER_PREAPPROVAL_TEMPLATE_ID =
+    '#utility-registry-app-v0:Utility.Registry.App.V0.Model.TransferPreapproval:TransferPreapproval'
 
 export class WalletSDKUtilitiesPlugin extends SDKPlugin {
     constructor(ctx: SDKContext) {
@@ -14,15 +16,12 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin {
 
     public preapprovalTransfer = {
         create: (
-            args: CodegenUtility.Utility.Registry.App.V0.Model.TransferPreapproval.TransferPreapproval
+            args: TransferPreapproval
         ): PreparedCommand<'CreateCommand'> => {
             const transferPreapprovalCommand: PreparedCommand<'CreateCommand'>[0] =
                 {
                     CreateCommand: {
-                        templateId:
-                            CodegenUtility.Utility.Registry.App.V0.Model
-                                .TransferPreapproval.TransferPreapproval
-                                .templateId,
+                        templateId: TRANSFER_PREAPPROVAL_TEMPLATE_ID,
                         createArguments: args,
                     },
                 }
