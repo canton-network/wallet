@@ -36,6 +36,8 @@ export function resolveGlobalSynchronizerId(
 ): string {
     const global =
         synchronizers.find((s) => s.synchronizerAlias === 'global') ??
+        synchronizers.find((s) => s.synchronizerAlias === 'global-domain') ??
+        synchronizers.find((s) => s.synchronizerAlias !== 'app-synchronizer') ??
         synchronizers[0]
     if (!global) throw new Error('No connected synchronizers found')
     return global.synchronizerId

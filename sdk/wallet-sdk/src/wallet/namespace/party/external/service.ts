@@ -80,32 +80,8 @@ export class ExternalPartyNamespace {
         )
     }
 
-    private async resolveSynchronizerId() {
-        const connectedSynchronizers =
-            await this.ctx.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-                {
-                    method: 'ledgerApi',
-                    params: {
-                        resource: '/v2/state/connected-synchronizers',
-                        requestMethod: 'get',
-                        query: {},
-                    },
-                }
-            )
-
-        if (!connectedSynchronizers.connectedSynchronizers?.[0]) {
-            throw new Error('No connected synchronizers found')
-        }
-
-        const synchronizerId =
-            connectedSynchronizers.connectedSynchronizers[0].synchronizerId
-        if (connectedSynchronizers.connectedSynchronizers.length > 1) {
-            this.logger.warn(
-                `Found ${connectedSynchronizers.connectedSynchronizers.length} synchronizers, defaulting to ${synchronizerId}`
-            )
-        }
-
-        return synchronizerId
+    private resolveSynchronizerId() {
+        return Promise.resolve(this.ctx.defaultSynchronizerId)
     }
 
     /**

@@ -1,6 +1,9 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
-import { TOKEN_PROVIDER_CONFIG_DEFAULT } from './utils/index.js'
+import {
+    resolveGlobalSynchronizerId,
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+} from './utils/index.js'
 const logger = pino({ name: 'v1-multi-user-setup', level: 'info' })
 
 logger.info('Operator sets up users and primary parties')
@@ -50,6 +53,13 @@ const masterUser = await operatorSdk.user.create({
 
 logger.info('created the users')
 
+const connectedSyncResponse = await operatorSdk.ledger.connectedSynchronizers(
+    {}
+)
+const globalSynchronizerId = resolveGlobalSynchronizerId(
+    connectedSyncResponse.connectedSynchronizers ?? []
+)
+
 if (!(aliceUser || bobUser || masterUser)) {
     throw new Error(`One of the users was not created correctly`)
 }
@@ -90,6 +100,8 @@ const aliceKeyPair = aliceSdk.keys.generate()
 const aliceExternal = await aliceSdk.party.external
     .create(aliceKeyPair.publicKey, {
         partyHint: 'v1-09-alice',
+        synchronizerId: globalSynchronizerId,
+        additionalSynchronizerIds: [],
     })
     .sign(aliceKeyPair.privateKey)
     .execute()
@@ -114,6 +126,8 @@ const bobKeyPair = bobSdk.keys.generate()
 const bobExternal = await bobSdk.party.external
     .create(bobKeyPair.publicKey, {
         partyHint: 'v1-09-bob',
+        synchronizerId: globalSynchronizerId,
+        additionalSynchronizerIds: [],
     })
     .sign(bobKeyPair.privateKey)
     .execute()

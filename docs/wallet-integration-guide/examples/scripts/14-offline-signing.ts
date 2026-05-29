@@ -8,6 +8,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    resolveGlobalSynchronizerId,
 } from './utils/index.js'
 
 const onlineLogger = pino({ name: '14-online-localnet', level: 'info' })
@@ -21,6 +22,10 @@ const onlineSDK = await SDK.create({
 })
 
 onlineLogger.info(`Online sdk initialized.`)
+
+const { connectedSynchronizers = [] } =
+    await onlineSDK.ledger.connectedSynchronizers({})
+const globalSynchronizerId = resolveGlobalSynchronizerId(connectedSynchronizers)
 
 const offlineSdk = SDK.createOffline()
 
@@ -40,6 +45,8 @@ const senderPartyPrepared = onlineSDK.party.external.create(
     keyPairSender.publicKey,
     {
         partyHint: 'v1-14-alice',
+        synchronizerId: globalSynchronizerId,
+        additionalSynchronizerIds: [],
     }
 )
 
@@ -94,6 +101,8 @@ const receiverPartyPrepared = onlineSDK.party.external.create(
     keyPairReceiver.publicKey,
     {
         partyHint: 'v1-14-bob',
+        synchronizerId: globalSynchronizerId,
+        additionalSynchronizerIds: [],
     }
 )
 
