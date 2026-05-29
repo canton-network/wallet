@@ -8,6 +8,7 @@ import {
     expect,
     beforeEach,
     type MockedFunction,
+    afterEach,
 } from 'vitest'
 import { ClientCredentialsService } from './client-credentials-service.js'
 import { ClientCredentials, OIDCConfig } from './auth-service.js'
@@ -30,10 +31,16 @@ describe('ClientCredentialsService', () => {
         ) => Promise<Response>
     >
 
+    const fetchMock = vi.fn()
     beforeEach(() => {
+        vi.stubGlobal('fetch', fetchMock)
         service = new ClientCredentialsService(configUrl, undefined)
         getOIDCConfigSpy = vi.spyOn(service, 'getOIDCConfig')
         fetchTokenEndpointSpy = vi.spyOn(service, 'fetchTokenEndpoint')
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
     })
 
     it('returns access_token on success', async () => {
@@ -81,5 +88,82 @@ describe('ClientCredentialsService', () => {
         await expect(service.fetchToken(credentials)).rejects.toThrow(
             'No access_token in token endpoint response'
         )
+    })
+
+    it('getOIDCConfig', async () => {
+        const mockData = { token_endpoint: 'http://idp/token' }
+
+        fetchMock.mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockData,
+            })
+        })
+
+        const result = await service.getOIDCConfig(
+            'http://idp/.well-known/openid-configuration'
+        )
+
+        expect(result).toStrictEqual(mockData)
+    })
+
+    it('getOIDCConfig should throw an error if fetch fails', async () => {
+        const mockData = { token_endpoint: 'http://idp/token' }
+        fetchMock.mockImplementation(() => {
+            return Promise.resolve({
+                ok: false,
+                status: 'Failed',
+                statusText: 'fetch request failed',
+                text: async () => 'error text here',
+                json: async () => mockData,
+            })
+        })
+
+        await expect(
+            service.getOIDCConfig('http://idp/.well-known/openid-configuration')
+        ).rejects.toThrow(`OIDC config error: Failed fetch request failed`)
+    })
+
+    it('fetchTokenEndpoint', async () => {
+        const mockData = { access_token: 'jwt' }
+        fetchMock.mockImplementation(() => {
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockData,
+            })
+        })
+
+        const result = await service.fetchTokenEndpoint(
+            'http://idp/token',
+            credentials
+        )
+
+        const params =
+            'grant_type=client_credentials&client_id=cid&client_secret=secret&scope=scope&audience=aud'
+        expect(fetch).toHaveBeenCalledWith('http://idp/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params,
+        })
+
+        const json = await result.json()
+        expect(json).toStrictEqual(mockData)
+    })
+
+    it('fetchTokenEndpoint should fail with bad fetch response', async () => {
+        const mockData = { access_token: 'jwt' }
+        fetchMock.mockImplementation(() => {
+            return Promise.resolve({
+                ok: false,
+                status: 'Failed',
+                statusText: 'fetch request failed',
+                text: async () => 'error text here',
+                json: async () => mockData,
+            })
+        })
+
+        await expect(
+            service.fetchTokenEndpoint('http://idp/token', credentials)
+        ).rejects.toThrow(`Token endpoint error: Failed fetch request failed`)
     })
 })

@@ -84,14 +84,19 @@ export const validateAuthorizedPartyIds = (
     }
 
     const results: ValidationResult = {}
-    preparedTx.metadata?.submitterInfo?.actAs.forEach((party) => {
-        results[party] = {
-            isAuthorized: authorizedPartyIds.includes(party),
-            locations: [
-                ...results[party].locations,
-                'metadata.submitterInfo.actAs',
-            ],
+    const updateParty = (party: string, location: string) => {
+        if (!results[party]) {
+            results[party] = {
+                isAuthorized: authorizedPartyIds.includes(party),
+                locations: [],
+            }
         }
+
+        results[party].locations.push(location)
+    }
+
+    preparedTx.metadata?.submitterInfo?.actAs.forEach((party) => {
+        updateParty(party, 'metadata.submitterInfo.actAs')
     })
 
     // then check transaction nodes
@@ -100,25 +105,19 @@ export const validateAuthorizedPartyIds = (
             if (node.versionedNode.v1.nodeType.oneofKind === 'create') {
                 node.versionedNode.v1.nodeType.create.signatories.forEach(
                     (party) => {
-                        results[party] = {
-                            isAuthorized: authorizedPartyIds.includes(party),
-                            locations: [
-                                ...results[party].locations,
-                                `transaction.nodes.${node.nodeId}.create.signatories`,
-                            ],
-                        }
+                        updateParty(
+                            party,
+                            `transaction.nodes.${node.nodeId}.create.signatories`
+                        )
                     }
                 )
 
                 node.versionedNode.v1.nodeType.create.stakeholders.forEach(
                     (party) => {
-                        results[party] = {
-                            isAuthorized: authorizedPartyIds.includes(party),
-                            locations: [
-                                ...results[party].locations,
-                                `transaction.nodes.${node.nodeId}.create.stakeholders`,
-                            ],
-                        }
+                        updateParty(
+                            party,
+                            `transaction.nodes.${node.nodeId}.create.stakeholders`
+                        )
                     }
                 )
             }
