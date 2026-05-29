@@ -18,6 +18,12 @@ export default defineConfig({
         }),
         react(),
     ],
+    build: {
+        commonjsOptions: {
+            include: [/node_modules/],
+            transformMixedEsModules: true,
+        },
+    },
     server: {
         port: 8081,
     },
