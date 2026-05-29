@@ -29,6 +29,7 @@ export const useRegistryUrls = (): ReadonlyMap<PartyId, string> => {
     const { data } = useQuery({
         queryKey: queryKeys.registries.all,
         queryFn: readFromStorage,
+        initialData: readFromStorage,
         staleTime: Infinity,
         gcTime: Infinity,
     })
