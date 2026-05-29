@@ -3,7 +3,17 @@ import {
     type PreparedCommand,
     type SDKContext,
 } from '@canton-network/wallet-sdk'
-import type { TransferPreapproval } from './codegen/utility-registry-app-v0-0.7.0/lib/Utility/Registry/App/V0/Model/TransferPreapproval/module'
+
+interface InstrumentAllowance {
+    id: string
+}
+
+interface TransferPreapproval {
+    operator: string
+    receiver: string
+    instrumentAdmin: string
+    instrumentAllowances: InstrumentAllowance[]
+}
 
 export const WalletSDKUtilitiesPluginName = 'utilities'
 const TRANSFER_PREAPPROVAL_TEMPLATE_ID =

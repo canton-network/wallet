@@ -8,8 +8,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-    // TODO: remove codegen ignore as part of issue #1901
-    { ignores: ['dist', './src/lib/wallet-sdk-utility/src/codegen/*'] },
+    { ignores: ['dist'] },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.{ts,tsx}'],
