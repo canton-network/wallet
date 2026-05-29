@@ -31,8 +31,8 @@ describe('ClientCredentialsService', () => {
         ) => Promise<Response>
     >
 
+    const fetchMock = vi.fn()
     beforeEach(() => {
-        const fetchMock = vi.fn()
         vi.stubGlobal('fetch', fetchMock)
         service = new ClientCredentialsService(configUrl, undefined)
         getOIDCConfigSpy = vi.spyOn(service, 'getOIDCConfig')
@@ -92,12 +92,8 @@ describe('ClientCredentialsService', () => {
 
     it('getOIDCConfig', async () => {
         const mockData = { token_endpoint: 'http://idp/token' }
-        if (typeof global === 'undefined') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(window as any).global = window
-        }
 
-        global.fetch = vi.fn().mockImplementation(() => {
+        fetchMock.mockImplementation(() => {
             return Promise.resolve({
                 ok: true,
                 json: async () => mockData,
@@ -113,12 +109,7 @@ describe('ClientCredentialsService', () => {
 
     it('getOIDCConfig should throw an error if fetch fails', async () => {
         const mockData = { token_endpoint: 'http://idp/token' }
-        if (typeof global === 'undefined') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(window as any).global = window
-        }
-
-        global.fetch = vi.fn().mockImplementation(() => {
+        fetchMock.mockImplementation(() => {
             return Promise.resolve({
                 ok: false,
                 status: 'Failed',
@@ -135,12 +126,7 @@ describe('ClientCredentialsService', () => {
 
     it('fetchTokenEndpoint', async () => {
         const mockData = { access_token: 'jwt' }
-        if (typeof global === 'undefined') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(window as any).global = window
-        }
-
-        global.fetch = vi.fn().mockImplementation(() => {
+        fetchMock.mockImplementation(() => {
             return Promise.resolve({
                 ok: true,
                 json: async () => mockData,
@@ -166,12 +152,7 @@ describe('ClientCredentialsService', () => {
 
     it('fetchTokenEndpoint should fail with bad fetch response', async () => {
         const mockData = { access_token: 'jwt' }
-        if (typeof global === 'undefined') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(window as any).global = window
-        }
-
-        global.fetch = vi.fn().mockImplementation(() => {
+        fetchMock.mockImplementation(() => {
             return Promise.resolve({
                 ok: false,
                 status: 'Failed',
