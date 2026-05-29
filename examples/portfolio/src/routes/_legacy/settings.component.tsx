@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material'
+import { PreapprovalContractSettings } from '../../components/preapproval-contract-settings'
 import { RegistrySettings } from '../../components/registry-settings'
 import { TapSettings } from '../../components/tap-settings'
 import { useIsDevNet } from '../../hooks/useIsDevNet'
@@ -13,6 +14,7 @@ export function SettingsPage() {
             </Typography>
 
             <RegistrySettings />
+            <PreapprovalContractSettings />
             {isDevNet && <TapSettings />}
         </Box>
     )
