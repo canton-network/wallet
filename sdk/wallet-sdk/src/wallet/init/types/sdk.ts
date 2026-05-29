@@ -92,7 +92,7 @@ export type BasicSDKInterface<
         P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
     >(
         plugins: P
-    ) => BasicSDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
+    ) => SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
 }>
 
 export type ExtendedFullSDKInterface = Readonly<{
@@ -117,6 +117,11 @@ export type ExtendedSDKInterface<
     extend: <NewExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, NewExtendedItems>
     ) => Promise<SDKInterface<NewExtendedItems | ExtendedItems>>
+    registerPlugins: <
+        P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
+    >(
+        plugins: P
+    ) => SDKInterface<ExtendedItems> & RegisteredPlugins<P>
 }
 
 export type SDKInterface<

@@ -136,7 +136,9 @@ const createNamespace: {
     },
 }
 
-export class InitializedSDK implements BasicSDKInterface {
+export class InitializedSDK<
+    CurrentlyExtended extends keyof ExtendedSDKOptions = never,
+> implements BasicSDKInterface<CurrentlyExtended> {
     public readonly keys = new KeysNamespace()
     public readonly ledger: LedgerNamespace
     public readonly party: PartyNamespace
@@ -155,18 +157,19 @@ export class InitializedSDK implements BasicSDKInterface {
 
     public async extend<ExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, ExtendedItems>
-    ) {
-        return await ExtendedInitializedSDK.create(this.ctx, config)
+    ): Promise<SDKInterface<CurrentlyExtended | ExtendedItems>> {
+        return ExtendedInitializedSDK.create<ExtendedItems>(
+            this.ctx,
+            config
+        ) as Promise<SDKInterface<CurrentlyExtended | ExtendedItems>>
     }
 
     public registerPlugins<
         P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
-    >(plugins: P): InitializedSDK & RegisteredPlugins<P> {
-        const newSDK = new InitializedSDK(this.ctx)
-
+    >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
         for (const name in plugins) {
             const plugin = new plugins[name](this.ctx)
-            Object.defineProperty(newSDK, plugin.name, {
+            Object.defineProperty(this, name, {
                 value: plugin,
                 writable: false,
                 enumerable: true,
@@ -174,7 +177,7 @@ export class InitializedSDK implements BasicSDKInterface {
             })
         }
 
-        return newSDK as InitializedSDK & RegisteredPlugins<P>
+        return this as SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
     }
 }
 
@@ -188,7 +191,7 @@ export class OfflineInitializedSDK implements OfflineSDKInterface {
 
 export class ExtendedInitializedSDK<
     ExtendedItems extends keyof ExtendedSDKOptions,
-> extends InitializedSDK {
+> extends InitializedSDK<ExtendedItems> {
     // Declare the dynamically assigned properties
     // These are set via Object.assign in the constructor
     declare readonly amulet: ExtendedItems extends 'amulet'
