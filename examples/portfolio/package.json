@@ -20,6 +20,7 @@
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
         "@canton-network/dapp-sdk": "workspace:^",
+        "@canton-network/wallet-sdk": "workspace:^",
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
         "@fontsource/inter": "^5.2.8",
@@ -47,7 +48,6 @@
     },
     "devDependencies": {
         "@canton-network/core-wallet-test-utils": "workspace:^",
-        "@canton-network/wallet-sdk": "workspace:^",
         "@eslint/js": "^10.0.1",
         "@inquirer/prompts": "^8.4.2",
         "@playwright/test": "^1.59.1",
