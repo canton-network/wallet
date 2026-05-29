@@ -3,7 +3,7 @@
 
 import { useCallback, useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { useInstruments } from './useInstruments'
+import { useInstruments } from '@hooks/useInstruments'
 import { listHoldings } from '../services/portfolio-service-implementation'
 import {
     aggregateHoldings,

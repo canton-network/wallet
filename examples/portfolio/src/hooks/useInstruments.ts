@@ -3,14 +3,11 @@
 
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { type metadataRegistryTypes } from '@canton-network/core-token-standard'
 import { type PartyId } from '@canton-network/core-types'
+import { type Instrument, type Instruments } from '../types/instruments'
 import { resolveTokenStandardClient } from '@services/resolve'
 import { useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from '@hooks/query-keys'
-
-export type Instrument = metadataRegistryTypes['schemas']['Instrument']
-export type Instruments = ReadonlyMap<PartyId, Instrument[]>
 
 const INSTRUMENTS_STALE_TIME = 5 * 60 * 1000 // 5 minutes
 

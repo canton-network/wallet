@@ -50,7 +50,11 @@ export const queryKeys = {
 
     instruments: {
         all: ['instruments'],
-        forRegistry: (party: string, url: string) => ['instruments', party, url],
+        forRegistry: (party: string, url: string) => [
+            'instruments',
+            party,
+            url,
+        ],
     },
 
     registries: {

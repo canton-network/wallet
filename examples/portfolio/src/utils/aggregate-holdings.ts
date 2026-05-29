@@ -4,7 +4,7 @@
 import Decimal from 'decimal.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { type Holding } from '@canton-network/core-tx-parser'
-import type { Instruments } from '@hooks/useInstruments'
+import type { Instruments } from '../types/instruments'
 
 export interface AggregatedWalletBalance {
     owner: string
