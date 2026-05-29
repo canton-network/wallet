@@ -19,9 +19,9 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { usePortfolio } from '../contexts/PortfolioContext'
 import { useConnection } from '../contexts/ConnectionContext'
-import { useRegistryUrls } from '../contexts/RegistryServiceContext'
-import { usePrimaryAccount } from '../hooks/useAccounts'
-import { useInstruments } from '../contexts/RegistryServiceContext'
+import { useRegistryUrls } from '@hooks/useRegistryUrls'
+import { usePrimaryAccount } from '@hooks/useAccounts'
+import { useInstruments } from '@hooks/useInstruments'
 import type { InstrumentId } from '@canton-network/core-token-standard'
 
 const instrumentValidator = z
