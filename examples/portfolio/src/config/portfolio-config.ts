@@ -12,13 +12,12 @@ const httpUrlSchema = z
     })
     .transform((value) => new URL(value).toString())
 
-const optionalNonEmptyStringSchema = (fieldName: string) =>
-    z.string().trim().min(1, `${fieldName} must not be empty`).optional()
+const optionalStringSchema = () => z.string().trim().optional()
 
 export const registryConfigSchema = z
     .object({
-        name: optionalNonEmptyStringSchema('Registry name'),
-        partyId: optionalNonEmptyStringSchema('Registry partyId'),
+        name: optionalStringSchema(),
+        partyId: optionalStringSchema(),
         url: httpUrlSchema,
     })
     .strict()
