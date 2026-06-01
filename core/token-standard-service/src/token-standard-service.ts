@@ -45,6 +45,7 @@ import {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'
+import { Decimal } from 'decimal.js'
 
 const REQUESTED_AT_SKEW_MS = 60_000
 
@@ -105,7 +106,7 @@ export class CoreService {
         instrumentAdmin?: string
         instrumentId?: string
         inputUtxos?: string[]
-        amount?: number
+        amount?: Decimal
         continueUntilCompletion?: boolean
     }) {
         const { sender, instrumentAdmin, instrumentId } = options
@@ -176,13 +177,12 @@ export class CoreService {
     }
 
     static async getInputHoldingsCidsForAmount(
-        amount: number,
+        amount: Decimal,
         unlockedSenderHoldings: PrettyContract<HoldingView>[]
     ) {
         //find holding that is the exact amount if possible
-        const exactAmount = unlockedSenderHoldings.find(
-            (holding) =>
-                parseFloat(holding.interfaceViewValue.amount) === amount
+        const exactAmount = unlockedSenderHoldings.find((holding) =>
+            new Decimal(holding.interfaceViewValue.amount).equals(amount)
         )
 
         if (exactAmount) {
@@ -192,8 +192,9 @@ export class CoreService {
         //sort holdings from smallest to largest
         const sortedUnlockedSenderHoldings = unlockedSenderHoldings.toSorted(
             (a, b) =>
-                parseFloat(a.interfaceViewValue.amount) -
-                parseFloat(b.interfaceViewValue.amount)
+                new Decimal(a.interfaceViewValue.amount).comparedTo(
+                    new Decimal(b.interfaceViewValue.amount)
+                )
         )
 
         const largestHoldingAmount = sortedUnlockedSenderHoldings.pop()
@@ -202,25 +203,27 @@ export class CoreService {
             throw new Error(`Sender doesn't have any unlocked holdings`)
         }
 
-        let currentSum = parseFloat(
+        let currentSum = new Decimal(
             largestHoldingAmount.interfaceViewValue.amount
         )
         const cIds = [largestHoldingAmount.contractId]
 
         for (const h of sortedUnlockedSenderHoldings) {
-            if (currentSum >= amount) {
+            if (currentSum.greaterThanOrEqualTo(amount)) {
                 break
             }
 
-            const currentHoldingAmount = parseFloat(h.interfaceViewValue.amount)
+            const currentHoldingAmount = new Decimal(
+                h.interfaceViewValue.amount
+            )
 
-            currentSum += currentHoldingAmount
+            currentSum = currentSum.plus(currentHoldingAmount)
             cIds.push(h.contractId)
         }
 
-        if (currentSum < amount) {
+        if (currentSum.lessThan(amount)) {
             throw new Error(
-                `Sender doesn't have sufficient funds for this transfer. Missing amount: ${amount - currentSum}`
+                `Sender doesn't have sufficient funds for this transfer. Missing amount: ${amount.minus(currentSum)}`
             )
         }
 
@@ -833,7 +836,7 @@ class TransferService {
                 instrumentAdmin,
                 instrumentId,
                 inputUtxos: inputUtxos ?? [],
-                amount: parseFloat(amount),
+                amount: new Decimal(amount),
                 continueUntilCompletion: continueUntilCompletion ?? false,
             }
         )
@@ -1594,7 +1597,7 @@ export class TokenStandardService {
     async getInputHoldingsCids(
         sender: PartyId,
         inputUtxos?: string[],
-        amount?: number
+        amount?: Decimal
     ) {
         if (amount) {
             return this.core.getInputHoldingsCids({

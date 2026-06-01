@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest'
 import { CoreService } from './token-standard-service.js'
 import { PrettyContract } from '@canton-network/core-tx-parser'
 import { HoldingView } from '@canton-network/core-token-standard'
+import { Decimal } from 'decimal.js'
 
 describe('getInputHoldingsCidsForAmount', async () => {
     const makeHolding = (
@@ -49,7 +50,7 @@ describe('getInputHoldingsCidsForAmount', async () => {
         ]
 
         const result = await CoreService.getInputHoldingsCidsForAmount(
-            20,
+            new Decimal(20),
             holdings
         )
 
@@ -64,7 +65,7 @@ describe('getInputHoldingsCidsForAmount', async () => {
         ]
 
         const result = await CoreService.getInputHoldingsCidsForAmount(
-            220,
+            new Decimal(220),
             holdings
         )
 
@@ -79,7 +80,7 @@ describe('getInputHoldingsCidsForAmount', async () => {
         ]
 
         const result = await CoreService.getInputHoldingsCidsForAmount(
-            100,
+            new Decimal(100),
             holdings
         )
 
@@ -113,7 +114,10 @@ describe('getInputHoldingsCidsForAmount', async () => {
         const holdings: PrettyContract<HoldingView>[] = []
 
         await expect(
-            CoreService.getInputHoldingsCidsForAmount(220, holdings)
+            CoreService.getInputHoldingsCidsForAmount(
+                new Decimal(220),
+                holdings
+            )
         ).rejects.toThrow(`Sender doesn't have any unlocked holdings`)
     })
 
@@ -124,7 +128,7 @@ describe('getInputHoldingsCidsForAmount', async () => {
         ]
 
         await expect(
-            CoreService.getInputHoldingsCidsForAmount(20, holdings)
+            CoreService.getInputHoldingsCidsForAmount(new Decimal(20), holdings)
         ).rejects.toThrow(
             `Sender doesn't have sufficient funds for this transfer. Missing amount: 5`
         )
@@ -136,7 +140,10 @@ describe('getInputHoldingsCidsForAmount', async () => {
         )
 
         await expect(
-            CoreService.getInputHoldingsCidsForAmount(101, holdings)
+            CoreService.getInputHoldingsCidsForAmount(
+                new Decimal(101),
+                holdings
+            )
         ).rejects.toThrow(`Exceeded the maximum of 100 utxos in 1 transaction`)
     })
 })
