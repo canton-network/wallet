@@ -15,6 +15,7 @@ import {
 import { Idp } from '@canton-network/core-wallet-user-rpc-client'
 
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 
@@ -99,7 +100,9 @@ export class UserUiIdentityProviders extends BaseElement {
     }
 
     private _onReview(e: IdpCardReviewEvent) {
-        window.location.href = `${toRelPath('/identity-providers/review/')}?id=${encodeURIComponent(e.idp.id)}`
+        setLocationHref(
+            `${toRelPath('/identity-providers/review/')}?id=${encodeURIComponent(e.idp.id)}`
+        )
     }
 
     private _onPageChange(e: PageChangeEvent) {
@@ -117,9 +120,9 @@ export class UserUiIdentityProviders extends BaseElement {
                               class="btn btn-primary btn-sm rounded-pill btn-add"
                               type="button"
                               @click=${() =>
-                                  (window.location.href = toRelPath(
-                                      '/identity-providers/add/'
-                                  ))}
+                                  setLocationHref(
+                                      toRelPath('/identity-providers/add/')
+                                  )}
                           >
                               <span aria-hidden="true">+</span>
                               New

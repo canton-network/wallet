@@ -14,6 +14,7 @@ import {
 } from '@canton-network/core-wallet-ui-components'
 import { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { createUserClient } from '../../rpc-client'
+import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 
@@ -84,7 +85,7 @@ export class UserUiReviewIdp extends BaseElement {
     }
 
     private navigateBack() {
-        window.location.href = toRelHref('/identity-providers')
+        setLocationHref(toRelHref('/identity-providers'))
     }
 
     private async onSave(e: IdpFormSaveEvent) {
@@ -97,7 +98,7 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { idp: e.idp },
             })
 
-            window.location.href = toRelPath('/identity-providers/')
+            setLocationHref(toRelPath('/identity-providers/'))
         } catch (error) {
             handleErrorToast(error)
         }
@@ -115,7 +116,7 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { identityProviderId: e.idp.id },
             })
 
-            window.location.href = toRelPath('/identity-providers/')
+            setLocationHref(toRelPath('/identity-providers/'))
         } catch (error) {
             handleErrorToast(error)
         }

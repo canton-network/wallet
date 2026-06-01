@@ -17,6 +17,7 @@ import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '../state-manager'
 import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
+import { setLocationHref } from '../navigation.js'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -151,7 +152,9 @@ export class LoginUI extends BaseElement {
                     this.connectingMessage = `Redirecting to ${selectedNetwork.name}...`
 
                     setTimeout(() => {
-                        window.location.href = `${config.authorization_endpoint}?${params.toString()}`
+                        setLocationHref(
+                            `${config.authorization_endpoint}?${params.toString()}`
+                        )
                     }, 250)
                     return
                 }

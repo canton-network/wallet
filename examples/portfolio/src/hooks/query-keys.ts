@@ -39,4 +39,12 @@ export const queryKeys = {
     isDevNet: {
         all: ['isDevNet'],
     },
+
+    walletSdk: {
+        all: ['walletSdk'],
+        forConnection: (
+            sessionToken: string | undefined,
+            registryUrlKey: string
+        ) => ['walletSdk', sessionToken, registryUrlKey],
+    },
 }
