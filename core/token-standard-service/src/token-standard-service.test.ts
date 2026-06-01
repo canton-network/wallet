@@ -86,7 +86,7 @@ describe('getInputHoldingsCidsForAmount', async () => {
         expect(result).toEqual(['b', 'a'])
     })
 
-    it('a', async () => {
+    it('should filter out holdings by instrument', async () => {
         const holdings = [
             makeHolding('a', '2', 'instrumentAdmin1', 'amulet'),
             makeHolding('b', '99', 'instrumentAdmin1', 'amulet'),
