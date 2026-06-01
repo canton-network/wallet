@@ -103,6 +103,8 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 }
             },
 
+            // TODO remove comment below and write a test once / if ever implemented
+            // v8 ignore next -- @preserve
             signMessage: async (): Promise<SignMessageResult> => {
                 return {
                     error: 'not_allowed',
@@ -248,7 +250,8 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
             },
 
             // TODO: implement subscribeTransactions - we will need to figure out how to handle subscriptions
-            // when the controller is not running in a server context
+            //  when the controller is not running in a server context
+            // v8 ignore next -- @preserve
             subscribeTransactions: async (
                 params: SubscribeTransactionsParams
             ): Promise<SubscribeTransactionsResult> =>

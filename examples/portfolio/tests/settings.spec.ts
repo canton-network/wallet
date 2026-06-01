@@ -21,7 +21,9 @@ test('registry management', async ({ page: dappPage }) => {
     await setupRegistry(dappPage)
 
     // Verify we're on settings page and registry was added
-    await expect(dappPage.getByText('Registries')).toBeVisible()
+    await expect(
+        dappPage.getByRole('heading', { name: 'Registries' })
+    ).toBeVisible()
     await expect(dappPage.getByRole('cell', { name: /^DSO::/ })).toBeVisible()
     await expect(
         dappPage.getByRole('cell', {

@@ -8,7 +8,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { routeTree } from './routeTree.gen'
 import ReactDOM from 'react-dom/client'
 
-import { RegistryServiceProvider } from './contexts/RegistriesServiceProvider'
 import { ConnectionProvider } from './contexts/ConnectionProvider'
 import { PortfolioProvider } from './contexts/PortfolioProvider'
 import { AppThemeProvider } from './contexts/theme-provider'
@@ -48,17 +47,15 @@ if (rootElement && !rootElement.innerHTML) {
             <AppThemeProvider>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <QueryClientProvider client={queryClient}>
-                        <RegistryServiceProvider>
-                            <ConnectionProvider>
-                                <PortfolioProvider>
-                                    <RouterProvider
-                                        router={router}
-                                        context={{ queryClient }}
-                                    />
-                                    <Toaster richColors />
-                                </PortfolioProvider>
-                            </ConnectionProvider>
-                        </RegistryServiceProvider>
+                        <ConnectionProvider>
+                            <PortfolioProvider>
+                                <RouterProvider
+                                    router={router}
+                                    context={{ queryClient }}
+                                />
+                                <Toaster richColors />
+                            </PortfolioProvider>
+                        </ConnectionProvider>
                     </QueryClientProvider>
                 </LocalizationProvider>
             </AppThemeProvider>
