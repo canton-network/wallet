@@ -476,6 +476,11 @@ class AllocationService {
         const inputHoldingCids = await this.core.getInputHoldingsCids({
             sender: allocationSpecificationNormalized.transferLeg.sender,
             inputUtxos: inputUtxos ?? [],
+            instrumentAdmin:
+                allocationSpecificationNormalized.transferLeg.instrumentId
+                    .admin,
+            instrumentId:
+                allocationSpecificationNormalized.transferLeg.instrumentId.id,
         })
 
         return {
