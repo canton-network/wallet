@@ -34,6 +34,7 @@ export default defineConfig({
                     browser: {
                         enabled: true,
                         provider: playwright({
+                            trace: 'off',
                             screenshot: 'off',
                             video: 'off',
                         }),
