@@ -8,9 +8,11 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { routeTree } from './routeTree.gen'
 import ReactDOM from 'react-dom/client'
 
-import { ConnectionProvider } from './contexts/ConnectionProvider'
-import { PortfolioProvider } from './contexts/PortfolioProvider'
-import { AppThemeProvider } from './contexts/theme-provider'
+import { loadPortfolioConfig } from '@config/portfolio-config'
+import { ConnectionProvider } from '@contexts/ConnectionProvider'
+import { PortfolioProvider } from '@contexts/PortfolioProvider'
+import { PortfolioConfigProvider } from '@contexts/PortfolioConfigProvider'
+import { AppThemeProvider } from '@contexts/theme-provider'
 import { Toaster } from 'sonner'
 
 const queryClient = new QueryClient({
@@ -37,28 +39,49 @@ declare module '@tanstack/react-router' {
     }
 }
 
+const renderConfigError = (root: ReactDOM.Root, error: unknown) => {
+    root.render(
+        <div role="alert">
+            Failed to load portfolio configuration: <br /> {String(error)}
+        </div>
+    )
+}
+
+const renderApp = async (root: ReactDOM.Root) => {
+    root.render(<div role="status">Loading portfolio configuration…</div>)
+
+    const portfolioConfig = await loadPortfolioConfig()
+
+    root.render(
+        <StrictMode>
+            <AppThemeProvider>
+                <PortfolioConfigProvider config={portfolioConfig}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <QueryClientProvider client={queryClient}>
+                            <ConnectionProvider>
+                                <PortfolioProvider>
+                                    <RouterProvider
+                                        router={router}
+                                        context={{ queryClient }}
+                                    />
+                                    <Toaster richColors />
+                                </PortfolioProvider>
+                            </ConnectionProvider>
+                        </QueryClientProvider>
+                    </LocalizationProvider>
+                </PortfolioConfigProvider>
+            </AppThemeProvider>
+        </StrictMode>
+    )
+}
+
 // Render the app
 const rootElement = document.getElementById('app')
 
 if (rootElement && !rootElement.innerHTML) {
     const root = ReactDOM.createRoot(rootElement)
-    root.render(
-        <StrictMode>
-            <AppThemeProvider>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <QueryClientProvider client={queryClient}>
-                        <ConnectionProvider>
-                            <PortfolioProvider>
-                                <RouterProvider
-                                    router={router}
-                                    context={{ queryClient }}
-                                />
-                                <Toaster richColors />
-                            </PortfolioProvider>
-                        </ConnectionProvider>
-                    </QueryClientProvider>
-                </LocalizationProvider>
-            </AppThemeProvider>
-        </StrictMode>
-    )
+
+    renderApp(root).catch((error: unknown) => {
+        renderConfigError(root, error)
+    })
 }
