@@ -5,7 +5,7 @@ import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { type AllocationSpecification } from '@canton-network/core-token-standard'
 import { type PartyId } from '@canton-network/core-types'
 import { usePortfolio } from '../contexts/PortfolioContext'
-import { useRegistryUrls } from '../contexts/RegistryServiceContext'
+import { useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from './query-keys'
 
 export const useCreateAllocation = () => {
