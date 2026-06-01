@@ -100,23 +100,25 @@ export class CoreService {
         )
     }
 
-    // TODO: probably needs a filter by instrument ID as well?
-    async getInputHoldingsCids(
-        sender: PartyId,
-        inputUtxos?: string[],
-        amount?: number,
+    async getInputHoldingsCids(options: {
+        sender: PartyId
+        instrumentAdmin?: string
+        instrumentId?: string
+        inputUtxos?: string[]
+        amount?: number
         continueUntilCompletion?: boolean
-    ) {
+    }) {
+        const { sender, instrumentAdmin, instrumentId } = options
         const now = new Date()
-        if (inputUtxos && inputUtxos.length > 0) {
-            return inputUtxos
+        if (options.inputUtxos && options.inputUtxos.length > 0) {
+            return options.inputUtxos
         }
         const senderHoldings = await this.listContractsByInterface<HoldingView>(
             HOLDING_INTERFACE_ID,
             sender,
             undefined,
             undefined,
-            continueUntilCompletion
+            options.continueUntilCompletion
         )
         if (senderHoldings.length === 0) {
             throw new Error(
@@ -140,14 +142,37 @@ export class CoreService {
             this.logger.warn(`Sender has more than 100 unlocked utxos.`)
         }
 
-        if (amount) {
+        const unlockedHoldingsForInstrument =
+            instrumentAdmin && instrumentId
+                ? await CoreService.filterHoldingsByInstrument({
+                      holdings: unlockedSenderHoldings,
+                      instrumentAdmin,
+                      instrumentId,
+                  })
+                : unlockedSenderHoldings
+
+        if (options.amount) {
             return CoreService.getInputHoldingsCidsForAmount(
-                amount,
-                unlockedSenderHoldings
+                options.amount,
+                unlockedHoldingsForInstrument
             )
         } else {
             return unlockedSenderHoldings.map((h) => h.contractId)
         }
+    }
+
+    static async filterHoldingsByInstrument(options: {
+        holdings: PrettyContract<HoldingView>[]
+        instrumentAdmin: string
+        instrumentId: string
+    }) {
+        const { holdings, instrumentAdmin, instrumentId } = options
+        return holdings.filter((utxo) => {
+            return (
+                utxo.interfaceViewValue.instrumentId.id === instrumentId &&
+                utxo.interfaceViewValue.instrumentId.admin === instrumentAdmin
+            )
+        })
     }
 
     static async getInputHoldingsCidsForAmount(
@@ -448,10 +473,11 @@ class AllocationService {
             },
         }
 
-        const inputHoldingCids = await this.core.getInputHoldingsCids(
-            allocationSpecificationNormalized.transferLeg.sender,
-            inputUtxos
-        )
+        //TODO: fix this instrumentID
+        const inputHoldingCids = await this.core.getInputHoldingsCids({
+            sender: allocationSpecificationNormalized.transferLeg.sender,
+            inputUtxos: inputUtxos ?? [],
+        })
 
         return {
             expectedAdmin,
@@ -798,10 +824,14 @@ class TransferService {
         continueUntilCompletion?: boolean
     ): Promise<CreateTransferChoiceArgs> {
         const inputHoldingCids: string[] = await this.core.getInputHoldingsCids(
-            sender,
-            inputUtxos,
-            parseFloat(amount),
-            continueUntilCompletion
+            {
+                sender,
+                instrumentAdmin,
+                instrumentId,
+                inputUtxos: inputUtxos ?? [],
+                amount: parseFloat(amount),
+                continueUntilCompletion: continueUntilCompletion ?? false,
+            }
         )
 
         return {
@@ -1562,7 +1592,18 @@ export class TokenStandardService {
         inputUtxos?: string[],
         amount?: number
     ) {
-        return this.core.getInputHoldingsCids(sender, inputUtxos, amount)
+        if (amount) {
+            return this.core.getInputHoldingsCids({
+                sender,
+                inputUtxos: inputUtxos ?? [],
+                amount,
+            })
+        } else {
+            return this.core.getInputHoldingsCids({
+                sender,
+                inputUtxos: inputUtxos ?? [],
+            })
+        }
     }
 
     async createDelegateProxyTranfser(
