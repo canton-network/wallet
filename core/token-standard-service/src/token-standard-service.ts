@@ -473,7 +473,6 @@ class AllocationService {
             },
         }
 
-        //TODO: fix this instrumentID
         const inputHoldingCids = await this.core.getInputHoldingsCids({
             sender: allocationSpecificationNormalized.transferLeg.sender,
             inputUtxos: inputUtxos ?? [],
