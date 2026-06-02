@@ -1,5 +1,4 @@
 {
     "validatorUrl": "http://localhost:2000/api/validator",
-    "scanProxyUrl": "http://localhost:2000/api/validator",
     "registries": []
 }
