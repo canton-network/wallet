@@ -9,7 +9,6 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
-    resolveGlobalSynchronizerId,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-01-ping-localnet', level: 'info' })
@@ -23,16 +22,9 @@ const sdk = await SDK.create({
 
 const senderKeys = sdk.keys.generate()
 
-const { connectedSynchronizers = [] } = await sdk.ledger.connectedSynchronizers(
-    {}
-)
-const globalSynchronizerId = resolveGlobalSynchronizerId(connectedSynchronizers)
-
 const sender = await sdk.party.external
     .create(senderKeys.publicKey, {
         partyHint: 'v1-01-alice',
-        synchronizerId: globalSynchronizerId,
-        additionalSynchronizerIds: [],
     })
     .sign(senderKeys.privateKey)
     .execute()
@@ -50,8 +42,6 @@ const receiverPartyCreation = sdk.party.external.create(
     receiverKeys.publicKey,
     {
         partyHint: 'v1-01-bob',
-        synchronizerId: globalSynchronizerId,
-        additionalSynchronizerIds: [],
     }
 )
 
