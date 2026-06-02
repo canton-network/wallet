@@ -37,7 +37,7 @@ export const TapSettings: React.FC = () => {
     const sessionToken = useConnection().status?.session?.accessToken
     const primaryParty = usePrimaryAccount()?.partyId
     const { tap } = usePortfolio()
-    const { scanProxyUrl } = usePortfolioConfig()
+    const { validatorUrl } = usePortfolioConfig()
     const registryUrls = useRegistryUrls()
     const instruments = useInstruments()
 
@@ -70,7 +70,7 @@ export const TapSettings: React.FC = () => {
                     registryUrls,
                     party: primaryParty,
                     sessionToken,
-                    scanProxyUrl,
+                    validatorUrl,
                     instrumentId: formData.instrumentId,
                     amount: Number(formData.amount),
                 })

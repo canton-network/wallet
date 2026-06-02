@@ -25,7 +25,6 @@ export const registryConfigSchema = z
 export const portfolioConfigSchema = z
     .object({
         validatorUrl: httpUrlSchema,
-        scanProxyUrl: httpUrlSchema,
         registries: z.array(registryConfigSchema),
     })
     .strict()

@@ -78,7 +78,7 @@ export interface PortfolioService {
     // Network info
     isDevNet: (_: {
         sessionToken: string
-        scanProxyUrl: string
+        validatorUrl: string
     }) => Promise<boolean>
 
     // Tap
@@ -86,7 +86,7 @@ export interface PortfolioService {
         registryUrls: ReadonlyMap<PartyId, string>
         party: string
         sessionToken: string
-        scanProxyUrl: string
+        validatorUrl: string
         instrumentId: { admin: string; id: string }
         amount: number
     }) => Promise<void>

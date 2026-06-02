@@ -38,11 +38,11 @@ export const useAllocationsQueryOptions = (party: string | undefined) => {
 
 export const useIsDevNetQueryOptions = (sessionToken: string | undefined) => {
     const { isDevNet } = usePortfolio()
-    const { scanProxyUrl } = usePortfolioConfig()
+    const { validatorUrl } = usePortfolioConfig()
     return queryOptions({
         queryKey: queryKeys.isDevNet.all,
         queryFn: async () =>
-            sessionToken ? isDevNet({ sessionToken, scanProxyUrl }) : false,
+            sessionToken ? isDevNet({ sessionToken, validatorUrl }) : false,
         enabled: !!sessionToken,
         staleTime: Infinity, // Network doesn't change, so cache forever
     })
