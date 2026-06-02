@@ -1952,24 +1952,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@canton-network/core-trading-app@workspace:^, @canton-network/core-trading-app@workspace:core/trading-app":
-  version: 0.0.0-use.local
-  resolution: "@canton-network/core-trading-app@workspace:core/trading-app"
-  dependencies:
-    "@daml/types": "npm:^3.5.0"
-    "@mojotech/json-type-validation": "npm:^3.1.0"
-    "@rollup/plugin-alias": "npm:^5.0.0"
-    "@rollup/plugin-commonjs": "npm:^29.0.0"
-    "@rollup/plugin-json": "npm:^6.1.0"
-    "@rollup/plugin-node-resolve": "npm:^16.0.3"
-    "@rollup/plugin-typescript": "npm:^12.3.0"
-    rollup: "npm:^4.59.0"
-    rollup-plugin-dts: "npm:^6.3.0"
-    tslib: "npm:^2.8.1"
-    typescript: "npm:^5.9.3"
-  languageName: unknown
-  linkType: soft
-
 "@canton-network/core-tx-parser@workspace:^, @canton-network/core-tx-parser@workspace:core/tx-parser":
   version: 0.0.0-use.local
   resolution: "@canton-network/core-tx-parser@workspace:core/tx-parser"
@@ -12511,7 +12493,6 @@ __metadata:
     "@canton-network/core-signing-lib": "workspace:^"
     "@canton-network/core-test-token": "workspace:^"
     "@canton-network/core-token-standard": "workspace:^"
-    "@canton-network/core-trading-app": "workspace:^"
     "@canton-network/core-tx-parser": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/core-wallet-auth": "workspace:^"

@@ -3,9 +3,27 @@
 
 import type { Logger } from 'pino'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
-import { buildSettleOtcTradeCommand } from '@canton-network/core-trading-app'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
+
+const OTC_TRADE_TEMPLATE_ID =
+    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade'
+
+function buildSettleOtcTradeCommand(params: {
+    tradeCid: string
+    allocationsWithContext: Record<string, unknown>
+}) {
+    return {
+        ExerciseCommand: {
+            templateId: OTC_TRADE_TEMPLATE_ID,
+            contractId: params.tradeCid,
+            choice: 'OTCTrade_Settle',
+            choiceArgument: {
+                allocationsWithContext: params.allocationsWithContext,
+            },
+        },
+    }
+}
 
 export interface SettleParams {
     otcTradeCid: string

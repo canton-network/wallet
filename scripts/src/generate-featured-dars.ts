@@ -25,12 +25,6 @@ const SPLICE_TEST_TOKEN_V1_CONFIG = {
     version: '1.0.0',
 }
 
-const SPLICE_TOKEN_TEST_TRADING_APP_CONFIG = {
-    destDir: path.join(repoRoot, 'damljs/splice-token-test-trading-app'),
-    packageName: 'splice-token-test-trading-app',
-    version: '1.0.2',
-}
-
 async function main() {
     await installDPM()
 
@@ -41,11 +35,6 @@ async function main() {
 
     console.log(info('\n=== Generating splice-test-token-v1 bindings ===\n'))
     await generateDamlJsBindings(SPLICE_TEST_TOKEN_V1_CONFIG)
-
-    console.log(
-        info('\n=== Generating splice-token-test-trading-app bindings ===\n')
-    )
-    await generateDamlJsBindings(SPLICE_TOKEN_TEST_TRADING_APP_CONFIG)
 
     console.log(info('\n=== All Daml JS bindings generated successfully ===\n'))
 }
