@@ -44,6 +44,7 @@
         "@canton-network/core-wallet-auth": "workspace:^",
         "bignumber.js": "^10.0.2",
         "dayjs": "^1.11.19",
+        "decimal.js": "^10.6.0",
         "openapi-fetch": "^0.17.0",
         "pino": "^10.3.1"
     },
