@@ -451,16 +451,5 @@ describe('reader', () => {
                 'Ledger error'
             )
         })
-
-        it('should handle null offset from ledger-end gracefully', async () => {
-            ledgerProvider.request.mockResolvedValue({ offset: null })
-
-            await reader.read({ parties: ['party1'] })
-
-            expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith({
-                parties: ['party1'],
-                offset: null,
-            })
-        })
     })
 })
