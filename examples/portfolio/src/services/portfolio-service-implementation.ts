@@ -307,12 +307,14 @@ export const tap = async ({
     registryUrls,
     party,
     sessionToken,
+    scanProxyUrl,
     instrumentId,
     amount,
 }: {
     registryUrls: ReadonlyMap<PartyId, string>
     party: string
     sessionToken: string
+    scanProxyUrl: string
     instrumentId: { admin: string; id: string }
     amount: number
 }) => {
@@ -324,6 +326,7 @@ export const tap = async ({
 
     const amuletService = await resolveAmuletService({
         sessionToken,
+        scanProxyUrl,
     })
     const [tapCommand, disclosedContracts] = await amuletService.createTap(
         party,
@@ -350,9 +353,14 @@ export const tap = async ({
 
 export const isDevNet = async ({
     sessionToken,
+    scanProxyUrl,
 }: {
     sessionToken: string
+    scanProxyUrl: string
 }): Promise<boolean> => {
-    const amuletService = await resolveAmuletService({ sessionToken })
+    const amuletService = await resolveAmuletService({
+        sessionToken,
+        scanProxyUrl,
+    })
     return await amuletService.isDevNet()
 }

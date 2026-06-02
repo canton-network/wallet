@@ -3,6 +3,7 @@
 
 import { queryOptions } from '@tanstack/react-query'
 import { usePortfolio } from '../contexts/PortfolioContext'
+import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
 import { queryKeys } from './query-keys'
 
 export const usePendingTransfersQueryOptions = (party: string | undefined) => {
@@ -37,10 +38,11 @@ export const useAllocationsQueryOptions = (party: string | undefined) => {
 
 export const useIsDevNetQueryOptions = (sessionToken: string | undefined) => {
     const { isDevNet } = usePortfolio()
+    const { scanProxyUrl } = usePortfolioConfig()
     return queryOptions({
         queryKey: queryKeys.isDevNet.all,
         queryFn: async () =>
-            sessionToken ? isDevNet({ sessionToken }) : false,
+            sessionToken ? isDevNet({ sessionToken, scanProxyUrl }) : false,
         enabled: !!sessionToken,
         staleTime: Infinity, // Network doesn't change, so cache forever
     })
