@@ -1894,7 +1894,6 @@ __metadata:
     "@types/node": "npm:^25.3.3"
     "@vitest/browser-playwright": "npm:^4.1.2"
     "@vitest/coverage-v8": "npm:^4.1.2"
-    bignumber.js: "npm:^10.0.2"
     dayjs: "npm:^1.11.19"
     decimal.js: "npm:^10.6.0"
     openapi-fetch: "npm:^0.17.0"
