@@ -3,16 +3,64 @@
 
 import type { Logger } from 'pino'
 import type { SDKInterface } from '@canton-network/wallet-sdk'
-import {
-    buildOtcTradeProposalCommand,
-    buildAcceptOtcTradeCommand,
-    buildInitiateSettlementCommand,
-} from '@canton-network/core-trading-app'
-import * as SpliceTokenTestTradingApp from '@canton-network/core-trading-app'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
 
-const TradingApp = SpliceTokenTestTradingApp.Splice.Testing.Apps.TradingApp
+const OTC_TRADE_PROPOSAL_TEMPLATE_ID =
+    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal'
+const OTC_TRADE_TEMPLATE_ID =
+    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade'
+
+function buildOtcTradeProposalCommand(params: {
+    venue: string
+    transferLegs: Record<string, unknown>
+    approvers: string[]
+    tradeCid?: string | null
+}) {
+    return {
+        CreateCommand: {
+            templateId: OTC_TRADE_PROPOSAL_TEMPLATE_ID,
+            createArguments: {
+                venue: params.venue,
+                tradeCid: params.tradeCid ?? null,
+                transferLegs: params.transferLegs,
+                approvers: params.approvers,
+            },
+        },
+    }
+}
+
+function buildAcceptOtcTradeCommand(params: {
+    proposalCid: string
+    approver: string
+}) {
+    return {
+        ExerciseCommand: {
+            templateId: OTC_TRADE_PROPOSAL_TEMPLATE_ID,
+            contractId: params.proposalCid,
+            choice: 'OTCTradeProposal_Accept',
+            choiceArgument: { approver: params.approver },
+        },
+    }
+}
+
+function buildInitiateSettlementCommand(params: {
+    proposalCid: string
+    prepareUntil: string
+    settleBefore: string
+}) {
+    return {
+        ExerciseCommand: {
+            templateId: OTC_TRADE_PROPOSAL_TEMPLATE_ID,
+            contractId: params.proposalCid,
+            choice: 'OTCTradeProposal_InitiateSettlement',
+            choiceArgument: {
+                prepareUntil: params.prepareUntil,
+                settleBefore: params.settleBefore,
+            },
+        },
+    }
+}
 
 const MS_30_MIN = 30 * 60 * 1000
 const MS_1_HOUR = 60 * 60 * 1000
@@ -38,7 +86,7 @@ export async function createAndInitiateOtcTrade(
     ): Promise<string> =>
         (
             await sdk.ledger.acs.requireOne({
-                templateIds: [TradingApp.OTCTradeProposal.templateId],
+                templateIds: [OTC_TRADE_PROPOSAL_TEMPLATE_ID],
                 parties: [party],
                 filterByParty: true,
             })
@@ -103,7 +151,7 @@ export async function createAndInitiateOtcTrade(
     )
 
     const otcTradeContracts = await p3Sdk.ledger.acs.read({
-        templateIds: [TradingApp.OTCTrade.templateId],
+        templateIds: [OTC_TRADE_TEMPLATE_ID],
         parties: [tradingApp.partyId],
         filterByParty: true,
     })

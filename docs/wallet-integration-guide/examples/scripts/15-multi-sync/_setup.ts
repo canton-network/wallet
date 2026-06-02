@@ -35,8 +35,8 @@ export type PartyInfo = Omit<
 
 const TEST_TOKEN_V1_DAR =
     '../../../../../damljs/splice-test-token-v1/.daml/dist/splice-test-token-v1-1.0.0.dar'
-const TRADING_APP_DAR_RELATIVE_PATH =
-    '../../../../../damljs/splice-token-test-trading-app/.daml/dist/splice-token-test-trading-app-1.0.2.dar'
+const LOCALNET_PATH = '../../../../../.localnet'
+const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.1.dar'
 
 export interface MultiSyncSetup {
     p1Sdk: SDKInterface<'token' | 'amulet'>
@@ -129,7 +129,7 @@ export async function setupMultiSyncTrade(
     const here = path.dirname(fileURLToPath(import.meta.url))
     const [testTokenV1Dar, tradingAppDar] = await Promise.all([
         fs.readFile(path.join(here, TEST_TOKEN_V1_DAR)),
-        fs.readFile(path.join(here, TRADING_APP_DAR_RELATIVE_PATH)),
+        fs.readFile(path.join(here, LOCALNET_PATH, TRADING_APP_DAR_LOCALNET)),
     ])
 
     await Promise.all(
