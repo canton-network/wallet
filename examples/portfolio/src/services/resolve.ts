@@ -61,13 +61,13 @@ const createTokenStandardService = async ({
     return tokenStandardService
 }
 
-const resolveScanProxyUrl = (scanProxyUrl: string): URL => {
-    const url = new URL(scanProxyUrl)
+const resolveValidatorUrl = (validatorUrl: string): URL => {
+    const url = new URL(validatorUrl)
 
     if (url.protocol === 'http:') {
         logger.warn(
-            { scanProxyUrl: url.toString() },
-            'Using a non-TLS scan proxy endpoint. This is acceptable only in trusted environments. Set scanProxyUrl in portfolio config to an HTTPS endpoint if the scan proxy is reachable over an untrusted network.'
+            { validatorUrl: url.toString() },
+            'Using a non-TLS validator endpoint. This is acceptable only in trusted environments. Set validatorUrl in portfolio config to an HTTPS endpoint if the validator API is reachable over an untrusted network.'
         )
     }
 
@@ -76,15 +76,15 @@ const resolveScanProxyUrl = (scanProxyUrl: string): URL => {
 
 const createAmuletService = async ({
     sessionToken,
-    scanProxyUrl,
+    validatorUrl,
     tokenStandardService,
 }: {
     sessionToken: string
-    scanProxyUrl: string
+    validatorUrl: string
     tokenStandardService: TokenStandardService
 }): Promise<AmuletService> => {
     const scanProxyClient = new ScanProxyClient(
-        resolveScanProxyUrl(scanProxyUrl),
+        resolveValidatorUrl(validatorUrl),
         logger,
         AuthTokenProvider.fromToken(sessionToken, logger)
     )
@@ -136,17 +136,17 @@ export const resolveTokenStandardService =
 
 export const resolveAmuletService = async ({
     sessionToken,
-    scanProxyUrl,
+    validatorUrl,
 }: {
     sessionToken: string
-    scanProxyUrl: string
+    validatorUrl: string
 }): Promise<AmuletService> => {
-    const key = `${scanProxyUrl}:current-session`
+    const key = `${validatorUrl}:current-session`
     if (amuletServices.has(key)) return amuletServices.get(key)!
     const tokenStandardService = await resolveTokenStandardService()
     const amuletService = await createAmuletService({
         sessionToken,
-        scanProxyUrl,
+        validatorUrl,
         tokenStandardService,
     })
     amuletServices.set(key, amuletService)
