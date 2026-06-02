@@ -98,26 +98,12 @@ async function beforeEachSetup() {
         asset: global.ASSET_CONFIG,
     })
 
-    const connectedSyncResponse = await sdk.ledger.connectedSynchronizers({})
-    const allSynchronizers = connectedSyncResponse.connectedSynchronizers ?? []
-    const globalSynchronizerId = resolveGlobalSynchronizerId(allSynchronizers)
-    const appSynchronizerEntry = allSynchronizers.find(
-        (s) => s.synchronizerAlias === 'app-synchronizer'
-    )
-    const additionalSynchronizerIds = appSynchronizerEntry
-        ? [appSynchronizerEntry.synchronizerId]
-        : []
-    global.GLOBAL_SYNCHRONIZER_ID = globalSynchronizerId
-
     // ========= Setup Existing Party 1 =========
 
     global.EXISTING_PARTY_1_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_1 = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_1_KEYS.publicKey, {
-                synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds,
-            })
+            .create(global.EXISTING_PARTY_1_KEYS.publicKey)
             .sign(global.EXISTING_PARTY_1_KEYS.privateKey)
             .execute()
     ).partyId
@@ -126,10 +112,7 @@ async function beforeEachSetup() {
     global.EXISTING_PARTY_2_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_2 = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_2_KEYS.publicKey, {
-                synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds,
-            })
+            .create(global.EXISTING_PARTY_2_KEYS.publicKey)
             .sign(global.EXISTING_PARTY_2_KEYS.privateKey)
             .execute()
     ).partyId
@@ -149,7 +132,6 @@ async function beforeEachSetup() {
         global.PREPARED_TRANSACTION = await sdk.ledger.prepare({
             partyId: global.EXISTING_PARTY_2,
             commands: global.PREPARED_COMMAND,
-            synchronizerId: globalSynchronizerId,
         }).preparedPromise
     }
 
@@ -157,8 +139,6 @@ async function beforeEachSetup() {
     global.EXISTING_TOPOLOGY = await sdk.party.external
         .create(global.EXISTING_PARTY_1_KEYS.publicKey, {
             partyHint: 'my-party',
-            synchronizerId: globalSynchronizerId,
-            additionalSynchronizerIds,
         })
         .sign(global.EXISTING_PARTY_1_KEYS.privateKey)
         .execute()
@@ -177,10 +157,7 @@ async function beforeEachSetup() {
     global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_WITH_PREAPPROVAL = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.publicKey, {
-                synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds,
-            })
+            .create(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.publicKey)
             .sign(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.privateKey)
             .execute()
     ).partyId
@@ -198,7 +175,6 @@ async function beforeEachSetup() {
             .prepare({
                 partyId: global.EXISTING_PARTY_WITH_PREAPPROVAL,
                 commands: createPreapprovalCommand,
-                synchronizerId: globalSynchronizerId,
             })
             .sign(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.privateKey)
             .execute({
@@ -216,7 +192,6 @@ async function beforeEachSetup() {
                 partyId: global.EXISTING_PARTY_1,
                 commands: amuletTapCommand,
                 disclosedContracts: amuletTapDisclosedContracts,
-                synchronizerId: globalSynchronizerId,
             })
             .sign(global.EXISTING_PARTY_1_KEYS.privateKey)
             .execute({ partyId: global.EXISTING_PARTY_1 })
@@ -235,7 +210,6 @@ async function beforeEachSetup() {
                 partyId: global.EXISTING_PARTY_1,
                 commands: transferCommand,
                 disclosedContracts: transferDisclosedContracts,
-                synchronizerId: globalSynchronizerId,
             })
             .sign(global.EXISTING_PARTY_1_KEYS.privateKey)
             .execute({ partyId: global.EXISTING_PARTY_1 })
