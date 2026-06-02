@@ -143,3 +143,5 @@ await logAllContracts(logger, synchronizers, [
     { sdk: p2Sdk, parties: [tokenAdmin.partyId] },
     { sdk: p3Sdk, parties: [tradingApp.partyId] },
 ])
+
+process.exit(0)
