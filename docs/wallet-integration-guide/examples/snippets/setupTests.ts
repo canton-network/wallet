@@ -54,8 +54,6 @@ declare global {
     var TOKEN_NAMESPACE_CONFIG: TokenConfig
     var AMULET_NAMESPACE_CONFIG: AmuletConfig
     var ASSET_CONFIG: AssetConfig
-
-    var GLOBAL_SYNCHRONIZER_ID: string
 }
 
 // @disable-snapshot-test
@@ -102,7 +100,7 @@ async function beforeEachSetup() {
     global.EXISTING_PARTY_1_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_1 = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_1_KEYS.publicKey)
+            .create(global.EXISTING_PARTY_1_KEYS.publicKey, {})
             .sign(global.EXISTING_PARTY_1_KEYS.privateKey)
             .execute()
     ).partyId
@@ -111,7 +109,7 @@ async function beforeEachSetup() {
     global.EXISTING_PARTY_2_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_2 = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_2_KEYS.publicKey)
+            .create(global.EXISTING_PARTY_2_KEYS.publicKey, {})
             .sign(global.EXISTING_PARTY_2_KEYS.privateKey)
             .execute()
     ).partyId
@@ -156,7 +154,7 @@ async function beforeEachSetup() {
     global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_WITH_PREAPPROVAL = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.publicKey)
+            .create(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.publicKey, {})
             .sign(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.privateKey)
             .execute()
     ).partyId
