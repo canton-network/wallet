@@ -158,7 +158,7 @@ export class CoreService {
                 unlockedHoldingsForInstrument
             )
         } else {
-            return unlockedSenderHoldings.map((h) => h.contractId)
+            return unlockedHoldingsForInstrument.map((h) => h.contractId)
         }
     }
 
