@@ -7,6 +7,11 @@ This example implements a Delivery vs Payment (DvP) flow across two synchronizer
 All commands are run from the **repository root** unless noted otherwise.
 
 ```bash
+# Step 0: Build all components
+yarn install
+
+yarn build:all
+
 # Step 1: Fetch localnet bundle (first time or after a Splice version update)
 yarn script:fetch:localnet
 
