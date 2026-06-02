@@ -8,7 +8,6 @@ import {
     TokenConfig,
     TokenProviderConfig,
 } from '@canton-network/wallet-sdk'
-import { resolveGlobalSynchronizerId } from '../scripts/utils/index.js'
 
 declare global {
     var EXISTING_PARTY_1: PartyId
