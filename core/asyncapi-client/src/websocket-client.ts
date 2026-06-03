@@ -30,6 +30,8 @@ export type CompletionStreamRequest =
 export type GetUpdatesRequest = LedgerCommonSchemas['GetUpdatesRequest']
 
 export type JsGetUpdatesResponse = LedgerCommonSchemas['JsGetUpdatesResponse']
+export type CompletionsResponse =
+    LedgerCommonSchemas['CompletionStreamResponse']
 
 type UpdateSubscriptionOptions = {
     beginExclusive: number
@@ -90,11 +92,11 @@ export class WebSocketClient {
         )
     }
 
-    generate(
+    private generate<T extends JsGetUpdatesResponse | CompletionsResponse>(
         wsUrl: string,
         request: GetUpdatesRequest | CompletionStreamRequest
-    ): AsyncIterableIterator<JsGetUpdatesResponse> {
-        const messageQueue: JsGetUpdatesResponse[] = []
+    ): AsyncIterableIterator<T> {
+        const messageQueue: T[] = []
         let resolveNext: (() => void) | null = null
         let isClosed = false
         let streamError: Error | null = null
@@ -110,7 +112,7 @@ export class WebSocketClient {
                 ws.send(JSON.stringify(request))
             }
             ws.onmessage = (event) => {
-                messageQueue.push(JSON.parse(event.data as string))
+                messageQueue.push(JSON.parse(event.data as string) as T)
                 this.logger.debug(event.data, `Received event`)
                 resolveNext?.()
             }
@@ -176,12 +178,12 @@ export class WebSocketClient {
                 : {}),
         } as GetUpdatesRequest
 
-        return this.generate(wsUpdatesUrl, request)
+        return this.generate<JsGetUpdatesResponse>(wsUpdatesUrl, request)
     }
 
     streamCompletions(
         options: CommandsCompletionsOptions
-    ): AsyncIterableIterator<JsGetUpdatesResponse> {
+    ): AsyncIterableIterator<CompletionsResponse> {
         const wsCompletionsUrl = `${this.baseUrl}${this.channels.v2_commands_completions}`
 
         const request = {
@@ -190,6 +192,6 @@ export class WebSocketClient {
             parties: options.parties,
         }
 
-        return this.generate(wsCompletionsUrl, request)
+        return this.generate<CompletionsResponse>(wsCompletionsUrl, request)
     }
 }
