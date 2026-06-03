@@ -8,7 +8,6 @@ import {
     AuthAware,
     assertConnected,
     Idp,
-    AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import {
     Store,
@@ -19,16 +18,11 @@ import {
     Transaction,
     Network,
     UpdateWallet,
-    PartyLevelRight,
     TransactionStatusUpdate,
     UserLevelRight,
     MessageRaw,
     MessageRawStatusUpdate,
 } from '@canton-network/core-wallet-store'
-import {
-    LedgerClient,
-    defaultRetryableOptions,
-} from '@canton-network/core-ledger-client'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 
 interface UserStorage {
@@ -65,7 +59,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.authContext = authContext
         this.userStorage = userStorage || new Map()
 
-        this.syncWallets()
+        // this.syncWallets()
     }
 
     withAuthContext(context?: AuthContext): StoreInternal {
@@ -105,111 +99,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     // Wallet methods
-
-    private async syncWallets(): Promise<void> {
-        try {
-            const network = await this.getCurrentNetwork()
-
-            // Get existing parties from participant
-            const userAccessTokenProvider = AuthTokenProvider.fromToken(
-                this.authContext!.accessToken,
-                this.logger
-            )
-
-            const ledgerClient = new LedgerClient({
-                baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: this.logger,
-                accessTokenProvider: userAccessTokenProvider,
-            })
-            const rights = await ledgerClient.getWithRetry(
-                '/v2/users/{user-id}/rights',
-                defaultRetryableOptions,
-                {
-                    path: {
-                        'user-id': this.authContext!.userId,
-                    },
-                }
-            )
-            const rightsByParty = new Map<string, Set<PartyLevelRight>>()
-            const getRights = (party: string) => {
-                const existing = rightsByParty.get(party)
-                if (existing) return existing
-                const created = new Set<PartyLevelRight>()
-                rightsByParty.set(party, created)
-                return created
-            }
-            rights.rights?.forEach((right) => {
-                if (!right || !right.kind) {
-                    return
-                }
-                if ('CanActAs' in right.kind) {
-                    getRights(right.kind.CanActAs.value.party).add(
-                        PartyLevelRight.CanActAs
-                    )
-                } else if ('CanReadAs' in right.kind) {
-                    getRights(right.kind.CanReadAs.value.party).add(
-                        PartyLevelRight.CanReadAs
-                    )
-                } else if ('CanExecuteAs' in right.kind) {
-                    getRights(right.kind.CanExecuteAs.value.party).add(
-                        PartyLevelRight.CanExecuteAs
-                    )
-                }
-            })
-            const parties = Array.from(rightsByParty.keys())
-
-            // Merge Wallets - check for duplicates by (partyId, networkId)
-            const existingWallets = await this.getAllWallets({
-                networkIds: [network.id],
-            })
-            const existingPartyNetworkPairs = new Set(
-                existingWallets.map((w) => `${w.partyId}:${w.networkId}`)
-            )
-            const participantWallets: Array<Wallet> =
-                parties
-                    ?.filter(
-                        (party) =>
-                            !existingPartyNetworkPairs.has(
-                                `${party}:${network.id}`
-                            )
-                        // todo: filter on idp id
-                    )
-                    .map((party) => {
-                        const [hint, namespace] = party.split('::')
-                        return {
-                            primary: false,
-                            partyId: party,
-                            status: 'allocated',
-                            hint: hint,
-                            publicKey: namespace,
-                            namespace: namespace,
-                            networkId: network.id,
-                            signingProviderId: 'participant', // todo: determine based on partyDetails.isLocal
-                            rights: [...(rightsByParty.get(party) ?? [])],
-                        }
-                    }) || []
-            const storage = this.getStorage()
-            const wallets = [...storage.wallets, ...participantWallets]
-
-            // Set primary wallet if none exists in this network
-            const networkWallets = wallets.filter(
-                (w) => w.networkId === network.id
-            )
-            const hasPrimary = networkWallets.some((w) => w.primary)
-            if (!hasPrimary && networkWallets.length > 0) {
-                networkWallets[0].primary = true
-            }
-
-            this.logger.debug(wallets, 'Wallets synchronized')
-
-            // Update storage with new wallets
-            storage.wallets = wallets
-            this.updateStorage(storage)
-        } catch {
-            return
-        }
-    }
-
     async getAllWallets(filter: WalletFilter = {}): Promise<Array<Wallet>> {
         const { networkIds, signingProviderIds } = filter
         const networkIdSet = networkIds ? new Set(networkIds) : null

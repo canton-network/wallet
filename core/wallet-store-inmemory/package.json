@@ -13,13 +13,10 @@
         "dev": "tsup --watch --onSuccess \"tsc\"",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run --project node --project browser",
-        "test:coverage": "vitest run --project node --project browser --coverage"
+        "test": "vitest run --project node",
+        "test:coverage": "vitest run --project node --coverage"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "workspace:^",
-        "@canton-network/core-rpc-errors": "workspace:^",
-        "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
         "@canton-network/core-wallet-store": "workspace:^",
         "pino": "^10.3.1",
