@@ -724,7 +724,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.setUserRights('network1', [])
             expect(await store.getUserRights()).toEqual([])
         })
-        //
+
         test('should manage transactions including lookup and removal', async () => {
             const tx: Transaction = {
                 id: 'tx-1',
