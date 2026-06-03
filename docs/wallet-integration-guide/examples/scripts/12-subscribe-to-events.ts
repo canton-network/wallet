@@ -171,7 +171,10 @@ logger.info(
 
 logger.debug(commandsCompletionsEvents, 'commands completions events')
 
-if (commandsCompletionsEvents.length === 0) {
+if (
+    commandsCompletionsEvents.length === 0 &&
+    commandsCompletionsEvents.find((event) => event.update)
+) {
     logger.error(
         'No command completion events received, something went wrong with the subscription'
     )
@@ -181,7 +184,7 @@ if (commandsCompletionsEvents.length === 0) {
 
 logger.debug(updateEvents, 'Update events')
 
-if (updateEvents.length === 0) {
+if (updateEvents.length === 0 && updateEvents.find((event) => event.update)) {
     logger.error(
         'No command completion events received, something went wrong with the subscription'
     )
