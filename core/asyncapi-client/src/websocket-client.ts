@@ -171,11 +171,10 @@ export class WebSocketClient {
             beginExclusive: options.beginExclusive,
             verbose: options.verbose ?? true,
             filter,
-            updateFormat: {},
             ...(options.endInclusive !== undefined
                 ? { endInclusive: options.endInclusive }
                 : {}),
-        }
+        } as GetUpdatesRequest
 
         return this.generate(wsUpdatesUrl, request)
     }
