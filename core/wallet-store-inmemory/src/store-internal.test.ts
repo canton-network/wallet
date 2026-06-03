@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, test } from 'vitest'
 
-import { StoreInternal, StoreInternalConfig } from './StoreInternal'
+import { StoreInternal, StoreInternalConfig } from './store-internal'
 import {
     Wallet,
     Session,
