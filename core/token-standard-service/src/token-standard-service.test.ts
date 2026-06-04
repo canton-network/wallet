@@ -46,7 +46,7 @@ const mockLogger: MockedObject<Logger> = {
     error: vi.fn(),
 } as MockedObject<Logger>
 
-const makeTokenClient = () => ({ get: vi.fn() })
+const makeTokenClient = () => ({ get: vi.fn(), post: vi.fn() })
 
 function makeService(isMasterUser = false) {
     const provider = makeProvider()
@@ -460,20 +460,175 @@ describe('token standard service', () => {
 })
 
 describe('AllocationService', () => {
-    describe('buildAllocationFactoryChoiceArgs', () => {
-        const instrumentAdmin =
-            'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
-        const instrumentId = 'Amulet'
-        const baseSpec = {
-            transferLeg: {
-                sender: senderParty,
-                receiver: 'bob::def',
-                amount: '10.0',
-                instrumentId: { admin: instrumentAdmin, id: instrumentId },
-                meta: null,
+    const instrumentAdmin =
+        'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
+    const instrumentId = 'Amulet'
+    const baseSpec = {
+        transferLeg: {
+            sender: senderParty,
+            receiver: 'bob::def',
+            amount: '10.0',
+            instrumentId: { admin: instrumentAdmin, id: instrumentId },
+            meta: null,
+        },
+        settlement: { meta: null },
+    }
+
+    it('uses prefetched context and does not make a registry call for allocation instruction', async () => {
+        const { service, tokenClient } = makeService()
+        vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
+            'cid1',
+            'cid2',
+        ])
+        const ctx = makeChoiceContext()
+        const ts = '2026-01-01T00:00:00.000Z'
+        await service.allocation.createAllocationInstruction(
+            baseSpec as any,
+            instrumentAdmin,
+            registryUrl,
+            [],
+            undefined,
+            { factoryId: 'factory-id', choiceContext: ctx as any }
+        )
+
+        expect(tokenClient.post).not.toHaveBeenCalled()
+    })
+
+    it('makes a registry call when no prefetched context is provided allocation instruction', async () => {
+        const { service, tokenClient } = makeService()
+        vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
+            'cid1',
+            'cid2',
+        ])
+
+        const ctx = makeChoiceContext()
+        tokenClient.post.mockResolvedValue({
+            factoryId: 'factory-id',
+            choiceContext: ctx as any,
+        })
+        const ts = '2026-01-01T00:00:00.000Z'
+        await service.allocation.createAllocationInstruction(
+            baseSpec as any,
+            instrumentAdmin,
+            registryUrl
+        )
+
+        expect(tokenClient.post).toHaveBeenCalled()
+    })
+
+    it('uses prefetched context and does not make a registry call for create exectuion transfer allocation', async () => {
+        const { service, tokenClient } = makeService()
+
+        const ctx = makeChoiceContext()
+        const [exercise] =
+            await service.allocation.createExecuteTransferAllocation(
+                'allocation-cid',
+                registryUrl,
+                ctx as any
+            )
+        expect(tokenClient.post).not.toHaveBeenCalled()
+        expect(exercise.choice).toBe('Allocation_ExecuteTransfer')
+        expect(exercise.contractId).toBe('allocation-cid')
+    })
+
+    it('does not use prefetched context and makes a registry call for create exectuion transfer allocation', async () => {
+        const { service, tokenClient } = makeService()
+
+        const ctx = makeChoiceContext()
+        tokenClient.post.mockResolvedValue(ctx as any)
+        await service.allocation.createExecuteTransferAllocation(
+            'allocation-cid',
+            registryUrl
+        )
+        expect(tokenClient.post).toHaveBeenCalled()
+    })
+
+    it('uses prefetched context and does not make a registry call for create withdraw allocation', async () => {
+        const { service, tokenClient } = makeService()
+
+        const ctx = makeChoiceContext()
+        const [exercise] = await service.allocation.createWithdrawAllocation(
+            'allocation-cid',
+            registryUrl,
+            ctx as any
+        )
+        expect(tokenClient.post).not.toHaveBeenCalled()
+        expect(exercise.choice).toBe('Allocation_Withdraw')
+    })
+
+    it('does not use prefetched context and makes a registry call for  create withdraw allocation', async () => {
+        const { service, tokenClient } = makeService()
+
+        const ctx = makeChoiceContext()
+        tokenClient.post.mockResolvedValue(ctx as any)
+        await service.allocation.createWithdrawAllocation(
+            'allocation-cid',
+            registryUrl
+        )
+        expect(tokenClient.post).toHaveBeenCalled()
+    })
+
+    it('uses prefetched context and does not make a registry call for cancel allocation exercise', async () => {
+        const { service, tokenClient } = makeService()
+
+        const ctx = makeChoiceContext()
+        const [exercise] = await service.allocation.createCancelAllocation(
+            'allocation-cid',
+            registryUrl,
+            ctx as any
+        )
+        expect(tokenClient.post).not.toHaveBeenCalled()
+        expect(exercise.choice).toBe('Allocation_Cancel')
+    })
+
+    it('does not use prefetched context and makes a registry call for  create cancel allocation', async () => {
+        const { service, tokenClient } = makeService()
+
+        const ctx = makeChoiceContext()
+        tokenClient.post.mockResolvedValue(ctx as any)
+        await service.allocation.createCancelAllocation(
+            'allocation-cid',
+            registryUrl
+        )
+        expect(tokenClient.post).toHaveBeenCalled()
+    })
+
+    it('command builders work', async () => {
+        const { service } = makeService()
+        const [exercise, dc] =
+            await service.allocation.createWithdrawAllocationInstruction(
+                'allocation-id'
+            )
+        expect(exercise.choice).toBe('AllocationInstruction_Withdraw')
+        expect(exercise.contractId).toBe('allocation-id')
+        expect(dc).toEqual([])
+
+        const updateInstruction =
+            await service.allocation.createUpdateAllocationInstruction(
+                'allocation-id',
+                ['actor::123'],
+                { myCtx: 'val' },
+                { meta: 'val' }
+            )
+        expect(updateInstruction[0].choice).toBe('AllocationInstruction_Update')
+        expect(updateInstruction[0].choiceArgument).toStrictEqual({
+            extraActors: ['actor::123'],
+            extraArgs: {
+                context: {
+                    values: {
+                        myCtx: 'val',
+                    },
+                },
+                meta: {
+                    values: {
+                        meta: 'val',
+                    },
+                },
             },
-            settlement: { meta: null },
-        }
+        })
+    })
+
+    describe('buildAllocationFactoryChoiceArgs', () => {
         it('calls getInputHoldingCids and embeds resulting cids', async () => {
             const { service } = makeService()
             vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
@@ -497,16 +652,6 @@ describe('AllocationService', () => {
         const instrumentAdmin =
             'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
         const instrumentId = 'Amulet'
-        const baseSpec = {
-            transferLeg: {
-                sender: senderParty,
-                receiver: 'bob::def',
-                amount: '10.0',
-                instrumentId: { admin: instrumentAdmin, id: instrumentId },
-                meta: null,
-            },
-            settlement: { meta: null },
-        }
         it('calls getInputHoldingCids and embeds resulting cids', async () => {
             const { service } = makeService()
             const choiceArgs = {
@@ -657,3 +802,43 @@ describe('getInputHoldingsCidsForAmount', async () => {
         ).rejects.toThrow(`Exceeded the maximum of 100 utxos in 1 transaction`)
     })
 })
+
+/*
+
+    describe('createAllocationInstruction skips registry call when prefeteched context is provided', () => {
+        const instrumentAdmin =
+            'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
+        const instrumentId = 'Amulet'
+        const baseSpec = {
+            transferLeg: {
+                sender: senderParty,
+                receiver: 'bob::def',
+                amount: '10.0',
+                instrumentId: { admin: instrumentAdmin, id: instrumentId },
+                meta: null,
+            },
+            settlement: { meta: null },
+        }
+        it('calls getInputHoldingCids and embeds resulting cids', async () => {
+            const { service, tokenClient } = makeService()
+            vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
+                'cid1',
+                'cid2',
+            ])
+            const ctx = makeChoiceContext()
+            const ts = '2026-01-01T00:00:00.000Z'
+            await service.allocation.createAllocationInstruction(
+                baseSpec as any,
+                instrumentAdmin,
+                registryUrl,
+                [],
+                undefined,
+                {factoryId: 'factory-id', choiceContext: ctx as any}
+            )
+
+            expect(tokenClient.post).not.toHaveBeenCalled()
+        })
+    
+    }
+
+    */
