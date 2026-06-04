@@ -111,86 +111,9 @@ const makeHolding = (
     },
 })
 
-const testActiveContract = {
-    workflowId: '',
-    contractEntry: {
-        JsActiveContract: {
-            createdEvent: {
-                offset: 340,
-                nodeId: 3,
-                contractId:
-                    '0018e06a02e11fe44ad91b40cdb438ed75a65a97e3a1d1a143da6bbf79596796d1ca1212207920f9a4d81fd9541abce95824864467f17a12c71fa55457bcfc4cf2672c00ed',
-                templateId:
-                    'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a:Splice.Amulet:Amulet',
-                contractKey: null,
-                contractKeyHash: '',
-                createArgument: {
-                    dso: 'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
-                    owner: 'v1-01-alice::12208cc0a2bd8c703a03d76e4d1b551c88dda1154867119729bd15e9fca0d2d61a87',
-                    amount: {
-                        initialAmount: '10000.0000000000',
-                        createdAt: {
-                            number: '6',
-                        },
-                        ratePerRound: {
-                            rate: '0.0038051800',
-                        },
-                    },
-                },
-                createdEventBlob:
-                    'CgMyLjES8QQKRQAY4GoC4R/kStkbQM20OO11plqX46HRoUPaa795WWeW0coSEiB5IPmk2B/ZVBq86VgkhkRn8XoSxx+lVFe8/EzyZywA7RINc3BsaWNlLWFtdWxldBpaCkBhMzFiZTA0ODNmMzE3NTY0NzA1M2YyODk2NWE0ZTZkOTdlM2RiYzQzM2VhMjMzOGJlMzAzZmFlNjliYmNmZjZhEgZTcGxpY2USBkFtdWxldBoGQW11bGV0IukBauYBCk0KSzpJRFNPOjoxMjIwYzY5NzMyZGQ1ZjNiNDM0YzI4M2Y2MWNiYzI5ZDNiYjQ5MmM1MGM1NmUzMDZiNDM2YzNlMTc0MWNiYzdiZTUzZQpVClM6UXYxLTAxLWFsaWNlOjoxMjIwOGNjMGEyYmQ4YzcwM2EwM2Q3NmU0ZDFiNTUxYzg4ZGRhMTE1NDg2NzExOTcyOWJkMTVlOWZjYTBkMmQ2MWE4Nwo+CjxqOgoUChIyEDEwMDAwLjAwMDAwMDAwMDAKCgoIagYKBAoCGAwKFgoUahIKEAoOMgwwLjAwMzgwNTE4MDAqSURTTzo6MTIyMGM2OTczMmRkNWYzYjQzNGMyODNmNjFjYmMyOWQzYmI0OTJjNTBjNTZlMzA2YjQzNmMzZTE3NDFjYmM3YmU1M2UqUXYxLTAxLWFsaWNlOjoxMjIwOGNjMGEyYmQ4YzcwM2EwM2Q3NmU0ZDFiNTUxYzg4ZGRhMTE1NDg2NzExOTcyOWJkMTVlOWZjYTBkMmQ2MWE4Nzkxpy/GWlMGAEIqCiYKJAgBEiCkbJ4cmw6aj5y/K38+JpUf+LiO0hdbK2kAcIA/J+020RAe',
-                interfaceViews: [
-                    {
-                        interfaceId:
-                            '718a0f77e505a8de22f188bd4c87fe74101274e9d4cb1bfac7d09aec7158d35b:Splice.Api.Token.HoldingV1:Holding',
-                        viewStatus: {
-                            code: 0,
-                            message: '',
-                            details: [],
-                        },
-                        viewValue: {
-                            owner: 'v1-01-alice::12208cc0a2bd8c703a03d76e4d1b551c88dda1154867119729bd15e9fca0d2d61a87',
-                            instrumentId: {
-                                admin: 'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
-                                id: 'Amulet',
-                            },
-                            amount: '10000.0000000000',
-                            lock: null,
-                            meta: {
-                                values: {
-                                    'amulet.splice.lfdecentralizedtrust.org/created-in-round':
-                                        '6',
-                                    'amulet.splice.lfdecentralizedtrust.org/rate-per-round':
-                                        '0.00380518',
-                                },
-                            },
-                        },
-                        implementationPackageId:
-                            'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a',
-                    },
-                ],
-                witnessParties: [
-                    'v1-01-alice::12208cc0a2bd8c703a03d76e4d1b551c88dda1154867119729bd15e9fca0d2d61a87',
-                ],
-                signatories: [
-                    'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
-                    'v1-01-alice::12208cc0a2bd8c703a03d76e4d1b551c88dda1154867119729bd15e9fca0d2d61a87',
-                ],
-                observers: [],
-                createdAt: '2026-06-03T15:06:37.437745Z',
-                packageName: 'splice-amulet',
-                representativePackageId:
-                    'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a',
-                acsDelta: true,
-            },
-            synchronizerId:
-                'global-domain::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
-            reassignmentCounter: 0,
-        },
-    },
-    streamContinuationToken: 'CgIIexIEpBtfAQ==',
-}
-
+const instrumentAdmin =
+    'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
+const instrumentId = 'Amulet'
 function createHolding(
     cId: string,
     amount: string,
@@ -460,9 +383,6 @@ describe('token standard service', () => {
 })
 
 describe('AllocationService', () => {
-    const instrumentAdmin =
-        'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
-    const instrumentId = 'Amulet'
     const baseSpec = {
         transferLeg: {
             sender: senderParty,
@@ -825,42 +745,98 @@ describe('getInputHoldingsCidsForAmount', async () => {
     })
 })
 
-/*
+describe('TransferService', () => {
+    it('builds transfer choice args', async () => {
+        const { service } = makeService()
+        vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
+            'cid1',
+        ])
 
-    describe('createAllocationInstruction skips registry call when prefeteched context is provided', () => {
-        const instrumentAdmin =
-            'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
-        const instrumentId = 'Amulet'
-        const baseSpec = {
-            transferLeg: {
-                sender: senderParty,
-                receiver: 'bob::def',
-                amount: '10.0',
-                instrumentId: { admin: instrumentAdmin, id: instrumentId },
-                meta: null,
-            },
-            settlement: { meta: null },
-        }
-        it('calls getInputHoldingCids and embeds resulting cids', async () => {
-            const { service, tokenClient } = makeService()
-            vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
-                'cid1',
-                'cid2',
-            ])
-            const ctx = makeChoiceContext()
-            const ts = '2026-01-01T00:00:00.000Z'
-            await service.allocation.createAllocationInstruction(
-                baseSpec as any,
-                instrumentAdmin,
-                registryUrl,
-                [],
-                undefined,
-                {factoryId: 'factory-id', choiceContext: ctx as any}
-            )
+        const res = await service.transfer.buildTransferChoiceArgs(
+            senderParty,
+            'bob::def',
+            '50.0',
+            instrumentAdmin,
+            instrumentId
+        )
 
-            expect(tokenClient.post).not.toHaveBeenCalled()
+        expect(res.transfer.sender).toBe(senderParty)
+        expect(res.transfer.receiver).toBe('bob::def')
+        expect(res.transfer.amount).toBe('50.0')
+        expect(res.transfer.instrumentId).toEqual({
+            admin: instrumentAdmin,
+            id: instrumentId,
         })
-    
-    }
 
-    */
+        const expiry = new Date('2030-01-01T00:00:00Z')
+
+        const resWithExpiry = await service.transfer.buildTransferChoiceArgs(
+            senderParty,
+            'bob::def',
+            '50.0',
+            instrumentAdmin,
+            instrumentId,
+            undefined,
+            undefined,
+            expiry
+        )
+
+        expect(resWithExpiry.transfer.executeBefore).toBe(expiry.toISOString())
+
+        const resWithMemo = await service.transfer.buildTransferChoiceArgs(
+            senderParty,
+            'bob::def',
+            '50.0',
+            instrumentAdmin,
+            instrumentId,
+            undefined,
+            'payment',
+            expiry
+        )
+        expect(
+            resWithMemo.transfer.meta.values[TokenStandardService.MEMO_KEY]
+        ).toBe('payment')
+    })
+
+    it('creates transfer from context', async () => {
+        const { service } = makeService()
+        const choiceArgs = {
+            expectedAdmin: instrumentAdmin,
+            transfer: {
+                sender: senderParty,
+                receiver: 'bob',
+                amount: '10.0',
+                instrumentId: instrumentId,
+            },
+            extraArgs: { context: { values: {} }, meta: { values: {} } },
+        }
+        const ctx = makeChoiceContext()
+        const [exercise, dc] = await service.transfer.createTransferFromContext(
+            'id1',
+            choiceArgs as any,
+            ctx as any
+        )
+        expect(exercise.choice).toBe('TransferFactory_Transfer')
+        expect(dc).toBe(ctx.disclosedContracts)
+        expect(exercise.choiceArgument).toStrictEqual({
+            expectedAdmin:
+                'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
+            extraArgs: {
+                context: {
+                    values: {
+                        ctx: 'data',
+                    },
+                },
+                meta: {
+                    values: {},
+                },
+            },
+            transfer: {
+                amount: '10.0',
+                instrumentId: 'Amulet',
+                receiver: 'bob',
+                sender: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
+            },
+        })
+    })
+})
