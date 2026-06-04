@@ -67,6 +67,12 @@ function makeService(isMasterUser = false) {
 
 const registryUrl = 'https://fake/registry'
 
+const makeChoiceContext = (overrides = {}) => ({
+    choiceContextData: { values: { ctx: 'data' } },
+    disclosedContracts: [{ contractId: 'disc1' }],
+    ...overrides,
+})
+
 const makeHolding = (
     id: string,
     amount: string,
@@ -417,6 +423,131 @@ describe('token standard service', () => {
 
         const response = await service.instrumentsToAsset(registryUrl)
         expect(response).toHaveLength(2)
+    })
+
+    it('toPretty transactions', async () => {
+        const { service } = makeService()
+        const result = await service.core.toPrettyTransactions([], senderParty)
+        expect(result.transactions).toHaveLength(0)
+        expect(result.nextOffset).toBe(0)
+
+        const updates = [
+            { update: { OffsetCheckpoint: { value: { offset: 50 } } } },
+            { update: { OffsetCheckpoint: { value: { offset: 80 } } } },
+        ]
+
+        const updatesResult = await service.core.toPrettyTransactions(
+            updates as any,
+            senderParty
+        )
+        expect(updatesResult.nextOffset).toBeGreaterThanOrEqual(80)
+    })
+
+    it('toQualfiedMemberId()', async () => {
+        const { service } = makeService()
+        expect(service.core.toQualifiedMemberId('abc123')).toBe('PAR::abc123')
+        expect(service.core.toQualifiedMemberId('PAR::abc123')).toBe(
+            'PAR::abc123'
+        )
+        expect(service.core.toQualifiedMemberId('MED::abc123')).toBe(
+            'MED::abc123'
+        )
+
+        expect(() => service.core.toQualifiedMemberId('')).toThrow(
+            'memberId is required'
+        )
+    })
+})
+
+describe('AllocationService', () => {
+    describe('buildAllocationFactoryChoiceArgs', () => {
+        const instrumentAdmin =
+            'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
+        const instrumentId = 'Amulet'
+        const baseSpec = {
+            transferLeg: {
+                sender: senderParty,
+                receiver: 'bob::def',
+                amount: '10.0',
+                instrumentId: { admin: instrumentAdmin, id: instrumentId },
+                meta: null,
+            },
+            settlement: { meta: null },
+        }
+        it('calls getInputHoldingCids and embeds resulting cids', async () => {
+            const { service } = makeService()
+            vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
+                'cid1',
+                'cid2',
+            ])
+            const ts = '2026-01-01T00:00:00.000Z'
+            const result =
+                await service.allocation.buildAllocationFactoryChoiceArgs(
+                    baseSpec as any,
+                    instrumentAdmin,
+                    [],
+                    ts
+                )
+            expect(result.inputHoldingCids).toEqual(['cid1', 'cid2'])
+            expect(result.requestedAt).toBe(ts)
+        })
+    })
+
+    describe('createAllocationInstructionFromContext', () => {
+        const instrumentAdmin =
+            'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
+        const instrumentId = 'Amulet'
+        const baseSpec = {
+            transferLeg: {
+                sender: senderParty,
+                receiver: 'bob::def',
+                amount: '10.0',
+                instrumentId: { admin: instrumentAdmin, id: instrumentId },
+                meta: null,
+            },
+            settlement: { meta: null },
+        }
+        it('calls getInputHoldingCids and embeds resulting cids', async () => {
+            const { service } = makeService()
+            const choiceArgs = {
+                expectedAdmin: instrumentAdmin,
+                allocation: {
+                    settlement: {
+                        executor: 'blah:123',
+                        settlementRef: {
+                            id: '123',
+                            cid: 'cid123',
+                        },
+                        requestedAt: '',
+                        allocateBefore: '',
+                        settleBefore: '',
+                        meta: { values: {} },
+                    },
+                    transferLegId: '',
+                    transferLeg: {
+                        sender: '',
+                        receiver: '',
+                        amount: '20.0',
+                        instrumentId: 'Amulet',
+                        meta: { values: {} },
+                    },
+                },
+                requestedAt: '',
+                inputHoldingCids: [],
+                extraArgs: { context: { values: {} }, meta: { values: {} } },
+            }
+
+            const ctx = makeChoiceContext()
+            const [exercise, dc] =
+                await service.allocation.createAllocationInstructionFromContext(
+                    'factory-id',
+                    choiceArgs as any,
+                    ctx as any
+                )
+
+            expect(exercise.choice).toBe('AllocationFactory_Allocate')
+            expect(exercise.contractId).toBe('factory-id')
+        })
     })
 })
 
