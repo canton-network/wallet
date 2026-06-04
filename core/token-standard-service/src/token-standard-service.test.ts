@@ -626,6 +626,28 @@ describe('AllocationService', () => {
                 },
             },
         })
+
+        const rejectReq =
+            await service.allocation.createRejectAllocationRequest(
+                'id1',
+                senderParty
+            )
+        expect(rejectReq[0].choice).toBe('AllocationRequest_Reject')
+        expect(rejectReq[0].choiceArgument).toStrictEqual({
+            actor: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
+            extraArgs: {
+                context: {
+                    values: {},
+                },
+                meta: {
+                    values: {},
+                },
+            },
+        })
+
+        const withdraw =
+            await service.allocation.createWithdrawAllocationRequest('id1')
+        expect(withdraw[0].choice).toBe('AllocationRequest_Withdraw')
     })
 
     describe('buildAllocationFactoryChoiceArgs', () => {
