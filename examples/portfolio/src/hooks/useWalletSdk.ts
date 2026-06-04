@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import * as dappSdk from '@canton-network/dapp-sdk'
 import * as walletSdk from '@canton-network/wallet-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
-import { useRegistryUrls } from '../contexts/RegistryServiceContext'
+import { useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from './query-keys'
 import {
     WalletSDKUtilitiesPlugin,

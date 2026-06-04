@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-amulet-service",
-    "version": "1.3.2",
+    "version": "1.4.0",
     "type": "module",
     "description": "A service layer for interacting with non-token-standard Amulet operations on Canton.",
     "license": "Apache-2.0",
@@ -44,6 +44,7 @@
         "@canton-network/core-wallet-auth": "workspace:^",
         "bignumber.js": "^10.0.2",
         "dayjs": "^1.11.19",
+        "decimal.js": "^10.6.0",
         "openapi-fetch": "^0.17.0",
         "pino": "^10.3.1"
     },
