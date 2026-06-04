@@ -13,10 +13,10 @@ import type { SignResult } from '../user-api/rpc-gen/typings.js'
 import {
     Error as SigningError,
     GetTransactionResult,
-    SigningDriverInterface,
     SigningProvider,
     SignTransactionResult,
 } from '@canton-network/core-signing-lib'
+import type { SigningDrivers } from '../signing/signing-drivers.js'
 import {
     ExecuteParams,
     ExecuteResult,
@@ -26,6 +26,7 @@ import {
 import { UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
 import { ledgerPrepareParams, type PrepareParams } from '../utils.js'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 
 function handleSigningError<T extends object>(result: SigningError | T): T {
     if ('error' in result) {
@@ -40,11 +41,62 @@ export class TransactionService {
     constructor(
         private store: Store,
         private logger: Logger,
-        private signingDrivers: Partial<
-            Record<SigningProvider, SigningDriverInterface>
-        > = {},
+        private signingDrivers: SigningDrivers = {},
         private notifier: Notifier
     ) {}
+
+    public async sign(
+        authContext: AuthContext,
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResult> {
+        const signingProvider = wallet.signingProviderId as SigningProvider
+        const driver = this.signingDrivers[signingProvider]?.controller(
+            authContext.userId
+        )
+        if (!driver) {
+            throw new Error(`No driver found for ${signingProvider}`)
+        }
+
+        switch (signingProvider) {
+            case SigningProvider.PARTICIPANT: {
+                return this.signWithParticipant(wallet)
+            }
+            case SigningProvider.WALLET_KERNEL: {
+                return this.signWithWalletKernel(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.BLOCKDAEMON: {
+                if (!authContext.email) {
+                    throw new Error(
+                        'Email is required for Blockdaemon wallet allocation'
+                    )
+                }
+                return this.signWithBlockdaemon(
+                    authContext.email,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.FIREBLOCKS: {
+                return this.signWithFireblocks(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.DFNS: {
+                return this.signWithDfns(authContext.userId, wallet, signParams)
+            }
+            default:
+                throw new Error(
+                    `Unsupported signing provider: ${wallet.signingProviderId}`
+                )
+        }
+    }
 
     private async loadPreparedTransactionForSigning(
         transactionId: Transaction['id']
