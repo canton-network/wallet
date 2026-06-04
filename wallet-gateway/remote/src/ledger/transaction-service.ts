@@ -98,6 +98,74 @@ export class TransactionService {
         }
     }
 
+    public execute(
+        authContext: AuthContext,
+        wallet: Wallet,
+        transaction: Transaction,
+        executeParams?: ExecuteParams,
+        ledgerClient?: LedgerClient,
+        network?: Network
+    ): Promise<ExecuteResult> {
+        switch (wallet.signingProviderId) {
+            case SigningProvider.PARTICIPANT: {
+                try {
+                    if (!executeParams) {
+                        throw new Error(
+                            'Execute params are required for participant signing'
+                        )
+                    }
+                    if (!ledgerClient) {
+                        throw new Error(
+                            'Ledger client is required for participant signing'
+                        )
+                    }
+                    if (!network) {
+                        throw new Error(
+                            'Network is required for participant signing'
+                        )
+                    }
+                    return this.executeWithParticipant(
+                        authContext.userId,
+                        executeParams,
+                        transaction,
+                        ledgerClient,
+                        network
+                    )
+                } catch (error) {
+                    this.logger.error(error, 'Failed to submit transaction')
+                    throw error
+                }
+            }
+            case SigningProvider.WALLET_KERNEL:
+            case SigningProvider.BLOCKDAEMON:
+            case SigningProvider.FIREBLOCKS: {
+                if (!executeParams) {
+                    throw new Error(
+                        'Execute params are required for external signing'
+                    )
+                }
+                if (!ledgerClient) {
+                    throw new Error(
+                        'Ledger client is required for external signing'
+                    )
+                }
+                return this.executeWithExternal(
+                    authContext.userId,
+                    executeParams,
+                    transaction,
+                    ledgerClient
+                )
+            }
+            case SigningProvider.DFNS: {
+                return this.executeWithDfns(transaction)
+            }
+            default:
+                throw new Error(
+                    `Unsupported signing provider: ${wallet.signingProviderId}`
+                )
+        }
+    }
+
     private async loadPreparedTransactionForSigning(
         transactionId: Transaction['id']
     ): Promise<Transaction> {
@@ -109,7 +177,7 @@ export class TransactionService {
         return existingTx
     }
 
-    public signWithParticipant(wallet: Wallet): SignResultSigned {
+    signWithParticipant(wallet: Wallet): SignResultSigned {
         return {
             status: 'signed',
             signature: 'none',
@@ -118,7 +186,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithWalletKernel(
+    async signWithWalletKernel(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -175,7 +243,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithBlockdaemon(
+    async signWithBlockdaemon(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -283,7 +351,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithFireblocks(
+    async signWithFireblocks(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -401,7 +469,7 @@ export class TransactionService {
      * signature payload (the controller short-circuits Dfns execute) and surface
      * the same SignResult shape the other external providers use.
      */
-    public async signWithDfns(
+    async signWithDfns(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -508,9 +576,7 @@ export class TransactionService {
      * state reconciliation: mark the stored transaction as executed and return
      * the updateId Dfns gave us. We deliberately don't post to the ledger here.
      */
-    public async executeWithDfns(
-        transaction: Transaction
-    ): Promise<ExecuteResult> {
+    async executeWithDfns(transaction: Transaction): Promise<ExecuteResult> {
         if (!transaction.externalTxId) {
             throw new Error(
                 'Cannot execute Dfns transaction without externalTxId from Dfns'
@@ -540,7 +606,7 @@ export class TransactionService {
         return { updateId: transaction.externalTxId } as ExecuteResult
     }
 
-    public async executeWithParticipant(
+    async executeWithParticipant(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,
@@ -587,7 +653,7 @@ export class TransactionService {
         return res as ExecuteResult
     }
 
-    public async executeWithExternal(
+    async executeWithExternal(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,

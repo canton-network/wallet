@@ -629,13 +629,15 @@ export const userController = (
                 throw new Error('No transaction found')
             }
 
-            const userId = assertConnected(authContext).userId
+            const connectedContext = assertConnected(authContext)
 
             if (network === undefined) {
                 throw new Error('No network session found')
             }
 
-            const notifier = notificationService.getNotifier(userId)
+            const notifier = notificationService.getNotifier(
+                connectedContext.userId
+            )
 
             // Create AccessTokenProvider for user token
             const userAccessTokenProvider = AuthTokenProvider.fromToken(
@@ -656,39 +658,14 @@ export const userController = (
                 notifier
             )
 
-            switch (wallet.signingProviderId) {
-                case SigningProvider.PARTICIPANT: {
-                    try {
-                        return await transactionService.executeWithParticipant(
-                            userId,
-                            executeParams,
-                            transaction,
-                            ledgerClient,
-                            network
-                        )
-                    } catch (error) {
-                        logger.error(error, 'Failed to submit transaction')
-                        throw error
-                    }
-                }
-                case SigningProvider.WALLET_KERNEL:
-                case SigningProvider.BLOCKDAEMON:
-                case SigningProvider.FIREBLOCKS: {
-                    return transactionService.executeWithExternal(
-                        userId,
-                        executeParams,
-                        transaction,
-                        ledgerClient
-                    )
-                }
-                case SigningProvider.DFNS: {
-                    return transactionService.executeWithDfns(transaction)
-                }
-                default:
-                    throw new Error(
-                        `Unsupported signing provider: ${wallet.signingProviderId}`
-                    )
-            }
+            return transactionService.execute(
+                connectedContext,
+                wallet,
+                transaction,
+                executeParams,
+                ledgerClient,
+                network
+            )
         },
         addSession: async function (
             params: AddSessionParams
