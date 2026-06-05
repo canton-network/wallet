@@ -4,7 +4,6 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import './sessions.js'
 import { WgSessions } from './sessions.js'
 
 describe('wg-sessions', () => {

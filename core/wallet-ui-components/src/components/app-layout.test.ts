@@ -4,8 +4,6 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import './app-header.js'
-import './app-layout.js'
 import { AppLayout } from './app-layout.js'
 
 describe('app-layout', () => {

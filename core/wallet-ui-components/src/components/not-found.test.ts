@@ -4,7 +4,6 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import './not-found.js'
 import { NotFound } from './not-found.js'
 
 describe('not-found', () => {

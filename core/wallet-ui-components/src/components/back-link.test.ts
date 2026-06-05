@@ -4,7 +4,6 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import './back-link.js'
 import { WgBackLink } from './back-link.js'
 
 describe('wg-back-link', () => {

@@ -4,7 +4,6 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import './error-page.js'
 import { WgErrorPage } from './error-page.js'
 
 describe('wg-error-page', () => {
