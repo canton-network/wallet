@@ -177,7 +177,7 @@ export class TransactionService {
         return existingTx
     }
 
-    signWithParticipant(wallet: Wallet): SignResultSigned {
+    private signWithParticipant(wallet: Wallet): SignResultSigned {
         return {
             status: 'signed',
             signature: 'none',
@@ -186,7 +186,7 @@ export class TransactionService {
         }
     }
 
-    async signWithWalletKernel(
+    private async signWithWalletKernel(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -243,7 +243,7 @@ export class TransactionService {
         }
     }
 
-    async signWithBlockdaemon(
+    private async signWithBlockdaemon(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -351,7 +351,7 @@ export class TransactionService {
         }
     }
 
-    async signWithFireblocks(
+    private async signWithFireblocks(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -469,7 +469,7 @@ export class TransactionService {
      * signature payload (the controller short-circuits Dfns execute) and surface
      * the same SignResult shape the other external providers use.
      */
-    async signWithDfns(
+    private async signWithDfns(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -576,7 +576,9 @@ export class TransactionService {
      * state reconciliation: mark the stored transaction as executed and return
      * the updateId Dfns gave us. We deliberately don't post to the ledger here.
      */
-    async executeWithDfns(transaction: Transaction): Promise<ExecuteResult> {
+    private async executeWithDfns(
+        transaction: Transaction
+    ): Promise<ExecuteResult> {
         if (!transaction.externalTxId) {
             throw new Error(
                 'Cannot execute Dfns transaction without externalTxId from Dfns'
@@ -606,7 +608,7 @@ export class TransactionService {
         return { updateId: transaction.externalTxId } as ExecuteResult
     }
 
-    async executeWithParticipant(
+    private async executeWithParticipant(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,
@@ -653,7 +655,7 @@ export class TransactionService {
         return res as ExecuteResult
     }
 
-    async executeWithExternal(
+    private async executeWithExternal(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,
