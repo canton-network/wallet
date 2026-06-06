@@ -3,13 +3,13 @@
 
 import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
 import { AcsOptions, PaginatedAcsOptions } from '../service'
-import { ACSCacheOptions } from '../cache/cache'
 import { BaseReader } from './base'
 import {
     ACSCacheCollection,
     PaginatedACSCacheCollection,
 } from '../cache/collection'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { ACSCacheOptions } from '../cache/item'
 
 function isPageResponse(
     obj: unknown

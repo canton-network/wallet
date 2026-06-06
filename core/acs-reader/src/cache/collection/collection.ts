@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ACSCache, PaginatedACSCache } from '../cache'
 import { ACSKey } from '../../types'
 import { PaginatedResolvedAcsOptions, ResolvedAcsOptions } from '../../service'
 import { BaseCacheCollection } from './base'
+import { ACSCache, PaginatedACSCache } from '../item'
 
 export class ACSCacheCollection extends BaseCacheCollection<ACSCache> {
     protected async updateCache(args: {

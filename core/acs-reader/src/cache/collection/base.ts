@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LRUCache } from 'typescript-lru-cache'
-import { ACSCache, ACSCacheOptions, PaginatedACSCache } from '../cache'
 import { ACSKey } from '../../types'
 import { PaginatedResolvedAcsOptions, ResolvedAcsOptions } from '../../service'
 import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { ACSCache, PaginatedACSCache, ACSCacheOptions } from '../item'
 
 export abstract class BaseCacheCollection<
     Cache extends ACSCache | PaginatedACSCache,

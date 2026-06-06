@@ -1,84 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    ACEvent,
-    ACS_UPDATE_CONFIG,
-    ACSState,
-    PaginatedACSState,
-} from '../types'
-import {
-    AbstractLedgerProvider,
-    Ops,
-} from '@canton-network/core-provider-ledger'
-import { LRUCacheOptions } from 'typescript-lru-cache'
+import { ACEvent, ACS_UPDATE_CONFIG, ACSState } from '../../types'
+import { Ops } from '@canton-network/core-provider-ledger'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import pino from 'pino'
-import {
-    ResolvedAcsOptions,
-    AcsService,
-    buildActiveContractFilter,
-    PaginatedResolvedAcsOptions,
-} from '../service'
+import { ResolvedAcsOptions, buildActiveContractFilter } from '../../service'
 import { ContractId } from '@canton-network/core-types'
-
-export type ACSCacheOptions = Pick<
-    LRUCacheOptions<string, BaseACSCache>,
-    'maxSize' | 'entryExpirationTimeInMS'
->
-
-const logger = pino({ name: 'acs-reader/cache' })
-
-/**
- * Checks if an event represents a contract creation.
- * Used to distinguish between created and archived events when processing cache updates.
- */
-function isCreatedEvent(event: ACEvent): event is ACEvent & {
-    archived: true
-    event: LedgerCommonSchemas['CreatedEvent']
-} {
-    return !event.archived
-}
-
-type BaseCache<Paginated extends boolean> = {
-    State: Paginated extends true ? PaginatedACSState : ACSState
-    Options: Paginated extends true
-        ? PaginatedResolvedAcsOptions
-        : ResolvedAcsOptions
-    ReturnValue: ReturnType<
-        AcsService[Paginated extends true
-            ? 'getPaginatedActiveContracts'
-            : 'getActiveContracts']
-    >
-}
-
-abstract class BaseACSCache<Paginated extends boolean = false> {
-    protected abstract readonly state: BaseCache<Paginated>['State']
-
-    protected readonly service: AcsService
-
-    constructor(protected readonly ledger: AbstractLedgerProvider) {
-        this.service = new AcsService(ledger)
-    }
-
-    /**
-     * Updates the cache to include ledger changes up to the specified offset.
-     * Fetches and applies incremental updates from the ledger, initializing the cache if needed.
-     * Automatically prunes old events when the update buffer exceeds configured thresholds.
-     */
-    public abstract update(
-        options: BaseCache<Paginated>['Options']
-    ): Promise<void>
-
-    /**
-     * Calculates the active contract set at a specific ledger offset.
-     * Applies cached updates to the initial snapshot and filters out archived contracts.
-     * Throws an error if the cache is not initialized or the requested offset is too old.
-     */
-    public abstract calculateAt(
-        offset: number
-    ): LedgerCommonSchemas['JsGetActiveContractsResponse'][]
-}
+import { BaseACSCache, isCreatedEvent, logger } from './base'
 
 export class ACSCache extends BaseACSCache {
     protected readonly state: ACSState = {
@@ -341,78 +269,5 @@ export class ACSCache extends BaseACSCache {
             }
         })
         return { newEvents, newOffset }
-    }
-}
-
-export class PaginatedACSCache extends BaseACSCache<true> {
-    private static readonly FIRST_PAGE_TOKEN = ''
-    protected readonly state: PaginatedACSState = {
-        pages: {
-            [PaginatedACSCache.FIRST_PAGE_TOKEN]: {
-                activeContracts: [],
-                activeAtOffset: 0,
-                nextPageToken: '',
-            },
-        },
-        offset: 0,
-    }
-    private nextPageToken: string | undefined =
-        PaginatedACSCache.FIRST_PAGE_TOKEN
-
-    public async update(options: PaginatedResolvedAcsOptions) {
-        if (
-            !this.state.pages[PaginatedACSCache.FIRST_PAGE_TOKEN]
-                .activeContracts.length &&
-            !this.state.pages[PaginatedACSCache.FIRST_PAGE_TOKEN].nextPageToken
-        ) {
-            await this.initState(options)
-        }
-
-        if (options.pageToken) {
-            this.state.pages[options.pageToken] =
-                await this.service.getPaginatedActiveContracts(options)
-            this.nextPageToken =
-                this.state.pages[options.pageToken].nextPageToken
-        } else {
-            while (this.nextPageToken && options.offset < this.state.offset) {
-                this.state.pages[this.nextPageToken] =
-                    await this.service.getPaginatedActiveContracts({
-                        ...options,
-                        pageToken: this.nextPageToken,
-                    })
-                this.nextPageToken =
-                    this.state.pages[this.nextPageToken].nextPageToken
-            }
-        }
-    }
-
-    public calculateAt(offset: number) {
-        const activeContracts = Object.values(this.state.pages).flatMap(
-            (page) => page.activeContracts
-        )
-
-        if (!activeContracts.length)
-            throw Error('No ACS initialized. Call `.update()` first')
-
-        return activeContracts.filter((ac) => {
-            const event =
-                ac.contractEntry && 'JsActiveContract' in ac.contractEntry
-                    ? ac.contractEntry.JsActiveContract.createdEvent
-                    : undefined
-            return event && event.offset <= offset
-        })
-    }
-
-    public getPage(pageToken: string) {
-        return this.state.pages[pageToken]
-    }
-
-    private async initState(options: PaginatedResolvedAcsOptions) {
-        const firstPage =
-            await this.service.getPaginatedActiveContracts(options)
-
-        this.state.pages[PaginatedACSCache.FIRST_PAGE_TOKEN] = firstPage
-        this.state.offset = firstPage.activeAtOffset
-        this.nextPageToken = firstPage.nextPageToken
     }
 }

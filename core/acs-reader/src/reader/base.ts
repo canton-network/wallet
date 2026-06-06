@@ -16,8 +16,8 @@ import {
     PaginatedResolvedAcsOptions,
     ResolvedAcsOptions,
 } from '../service'
-import { ACSCacheOptions } from '../cache/cache'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { ACSCacheOptions } from '../cache/item'
 
 export abstract class BaseReader<
     Options extends AcsOptions | PaginatedAcsOptions,
