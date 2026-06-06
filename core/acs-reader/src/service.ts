@@ -27,11 +27,93 @@ export type AcsOptions = {
     limit?: number
     continueUntilCompletion?: boolean
 }
+export type PaginatedAcsOptions = Omit<AcsOptions, 'limit'> &
+    Pick<Types['GetActiveContractsPageRequest'], 'pageToken' | 'maxPageSize'>
 
-export type ResolvedAcsOptions = Omit<AcsOptions, 'offset'> & { offset: number }
+type ResolvedOptions<Options> = Omit<Options, 'offset'> & { offset: number }
+
+export type ResolvedAcsOptions = ResolvedOptions<AcsOptions>
+export type PaginatedResolvedAcsOptions = ResolvedOptions<PaginatedAcsOptions>
 
 export class AcsService {
     constructor(private readonly ledgerProvider: AbstractLedgerProvider) {}
+
+    public async getPaginatedActiveContracts(
+        options: Omit<
+            PaginatedResolvedAcsOptions,
+            'continueUntilCompletion'
+        > & {
+            continueUntilCompletion: true
+        }
+    ): Promise<Types['JsGetActiveContractsPageResponse'][]>
+    public async getPaginatedActiveContracts(
+        options: Omit<
+            PaginatedResolvedAcsOptions,
+            'continueUntilCompletion'
+        > & {
+            continueUntilCompletion: false
+        }
+    ): Promise<Types['JsGetActiveContractsPageResponse']>
+    public async getPaginatedActiveContracts(
+        options: Omit<PaginatedResolvedAcsOptions, 'continueUntilCompletion'>
+    ): Promise<Types['JsGetActiveContractsPageResponse']>
+    public async getPaginatedActiveContracts(
+        options: PaginatedResolvedAcsOptions
+    ): Promise<
+        | Types['JsGetActiveContractsPageResponse']
+        | Types['JsGetActiveContractsPageResponse'][]
+    > {
+        const { continueUntilCompletion, ...baseArgs } = options
+        const { maxPageSize, pageToken } = baseArgs
+
+        const { activeAtOffset, filter } = buildActiveContractFilter(options)
+
+        if (continueUntilCompletion) {
+            const results: Types['JsGetActiveContractsPageResponse'][] = []
+            let shouldContinue = true
+            while (shouldContinue) {
+                const pageToken = results[results.length - 1].nextPageToken
+                const result = await this.getPaginatedActiveContracts({
+                    ...baseArgs,
+                    continueUntilCompletion: false,
+                    ...(pageToken ? { pageToken } : {}),
+                })
+
+                results.push(result)
+                shouldContinue = Boolean(result.nextPageToken)
+            }
+            return results
+        }
+
+        const body: Ops.GetV2StateActiveContractsPage['ledgerApi']['params']['body'] =
+            {
+                eventFormat: {},
+                activeAtOffset,
+            }
+        if (filter?.filtersByParty) {
+            body.eventFormat.filtersByParty = filter.filtersByParty
+        }
+        if (filter?.filtersForAnyParty) {
+            body.eventFormat.filtersForAnyParty = filter.filtersForAnyParty
+        }
+        if (maxPageSize !== undefined) {
+            body.maxPageSize = maxPageSize
+        }
+        if (pageToken !== undefined) {
+            body.pageToken = pageToken
+        }
+
+        return await this.ledgerProvider.request<Ops.GetV2StateActiveContractsPage>(
+            {
+                method: 'ledgerApi',
+                params: {
+                    requestMethod: 'get',
+                    resource: '/v2/state/active-contracts-page',
+                    body,
+                },
+            }
+        )
+    }
 
     public async getActiveContracts(
         options: ResolvedAcsOptions

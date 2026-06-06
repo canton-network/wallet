@@ -2,17 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LRUCache } from 'typescript-lru-cache'
-import { ACSCache, ACSCacheOptions } from './cache'
-import { ACSKey } from '../types'
-import { ResolvedAcsOptions } from '../service'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { ACSCache, ACSCacheOptions, PaginatedACSCache } from '../cache'
+import { ACSKey } from '../../types'
+import { PaginatedResolvedAcsOptions, ResolvedAcsOptions } from '../../service'
 import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
+import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
-export class ACSCacheCollection {
-    private readonly collection: LRUCache<string, ACSCache>
+export abstract class BaseCacheCollection<
+    Cache extends ACSCache | PaginatedACSCache,
+    Options extends ResolvedAcsOptions | PaginatedResolvedAcsOptions =
+        Cache extends ACSCache
+            ? ResolvedAcsOptions
+            : PaginatedResolvedAcsOptions,
+> {
+    protected readonly collection: LRUCache<string, Cache>
 
     constructor(
-        private readonly ledger: AbstractLedgerProvider,
+        protected readonly ledger: AbstractLedgerProvider,
         private readonly options: ACSCacheOptions = {
             maxSize: 100,
             entryExpirationTimeInMS: 10 * 60 * 1000,
@@ -26,12 +32,11 @@ export class ACSCacheCollection {
      * Resolves party references and constructs cache keys from the provided template and interface IDs.
      * Queries are deduplicated and cached per party-template-interface combination.
      *
-     * @override
      * @see {@link ACSReader.readRaw}
      */
     public async readFromCache(
-        options: ResolvedAcsOptions
-    ): Promise<Array<LedgerCommonSchemas['JsGetActiveContractsResponse']>> {
+        options: Options
+    ): Promise<LedgerCommonSchemas['JsGetActiveContractsResponse'][]> {
         const { parties, interfaceIds, templateIds } = options
         const keys: ACSKey[] =
             parties?.flatMap((party) => {
@@ -49,12 +54,14 @@ export class ACSCacheCollection {
         return await this.query({ options, keys })
     }
 
-    private getCache(key: ACSKey) {
+    protected abstract createCache(): Cache
+
+    protected getCache(key: ACSKey) {
         const serializedKey = this.serializeKey(key)
         const existingCache = this.collection.get(serializedKey)
         if (existingCache) return existingCache
 
-        const newCache = new ACSCache(this.ledger)
+        const newCache = this.createCache()
         this.collection.set(serializedKey, newCache)
 
         return newCache
@@ -64,23 +71,19 @@ export class ACSCacheCollection {
      * Updates the cached active contract set for a specific key and returns contracts at the requested offset.
      * If the cache is outdated, fetches updates from the ledger and applies them incrementally.
      */
-    private async updateCache(args: {
-        options: ResolvedAcsOptions
+    protected abstract updateCache(args: {
+        options: Options
         key: ACSKey
-    }) {
-        const cache = this.getCache(args.key)
-        await cache.update(args.options)
-        return await cache.calculateAt(args.options.offset)
-    }
+    }): Promise<ReturnType<Cache['calculateAt']>>
 
     /**
      * Queries multiple cache keys in parallel and combines the results.
      * Each key represents a unique party-template-interface combination to be queried independently.
      */
-    private async query(args: {
-        options: ResolvedAcsOptions
+    protected async query(args: {
+        options: Options
         keys: ACSKey[]
-    }): Promise<Array<LedgerCommonSchemas['JsGetActiveContractsResponse']>> {
+    }): Promise<LedgerCommonSchemas['JsGetActiveContractsResponse'][]> {
         const { options, keys } = args
         return (
             await Promise.all(
@@ -91,7 +94,7 @@ export class ACSCacheCollection {
         ).flat()
     }
 
-    private serializeKey(key: ACSKey): string {
+    protected serializeKey(key: ACSKey): string {
         return `${key.party ?? 'ANY'}_T${key.templateId ?? '()'}_I${key.interfaceId ?? '()'}`
     }
 }
