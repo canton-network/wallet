@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import CheckIcon from '@mui/icons-material/Check'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { IconButton, Tooltip, type IconButtonProps } from '@mui/material'
@@ -19,7 +19,10 @@ export function CopyIconButton({
 }: CopyIconButtonProps) {
     const [copied, setCopied] = useState(false)
 
-    const handleCopy = async () => {
+    const handleCopy = async (event: MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault()
+        event.stopPropagation()
+
         try {
             await navigator.clipboard.writeText(value)
             setCopied(true)
