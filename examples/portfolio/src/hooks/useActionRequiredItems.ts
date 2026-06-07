@@ -99,7 +99,7 @@ export function useActionRequiredItems(): ActionRequiredItemsResult {
 
             const transferItem: TransferActionItem = {
                 kind: 'transfer',
-                id: contract.contractId,
+                contractId: contract.contractId,
                 currentPartyId: primaryParty,
                 tag,
                 type: tag?.startsWith('Transfer') ? 'Transfer' : tag,
@@ -143,7 +143,7 @@ export function useActionRequiredItems(): ActionRequiredItemsResult {
 
             const allocationItem: AllocationActionItem = {
                 kind: 'allocation',
-                id: request.contractId,
+                contractId: request.contractId,
                 currentPartyId: primaryParty,
                 expiry: settlement.allocateBefore,
                 settlement,

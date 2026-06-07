@@ -90,7 +90,7 @@ export function Index() {
 
                 const transferItem: TransferActionItem = {
                     kind: 'transfer',
-                    id: contract.contractId,
+                    contractId: contract.contractId,
                     currentPartyId: primaryParty,
                     tag: tag,
                     type: tag?.startsWith('Transfer') ? 'Transfer' : tag,
@@ -131,7 +131,7 @@ export function Index() {
 
                 const allocationItem: AllocationActionItem = {
                     kind: 'allocation',
-                    id: request.contractId,
+                    contractId: request.contractId,
                     currentPartyId: primaryParty,
                     expiry: settlement.allocateBefore,
                     settlement,
