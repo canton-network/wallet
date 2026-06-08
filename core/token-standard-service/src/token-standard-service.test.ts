@@ -1017,4 +1017,45 @@ describe('Token standard service', () => {
             } as any)
         ).toBe(false)
     })
+
+    it('create delegate proxy transfer', async () => {
+        const { service } = makeService()
+        vi.spyOn(service.transfer, 'createTransfer').mockResolvedValue([
+            { contractId: 'transfer-cid', choiceArgument: {} } as any,
+            [],
+        ])
+
+        const [exercise] = await service.createDelegateProxyTranfser(
+            senderParty,
+            'bob::def',
+            '10.0',
+            instrumentAdmin,
+            instrumentId,
+            registryUrl,
+            'app-right-cid',
+            'proxy-cid',
+            [{ beneficiary: senderParty, weight: 0.5 }]
+        )
+
+        expect(exercise).toStrictEqual({
+            choice: 'DelegateProxy_TransferFactory_Transfer',
+            choiceArgument: {
+                cid: 'transfer-cid',
+                proxyArg: {
+                    beneficiaries: [
+                        {
+                            beneficiary:
+                                'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
+                            weight: 0.5,
+                        },
+                    ],
+                    choiceArg: {},
+                    featuredAppRightCid: 'app-right-cid',
+                },
+            },
+            contractId: 'proxy-cid',
+            templateId:
+                '#splice-util-featured-app-proxies:Splice.Util.FeaturedApp.DelegateProxy:DelegateProxy',
+        })
+    })
 })
