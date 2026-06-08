@@ -1,10 +1,30 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    PartyLevelRight,
+    type Network,
+    type Wallet,
+} from '@canton-network/core-wallet-store'
 import type {
     Idp,
     PublicNetwork,
 } from '@canton-network/core-wallet-user-rpc-client'
+
+export function makeWallet(overrides: Partial<Wallet> = {}): Wallet {
+    return {
+        primary: false,
+        status: 'allocated',
+        partyId: 'party::ns',
+        hint: 'alice',
+        publicKey: 'pk',
+        namespace: 'ns',
+        networkId: 'net-1',
+        signingProviderId: 'local',
+        rights: [],
+        ...overrides,
+    }
+}
 
 export function makePublicNetwork(
     overrides: Partial<PublicNetwork> = {}
@@ -22,6 +42,23 @@ export function makePublicNetwork(
     }
 }
 
+export function makeNetwork(overrides: Partial<Network> = {}): Network {
+    return {
+        id: 'net-1',
+        name: 'Test Network',
+        description: 'Test network description',
+        identityProviderId: 'idp-1',
+        ledgerApi: { baseUrl: 'http://localhost:6865' },
+        auth: {
+            method: 'authorization_code',
+            audience: 'audience',
+            scope: 'scope',
+            clientId: 'client-id',
+        },
+        ...overrides,
+    } as Network
+}
+
 export function makeIdp(overrides: Partial<Idp> = {}): Idp {
     return {
         id: 'idp-1',
@@ -31,3 +68,5 @@ export function makeIdp(overrides: Partial<Idp> = {}): Idp {
         ...overrides,
     }
 }
+
+export { PartyLevelRight }
