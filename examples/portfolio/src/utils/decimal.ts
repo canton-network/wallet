@@ -10,3 +10,8 @@ export const toDecimalOrNull = (value: Decimal.Value): Decimal | null => {
         return null
     }
 }
+
+export const formatAmount = (value: Decimal.Value): string => {
+    const decimal = toDecimalOrNull(value)
+    return decimal ? decimal.toFixed() : String(value)
+}

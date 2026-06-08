@@ -22,7 +22,7 @@ export const CopyableIdentifier: React.FC<CopyableIdentifierProps> = ({
         const parts = val.split('::')
         const prefix = parts[0] || ''
         const suffix = parts[1] || ''
-        return `${prefix}::${truncate(suffix, maxLength)}`
+        return `${truncate(prefix, maxLength)}::${truncate(suffix, maxLength)}`
     }
 
     const getDisplayValue = () => {
