@@ -101,12 +101,29 @@ const testTokenAllocation = allocationsBob.find(
 )
 if (!testTokenAllocation) throw new Error('TestToken allocation not found')
 const testTokenAllocationCid = testTokenAllocation.contractId
+// Disclose Bob's TestToken allocation to the TradingApp (P3/sv participant): the
+// allocation is created on P2 (app-provider), so it may not yet be in P3's ACS
+// when settlement runs. Disclosing it makes settlement independent of cross-
+// participant propagation timing.
+const testTokenAllocationDisclosed = {
+    templateId: testTokenAllocation.activeContract.createdEvent.templateId,
+    contractId: testTokenAllocation.contractId,
+    createdEventBlob:
+        testTokenAllocation.activeContract.createdEvent.createdEventBlob!,
+    synchronizerId: '',
+}
 
 // ── Step 10b: TradingApp settles the OTCTrade ─────────────────────────────────
 try {
     await settleOtcTrade(
         setup,
-        { otcTradeCid, legIdAlice, legIdBob, testTokenAllocationCid },
+        {
+            otcTradeCid,
+            legIdAlice,
+            legIdBob,
+            testTokenAllocationCid,
+            testTokenAllocationDisclosed,
+        },
         logger
     )
 } catch (e) {
