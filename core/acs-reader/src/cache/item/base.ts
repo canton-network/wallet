@@ -18,7 +18,7 @@ export const logger = pino({ name: 'acs-reader/cache' })
  * Used to distinguish between created and archived events when processing cache updates.
  */
 export function isCreatedEvent(event: ACEvent): event is ACEvent & {
-    archived: true
+    archived: false
     event: LedgerCommonSchemas['CreatedEvent']
 } {
     return !event.archived
