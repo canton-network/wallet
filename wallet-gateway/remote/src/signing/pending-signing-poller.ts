@@ -3,14 +3,15 @@
 
 import { Logger } from 'pino'
 import {
+    AuthContext,
     AuthTokenProvider,
     Idp,
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
 import { StoreSql } from '@canton-network/core-wallet-store-sql'
-import { Transaction } from '@canton-network/core-wallet-store'
+import { Session, Transaction } from '@canton-network/core-wallet-store'
 import { NotificationService } from '../notification/NotificationService.js'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
+import type { SigningDrivers } from './signing-drivers.js'
 import {
     ServiceAccountAutomation,
     ServiceAccountAutomationConfig,
@@ -35,8 +36,7 @@ export class PendingSigningPoller {
         this.automation = new ServiceAccountAutomation(
             options.automationConfig,
             options.signingDrivers,
-            options.logger.child({ component: 'ServiceAccountAutomation' }),
-            options.getIdp
+            options.logger.child({ component: 'ServiceAccountAutomation' })
         )
     }
 
@@ -103,16 +103,13 @@ export class PendingSigningPoller {
             return
         }
 
-        const scopedStore = this.options.store
-        await scopedStore.setSession(sessionRow)
+        const accessToken = await this.resolveAccessToken(userId, sessionRow)
+
+        const authContext: AuthContext = { userId, accessToken }
+        const scopedStore = this.options.store.withAuthContext(authContext)
+        await scopedStore.setSession({ ...sessionRow, accessToken })
 
         const network = await scopedStore.getNetwork(networkId)
-        const accessToken = await this.resolveAccessToken(
-            scopedStore,
-            network,
-            sessionRow.accessToken
-        )
-
         if (!this.automation.isAutomationRequest(network, accessToken)) {
             return
         }
@@ -135,12 +132,15 @@ export class PendingSigningPoller {
         const notifier = this.options.notificationService.getNotifier(userId)
 
         try {
-            await this.automation.signAndExecutePreparedTransaction(
-                scopedStore,
-                wallet,
-                transaction,
-                notifier
-            )
+            await this.automation
+                .withAuthContext(authContext)
+                .signAndExecutePreparedTransaction(
+                    scopedStore,
+                    network,
+                    wallet,
+                    refreshedTx,
+                    notifier
+                )
         } catch (error) {
             this.options.logger.error(
                 {
@@ -155,32 +155,32 @@ export class PendingSigningPoller {
     }
 
     private async resolveAccessToken(
-        store: StoreSql,
-        network: Awaited<ReturnType<StoreSql['getNetwork']>>,
-        sessionAccessToken: string
+        userId: string,
+        session: Session
     ): Promise<string> {
-        if (!jwtExpired(sessionAccessToken)) {
-            return sessionAccessToken
+        if (!jwtExpired(session.accessToken)) {
+            return session.accessToken
         }
 
+        const scopedStore = this.options.store.withAuthContext({
+            userId,
+            accessToken: session.accessToken,
+        })
+        await scopedStore.setSession(session)
+        const network = await scopedStore.getNetwork(session.network)
+
         if (network.auth.method !== 'client_credentials') {
-            return sessionAccessToken
+            return session.accessToken
         }
 
         const idp = await this.options.getIdp(network.identityProviderId)
-        const provider = AuthTokenProvider.fromGatewayConfig(
+        const accessToken = await AuthTokenProvider.fromGatewayConfig(
             idp,
             network.auth,
             this.options.logger
-        )
-        const accessToken = await provider.getAccessToken()
-        const userId = store.authContext?.userId
-        if (userId) {
-            const session = await store.getSession()
-            if (session) {
-                await store.setSession({ ...session, accessToken })
-            }
-        }
+        ).getAccessToken()
+
+        await scopedStore.setSession({ ...session, accessToken })
         return accessToken
     }
 }

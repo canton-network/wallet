@@ -35,14 +35,12 @@ import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import {
     ServiceAccountAutomation,
     ServiceAccountAutomationConfig,
-} from '../ledger/service-account-automation.js'
+} from '../signing/service-account-automation.js'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
-import type { Idp } from '@canton-network/core-wallet-auth'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
     serviceAccountConfig: ServiceAccountAutomationConfig
-    getIdp: (idpId: string) => Promise<Idp>
 }
 
 export const dappController = (
@@ -62,8 +60,8 @@ export const dappController = (
               deps.serviceAccountConfig,
               deps.signingDrivers,
               logger,
-              deps.getIdp
-          ).withAuthContext(context)
+              context
+          )
         : undefined
 
     return buildController({
@@ -295,6 +293,7 @@ export const dappController = (
                 )
                 await serviceAccountAutomation.signAndExecutePreparedTransaction(
                     store,
+                    network,
                     wallet,
                     transaction,
                     notifier

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { ServiceAccountAutomation } from './service-account-automation.js'
@@ -13,13 +13,11 @@ import type {
 } from '@canton-network/core-wallet-store'
 
 const transactionServiceMocks = vi.hoisted(() => ({
-    signWithParticipant: vi.fn(),
-    signWithWalletKernel: vi.fn(),
-    executeWithParticipant: vi.fn(),
-    executeWithExternal: vi.fn(),
+    sign: vi.fn(),
+    execute: vi.fn(),
 }))
 
-vi.mock('./transaction-service.js', () => ({
+vi.mock('../ledger/transaction-service.js', () => ({
     TransactionService: vi.fn(function TransactionServiceMock() {
         return transactionServiceMocks
     }),
@@ -62,30 +60,33 @@ const transaction: Transaction = {
     origin: null,
 }
 
+const authContext = {
+    userId: 'user-1',
+    accessToken: 'token',
+}
+
 describe('ServiceAccountAutomation', () => {
+    afterEach(() => {
+        vi.clearAllMocks()
+    })
+
     it('detects client credentials networks', () => {
         const automation = new ServiceAccountAutomation(
             {},
             {},
-            pino({ level: 'silent' }, sink()),
-            async () => ({
-                id: 'idp1',
-                type: 'oauth',
-                issuer: 'iss',
-                configUrl: 'http://auth',
-            })
+            pino({ level: 'silent' }, sink())
         )
         expect(automation.isAutomationRequest(network, 'any-token')).toBe(true)
     })
 
-    it('signs and executes participant transactions straight-through', async () => {
-        transactionServiceMocks.signWithParticipant.mockReturnValue({
+    it('signs and executes transactions straight-through', async () => {
+        transactionServiceMocks.sign.mockResolvedValue({
             status: 'signed',
-            signature: 'none',
+            signature: 'sig',
             signedBy: 'ns',
             partyId: wallet.partyId,
         })
-        transactionServiceMocks.executeWithParticipant.mockResolvedValue({
+        transactionServiceMocks.execute.mockResolvedValue({
             commandId: 'cmd-1',
         })
 
@@ -93,12 +94,7 @@ describe('ServiceAccountAutomation', () => {
             {},
             {},
             pino({ level: 'silent' }, sink()),
-            async () => ({
-                id: 'idp1',
-                type: 'oauth',
-                issuer: 'iss',
-                configUrl: 'http://auth',
-            })
+            authContext
         )
 
         const store = {
@@ -109,14 +105,52 @@ describe('ServiceAccountAutomation', () => {
 
         await automation.signAndExecutePreparedTransaction(
             store as never,
+            network,
             wallet,
             transaction,
             notifier as never
         )
 
-        expect(transactionServiceMocks.signWithParticipant).toHaveBeenCalled()
-        expect(
-            transactionServiceMocks.executeWithParticipant
-        ).toHaveBeenCalled()
+        expect(transactionServiceMocks.sign).toHaveBeenCalledWith(
+            authContext,
+            wallet,
+            expect.objectContaining({ transactionId: transaction.id })
+        )
+        expect(transactionServiceMocks.execute).toHaveBeenCalledWith(
+            authContext,
+            wallet,
+            transaction,
+            expect.objectContaining({
+                signature: 'sig',
+                signedBy: 'ns',
+            }),
+            expect.anything(),
+            network
+        )
+    })
+
+    it('returns without executing when external signing is still pending', async () => {
+        transactionServiceMocks.sign.mockResolvedValue({
+            status: 'pending',
+            externalTxId: 'ext-1',
+            partyId: wallet.partyId,
+        })
+
+        const automation = new ServiceAccountAutomation(
+            {},
+            {},
+            pino({ level: 'silent' }, sink()),
+            authContext
+        )
+
+        await automation.signAndExecutePreparedTransaction(
+            {} as never,
+            network,
+            wallet,
+            transaction,
+            { emit: vi.fn() } as never
+        )
+
+        expect(transactionServiceMocks.execute).not.toHaveBeenCalled()
     })
 })

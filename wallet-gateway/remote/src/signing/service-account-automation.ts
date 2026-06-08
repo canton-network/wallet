@@ -4,19 +4,21 @@
 import { Logger } from 'pino'
 import {
     AuthContext,
+    AuthTokenProvider,
     assertConnected,
     assertServiceAccountUserAllowed,
     isServiceAccountRequest,
+    type AuthAware,
 } from '@canton-network/core-wallet-auth'
+import { LedgerClient } from '@canton-network/core-ledger-client'
 import {
     Network,
     Store,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import type { AuthAware, Idp } from '@canton-network/core-wallet-auth'
-import { TransactionService } from './transaction-service.js'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
+import { TransactionService } from '../ledger/transaction-service.js'
+import type { SigningDrivers } from './signing-drivers.js'
 import { Notifier } from '../notification/NotificationService.js'
 import type { ExecuteParams, SignParams } from '../user-api/rpc-gen/typings.js'
 
@@ -31,7 +33,6 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
         private readonly config: ServiceAccountAutomationConfig,
         private readonly signingDrivers: SigningDrivers,
         private readonly logger: Logger,
-        private readonly getIdp: (idpId: string) => Promise<Idp>,
         authContext?: AuthContext
     ) {
         this.authContext = authContext
@@ -42,7 +43,6 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
             this.config,
             this.signingDrivers,
             this.logger,
-            this.getIdp,
             context
         )
     }
@@ -57,12 +57,15 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
 
     async signAndExecutePreparedTransaction(
         store: Store,
+        network: Network,
         wallet: Wallet,
         transaction: Transaction,
         notifier: Notifier
     ): Promise<void> {
+        const authContext = this.getAuthContext()
+
         assertServiceAccountUserAllowed(
-            this.getAuthContext().userId,
+            authContext.userId,
             this.config.allowedUsers
         )
 
@@ -79,7 +82,7 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
         }
 
         const signResult = await transactionService.sign(
-            this.getAuthContext(),
+            authContext,
             wallet,
             signParams
         )
@@ -110,6 +113,15 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
             )
         }
 
+        const ledgerClient = new LedgerClient({
+            baseUrl: new URL(network.ledgerApi.baseUrl),
+            logger: this.logger,
+            accessTokenProvider: AuthTokenProvider.fromToken(
+                authContext.accessToken,
+                this.logger
+            ),
+        })
+
         const executeParams: ExecuteParams = {
             transactionId: transaction.id,
             partyId: wallet.partyId,
@@ -118,10 +130,12 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
         }
 
         await transactionService.execute(
-            this.getAuthContext(),
+            authContext,
             wallet,
             transaction,
-            executeParams
+            executeParams,
+            ledgerClient,
+            network
         )
     }
 }

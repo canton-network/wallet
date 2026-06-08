@@ -44,7 +44,7 @@ import { sessionHandler } from './middleware/sessionHandler.js'
 import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
 import { Env } from './env.js'
-import { PendingSigningPoller } from './ledger/pending-signing-poller.js'
+import { PendingSigningPoller } from './signing/pending-signing-poller.js'
 import type { Idp } from '@canton-network/core-wallet-auth'
 
 let isReady = false
@@ -371,7 +371,6 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const dappControllerDeps = {
         signingDrivers: drivers,
         serviceAccountConfig,
-        getIdp: resolveIdp,
     }
 
     pendingSigningPoller = new PendingSigningPoller({
