@@ -61,20 +61,6 @@ export function makeIdp(overrides: Partial<Idp> = {}): Idp {
     }
 }
 
-export function makePublicNetwork(
-    overrides: Partial<PublicNetwork> = {}
-): PublicNetwork {
-    return {
-        id: 'net-1',
-        name: 'Test Network',
-        description: 'Test network description',
-        identityProviderId: 'idp-1',
-        ledgerApi: 'http://localhost:6865',
-        authMethod: 'client_credentials',
-        ...overrides,
-    }
-}
-
 export function makeNetwork(overrides: Partial<Network> = {}): Network {
     return {
         id: 'net-1',
@@ -89,6 +75,20 @@ export function makeNetwork(overrides: Partial<Network> = {}): Network {
             clientId: 'client-id',
             clientSecret: 'client-secret',
         },
+        ...overrides,
+    }
+}
+
+export function makePublicNetwork(
+    overrides: Partial<PublicNetwork> = {}
+): PublicNetwork {
+    return {
+        id: 'net-1',
+        name: 'Test Network',
+        description: 'Test network description',
+        identityProviderId: 'idp-1',
+        ledgerApi: 'http://localhost:6865',
+        authMethod: 'client_credentials',
         ...overrides,
     }
 }
