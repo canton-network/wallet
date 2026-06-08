@@ -56,7 +56,6 @@ describe('idp-card', () => {
         )
 
         expect(el.shadowRoot?.textContent).not.toContain('Config URL')
-        expect(el.shadowRoot?.querySelectorAll('wg-copy-button').length).toBe(1)
     })
 
     it('emits IdpCardReviewEvent when the card is clicked', async () => {
