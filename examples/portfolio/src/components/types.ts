@@ -9,7 +9,7 @@ import type {
 } from '@canton-network/core-token-standard'
 
 interface ActionItemBase {
-    id: string
+    contractId: string
     currentPartyId: string
     expiry: string
 }

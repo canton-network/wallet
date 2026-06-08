@@ -48,15 +48,11 @@ import {
     authSchema,
     Auth,
     AuthTokenProvider,
-    fetchOidcUserInfo,
     idpSchema,
 } from '@canton-network/core-wallet-auth'
 import { KernelInfo } from '../config/Config.js'
-import {
-    isRpcError,
-    SigningDriverInterface,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
+import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
+import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
@@ -66,17 +62,13 @@ import { TransactionService } from '../ledger/transaction-service.js'
 import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
 
-type AvailableSigningDrivers = Partial<
-    Record<SigningProvider, SigningDriverInterface>
->
-
 export const userController = (
     kernelInfo: KernelInfo,
     userUrl: string,
     store: Store,
     notificationService: NotificationService,
     authContext: AuthContext | undefined,
-    drivers: AvailableSigningDrivers,
+    drivers: SigningDrivers,
     _logger: Logger,
     adminUserId?: string
 ) => {
@@ -94,38 +86,6 @@ export const userController = (
             throw new Error(
                 'Unauthorized: only the admin user can perform this operation'
             )
-        }
-    }
-
-    async function resolveUserEmail(
-        connectedContext: AuthContext
-    ): Promise<string | undefined> {
-        if (connectedContext.email) {
-            return connectedContext.email
-        }
-
-        try {
-            const network = await store.getCurrentNetwork()
-            if (!network) {
-                return undefined
-            }
-
-            const idp = await store.getIdp(network.identityProviderId)
-            if (idp.type !== 'oauth') {
-                return undefined
-            }
-
-            const userInfo = await fetchOidcUserInfo(
-                idp.configUrl,
-                connectedContext.accessToken
-            )
-            return userInfo?.email
-        } catch (error) {
-            logger.warn(
-                error,
-                'Failed to resolve user email from OIDC userinfo'
-            )
-            return undefined
         }
     }
 
@@ -269,21 +229,18 @@ export const userController = (
             const { signingProviderId, primary, partyHint } = params
 
             const connectedContext = assertConnected(authContext)
-            const userId = connectedContext.userId
-            const email = await resolveUserEmail(connectedContext)
-
-            const notifier = notificationService.getNotifier(userId)
             const network = await store.getCurrentNetwork()
-
             if (network === undefined) {
                 throw new Error('No network session found')
             }
-
             const idp = await store.getIdp(network.identityProviderId)
-
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+
+            const notifier = notificationService.getNotifier(
+                connectedContext.userId
+            )
 
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
@@ -351,12 +308,13 @@ export const userController = (
 
             const connectedContext = assertConnected(authContext)
             const userId = connectedContext.userId
-            const email = await resolveUserEmail(connectedContext)
 
-            const notifier = notificationService.getNotifier(userId)
             const network = await store.getCurrentNetwork()
             if (!network) {
                 throw new Error('No network session found')
+            }
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
             }
 
             const allWallets = await store.getWallets()
@@ -369,11 +327,6 @@ export const userController = (
             }
 
             const idp = await store.getIdp(network.identityProviderId)
-
-            if (!network.adminAuth) {
-                throw new Error('No admin auth configured')
-            }
-
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -432,8 +385,9 @@ export const userController = (
                     w.partyId === existingWallet.partyId &&
                     w.networkId === network.id
             )!
-            notifier?.emit('accountsChanged', wallets)
 
+            const notifier = notificationService.getNotifier(userId)
+            notifier?.emit('accountsChanged', wallets)
             return { wallet }
         },
         setPrimaryWallet: async (params: SetPrimaryWalletParams) => {
@@ -467,69 +421,16 @@ export const userController = (
             }
 
             const connectedContext = assertConnected(authContext)
-            const userId = connectedContext.userId
-            const email = await resolveUserEmail(connectedContext)
-
-            const notifier = notificationService.getNotifier(userId)
-            const signingProvider = wallet.signingProviderId as SigningProvider
-            const driver =
-                drivers[signingProvider]?.controller(connectedContext)
-
-            if (!driver) {
-                throw new Error(
-                    `No driver found for ${wallet.signingProviderId}`
-                )
-            }
-
+            const notifier = notificationService.getNotifier(
+                connectedContext.userId
+            )
             const transactionService = new TransactionService(
                 store,
                 logger,
                 drivers,
                 notifier
             )
-
-            switch (wallet.signingProviderId) {
-                case SigningProvider.PARTICIPANT: {
-                    return transactionService.signWithParticipant(wallet)
-                }
-                case SigningProvider.WALLET_KERNEL: {
-                    return transactionService.signWithWalletKernel(
-                        connectedContext,
-                        wallet,
-                        signParams
-                    )
-                }
-                case SigningProvider.BLOCKDAEMON: {
-                    if (!email) {
-                        throw new Error(
-                            'Email is required for Blockdaemon wallet allocation'
-                        )
-                    }
-                    return transactionService.signWithBlockdaemon(
-                        connectedContext,
-                        wallet,
-                        signParams
-                    )
-                }
-                case SigningProvider.FIREBLOCKS: {
-                    return transactionService.signWithFireblocks(
-                        connectedContext,
-                        wallet,
-                        signParams
-                    )
-                }
-                case SigningProvider.DFNS: {
-                    return transactionService.signWithDfns(
-                        connectedContext,
-                        wallet,
-                        signParams
-                    )
-                }
-                default:
-                    throw new Error(
-                        `Unsupported signing provider: ${wallet.signingProviderId}`
-                    )
-            }
+            return transactionService.sign(connectedContext, wallet, signParams)
         },
         signMessage: async (
             params: SignMessageParams
@@ -731,13 +632,15 @@ export const userController = (
                 throw new Error('No transaction found')
             }
 
-            const userId = assertConnected(authContext).userId
+            const connectedContext = assertConnected(authContext)
 
             if (network === undefined) {
                 throw new Error('No network session found')
             }
 
-            const notifier = notificationService.getNotifier(userId)
+            const notifier = notificationService.getNotifier(
+                connectedContext.userId
+            )
 
             // Create AccessTokenProvider for user token
             const userAccessTokenProvider = AuthTokenProvider.fromToken(
@@ -758,39 +661,14 @@ export const userController = (
                 notifier
             )
 
-            switch (wallet.signingProviderId) {
-                case SigningProvider.PARTICIPANT: {
-                    try {
-                        return await transactionService.executeWithParticipant(
-                            userId,
-                            executeParams,
-                            transaction,
-                            ledgerClient,
-                            network
-                        )
-                    } catch (error) {
-                        logger.error(error, 'Failed to submit transaction')
-                        throw error
-                    }
-                }
-                case SigningProvider.WALLET_KERNEL:
-                case SigningProvider.BLOCKDAEMON:
-                case SigningProvider.FIREBLOCKS: {
-                    return transactionService.executeWithExternal(
-                        userId,
-                        executeParams,
-                        transaction,
-                        ledgerClient
-                    )
-                }
-                case SigningProvider.DFNS: {
-                    return transactionService.executeWithDfns(transaction)
-                }
-                default:
-                    throw new Error(
-                        `Unsupported signing provider: ${wallet.signingProviderId}`
-                    )
-            }
+            return transactionService.execute(
+                connectedContext,
+                wallet,
+                transaction,
+                executeParams,
+                ledgerClient,
+                network
+            )
         },
         addSession: async function (
             params: AddSessionParams

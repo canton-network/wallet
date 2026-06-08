@@ -22,12 +22,6 @@ import type { AllocatedParty } from '../party-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import { AuthContext } from '@canton-network/core-wallet-auth'
 
-const authContext: AuthContext = {
-    userId: 'user-1',
-    accessToken: 'access-token',
-    email: 'user-1@example.com',
-}
-
 const createWallet = (
     partyId: string,
     overrides: Partial<Wallet> = {}
@@ -54,6 +48,12 @@ const createAllocatedParty = (
     hint,
     namespace,
 })
+
+const authContext: AuthContext = {
+    userId: 'user-1',
+    accessToken: 'access-token',
+    email: 'user-1@example.com',
+}
 
 function createFireblocksDriver(options: {
     getKeysResult?:
@@ -329,7 +329,7 @@ describe('WalletAllocationService', () => {
             )
 
             expect(mockPartyAllocator.allocateParty).toHaveBeenCalledWith(
-                'user-1',
+                authContext.userId,
                 'alice'
             )
             expect(mockStore.addWallet).toHaveBeenCalledWith(
