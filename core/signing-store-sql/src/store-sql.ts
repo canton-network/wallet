@@ -78,6 +78,7 @@ export class StoreSql implements SigningDriverStore, AuthAware<StoreSql> {
             .selectFrom('signingKeys')
             .selectAll()
             .where('publicKey', '=', publicKey)
+            .where('userId', '=', this.assertConnected())
             .executeTakeFirst()
         return result ? toSigningKey(result) : undefined
     }
@@ -240,6 +241,7 @@ export class StoreSql implements SigningDriverStore, AuthAware<StoreSql> {
                     eb('id', 'in', txIds),
                 ])
             )
+            .where('userId', '=', this.assertConnected())
             .execute()
 
         return results.map(toSigningTransaction)
