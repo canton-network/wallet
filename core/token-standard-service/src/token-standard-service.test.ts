@@ -7,27 +7,21 @@ import { PrettyContract } from '@canton-network/core-tx-parser'
 import { HoldingView } from '@canton-network/core-token-standard'
 import { Decimal } from 'decimal.js'
 import { Logger } from '@canton-network/core-types'
+import rawTransactions from './test-data/mock/txs.json'
+import prettyTransactions from './test-data/expected/txs.json'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const {
-    mockAcsRead,
-    mockParseTransaction,
-    mockParseTransferObjects,
-    mockRenderTransaction,
-} = vi.hoisted(() => ({
-    mockAcsRead: vi.fn().mockResolvedValue([]),
+const { mockAcsState, mockParseTransaction } = vi.hoisted(() => ({
+    mockAcsState: vi.fn().mockResolvedValue([]),
     mockParseTransaction: vi.fn().mockResolvedValue({ offset: 10, events: [] }),
-    mockParseTransferObjects: vi.fn().mockResolvedValue([]),
-    mockRenderTransaction: vi.fn((tx: unknown) => tx),
 }))
 
 vi.mock('@canton-network/core-acs-reader', () => ({
-    ACSReader: vi.fn().mockImplementation(() => ({
-        raw: { read: mockAcsRead },
-    })),
+    ACSReader: vi.fn(function () {
+        return { raw: { read: mockAcsState } }
+    }),
 }))
-
 const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     request: vi.fn().mockResolvedValue(undefined),
     on: vi.fn(),
@@ -1216,7 +1210,7 @@ describe('Token standard service', () => {
         expect(result).toHaveLength(3)
     })
 
-    it('blah', async () => {
+    it('list holding transactions', async () => {
         const { service, provider } = makeService()
         provider.request
             .mockResolvedValueOnce({ participantPrunedUpToInclusive: 5 })
@@ -1245,5 +1239,118 @@ describe('Token standard service', () => {
         const [call] = provider.request.mock.calls
         expect(call[0].params.resource).toBe('/v2/updates/transaction-by-id')
         expect(call[0].params.requestMethod).toBe('post')
+    })
+
+    it('to pretty transactions process transaction updates', async () => {
+        const { service } = makeService()
+        const toUpdate = (tx: (typeof rawTransactions)[number]) => ({
+            update: { Transaction: { value: tx } },
+        })
+
+        const prettyTx4 = (prettyTransactions as any[]).find(
+            (t) => t.offset === 4
+        )
+        mockParseTransaction
+            .mockResolvedValueOnce({ offset: 0, events: [] })
+            .mockResolvedValueOnce({ offset: 1, events: [] })
+            .mockResolvedValueOnce({ offset: 2, events: [] })
+            .mockResolvedValueOnce({ offset: 3, events: [] })
+            .mockResolvedValueOnce({ offset: 4, events: prettyTx4.events })
+
+        const updates = rawTransactions
+            .filter((tx) => tx.offset <= 4)
+            .map(toUpdate)
+
+        const result = await service.core.toPrettyTransactions(
+            updates as any,
+            'alice::normalized'
+        )
+        expect(result.transactions).toHaveLength(1)
+        expect(result.nextOffset).toBe(4)
+    })
+
+    it('to pretty transactions picks higher checkpoint offset vs tx offset', async () => {
+        const { service } = makeService()
+
+        const prettyTx7 = (prettyTransactions as any[]).find(
+            (t) => t.offset === 7
+        )
+        mockParseTransaction.mockResolvedValueOnce({
+            ...prettyTx7,
+            offset: 7,
+            events: prettyTx7.events,
+        })
+
+        const updates = [
+            { update: { OffsetCheckpoint: { value: { offset: 50 } } } },
+            {
+                update: {
+                    Transaction: {
+                        value: rawTransactions.find((t) => t.offset === 7),
+                    },
+                },
+            },
+        ]
+
+        const result = await service.core.toPrettyTransactions(
+            updates as any,
+            'alice::normalized'
+        )
+        expect(result.nextOffset).toBe(50)
+        expect(result.transactions).toHaveLength(1)
+    })
+
+    it('list contracts by interface', async () => {
+        const { service } = makeService()
+
+        mockAcsState.mockResolvedValue([
+            {
+                contractEntry: {
+                    JsActiveContract: {
+                        createdEvent: {
+                            contractId: '16',
+                            interfaceViews: [],
+                        },
+                    },
+                },
+            },
+        ])
+
+        vi.spyOn(service.core, 'toPrettyContract').mockReturnValue({
+            contractId: '16',
+            activeContract: {} as any,
+            interfaceViewValue: {
+                amount: '200.0000',
+                instrumentId: {
+                    admin: instrumentAdmin,
+                    id: 'Amulet',
+                },
+                lock: null,
+                owner: senderParty,
+            },
+            fetchedAtOffset: 4,
+        })
+
+        const results = await service.core.listContractsByInterface(
+            'splice-api-token-v1-Holding',
+            senderParty,
+            undefined,
+            4
+        )
+
+        expect(results[0]).toStrictEqual({
+            activeContract: {},
+            contractId: '16',
+            fetchedAtOffset: 4,
+            interfaceViewValue: {
+                amount: '200.0000',
+                instrumentId: {
+                    admin: 'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
+                    id: 'Amulet',
+                },
+                lock: null,
+                owner: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
+            },
+        })
     })
 })
