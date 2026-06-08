@@ -3,7 +3,6 @@
 
 import { ACEvent, ACSState, PaginatedACSState } from '../../types'
 import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
-import { LRUCacheOptions } from 'typescript-lru-cache'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import pino from 'pino'
 import {
@@ -24,11 +23,6 @@ export function isCreatedEvent(event: ACEvent): event is ACEvent & {
 } {
     return !event.archived
 }
-
-export type ACSCacheOptions = Pick<
-    LRUCacheOptions<string, BaseACSCache>,
-    'maxSize' | 'entryExpirationTimeInMS'
->
 
 export type BaseCache<Paginated extends boolean> = {
     State: Paginated extends true ? PaginatedACSState : ACSState

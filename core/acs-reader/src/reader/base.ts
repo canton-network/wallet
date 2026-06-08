@@ -17,7 +17,7 @@ import {
     ResolvedAcsOptions,
 } from '../service'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { ACSCacheOptions } from '../cache/item'
+import { ACSCacheCollectionOptions } from '../cache/collection'
 
 export abstract class BaseReader<
     Options extends AcsOptions | PaginatedAcsOptions,
@@ -26,7 +26,7 @@ export abstract class BaseReader<
     protected service: AcsService
     constructor(
         protected readonly ledger: AbstractLedgerProvider,
-        protected readonly cacheOptions?: ACSCacheOptions
+        protected readonly cacheOptions?: ACSCacheCollectionOptions
     ) {
         this.cacheCollection = this.createCacheCollection()
         this.service = new AcsService(ledger)

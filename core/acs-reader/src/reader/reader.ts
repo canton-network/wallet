@@ -6,10 +6,10 @@ import { AcsOptions, PaginatedAcsOptions } from '../service'
 import { BaseReader } from './base'
 import {
     ACSCacheCollection,
+    ACSCacheCollectionOptions,
     PaginatedACSCacheCollection,
 } from '../cache/collection'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { ACSCacheOptions } from '../cache/item'
 
 function isPageResponse(
     obj: unknown
@@ -20,7 +20,7 @@ function isPageResponse(
 class RawReader extends BaseReader<AcsOptions> {
     constructor(
         protected readonly ledger: AbstractLedgerProvider,
-        protected readonly cacheOptions?: ACSCacheOptions,
+        protected readonly cacheOptions?: ACSCacheCollectionOptions,
         private readonly paginated?: boolean
     ) {
         super(ledger, cacheOptions)
@@ -58,7 +58,7 @@ class PaginatedReader extends BaseReader<PaginatedAcsOptions> {
 
     constructor(
         protected readonly ledger: AbstractLedgerProvider,
-        protected readonly cacheOptions?: ACSCacheOptions
+        protected readonly cacheOptions?: ACSCacheCollectionOptions
     ) {
         super(ledger, cacheOptions)
 
@@ -82,7 +82,7 @@ export class ACSReader extends BaseReader<AcsOptions> {
 
     constructor(
         protected readonly ledger: AbstractLedgerProvider,
-        protected readonly cacheOptions?: ACSCacheOptions
+        protected readonly cacheOptions?: ACSCacheCollectionOptions
     ) {
         super(ledger, cacheOptions)
         this.raw = new RawReader(ledger, cacheOptions)

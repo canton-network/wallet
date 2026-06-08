@@ -1,12 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LRUCache } from 'typescript-lru-cache'
+import { LRUCache, LRUCacheOptions } from 'typescript-lru-cache'
 import { ACSKey } from '../../types'
 import { PaginatedResolvedAcsOptions, ResolvedAcsOptions } from '../../service'
 import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { ACSCache, PaginatedACSCache, ACSCacheOptions } from '../item'
+import { ACSCache, BaseACSCache, PaginatedACSCache } from '../item'
+
+export type ACSCacheCollectionOptions = Pick<
+    LRUCacheOptions<string, BaseACSCache>,
+    'maxSize' | 'entryExpirationTimeInMS'
+>
 
 export abstract class BaseCacheCollection<
     Cache extends ACSCache | PaginatedACSCache,
@@ -19,7 +24,7 @@ export abstract class BaseCacheCollection<
 
     constructor(
         protected readonly ledger: AbstractLedgerProvider,
-        private readonly options: ACSCacheOptions = {
+        private readonly options: ACSCacheCollectionOptions = {
             maxSize: 100,
             entryExpirationTimeInMS: 10 * 60 * 1000,
         }
@@ -71,10 +76,14 @@ export abstract class BaseCacheCollection<
      * Updates the cached active contract set for a specific key and returns contracts at the requested offset.
      * If the cache is outdated, fetches updates from the ledger and applies them incrementally.
      */
-    protected abstract updateCache(args: {
-        options: Options
+    protected async updateCache(args: {
+        options: ResolvedAcsOptions | PaginatedResolvedAcsOptions
         key: ACSKey
-    }): Promise<ReturnType<Cache['calculateAt']>>
+    }) {
+        const cache = this.getCache(args.key)
+        await cache.update(args.options)
+        return await cache.calculateAt(args.options.offset)
+    }
 
     /**
      * Queries multiple cache keys in parallel and combines the results.
