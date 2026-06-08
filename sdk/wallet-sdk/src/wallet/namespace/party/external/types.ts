@@ -9,7 +9,7 @@ export type CreatePartyOptions = Partial<{
     partyHint: string
     confirmingThreshold: number
     synchronizerId: string
-    additionalSynchronizerIds?: string[]
+    additionalSynchronizerIds: string[]
     confirmingParticipantEndpoints: ParticipantEndpointConfig[]
     observingParticipantEndpoints: ParticipantEndpointConfig[]
     localParticipantObservationOnly: boolean
