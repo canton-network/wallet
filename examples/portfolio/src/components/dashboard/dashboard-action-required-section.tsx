@@ -62,7 +62,7 @@ export function DashboardActionRequiredSection({
             <Box sx={{ display: 'grid', gap: 2 }}>
                 {visibleItems.map((item) => (
                     <ActionRequiredRow
-                        key={`${item.kind}-${item.id}`}
+                        key={`${item.kind}-${item.contractId}`}
                         item={item}
                         onClick={() => setSelectedItem(item)}
                     />
