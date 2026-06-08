@@ -19,7 +19,7 @@ export class PaginatedACSCache extends BaseACSCache<true> {
     }
 
     /**
-     * Token for fetching the next page of active contracts.
+     * Token for fetching pages of active contracts. will loop over pages until desired offset is reached. When last obtained page was the last one it is `undefined`
      */
     private nextPageToken: string | undefined =
         PaginatedACSCache.FIRST_PAGE_TOKEN
@@ -39,12 +39,14 @@ export class PaginatedACSCache extends BaseACSCache<true> {
             this.nextPageToken =
                 this.state.pages[options.pageToken].nextPageToken
         } else {
-            while (this.nextPageToken && options.offset < this.state.offset) {
+            while (this.nextPageToken && options.offset > this.state.offset) {
                 this.state.pages[this.nextPageToken] =
                     await this.service.getPaginatedActiveContracts({
                         ...options,
                         pageToken: this.nextPageToken,
                     })
+                this.state.offset =
+                    this.state.pages[this.nextPageToken].activeAtOffset
                 this.nextPageToken =
                     this.state.pages[this.nextPageToken].nextPageToken
             }
