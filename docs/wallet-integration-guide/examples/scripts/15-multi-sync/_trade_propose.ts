@@ -84,21 +84,29 @@ export async function createAndInitiateOtcTrade(
     } = setup
 
     // The proposal is created on Alice's participant but read from other
-    // participants (Bob, TradingApp). Cross-participant propagation over the
-    // synchronizer is eventually consistent, so poll until the contract becomes
-    // visible instead of reading once.
+    // participants (Bob, TradingApp)
     const readProposalCid = async (
         sdk: SDKInterface<'token'>,
-        party: string
+        party: string,
+        predicate: (approvers: string[]) => boolean = () => true
     ): Promise<string> => {
         const deadline = Date.now() + PROPOSAL_POLL_TIMEOUT_MS
         for (;;) {
-            const [proposal] = await sdk.ledger.acs.read({
+            const proposals = await sdk.ledger.acs.read({
                 templateIds: [OTC_TRADE_PROPOSAL_TEMPLATE_ID],
                 parties: [party],
                 filterByParty: true,
             })
-            if (proposal) return proposal.contractId
+            const match = proposals.find((proposal) =>
+                predicate(
+                    ((
+                        proposal as unknown as {
+                            createArgument?: { approvers?: string[] }
+                        }
+                    ).createArgument?.approvers ?? []) as string[]
+                )
+            )
+            if (match) return match.contractId
             if (Date.now() >= deadline) {
                 throw new Error(
                     `OTCTradeProposal not visible to ${party} within ${PROPOSAL_POLL_TIMEOUT_MS}ms`
@@ -153,7 +161,8 @@ export async function createAndInitiateOtcTrade(
                 buildInitiateSettlementCommand({
                     proposalCid: await readProposalCid(
                         p3Sdk,
-                        tradingApp.partyId
+                        tradingApp.partyId,
+                        (approvers) => approvers.includes(bob.partyId)
                     ),
                     prepareUntil,
                     settleBefore,
