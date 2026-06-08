@@ -1,30 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ACEvent, ACS_UPDATE_CONFIG, ACSState } from '../types'
-import {
-    AbstractLedgerProvider,
-    Ops,
-} from '@canton-network/core-provider-ledger'
-import { LRUCacheOptions } from 'typescript-lru-cache'
+import { ACEvent, ACS_UPDATE_CONFIG, ACSState } from '../../types'
+import { Ops } from '@canton-network/core-provider-ledger'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import pino from 'pino'
-import {
-    ResolvedAcsOptions,
-    AcsService,
-    buildActiveContractFilter,
-} from '../service'
+import { ResolvedAcsOptions, buildActiveContractFilter } from '../../service'
 import { ContractId } from '@canton-network/core-types'
+import { BaseACSCache, isCreatedEvent, logger } from './base'
 
-export type ACSCacheOptions = Pick<
-    LRUCacheOptions<string, ACSCache>,
-    'maxSize' | 'entryExpirationTimeInMS'
->
-
-const logger = pino({ name: 'acs-reader/cache' })
-
-export class ACSCache {
-    private readonly state: ACSState = {
+export class ACSCache extends BaseACSCache {
+    protected readonly state: ACSState = {
         initial: {
             offset: 0,
             acs: [],
@@ -34,11 +19,6 @@ export class ACSCache {
             acs: [],
         },
         archivedACs: new Set(),
-    }
-    private readonly service: AcsService
-
-    constructor(private readonly ledger: AbstractLedgerProvider) {
-        this.service = new AcsService(ledger)
     }
 
     /**
@@ -57,11 +37,6 @@ export class ACSCache {
         return this.state.updates
     }
 
-    /**
-     * Updates the cache to include ledger changes up to the specified offset.
-     * Fetches and applies incremental updates from the ledger, initializing the cache if needed.
-     * Automatically prunes old events when the update buffer exceeds configured thresholds.
-     */
     public async update(options: ResolvedAcsOptions) {
         if (!this.initial.acs.length || this.initial.offset > options.offset) {
             await this.initState(options)
@@ -78,7 +53,9 @@ export class ACSCache {
             },
         })
 
-        // in practise length should never be > maxUpdatesToFetch only equal (server should never return more than limit in query). This is just a safeguard.
+        /**
+         * in practice length should never be > maxUpdatesToFetch only equal (server should never return more than limit in query). This is just a safeguard.
+         */
         if (updates.length >= ACS_UPDATE_CONFIG.maxUpdatesToFetch)
             void this.update(options)
 
@@ -97,11 +74,6 @@ export class ACSCache {
         }
     }
 
-    /**
-     * Calculates the active contract set at a specific ledger offset.
-     * Applies cached updates to the initial snapshot and filters out archived contracts.
-     * Throws an error if the cache is not initialized or the requested offset is too old.
-     */
     public calculateAt(offset: number) {
         if (!this.initial.acs)
             throw Error('No ACS initialized. Call `.update()` first')
@@ -298,15 +270,4 @@ export class ACSCache {
         })
         return { newEvents, newOffset }
     }
-}
-
-/**
- * Checks if an event represents a contract creation.
- * Used to distinguish between created and archived events when processing cache updates.
- */
-function isCreatedEvent(event: ACEvent): event is ACEvent & {
-    archived: true
-    event: LedgerCommonSchemas['CreatedEvent']
-} {
-    return !event.archived
 }
