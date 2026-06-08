@@ -12,7 +12,6 @@ import {
 import {
     createMockUserClient,
     makeIdp,
-    makePublicNetwork,
     makeStoreNetwork,
     toPublicNetwork,
     mockRequest,
@@ -258,10 +257,12 @@ describe('UserUiSettings', () => {
     })
 
     it('removes a network when delete is confirmed', async () => {
-        const network = makePublicNetwork({ id: 'net-del', name: 'Remove Me' })
+        const network = makeStoreNetwork({ id: 'net-del', name: 'Remove Me' })
         el.shadowRoot
             ?.querySelector('wg-networks')
-            ?.dispatchEvent(new NetworkCardDeleteEvent(network))
+            ?.dispatchEvent(
+                new NetworkCardDeleteEvent(toPublicNetwork(network))
+            )
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'removeNetwork')
@@ -323,7 +324,9 @@ describe('UserUiSettings', () => {
         el.shadowRoot
             ?.querySelector('wg-networks')
             ?.dispatchEvent(
-                new NetworkCardDeleteEvent(makePublicNetwork({ id: 'net-del' }))
+                new NetworkCardDeleteEvent(
+                    toPublicNetwork(makeStoreNetwork({ id: 'net-del' }))
+                )
             )
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
