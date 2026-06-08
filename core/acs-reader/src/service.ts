@@ -8,6 +8,7 @@ import {
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 import { PartyId } from '@canton-network/core-types'
+import { PaginatedACSCache } from './cache/item'
 
 type Types = LedgerCommonSchemas
 
@@ -72,7 +73,9 @@ export class AcsService {
             const results: Types['JsGetActiveContractsPageResponse'][] = []
             let shouldContinue = true
             while (shouldContinue) {
-                const pageToken = results[results.length - 1].nextPageToken
+                const pageToken = results.length
+                    ? results[results.length - 1].nextPageToken
+                    : PaginatedACSCache.FIRST_PAGE_TOKEN
                 const result = await this.getPaginatedActiveContracts({
                     ...baseArgs,
                     continueUntilCompletion: false,

@@ -6,7 +6,7 @@ import { PaginatedACSState } from '../../types'
 import { BaseACSCache } from './base'
 
 export class PaginatedACSCache extends BaseACSCache<true> {
-    private static readonly FIRST_PAGE_TOKEN = ''
+    public static readonly FIRST_PAGE_TOKEN = ''
     protected readonly state: PaginatedACSState = {
         pages: {
             [PaginatedACSCache.FIRST_PAGE_TOKEN]: {
