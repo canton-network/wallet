@@ -1058,4 +1058,161 @@ describe('Token standard service', () => {
                 '#splice-util-featured-app-proxies:Splice.Util.FeaturedApp.DelegateProxy:DelegateProxy',
         })
     })
+
+    it('accepts delegate proxy transfer instruction accept', async () => {
+        const { service } = makeService()
+        vi.spyOn(service.transfer, 'createTransfer').mockResolvedValue([
+            { contractId: 'accept-cid', choiceArgument: {} } as any,
+            [],
+        ])
+
+        const ctx = makeChoiceContext()
+        vi.spyOn(
+            service.transfer,
+            'fetchAcceptTransferInstructionChoiceContext'
+        ).mockResolvedValue({ choiceContextData: ctx, disclosedContracts: [] })
+
+        const [exercise] =
+            await service.exerciseDelegateProxyTransferInstructionAccept(
+                senderParty,
+                'proxy-cid',
+                'transfer-cid',
+                registryUrl,
+                'app-right'
+            )
+
+        expect(exercise).toStrictEqual({
+            choice: 'DelegateProxy_TransferInstruction_Accept',
+            choiceArgument: {
+                cid: 'transfer-cid',
+                proxyArg: {
+                    beneficiaries: [
+                        {
+                            beneficiary:
+                                'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
+                            weight: 1,
+                        },
+                    ],
+                    choiceArg: {
+                        extraArgs: {
+                            context: {
+                                choiceContextData: {
+                                    values: {
+                                        ctx: 'data',
+                                    },
+                                },
+                                disclosedContracts: [
+                                    {
+                                        contractId: 'disc1',
+                                    },
+                                ],
+                            },
+                            meta: {
+                                values: {},
+                            },
+                        },
+                    },
+                    featuredAppRightCid: 'app-right',
+                },
+            },
+            contractId: 'proxy-cid',
+            templateId:
+                '#splice-util-featured-app-proxies:Splice.Util.FeaturedApp.DelegateProxy:DelegateProxy',
+        })
+    })
+
+    it('lists contracts by interface', async () => {
+        const { service } = makeService()
+        const spy = vi
+            .spyOn(service.core, 'listContractsByInterface')
+            .mockResolvedValue([])
+
+        await service.listContractsByInterface(
+            'interface::id',
+            senderParty,
+            10,
+            5,
+            true
+        )
+        expect(spy).toHaveBeenCalledWith(
+            'interface::id',
+            senderParty,
+            10,
+            5,
+            true
+        )
+    })
+
+    it('registries to assets', async () => {
+        const { service, tokenClient } = makeService()
+        expect(await service.registriesToAssets([])).toEqual([])
+
+        tokenClient.get
+            .mockResolvedValueOnce({
+                instruments: [
+                    {
+                        id: 'USDCx',
+                        name: 'USDCx',
+                        symbol: 'USDCx',
+                        totalSupply: '3235186.362102',
+                        totalSupplyAsOf: null,
+                        decimals: 10,
+                        supportedApis: {
+                            'splice-api-token-metadata-v1': 1,
+                            'splice-api-token-transfer-instruction-v1': 1,
+                            'splice-api-token-allocation-request-v1': 1,
+                            'splice-api-token-allocation-v1': 1,
+                            'splice-api-token-holding-v1': 1,
+                            'splice-api-token-allocation-instruction-v1': 1,
+                        },
+                    },
+                ],
+                nextPageToken: null,
+            })
+            .mockResolvedValueOnce({ adminId: 'admin-a' })
+            .mockResolvedValueOnce({
+                instruments: [
+                    {
+                        id: 'TestTokenExt',
+                        name: 'TestTokenExt',
+                        symbol: 'TestTokenExt',
+                        totalSupply: '201.0',
+                        totalSupplyAsOf: null,
+                        decimals: 10,
+                        supportedApis: {
+                            'splice-api-token-metadata-v1': 1,
+                            'splice-api-token-transfer-instruction-v1': 1,
+                            'splice-api-token-allocation-request-v1': 1,
+                            'splice-api-token-allocation-v1': 1,
+                            'splice-api-token-holding-v1': 1,
+                            'splice-api-token-allocation-instruction-v1': 1,
+                        },
+                    },
+                    {
+                        id: 'TestToken',
+                        name: 'TestToken',
+                        symbol: 'TestToken',
+                        totalSupply: '1300.0',
+                        totalSupplyAsOf: null,
+                        decimals: 10,
+                        supportedApis: {
+                            'splice-api-token-metadata-v1': 1,
+                            'splice-api-token-transfer-instruction-v1': 1,
+                            'splice-api-token-allocation-request-v1': 1,
+                            'splice-api-token-allocation-v1': 1,
+                            'splice-api-token-holding-v1': 1,
+                            'splice-api-token-allocation-instruction-v1': 1,
+                        },
+                    },
+                ],
+                nextPageToken: null,
+            })
+            .mockResolvedValueOnce({ adminId: 'admin-b' })
+
+        const result = await service.registriesToAssets([
+            'http://registry1.com',
+            'http://registry2.com',
+        ])
+        expect(result).toHaveLength(2)
+    })
 })
