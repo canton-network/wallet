@@ -45,13 +45,10 @@ export abstract class BaseReader<
     /**
      * Reads active contracts from the cache.
      */
-    public abstract read(
-        options: Options
-    ): ReturnType<
-        AcsService[Options extends AcsOptions
-            ? 'getActiveContracts'
-            : 'getPaginatedActiveContracts']
-    >
+    public async read(options: Options) {
+        const resolvedOptions = await this.resolveAcsOptions(options)
+        return await this.cacheCollection.readFromCache(resolvedOptions)
+    }
 
     /**
      * Convenience method that returns active contracts as JS contract objects.
@@ -60,6 +57,9 @@ export abstract class BaseReader<
         return this.readJsContractsWith(await this.read(options))
     }
 
+    /**
+     * Extracts active contracts from various output formats (single page, array of pages, or array of responses).
+     */
     private getActiveContracts(
         output:
             | LedgerCommonSchemas['JsGetActiveContractsResponse'][]
@@ -86,15 +86,10 @@ export abstract class BaseReader<
         )
     }
 
-    private readJsContractsWith(
-        output: Awaited<
-            ReturnType<
-                AcsService[Options extends AcsOptions
-                    ? 'getActiveContracts'
-                    : 'getPaginatedActiveContracts']
-            >
-        >
-    ) {
+    /**
+     * Transforms active contracts output into JS contract objects with created event details and synchronizer ID.
+     */
+    private readJsContractsWith(output: Awaited<ReturnType<typeof this.read>>) {
         const contracts = this.getActiveContracts(output)
 
         return contracts
@@ -117,6 +112,9 @@ export abstract class BaseReader<
             })
     }
 
+    /**
+     * Resolves ACS options by ensuring an offset is present, fetching the current ledger end if needed.
+     */
     protected async resolveAcsOptions(
         options: Options
     ): Promise<

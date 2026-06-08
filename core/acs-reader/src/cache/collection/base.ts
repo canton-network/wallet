@@ -36,8 +36,6 @@ export abstract class BaseCacheCollection<
      * Reads the active contract set from the ledger with caching.
      * Resolves party references and constructs cache keys from the provided template and interface IDs.
      * Queries are deduplicated and cached per party-template-interface combination.
-     *
-     * @see {@link ACSReader.readRaw}
      */
     public async readFromCache(
         options: Options

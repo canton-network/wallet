@@ -48,7 +48,7 @@ export abstract class BaseACSCache<Paginated extends boolean = false> {
     /**
      * Updates the cache to include ledger changes up to the specified offset.
      * Fetches and applies incremental updates from the ledger, initializing the cache if needed.
-     * Automatically prunes old events when the update buffer exceeds configured thresholds.
+     * Automatically prunes old events when the update buffer exceeds configured thresholds (when not in pagination mode).
      */
     public abstract update(
         options: BaseCache<Paginated>['Options']

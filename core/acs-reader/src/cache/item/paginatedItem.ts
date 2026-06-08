@@ -17,6 +17,10 @@ export class PaginatedACSCache extends BaseACSCache<true> {
         },
         offset: 0,
     }
+
+    /**
+     * Token for fetching the next page of active contracts.
+     */
     private nextPageToken: string | undefined =
         PaginatedACSCache.FIRST_PAGE_TOKEN
 
@@ -64,10 +68,16 @@ export class PaginatedACSCache extends BaseACSCache<true> {
         })
     }
 
+    /**
+     * Retrieves a specific page from the cache using the page token.
+     */
     public getPage(pageToken: string) {
         return this.state.pages[pageToken]
     }
 
+    /**
+     * Initializes the cache state by fetching the first page of active contracts.
+     */
     private async initState(options: PaginatedResolvedAcsOptions) {
         const firstPage =
             await this.service.getPaginatedActiveContracts(options)

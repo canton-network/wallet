@@ -65,12 +65,6 @@ class PaginatedReader extends BaseReader<PaginatedAcsOptions> {
         this.raw = new RawReader(ledger, cacheOptions, true)
     }
 
-    public async read(options: PaginatedAcsOptions) {
-        const resolvedOptions = await this.resolveAcsOptions(options)
-        // TODO: this might be different
-        return await this.cacheCollection.readFromCache(resolvedOptions)
-    }
-
     protected createCacheCollection() {
         return new PaginatedACSCacheCollection(this.ledger, this.cacheOptions)
     }
@@ -91,13 +85,5 @@ export class ACSReader extends BaseReader<AcsOptions> {
 
     protected createCacheCollection() {
         return new ACSCacheCollection(this.ledger, this.cacheOptions)
-    }
-
-    /**
-     * Reads active contracts from the cache.
-     */
-    public async read(options: AcsOptions) {
-        const resolvedOptions = await this.resolveAcsOptions(options)
-        return await this.cacheCollection.readFromCache(resolvedOptions)
     }
 }
