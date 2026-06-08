@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
 import {
     Error as SigningError,
@@ -30,12 +30,11 @@ export class KernelWalletAllocator implements WalletAllocator {
     ) {}
 
     async createWallet(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false
     ): Promise<Wallet> {
-        const driver = this.signingDriver.controller(userId)
+        const driver = this.signingDriver.controller(authContext)
         const key = await driver
             .createKey({
                 name: partyHint,
@@ -43,7 +42,7 @@ export class KernelWalletAllocator implements WalletAllocator {
             .then(handleSigningError)
 
         const party = await this.partyAllocator.allocateParty(
-            userId,
+            authContext.userId,
             partyHint,
             key.publicKey,
             async (hash) => {
@@ -84,11 +83,10 @@ export class KernelWalletAllocator implements WalletAllocator {
     }
 
     async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet
     ): Promise<void> {
-        const driver = this.signingDriver.controller(userId)
+        const driver = this.signingDriver.controller(authContext)
         const signingCallback = async (hash: string) => {
             const result = await driver
                 .signTransaction({
@@ -105,7 +103,7 @@ export class KernelWalletAllocator implements WalletAllocator {
         }
 
         const party = await this.partyAllocator.allocateParty(
-            userId,
+            authContext.userId,
             existingWallet.hint,
             existingWallet.publicKey,
             signingCallback

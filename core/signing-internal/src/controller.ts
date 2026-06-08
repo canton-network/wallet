@@ -36,7 +36,7 @@ import {
     SignMessageResult,
 } from '@canton-network/core-signing-lib'
 import { randomUUID } from 'node:crypto'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import { AuthAware, AuthContext } from '@canton-network/core-wallet-auth'
 
 interface InternalKey {
     id: string
@@ -62,17 +62,18 @@ const convertInternalTransaction = (tx: InternalTransaction): Transaction => {
 }
 
 export class InternalSigningDriver implements SigningDriverInterface {
-    private store: SigningDriverStore
-
+    private store: SigningDriverStore & AuthAware<SigningDriverStore>
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.WALLET_KERNEL
 
-    constructor(store: SigningDriverStore) {
+    constructor(store: SigningDriverStore & AuthAware<SigningDriverStore>) {
         this.store = store
     }
 
-    public controller = (_userId: AuthContext['userId'] | undefined) =>
-        buildController({
+    public controller = (authContext: AuthContext | undefined) => {
+        const scopedStore = this.store.withAuthContext(authContext)
+        const _userId = authContext?.userId
+        return buildController({
             signTransaction: async (
                 params: SignTransactionParams
             ): Promise<SignTransactionResult> => {
@@ -86,7 +87,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     })
                 }
 
-                const key = await this.store.getSigningKeyByPublicKey(
+                const key = await scopedStore.getSigningKeyByPublicKey(
                     params.keyIdentifier.publicKey
                 )
 
@@ -109,7 +110,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                         signedAt: now,
                     }
 
-                    this.store.setSigningTransaction(
+                    scopedStore.setSigningTransaction(
                         _userId,
                         internalTransaction
                     )
@@ -146,7 +147,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     })
                 }
 
-                const key = await this.store.getSigningKeyByPublicKey(
+                const key = await scopedStore.getSigningKeyByPublicKey(
                     params.keyIdentifier.publicKey
                 )
                 if (!key?.privateKey) {
@@ -172,7 +173,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     })
                 }
 
-                const storedTx = await this.store.getSigningTransaction(
+                const storedTx = await scopedStore.getSigningTransaction(
                     _userId,
                     params.txId
                 )
@@ -204,7 +205,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
 
                 if (params.publicKeys || params.txIds) {
                     const transactions =
-                        await this.store.listSigningTransactionsByTxIdsAndPublicKeys(
+                        await scopedStore.listSigningTransactionsByTxIdsAndPublicKeys(
                             params.txIds || [],
                             params.publicKeys || []
                         )
@@ -237,7 +238,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     })
                 }
 
-                const keys = await this.store.listSigningKeys(_userId)
+                const keys = await scopedStore.listSigningKeys(_userId)
                 if (keys.length > 0) {
                     return Promise.resolve({
                         keys: Array.from(keys).map((key) => ({
@@ -276,7 +277,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     updatedAt: now,
                 }
 
-                await this.store.setSigningKey(_userId, internalKey)
+                await scopedStore.setSigningKey(_userId, internalKey)
 
                 return {
                     id,
@@ -299,4 +300,5 @@ export class InternalSigningDriver implements SigningDriverInterface {
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),
         })
+    }
 }

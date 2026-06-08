@@ -161,7 +161,7 @@ describe('WalletSyncService - resolveSigningProvider', () => {
         const internalDriver = service['signingDrivers'][
             SigningProvider.WALLET_KERNEL
         ] as InternalSigningDriver
-        const controller = internalDriver.controller(authContext.userId)
+        const controller = internalDriver.controller(authContext)
         const key = await controller.createKey({ name: 'test-key' })
 
         if ('error' in key) {

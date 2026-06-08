@@ -6,7 +6,7 @@ import {
     LedgerClient,
 } from '@canton-network/core-ledger-client'
 import { createHash } from 'node:crypto'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { AccessTokenProvider, UserId } from '@canton-network/core-wallet-auth'
 import { Logger } from 'pino'
 
 export type AllocatedParty = {
@@ -165,14 +165,14 @@ export class PartyAllocationService {
         namespace: string,
         transactions: string[],
         signature: string,
-        userId: string
+        userId: UserId
     ): Promise<string>
 
     async allocatePartyWithExistingWallet(
         namespace: string,
         transactions: string[],
         signature: string,
-        userId: string
+        userId: UserId
     ): Promise<string> {
         const synchronizerId =
             this.synchronizerId ?? (await this.ledgerClient.getSynchronizerId())

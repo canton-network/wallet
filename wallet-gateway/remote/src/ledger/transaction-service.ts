@@ -51,9 +51,8 @@ export class TransactionService {
         signParams: SignParams
     ): Promise<SignResult> {
         const signingProvider = wallet.signingProviderId as SigningProvider
-        const driver = this.signingDrivers[signingProvider]?.controller(
-            authContext.userId
-        )
+        const driver =
+            this.signingDrivers[signingProvider]?.controller(authContext)
         if (!driver) {
             throw new Error(`No driver found for ${signingProvider}`)
         }
@@ -64,7 +63,7 @@ export class TransactionService {
             }
             case SigningProvider.WALLET_KERNEL: {
                 return this.signWithWalletKernel(
-                    authContext.userId,
+                    authContext,
                     wallet,
                     signParams
                 )
@@ -75,21 +74,13 @@ export class TransactionService {
                         'Email is required for Blockdaemon wallet allocation'
                     )
                 }
-                return this.signWithBlockdaemon(
-                    authContext.email,
-                    wallet,
-                    signParams
-                )
+                return this.signWithBlockdaemon(authContext, wallet, signParams)
             }
             case SigningProvider.FIREBLOCKS: {
-                return this.signWithFireblocks(
-                    authContext.userId,
-                    wallet,
-                    signParams
-                )
+                return this.signWithFireblocks(authContext, wallet, signParams)
             }
             case SigningProvider.DFNS: {
-                return this.signWithDfns(authContext.userId, wallet, signParams)
+                return this.signWithDfns(authContext, wallet, signParams)
             }
             default:
                 throw new Error(
@@ -186,8 +177,8 @@ export class TransactionService {
         }
     }
 
-    private async signWithWalletKernel(
-        userId: UserId,
+    public async signWithWalletKernel(
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResultSigned> {
@@ -196,7 +187,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Wallet Gateway signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -243,8 +234,8 @@ export class TransactionService {
         }
     }
 
-    private async signWithBlockdaemon(
-        userId: UserId,
+    public async signWithBlockdaemon(
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResult> {
@@ -252,7 +243,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Blockdaemon signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -265,7 +256,7 @@ export class TransactionService {
         if (tx && tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId: tx.externalTxId,
                 })
                 .then(handleSigningError)
@@ -351,8 +342,8 @@ export class TransactionService {
         }
     }
 
-    private async signWithFireblocks(
-        userId: UserId,
+    public async signWithFireblocks(
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResult> {
@@ -360,7 +351,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Fireblocks signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -373,14 +364,14 @@ export class TransactionService {
         if (tx && tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId: tx.externalTxId,
                 })
                 .then(handleSigningError)
         } else {
             signingResult = await driver
                 .signTransaction({
-                    userId,
+                    userId: authContext.userId,
                     tx: tx.preparedTransaction,
                     txHash: Buffer.from(
                         tx.preparedTransactionHash,
@@ -469,8 +460,8 @@ export class TransactionService {
      * signature payload (the controller short-circuits Dfns execute) and surface
      * the same SignResult shape the other external providers use.
      */
-    private async signWithDfns(
-        userId: UserId,
+    public async signWithDfns(
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResult> {
@@ -478,7 +469,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Dfns signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -491,7 +482,7 @@ export class TransactionService {
         if (tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId: tx.externalTxId,
                 })
                 .then(handleSigningError)

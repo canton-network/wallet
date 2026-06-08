@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
 import {
     Error as SigningError,
@@ -32,12 +32,11 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
     ) {}
 
     async createWallet(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false
     ): Promise<Wallet> {
-        const driver = this.signingDriver.controller(email)
+        const driver = this.signingDriver.controller(authContext)
 
         const key = await driver.createKey({
             name: partyHint,
@@ -96,7 +95,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
         if (status === 'signed') {
             const { signature } = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId,
                 })
                 .then(handleSigningError)
@@ -110,7 +109,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                     namespace,
                     topologyTransactions,
                     signature,
-                    userId
+                    authContext.userId
                 )
             wallet = {
                 ...walletBase,
@@ -141,8 +140,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
     }
 
     async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet
     ): Promise<void> {
         if (
@@ -153,7 +151,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                 'Existing wallet is missing field externalTxId or topologyTransactions'
             )
         }
-        const driver = this.signingDriver.controller(email)
+        const driver = this.signingDriver.controller(authContext)
 
         const { signature, status, metadata } = await driver
             .getTransaction({
@@ -176,7 +174,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                     existingWallet.namespace,
                     existingWallet.topologyTransactions.split(', '),
                     signature,
-                    userId
+                    authContext.userId
                 )
             walletUpdate = {
                 ...walletUpdate,

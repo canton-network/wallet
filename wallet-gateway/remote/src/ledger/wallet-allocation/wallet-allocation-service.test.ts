@@ -20,6 +20,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
 import type { AllocatedParty } from '../party-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 
 const createWallet = (
     partyId: string,
@@ -48,7 +49,7 @@ const createAllocatedParty = (
     namespace,
 })
 
-const authContext = {
+const authContext: AuthContext = {
     userId: 'user-1',
     accessToken: 'access-token',
     email: 'user-1@example.com',
@@ -407,7 +408,7 @@ describe('WalletAllocationService', () => {
                         controller: Mock
                     }
                 ).controller
-            ).toHaveBeenCalledWith(authContext.userId)
+            ).toHaveBeenCalledWith(authContext)
             expect(mockController.createKey).toHaveBeenCalledWith({
                 name: 'bob',
             })

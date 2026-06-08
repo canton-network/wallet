@@ -421,9 +421,9 @@ export const userController = (
             }
 
             const connectedContext = assertConnected(authContext)
-            const userId = connectedContext.userId
-            const notifier = notificationService.getNotifier(userId)
-
+            const notifier = notificationService.getNotifier(
+                connectedContext.userId
+            )
             const transactionService = new TransactionService(
                 store,
                 logger,
@@ -494,8 +494,11 @@ export const userController = (
                 )
             }
 
+            const connectedContext = assertConnected(authContext)
             const driver =
-                drivers[SigningProvider.WALLET_KERNEL]?.controller(userId)
+                drivers[SigningProvider.WALLET_KERNEL]?.controller(
+                    connectedContext
+                )
             if (!driver) {
                 return await emitFailedAndPersist(
                     'Wallet Kernel signing driver not available'

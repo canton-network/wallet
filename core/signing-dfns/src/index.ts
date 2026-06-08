@@ -90,7 +90,7 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
 
     public controller = (
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _userId: AuthContext['userId'] | undefined
+        authContext: AuthContext | undefined
     ) =>
         buildController({
             signTransaction: async (
