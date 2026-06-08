@@ -10,7 +10,6 @@ import { Logger } from '@canton-network/core-types'
 import rawTransactions from './test-data/mock/txs.json'
 import prettyTransactions from './test-data/expected/txs.json'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const { mockAcsState, mockParseTransaction } = vi.hoisted(() => ({
     mockAcsState: vi.fn().mockResolvedValue([]),
@@ -173,7 +172,6 @@ describe('AllocationService', () => {
             'cid2',
         ])
         const ctx = makeChoiceContext()
-        const ts = '2026-01-01T00:00:00.000Z'
         await service.allocation.createAllocationInstruction(
             baseSpec as any,
             instrumentAdmin,
@@ -198,7 +196,6 @@ describe('AllocationService', () => {
             factoryId: 'factory-id',
             choiceContext: ctx as any,
         })
-        const ts = '2026-01-01T00:00:00.000Z'
         await service.allocation.createAllocationInstruction(
             baseSpec as any,
             instrumentAdmin,
@@ -365,7 +362,6 @@ describe('AllocationService', () => {
     describe('createAllocationInstructionFromContext', () => {
         const instrumentAdmin =
             'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
-        const instrumentId = 'Amulet'
         it('calls getInputHoldingCids and embeds resulting cids', async () => {
             const { service } = makeService()
             const choiceArgs = {
@@ -397,7 +393,7 @@ describe('AllocationService', () => {
             }
 
             const ctx = makeChoiceContext()
-            const [exercise, dc] =
+            const [exercise] =
                 await service.allocation.createAllocationInstructionFromContext(
                     'factory-id',
                     choiceArgs as any,
@@ -847,7 +843,6 @@ describe('Token standard service', () => {
         )
     })
     it('holding locked returns correctly', async () => {
-        const now = new Date()
         const future = new Date(Date.now() + 100_000).toISOString()
         const past = new Date(Date.now() - 100_000).toISOString()
 
