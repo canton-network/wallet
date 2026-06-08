@@ -943,6 +943,7 @@ describe('TransferService', () => {
     it('exercise delegate proxy throws an error when sum of beneficiary weights exceed 1.0', async () => {
         const { service, tokenClient } = makeService()
         tokenClient.post.mockResolvedValue(makeChoiceContext())
+
         await expect(
             service.transfer.exerciseDelegateProxyTransferInstructioWithdraw(
                 'proxy-cid',
@@ -955,5 +956,65 @@ describe('TransferService', () => {
                 ]
             )
         ).rejects.toThrow('Sum of beneficiary weights is larger than 1.')
+    })
+})
+
+describe('Token standard service', () => {
+    it('holding locked returns correctly', async () => {
+        const now = new Date()
+        const future = new Date(Date.now() + 100_000).toISOString()
+        const past = new Date(Date.now() - 100_000).toISOString()
+
+        expect(
+            TokenStandardService.isHoldingLocked({
+                lock: null,
+                owner: '',
+                instrumentId: {
+                    admin: '',
+                    id: '',
+                },
+                amount: '',
+                meta: undefined,
+            } as any)
+        ).toBe(false)
+
+        expect(
+            TokenStandardService.isHoldingLocked({
+                lock: {},
+                owner: '',
+                instrumentId: {
+                    admin: '',
+                    id: '',
+                },
+                amount: '',
+                meta: undefined,
+            } as any)
+        ).toBe(true)
+
+        expect(
+            TokenStandardService.isHoldingLocked({
+                lock: { expiresAt: future },
+                owner: '',
+                instrumentId: {
+                    admin: '',
+                    id: '',
+                },
+                amount: '',
+                meta: undefined,
+            } as any)
+        ).toBe(true)
+
+        expect(
+            TokenStandardService.isHoldingLocked({
+                lock: { expiresAt: past },
+                owner: '',
+                instrumentId: {
+                    admin: '',
+                    id: '',
+                },
+                amount: '',
+                meta: undefined,
+            } as any)
+        ).toBe(false)
     })
 })
