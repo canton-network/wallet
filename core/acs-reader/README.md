@@ -1,19 +1,8 @@
 # @canton-network/core-acs-reader
 
-A high-performance reader for Active Contract Set (ACS) data from the Canton ledger. This package provides efficient retrieval and processing of active contract information with built-in caching and pagination support.
-
 ## Overview
 
 The ACS Reader abstracts the complexity of querying and managing active contracts from the Canton ledger. It offers both standard and paginated access patterns, with intelligent caching to minimize network overhead and improve application performance.
-
-## Features
-
-- **Efficient Caching**: Built-in cache management reduces redundant ledger queries
-- **Flexible Filtering**: Filter contracts by template IDs, interface IDs, and parties
-- **Pagination Support**: Handle large result sets with paginated queries
-- **Raw Data Access**: Direct access to raw contract data when needed
-- **Type-Safe API**: Full TypeScript support with comprehensive type definitions
-- **Smart Resolution**: Automatic offset resolution with configurable fallback
 
 ## Installation
 
