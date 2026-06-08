@@ -26,8 +26,8 @@ export function ActionRequiredSection({
     const selectedItem = useMemo(
         () =>
             selectedItemKey
-                ? items.find((item) => getItemKey(item) === selectedItemKey) ??
-                  null
+                ? (items.find((item) => getItemKey(item) === selectedItemKey) ??
+                  null)
                 : null,
         [items, selectedItemKey]
     )
