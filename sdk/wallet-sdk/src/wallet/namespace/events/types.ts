@@ -34,4 +34,7 @@ export type EventsContext = {
     websocketURL: ParsedURL
 }
 
-export type Event = LedgerCommonSchemas['JsGetUpdatesResponse']
+export type UpdateEvent = LedgerCommonSchemas['JsGetUpdatesResponse']
+export type CompletionEvent = LedgerCommonSchemas['CompletionStreamResponse']
+
+export type Event = UpdateEvent | CompletionEvent

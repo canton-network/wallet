@@ -7,9 +7,10 @@ import { SDKLogger } from '../../logger/logger.js'
 import {
     UpdatesOptions,
     CompletionOptions,
-    Event,
     InvalidSubscriptionOptionsError,
     EventsContext,
+    UpdateEvent,
+    CompletionEvent,
 } from './types.js'
 
 export class EventsNamespace {
@@ -28,7 +29,7 @@ export class EventsNamespace {
 
     async *completions(
         options: CompletionOptions
-    ): AsyncIterableIterator<Event> {
+    ): AsyncIterableIterator<CompletionEvent> {
         this.logger.info('Subscribing to command completions...')
 
         const request = {
@@ -46,7 +47,9 @@ export class EventsNamespace {
      * @throws InvalidSubscriptionOptionsError if the options is invalid
      * @throws WebSocketConnectionError if connection fails
      */
-    async *updates(options: UpdatesOptions): AsyncIterableIterator<Event> {
+    async *updates(
+        options: UpdatesOptions
+    ): AsyncIterableIterator<UpdateEvent> {
         try {
             this.validateUpdatesOptions(options)
             const normalizedOptions = this.normalizeUpdatesOptions(options)

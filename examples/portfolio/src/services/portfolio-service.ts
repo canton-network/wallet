@@ -76,13 +76,17 @@ export interface PortfolioService {
     }) => Promise<TransactionHistoryResponse>
 
     // Network info
-    isDevNet: (_: { sessionToken: string }) => Promise<boolean>
+    isDevNet: (_: {
+        sessionToken: string
+        validatorUrl: string
+    }) => Promise<boolean>
 
     // Tap
     tap: (_: {
         registryUrls: ReadonlyMap<PartyId, string>
         party: string
         sessionToken: string
+        validatorUrl: string
         instrumentId: { admin: string; id: string }
         amount: number
     }) => Promise<void>

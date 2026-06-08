@@ -268,7 +268,7 @@ async function encodeInputContract(contract: Metadata_InputContract) {
     else throw new Error('Unsupported contract version')
 }
 
-async function encodeValue(value: Value): Promise<Uint8Array> {
+export async function encodeValue(value: Value): Promise<Uint8Array> {
     if (value.sum.oneofKind === 'unit') {
         return Uint8Array.from([0]) // Unit value
     } else if (value.sum.oneofKind === 'bool') {

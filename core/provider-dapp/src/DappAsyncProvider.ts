@@ -35,6 +35,7 @@ function parseSSEData(data: string): unknown[] {
 
 export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
     private sessionToken?: string
+    private url: URL
     private client: SpliceWalletJSONRPCRemoteDAppAPI
     private status?: Session | undefined
     private readonly sseForwarder = (event: string, args: unknown[]) => {
@@ -113,15 +114,13 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
         connection.listeners.add(this.sseForwarder)
     }
 
-    constructor(
-        private url: URL,
-        sessionToken?: string
-    ) {
+    constructor(url: URL | string, sessionToken?: string) {
         super()
+        this.url = typeof url === 'string' ? new URL(url) : url
 
         if (sessionToken) {
             this.sessionToken = sessionToken
-            this.openSSE(url, sessionToken)
+            this.openSSE(this.url, sessionToken)
         }
 
         this.client = this.createClient(sessionToken)
