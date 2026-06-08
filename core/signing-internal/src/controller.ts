@@ -70,10 +70,9 @@ export class InternalSigningDriver implements SigningDriverInterface {
         this.store = store
     }
 
-    public controller = (_userId: AuthContext['userId'] | undefined) => {
-        const scopedStore = this.store.withAuthContext(
-            _userId ? { userId: _userId, accessToken: '' } : undefined
-        )
+    public controller = (authContext: AuthContext | undefined) => {
+        const scopedStore = this.store.withAuthContext(authContext)
+        const _userId = authContext?.userId
         return buildController({
             signTransaction: async (
                 params: SignTransactionParams

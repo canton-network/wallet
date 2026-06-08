@@ -47,7 +47,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.BLOCKDAEMON
 
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public controller = (authContext: AuthContext | undefined) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -67,7 +67,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                         ...(params.internalTxId !== undefined && {
                             internalTxId: params.internalTxId,
                         }),
-                        userIdentifier: userId,
+                        userIdentifier: authContext?.email,
                     })
                     return {
                         txId: tx.txId,
@@ -135,7 +135,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                         const transactions = await this.client.getTransactions({
                             txIds: params.txIds!,
                             publicKeys: params.publicKeys!,
-                            userIdentifier: userId,
+                            userIdentifier: authContext?.email,
                         })
                         return {
                             transactions: transactions.map((tx) => ({
@@ -175,7 +175,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                             id: k.id,
                             name: k.name,
                             publicKey: k.publicKey,
-                            userIdentifier: userId,
+                            userIdentifier: authContext?.email,
                         })),
                     }
                 } catch (error) {
@@ -192,7 +192,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                 try {
                     const key = await this.client.createKey({
                         name: params.name,
-                        userIdentifier: userId,
+                        userIdentifier: authContext?.email,
                     })
                     return {
                         id: key.id,

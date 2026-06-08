@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
 import {
     Error as SigningError,
@@ -32,12 +32,11 @@ export class FireblocksWalletAllocator implements WalletAllocator {
     ) {}
 
     async createWallet(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false
     ): Promise<Wallet> {
-        const driver = this.signingDriver.controller(userId)
+        const driver = this.signingDriver.controller(authContext)
 
         const keys = await driver.getKeys().then(handleSigningError)
         const key = keys?.keys?.find((k) => k.name === 'Canton Party')
@@ -85,7 +84,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         if (status === 'signed') {
             const { signature } = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId,
                 })
                 .then(handleSigningError)
@@ -99,7 +98,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                     namespace,
                     topologyTransactions,
                     Buffer.from(signature, 'hex').toString('base64'),
-                    userId
+                    authContext.userId
                 )
             wallet = {
                 ...walletBase,
@@ -130,8 +129,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
     }
 
     async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet
     ): Promise<void> {
         if (
@@ -143,14 +141,14 @@ export class FireblocksWalletAllocator implements WalletAllocator {
             )
         }
 
-        const driver = this.signingDriver.controller(userId)
+        const driver = this.signingDriver.controller(authContext)
         const keys = await driver.getKeys().then(handleSigningError)
         const key = keys?.keys?.find((k) => k.name === 'Canton Party')
         if (!key) throw new Error('Fireblocks key not found')
 
         const { signature, status } = await driver
             .getTransaction({
-                userId,
+                userId: authContext.userId,
                 txId: existingWallet.externalTxId,
             })
             .then(handleSigningError)
@@ -170,7 +168,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                     existingWallet.namespace,
                     existingWallet.topologyTransactions.split(', '),
                     Buffer.from(signature, 'hex').toString('base64'),
-                    userId
+                    authContext.userId
                 )
             walletUpdate = {
                 ...walletUpdate,

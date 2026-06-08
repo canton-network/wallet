@@ -102,7 +102,6 @@ export class WalletSyncService {
             }
 
             // Get keys from signing providers try to match
-            const userId = this.authContext?.userId
             for (const [providerId, driver] of Object.entries(
                 this.signingDrivers
             )) {
@@ -114,7 +113,7 @@ export class WalletSyncService {
                 }
 
                 try {
-                    const controller = driver.controller(userId)
+                    const controller = driver.controller(this.authContext)
                     const result = await controller.getKeys()
 
                     // In case of error getKeys resolve Promise but with error object

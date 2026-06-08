@@ -18,8 +18,14 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { Notifier } from '../notification/NotificationService.js'
 import { TransactionService } from './transaction-service.js'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 
 const userId = 'user-1'
+const authContext: AuthContext = {
+    userId,
+    accessToken: 'access-token',
+    email: 'user@example.com',
+}
 
 const wallet: Wallet = {
     primary: true,
@@ -162,7 +168,7 @@ describe('TransactionService', () => {
             )
 
             const result = await service.signWithWalletKernel(
-                userId,
+                authContext,
                 wallet,
                 signParams
             )
@@ -195,7 +201,7 @@ describe('TransactionService', () => {
             const service = createService(createStore(), {}, notifier, logger)
 
             await expect(
-                service.signWithWalletKernel(userId, wallet, signParams)
+                service.signWithWalletKernel(authContext, wallet, signParams)
             ).rejects.toThrow('Wallet Gateway signing driver not available')
         })
 
@@ -212,7 +218,7 @@ describe('TransactionService', () => {
             )
 
             await expect(
-                service.signWithWalletKernel(userId, wallet, signParams)
+                service.signWithWalletKernel(authContext, wallet, signParams)
             ).rejects.toThrow('Transaction not found with id: tx-1')
         })
 
@@ -233,7 +239,7 @@ describe('TransactionService', () => {
             )
 
             await expect(
-                service.signWithWalletKernel(userId, wallet, signParams)
+                service.signWithWalletKernel(authContext, wallet, signParams)
             ).rejects.toThrow('Error from signing driver: Signing rejected')
         })
     })
@@ -257,7 +263,7 @@ describe('TransactionService', () => {
             )
 
             const result = await service.signWithBlockdaemon(
-                userId,
+                authContext,
                 wallet,
                 signParams
             )
@@ -302,13 +308,13 @@ describe('TransactionService', () => {
             )
 
             const result = await service.signWithBlockdaemon(
-                userId,
+                authContext,
                 wallet,
                 signParams
             )
 
             expect(getTransaction).toHaveBeenCalledWith({
-                userId,
+                userId: authContext.userId,
                 txId: 'external-tx-1',
             })
             expect(store.setTransactionSigned).toHaveBeenCalledWith(
@@ -347,14 +353,14 @@ describe('TransactionService', () => {
             )
 
             const result = await service.signWithFireblocks(
-                userId,
+                authContext,
                 wallet,
                 signParams
             )
 
             expect(signTransaction).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    userId,
+                    userId: authContext.userId,
                     txHash: Buffer.from(
                         pendingTransaction.preparedTransactionHash,
                         'base64'
@@ -389,7 +395,7 @@ describe('TransactionService', () => {
             )
 
             const result = await service.signWithDfns(
-                userId,
+                authContext,
                 wallet,
                 signParams
             )

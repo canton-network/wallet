@@ -75,7 +75,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
     }
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.FIREBLOCKS
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public controller = (authContext: AuthContext | undefined) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -84,7 +84,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
 
                 try {
                     const tx = await this.fireblocks.signTransaction(
-                        userId,
+                        authContext?.userId,
                         params.txHash,
                         params.keyIdentifier,
                         params.internalTxId
@@ -117,7 +117,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 params: GetTransactionParams
             ): Promise<GetTransactionResult> => {
                 const tx = await this.fireblocks.getTransaction(
-                    userId,
+                    authContext?.userId,
                     params.txId
                 )
                 if (tx) {
@@ -144,7 +144,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     const txIds = new Set(params.txIds)
                     const publicKeys = new Set(params.publicKeys)
                     for await (const tx of this.fireblocks.getTransactions(
-                        userId
+                        authContext?.userId
                     )) {
                         if (
                             txIds.has(tx.txId) ||
@@ -180,7 +180,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
 
             getKeys: async (): Promise<GetKeysResult> => {
                 try {
-                    const keys = await this.fireblocks.getPublicKeys(userId)
+                    const keys = await this.fireblocks.getPublicKeys(
+                        authContext?.userId
+                    )
                     return {
                         keys: keys.map((k) => ({
                             id: k.derivationPath.join('-'),

@@ -20,6 +20,13 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
 import type { AllocatedParty } from '../party-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+import { AuthContext } from '@canton-network/core-wallet-auth'
+
+const authContext: AuthContext = {
+    userId: 'user-1',
+    accessToken: 'access-token',
+    email: 'user-1@example.com',
+}
 
 const createWallet = (
     partyId: string,
@@ -315,8 +322,7 @@ describe('WalletAllocationService', () => {
             mockPartyAllocator.allocateParty.mockResolvedValue(expectedParty)
 
             const result = await service.createWallet(
-                'user-1',
-                undefined,
+                authContext,
                 'alice',
                 false,
                 SigningProvider.PARTICIPANT
@@ -351,14 +357,13 @@ describe('WalletAllocationService', () => {
             })
 
             await service.allocateParty(
-                'user-1',
-                undefined,
+                authContext,
                 existingWallet,
                 SigningProvider.PARTICIPANT
             )
 
             expect(mockPartyAllocator.allocateParty).toHaveBeenCalledWith(
-                'user-1',
+                authContext.userId,
                 'alice'
             )
             expect(mockStore.updateWallet).toHaveBeenCalledWith({
@@ -382,8 +387,7 @@ describe('WalletAllocationService', () => {
             mockPartyAllocator.allocateParty.mockResolvedValue(expectedParty)
 
             const result = await service.createWallet(
-                'user-1',
-                undefined,
+                authContext,
                 'bob',
                 false,
                 SigningProvider.WALLET_KERNEL
@@ -404,7 +408,7 @@ describe('WalletAllocationService', () => {
                         controller: Mock
                     }
                 ).controller
-            ).toHaveBeenCalledWith('user-1')
+            ).toHaveBeenCalledWith(authContext)
             expect(mockController.createKey).toHaveBeenCalledWith({
                 name: 'bob',
             })
@@ -431,8 +435,7 @@ describe('WalletAllocationService', () => {
             })
 
             await service.allocateParty(
-                'user-1',
-                undefined,
+                authContext,
                 existingWallet,
                 SigningProvider.WALLET_KERNEL
             )
@@ -455,8 +458,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithoutDriver.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'bob',
                     false,
                     SigningProvider.WALLET_KERNEL
@@ -472,8 +474,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 service.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'bob',
                     false,
                     SigningProvider.WALLET_KERNEL
@@ -504,8 +505,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 service.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'bob',
                     false,
                     SigningProvider.WALLET_KERNEL
@@ -535,8 +535,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 service.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'bob',
                     false,
                     SigningProvider.WALLET_KERNEL
@@ -571,8 +570,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 service.allocateParty(
-                    'user-1',
-                    undefined,
+                    authContext,
                     existingWallet,
                     SigningProvider.WALLET_KERNEL
                 )
@@ -586,8 +584,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithoutFireblocks.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.FIREBLOCKS
@@ -611,8 +608,7 @@ describe('WalletAllocationService', () => {
             )
 
             const result = await serviceWithFireblocks.createWallet(
-                'user-1',
-                undefined,
+                authContext,
                 'alice',
                 false,
                 SigningProvider.FIREBLOCKS
@@ -638,8 +634,7 @@ describe('WalletAllocationService', () => {
             })
 
             const result = await serviceWithFireblocks.createWallet(
-                'user-1',
-                undefined,
+                authContext,
                 'alice',
                 false,
                 SigningProvider.FIREBLOCKS
@@ -669,8 +664,7 @@ describe('WalletAllocationService', () => {
                 })
 
                 const result = await serviceWithFireblocks.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.FIREBLOCKS
@@ -697,8 +691,7 @@ describe('WalletAllocationService', () => {
             })
 
             const result = await serviceWithFireblocks.createWallet(
-                'user-1',
-                undefined,
+                authContext,
                 'alice',
                 false,
                 SigningProvider.FIREBLOCKS
@@ -719,8 +712,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithFireblocks.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.FIREBLOCKS
@@ -737,8 +729,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithFireblocks.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.FIREBLOCKS
@@ -759,8 +750,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithFireblocks.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.FIREBLOCKS
@@ -777,8 +767,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithFireblocks.allocateParty(
-                    'user-1',
-                    undefined,
+                    authContext,
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.FIREBLOCKS,
                         topologyTransactions: undefined,
@@ -799,8 +788,7 @@ describe('WalletAllocationService', () => {
             })
 
             await serviceWithFireblocks.allocateParty(
-                'user-1',
-                undefined,
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.FIREBLOCKS,
                     topologyTransactions: 'tx1',
@@ -833,8 +821,7 @@ describe('WalletAllocationService', () => {
             )
 
             await serviceWithFireblocks.allocateParty(
-                'user-1',
-                undefined,
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.FIREBLOCKS,
                     namespace: 'fingerprint',
@@ -868,8 +855,7 @@ describe('WalletAllocationService', () => {
             })
 
             await serviceWithFireblocks.allocateParty(
-                'user-1',
-                undefined,
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.FIREBLOCKS,
                     topologyTransactions: 'tx1',
@@ -894,8 +880,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithoutBlockdaemon.createWallet(
-                    'user-1',
-                    'user-1@example.com',
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.BLOCKDAEMON
@@ -911,8 +896,7 @@ describe('WalletAllocationService', () => {
             })
 
             const result = await serviceWithBlockdaemon.createWallet(
-                'user-1',
-                'user-1@example.com',
+                authContext,
                 'alice',
                 false,
                 SigningProvider.BLOCKDAEMON
@@ -946,8 +930,7 @@ describe('WalletAllocationService', () => {
             )
 
             const result = await serviceWithBlockdaemon.createWallet(
-                'user-1',
-                'user-1@example.com',
+                authContext,
                 'alice',
                 false,
                 SigningProvider.BLOCKDAEMON
@@ -973,8 +956,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithBlockdaemon.createWallet(
-                    'user-1',
-                    'user-1@example.com',
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.BLOCKDAEMON
@@ -995,8 +977,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithBlockdaemon.createWallet(
-                    'user-1',
-                    'user-1@example.com',
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.BLOCKDAEMON
@@ -1019,8 +1000,7 @@ describe('WalletAllocationService', () => {
                 })
 
                 const result = await serviceWithBlockdaemon.createWallet(
-                    'user-1',
-                    'user-1@example.com',
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.BLOCKDAEMON
@@ -1039,8 +1019,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithBlockdaemon.allocateParty(
-                    'user-1',
-                    'user-1@example.com',
+                    authContext,
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.BLOCKDAEMON,
                         topologyTransactions: 'tx1',
@@ -1068,8 +1047,7 @@ describe('WalletAllocationService', () => {
             )
 
             await serviceWithBlockdaemon.allocateParty(
-                'user-1',
-                'user-1@example.com',
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.BLOCKDAEMON,
                     namespace: 'fingerprint',
@@ -1095,8 +1073,7 @@ describe('WalletAllocationService', () => {
             })
 
             await serviceWithBlockdaemon.allocateParty(
-                'user-1',
-                'user-1@example.com',
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.BLOCKDAEMON,
                     topologyTransactions: 'tx1',
@@ -1121,8 +1098,7 @@ describe('WalletAllocationService', () => {
             })
 
             await serviceWithBlockdaemon.allocateParty(
-                'user-1',
-                'user-1@example.com',
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.BLOCKDAEMON,
                     topologyTransactions: 'tx1',
@@ -1153,8 +1129,7 @@ describe('WalletAllocationService', () => {
             })
 
             await serviceWithBlockdaemon.allocateParty(
-                'user-1',
-                'user-1@example.com',
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.BLOCKDAEMON,
                     topologyTransactions: 'tx1',
@@ -1180,8 +1155,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithoutDfns.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.DFNS
@@ -1198,8 +1172,7 @@ describe('WalletAllocationService', () => {
             })
 
             const result = await serviceWithDfns.createWallet(
-                'user-1',
-                undefined,
+                authContext,
                 'alice',
                 false,
                 SigningProvider.DFNS
@@ -1231,8 +1204,7 @@ describe('WalletAllocationService', () => {
             )
 
             const result = await serviceWithDfns.createWallet(
-                'user-1',
-                undefined,
+                authContext,
                 'alice',
                 false,
                 SigningProvider.DFNS
@@ -1260,8 +1232,7 @@ describe('WalletAllocationService', () => {
                 })
 
                 const result = await serviceWithDfns.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.DFNS
@@ -1286,8 +1257,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithDfns.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.DFNS
@@ -1308,8 +1278,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithDfns.createWallet(
-                    'user-1',
-                    undefined,
+                    authContext,
                     'alice',
                     false,
                     SigningProvider.DFNS
@@ -1326,8 +1295,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithDfns.allocateParty(
-                    'user-1',
-                    undefined,
+                    authContext,
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.DFNS,
                         topologyTransactions: 'tx1',
@@ -1352,8 +1320,7 @@ describe('WalletAllocationService', () => {
 
             await expect(
                 serviceWithDfns.allocateParty(
-                    'user-1',
-                    undefined,
+                    authContext,
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.DFNS,
                         topologyTransactions: 'tx1',
@@ -1382,8 +1349,7 @@ describe('WalletAllocationService', () => {
             )
 
             await serviceWithDfns.allocateParty(
-                'user-1',
-                undefined,
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.DFNS,
                     namespace: 'fingerprint',
@@ -1399,7 +1365,7 @@ describe('WalletAllocationService', () => {
                 'fingerprint',
                 ['tx1'],
                 'sig-base64',
-                'user-1'
+                authContext.userId
             )
             expect(mockStore.updateWallet).toHaveBeenCalledWith({
                 networkId: 'network1',
@@ -1417,8 +1383,7 @@ describe('WalletAllocationService', () => {
             })
 
             await serviceWithDfns.allocateParty(
-                'user-1',
-                undefined,
+                authContext,
                 createWallet('alice::fingerprint', {
                     signingProviderId: SigningProvider.DFNS,
                     topologyTransactions: 'tx1',
@@ -1452,8 +1417,7 @@ describe('WalletAllocationService', () => {
                 })
 
                 await serviceWithDfns.allocateParty(
-                    'user-1',
-                    undefined,
+                    authContext,
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.DFNS,
                         topologyTransactions: 'tx1',

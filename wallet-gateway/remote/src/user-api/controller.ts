@@ -311,8 +311,7 @@ export const userController = (
             }
 
             const wallet = await walletAllocationService.createWallet(
-                userId,
-                email,
+                connectedContext,
                 partyHint,
                 primary ?? false,
                 signingProviderId as SigningProvider
@@ -402,8 +401,7 @@ export const userController = (
             }
 
             await walletAllocationService.allocateParty(
-                userId,
-                email,
+                connectedContext,
                 existingWallet,
                 signingProviderId
             )
@@ -474,7 +472,8 @@ export const userController = (
 
             const notifier = notificationService.getNotifier(userId)
             const signingProvider = wallet.signingProviderId as SigningProvider
-            const driver = drivers[signingProvider]?.controller(userId)
+            const driver =
+                drivers[signingProvider]?.controller(connectedContext)
 
             if (!driver) {
                 throw new Error(
@@ -495,7 +494,7 @@ export const userController = (
                 }
                 case SigningProvider.WALLET_KERNEL: {
                     return transactionService.signWithWalletKernel(
-                        userId,
+                        connectedContext,
                         wallet,
                         signParams
                     )
@@ -507,21 +506,21 @@ export const userController = (
                         )
                     }
                     return transactionService.signWithBlockdaemon(
-                        email,
+                        connectedContext,
                         wallet,
                         signParams
                     )
                 }
                 case SigningProvider.FIREBLOCKS: {
                     return transactionService.signWithFireblocks(
-                        userId,
+                        connectedContext,
                         wallet,
                         signParams
                     )
                 }
                 case SigningProvider.DFNS: {
                     return transactionService.signWithDfns(
-                        userId,
+                        connectedContext,
                         wallet,
                         signParams
                     )
@@ -594,8 +593,11 @@ export const userController = (
                 )
             }
 
+            const connectedContext = assertConnected(authContext)
             const driver =
-                drivers[SigningProvider.WALLET_KERNEL]?.controller(userId)
+                drivers[SigningProvider.WALLET_KERNEL]?.controller(
+                    connectedContext
+                )
             if (!driver) {
                 return await emitFailedAndPersist(
                     'Wallet Kernel signing driver not available'

@@ -26,6 +26,7 @@ import {
 import { UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
 import { ledgerPrepareParams, type PrepareParams } from '../utils.js'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 
 function handleSigningError<T extends object>(result: SigningError | T): T {
     if ('error' in result) {
@@ -67,7 +68,7 @@ export class TransactionService {
     }
 
     public async signWithWalletKernel(
-        userId: UserId,
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResultSigned> {
@@ -76,7 +77,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Wallet Gateway signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -124,7 +125,7 @@ export class TransactionService {
     }
 
     public async signWithBlockdaemon(
-        userId: UserId,
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResult> {
@@ -132,7 +133,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Blockdaemon signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -145,7 +146,7 @@ export class TransactionService {
         if (tx && tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId: tx.externalTxId,
                 })
                 .then(handleSigningError)
@@ -232,7 +233,7 @@ export class TransactionService {
     }
 
     public async signWithFireblocks(
-        userId: UserId,
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResult> {
@@ -240,7 +241,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Fireblocks signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -253,14 +254,14 @@ export class TransactionService {
         if (tx && tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId: tx.externalTxId,
                 })
                 .then(handleSigningError)
         } else {
             signingResult = await driver
                 .signTransaction({
-                    userId,
+                    userId: authContext.userId,
                     tx: tx.preparedTransaction,
                     txHash: Buffer.from(
                         tx.preparedTransactionHash,
@@ -350,7 +351,7 @@ export class TransactionService {
      * the same SignResult shape the other external providers use.
      */
     public async signWithDfns(
-        userId: UserId,
+        authContext: AuthContext,
         wallet: Wallet,
         signParams: SignParams
     ): Promise<SignResult> {
@@ -358,7 +359,7 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Dfns signing driver not available')
         }
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(authContext)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
@@ -371,7 +372,7 @@ export class TransactionService {
         if (tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
-                    userId,
+                    userId: authContext.userId,
                     txId: tx.externalTxId,
                 })
                 .then(handleSigningError)

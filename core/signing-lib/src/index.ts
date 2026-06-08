@@ -38,7 +38,7 @@ export interface KeyPair {
 export interface SigningDriverInterface {
     partyMode: PartyMode
     signingProvider: SigningProvider
-    controller: (userId: AuthContext['userId'] | undefined) => Methods
+    controller: (authContext: AuthContext | undefined) => Methods
 }
 
 export const verifySignedTxHash = (

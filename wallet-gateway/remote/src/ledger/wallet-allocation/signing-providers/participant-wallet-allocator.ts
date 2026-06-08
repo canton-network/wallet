@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 import { Store, Wallet } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
@@ -17,12 +17,14 @@ export class ParticipantWalletAllocator implements WalletAllocator {
     ) {}
 
     async createWallet(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false
     ): Promise<Wallet> {
-        const party = await this.partyAllocator.allocateParty(userId, partyHint)
+        const party = await this.partyAllocator.allocateParty(
+            authContext.userId,
+            partyHint
+        )
         const network = await this.store.getCurrentNetwork()
         const wallet: Wallet = {
             partyId: party.partyId,
@@ -42,12 +44,11 @@ export class ParticipantWalletAllocator implements WalletAllocator {
     }
 
     async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet
     ): Promise<void> {
         const party = await this.partyAllocator.allocateParty(
-            userId,
+            authContext.userId,
             existingWallet.hint
         )
         const network = await this.store.getCurrentNetwork()
