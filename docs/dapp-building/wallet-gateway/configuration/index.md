@@ -569,6 +569,26 @@ Store `adminAuth` secrets via `clientSecretEnv` and Kubernetes secrets (Helm `oa
 
 For participant-only signing with no external custody, leave the Helm chart `signing: {}` block empty — see [Deployment](../deployment/index.md#signing-chart-values-signing-).
 
+## Service account automation
+
+When a network uses **`client_credentials`** for `auth` (machine-to-machine), the Wallet Gateway treats DApp API `prepareExecute` calls as **service account automation**: it prepares, signs, and submits transactions without opening the approval UI. Clients should still use the existing DApp API (`prepareExecute`, `txChanged` events, `addSession`) — no new endpoints are required.
+
+Optional server settings:
+
+```json
+{
+    "server": {
+        "serviceAccount": {
+            "allowedUsers": ["ledger-user-id-from-jwt-sub"],
+            "pendingSigningPollIntervalMs": 5000
+        }
+    }
+}
+```
+
+- **`allowedUsers`**: When set, only these JWT `sub` values may use automation. Omit to allow any authenticated user on a `client_credentials` network.
+- **`pendingSigningPollIntervalMs`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns) when automation signing stays `pending` until custody approves.
+
 ## Configuring Signing Store
 
 The signing store is an optional secondary database used for storing private keys when the Wallet Gateway is configured to act as a signing provider (using the `wallet-kernel` signing provider).

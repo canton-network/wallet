@@ -32,6 +32,18 @@ import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import {
+    ServiceAccountAutomation,
+    ServiceAccountAutomationConfig,
+} from '../ledger/service-account-automation.js'
+import type { SigningDrivers } from '../signing/signing-drivers.js'
+import type { Idp } from '@canton-network/core-wallet-auth'
+
+export interface DappControllerDeps {
+    signingDrivers: SigningDrivers
+    serviceAccountConfig: ServiceAccountAutomationConfig
+    getIdp: (idpId: string) => Promise<Idp>
+}
 
 export const dappController = (
     kernelInfo: KernelInfoConfig,
@@ -41,9 +53,19 @@ export const dappController = (
     notificationService: NotificationService,
     _logger: Logger,
     origin: string | null,
-    context?: AuthContext
+    context?: AuthContext,
+    deps?: DappControllerDeps
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
+    const serviceAccountAutomation = deps
+        ? new ServiceAccountAutomation(
+              deps.serviceAccountConfig,
+              deps.signingDrivers,
+              logger,
+              deps.getIdp
+          ).withAuthContext(context)
+        : undefined
+
     return buildController({
         connect: async () => {
             if (!context || !(await store.getSession())) {
@@ -254,9 +276,34 @@ export const dappController = (
 
             await store.setTransaction(transaction)
 
+            const approveUrl = `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`
+
+            if (
+                serviceAccountAutomation?.isAutomationRequest(
+                    network,
+                    context.accessToken
+                )
+            ) {
+                logger.info(
+                    {
+                        userId: context.userId,
+                        commandId,
+                        transactionId,
+                        signingProviderId: wallet.signingProviderId,
+                    },
+                    'Service account straight-through prepare/sign/execute'
+                )
+                await serviceAccountAutomation.signAndExecutePreparedTransaction(
+                    store,
+                    wallet,
+                    transaction,
+                    notifier
+                )
+            }
+
             return {
                 // closeafteraction query param flag makes approving or deleting tx close the popup
-                userUrl: `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`,
+                userUrl: approveUrl,
             }
         },
         status: async () => {

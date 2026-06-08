@@ -148,7 +148,8 @@ function createController(
     notificationService: NotificationService,
     logger: Logger,
     context: AuthContext | undefined,
-    requestOrigin: string | null = origin
+    requestOrigin: string | null = origin,
+    deps?: Parameters<typeof dappController>[8]
 ) {
     return dappController(
         kernelInfo,
@@ -158,7 +159,8 @@ function createController(
         notificationService,
         logger,
         requestOrigin,
-        context
+        context,
+        deps
     )
 }
 

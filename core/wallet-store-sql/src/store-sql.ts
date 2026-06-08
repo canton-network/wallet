@@ -401,6 +401,50 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .execute()
     }
 
+    /**
+     * Returns the session for a user without requiring the caller's auth context.
+     * Used by background jobs (e.g. pending external signing poller).
+     */
+    async getSessionForUser(userId: UserId): Promise<Session | undefined> {
+        const row = await this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('userId', '=', userId)
+            .executeTakeFirst()
+        if (!row) {
+            return undefined
+        }
+        return {
+            id: row.id,
+            network: row.network,
+            accessToken: row.accessToken,
+        }
+    }
+
+    /**
+     * Lists pending transactions awaiting external signing approval across all users.
+     */
+    async listPendingExternalTransactions(): Promise<
+        Array<{
+            userId: UserId
+            networkId: string
+            transaction: Transaction
+        }>
+    > {
+        const rows = await this.db
+            .selectFrom('transactions')
+            .selectAll()
+            .where('status', '=', 'pending')
+            .where('externalTxId', 'is not', null)
+            .execute()
+
+        return rows.map((row) => ({
+            userId: row.userId,
+            networkId: row.networkId,
+            transaction: toTransaction(row),
+        }))
+    }
+
     // IDP methods
 
     async getIdp(idpId: string): Promise<Idp> {

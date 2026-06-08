@@ -44,8 +44,11 @@ import { sessionHandler } from './middleware/sessionHandler.js'
 import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
 import { Env } from './env.js'
+import { PendingSigningPoller } from './ledger/pending-signing-poller.js'
+import type { Idp } from '@canton-network/core-wallet-auth'
 
 let isReady = false
+let pendingSigningPoller: PendingSigningPoller | undefined
 
 async function initializeDatabase(
     config: Config,
@@ -352,6 +355,37 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const kernelInfo = config.kernel
 
+    const serviceAccountConfig = {
+        allowedUsers: config.server.serviceAccount?.allowedUsers,
+    }
+
+    const resolveIdp = async (idpId: string): Promise<Idp> => {
+        const idps = await store.listIdps()
+        const idp = idps.find((i) => i.id === idpId)
+        if (!idp) {
+            throw new Error(`IDP "${idpId}" not found`)
+        }
+        return idp
+    }
+
+    const dappControllerDeps = {
+        signingDrivers: drivers,
+        serviceAccountConfig,
+        getIdp: resolveIdp,
+    }
+
+    pendingSigningPoller = new PendingSigningPoller({
+        intervalMs:
+            config.server.serviceAccount?.pendingSigningPollIntervalMs ?? 5000,
+        automationConfig: serviceAccountConfig,
+        signingDrivers: drivers,
+        store,
+        notificationService,
+        getIdp: resolveIdp,
+        logger: logger.child({ component: 'PendingSigningPoller' }),
+    })
+    pendingSigningPoller.start()
+
     // register dapp API handlers
     dapp(
         config.server.dappPath,
@@ -364,7 +398,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         config.server,
         notificationService,
         authService,
-        store
+        store,
+        dappControllerDeps
     )
 
     // register user API handlers
