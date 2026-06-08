@@ -890,4 +890,70 @@ describe('TransferService', () => {
             expect(exercise.choice).toBe(expectedChoice)
         }
     )
+
+    it('exercise delegate proxy accept', async () => {
+        const { service, tokenClient } = makeService()
+        tokenClient.post.mockResolvedValue(makeChoiceContext())
+        const [exercise] =
+            await service.transfer.exerciseDelegateProxyTransferInstructionAccept(
+                'proxy-cid',
+                'ti-cid',
+                new URL(registryUrl),
+                'app-right-cid',
+                [{ beneficiary: senderParty, weight: 1.0 }]
+            )
+
+        expect(exercise.choice).toBe('DelegateProxy_TransferInstruction_Accept')
+        expect(exercise.contractId).toBe('proxy-cid')
+    })
+
+    it('exercise delegate proxy withdraw', async () => {
+        const { service, tokenClient } = makeService()
+        tokenClient.post.mockResolvedValue(makeChoiceContext())
+        const [exercise] =
+            await service.transfer.exerciseDelegateProxyTransferInstructioWithdraw(
+                'proxy-cid',
+                'ti-cid',
+                new URL(registryUrl),
+                'app-right-cid',
+                [{ beneficiary: senderParty, weight: 1.0 }]
+            )
+
+        expect(exercise.choice).toBe(
+            'DelegateProxy_TransferInstruction_Withdraw'
+        )
+        expect(exercise.contractId).toBe('proxy-cid')
+    })
+    it('exercise delegate proxy reject', async () => {
+        const { service, tokenClient } = makeService()
+        tokenClient.post.mockResolvedValue(makeChoiceContext())
+        const [exercise] =
+            await service.transfer.exerciseDelegateProxyTransferInstructionReject(
+                'proxy-cid',
+                'ti-cid',
+                new URL(registryUrl),
+                'app-right-cid',
+                [{ beneficiary: senderParty, weight: 1.0 }]
+            )
+
+        expect(exercise.choice).toBe('DelegateProxy_TransferInstruction_Reject')
+        expect(exercise.contractId).toBe('proxy-cid')
+    })
+
+    it('exercise delegate proxy throws an error when sum of beneficiary weights exceed 1.0', async () => {
+        const { service, tokenClient } = makeService()
+        tokenClient.post.mockResolvedValue(makeChoiceContext())
+        await expect(
+            service.transfer.exerciseDelegateProxyTransferInstructioWithdraw(
+                'proxy-cid',
+                'ti-cid',
+                new URL(registryUrl),
+                'app-right-cid',
+                [
+                    { beneficiary: senderParty, weight: 1.0 },
+                    { beneficiary: 'bob:def', weight: 1.0 },
+                ]
+            )
+        ).rejects.toThrow('Sum of beneficiary weights is larger than 1.')
+    })
 })
