@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { v4 } from 'uuid'
 import { SDKContext } from '../../../sdk.js'
 import {
     CreatePartyOptions,
@@ -150,8 +149,7 @@ export class SignedPartyCreationService {
                         resource: '/v2/parties/external/generate-topology',
                         body: {
                             synchronizer: synchronizerId,
-                            partyHint:
-                                this.createPartyOptions?.partyHint ?? v4(),
+                            partyHint: this.createPartyOptions?.partyHint ?? '',
                             publicKey: {
                                 format: 'CRYPTO_KEY_FORMAT_RAW',
                                 keyData: this.publicKey,
