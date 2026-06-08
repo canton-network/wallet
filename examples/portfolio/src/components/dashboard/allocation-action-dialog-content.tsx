@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react'
 import {
     Alert,
     Box,
+    Button,
     Chip,
     CircularProgress,
     Collapse,
@@ -51,9 +52,18 @@ export function AllocationActionDialogContent({
     onCreateAllocation,
     onWithdrawAllocation,
 }: AllocationActionDialogContentProps) {
-    const [expandedLegIds, setExpandedLegIds] = useState(() =>
-        getDefaultExpandedLegIds(item.transferLegs)
+    const [expandedLegIds, setExpandedLegIds] = useState(
+        () => new Set(item.transferLegs.map((leg) => leg.transferLegId))
     )
+    const allLegsExpanded = expandedLegIds.size === item.transferLegs.length
+
+    const toggleAllLegs = () => {
+        setExpandedLegIds(
+            allLegsExpanded
+                ? new Set()
+                : new Set(item.transferLegs.map((leg) => leg.transferLegId))
+        )
+    }
 
     const toggleLeg = (transferLegId: string) => {
         setExpandedLegIds((current) => {
@@ -121,9 +131,27 @@ export function AllocationActionDialogContent({
             </Box>
 
             <Box sx={{ display: 'grid', gap: 2 }}>
-                <Typography variant="h5" component="h2">
-                    Transfer legs
-                </Typography>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 2,
+                    }}
+                >
+                    <Typography variant="h5" component="h2">
+                        Transfer legs
+                    </Typography>
+                    <Button
+                        type="button"
+                        variant="text"
+                        size="small"
+                        onClick={toggleAllLegs}
+                        sx={{ color: 'secondary.main', flexShrink: 0 }}
+                    >
+                        {allLegsExpanded ? 'Collapse all' : 'Expand all'}
+                    </Button>
+                </Box>
 
                 <Box sx={{ display: 'grid', gap: 2 }}>
                     {item.transferLegs.map((leg, index) => (
@@ -485,10 +513,6 @@ function SubtleChip({ label }: { label: string }) {
             }}
         />
     )
-}
-
-function getDefaultExpandedLegIds(legs: TransferLegWithAllocation[]) {
-    return new Set(legs.length < 4 ? legs.map((leg) => leg.transferLegId) : [])
 }
 
 function getAmountColor(isSender: boolean, isReceiver: boolean) {

@@ -172,10 +172,16 @@ export function ActionRequiredDialog({
             onClose={handleClose}
             maxWidth={false}
             slotProps={{
+                container: {
+                    sx: {
+                        alignItems: 'flex-start',
+                    },
+                },
                 paper: {
                     sx: {
                         width: 'min(100%, 960px)',
                         maxHeight: 'min(calc(100vh - 48px), 100%)',
+                        my: 10,
                         overflow: 'auto',
                         scrollbarWidth: 'none',
                         msOverflowStyle: 'none',
