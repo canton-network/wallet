@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi, MockedObject, beforeEach } from 'vitest'
+import { describe, it, expect, vi, MockedObject } from 'vitest'
 import { CoreService, TokenStandardService } from './token-standard-service.js'
 import { PrettyContract } from '@canton-network/core-tx-parser'
 import { HoldingView } from '@canton-network/core-token-standard'
@@ -252,127 +252,6 @@ describe('CoreService', () => {
             sender: senderParty,
         })
         expect(result).toHaveLength(1)
-    })
-})
-
-describe('token standard service', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
-
-    it('should get instrument byId', async () => {
-        const { service, getTokenStandardClient, tokenClient } = makeService()
-
-        tokenClient.get.mockResolvedValue({ id: 'cc', name: 'amulet' })
-
-        const instrument = await service.getInstrumentById(registryUrl, 'cc')
-        expect(instrument.id).toBe('cc')
-        expect(instrument.name).toBe('amulet')
-        expect(getTokenStandardClient).toHaveBeenCalledWith(registryUrl)
-    })
-
-    it('should get instrumentAdmin', async () => {
-        const { service, tokenClient } = makeService()
-
-        tokenClient.get.mockResolvedValue({
-            id: 'cc',
-            name: 'amulet',
-            adminId: 'blah:123',
-        })
-
-        const admin = await service.getInstrumentAdmin(registryUrl)
-        expect(admin).toBe('blah:123')
-    })
-
-    it('convert the instruments to an asset type', async () => {
-        const { service, tokenClient } = makeService()
-
-        tokenClient.get
-            .mockResolvedValueOnce({
-                instruments: [
-                    {
-                        id: 'TestTokenExt',
-                        name: 'TestTokenExt',
-                        symbol: 'TestTokenExt',
-                        totalSupply: '201.0',
-                        totalSupplyAsOf: null,
-                        decimals: 10,
-                        supportedApis: {
-                            'splice-api-token-metadata-v1': 1,
-                            'splice-api-token-transfer-instruction-v1': 1,
-                            'splice-api-token-allocation-request-v1': 1,
-                            'splice-api-token-allocation-v1': 1,
-                            'splice-api-token-holding-v1': 1,
-                            'splice-api-token-allocation-instruction-v1': 1,
-                        },
-                    },
-                    {
-                        id: 'TestToken',
-                        name: 'TestToken',
-                        symbol: 'TestToken',
-                        totalSupply: '1300.0',
-                        totalSupplyAsOf: null,
-                        decimals: 10,
-                        supportedApis: {
-                            'splice-api-token-metadata-v1': 1,
-                            'splice-api-token-transfer-instruction-v1': 1,
-                            'splice-api-token-allocation-request-v1': 1,
-                            'splice-api-token-allocation-v1': 1,
-                            'splice-api-token-holding-v1': 1,
-                            'splice-api-token-allocation-instruction-v1': 1,
-                        },
-                    },
-                ],
-                nextPageToken: null,
-            })
-            .mockResolvedValue({
-                adminId:
-                    'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
-                supportedApis: {
-                    'splice-api-token-metadata-v1': 1,
-                    'splice-api-token-transfer-instruction-v1': 1,
-                    'splice-api-token-allocation-request-v1': 1,
-                    'splice-api-token-allocation-v1': 1,
-                    'splice-api-token-holding-v1': 1,
-                    'splice-api-token-allocation-instruction-v1': 1,
-                },
-            })
-
-        const response = await service.instrumentsToAsset(registryUrl)
-        expect(response).toHaveLength(2)
-    })
-
-    it('toPretty transactions', async () => {
-        const { service } = makeService()
-        const result = await service.core.toPrettyTransactions([], senderParty)
-        expect(result.transactions).toHaveLength(0)
-        expect(result.nextOffset).toBe(0)
-
-        const updates = [
-            { update: { OffsetCheckpoint: { value: { offset: 50 } } } },
-            { update: { OffsetCheckpoint: { value: { offset: 80 } } } },
-        ]
-
-        const updatesResult = await service.core.toPrettyTransactions(
-            updates as any,
-            senderParty
-        )
-        expect(updatesResult.nextOffset).toBeGreaterThanOrEqual(80)
-    })
-
-    it('toQualfiedMemberId()', async () => {
-        const { service } = makeService()
-        expect(service.core.toQualifiedMemberId('abc123')).toBe('PAR::abc123')
-        expect(service.core.toQualifiedMemberId('PAR::abc123')).toBe(
-            'PAR::abc123'
-        )
-        expect(service.core.toQualifiedMemberId('MED::abc123')).toBe(
-            'MED::abc123'
-        )
-
-        expect(() => service.core.toQualifiedMemberId('')).toThrow(
-            'memberId is required'
-        )
     })
 })
 
@@ -954,6 +833,120 @@ describe('TransferService', () => {
 })
 
 describe('Token standard service', () => {
+    it('should get instrument byId', async () => {
+        const { service, getTokenStandardClient, tokenClient } = makeService()
+
+        tokenClient.get.mockResolvedValue({ id: 'cc', name: 'amulet' })
+
+        const instrument = await service.getInstrumentById(registryUrl, 'cc')
+        expect(instrument.id).toBe('cc')
+        expect(instrument.name).toBe('amulet')
+        expect(getTokenStandardClient).toHaveBeenCalledWith(registryUrl)
+    })
+
+    it('should get instrumentAdmin', async () => {
+        const { service, tokenClient } = makeService()
+
+        tokenClient.get.mockResolvedValue({
+            id: 'cc',
+            name: 'amulet',
+            adminId: 'blah:123',
+        })
+
+        const admin = await service.getInstrumentAdmin(registryUrl)
+        expect(admin).toBe('blah:123')
+    })
+
+    it('convert the instruments to an asset type', async () => {
+        const { service, tokenClient } = makeService()
+
+        tokenClient.get
+            .mockResolvedValueOnce({
+                instruments: [
+                    {
+                        id: 'TestTokenExt',
+                        name: 'TestTokenExt',
+                        symbol: 'TestTokenExt',
+                        totalSupply: '201.0',
+                        totalSupplyAsOf: null,
+                        decimals: 10,
+                        supportedApis: {
+                            'splice-api-token-metadata-v1': 1,
+                            'splice-api-token-transfer-instruction-v1': 1,
+                            'splice-api-token-allocation-request-v1': 1,
+                            'splice-api-token-allocation-v1': 1,
+                            'splice-api-token-holding-v1': 1,
+                            'splice-api-token-allocation-instruction-v1': 1,
+                        },
+                    },
+                    {
+                        id: 'TestToken',
+                        name: 'TestToken',
+                        symbol: 'TestToken',
+                        totalSupply: '1300.0',
+                        totalSupplyAsOf: null,
+                        decimals: 10,
+                        supportedApis: {
+                            'splice-api-token-metadata-v1': 1,
+                            'splice-api-token-transfer-instruction-v1': 1,
+                            'splice-api-token-allocation-request-v1': 1,
+                            'splice-api-token-allocation-v1': 1,
+                            'splice-api-token-holding-v1': 1,
+                            'splice-api-token-allocation-instruction-v1': 1,
+                        },
+                    },
+                ],
+                nextPageToken: null,
+            })
+            .mockResolvedValue({
+                adminId:
+                    'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
+                supportedApis: {
+                    'splice-api-token-metadata-v1': 1,
+                    'splice-api-token-transfer-instruction-v1': 1,
+                    'splice-api-token-allocation-request-v1': 1,
+                    'splice-api-token-allocation-v1': 1,
+                    'splice-api-token-holding-v1': 1,
+                    'splice-api-token-allocation-instruction-v1': 1,
+                },
+            })
+
+        const response = await service.instrumentsToAsset(registryUrl)
+        expect(response).toHaveLength(2)
+    })
+
+    it('toPretty transactions', async () => {
+        const { service } = makeService()
+        const result = await service.core.toPrettyTransactions([], senderParty)
+        expect(result.transactions).toHaveLength(0)
+        expect(result.nextOffset).toBe(0)
+
+        const updates = [
+            { update: { OffsetCheckpoint: { value: { offset: 50 } } } },
+            { update: { OffsetCheckpoint: { value: { offset: 80 } } } },
+        ]
+
+        const updatesResult = await service.core.toPrettyTransactions(
+            updates as any,
+            senderParty
+        )
+        expect(updatesResult.nextOffset).toBeGreaterThanOrEqual(80)
+    })
+
+    it('toQualfiedMemberId()', async () => {
+        const { service } = makeService()
+        expect(service.core.toQualifiedMemberId('abc123')).toBe('PAR::abc123')
+        expect(service.core.toQualifiedMemberId('PAR::abc123')).toBe(
+            'PAR::abc123'
+        )
+        expect(service.core.toQualifiedMemberId('MED::abc123')).toBe(
+            'MED::abc123'
+        )
+
+        expect(() => service.core.toQualifiedMemberId('')).toThrow(
+            'memberId is required'
+        )
+    })
     it('holding locked returns correctly', async () => {
         const now = new Date()
         const future = new Date(Date.now() + 100_000).toISOString()
