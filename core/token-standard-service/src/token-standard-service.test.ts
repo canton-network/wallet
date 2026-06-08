@@ -839,4 +839,55 @@ describe('TransferService', () => {
             },
         })
     })
+
+    it('creates transfer instruction', async () => {
+        const { service } = makeService()
+        const ctx = makeChoiceContext()
+
+        const [exercise] =
+            await service.transfer.createAcceptTransferInstruction(
+                'cid',
+                registryUrl,
+                ctx as any
+            )
+
+        expect(exercise.choice).toBe('TransferInstruction_Accept')
+        expect(exercise.contractId).toBe('cid')
+
+        const [exerciseReject] =
+            await service.transfer.createRejectTransferInstruction(
+                'cid',
+                registryUrl,
+                ctx as any
+            )
+        expect(exerciseReject.choice).toBe('TransferInstruction_Reject')
+
+        //TODO: do all of these where it fetches from registry when no ctx is provided
+        const [exerciseWithdraw] =
+            await service.transfer.createWithdrawTransferInstruction(
+                'cid',
+                registryUrl,
+                ctx as any
+            )
+        expect(exerciseWithdraw.choice).toBe('TransferInstruction_Withdraw')
+    })
+
+    it.each([
+        ['Accept', 'TransferInstruction_Accept'],
+        ['Reject', 'TransferInstruction_Reject'],
+        ['Withdraw', 'TransferInstruction_Withdraw'],
+    ] as const)(
+        '%s routes to correct choice',
+        async (instructionChoice, expectedChoice) => {
+            const { service, tokenClient } = makeService()
+            tokenClient.post.mockResolvedValue(makeChoiceContext())
+            const [exercise] = await service.transfer.createTransferInstruction(
+                'cid',
+                registryUrl,
+                instructionChoice
+            )
+
+            expect(exercise.choice).toBe(expectedChoice)
+        }
+    )
 })
