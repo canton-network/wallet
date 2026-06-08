@@ -41,6 +41,20 @@ yarn workspace @canton-network/example-portfolio dev
 
 The app will be available at [http://localhost:8081](http://localhost:8081).
 
+## Runtime configuration
+
+The app loads `config.json` at startup and validates it before rendering. The local/default config is in [`public/config.json`](public/config.json):
+
+```json
+{
+    "validatorUrl": "http://localhost:2000/api/validator",
+    "scanProxyUrl": "http://localhost:2000/api/validator",
+    "registries": [] // not currently used
+}
+```
+
+For static or Docker deployments, replace or mount `/config.json`.
+
 Alternatively, start all services (Wallet Gateway + example dApps) together from the repository root:
 
 ```bash

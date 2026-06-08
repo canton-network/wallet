@@ -24,7 +24,7 @@ export function sessionHandler(
 
         if (req.method !== 'POST') {
             logger.debug(
-                'Skipping authentication for OPTIONS request to ' + req.baseUrl
+                `Skipping authentication for ${req.method} request to ${req.baseUrl}`
             )
             next()
         } else if (

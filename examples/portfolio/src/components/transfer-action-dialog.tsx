@@ -278,7 +278,7 @@ export const TransferActionDialog: React.FC<TransferActionDialogProps> = (
                                 }}
                             >
                                 <CopyableIdentifier
-                                    value={item.id}
+                                    value={item.contractId}
                                     maxLength={60}
                                 />
                             </Box>

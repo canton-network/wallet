@@ -16,8 +16,6 @@ import {
     retryable,
     retryableOptions,
 } from './ledger-api-utils.js'
-import { ACSHelper, AcsHelperOptions } from './acs/acs-helper.js'
-import { SharedACSCache } from './acs/acs-shared-cache.js'
 import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export const supportedVersions = supportedLedgerApiVersions
@@ -127,7 +125,6 @@ export class LedgerClient {
     private clientVersion: SupportedVersions = '3.5'
     private initialized: boolean = false
     private accessTokenProvider: AccessTokenProvider
-    private acsHelper: ACSHelper
     private readonly logger: Logger
     private synchronizerId: string | undefined
     baseUrl: URL
@@ -137,13 +134,11 @@ export class LedgerClient {
         logger,
         accessTokenProvider,
         version,
-        acsHelperOptions,
     }: {
         baseUrl: URL
         logger: Logger
         accessTokenProvider: AccessTokenProvider
         version?: SupportedVersions
-        acsHelperOptions?: AcsHelperOptions
     }) {
         this.logger = logger.child({ component: 'LedgerClient' })
         this.accessTokenProvider = accessTokenProvider
@@ -174,12 +169,6 @@ export class LedgerClient {
 
         this.clientVersion = version ?? this.clientVersion
         this.baseUrl = baseUrl
-        this.acsHelper = new ACSHelper(
-            this,
-            logger,
-            acsHelperOptions,
-            SharedACSCache
-        )
     }
 
     private get currentClient(): Client<paths> {
@@ -516,285 +505,6 @@ export class LedgerClient {
         return this.valueOrError(resp)
     }
 
-    /*
-    if limit is provided, this function performs a one-time query. Automatically splits into multiple `/v2/updates` calls with `continueUntilCompletion` on.
-    if limit is omitted, results may be served from the ACS cache
-    current cache design doesn't support limiting queries because updates/deltas for the acs at offset x will be incorrect
-    TODO: expose query mode vs subscribe mode to call queryActiveContracts vs subscribeActiveContracts
-    */
-    async activeContracts(options: {
-        offset: number
-        templateIds?: string[]
-        parties?: string[] //TODO: Figure out if this should use this.partyId by default and not allow cross party filtering
-        filterByParty?: boolean
-        interfaceIds?: string[]
-        limit?: number
-        continueUntilCompletion?: boolean
-    }): Promise<Array<Types['JsGetActiveContractsResponse']>> {
-        const {
-            offset,
-            templateIds,
-            parties,
-            interfaceIds,
-            limit,
-            continueUntilCompletion,
-        } = options
-
-        if (continueUntilCompletion) {
-            const filter = this.buildActiveContractFilter(options)
-            // Query-mode: if limit it set, perform a series of http queries (scan whole ledger)
-            return await this.fetchActiveContractsUntilComplete(
-                filter,
-                limit ?? 200
-            )
-        }
-
-        const hasLimit = typeof limit === 'number'
-
-        // Query-mode: if limit it set, perform one off http query
-
-        if (hasLimit) {
-            const filter = this.buildActiveContractFilter(options)
-            //...perform one off http query
-            return await this.postWithRetry(
-                '/v2/state/active-contracts',
-                filter,
-                defaultRetryableOptions,
-                { query: { limit: limit.toString() } }
-            )
-        }
-
-        this.logger.debug(options, 'options for active contracts')
-
-        const hasParties = Array.isArray(parties) && parties.length > 0
-
-        //subscribe mode: no limit set and fits the cache requirements, back this by the acs subscription
-        if (templateIds?.length && hasParties) {
-            return this.acsHelper.activeContractsForTemplates(
-                offset,
-                parties!,
-                templateIds!
-            )
-        }
-
-        if (interfaceIds?.length && hasParties) {
-            return this.acsHelper.activeContractsForInterfaces(
-                offset,
-                parties!,
-                interfaceIds!
-            )
-        }
-
-        //fallback to generic query without template/interface filter (doesn't use cache)
-        const filter = this.buildActiveContractFilter(options)
-        this.logger.debug('falling back to post request')
-
-        return await this.postWithRetry(
-            '/v2/state/active-contracts',
-            filter,
-            defaultRetryableOptions
-        )
-    }
-
-    /**
-     * Fetches active contracts by splitting requests into multiple `/v2/updates` calls.
-     * Should only be used when the number of contracts exceeds http-list-max-elements-limit (200 by default).
-     * For limits at or below http-list-max-elements-limit, use a single `/v2/state/active-contracts` call instead.
-     * @param activeContractsArgs The request parameters for active contracts query
-     * @returns A promise that resolves to an array of active contract responses
-     * @private
-     */
-    private async fetchActiveContractsUntilComplete(
-        activeContractsArgs: PostRequest<'/v2/state/active-contracts'>,
-        limit: number
-    ): Promise<Array<Types['JsGetActiveContractsResponse']>> {
-        const ledgerEnd = await this.getWithRetry('/v2/state/ledger-end')
-
-        const bodyRequest: PostRequest<'/v2/updates'> = {
-            beginExclusive: 0,
-            endInclusive: ledgerEnd.offset!,
-            verbose: false,
-            updateFormat: {},
-        }
-        if (!activeContractsArgs.filter)
-            bodyRequest.filter = activeContractsArgs.filter!
-
-        let currentOffset = 0
-
-        const allContractsData = new Map()
-        const exercisedContracts = new Set()
-        while (currentOffset < ledgerEnd.offset!) {
-            bodyRequest.beginExclusive = currentOffset
-            const results = (
-                await this.postWithRetry(
-                    '/v2/updates',
-                    bodyRequest,
-                    defaultRetryableOptions,
-                    {
-                        query: { limit: limit.toString() },
-                    }
-                )
-            )
-                .filter(({ update }) => update && 'Transaction' in update)
-                .map(({ update }) => {
-                    if (update && 'Transaction' in update) {
-                        return update.Transaction.value
-                    }
-                    throw new Error('Expected Transaction update')
-                })
-                .map((data) => {
-                    const exercisedEvents = data.events
-                        ?.filter(
-                            (event) => !!event && 'ExercisedEvent' in event
-                        )
-                        .map(
-                            (event) =>
-                                (
-                                    event as {
-                                        ExercisedEvent: Types['ExercisedEvent']
-                                    }
-                                ).ExercisedEvent
-                        )
-                        .filter((event) => !!event)
-                        .filter((event) => !!event.consuming)
-                    const createdEvents = data.events
-                        ?.filter((event) => !!event && 'CreatedEvent' in event)
-                        .map(
-                            (event) =>
-                                (
-                                    event as {
-                                        CreatedEvent: Types['CreatedEvent']
-                                    }
-                                ).CreatedEvent
-                        )
-                        .filter((event) => !!event)
-                        // TODO: remove the filter once /v2/updates is fixed
-                        .filter((event) =>
-                            Object.keys(
-                                activeContractsArgs.filter?.filtersByParty ?? {}
-                            ).includes(
-                                (event.createArgument as { owner?: string })
-                                    ?.owner ?? ''
-                            )
-                        )
-
-                    exercisedEvents?.forEach((event) => {
-                        if (event.contractId)
-                            exercisedContracts.add(event.contractId)
-                    })
-
-                    createdEvents?.forEach((event) => {
-                        if (!event.contractId) return
-                        allContractsData.set(event.contractId, {
-                            workflowId: data.workflowId,
-                            contractEntry: {
-                                JsActiveContract: {
-                                    synchronizerId: data.synchronizerId,
-                                    createdEvent: event,
-                                    reassignmentCounter: data.offset,
-                                },
-                            },
-                        })
-                    })
-
-                    currentOffset = Math.max(currentOffset, data.offset)
-                    return true
-                })
-
-            if (!results.length) currentOffset++
-        }
-
-        // filter through all contracts to retrieve only active ones
-        exercisedContracts.forEach((cid) => {
-            allContractsData.delete(cid)
-        })
-
-        return Array.from(allContractsData.values())
-    }
-
-    private buildActiveContractFilter(options: {
-        offset: number
-        templateIds?: string[]
-        parties?: string[] //TODO: Figure out if this should use this.partyId by default and not allow cross party filtering
-        filterByParty?: boolean
-        interfaceIds?: string[]
-        limit?: number
-    }) {
-        const filter: PostRequest<'/v2/state/active-contracts'> = {
-            eventFormat: {
-                filtersByParty: {},
-                verbose: false,
-            },
-            activeAtOffset: options?.offset,
-        }
-
-        // Helper to build TemplateFilter array
-        const buildTemplateFilter = (templateIds?: string[]) => {
-            if (!templateIds) return []
-            return [
-                {
-                    identifierFilter: {
-                        TemplateFilter: {
-                            value: {
-                                templateId: templateIds[0],
-                                includeCreatedEventBlob: true, //TODO: figure out if this should be configurable
-                            },
-                        },
-                    },
-                },
-            ]
-        }
-
-        const buildInterfaceFilter = (interfaceIds?: string[]) => {
-            if (!interfaceIds) return []
-            return [
-                {
-                    identifierFilter: {
-                        InterfaceFilter: {
-                            value: {
-                                interfaceId: interfaceIds[0],
-                                includeCreatedEventBlob: true, //TODO: figure out if this should be configurable
-                                includeInterfaceView: true,
-                            },
-                        },
-                    },
-                },
-            ]
-        }
-
-        this.logger.info(options, 'active contract query options')
-        if (
-            options?.filterByParty &&
-            options.parties &&
-            options.parties.length > 0
-        ) {
-            // Filter by party: set filtersByParty for each party
-            const cumulativeFilter =
-                options?.templateIds && !options?.interfaceIds
-                    ? buildTemplateFilter(options.templateIds)
-                    : options?.interfaceIds && !options?.templateIds
-                      ? buildInterfaceFilter(options.interfaceIds)
-                      : []
-
-            for (const party of options.parties) {
-                filter.filter!.filtersByParty![party] = {
-                    cumulative: cumulativeFilter,
-                }
-            }
-        } else if (options?.templateIds) {
-            // Only template filter, no party
-            filter.filter!.filtersForAnyParty = {
-                cumulative: buildTemplateFilter(options.templateIds),
-            }
-        } else if (options?.interfaceIds) {
-            filter.filter!.filtersForAnyParty = {
-                cumulative: buildInterfaceFilter(options.templateIds),
-            }
-        }
-
-        return filter
-    }
-
     // Retrieve an (arbitrary) synchronizer id from the validator.
     // This synchronizer id is cached for the remainder of this object's life.
     public async getSynchronizerId(): Promise<string> {
@@ -879,10 +589,6 @@ export class LedgerClient {
             )
             throw asJsCantonError(e)
         })
-    }
-
-    public getCacheStats() {
-        return this.acsHelper.getCacheStats()
     }
 
     public async patch<Path extends PatchEndpoint>(
