@@ -1213,6 +1213,37 @@ describe('Token standard service', () => {
             'http://registry1.com',
             'http://registry2.com',
         ])
-        expect(result).toHaveLength(2)
+        expect(result).toHaveLength(3)
+    })
+
+    it('blah', async () => {
+        const { service, provider } = makeService()
+        provider.request
+            .mockResolvedValueOnce({ participantPrunedUpToInclusive: 5 })
+            .mockResolvedValueOnce({ offset: 100 })
+            .mockResolvedValueOnce([])
+
+        vi.spyOn(service.core, 'toPrettyTransactions').mockResolvedValue({
+            nextOffset: 100,
+            transactions: [],
+        })
+        await service.listHoldingTransactions(senderParty)
+        const resources = provider.request.mock.calls.map(
+            (c: any) => c[0].params.resource
+        )
+        expect(resources).toContain('/v2/state/latest-pruned-offsets')
+    })
+
+    it('transaction by id', async () => {
+        const { service, provider } = makeService()
+        provider.request.mockResolvedValue({ transaction: {} })
+        vi.spyOn(service.core, 'toPrettyTransaction').mockResolvedValue({
+            id: 'tx-1',
+        } as any)
+
+        await service.getTransactionById('update-abc', senderParty)
+        const [call] = provider.request.mock.calls
+        expect(call[0].params.resource).toBe('/v2/updates/transaction-by-id')
+        expect(call[0].params.requestMethod).toBe('post')
     })
 })
