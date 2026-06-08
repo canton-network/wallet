@@ -38,6 +38,40 @@ const TEST_TOKEN_V1_DAR =
 const LOCALNET_PATH = '../../../../../.localnet'
 const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
 
+/**
+ * Vet a DAR, tolerating the case where a package with the same name+version is
+ * already vetted on the participant.
+ *
+ * On a persistent localnet, a previous build of a DAR (e.g. `splice-test-token-v1`)
+ * may already be vetted. Re-running the example after rebuilding the DAR produces a
+ * different package hash for the same name+version, which Canton rejects with
+ * `KNOWN_PACKAGE_VERSION`. Since the already-vetted package is resolved by
+ * package-name at command-submission time, it is safe to reuse it and continue.
+ */
+async function vetPackageIdempotent(
+    ledgerProvider: Parameters<typeof vetPackage>[0],
+    dar: Uint8Array,
+    synchronizerId: string,
+    logger: Logger
+): Promise<void> {
+    try {
+        await vetPackage(ledgerProvider, dar, synchronizerId)
+    } catch (e) {
+        const code = (e as { code?: string })?.code
+        const message = `${(e as { cause?: unknown })?.cause ?? (e as Error)?.message ?? e}`
+        if (
+            code === 'KNOWN_PACKAGE_VERSION' ||
+            message.includes('same name and version')
+        ) {
+            logger.warn(
+                'A package with the same name+version is already vetted; reusing the existing package.'
+            )
+            return
+        }
+        throw e
+    }
+}
+
 export interface MultiSyncSetup {
     p1Sdk: SDKInterface<'token' | 'amulet'>
     p2Sdk: SDKInterface<'token'>
@@ -136,10 +170,15 @@ export async function setupMultiSyncTrade(
         [testTokenV1Dar, tradingAppDar].flatMap((dar) => [
             ...[p1SdkCtx, p2SdkCtx].flatMap((ctx) =>
                 [globalSynchronizerId, appSynchronizerId].map((sid) =>
-                    vetPackage(ctx.ledgerProvider, dar, sid)
+                    vetPackageIdempotent(ctx.ledgerProvider, dar, sid, logger)
                 )
             ),
-            vetPackage(p3SdkCtx.ledgerProvider, dar, globalSynchronizerId),
+            vetPackageIdempotent(
+                p3SdkCtx.ledgerProvider,
+                dar,
+                globalSynchronizerId,
+                logger
+            ),
         ])
     )
     logger.info(
