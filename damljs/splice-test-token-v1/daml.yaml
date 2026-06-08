@@ -11,7 +11,6 @@ data-dependencies:
   - ../../.localnet/dars/splice-api-token-transfer-instruction-v1-current.dar
   - ../../.localnet/dars/splice-api-token-allocation-v1-current.dar
   - ../../.localnet/dars/splice-api-token-allocation-instruction-v1-current.dar
-  - ../splice-token-standard-utils/.daml/dist/splice-token-standard-utils-2.0.0.dar
 
 build-options:
   - --target=2.1

@@ -4,20 +4,9 @@
 import * as path from 'path'
 import { getRepoRoot, info } from './lib/utils.js'
 import { installDPM } from './install-dpm.js'
-import { buildDamlPackage, generateDamlJsBindings } from './lib/daml-codegen.js'
+import { generateDamlJsBindings } from './lib/daml-codegen.js'
 
 const repoRoot = getRepoRoot()
-
-// V2 API packages — built in dependency order, no JS codegen needed (used as data-deps only)
-const V2_BUILD_ONLY_DIRS = [
-    'splice-api-token-holding-v2',
-    'splice-api-token-allocation-v2',
-    'splice-api-token-transfer-events-v2',
-    'splice-api-token-transfer-instruction-v2',
-    'splice-api-token-allocation-instruction-v2',
-    'splice-api-token-allocation-request-v2',
-    'splice-token-standard-utils',
-]
 
 const SPLICE_TEST_TOKEN_V1_CONFIG = {
     destDir: path.join(repoRoot, 'damljs/splice-test-token-v1'),
@@ -27,11 +16,6 @@ const SPLICE_TEST_TOKEN_V1_CONFIG = {
 
 async function main() {
     await installDPM()
-
-    for (const pkg of V2_BUILD_ONLY_DIRS) {
-        console.log(info(`\n=== Building ${pkg} ===\n`))
-        buildDamlPackage(path.join(repoRoot, 'damljs', pkg))
-    }
 
     console.log(info('\n=== Generating splice-test-token-v1 bindings ===\n'))
     await generateDamlJsBindings(SPLICE_TEST_TOKEN_V1_CONFIG)
