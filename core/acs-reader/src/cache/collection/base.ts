@@ -20,7 +20,7 @@ export abstract class BaseCacheCollection<
             ? ResolvedAcsOptions
             : PaginatedResolvedAcsOptions,
 > {
-    protected readonly collection: LRUCache<string, Cache>
+    private readonly collection: LRUCache<string, Cache>
 
     constructor(
         protected readonly ledger: AbstractLedgerProvider,
@@ -61,7 +61,7 @@ export abstract class BaseCacheCollection<
 
     protected abstract createCache(): Cache
 
-    protected getCache(key: ACSKey) {
+    private getCache(key: ACSKey) {
         const serializedKey = this.serializeKey(key)
         const existingCache = this.collection.get(serializedKey)
         if (existingCache) return existingCache
@@ -76,7 +76,7 @@ export abstract class BaseCacheCollection<
      * Updates the cached active contract set for a specific key and returns contracts at the requested offset.
      * If the cache is outdated, fetches updates from the ledger and applies them incrementally.
      */
-    protected async updateCache(args: {
+    private async updateCache(args: {
         options: ResolvedAcsOptions | PaginatedResolvedAcsOptions
         key: ACSKey
     }) {
@@ -89,7 +89,7 @@ export abstract class BaseCacheCollection<
      * Queries multiple cache keys in parallel and combines the results.
      * Each key represents a unique party-template-interface combination to be queried independently.
      */
-    protected async query(args: {
+    private async query(args: {
         options: Options
         keys: ACSKey[]
     }): Promise<LedgerCommonSchemas['JsGetActiveContractsResponse'][]> {
@@ -103,7 +103,7 @@ export abstract class BaseCacheCollection<
         ).flat()
     }
 
-    protected serializeKey(key: ACSKey): string {
+    private serializeKey(key: ACSKey): string {
         return `${key.party ?? 'ANY'}_T${key.templateId ?? '()'}_I${key.interfaceId ?? '()'}`
     }
 }
