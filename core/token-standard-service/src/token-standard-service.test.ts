@@ -108,107 +108,6 @@ const makeHolding = (
 const instrumentAdmin =
     'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
 const instrumentId = 'Amulet'
-function createHolding(
-    cId: string,
-    amount: string,
-    admin: string,
-    instrumentId: string,
-    lock?: { expiresAt?: string | null } | null
-) {
-    return {
-        contractId: cId,
-        activeContract: {
-            createdEvent: {
-                offset: 49,
-                nodeId: 3,
-                contractId: cId,
-                templateId:
-                    'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a:Splice.Amulet:Amulet',
-                contractKey: null,
-                contractKeyHash: '',
-                createArgument: {
-                    dso: 'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
-                    owner: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
-                    amount: {
-                        initialAmount: amount,
-                        createdAt: {
-                            number: '1',
-                        },
-                        ratePerRound: {
-                            rate: '0.0038051800',
-                        },
-                    },
-                },
-                createdEventBlob:
-                    'CgMyLjES8QQKRQCU66JZw5C46HMQnw1hIk0dsgkuaPz00+MAPHn2zlBbFsoSEiDmApEy9AvI0VmgrNDLv8/GvvGuTC7G4rB+cZK+oPtoKhINc3BsaWNlLWFtdWxldBpaCkBhMzFiZTA0ODNmMzE3NTY0NzA1M2YyODk2NWE0ZTZkOTdlM2RiYzQzM2VhMjMzOGJlMzAzZmFlNjliYmNmZjZhEgZTcGxpY2USBkFtdWxldBoGQW11bGV0IukBauYBCk0KSzpJRFNPOjoxMjIwYzY5NzMyZGQ1ZjNiNDM0YzI4M2Y2MWNiYzI5ZDNiYjQ5MmM1MGM1NmUzMDZiNDM2YzNlMTc0MWNiYzdiZTUzZQpVClM6UXYxLTAxLWFsaWNlOjoxMjIwNmVlZTYwZjY0ZDkwYmUzZjgyMzAwN2QxMzIxZGM2YWNjNWY0ZjJjNTdkM2RkNmFjMWY2NjE0ODc1M2JiNjVjNQo+CjxqOgoUChIyEDEwMDAwLjAwMDAwMDAwMDAKCgoIagYKBAoCGAIKFgoUahIKEAoOMgwwLjAwMzgwNTE4MDAqSURTTzo6MTIyMGM2OTczMmRkNWYzYjQzNGMyODNmNjFjYmMyOWQzYmI0OTJjNTBjNTZlMzA2YjQzNmMzZTE3NDFjYmM3YmU1M2UqUXYxLTAxLWFsaWNlOjoxMjIwNmVlZTYwZjY0ZDkwYmUzZjgyMzAwN2QxMzIxZGM2YWNjNWY0ZjJjNTdkM2RkNmFjMWY2NjE0ODc1M2JiNjVjNTlmmBYOWlMGAEIqCiYKJAgBEiCzuweldZ8sz5U5S4gPJigbNNLmPal4Nl4KR8E7ifrx1RAe',
-                interfaceViews: [
-                    {
-                        interfaceId:
-                            '718a0f77e505a8de22f188bd4c87fe74101274e9d4cb1bfac7d09aec7158d35b:Splice.Api.Token.HoldingV1:Holding',
-                        viewStatus: {
-                            code: 0,
-                            message: '',
-                            details: [],
-                        },
-                        viewValue: {
-                            owner: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
-                            instrumentId: {
-                                admin: admin,
-                                id: instrumentId,
-                            },
-                            amount: '10000.0000000000',
-                            lock: lock,
-                            meta: {
-                                values: {
-                                    'amulet.splice.lfdecentralizedtrust.org/created-in-round':
-                                        '1',
-                                    'amulet.splice.lfdecentralizedtrust.org/rate-per-round':
-                                        '0.00380518',
-                                },
-                            },
-                        },
-                        implementationPackageId:
-                            'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a',
-                    },
-                ],
-                witnessParties: [
-                    'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
-                ],
-                signatories: [
-                    'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
-                    'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
-                ],
-                observers: [],
-                createdAt: '2026-06-03T14:15:08.787814Z',
-                packageName: 'splice-amulet',
-                representativePackageId:
-                    'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a',
-                acsDelta: true,
-            },
-            synchronizerId:
-                'global-domain::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
-            reassignmentCounter: 0,
-        },
-        interfaceViewValue: {
-            owner: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
-            instrumentId: {
-                admin: admin,
-                id: instrumentId,
-            },
-            amount: amount,
-            lock: lock,
-            meta: {
-                values: {
-                    'amulet.splice.lfdecentralizedtrust.org/created-in-round':
-                        '1',
-                    'amulet.splice.lfdecentralizedtrust.org/rate-per-round':
-                        '0.00380518',
-                },
-            },
-        },
-        fetchedAtOffset: 51,
-    }
-}
 
 const senderParty =
     'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5'
@@ -238,10 +137,10 @@ describe('CoreService', () => {
     })
 
     it('should fetch only unlocked holdings', async () => {
-        const lockedHolding = createHolding('1', '20', 'admin:123', 'amulet', {
+        const lockedHolding = makeHolding('1', '20', 'admin:123', 'amulet', {
             expiresAt: null,
-        })
-        const unlockedHolding = createHolding('2', '20', 'admin:123', 'amulet')
+        }) as any
+        const unlockedHolding = makeHolding('2', '20', 'admin:123', 'amulet')
         const { service } = makeService()
         vi.spyOn(service.core, 'listContractsByInterface').mockResolvedValue([
             lockedHolding,
