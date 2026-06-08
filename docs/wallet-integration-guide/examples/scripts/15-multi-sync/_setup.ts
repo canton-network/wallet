@@ -36,7 +36,7 @@ export type PartyInfo = Omit<
 const TEST_TOKEN_V1_DAR =
     '../../../../../damljs/splice-test-token-v1/.daml/dist/splice-test-token-v1-1.0.0.dar'
 const LOCALNET_PATH = '../../../../../.localnet'
-const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.1.dar'
+const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
 
 export interface MultiSyncSetup {
     p1Sdk: SDKInterface<'token' | 'amulet'>
