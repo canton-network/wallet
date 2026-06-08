@@ -3,6 +3,7 @@
 
 import type { Logger } from 'pino'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
 
@@ -25,11 +26,14 @@ function buildSettleOtcTradeCommand(params: {
     }
 }
 
+type DisclosedContract = LedgerCommonSchemas['DisclosedContract']
+
 export interface SettleParams {
     otcTradeCid: string
     legIdAlice: string
     legIdBob: string
     testTokenAllocationCid: string
+    testTokenAllocationDisclosed: DisclosedContract
 }
 
 /** Withdraws both allocations in parallel after a settlement failure, returning funds to each party. */
@@ -115,7 +119,13 @@ export async function settleOtcTrade(
 ): Promise<void> {
     const { p3Sdk, tokenNamespaceP1, alice, tradingApp, globalSynchronizerId } =
         setup
-    const { otcTradeCid, legIdAlice, legIdBob, testTokenAllocationCid } = params
+    const {
+        otcTradeCid,
+        legIdAlice,
+        legIdBob,
+        testTokenAllocationCid,
+        testTokenAllocationDisclosed,
+    } = params
 
     const allocationsAlice = await tokenNamespaceP1.allocation.pending(
         alice.partyId
@@ -151,9 +161,15 @@ export async function settleOtcTrade(
         },
     }
 
-    const disclosedContracts = (amuletExecCtx.disclosedContracts ?? []).map(
-        (c) => ({ ...c, synchronizerId: '' })
-    )
+    const disclosedContracts = [
+        ...(amuletExecCtx.disclosedContracts ?? []).map((c) => ({
+            ...c,
+            synchronizerId: '',
+        })),
+        // Disclose Bob's TestToken allocation so the TradingApp's participant can
+        // resolve it without waiting for cross-participant ACS propagation.
+        testTokenAllocationDisclosed,
+    ]
 
     try {
         await p3Sdk.ledger
