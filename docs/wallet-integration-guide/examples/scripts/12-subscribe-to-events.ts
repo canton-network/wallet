@@ -193,10 +193,6 @@ if (
     updateEvents.length === 0 ||
     updateEvents.filter((event) => event.update) === undefined
 ) {
-if (
-    updateEvents.length === 0 ||
-    updateEvents.filter((event) => event.update) === undefined
-) {
     logger.error(
         'No command completion events received, something went wrong with the subscription'
     )
