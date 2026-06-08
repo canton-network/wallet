@@ -89,9 +89,6 @@ const selfSignedNetwork = makePublicNetwork({
     id: 'net-1',
     name: 'Self Signed Network',
     authMethod: 'client_credentials',
-    audience: 'aud',
-    scope: 'scope',
-    clientId: 'client-id',
 })
 const selfSignedIdp = makeIdp({ id: 'idp-1', type: 'self_signed' })
 
