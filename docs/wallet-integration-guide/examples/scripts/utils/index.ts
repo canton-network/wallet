@@ -34,10 +34,8 @@ export type SynchronizerMap = {
 export function resolveGlobalSynchronizerId(
     synchronizers: Array<{ synchronizerAlias: string; synchronizerId: string }>
 ): string {
-    const global =
-        synchronizers.find((s) => s.synchronizerAlias === 'global') ??
-        synchronizers[0]
-    if (!global) throw new Error('No connected synchronizers found')
+    const global = synchronizers.find((s) => s.synchronizerAlias === 'global')
+    if (!global) throw new Error('Global synchronizer not found')
     return global.synchronizerId
 }
 

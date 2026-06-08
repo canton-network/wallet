@@ -65,6 +65,9 @@ function buildInitiateSettlementCommand(params: {
 const MS_30_MIN = 30 * 60 * 1000
 const MS_1_HOUR = 60 * 60 * 1000
 
+const PROPOSAL_POLL_TIMEOUT_MS = 30_000
+const PROPOSAL_POLL_INTERVAL_MS = 500
+
 export async function createAndInitiateOtcTrade(
     setup: MultiSyncSetup,
     transferLegs: Record<string, unknown>,
@@ -80,17 +83,32 @@ export async function createAndInitiateOtcTrade(
         globalSynchronizerId,
     } = setup
 
+    // The proposal is created on Alice's participant but read from other
+    // participants (Bob, TradingApp). Cross-participant propagation over the
+    // synchronizer is eventually consistent, so poll until the contract becomes
+    // visible instead of reading once.
     const readProposalCid = async (
         sdk: SDKInterface<'token'>,
         party: string
-    ): Promise<string> =>
-        (
-            await sdk.ledger.acs.requireOne({
+    ): Promise<string> => {
+        const deadline = Date.now() + PROPOSAL_POLL_TIMEOUT_MS
+        for (;;) {
+            const [proposal] = await sdk.ledger.acs.read({
                 templateIds: [OTC_TRADE_PROPOSAL_TEMPLATE_ID],
                 parties: [party],
                 filterByParty: true,
             })
-        ).contractId
+            if (proposal) return proposal.contractId
+            if (Date.now() >= deadline) {
+                throw new Error(
+                    `OTCTradeProposal not visible to ${party} within ${PROPOSAL_POLL_TIMEOUT_MS}ms`
+                )
+            }
+            await new Promise((resolve) =>
+                setTimeout(resolve, PROPOSAL_POLL_INTERVAL_MS)
+            )
+        }
+    }
 
     await p1Sdk.ledger
         .prepare({

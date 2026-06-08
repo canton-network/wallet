@@ -184,15 +184,21 @@ async function getDefaultSynchronizerId(
             },
         })
 
-    if (!connectedSynchronizers.connectedSynchronizers?.[0]) {
+    const synchronizers = connectedSynchronizers.connectedSynchronizers
+    if (!synchronizers?.[0]) {
         throw new Error('No connected synchronizers found')
     }
 
-    const defaultSynchronizerId =
-        connectedSynchronizers.connectedSynchronizers[0].synchronizerId
-    if (connectedSynchronizers.connectedSynchronizers.length > 1) {
+    const defaultEntry =
+        synchronizers.find((s) => s.synchronizerAlias === 'global') ??
+        synchronizers.find((s) => s.synchronizerAlias === 'global-domain') ??
+        synchronizers.find((s) => s.synchronizerAlias !== 'app-synchronizer') ??
+        synchronizers[0]
+
+    const defaultSynchronizerId = defaultEntry.synchronizerId
+    if (synchronizers.length > 1) {
         logger.warn(
-            `Found ${connectedSynchronizers.connectedSynchronizers.length} synchronizers, defaulting to ${defaultSynchronizerId}`
+            `Found ${synchronizers.length} synchronizers, defaulting to ${defaultSynchronizerId}`
         )
     }
 
