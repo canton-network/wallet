@@ -5,6 +5,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-05-preapproval', level: 'info' })
@@ -16,6 +17,8 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
+const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
+
 await sdk.amulet.tapInternal('1000')
 
 const aliceKeys = sdk.keys.generate()
@@ -23,6 +26,7 @@ const aliceKeys = sdk.keys.generate()
 const alice = await sdk.party.external
     .create(aliceKeys.publicKey, {
         partyHint: 'v1-05-alice',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(aliceKeys.privateKey)
     .execute()
@@ -46,6 +50,7 @@ const bobKeys = sdk.keys.generate()
 const bob = await sdk.party.external
     .create(bobKeys.publicKey, {
         partyHint: 'v1-05-bob',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(bobKeys.privateKey)
     .execute()
@@ -169,6 +174,7 @@ await sdk.amulet.preapproval.renew({
         receiver: bob.partyId,
     },
     expiresAt: newExpiresAt,
+    synchronizerId: globalSynchronizerId,
 })
 
 const fetchedStatusAfterRenew = await sdk.amulet.preapproval.fetchStatus(

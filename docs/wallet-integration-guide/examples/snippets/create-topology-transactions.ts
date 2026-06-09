@@ -13,6 +13,7 @@ export default async function () {
 
     const prepared = sdk.party.external.create(key.publicKey, {
         partyHint,
+        synchronizerId: global.SYNCHRONIZER_ID,
     })
 
     await prepared.topology()
