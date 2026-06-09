@@ -41,7 +41,10 @@ export default async function () {
     const partyHint = 'my-wallet-1'
 
     await sdk.party.external
-        .create(key.publicKey, { partyHint })
+        .create(key.publicKey, {
+            partyHint,
+            synchronizerId: global.SYNCHRONIZER_ID,
+        })
         .sign(key.privateKey)
         .execute()
 }

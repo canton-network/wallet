@@ -26,6 +26,8 @@ declare global {
 
     var VALIDATOR_OPERATOR_PARTY: PartyId
 
+    var SYNCHRONIZER_ID: string
+
     var EXISTING_TOPOLOGY: {
         multiHash: string
         partyId: string
@@ -95,12 +97,24 @@ async function beforeEachSetup() {
         asset: global.ASSET_CONFIG,
     })
 
+    // ========= Resolve the synchronizer parties are hosted on =========
+    const { connectedSynchronizers } = await sdk.ledger.connectedSynchronizers(
+        {}
+    )
+    const globalSynchronizer = (connectedSynchronizers ?? []).find(
+        (s) => s.synchronizerAlias === 'global'
+    )
+    if (!globalSynchronizer) throw new Error('Global synchronizer not found')
+    global.SYNCHRONIZER_ID = globalSynchronizer.synchronizerId
+
     // ========= Setup Existing Party 1 =========
 
     global.EXISTING_PARTY_1_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_1 = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_1_KEYS.publicKey, {})
+            .create(global.EXISTING_PARTY_1_KEYS.publicKey, {
+                synchronizerId: global.SYNCHRONIZER_ID,
+            })
             .sign(global.EXISTING_PARTY_1_KEYS.privateKey)
             .execute()
     ).partyId
@@ -109,7 +123,9 @@ async function beforeEachSetup() {
     global.EXISTING_PARTY_2_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_2 = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_2_KEYS.publicKey, {})
+            .create(global.EXISTING_PARTY_2_KEYS.publicKey, {
+                synchronizerId: global.SYNCHRONIZER_ID,
+            })
             .sign(global.EXISTING_PARTY_2_KEYS.privateKey)
             .execute()
     ).partyId
@@ -136,6 +152,7 @@ async function beforeEachSetup() {
     global.EXISTING_TOPOLOGY = await sdk.party.external
         .create(global.EXISTING_PARTY_1_KEYS.publicKey, {
             partyHint: 'my-party',
+            synchronizerId: global.SYNCHRONIZER_ID,
         })
         .sign(global.EXISTING_PARTY_1_KEYS.privateKey)
         .execute()
@@ -154,7 +171,9 @@ async function beforeEachSetup() {
     global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS = sdk.keys.generate()
     global.EXISTING_PARTY_WITH_PREAPPROVAL = (
         await sdk.party.external
-            .create(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.publicKey, {})
+            .create(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.publicKey, {
+                synchronizerId: global.SYNCHRONIZER_ID,
+            })
             .sign(global.EXISTING_PARTY_WITH_PREAPPROVAL_KEYS.privateKey)
             .execute()
     ).partyId

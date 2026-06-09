@@ -36,7 +36,7 @@ export default async function () {
 
     await sdk.token.utxos.list({ partyId: myParty })
 
-    await sdk.amulet.traffic.status()
+    await sdk.amulet.traffic.status({ synchronizerId: global.SYNCHRONIZER_ID })
 
     // OR, you can defer loading config by calling .extend()
 
@@ -80,5 +80,7 @@ export default async function () {
 
     // Now both token and amulet are available
     await fullyExtendedSDK.token.utxos.list({ partyId: myParty })
-    await fullyExtendedSDK.amulet.traffic.status()
+    await fullyExtendedSDK.amulet.traffic.status({
+        synchronizerId: global.SYNCHRONIZER_ID,
+    })
 }

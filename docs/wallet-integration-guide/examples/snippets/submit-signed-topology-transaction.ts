@@ -16,6 +16,7 @@ export default async function () {
     await sdk.party.external
         .create(keys.publicKey, {
             partyHint: 'snippet-party-hint',
+            synchronizerId: global.SYNCHRONIZER_ID,
         })
         .sign(keys.privateKey)
         .execute()
@@ -27,6 +28,7 @@ export default async function () {
         offlineSigningKeys.publicKey,
         {
             partyHint: 'offline-signing-party',
+            synchronizerId: global.SYNCHRONIZER_ID,
         }
     )
 
