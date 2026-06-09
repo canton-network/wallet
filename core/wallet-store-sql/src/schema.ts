@@ -5,7 +5,6 @@ import { authSchema, Idp, UserId } from '@canton-network/core-wallet-auth'
 import {
     Wallet,
     Transaction,
-    Session,
     Network,
     WalletStatus,
     UpdateWallet,
@@ -110,8 +109,11 @@ interface MessageRawTable {
     signature: string | null
 }
 
-interface SessionTable extends Session {
+interface SessionTable {
     id: string
+    network: string
+    accessToken: string
+    authType: string | null
     userId: UserId
 }
 

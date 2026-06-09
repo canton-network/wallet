@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Idp } from '@canton-network/core-wallet-auth'
+import type { AuthType, Idp } from '@canton-network/core-wallet-auth'
 import { Network } from './config/schema'
 
 export enum AddressType {
@@ -76,6 +76,11 @@ export interface Session {
     id: string
     network: string
     accessToken: string
+    /**
+     * How the session access token was obtained. Used to avoid reusing
+     * short-lived interactive tokens in machine-to-machine automation paths.
+     */
+    authType?: AuthType
 }
 
 export interface Transaction {

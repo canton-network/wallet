@@ -34,7 +34,11 @@ export async function ensureAutomationSessionForPrepare(
     logger: Logger
 ): Promise<void> {
     const existing = await store.getSession()
-    if (existing && !jwtExpired(existing.accessToken)) {
+    if (
+        existing &&
+        existing.authType === 'client_credentials' &&
+        !jwtExpired(existing.accessToken)
+    ) {
         return
     }
 
@@ -55,6 +59,7 @@ export async function ensureAutomationSessionForPrepare(
         id: existing?.id ?? v4(),
         network: network.id,
         accessToken,
+        authType: 'client_credentials',
     })
 
     logger.info(
@@ -84,7 +89,12 @@ export async function resolveAutomationRunContext(
         return undefined
     }
 
-    const existingSession = await bootstrapStore.getSessionForUser(userId)
+    const existingSession = await bootstrapStore.getSessionForUser(
+        userId,
+        isClientCredentialsNetworkAuth(network.auth)
+            ? { authType: 'client_credentials' }
+            : undefined
+    )
     const sessionMatchesNetwork =
         existingSession?.network === networkId &&
         !jwtExpired(existingSession.accessToken)
@@ -116,6 +126,7 @@ export async function resolveAutomationRunContext(
         id: existingSession?.id ?? v4(),
         network: networkId,
         accessToken,
+        authType: 'client_credentials',
     }
     const scopedStore = bootstrapStore.withAuthContext(authContext)
     await scopedStore.setSession(session)

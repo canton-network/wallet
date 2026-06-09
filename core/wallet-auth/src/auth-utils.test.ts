@@ -11,11 +11,16 @@ import {
     afterEach,
 } from 'vitest'
 import {
+    assertConnected,
+    assertServiceAccountUserAllowed,
+    fetchOidcUserInfo,
+    isClientCredentialsNetworkAuth,
+    isClientCredentialsToken,
+    isServiceAccountRequest,
+    jwtExpired,
     jwtUserEmail,
     jwtUserId,
-    assertConnected,
-    fetchOidcUserInfo,
-    jwtExpired,
+    resolveSessionAuthType,
     resolveUserEmail,
 } from './auth-utils.js'
 import { Idp } from './config/schema.js'
@@ -299,5 +304,93 @@ describe('Auth Utils', () => {
                 'Failed to resolve user email from OIDC userinfo'
             )
         })
+    })
+})
+
+describe('service account auth utils', () => {
+    it('detects client credentials network auth', () => {
+        expect(
+            isClientCredentialsNetworkAuth({
+                method: 'client_credentials',
+                clientId: 'svc',
+                clientSecret: 'secret',
+                audience: 'aud',
+                scope: 'scope',
+            })
+        ).toBe(true)
+        expect(
+            isClientCredentialsNetworkAuth({
+                method: 'authorization_code',
+                clientId: 'app',
+                audience: 'aud',
+                scope: 'scope',
+            })
+        ).toBe(false)
+    })
+
+    it('detects client credentials token grant type', () => {
+        const header = Buffer.from(
+            JSON.stringify({ alg: 'none', typ: 'JWT' })
+        ).toString('base64url')
+        const payload = Buffer.from(
+            JSON.stringify({ gty: 'client_credentials', sub: 'svc' })
+        ).toString('base64url')
+        const token = `${header}.${payload}.`
+
+        expect(isClientCredentialsToken(token)).toBe(true)
+        expect(isClientCredentialsToken('not-a-jwt')).toBe(false)
+    })
+
+    it('combines network and token signals', () => {
+        expect(
+            isServiceAccountRequest(
+                {
+                    method: 'authorization_code',
+                    clientId: 'app',
+                    audience: 'aud',
+                    scope: 'scope',
+                },
+                'not-a-jwt'
+            )
+        ).toBe(false)
+    })
+
+    it('resolves session auth type from token grant or network auth', () => {
+        const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString(
+            'base64url'
+        )
+        const m2mPayload = Buffer.from(
+            JSON.stringify({ gty: 'client_credentials', sub: 'svc' })
+        ).toString('base64url')
+        const m2mToken = `${header}.${m2mPayload}.`
+
+        expect(
+            resolveSessionAuthType(m2mToken, {
+                method: 'authorization_code',
+                clientId: 'app',
+                audience: 'aud',
+                scope: 'scope',
+            })
+        ).toBe('client_credentials')
+        expect(
+            resolveSessionAuthType('interactive-token', {
+                method: 'authorization_code',
+                clientId: 'app',
+                audience: 'aud',
+                scope: 'scope',
+            })
+        ).toBe('authorization_code')
+    })
+
+    it('enforces optional user allow-list', () => {
+        expect(() => assertServiceAccountUserAllowed('alice', ['bob'])).toThrow(
+            /not allowed/
+        )
+        expect(() =>
+            assertServiceAccountUserAllowed('alice', ['alice', 'bob'])
+        ).not.toThrow()
+        expect(() =>
+            assertServiceAccountUserAllowed('alice', undefined)
+        ).not.toThrow()
     })
 })

@@ -83,6 +83,35 @@ describe('ensureAutomationSessionForPrepare', () => {
             expect.objectContaining({
                 network: 'net-m2m',
                 accessToken: token,
+                authType: 'client_credentials',
+            })
+        )
+    })
+
+    it('does not reuse an interactive session for M2M bootstrap', async () => {
+        const token = validJwt()
+        const store = {
+            getSession: vi.fn().mockResolvedValue({
+                id: 'session-interactive',
+                network: 'net-m2m',
+                accessToken: 'interactive-token',
+                authType: 'authorization_code',
+            }),
+            listNetworks: vi.fn().mockResolvedValue([clientCredentialsNetwork]),
+            setSession: vi.fn().mockResolvedValue(undefined),
+        }
+
+        await ensureAutomationSessionForPrepare(
+            store as never,
+            { userId: 'user-1', accessToken: token },
+            vi.fn(),
+            logger
+        )
+
+        expect(store.setSession).toHaveBeenCalledWith(
+            expect.objectContaining({
+                authType: 'client_credentials',
+                accessToken: token,
             })
         )
     })
@@ -113,6 +142,31 @@ describe('ensureAutomationSessionForPrepare', () => {
 describe('resolveAutomationRunContext', () => {
     afterEach(() => {
         vi.clearAllMocks()
+    })
+
+    it('ignores interactive sessions when resolving M2M run context', async () => {
+        const store = {
+            getNetwork: vi.fn().mockResolvedValue(clientCredentialsNetwork),
+            getSessionForUser: vi.fn().mockResolvedValue(undefined),
+            withAuthContext: vi.fn().mockReturnValue({
+                setSession: vi.fn().mockResolvedValue(undefined),
+            }),
+        }
+        const createAccessTokenProvider = vi.fn(async () =>
+            AuthTokenProvider.fromToken(validJwt(), logger)
+        )
+
+        await resolveAutomationRunContext(
+            store as never,
+            'user-1',
+            'net-m2m',
+            createAccessTokenProvider,
+            logger
+        )
+
+        expect(store.getSessionForUser).toHaveBeenCalledWith('user-1', {
+            authType: 'client_credentials',
+        })
     })
 
     it('mints a token when no session exists on an M2M network', async () => {

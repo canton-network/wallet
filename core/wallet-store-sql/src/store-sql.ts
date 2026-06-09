@@ -4,6 +4,7 @@
 import { Logger } from 'pino'
 import {
     AuthContext,
+    AuthType,
     UserId,
     AuthAware,
     assertConnected,
@@ -369,12 +370,12 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     // Session methods
     async getSession(): Promise<Session | undefined> {
         const userId = this.assertConnected()
-        const sessions = await this.db
+        const row = await this.db
             .selectFrom('sessions')
             .selectAll()
             .where('userId', '=', userId)
             .executeTakeFirst()
-        return sessions
+        return row ? this.toSession(row) : undefined
     }
 
     async setSession(session: Session): Promise<void> {
@@ -405,20 +406,33 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
      * Returns the session for a user without requiring the caller's auth context.
      * Used by background jobs (e.g. pending external signing poller).
      */
-    async getSessionForUser(userId: UserId): Promise<Session | undefined> {
-        const row = await this.db
+    async getSessionForUser(
+        userId: UserId,
+        filter?: { authType?: AuthType }
+    ): Promise<Session | undefined> {
+        let query = this.db
             .selectFrom('sessions')
             .selectAll()
             .where('userId', '=', userId)
-            .executeTakeFirst()
-        if (!row) {
-            return undefined
+
+        if (filter?.authType) {
+            query = query.where('authType', '=', filter.authType)
         }
-        return {
+
+        const row = await query.executeTakeFirst()
+        return row ? this.toSession(row) : undefined
+    }
+
+    private toSession(row: DB['sessions']): Session {
+        const session: Session = {
             id: row.id,
             network: row.network,
             accessToken: row.accessToken,
         }
+        if (row.authType) {
+            session.authType = row.authType as AuthType
+        }
+        return session
     }
 
     /**
