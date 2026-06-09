@@ -39,7 +39,9 @@ export const ActionRequired: React.FC<ActionRequiredProps> = ({ items }) => {
     const selectedAllocationItem = useMemo(() => {
         if (!selectedAllocationItemId) return null
         const item = items.find(
-            (i) => i.kind === 'allocation' && i.id === selectedAllocationItemId
+            (i) =>
+                i.kind === 'allocation' &&
+                i.contractId === selectedAllocationItemId
         )
         return item ? (item as AllocationActionItem) : null
     }, [items, selectedAllocationItemId])
@@ -64,11 +66,11 @@ export const ActionRequired: React.FC<ActionRequiredProps> = ({ items }) => {
         item: TransferActionItem,
         action: 'Accept' | 'Reject' | 'Withdraw'
     ) => {
-        setLoadingItemId(item.id)
+        setLoadingItemId(item.contractId)
         exerciseTransferMutation.mutate(
             {
                 party: item.currentPartyId as PartyId,
-                contractId: item.id,
+                contractId: item.contractId,
                 instrumentId: item.instrumentId,
                 instructionChoice: action,
             },
@@ -87,7 +89,7 @@ export const ActionRequired: React.FC<ActionRequiredProps> = ({ items }) => {
     }
 
     const handleAllocationCardClick = (item: AllocationActionItem) => {
-        setSelectedAllocationItemId(item.id)
+        setSelectedAllocationItemId(item.contractId)
         setIsAllocationDialogOpen(true)
     }
 
@@ -100,7 +102,7 @@ export const ActionRequired: React.FC<ActionRequiredProps> = ({ items }) => {
         item: AllocationActionItem,
         leg: TransferLegWithAllocation
     ) => {
-        setLoadingItemId(item.id)
+        setLoadingItemId(item.contractId)
         setLoadingLegId(leg.transferLegId)
         createAllocationMutation.mutate(
             {
@@ -132,7 +134,7 @@ export const ActionRequired: React.FC<ActionRequiredProps> = ({ items }) => {
         leg: TransferLegWithAllocation,
         allocationContractId: string
     ) => {
-        setLoadingItemId(item.id)
+        setLoadingItemId(item.contractId)
         setLoadingLegId(leg.transferLegId)
         withdrawAllocationMutation.mutate(
             {
@@ -176,13 +178,13 @@ export const ActionRequired: React.FC<ActionRequiredProps> = ({ items }) => {
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {items.map((item) => {
-                    const isItemLoading = loadingItemId === item.id
+                    const isItemLoading = loadingItemId === item.contractId
 
                     switch (item.kind) {
                         case 'allocation':
                             return (
                                 <AllocationActionItemCard
-                                    key={item.id}
+                                    key={item.contractId}
                                     item={item}
                                     isLoading={isItemLoading}
                                     onClick={() =>
@@ -193,7 +195,7 @@ export const ActionRequired: React.FC<ActionRequiredProps> = ({ items }) => {
                         case 'transfer':
                             return (
                                 <TransferActionItemCard
-                                    key={item.id}
+                                    key={item.contractId}
                                     item={item}
                                     isLoading={isItemLoading}
                                     onClick={() =>

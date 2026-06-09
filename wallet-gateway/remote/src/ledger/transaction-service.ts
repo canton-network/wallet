@@ -13,10 +13,10 @@ import type { SignResult } from '../user-api/rpc-gen/typings.js'
 import {
     Error as SigningError,
     GetTransactionResult,
-    SigningDriverInterface,
     SigningProvider,
     SignTransactionResult,
 } from '@canton-network/core-signing-lib'
+import type { SigningDrivers } from '../signing/signing-drivers.js'
 import {
     ExecuteParams,
     ExecuteResult,
@@ -26,6 +26,7 @@ import {
 import { UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
 import { ledgerPrepareParams, type PrepareParams } from '../utils.js'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 
 function handleSigningError<T extends object>(result: SigningError | T): T {
     if ('error' in result) {
@@ -40,11 +41,130 @@ export class TransactionService {
     constructor(
         private store: Store,
         private logger: Logger,
-        private signingDrivers: Partial<
-            Record<SigningProvider, SigningDriverInterface>
-        > = {},
+        private signingDrivers: SigningDrivers = {},
         private notifier: Notifier
     ) {}
+
+    public async sign(
+        authContext: AuthContext,
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResult> {
+        const signingProvider = wallet.signingProviderId as SigningProvider
+        const driver = this.signingDrivers[signingProvider]?.controller(
+            authContext.userId
+        )
+        if (!driver) {
+            throw new Error(`No driver found for ${signingProvider}`)
+        }
+
+        switch (signingProvider) {
+            case SigningProvider.PARTICIPANT: {
+                return this.signWithParticipant(wallet)
+            }
+            case SigningProvider.WALLET_KERNEL: {
+                return this.signWithWalletKernel(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.BLOCKDAEMON: {
+                if (!authContext.email) {
+                    throw new Error(
+                        'Email is required for Blockdaemon wallet allocation'
+                    )
+                }
+                return this.signWithBlockdaemon(
+                    authContext.email,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.FIREBLOCKS: {
+                return this.signWithFireblocks(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.DFNS: {
+                return this.signWithDfns(authContext.userId, wallet, signParams)
+            }
+            default:
+                throw new Error(
+                    `Unsupported signing provider: ${wallet.signingProviderId}`
+                )
+        }
+    }
+
+    public execute(
+        authContext: AuthContext,
+        wallet: Wallet,
+        transaction: Transaction,
+        executeParams?: ExecuteParams,
+        ledgerClient?: LedgerClient,
+        network?: Network
+    ): Promise<ExecuteResult> {
+        switch (wallet.signingProviderId) {
+            case SigningProvider.PARTICIPANT: {
+                try {
+                    if (!executeParams) {
+                        throw new Error(
+                            'Execute params are required for participant signing'
+                        )
+                    }
+                    if (!ledgerClient) {
+                        throw new Error(
+                            'Ledger client is required for participant signing'
+                        )
+                    }
+                    if (!network) {
+                        throw new Error(
+                            'Network is required for participant signing'
+                        )
+                    }
+                    return this.executeWithParticipant(
+                        authContext.userId,
+                        executeParams,
+                        transaction,
+                        ledgerClient,
+                        network
+                    )
+                } catch (error) {
+                    this.logger.error(error, 'Failed to submit transaction')
+                    throw error
+                }
+            }
+            case SigningProvider.WALLET_KERNEL:
+            case SigningProvider.BLOCKDAEMON:
+            case SigningProvider.FIREBLOCKS: {
+                if (!executeParams) {
+                    throw new Error(
+                        'Execute params are required for external signing'
+                    )
+                }
+                if (!ledgerClient) {
+                    throw new Error(
+                        'Ledger client is required for external signing'
+                    )
+                }
+                return this.executeWithExternal(
+                    authContext.userId,
+                    executeParams,
+                    transaction,
+                    ledgerClient
+                )
+            }
+            case SigningProvider.DFNS: {
+                return this.executeWithDfns(transaction)
+            }
+            default:
+                throw new Error(
+                    `Unsupported signing provider: ${wallet.signingProviderId}`
+                )
+        }
+    }
 
     private async loadPreparedTransactionForSigning(
         transactionId: Transaction['id']
@@ -57,7 +177,7 @@ export class TransactionService {
         return existingTx
     }
 
-    public signWithParticipant(wallet: Wallet): SignResultSigned {
+    private signWithParticipant(wallet: Wallet): SignResultSigned {
         return {
             status: 'signed',
             signature: 'none',
@@ -66,7 +186,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithWalletKernel(
+    private async signWithWalletKernel(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -123,7 +243,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithBlockdaemon(
+    private async signWithBlockdaemon(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -231,7 +351,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithFireblocks(
+    private async signWithFireblocks(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -349,7 +469,7 @@ export class TransactionService {
      * signature payload (the controller short-circuits Dfns execute) and surface
      * the same SignResult shape the other external providers use.
      */
-    public async signWithDfns(
+    private async signWithDfns(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -456,7 +576,7 @@ export class TransactionService {
      * state reconciliation: mark the stored transaction as executed and return
      * the updateId Dfns gave us. We deliberately don't post to the ledger here.
      */
-    public async executeWithDfns(
+    private async executeWithDfns(
         transaction: Transaction
     ): Promise<ExecuteResult> {
         if (!transaction.externalTxId) {
@@ -488,7 +608,7 @@ export class TransactionService {
         return { updateId: transaction.externalTxId } as ExecuteResult
     }
 
-    public async executeWithParticipant(
+    private async executeWithParticipant(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,
@@ -535,7 +655,7 @@ export class TransactionService {
         return res as ExecuteResult
     }
 
-    public async executeWithExternal(
+    private async executeWithExternal(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,

@@ -4,6 +4,8 @@
 import { decodeJwt } from 'jose'
 import { AuthContext } from './auth-service'
 import { providerErrors } from '@canton-network/core-rpc-errors'
+import { Logger } from '@canton-network/core-types'
+import { Idp } from './config/schema.js'
 
 export function assertConnected(
     authContext: AuthContext | undefined
@@ -113,6 +115,39 @@ export async function fetchOidcUserInfo(
     }
 
     return (await userInfoResponse.json()) as OidcUserInfo
+}
+
+/**
+ * Resolve the user email from the OIDC userinfo endpoint.
+ *
+ * @param authContext - The authentication context
+ * @param idp - The IDP configuration
+ * @param logger - The logger
+ * @returns The user email, or undefined if the email is not found
+ */
+export async function resolveUserEmail(
+    authContext: AuthContext,
+    idp: Idp,
+    logger?: Logger
+): Promise<string | undefined> {
+    if (authContext.email) {
+        return authContext.email
+    }
+
+    try {
+        if (idp.type !== 'oauth') {
+            return undefined
+        }
+
+        const userInfo = await fetchOidcUserInfo(
+            idp.configUrl,
+            authContext.accessToken
+        )
+        return userInfo?.email
+    } catch (error) {
+        logger?.warn(error, 'Failed to resolve user email from OIDC userinfo')
+        return undefined
+    }
 }
 
 /**

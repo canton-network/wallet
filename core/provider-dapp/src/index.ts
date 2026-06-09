@@ -14,24 +14,5 @@ declare global {
     }
 }
 
-export enum ProviderType {
-    WINDOW,
-    HTTP,
-}
-
-export function injectProvider(
-    provider: Provider<DappSyncRpc>
-): Provider<DappSyncRpc> {
-    // Check if the provider is already injected
-    if (window.canton !== undefined)
-        return window.canton as Provider<DappSyncRpc>
-
-    // Inject the Provider instance
-    window.canton = provider as Provider<DappLedgerRpc>
-
-    console.log('Splice provider injected successfully.')
-    return window.canton as Provider<DappSyncRpc>
-}
-
 export * from './DappSyncProvider'
 export * from './DappAsyncProvider'

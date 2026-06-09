@@ -6,7 +6,8 @@ import { expect, test } from 'vitest'
 // import request from 'supertest'
 import { InternalSigningDriver } from './controller.js'
 import {
-    CreateKeyResult,
+    createKeyPair,
+    Error as RpcError,
     isRpcError,
     Key,
     Methods,
@@ -32,9 +33,17 @@ const authContext: AuthContext = {
     accessToken: 'test-access-token',
 }
 
+function assertNotRpcError<T>(value: T | RpcError): asserts value is T {
+    if (isRpcError(value)) {
+        throw new Error(
+            `Expected a successful RPC result, got: ${value.error_description}`
+        )
+    }
+}
+
 interface TestValues {
     signingDriver: InternalSigningDriver
-    key: CreateKeyResult
+    key: Key
     controller: Methods
 }
 
@@ -55,6 +64,7 @@ async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
     const signingDriver = new InternalSigningDriver(store)
     const controller = signingDriver.controller(authContext.userId)
     const key = await controller.createKey({ name: keyName })
+    assertNotRpcError(key)
     return {
         signingDriver,
         key,
@@ -65,6 +75,7 @@ async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
 test('key creation', async () => {
     const { controller, key } = await setupTest()
     const keys = await controller.getKeys()
+    assertNotRpcError(keys)
     expect(
         keys.keys?.find(
             (k: Key) => k.id === key.id && k.publicKey === key.publicKey
@@ -82,11 +93,7 @@ test('transaction signature', async () => {
         },
     })
 
-    if (isRpcError(tx)) {
-        throw new Error(
-            `Expected a valid transaction, but got an error: ${tx.error_description}`
-        )
-    }
+    assertNotRpcError(tx)
     expect(tx.status).toBe('signed')
     expect(tx.signature).toBeDefined()
 
@@ -101,11 +108,7 @@ test('transaction signature', async () => {
     const transactionsByKey = await controller.getTransactions({
         publicKeys: [key.publicKey],
     })
-    if (isRpcError(transactionsByKey)) {
-        throw new Error(
-            `Expected valid transactions, but got an error: ${transactionsByKey.error_description}`
-        )
-    }
+    assertNotRpcError(transactionsByKey)
     expect(
         transactionsByKey.transactions?.find(
             (t: Transaction) => t.txId === tx.txId
@@ -115,14 +118,204 @@ test('transaction signature', async () => {
     const transactionsById = await controller.getTransactions({
         txIds: [tx.txId],
     })
-    if (isRpcError(transactionsById)) {
-        throw new Error(
-            `Expected valid transactions, but got an error: ${transactionsById.error_description}`
-        )
-    }
+    assertNotRpcError(transactionsById)
     expect(
         transactionsById.transactions?.find(
             (t: Transaction) => t.txId === tx.txId
         )
     ).toBeDefined()
+})
+
+const TEST_MESSAGE = 'hello world'
+
+test('signMessage signs a message with a stored key', async () => {
+    const { controller, key } = await setupTest()
+
+    const result = await controller.signMessage({
+        message: TEST_MESSAGE,
+        keyIdentifier: { publicKey: key.publicKey },
+    })
+
+    assertNotRpcError(result)
+    expect(result.signature).toBeDefined()
+    expect(
+        nacl.sign.detached.verify(
+            new TextEncoder().encode(TEST_MESSAGE),
+            naclUtil.decodeBase64(result.signature),
+            naclUtil.decodeBase64(key.publicKey)
+        )
+    ).toBe(true)
+})
+
+test('signMessage returns key_not_found when the publicKey is missing', async () => {
+    const { controller } = await setupTest()
+
+    const result = await controller.signMessage({
+        message: TEST_MESSAGE,
+        keyIdentifier: { id: 'id not supported' },
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('key_not_found')
+    }
+})
+
+test('signMessage returns key_not_found when the key is unknown', async () => {
+    const { controller } = await setupTest()
+    const { publicKey } = createKeyPair()
+
+    const result = await controller.signMessage({
+        message: TEST_MESSAGE,
+        keyIdentifier: { publicKey },
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('key_not_found')
+    }
+})
+
+test('signTransaction returns key_not_found when the publicKey is missing', async () => {
+    const { controller } = await setupTest()
+
+    const result = await controller.signTransaction({
+        tx: TEST_TRANSACTION,
+        txHash: TEST_TRANSACTION_HASH,
+        keyIdentifier: { id: 'no-public-key' },
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('key_not_found')
+    }
+})
+
+test('signTransaction returns key_not_found when the key is unknown', async () => {
+    const { controller } = await setupTest()
+    const { publicKey } = createKeyPair()
+
+    const result = await controller.signTransaction({
+        tx: TEST_TRANSACTION,
+        txHash: TEST_TRANSACTION_HASH,
+        keyIdentifier: { publicKey },
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('key_not_found')
+    }
+})
+
+test('signTransaction returns userId_not_found when no userId is set', async () => {
+    const { signingDriver, key } = await setupTest()
+    const controller = signingDriver.controller(undefined)
+
+    const result = await controller.signTransaction({
+        tx: TEST_TRANSACTION,
+        txHash: TEST_TRANSACTION_HASH,
+        keyIdentifier: { publicKey: key.publicKey },
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('userId_not_found')
+    }
+})
+
+test('getTransaction returns a stored transaction', async () => {
+    const { controller, key } = await setupTest()
+    const tx = await controller.signTransaction({
+        tx: TEST_TRANSACTION,
+        txHash: TEST_TRANSACTION_HASH,
+        keyIdentifier: { publicKey: key.publicKey },
+    })
+    assertNotRpcError(tx)
+
+    const result = await controller.getTransaction({ txId: tx.txId })
+
+    assertNotRpcError(result)
+    expect(result.txId).toBe(tx.txId)
+    expect(result.status).toBe('signed')
+    expect(result.publicKey).toBe(key.publicKey)
+})
+
+test('getTransaction returns transaction_not_found for an unknown id', async () => {
+    const { controller } = await setupTest()
+
+    const result = await controller.getTransaction({
+        txId: 'does-not-exist',
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('transaction_not_found')
+    }
+})
+
+test('getTransaction returns userId_not_found when no userId is set', async () => {
+    const { signingDriver } = await setupTest()
+    const controller = signingDriver.controller(undefined)
+
+    const result = await controller.getTransaction({ txId: 'any' })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('userId_not_found')
+    }
+})
+
+test('getTransactions returns bad_arguments when no filter is supplied', async () => {
+    const { controller } = await setupTest()
+
+    const result = await controller.getTransactions({})
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('bad_arguments')
+    }
+})
+
+test('getTransactions returns userId_not_found when no userId is set', async () => {
+    const { signingDriver } = await setupTest()
+    const controller = signingDriver.controller(undefined)
+
+    const result = await controller.getTransactions({ txIds: ['any'] })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('userId_not_found')
+    }
+})
+
+test('getKeys returns userId_not_found when no userId is set', async () => {
+    const { signingDriver } = await setupTest()
+    const controller = signingDriver.controller(undefined)
+
+    const result = await controller.getKeys()
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('userId_not_found')
+    }
+})
+
+test('createKey returns userId_not_found when no userId is set', async () => {
+    const { signingDriver } = await setupTest()
+    const controller = signingDriver.controller(undefined)
+
+    const result = await controller.createKey({ name: TEST_KEY_NAME })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('userId_not_found')
+    }
+})
+
+test('getConfiguration, setConfiguration and subscribeTransactions return empty results', async () => {
+    const { controller } = await setupTest()
+
+    expect(await controller.getConfiguration()).toEqual({})
+    expect(await controller.setConfiguration({})).toEqual({})
+    expect(await controller.subscribeTransactions({ txIds: [] })).toEqual({})
 })

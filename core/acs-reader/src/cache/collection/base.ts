@@ -1,19 +1,30 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LRUCache } from 'typescript-lru-cache'
-import { ACSCache, ACSCacheOptions } from './cache'
-import { ACSKey } from '../types'
-import { ResolvedAcsOptions } from '../service'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { LRUCache, LRUCacheOptions } from 'typescript-lru-cache'
+import { ACSKey } from '../../types'
+import { PaginatedResolvedAcsOptions, ResolvedAcsOptions } from '../../service'
 import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
+import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { ACSCache, BaseACSCache, PaginatedACSCache } from '../item'
 
-export class ACSCacheCollection {
-    private readonly collection: LRUCache<string, ACSCache>
+export type ACSCacheCollectionOptions = Pick<
+    LRUCacheOptions<string, BaseACSCache>,
+    'maxSize' | 'entryExpirationTimeInMS'
+>
+
+export abstract class BaseCacheCollection<
+    Cache extends ACSCache | PaginatedACSCache,
+    Options extends ResolvedAcsOptions | PaginatedResolvedAcsOptions =
+        Cache extends ACSCache
+            ? ResolvedAcsOptions
+            : PaginatedResolvedAcsOptions,
+> {
+    private readonly collection: LRUCache<string, Cache>
 
     constructor(
-        private readonly ledger: AbstractLedgerProvider,
-        private readonly options: ACSCacheOptions = {
+        protected readonly ledger: AbstractLedgerProvider,
+        private readonly options: ACSCacheCollectionOptions = {
             maxSize: 100,
             entryExpirationTimeInMS: 10 * 60 * 1000,
         }
@@ -25,13 +36,10 @@ export class ACSCacheCollection {
      * Reads the active contract set from the ledger with caching.
      * Resolves party references and constructs cache keys from the provided template and interface IDs.
      * Queries are deduplicated and cached per party-template-interface combination.
-     *
-     * @override
-     * @see {@link ACSReader.readRaw}
      */
     public async readFromCache(
-        options: ResolvedAcsOptions
-    ): Promise<Array<LedgerCommonSchemas['JsGetActiveContractsResponse']>> {
+        options: Options
+    ): Promise<LedgerCommonSchemas['JsGetActiveContractsResponse'][]> {
         const { parties, interfaceIds, templateIds } = options
         const keys: ACSKey[] =
             parties?.flatMap((party) => {
@@ -49,12 +57,14 @@ export class ACSCacheCollection {
         return await this.query({ options, keys })
     }
 
+    protected abstract createCache(): Cache
+
     private getCache(key: ACSKey) {
         const serializedKey = this.serializeKey(key)
         const existingCache = this.collection.get(serializedKey)
         if (existingCache) return existingCache
 
-        const newCache = new ACSCache(this.ledger)
+        const newCache = this.createCache()
         this.collection.set(serializedKey, newCache)
 
         return newCache
@@ -65,7 +75,7 @@ export class ACSCacheCollection {
      * If the cache is outdated, fetches updates from the ledger and applies them incrementally.
      */
     private async updateCache(args: {
-        options: ResolvedAcsOptions
+        options: ResolvedAcsOptions | PaginatedResolvedAcsOptions
         key: ACSKey
     }) {
         const cache = this.getCache(args.key)
@@ -78,9 +88,9 @@ export class ACSCacheCollection {
      * Each key represents a unique party-template-interface combination to be queried independently.
      */
     private async query(args: {
-        options: ResolvedAcsOptions
+        options: Options
         keys: ACSKey[]
-    }): Promise<Array<LedgerCommonSchemas['JsGetActiveContractsResponse']>> {
+    }): Promise<LedgerCommonSchemas['JsGetActiveContractsResponse'][]> {
         const { options, keys } = args
         return (
             await Promise.all(
