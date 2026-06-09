@@ -581,15 +581,17 @@ Optional server settings:
 {
     "server": {
         "serviceAccount": {
-            "allowedUsers": ["ledger-user-id-from-jwt-sub"],
-            "pendingSigningPollIntervalMs": 5000
+            "allowedUsers": ["ledger-user-id-from-jwt-sub"]
+        },
+        "signingWorker": {
+            "pollInterval": 5000
         }
     }
 }
 ```
 
 - **`allowedUsers`**: When set, only these JWT `sub` values may use automation. Omit to allow any authenticated user on a `client_credentials` network.
-- **`pendingSigningPollIntervalMs`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns) when automation signing stays `pending` until custody approves.
+- **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns) when automation signing stays `pending` until custody approves.
 
 ## Configuring Signing Store
 

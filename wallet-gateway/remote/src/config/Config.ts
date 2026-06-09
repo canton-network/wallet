@@ -79,21 +79,21 @@ export const serverConfigSchema = z.object({
                 description:
                     'Optional allow-list of ledger user IDs (JWT sub) that service accounts may automate. When omitted, all authenticated users are allowed.',
             }),
-            pendingSigningPollIntervalMs: z
-                .number()
-                .int()
-                .positive()
-                .default(5000)
-                .meta({
-                    description:
-                        'Interval in milliseconds for polling external signing providers on pending service account transactions. Defaults to 5000.',
-                }),
         })
         .optional()
         .meta({
             description:
                 'Service account automation settings for machine-to-machine (client credentials) flows.',
         }),
+    signingWorker: z.preprocess(
+        (val) => val ?? {},
+        z.object({
+            pollInterval: z.number().int().positive().default(5000).meta({
+                description:
+                    'Interval in milliseconds for the signing worker to poll external signing providers on pending transactions. Defaults to 5000.',
+            }),
+        })
+    ),
 })
 
 const loggingConfigSchema = z

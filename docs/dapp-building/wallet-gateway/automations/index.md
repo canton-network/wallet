@@ -142,17 +142,19 @@ Configure the target network with M2M OAuth for normal ledger access:
 {
     "server": {
         "serviceAccount": {
-            "allowedUsers": ["automation-ledger-user-id"],
-            "pendingSigningPollIntervalMs": 5000
+            "allowedUsers": ["automation-ledger-user-id"]
+        },
+        "signingWorker": {
+            "pollInterval": 5000
         }
     }
 }
 ```
 
-| Field                          | Description                                                                                                                  |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `allowedUsers`                 | Optional allow-list of JWT `sub` values permitted to use automation. Omit to allow any authenticated user on an M2M network. |
-| `pendingSigningPollIntervalMs` | How often the Signing worker polls external signers when a transaction stays `pending` after submit. Default: `5000` ms.     |
+| Field                        | Description                                                                                                                  |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `allowedUsers`               | Optional allow-list of JWT `sub` values permitted to use automation. Omit to allow any authenticated user on an M2M network. |
+| `signingWorker.pollInterval` | How often the Signing worker polls external signers when a transaction stays `pending` after submit. Default: `5000` ms.     |
 
 ### Signing provider configuration
 
@@ -279,7 +281,7 @@ When the primary wallet uses **Fireblocks**, **Blockdaemon**, or **Dfns**:
 1. `prepareExecute` prepares the transaction and submits it to the custody provider.
 2. Signing may return **`pending`** until the provider approves the request.
 3. The **Signing worker** background process polls pending external transactions and calls sign → execute when approval completes.
-4. Tune `pendingSigningPollIntervalMs` if you need faster completion.
+4. Tune `signingWorker.pollInterval` if you need faster completion.
 
 Your automation should wait for a `txChanged` event with status **`executed`** (or handle `failed` / prolonged `pending`).
 
@@ -342,7 +344,7 @@ Subscribe to **`txChanged`** SSE events in your automation and alert when:
 
 ### Availability
 
-- The **Signing worker** runs inside the Gateway process and polls pending external transactions at `pendingSigningPollIntervalMs` (default 5 s). Run at least one Gateway replica with this process active (default: enabled on startup).
+- The **Signing worker** runs inside the Gateway process and polls pending external transactions at `signingWorker.pollInterval` (default 5 s). Run at least one Gateway replica with this process active (default: enabled on startup).
 - Persist the Gateway **store** (PostgreSQL recommended) so wallets, sessions, and pending transactions survive restarts.
 - Rotate M2M secrets via `clientSecretEnv` without embedding credentials in config files.
 

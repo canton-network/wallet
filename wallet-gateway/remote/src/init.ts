@@ -388,8 +388,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         component: 'SigningWorker',
     })
     signingWorker = new SigningWorker({
-        intervalMs:
-            config.server.serviceAccount?.pendingSigningPollIntervalMs ?? 5000,
+        intervalMs: config.server.signingWorker.pollInterval,
         serviceAccountConfig,
         signingDrivers: drivers,
         store,
