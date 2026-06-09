@@ -7,41 +7,40 @@ import {
     AuthTokenProvider,
     assertConnected,
     assertServiceAccountUserAllowed,
-    isServiceAccountRequest,
     type AuthAware,
 } from '@canton-network/core-wallet-auth'
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import {
-    Network,
-    Store,
-    Transaction,
-    Wallet,
-} from '@canton-network/core-wallet-store'
+import { Network, Transaction, Wallet } from '@canton-network/core-wallet-store'
 import { TransactionService } from '../ledger/transaction-service.js'
-import type { SigningDrivers } from './signing-drivers.js'
-import { Notifier } from '../notification/NotificationService.js'
-import type { ExecuteParams, SignParams } from '../user-api/rpc-gen/typings.js'
+import type {
+    ExecuteParams,
+    ExecuteResult,
+    SignParams,
+    SignResult,
+} from '../user-api/rpc-gen/typings.js'
 
-export interface ServiceAccountAutomationConfig {
+export type SignAndExecuteResult = SignResult | ExecuteResult
+
+export interface ServiceAccountWorkerConfig {
     allowedUsers?: string[]
 }
 
-export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomation> {
+export class ServiceAccountWorker implements AuthAware<ServiceAccountWorker> {
     authContext: AuthContext | undefined
 
     constructor(
-        private readonly config: ServiceAccountAutomationConfig,
-        private readonly signingDrivers: SigningDrivers,
+        private readonly config: ServiceAccountWorkerConfig,
+        private readonly transactionService: TransactionService,
         private readonly logger: Logger,
         authContext?: AuthContext
     ) {
         this.authContext = authContext
     }
 
-    withAuthContext(context?: AuthContext): ServiceAccountAutomation {
-        return new ServiceAccountAutomation(
+    withAuthContext(context?: AuthContext): ServiceAccountWorker {
+        return new ServiceAccountWorker(
             this.config,
-            this.signingDrivers,
+            this.transactionService,
             this.logger,
             context
         )
@@ -51,17 +50,11 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
         return assertConnected(this.authContext)
     }
 
-    isAutomationRequest(network: Network, accessToken: string): boolean {
-        return isServiceAccountRequest(network.auth, accessToken)
-    }
-
     async signAndExecutePreparedTransaction(
-        store: Store,
         network: Network,
         wallet: Wallet,
-        transaction: Transaction,
-        notifier: Notifier
-    ): Promise<void> {
+        transaction: Transaction
+    ): Promise<SignAndExecuteResult> {
         const authContext = this.getAuthContext()
 
         assertServiceAccountUserAllowed(
@@ -69,33 +62,19 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
             this.config.allowedUsers
         )
 
-        const transactionService = new TransactionService(
-            store,
-            this.logger,
-            this.signingDrivers,
-            notifier
-        )
-
         const signParams: SignParams = {
             transactionId: transaction.id,
             partyId: wallet.partyId,
         }
 
-        const signResult = await transactionService.sign(
+        const signResult = await this.transactionService.sign(
             authContext,
             wallet,
             signParams
         )
 
         if (signResult.status === 'pending') {
-            this.logger.info(
-                {
-                    transactionId: transaction.id,
-                    externalTxId: signResult.externalTxId,
-                },
-                'Service account signing pending external approval'
-            )
-            return
+            return signResult
         }
 
         if (signResult.status !== 'signed') {
@@ -129,7 +108,7 @@ export class ServiceAccountAutomation implements AuthAware<ServiceAccountAutomat
             signedBy: signResult.signedBy,
         }
 
-        await transactionService.execute(
+        return this.transactionService.execute(
             authContext,
             wallet,
             transaction,

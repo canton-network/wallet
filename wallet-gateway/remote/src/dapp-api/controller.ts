@@ -5,6 +5,7 @@ import {
     assertConnected,
     AuthContext,
     AuthTokenProvider,
+    isServiceAccountRequest,
 } from '@canton-network/core-wallet-auth'
 import buildController from './rpc-gen/index.js'
 import {
@@ -32,15 +33,16 @@ import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import { TransactionService } from '../ledger/transaction-service.js'
 import {
-    ServiceAccountAutomation,
-    ServiceAccountAutomationConfig,
-} from '../signing/service-account-automation.js'
+    ServiceAccountWorker,
+    ServiceAccountWorkerConfig,
+} from '../signing/service-account-worker.js'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
-    serviceAccountConfig: ServiceAccountAutomationConfig
+    serviceAccountWorkerConfig: ServiceAccountWorkerConfig
 }
 
 export const dappController = (
@@ -55,14 +57,6 @@ export const dappController = (
     deps?: DappControllerDeps
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
-    const serviceAccountAutomation = deps
-        ? new ServiceAccountAutomation(
-              deps.serviceAccountConfig,
-              deps.signingDrivers,
-              logger,
-              context
-          )
-        : undefined
 
     return buildController({
         connect: async () => {
@@ -276,12 +270,7 @@ export const dappController = (
 
             const approveUrl = `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`
 
-            if (
-                serviceAccountAutomation?.isAutomationRequest(
-                    network,
-                    context.accessToken
-                )
-            ) {
+            if (isServiceAccountRequest(network.auth, context.accessToken)) {
                 logger.info(
                     {
                         userId: context.userId,
@@ -291,12 +280,21 @@ export const dappController = (
                     },
                     'Service account straight-through prepare/sign/execute'
                 )
-                await serviceAccountAutomation.signAndExecutePreparedTransaction(
+                const transactionService = new TransactionService(
                     store,
+                    logger,
+                    deps!.signingDrivers,
+                    notifier
+                )
+                await new ServiceAccountWorker(
+                    deps!.serviceAccountWorkerConfig,
+                    transactionService,
+                    logger,
+                    context
+                ).signAndExecutePreparedTransaction(
                     network,
                     wallet,
-                    transaction,
-                    notifier
+                    transaction
                 )
             }
 

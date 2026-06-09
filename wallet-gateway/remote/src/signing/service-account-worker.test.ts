@@ -4,7 +4,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { ServiceAccountAutomation } from './service-account-automation.js'
+import { isServiceAccountRequest } from '@canton-network/core-wallet-auth'
+import { ServiceAccountWorker } from './service-account-worker.js'
+import { TransactionService } from '../ledger/transaction-service.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type {
     Network,
@@ -15,12 +17,6 @@ import type {
 const transactionServiceMocks = vi.hoisted(() => ({
     sign: vi.fn(),
     execute: vi.fn(),
-}))
-
-vi.mock('../ledger/transaction-service.js', () => ({
-    TransactionService: vi.fn(function TransactionServiceMock() {
-        return transactionServiceMocks
-    }),
 }))
 
 const network: Network = {
@@ -65,18 +61,27 @@ const authContext = {
     accessToken: 'token',
 }
 
-describe('ServiceAccountAutomation', () => {
+function createWorker(auth = authContext): ServiceAccountWorker {
+    const transactionService = {
+        sign: transactionServiceMocks.sign,
+        execute: transactionServiceMocks.execute,
+    } as unknown as TransactionService
+
+    return new ServiceAccountWorker(
+        {},
+        transactionService,
+        pino({ level: 'silent' }, sink()),
+        auth
+    )
+}
+
+describe('ServiceAccountWorker', () => {
     afterEach(() => {
         vi.clearAllMocks()
     })
 
     it('detects client credentials networks', () => {
-        const automation = new ServiceAccountAutomation(
-            {},
-            {},
-            pino({ level: 'silent' }, sink())
-        )
-        expect(automation.isAutomationRequest(network, 'any-token')).toBe(true)
+        expect(isServiceAccountRequest(network.auth, 'any-token')).toBe(true)
     })
 
     it('signs and executes transactions straight-through', async () => {
@@ -90,27 +95,13 @@ describe('ServiceAccountAutomation', () => {
             commandId: 'cmd-1',
         })
 
-        const automation = new ServiceAccountAutomation(
-            {},
-            {},
-            pino({ level: 'silent' }, sink()),
-            authContext
-        )
-
-        const store = {
-            getWallets: vi.fn().mockResolvedValue([wallet]),
-            getTransaction: vi.fn().mockResolvedValue(transaction),
-        }
-        const notifier = { emit: vi.fn() }
-
-        await automation.signAndExecutePreparedTransaction(
-            store as never,
+        const result = await createWorker().signAndExecutePreparedTransaction(
             network,
             wallet,
-            transaction,
-            notifier as never
+            transaction
         )
 
+        expect(result).toEqual({ commandId: 'cmd-1' })
         expect(transactionServiceMocks.sign).toHaveBeenCalledWith(
             authContext,
             wallet,
@@ -136,21 +127,17 @@ describe('ServiceAccountAutomation', () => {
             partyId: wallet.partyId,
         })
 
-        const automation = new ServiceAccountAutomation(
-            {},
-            {},
-            pino({ level: 'silent' }, sink()),
-            authContext
-        )
-
-        await automation.signAndExecutePreparedTransaction(
-            {} as never,
+        const result = await createWorker().signAndExecutePreparedTransaction(
             network,
             wallet,
-            transaction,
-            { emit: vi.fn() } as never
+            transaction
         )
 
+        expect(result).toEqual({
+            status: 'pending',
+            externalTxId: 'ext-1',
+            partyId: wallet.partyId,
+        })
         expect(transactionServiceMocks.execute).not.toHaveBeenCalled()
     })
 })

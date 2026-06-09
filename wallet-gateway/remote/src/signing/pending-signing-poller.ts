@@ -2,45 +2,60 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Logger } from 'pino'
+import { v4 } from 'uuid'
 import {
     AuthContext,
     AuthTokenProvider,
-    Idp,
+    isClientCredentialsNetworkAuth,
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
 import { StoreSql } from '@canton-network/core-wallet-store-sql'
-import { Session, Transaction } from '@canton-network/core-wallet-store'
+import {
+    Network,
+    Session,
+    Transaction,
+} from '@canton-network/core-wallet-store'
 import { NotificationService } from '../notification/NotificationService.js'
+import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from './signing-drivers.js'
 import {
-    ServiceAccountAutomation,
-    ServiceAccountAutomationConfig,
-} from './service-account-automation.js'
+    ServiceAccountWorker,
+    ServiceAccountWorkerConfig,
+} from './service-account-worker.js'
+
+export type AccessTokenProviderFactory = (
+    network: Network
+) => Promise<AuthTokenProvider>
 
 export interface PendingSigningPollerOptions {
     intervalMs: number
-    automationConfig: ServiceAccountAutomationConfig
+    workerConfig: ServiceAccountWorkerConfig
     signingDrivers: SigningDrivers
     store: StoreSql
     notificationService: NotificationService
-    getIdp: (idpId: string) => Promise<Idp>
+    createAccessTokenProvider: AccessTokenProviderFactory
     logger: Logger
+}
+
+interface RunContext {
+    authContext: AuthContext
+    scopedStore: StoreSql
+    network: Network
 }
 
 export class PendingSigningPoller {
     private timer: ReturnType<typeof setInterval> | undefined
-    private readonly automation: ServiceAccountAutomation
     private running = false
+    // Cache access token providers by network ID to avoid creating new ones for each request.
+    private readonly accessTokenProvidersByNetworkId = new Map<
+        string,
+        AuthTokenProvider
+    >()
 
-    constructor(private readonly options: PendingSigningPollerOptions) {
-        this.automation = new ServiceAccountAutomation(
-            options.automationConfig,
-            options.signingDrivers,
-            options.logger.child({ component: 'ServiceAccountAutomation' })
-        )
-    }
+    constructor(private readonly options: PendingSigningPollerOptions) {}
 
     start(): void {
+        this.options.logger.info('Starting pending external signing poller')
         if (this.timer) {
             return
         }
@@ -94,25 +109,16 @@ export class PendingSigningPoller {
             return
         }
 
-        const sessionRow = await this.options.store.getSessionForUser(userId)
-        if (!sessionRow || sessionRow.network !== networkId) {
+        const runContext = await this.prepareRunContext(userId, networkId)
+        if (!runContext) {
             this.options.logger.debug(
-                { userId, transactionId: transaction.id },
-                'Skipping pending poll: no matching session'
+                { userId, networkId, transactionId: transaction.id },
+                'Skipping pending poll: no run context'
             )
             return
         }
 
-        const accessToken = await this.resolveAccessToken(userId, sessionRow)
-
-        const authContext: AuthContext = { userId, accessToken }
-        const scopedStore = this.options.store.withAuthContext(authContext)
-        await scopedStore.setSession({ ...sessionRow, accessToken })
-
-        const network = await scopedStore.getNetwork(networkId)
-        if (!this.automation.isAutomationRequest(network, accessToken)) {
-            return
-        }
+        const { authContext, scopedStore, network } = runContext
 
         const wallets = await scopedStore.getWallets()
         const wallet = wallets.find((w) => w.primary) ?? wallets[0]
@@ -130,17 +136,47 @@ export class PendingSigningPoller {
         }
 
         const notifier = this.options.notificationService.getNotifier(userId)
+        const workerLogger = this.options.logger.child({
+            component: 'ServiceAccountWorker',
+        })
+        const worker = new ServiceAccountWorker(
+            this.options.workerConfig,
+            new TransactionService(
+                scopedStore,
+                workerLogger,
+                this.options.signingDrivers,
+                notifier
+            ),
+            workerLogger,
+            authContext
+        )
 
         try {
-            await this.automation
-                .withAuthContext(authContext)
-                .signAndExecutePreparedTransaction(
-                    scopedStore,
-                    network,
-                    wallet,
-                    refreshedTx,
-                    notifier
+            const result = await worker.signAndExecutePreparedTransaction(
+                network,
+                wallet,
+                refreshedTx
+            )
+            if ('status' in result && result.status === 'pending') {
+                this.options.logger.info(
+                    {
+                        userId,
+                        transactionId: transaction.id,
+                        externalTxId: result.externalTxId,
+                    },
+                    'Pending service account transaction still awaiting external signing'
                 )
+            } else {
+                this.options.logger.info(
+                    {
+                        userId,
+                        transactionId: transaction.id,
+                        externalTxId: transaction.externalTxId,
+                        result,
+                    },
+                    'Completed pending service account transaction'
+                )
+            }
         } catch (error) {
             this.options.logger.error(
                 {
@@ -154,33 +190,80 @@ export class PendingSigningPoller {
         }
     }
 
-    private async resolveAccessToken(
+    /**
+     * Resolves auth for a pending transaction. Service-account networks can run
+     * without a pre-existing session by minting an access token. Interactive
+     * networks still require a valid stored session.
+     */
+    private async prepareRunContext(
         userId: string,
-        session: Session
-    ): Promise<string> {
-        if (!jwtExpired(session.accessToken)) {
-            return session.accessToken
+        networkId: string
+    ): Promise<RunContext | undefined> {
+        const network = await this.options.store.getNetwork(networkId)
+        if (!network) {
+            this.options.logger.warn(
+                { userId, networkId },
+                'Skipping pending poll: network not found'
+            )
+            return undefined
         }
 
-        const scopedStore = this.options.store.withAuthContext({
-            userId,
-            accessToken: session.accessToken,
-        })
+        const existingSession =
+            await this.options.store.getSessionForUser(userId)
+        const sessionMatchesNetwork =
+            existingSession?.network === networkId &&
+            !jwtExpired(existingSession.accessToken)
+
+        // This will also enable polling for non-service-account users for as long as the session is valid.
+        if (sessionMatchesNetwork && existingSession) {
+            const authContext: AuthContext = {
+                userId,
+                accessToken: existingSession.accessToken,
+            }
+            const scopedStore = this.options.store.withAuthContext(authContext)
+            await scopedStore.setSession(existingSession)
+            return { authContext, scopedStore, network }
+        }
+
+        // If there is no valid session, we cannot poll for a non-service-account user because we need to mint an access token.
+        if (!isClientCredentialsNetworkAuth(network.auth)) {
+            this.options.logger.debug(
+                { userId, transactionId: networkId },
+                'Skipping pending poll: no valid session for interactive network'
+            )
+            return undefined
+        }
+
+        // After here we are dealing with a service-account, for which we can mint an access token.
+        const provider = await this.getAccessTokenProvider(network)
+        const accessToken = await provider.getAccessToken()
+        const authContext: AuthContext = { userId, accessToken }
+        const session: Session = {
+            id: existingSession?.id ?? v4(),
+            network: networkId,
+            accessToken,
+        }
+        const scopedStore = this.options.store.withAuthContext(authContext)
         await scopedStore.setSession(session)
-        const network = await scopedStore.getNetwork(session.network)
 
-        if (network.auth.method !== 'client_credentials') {
-            return session.accessToken
+        this.options.logger.debug(
+            { userId, networkId, createdSession: !existingSession },
+            'Prepared service account session for pending poll'
+        )
+
+        return { authContext, scopedStore, network }
+    }
+
+    private async getAccessTokenProvider(
+        network: Network
+    ): Promise<AuthTokenProvider> {
+        const existing = this.accessTokenProvidersByNetworkId.get(network.id)
+        if (existing) {
+            return existing
         }
 
-        const idp = await this.options.getIdp(network.identityProviderId)
-        const accessToken = await AuthTokenProvider.fromGatewayConfig(
-            idp,
-            network.auth,
-            this.options.logger
-        ).getAccessToken()
-
-        await scopedStore.setSession({ ...session, accessToken })
-        return accessToken
+        const provider = await this.options.createAccessTokenProvider(network)
+        this.accessTokenProvidersByNetworkId.set(network.id, provider)
+        return provider
     }
 }

@@ -45,7 +45,7 @@ import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
 import { Env } from './env.js'
 import { PendingSigningPoller } from './signing/pending-signing-poller.js'
-import type { Idp } from '@canton-network/core-wallet-auth'
+import { AuthTokenProvider, type Idp } from '@canton-network/core-wallet-auth'
 
 let isReady = false
 let pendingSigningPoller: PendingSigningPoller | undefined
@@ -355,7 +355,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const kernelInfo = config.kernel
 
-    const serviceAccountConfig = {
+    const serviceAccountWorkerConfig = {
         allowedUsers: config.server.serviceAccount?.allowedUsers,
     }
 
@@ -370,18 +370,28 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const dappControllerDeps = {
         signingDrivers: drivers,
-        serviceAccountConfig,
+        serviceAccountWorkerConfig,
     }
 
+    const pendingSigningLogger = logger.child({
+        component: 'PendingSigningPoller',
+    })
     pendingSigningPoller = new PendingSigningPoller({
         intervalMs:
             config.server.serviceAccount?.pendingSigningPollIntervalMs ?? 5000,
-        automationConfig: serviceAccountConfig,
+        workerConfig: serviceAccountWorkerConfig,
         signingDrivers: drivers,
         store,
         notificationService,
-        getIdp: resolveIdp,
-        logger: logger.child({ component: 'PendingSigningPoller' }),
+        createAccessTokenProvider: async (network) => {
+            const idp = await resolveIdp(network.identityProviderId)
+            return AuthTokenProvider.fromGatewayConfig(
+                idp,
+                network.auth,
+                pendingSigningLogger
+            )
+        },
+        logger: pendingSigningLogger,
     })
     pendingSigningPoller.start()
 
@@ -396,7 +406,6 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         publicUrl,
         config.server,
         notificationService,
-        authService,
         store,
         dappControllerDeps
     )
