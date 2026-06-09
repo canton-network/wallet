@@ -1,6 +1,8 @@
 # Splice Portfolio
 
-The Splice Portfolio is a dApp for managing token standard assets and allocations. The app is a static single-page application that can be hosted anywhere. It currently only allows you to connect to your a Wallet Gateway instance to sign transactions.
+The Splice Portfolio is a dApp for managing token standard assets and allocations. The app is a static single-page application that can be hosted anywhere. It allows you to connect to your own Wallet Gateway, or any CIP-103 compatible wallet, to sign transactions.
+
+**NOTE:** You currently need to supply a `validatorUrl` for Canton Coin (Amulet) operations.
 
 There are two supported ways of running an instance the app UI:
 
