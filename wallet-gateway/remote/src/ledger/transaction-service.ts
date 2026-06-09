@@ -26,7 +26,17 @@ import {
 import { UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
 import { ledgerPrepareParams, type PrepareParams } from '../utils.js'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import {
+    AuthContext,
+    AuthTokenProvider,
+    assertServiceAccountUserAllowed,
+} from '@canton-network/core-wallet-auth'
+
+export interface ServiceAccountConfig {
+    allowedUsers?: string[]
+}
+
+export type SignAndExecuteResult = SignResult | ExecuteResult
 
 function handleSigningError<T extends object>(result: SigningError | T): T {
     if ('error' in result) {
@@ -164,6 +174,70 @@ export class TransactionService {
                     `Unsupported signing provider: ${wallet.signingProviderId}`
                 )
         }
+    }
+
+    public async signAndExecute(
+        authContext: AuthContext,
+        network: Network,
+        wallet: Wallet,
+        transaction: Transaction,
+        serviceAccountConfig: ServiceAccountConfig = {}
+    ): Promise<SignAndExecuteResult> {
+        assertServiceAccountUserAllowed(
+            authContext.userId,
+            serviceAccountConfig.allowedUsers
+        )
+
+        const signParams: SignParams = {
+            transactionId: transaction.id,
+            partyId: wallet.partyId,
+        }
+
+        const signResult = await this.sign(authContext, wallet, signParams)
+
+        if (signResult.status === 'pending') {
+            return signResult
+        }
+
+        if (signResult.status !== 'signed') {
+            throw new Error(
+                `Service account signing failed with status: ${signResult.status}`
+            )
+        }
+
+        if (
+            !('signature' in signResult) ||
+            signResult.signature === undefined
+        ) {
+            throw new Error(
+                'Service account signing did not return a signature'
+            )
+        }
+
+        const ledgerClient = new LedgerClient({
+            baseUrl: new URL(network.ledgerApi.baseUrl),
+            logger: this.logger,
+            accessTokenProvider: AuthTokenProvider.fromToken(
+                authContext.accessToken,
+                this.logger
+            ),
+        })
+
+        const executeParams: ExecuteParams = {
+            transactionId: transaction.id,
+            partyId: wallet.partyId,
+            signature: signResult.signature,
+            signedBy: signResult.signedBy,
+        }
+
+        return this.execute(
+            authContext,
+            wallet,
+            transaction,
+            executeParams,
+            ledgerClient,
+            network
+        )
     }
 
     private async loadPreparedTransactionForSigning(

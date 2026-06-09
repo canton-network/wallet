@@ -33,16 +33,20 @@ import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
-import { TransactionService } from '../ledger/transaction-service.js'
 import {
-    ServiceAccountWorker,
-    ServiceAccountWorkerConfig,
-} from '../signing/service-account-worker.js'
+    ServiceAccountConfig,
+    TransactionService,
+} from '../ledger/transaction-service.js'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
+import {
+    AccessTokenProviderFactory,
+    ensureAutomationSessionForPrepare,
+} from '../signing/service-account-session.js'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
-    serviceAccountWorkerConfig: ServiceAccountWorkerConfig
+    serviceAccountConfig: ServiceAccountConfig
+    createAccessTokenProvider: AccessTokenProviderFactory
 }
 
 export const dappController = (
@@ -201,15 +205,26 @@ export const dappController = (
             return result
         },
         prepareExecute: async (params: PrepareExecuteParams) => {
-            const wallet = await store.getPrimaryWallet()
-            const network = await store.getCurrentNetwork()
-
             if (context === undefined) {
                 throw new Error('Unauthenticated context')
             }
 
+            if (deps?.createAccessTokenProvider) {
+                await ensureAutomationSessionForPrepare(
+                    store,
+                    context,
+                    deps.createAccessTokenProvider,
+                    logger
+                )
+            }
+
+            const wallet = await store.getPrimaryWallet()
+            const network = await store.getCurrentNetwork()
+
             if (wallet === undefined) {
-                throw new Error('No primary wallet found')
+                throw new Error(
+                    'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
+                )
             }
 
             const ledgerClient = new LedgerClient({
@@ -286,16 +301,28 @@ export const dappController = (
                     deps!.signingDrivers,
                     notifier
                 )
-                await new ServiceAccountWorker(
-                    deps!.serviceAccountWorkerConfig,
-                    transactionService,
-                    logger,
-                    context
-                ).signAndExecutePreparedTransaction(
-                    network,
-                    wallet,
-                    transaction
-                )
+                try {
+                    await transactionService.signAndExecute(
+                        context,
+                        network,
+                        wallet,
+                        transaction,
+                        deps!.serviceAccountConfig
+                    )
+                } catch (error) {
+                    logger.error(
+                        {
+                            err: error,
+                            userId: context.userId,
+                            commandId,
+                            transactionId,
+                            partyId: wallet.partyId,
+                            signingProviderId: wallet.signingProviderId,
+                        },
+                        'Service account sign/execute failed after prepare'
+                    )
+                    throw error
+                }
             }
 
             return {

@@ -30,6 +30,7 @@ The Wallet Gateway enables transparent interaction between a dApp, Validator Nod
 
 - [Getting Started](getting-started/index.md)
 - [Configuration](configuration/index.md)
+- [Automations](automations/index.md) — service accounts and M2M transaction submission
 - [Usage](usage/index.md)
 - [APIs](apis/index.md)
 - [Signing Providers](signing-providers/index.md)

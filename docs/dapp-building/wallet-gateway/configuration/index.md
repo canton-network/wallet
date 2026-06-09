@@ -573,6 +573,8 @@ For participant-only signing with no external custody, leave the Helm chart `sig
 
 When a network uses **`client_credentials`** for `auth` (machine-to-machine), the Wallet Gateway treats DApp API `prepareExecute` calls as **service account automation**: it prepares, signs, and submits transactions without opening the approval UI. Clients should still use the existing DApp API (`prepareExecute`, `txChanged` events, `addSession`) — no new endpoints are required.
 
+For setup prerequisites (ledger user, wallet, signing provider, session) and step-by-step automation examples, see [Automations](../automations/index.md).
+
 Optional server settings:
 
 ```json

@@ -4,33 +4,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { PendingSigningPoller } from './pending-signing-poller.js'
+import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { SigningWorker } from './signing-worker.js'
 import type { Network, Transaction } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
-const workerMocks = vi.hoisted(() => ({
-    signAndExecutePreparedTransaction: vi
-        .fn()
-        .mockResolvedValue({ commandId: 'cmd-1' }),
+const transactionServiceMocks = vi.hoisted(() => ({
+    signAndExecute: vi.fn().mockResolvedValue({ commandId: 'cmd-1' }),
     mockUuidV4: vi.fn(() => 'session-new'),
 }))
 
 vi.mock('uuid', () => ({
-    v4: workerMocks.mockUuidV4,
-}))
-
-vi.mock('./service-account-worker.js', () => ({
-    ServiceAccountWorker: vi.fn(function ServiceAccountWorkerMock() {
-        return {
-            signAndExecutePreparedTransaction:
-                workerMocks.signAndExecutePreparedTransaction,
-        }
-    }),
+    v4: transactionServiceMocks.mockUuidV4,
 }))
 
 vi.mock('../ledger/transaction-service.js', () => ({
     TransactionService: vi.fn(function TransactionServiceMock() {
-        return {}
+        return {
+            signAndExecute: transactionServiceMocks.signAndExecute,
+        }
     }),
 }))
 
@@ -85,7 +77,7 @@ const pendingTransaction: Transaction = {
     origin: null,
 }
 
-function createPoller(store: {
+function createWorker(store: {
     listPendingExternalTransactions: ReturnType<typeof vi.fn>
     getSessionForUser: ReturnType<typeof vi.fn>
     getNetwork: ReturnType<typeof vi.fn>
@@ -93,33 +85,34 @@ function createPoller(store: {
 }) {
     const scopedStore = {
         setSession: vi.fn().mockResolvedValue(undefined),
-        getWallets: vi.fn().mockResolvedValue([wallet]),
+        getPrimaryWallet: vi.fn().mockResolvedValue(wallet),
         getTransaction: vi.fn().mockResolvedValue(pendingTransaction),
     }
     store.withAuthContext.mockImplementation(() => scopedStore)
 
-    const createAccessTokenProvider = vi.fn(async () => ({
-        getAccessToken: async () => 'minted-token',
-    }))
+    const logger = pino({ level: 'silent' }, sink())
+    const createAccessTokenProvider = vi.fn(async () =>
+        AuthTokenProvider.fromToken(validJwt(), logger)
+    )
 
     return {
-        poller: new PendingSigningPoller({
+        worker: new SigningWorker({
             intervalMs: 1000,
-            workerConfig: {},
+            serviceAccountConfig: {},
             signingDrivers: {},
             store: store as never,
             notificationService: {
                 getNotifier: vi.fn(() => ({ emit: vi.fn() })),
             } as never,
             createAccessTokenProvider,
-            logger: pino({ level: 'silent' }, sink()),
+            logger,
         }),
         scopedStore,
         createAccessTokenProvider,
     }
 }
 
-describe('PendingSigningPoller', () => {
+describe('SigningWorker', () => {
     afterEach(() => {
         vi.clearAllMocks()
     })
@@ -138,25 +131,26 @@ describe('PendingSigningPoller', () => {
             withAuthContext: vi.fn(),
         }
 
-        const { poller, scopedStore, createAccessTokenProvider } =
-            createPoller(store)
+        const { worker, scopedStore, createAccessTokenProvider } =
+            createWorker(store)
 
-        await poller.tick()
+        await worker.tick()
 
         expect(store.getSessionForUser).toHaveBeenCalledWith('user-1')
         expect(createAccessTokenProvider).toHaveBeenCalledWith(
             clientCredentialsNetwork
         )
+        const mintedToken = validJwt()
         expect(store.withAuthContext).toHaveBeenCalledWith({
             userId: 'user-1',
-            accessToken: 'minted-token',
+            accessToken: mintedToken,
         })
         expect(scopedStore.setSession).toHaveBeenCalledWith({
             id: 'session-new',
             network: 'net-m2m',
-            accessToken: 'minted-token',
+            accessToken: mintedToken,
         })
-        expect(workerMocks.signAndExecutePreparedTransaction).toHaveBeenCalled()
+        expect(transactionServiceMocks.signAndExecute).toHaveBeenCalled()
     })
 
     it('reuses a valid existing session', async () => {
@@ -177,9 +171,9 @@ describe('PendingSigningPoller', () => {
             withAuthContext: vi.fn(),
         }
 
-        const { poller, scopedStore } = createPoller(store)
+        const { worker, scopedStore } = createWorker(store)
 
-        await poller.tick()
+        await worker.tick()
 
         const sessionToken = validJwt()
         expect(scopedStore.setSession).toHaveBeenCalledWith({
@@ -187,7 +181,7 @@ describe('PendingSigningPoller', () => {
             network: 'net-m2m',
             accessToken: sessionToken,
         })
-        expect(workerMocks.signAndExecutePreparedTransaction).toHaveBeenCalled()
+        expect(transactionServiceMocks.signAndExecute).toHaveBeenCalled()
     })
 
     it('skips interactive networks without a valid session', async () => {
@@ -214,12 +208,10 @@ describe('PendingSigningPoller', () => {
             withAuthContext: vi.fn(),
         }
 
-        const { poller } = createPoller(store)
+        const { worker } = createWorker(store)
 
-        await poller.tick()
+        await worker.tick()
 
-        expect(
-            workerMocks.signAndExecutePreparedTransaction
-        ).not.toHaveBeenCalled()
+        expect(transactionServiceMocks.signAndExecute).not.toHaveBeenCalled()
     })
 })

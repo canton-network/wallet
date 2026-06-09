@@ -44,11 +44,12 @@ import { sessionHandler } from './middleware/sessionHandler.js'
 import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
 import { Env } from './env.js'
-import { PendingSigningPoller } from './signing/pending-signing-poller.js'
+import { SigningWorker } from './signing/signing-worker.js'
 import { AuthTokenProvider, type Idp } from '@canton-network/core-wallet-auth'
+import type { Network } from '@canton-network/core-wallet-store'
 
 let isReady = false
-let pendingSigningPoller: PendingSigningPoller | undefined
+let signingWorker: SigningWorker | undefined
 
 async function initializeDatabase(
     config: Config,
@@ -355,7 +356,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const kernelInfo = config.kernel
 
-    const serviceAccountWorkerConfig = {
+    const serviceAccountConfig = {
         allowedUsers: config.server.serviceAccount?.allowedUsers,
     }
 
@@ -368,32 +369,35 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         return idp
     }
 
-    const dappControllerDeps = {
-        signingDrivers: drivers,
-        serviceAccountWorkerConfig,
+    const createAccessTokenProvider = async (network: Network) => {
+        const idp = await resolveIdp(network.identityProviderId)
+        return AuthTokenProvider.fromGatewayConfig(
+            idp,
+            network.auth,
+            logger.child({ component: 'AuthTokenProvider' })
+        )
     }
 
-    const pendingSigningLogger = logger.child({
-        component: 'PendingSigningPoller',
+    const dappControllerDeps = {
+        signingDrivers: drivers,
+        serviceAccountConfig,
+        createAccessTokenProvider,
+    }
+
+    const signingWorkerLogger = logger.child({
+        component: 'SigningWorker',
     })
-    pendingSigningPoller = new PendingSigningPoller({
+    signingWorker = new SigningWorker({
         intervalMs:
             config.server.serviceAccount?.pendingSigningPollIntervalMs ?? 5000,
-        workerConfig: serviceAccountWorkerConfig,
+        serviceAccountConfig,
         signingDrivers: drivers,
         store,
         notificationService,
-        createAccessTokenProvider: async (network) => {
-            const idp = await resolveIdp(network.identityProviderId)
-            return AuthTokenProvider.fromGatewayConfig(
-                idp,
-                network.auth,
-                pendingSigningLogger
-            )
-        },
-        logger: pendingSigningLogger,
+        createAccessTokenProvider,
+        logger: signingWorkerLogger,
     })
-    pendingSigningPoller.start()
+    signingWorker.start()
 
     // register dapp API handlers
     dapp(
