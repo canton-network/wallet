@@ -48,7 +48,6 @@ The app loads `config.json` at startup and validates it before rendering. The lo
 ```json
 {
     "validatorUrl": "http://localhost:2000/api/validator",
-    "scanProxyUrl": "http://localhost:2000/api/validator",
     "registries": [] // not currently used
 }
 ```

@@ -48,17 +48,9 @@ const walletSyncMocks = vi.hoisted(() => ({
 }))
 
 const transactionServiceMocks = vi.hoisted(() => ({
-    signWithParticipant: vi.fn(),
-    signWithWalletKernel: vi.fn(),
-    signWithBlockdaemon: vi.fn(),
-    signWithFireblocks: vi.fn(),
-    signWithDfns: vi.fn(),
-    executeWithParticipant: vi.fn(),
-    executeWithExternal: vi.fn(),
-    executeWithDfns: vi.fn(),
+    sign: vi.fn(),
+    execute: vi.fn(),
 }))
-
-const mockFetchOidcUserInfo = vi.hoisted(() => vi.fn())
 
 vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     const actual =
@@ -106,17 +98,6 @@ vi.mock('../ledger/transaction-service.js', () => ({
         return transactionServiceMocks
     }),
 }))
-
-vi.mock('@canton-network/core-wallet-auth', async (importOriginal) => {
-    const actual =
-        await importOriginal<
-            typeof import('@canton-network/core-wallet-auth')
-        >()
-    return {
-        ...actual,
-        fetchOidcUserInfo: mockFetchOidcUserInfo,
-    }
-})
 
 const kernelInfo: KernelInfo = {
     id: 'kernel-test',
@@ -268,12 +249,8 @@ describe('userController', () => {
         })
         walletSyncMocks.isWalletSyncNeeded.mockReset()
         walletSyncMocks.isWalletSyncNeeded.mockResolvedValue(false)
-        transactionServiceMocks.signWithParticipant.mockReset()
-        transactionServiceMocks.signWithWalletKernel.mockReset()
-        transactionServiceMocks.executeWithParticipant.mockReset()
-        transactionServiceMocks.executeWithExternal.mockReset()
-        transactionServiceMocks.executeWithDfns.mockReset()
-        mockFetchOidcUserInfo.mockReset()
+        transactionServiceMocks.sign.mockReset()
+        transactionServiceMocks.execute.mockReset()
     })
 
     afterEach(() => {
@@ -832,11 +809,11 @@ describe('userController', () => {
             ).rejects.toThrow('No session found')
         })
 
-        it('delegates to TransactionService.signWithParticipant', async () => {
+        it('delegates to TransactionService.sign', async () => {
             const store = await createStore(logger, auth)
             await store.removeWallet(primaryWallet.partyId)
             await store.addWallet(participantWallet)
-            transactionServiceMocks.signWithParticipant.mockReturnValue({
+            transactionServiceMocks.sign.mockReturnValue({
                 status: 'signed',
                 signature: 'none',
                 signedBy: 'namespace',
@@ -854,14 +831,17 @@ describe('userController', () => {
                 }
             )
 
-            const result = await controller.sign({
+            const signParams = {
                 transactionId: 'tx-1',
                 partyId: participantWallet.partyId,
-            })
+            }
+            const result = await controller.sign(signParams)
 
-            expect(
-                transactionServiceMocks.signWithParticipant
-            ).toHaveBeenCalledWith(participantWallet)
+            expect(transactionServiceMocks.sign).toHaveBeenCalledWith(
+                auth,
+                participantWallet,
+                signParams
+            )
             expect(result).toMatchObject({ status: 'signed' })
         })
     })
@@ -874,12 +854,12 @@ describe('userController', () => {
             signedBy: primaryWallet.namespace,
         }
 
-        it('delegates to TransactionService.executeWithParticipant', async () => {
+        it('delegates to TransactionService.execute', async () => {
             const store = await createStore(logger, auth)
             await store.removeWallet(primaryWallet.partyId)
             await store.addWallet(participantWallet)
             await store.setTransaction(pendingTransaction)
-            transactionServiceMocks.executeWithParticipant.mockResolvedValue({
+            transactionServiceMocks.execute.mockResolvedValue({
                 commandId: pendingTransaction.commandId,
             })
             const controller = createController(
@@ -894,35 +874,29 @@ describe('userController', () => {
                 }
             )
 
-            const result = await controller.execute({
+            const params = {
                 ...executeParams,
                 partyId: participantWallet.partyId,
-            })
+            }
+            const result = await controller.execute(params)
 
-            expect(
-                transactionServiceMocks.executeWithParticipant
-            ).toHaveBeenCalledWith(
-                regularUserId,
-                {
-                    ...executeParams,
-                    partyId: participantWallet.partyId,
-                },
+            expect(transactionServiceMocks.execute).toHaveBeenCalledWith(
+                auth,
+                participantWallet,
                 expect.objectContaining({ id: pendingTransaction.id }),
+                params,
                 expect.objectContaining({
                     getWithRetry: ledgerMocks.getWithRetry,
                 }),
                 expect.objectContaining({ id: storeNetwork.id })
             )
             expect(result).toEqual({ commandId: pendingTransaction.commandId })
-            expect(
-                transactionServiceMocks.executeWithExternal
-            ).not.toHaveBeenCalled()
         })
 
-        it('delegates to TransactionService.executeWithExternal', async () => {
+        it('delegates execute for external signing providers', async () => {
             const store = await createStore(logger, auth)
             await store.setTransaction(pendingTransaction)
-            transactionServiceMocks.executeWithExternal.mockResolvedValue({
+            transactionServiceMocks.execute.mockResolvedValue({
                 commandId: pendingTransaction.commandId,
             })
             const controller = createController(
@@ -939,20 +913,17 @@ describe('userController', () => {
 
             const result = await controller.execute(executeParams)
 
-            expect(
-                transactionServiceMocks.executeWithExternal
-            ).toHaveBeenCalledWith(
-                regularUserId,
-                executeParams,
+            expect(transactionServiceMocks.execute).toHaveBeenCalledWith(
+                auth,
+                primaryWallet,
                 expect.objectContaining({ id: pendingTransaction.id }),
+                executeParams,
                 expect.objectContaining({
                     getWithRetry: ledgerMocks.getWithRetry,
-                })
+                }),
+                expect.objectContaining({ id: storeNetwork.id })
             )
             expect(result).toEqual({ commandId: pendingTransaction.commandId })
-            expect(
-                transactionServiceMocks.executeWithParticipant
-            ).not.toHaveBeenCalled()
         })
     })
 
@@ -1123,8 +1094,7 @@ describe('userController', () => {
             })
 
             expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
-                regularUserId,
-                'user@example.com',
+                authWithEmail,
                 'alice',
                 false,
                 SigningProvider.WALLET_KERNEL
@@ -1135,10 +1105,9 @@ describe('userController', () => {
                 expect.any(Array)
             )
             expect(result.wallet).toEqual(newWallet)
-            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
         })
 
-        it('uses email from auth context without calling OIDC userinfo', async () => {
+        it('passes auth context to wallet allocation service', async () => {
             const authWithEmail = { ...auth, email: 'direct@example.com' }
             const store = await createStore(logger, authWithEmail)
             walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
@@ -1155,149 +1124,33 @@ describe('userController', () => {
                 signingProviderId: SigningProvider.WALLET_KERNEL,
             })
 
-            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
             expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
-                regularUserId,
-                'direct@example.com',
+                authWithEmail,
                 'bob',
                 false,
                 SigningProvider.WALLET_KERNEL
             )
         })
 
-        it('resolves email from OIDC userinfo when not in auth context', async () => {
-            mockFetchOidcUserInfo.mockResolvedValue({
-                email: 'from-oidc@example.com',
-            })
+        it('throws when no current network is configured', async () => {
             const store = await createStore(logger, auth)
-            walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
+            // @ts-expect-error type doesn't allow empty return. override to validate guard clause
+            vi.spyOn(store, 'getCurrentNetwork').mockResolvedValue(undefined)
             const controller = createController(
                 store,
                 notificationService,
                 logger,
                 auth,
                 walletKernelDriver
-            )
-
-            await controller.createWallet({
-                partyHint: 'alice',
-                signingProviderId: SigningProvider.WALLET_KERNEL,
-            })
-
-            expect(mockFetchOidcUserInfo).toHaveBeenCalledWith(
-                idp.configUrl,
-                auth.accessToken
-            )
-            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
-                regularUserId,
-                'from-oidc@example.com',
-                'alice',
-                false,
-                SigningProvider.WALLET_KERNEL
-            )
-        })
-
-        it('does not resolve email from OIDC when idp is not oauth', async () => {
-            const selfSignedIdp: Idp = {
-                id: 'idp1',
-                type: 'self_signed',
-                issuer: 'self',
-            }
-            const store = new StoreInternal(
-                { idps: [selfSignedIdp], networks: [storeNetwork] },
-                logger,
-                auth
-            )
-            await store.setSession(session)
-            await store.removeWallet(primaryWallet.partyId)
-            await store.addWallet({
-                ...primaryWallet,
-                signingProviderId: SigningProvider.BLOCKDAEMON,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                auth,
-                {
-                    [SigningProvider.BLOCKDAEMON]: {
-                        controller: vi.fn(() => ({})),
-                    },
-                }
             )
 
             await expect(
-                controller.sign({
-                    transactionId: pendingTransaction.id,
-                    partyId: primaryWallet.partyId,
+                controller.createWallet({
+                    partyHint: 'alice',
+                    signingProviderId: SigningProvider.WALLET_KERNEL,
                 })
-            ).rejects.toThrow('Email is required for Blockdaemon')
-
-            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
-        })
-
-        it('continues without email when OIDC userinfo lookup fails', async () => {
-            mockFetchOidcUserInfo.mockRejectedValue(
-                new Error('OIDC unavailable')
-            )
-            const store = await createStore(logger, auth)
-            walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                auth,
-                walletKernelDriver
-            )
-
-            await controller.createWallet({
-                partyHint: 'alice',
-                signingProviderId: SigningProvider.WALLET_KERNEL,
-            })
-
-            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
-                regularUserId,
-                undefined,
-                'alice',
-                false,
-                SigningProvider.WALLET_KERNEL
-            )
-        })
-
-        it('returns undefined without calling OIDC when no current network', async () => {
-            const store = await createStore(logger, auth)
-            let getCurrentNetworkCalls = 0
-            vi.spyOn(store, 'getCurrentNetwork').mockImplementation(
-                async () => {
-                    getCurrentNetworkCalls += 1
-                    if (getCurrentNetworkCalls === 1) {
-                        return undefined as unknown as StoreNetwork
-                    }
-                    return storeNetwork
-                }
-            )
-            walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                auth,
-                walletKernelDriver
-            )
-
-            await controller.createWallet({
-                partyHint: 'alice',
-                signingProviderId: SigningProvider.WALLET_KERNEL,
-            })
-
-            expect(mockFetchOidcUserInfo).not.toHaveBeenCalled()
-            expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
-                regularUserId,
-                undefined,
-                'alice',
-                false,
-                SigningProvider.WALLET_KERNEL
-            )
+            ).rejects.toThrow('No network session found')
+            expect(walletAllocationMocks.createWallet).not.toHaveBeenCalled()
         })
     })
 
@@ -1324,8 +1177,7 @@ describe('userController', () => {
             })
 
             expect(walletAllocationMocks.allocateParty).toHaveBeenCalledWith(
-                regularUserId,
-                'user@example.com',
+                authWithEmail,
                 primaryWallet,
                 SigningProvider.WALLET_KERNEL
             )
