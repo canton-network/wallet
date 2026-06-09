@@ -8,7 +8,7 @@ import {
     DisclosedContract,
     TokenStandardService,
 } from '@canton-network/core-token-standard-service'
-
+import { Decimal } from 'decimal.js'
 // TODO: This appears in a couple of places, either move it somewhere more
 // central, or as part of the Service class hierarchy
 const REQUESTED_AT_SKEW_MS = 60_000
@@ -69,7 +69,7 @@ export class AmuletService {
         const inputHoldings = await this.tokenStandard.getInputHoldingsCids(
             provider,
             inputUtxos,
-            trafficAmount
+            new Decimal(trafficAmount)
         )
 
         if (!amuletRules) {

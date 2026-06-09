@@ -3,7 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { listHoldings } from '../services/portfolio-service-implementation'
-import { useInstruments } from '../contexts/RegistryServiceContext'
+import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,

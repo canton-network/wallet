@@ -29,7 +29,7 @@ interface JsonRpcHttpOptions<T> {
  * @param method The name of the JSON-RPC method being called.
  * @returns A tuple containing the HTTP status code and the JSON-RPC response.
  */
-const handleRpcError = (
+export const handleRpcError = (
     error: unknown,
     id: string | number | null,
     logger: Logger,
@@ -97,7 +97,7 @@ export const jsonRpcHandler =
 
         return (req: Request, res: Response, next: NextFunction) => {
             if (req.method !== 'POST') {
-                next()
+                return next()
             }
 
             const parsed = JsonRpcRequest.safeParse(req.body)
@@ -119,7 +119,7 @@ export const jsonRpcHandler =
                     logger
                 )
 
-                res.status(status).json(response)
+                return res.status(status).json(response)
             } else {
                 const { method, params, id = null } = parsed.data
 
@@ -148,7 +148,7 @@ export const jsonRpcHandler =
                         method
                     )
 
-                    res.status(status).json(response)
+                    return res.status(status).json(response)
                 }
 
                 // TODO: validate params match the expected schema for the method

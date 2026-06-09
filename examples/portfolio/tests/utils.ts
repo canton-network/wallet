@@ -55,7 +55,7 @@ export const tap = async (
     })
 
     // Select the AMT instrument (wait for instruments to load from registry)
-    await tapForm.getByLabel('Instrument').click()
+    await tapForm.getByRole('combobox', { name: 'Instrument' }).click()
     await expect(page.getByRole('option', { name: /AMT/ })).toBeVisible({
         timeout: 10000,
     })
@@ -101,7 +101,7 @@ export const fillAndSubmitTransfer = async (
     wg: WalletGateway,
     opts: { amount: string; recipient: string; message: string }
 ): Promise<void> => {
-    await page.getByLabel('Instrument').click()
+    await page.getByRole('combobox', { name: 'Instrument' }).click()
     await page.getByRole('option', { name: /AMT/ }).click()
     await page.getByLabel('Amount').fill(opts.amount)
     await page.getByLabel('Recipient').fill(opts.recipient)

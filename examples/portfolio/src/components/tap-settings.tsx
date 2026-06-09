@@ -18,10 +18,11 @@ import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { usePortfolio } from '../contexts/PortfolioContext'
+import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
 import { useConnection } from '../contexts/ConnectionContext'
-import { useRegistryUrls } from '../contexts/RegistryServiceContext'
-import { usePrimaryAccount } from '../hooks/useAccounts'
-import { useInstruments } from '../contexts/RegistryServiceContext'
+import { useRegistryUrls } from '@hooks/useRegistryUrls'
+import { usePrimaryAccount } from '@hooks/useAccounts'
+import { useInstruments } from '@hooks/useInstruments'
 import type { InstrumentId } from '@canton-network/core-token-standard'
 
 const instrumentValidator = z
@@ -36,6 +37,7 @@ export const TapSettings: React.FC = () => {
     const sessionToken = useConnection().status?.session?.accessToken
     const primaryParty = usePrimaryAccount()?.partyId
     const { tap } = usePortfolio()
+    const { validatorUrl } = usePortfolioConfig()
     const registryUrls = useRegistryUrls()
     const instruments = useInstruments()
 
@@ -68,6 +70,7 @@ export const TapSettings: React.FC = () => {
                     registryUrls,
                     party: primaryParty,
                     sessionToken,
+                    validatorUrl,
                     instrumentId: formData.instrumentId,
                     amount: Number(formData.amount),
                 })

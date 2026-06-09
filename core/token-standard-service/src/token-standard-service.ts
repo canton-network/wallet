@@ -45,6 +45,7 @@ import {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'
+import { Decimal } from 'decimal.js'
 
 const REQUESTED_AT_SKEW_MS = 60_000
 
@@ -100,23 +101,25 @@ export class CoreService {
         )
     }
 
-    // TODO: probably needs a filter by instrument ID as well?
-    async getInputHoldingsCids(
-        sender: PartyId,
-        inputUtxos?: string[],
-        amount?: number,
+    async getInputHoldingsCids(options: {
+        sender: PartyId
+        instrumentAdmin?: string
+        instrumentId?: string
+        inputUtxos?: string[]
+        amount?: Decimal
         continueUntilCompletion?: boolean
-    ) {
+    }) {
+        const { sender, instrumentAdmin, instrumentId } = options
         const now = new Date()
-        if (inputUtxos && inputUtxos.length > 0) {
-            return inputUtxos
+        if (options.inputUtxos && options.inputUtxos.length > 0) {
+            return options.inputUtxos
         }
         const senderHoldings = await this.listContractsByInterface<HoldingView>(
             HOLDING_INTERFACE_ID,
             sender,
             undefined,
             undefined,
-            continueUntilCompletion
+            options.continueUntilCompletion
         )
         if (senderHoldings.length === 0) {
             throw new Error(
@@ -140,24 +143,46 @@ export class CoreService {
             this.logger.warn(`Sender has more than 100 unlocked utxos.`)
         }
 
-        if (amount) {
+        const unlockedHoldingsForInstrument =
+            instrumentAdmin && instrumentId
+                ? await CoreService.filterHoldingsByInstrument({
+                      holdings: unlockedSenderHoldings,
+                      instrumentAdmin,
+                      instrumentId,
+                  })
+                : unlockedSenderHoldings
+
+        if (options.amount) {
             return CoreService.getInputHoldingsCidsForAmount(
-                amount,
-                unlockedSenderHoldings
+                options.amount,
+                unlockedHoldingsForInstrument
             )
         } else {
-            return unlockedSenderHoldings.map((h) => h.contractId)
+            return unlockedHoldingsForInstrument.map((h) => h.contractId)
         }
     }
 
+    static async filterHoldingsByInstrument(options: {
+        holdings: PrettyContract<HoldingView>[]
+        instrumentAdmin: string
+        instrumentId: string
+    }) {
+        const { holdings, instrumentAdmin, instrumentId } = options
+        return holdings.filter((utxo) => {
+            return (
+                utxo.interfaceViewValue.instrumentId.id === instrumentId &&
+                utxo.interfaceViewValue.instrumentId.admin === instrumentAdmin
+            )
+        })
+    }
+
     static async getInputHoldingsCidsForAmount(
-        amount: number,
+        amount: Decimal,
         unlockedSenderHoldings: PrettyContract<HoldingView>[]
     ) {
         //find holding that is the exact amount if possible
-        const exactAmount = unlockedSenderHoldings.find(
-            (holding) =>
-                parseFloat(holding.interfaceViewValue.amount) === amount
+        const exactAmount = unlockedSenderHoldings.find((holding) =>
+            new Decimal(holding.interfaceViewValue.amount).equals(amount)
         )
 
         if (exactAmount) {
@@ -167,8 +192,9 @@ export class CoreService {
         //sort holdings from smallest to largest
         const sortedUnlockedSenderHoldings = unlockedSenderHoldings.toSorted(
             (a, b) =>
-                parseFloat(a.interfaceViewValue.amount) -
-                parseFloat(b.interfaceViewValue.amount)
+                new Decimal(a.interfaceViewValue.amount).comparedTo(
+                    new Decimal(b.interfaceViewValue.amount)
+                )
         )
 
         const largestHoldingAmount = sortedUnlockedSenderHoldings.pop()
@@ -177,25 +203,27 @@ export class CoreService {
             throw new Error(`Sender doesn't have any unlocked holdings`)
         }
 
-        let currentSum = parseFloat(
+        let currentSum = new Decimal(
             largestHoldingAmount.interfaceViewValue.amount
         )
         const cIds = [largestHoldingAmount.contractId]
 
         for (const h of sortedUnlockedSenderHoldings) {
-            if (currentSum >= amount) {
+            if (currentSum.greaterThanOrEqualTo(amount)) {
                 break
             }
 
-            const currentHoldingAmount = parseFloat(h.interfaceViewValue.amount)
+            const currentHoldingAmount = new Decimal(
+                h.interfaceViewValue.amount
+            )
 
-            currentSum += currentHoldingAmount
+            currentSum = currentSum.plus(currentHoldingAmount)
             cIds.push(h.contractId)
         }
 
-        if (currentSum < amount) {
+        if (currentSum.lessThan(amount)) {
             throw new Error(
-                `Sender doesn't have sufficient funds for this transfer. Missing amount: ${amount - currentSum}`
+                `Sender doesn't have sufficient funds for this transfer. Missing amount: ${amount.minus(currentSum)}`
             )
         }
 
@@ -448,10 +476,15 @@ class AllocationService {
             },
         }
 
-        const inputHoldingCids = await this.core.getInputHoldingsCids(
-            allocationSpecificationNormalized.transferLeg.sender,
-            inputUtxos
-        )
+        const inputHoldingCids = await this.core.getInputHoldingsCids({
+            sender: allocationSpecificationNormalized.transferLeg.sender,
+            inputUtxos: inputUtxos ?? [],
+            instrumentAdmin:
+                allocationSpecificationNormalized.transferLeg.instrumentId
+                    .admin,
+            instrumentId:
+                allocationSpecificationNormalized.transferLeg.instrumentId.id,
+        })
 
         return {
             expectedAdmin,
@@ -798,10 +831,14 @@ class TransferService {
         continueUntilCompletion?: boolean
     ): Promise<CreateTransferChoiceArgs> {
         const inputHoldingCids: string[] = await this.core.getInputHoldingsCids(
-            sender,
-            inputUtxos,
-            parseFloat(amount),
-            continueUntilCompletion
+            {
+                sender,
+                instrumentAdmin,
+                instrumentId,
+                inputUtxos: inputUtxos ?? [],
+                amount: new Decimal(amount),
+                continueUntilCompletion: continueUntilCompletion ?? false,
+            }
         )
 
         return {
@@ -1560,9 +1597,20 @@ export class TokenStandardService {
     async getInputHoldingsCids(
         sender: PartyId,
         inputUtxos?: string[],
-        amount?: number
+        amount?: Decimal
     ) {
-        return this.core.getInputHoldingsCids(sender, inputUtxos, amount)
+        if (amount) {
+            return this.core.getInputHoldingsCids({
+                sender,
+                inputUtxos: inputUtxos ?? [],
+                amount,
+            })
+        } else {
+            return this.core.getInputHoldingsCids({
+                sender,
+                inputUtxos: inputUtxos ?? [],
+            })
+        }
     }
 
     async createDelegateProxyTranfser(

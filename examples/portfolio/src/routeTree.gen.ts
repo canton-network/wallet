@@ -15,7 +15,6 @@ import { Route as LegacyIndexRouteImport } from './routes/_legacy/index'
 import { Route as NextDashboardRouteImport } from './routes/next/dashboard'
 import { Route as NextConnectRouteImport } from './routes/next/connect'
 import { Route as LegacySettingsRouteImport } from './routes/_legacy/settings'
-import { Route as LegacyOldRouteImport } from './routes/_legacy/old'
 import { Route as NextDashboardIndexRouteImport } from './routes/next/dashboard/index'
 import { Route as NextDashboardOffersRouteImport } from './routes/next/dashboard/offers'
 import { Route as LegacyWalletWalletIdRouteImport } from './routes/_legacy/wallet.$walletId'
@@ -50,11 +49,6 @@ const LegacySettingsRoute = LegacySettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LegacyRouteRoute,
 } as any)
-const LegacyOldRoute = LegacyOldRouteImport.update({
-  id: '/old',
-  path: '/old',
-  getParentRoute: () => LegacyRouteRoute,
-} as any)
 const NextDashboardIndexRoute = NextDashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -80,7 +74,6 @@ const NextDashboardWalletWalletIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof LegacyIndexRoute
   '/next': typeof NextRouteRouteWithChildren
-  '/old': typeof LegacyOldRoute
   '/settings': typeof LegacySettingsRoute
   '/next/connect': typeof NextConnectRoute
   '/next/dashboard': typeof NextDashboardRouteWithChildren
@@ -91,7 +84,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/next': typeof NextRouteRouteWithChildren
-  '/old': typeof LegacyOldRoute
   '/settings': typeof LegacySettingsRoute
   '/next/connect': typeof NextConnectRoute
   '/': typeof LegacyIndexRoute
@@ -104,7 +96,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_legacy': typeof LegacyRouteRouteWithChildren
   '/next': typeof NextRouteRouteWithChildren
-  '/_legacy/old': typeof LegacyOldRoute
   '/_legacy/settings': typeof LegacySettingsRoute
   '/next/connect': typeof NextConnectRoute
   '/next/dashboard': typeof NextDashboardRouteWithChildren
@@ -119,7 +110,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/next'
-    | '/old'
     | '/settings'
     | '/next/connect'
     | '/next/dashboard'
@@ -130,7 +120,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/next'
-    | '/old'
     | '/settings'
     | '/next/connect'
     | '/'
@@ -142,7 +131,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_legacy'
     | '/next'
-    | '/_legacy/old'
     | '/_legacy/settings'
     | '/next/connect'
     | '/next/dashboard'
@@ -202,13 +190,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegacySettingsRouteImport
       parentRoute: typeof LegacyRouteRoute
     }
-    '/_legacy/old': {
-      id: '/_legacy/old'
-      path: '/old'
-      fullPath: '/old'
-      preLoaderRoute: typeof LegacyOldRouteImport
-      parentRoute: typeof LegacyRouteRoute
-    }
     '/next/dashboard/': {
       id: '/next/dashboard/'
       path: '/'
@@ -241,14 +222,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface LegacyRouteRouteChildren {
-  LegacyOldRoute: typeof LegacyOldRoute
   LegacySettingsRoute: typeof LegacySettingsRoute
   LegacyIndexRoute: typeof LegacyIndexRoute
   LegacyWalletWalletIdRoute: typeof LegacyWalletWalletIdRoute
 }
 
 const LegacyRouteRouteChildren: LegacyRouteRouteChildren = {
-  LegacyOldRoute: LegacyOldRoute,
   LegacySettingsRoute: LegacySettingsRoute,
   LegacyIndexRoute: LegacyIndexRoute,
   LegacyWalletWalletIdRoute: LegacyWalletWalletIdRoute,
