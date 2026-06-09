@@ -30,8 +30,7 @@ export class DarNamespace {
                 resource: '/v2/packages',
                 requestMethod: 'post',
                 query: {
-                    synchronizerId:
-                        synchronizerId ?? this.sdkContext.defaultSynchronizerId,
+                    ...(synchronizerId !== undefined && { synchronizerId }),
                     vetAllPackages: vetAllPackages ?? true,
                 },
                 body: darBytes as never,
@@ -63,7 +62,7 @@ export class DarNamespace {
      * vetted on the participant.
      * @param darBytes - Raw DAR file bytes.
      * @param synchronizerId - The synchronizer on which the package should be
-     *   vetted. Defaults to the SDK's configured synchronizer.
+     *   vetted. When omitted, the synchronizer is not constrained in the request.
      */
     async vet(
         darBytes: Uint8Array | Buffer,
@@ -76,9 +75,7 @@ export class DarNamespace {
                     resource: '/v2/packages',
                     requestMethod: 'post',
                     query: {
-                        synchronizerId:
-                            synchronizerId ??
-                            this.sdkContext.defaultSynchronizerId,
+                        ...(synchronizerId !== undefined && { synchronizerId }),
                         vetAllPackages: true,
                     },
                     body: darBytes as never,
