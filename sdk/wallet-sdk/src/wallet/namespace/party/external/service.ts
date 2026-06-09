@@ -32,14 +32,18 @@ export class ExternalPartyNamespace {
             this.resolveParticipantUids(
                 options?.confirmingParticipantEndpoints ?? []
             ),
-            options?.synchronizerId || this.resolveSynchronizerId(),
+            options?.synchronizerId,
         ]).then(
             ([
                 observingParticipantUids,
                 otherHostingParticipantUids,
                 synchronizerId,
-            ]) =>
-                this.ctx.ledgerProvider.request<Ops.PostV2PartiesExternalGenerateTopology>(
+            ]) => {
+                if (!synchronizerId)
+                    throw new Error(
+                        'synchronizerId is required for party creation — pass it via options.synchronizerId'
+                    )
+                return this.ctx.ledgerProvider.request<Ops.PostV2PartiesExternalGenerateTopology>(
                     {
                         method: 'ledgerApi',
                         params: {
@@ -66,6 +70,7 @@ export class ExternalPartyNamespace {
                         },
                     }
                 )
+            }
         )
 
         this.logger.debug('Prepared party creation successfully.')
@@ -78,10 +83,6 @@ export class ExternalPartyNamespace {
             options,
             publicKey
         )
-    }
-
-    private resolveSynchronizerId() {
-        return Promise.resolve(this.ctx.defaultSynchronizerId)
     }
 
     /**

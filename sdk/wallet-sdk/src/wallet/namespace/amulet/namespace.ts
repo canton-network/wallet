@@ -86,15 +86,13 @@ export class AmuletNamespace {
         options?: { partyId?: PartyId; synchronizerId?: string }
     ) {
         const partyId = options?.partyId ?? this.sdkContext.validatorParty
-        const synchronizerId =
-            options?.synchronizerId ??
-            this.sdkContext.commonCtx.defaultSynchronizerId
+        const synchronizerId = options?.synchronizerId
         const [tapCommand, disclosedContracts] = await this.tap(partyId, amount)
 
         return await this.ledger.internal.submit({
             commands: [tapCommand],
             disclosedContracts,
-            synchronizerId,
+            ...(synchronizerId !== undefined && { synchronizerId }),
             actAs: [partyId],
         })
     }
@@ -124,9 +122,13 @@ export class AmuletNamespace {
         if (featuredAppRights) {
             return featuredAppRights
         }
-        const synchronizerId =
-            options.synchronizerId ??
-            this.sdkContext.commonCtx.defaultSynchronizerId
+        const synchronizerId = options.synchronizerId
+        if (!synchronizerId)
+            this.sdkContext.commonCtx.error.throw({
+                type: 'BadRequest',
+                message:
+                    'synchronizerId is required for featuredApp.grant — pass the synchronizer ID explicitly',
+            })
 
         const [featuredAppCommand, dc] =
             await this.sdkContext.amuletService.selfGrantFeatureAppRight(

@@ -116,12 +116,12 @@ export class PreapprovalNamespace {
         const { parties, inputUtxos, expiresAt } = args
         const preapprovalStatus = await this.fetchStatus(parties.receiver)
         const provider = parties?.provider ?? this.ctx.validatorParty
-        const synchronizerId =
-            args.synchronizerId ?? this.ctx.commonCtx.defaultSynchronizerId
+        const synchronizerId = args.synchronizerId
         if (!synchronizerId)
             this.ctx.commonCtx.error.throw({
-                type: 'Unexpected',
-                message: 'Cannot obtain synchronizer id',
+                type: 'BadRequest',
+                message:
+                    'synchronizerId is required for preapproval.renew — pass the synchronizer ID explicitly',
             })
 
         if (
