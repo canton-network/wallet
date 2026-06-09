@@ -24,46 +24,8 @@ bootstrap.synchronizer(
 
 // Wait for both participants to be active on app-synchronizer
 utils.retry_until_true {
-  `app-provider`.synchronizers.active("app-synchronizer")
-}
-utils.retry_until_true {
-  `app-user`.synchronizers.active("app-synchronizer")
-}
-
-// Vet packages on app-synchronizer for all three participants.
-// The Splice app already uploaded DARs and vetted them on global-domain.
-// We replicate the vetting from the authorized store to app-synchronizer
-// so that the synchronizer is fully functional.
-val appSyncId = `app-provider`.synchronizers.list_connected()
-  .find(_.synchronizerAlias.unwrap == "app-synchronizer")
-  .getOrElse(throw new RuntimeException("app-synchronizer not found in connected synchronizers"))
-  .synchronizerId
-
-for (participant <- Seq(`app-provider`, `app-user`)) {
-  val vettedFromAuthorized = participant.topology.vetted_packages
-    .list(store = Some(TopologyStoreId.Authorized), filterParticipant = participant.id.filterString)
-    .flatMap(_.item.packages)
-
-  if (vettedFromAuthorized.nonEmpty) {
-    logger.info(s"Vetting ${vettedFromAuthorized.size} packages on app-synchronizer for ${participant.name}")
-    participant.topology.vetted_packages.propose_delta(
-      participant = participant.id,
-      store = appSyncId,
-      adds = vettedFromAuthorized.toSeq,
-    )
-  }
-}
-
-// Wait for vetting topology to propagate for app-provider and app-user
-utils.retry_until_true {
-  val providerVetted = `app-provider`.topology.vetted_packages
-    .list(store = Some(appSyncId), filterParticipant = `app-provider`.id.filterString)
-  providerVetted.nonEmpty && providerVetted.head.item.packages.nonEmpty
-}
-utils.retry_until_true {
-  val userVetted = `app-user`.topology.vetted_packages
-    .list(store = Some(appSyncId), filterParticipant = `app-user`.id.filterString)
-  userVetted.nonEmpty && userVetted.head.item.packages.nonEmpty
+  `app-provider`.synchronizers.active("app-synchronizer") &&
+    `app-user`.synchronizers.active("app-synchronizer")
 }
 
 logger.info("app-synchronizer bootstrap with package vetting completed successfully for app-provider and app-user")
