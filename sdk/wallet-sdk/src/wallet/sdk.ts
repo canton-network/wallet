@@ -188,7 +188,8 @@ async function getDefaultSynchronizerId(
     if (!synchronizers?.[0]) {
         throw new Error('No connected synchronizers found')
     }
-
+    // TODO #1740 this logic is a temporary workaround to make sdk work with multiple synchronizers and ensure the
+    // the choice of default synchronizer is not random. In subsequent PR we remove this logic from sdk code (and fix existing tests)
     const defaultEntry =
         synchronizers.find((s) => s.synchronizerAlias === 'global') ??
         synchronizers.find((s) => s.synchronizerAlias === 'global-domain') ??
