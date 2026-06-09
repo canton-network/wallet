@@ -6,6 +6,7 @@ import {
     type Network,
     type Wallet,
 } from '@canton-network/core-wallet-store'
+import type { WalletPickerEntry } from '@canton-network/core-types'
 import type {
     Idp,
     PublicNetwork,
@@ -57,6 +58,17 @@ export function makeNetwork(overrides: Partial<Network> = {}): Network {
         },
         ...overrides,
     } as Network
+}
+
+export function makeWalletPickerEntry(
+    overrides: Partial<WalletPickerEntry> = {}
+): WalletPickerEntry {
+    return {
+        providerId: 'provider-id',
+        name: 'Test Wallet',
+        type: 'remote',
+        ...overrides,
+    }
 }
 
 export function makeIdp(overrides: Partial<Idp> = {}): Idp {
