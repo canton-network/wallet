@@ -814,7 +814,22 @@ describe('Token standard service', () => {
             })
 
         const response = await service.instrumentsToAsset(registryUrl)
-        expect(response).toHaveLength(2)
+        expect(response).toStrictEqual([
+            {
+                admin: 'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
+                displayName: 'TestTokenExt',
+                id: 'TestTokenExt',
+                registryUrl: 'https://fake/registry',
+                symbol: 'TestTokenExt',
+            },
+            {
+                admin: 'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
+                displayName: 'TestToken',
+                id: 'TestToken',
+                registryUrl: 'https://fake/registry',
+                symbol: 'TestToken',
+            },
+        ])
     })
 
     it('toPretty transactions', async () => {
@@ -1090,7 +1105,29 @@ describe('Token standard service', () => {
             'http://registry1.com',
             'http://registry2.com',
         ])
-        expect(result).toHaveLength(3)
+        expect(result).toStrictEqual([
+            {
+                admin: 'admin-a',
+                displayName: 'USDCx',
+                id: 'USDCx',
+                registryUrl: 'http://registry1.com',
+                symbol: 'USDCx',
+            },
+            {
+                admin: 'admin-b',
+                displayName: 'TestTokenExt',
+                id: 'TestTokenExt',
+                registryUrl: 'http://registry2.com',
+                symbol: 'TestTokenExt',
+            },
+            {
+                admin: 'admin-b',
+                displayName: 'TestToken',
+                id: 'TestToken',
+                registryUrl: 'http://registry2.com',
+                symbol: 'TestToken',
+            },
+        ])
     })
 
     it('list holding transactions', async () => {
