@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, MockedObject } from 'vitest'
-import { AssetContext, AssetNamespace, findAsset } from './index.js'
+import { AssetContext, AssetNamespace } from './index.js'
 import { Logger } from '@canton-network/core-types'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { SDKErrorHandler } from '../../error/handler.js'
@@ -65,7 +65,7 @@ function makeAssetNamespace() {
         tokenStandardService: service,
         registries: [new URL('http://registry.com')],
         error: new SDKErrorHandler(new SDKLogger('console')),
-        list: [amuletAsset],
+        list: [amuletAsset, testAsset, testAsset2],
     }
 
     const asset = new AssetNamespace(assetContext)
@@ -78,49 +78,35 @@ describe('Asset namespace', () => {
         const { asset } = makeAssetNamespace()
         const listedAsset = asset.list
 
-        expect(listedAsset).toHaveLength(1)
+        expect(listedAsset).toHaveLength(3)
         expect(listedAsset[0]).toEqual(amuletAsset)
     })
 
-    it('should find asset by ID', () => {
-        const assets = [amuletAsset, testAsset]
-        const foundAsset = findAsset(
-            assets,
-            'Amulet',
-            new SDKErrorHandler(new SDKLogger('console'))
-        )
+    it('should find asset by ID', async () => {
+        const { asset } = makeAssetNamespace()
+
+        const foundAsset = await asset.find('Amulet')
         expect(foundAsset).toEqual(amuletAsset)
     })
 
-    it('should throw an error if asset is not found within asset list', () => {
-        const assets = [amuletAsset, testAsset]
-        expect(() =>
-            findAsset(
-                assets,
-                'bad-id',
-                new SDKErrorHandler(new SDKLogger('console'))
-            )
-        ).toThrow('Asset with id bad-id not found')
+    it('should throw an error if asset is not found within asset list', async () => {
+        const { asset } = makeAssetNamespace()
+        await expect(() => asset.find('bad-id')).rejects.toThrow(
+            'Asset with id bad-id not found'
+        )
     })
 
-    it('should throw an error if multiple assets are found and suggest to provide a registryURL', () => {
-        const assets = [amuletAsset, testAsset, testAsset2]
-        expect(() =>
-            findAsset(
-                assets,
-                'test',
-                new SDKErrorHandler(new SDKLogger('console'))
-            )
-        ).toThrow('Multiple assets found, please provide a registryUrl')
+    it('should throw an error if multiple assets are found and suggest to provide a registryURL', async () => {
+        const { asset } = makeAssetNamespace()
+        await expect(() => asset.find('test')).rejects.toThrow(
+            'Multiple assets found, please provide a registryUrl'
+        )
     })
 
-    it('should find an asset by registryURL and id', () => {
-        const assets = [amuletAsset, testAsset, testAsset2]
-
-        const foundAsset = findAsset(
-            assets,
+    it('should find an asset by registryURL and id', async () => {
+        const { asset } = makeAssetNamespace()
+        const foundAsset = await asset.find(
             'test',
-            new SDKErrorHandler(new SDKLogger('console')),
             new URL('http://registry2.com')
         )
 
