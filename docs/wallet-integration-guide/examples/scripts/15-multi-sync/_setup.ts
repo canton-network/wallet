@@ -145,7 +145,7 @@ export async function setupMultiSyncTrade(
 
     if (!appSynchronizerId)
         throw new Error(
-            'App synchronizer not found — start localnet with --multi-sync to enable it.'
+            'App synchronizer not found — start localnet in multi-sync mode (the default; do not pass --no-multi-sync).'
         )
 
     logger.info(
