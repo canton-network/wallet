@@ -402,7 +402,7 @@ describe('AllocationService', () => {
     describe('createAllocationInstructionFromContext', () => {
         const instrumentAdmin =
             'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
-        it('calls getInputHoldingCids and embeds resulting cids', async () => {
+        it('builds an AllocationFactory_Allocate exercise command for the given factory id and context', async () => {
             const { service } = makeService()
             const choiceArgs = {
                 expectedAdmin: instrumentAdmin,
