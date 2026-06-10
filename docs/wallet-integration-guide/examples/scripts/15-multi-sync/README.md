@@ -15,14 +15,14 @@ yarn build:all
 # Step 1: Fetch localnet bundle (first time or after a Splice version update)
 yarn script:fetch:localnet
 
-# Step 2: Start localnet in multi-sync mode
-yarn start:localnet -- --multi-sync
+# Step 2: Start localnet (multi-sync is the default; pass --no-multi-sync for single-synchronizer debug mode)
+yarn start:localnet
 
 # Step 3: Run the example
 yarn workspace docs-wallet-integration-guide-examples run-15
 
 # Step 4: Stop when done (from the repository root)
-yarn stop:localnet -- --multi-sync
+yarn stop:localnet
 ```
 
 # Example details
