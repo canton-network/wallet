@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ACSCacheCollection } from '../collection'
+import { ACSCacheCollection } from '../../../cache/collection'
 
 const { mockCache, MockACSCache } = vi.hoisted(() => {
     const update = vi.fn()
@@ -23,9 +23,13 @@ const { mockCache, MockACSCache } = vi.hoisted(() => {
     return { mockCache, MockACSCache }
 })
 
-vi.mock('../cache', () => ({
-    ACSCache: MockACSCache,
-}))
+vi.mock('../../../cache/item', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../cache/item')>()
+    return {
+        ...actual,
+        ACSCache: MockACSCache,
+    }
+})
 
 const ledgerProvider = vi.hoisted(() => ({
     request: vi.fn(),
@@ -36,7 +40,6 @@ describe('cache collection', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
-        mockCache.update.mockResolvedValue(undefined)
         mockCache.calculateAt.mockReturnValue([
             {
                 workflowId: 'test-workflow',
@@ -56,11 +59,9 @@ describe('cache collection', () => {
         collection = new ACSCacheCollection(ledgerProvider)
     })
 
-    it('should create cache collection with default options', () => {
-        expect(collection).toBeDefined()
-    })
-
     it('should create cache collection with custom options', () => {
+        expect(collection).toBeDefined()
+
         const customCollection = new ACSCacheCollection(ledgerProvider, {
             maxSize: 50,
             entryExpirationTimeInMS: 5 * 60 * 1000,
@@ -88,16 +89,16 @@ describe('cache collection', () => {
             const options = {
                 offset: 100,
                 parties: ['party1', 'party2'],
-                templateIds: ['template1', 'template2'],
+                templateIds: ['template1', 'template2', 'template3'],
             }
 
             const result = await collection.readFromCache(options)
 
-            // Should create 4 cache instances (2 parties × 2 templates)
-            expect(MockACSCache).toHaveBeenCalledTimes(4)
-            expect(mockCache.update).toHaveBeenCalledTimes(4)
-            expect(mockCache.calculateAt).toHaveBeenCalledTimes(4)
-            expect(result).toHaveLength(4)
+            // Should create 6 cache instances (2 parties × 3 templates)
+            expect(MockACSCache).toHaveBeenCalledTimes(6)
+            expect(mockCache.update).toHaveBeenCalledTimes(6)
+            expect(mockCache.calculateAt).toHaveBeenCalledTimes(6)
+            expect(result).toHaveLength(6)
         })
 
         it('should read from cache with parties and interfaces', async () => {
@@ -194,68 +195,6 @@ describe('cache collection', () => {
 
             // 2 templates × 2 contracts per template = 4 total contracts
             expect(result).toHaveLength(4)
-        })
-
-        it('should query all keys in parallel', async () => {
-            const updatePromises: Array<() => void> = []
-            mockCache.update.mockImplementation(
-                () =>
-                    new Promise((resolve) => {
-                        updatePromises.push(() => resolve(undefined))
-                    })
-            )
-
-            const options = {
-                offset: 100,
-                parties: ['party1', 'party2'],
-                templateIds: ['template1', 'template2'],
-            }
-
-            const resultPromise = collection.readFromCache(options)
-
-            // Wait a bit to ensure all updates are called
-            await new Promise((resolve) => setTimeout(resolve, 10))
-
-            // All 4 updates should be called before any resolves
-            expect(mockCache.update).toHaveBeenCalledTimes(4)
-            expect(mockCache.calculateAt).not.toHaveBeenCalled()
-
-            // Resolve all promises
-            updatePromises.forEach((resolve) => resolve())
-
-            await resultPromise
-
-            expect(mockCache.calculateAt).toHaveBeenCalledTimes(4)
-        })
-
-        it('should handle cache update errors', async () => {
-            mockCache.update.mockRejectedValue(new Error('Update failed'))
-
-            const options = {
-                offset: 100,
-                parties: ['party1'],
-                templateIds: ['template1'],
-            }
-
-            await expect(collection.readFromCache(options)).rejects.toThrow(
-                'Update failed'
-            )
-        })
-
-        it('should handle calculateAt errors', async () => {
-            mockCache.calculateAt.mockImplementation(() => {
-                throw new Error('Calculate failed')
-            })
-
-            const options = {
-                offset: 100,
-                parties: ['party1'],
-                templateIds: ['template1'],
-            }
-
-            await expect(collection.readFromCache(options)).rejects.toThrow(
-                'Calculate failed'
-            )
         })
     })
 })

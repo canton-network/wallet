@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ACSCache } from '../cache'
+import { ACSCache } from '../../../cache/item'
 
 const { getActiveContracts, MockACSService } = vi.hoisted(() => {
     const getActiveContracts = vi.fn()
@@ -16,8 +16,8 @@ const { getActiveContracts, MockACSService } = vi.hoisted(() => {
     return { getActiveContracts, MockACSService }
 })
 
-vi.mock('../../service.ts', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../service')>()
+vi.mock('../../../service.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../service')>()
     return {
         ...actual,
         AcsService: MockACSService,
@@ -28,7 +28,7 @@ const ledgerProvider = vi.hoisted(() => ({
     request: vi.fn(),
 }))
 
-describe('cache', () => {
+describe('cache - item', () => {
     let cache: ACSCache
 
     beforeEach(() => {
@@ -121,41 +121,6 @@ describe('cache', () => {
                     }),
                 })
             )
-        })
-
-        it('should update offset and concatenate events when new events are found', async () => {
-            const mockUpdates = [
-                {
-                    update: {
-                        Transaction: {
-                            value: {
-                                offset: 150,
-                                workflowId: 'wf1',
-                                synchronizerId: 'sync1',
-                                events: [
-                                    {
-                                        CreatedEvent: {
-                                            contractId: 'contract1',
-                                            templateId: { value: 'template1' },
-                                            contractKey: null,
-                                            createArguments: {},
-                                            createdAt: '2024-01-01T00:00:00Z',
-                                            signatories: [],
-                                            observers: [],
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                },
-            ]
-            ledgerProvider.request.mockResolvedValue(mockUpdates)
-
-            await cache.update({ offset: 100 })
-
-            // Verify the update was processed without calling calculateAt
-            expect(ledgerProvider.request).toHaveBeenCalled()
         })
 
         it('should recursively call update when reaching maxUpdatesToFetch', async () => {
@@ -272,7 +237,7 @@ describe('cache', () => {
                         c.contractEntry.JsActiveContract.createdEvent
                             .contractId === 'new-contract-1'
                 )
-            )
+            ).toBe(true)
         })
 
         it('should handle multiple created and archived events correctly', async () => {
@@ -477,7 +442,9 @@ describe('cache', () => {
             const result = cache.calculateAt(200)
 
             // Should filter out any entries without contractEntry
-            expect(result.every(Boolean)).toBe(true)
+            expect(
+                result.every(({ contractEntry }) => Boolean(contractEntry))
+            ).toBe(true)
         })
     })
 })
