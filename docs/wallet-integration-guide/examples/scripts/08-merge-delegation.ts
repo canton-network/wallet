@@ -56,6 +56,7 @@ const aliceKeys = sdk.keys.generate()
 const alice = await sdk.party.external
     .create(aliceKeys.publicKey, {
         partyHint: 'v1-08-alice',
+        synchronizerId,
     })
     .sign(aliceKeys.privateKey)
     .execute()

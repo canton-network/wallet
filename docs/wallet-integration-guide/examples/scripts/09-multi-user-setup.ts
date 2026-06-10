@@ -19,14 +19,17 @@ const globalSynchronizerId = await getGlobalSynchronizerId(operatorSdk)
 
 const aliceInternal = await operatorSdk.party.internal.allocate({
     partyHint: 'v1-09-alice',
+    synchronizerId: globalSynchronizerId,
 })
 
 const bobInternal = await operatorSdk.party.internal.allocate({
     partyHint: 'v1-09-bob',
+    synchronizerId: globalSynchronizerId,
 })
 
 const masterPartyInternal = await operatorSdk.party.internal.allocate({
     partyHint: 'v1-09-master',
+    synchronizerId: globalSynchronizerId,
 })
 
 logger.info('Created the internal parties')
