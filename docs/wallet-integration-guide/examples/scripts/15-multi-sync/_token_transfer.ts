@@ -12,31 +12,56 @@ const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
 
 const MS_24_HOURS = 24 * 60 * 60 * 1000
 
+const TOKEN_POLL_TIMEOUT_MS = 30_000
+const TOKEN_POLL_INTERVAL_MS = 500
+
 export async function aliceSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
     const { p1Sdk, p2Sdk, alice, tokenAdmin, appSynchronizerId } = setup
 
-    const [aliceTokens, tokenRulesContracts] = await Promise.all([
-        p1Sdk.ledger.acs.read({
+    // The settlement is submitted by TradingApp (P3), so Alice's resulting Token
+    // holding propagates to her participant (P1) asynchronously. Poll P1 until it
+    // becomes visible instead of reading once (cross-participant read-after-write).
+    const deadline = Date.now() + TOKEN_POLL_TIMEOUT_MS
+    let aliceToken
+    for (;;) {
+        const aliceTokens = await p1Sdk.ledger.acs.read({
             templateIds: [TestTokenV1.Token.templateId],
             parties: [alice.partyId],
             filterByParty: true,
-        }),
-        p2Sdk.ledger.acs.read({
-            templateIds: [TestTokenV1.TokenRules.templateId],
-            parties: [tokenAdmin.partyId],
-            filterByParty: true,
-        }),
-    ])
-    const aliceToken = aliceTokens[0]
-    if (!aliceToken)
-        throw new Error('Alice: Token holding not found after settlement')
+        })
+        aliceToken = aliceTokens[0]
+        if (aliceToken) break
+        if (Date.now() >= deadline)
+            throw new Error('Alice: Token holding not found after settlement')
+        await new Promise((resolve) =>
+            setTimeout(resolve, TOKEN_POLL_INTERVAL_MS)
+        )
+    }
+
+    const tokenRulesContracts = await p2Sdk.ledger.acs.read({
+        templateIds: [TestTokenV1.TokenRules.templateId],
+        parties: [tokenAdmin.partyId],
+        filterByParty: true,
+    })
     const tokenRules = tokenRulesContracts.find(
         (c) => c.synchronizerId === appSynchronizerId
     )
     if (!tokenRules) throw new Error(`TokenRules not found on app-synchronizer`)
+
+    // The settled holding lands on the global synchronizer; move it to the
+    // app-synchronizer before self-transferring there (mirrors Bob's flow).
+    if (aliceToken.synchronizerId !== appSynchronizerId) {
+        await p1Sdk.ledger.internal.reassign({
+            submitter: alice.partyId,
+            contractId: aliceToken.contractId,
+            source: aliceToken.synchronizerId,
+            target: appSynchronizerId,
+            skipIfAlreadyOn: true,
+        })
+    }
 
     await p1Sdk.ledger
         .prepare({
