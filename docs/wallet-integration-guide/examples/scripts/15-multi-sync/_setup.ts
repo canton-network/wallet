@@ -166,23 +166,25 @@ export async function setupMultiSyncTrade(
         fs.readFile(path.join(here, LOCALNET_PATH, TRADING_APP_DAR_LOCALNET)),
     ])
 
-    await Promise.all(
-        [testTokenV1Dar, tradingAppDar].flatMap((dar) => [
-            ...[p1SdkCtx, p2SdkCtx].flatMap((ctx) =>
+    await Promise.all([
+        // P1 + P2 vet both DARs on the global and app synchronizers.
+        ...[testTokenV1Dar, tradingAppDar].flatMap((dar) =>
+            [p1SdkCtx, p2SdkCtx].flatMap((ctx) =>
                 [globalSynchronizerId, appSynchronizerId].map((sid) =>
                     vetPackageIdempotent(ctx.ledgerProvider, dar, sid, logger)
                 )
-            ),
-            vetPackageIdempotent(
-                p3SdkCtx.ledgerProvider,
-                dar,
-                globalSynchronizerId,
-                logger
-            ),
-        ])
-    )
+            )
+        ),
+        // P3 only vets the trading-app DAR (global only); it must not know about TestTokenV1.
+        vetPackageIdempotent(
+            p3SdkCtx.ledgerProvider,
+            tradingAppDar,
+            globalSynchronizerId,
+            logger
+        ),
+    ])
     logger.info(
-        'TestTokenV1 + trading-app DARs vetted: P1+P2 on both synchronizers, P3 on global only'
+        'DARs vetted: P1+P2 have TestTokenV1 + trading-app on both synchronizers; P3 has trading-app on global only'
     )
 
     const aliceKey = p1Sdk.keys.generate()
