@@ -62,7 +62,14 @@ const registryUrl = 'https://fake/registry'
 
 const makeChoiceContext = (overrides = {}) => ({
     choiceContextData: { values: { ctx: 'data' } },
-    disclosedContracts: [{ contractId: 'disc1' }],
+    disclosedContracts: [
+        {
+            contractId: 'disc1',
+            templateId: 'tempalteId',
+            createdEventBlob: 'blah',
+            synchronizerId: 'mysync',
+        },
+    ],
     ...overrides,
 })
 
@@ -406,7 +413,7 @@ describe('AllocationService', () => {
     })
 })
 
-describe('getInputHoldingsCidsForAmount', async () => {
+describe('getInputHoldingsCidsForAmount', () => {
     it('returns exact match', async () => {
         const holdings = [
             makeHolding('a', '200', 'partyId', 'amulet'),
@@ -906,7 +913,7 @@ describe('Token standard service', () => {
             [],
         ])
 
-        const [exercise] = await service.createDelegateProxyTranfser(
+        const [exercise] = await service.createDelegateProxyTransfer(
             senderParty,
             'bob::def',
             '10.0',
@@ -951,7 +958,7 @@ describe('Token standard service', () => {
         vi.spyOn(
             service.transfer,
             'fetchAcceptTransferInstructionChoiceContext'
-        ).mockResolvedValue({ choiceContextData: ctx, disclosedContracts: [] })
+        ).mockResolvedValue(ctx)
 
         const [exercise] =
             await service.exerciseDelegateProxyTransferInstructionAccept(
@@ -977,16 +984,9 @@ describe('Token standard service', () => {
                     choiceArg: {
                         extraArgs: {
                             context: {
-                                choiceContextData: {
-                                    values: {
-                                        ctx: 'data',
-                                    },
+                                values: {
+                                    ctx: 'data',
                                 },
-                                disclosedContracts: [
-                                    {
-                                        contractId: 'disc1',
-                                    },
-                                ],
                             },
                             meta: {
                                 values: {},

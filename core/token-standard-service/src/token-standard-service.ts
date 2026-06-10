@@ -1613,7 +1613,7 @@ export class TokenStandardService {
         }
     }
 
-    async createDelegateProxyTranfser(
+    async createDelegateProxyTransfer(
         sender: PartyId,
         receiver: PartyId,
         amount: string,
