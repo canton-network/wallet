@@ -347,7 +347,7 @@ describe('AllocationService', () => {
     })
 
     describe('buildAllocationFactoryChoiceArgs', () => {
-        it('calls getInputHoldingCids and embeds resulting cids', async () => {
+        it('calls getInputHoldingCids and embeds resulting cids in the allocation factory choice args with the correct timestamp', async () => {
             const { service } = makeService()
             vi.spyOn(service.core, 'getInputHoldingsCids').mockResolvedValue([
                 'cid1',
@@ -361,8 +361,40 @@ describe('AllocationService', () => {
                     [],
                     ts
                 )
-            expect(result.inputHoldingCids).toEqual(['cid1', 'cid2'])
-            expect(result.requestedAt).toBe(ts)
+
+            expect(result).toStrictEqual({
+                allocation: {
+                    settlement: {
+                        meta: {
+                            values: {},
+                        },
+                    },
+                    transferLeg: {
+                        amount: '10.0',
+                        instrumentId: {
+                            admin: 'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
+                            id: 'Amulet',
+                        },
+                        meta: {
+                            values: {},
+                        },
+                        receiver: 'bob::def',
+                        sender: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
+                    },
+                },
+                expectedAdmin:
+                    'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',
+                extraArgs: {
+                    context: {
+                        values: {},
+                    },
+                    meta: {
+                        values: {},
+                    },
+                },
+                inputHoldingCids: ['cid1', 'cid2'],
+                requestedAt: '2026-01-01T00:00:00.000Z',
+            })
         })
     })
 
