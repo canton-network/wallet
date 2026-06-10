@@ -1105,13 +1105,136 @@ describe('Token standard service', () => {
             transactions: [],
         })
         await service.listHoldingTransactions(senderParty)
-        const resources = provider.request.mock.calls.map(
-            (c: any) => c[0].params.resource
+
+        const providerCalls = provider.request.mock.calls.map(
+            (c: any) => c[0].params
         )
-        expect(resources).toEqual([
-            '/v2/state/latest-pruned-offsets',
-            '/v2/state/ledger-end',
-            '/v2/updates/flats',
+
+        expect(providerCalls).toEqual([
+            {
+                resource: '/v2/state/latest-pruned-offsets',
+                requestMethod: 'get',
+            },
+            { resource: '/v2/state/ledger-end', requestMethod: 'get' },
+            {
+                resource: '/v2/updates/flats',
+                requestMethod: 'post',
+                query: {},
+                body: {
+                    updateFormat: {
+                        includeTransactions: {
+                            eventFormat: {
+                                filtersByParty: {
+                                    'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5':
+                                        {
+                                            cumulative: [
+                                                {
+                                                    identifierFilter: {
+                                                        InterfaceFilter: {
+                                                            value: {
+                                                                interfaceId:
+                                                                    '#splice-api-token-holding-v1:Splice.Api.Token.HoldingV1:Holding',
+                                                                includeInterfaceView: true,
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    identifierFilter: {
+                                                        InterfaceFilter: {
+                                                            value: {
+                                                                interfaceId:
+                                                                    '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory',
+                                                                includeInterfaceView: true,
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    identifierFilter: {
+                                                        InterfaceFilter: {
+                                                            value: {
+                                                                interfaceId:
+                                                                    '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction',
+                                                                includeInterfaceView: true,
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    identifierFilter: {
+                                                        InterfaceFilter: {
+                                                            value: {
+                                                                interfaceId:
+                                                                    '#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationFactory',
+                                                                includeInterfaceView: true,
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    identifierFilter: {
+                                                        InterfaceFilter: {
+                                                            value: {
+                                                                interfaceId:
+                                                                    '#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationInstruction',
+                                                                includeInterfaceView: true,
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    identifierFilter: {
+                                                        InterfaceFilter: {
+                                                            value: {
+                                                                interfaceId:
+                                                                    '#splice-api-token-allocation-v1:Splice.Api.Token.AllocationV1:Allocation',
+                                                                includeInterfaceView: true,
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    identifierFilter: {
+                                                        InterfaceFilter: {
+                                                            value: {
+                                                                interfaceId:
+                                                                    '#splice-api-token-allocation-request-v1:Splice.Api.Token.AllocationRequestV1:AllocationRequest',
+                                                                includeInterfaceView: true,
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    identifierFilter: {
+                                                        WildcardFilter: {
+                                                            value: {
+                                                                includeCreatedEventBlob: true,
+                                                            },
+                                                        },
+                                                    },
+                                                },
+                                            ],
+                                        },
+                                },
+                                verbose: false,
+                            },
+                            transactionShape:
+                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+                        },
+                    },
+                    beginExclusive: 5,
+                    endInclusive: 100,
+                    verbose: false,
+                },
+            },
         ])
     })
 
