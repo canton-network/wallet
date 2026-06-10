@@ -1,6 +1,9 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
-import { TOKEN_PROVIDER_CONFIG_DEFAULT } from './utils/index.js'
+import {
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+    getGlobalSynchronizerId,
+} from './utils/index.js'
 const logger = pino({ name: 'v1-multi-user-setup', level: 'info' })
 
 logger.info('Operator sets up users and primary parties')
@@ -9,6 +12,10 @@ const operatorSdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
 })
+
+// The wallet SDK no longer auto-selects a synchronizer, so resolve the global
+// synchronizer explicitly and pass it to external party creation.
+const globalSynchronizerId = await getGlobalSynchronizerId(operatorSdk)
 
 const aliceInternal = await operatorSdk.party.internal.allocate({
     partyHint: 'v1-09-alice',
@@ -90,6 +97,7 @@ const aliceKeyPair = aliceSdk.keys.generate()
 const aliceExternal = await aliceSdk.party.external
     .create(aliceKeyPair.publicKey, {
         partyHint: 'v1-09-alice',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(aliceKeyPair.privateKey)
     .execute()
@@ -114,6 +122,7 @@ const bobKeyPair = bobSdk.keys.generate()
 const bobExternal = await bobSdk.party.external
     .create(bobKeyPair.publicKey, {
         partyHint: 'v1-09-bob',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(bobKeyPair.privateKey)
     .execute()

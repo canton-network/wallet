@@ -62,7 +62,11 @@ const spliceUtilFeaturedAppProxyDarPath = path.join(
 )
 
 const darBytes = await fs.readFile(spliceUtilFeaturedAppProxyDarPath)
-await sdk.ledger.dar.upload(darBytes, SPLICE_UTIL_PROXY_PACKAGE_ID)
+await sdk.ledger.dar.upload(
+    darBytes,
+    SPLICE_UTIL_PROXY_PACKAGE_ID,
+    globalSynchronizerId
+)
 
 const transferPreApprovalProposal = await sdk.amulet.preapproval.command.create(
     {

@@ -4,6 +4,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-06-merge-utxos', level: 'info' })
@@ -15,11 +16,16 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
+// The wallet SDK no longer auto-selects a synchronizer, so resolve the global
+// synchronizer explicitly and pass it to external party creation.
+const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
+
 const aliceKeys = sdk.keys.generate()
 
 const alice = await sdk.party.external
     .create(aliceKeys.publicKey, {
         partyHint: 'v1-06-alice',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(aliceKeys.privateKey)
     .execute()

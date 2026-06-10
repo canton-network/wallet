@@ -3,6 +3,7 @@ import { pino } from 'pino'
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-11-hashing', level: 'info' })
@@ -13,11 +14,16 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
+// The wallet SDK no longer auto-selects a synchronizer, so resolve the global
+// synchronizer explicitly and pass it to external party creation.
+const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
+
 const senderKeys = sdk.keys.generate()
 
 const sender = await sdk.party.external
     .create(senderKeys.publicKey, {
         partyHint: 'v1-11-alice',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(senderKeys.privateKey)
     .execute()
