@@ -72,7 +72,7 @@ The UI is accessible on http://localhost:3333.
 When the Splice Portfolio UI opens, the UI will immediately inform you that a "Registry Configuration Required. No token registries are configured. You need to add at least one registry to use the portfolio."
 Click "Go to Settings" where you should add the registry information for the tokens that you want to use.
 
-For Canton Coin, you can use the following information:
+For Canton Coin on MainNet, you can use the information below. For other networks, search for "Amulet" on [this page of assets](https://github.com/canton-network/wallet/blob/main/api-specs/assets.json).
 
 - Party ID: DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc
 - Registry URL: any of the Super Validator's Scan URLs from the [Ecosystem website page](https://canton.foundation/sv-network-status-2/)
