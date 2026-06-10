@@ -129,6 +129,7 @@ const observingCharlieKeys = sdk.keys.generate()
 const observingCharlie = await sdk.party.external
     .create(observingCharlieKeys.publicKey, {
         partyHint: 'v1-12-observingCharlie',
+        synchronizerId: globalSynchronizerId,
         observingParticipantEndpoints: participantEndpoints,
     })
     .sign(observingCharlieKeys.privateKey)
