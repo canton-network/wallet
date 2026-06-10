@@ -949,10 +949,6 @@ describe('Token standard service', () => {
 
     it('accepts delegate proxy transfer instruction accept', async () => {
         const { service } = makeService()
-        vi.spyOn(service.transfer, 'createTransfer').mockResolvedValue([
-            { contractId: 'accept-cid', choiceArgument: {} } as any,
-            [],
-        ])
 
         const ctx = makeChoiceContext()
         vi.spyOn(
