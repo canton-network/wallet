@@ -424,7 +424,7 @@ export class CoreService {
 
     // returns object with JsActiveContract content
     // and contractId and interface view value extracted from it as separate fields for convenience
-    private toPrettyContract<T>(
+    toPrettyContract<T>(
         interfaceId: string,
         response: JsActiveContractEntryResponse,
         offset?: number
@@ -1613,7 +1613,7 @@ export class TokenStandardService {
         }
     }
 
-    async createDelegateProxyTranfser(
+    async createDelegateProxyTransfer(
         sender: PartyId,
         receiver: PartyId,
         amount: string,

@@ -6,6 +6,17 @@ import { playwright } from '@vitest/browser-playwright'
 
 export default defineConfig({
     test: {
+        coverage: {
+            include: ['src/**/*.ts'],
+            provider: 'v8',
+            reporter: ['text', 'html', 'lcov'],
+            thresholds: {
+                lines: 80,
+                functions: 80,
+                branches: 70,
+                statements: 80,
+            },
+        },
         environment: 'node',
         include: ['src/**/*.test.ts'],
         projects: [
