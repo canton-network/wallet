@@ -1108,7 +1108,11 @@ describe('Token standard service', () => {
         const resources = provider.request.mock.calls.map(
             (c: any) => c[0].params.resource
         )
-        expect(resources).toContain('/v2/state/latest-pruned-offsets')
+        expect(resources).toEqual([
+            '/v2/state/latest-pruned-offsets',
+            '/v2/state/ledger-end',
+            '/v2/updates/flats',
+        ])
     })
 
     it('transaction by id', async () => {
