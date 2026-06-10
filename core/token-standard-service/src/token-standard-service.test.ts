@@ -16,6 +16,17 @@ const { mockAcsState, mockParseTransaction } = vi.hoisted(() => ({
     mockParseTransaction: vi.fn().mockResolvedValue({ offset: 10, events: [] }),
 }))
 
+vi.mock('@canton-network/core-tx-parser', async (importActual) => {
+    const actual =
+        await importActual<typeof import('@canton-network/core-tx-parser')>()
+    return {
+        ...actual,
+        TransactionParser: vi.fn(function () {
+            return { parseTransaction: mockParseTransaction }
+        }),
+    }
+})
+
 vi.mock('@canton-network/core-acs-reader', () => ({
     ACSReader: vi.fn(function () {
         return { raw: { read: mockAcsState } }
