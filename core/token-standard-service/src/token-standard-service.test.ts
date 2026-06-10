@@ -157,6 +157,7 @@ describe('CoreService', () => {
             sender: senderParty,
         })
         expect(result).toHaveLength(1)
+        expect(result[0]).toEqual('2')
     })
 })
 
