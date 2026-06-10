@@ -8,6 +8,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from '../utils/index.js'
 import { batchTap } from './utils.js'
 import Decimal from 'decimal.js'
@@ -37,10 +38,16 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
+// The wallet SDK no longer auto-selects a synchronizer, and DAR upload cannot be
+// autodetected when the participant is connected to multiple synchronizers, so
+// resolve the global synchronizer explicitly and pass it to the upload.
+const synchronizerId = await getGlobalSynchronizerId(sdk)
+
 const darBytes = await readFile(spliceUtilTokenStandardWalletDarPath)
 await sdk.ledger.dar.upload(
     darBytes,
-    SPLICE_UTIL_TOKEN_STANDARD_WALLET_PACKAGE_ID
+    SPLICE_UTIL_TOKEN_STANDARD_WALLET_PACKAGE_ID,
+    synchronizerId
 )
 
 logger.info(`DAR ${PATH_TO_DAR_IN_LOCALNET} successfully uploaded`)
