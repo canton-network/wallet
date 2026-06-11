@@ -10,6 +10,7 @@ import { CreatePartyOptions } from './types.js'
 import { SDKLogger } from '../../../logger/index.js'
 import { LedgerProvider, Ops } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { resolveSynchronizerIdOrGlobal } from '../../ledger/synchronizer-cache.js'
 
 export class ExternalPartyNamespace {
     private readonly logger: SDKLogger
@@ -34,14 +35,15 @@ export class ExternalPartyNamespace {
             ),
             options?.synchronizerId,
         ]).then(
-            ([
+            async ([
                 observingParticipantUids,
                 otherHostingParticipantUids,
                 synchronizerId,
             ]) => {
-                if (!synchronizerId)
-                    throw new Error(
-                        'synchronizerId is required for party creation — pass it via options.synchronizerId'
+                const resolvedSynchronizerId =
+                    await resolveSynchronizerIdOrGlobal(
+                        this.ctx,
+                        synchronizerId
                     )
                 return this.ctx.ledgerProvider.request<Ops.PostV2PartiesExternalGenerateTopology>(
                     {
@@ -49,7 +51,7 @@ export class ExternalPartyNamespace {
                         params: {
                             resource: '/v2/parties/external/generate-topology',
                             body: {
-                                synchronizer: synchronizerId,
+                                synchronizer: resolvedSynchronizerId,
                                 partyHint: options?.partyHint ?? v4(),
                                 publicKey: {
                                     format: 'CRYPTO_KEY_FORMAT_RAW',

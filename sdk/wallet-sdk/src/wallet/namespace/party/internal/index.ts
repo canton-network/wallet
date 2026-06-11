@@ -6,6 +6,7 @@ import { SDKContext } from '../../../sdk.js'
 import { v4 } from 'uuid'
 import { PartyId } from '@canton-network/core-types'
 import { SDKLogger } from '../../../logger/logger.js'
+import { resolveSynchronizerIdOrGlobal } from '../../ledger/synchronizer-cache.js'
 
 export class InternalPartyNamespace {
     private readonly logger: SDKLogger
@@ -24,6 +25,11 @@ export class InternalPartyNamespace {
             userId?: string
         } = {}
     ): Promise<string> {
+        const synchronizerId = await resolveSynchronizerIdOrGlobal(
+            this.ctx,
+            params.synchronizerId
+        )
+
         if (params.partyHint) {
             const pIdFingerprint = await this.getParticipantIdFingerprint()
 
@@ -50,9 +56,7 @@ export class InternalPartyNamespace {
                     body: {
                         partyIdHint: params.partyHint ?? v4(),
                         identityProviderId: '',
-                        ...(params.synchronizerId !== undefined && {
-                            synchronizerId: params.synchronizerId,
-                        }),
+                        synchronizerId,
                         userId: params.userId ?? this.ctx.userId,
                     },
                 },
@@ -64,6 +68,9 @@ export class InternalPartyNamespace {
                 type: 'CantonError',
             })
         }
+        this.ctx.synchronizers.connect(synchronizerId, {
+            party: allocatedParty.partyDetails.party,
+        })
 
         return allocatedParty.partyDetails.party
     }

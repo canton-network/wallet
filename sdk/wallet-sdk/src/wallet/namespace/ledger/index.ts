@@ -3,3 +3,4 @@
 
 export * from './namespace.js'
 export * from './types.js'
+export * from './synchronizer-cache.js'

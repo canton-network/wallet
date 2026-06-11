@@ -17,6 +17,7 @@ import { DarNamespace } from './dar/client.js'
 import { InternalLedgerNamespace } from './internal/index.js'
 import { PreparedTransactionNamespace } from './hash/namespace.js'
 import { AcsOptions, ACSReader } from '@canton-network/core-acs-reader'
+import { ConnectedSynchronizer } from './synchronizer-cache.js'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace
@@ -33,65 +34,57 @@ export class LedgerNamespace {
 
     /**
      * Returns connected synchronizers visible to the caller, optionally filtered
-     * by party, participant, or identity provider.
-     *
-     * Uses the Ledger API endpoint GET /v2/state/connected-synchronizers.
+     * by party, participant, or identity provider. Reeas connected synchronizers from the cache by default, but can be forced to re-fetch from the Ledger API with `opts.refresh = true`.
      */
     public async connectedSynchronizers(
-        options?: ConnectedSynchronizersOptions
+        options?: ConnectedSynchronizersOptions,
+        extraOptions?: { refresh?: boolean }
     ) {
-        this.sdkContext.logger.debug(
-            { options },
-            'Fetching connected synchronizers'
-        )
+        return {
+            connectedSynchronizers: await this.sdkContext.synchronizers.list(
+                options,
+                extraOptions
+            ),
+        }
+    }
 
-        return this.sdkContext.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-            {
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/state/connected-synchronizers',
-                    requestMethod: 'get',
-                    query: {
-                        ...(options?.party !== undefined && {
-                            party: options.party,
-                        }),
-                        ...(options?.participantId !== undefined && {
-                            participantId: options.participantId,
-                        }),
-                        ...(options?.identityProviderId !== undefined && {
-                            identityProviderId: options.identityProviderId,
-                        }),
-                    },
-                },
-            }
-        )
+    /**
+     * Re-fetches the connected synchronizers from the Ledger API and updates the
+     * cache.
+     */
+    public async refreshSynchronizers(): Promise<void> {
+        return this.sdkContext.synchronizers.refresh()
+    }
+
+    /**
+     * Adds connected synchronizers to the cache
+     */
+    public addConnectedSynchronizers(
+        ...synchronizers: ConnectedSynchronizer[]
+    ): void {
+        this.sdkContext.synchronizers.add(...synchronizers)
     }
 
     /**
      * Resolves the ID of the synchronizer aliased `'global'` from the
      * synchronizers connected to the caller.
      *
-     * The SDK no longer auto-selects a synchronizer, so callers that need to
-     * target the global synchronizer (DAR uploads, party creation, transfers,
-     * ...) resolve it through this single helper.
-     *
      * @throws {Error} When no synchronizer aliased `'global'` is connected.
      */
     public async getGlobalSynchronizerId(
         options?: ConnectedSynchronizersOptions
     ): Promise<string> {
-        const { connectedSynchronizers } =
-            await this.connectedSynchronizers(options)
-        const global = connectedSynchronizers?.find(
-            (s) => s.synchronizerAlias === 'global'
-        )
-        if (!global) {
+        const synchronizerId =
+            await this.sdkContext.synchronizers.resolveGlobalSynchronizerId(
+                options
+            )
+        if (!synchronizerId) {
             this.sdkContext.error.throw({
                 message: 'Global synchronizer not found',
                 type: 'SDKOperationUnsupported',
             })
         }
-        return global.synchronizerId
+        return synchronizerId
     }
 
     public async ledgerEnd() {

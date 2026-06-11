@@ -16,6 +16,7 @@ import {
     LedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'
+import { resolveSynchronizerIdOrGlobal } from '../../ledger/synchronizer-cache.js'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import {
     PrivateKey,
@@ -57,14 +58,9 @@ export class SignedPartyCreationService {
                 type: 'SDKOperationUnsupported',
             })
 
-        // When a specific synchronizerId is provided, check whether the party
-        // is already registered on that synchronizer (not just on the participant).
-        if (
-            await this.checkIfPartyExists(
-                party.partyId,
-                this.createPartyOptions?.synchronizerId
-            )
-        ) {
+        const synchronizerId = await this.resolveSynchronizerId()
+
+        if (await this.checkIfPartyExists(party.partyId, synchronizerId)) {
             this.ctx.logger.info('Party already created.')
             return party
         }
@@ -76,8 +72,13 @@ export class SignedPartyCreationService {
 
         await this.executeAllocateParty({
             ...executeOptions,
+            synchronizerId,
             withErrorHandling: true,
             expectHeavyLoad: Boolean(options?.expectHeavyLoad),
+        })
+
+        this.ctx.synchronizers.connect(synchronizerId, {
+            party: party.partyId,
         })
 
         const endpointConfig = [
@@ -89,6 +90,7 @@ export class SignedPartyCreationService {
             await this.allocateExternalPartyForAdditionalParticipants({
                 ...executeOptions,
                 endpointConfig,
+                synchronizerId,
             })
         }
 
@@ -185,6 +187,7 @@ export class SignedPartyCreationService {
                 },
             ]
         )
+        this.ctx.synchronizers.connect(synchronizerId, { party: partyId })
 
         this.ctx.logger.info(
             `Party registered on additional synchronizer ${synchronizerId}.`
@@ -199,9 +202,10 @@ export class SignedPartyCreationService {
     private async allocateExternalPartyForAdditionalParticipants(
         options: {
             endpointConfig: ParticipantEndpointConfig[]
+            synchronizerId: string
         } & ExecuteOptions
     ) {
-        const { endpointConfig, party, signature } = options
+        const { endpointConfig, party, signature, synchronizerId } = options
         for (const endpoint of endpointConfig) {
             const defaultLedgerProvider = new LedgerProvider({
                 baseUrl: endpoint.url,
@@ -215,8 +219,23 @@ export class SignedPartyCreationService {
                 defaultLedgerProvider,
                 party,
                 signature,
+                synchronizerId,
             })
         }
+    }
+
+    /**
+     * Resolves the synchronizer the party should be allocated on: the one given
+     * in {@link CreatePartyOptions}, or the global synchronizer as a fallback
+     * when none was provided.
+     * @throws {Error} When no synchronizerId is provided and no global
+     * synchronizer is connected to fall back to.
+     */
+    private resolveSynchronizerId(): Promise<string> {
+        return resolveSynchronizerIdOrGlobal(
+            this.ctx,
+            this.createPartyOptions?.synchronizerId
+        )
     }
 
     /**
@@ -226,6 +245,7 @@ export class SignedPartyCreationService {
      */
     private async executeAllocateParty(
         options: {
+            synchronizerId: string
             withErrorHandling?: boolean
             expectHeavyLoad?: boolean
             defaultLedgerProvider?: AbstractLedgerProvider
@@ -234,18 +254,13 @@ export class SignedPartyCreationService {
         const {
             party,
             signature,
+            synchronizerId,
             withErrorHandling,
             expectHeavyLoad,
             defaultLedgerProvider,
         } = options
         const ledgerProvider = defaultLedgerProvider ?? this.ctx.ledgerProvider
         try {
-            const synchronizerId = this.createPartyOptions?.synchronizerId
-            if (!synchronizerId)
-                throw new Error(
-                    'synchronizerId is required for external party allocation — pass it via createPartyOptions.synchronizerId'
-                )
-
             await this.allocate(
                 ledgerProvider,
                 synchronizerId,
@@ -291,21 +306,10 @@ export class SignedPartyCreationService {
     ): Promise<boolean> {
         try {
             if (synchronizerId) {
-                const response =
-                    await this.ctx.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-                        {
-                            method: 'ledgerApi',
-                            params: {
-                                resource: '/v2/state/connected-synchronizers',
-                                requestMethod: 'get',
-                                query: { party: partyId },
-                            },
-                        }
-                    )
-                return (
-                    response.connectedSynchronizers?.some(
-                        (s) => s.synchronizerId === synchronizerId
-                    ) ?? false
+                const connectedSynchronizers =
+                    await this.ctx.synchronizers.list({ party: partyId })
+                return connectedSynchronizers.some(
+                    (s) => s.synchronizerId === synchronizerId
                 )
             }
 

@@ -27,6 +27,7 @@ import {
 } from '@canton-network/core-ledger-client-types'
 import { AllowedLogAdapters } from './logger/types.js'
 import { DappLedgerRpc } from '@canton-network/core-provider-dapp'
+import { SynchronizerCache } from './namespace/ledger/synchronizer-cache.js'
 export * from './namespace/asset/index.js'
 export type * from './namespace/token/index.js'
 export type * from './namespace/amulet/index.js'
@@ -49,6 +50,7 @@ export type SDKContext = {
     userId: string
     logger: SDKLogger
     error: SDKErrorHandler
+    synchronizers: SynchronizerCache
 }
 
 export type OfflineSDKContext = {
@@ -126,11 +128,15 @@ export class SDK {
             })
         }
 
+        const synchronizers = new SynchronizerCache(ledgerProvider, logger)
+        await synchronizers.list()
+
         const ctx: SDKContext = {
             ledgerProvider,
             userId: userId!,
             logger,
             error,
+            synchronizers,
         }
 
         const config = {} as Pick<
