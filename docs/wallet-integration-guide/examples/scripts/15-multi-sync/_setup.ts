@@ -30,7 +30,7 @@ import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
 // registry (in addition to the Amulet scan-proxy registry). This lets the
 // wallet SDK resolve TestToken via the CIP-56 metadata API and fetch its
 // transfer/allocation choice contexts over HTTP.
-const TOKEN_NAMESPACE_CONFIG_WITH_TEST_TOKEN = {
+const TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES = {
     ...TOKEN_NAMESPACE_CONFIG,
     registries: [
         ...(TOKEN_NAMESPACE_CONFIG.registries as URL[]),
@@ -123,13 +123,13 @@ export async function setupMultiSyncTrade(
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
             ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
             amulet: AMULET_NAMESPACE_CONFIG,
-            token: TOKEN_NAMESPACE_CONFIG_WITH_TEST_TOKEN,
+            token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
         }),
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
             ledgerClientUrl:
                 localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-            token: TOKEN_NAMESPACE_CONFIG_WITH_TEST_TOKEN,
+            token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
         }),
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
