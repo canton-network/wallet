@@ -19,8 +19,6 @@ function setNodeEnv(value: string | undefined) {
         } else {
             process.env.NODE_ENV = value
         }
-    } else {
-        vi.stubGlobal('process', { env: { NODE_ENV: value } })
     }
 }
 
@@ -82,27 +80,36 @@ describe('sdk logging package', () => {
         })
     })
 
-    describe('sdk logger logs correct levels', () => {
+    describe('sdk logger logs correct levels based on node env', () => {
+        const isBrowserEnv = typeof process === 'undefined'
         let log: ReturnType<typeof vi.fn<LogAdapter['log']>>
         let logger: SDKLogger
         let ogNodeEnv: string | undefined
         beforeEach(() => {
-            ogNodeEnv =
-                typeof process !== 'undefined'
-                    ? process.env.NODE_ENV
-                    : undefined
+            ogNodeEnv = process.env.NODE_ENV
             log = vi.fn()
             logger = new SDKLogger(new CustomLogAdapter(log))
         })
 
         afterEach(() => {
             setNodeEnv(ogNodeEnv)
-            vi.unstubAllGlobals()
         })
 
-        it('debug', () => {
+        it.skipIf(isBrowserEnv)('debug', () => {
             setNodeEnv('development')
             logger.debug('should not be supressed')
+            expect(log).toHaveBeenCalled()
+        })
+
+        it.skipIf(isBrowserEnv)('debug', () => {
+            setNodeEnv('production')
+            logger.debug({ requestId: '123' }, 'should be supressed')
+            expect(log).not.toHaveBeenCalled()
+        })
+
+        it.skipIf(isBrowserEnv)('debug', () => {
+            setNodeEnv(undefined)
+            logger.warn({ requestId: '123' }, 'should be supressed')
             expect(log).toHaveBeenCalled()
         })
     })
