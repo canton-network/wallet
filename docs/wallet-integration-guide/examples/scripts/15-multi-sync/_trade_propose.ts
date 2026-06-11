@@ -74,9 +74,9 @@ export async function createAndInitiateOtcTrade(
     logger: Logger
 ): Promise<string> {
     const {
-        p1Sdk,
-        p2Sdk,
-        p3Sdk,
+        appUserSdk,
+        appProviderSdk,
+        svSdk,
         alice,
         bob,
         tradingApp,
@@ -118,7 +118,7 @@ export async function createAndInitiateOtcTrade(
         }
     }
 
-    await p1Sdk.ledger
+    await appUserSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: buildOtcTradeProposalCommand({
@@ -135,12 +135,15 @@ export async function createAndInitiateOtcTrade(
         `Alice: OTCTradeProposal created (leg-0: ${TRADE_AMULET_AMOUNT} Amulet → Bob, leg-1: ${TRADE_TOKEN_AMOUNT} TestToken → Alice)`
     )
 
-    await p2Sdk.ledger
+    await appProviderSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [
                 buildAcceptOtcTradeCommand({
-                    proposalCid: await readProposalCid(p2Sdk, bob.partyId),
+                    proposalCid: await readProposalCid(
+                        appProviderSdk,
+                        bob.partyId
+                    ),
                     approver: bob.partyId,
                 }),
             ],
@@ -154,13 +157,13 @@ export async function createAndInitiateOtcTrade(
     const prepareUntil = new Date(Date.now() + MS_30_MIN).toISOString()
     const settleBefore = new Date(Date.now() + MS_1_HOUR).toISOString()
 
-    await p3Sdk.ledger
+    await svSdk.ledger
         .prepare({
             partyId: tradingApp.partyId,
             commands: [
                 buildInitiateSettlementCommand({
                     proposalCid: await readProposalCid(
-                        p3Sdk,
+                        svSdk,
                         tradingApp.partyId,
                         (approvers) => approvers.includes(bob.partyId)
                     ),
@@ -177,7 +180,7 @@ export async function createAndInitiateOtcTrade(
         'TradingApp: OTCTradeProposal_InitiateSettlement executed → OTCTrade created'
     )
 
-    const otcTradeContracts = await p3Sdk.ledger.acs.read({
+    const otcTradeContracts = await svSdk.ledger.acs.read({
         templateIds: [OTC_TRADE_TEMPLATE_ID],
         parties: [tradingApp.partyId],
         filterByParty: true,

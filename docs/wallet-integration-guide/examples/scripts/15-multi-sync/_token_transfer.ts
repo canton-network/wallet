@@ -19,15 +19,16 @@ export async function aliceSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p1Sdk, p2Sdk, alice, tokenAdmin, appSynchronizerId } = setup
+    const { appUserSdk, appProviderSdk, alice, tokenAdmin, appSynchronizerId } =
+        setup
 
-    // The settlement is submitted by TradingApp (P3), so Alice's resulting Token
-    // holding propagates to her participant (P1) asynchronously. Poll P1 until it
+    // The settlement is submitted by TradingApp (sv), so Alice's resulting Token
+    // holding propagates to her participant (app-user) asynchronously. Poll app-user until it
     // becomes visible instead of reading once (cross-participant read-after-write).
     const deadline = Date.now() + TOKEN_POLL_TIMEOUT_MS
     let aliceToken
     for (;;) {
-        const aliceTokens = await p1Sdk.ledger.acs.read({
+        const aliceTokens = await appUserSdk.ledger.acs.read({
             templateIds: [TestTokenV1.Token.templateId],
             parties: [alice.partyId],
             filterByParty: true,
@@ -41,7 +42,7 @@ export async function aliceSelfTransferToApp(
         )
     }
 
-    const tokenRulesContracts = await p2Sdk.ledger.acs.read({
+    const tokenRulesContracts = await appProviderSdk.ledger.acs.read({
         templateIds: [TestTokenV1.TokenRules.templateId],
         parties: [tokenAdmin.partyId],
         filterByParty: true,
@@ -54,7 +55,7 @@ export async function aliceSelfTransferToApp(
     // The settled holding lands on the global synchronizer; move it to the
     // app-synchronizer before self-transferring there (mirrors Bob's flow).
     if (aliceToken.synchronizerId !== appSynchronizerId) {
-        await p1Sdk.ledger.internal.reassign({
+        await appUserSdk.ledger.internal.reassign({
             submitter: alice.partyId,
             contractId: aliceToken.contractId,
             source: aliceToken.synchronizerId,
@@ -63,7 +64,7 @@ export async function aliceSelfTransferToApp(
         })
     }
 
-    await p1Sdk.ledger
+    await appUserSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: [
@@ -103,15 +104,15 @@ export async function bobSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p2Sdk, bob, tokenAdmin, appSynchronizerId } = setup
+    const { appProviderSdk, bob, tokenAdmin, appSynchronizerId } = setup
 
     const [bobTokens, tokenRulesContracts] = await Promise.all([
-        p2Sdk.ledger.acs.read({
+        appProviderSdk.ledger.acs.read({
             templateIds: [TestTokenV1.Token.templateId],
             parties: [bob.partyId],
             filterByParty: true,
         }),
-        p2Sdk.ledger.acs.read({
+        appProviderSdk.ledger.acs.read({
             templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
@@ -125,7 +126,7 @@ export async function bobSelfTransferToApp(
 
     for (const token of bobTokens) {
         if (token.synchronizerId !== appSynchronizerId) {
-            await p2Sdk.ledger.internal.reassign({
+            await appProviderSdk.ledger.internal.reassign({
                 submitter: bob.partyId,
                 contractId: token.contractId,
                 source: token.synchronizerId,
@@ -148,7 +149,7 @@ export async function bobSelfTransferToApp(
         if (!tokenRules)
             throw new Error(`TokenRules not found on app-synchronizer`)
 
-        await p2Sdk.ledger
+        await appProviderSdk.ledger
             .prepare({
                 partyId: bob.partyId,
                 commands: [
