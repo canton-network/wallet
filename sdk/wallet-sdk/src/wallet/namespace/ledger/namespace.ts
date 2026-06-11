@@ -34,7 +34,7 @@ export class LedgerNamespace {
 
     /**
      * Returns connected synchronizers visible to the caller, optionally filtered
-     * by party, participant, or identity provider. Reeas connected synchronizers from the cache by default, but can be forced to re-fetch from the Ledger API with `opts.refresh = true`.
+     * by party, participant, or identity provider. Reads connected synchronizers from the cache by default, but can be forced to re-fetch from the Ledger API with `opts.refresh = true`.
      */
     public async connectedSynchronizers(
         options?: ConnectedSynchronizersOptions,

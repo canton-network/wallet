@@ -13,9 +13,6 @@ import type { SDKContext } from '../../sdk.js'
  * Resolves the synchronizer an operation should target: the explicit
  * `synchronizerId` when given, otherwise the global synchronizer as a fallback.
  *
- * Shared by the party / participant flows so they all fall back to (and fail
- * with) the same behaviour when no synchronizer is supplied.
- *
  * @throws When no `synchronizerId` is provided and no global synchronizer is
  * connected to fall back to.
  */
@@ -84,17 +81,15 @@ const sameScope = (
 
 /**
  * Caches the synchronizers connected to the participant so the SDK reads them
- * from the Ledger API only once (at initialization) instead of on every call.
+ * from the Ledger API once per scope
  *
- * Entries are keyed by `synchronizerId` — a synchronizer shared by several parties
- * is a single entry whose membership lists (`parties`, `participantIds`,
- * `identityProviderIds`) record every scope it was seen under. A read is a
- * `filter` over the entries by {@link matchesScope}. The set of scopes already
- * fetched is tracked separately so an empty result is still treated as a cache
- * hit (we don't re-query a scope that is genuinely empty). The cache is kept
- * current via {@link refresh} (rebuild every scope seen so far) and {@link add}
- * (merge a newly connected synchronizer) — callers update it when they connect
- * to, or host a party on, a new synchronizer.
+ * - Entries are keyed by `synchronizerId` (one shared by several parties is a
+ *   single entry); its membership lists record every scope it was seen under.
+ * - Reads filter entries by {@link matchesScope}.
+ * - Fetched scopes are tracked separately so a genuinely empty scope counts as a
+ *   cache hit instead of being re-queried every call.
+ * - {@link add} / {@link connect} merge in a newly known synchronizer;
+ *   {@link refresh} rebuilds by re-fetching every scope seen so far.
  */
 export class SynchronizerCache {
     private cache = new Map<string, CachedSynchronizer>()
@@ -252,10 +247,6 @@ export class SynchronizerCache {
      * Records that the given scope (a party and/or participant) is now connected
      * to a synchronizer, updating its membership lists in place.
      *
-     * The scope is also marked fetched so a subsequent `list(scope)` is served
-     * from the cache. If the synchronizer is not yet cached, an entry is created;
-     * pass `synchronizerAlias` when it is known (e.g. for global-synchronizer
-     * resolution).
      */
     public connect(
         synchronizerId: string,

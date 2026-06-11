@@ -13,8 +13,6 @@ const operatorSdk = await SDK.create({
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
 })
 
-// The wallet SDK no longer auto-selects a synchronizer, so resolve the global
-// synchronizer explicitly and pass it to external party creation.
 const globalSynchronizerId = await getGlobalSynchronizerId(operatorSdk)
 
 const aliceInternal = await operatorSdk.party.internal.allocate({

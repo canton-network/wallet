@@ -31,9 +31,6 @@ const TRADING_APP_PACKAGE_ID =
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
-// The wallet SDK no longer auto-selects a synchronizer, and DAR upload cannot be
-// autodetected when the participant is connected to multiple synchronizers, so
-// resolve the global synchronizer explicitly and pass it to every upload.
 const synchronizerId = await getGlobalSynchronizerId(sdk)
 
 const tradingDarPath = path.join(

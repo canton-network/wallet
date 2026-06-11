@@ -13,9 +13,6 @@ import {
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
 
-// This example needs uploaded .dar for splice-token-test-trading-app
-// It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script
-// Adjust if to your .localnet location
 const PATH_TO_LOCALNET = '../../../.localnet'
 const PATH_TO_DAR_IN_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
 const TRADING_APP_PACKAGE_ID =
@@ -79,7 +76,6 @@ export class OTCTrade {
             PATH_TO_DAR_IN_LOCALNET
         )
 
-        // Retrieve ID of Global Synchronizer for vetting the Trade App DAR
         const synchronizerId = await this.sdk.ledger.getGlobalSynchronizerId()
 
         //upload dar

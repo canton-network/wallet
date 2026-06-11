@@ -25,11 +25,6 @@ export type SynchronizerMap = {
 
 /**
  * Returns the ID of the synchronizer aliased `'global'`.
- *
- * The wallet SDK no longer auto-selects a synchronizer, so client code (these
- * examples) resolves it explicitly and passes it to SDK calls that require one.
- * Resolution lives in the SDK (`sdk.ledger.getGlobalSynchronizerId`); this is a
- * thin convenience wrapper over it.
  */
 export async function getGlobalSynchronizerId(sdk: {
     ledger: { getGlobalSynchronizerId(): Promise<string> }

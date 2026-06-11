@@ -44,9 +44,6 @@ const tradingDarPath = path.join(
     PATH_TO_DAR_IN_LOCALNET
 )
 
-// The wallet SDK no longer auto-selects a synchronizer, and DAR upload and party
-// creation cannot be autodetected when the participant is connected to multiple
-// synchronizers, so resolve the global synchronizer explicitly and pass it on.
 const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
 
 //upload dar
