@@ -35,19 +35,29 @@ export function createTransferHandlers(
     return {
         getTransferFactory: async (
             req: GetFactoryRequest
-        ): Promise<TransferFactoryWithChoiceContext | null> => {
-            const args = req.choiceArguments ?? {}
-            const transfer = args['transfer'] as
+        ): Promise<TransferFactoryWithChoiceContext> => {
+            const transfer = req.choiceArguments?.['transfer'] as
                 | Record<string, unknown>
                 | undefined
-            const isSelf =
-                transfer !== undefined &&
-                transfer['sender'] !== undefined &&
-                transfer['sender'] === transfer['receiver']
-            const transferKind: 'self' | 'offer' = isSelf ? 'self' : 'offer'
+            if (transfer === undefined)
+                throw new Error(
+                    'getTransferFactory: missing "transfer" choice argument'
+                )
+            if (
+                transfer['sender'] === undefined ||
+                transfer['receiver'] === undefined
+            )
+                throw new Error(
+                    'getTransferFactory: "transfer" argument must include sender and receiver'
+                )
+            const transferKind: 'self' | 'offer' =
+                transfer['sender'] === transfer['receiver'] ? 'self' : 'offer'
 
             const tokenRules = await ctx.getTokenRules(ctx.appSynchronizerId)
-            if (!tokenRules) return null
+            if (!tokenRules)
+                throw new Error(
+                    `getTransferFactory: TokenRules not found on app synchronizer ${ctx.appSynchronizerId}`
+                )
             return {
                 factoryId: tokenRules.contractId,
                 transferKind,
