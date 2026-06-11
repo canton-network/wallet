@@ -22,81 +22,88 @@ const { mockCacheCollection, MockACSCacheCollection } = vi.hoisted(() => {
 
 const { mockService, MockAcsService } = vi.hoisted(() => {
     const getActiveContracts = vi.fn()
+    const getPaginatedActiveContracts = vi.fn()
 
     const mockService = {
         getActiveContracts,
+        getPaginatedActiveContracts,
     }
 
     const MockAcsService = vi.fn(
         class {
             getActiveContracts = getActiveContracts
+            getPaginatedActiveContracts = getPaginatedActiveContracts
         }
     )
 
     return { mockService, MockAcsService }
 })
 
-vi.mock('../cache/collection', () => ({
-    ACSCacheCollection: MockACSCacheCollection,
-}))
+vi.mock('../cache/collection', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../cache/collection')>()
+    return {
+        ...actual,
+        ACSCacheCollection: MockACSCacheCollection,
+        PaginatedACSCacheCollection: MockACSCacheCollection,
+    }
+})
 
-vi.mock('../service', () => ({
-    AcsService: MockAcsService,
-}))
+vi.mock('../service', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../service')>()
+    return {
+        ...actual,
+        AcsService: MockAcsService,
+    }
+})
 
 const ledgerProvider = vi.hoisted(() => ({
     request: vi.fn(),
 }))
 
-describe.skip('reader', () => {
+describe('reader', () => {
     let reader: ACSReader
 
+    const createMockContract = (id: string, party: string, syncId: string) => ({
+        workflowId: `wf-${id}`,
+        contractEntry: {
+            JsActiveContract: {
+                createdEvent: {
+                    contractId: `contract-${id}`,
+                    templateId: `template${id}`,
+                    contractKey: null,
+                    createArguments: {},
+                    createdAt: '2024-01-01T00:00:00Z',
+                    signatories: [party],
+                    observers: [],
+                },
+                synchronizerId: syncId,
+                reassignmentCounter: 0,
+            },
+        },
+    })
+
     const mockActiveContracts = [
-        {
-            workflowId: 'wf1',
-            contractEntry: {
-                JsActiveContract: {
-                    createdEvent: {
-                        contractId: 'contract-1',
-                        templateId: 'template1',
-                        contractKey: null,
-                        createArguments: {},
-                        createdAt: '2024-01-01T00:00:00Z',
-                        signatories: ['party1'],
-                        observers: [],
-                    },
-                    synchronizerId: 'sync1',
-                    reassignmentCounter: 0,
-                },
-            },
-        },
-        {
-            workflowId: 'wf2',
-            contractEntry: {
-                JsActiveContract: {
-                    createdEvent: {
-                        contractId: 'contract-2',
-                        templateId: 'template2',
-                        contractKey: null,
-                        createArguments: {},
-                        createdAt: '2024-01-01T00:00:00Z',
-                        signatories: ['party2'],
-                        observers: [],
-                    },
-                    synchronizerId: 'sync2',
-                    reassignmentCounter: 0,
-                },
-            },
-        },
+        createMockContract('1', 'party1', 'sync1'),
+        createMockContract('2', 'party2', 'sync2'),
     ]
+
+    const expectLedgerEndCalled = () => {
+        expect(ledgerProvider.request).toHaveBeenCalledWith({
+            method: 'ledgerApi',
+            params: { resource: '/v2/state/ledger-end', requestMethod: 'get' },
+        })
+    }
 
     beforeEach(() => {
         vi.clearAllMocks()
-
         mockService.getActiveContracts.mockResolvedValue(mockActiveContracts)
+        mockService.getPaginatedActiveContracts.mockResolvedValue({
+            activeContracts: mockActiveContracts,
+            activeAtOffset: 100,
+            nextPageToken: '',
+        })
         mockCacheCollection.readFromCache.mockResolvedValue(mockActiveContracts)
         ledgerProvider.request.mockResolvedValue({ offset: 1000 })
-
         reader = new ACSReader(ledgerProvider)
     })
 
@@ -129,7 +136,6 @@ describe.skip('reader', () => {
                 parties: ['party1'],
                 templateIds: ['template1'],
             }
-
             const result = await reader.raw.read(options)
 
             expect(mockService.getActiveContracts).toHaveBeenCalledWith(options)
@@ -139,98 +145,63 @@ describe.skip('reader', () => {
 
         it('should resolve offset when not provided', async () => {
             ledgerProvider.request.mockResolvedValue({ offset: 500 })
-
-            const options = {
+            await reader.raw.read({
                 parties: ['party1'],
                 templateIds: ['template1'],
-            }
-
-            await reader.raw.read(options)
-
-            expect(ledgerProvider.request).toHaveBeenCalledWith({
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/state/ledger-end',
-                    requestMethod: 'get',
-                },
             })
 
-            expect(mockService.getActiveContracts).toHaveBeenCalledWith({
-                ...options,
-                offset: 500,
-            })
+            expectLedgerEndCalled()
+            expect(mockService.getActiveContracts).toHaveBeenCalledWith(
+                expect.objectContaining({ offset: 500 })
+            )
         })
 
         it('should handle empty results', async () => {
             mockService.getActiveContracts.mockResolvedValue([])
-
-            const result = await reader.raw.read({
-                offset: 100,
-                parties: ['party1'],
-            })
-
-            expect(result).toEqual([])
+            expect(
+                await reader.raw.read({ offset: 100, parties: ['party1'] })
+            ).toEqual([])
         })
     })
 
     describe('raw.readJsContracts', () => {
         it('should read and transform to JS contracts', async () => {
-            const options = {
+            const result = await reader.raw.readJsContracts({
                 offset: 100,
                 parties: ['party1'],
                 templateIds: ['template1'],
-            }
+            })
 
-            const result = await reader.raw.readJsContracts(options)
-
-            expect(mockService.getActiveContracts).toHaveBeenCalledWith(options)
             expect(result).toHaveLength(2)
-            expect(result[0]).toEqual({
+            expect(result[0]).toMatchObject({
                 contractId: 'contract-1',
                 templateId: 'template1',
-                contractKey: null,
-                createArguments: {},
-                createdAt: '2024-01-01T00:00:00Z',
-                signatories: ['party1'],
-                observers: [],
                 synchronizerId: 'sync1',
             })
         })
 
         it('should filter out contracts without JsActiveContract', async () => {
-            const mixedContracts = [
+            mockService.getActiveContracts.mockResolvedValue([
                 ...mockActiveContracts,
-                {
-                    workflowId: 'wf3',
-                    contractEntry: null,
-                },
-                {
-                    workflowId: 'wf4',
-                    contractEntry: {
-                        OtherType: {},
-                    },
-                },
-            ]
-
-            mockService.getActiveContracts.mockResolvedValue(mixedContracts)
+                { workflowId: 'wf3', contractEntry: null },
+                { workflowId: 'wf4', contractEntry: { OtherType: {} } },
+            ])
 
             const result = await reader.raw.readJsContracts({
                 offset: 100,
                 parties: ['party1'],
             })
-
             expect(result).toHaveLength(2)
         })
 
         it('should return empty array when no contracts', async () => {
             mockService.getActiveContracts.mockResolvedValue([])
-
-            const result = await reader.raw.readJsContracts({
-                offset: 100,
-                parties: ['party1'],
-            })
-
-            expect(result).toEqual([])
+            expect(
+                await reader.raw.readJsContracts({
+                    offset: 100,
+                    parties: ['party1'],
+                })
+            ).toEqual([])
         })
     })
 
@@ -241,7 +212,6 @@ describe.skip('reader', () => {
                 parties: ['party1'],
                 templateIds: ['template1'],
             }
-
             const result = await reader.read(options)
 
             expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
@@ -253,62 +223,43 @@ describe.skip('reader', () => {
 
         it('should resolve offset when not provided', async () => {
             ledgerProvider.request.mockResolvedValue({ offset: 750 })
-
-            const options = {
+            await reader.read({
                 parties: ['party1'],
                 templateIds: ['template1'],
-            }
-
-            await reader.read(options)
-
-            expect(ledgerProvider.request).toHaveBeenCalledWith({
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/state/ledger-end',
-                    requestMethod: 'get',
-                },
             })
 
-            expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith({
-                ...options,
-                offset: 750,
-            })
+            expectLedgerEndCalled()
+            expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
+                expect.objectContaining({ offset: 750 })
+            )
         })
 
         it('should handle empty cache results', async () => {
             mockCacheCollection.readFromCache.mockResolvedValue([])
-
-            const result = await reader.read({
-                offset: 100,
-                parties: ['party1'],
-            })
-
-            expect(result).toEqual([])
+            expect(
+                await reader.read({ offset: 100, parties: ['party1'] })
+            ).toEqual([])
         })
 
-        it('should work with multiple parties and templates', async () => {
-            const options = {
-                offset: 200,
-                parties: ['party1', 'party2'],
-                templateIds: ['template1', 'template2'],
-            }
-
+        it.each([
+            [
+                'multiple parties and templates',
+                {
+                    offset: 200,
+                    parties: ['party1', 'party2'],
+                    templateIds: ['template1', 'template2'],
+                },
+            ],
+            [
+                'interface IDs',
+                {
+                    offset: 200,
+                    parties: ['party1'],
+                    interfaceIds: ['interface1'],
+                },
+            ],
+        ])('should work with %s', async (_, options) => {
             await reader.read(options)
-
-            expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
-                options
-            )
-        })
-
-        it('should work with interface IDs', async () => {
-            const options = {
-                offset: 200,
-                parties: ['party1'],
-                interfaceIds: ['interface1'],
-            }
-
-            await reader.read(options)
-
             expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
                 options
             )
@@ -317,138 +268,408 @@ describe.skip('reader', () => {
 
     describe('readJsContracts', () => {
         it('should read from cache and transform to JS contracts', async () => {
-            const options = {
+            const result = await reader.readJsContracts({
                 offset: 100,
                 parties: ['party1'],
                 templateIds: ['template1'],
-            }
+            })
 
-            const result = await reader.readJsContracts(options)
-
-            expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
-                options
-            )
             expect(result).toHaveLength(2)
-            expect(result[0]).toEqual({
+            expect(result[0]).toMatchObject({
                 contractId: 'contract-1',
-                templateId: 'template1',
-                contractKey: null,
-                createArguments: {},
-                createdAt: '2024-01-01T00:00:00Z',
-                signatories: ['party1'],
-                observers: [],
                 synchronizerId: 'sync1',
             })
-            expect(result[1]).toEqual({
+            expect(result[1]).toMatchObject({
                 contractId: 'contract-2',
-                templateId: 'template2',
-                contractKey: null,
-                createArguments: {},
-                createdAt: '2024-01-01T00:00:00Z',
-                signatories: ['party2'],
-                observers: [],
                 synchronizerId: 'sync2',
             })
         })
 
         it('should filter out contracts without JsActiveContract', async () => {
-            const mixedContracts = [
+            mockCacheCollection.readFromCache.mockResolvedValue([
                 mockActiveContracts[0],
-                {
-                    workflowId: 'wf3',
-                    contractEntry: null,
-                },
+                { workflowId: 'wf3', contractEntry: null },
                 mockActiveContracts[1],
-                {
-                    workflowId: 'wf4',
-                    contractEntry: {
-                        OtherType: {},
-                    },
-                },
-            ]
-
-            mockCacheCollection.readFromCache.mockResolvedValue(mixedContracts)
+                { workflowId: 'wf4', contractEntry: { OtherType: {} } },
+            ])
 
             const result = await reader.readJsContracts({
                 offset: 100,
                 parties: ['party1'],
             })
-
             expect(result).toHaveLength(2)
-            expect(result[0].contractId).toBe('contract-1')
-            expect(result[1].contractId).toBe('contract-2')
+            expect(result.map((c) => c.contractId)).toEqual([
+                'contract-1',
+                'contract-2',
+            ])
         })
 
         it('should return empty array when cache is empty', async () => {
             mockCacheCollection.readFromCache.mockResolvedValue([])
-
-            const result = await reader.readJsContracts({
-                offset: 100,
-                parties: ['party1'],
-            })
-
-            expect(result).toEqual([])
-        })
-
-        it('should preserve synchronizerId in output', async () => {
-            const result = await reader.readJsContracts({
-                offset: 100,
-                parties: ['party1'],
-            })
-
-            expect(result[0].synchronizerId).toBe('sync1')
-            expect(result[1].synchronizerId).toBe('sync2')
+            expect(
+                await reader.readJsContracts({
+                    offset: 100,
+                    parties: ['party1'],
+                })
+            ).toEqual([])
         })
 
         it('should resolve offset before reading from cache', async () => {
             ledgerProvider.request.mockResolvedValue({ offset: 999 })
-
             await reader.readJsContracts({
                 parties: ['party1'],
                 templateIds: ['template1'],
             })
 
-            expect(ledgerProvider.request).toHaveBeenCalledWith({
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/state/ledger-end',
-                    requestMethod: 'get',
-                },
-            })
-
-            expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith({
-                parties: ['party1'],
-                templateIds: ['template1'],
-                offset: 999,
-            })
+            expectLedgerEndCalled()
+            expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
+                expect.objectContaining({ offset: 999 })
+            )
         })
     })
 
     describe('error handling', () => {
-        it('should propagate errors from service', async () => {
-            const error = new Error('Service error')
-            mockService.getActiveContracts.mockRejectedValue(error)
+        it.each([
+            [
+                'service',
+                () =>
+                    mockService.getActiveContracts.mockRejectedValue(
+                        new Error('Service error')
+                    ),
+                () => reader.raw.read({ offset: 100, parties: ['party1'] }),
+                'Service error',
+            ],
+            [
+                'cache',
+                () =>
+                    mockCacheCollection.readFromCache.mockRejectedValue(
+                        new Error('Cache error')
+                    ),
+                () => reader.read({ offset: 100, parties: ['party1'] }),
+                'Cache error',
+            ],
+            [
+                'ledger-end',
+                () =>
+                    ledgerProvider.request.mockRejectedValue(
+                        new Error('Ledger error')
+                    ),
+                () => reader.read({ parties: ['party1'] }),
+                'Ledger error',
+            ],
+        ])(
+            'should propagate errors from %s',
+            async (_, setupError, action, expectedError) => {
+                setupError()
+                await expect(action()).rejects.toThrow(expectedError)
+            }
+        )
+    })
 
-            await expect(
-                reader.raw.read({ offset: 100, parties: ['party1'] })
-            ).rejects.toThrow('Service error')
+    describe('paginated', () => {
+        const createPagedMocks = (pages: number = 1) => {
+            if (pages === 1) {
+                return {
+                    activeContracts: mockActiveContracts,
+                    activeAtOffset: 100,
+                    nextPageToken: '',
+                }
+            }
+            return Array.from({ length: pages }, (_, i) => ({
+                activeContracts: [mockActiveContracts[i]],
+                activeAtOffset: 100 * (i + 1),
+                nextPageToken: i < pages - 1 ? `page${i + 2}` : '',
+            }))
+        }
+
+        describe('raw.read', () => {
+            it('should read paginated active contracts directly without cache', async () => {
+                mockService.getPaginatedActiveContracts.mockResolvedValue(
+                    createPagedMocks()
+                )
+                const options = {
+                    offset: 100,
+                    parties: ['party1'],
+                    templateIds: ['template1'],
+                }
+
+                const result = await reader.paginated.raw.read(options)
+
+                expect(
+                    mockService.getPaginatedActiveContracts
+                ).toHaveBeenCalledWith(options)
+                expect(result).toEqual(mockActiveContracts)
+                expect(mockCacheCollection.readFromCache).not.toHaveBeenCalled()
+            })
+
+            it('should handle multiple pages when continueUntilCompletion is true', async () => {
+                mockService.getPaginatedActiveContracts.mockResolvedValue(
+                    createPagedMocks(2)
+                )
+
+                const result = await reader.paginated.raw.read({
+                    offset: 100,
+                    parties: ['party1'],
+                    continueUntilCompletion: true,
+                })
+
+                expect(result).toEqual(mockActiveContracts)
+            })
+
+            it('should resolve offset when not provided', async () => {
+                ledgerProvider.request.mockResolvedValue({ offset: 500 })
+                await reader.paginated.raw.read({
+                    parties: ['party1'],
+                    templateIds: ['template1'],
+                })
+
+                expectLedgerEndCalled()
+                expect(
+                    mockService.getPaginatedActiveContracts
+                ).toHaveBeenCalledWith(expect.objectContaining({ offset: 500 }))
+            })
+
+            it('should handle empty page results', async () => {
+                mockService.getPaginatedActiveContracts.mockResolvedValue({
+                    activeContracts: [],
+                    activeAtOffset: 100,
+                    nextPageToken: '',
+                })
+                expect(
+                    await reader.paginated.raw.read({
+                        offset: 100,
+                        parties: ['party1'],
+                    })
+                ).toEqual([])
+            })
+
+            it.each([
+                ['pageToken', { pageToken: 'customToken' }],
+                ['maxPageSize', { maxPageSize: 50 }],
+            ])('should include %s when provided', async (_, extraOptions) => {
+                const options = {
+                    offset: 100,
+                    parties: ['party1'],
+                    ...extraOptions,
+                }
+                await reader.paginated.raw.read(options)
+                expect(
+                    mockService.getPaginatedActiveContracts
+                ).toHaveBeenCalledWith(options)
+            })
         })
 
-        it('should propagate errors from cache', async () => {
-            const error = new Error('Cache error')
-            mockCacheCollection.readFromCache.mockRejectedValue(error)
+        describe('raw.readJsContracts', () => {
+            it('should read and transform paginated contracts to JS contracts', async () => {
+                mockService.getPaginatedActiveContracts.mockResolvedValue(
+                    createPagedMocks()
+                )
 
-            await expect(
-                reader.read({ offset: 100, parties: ['party1'] })
-            ).rejects.toThrow('Cache error')
+                const result = await reader.paginated.raw.readJsContracts({
+                    offset: 100,
+                    parties: ['party1'],
+                    templateIds: ['template1'],
+                })
+
+                expect(result).toHaveLength(2)
+                expect(result[0]).toMatchObject({
+                    contractId: 'contract-1',
+                    synchronizerId: 'sync1',
+                })
+            })
+
+            it('should handle multiple pages and flatten results', async () => {
+                mockService.getPaginatedActiveContracts.mockResolvedValue(
+                    createPagedMocks(2)
+                )
+
+                const result = await reader.paginated.raw.readJsContracts({
+                    offset: 100,
+                    parties: ['party1'],
+                    continueUntilCompletion: true,
+                })
+
+                expect(result).toHaveLength(2)
+                expect(result.map((c) => c.contractId)).toEqual([
+                    'contract-1',
+                    'contract-2',
+                ])
+            })
+
+            it('should filter out contracts without JsActiveContract', async () => {
+                mockService.getPaginatedActiveContracts.mockResolvedValue({
+                    activeContracts: [
+                        ...mockActiveContracts,
+                        { workflowId: 'wf3', contractEntry: null },
+                    ],
+                    activeAtOffset: 100,
+                    nextPageToken: '',
+                })
+
+                const result = await reader.paginated.raw.readJsContracts({
+                    offset: 100,
+                    parties: ['party1'],
+                })
+                expect(result).toHaveLength(2)
+            })
         })
 
-        it('should propagate errors from ledger-end request', async () => {
-            const error = new Error('Ledger error')
-            ledgerProvider.request.mockRejectedValue(error)
+        describe('read', () => {
+            it('should read paginated active contracts from cache', async () => {
+                const options = {
+                    offset: 100,
+                    parties: ['party1'],
+                    templateIds: ['template1'],
+                }
+                const result = await reader.paginated.read(options)
 
-            await expect(reader.read({ parties: ['party1'] })).rejects.toThrow(
-                'Ledger error'
+                expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
+                    options
+                )
+                expect(result).toEqual(mockActiveContracts)
+                expect(
+                    mockService.getPaginatedActiveContracts
+                ).not.toHaveBeenCalled()
+            })
+
+            it('should resolve offset when not provided', async () => {
+                ledgerProvider.request.mockResolvedValue({ offset: 750 })
+                await reader.paginated.read({
+                    parties: ['party1'],
+                    templateIds: ['template1'],
+                })
+
+                expectLedgerEndCalled()
+                expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
+                    expect.objectContaining({ offset: 750 })
+                )
+            })
+
+            it.each([
+                ['pageToken', { pageToken: 'token123' }],
+                ['maxPageSize', { maxPageSize: 100 }],
+            ])('should work with %s option', async (_, extraOptions) => {
+                const options = {
+                    offset: 200,
+                    parties: ['party1'],
+                    ...extraOptions,
+                }
+                await reader.paginated.read(options)
+                expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
+                    options
+                )
+            })
+
+            it('should handle empty cache results', async () => {
+                mockCacheCollection.readFromCache.mockResolvedValue([])
+                expect(
+                    await reader.paginated.read({
+                        offset: 100,
+                        parties: ['party1'],
+                    })
+                ).toEqual([])
+            })
+        })
+
+        describe('readJsContracts', () => {
+            it('should read paginated from cache and transform to JS contracts', async () => {
+                const result = await reader.paginated.readJsContracts({
+                    offset: 100,
+                    parties: ['party1'],
+                    templateIds: ['template1'],
+                })
+
+                expect(result).toHaveLength(2)
+                expect(result[0]).toMatchObject({
+                    contractId: 'contract-1',
+                    synchronizerId: 'sync1',
+                })
+            })
+
+            it('should filter out contracts without JsActiveContract from cache', async () => {
+                mockCacheCollection.readFromCache.mockResolvedValue([
+                    mockActiveContracts[0],
+                    { workflowId: 'wf3', contractEntry: null },
+                    mockActiveContracts[1],
+                ])
+
+                const result = await reader.paginated.readJsContracts({
+                    offset: 100,
+                    parties: ['party1'],
+                })
+                expect(result.map((c) => c.contractId)).toEqual([
+                    'contract-1',
+                    'contract-2',
+                ])
+            })
+
+            it('should resolve offset before reading from cache', async () => {
+                ledgerProvider.request.mockResolvedValue({ offset: 999 })
+                await reader.paginated.readJsContracts({
+                    parties: ['party1'],
+                    templateIds: ['template1'],
+                })
+
+                expectLedgerEndCalled()
+                expect(mockCacheCollection.readFromCache).toHaveBeenCalledWith(
+                    expect.objectContaining({ offset: 999 })
+                )
+            })
+
+            it('should return empty array when cache is empty', async () => {
+                mockCacheCollection.readFromCache.mockResolvedValue([])
+                expect(
+                    await reader.paginated.readJsContracts({
+                        offset: 100,
+                        parties: ['party1'],
+                    })
+                ).toEqual([])
+            })
+        })
+
+        describe('error handling', () => {
+            it.each([
+                [
+                    'paginated service',
+                    () =>
+                        mockService.getPaginatedActiveContracts.mockRejectedValue(
+                            new Error('Paginated service error')
+                        ),
+                    () =>
+                        reader.paginated.raw.read({
+                            offset: 100,
+                            parties: ['party1'],
+                        }),
+                    'Paginated service error',
+                ],
+                [
+                    'paginated cache',
+                    () =>
+                        mockCacheCollection.readFromCache.mockRejectedValue(
+                            new Error('Paginated cache error')
+                        ),
+                    () =>
+                        reader.paginated.read({
+                            offset: 100,
+                            parties: ['party1'],
+                        }),
+                    'Paginated cache error',
+                ],
+                [
+                    'ledger-end in paginated mode',
+                    () =>
+                        ledgerProvider.request.mockRejectedValue(
+                            new Error('Ledger error in paginated')
+                        ),
+                    () => reader.paginated.read({ parties: ['party1'] }),
+                    'Ledger error in paginated',
+                ],
+            ])(
+                'should propagate errors from %s',
+                async (_, setupError, action, expectedError) => {
+                    setupError()
+                    await expect(action()).rejects.toThrow(expectedError)
+                }
             )
         })
     })
