@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { type ReactNode } from 'react'
-import { Box, ButtonBase, Chip, Typography } from '@mui/material'
+import { type KeyboardEvent, type ReactNode } from 'react'
+import { Box, Chip, Typography } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import type {
     ActionItem,
@@ -22,14 +22,24 @@ interface ActionRequiredRowProps {
 }
 
 export function ActionRequiredRow({ item, onClick }: ActionRequiredRowProps) {
+    const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onClick()
+        }
+    }
+
     return (
         <Box
-            component={ButtonBase}
-            type="button"
+            role="button"
+            tabIndex={0}
             aria-haspopup="dialog"
             aria-label={`Open ${getItemRowLabel(item)}`}
             onClick={onClick}
+            onKeyDown={handleKeyDown}
             sx={{
+                cursor: 'pointer',
+                userSelect: 'none',
                 width: '100%',
                 minHeight: 80,
                 p: 2,
@@ -50,7 +60,7 @@ export function ActionRequiredRow({ item, onClick }: ActionRequiredRowProps) {
                     bgcolor: 'action.hover',
                     borderColor: 'text.secondary',
                 },
-                '&.Mui-focusVisible': {
+                '&:focus-visible': {
                     outline: (theme) =>
                         `2px solid ${theme.palette.secondary.main}`,
                     outlineOffset: 2,

@@ -10,6 +10,10 @@ export function getExpiryTime(expiry: string): number {
     return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time
 }
 
+export function isExpired(expiry: string): boolean {
+    return getExpiryTime(expiry) <= Date.now()
+}
+
 export function formatIsoDateTimeString(date: string): string {
     const parsedDate = new Date(date)
     return Number.isNaN(parsedDate.getTime())

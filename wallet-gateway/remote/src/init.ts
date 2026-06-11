@@ -18,10 +18,8 @@ import {
     migrator as signingMigrator,
 } from '@canton-network/core-signing-store-sql'
 import { ConfigUtils } from './config/ConfigUtils.js'
-import {
-    SigningDriverInterface,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
+import { SigningProvider } from '@canton-network/core-signing-lib'
+import type { SigningDrivers } from './signing/signing-drivers.js'
 import { ParticipantSigningDriver } from '@canton-network/core-signing-participant'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import DfnsSigningProvider from '@canton-network/core-signing-dfns'
@@ -284,7 +282,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const keyInfo = { apiKey, apiSecret }
     const userApiKeys = new Map([['user', keyInfo]])
 
-    const drivers: Partial<Record<SigningProvider, SigningDriverInterface>> = {
+    const drivers: SigningDrivers = {
         [SigningProvider.PARTICIPANT]: new ParticipantSigningDriver(),
         [SigningProvider.WALLET_KERNEL]: new InternalSigningDriver(
             signingStore

@@ -10,10 +10,12 @@ import {
 } from '@canton-network/core-wallet-auth'
 import {
     LedgerApi,
+    MessageRaw,
     Network,
     PartyLevelRight,
     Session,
     Transaction,
+    UserLevelRight,
     Wallet,
 } from '@canton-network/core-wallet-store'
 import { Kysely } from 'kysely'
@@ -99,6 +101,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)
@@ -139,6 +142,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet2: Wallet = {
                 primary: false,
@@ -149,6 +153,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet3: Wallet = {
                 primary: false,
@@ -159,6 +164,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network2',
+                rights: [PartyLevelRight.CanActAs],
             }
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)
@@ -207,6 +213,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet2: Wallet = {
                 primary: false,
@@ -217,6 +224,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)
@@ -349,6 +357,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet2: Wallet = {
                 primary: false,
@@ -359,6 +368,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network2', // Different network
+                rights: [PartyLevelRight.CanActAs],
             }
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)
@@ -409,6 +419,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet2: Wallet = {
                 primary: false,
@@ -419,6 +430,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet3: Wallet = {
                 primary: false,
@@ -429,6 +441,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network2',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet4: Wallet = {
                 primary: false,
@@ -439,6 +452,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network2',
+                rights: [PartyLevelRight.CanActAs],
             }
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)
@@ -490,6 +504,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             }
             const wallet2: Wallet = {
                 primary: false,
@@ -500,6 +515,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network2', // Different network
+                rights: [PartyLevelRight.CanActAs],
             }
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)
@@ -665,6 +681,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 publicKey: 'publicKey',
                 namespace: 'namespace',
                 networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
             })
 
             await store.setTransaction({
@@ -693,6 +710,174 @@ implementations.forEach(([name, StoreImpl]) => {
                 .selectAll()
                 .execute()
             expect(remainingTransactions).toHaveLength(0)
+        })
+
+        test('should manage idps and reject deletion when referenced by a network', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addIdp(idp2)
+            await store.addNetwork(network)
+
+            expect(await store.getIdp('idp1')).toEqual(idp)
+            await store.updateIdp({ ...idp, issuer: 'https://issuer-updated' })
+            expect(
+                (await store.listIdps()).find((i) => i.id === 'idp1')?.issuer
+            ).toBe('https://issuer-updated')
+
+            await expect(store.addIdp(idp)).rejects.toThrow(
+                'IDP idp1 already exists'
+            )
+            await expect(store.removeIdp('idp1')).rejects.toThrow(
+                'Cannot delete IDP idp1 as it is in use'
+            )
+
+            await store.removeNetwork('network1')
+            await store.removeIdp('idp1')
+            expect(await store.listIdps()).toHaveLength(1)
+        })
+
+        test('should set and read user level rights for the current network', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-user-rights',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            await store.setUserRights('network1', [
+                UserLevelRight.CanReadAsAnyParty,
+            ])
+            expect(await store.getUserRights()).toEqual([
+                UserLevelRight.CanReadAsAnyParty,
+            ])
+
+            await store.setUserRights('network1', [])
+            expect(await store.getUserRights()).toEqual([])
+        })
+
+        test('should manage message signing requests', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-messages',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            const message: MessageRaw = {
+                id: 'msg-1',
+                status: 'pending',
+                userId: authContextMock.userId,
+                partyId: 'party-msg',
+                publicKey: 'publicKey',
+                message: 'hello',
+                origin: 'https://dapp.example',
+                createdAt: new Date('2026-03-01T10:00:00.000Z'),
+            }
+
+            await store.setMessageRaw(message)
+            await store.setMessageRawStatus('msg-1', 'signed', {
+                signedAt: new Date('2026-03-01T10:01:00.000Z'),
+                signature: 'signature-bytes',
+            })
+
+            const fetched = await store.getMessageRaw('msg-1')
+            expect(fetched?.status).toBe('signed')
+            expect(fetched?.signature).toBe('signature-bytes')
+            expect(await store.listMessageRaws()).toHaveLength(1)
+
+            await store.removeMessageRaw('msg-1')
+            expect(await store.getMessageRaw('msg-1')).toBeUndefined()
+        })
+
+        test('should reject message raw with mismatched userId', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-msg-mismatch',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            await expect(
+                store.setMessageRaw({
+                    id: 'msg-bad',
+                    status: 'pending',
+                    userId: 'other-user',
+                    partyId: 'party-msg',
+                    publicKey: 'publicKey',
+                    message: 'hello',
+                    origin: null,
+                    createdAt: new Date(),
+                })
+            ).rejects.toThrow('MessageRaw userId mismatch')
+        })
+
+        test('should support latest transaction lookup and removal', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-tx-lookup',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            await store.setTransaction({
+                id: 'tx-old',
+                commandId: 'cmd-shared',
+                status: 'pending',
+                preparedTransaction: 'prepared-old',
+                preparedTransactionHash: 'hash-old',
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+                origin: 'https://dapp.example',
+            })
+            await store.setTransaction({
+                id: 'tx-new',
+                commandId: 'cmd-shared',
+                status: 'pending',
+                preparedTransaction: 'prepared-new',
+                preparedTransactionHash: 'hash-new',
+                createdAt: new Date('2026-01-02T00:00:00.000Z'),
+                origin: 'https://dapp.example',
+            })
+
+            const latest =
+                await store.getLatestTransactionByCommandId('cmd-shared')
+            expect(latest?.id).toBe('tx-new')
+
+            const signedAt = new Date('2026-01-02T00:01:00.000Z')
+            await store.setTransactionSigned('tx-new', signedAt, 'ext-tx-1')
+            expect((await store.getTransaction('tx-new'))?.externalTxId).toBe(
+                'ext-tx-1'
+            )
+
+            await store.removeTransaction('tx-old')
+            expect(await store.getTransaction('tx-old')).toBeUndefined()
+            expect(await store.listTransactions()).toHaveLength(1)
+        })
+
+        test('should throw when updating a missing transaction or message', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-missing-updates',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            await expect(
+                store.setTransactionStatus('missing-tx', 'failed')
+            ).rejects.toThrow('Transaction not found')
+
+            await expect(
+                store.setMessageRawStatus('missing-msg', 'failed')
+            ).rejects.toThrow('MessageRaw not found')
         })
     })
 })

@@ -7,14 +7,21 @@ export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: ['src/migrations-test/**'],
+            exclude: [
+                'src/migrations/**',
+                'src/migrations-test/**',
+                'src/cli.ts',
+                'src/bootstrap.ts',
+                'src/index.ts',
+                'src/migrator.ts',
+            ],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov'],
             thresholds: {
-                lines: 0,
-                functions: 0,
-                branches: 0,
-                statements: 0,
+                lines: 80,
+                functions: 80,
+                branches: 70,
+                statements: 80,
             },
         },
         projects: [
