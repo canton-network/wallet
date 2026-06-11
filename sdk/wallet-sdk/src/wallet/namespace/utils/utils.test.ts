@@ -6,6 +6,7 @@ import { parseAssets, ParsedURL } from './url.js'
 import { SDKContext } from '../../sdk.js'
 import { SDKLogger } from '../../logger/index.js'
 import { SDKError, SDKErrorHandler } from '../../error/index.js'
+import { SDKUtilsNamespace } from './index.js'
 
 const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     request: vi.fn().mockResolvedValue(undefined),
@@ -89,5 +90,34 @@ describe('utils package', () => {
         }
 
         expect(() => parseAssets(ctx, [asset])).toThrow()
+    })
+
+    it('tests ping service', () => {
+        const utils = new SDKUtilsNamespace({
+            logger: new SDKLogger('console'),
+            error: new SDKErrorHandler(new SDKLogger('console')),
+        })
+
+        const ping = utils.ping.create([
+            {
+                initiator: 'alice::abc',
+                responder: 'bob::def',
+                id: 'c5977c20-5078-46b0-ad3d-eef9b27ec981',
+            },
+        ])
+
+        expect(ping).toStrictEqual([
+            {
+                CreateCommand: {
+                    createArguments: {
+                        id: 'c5977c20-5078-46b0-ad3d-eef9b27ec981',
+                        initiator: 'alice::abc',
+                        responder: 'bob::def',
+                    },
+                    templateId:
+                        '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
+                },
+            },
+        ])
     })
 })
