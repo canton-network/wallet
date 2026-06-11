@@ -5,15 +5,7 @@
  * Shared Token Standard types for the TestToken registry server.
  *
  * The request/response data shapes are reused directly from the generated
- * OpenAPI clients in `@canton-network/core-token-standard` (themselves derived
- * from the four off-ledger API specs in api-specs/splice/0.6.1/). Only the
- * server-side handler interfaces — which are an abstraction specific to this
- * example registry — are declared here.
- *
- * The one exception is `ChoiceContext`: the generated type models
- * `choiceContextData` as an empty object, but the registry must emit a Daml
- * `ChoiceContext` record (`{ values: {} }`), so a slightly looser local type is
- * used for the values the handlers produce.
+ * OpenAPI clients in `@canton-network/core-token-standard`
  */
 
 import type {
@@ -46,11 +38,6 @@ export type ListInstrumentsResponse =
 
 // ── Local context type ─────────────────────────────────────────────────────
 
-/**
- * The choice context the registry returns. `choiceContextData` is the Daml
- * `ChoiceContext` record (`{ values: <map> }`) that the SDK forwards verbatim
- * into the prepared transaction's `extraArgs.context`.
- */
 export interface ChoiceContext {
     choiceContextData: { values: Record<string, unknown> }
     disclosedContracts: DisclosedContract[]
