@@ -5,8 +5,6 @@ import type { Logger } from 'pino'
 import {
     buildCreateTokenRulesCommand,
     buildMintTokenCommand,
-    buildTransferTokenCommand,
-    buildAcceptTransferInstructionCommand,
 } from '@canton-network/core-test-token'
 import * as SpliceTestTokenV1 from '@canton-network/core-test-token'
 import type { MultiSyncSetup } from './_setup.js'
@@ -14,18 +12,18 @@ import { BOB_TOKEN_MINT_AMOUNT } from './_constants.js'
 
 const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
 
-const MS_24_HOURS = 24 * 60 * 60 * 1000
-
 export async function createTokenRulesAndMintForBob(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
     const {
         appProviderSdk,
+        tokenNamespaceAppProvider,
         bob,
         tokenAdmin,
         globalSynchronizerId,
         appSynchronizerId,
+        testTokenRegistryUrl,
     } = setup
 
     await appProviderSdk.ledger.executeOnSynchronizers(
@@ -54,48 +52,33 @@ export async function createTokenRulesAndMintForBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
-    const [tokenRulesContracts, adminTokenHoldings] = await Promise.all([
-        appProviderSdk.ledger.acs.read({
-            templateIds: [TestTokenV1.TokenRules.templateId],
-            parties: [tokenAdmin.partyId],
-            filterByParty: true,
-        }),
-        appProviderSdk.ledger.acs.read({
-            templateIds: [TestTokenV1.Token.templateId],
-            parties: [tokenAdmin.partyId],
-            filterByParty: true,
-        }),
-    ])
-    const appTokenRules = tokenRulesContracts.find(
-        (c) => c.synchronizerId === appSynchronizerId
-    )
-    if (!appTokenRules)
-        throw new Error(
-            'TokenRules not found on app synchronizer after creation'
-        )
+    const adminTokenHoldings = await appProviderSdk.ledger.acs.read({
+        templateIds: [TestTokenV1.Token.templateId],
+        parties: [tokenAdmin.partyId],
+        filterByParty: true,
+    })
     const adminTokenCid = adminTokenHoldings[0]?.contractId
     if (!adminTokenCid)
         throw new Error('TokenAdmin Token holding not found after mint')
 
+    // TokenAdmin offers the freshly-minted TestToken to Bob. The transfer factory
+    // and choice context come from the registry's transfer-instruction-v1 API
+    // (the TestToken registry is also resolved via the metadata-v1 API).
+    const [transferCommand, transferDisclosed] =
+        await tokenNamespaceAppProvider.transfer.create({
+            sender: tokenAdmin.partyId,
+            recipient: bob.partyId,
+            amount: BOB_TOKEN_MINT_AMOUNT,
+            instrumentId: 'TestToken',
+            registryUrl: testTokenRegistryUrl,
+            inputUtxos: [adminTokenCid],
+        })
+
     await appProviderSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
-            commands: [
-                buildTransferTokenCommand({
-                    tokenRulesCid: appTokenRules.contractId,
-                    expectedAdmin: tokenAdmin.partyId,
-                    sender: tokenAdmin.partyId,
-                    receiver: bob.partyId,
-                    amount: BOB_TOKEN_MINT_AMOUNT,
-                    admin: tokenAdmin.partyId,
-                    inputHoldingCids: [adminTokenCid],
-                    requestedAt: new Date(Date.now()).toISOString(),
-                    executeBefore: new Date(
-                        Date.now() + MS_24_HOURS
-                    ).toISOString(),
-                }),
-            ],
-            disclosedContracts: [],
+            commands: [transferCommand],
+            disclosedContracts: transferDisclosed,
             synchronizerId: appSynchronizerId,
         })
         .sign(tokenAdmin.keyPair.privateKey)
@@ -110,17 +93,25 @@ export async function createTokenRulesAndMintForBob(
     if (!transferOfferCid)
         throw new Error('TokenTransferOffer not found for Bob')
 
+    // Bob accepts the transfer offer using the registry's transfer-instruction-v1
+    // accept choice context.
+    const [acceptCommand, acceptDisclosed] =
+        await tokenNamespaceAppProvider.transfer.accept({
+            transferInstructionCid: transferOfferCid,
+            registryUrl: testTokenRegistryUrl,
+        })
+
     await appProviderSdk.ledger
         .prepare({
             partyId: bob.partyId,
-            commands: [buildAcceptTransferInstructionCommand(transferOfferCid)],
-            disclosedContracts: [],
+            commands: [acceptCommand],
+            disclosedContracts: acceptDisclosed,
             synchronizerId: appSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        `TokenAdmin: TokenRules created on global + app synchronizers; Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer`
+        `TokenAdmin: TokenRules created on global + app synchronizers; Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer via registry transfer-factory`
     )
 }

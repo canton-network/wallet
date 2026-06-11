@@ -1,7 +1,13 @@
 import pino from 'pino'
+import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
-import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
+import { startRegistry } from './_registry/index.js'
+import {
+    TEST_TOKEN_REGISTRY_PORT,
+    TRADE_AMULET_AMOUNT,
+    TRADE_TOKEN_AMOUNT,
+} from './_constants.js'
 import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
 import { createTokenRulesAndMintForBob } from './_token_setup.js'
 import { allocateTokenForBob } from './_token_allocation.js'
@@ -34,6 +40,16 @@ const {
     synchronizers,
     amuletAdmin,
 } = setup
+
+// ── Start the TestToken registry (CIP-56 off-ledger APIs) ───────────────────
+const registry = await startRegistry({
+    tokenAdminPartyId: tokenAdmin.partyId,
+    port: TEST_TOKEN_REGISTRY_PORT,
+    ledgerUrl: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
+    globalSynchronizerId: setup.globalSynchronizerId,
+    appSynchronizerId: setup.appSynchronizerId,
+    logger,
+})
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)
@@ -141,6 +157,7 @@ try {
         { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
         { sdk: svSdk, parties: [tradingApp.partyId] },
     ])
+    await registry.stop()
     process.exit(1)
 }
 logger.info('Contracts after settlement:')
@@ -163,4 +180,5 @@ await logAllContracts(logger, synchronizers, [
     { sdk: svSdk, parties: [tradingApp.partyId] },
 ])
 
+await registry.stop()
 process.exit(0)
