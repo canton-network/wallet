@@ -21,8 +21,16 @@ export function ActionRequiredSection({
     isError = false,
     error,
 }: ActionRequiredSectionProps) {
-    const [selectedItem, setSelectedItem] = useState<ActionItem | null>(null)
+    const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null)
     const visibleItems = useMemo(() => items.slice(0, 3), [items])
+    const selectedItem = useMemo(
+        () =>
+            selectedItemKey
+                ? (items.find((item) => getItemKey(item) === selectedItemKey) ??
+                  null)
+                : null,
+        [items, selectedItemKey]
+    )
 
     if (isError) {
         return (
@@ -64,16 +72,20 @@ export function ActionRequiredSection({
                     <ActionRequiredRow
                         key={`${item.kind}-${item.contractId}`}
                         item={item}
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => setSelectedItemKey(getItemKey(item))}
                     />
                 ))}
             </Box>
             <ActionRequiredDialog
                 item={selectedItem}
-                onClose={() => setSelectedItem(null)}
+                onClose={() => setSelectedItemKey(null)}
             />
         </SectionShell>
     )
+}
+
+function getItemKey(item: ActionItem) {
+    return `${item.kind}-${item.contractId}`
 }
 
 interface SectionShellProps {
