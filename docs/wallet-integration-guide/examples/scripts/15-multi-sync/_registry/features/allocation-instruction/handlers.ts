@@ -5,12 +5,8 @@
  * TestToken implementation of the allocation-instruction-v1 API
  * (api-specs/splice/0.6.1/allocation-instruction-v1.yaml).
  *
- * The allocation factory is the live `TokenRules` contract on the
- * *global synchronizer*: Bob reassigns his holding to global and then exercises
- * `AllocationFactory_Allocate` there so the resulting allocation can be consumed
- * atomically by `OTCTrade_Settle` (which also runs on global). The disclosed
- * factory must therefore target the global synchronizer to avoid a
- * PRESCRIBED_SYNCHRONIZER_ID_MISMATCH.
+ * The allocation factory return live `TokenRules` contract on the
+ * *global synchronizer*
  */
 
 import type {

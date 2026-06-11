@@ -35,13 +35,6 @@ import { createAllocationHandlers } from './features/allocation/handlers.js'
 // ── static instrument metadata ─────────────────────────────────────────────
 const TEST_TOKEN_INSTRUMENT_ID = 'TestToken'
 
-const SUPPORTED_APIS: Record<string, number> = {
-    'splice-api-token-metadata-v1': 1,
-    'splice-api-token-transfer-instruction-v1': 1,
-    'splice-api-token-allocation-instruction-v1': 1,
-    'splice-api-token-allocation-v1': 1,
-}
-
 // ── Route table (source of truth: api-specs/splice/0.6.1/) ────────────────
 interface RouteEntry {
     method: string
@@ -169,7 +162,6 @@ export async function startRegistry(
 
     const metadata = createMetadataHandlers({
         tokenAdminPartyId,
-        supportedApis: SUPPORTED_APIS,
         instrumentId: TEST_TOKEN_INSTRUMENT_ID,
     })
     const transfer = createTransferHandlers({
