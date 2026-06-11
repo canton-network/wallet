@@ -29,12 +29,7 @@ import { ledgerPrepareParams, type PrepareParams } from '../utils.js'
 import {
     AuthContext,
     AuthTokenProvider,
-    assertServiceAccountUserAllowed,
 } from '@canton-network/core-wallet-auth'
-
-export interface ServiceAccountConfig {
-    allowedUsers?: string[]
-}
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -180,14 +175,8 @@ export class TransactionService {
         authContext: AuthContext,
         network: Network,
         wallet: Wallet,
-        transaction: Transaction,
-        serviceAccountConfig: ServiceAccountConfig = {}
+        transaction: Transaction
     ): Promise<SignAndExecuteResult> {
-        assertServiceAccountUserAllowed(
-            authContext.userId,
-            serviceAccountConfig.allowedUsers
-        )
-
         const signParams: SignParams = {
             transactionId: transaction.id,
             partyId: wallet.partyId,

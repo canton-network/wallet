@@ -575,14 +575,11 @@ When a network uses **`client_credentials`** for `auth` (machine-to-machine), th
 
 For setup prerequisites (ledger user, wallet, signing provider, session) and step-by-step automation examples, see [Automations](../automations/index.md).
 
-Optional server settings:
+Optional server setting for external custody signers:
 
 ```json
 {
     "server": {
-        "serviceAccount": {
-            "allowedUsers": ["ledger-user-id-from-jwt-sub"]
-        },
         "signingWorker": {
             "pollInterval": 5000
         }
@@ -590,7 +587,6 @@ Optional server settings:
 }
 ```
 
-- **`allowedUsers`**: When set, only these JWT `sub` values may use automation. Omit to allow any authenticated user on a `client_credentials` network.
 - **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns) when automation signing stays `pending` until custody approves.
 
 ## Configuring Signing Store

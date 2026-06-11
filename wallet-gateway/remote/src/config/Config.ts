@@ -73,18 +73,6 @@ export const serverConfigSchema = z.object({
         description:
             'The JWT claim (e.g. "sub") identifying the admin user. If set, requests with a matching claim will be granted admin privileges.',
     }),
-    serviceAccount: z
-        .object({
-            allowedUsers: z.array(z.string()).optional().meta({
-                description:
-                    'Optional allow-list of ledger user IDs (JWT sub) that service accounts may automate. When omitted, all authenticated users are allowed.',
-            }),
-        })
-        .optional()
-        .meta({
-            description:
-                'Service account automation settings for machine-to-machine (client credentials) flows.',
-        }),
     signingWorker: z.preprocess(
         (val) => val ?? {},
         z.object({

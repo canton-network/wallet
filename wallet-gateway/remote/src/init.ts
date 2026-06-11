@@ -356,10 +356,6 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const kernelInfo = config.kernel
 
-    const serviceAccountConfig = {
-        allowedUsers: config.server.serviceAccount?.allowedUsers,
-    }
-
     const resolveIdp = async (idpId: string): Promise<Idp> => {
         const idps = await store.listIdps()
         const idp = idps.find((i) => i.id === idpId)
@@ -380,7 +376,6 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const dappControllerDeps = {
         signingDrivers: drivers,
-        serviceAccountConfig,
         createAccessTokenProvider,
     }
 
@@ -389,7 +384,6 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     })
     signingWorker = new SigningWorker({
         intervalMs: config.server.signingWorker.pollInterval,
-        serviceAccountConfig,
         signingDrivers: drivers,
         store,
         notificationService,

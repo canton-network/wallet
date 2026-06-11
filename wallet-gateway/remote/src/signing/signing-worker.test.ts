@@ -98,7 +98,6 @@ function createWorker(store: {
     return {
         worker: new SigningWorker({
             intervalMs: 1000,
-            serviceAccountConfig: {},
             signingDrivers: {},
             store: store as never,
             notificationService: {

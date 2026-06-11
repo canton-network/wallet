@@ -48,8 +48,6 @@ Complete every item below before calling `prepareExecute` from automation.
 
 The Gateway identifies the acting user from the JWT **`sub`** claim. That value must be the **ledger user ID** you intend to automate — not the OAuth client ID, unless your IDP deliberately maps them to the same value.
 
-If `server.serviceAccount.allowedUsers` is configured, the user's `sub` must appear in that list.
-
 ### 2. Wallet (party) must exist with ledger rights
 
 `prepareExecute` uses the user's **primary wallet** in the Gateway store. That wallet represents a **party** the user may act as on the ledger.
@@ -136,14 +134,11 @@ Configure the target network with M2M OAuth for normal ledger access:
 
 `adminAuth` is required when the user has **no wallets yet** and the Gateway should discover parties from the ledger on `addSession`. See [Authentication: `auth` and `adminAuth`](../configuration/index.md#authentication-auth-and-adminauth).
 
-### Server: service account settings
+### Server: signing worker
 
 ```json
 {
     "server": {
-        "serviceAccount": {
-            "allowedUsers": ["automation-ledger-user-id"]
-        },
         "signingWorker": {
             "pollInterval": 5000
         }
@@ -151,10 +146,9 @@ Configure the target network with M2M OAuth for normal ledger access:
 }
 ```
 
-| Field                        | Description                                                                                                                  |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `allowedUsers`               | Optional allow-list of JWT `sub` values permitted to use automation. Omit to allow any authenticated user on an M2M network. |
-| `signingWorker.pollInterval` | How often the Signing worker polls external signers when a transaction stays `pending` after submit. Default: `5000` ms.     |
+| Field                        | Description                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `signingWorker.pollInterval` | How often the Signing worker polls external signers when a transaction stays `pending` after submit. Default: `5000` ms. |
 
 ### Signing provider configuration
 
@@ -306,7 +300,7 @@ See [APIs — Server-Sent Events](../apis/index.md#server-sent-events-sse-suppor
 
 | Step | Action                                                                                   | API            |
 | ---- | ---------------------------------------------------------------------------------------- | -------------- |
-| 1    | Configure M2M network + signing provider + `serviceAccount`                              | Gateway config |
+| 1    | Configure M2M network + signing provider                                                 | Gateway config |
 | 2    | Obtain JWT with correct `sub` (ledger user)                                              | Your IDP       |
 | 3    | `addSession` for target network (recommended; required when multiple M2M networks exist) | User API       |
 | 4    | Create / sync wallet; set primary; confirm signing provider                              | User API / UI  |
@@ -319,7 +313,6 @@ Treat service account automation as a **critical dependency** in production. The
 
 ### Configuration hardening
 
-- Set **`server.serviceAccount.allowedUsers`** to an explicit allow-list of ledger user IDs your automations may act as.
 - Configure **`adminAuth`** even when wallets are pre-provisioned — recovery flows and manual sync still depend on it.
 - Verify every automated wallet uses a [signing provider](../signing-providers/index.md) that is configured and monitored in the target environment.
 - Use separate OAuth clients for automation (`auth`) and administration (`adminAuth`) where your IDP supports it.
@@ -355,33 +348,30 @@ Before promoting an automation to production, verify in a staging environment:
 1. JWT `sub` matches the intended ledger user.
 2. `listAccounts` (DApp API) returns the expected primary party.
 3. A test `prepareExecute` reaches `executed` (or `pending` → `executed` for external signers).
-4. `allowedUsers` rejects tokens for non-approved users when configured.
 
 ## Security recommendations
 
-- Set **`allowedUsers`** in production to restrict which ledger users automation may impersonate.
 - Store `clientSecret` values in environment variables or Kubernetes secrets (`clientSecretEnv`), not in plain config files.
 - Use a dedicated OAuth client for `auth` (automation) separate from `adminAuth` when your IDP supports least-privilege clients.
 - Prefer external custody signers ([Signing providers](../signing-providers/index.md)) over `wallet-kernel` internal signing in production.
 
 ## Troubleshooting
 
-| Symptom                                                  | Likely cause                                                                                        |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `No primary wallet found`                                | No wallet in store, or none marked primary — run setup step 3                                       |
-| `No session found`                                       | Missing session and automatic bootstrap could not resolve network — call `addSession`               |
-| `Multiple client_credentials networks configured`        | Call `addSession` with explicit `networkId`                                                         |
-| `No primary wallet found. Create or sync a wallet…`      | Wallet setup incomplete — see prerequisite 2                                                        |
-| `User "…" is not allowed for service account automation` | `sub` not in `allowedUsers`                                                                         |
-| `No driver found for …`                                  | Signing provider not configured on Gateway — see [Signing providers](../signing-providers/index.md) |
-| Transaction stays `pending`                              | External signer awaiting approval; check custody dashboard and Signing worker logs                  |
-| HTTP 401 on User API                                     | Expired token or missing session for protected methods                                              |
+| Symptom                                             | Likely cause                                                                                        |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `No primary wallet found`                           | No wallet in store, or none marked primary — run setup step 3                                       |
+| `No session found`                                  | Missing session and automatic bootstrap could not resolve network — call `addSession`               |
+| `Multiple client_credentials networks configured`   | Call `addSession` with explicit `networkId`                                                         |
+| `No primary wallet found. Create or sync a wallet…` | Wallet setup incomplete — see prerequisite 2                                                        |
+| `No driver found for …`                             | Signing provider not configured on Gateway — see [Signing providers](../signing-providers/index.md) |
+| Transaction stays `pending`                         | External signer awaiting approval; check custody dashboard and Signing worker logs                  |
+| HTTP 401 on User API                                | Expired token or missing session for protected methods                                              |
 
 See also [Troubleshooting](../troubleshooting/index.md) for ledger connectivity, `addSession` HTTP 500, and auth debugging.
 
 ## Related documentation
 
-- [Configuration](../configuration/index.md) — networks, `auth`, `adminAuth`, `serviceAccount`
+- [Configuration](../configuration/index.md) — networks, `auth`, `adminAuth`, `signingWorker`
 - [Signing providers](../signing-providers/index.md) — Fireblocks, Blockdaemon, Dfns, participant
 - [APIs](../apis/index.md) — DApp and User API reference
 - [Usage](../usage/index.md) — interactive flows and User UI

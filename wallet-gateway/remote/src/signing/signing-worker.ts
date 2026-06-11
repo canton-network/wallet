@@ -6,10 +6,7 @@ import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { StoreSql } from '@canton-network/core-wallet-store-sql'
 import { Transaction } from '@canton-network/core-wallet-store'
 import { NotificationService } from '../notification/NotificationService.js'
-import {
-    ServiceAccountConfig,
-    TransactionService,
-} from '../ledger/transaction-service.js'
+import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from './signing-drivers.js'
 import {
     AccessTokenProviderFactory,
@@ -22,7 +19,6 @@ export type { AccessTokenProviderFactory } from './service-account-session.js'
 export interface SigningWorkerOptions {
     /** Poll interval in ms (`server.signingWorker.pollInterval`, default 5000). */
     intervalMs: number
-    serviceAccountConfig: ServiceAccountConfig
     signingDrivers: SigningDrivers
     store: StoreSql
     notificationService: NotificationService
@@ -202,8 +198,7 @@ export class SigningWorker {
                 authContext,
                 network,
                 wallet,
-                refreshedTx,
-                this.options.serviceAccountConfig
+                refreshedTx
             )
             if ('status' in result && result.status === 'pending') {
                 this.options.logger.info(

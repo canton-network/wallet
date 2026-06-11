@@ -33,10 +33,7 @@ import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
-import {
-    ServiceAccountConfig,
-    TransactionService,
-} from '../ledger/transaction-service.js'
+import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
 import {
     AccessTokenProviderFactory,
@@ -45,7 +42,6 @@ import {
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
-    serviceAccountConfig: ServiceAccountConfig
     createAccessTokenProvider: AccessTokenProviderFactory
 }
 
@@ -306,8 +302,7 @@ export const dappController = (
                         context,
                         network,
                         wallet,
-                        transaction,
-                        deps!.serviceAccountConfig
+                        transaction
                     )
                 } catch (error) {
                     logger.error(
