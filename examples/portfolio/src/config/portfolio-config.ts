@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type ZodError } from 'zod'
-import {
-    portfolioConfigSchema,
-    type PortfolioConfig,
-} from '@lib/schemas'
+import { portfolioConfigSchema, type PortfolioConfig } from '@lib/schemas'
 
 const DEFAULT_CONFIG_URL = '/config.json'
 
