@@ -5,7 +5,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import ConsoleLogAdapter from './adapter/console'
 import CustomLogAdapter from './adapter/custom'
 import { SDKLogger } from './logger'
-import PinoLogAdapter from './adapter/pino'
+import { LogAdapter } from './types'
 
 function makeCustomAdapter() {
     const log = vi.fn()
@@ -20,7 +20,7 @@ function setNodeEnv(value: string | undefined) {
             process.env.NODE_ENV = value
         }
     } else {
-        vi.stubGlobal('process', { env: { NODE_ENV: 'development' } })
+        vi.stubGlobal('process', { env: { NODE_ENV: value } })
     }
 }
 
@@ -83,7 +83,7 @@ describe('sdk logging package', () => {
     })
 
     describe('sdk logger logs correct levels', () => {
-        let log: ReturnType<typeof vi.fn>
+        let log: ReturnType<typeof vi.fn<LogAdapter['log']>>
         let logger: SDKLogger
         let ogNodeEnv: string | undefined
         beforeEach(() => {
@@ -92,7 +92,7 @@ describe('sdk logging package', () => {
                     ? process.env.NODE_ENV
                     : undefined
             log = vi.fn()
-            logger = new SDKLogger(new PinoLogAdapter())
+            logger = new SDKLogger(new CustomLogAdapter(log))
         })
 
         afterEach(() => {
@@ -101,8 +101,8 @@ describe('sdk logging package', () => {
         })
 
         it('debug', () => {
-            vi.stubGlobal('process', { env: { NODE_ENV: 'development' } })
-            logger.info('should not be supressed')
+            setNodeEnv('development')
+            logger.debug('should not be supressed')
             expect(log).toHaveBeenCalled()
         })
     })
