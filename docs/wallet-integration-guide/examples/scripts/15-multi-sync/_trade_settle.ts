@@ -44,10 +44,10 @@ async function withdrawAllocationsOnFailure(
     logger: Logger
 ): Promise<void> {
     const {
-        p1Sdk,
-        p2Sdk,
-        tokenNamespaceP1,
-        tokenNamespaceP2,
+        appUserSdk,
+        appProviderSdk,
+        tokenNamespaceAppUser,
+        tokenNamespaceAppProvider,
         alice,
         bob,
         tokenAdmin,
@@ -57,8 +57,8 @@ async function withdrawAllocationsOnFailure(
 
     await Promise.all([
         (async () => {
-            const [cmd, disclosed] = await tokenNamespaceP1.allocation.withdraw(
-                {
+            const [cmd, disclosed] =
+                await tokenNamespaceAppUser.allocation.withdraw({
                     allocationCid: amuletAllocationCid,
                     asset: {
                         id: 'Amulet',
@@ -68,9 +68,8 @@ async function withdrawAllocationsOnFailure(
                             localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
                         admin: amuletAdmin,
                     },
-                }
-            )
-            await p1Sdk.ledger
+                })
+            await appUserSdk.ledger
                 .prepare({
                     partyId: alice.partyId,
                     commands: [cmd],
@@ -82,8 +81,8 @@ async function withdrawAllocationsOnFailure(
             logger.info('Alice: Amulet allocation withdrawn — funds returned')
         })(),
         (async () => {
-            const [cmd, disclosed] = await tokenNamespaceP2.allocation.withdraw(
-                {
+            const [cmd, disclosed] =
+                await tokenNamespaceAppProvider.allocation.withdraw({
                     allocationCid: testTokenAllocationCid,
                     asset: {
                         id: 'TestToken',
@@ -96,9 +95,8 @@ async function withdrawAllocationsOnFailure(
                         choiceContextData: { values: {} as never },
                         disclosedContracts: [],
                     },
-                }
-            )
-            await p2Sdk.ledger
+                })
+            await appProviderSdk.ledger
                 .prepare({
                     partyId: bob.partyId,
                     commands: [cmd],
@@ -117,8 +115,13 @@ export async function settleOtcTrade(
     params: SettleParams,
     logger: Logger
 ): Promise<void> {
-    const { p3Sdk, tokenNamespaceP1, alice, tradingApp, globalSynchronizerId } =
-        setup
+    const {
+        svSdk,
+        tokenNamespaceAppUser,
+        alice,
+        tradingApp,
+        globalSynchronizerId,
+    } = setup
     const {
         otcTradeCid,
         legIdAlice,
@@ -127,7 +130,7 @@ export async function settleOtcTrade(
         testTokenAllocationDisclosed,
     } = params
 
-    const allocationsAlice = await tokenNamespaceP1.allocation.pending(
+    const allocationsAlice = await tokenNamespaceAppUser.allocation.pending(
         alice.partyId
     )
     const amuletAllocation = allocationsAlice.find(
@@ -135,10 +138,11 @@ export async function settleOtcTrade(
     )
     if (!amuletAllocation) throw new Error('Amulet allocation not found')
 
-    const amuletExecCtx = await tokenNamespaceP1.allocation.context.execute({
-        allocationCid: amuletAllocation.contractId,
-        registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
-    })
+    const amuletExecCtx =
+        await tokenNamespaceAppUser.allocation.context.execute({
+            allocationCid: amuletAllocation.contractId,
+            registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+        })
 
     const allocationsWithContext = {
         [legIdAlice]: {
@@ -172,7 +176,7 @@ export async function settleOtcTrade(
     ]
 
     try {
-        await p3Sdk.ledger
+        await svSdk.ledger
             .prepare({
                 partyId: tradingApp.partyId,
                 commands: [

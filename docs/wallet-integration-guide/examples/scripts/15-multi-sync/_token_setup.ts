@@ -20,10 +20,15 @@ export async function createTokenRulesAndMintForBob(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { p2Sdk, bob, tokenAdmin, globalSynchronizerId, appSynchronizerId } =
-        setup
+    const {
+        appProviderSdk,
+        bob,
+        tokenAdmin,
+        globalSynchronizerId,
+        appSynchronizerId,
+    } = setup
 
-    await p2Sdk.ledger.executeOnSynchronizers(
+    await appProviderSdk.ledger.executeOnSynchronizers(
         {
             partyId: tokenAdmin.partyId,
             commands: buildCreateTokenRulesCommand(tokenAdmin.partyId),
@@ -33,7 +38,7 @@ export async function createTokenRulesAndMintForBob(
         tokenAdmin.keyPair.privateKey
     )
 
-    await p2Sdk.ledger
+    await appProviderSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
             commands: [
@@ -50,12 +55,12 @@ export async function createTokenRulesAndMintForBob(
         .execute({ partyId: tokenAdmin.partyId })
 
     const [tokenRulesContracts, adminTokenHoldings] = await Promise.all([
-        p2Sdk.ledger.acs.read({
+        appProviderSdk.ledger.acs.read({
             templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         }),
-        p2Sdk.ledger.acs.read({
+        appProviderSdk.ledger.acs.read({
             templateIds: [TestTokenV1.Token.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
@@ -72,7 +77,7 @@ export async function createTokenRulesAndMintForBob(
     if (!adminTokenCid)
         throw new Error('TokenAdmin Token holding not found after mint')
 
-    await p2Sdk.ledger
+    await appProviderSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
             commands: [
@@ -96,7 +101,7 @@ export async function createTokenRulesAndMintForBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
-    const transferOffers = await p2Sdk.ledger.acs.read({
+    const transferOffers = await appProviderSdk.ledger.acs.read({
         templateIds: [TestTokenV1.TokenTransferOffer.templateId],
         parties: [bob.partyId],
         filterByParty: true,
@@ -105,7 +110,7 @@ export async function createTokenRulesAndMintForBob(
     if (!transferOfferCid)
         throw new Error('TokenTransferOffer not found for Bob')
 
-    await p2Sdk.ledger
+    await appProviderSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [buildAcceptTransferInstructionCommand(transferOfferCid)],

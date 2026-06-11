@@ -33,10 +33,10 @@ provided that at some point the contracts are re-assigned (automatically or expl
 
 The parties in the example are:
 
-- **Alice** — app-user, hosted on participant **P1**. Holds Amulet, buys `TestToken`.
-- **Bob** — app-provider, hosted on participant **P2**. Holds `TestToken`, buys Amulet.
-- **TokenAdmin** — issuer / admin of `TestToken`, also hosted on **P2**.
-- **TradingApp** — the OTC settlement venue (DvP), hosted on the SV participant **P3**.
+- **Alice** — app-user, hosted on the **app-user** participant. Holds Amulet, buys `TestToken`.
+- **Bob** — app-provider, hosted on the **app-provider** participant. Holds `TestToken`, buys Amulet.
+- **TokenAdmin** — issuer / admin of `TestToken`, also hosted on the **app-provider** participant.
+- **TradingApp** — the OTC settlement venue (DvP), hosted on the **sv** participant.
 
 The trade is a two-legged Delivery-vs-Payment:
 

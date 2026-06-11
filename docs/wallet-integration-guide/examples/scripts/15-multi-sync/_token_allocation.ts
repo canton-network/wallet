@@ -11,12 +11,16 @@ export async function allocateTokenForBob(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<{ legId: string }> {
-    const { p2Sdk, tokenNamespaceP2, bob, tokenAdmin, globalSynchronizerId } =
-        setup
+    const {
+        appProviderSdk,
+        tokenNamespaceAppProvider,
+        bob,
+        tokenAdmin,
+        globalSynchronizerId,
+    } = setup
 
-    const pendingRequests = await tokenNamespaceP2.allocation.request.pending(
-        bob.partyId
-    )
+    const pendingRequests =
+        await tokenNamespaceAppProvider.allocation.request.pending(bob.partyId)
     const requestView = pendingRequests[0].interfaceViewValue!
     const legId = Object.keys(requestView.transferLegs).find(
         (key) => requestView.transferLegs[key].sender === bob.partyId
@@ -24,12 +28,12 @@ export async function allocateTokenForBob(
     if (!legId) throw new Error('No transfer leg found for Bob')
 
     const [tokenHoldings, tokenRulesContracts] = await Promise.all([
-        p2Sdk.ledger.acs.read({
+        appProviderSdk.ledger.acs.read({
             templateIds: [TestTokenV1.Token.templateId],
             parties: [bob.partyId],
             filterByParty: true,
         }),
-        p2Sdk.ledger.acs.read({
+        appProviderSdk.ledger.acs.read({
             templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
@@ -44,7 +48,7 @@ export async function allocateTokenForBob(
     if (!tokenRulesOnGlobal)
         throw new Error('TokenRules not found on global synchronizer')
 
-    await p2Sdk.ledger.internal.reassign({
+    await appProviderSdk.ledger.internal.reassign({
         submitter: bob.partyId,
         contractId: tokenHolding.contractId,
         source: tokenHolding.synchronizerId,
@@ -53,7 +57,7 @@ export async function allocateTokenForBob(
     })
 
     const [command, disclosedFromHelper] =
-        await tokenNamespaceP2.allocation.instruction.create({
+        await tokenNamespaceAppProvider.allocation.instruction.create({
             allocationSpecification: {
                 settlement: requestView.settlement,
                 transferLegId: legId,
@@ -77,7 +81,7 @@ export async function allocateTokenForBob(
             },
         })
 
-    await p2Sdk.ledger
+    await appProviderSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [command],
