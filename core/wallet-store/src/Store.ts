@@ -90,6 +90,8 @@ export interface Transaction {
     createdAt?: Date
     signedAt?: Date
     externalTxId?: string
+    userId?: string
+    networkId?: string
 }
 
 export interface TransactionStatusUpdate {
@@ -135,6 +137,7 @@ export interface Store {
 
     // Session methods
     getSession(): Promise<Session | undefined>
+    getSessionForUser(userId: string): Promise<Session | undefined>
     setSession(session: Session): Promise<void>
     removeSession(): Promise<void>
 
@@ -170,6 +173,7 @@ export interface Store {
         commandId: string
     ): Promise<Transaction | undefined>
     listTransactions(): Promise<Array<Transaction>>
+    listAllPendingTransactions(): Promise<Array<Transaction>>
     removeTransaction(transactionId: string): Promise<void>
 
     // Message signing request methods

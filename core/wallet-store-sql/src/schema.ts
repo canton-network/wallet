@@ -323,6 +323,8 @@ export const toTransaction = (table: TransactionTable): Transaction => {
         preparedTransactionHash: table.preparedTransactionHash,
         payload: table.payload ? JSON.parse(table.payload) : undefined,
         origin: table.origin || null,
+        userId: table.userId,
+        networkId: table.networkId,
     }
 
     if (table.createdAt) {

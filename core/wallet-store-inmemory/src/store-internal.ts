@@ -240,6 +240,11 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return this.getStorage().session
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getSessionForUser(_userId: string): Promise<Session | undefined> {
+        return this.getStorage().session
+    }
+
     async setSession(session: Session): Promise<void> {
         const storage = this.getStorage()
         storage.session = session
@@ -427,6 +432,14 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const storage = this.getStorage()
 
         return storage.transactions.get(transactionId)
+    }
+
+    async listAllPendingTransactions(): Promise<Array<Transaction>> {
+        this.assertConnected()
+        const storage = this.getStorage()
+        return Array.from(storage.transactions.values()).filter(
+            (tx) => tx.status === 'pending'
+        )
     }
 
     async getLatestTransactionByCommandId(

@@ -9,24 +9,19 @@ import { SigningWorker } from './signing-worker.js'
 import type { Network, Transaction } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
-const transactionServiceMocks = vi.hoisted(() => ({
+const mocks = vi.hoisted(() => ({
     signAndExecute: vi.fn().mockResolvedValue({ commandId: 'cmd-1' }),
-    mockUuidV4: vi.fn(() => 'session-new'),
+    uuidV4: vi.fn(() => 'session-new'),
 }))
 
-vi.mock('uuid', () => ({
-    v4: transactionServiceMocks.mockUuidV4,
-}))
-
+vi.mock('uuid', () => ({ v4: mocks.uuidV4 }))
 vi.mock('../ledger/transaction-service.js', () => ({
     TransactionService: vi.fn(function TransactionServiceMock() {
-        return {
-            signAndExecute: transactionServiceMocks.signAndExecute,
-        }
+        return { signAndExecute: mocks.signAndExecute }
     }),
 }))
 
-const clientCredentialsNetwork: Network = {
+const m2mNetwork: Network = {
     id: 'net-m2m',
     name: 'm2m',
     description: '',
@@ -54,19 +49,6 @@ const wallet = {
     rights: [],
 }
 
-function validJwt(): string {
-    const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString(
-        'base64url'
-    )
-    const payload = Buffer.from(
-        JSON.stringify({
-            sub: 'user-1',
-            exp: Math.floor(Date.now() / 1000) + 3600,
-        })
-    ).toString('base64url')
-    return `${header}.${payload}.`
-}
-
 const pendingTransaction: Transaction = {
     id: 'tx-1',
     commandId: 'cmd-1',
@@ -75,24 +57,46 @@ const pendingTransaction: Transaction = {
     preparedTransactionHash: 'hash',
     externalTxId: 'ext-1',
     origin: null,
+    userId: 'user-1',
+    networkId: 'net-m2m',
 }
 
-function createWorker(store: {
-    listPendingExternalTransactions: ReturnType<typeof vi.fn>
-    getSessionForUser: ReturnType<typeof vi.fn>
-    getNetwork: ReturnType<typeof vi.fn>
-    withAuthContext: ReturnType<typeof vi.fn>
-}) {
+function m2mJwt(extra: Record<string, unknown> = {}): string {
+    const encode = (value: unknown) =>
+        Buffer.from(JSON.stringify(value)).toString('base64url')
+    return `${encode({ alg: 'none' })}.${encode({
+        sub: 'user-1',
+        gty: 'client_credentials',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        ...extra,
+    })}.`
+}
+
+function createWorker(
+    storeOverrides: {
+        listAllPendingTransactions?: ReturnType<typeof vi.fn>
+        getSessionForUser?: ReturnType<typeof vi.fn>
+        getNetwork?: ReturnType<typeof vi.fn>
+        withAuthContext?: ReturnType<typeof vi.fn>
+    } = {}
+) {
     const scopedStore = {
         setSession: vi.fn().mockResolvedValue(undefined),
         getPrimaryWallet: vi.fn().mockResolvedValue(wallet),
         getTransaction: vi.fn().mockResolvedValue(pendingTransaction),
     }
-    store.withAuthContext.mockImplementation(() => scopedStore)
-
+    const store = {
+        listAllPendingTransactions: vi
+            .fn()
+            .mockResolvedValue([pendingTransaction]),
+        getSessionForUser: vi.fn().mockResolvedValue(undefined),
+        getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
+        withAuthContext: vi.fn().mockReturnValue(scopedStore),
+        ...storeOverrides,
+    }
     const logger = pino({ level: 'silent' }, sink())
     const createAccessTokenProvider = vi.fn(async () =>
-        AuthTokenProvider.fromToken(validJwt(), logger)
+        AuthTokenProvider.fromToken(m2mJwt(), logger)
     )
 
     return {
@@ -106,86 +110,61 @@ function createWorker(store: {
             createAccessTokenProvider,
             logger,
         }),
+        store,
         scopedStore,
         createAccessTokenProvider,
     }
 }
 
 describe('SigningWorker', () => {
-    afterEach(() => {
-        vi.clearAllMocks()
-    })
+    afterEach(() => vi.clearAllMocks())
 
-    it('mints a token and creates a session when no session exists on an M2M network', async () => {
-        const store = {
-            listPendingExternalTransactions: vi.fn().mockResolvedValue([
-                {
-                    userId: 'user-1',
-                    networkId: 'net-m2m',
-                    transaction: pendingTransaction,
-                },
-            ]),
-            getSessionForUser: vi.fn().mockResolvedValue(undefined),
-            getNetwork: vi.fn().mockResolvedValue(clientCredentialsNetwork),
-            withAuthContext: vi.fn(),
-        }
-
-        const { worker, scopedStore, createAccessTokenProvider } =
-            createWorker(store)
+    it('mints a session and completes pending external transactions', async () => {
+        const { worker, store, createAccessTokenProvider } = createWorker()
 
         await worker.tick()
 
         expect(store.getSessionForUser).toHaveBeenCalledWith('user-1')
-        expect(createAccessTokenProvider).toHaveBeenCalledWith(
-            clientCredentialsNetwork
-        )
-        const mintedToken = validJwt()
-        expect(store.withAuthContext).toHaveBeenCalledWith({
-            userId: 'user-1',
-            accessToken: mintedToken,
-        })
-        expect(scopedStore.setSession).toHaveBeenCalledWith({
-            id: 'session-new',
-            network: 'net-m2m',
-            accessToken: mintedToken,
-        })
-        expect(transactionServiceMocks.signAndExecute).toHaveBeenCalled()
+        expect(createAccessTokenProvider).toHaveBeenCalledWith(m2mNetwork)
+        expect(mocks.signAndExecute).toHaveBeenCalled()
     })
 
-    it('reuses a valid existing session', async () => {
-        const store = {
-            listPendingExternalTransactions: vi.fn().mockResolvedValue([
-                {
-                    userId: 'user-1',
-                    networkId: 'net-m2m',
-                    transaction: pendingTransaction,
-                },
-            ]),
-            getSessionForUser: vi.fn().mockResolvedValue({
-                id: 'session-1',
-                network: 'net-m2m',
-                accessToken: validJwt(),
-            }),
-            getNetwork: vi.fn().mockResolvedValue(clientCredentialsNetwork),
-            withAuthContext: vi.fn(),
+    it('reuses a valid client-credentials session without minting', async () => {
+        const session = {
+            id: 'session-1',
+            network: 'net-m2m',
+            accessToken: m2mJwt(),
         }
-
-        const { worker, scopedStore } = createWorker(store)
+        const { worker, scopedStore, createAccessTokenProvider } = createWorker(
+            {
+                getSessionForUser: vi.fn().mockResolvedValue(session),
+            }
+        )
 
         await worker.tick()
 
-        const sessionToken = validJwt()
-        expect(scopedStore.setSession).toHaveBeenCalledWith({
-            id: 'session-1',
-            network: 'net-m2m',
-            accessToken: sessionToken,
-        })
-        expect(transactionServiceMocks.signAndExecute).toHaveBeenCalled()
+        expect(createAccessTokenProvider).not.toHaveBeenCalled()
+        expect(scopedStore.setSession).toHaveBeenCalledWith(session)
+        expect(mocks.signAndExecute).toHaveBeenCalled()
     })
 
-    it('skips interactive networks without a valid session', async () => {
+    it('skips pending transactions without an externalTxId', async () => {
+        const { worker } = createWorker({
+            listAllPendingTransactions: vi
+                .fn()
+                .mockResolvedValue([
+                    { ...pendingTransaction, externalTxId: undefined },
+                ]),
+        })
+
+        await worker.tick()
+
+        expect(mocks.signAndExecute).not.toHaveBeenCalled()
+    })
+
+    it('skips interactive networks without a stored session', async () => {
         const interactiveNetwork: Network = {
-            ...clientCredentialsNetwork,
+            ...m2mNetwork,
             id: 'net-interactive',
             auth: {
                 method: 'authorization_code',
@@ -194,23 +173,17 @@ describe('SigningWorker', () => {
                 scope: 'scope',
             },
         }
-        const store = {
-            listPendingExternalTransactions: vi.fn().mockResolvedValue([
-                {
-                    userId: 'user-1',
-                    networkId: 'net-interactive',
-                    transaction: pendingTransaction,
-                },
-            ]),
-            getSessionForUser: vi.fn().mockResolvedValue(undefined),
+        const { worker } = createWorker({
+            listAllPendingTransactions: vi
+                .fn()
+                .mockResolvedValue([
+                    { ...pendingTransaction, networkId: 'net-interactive' },
+                ]),
             getNetwork: vi.fn().mockResolvedValue(interactiveNetwork),
-            withAuthContext: vi.fn(),
-        }
-
-        const { worker } = createWorker(store)
+        })
 
         await worker.tick()
 
-        expect(transactionServiceMocks.signAndExecute).not.toHaveBeenCalled()
+        expect(mocks.signAndExecute).not.toHaveBeenCalled()
     })
 })

@@ -424,27 +424,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     /**
-     * Lists pending transactions awaiting external signing approval across all users.
+     * Lists all pending transactions across all users.
      */
-    async listPendingExternalTransactions(): Promise<
-        Array<{
-            userId: UserId
-            networkId: string
-            transaction: Transaction
-        }>
-    > {
+    async listAllPendingTransactions(): Promise<Array<Transaction>> {
         const rows = await this.db
             .selectFrom('transactions')
             .selectAll()
             .where('status', '=', 'pending')
-            .where('externalTxId', 'is not', null)
             .execute()
 
-        return rows.map((row) => ({
-            userId: row.userId,
-            networkId: row.networkId,
-            transaction: toTransaction(row),
-        }))
+        return rows.map((row) => toTransaction(row))
     }
 
     // IDP methods

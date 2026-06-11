@@ -3,9 +3,8 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('uuid', () => ({
-    v4: vi.fn(() => 'session-new'),
-}))
+vi.mock('uuid', () => ({ v4: vi.fn(() => 'session-new') }))
+
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
@@ -15,7 +14,7 @@ import {
     resolveAutomationRunContext,
 } from './service-account-session.js'
 
-const clientCredentialsNetwork: Network = {
+const m2mNetwork: Network = {
     id: 'net-m2m',
     name: 'm2m',
     description: '',
@@ -32,7 +31,7 @@ const clientCredentialsNetwork: Network = {
 }
 
 const interactiveNetwork: Network = {
-    ...clientCredentialsNetwork,
+    ...m2mNetwork,
     id: 'net-interactive',
     auth: {
         method: 'authorization_code',
@@ -42,34 +41,28 @@ const interactiveNetwork: Network = {
     },
 }
 
-function validJwt(extra: Record<string, unknown> = {}): string {
-    const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString(
-        'base64url'
-    )
-    const payload = Buffer.from(
-        JSON.stringify({
-            sub: 'user-1',
-            gty: 'client_credentials',
-            exp: Math.floor(Date.now() / 1000) + 3600,
-            ...extra,
-        })
-    ).toString('base64url')
-    return `${header}.${payload}.`
-}
-
 const logger = pino({ level: 'silent' }, sink())
 
-describe('ensureAutomationSessionForPrepare', () => {
-    afterEach(() => {
-        vi.clearAllMocks()
-    })
+function m2mJwt(extra: Record<string, unknown> = {}): string {
+    const encode = (value: unknown) =>
+        Buffer.from(JSON.stringify(value)).toString('base64url')
+    return `${encode({ alg: 'none' })}.${encode({
+        sub: 'user-1',
+        gty: 'client_credentials',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        ...extra,
+    })}.`
+}
 
-    it('creates a session from the request token on a single M2M network', async () => {
-        const token = validJwt()
+describe('ensureAutomationSessionForPrepare', () => {
+    afterEach(() => vi.clearAllMocks())
+
+    it('bootstraps a session from the request token', async () => {
+        const token = m2mJwt()
         const store = {
             getSession: vi.fn().mockResolvedValue(undefined),
-            listNetworks: vi.fn().mockResolvedValue([clientCredentialsNetwork]),
-            setSession: vi.fn().mockResolvedValue(undefined),
+            listNetworks: vi.fn().mockResolvedValue([m2mNetwork]),
+            setSession: vi.fn(),
         }
 
         await ensureAutomationSessionForPrepare(
@@ -79,24 +72,44 @@ describe('ensureAutomationSessionForPrepare', () => {
             logger
         )
 
-        expect(store.setSession).toHaveBeenCalledWith(
-            expect.objectContaining({
-                network: 'net-m2m',
-                accessToken: token,
-            })
-        )
+        expect(store.setSession).toHaveBeenCalledWith({
+            id: 'session-new',
+            network: 'net-m2m',
+            accessToken: token,
+        })
     })
 
-    it('does not reuse an interactive session for M2M bootstrap', async () => {
-        const token = validJwt()
+    it('reuses a valid client-credentials session', async () => {
+        const store = {
+            getSession: vi.fn().mockResolvedValue({
+                id: 'session-1',
+                network: 'net-m2m',
+                accessToken: m2mJwt(),
+            }),
+            listNetworks: vi.fn(),
+            setSession: vi.fn(),
+        }
+
+        await ensureAutomationSessionForPrepare(
+            store as never,
+            { userId: 'user-1', accessToken: m2mJwt() },
+            vi.fn(),
+            logger
+        )
+
+        expect(store.setSession).not.toHaveBeenCalled()
+    })
+
+    it('replaces a non-M2M stored session', async () => {
+        const token = m2mJwt()
         const store = {
             getSession: vi.fn().mockResolvedValue({
                 id: 'session-interactive',
                 network: 'net-m2m',
                 accessToken: 'interactive-token',
             }),
-            listNetworks: vi.fn().mockResolvedValue([clientCredentialsNetwork]),
-            setSession: vi.fn().mockResolvedValue(undefined),
+            listNetworks: vi.fn().mockResolvedValue([m2mNetwork]),
+            setSession: vi.fn(),
         }
 
         await ensureAutomationSessionForPrepare(
@@ -107,9 +120,7 @@ describe('ensureAutomationSessionForPrepare', () => {
         )
 
         expect(store.setSession).toHaveBeenCalledWith(
-            expect.objectContaining({
-                accessToken: token,
-            })
+            expect.objectContaining({ accessToken: token })
         )
     })
 
@@ -119,8 +130,8 @@ describe('ensureAutomationSessionForPrepare', () => {
             listNetworks: vi
                 .fn()
                 .mockResolvedValue([
-                    clientCredentialsNetwork,
-                    { ...clientCredentialsNetwork, id: 'net-m2m-2' },
+                    m2mNetwork,
+                    { ...m2mNetwork, id: 'net-m2m-2' },
                 ]),
             setSession: vi.fn(),
         }
@@ -128,7 +139,7 @@ describe('ensureAutomationSessionForPrepare', () => {
         await expect(
             ensureAutomationSessionForPrepare(
                 store as never,
-                { userId: 'user-1', accessToken: validJwt() },
+                { userId: 'user-1', accessToken: m2mJwt() },
                 vi.fn(),
                 logger
             )
@@ -137,23 +148,23 @@ describe('ensureAutomationSessionForPrepare', () => {
 })
 
 describe('resolveAutomationRunContext', () => {
-    afterEach(() => {
-        vi.clearAllMocks()
-    })
+    afterEach(() => vi.clearAllMocks())
 
-    it('ignores interactive sessions when resolving M2M run context', async () => {
-        const store = {
-            getNetwork: vi.fn().mockResolvedValue(clientCredentialsNetwork),
-            getSessionForUser: vi.fn().mockResolvedValue(undefined),
-            withAuthContext: vi.fn().mockReturnValue({
-                setSession: vi.fn().mockResolvedValue(undefined),
-            }),
+    it('reuses a valid client-credentials session', async () => {
+        const session = {
+            id: 'session-1',
+            network: 'net-m2m',
+            accessToken: m2mJwt(),
         }
-        const createAccessTokenProvider = vi.fn(async () =>
-            AuthTokenProvider.fromToken(validJwt(), logger)
-        )
+        const scopedStore = { setSession: vi.fn() }
+        const store = {
+            getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
+            getSessionForUser: vi.fn().mockResolvedValue(session),
+            withAuthContext: vi.fn().mockReturnValue(scopedStore),
+        }
+        const createAccessTokenProvider = vi.fn()
 
-        await resolveAutomationRunContext(
+        const result = await resolveAutomationRunContext(
             store as never,
             'user-1',
             'net-m2m',
@@ -161,20 +172,23 @@ describe('resolveAutomationRunContext', () => {
             logger
         )
 
-        expect(store.getSessionForUser).toHaveBeenCalledWith('user-1')
+        expect(result?.authContext).toEqual({
+            userId: 'user-1',
+            accessToken: session.accessToken,
+        })
+        expect(createAccessTokenProvider).not.toHaveBeenCalled()
+        expect(scopedStore.setSession).toHaveBeenCalledWith(session)
     })
 
-    it('mints a token when no session exists on an M2M network', async () => {
-        const scopedStore = {
-            setSession: vi.fn().mockResolvedValue(undefined),
-        }
+    it('mints a token when no usable session exists', async () => {
+        const scopedStore = { setSession: vi.fn() }
         const store = {
-            getNetwork: vi.fn().mockResolvedValue(clientCredentialsNetwork),
+            getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
             getSessionForUser: vi.fn().mockResolvedValue(undefined),
             withAuthContext: vi.fn().mockReturnValue(scopedStore),
         }
         const createAccessTokenProvider = vi.fn(async () =>
-            AuthTokenProvider.fromToken(validJwt(), logger)
+            AuthTokenProvider.fromToken(m2mJwt(), logger)
         )
 
         const result = await resolveAutomationRunContext(
@@ -186,13 +200,37 @@ describe('resolveAutomationRunContext', () => {
         )
 
         expect(result?.authContext.userId).toBe('user-1')
-        expect(createAccessTokenProvider).toHaveBeenCalledWith(
-            clientCredentialsNetwork
-        )
+        expect(createAccessTokenProvider).toHaveBeenCalledWith(m2mNetwork)
         expect(scopedStore.setSession).toHaveBeenCalled()
     })
 
-    it('skips interactive networks without a valid session', async () => {
+    it('mints when the stored session is not a client-credentials token', async () => {
+        const scopedStore = { setSession: vi.fn() }
+        const store = {
+            getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
+            getSessionForUser: vi.fn().mockResolvedValue({
+                id: 'session-1',
+                network: 'net-m2m',
+                accessToken: 'interactive-token',
+            }),
+            withAuthContext: vi.fn().mockReturnValue(scopedStore),
+        }
+        const createAccessTokenProvider = vi.fn(async () =>
+            AuthTokenProvider.fromToken(m2mJwt(), logger)
+        )
+
+        await resolveAutomationRunContext(
+            store as never,
+            'user-1',
+            'net-m2m',
+            createAccessTokenProvider,
+            logger
+        )
+
+        expect(createAccessTokenProvider).toHaveBeenCalled()
+    })
+
+    it('returns undefined for interactive networks without a session', async () => {
         const store = {
             getNetwork: vi.fn().mockResolvedValue(interactiveNetwork),
             getSessionForUser: vi.fn().mockResolvedValue(undefined),

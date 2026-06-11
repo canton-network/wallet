@@ -4,13 +4,13 @@
 import { Logger } from 'pino'
 import { v4 } from 'uuid'
 import {
+    AuthAware,
     AuthContext,
     AuthTokenProvider,
     isClientCredentialsNetworkAuth,
     isClientCredentialsToken,
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
-import { StoreSql } from '@canton-network/core-wallet-store-sql'
 import { Network, Session, Store } from '@canton-network/core-wallet-store'
 
 export type AccessTokenProviderFactory = (
@@ -19,7 +19,7 @@ export type AccessTokenProviderFactory = (
 
 export interface AutomationRunContext {
     authContext: AuthContext
-    scopedStore: StoreSql
+    scopedStore: Store
     network: Network
 }
 
@@ -73,7 +73,7 @@ export async function ensureAutomationSessionForPrepare(
  * an access token. Interactive networks still require a valid stored session.
  */
 export async function resolveAutomationRunContext(
-    bootstrapStore: StoreSql,
+    bootstrapStore: Store & AuthAware<Store>,
     userId: string,
     networkId: string,
     createAccessTokenProvider: AccessTokenProviderFactory,

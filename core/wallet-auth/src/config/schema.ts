@@ -82,5 +82,3 @@ export const idpSchema = z.discriminatedUnion('type', [
 ])
 
 export type Idp = z.infer<typeof idpSchema>
-
-export type AuthType = Auth['method']

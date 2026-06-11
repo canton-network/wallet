@@ -322,44 +322,36 @@ describe('Auth Utils', () => {
 })
 
 describe('service account auth utils', () => {
+    const interactiveAuth = {
+        method: 'authorization_code' as const,
+        clientId: 'app',
+        audience: 'aud',
+        scope: 'scope',
+    }
+    const m2mAuth = {
+        method: 'client_credentials' as const,
+        clientId: 'svc',
+        clientSecret: 'secret',
+        audience: 'aud',
+        scope: 'scope',
+    }
+    const m2mToken = mockJwt({ gty: 'client_credentials', sub: 'svc' })
+
     it('detects client credentials network auth', () => {
-        expect(
-            isClientCredentialsNetworkAuth({
-                method: 'client_credentials',
-                clientId: 'svc',
-                clientSecret: 'secret',
-                audience: 'aud',
-                scope: 'scope',
-            })
-        ).toBe(true)
-        expect(
-            isClientCredentialsNetworkAuth({
-                method: 'authorization_code',
-                clientId: 'app',
-                audience: 'aud',
-                scope: 'scope',
-            })
-        ).toBe(false)
+        expect(isClientCredentialsNetworkAuth(m2mAuth)).toBe(true)
+        expect(isClientCredentialsNetworkAuth(interactiveAuth)).toBe(false)
     })
 
     it('detects client credentials token grant type', () => {
-        const token = mockJwt({ gty: 'client_credentials', sub: 'svc' })
-
-        expect(isClientCredentialsToken(token)).toBe(true)
+        expect(isClientCredentialsToken(m2mToken)).toBe(true)
         expect(isClientCredentialsToken('not-a-jwt')).toBe(false)
     })
 
-    it('combines network and token signals', () => {
-        expect(
-            isServiceAccountRequest(
-                {
-                    method: 'authorization_code',
-                    clientId: 'app',
-                    audience: 'aud',
-                    scope: 'scope',
-                },
-                'not-a-jwt'
-            )
-        ).toBe(false)
+    it.each([
+        ['M2M network', m2mAuth, 'any-token', true],
+        ['M2M token', interactiveAuth, m2mToken, true],
+        ['neither', interactiveAuth, 'not-a-jwt', false],
+    ])('isServiceAccountRequest when %s', (_, auth, token, expected) => {
+        expect(isServiceAccountRequest(auth, token)).toBe(expected)
     })
 })

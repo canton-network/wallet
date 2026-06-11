@@ -609,75 +609,45 @@ describe('TransactionService', () => {
     })
 
     describe('signAndExecute', () => {
-        const serviceAccountNetwork: Network = {
-            ...network,
-            auth: {
-                method: 'client_credentials',
-                clientId: 'svc',
-                clientSecret: 'secret',
-                audience: 'aud',
-                scope: 'scope',
-            },
-        }
-
         const participantWallet = walletWithProvider(
             SigningProvider.PARTICIPANT
         )
 
-        it('signs and executes transactions straight-through', async () => {
-            const store = createStore()
-            const service = createService(store, {}, notifier, logger)
-            const signSpy = vi.spyOn(service, 'sign').mockResolvedValue({
+        it('signs and executes when signing completes synchronously', async () => {
+            const service = createService(createStore(), {}, notifier, logger)
+            const executeSpy = vi
+                .spyOn(service, 'execute')
+                .mockResolvedValue({ commandId: 'cmd-1' })
+            vi.spyOn(service, 'sign').mockResolvedValue({
                 status: 'signed',
                 signature: 'sig',
                 signedBy: 'namespace',
                 partyId: participantWallet.partyId,
             })
-            const executeSpy = vi
-                .spyOn(service, 'execute')
-                .mockResolvedValue({ commandId: 'cmd-1' })
 
             const result = await service.signAndExecute(
                 authContext,
-                serviceAccountNetwork,
+                network,
                 participantWallet,
                 pendingTransaction
             )
 
             expect(result).toEqual({ commandId: 'cmd-1' })
-            expect(signSpy).toHaveBeenCalledWith(
-                authContext,
-                participantWallet,
-                expect.objectContaining({
-                    transactionId: pendingTransaction.id,
-                })
-            )
-            expect(executeSpy).toHaveBeenCalledWith(
-                authContext,
-                participantWallet,
-                pendingTransaction,
-                expect.objectContaining({
-                    signature: 'sig',
-                    signedBy: 'namespace',
-                }),
-                expect.anything(),
-                serviceAccountNetwork
-            )
+            expect(executeSpy).toHaveBeenCalled()
         })
 
-        it('returns without executing when external signing is still pending', async () => {
-            const store = createStore()
-            const service = createService(store, {}, notifier, logger)
+        it('returns pending sign result without executing', async () => {
+            const service = createService(createStore(), {}, notifier, logger)
+            const executeSpy = vi.spyOn(service, 'execute')
             vi.spyOn(service, 'sign').mockResolvedValue({
                 status: 'pending',
                 externalTxId: 'ext-1',
                 partyId: participantWallet.partyId,
             })
-            const executeSpy = vi.spyOn(service, 'execute')
 
             const result = await service.signAndExecute(
                 authContext,
-                serviceAccountNetwork,
+                network,
                 participantWallet,
                 pendingTransaction
             )

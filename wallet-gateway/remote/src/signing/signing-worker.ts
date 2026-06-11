@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Logger } from 'pino'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { StoreSql } from '@canton-network/core-wallet-store-sql'
-import { Transaction } from '@canton-network/core-wallet-store'
+import { AuthAware, AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { Store, Transaction } from '@canton-network/core-wallet-store'
 import { NotificationService } from '../notification/NotificationService.js'
 import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from './signing-drivers.js'
@@ -20,7 +19,7 @@ export interface SigningWorkerOptions {
     /** Poll interval in ms (`server.signingWorker.pollInterval`, default 5000). */
     intervalMs: number
     signingDrivers: SigningDrivers
-    store: StoreSql
+    store: Store & AuthAware<Store>
     notificationService: NotificationService
     createAccessTokenProvider: AccessTokenProviderFactory
     logger: Logger
@@ -36,7 +35,8 @@ export interface SigningWorkerOptions {
  * providers (Fireblocks, Blockdaemon, Dfns) may return `pending` instead of a
  * signature. The gateway persists the transaction with `status: 'pending'` and
  * an `externalTxId` from the provider. This worker picks up those rows on each
- * tick via {@link StoreSql.listPendingExternalTransactions}.
+ * tick via {@link Store.listAllPendingTransactions} (rows with an
+ * `externalTxId` are processed; others are skipped).
  *
  * Participant and wallet-kernel sign synchronously and never appear here.
  *
@@ -104,8 +104,9 @@ export class SigningWorker {
     }
 
     /**
-     * One poll cycle: list all pending external transactions and attempt to
-     * complete each via {@link processPending}. Safe to call directly in tests.
+     * One poll cycle: list all pending transactions and attempt to complete
+     * external-custody rows via {@link processPending}. Safe to call directly in
+     * tests.
      */
     async tick(): Promise<void> {
         if (this.running) {
@@ -114,13 +115,12 @@ export class SigningWorker {
         this.running = true
         try {
             const pending =
-                await this.options.store.listPendingExternalTransactions()
-            for (const entry of pending) {
-                await this.processPending(
-                    entry.userId,
-                    entry.networkId,
-                    entry.transaction
-                )
+                await this.options.store.listAllPendingTransactions()
+            for (const tx of pending) {
+                if (!tx.externalTxId) {
+                    continue
+                }
+                await this.processPending(tx.userId!, tx.networkId!, tx)
             }
         } catch (error) {
             this.options.logger.error(
