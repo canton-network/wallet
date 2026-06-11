@@ -280,6 +280,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 id: 'sess-123',
                 network: 'network1',
                 accessToken: 'token',
+                authType: 'authorization_code',
             }
             await store.setSession(session)
             const result = await store.getSession()

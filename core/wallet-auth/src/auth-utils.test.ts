@@ -12,7 +12,6 @@ import {
 } from 'vitest'
 import {
     assertConnected,
-    assertServiceAccountUserAllowed,
     fetchOidcUserInfo,
     isClientCredentialsNetworkAuth,
     isClientCredentialsToken,
@@ -27,6 +26,22 @@ import { Idp } from './config/schema.js'
 import { TokenProviderConfig } from './auth-token-provider.js'
 import { Logger } from '@canton-network/core-types'
 import { SelfSignedTokenService } from './self-signed-token-service.js'
+
+function base64UrlEncode(value: string): string {
+    const bytes = new TextEncoder().encode(value)
+    let binary = ''
+    for (const byte of bytes) {
+        binary += String.fromCharCode(byte)
+    }
+    return btoa(binary)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '')
+}
+
+function mockJwt(payload: Record<string, unknown>): string {
+    return `${base64UrlEncode(JSON.stringify({ alg: 'none', typ: 'JWT' }))}.${base64UrlEncode(JSON.stringify(payload))}.`
+}
 
 describe('Auth Utils', () => {
     const fetchMock = vi.fn()
@@ -329,13 +344,7 @@ describe('service account auth utils', () => {
     })
 
     it('detects client credentials token grant type', () => {
-        const header = Buffer.from(
-            JSON.stringify({ alg: 'none', typ: 'JWT' })
-        ).toString('base64url')
-        const payload = Buffer.from(
-            JSON.stringify({ gty: 'client_credentials', sub: 'svc' })
-        ).toString('base64url')
-        const token = `${header}.${payload}.`
+        const token = mockJwt({ gty: 'client_credentials', sub: 'svc' })
 
         expect(isClientCredentialsToken(token)).toBe(true)
         expect(isClientCredentialsToken('not-a-jwt')).toBe(false)
@@ -356,13 +365,7 @@ describe('service account auth utils', () => {
     })
 
     it('resolves session auth type from token grant or network auth', () => {
-        const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString(
-            'base64url'
-        )
-        const m2mPayload = Buffer.from(
-            JSON.stringify({ gty: 'client_credentials', sub: 'svc' })
-        ).toString('base64url')
-        const m2mToken = `${header}.${m2mPayload}.`
+        const m2mToken = mockJwt({ gty: 'client_credentials', sub: 'svc' })
 
         expect(
             resolveSessionAuthType(m2mToken, {
@@ -380,17 +383,5 @@ describe('service account auth utils', () => {
                 scope: 'scope',
             })
         ).toBe('authorization_code')
-    })
-
-    it('enforces optional user allow-list', () => {
-        expect(() => assertServiceAccountUserAllowed('alice', ['bob'])).toThrow(
-            /not allowed/
-        )
-        expect(() =>
-            assertServiceAccountUserAllowed('alice', ['alice', 'bob'])
-        ).not.toThrow()
-        expect(() =>
-            assertServiceAccountUserAllowed('alice', undefined)
-        ).not.toThrow()
     })
 })

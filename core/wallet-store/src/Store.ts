@@ -81,6 +81,7 @@ export interface Session {
      * short-lived interactive tokens in machine-to-machine automation paths.
      */
     authType?: AuthType
+    userId?: string
 }
 
 export interface Transaction {

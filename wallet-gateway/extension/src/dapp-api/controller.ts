@@ -8,6 +8,7 @@ import Browser from 'webextension-polyfill'
 import buildController from './rpc-gen'
 import {
     LedgerApiParams,
+    MessageSignatureEvent,
     Network,
     PrepareExecuteParams,
     SignMessageParams,
@@ -61,6 +62,9 @@ export const dappController = (store?: Store) =>
             throw new Error('Function not implemented.')
         },
         getPrimaryAccount: async function (): Promise<Wallet> {
+            throw new Error('Function not implemented.')
+        },
+        messageSignature: function (): Promise<MessageSignatureEvent> {
             throw new Error('Function not implemented.')
         },
     })

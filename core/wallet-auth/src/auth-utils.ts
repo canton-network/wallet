@@ -213,21 +213,3 @@ export function isServiceAccountRequest(
         isClientCredentialsToken(accessToken)
     )
 }
-
-/**
- * Optional allow-list of ledger user IDs that service accounts may act as.
- * When omitted or empty, all authenticated users are allowed.
- */
-export function assertServiceAccountUserAllowed(
-    userId: string,
-    allowedUsers: string[] | undefined
-): void {
-    if (!allowedUsers || allowedUsers.length === 0) {
-        return
-    }
-    if (!allowedUsers.includes(userId)) {
-        throw new Error(
-            `User "${userId}" is not allowed for service account automation`
-        )
-    }
-}

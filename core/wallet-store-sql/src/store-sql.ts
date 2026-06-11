@@ -428,6 +428,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             id: row.id,
             network: row.network,
             accessToken: row.accessToken,
+            userId: row.userId,
         }
         if (row.authType) {
             session.authType = row.authType as AuthType
