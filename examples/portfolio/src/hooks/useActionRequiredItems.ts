@@ -21,7 +21,7 @@ import type {
     AllocationActionItem,
     TransferActionItem,
 } from '@components/types'
-import { getExpiryTime } from '@utils/date-format'
+import { getExpiryTime, isExpired } from '@utils/date-format'
 
 export interface ActionRequiredItemsResult {
     items: ActionItem[]
@@ -97,6 +97,8 @@ export function useActionRequiredItems(): ActionRequiredItemsResult {
             const memo =
                 transfer?.meta?.values?.[TokenStandardService.MEMO_KEY] ?? ''
 
+            if (isExpired(transfer.executeBefore)) continue
+
             const transferItem: TransferActionItem = {
                 kind: 'transfer',
                 contractId: contract.contractId,
@@ -118,6 +120,8 @@ export function useActionRequiredItems(): ActionRequiredItemsResult {
         // but the current party only needs legs where it is either the sender or receiver.
         for (const request of allocationRequests.data ?? []) {
             const { settlement, transferLegs } = request.interfaceViewValue
+            if (isExpired(settlement.allocateBefore)) continue
+
             const typedTransferLegs = transferLegs as Record<
                 string,
                 TransferLeg
