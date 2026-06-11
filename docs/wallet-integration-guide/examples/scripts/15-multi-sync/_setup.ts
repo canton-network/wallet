@@ -24,6 +24,19 @@ import {
     resolveGlobalSynchronizerId,
 } from '../utils/index.js'
 import type { SynchronizerMap } from '../utils/index.js'
+import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
+
+// Token namespace config that also points the SDK at the local TestToken
+// registry (in addition to the Amulet scan-proxy registry). This lets the
+// wallet SDK resolve TestToken via the CIP-56 metadata API and fetch its
+// transfer/allocation choice contexts over HTTP.
+const TOKEN_NAMESPACE_CONFIG_WITH_TEST_TOKEN = {
+    ...TOKEN_NAMESPACE_CONFIG,
+    registries: [
+        ...(TOKEN_NAMESPACE_CONFIG.registries as URL[]),
+        TEST_TOKEN_REGISTRY_URL,
+    ],
+}
 
 export type PartyInfo = Omit<
     GenerateTransactionResponse,
@@ -90,6 +103,7 @@ export interface MultiSyncSetup {
     synchronizers: SynchronizerMap
     scanProxy: ScanProxyClient
     amuletAdmin: string
+    testTokenRegistryUrl: URL
 }
 
 /**
@@ -109,13 +123,13 @@ export async function setupMultiSyncTrade(
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
             ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
             amulet: AMULET_NAMESPACE_CONFIG,
-            token: TOKEN_NAMESPACE_CONFIG,
+            token: TOKEN_NAMESPACE_CONFIG_WITH_TEST_TOKEN,
         }),
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
             ledgerClientUrl:
                 localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-            token: TOKEN_NAMESPACE_CONFIG,
+            token: TOKEN_NAMESPACE_CONFIG_WITH_TEST_TOKEN,
         }),
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
@@ -280,5 +294,6 @@ export async function setupMultiSyncTrade(
         synchronizers,
         scanProxy,
         amuletAdmin,
+        testTokenRegistryUrl: TEST_TOKEN_REGISTRY_URL,
     }
 }
