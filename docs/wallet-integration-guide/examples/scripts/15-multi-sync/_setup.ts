@@ -178,16 +178,17 @@ export async function setupMultiSyncTrade(
                 )
             )
         ),
-        // sv only vets the trading-app DAR (global only); it must not know about TestTokenV1.
-        vetPackageIdempotent(
-            svCtx.ledgerProvider,
-            tradingAppDar,
-            globalSynchronizerId,
-            logger
+        ...[testTokenV1Dar, tradingAppDar].map((dar) =>
+            vetPackageIdempotent(
+                svCtx.ledgerProvider,
+                dar,
+                globalSynchronizerId,
+                logger
+            )
         ),
     ])
     logger.info(
-        'DARs vetted: app-user + app-provider have TestTokenV1 + trading-app on both synchronizers; sv has trading-app on global only'
+        'DARs vetted: app-user + app-provider have TestTokenV1 + trading-app on both synchronizers; sv has both on global only'
     )
 
     const aliceKey = appUserSdk.keys.generate()
