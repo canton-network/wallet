@@ -53,6 +53,7 @@ async function withdrawAllocationsOnFailure(
         tokenAdmin,
         globalSynchronizerId,
         amuletAdmin,
+        testTokenRegistryUrl,
     } = setup
 
     await Promise.all([
@@ -88,12 +89,8 @@ async function withdrawAllocationsOnFailure(
                         id: 'TestToken',
                         displayName: 'TestToken',
                         symbol: 'TT',
-                        registryUrl: new URL('http://unused.invalid'),
+                        registryUrl: testTokenRegistryUrl,
                         admin: tokenAdmin.partyId,
-                    },
-                    prefetchedRegistryChoiceContext: {
-                        choiceContextData: { values: {} as never },
-                        disclosedContracts: [],
                     },
                 })
             await appProviderSdk.ledger
@@ -118,9 +115,11 @@ export async function settleOtcTrade(
     const {
         svSdk,
         tokenNamespaceAppUser,
+        tokenNamespaceAppProvider,
         alice,
         tradingApp,
         globalSynchronizerId,
+        testTokenRegistryUrl,
     } = setup
     const {
         otcTradeCid,
@@ -144,6 +143,14 @@ export async function settleOtcTrade(
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         })
 
+    // Fetch Bob's TestToken execute-transfer choice context from the registry's
+    // allocation-v1 API (instead of hard-coding an empty context).
+    const testTokenExecCtx =
+        await tokenNamespaceAppProvider.allocation.context.execute({
+            allocationCid: testTokenAllocationCid,
+            registryUrl: testTokenRegistryUrl,
+        })
+
     const allocationsWithContext = {
         [legIdAlice]: {
             _1: amuletAllocation.contractId,
@@ -161,12 +168,26 @@ export async function settleOtcTrade(
         },
         [legIdBob]: {
             _1: testTokenAllocationCid,
-            _2: { context: { values: {} }, meta: { values: {} } },
+            _2: {
+                context: {
+                    ...(testTokenExecCtx.choiceContextData ?? {}),
+                    values:
+                        (testTokenExecCtx.choiceContextData?.values as Record<
+                            string,
+                            unknown
+                        >) ?? {},
+                },
+                meta: { values: {} },
+            },
         },
     }
 
     const disclosedContracts = [
         ...(amuletExecCtx.disclosedContracts ?? []).map((c) => ({
+            ...c,
+            synchronizerId: '',
+        })),
+        ...(testTokenExecCtx.disclosedContracts ?? []).map((c) => ({
             ...c,
             synchronizerId: '',
         })),

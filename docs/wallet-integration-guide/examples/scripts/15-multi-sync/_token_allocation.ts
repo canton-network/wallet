@@ -17,6 +17,7 @@ export async function allocateTokenForBob(
         bob,
         tokenAdmin,
         globalSynchronizerId,
+        testTokenRegistryUrl,
     } = setup
 
     const pendingRequests =
@@ -27,26 +28,14 @@ export async function allocateTokenForBob(
     )!
     if (!legId) throw new Error('No transfer leg found for Bob')
 
-    const [tokenHoldings, tokenRulesContracts] = await Promise.all([
-        appProviderSdk.ledger.acs.read({
-            templateIds: [TestTokenV1.Token.templateId],
-            parties: [bob.partyId],
-            filterByParty: true,
-        }),
-        appProviderSdk.ledger.acs.read({
-            templateIds: [TestTokenV1.TokenRules.templateId],
-            parties: [tokenAdmin.partyId],
-            filterByParty: true,
-        }),
-    ])
+    const tokenHoldings = await appProviderSdk.ledger.acs.read({
+        templateIds: [TestTokenV1.Token.templateId],
+        parties: [bob.partyId],
+        filterByParty: true,
+    })
 
     const tokenHolding = tokenHoldings[0]
     if (!tokenHolding) throw new Error('Token holding not found for Bob')
-    const tokenRulesOnGlobal = tokenRulesContracts.find(
-        (c) => c.synchronizerId === globalSynchronizerId
-    )
-    if (!tokenRulesOnGlobal)
-        throw new Error('TokenRules not found on global synchronizer')
 
     await appProviderSdk.ledger.internal.reassign({
         submitter: bob.partyId,
@@ -56,6 +45,9 @@ export async function allocateTokenForBob(
         skipIfAlreadyOn: true,
     })
 
+    // Fetch the AllocationFactory + choice context from the TestToken registry's
+    // allocation-instruction-v1 API. The registry returns the global-synchronizer
+    // TokenRules contract as the factory (disclosed in `disclosedFromHelper`).
     const [command, disclosedFromHelper] =
         await tokenNamespaceAppProvider.allocation.instruction.create({
             allocationSpecification: {
@@ -67,40 +59,25 @@ export async function allocateTokenForBob(
                 id: 'TestToken',
                 displayName: 'TestToken',
                 symbol: 'TT',
-                registryUrl: new URL('http://unused.invalid'),
+                registryUrl: testTokenRegistryUrl,
                 admin: tokenAdmin.partyId,
             },
             inputUtxos: [tokenHolding.contractId],
             requestedAt: new Date(Date.now()).toISOString(),
-            prefetchedRegistryChoiceContext: {
-                factoryId: tokenRulesOnGlobal.contractId,
-                choiceContext: {
-                    choiceContextData: {} as Record<string, never>,
-                    disclosedContracts: [],
-                },
-            },
         })
 
     await appProviderSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [command],
-            disclosedContracts: [
-                ...disclosedFromHelper,
-                {
-                    templateId: tokenRulesOnGlobal.templateId,
-                    contractId: tokenRulesOnGlobal.contractId,
-                    createdEventBlob: tokenRulesOnGlobal.createdEventBlob!,
-                    synchronizerId: tokenRulesOnGlobal.synchronizerId,
-                },
-            ],
+            disclosedContracts: disclosedFromHelper,
             synchronizerId: globalSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        'Bob: TestToken allocated for leg-1 (global synchronizer, single-party)'
+        'Bob: TestToken allocated for leg-1 (global synchronizer, single-party) via registry allocation-factory'
     )
     return { legId }
 }

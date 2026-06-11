@@ -2,15 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
-import { buildTransferTokenCommand } from '@canton-network/core-test-token'
 import * as SpliceTestTokenV1 from '@canton-network/core-test-token'
 import type { Splice as SpliceTestTokenTypes } from '@canton-network/core-test-token'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_TOKEN_AMOUNT } from './_constants.js'
 
 const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
-
-const MS_24_HOURS = 24 * 60 * 60 * 1000
 
 const TOKEN_POLL_TIMEOUT_MS = 30_000
 const TOKEN_POLL_INTERVAL_MS = 500
@@ -19,8 +16,13 @@ export async function aliceSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { appUserSdk, appProviderSdk, alice, tokenAdmin, appSynchronizerId } =
-        setup
+    const {
+        appUserSdk,
+        tokenNamespaceAppUser,
+        alice,
+        appSynchronizerId,
+        testTokenRegistryUrl,
+    } = setup
 
     // The settlement is submitted by TradingApp (sv), so Alice's resulting Token
     // holding propagates to her participant (app-user) asynchronously. Poll app-user until it
@@ -42,16 +44,6 @@ export async function aliceSelfTransferToApp(
         )
     }
 
-    const tokenRulesContracts = await appProviderSdk.ledger.acs.read({
-        templateIds: [TestTokenV1.TokenRules.templateId],
-        parties: [tokenAdmin.partyId],
-        filterByParty: true,
-    })
-    const tokenRules = tokenRulesContracts.find(
-        (c) => c.synchronizerId === appSynchronizerId
-    )
-    if (!tokenRules) throw new Error(`TokenRules not found on app-synchronizer`)
-
     // The settled holding lands on the global synchronizer; move it to the
     // app-synchronizer before self-transferring there (mirrors Bob's flow).
     if (aliceToken.synchronizerId !== appSynchronizerId) {
@@ -64,39 +56,28 @@ export async function aliceSelfTransferToApp(
         })
     }
 
+    const [transferCommand, transferDisclosed] =
+        await tokenNamespaceAppUser.transfer.create({
+            sender: alice.partyId,
+            recipient: alice.partyId,
+            amount: TRADE_TOKEN_AMOUNT,
+            instrumentId: 'TestToken',
+            registryUrl: testTokenRegistryUrl,
+            inputUtxos: [aliceToken.contractId],
+        })
+
     await appUserSdk.ledger
         .prepare({
             partyId: alice.partyId,
-            commands: [
-                buildTransferTokenCommand({
-                    tokenRulesCid: tokenRules.contractId,
-                    expectedAdmin: tokenAdmin.partyId,
-                    sender: alice.partyId,
-                    receiver: alice.partyId,
-                    amount: TRADE_TOKEN_AMOUNT,
-                    admin: tokenAdmin.partyId,
-                    inputHoldingCids: [aliceToken.contractId],
-                    requestedAt: new Date(Date.now()).toISOString(),
-                    executeBefore: new Date(
-                        Date.now() + MS_24_HOURS
-                    ).toISOString(),
-                }),
-            ],
-            disclosedContracts: [
-                {
-                    templateId: tokenRules.templateId,
-                    contractId: tokenRules.contractId,
-                    createdEventBlob: tokenRules.createdEventBlob!,
-                    synchronizerId: tokenRules.synchronizerId,
-                },
-            ],
+            commands: [transferCommand],
+            disclosedContracts: transferDisclosed,
             synchronizerId: appSynchronizerId,
         })
         .sign(alice.keyPair.privateKey)
         .execute({ partyId: alice.partyId })
 
     logger.info(
-        `Alice: ${TRADE_TOKEN_AMOUNT} TestToken self-transferred on app-synchronizer`
+        `Alice: ${TRADE_TOKEN_AMOUNT} TestToken self-transferred on app-synchronizer via registry transfer-factory`
     )
 }
 
@@ -104,20 +85,19 @@ export async function bobSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { appProviderSdk, bob, tokenAdmin, appSynchronizerId } = setup
+    const {
+        appProviderSdk,
+        tokenNamespaceAppProvider,
+        bob,
+        appSynchronizerId,
+        testTokenRegistryUrl,
+    } = setup
 
-    const [bobTokens, tokenRulesContracts] = await Promise.all([
-        appProviderSdk.ledger.acs.read({
-            templateIds: [TestTokenV1.Token.templateId],
-            parties: [bob.partyId],
-            filterByParty: true,
-        }),
-        appProviderSdk.ledger.acs.read({
-            templateIds: [TestTokenV1.TokenRules.templateId],
-            parties: [tokenAdmin.partyId],
-            filterByParty: true,
-        }),
-    ])
+    const bobTokens = await appProviderSdk.ledger.acs.read({
+        templateIds: [TestTokenV1.Token.templateId],
+        parties: [bob.partyId],
+        filterByParty: true,
+    })
 
     if (bobTokens.length === 0) {
         logger.info('Bob: no TestToken holdings to self-transfer')
@@ -143,43 +123,28 @@ export async function bobSelfTransferToApp(
         if (!holdingAmount)
             throw new Error('Cannot read amount from Bob Token holding')
 
-        const tokenRules = tokenRulesContracts.find(
-            (c) => c.synchronizerId === appSynchronizerId
-        )
-        if (!tokenRules)
-            throw new Error(`TokenRules not found on app-synchronizer`)
+        const [transferCommand, transferDisclosed] =
+            await tokenNamespaceAppProvider.transfer.create({
+                sender: bob.partyId,
+                recipient: bob.partyId,
+                amount: holdingAmount,
+                instrumentId: 'TestToken',
+                registryUrl: testTokenRegistryUrl,
+                inputUtxos: [token.contractId],
+            })
 
         await appProviderSdk.ledger
             .prepare({
                 partyId: bob.partyId,
-                commands: [
-                    buildTransferTokenCommand({
-                        tokenRulesCid: tokenRules.contractId,
-                        expectedAdmin: tokenAdmin.partyId,
-                        sender: bob.partyId,
-                        receiver: bob.partyId,
-                        amount: holdingAmount,
-                        admin: tokenAdmin.partyId,
-                        inputHoldingCids: [token.contractId],
-                        requestedAt: new Date(Date.now()).toISOString(),
-                        executeBefore: new Date(
-                            Date.now() + MS_24_HOURS
-                        ).toISOString(),
-                    }),
-                ],
-                disclosedContracts: [
-                    {
-                        templateId: tokenRules.templateId,
-                        contractId: tokenRules.contractId,
-                        createdEventBlob: tokenRules.createdEventBlob!,
-                        synchronizerId: tokenRules.synchronizerId,
-                    },
-                ],
+                commands: [transferCommand],
+                disclosedContracts: transferDisclosed,
                 synchronizerId: appSynchronizerId,
             })
             .sign(bob.keyPair.privateKey)
             .execute({ partyId: bob.partyId })
     }
 
-    logger.info(`Bob: TestToken self-transferred on app-synchronizer`)
+    logger.info(
+        `Bob: TestToken self-transferred on app-synchronizer via registry transfer-factory`
+    )
 }
