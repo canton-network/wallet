@@ -39,6 +39,13 @@ const testAsset = {
     admin: 'adminParty:123',
 }
 
+const pingTx =
+    'CoQGCgMyLjESATAa1QUKATDCPs4FCssFCgMyLjESQjAwODM2ZmE0NzAxNmQ4OWJmZWRlNjM5NzlhZDA0OTJkZWI3OGQ5Yzc4MDYzNWNiNDhlMTdhYWE5YjRlNGE2OTczOBoiY2FudG9uLWJ1aWx0aW4tYWRtaW4td29ya2Zsb3ctcGluZyJeCkBkZTJjYzJmOTBlYjUyMzQxNGZmNTRlODk5OTUxZGFkZDg3ODlhNGMwN2UwZjcxZjZkNmM5ZWFmNTdkNDEyYTU0EhRDYW50b24uSW50ZXJuYWwuUGluZxoEUGluZyrVAnLSAgpeCkBkZTJjYzJmOTBlYjUyMzQxNGZmNTRlODk5OTUxZGFkZDg3ODlhNGMwN2UwZjcxZjZkNmM5ZWFmNTdkNDEyYTU0EhRDYW50b24uSW50ZXJuYWwuUGluZxoEUGluZxIsCgJpZBImQiQwNGQ4ODdkZC0xNWI4LTQ5NTQtOGI3OS1hODUzODExY2U3Y2YSYAoJaW5pdGlhdG9yElM6UXYxLTAxLWFsaWNlOjoxMjIwZWUyNjI0MTkwODM0ZGRkZjI4ZjE5NDY4NWFjZWU4ZjAwY2JkZTllZTBkMjExZGFlMjc3ZjRkNzk5ODg0ZjI4ORJgCglyZXNwb25kZXISUzpRdjEtMDEtYWxpY2U6OjEyMjBlZTI2MjQxOTA4MzRkZGRmMjhmMTk0Njg1YWNlZThmMDBjYmRlOWVlMGQyMTFkYWUyNzdmNGQ3OTk4ODRmMjg5MlF2MS0wMS1hbGljZTo6MTIyMGVlMjYyNDE5MDgzNGRkZGYyOGYxOTQ2ODVhY2VlOGYwMGNiZGU5ZWUwZDIxMWRhZTI3N2Y0ZDc5OTg4NGYyODk6UXYxLTAxLWFsaWNlOjoxMjIwZWUyNjI0MTkwODM0ZGRkZjI4ZjE5NDY4NWFjZWU4ZjAwY2JkZTllZTBkMjExZGFlMjc3ZjRkNzk5ODg0ZjI4OSIiEiC8zzmuPyGPcD7usKyRMqdiVWlRskpjZ3ZiBoyD9maILhL/ARJ5ClF2MS0wMS1hbGljZTo6MTIyMGVlMjYyNDE5MDgzNGRkZGYyOGYxOTQ2ODVhY2VlOGYwMGNiZGU5ZWUwZDIxMWRhZTI3N2Y0ZDc5OTg4NGYyODkSJDUxMjFkMTIwLTNjNTMtNDEwMy04NmFhLTdhM2VhNjZlYzQ2NRpTZ2xvYmFsLWRvbWFpbjo6MTIyMGI5NTM5MWNkMDNlMTE4NzFkNTRlOTBjMjAyNTc1ZDI5ZTc2YzI2NWRkMzg4YjhhZmIwNWFhZDU0ZDY3MGRmYzYqJDhiOTBhNDQ4LTFmZmEtNDA0OS04NTNlLWY4YjRmZTg1M2RjMjCwqJjB5v+UAw=='
+const topologyTx = [
+    'CvEBCAEQARrqAUrnAQpPdjEtMDEtYm9iOjoxMjIwMjdlYjczZGRiODBhYTY0MWE2ZDQwZjhjY2I2MWU0MzIyMjFjZjdlZTI3NTJlMzAxZGIzMWMxYzZmMGRhZGYzNRABGlUKUXBhcnRpY2lwYW50OjoxMjIwOWIxZDBkZDhiMjVlMjAwMmE0NTJiOTlkNGJjMGRlZmVhZDY0ZmQ3YTkyNWEzY2I1MGM3MDJhMDYxNTQyNzVhZBACMjsKNxAEGiwwKjAFBgMrZXADIQCQesJGtB8HQ/zNPGhX6gG/fnapj7qC1nSAoXEMIWR3mCoDAQUEMAEQARAe',
+]
+
+const isBrowserEnv = typeof process === 'undefined'
 describe('utils package', () => {
     it('tests ParsedURL with string input', () => {
         const urlAsString = 'http://registry.com/path'
@@ -119,5 +126,23 @@ describe('utils package', () => {
                 },
             },
         ])
+    })
+
+    it.skipIf(isBrowserEnv)('tests hash service', async () => {
+        const utils = new SDKUtilsNamespace({
+            logger: new SDKLogger('console'),
+            error: new SDKErrorHandler(new SDKLogger('console')),
+        })
+
+        const preparedTxHash = (
+            await utils.hash.preparedTransacation(pingTx)
+        ).toBase64()
+        const topologyHash = await utils.hash.topologyTransaction(topologyTx)
+        expect(topologyHash).toBe(
+            'EiAuQ/LV6dYD1fIWldav2upEt/c9Wc0k3KbACxMMEBA5lw=='
+        )
+        expect(preparedTxHash).toBe(
+            'Bp2sK8iqD+0g0Qh9cgmPf0Kl7XtJs710fySuuzs3LcI='
+        )
     })
 })
