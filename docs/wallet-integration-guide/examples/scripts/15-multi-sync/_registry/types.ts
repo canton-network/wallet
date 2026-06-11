@@ -4,65 +4,59 @@
 /**
  * Shared Token Standard types for the TestToken registry server.
  *
- * Derived from the four off-ledger API specs in api-specs/splice/0.6.1/:
- *   - token-metadata-v1.yaml
- *   - transfer-instruction-v1.yaml
- *   - allocation-instruction-v1.yaml
- *   - allocation-v1.yaml
+ * The request/response data shapes are reused directly from the generated
+ * OpenAPI clients in `@canton-network/core-token-standard` (themselves derived
+ * from the four off-ledger API specs in api-specs/splice/0.6.1/). Only the
+ * server-side handler interfaces — which are an abstraction specific to this
+ * example registry — are declared here.
  *
- * Each handler interface corresponds to one spec; common primitives are
- * deduplicated here.
+ * The one exception is `ChoiceContext`: the generated type models
+ * `choiceContextData` as an empty object, but the registry must emit a Daml
+ * `ChoiceContext` record (`{ values: {} }`), so a slightly looser local type is
+ * used for the values the handlers produce.
  */
 
-// ── Shared primitives ──────────────────────────────────────────────────────
+import type {
+    metadataRegistryTypes,
+    transferInstructionRegistryTypes,
+} from '@canton-network/core-token-standard'
 
-export interface DisclosedContract {
-    templateId: string
-    contractId: string
-    createdEventBlob: string
-    synchronizerId: string
-}
+// ── Reused generated schema types ──────────────────────────────────────────
 
+export type DisclosedContract =
+    transferInstructionRegistryTypes['schemas']['DisclosedContract']
+
+/** Request body for getTransferFactory and getAllocationFactory. */
+export type GetFactoryRequest =
+    transferInstructionRegistryTypes['schemas']['GetFactoryRequest']
+
+/** Request body for the transfer-instruction and allocation choice-context endpoints. */
+export type GetChoiceContextRequest =
+    transferInstructionRegistryTypes['schemas']['GetChoiceContextRequest']
+
+export type SupportedApis = metadataRegistryTypes['schemas']['SupportedApis']
+
+export type GetRegistryInfoResponse =
+    metadataRegistryTypes['schemas']['GetRegistryInfoResponse']
+
+export type Instrument = metadataRegistryTypes['schemas']['Instrument']
+
+export type ListInstrumentsResponse =
+    metadataRegistryTypes['schemas']['ListInstrumentsResponse']
+
+// ── Local context type ─────────────────────────────────────────────────────
+
+/**
+ * The choice context the registry returns. `choiceContextData` is the Daml
+ * `ChoiceContext` record (`{ values: <map> }`) that the SDK forwards verbatim
+ * into the prepared transaction's `extraArgs.context`.
+ */
 export interface ChoiceContext {
-    choiceContextData: Record<string, unknown>
+    choiceContextData: { values: Record<string, unknown> }
     disclosedContracts: DisclosedContract[]
 }
 
-/** Request body for getTransferFactory and getAllocationFactory. */
-export interface GetFactoryRequest {
-    choiceArguments: Record<string, unknown>
-    excludeDebugFields?: boolean
-}
-
-/** Request body for the transfer-instruction and allocation choice-context endpoints. */
-export interface GetChoiceContextRequest {
-    meta?: Record<string, string>
-    excludeDebugFields?: boolean
-}
-
 // ── token-metadata-v1 ──────────────────────────────────────────────────────
-
-export type SupportedApis = Record<string, number>
-
-export interface GetRegistryInfoResponse {
-    adminId: string
-    supportedApis: SupportedApis
-}
-
-export interface Instrument {
-    id: string
-    name: string
-    symbol: string
-    totalSupply?: string
-    totalSupplyAsOf?: string
-    decimals: number
-    supportedApis: SupportedApis
-}
-
-export interface ListInstrumentsResponse {
-    instruments: Instrument[]
-    nextPageToken?: string
-}
 
 export interface MetadataHandlers {
     getRegistryInfo():
