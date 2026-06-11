@@ -5,7 +5,7 @@ import { decodeJwt } from 'jose'
 import { AuthContext } from './auth-service'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import { Logger } from '@canton-network/core-types'
-import { Auth, AuthType, Idp } from './config/schema.js'
+import { Auth, Idp } from './config/schema.js'
 
 export function assertConnected(
     authContext: AuthContext | undefined
@@ -185,20 +185,6 @@ export function isClientCredentialsToken(accessToken: string): boolean {
     } catch {
         return false
     }
-}
-
-/**
- * Records how a Gateway session token was obtained for persistence and
- * automation session selection.
- */
-export function resolveSessionAuthType(
-    accessToken: string,
-    networkAuth: Auth
-): AuthType {
-    if (isClientCredentialsToken(accessToken)) {
-        return 'client_credentials'
-    }
-    return networkAuth.method
 }
 
 /**

@@ -49,7 +49,6 @@ import {
     Auth,
     AuthTokenProvider,
     idpSchema,
-    resolveSessionAuthType,
 } from '@canton-network/core-wallet-auth'
 import { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
@@ -682,10 +681,6 @@ export const userController = (
                     id: newSessionId,
                     network: params.networkId,
                     accessToken: authContext?.accessToken || '',
-                    authType: resolveSessionAuthType(
-                        authContext?.accessToken || '',
-                        network.auth
-                    ),
                 })
                 const idp = await store.getIdp(network.identityProviderId)
                 // Assumption: `setSession` calls `assertConnected`, so its safe to declare that the authContext is defined.

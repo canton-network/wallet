@@ -135,9 +135,7 @@ describe('SigningWorker', () => {
 
         await worker.tick()
 
-        expect(store.getSessionForUser).toHaveBeenCalledWith('user-1', {
-            authType: 'client_credentials',
-        })
+        expect(store.getSessionForUser).toHaveBeenCalledWith('user-1')
         expect(createAccessTokenProvider).toHaveBeenCalledWith(
             clientCredentialsNetwork
         )
@@ -150,7 +148,6 @@ describe('SigningWorker', () => {
             id: 'session-new',
             network: 'net-m2m',
             accessToken: mintedToken,
-            authType: 'client_credentials',
         })
         expect(transactionServiceMocks.signAndExecute).toHaveBeenCalled()
     })
@@ -168,7 +165,6 @@ describe('SigningWorker', () => {
                 id: 'session-1',
                 network: 'net-m2m',
                 accessToken: validJwt(),
-                authType: 'client_credentials',
             }),
             getNetwork: vi.fn().mockResolvedValue(clientCredentialsNetwork),
             withAuthContext: vi.fn(),
@@ -183,7 +179,6 @@ describe('SigningWorker', () => {
             id: 'session-1',
             network: 'net-m2m',
             accessToken: sessionToken,
-            authType: 'client_credentials',
         })
         expect(transactionServiceMocks.signAndExecute).toHaveBeenCalled()
     })

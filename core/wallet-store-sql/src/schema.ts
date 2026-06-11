@@ -113,7 +113,6 @@ interface SessionTable {
     id: string
     network: string
     accessToken: string
-    authType: string | null
     userId: UserId
 }
 

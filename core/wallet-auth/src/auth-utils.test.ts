@@ -19,7 +19,6 @@ import {
     jwtExpired,
     jwtUserEmail,
     jwtUserId,
-    resolveSessionAuthType,
     resolveUserEmail,
 } from './auth-utils.js'
 import { Idp } from './config/schema.js'
@@ -362,26 +361,5 @@ describe('service account auth utils', () => {
                 'not-a-jwt'
             )
         ).toBe(false)
-    })
-
-    it('resolves session auth type from token grant or network auth', () => {
-        const m2mToken = mockJwt({ gty: 'client_credentials', sub: 'svc' })
-
-        expect(
-            resolveSessionAuthType(m2mToken, {
-                method: 'authorization_code',
-                clientId: 'app',
-                audience: 'aud',
-                scope: 'scope',
-            })
-        ).toBe('client_credentials')
-        expect(
-            resolveSessionAuthType('interactive-token', {
-                method: 'authorization_code',
-                clientId: 'app',
-                audience: 'aud',
-                scope: 'scope',
-            })
-        ).toBe('authorization_code')
     })
 })

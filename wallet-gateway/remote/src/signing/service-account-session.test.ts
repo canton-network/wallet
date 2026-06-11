@@ -83,7 +83,6 @@ describe('ensureAutomationSessionForPrepare', () => {
             expect.objectContaining({
                 network: 'net-m2m',
                 accessToken: token,
-                authType: 'client_credentials',
             })
         )
     })
@@ -95,7 +94,6 @@ describe('ensureAutomationSessionForPrepare', () => {
                 id: 'session-interactive',
                 network: 'net-m2m',
                 accessToken: 'interactive-token',
-                authType: 'authorization_code',
             }),
             listNetworks: vi.fn().mockResolvedValue([clientCredentialsNetwork]),
             setSession: vi.fn().mockResolvedValue(undefined),
@@ -110,7 +108,6 @@ describe('ensureAutomationSessionForPrepare', () => {
 
         expect(store.setSession).toHaveBeenCalledWith(
             expect.objectContaining({
-                authType: 'client_credentials',
                 accessToken: token,
             })
         )
@@ -164,9 +161,7 @@ describe('resolveAutomationRunContext', () => {
             logger
         )
 
-        expect(store.getSessionForUser).toHaveBeenCalledWith('user-1', {
-            authType: 'client_credentials',
-        })
+        expect(store.getSessionForUser).toHaveBeenCalledWith('user-1')
     })
 
     it('mints a token when no session exists on an M2M network', async () => {

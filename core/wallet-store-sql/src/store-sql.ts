@@ -4,7 +4,6 @@
 import { Logger } from 'pino'
 import {
     AuthContext,
-    AuthType,
     UserId,
     AuthAware,
     assertConnected,
@@ -406,34 +405,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
      * Returns the session for a user without requiring the caller's auth context.
      * Used by background jobs (e.g. pending external signing poller).
      */
-    async getSessionForUser(
-        userId: UserId,
-        filter?: { authType?: AuthType }
-    ): Promise<Session | undefined> {
-        let query = this.db
+    async getSessionForUser(userId: UserId): Promise<Session | undefined> {
+        const row = await this.db
             .selectFrom('sessions')
             .selectAll()
             .where('userId', '=', userId)
-
-        if (filter?.authType) {
-            query = query.where('authType', '=', filter.authType)
-        }
-
-        const row = await query.executeTakeFirst()
+            .executeTakeFirst()
         return row ? this.toSession(row) : undefined
     }
 
     private toSession(row: DB['sessions']): Session {
-        const session: Session = {
+        return {
             id: row.id,
             network: row.network,
             accessToken: row.accessToken,
             userId: row.userId,
         }
-        if (row.authType) {
-            session.authType = row.authType as AuthType
-        }
-        return session
     }
 
     /**

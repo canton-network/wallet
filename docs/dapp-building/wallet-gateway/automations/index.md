@@ -86,7 +86,7 @@ The provider must be **installed and configured** on the Gateway host (API keys,
 | **Multiple M2M networks**               | Call User API **`addSession`** with `networkId` before `prepareExecute`.                                      |
 | **Expired token**                       | The Gateway refreshes the session token from the network's `client_credentials` configuration.                |
 
-Sessions persist an **`authType`** (`client_credentials`, `authorization_code`, or `self_signed`). Automation only reuses **`client_credentials`** sessions so a short-lived interactive OAuth token from the User UI is never picked up by the Signing worker or M2M `prepareExecute` bootstrap.
+Automation only reuses stored sessions when the access token is a valid **client-credentials** JWT (`gty: client_credentials`), so a short-lived interactive OAuth token from the User UI is not picked up by the Signing worker or M2M `prepareExecute` bootstrap.
 
 For production systems, we still recommend an explicit `addSession` during automation startup so network selection is deterministic and failures surface before command submission.
 
