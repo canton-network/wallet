@@ -44,3 +44,41 @@ The trade is a two-legged Delivery-vs-Payment:
 - **leg-1:** Bob delivers **20 `TestToken`** to Alice — `TestToken` lives on the **app** synchronizer.
 
 The whole flow uses **single-party submissions only** (no multi-party signing) and is settled atomically by the TradingApp.
+
+## Topology & DAR vetting
+
+Vetting is per **(participant, synchronizer)**. `app-user` and `app-provider` connect to both
+synchronizers and vet the same two DARs on each; `sv` connects to the **global** synchronizer only.
+
+```text
+GLOBAL synchronizer  —  Amulet*  ·  leg-0:  Alice --100 CC-->  Bob
+══════════╤═══════════════════════╤═══════════════════════╤═════════════════
+          │                       │                       │
+          │ vetted on GLOBAL:  TestTokenV1, trading-app  (+ Amulet* preinstalled)  — all 3 participants
+          │                       │                       │
+   ┌──────┴───────┐        ┌──────┴───────┐        ┌──────┴───────┐
+   │ app-user     │        │ app-provider │        │ sv           │
+   │ participant  │        │ participant  │        │ participant  │
+   │ Alice        │        │ Bob          │        │ TradingApp   │
+   │              │        │ TokenAdmin   │        │              │
+   └──────┬───────┘        └──────┬───────┘        └──────────────┘
+          │                       │
+          │ vetted on APP:  TestTokenV1, trading-app  — app-user & app-provider only (sv not connected)
+          │                       │
+══════════╧═══════════════════════╧═════════════════════════════════════════
+APP synchronizer  —  TestToken  ·  leg-1:  Bob --20 TT-->  Alice
+```
+
+Vetting matrix (which DAR is vetted where):
+
+| Participant (hosts)                | global synchronizer                  | app synchronizer         |
+| ---------------------------------- | ------------------------------------ | ------------------------ |
+| **app-user** (Alice)               | TestTokenV1, trading-app, (Amulet\*) | TestTokenV1, trading-app |
+| **app-provider** (Bob, TokenAdmin) | TestTokenV1, trading-app, (Amulet\*) | TestTokenV1, trading-app |
+| **sv** (TradingApp)                | TestTokenV1, trading-app, (Amulet\*) | — _(not connected)_      |
+
+DARs referenced above:
+
+- **TestTokenV1** = `splice-test-token-v1-1.0.0.dar` (built locally from `damljs/splice-test-token-v1`)
+- **trading-app** = `splice-token-test-trading-app-1.0.0.dar` (from the localnet bundle)
+- **Amulet\*** = `splice-amulet` — pre-vetted on the **global** synchronizer by localnet, **not** by this example.
