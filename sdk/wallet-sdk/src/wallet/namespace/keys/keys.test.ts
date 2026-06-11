@@ -30,7 +30,7 @@ describe('Keys namespace', () => {
         const publicKeyWithKnownFingerprint =
             'PJCUPZmCN134OST9ofcs2BGLJ/4ju8BT/xiZjzSO6t4='
 
-        const fingerprint = await keys.fingerprint2(
+        const fingerprint = await keys.fingerprint(
             publicKeyWithKnownFingerprint
         )
 
