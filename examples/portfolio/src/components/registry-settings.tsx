@@ -19,12 +19,9 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { CopyableIdentifier } from './copyable-identifier'
 import { useRegistryUrls, useRegistryMutations } from '@hooks/useRegistryUrls'
 import { useForm } from '@tanstack/react-form'
+import { HttpUrl } from '@canton-network/core-types'
 import { toast } from 'sonner'
-import {
-    httpUrlSchema,
-    registryFormSchema,
-    type RegistryFormData,
-} from '@lib/schemas'
+import { registryFormSchema, type RegistryFormData } from '@lib/schemas'
 
 interface Registry {
     partyId: string
@@ -33,7 +30,7 @@ interface Registry {
 
 const INSECURE_REGISTRY_URL_WARNING =
     'Registry responses can be spoofed by network attackers. Use HTTPS.'
-const registryUrlSchema = httpUrlSchema
+const registryUrlSchema = HttpUrl
 
 const isInsecureRegistryUrl = (value: string) => {
     const result = registryUrlSchema.safeParse(value)

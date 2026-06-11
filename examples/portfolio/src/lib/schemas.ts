@@ -1,30 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    HttpUrl,
+    PartyId,
+    PARTY_ID_ERROR_MESSAGE,
+} from '@canton-network/core-types'
 import { z } from 'zod'
 
-export const httpUrlSchema = z
-    .url({
-        message: 'Must be a valid HTTP or HTTPS URL',
-        protocol: /^https?$/,
-    })
-    .transform((value) => new URL(value).toString())
-
 const optionalStringSchema = () => z.string().trim().optional()
-
-export const PARTY_ID_EXAMPLE = 'party-hint::fingerprint'
-export const PARTY_ID_ERROR_MESSAGE = `Must be in the form ${PARTY_ID_EXAMPLE}`
-export const PARTY_ID_PATTERN = /^[^:]+::[^:]+$/
-export const partyIdSchema = z
-    .string()
-    .trim()
-    .regex(PARTY_ID_PATTERN, PARTY_ID_ERROR_MESSAGE)
 
 export const optionalPartyIdSchema = z
     .string()
     .trim()
     .refine(
-        (value) => value === '' || PARTY_ID_PATTERN.test(value),
+        (value) => value === '' || PartyId.safeParse(value).success,
         PARTY_ID_ERROR_MESSAGE
     )
     .transform((value) => (value === '' ? undefined : value))
@@ -34,7 +24,7 @@ export const optionalPartyIdInputSchema = z
     .string()
     .trim()
     .refine(
-        (value) => value === '' || partyIdSchema.safeParse(value).success,
+        (value) => value === '' || PartyId.safeParse(value).success,
         PARTY_ID_ERROR_MESSAGE
     )
 
@@ -42,7 +32,7 @@ export const registryConfigSchema = z
     .object({
         name: optionalStringSchema(),
         partyId: optionalPartyIdSchema,
-        url: httpUrlSchema,
+        url: HttpUrl,
     })
     .strict()
 
@@ -50,13 +40,13 @@ export const portfolioConfigSchema = z
     .object({
         amulet: z
             .object({
-                validatorUrl: httpUrlSchema,
-                registry: httpUrlSchema,
+                validatorUrl: HttpUrl,
+                registry: HttpUrl,
             })
             .strict(),
         token: z
             .object({
-                validatorUrl: httpUrlSchema,
+                validatorUrl: HttpUrl,
                 registries: z.array(registryConfigSchema),
             })
             .strict(),
@@ -65,7 +55,7 @@ export const portfolioConfigSchema = z
 
 export const registryFormSchema = z.object({
     partyId: optionalPartyIdInputSchema,
-    registryUrl: httpUrlSchema,
+    registryUrl: HttpUrl,
 })
 
 export type PortfolioRegistryConfig = z.infer<typeof registryConfigSchema>
