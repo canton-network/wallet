@@ -8,6 +8,7 @@ import {
     buildActiveContractFilter,
     promiseWithTimeout,
 } from '../service'
+import { PaginatedACSCache } from '../cache/item'
 
 const ledgerProvider = vi.hoisted(() => ({
     request: vi.fn(),
@@ -40,6 +41,7 @@ describe('service', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         ledgerProvider.request.mockResolvedValue(mockActiveContracts)
+
         service = new AcsService(ledgerProvider)
     })
 
@@ -465,6 +467,272 @@ describe('service', () => {
 
             expect(ledgerProvider.request).toHaveBeenCalledTimes(3)
             expect(result).toHaveLength(2)
+        })
+    })
+
+    describe('getPaginatedActiveContracts', () => {
+        const mockPageResponse = {
+            activeContracts: [
+                {
+                    workflowId: 'wf1',
+                    contractEntry: {
+                        JsActiveContract: {
+                            createdEvent: {
+                                contractId: 'contract-1',
+                                templateId: 'template1',
+                                contractKey: null,
+                                createArguments: {},
+                                createdAt: '2024-01-01T00:00:00Z',
+                                signatories: ['party1'],
+                                observers: [],
+                                offset: 100,
+                            },
+                            synchronizerId: 'sync1',
+                            reassignmentCounter: 0,
+                        },
+                    },
+                },
+            ],
+            activeAtOffset: 100,
+            nextPageToken: '',
+        }
+
+        it('should properly construct request body when specific args are provided', async () => {
+            ledgerProvider.request.mockResolvedValue(mockPageResponse)
+
+            const options = {
+                offset: 100,
+                parties: ['party1'],
+                pageToken: 'page2Token',
+                maxPageSize: 50,
+            }
+
+            await service.getPaginatedActiveContracts(options)
+
+            expect(ledgerProvider.request).toHaveBeenCalledWith({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/state/active-contracts-page',
+                    requestMethod: 'get',
+                    body: expect.objectContaining({
+                        pageToken: 'page2Token',
+                        maxPageSize: 50,
+                        activeAtOffset: 100,
+                        eventFormat: expect.any(Object),
+                    }),
+                },
+            })
+        })
+
+        it('should include filtersByParty when filterByParty is true', async () => {
+            ledgerProvider.request.mockResolvedValue(mockPageResponse)
+
+            const options = {
+                offset: 100,
+                parties: ['party1'],
+                templateIds: ['template1'],
+                filterByParty: true,
+            }
+
+            await service.getPaginatedActiveContracts(options)
+
+            expect(ledgerProvider.request).toHaveBeenCalledWith({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/state/active-contracts-page',
+                    requestMethod: 'get',
+                    body: expect.objectContaining({
+                        eventFormat: expect.objectContaining({
+                            filtersByParty: expect.any(Object),
+                        }),
+                    }),
+                },
+            })
+        })
+
+        it('should include filtersForAnyParty when filterByParty is false', async () => {
+            ledgerProvider.request.mockResolvedValue(mockPageResponse)
+
+            const options = {
+                offset: 100,
+                templateIds: ['template1'],
+            }
+
+            await service.getPaginatedActiveContracts(options)
+
+            expect(ledgerProvider.request).toHaveBeenCalledWith({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/state/active-contracts-page',
+                    requestMethod: 'get',
+                    body: expect.objectContaining({
+                        eventFormat: expect.objectContaining({
+                            filtersForAnyParty: expect.any(Object),
+                        }),
+                    }),
+                },
+            })
+        })
+
+        it('should fetch all pages when continueUntilCompletion is true', async () => {
+            ledgerProvider.request
+                .mockResolvedValueOnce({
+                    activeContracts: [mockPageResponse.activeContracts[0]],
+                    activeAtOffset: 100,
+                    nextPageToken: 'page2',
+                })
+                .mockResolvedValueOnce({
+                    activeContracts: [
+                        {
+                            workflowId: 'wf2',
+                            contractEntry: {
+                                JsActiveContract: {
+                                    createdEvent: {
+                                        contractId: 'contract-2',
+                                        templateId: 'template1',
+                                        contractKey: null,
+                                        createArguments: {},
+                                        createdAt: '2024-01-01T00:00:00Z',
+                                        signatories: ['party1'],
+                                        observers: [],
+                                        offset: 200,
+                                    },
+                                    synchronizerId: 'sync1',
+                                    reassignmentCounter: 0,
+                                },
+                            },
+                        },
+                    ],
+                    activeAtOffset: 200,
+                    nextPageToken: 'page3',
+                })
+                .mockResolvedValueOnce({
+                    activeContracts: [
+                        {
+                            workflowId: 'wf3',
+                            contractEntry: {
+                                JsActiveContract: {
+                                    createdEvent: {
+                                        contractId: 'contract-3',
+                                        templateId: 'template1',
+                                        contractKey: null,
+                                        createArguments: {},
+                                        createdAt: '2024-01-01T00:00:00Z',
+                                        signatories: ['party1'],
+                                        observers: [],
+                                        offset: 300,
+                                    },
+                                    synchronizerId: 'sync1',
+                                    reassignmentCounter: 0,
+                                },
+                            },
+                        },
+                    ],
+                    activeAtOffset: 300,
+                    nextPageToken: '',
+                })
+
+            const options = {
+                offset: 100,
+                parties: ['party1'],
+                templateIds: ['template1'],
+                continueUntilCompletion: true,
+            }
+
+            const result = await service.getPaginatedActiveContracts(options)
+
+            expect(ledgerProvider.request).toHaveBeenCalledTimes(3)
+            expect(Array.isArray(result)).toBe(true)
+            expect(result).toHaveLength(3)
+            if (Array.isArray(result)) {
+                expect(result[0].activeAtOffset).toBe(100)
+                expect(result[1].activeAtOffset).toBe(200)
+                expect(result[2].activeAtOffset).toBe(300)
+            }
+        })
+
+        it('should stop pagination when nextPageToken is empty', async () => {
+            ledgerProvider.request
+                .mockResolvedValueOnce({
+                    activeContracts: [mockPageResponse.activeContracts[0]],
+                    activeAtOffset: 100,
+                    nextPageToken: 'page2',
+                })
+                .mockResolvedValueOnce({
+                    activeContracts: [],
+                    activeAtOffset: 200,
+                    nextPageToken: '',
+                })
+
+            const options = {
+                offset: 100,
+                parties: ['party1'],
+                continueUntilCompletion: true,
+            }
+
+            const result = await service.getPaginatedActiveContracts(options)
+
+            expect(ledgerProvider.request).toHaveBeenCalledTimes(2)
+            expect(Array.isArray(result)).toBe(true)
+            expect(result).toHaveLength(2)
+        })
+
+        it('should use correct pageToken in subsequent requests', async () => {
+            ledgerProvider.request
+                .mockResolvedValueOnce({
+                    activeContracts: [],
+                    activeAtOffset: 100,
+                    nextPageToken: 'customToken1',
+                })
+                .mockResolvedValueOnce({
+                    activeContracts: [],
+                    activeAtOffset: 200,
+                    nextPageToken: 'customToken2',
+                })
+                .mockResolvedValueOnce({
+                    activeContracts: [],
+                    activeAtOffset: 300,
+                    nextPageToken: '',
+                })
+
+            const options = {
+                offset: 100,
+                parties: ['party1'],
+                continueUntilCompletion: true,
+            }
+
+            await service.getPaginatedActiveContracts(options)
+
+            expect(ledgerProvider.request).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                    params: expect.objectContaining({
+                        body: expect.not.objectContaining({
+                            pageToken: PaginatedACSCache.FIRST_PAGE_TOKEN,
+                        }),
+                    }),
+                })
+            )
+            expect(ledgerProvider.request).toHaveBeenNthCalledWith(
+                2,
+                expect.objectContaining({
+                    params: expect.objectContaining({
+                        body: expect.objectContaining({
+                            pageToken: 'customToken1',
+                        }),
+                    }),
+                })
+            )
+            expect(ledgerProvider.request).toHaveBeenNthCalledWith(
+                3,
+                expect.objectContaining({
+                    params: expect.objectContaining({
+                        body: expect.objectContaining({
+                            pageToken: 'customToken2',
+                        }),
+                    }),
+                })
+            )
         })
     })
 
