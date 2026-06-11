@@ -42,11 +42,6 @@ const {
 } = setup
 
 // ── Start the TestToken registry (CIP-56 off-ledger APIs) ───────────────────
-// Stands up a local HTTP server implementing the four Token Standard off-ledger
-// APIs (metadata, transfer-instruction, allocation-instruction, allocation) for
-// the custom TestToken. It reads TokenRules from the app-provider participant
-// (which hosts tokenAdmin on both synchronizers) and serves the factory contracts
-// and choice contexts the wallet SDK needs to build TestToken transactions.
 const registry = await startRegistry({
     tokenAdminPartyId: tokenAdmin.partyId,
     port: TEST_TOKEN_REGISTRY_PORT,
