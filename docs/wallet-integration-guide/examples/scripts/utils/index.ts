@@ -24,40 +24,17 @@ export type SynchronizerMap = {
 }
 
 /**
- * Resolve the global synchronizer ID from the list returned by the ledger API.
- *
- * Looks for the entry whose alias is `'global'`. Falls back to the first entry
- * when no alias matches (e.g. single-synchronizer setups).
- *
- * @throws {Error} When the array is empty.
- */
-export function resolveGlobalSynchronizerId(
-    synchronizers: Array<{ synchronizerAlias: string; synchronizerId: string }>
-): string {
-    const global = synchronizers.find((s) => s.synchronizerAlias === 'global')
-    if (!global) throw new Error('Global synchronizer not found')
-    return global.synchronizerId
-}
-
-/**
- * Fetches connected synchronizers from the ledger API and returns the ID of the
- * synchronizer aliased `'global'`.
+ * Returns the ID of the synchronizer aliased `'global'`.
  *
  * The wallet SDK no longer auto-selects a synchronizer, so client code (these
  * examples) resolves it explicitly and passes it to SDK calls that require one.
+ * Resolution lives in the SDK (`sdk.ledger.getGlobalSynchronizerId`); this is a
+ * thin convenience wrapper over it.
  */
 export async function getGlobalSynchronizerId(sdk: {
-    ledger: {
-        connectedSynchronizers(args: object): Promise<{
-            connectedSynchronizers?: Array<{
-                synchronizerAlias: string
-                synchronizerId: string
-            }>
-        }>
-    }
+    ledger: { getGlobalSynchronizerId(): Promise<string> }
 }): Promise<string> {
-    const response = await sdk.ledger.connectedSynchronizers({})
-    return resolveGlobalSynchronizerId(response.connectedSynchronizers ?? [])
+    return sdk.ledger.getGlobalSynchronizerId()
 }
 
 export const TOKEN_PROVIDER_CONFIG_DEFAULT: TokenProviderConfig = {

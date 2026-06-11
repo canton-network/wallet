@@ -21,7 +21,6 @@ import {
     AMULET_NAMESPACE_CONFIG,
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
-    resolveGlobalSynchronizerId,
 } from '../utils/index.js'
 import type { SynchronizerMap } from '../utils/index.js'
 import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
@@ -155,7 +154,8 @@ export async function setupMultiSyncTrade(
             `Expected at least 2 connected synchronizers (global + app), found ${allSynchronizers.length}`
         )
 
-    const globalSynchronizerId = resolveGlobalSynchronizerId(allSynchronizers)
+    const globalSynchronizerId =
+        await appUserSdk.ledger.getGlobalSynchronizerId()
     const appSynchronizerId = allSynchronizers.find(
         (s) => s.synchronizerAlias === 'app-synchronizer'
     )?.synchronizerId

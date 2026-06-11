@@ -67,6 +67,33 @@ export class LedgerNamespace {
         )
     }
 
+    /**
+     * Resolves the ID of the synchronizer aliased `'global'` from the
+     * synchronizers connected to the caller.
+     *
+     * The SDK no longer auto-selects a synchronizer, so callers that need to
+     * target the global synchronizer (DAR uploads, party creation, transfers,
+     * ...) resolve it through this single helper.
+     *
+     * @throws {Error} When no synchronizer aliased `'global'` is connected.
+     */
+    public async getGlobalSynchronizerId(
+        options?: ConnectedSynchronizersOptions
+    ): Promise<string> {
+        const { connectedSynchronizers } =
+            await this.connectedSynchronizers(options)
+        const global = connectedSynchronizers?.find(
+            (s) => s.synchronizerAlias === 'global'
+        )
+        if (!global) {
+            this.sdkContext.error.throw({
+                message: 'Global synchronizer not found',
+                type: 'SDKOperationUnsupported',
+            })
+        }
+        return global.synchronizerId
+    }
+
     public async ledgerEnd() {
         return (
             await this.sdkContext.ledgerProvider.request<Ops.GetV2StateLedgerEnd>(

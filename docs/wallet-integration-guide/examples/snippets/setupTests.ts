@@ -98,14 +98,7 @@ async function beforeEachSetup() {
     })
 
     // ========= Resolve the synchronizer parties are hosted on =========
-    const { connectedSynchronizers } = await sdk.ledger.connectedSynchronizers(
-        {}
-    )
-    const globalSynchronizer = (connectedSynchronizers ?? []).find(
-        (s) => s.synchronizerAlias === 'global'
-    )
-    if (!globalSynchronizer) throw new Error('Global synchronizer not found')
-    global.SYNCHRONIZER_ID = globalSynchronizer.synchronizerId
+    global.SYNCHRONIZER_ID = await sdk.ledger.getGlobalSynchronizerId()
 
     // ========= Setup Existing Party 1 =========
 
