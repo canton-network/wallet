@@ -18,7 +18,9 @@ import {
 
 export type { AccessTokenProviderFactory } from './service-account-session.js'
 
+/** Configuration for {@link SigningWorker}. */
 export interface SigningWorkerOptions {
+    /** Poll interval in ms (`server.signingWorker.pollInterval`, default 5000). */
     intervalMs: number
     serviceAccountConfig: ServiceAccountConfig
     signingDrivers: SigningDrivers
@@ -28,6 +30,50 @@ export interface SigningWorkerOptions {
     logger: Logger
 }
 
+/**
+ * Background poller that completes service-account transactions stuck in external
+ * custody approval.
+ *
+ * ## When this runs
+ *
+ * During M2M automation (`prepareExecute` → `signAndExecute`), external signing
+ * providers (Fireblocks, Blockdaemon, Dfns) may return `pending` instead of a
+ * signature. The gateway persists the transaction with `status: 'pending'` and
+ * an `externalTxId` from the provider. This worker picks up those rows on each
+ * tick via {@link StoreSql.listPendingExternalTransactions}.
+ *
+ * Participant and wallet-kernel sign synchronously and never appear here.
+ *
+ * ## What happens on each tick
+ *
+ * For every pending row the worker resolves an M2M auth context
+ * ({@link resolveAutomationRunContext}), loads the user's primary wallet, and
+ * calls {@link TransactionService.signAndExecute}.
+ *
+ * Although the worker always invokes `signAndExecute`, **retries do not submit a
+ * new sign request**. `TransactionService.sign()` checks whether the stored
+ * transaction already has an `externalTxId`:
+ *
+ * - **First pass** (no `externalTxId`): `driver.signTransaction()` submits to
+ *   custody and stores the returned `externalTxId`.
+ * - **Subsequent ticks** (`externalTxId` present): `driver.getTransaction()`
+ *   polls the existing custody request for an updated status/signature.
+ *
+ * `signAndExecute` then:
+ *
+ * - returns early while the provider still reports `pending` (worker logs and
+ *   waits for the next tick), or
+ * - calls `execute()` once signing is `signed` (Dfns is special: it broadcasts
+ *   at sign-time, so execute only reconciles local state).
+ *
+ * A transaction is re-read before processing so a concurrent DApp call or an
+ * earlier tick that already completed it is skipped.
+ *
+ * ## Lifecycle
+ *
+ * Started once at gateway init (`start()`). Ticks are serialized: if a tick is
+ * still running, the next interval callback is a no-op. Use `stop()` on shutdown.
+ */
 export class SigningWorker {
     private timer: ReturnType<typeof setInterval> | undefined
     private running = false
@@ -38,6 +84,7 @@ export class SigningWorker {
 
     constructor(private readonly options: SigningWorkerOptions) {}
 
+    /** Starts the interval timer. Idempotent if already started. */
     start(): void {
         this.options.logger.info('Starting signing worker')
         if (this.timer) {
@@ -52,6 +99,7 @@ export class SigningWorker {
         )
     }
 
+    /** Clears the interval timer. */
     stop(): void {
         if (this.timer) {
             clearInterval(this.timer)
@@ -59,6 +107,10 @@ export class SigningWorker {
         }
     }
 
+    /**
+     * One poll cycle: list all pending external transactions and attempt to
+     * complete each via {@link processPending}. Safe to call directly in tests.
+     */
     async tick(): Promise<void> {
         if (this.running) {
             return
@@ -84,6 +136,11 @@ export class SigningWorker {
         }
     }
 
+    /**
+     * Drives a single pending transaction through `signAndExecute`. Skips when
+     * automation context, primary wallet, or refreshed `pending` status is missing.
+     * Errors are logged per transaction; other rows in the same tick still run.
+     */
     private async processPending(
         userId: string,
         networkId: string,
@@ -192,6 +249,7 @@ export class SigningWorker {
         }
     }
 
+    /** Caches one {@link AuthTokenProvider} per network for M2M token minting. */
     private async getAccessTokenProvider(
         network: Parameters<AccessTokenProviderFactory>[0]
     ): Promise<AuthTokenProvider> {
