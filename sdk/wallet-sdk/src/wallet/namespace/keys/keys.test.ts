@@ -27,9 +27,15 @@ describe('Keys namespace', () => {
 
     it('should calculate the fingerprint correctly from a known base64 encoded public key', async () => {
         const keys = new KeysNamespace()
-        const keyPair = keys.generate()
-        const fingerprint = await keys.fingerprint(keyPair.publicKey)
+        const publicKeyWithKnownFingerprint =
+            'PJCUPZmCN134OST9ofcs2BGLJ/4ju8BT/xiZjzSO6t4='
 
-        console.log(fingerprint)
+        const fingerprint = await keys.fingerprint2(
+            publicKeyWithKnownFingerprint
+        )
+
+        expect(fingerprint).toEqual(
+            '1220def9be3ebfa2ff62e63e4ce8e05551f0487371447ac19178cfdb40da37b28059'
+        )
     })
 })
