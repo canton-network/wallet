@@ -2,7 +2,7 @@
 
 The Splice Portfolio is a dApp for managing token standard assets and allocations. The app is a static single-page application that can be hosted anywhere. It allows you to connect to your own Wallet Gateway, or any CIP-103 compatible wallet, to sign transactions.
 
-**NOTE:** You currently need to supply a `validatorUrl` for Canton Coin (Amulet) operations.
+**NOTE:** You currently need to supply `amulet.validatorUrl` for Canton Coin (Amulet) operations.
 
 There are two supported ways of running an instance the app UI:
 
@@ -18,20 +18,40 @@ It is also possible to host the UI directly on any webserver by downloading the 
 
 ## Configuration
 
-The app uses a simple configuration file, `config.json`. The only required option currently is `validatorUrl` which must point to a Validator API accessible to your browser using the same authentication setup as the Wallet Gateway user.
+The app uses a simple configuration file, `config.json`. `amulet.validatorUrl` must point to a Validator API accessible to your browser using the same authentication setup as the Wallet Gateway user.
 
 ```json
 {
-    "validatorUrl": "http://localhost:2000/api/validator",
-    "registries": [] // not currently used but still needed in the config.json file
+    "amulet": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registry": "http://scan.localhost:4000/registry/"
+    },
+    "token": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registries": [
+            {
+                "name": "DA Registry",
+                "partyId": "operator::1234567890",
+                "url": "https://apps.da.com/registrar/operator::1234567890/"
+            }
+        ]
+    }
 }
 ```
+
+- `amulet.registry` points to the Amulet/Scan registry endpoint.
+- `token.validatorUrl` points to the Validator API used for token-standard operations.
+- `token.registries` points to Token Standard registry APIs.
+    - Registry names are optional.
+    - Registry `partyId` values are optional.
+    - When a registry omits `partyId`, the app discovers the registry admin party from the registry metadata endpoint.
+- Configured registries from `amulet.registry` and `token.registries` are combined with registries saved in browser storage, with saved entries overriding matching configured parties.
 
 ## Deployment
 
 ### Docker
 
-To start the UI with Docker, create a `config.json` in your chosen directory and set your validatorUrl. Then, run the container:
+To start the UI with Docker, create a `config.json` in your chosen directory and set the Amulet and token configuration. Then, run the container:
 
 ```sh
 docker run --rm \
@@ -52,11 +72,15 @@ image:
     tag: ''
 
 config:
-    validatorUrl: 'http://localhost:2000/api/validator' # @schema required
-    registries:
-        - url: 'https://registry.example.com' # @schema required
-          name: '' # (optional)
-          partyId: '' # (optional)
+    amulet:
+        validatorUrl: 'http://localhost:2000/api/validator' # @schema required
+        registry: 'http://scan.localhost:4000/registry/' # @schema required
+    token:
+        validatorUrl: 'http://localhost:2000/api/validator' # @schema required
+        registries:
+            - url: 'https://registry.example.com' # @schema required
+              name: '' # (optional)
+              partyId: 'party-hint::fingerprint' # (optional)
 ```
 
 Then
