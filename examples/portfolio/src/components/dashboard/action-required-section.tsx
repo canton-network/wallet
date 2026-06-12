@@ -3,13 +3,13 @@
 
 import { useMemo, useState, type ReactNode } from 'react'
 import { Alert, Box, Chip, Typography } from '@mui/material'
-import type { ActionItem } from '@components/types'
 import { ActionRequiredDialog } from '@components/dashboard/action-required-dialog'
-import { ActionRequiredRow } from '@components/dashboard/action-required-row'
 import { ActionRequiredRowSkeleton } from '@components/dashboard/action-required-row-skeleton'
+import { OfferRow } from '@components/offers/offer-row'
+import type { OfferItem } from '@hooks/useOffers'
 
 interface ActionRequiredSectionProps {
-    items: ActionItem[]
+    items: OfferItem[]
     isLoading?: boolean
     isError?: boolean
     error?: Error | null
@@ -21,15 +21,14 @@ export function ActionRequiredSection({
     isError = false,
     error,
 }: ActionRequiredSectionProps) {
-    const [selectedItemKey, setSelectedItemKey] = useState<string | null>(null)
+    const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
     const visibleItems = useMemo(() => items.slice(0, 3), [items])
-    const selectedItem = useMemo(
+    const selectedOffer = useMemo(
         () =>
-            selectedItemKey
-                ? (items.find((item) => getItemKey(item) === selectedItemKey) ??
-                  null)
+            selectedOfferId
+                ? (items.find((item) => item.id === selectedOfferId) ?? null)
                 : null,
-        [items, selectedItemKey]
+        [items, selectedOfferId]
     )
 
     if (isError) {
@@ -68,24 +67,20 @@ export function ActionRequiredSection({
     return (
         <SectionShell totalCount={items.length}>
             <Box sx={{ display: 'grid', gap: 2 }}>
-                {visibleItems.map((item) => (
-                    <ActionRequiredRow
-                        key={`${item.kind}-${item.contractId}`}
-                        item={item}
-                        onClick={() => setSelectedItemKey(getItemKey(item))}
+                {visibleItems.map((offer) => (
+                    <OfferRow
+                        key={offer.id}
+                        offer={offer}
+                        onClick={() => setSelectedOfferId(offer.id)}
                     />
                 ))}
             </Box>
             <ActionRequiredDialog
-                item={selectedItem}
-                onClose={() => setSelectedItemKey(null)}
+                item={selectedOffer?.source ?? null}
+                onClose={() => setSelectedOfferId(null)}
             />
         </SectionShell>
     )
-}
-
-function getItemKey(item: ActionItem) {
-    return `${item.kind}-${item.contractId}`
 }
 
 interface SectionShellProps {
