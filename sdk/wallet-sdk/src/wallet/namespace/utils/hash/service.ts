@@ -15,7 +15,14 @@ export class HashNamespace {
         this.encodePreparedTransaction = new PreparedTransactionEncoder(ctx)
     }
 
+    /**
+     * @deprecated use preparedTransaction
+     */
     public async preparedTransacation(value: PreparedTransaction | string) {
+        return await this.encodePreparedTransaction.hash(value)
+    }
+
+    public async preparedTransaction(value: PreparedTransaction | string) {
         return await this.encodePreparedTransaction.hash(value)
     }
 
