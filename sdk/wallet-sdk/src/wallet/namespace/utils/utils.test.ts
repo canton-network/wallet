@@ -64,11 +64,17 @@ describe('utils package', () => {
     it('tests ParsedURL with bad input', () => {
         const urlAsString = 'registry.com'
 
+        let thrownError
         try {
             new ParsedURL(ctx, urlAsString)
         } catch (e) {
-            expect(e).toBeInstanceOf(SDKError)
-            const err = e as SDKError
+            thrownError = e as SDKError
+        }
+
+        expect(thrownError).toBeDefined()
+        expect(thrownError).toBeInstanceOf(SDKError)
+        if (thrownError) {
+            const err = thrownError as SDKError
             expect(err.context.type).toBe('BadRequest')
             expect(err.context.message).toBe(
                 'Invalid URL provided registry.com.'

@@ -5,6 +5,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import ConsoleLogAdapter from './adapter/console'
 import CustomLogAdapter from './adapter/custom'
 import { SDKLogger } from './logger'
+import { LogAdapter } from './types'
 
 function makeCustomAdapter() {
     const log = vi.fn()
@@ -94,22 +95,31 @@ describe('sdk logging package', () => {
             setNodeEnv(ogNodeEnv)
         })
 
-        it.skipIf(isBrowserEnv)('debug', () => {
-            setNodeEnv('development')
-            logger.debug('should not be supressed')
-            expect(log).toHaveBeenCalled()
-        })
+        it.skipIf(isBrowserEnv)(
+            'node env is development should not be supressed',
+            () => {
+                setNodeEnv('development')
+                logger.debug('should not be supressed')
+                expect(log).toHaveBeenCalled()
+            }
+        )
 
-        it.skipIf(isBrowserEnv)('debug', () => {
-            setNodeEnv('production')
-            logger.debug({ requestId: '123' }, 'should be supressed')
-            expect(log).not.toHaveBeenCalled()
-        })
+        it.skipIf(isBrowserEnv)(
+            'node env is production debug should be supressed',
+            () => {
+                setNodeEnv('production')
+                logger.debug({ requestId: '123' }, 'should be supressed')
+                expect(log).not.toHaveBeenCalled()
+            }
+        )
 
-        it.skipIf(isBrowserEnv)('debug', () => {
-            setNodeEnv(undefined)
-            logger.warn({ requestId: '123' }, 'should be supressed')
-            expect(log).toHaveBeenCalled()
-        })
+        it.skipIf(isBrowserEnv)(
+            'node env is undefined debug should be supressed',
+            () => {
+                setNodeEnv(undefined)
+                logger.debug({ requestId: '123' }, 'should be supressed')
+                expect(log).not.toHaveBeenCalled()
+            }
+        )
     })
 })
