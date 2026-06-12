@@ -18,6 +18,7 @@ import z from 'zod'
 import { rawConfigSchema } from './config/Config.js'
 import exampleConfig from './example-config.js'
 import { GATEWAY_VERSION } from './version.js'
+import { nestedRedact } from './utils.js'
 
 const program = new Command()
     .name('wallet-gateway')
@@ -65,6 +66,7 @@ const program = new Command()
         // Define project-global logger
         const logger = pino({
             name: 'main',
+            redact: nestedRedact(['accessToken', 'clientSecret']),
             level: logLevel,
             ...(logFormat === 'pretty'
                 ? {

@@ -123,7 +123,7 @@ export const jsonRpcHandler =
             } else {
                 const { method, params, id = null } = parsed.data
 
-                logger.debug(
+                logger.trace(
                     {
                         request: {
                             id: id,
@@ -132,7 +132,7 @@ export const jsonRpcHandler =
                             authContext: req.authContext,
                         },
                     },
-                    `RPC request: ${method}`
+                    `RPC request: Method called ${method}`
                 )
 
                 const methodFn = controller[method as keyof T] as (
@@ -156,7 +156,10 @@ export const jsonRpcHandler =
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .then((result: any) => {
                         const response = jsonRpcResponse(id, { result })
-                        logger.debug(response, 'RPC response')
+                        logger.trace(
+                            { response },
+                            'RPC response: success with response'
+                        )
                         res.json(response)
                     })
                     .catch((error: unknown) => {
@@ -166,7 +169,11 @@ export const jsonRpcHandler =
                             logger,
                             method
                         )
-                        logger.error(response, 'RPC response')
+
+                        logger.error(
+                            { response },
+                            'RPC response: error with response'
+                        )
                         res.status(status).json(response)
                     })
             }
