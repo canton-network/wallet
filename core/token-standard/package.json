@@ -4,7 +4,6 @@
     "type": "module",
     "description": "daml codegen js for core token standard",
     "license": "Apache-2.0",
-    "packageManager": "yarn@4.9.4",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
