@@ -574,7 +574,7 @@ For participant-only signing with no external custody, leave the Helm chart `sig
 The signing store is an optional secondary database used for storing private keys when the Wallet Gateway is configured to act as a signing provider (using the `wallet-kernel` signing provider).
 
 > [!IMPORTANT]
-> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, Blockdaemon, or Participant-based) for production.
+> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, or Blockdaemon) for production when the User API is accessible. Participant-based signing is only appropriate in production when wallet creation is restricted to trusted operators; see [Signing Providers](../signing-providers/index.md#participant-based-signing).
 
 **Configuration:**
 
