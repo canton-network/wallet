@@ -792,7 +792,7 @@ export const userController = (
             }
         },
         removeSession: async (): Promise<Null> => {
-            logger.info(authContext, 'Removing session')
+            logger.info({ authContext }, 'Removing session')
             const userId = assertConnected(authContext).userId
             const notifier = notificationService.getNotifier(userId)
             await store.removeSession()

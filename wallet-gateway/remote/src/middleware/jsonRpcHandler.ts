@@ -79,8 +79,6 @@ export const handleRpcError = (
     }
 
     const jsonResponse = jsonRpcResponse(id, response)
-    logger.error(jsonResponse, 'RPC response')
-
     return [500, jsonResponse]
 }
 
@@ -126,9 +124,9 @@ export const jsonRpcHandler =
                 logger.trace(
                     {
                         request: {
-                            id: id,
-                            method: method,
-                            params: params,
+                            id,
+                            method,
+                            params,
                             authContext: req.authContext,
                         },
                     },

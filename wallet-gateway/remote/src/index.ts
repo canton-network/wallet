@@ -66,7 +66,10 @@ const program = new Command()
         // Define project-global logger
         const logger = pino({
             name: 'main',
-            redact: nestedRedact(['accessToken', 'clientSecret']),
+            redact: {
+                paths: nestedRedact(['accessToken', 'clientSecret', 'jwt']),
+                censor: '*****',
+            },
             level: logLevel,
             ...(logFormat === 'pretty'
                 ? {
