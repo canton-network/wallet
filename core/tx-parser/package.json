@@ -5,7 +5,6 @@
     "description": "Transaction parsing utilities for Canton Network transactions, including parsing of transaction trees and extraction of relevant information from transaction events.",
     "license": "Apache-2.0",
     "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
-    "packageManager": "yarn@4.9.4",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
