@@ -141,7 +141,7 @@ describe('utils package', () => {
         })
 
         const preparedTxHash = (
-            await utils.hash.preparedTransacation(pingTx)
+            await utils.hash.preparedTransaction(pingTx)
         ).toBase64()
         const topologyHash = await utils.hash.topologyTransaction(topologyTx)
         expect(topologyHash).toBe(
