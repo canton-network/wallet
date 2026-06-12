@@ -177,6 +177,8 @@ export type ProviderAdapterConfig = z.infer<typeof ProviderAdapterConfig>
 /**
  * Wallet picker entry and result
  */
+export type BrowserPlatform = 'chrome' | 'firefox'
+
 export interface WalletPickerEntry {
     providerId: string
     name: string
@@ -186,6 +188,13 @@ export interface WalletPickerEntry {
     url?: string | undefined
     /** Keep the global wallet popup open after pick for async HTTP-gateway navigation. */
     reuseGlobalWalletPopup?: boolean | undefined
+}
+
+export interface WalletPickerSuggestedEntry extends Omit<
+    WalletPickerEntry,
+    'url' | 'reuseGlobalWalletPopup'
+> {
+    installUrls: { platform: BrowserPlatform; url: string }[]
 }
 
 export interface WalletPickerResult {

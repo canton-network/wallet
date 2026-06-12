@@ -4,7 +4,11 @@
 import { css } from 'lit'
 import { BaseElement } from '../internal/base-element'
 import { cssToString } from '../utils'
-import { WalletPickerEntry } from '@canton-network/core-types'
+import {
+    BrowserPlatform,
+    WalletPickerEntry,
+    WalletPickerSuggestedEntry,
+} from '@canton-network/core-types'
 
 export type {
     WalletPickerEntry,
@@ -106,6 +110,43 @@ const SUBSTITUTABLE_CSS = cssToString([
             flex: 1;
             overflow-y: auto;
             padding: 4px 12px 0;
+        }
+
+        .wallet-suggested-card {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--wg-theme-border-color);
+            background: var(--wg-theme-surface-color);
+            transition: all 0.15s ease;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 8px;
+        }
+
+        .wallet-suggested-card.wallet-suggested-card-disabled {
+            opacity: 0.8;
+            background: var(--wg-theme-border-color);
+        }
+
+        .btn-secondary.wallet-install-btn {
+            text-decoration: none;
+            padding: 2px 4px;
+            font-size: 12px;
+            background: var(--wg-theme-surface-color);
+        }
+
+        .wallet-install-buttons
+            > .btn-secondary.wallet-install-btn:not(:first-child) {
+            margin-left: 4px;
+        }
+
+        .wallet-install-btn:hover {
+            background: var(--wg-theme-surface-hover);
+            border-color: var(--wg-theme-accent-color);
         }
 
         .wallet-card {
@@ -218,6 +259,10 @@ const SUBSTITUTABLE_CSS = cssToString([
             letter-spacing: 0.05em;
             color: var(--wg-theme-text-color);
             padding: 0 4px 8px;
+        }
+
+        .suggested-title {
+            margin-top: 24px;
         }
 
         .custom-url-label .info-wrap {
@@ -430,6 +475,8 @@ export class WalletPicker extends HTMLElement {
 
     private root: HTMLElement
     private entries: WalletPickerEntry[] = []
+    private platform: BrowserPlatform | 'unsupported' = 'unsupported'
+    private suggestedEntries: WalletPickerSuggestedEntry[] = []
     private recentGateways: { name: string; rpcUrl: string }[] = []
     private state: 'list' | 'connecting' | 'connected' | 'error' = 'list'
     private selectedEntry: WalletPickerEntry | null = null
@@ -475,7 +522,9 @@ export class WalletPicker extends HTMLElement {
         this.root.className = 'root'
 
         this.loadEntries()
+        this.loadSuggestedEntries()
         this.recentGateways = this.loadRecentGateways()
+        this.platform = this.detectBrowserPlatform()
     }
 
     // ── localStorage helpers (inlined so they survive .toString() serialisation) ──
@@ -529,6 +578,18 @@ export class WalletPicker extends HTMLElement {
         }
     }
 
+    private loadSuggestedEntries(): void {
+        const stored = localStorage.getItem(
+            'splice_wallet_picker_suggested_entries'
+        )
+        if (!stored) return
+        try {
+            this.suggestedEntries = JSON.parse(stored)
+        } catch {
+            this.suggestedEntries = []
+        }
+    }
+
     private getAllEntries(): WalletPickerEntry[] {
         // Merge all entries into a single flat list:
         // 1. Registered entries (extensions + gateways from discovery)
@@ -550,6 +611,37 @@ export class WalletPicker extends HTMLElement {
             }))
 
         return [...this.entries, ...recentEntries]
+    }
+
+    private getSuggestedEntries(): WalletPickerSuggestedEntry[] {
+        // We only want to show the following suggested entries:
+        // 1. Extensions that are not already detected (i.e. not in entries list)
+        const detectedEntries = this.getAllEntries()
+
+        const entries = this.suggestedEntries.filter((entry) => {
+            const alreadyInstalled = detectedEntries.some(
+                (e) => e.providerId === entry.providerId
+            )
+            return !alreadyInstalled
+        })
+
+        // We then want to sort the list priority by:
+        // 1. Extensions that are supported in the user's current browser
+        // 2. Alphabetically by name
+
+        return entries.sort((a, b) => {
+            const aSupported = a.installUrls.some(
+                (url) => url.platform === this.platform
+            )
+            const bSupported = b.installUrls.some(
+                (url) => url.platform === this.platform
+            )
+
+            if (aSupported && !bSupported) return -1
+            if (!aSupported && bSupported) return 1
+
+            return a.name.localeCompare(b.name)
+        })
     }
 
     private isRemovableEntry(entry: WalletPickerEntry): boolean {
@@ -700,6 +792,73 @@ export class WalletPicker extends HTMLElement {
         return card
     }
 
+    private renderSuggestedWalletCard(
+        entry: WalletPickerSuggestedEntry
+    ): HTMLElement {
+        const existsForCurrentPlatform = entry.installUrls.some(
+            (install) => install.platform === this.platform
+        )
+
+        const className = existsForCurrentPlatform
+            ? 'wallet-suggested-card'
+            : 'wallet-suggested-card wallet-suggested-card-disabled'
+
+        const card = this.el('div', '', {
+            class: className,
+            tabindex: '0',
+            'aria-label': `Install ${entry.name}`,
+        })
+
+        const icon = this.el('div', '', { class: 'wallet-icon' })
+        if (entry.icon) {
+            const img = this.el('img', '', { src: entry.icon, alt: entry.name })
+            icon.appendChild(img)
+        } else {
+            icon.innerHTML =
+                entry.type === 'browser'
+                    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+                    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><circle cx="12" cy="10" r="2"/></svg>'
+        }
+        card.appendChild(icon)
+
+        card.appendChild(this.el('span', entry.name, { class: 'wallet-name' }))
+
+        const installButtons = this.el('div', '', {
+            class: 'wallet-install-buttons',
+        })
+
+        // Sort the available install URLs by:
+        // 1. The user's current detected browser
+        // 2. Alphabetically
+        const sortedInstallUrls = [...entry.installUrls].sort((a, b) => {
+            const aIsCurrentBrowser = this.platform === a.platform
+            const bIsCurrentBrowser = this.platform === b.platform
+
+            if (aIsCurrentBrowser && !bIsCurrentBrowser) return -1
+            if (!aIsCurrentBrowser && bIsCurrentBrowser) return 1
+
+            return a.platform.localeCompare(b.platform)
+        })
+
+        for (const { url, platform } of sortedInstallUrls) {
+            const badge = this.el('a', `Get for ${platform}`, {
+                class: 'btn-secondary wallet-install-btn',
+                href: url,
+                rel: 'noopener',
+                target: '_blank',
+            })
+            badge.addEventListener('click', (e: Event) => {
+                e.stopPropagation()
+                window.close()
+            })
+            installButtons.appendChild(badge)
+        }
+
+        card.appendChild(installButtons)
+
+        return card
+    }
+
     private renderList(): HTMLElement {
         const container = this.el('div', '', {
             class: 'view-container',
@@ -731,6 +890,19 @@ export class WalletPicker extends HTMLElement {
         } else {
             for (const entry of allEntries) {
                 list.appendChild(this.renderWalletCard(entry))
+            }
+        }
+
+        const suggestedEntries = this.getSuggestedEntries()
+
+        if (suggestedEntries.length > 0) {
+            const suggestedTitle = this.el('div', 'Suggested Wallets', {
+                class: 'custom-url-label suggested-title',
+            })
+            list.appendChild(suggestedTitle)
+
+            for (const entry of suggestedEntries) {
+                list.appendChild(this.renderSuggestedWalletCard(entry))
             }
         }
 
@@ -989,6 +1161,18 @@ export class WalletPicker extends HTMLElement {
             element.setAttribute(key, val)
         }
         return element
+    }
+
+    private detectBrowserPlatform(): BrowserPlatform | 'unsupported' {
+        const userAgent = window.navigator.userAgent
+
+        const isFirefox = /firefox/i.test(userAgent)
+        const isChrome = /chrome|chromium|crios/i.test(userAgent)
+
+        if (isFirefox) return 'firefox'
+        if (isChrome) return 'chrome'
+
+        return 'unsupported'
     }
 }
 
