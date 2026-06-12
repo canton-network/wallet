@@ -91,7 +91,7 @@ describe('WalletConnectAdapter', () => {
         expect(adapter.getInfo()).toEqual({
             providerId: 'walletconnect',
             name: 'WalletConnect',
-            type: 'remote',
+            type: 'mobile',
             icon: WALLETCONNECT_ICON,
             description: 'Connect via WalletConnect',
             reuseGlobalWalletPopup: true,
@@ -110,7 +110,7 @@ describe('WalletConnectAdapter', () => {
         await expect(adapter.request({ method: 'status' })).resolves.toEqual({
             provider: {
                 id: 'walletconnect',
-                providerType: 'remote',
+                providerType: 'mobile',
             },
             connection: {
                 isConnected: false,
@@ -175,7 +175,7 @@ describe('WalletConnectAdapter', () => {
         const listener = vi.fn<EventListener<StatusEvent>>()
 
         adapter.emit('statusChanged', {
-            provider: { id: 'walletconnect', providerType: 'remote' },
+            provider: { id: 'walletconnect', providerType: 'mobile' },
             connection: { isConnected: true, isNetworkConnected: true },
         })
         expect(listener).not.toHaveBeenCalled()
@@ -195,7 +195,7 @@ describe('WalletConnectAdapter', () => {
         adapter.on('statusChanged', listener)
         adapter.removeListener('statusChanged', listener)
         adapter.emit('statusChanged', {
-            provider: { id: 'walletconnect', providerType: 'remote' },
+            provider: { id: 'walletconnect', providerType: 'mobile' },
             connection: { isConnected: false, isNetworkConnected: false },
         })
 
