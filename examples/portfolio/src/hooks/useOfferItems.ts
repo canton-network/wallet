@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { type PrettyContract } from '@canton-network/core-tx-parser'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
@@ -30,6 +30,17 @@ export interface OfferItemsResult {
     error: Error | null
 }
 
+// Allocation requests and allocations are returned as separate contracts.
+// Use the settlement reference plus transfer leg ID as a stable join key so
+// each request leg can be decorated with any allocations already created.
+function allocationKey(settlement: SettlementInfo, transferLegId: string) {
+    return JSON.stringify([
+        settlement.settlementRef.id,
+        settlement.settlementRef.cid,
+        transferLegId,
+    ])
+}
+
 export function useOfferItems(): OfferItemsResult {
     const primaryParty = usePrimaryAccount()?.partyId
 
@@ -42,19 +53,6 @@ export function useOfferItems(): OfferItemsResult {
         useAllocationRequestsQueryOptions(primaryParty)
     )
     const allocations = useQuery(useAllocationsQueryOptions(primaryParty))
-
-    // Allocation requests and allocations are returned as separate contracts.
-    // Use the settlement reference plus transfer leg ID as a stable join key so
-    // each request leg can be decorated with any allocations already created.
-    const allocationKey = useCallback(
-        (settlement: SettlementInfo, transferLegId: string) =>
-            JSON.stringify([
-                settlement.settlementRef.id,
-                settlement.settlementRef.cid,
-                transferLegId,
-            ]),
-        []
-    )
 
     // Group existing allocations by the allocation request leg they fulfill.
     const groupedAllocations = useMemo(() => {
@@ -79,7 +77,7 @@ export function useOfferItems(): OfferItemsResult {
         }
 
         return grouped
-    }, [allocationRequests.data, allocations.data, allocationKey])
+    }, [allocationRequests.data, allocations.data])
 
     const items = useMemo(() => {
         if (!primaryParty) return []
@@ -162,7 +160,6 @@ export function useOfferItems(): OfferItemsResult {
         allocationRequests.data,
         groupedAllocations,
         primaryParty,
-        allocationKey,
     ])
 
     const error =

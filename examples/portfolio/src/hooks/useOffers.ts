@@ -53,38 +53,35 @@ export function useOffers(): OffersResult {
 function deriveOffers(items: ActionItem[]): OfferItem[] {
     return items.flatMap((item) => {
         if (item.kind === 'transfer') {
-            return deriveTransferOffer(item)
+            const offer = deriveTransferOffer(item)
+            return offer ? [offer] : []
         }
         return deriveAllocationOffers(item)
     })
 }
 
-function deriveTransferOffer(item: TransferActionItem): OfferItem[] {
+function deriveTransferOffer(item: TransferActionItem): OfferItem | null {
     const status = isExpired(item.expiry) ? 'Expired' : 'Pending'
 
     if (item.receiver === item.currentPartyId) {
-        return [
-            {
-                id: `${item.contractId}-incoming`,
-                source: item,
-                direction: 'incoming',
-                status,
-            },
-        ]
+        return {
+            id: `${item.contractId}-incoming`,
+            source: item,
+            direction: 'incoming',
+            status,
+        }
     }
 
     if (item.sender === item.currentPartyId) {
-        return [
-            {
-                id: `${item.contractId}-outgoing`,
-                source: item,
-                direction: 'outgoing',
-                status,
-            },
-        ]
+        return {
+            id: `${item.contractId}-outgoing`,
+            source: item,
+            direction: 'outgoing',
+            status,
+        }
     }
 
-    return []
+    return null
 }
 
 function deriveAllocationOffers(item: AllocationActionItem): OfferItem[] {
