@@ -19,8 +19,9 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { CopyableIdentifier } from './copyable-identifier'
 import { useRegistryUrls, useRegistryMutations } from '@hooks/useRegistryUrls'
 import { useForm } from '@tanstack/react-form'
-import { z } from 'zod'
+import { HttpUrl } from '@canton-network/core-types'
 import { toast } from 'sonner'
+import { registryFormSchema, type RegistryFormData } from '@lib/schemas'
 
 interface Registry {
     partyId: string
@@ -29,22 +30,12 @@ interface Registry {
 
 const INSECURE_REGISTRY_URL_WARNING =
     'Registry responses can be spoofed by network attackers. Use HTTPS.'
-const registryUrlSchema = z.url({
-    message: 'Must be a valid HTTP or HTTPS URL',
-    protocol: /^https?$/,
-})
+const registryUrlSchema = HttpUrl
 
 const isInsecureRegistryUrl = (value: string) => {
     const result = registryUrlSchema.safeParse(value)
     return result.success && new URL(result.data).protocol === 'http:'
 }
-
-const registryFormSchema = z.object({
-    partyId: z.string().min(1, 'Party ID is required'),
-    registryUrl: registryUrlSchema,
-})
-
-type RegistryFormData = z.infer<typeof registryFormSchema>
 
 export function RegistrySettings() {
     const { setRegistryUrl, deleteRegistryUrl } = useRegistryMutations()
@@ -128,6 +119,7 @@ export function RegistrySettings() {
                                 {(field) => (
                                     <TextField
                                         label="Party ID"
+                                        placeholder="party-hint::fingerprint"
                                         value={field.state.value}
                                         onChange={(e) =>
                                             field.handleChange(e.target.value)
