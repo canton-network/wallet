@@ -16,7 +16,7 @@
     "devDependencies": {
         "@types/node": "^25.3.3",
         "@types/webextension-polyfill": "^0.12.5",
-        "esbuild": "^0.27.3",
+        "esbuild": "^0.28.1",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "web-ext": "^9.3.0"
