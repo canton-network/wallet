@@ -56,7 +56,7 @@ signing: {}
 
 With `signing: {}` (or with external drivers omitted), the Gateway still offers:
 
-- **Participant** — signs via your Canton participant node (typical for validator / operator deployments)
+- **Participant** — signs via your Canton participant node (typical for validator / operator deployments). Not recommended in production when the User API is accessible; see [Signing Providers](../signing-providers/index.md#participant-based-signing).
 - **Wallet Gateway (internal)** — not recommended for production
 
 You do **not** need participant-specific fields under `signing` when the participant node handles keys. Add entries under `signing` only when enabling an external custody provider.
