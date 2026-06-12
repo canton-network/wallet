@@ -4,7 +4,6 @@
     "private": true,
     "description": "Creates mock oauth2 server",
     "license": "Apache-2.0",
-    "packageManager": "yarn@4.9.4",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "type": "module",
