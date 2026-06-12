@@ -67,7 +67,12 @@ const program = new Command()
         const logger = pino({
             name: 'main',
             redact: {
-                paths: nestedRedact(['accessToken', 'clientSecret', 'jwt']),
+                paths: nestedRedact([
+                    'accessToken',
+                    'access_token',
+                    'clientSecret',
+                    'jwt',
+                ]),
                 censor: '*****',
             },
             level: logLevel,
