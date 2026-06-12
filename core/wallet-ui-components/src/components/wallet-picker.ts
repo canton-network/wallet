@@ -844,6 +844,7 @@ export class WalletPicker extends HTMLElement {
             const badge = this.el('a', `Get for ${platform}`, {
                 class: 'btn-secondary wallet-install-btn',
                 href: url,
+                rel: 'noopener',
                 target: '_blank',
             })
             badge.addEventListener('click', (e: Event) => {

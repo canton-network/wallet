@@ -319,12 +319,15 @@ export class DappSDK {
         const enableSuggestedWallets = defaultTrue(
             this.configuredAdapters?.enableSuggestedWallets
         )
+
         if (enableSuggestedWallets) {
             // Enable suggested wallets logic here
             localStorage.setItem(
                 'splice_wallet_picker_suggested_entries',
                 JSON.stringify(defaultExtensionsList)
             )
+        } else {
+            localStorage.removeItem('splice_wallet_picker_suggested_entries')
         }
 
         // Create discovery and attempt restore.
