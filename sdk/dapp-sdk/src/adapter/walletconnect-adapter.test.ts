@@ -245,6 +245,7 @@ describe('WalletConnectAdapter', () => {
         mockSignClient.request.mockResolvedValueOnce({
             commandId: 'cmd-1',
             status: 'executed',
+            payload: { updateId: '1', completionOffset: 1 },
         })
 
         await expect(
@@ -253,7 +254,11 @@ describe('WalletConnectAdapter', () => {
                 params: { commands: [] },
             })
         ).resolves.toEqual({
-            tx: { commandId: 'cmd-1', status: 'executed' },
+            tx: {
+                commandId: 'cmd-1',
+                status: 'executed',
+                payload: { updateId: '1', completionOffset: 1 },
+            },
         })
 
         expect(mockSignClient.request).toHaveBeenCalledWith({
@@ -267,6 +272,7 @@ describe('WalletConnectAdapter', () => {
         expect(txListener).toHaveBeenCalledWith({
             commandId: 'cmd-1',
             status: 'executed',
+            payload: { updateId: '1', completionOffset: 1 },
         })
     })
 

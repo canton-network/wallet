@@ -224,7 +224,11 @@ const makeMockProvider = (
                 return null
             case 'prepareExecuteAndWait':
                 return {
-                    tx: { commandId: 'cmd-1', status: 'executed' },
+                    tx: {
+                        commandId: 'cmd-1',
+                        status: 'executed',
+                        payload: { updateId: '1', completionOffset: 1 },
+                    },
                 } satisfies PrepareExecuteAndWaitResult
             case 'signMessage':
                 return { signature: 'signed' } satisfies SignMessageResult
@@ -573,7 +577,11 @@ describe('DappSDK', () => {
             await expect(
                 sdk.prepareExecuteAndWait(prepareExecuteParams)
             ).resolves.toEqual({
-                tx: { commandId: 'cmd-1', status: 'executed' },
+                tx: {
+                    commandId: 'cmd-1',
+                    status: 'executed',
+                    payload: { updateId: '1', completionOffset: 1 },
+                },
             })
             await expect(sdk.signMessage(signMessageParams)).resolves.toEqual({
                 signature: 'signed',
