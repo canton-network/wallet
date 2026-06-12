@@ -1,0 +1,15 @@
+[
+    {
+        "name": "Send Connect",
+        "type": "browser",
+        "providerId": "browser:ext:ldmohiccoioolenadmogclhoklmanpgi",
+        "description": "Connect via a browser extension wallet",
+        "icon": "https://info.send.it/img/favicon.svg",
+        "installUrls": [
+            {
+                "platform": "chrome",
+                "url": "https://chromewebstore.google.com/detail/send-connect/ldmohiccoioolenadmogclhoklmanpgi"
+            }
+        ]
+    }
+]
