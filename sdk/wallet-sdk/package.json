@@ -69,5 +69,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "sdk/wallet-sdk"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/sdk/wallet-sdk#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }
