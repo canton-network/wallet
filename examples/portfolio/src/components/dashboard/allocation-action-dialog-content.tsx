@@ -178,13 +178,12 @@ export function AllocationActionDialogContent({
                             isExpanded={expandedLegIds.has(leg.transferLegId)}
                             isLoading={isLoading}
                             isLegLoading={loadingLegId === leg.transferLegId}
-                            hasInsufficientFunds={insufficientLegIds.has(
-                                leg.transferLegId
-                            )}
                             error={
                                 failedLegId === leg.transferLegId
                                     ? allocationError
-                                    : null
+                                    : insufficientLegIds.has(leg.transferLegId)
+                                      ? 'Cannot allocate due to insufficient funds.'
+                                      : null
                             }
                             onToggle={() => toggleLeg(leg.transferLegId)}
                             onCreateAllocation={() => onCreateAllocation(leg)}
@@ -206,7 +205,6 @@ interface TransferLegCardProps {
     isExpanded: boolean
     isLoading: boolean
     isLegLoading: boolean
-    hasInsufficientFunds: boolean
     error: string | null
     onToggle: () => void
     onCreateAllocation: () => void
@@ -220,7 +218,6 @@ function TransferLegCard({
     isExpanded,
     isLoading,
     isLegLoading,
-    hasInsufficientFunds,
     error,
     onToggle,
     onCreateAllocation,
@@ -233,12 +230,7 @@ function TransferLegCard({
     const canCreateAllocation = isSender && !hasAllocation
     const canWithdrawAllocation =
         isSender && hasAllocation && allocationContractId
-    const displayedError =
-        error ??
-        (hasInsufficientFunds
-            ? 'Cannot allocate due to insufficient funds.'
-            : null)
-    const actionDisabled = isLoading || Boolean(error) || hasInsufficientFunds
+    const actionDisabled = isLoading || Boolean(error)
 
     return (
         <Box
@@ -249,7 +241,7 @@ function TransferLegCard({
                 overflow: 'hidden',
             }}
         >
-            {displayedError ? (
+            {error ? (
                 <Alert
                     severity="error"
                     icon={<InfoOutlinedIcon fontSize="inherit" />}
@@ -267,7 +259,7 @@ function TransferLegCard({
                         },
                     }}
                 >
-                    {displayedError}
+                    {error}
                 </Alert>
             ) : null}
 
