@@ -66,6 +66,22 @@ export class LedgerNamespace {
     }
 
     /**
+     * Resolves the ID of the synchronizer with the given alias from the
+     * synchronizers connected to the caller. Returns `undefined` when no
+     * synchronizer with that alias is connected, leaving it to the caller to
+     * decide how a missing synchronizer should be handled.
+     */
+    public async getSynchronizerIdByAlias(
+        alias: string,
+        options?: ConnectedSynchronizersOptions
+    ): Promise<string | undefined> {
+        return this.sdkContext.synchronizers.resolveSynchronizerIdByAlias(
+            alias,
+            options
+        )
+    }
+
+    /**
      * Resolves the ID of the synchronizer aliased `'global'` from the
      * synchronizers connected to the caller.
      *

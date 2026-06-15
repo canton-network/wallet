@@ -204,6 +204,26 @@ export class SynchronizerCache {
     }
 
     /**
+     * Resolves the ID of the synchronizer with the given alias from the cache,
+     * re-fetching once if it is not yet present (in case a synchronizer was
+     * connected after the SDK was initialized). Returns `undefined` when no
+     * synchronizer with that alias is connected.
+     */
+    public async resolveSynchronizerIdByAlias(
+        alias: string,
+        options?: ConnectedSynchronizersOptions
+    ): Promise<string | undefined> {
+        const findByAlias = (synchronizers: CachedSynchronizer[]) =>
+            synchronizers.find((s) => s.synchronizerAlias === alias)
+
+        let match = findByAlias(await this.list(options))
+        if (!match) {
+            match = findByAlias(await this.list(options, { refresh: true }))
+        }
+        return match?.synchronizerId
+    }
+
+    /**
      * Resolves the ID of the synchronizer aliased `'global'` from the cache,
      * re-fetching once if it is not yet present (in case a synchronizer was
      * connected after the SDK was initialized). Returns `undefined` when no
@@ -213,14 +233,7 @@ export class SynchronizerCache {
     public async resolveGlobalSynchronizerId(
         options?: ConnectedSynchronizersOptions
     ): Promise<string | undefined> {
-        const findGlobal = (synchronizers: CachedSynchronizer[]) =>
-            synchronizers.find((s) => s.synchronizerAlias === 'global')
-
-        let global = findGlobal(await this.list(options))
-        if (!global) {
-            global = findGlobal(await this.list(options, { refresh: true }))
-        }
-        return global?.synchronizerId
+        return this.resolveSynchronizerIdByAlias('global', options)
     }
 
     /**
