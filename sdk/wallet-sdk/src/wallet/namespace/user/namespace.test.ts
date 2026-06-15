@@ -13,10 +13,6 @@ const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     ...overrides,
 })
 
-// const accessTokenProvider = {
-//     getAccessToken: vi.fn().mockResolvedValue('test-token'),
-//     getAuthContext: vi.fn().mockResolvedValue(''),
-// }
 const logger = new SDKLogger('console')
 const sdkContext = {
     ledgerProvider: makeProvider(),
@@ -74,7 +70,7 @@ describe('utils namespace', () => {
         expect(res).toStrictEqual(usersResponse)
     })
 
-    it('should list users', async () => {
+    it('should list user rights', async () => {
         const rightsResponse = {
             rights: [
                 {
@@ -189,5 +185,26 @@ describe('utils namespace', () => {
         sdkContext.ledgerProvider.request.mockResolvedValue(rightsResponse)
         const res = await user.rights.list()
         expect(res).toStrictEqual(rightsResponse)
+    })
+
+    it('should skip user creation if user already exists', async () => {
+        const usersResponse = {
+            user: {
+                id: 'ledger-api-user',
+                primaryParty:
+                    'app_user_localnet-localparty-1::12209b1d0dd8b25e2002a452b99d4bc0defead64fd7a925a3cb50c702a06154275ad',
+                isDeactivated: false,
+                metadata: {
+                    resourceVersion: '1',
+                    annotations: {},
+                },
+                identityProviderId: '',
+                primaryPartyAuthentication: false,
+            },
+        }
+        const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockResolvedValueOnce(usersResponse)
+
+        await user.create({ userId: 'ledger-api-user', primaryParty: '' })
     })
 })
