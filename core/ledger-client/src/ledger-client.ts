@@ -14,7 +14,7 @@ import {
     asJsCantonError,
     defaultRetryableOptions,
     retryable,
-    retryableOptions,
+    RetryableOptions,
 } from './ledger-api-utils.js'
 import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
@@ -177,15 +177,21 @@ export class LedgerClient {
 
     public async init() {
         if (!this.initialized) {
-            this.logger.debug({
-                message: `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href}`,
-            })
+            this.logger.debug(
+                `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href}`
+            )
 
             //TODO: parse error response and escalate
             const versionFromClient =
                 await this.currentClient.GET('/v2/version')
 
-            this.logger.debug(versionFromClient, 'getV2Version response')
+            this.logger.debug(
+                {
+                    data: versionFromClient.data,
+                    status: versionFromClient.response.status,
+                },
+                'getV2Version response'
+            )
 
             this.clientVersion = this.parseSupportedVersions(
                 versionFromClient.data?.version
@@ -528,7 +534,7 @@ export class LedgerClient {
     public async postWithRetry<Path extends PostEndpoint>(
         path: Path,
         body: PostRequest<Path>,
-        retryOptions: retryableOptions = defaultRetryableOptions,
+        retryOptions: RetryableOptions = defaultRetryableOptions,
         params?: {
             path?: Record<string, string>
             query?: Record<string, string>
@@ -550,7 +556,7 @@ export class LedgerClient {
 
     public async getWithRetry<Path extends GetEndpoint>(
         path: Path,
-        retryOptions: retryableOptions = defaultRetryableOptions,
+        retryOptions: RetryableOptions = defaultRetryableOptions,
         params?: {
             path?: Record<string, string>
             query?: Record<string, string>
@@ -572,7 +578,7 @@ export class LedgerClient {
     public async patchWithRetry<Path extends PatchEndpoint>(
         path: Path,
         body: PatchRequest<Path>,
-        retryOptions: retryableOptions = defaultRetryableOptions,
+        retryOptions: RetryableOptions = defaultRetryableOptions,
         params?: {
             path?: Record<string, string>
             query?: Record<string, string>

@@ -102,7 +102,7 @@ export class FlatPack {
                     version: '0.0.0',
                     description: 'Temporary package for flat packing',
                     ...(this.projectType === 'yarn'
-                        ? { packageManager: 'yarn@4.9.4' }
+                        ? { packageManager: 'yarn@4.16.0' }
                         : {}),
                     dependencies: {},
                 },

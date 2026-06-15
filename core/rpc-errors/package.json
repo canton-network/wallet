@@ -4,7 +4,6 @@
     "type": "module",
     "description": "Wrapper for JSON-RPC error objects",
     "author": "Alex Matson <alex.matson@digitalasset.com>",
-    "packageManager": "yarn@4.9.4",
     "license": "Apache-2.0",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
