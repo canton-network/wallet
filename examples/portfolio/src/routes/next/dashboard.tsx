@@ -1,6 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import DashboardIcon from '@mui/icons-material/Dashboard'
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import {
     Box,
@@ -174,6 +175,13 @@ function RouteComponent() {
                         >
                             Disconnect
                         </PillButton>
+                        <SidebarLink
+                            to="/next/dashboard/faq"
+                            active={pathname === '/next/dashboard/faq'}
+                            icon={<HelpOutlineOutlinedIcon fontSize="small" />}
+                        >
+                            FAQ
+                        </SidebarLink>
                     </Box>
                 </Box>
             </Drawer>
