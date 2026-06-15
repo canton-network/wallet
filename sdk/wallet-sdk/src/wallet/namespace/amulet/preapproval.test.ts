@@ -4,39 +4,28 @@
 import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
 import { PreapprovalNamespace } from './preapproval' // Adjust path as needed
 import { AmuletNamespaceConfig, fetchAmulet } from './namespace'
+import { mock } from '../../__test__/mocks'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 vi.mock('./namespace', () => ({
     fetchAmulet: vi.fn(),
 }))
 
+const { ctx, mockLogger } = mock
+
 describe('PreapprovalNamespace', () => {
     let mockConfig: any
     let preapprovalNamespace: PreapprovalNamespace
-    let mockLogger: any
+
     let mockSubmit: Mock
 
     beforeEach(() => {
         vi.clearAllMocks()
         vi.useFakeTimers()
 
-        mockLogger = {
-            info: vi.fn(),
-            warn: vi.fn(),
-            debug: vi.fn(),
-            child: vi.fn(),
-        }
         mockLogger.child.mockImplementation(() => mockLogger)
 
         mockConfig = {
-            commonCtx: {
-                defaultSynchronizerId: 'mock-sync-id',
-                logger: mockLogger,
-                error: {
-                    throw: vi.fn((err) => {
-                        throw new Error(err.message)
-                    }),
-                },
-            },
+            commonCtx: ctx,
             validatorParty: 'mock-validator-party',
             amuletService: {
                 cancelTransferPreapproval: vi.fn(),

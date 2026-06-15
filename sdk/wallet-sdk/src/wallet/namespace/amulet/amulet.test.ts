@@ -23,19 +23,7 @@ vi.mock('../utils/url.js', () => ({
     parseAssets: vi.fn(),
 }))
 
-const { ctx } = mock
-
-const createMockLogger = () => {
-    const loggerMock = {
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn(),
-        debug: vi.fn(),
-        child: vi.fn(),
-    }
-    loggerMock.child.mockImplementation(() => loggerMock)
-    return loggerMock
-}
+const { ctx, mockLogger } = mock
 
 const mockTokenStandard = {
     get: vi.fn(),
@@ -59,7 +47,7 @@ const config: AmuletNamespaceConfig = {
     commonCtx: {
         ...ctx,
         defaultSynchronizerId: 'mock-synchronizer-id',
-        logger: createMockLogger(),
+        logger: mockLogger,
     } as any,
     registry: {
         id: 'Amulet',
