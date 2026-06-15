@@ -22,7 +22,7 @@ const sdkContext = {
     defaultSynchronizerId: 'syncid',
 }
 
-describe('utils namespace', () => {
+describe('user namespace', () => {
     it('should list users', async () => {
         const usersResponse = {
             users: [
