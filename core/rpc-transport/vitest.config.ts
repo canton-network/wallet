@@ -18,19 +18,20 @@ export default defineConfig({
             },
         },
         environment: 'node',
-        include: ['src/**/*.test.ts'],
         projects: [
             defineProject({
                 test: {
                     name: 'node',
                     environment: 'node',
                     include: ['src/**/*.test.ts'],
+                    // don't test parts that rely on window in node env
+                    exclude: ['src/**/*.browser.test.ts'],
                 },
             }),
             defineProject({
                 test: {
                     name: 'browser',
-                    include: ['src/**/*.test.ts'],
+                    include: ['src/**/*.test.ts', 'src/**/*.browser.test.ts'],
                     browser: {
                         enabled: true,
                         provider: playwright({
