@@ -111,12 +111,12 @@ export async function promiseWithTimeout<T>(
     }
 }
 
-export type retryableOptions = {
+export type RetryableOptions = {
     retries: number
     delayMs: number
     cantonErrorKeys: string[]
 }
-export const defaultRetryableOptions: retryableOptions = {
+export const defaultRetryableOptions: RetryableOptions = {
     retries: 5,
     delayMs: 3000,
     cantonErrorKeys: [
@@ -131,7 +131,7 @@ export const defaultRetryableOptions: retryableOptions = {
 
 export async function retryable<T>(
     fn: () => Promise<T>,
-    retryableOptions: retryableOptions,
+    retryableOptions: RetryableOptions,
     logger?: Logger
 ): Promise<T> {
     for (let attempts = 1; attempts <= retryableOptions.retries; attempts++) {

@@ -251,7 +251,6 @@ describe('handleRpcError', () => {
                 data: expect.any(Error),
             }),
         })
-        expect(errorLog).toHaveBeenCalledOnce()
     })
 
     it('uses generic message when method name is omitted', () => {

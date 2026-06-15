@@ -59,7 +59,7 @@ export class UserApp extends LitElement {
         } catch (error) {
             // If removeSession fails (for example token is invalid),
             // clear the local state anyway
-            console.debug('Failed to remove session during logout:', error)
+            console.debug('Failed to remove session during logout: ', error)
         }
 
         stateManager.clearAuthState()

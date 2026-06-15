@@ -437,7 +437,7 @@ export class WalletSyncService {
                     }),
                 }
 
-                this.logger.info({ ...wallet }, 'Wallet sync result')
+                this.logger.info({ wallet }, 'Wallet sync result')
                 await this.store.addWallet(wallet)
                 return wallet
             })
@@ -471,7 +471,7 @@ export class WalletSyncService {
         try {
             const participantNamespace = await this.getParticipantNamespace()
             const network = await this.store.getCurrentNetwork()
-            this.logger.info(network, 'Current network')
+            this.logger.info({ network }, 'Current network')
 
             const { rightsByParty, rightsByUser } =
                 await this.getRightsSnapshot()
@@ -483,7 +483,7 @@ export class WalletSyncService {
             ])
 
             const existingWallets = await this.store.getWallets()
-            this.logger.info(existingWallets, 'Existing wallets')
+            this.logger.info({ existingWallets }, 'Existing wallets')
             // Skips wallets for which we didn't allocate a party
             const existingAllocatedWallets = existingWallets.filter(
                 (w) => w.status === 'allocated'

@@ -5,7 +5,6 @@
     "description": "A Splice Provider implementation for direct ledger access.",
     "license": "Apache-2.0",
     "author": "Alex Matson <alex.matson@digitalasset.com>",
-    "packageManager": "yarn@4.9.4",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
