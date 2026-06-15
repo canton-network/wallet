@@ -396,7 +396,7 @@ describe('user namespace', () => {
         ).rejects.toThrow()
     })
 
-    it('should grant rights to a user for canExecuteAsAnyParty and canReadAsAnyParty', async () => {
+    it('should grant rights to a user', async () => {
         const user = new UserNamespace(sdkContext)
         sdkContext.ledgerProvider.request.mockReset()
 
@@ -438,7 +438,7 @@ describe('user namespace', () => {
         })
     })
 
-    it('should grant rights to a user', async () => {
+    it('should grant rights to a user for canExecuteAsAnyParty and canReadAsAnyParty', async () => {
         const user = new UserNamespace(sdkContext)
         sdkContext.ledgerProvider.request.mockReset()
 
@@ -492,7 +492,7 @@ describe('user namespace', () => {
 
         sdkContext.ledgerProvider.request.mockResolvedValueOnce(undefined)
 
-        await user.rights.grant({
+        await user.rights.revoke({
             userId: 'revoked-rights-user',
             userRights: {
                 readAs: ['alice::abc'],
@@ -522,7 +522,7 @@ describe('user namespace', () => {
                 path: {
                     'user-id': 'revoked-rights-user',
                 },
-                requestMethod: 'post',
+                requestMethod: 'patch',
                 resource: '/v2/users/{user-id}/rights',
             },
         })
