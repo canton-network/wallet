@@ -362,19 +362,6 @@ describe('user namespace', () => {
     })
 
     it('should throw an error if ledger api is unsuccessful', async () => {
-        const createdUserResponse = {
-            user: {
-                id: 'user-ledger-api-error',
-                primaryParty: '',
-                isDeactivated: false,
-                metadata: {
-                    resourceVersion: '1',
-                    annotations: {},
-                },
-                identityProviderId: '',
-                primaryPartyAuthentication: false,
-            },
-        }
         const user = new UserNamespace(sdkContext)
         sdkContext.ledgerProvider.request.mockReset()
 
@@ -387,7 +374,7 @@ describe('user namespace', () => {
         await expect(
             user.create({
                 userId: 'user-with-rights',
-                primaryParty: createdUserResponse.user.primaryParty,
+                primaryParty: '',
                 userRights: {
                     actAs: ['alice::abc'],
                     readAs: ['bob::def'],
