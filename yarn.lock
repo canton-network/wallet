@@ -2312,8 +2312,6 @@ __metadata:
     "@canton-network/core-tx-visualizer": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/core-wallet-auth": "workspace:^"
-    "@grpc/grpc-js": "npm:^1.14.3"
-    "@protobuf-ts/grpc-transport": "npm:^2.11.1"
     "@types/node": "npm:^25.3.3"
     "@vitest/browser-playwright": "npm:^4.1.2"
     "@vitest/coverage-v8": "npm:^4.1.2"
@@ -3471,7 +3469,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grpc/grpc-js@npm:^1.11.1, @grpc/grpc-js@npm:^1.14.3":
+"@grpc/grpc-js@npm:^1.11.1":
   version: 1.14.3
   resolution: "@grpc/grpc-js@npm:1.14.3"
   dependencies:
@@ -6221,18 +6219,6 @@ __metadata:
   version: 2.11.8
   resolution: "@popperjs/core@npm:2.11.8"
   checksum: 10c0/4681e682abc006d25eb380d0cf3efc7557043f53b6aea7a5057d0d1e7df849a00e281cd8ea79c902a35a414d7919621fc2ba293ecec05f413598e0b23d5a1e63
-  languageName: node
-  linkType: hard
-
-"@protobuf-ts/grpc-transport@npm:^2.11.1":
-  version: 2.11.1
-  resolution: "@protobuf-ts/grpc-transport@npm:2.11.1"
-  dependencies:
-    "@protobuf-ts/runtime": "npm:^2.11.1"
-    "@protobuf-ts/runtime-rpc": "npm:^2.11.1"
-  peerDependencies:
-    "@grpc/grpc-js": ^1.6.0
-  checksum: 10c0/e7bae05752220e92ebe715559fc3fbb7d4e8e496932d11e2828022dab281b0c919ecb69939ddcb4e720557928bbddcecca23ea415e87ac0d770976f6025d617b
   languageName: node
   linkType: hard
 
