@@ -1,8 +1,8 @@
 {
-    "name": "@canton-network/core-test-token",
+    "name": "@canton-network/core-trading-app",
     "version": "0.0.1",
     "type": "module",
-    "description": "DAML codegen JS for splice-test-token-v1",
+    "description": "OTC trading-app flows (propose, accept, initiate, settle) for the splice-token-test-trading-app",
     "license": "Apache-2.0",
     "packageManager": "yarn@4.9.4",
     "main": "dist/index.cjs",
@@ -11,20 +11,21 @@
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "browser": "./dist/index.browser.js",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
     "scripts": {
-        "build": "yarn clean && rollup -c && yarn clean:types-tmp",
-        "clean:types-tmp": "rm -rf dist/types",
-        "clean": "rm -rf dist"
+        "build": "tsup --onSuccess \"tsc\"",
+        "dev": "tsup --watch --onSuccess \"tsc\"",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "test": "vitest run --project node --passWithNoTests",
+        "test:coverage": "vitest run --project node --coverage --passWithNoTests"
     },
     "dependencies": {
-        "@daml/types": "^3.5.0",
-        "@mojotech/json-type-validation": "^3.1.0"
+        "@canton-network/core-ledger-client-types": "workspace:^"
     },
     "peerDependencies": {
         "@canton-network/core-signing-lib": "workspace:^",
@@ -34,16 +35,11 @@
     "devDependencies": {
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
-        "@rollup/plugin-alias": "^5.0.0",
-        "@rollup/plugin-commonjs": "^29.0.0",
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
-        "@rollup/plugin-typescript": "^12.3.0",
+        "@vitest/coverage-v8": "^4.1.2",
         "pino": "^10.3.1",
-        "rollup": "^4.59.0",
-        "rollup-plugin-dts": "^6.3.0",
-        "tslib": "^2.8.1",
-        "typescript": "^5.9.3"
+        "tsup": "^8.5.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.2"
     },
     "files": [
         "dist/**"
@@ -54,6 +50,6 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/test-token"
+        "directory": "core/trading-app"
     }
 }

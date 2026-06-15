@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { TokenProviderConfig } from '@canton-network/core-wallet-auth'
+
 const LOCALNET_APP_VALIDATOR_URL = new URL(
     'http://localhost:2000/api/validator'
 )
@@ -28,4 +30,15 @@ export const localNetStaticConfig = {
     LOCALNET_SV_LEDGER_URL,
     LOCALNET_TOKEN_STANDARD_URL,
     LOCALNET_USER_ID,
+}
+
+export const localNetDefaultAuth: TokenProviderConfig = {
+    method: 'self_signed',
+    issuer: 'unsafe-auth',
+    credentials: {
+        clientId: LOCALNET_USER_ID,
+        clientSecret: 'unsafe',
+        audience: 'https://canton.network.global',
+        scope: '',
+    },
 }

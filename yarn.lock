@@ -1488,6 +1488,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@canton-network/core-amulet-ops@workspace:^, @canton-network/core-amulet-ops@workspace:core/amulet-ops":
+  version: 0.0.0-use.local
+  resolution: "@canton-network/core-amulet-ops@workspace:core/amulet-ops"
+  dependencies:
+    "@canton-network/core-amulet-service": "workspace:^"
+    "@canton-network/core-signing-lib": "workspace:^"
+    "@canton-network/wallet-sdk": "workspace:^"
+    "@vitest/coverage-v8": "npm:^4.1.2"
+    pino: "npm:^10.3.1"
+    tsup: "npm:^8.5.1"
+    typescript: "npm:^5.9.3"
+    vitest: "npm:^4.1.2"
+  peerDependencies:
+    "@canton-network/core-signing-lib": "workspace:^"
+    "@canton-network/wallet-sdk": "workspace:^"
+    pino: ^10.3.1
+  languageName: unknown
+  linkType: soft
+
 "@canton-network/core-amulet-service@workspace:^, @canton-network/core-amulet-service@workspace:core/amulet-service":
   version: 0.0.0-use.local
   resolution: "@canton-network/core-amulet-service@workspace:core/amulet-service"
@@ -1883,6 +1902,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/core-test-token@workspace:core/test-token"
   dependencies:
+    "@canton-network/core-signing-lib": "workspace:^"
+    "@canton-network/wallet-sdk": "workspace:^"
     "@daml/types": "npm:^3.5.0"
     "@mojotech/json-type-validation": "npm:^3.1.0"
     "@rollup/plugin-alias": "npm:^5.0.0"
@@ -1890,10 +1911,15 @@ __metadata:
     "@rollup/plugin-json": "npm:^6.1.0"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@rollup/plugin-typescript": "npm:^12.3.0"
+    pino: "npm:^10.3.1"
     rollup: "npm:^4.59.0"
     rollup-plugin-dts: "npm:^6.3.0"
     tslib: "npm:^2.8.1"
     typescript: "npm:^5.9.3"
+  peerDependencies:
+    "@canton-network/core-signing-lib": "workspace:^"
+    "@canton-network/wallet-sdk": "workspace:^"
+    pino: ^10.3.1
   languageName: unknown
   linkType: soft
 
@@ -1947,6 +1973,25 @@ __metadata:
     typescript: "npm:^5.9.3"
     uuid: "npm:^14.0.0"
     zod: "npm:^4.3.6"
+  languageName: unknown
+  linkType: soft
+
+"@canton-network/core-trading-app@workspace:^, @canton-network/core-trading-app@workspace:core/trading-app":
+  version: 0.0.0-use.local
+  resolution: "@canton-network/core-trading-app@workspace:core/trading-app"
+  dependencies:
+    "@canton-network/core-ledger-client-types": "workspace:^"
+    "@canton-network/core-signing-lib": "workspace:^"
+    "@canton-network/wallet-sdk": "workspace:^"
+    "@vitest/coverage-v8": "npm:^4.1.2"
+    pino: "npm:^10.3.1"
+    tsup: "npm:^8.5.1"
+    typescript: "npm:^5.9.3"
+    vitest: "npm:^4.1.2"
+  peerDependencies:
+    "@canton-network/core-signing-lib": "workspace:^"
+    "@canton-network/wallet-sdk": "workspace:^"
+    pino: ^10.3.1
   languageName: unknown
   linkType: soft
 
@@ -12491,6 +12536,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "docs-wallet-integration-guide-examples@workspace:docs/wallet-integration-guide/examples"
   dependencies:
+    "@canton-network/core-amulet-ops": "workspace:^"
     "@canton-network/core-amulet-service": "workspace:^"
     "@canton-network/core-ledger-client": "workspace:^"
     "@canton-network/core-ledger-client-types": "workspace:^"
@@ -12498,6 +12544,7 @@ __metadata:
     "@canton-network/core-signing-lib": "workspace:^"
     "@canton-network/core-test-token": "workspace:^"
     "@canton-network/core-token-standard": "workspace:^"
+    "@canton-network/core-trading-app": "workspace:^"
     "@canton-network/core-tx-parser": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/core-wallet-auth": "workspace:^"

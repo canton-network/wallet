@@ -6,12 +6,12 @@ import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
 import type { Logger } from 'pino'
 import {
+    createLocalNetSdks,
     localNetStaticConfig,
-    SDK,
     type SDKInterface,
     type SDKContext,
     type TokenNamespace,
-    vetPackage,
+    vetPackageIdempotent,
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
@@ -50,40 +50,6 @@ const TEST_TOKEN_V1_DAR =
 const LOCALNET_PATH = '../../../../../.localnet'
 const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
 
-/**
- * Vet a DAR, tolerating the case where a package with the same name+version is
- * already vetted on the participant.
- *
- * On a persistent localnet, a previous build of a DAR (e.g. `splice-test-token-v1`)
- * may already be vetted. Re-running the example after rebuilding the DAR produces a
- * different package hash for the same name+version, which Canton rejects with
- * `KNOWN_PACKAGE_VERSION`. Since the already-vetted package is resolved by
- * package-name at command-submission time, it is safe to reuse it and continue.
- */
-async function vetPackageIdempotent(
-    ledgerProvider: Parameters<typeof vetPackage>[0],
-    dar: Uint8Array,
-    synchronizerId: string,
-    logger: Logger
-): Promise<void> {
-    try {
-        await vetPackage(ledgerProvider, dar, synchronizerId)
-    } catch (e) {
-        const code = (e as { code?: string })?.code
-        const message = `${(e as { cause?: unknown })?.cause ?? (e as Error)?.message ?? e}`
-        if (
-            code === 'KNOWN_PACKAGE_VERSION' ||
-            message.includes('same name and version')
-        ) {
-            logger.warn(
-                'A package with the same name+version is already vetted; reusing the existing package.'
-            )
-            return
-        }
-        throw e
-    }
-}
-
 export interface MultiSyncSetup {
     appUserSdk: SDKInterface<'token' | 'amulet'>
     appProviderSdk: SDKInterface<'token'>
@@ -117,25 +83,18 @@ export interface MultiSyncSetup {
 export async function setupMultiSyncTrade(
     logger: Logger
 ): Promise<MultiSyncSetup> {
-    const [appUserSdk, appProviderSdk, svSdk] = await Promise.all([
-        SDK.create({
-            auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
-            ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+    const {
+        appUser: appUserSdk,
+        appProvider: appProviderSdk,
+        sv: svSdk,
+    } = await createLocalNetSdks({
+        appUser: {
             amulet: AMULET_NAMESPACE_CONFIG,
-            token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
-        }),
-        SDK.create({
-            auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
-            ledgerClientUrl:
-                localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-            token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
-        }),
-        SDK.create({
-            auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
-            ledgerClientUrl: localNetStaticConfig.LOCALNET_SV_LEDGER_URL,
             token: TOKEN_NAMESPACE_CONFIG,
-        }),
-    ])
+        },
+        appProvider: { token: TOKEN_NAMESPACE_CONFIG },
+        sv: { token: TOKEN_NAMESPACE_CONFIG },
+    })
 
     const appUserCtx = (
         appUserSdk.ledger as unknown as { sdkContext: SDKContext }
@@ -156,9 +115,8 @@ export async function setupMultiSyncTrade(
 
     const globalSynchronizerId =
         await appUserSdk.ledger.getGlobalSynchronizerId()
-    const appSynchronizerId = allSynchronizers.find(
-        (s) => s.synchronizerAlias === 'app-synchronizer'
-    )?.synchronizerId
+    const appSynchronizerId =
+        await appUserSdk.ledger.getSynchronizerIdByAlias('app-synchronizer')
 
     if (!appSynchronizerId)
         throw new Error(
