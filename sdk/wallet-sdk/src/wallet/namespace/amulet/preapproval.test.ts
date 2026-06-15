@@ -44,153 +44,156 @@ describe('PreapprovalNamespace', () => {
         }
     })
 
-    describe('Create preapproval command', () => {
-        it('should create the preapproval command', async () => {
-            vi.mocked(fetchAmulet).mockResolvedValue({
-                admin: 'mock-dso-party',
-            } as any)
+    it('should create the preapproval command', async () => {
+        vi.mocked(fetchAmulet).mockResolvedValue({
+            admin: 'dso::123',
+            id: 'Amulet',
+            displayName: 'Amulet',
+            symbol: 'CC',
+            registryUrl: new URL('http://registry:808'),
+        })
 
-            const result = await preapprovalNamespace.command.create({
-                parties: { receiver: 'receiver-party-123' as any },
-            })
+        const result = await preapprovalNamespace.command.create({
+            parties: { receiver: 'receiver-party::123' },
+        })
 
-            expect(fetchAmulet).toHaveBeenCalledWith(mockConfig)
-            expect(result).toStrictEqual({
-                CreateCommand: {
-                    templateId:
-                        '#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal',
-                    createArguments: {
-                        provider: 'mock-validator-party',
-                        receiver: 'receiver-party-123',
-                        expectedDso: 'mock-dso-party',
-                    },
+        expect(fetchAmulet).toHaveBeenCalledWith(mockConfig)
+        expect(result).toStrictEqual({
+            CreateCommand: {
+                templateId:
+                    '#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal',
+                createArguments: {
+                    provider: 'mock-validator-party',
+                    receiver: 'receiver-party::123',
+                    expectedDso: 'dso::123',
                 },
-            })
+            },
         })
     })
 
-    describe('Cancel preapproval', () => {
-        it('should cancel when the preapproval contract exists', async () => {
-            const mockStatus = { contractId: 'cid-111', templateId: 'tid-222' }
-            vi.spyOn(preapprovalNamespace, 'fetchStatus').mockResolvedValue(
-                mockStatus as any
-            )
-            mockConfig.amuletService.cancelTransferPreapproval.mockResolvedValue(
-                ['cancel-exercise', ['dc-1']]
-            )
+    it('should cancel when the preapproval contract exists', async () => {
+        const mockStatus = { contractId: 'cid-111', templateId: 'tid-222' }
+        vi.spyOn(preapprovalNamespace, 'fetchStatus').mockResolvedValue(
+            mockStatus as any
+        )
+        mockConfig.amuletService.cancelTransferPreapproval.mockResolvedValue([
+            'cancel-exercise',
+            ['dc-1'],
+        ])
 
-            const result = await preapprovalNamespace.command.cancel({
-                parties: { receiver: 'receiver-party-abc' as any },
-            })
-
-            expect(
-                mockConfig.amuletService.cancelTransferPreapproval
-            ).toHaveBeenCalledWith('cid-111', 'tid-222', 'receiver-party-abc')
-            expect(result).toStrictEqual([
-                { ExerciseCommand: 'cancel-exercise' },
-                ['dc-1'],
-            ])
+        const result = await preapprovalNamespace.command.cancel({
+            parties: { receiver: 'receiver-party-abc' as any },
         })
+
+        expect(
+            mockConfig.amuletService.cancelTransferPreapproval
+        ).toHaveBeenCalledWith('cid-111', 'tid-222', 'receiver-party-abc')
+        expect(result).toStrictEqual([
+            { ExerciseCommand: 'cancel-exercise' },
+            ['dc-1'],
+        ])
     })
 
-    describe('Renew preapproval', () => {
+    it('renew preapproval if the proper contracts exist', async () => {
         const expiresAt = new Date('2026-12-31')
+        const mockStatus = {
+            contractId: 'cid-old',
+            templateId: 'tid-old',
+            dso: 'dso::123',
+            expiresAt: new Date('2026-06-15T00:00:00.000Z'),
+        }
+        vi.spyOn(preapprovalNamespace, 'fetchStatus').mockResolvedValue(
+            mockStatus as any
+        )
+        mockConfig.amuletService.renewTransferPreapproval.mockResolvedValue([
+            'renew-exercise',
+            ['dc-renew'],
+        ])
 
-        it('renew preapproval if the proper contracts exist', async () => {
-            const mockStatus = { contractId: 'cid-old', templateId: 'tid-old' }
-            vi.spyOn(preapprovalNamespace, 'fetchStatus').mockResolvedValue(
-                mockStatus as any
-            )
-            mockConfig.amuletService.renewTransferPreapproval.mockResolvedValue(
-                ['renew-exercise', ['dc-renew']]
-            )
-
-            const result = await preapprovalNamespace.renew({
-                parties: {
-                    receiver: 'rec-1' as any,
-                    provider: 'custom-provider' as any,
-                },
-                expiresAt: expiresAt,
-                inputUtxos: ['utxo-1'],
-                synchronizerId: 'custom-sync',
-            })
-
-            expect(
-                mockConfig.amuletService.renewTransferPreapproval
-            ).toHaveBeenCalledWith(
-                'cid-old',
-                'tid-old',
-                'custom-provider',
-                'custom-sync',
-                expiresAt,
-                ['utxo-1']
-            )
-            expect(mockSubmit).toHaveBeenCalledWith({
-                commands: [{ ExerciseCommand: 'renew-exercise' }],
-                disclosedContracts: ['dc-renew'],
-                synchronizerId: 'custom-sync',
-                actAs: ['custom-provider'],
-            })
-            expect(result).toStrictEqual({ updateId: 'tx-999' })
+        const result = await preapprovalNamespace.renew({
+            parties: {
+                receiver: 'rec::123',
+                provider: 'sender::123',
+            },
+            expiresAt: expiresAt,
+            inputUtxos: ['utxo-1'],
+            synchronizerId: 'sync::123',
         })
+
+        expect(
+            mockConfig.amuletService.renewTransferPreapproval
+        ).toHaveBeenCalledWith(
+            'cid-old',
+            'tid-old',
+            'sender::123',
+            'sync::123',
+            expiresAt,
+            ['utxo-1']
+        )
+        expect(mockSubmit).toHaveBeenCalledWith({
+            commands: [{ ExerciseCommand: 'renew-exercise' }],
+            disclosedContracts: ['dc-renew'],
+            synchronizerId: 'sync::123',
+            actAs: ['sender::123'],
+        })
+        expect(result).toStrictEqual({ updateId: 'tx-999' })
     })
 
-    describe('Preapproval quick fetch', () => {
-        it('fetch preapproval from amulet service', async () => {
-            mockConfig.amuletService.getTransferPreApprovalByParty.mockResolvedValue(
-                { payload: 'data' }
-            )
+    it('fetch preapproval from amulet service with fetchQuick', async () => {
+        mockConfig.amuletService.getTransferPreApprovalByParty.mockResolvedValue(
+            { payload: 'data' }
+        )
 
-            const result = await preapprovalNamespace.fetchQuick(
-                'party-x' as any
-            )
-            expect(result).toStrictEqual({ payload: 'data' })
-        })
-
-        it('should convert error into preapproval no longer visible', async () => {
-            const error = {
-                error: 'No TransferPreapproval found for party xyz...',
-            }
-            mockConfig.amuletService.getTransferPreApprovalByParty.mockRejectedValue(
-                error
-            )
-
-            const result = await preapprovalNamespace.fetchQuick(
-                'party-x' as any
-            )
-            expect(result).toBeNull()
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                'Preapproval is no longer visible'
-            )
-        })
+        const result = await preapprovalNamespace.fetchQuick(
+            'preapprovalParty::123'
+        )
+        expect(result).toStrictEqual({ payload: 'data' })
+        expect(
+            mockConfig.amuletService.getTransferPreApprovalByParty
+        ).toHaveBeenCalledOnce()
     })
 
-    describe('Fetch status', () => {
-        it('should find a preapproval if it exists', async () => {
-            const payloadObject = {
-                contract: {
-                    contract_id: 'cid-found',
-                    template_id: 'tid-found',
-                    payload: {
-                        dso: 'dso',
-                        expiresAt: '2026-06-15T00:00:00.000Z',
-                    },
+    it('should convert error into preapproval no longer visible for fetchQuick', async () => {
+        const error = {
+            error: 'No TransferPreapproval found for party preapprovalParty::123',
+        }
+        mockConfig.amuletService.getTransferPreApprovalByParty.mockRejectedValue(
+            error
+        )
+
+        const result = await preapprovalNamespace.fetchQuick(
+            'preapprovalParty::123'
+        )
+        expect(result).toBeNull()
+        expect(mockLogger.info).toHaveBeenCalledWith(
+            'Preapproval is no longer visible'
+        )
+    })
+
+    it('should fetch preapproval status with normal preapproval fetch', async () => {
+        const preapproval = {
+            contract: {
+                contract_id: 'cid-found',
+                template_id: 'tid-found',
+                payload: {
+                    dso: 'dso',
+                    expiresAt: '2026-06-15T00:00:00.000Z',
                 },
-            }
-            mockConfig.amuletService.getTransferPreApprovalByParty.mockResolvedValue(
-                payloadObject
-            )
+            },
+        }
+        mockConfig.amuletService.getTransferPreApprovalByParty.mockResolvedValue(
+            preapproval
+        )
 
-            const result = await preapprovalNamespace.fetchStatus(
-                'party-target' as any
-            )
+        const result = await preapprovalNamespace.fetchStatus(
+            'preapprovalParty::123'
+        )
 
-            expect(result).toStrictEqual({
-                expiresAt: new Date('2026-06-15T00:00:00.000Z'),
-                dso: 'dso',
-                contractId: 'cid-found',
-                templateId: 'tid-found',
-            })
+        expect(result).toStrictEqual({
+            expiresAt: new Date('2026-06-15T00:00:00.000Z'),
+            dso: 'dso',
+            contractId: 'cid-found',
+            templateId: 'tid-found',
         })
     })
 })

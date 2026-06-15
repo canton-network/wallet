@@ -81,7 +81,7 @@ describe('AmuletNamespace', () => {
     describe('Tap amulet', () => {
         const testParty =
             'v1-01-alice::1220a07b16cc2186d42c97242642a9db79eda4bea472963ecd42a3e057924576f573' as any
-        const sampleTapCommand = {
+        const tapCommand = {
             templateId: 'Splice.AmuletRules:AmuletRules',
             contractId: '001e364e529d90ba',
             choice: 'AmuletRules_DevNet_Tap',
@@ -94,7 +94,7 @@ describe('AmuletNamespace', () => {
 
         it('should create tap command', async () => {
             vi.mocked(mockAmuletService.createTap).mockResolvedValue([
-                sampleTapCommand,
+                tapCommand,
                 [],
             ])
 
@@ -107,15 +107,12 @@ describe('AmuletNamespace', () => {
                 config.registry.id,
                 config.registry.registryUrl.toString()
             )
-            expect(result).toStrictEqual([
-                { ExerciseCommand: sampleTapCommand },
-                [],
-            ])
+            expect(result).toStrictEqual([{ ExerciseCommand: tapCommand }, []])
         })
 
         it('should execute tap internal', async () => {
             vi.spyOn(amuletNamespace, 'tap').mockResolvedValue([
-                { ExerciseCommand: sampleTapCommand } as any,
+                { ExerciseCommand: tapCommand } as any,
                 ['dc-1'] as any,
             ])
 
@@ -126,7 +123,7 @@ describe('AmuletNamespace', () => {
                 '10000'
             )
             expect(mockSubmit).toHaveBeenCalledWith({
-                commands: [{ ExerciseCommand: sampleTapCommand }],
+                commands: [{ ExerciseCommand: tapCommand }],
                 disclosedContracts: ['dc-1'],
                 synchronizerId: config.commonCtx.defaultSynchronizerId,
                 actAs: [config.validatorParty],
@@ -164,7 +161,7 @@ describe('AmuletNamespace', () => {
                 ).toHaveBeenCalledTimes(1)
             })
 
-            it('should exhaust loop parameters to the threshold before abandoning lookup', async () => {
+            it('should keep retrying featured app rights based on params', async () => {
                 vi.mocked(
                     mockAmuletService.getFeaturedAppsByParty
                 ).mockResolvedValue(undefined)
