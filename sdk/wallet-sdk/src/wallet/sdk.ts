@@ -27,6 +27,7 @@ import {
 } from '@canton-network/core-ledger-client-types'
 import { AllowedLogAdapters } from './logger/types.js'
 import { DappLedgerRpc } from '@canton-network/core-provider-dapp'
+import { SDKContext } from './index.js'
 export * from './namespace/asset/index.js'
 export type * from './namespace/token/index.js'
 export type * from './namespace/amulet/index.js'
@@ -44,21 +45,7 @@ export {
 } from '@canton-network/core-signing-lib'
 export type LedgerTypes = LedgerCommonSchemas
 
-export type SDKContext = {
-    ledgerProvider: AbstractLedgerProvider
-    userId: string
-    logger: SDKLogger
-    error: SDKErrorHandler
-    defaultSynchronizerId: string
-}
-
-export type OfflineSDKContext = {
-    logger: SDKLogger
-    error: SDKErrorHandler
-}
-
 export * from './init/index.js'
-export { PrepareOptions, ExecuteOptions } from './namespace/ledger/index.js'
 export * from './namespace/transactions/prepared.js'
 export * from './namespace/transactions/signed.js'
 

@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SDKLogger } from '../logger/index.js'
-import {
-    EXTENDED_SDK_OPTION_KEYS,
-    ExtendedSDKOptions,
-    SDKContext,
-} from '../sdk.js'
+import { EXTENDED_SDK_OPTION_KEYS, ExtendedSDKOptions } from './types/sdk.js'
+import type { SDKContext } from './types/context.js'
 
 export abstract class SDKPlugin {
     /**
+     *
      * @deprecated use this.ctx.logger instead
      */
     protected readonly logger: ReturnType<SDKLogger['child']>
@@ -21,7 +19,7 @@ export abstract class SDKPlugin {
     ) {
         if (EXTENDED_SDK_OPTION_KEYS.includes(name as keyof ExtendedSDKOptions))
             throw Error(
-                `Name ${name} is reserved and cannot be used to register the plugin. Reserved names: ${EXTENDED_SDK_OPTION_KEYS.join(', ')}.`
+                `Name "${name}" is reserved and cannot be used to register the plugin. Reserved names: ${EXTENDED_SDK_OPTION_KEYS.join(', ')}.`
             )
 
         const logger = _ctx.logger.child({

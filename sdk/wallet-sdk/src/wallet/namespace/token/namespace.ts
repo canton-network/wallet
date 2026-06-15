@@ -7,7 +7,7 @@ import { TransferNamespace } from './transfer/index.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { PartyId } from '@canton-network/core-types'
 import { PrettyTransactions } from '@canton-network/core-tx-parser'
-import { SDKContext } from '../../sdk.js'
+import type { SDKContext } from '../../init/types/context.js'
 import { ParsedURL } from '../utils/url.js'
 
 export type TokenNamespaceConfig = {
