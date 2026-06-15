@@ -8,7 +8,11 @@ export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: ['src/**/*.stories.ts', 'src/vite-env.d.ts '],
+            exclude: [
+                'src/**/*.stories.ts',
+                'src/vite-env.d.ts',
+                'src/components/fixtures.ts',
+            ],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov'],
             thresholds: {
