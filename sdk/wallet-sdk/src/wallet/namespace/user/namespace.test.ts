@@ -203,8 +203,328 @@ describe('utils namespace', () => {
             },
         }
         const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockReset()
         sdkContext.ledgerProvider.request.mockResolvedValueOnce(usersResponse)
+        const result = await user.create({
+            userId: 'ledger-api-user',
+            primaryParty: '',
+        })
+        expect(result).toStrictEqual(usersResponse.user)
+        expect(sdkContext.ledgerProvider.request).toHaveBeenCalledTimes(1)
+        expect(sdkContext.ledgerProvider.request).toHaveBeenCalledWith(
+            expect.objectContaining({
+                params: expect.objectContaining({
+                    resource: '/v2/users/{user-id}',
+                    requestMethod: 'get',
+                }),
+            })
+        )
+    })
 
-        await user.create({ userId: 'ledger-api-user', primaryParty: '' })
+    it('should create new user if it does not already exist', async () => {
+        const createdUserResponse = {
+            user: {
+                id: 'new-user',
+                primaryParty:
+                    'app_user_localnet-localparty-1::12209b1d0dd8b25e2002a452b99d4bc0defead64fd7a925a3cb50c702a06154275ad',
+                isDeactivated: false,
+                metadata: {
+                    resourceVersion: '1',
+                    annotations: {},
+                },
+                identityProviderId: '',
+                primaryPartyAuthentication: false,
+            },
+        }
+        const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockReset()
+
+        sdkContext.ledgerProvider.request.mockImplementationOnce(() =>
+            Promise.reject({ code: 'USER_NOT_FOUND' })
+        )
+
+        sdkContext.ledgerProvider.request.mockResolvedValueOnce(
+            createdUserResponse
+        )
+
+        const result = await user.create({
+            userId: 'new-user',
+            primaryParty: createdUserResponse.user.primaryParty,
+        })
+
+        expect(result).toStrictEqual(createdUserResponse.user)
+        expect(sdkContext.ledgerProvider.request).toHaveBeenCalledTimes(2)
+
+        expect(
+            sdkContext.ledgerProvider.request.mock.calls[1][0]
+        ).toStrictEqual({
+            method: 'ledgerApi',
+            params: {
+                body: {
+                    rights: [],
+                    user: {
+                        id: 'new-user',
+                        identityProviderId: '',
+                        isDeactivated: false,
+                        primaryParty:
+                            'app_user_localnet-localparty-1::12209b1d0dd8b25e2002a452b99d4bc0defead64fd7a925a3cb50c702a06154275ad',
+                    },
+                },
+                requestMethod: 'post',
+                resource: '/v2/users',
+            },
+        })
+    })
+
+    it('should create new user with rights', async () => {
+        const createdUserResponse = {
+            user: {
+                id: 'user-with-rights',
+                primaryParty: '',
+                isDeactivated: false,
+                metadata: {
+                    resourceVersion: '1',
+                    annotations: {},
+                },
+                identityProviderId: '',
+                primaryPartyAuthentication: false,
+            },
+        }
+        const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockReset()
+
+        sdkContext.ledgerProvider.request.mockImplementationOnce(() =>
+            Promise.reject({ code: 'USER_NOT_FOUND' })
+        )
+
+        sdkContext.ledgerProvider.request.mockResolvedValueOnce(
+            createdUserResponse
+        )
+
+        const result = await user.create({
+            userId: 'user-with-rights',
+            primaryParty: createdUserResponse.user.primaryParty,
+            userRights: {
+                actAs: ['alice::abc'],
+                readAs: ['bob::def'],
+            },
+        })
+
+        expect(result).toStrictEqual({
+            id: 'user-with-rights',
+            identityProviderId: '',
+            isDeactivated: false,
+            metadata: {
+                annotations: {},
+                resourceVersion: '1',
+            },
+            primaryParty: '',
+            primaryPartyAuthentication: false,
+        })
+
+        expect(
+            sdkContext.ledgerProvider.request.mock.calls[1][0]
+        ).toStrictEqual({
+            method: 'ledgerApi',
+            params: {
+                body: {
+                    rights: [
+                        {
+                            kind: {
+                                CanReadAs: {
+                                    value: {
+                                        party: 'bob::def',
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            kind: {
+                                CanActAs: {
+                                    value: {
+                                        party: 'alice::abc',
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                    user: {
+                        id: 'user-with-rights',
+                        identityProviderId: '',
+                        isDeactivated: false,
+                        primaryParty: '',
+                    },
+                },
+                requestMethod: 'post',
+                resource: '/v2/users',
+            },
+        })
+    })
+
+    it('should throw an error if ledger api is unsuccessful', async () => {
+        const createdUserResponse = {
+            user: {
+                id: 'user-ledger-api-error',
+                primaryParty: '',
+                isDeactivated: false,
+                metadata: {
+                    resourceVersion: '1',
+                    annotations: {},
+                },
+                identityProviderId: '',
+                primaryPartyAuthentication: false,
+            },
+        }
+        const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockReset()
+
+        sdkContext.ledgerProvider.request.mockImplementationOnce(() =>
+            Promise.reject({ code: 'USER_NOT_FOUND' })
+        )
+
+        sdkContext.ledgerProvider.request.mockResolvedValueOnce(undefined)
+
+        await expect(
+            user.create({
+                userId: 'user-with-rights',
+                primaryParty: createdUserResponse.user.primaryParty,
+                userRights: {
+                    actAs: ['alice::abc'],
+                    readAs: ['bob::def'],
+                },
+            })
+        ).rejects.toThrow()
+    })
+
+    it('should grant rights to a user for canExecuteAsAnyParty and canReadAsAnyParty', async () => {
+        const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockReset()
+
+        sdkContext.ledgerProvider.request.mockResolvedValueOnce(undefined)
+
+        await user.rights.grant({
+            userId: 'new-user2',
+            userRights: {
+                readAs: ['alice::abc'],
+            },
+        })
+
+        expect(
+            sdkContext.ledgerProvider.request.mock.calls[0][0]
+        ).toStrictEqual({
+            method: 'ledgerApi',
+            params: {
+                body: {
+                    identityProviderId: '',
+                    rights: [
+                        {
+                            kind: {
+                                CanReadAs: {
+                                    value: {
+                                        party: 'alice::abc',
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                    userId: 'new-user2',
+                },
+                path: {
+                    'user-id': 'new-user2',
+                },
+                requestMethod: 'post',
+                resource: '/v2/users/{user-id}/rights',
+            },
+        })
+    })
+
+    it('should grant rights to a user', async () => {
+        const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockReset()
+
+        sdkContext.ledgerProvider.request.mockResolvedValueOnce(undefined)
+
+        await user.rights.grant({
+            userId: 'can-execute-and-read',
+            userRights: {
+                canExecuteAsAnyParty: true,
+                canReadAsAnyParty: true,
+            },
+        })
+
+        expect(
+            sdkContext.ledgerProvider.request.mock.calls[0][0]
+        ).toStrictEqual({
+            method: 'ledgerApi',
+            params: {
+                body: {
+                    identityProviderId: '',
+                    rights: [
+                        {
+                            kind: {
+                                CanReadAsAnyParty: {
+                                    value: {},
+                                },
+                            },
+                        },
+                        {
+                            kind: {
+                                CanExecuteAsAnyParty: {
+                                    value: {},
+                                },
+                            },
+                        },
+                    ],
+                    userId: 'can-execute-and-read',
+                },
+                path: {
+                    'user-id': 'can-execute-and-read',
+                },
+                requestMethod: 'post',
+                resource: '/v2/users/{user-id}/rights',
+            },
+        })
+    })
+
+    it('should revoke rights to a user', async () => {
+        const user = new UserNamespace(sdkContext)
+        sdkContext.ledgerProvider.request.mockReset()
+
+        sdkContext.ledgerProvider.request.mockResolvedValueOnce(undefined)
+
+        await user.rights.grant({
+            userId: 'revoked-rights-user',
+            userRights: {
+                readAs: ['alice::abc'],
+            },
+        })
+
+        expect(
+            sdkContext.ledgerProvider.request.mock.calls[0][0]
+        ).toStrictEqual({
+            method: 'ledgerApi',
+            params: {
+                body: {
+                    identityProviderId: '',
+                    rights: [
+                        {
+                            kind: {
+                                CanReadAs: {
+                                    value: {
+                                        party: 'alice::abc',
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                    userId: 'revoked-rights-user',
+                },
+                path: {
+                    'user-id': 'revoked-rights-user',
+                },
+                requestMethod: 'post',
+                resource: '/v2/users/{user-id}/rights',
+            },
+        })
     })
 })
