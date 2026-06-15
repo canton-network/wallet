@@ -50,6 +50,7 @@ import {
 import * as storage from './storage'
 import { clearAllLocalState } from './util'
 import defaultGatewayList from './gateways.json'
+import defaultExtensionsList from './wallets.json'
 import { CANTON_LOGO_PNG } from './assets'
 import { requestAnnouncedProviders } from './announce-discovery'
 
@@ -58,6 +59,11 @@ export interface DappSDKConnectOptions<
 > {
     defaultAdapters?: TDefaultAdapter[]
     additionalAdapters?: ProviderAdapter[] | undefined
+    enableSuggestedWallets?: boolean
+}
+
+function defaultTrue(b: boolean | undefined): boolean {
+    return b === undefined ? true : b
 }
 
 function normalizeConnectOptions(
@@ -69,6 +75,7 @@ function normalizeConnectOptions(
                 ? createDefaultAdapters(defaultGatewayList)
                 : options.defaultAdapters,
         additionalAdapters: options.additionalAdapters,
+        enableSuggestedWallets: defaultTrue(options.enableSuggestedWallets),
     }
 }
 
@@ -307,6 +314,20 @@ export class DappSDK {
         // Register adapters and store them in the SDK instance.
         if (options) {
             this.configuredAdapters = normalizeConnectOptions(options)
+        }
+
+        const enableSuggestedWallets = defaultTrue(
+            this.configuredAdapters?.enableSuggestedWallets
+        )
+
+        if (enableSuggestedWallets) {
+            // Enable suggested wallets logic here
+            localStorage.setItem(
+                'splice_wallet_picker_suggested_entries',
+                JSON.stringify(defaultExtensionsList)
+            )
+        } else {
+            localStorage.removeItem('splice_wallet_picker_suggested_entries')
         }
 
         // Create discovery and attempt restore.

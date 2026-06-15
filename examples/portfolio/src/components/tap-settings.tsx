@@ -37,7 +37,9 @@ export const TapSettings: React.FC = () => {
     const sessionToken = useConnection().status?.session?.accessToken
     const primaryParty = usePrimaryAccount()?.partyId
     const { tap } = usePortfolio()
-    const { validatorUrl } = usePortfolioConfig()
+    const {
+        amulet: { validatorUrl },
+    } = usePortfolioConfig()
     const registryUrls = useRegistryUrls()
     const instruments = useInstruments()
 

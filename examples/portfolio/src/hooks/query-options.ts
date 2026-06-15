@@ -38,7 +38,9 @@ export const useAllocationsQueryOptions = (party: string | undefined) => {
 
 export const useIsDevNetQueryOptions = (sessionToken: string | undefined) => {
     const { isDevNet } = usePortfolio()
-    const { validatorUrl } = usePortfolioConfig()
+    const {
+        token: { validatorUrl },
+    } = usePortfolioConfig()
     return queryOptions({
         queryKey: queryKeys.isDevNet.all,
         queryFn: async () =>

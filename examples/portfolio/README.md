@@ -47,10 +47,24 @@ The app loads `config.json` at startup and validates it before rendering. The lo
 
 ```json
 {
-    "validatorUrl": "http://localhost:2000/api/validator",
-    "registries": [] // not currently used
+    "amulet": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registry": "http://scan.localhost:4000/registry/"
+    },
+    "token": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registries": [
+            {
+                "name": "DA Registry",
+                "partyId": "operator::1234567890",
+                "url": "https://apps.da.com/registrar/operator::1234567890/"
+            }
+        ]
+    }
 }
 ```
+
+The `amulet` section configures Canton Coin (Amulet) operations. The `token` section configures token-standard operations and default registries. Registry `partyId` values are optional; when omitted, the app discovers the registry admin party from the registry metadata endpoint.
 
 For static or Docker deployments, replace or mount `/config.json`.
 
