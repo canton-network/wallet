@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MockedObject, vi } from 'vitest'
-import { SDKContext } from '../sdk.js'
+import { BasicSDKOptions, SDKContext } from '../sdk.js'
 import { SDKLogger } from '../logger/logger.js'
 import { SDKErrorHandler } from '../error/handler.js'
 
@@ -34,8 +34,17 @@ const ctx: SDKContext = {
     defaultSynchronizerId: '',
 }
 
+const basicSDKOptions: BasicSDKOptions<never> = {
+    auth: {
+        method: 'static',
+        token: 'token',
+    },
+    ledgerClientUrl: 'http://example.com',
+}
+
 export const mock = {
     ledgerProvider,
     mockLogger,
     ctx,
+    basicSDKOptions,
 }
