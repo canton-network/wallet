@@ -22,6 +22,7 @@ export const portfolioColors = {
     purple30: '#C6B2FF',
     red99: '#FD8575',
     green76: '#33C200',
+    green80: '#BBFBD7',
 } as const
 
 declare module '@mui/material/styles' {

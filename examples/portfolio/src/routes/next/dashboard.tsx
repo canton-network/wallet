@@ -20,6 +20,7 @@ import {
     type LinkComponentProps,
 } from '@tanstack/react-router'
 import type { RegisteredRouter } from '@tanstack/router-core'
+import { PrimaryBadge } from '@components/dashboard/primary-badge'
 import { PillButton } from '@components/ui/PillButton'
 import { useConnection } from '@contexts/ConnectionContext'
 import { useAccounts } from '@hooks/useAccounts'
@@ -150,6 +151,11 @@ function RouteComponent() {
                                 icon={
                                     <AccountBalanceWalletIcon fontSize="small" />
                                 }
+                                endAdornment={
+                                    wallet.primary ? (
+                                        <PrimaryBadge />
+                                    ) : undefined
+                                }
                             >
                                 {wallet.hint}
                             </SidebarLink>
@@ -190,12 +196,14 @@ type SidebarLinkProps = {
     active: boolean
     icon: ReactNode
     children: ReactNode
+    endAdornment?: ReactNode
 } & LinkComponentProps<'a', RegisteredRouter>
 
 function SidebarLink({
     active,
     icon,
     children,
+    endAdornment,
     ...linkProps
 }: SidebarLinkProps) {
     return (
@@ -204,7 +212,7 @@ function SidebarLink({
             aria-current={active ? 'page' : undefined}
             style={{ color: 'inherit', textDecoration: 'none' }}
         >
-            <Box sx={sidebarLinkSx(active)}>
+            <Box sx={sidebarLinkSx(active, Boolean(endAdornment))}>
                 <Box
                     aria-hidden="true"
                     sx={{
@@ -227,14 +235,20 @@ function SidebarLink({
                 >
                     {children}
                 </Typography>
+                {endAdornment}
             </Box>
         </Link>
     )
 }
 
-const sidebarLinkSx = (active: boolean): SxProps<Theme> => ({
+const sidebarLinkSx = (
+    active: boolean,
+    hasEndAdornment: boolean
+): SxProps<Theme> => ({
     display: 'grid',
-    gridTemplateColumns: '18px minmax(0, 1fr)',
+    gridTemplateColumns: hasEndAdornment
+        ? '18px minmax(0, 1fr) auto'
+        : '18px minmax(0, 1fr)',
     alignItems: 'center',
     gap: 1,
     minHeight: 34,
