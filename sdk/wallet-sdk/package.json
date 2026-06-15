@@ -41,8 +41,6 @@
         "@canton-network/core-tx-visualizer": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
-        "@grpc/grpc-js": "^1.14.3",
-        "@protobuf-ts/grpc-transport": "^2.11.1",
         "decimal.js": "^10.6.0",
         "jose": "^6.1.3",
         "pino": "^10.3.1",
