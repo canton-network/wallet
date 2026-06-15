@@ -1,30 +1,48 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
+import {
+    AmuletNamespace,
+    AmuletNamespaceConfig,
+    fetchAmulet,
+} from './namespace'
 import { mock } from '../../__test__/mocks'
-import { describe, it, vi, beforeEach, expect } from 'vitest'
-import { AmuletNamespace, AmuletNamespaceConfig } from './namespace'
-// import { LedgerNamespace } from '../ledger'
-const { mockSubmit } = vi.hoisted(() => ({ mockSubmit: vi.fn() }))
-
+import { Decimal } from 'decimal.js'
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+vi.mock('../utils/url.js', () => ({
+    ParsedURL: class MockedParsedURL extends URL {
+        constructor(
+            public ctx: any,
+            public input: any
+        ) {
+            super(input)
+        }
+    },
+    parseAssets: vi.fn(),
+}))
+
 const { ctx } = mock
 
-vi.mock('../ledger/namespace.ts', () => ({
-    LedgerNamespace: vi.fn().mockImplementation(() => ({
-        internal: { submit: mockSubmit },
-    })),
-}))
+const createMockLogger = () => {
+    const loggerMock = {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        child: vi.fn(),
+    }
+    loggerMock.child.mockImplementation(() => loggerMock)
+    return loggerMock
+}
 
 const mockTokenStandard = {
     get: vi.fn(),
     getInputHoldingsCids: vi.fn(),
-    core: {
-        toQualifiedMemberId: vi.fn(),
-    },
-    transfer: {
-        fetchTransferFactoryChoiceContext: vi.fn(),
-    },
+    core: { toQualifiedMemberId: vi.fn() },
+    transfer: { fetchTransferFactoryChoiceContext: vi.fn() },
+    registriesToAssets: vi.fn(),
 }
 
 const mockAmuletService = {
@@ -36,8 +54,13 @@ const mockAmuletService = {
     renewTransferPreapproval: vi.fn(),
     isDevNet: vi.fn(),
 }
+
 const config: AmuletNamespaceConfig = {
-    commonCtx: ctx,
+    commonCtx: {
+        ...ctx,
+        defaultSynchronizerId: 'mock-synchronizer-id',
+        logger: createMockLogger(),
+    } as any,
     registry: {
         id: 'Amulet',
         displayName: 'Amulet',
@@ -45,101 +68,146 @@ const config: AmuletNamespaceConfig = {
         registryUrl: new URL('http://registry.com'),
         admin: 'adminParty:123',
     },
-    amuletService: mockAmuletService as any,
-    tokenStandardService: mockTokenStandard as any,
-    validatorParty: 'validatorParty:123',
+    amuletService: mockAmuletService as unknown as any,
+    tokenStandardService: mockTokenStandard as unknown as any,
+    validatorParty: 'validatorParty:123' as any,
 }
 
-describe('amulet namespace', () => {
+describe('AmuletNamespace', () => {
     let amuletNamespace: AmuletNamespace
+    let mockSubmit: Mock
 
     beforeEach(() => {
         vi.clearAllMocks()
+        vi.useFakeTimers()
+
         amuletNamespace = new AmuletNamespace(config)
+
+        mockSubmit = vi.fn().mockResolvedValue({
+            updateId: 'tx-123',
+            completionOffset: '1000',
+        })
+        ;(amuletNamespace as any).ledger = { internal: { submit: mockSubmit } }
     })
 
-    it('should create tap', async () => {
-        const tapCommand = {
-            templateId:
-                'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a:Splice.AmuletRules:AmuletRules',
-            contractId:
-                '001e364e529d90ba28da0c99b71bf77cf464d80fc71effa25c815e7320577d212eca1212206987ff84133b0d73585fefc687c7af9bf6a31d53419ccc575be3e994f592e0cf',
+    describe('Tap amulet', () => {
+        const testParty =
+            'v1-01-alice::1220a07b16cc2186d42c97242642a9db79eda4bea472963ecd42a3e057924576f573' as any
+        const sampleTapCommand = {
+            templateId: 'Splice.AmuletRules:AmuletRules',
+            contractId: '001e364e529d90ba',
             choice: 'AmuletRules_DevNet_Tap',
             choiceArgument: {
-                receiver:
-                    'v1-01-alice::1220a07b16cc2186d42c97242642a9db79eda4bea472963ecd42a3e057924576f573',
+                receiver: testParty,
                 amount: '10000.0000000000',
-                openRound:
-                    '006b5fe2c819eaef2130811d27868a5fe2915dee6fa98cf1aba890543a808aba2aca121220749ca9763bfe2b5644ea0b74a27a4d85f27f33de0ae06eda17dfea6a32f52c2d',
+                openRound: '006b5fe2c819',
             },
         }
-        ;(
-            config.amuletService.createTap as ReturnType<typeof vi.fn>
-        ).mockResolvedValue([tapCommand, []])
 
-        const result = await amuletNamespace.tap(
-            'v1-01-alice::1220a07b16cc2186d42c97242642a9db79eda4bea472963ecd42a3e057924576f573',
-            '10000'
-        )
-        expect(result).toStrictEqual([
-            {
-                ExerciseCommand: {
-                    choice: 'AmuletRules_DevNet_Tap',
-                    choiceArgument: {
-                        amount: '10000.0000000000',
-                        openRound:
-                            '006b5fe2c819eaef2130811d27868a5fe2915dee6fa98cf1aba890543a808aba2aca121220749ca9763bfe2b5644ea0b74a27a4d85f27f33de0ae06eda17dfea6a32f52c2d',
-                        receiver:
-                            'v1-01-alice::1220a07b16cc2186d42c97242642a9db79eda4bea472963ecd42a3e057924576f573',
-                    },
-                    contractId:
-                        '001e364e529d90ba28da0c99b71bf77cf464d80fc71effa25c815e7320577d212eca1212206987ff84133b0d73585fefc687c7af9bf6a31d53419ccc575be3e994f592e0cf',
-                    templateId:
-                        'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a:Splice.AmuletRules:AmuletRules',
-                },
-            },
-            [],
-        ])
+        it('should create tap command', async () => {
+            vi.mocked(mockAmuletService.createTap).mockResolvedValue([
+                sampleTapCommand,
+                [],
+            ])
+
+            const result = await amuletNamespace.tap(testParty, '10000')
+
+            expect(mockAmuletService.createTap).toHaveBeenCalledWith(
+                testParty,
+                new Decimal('10000').toFixed(10),
+                config.registry.admin,
+                config.registry.id,
+                config.registry.registryUrl.toString()
+            )
+            expect(result).toStrictEqual([
+                { ExerciseCommand: sampleTapCommand },
+                [],
+            ])
+        })
+
+        it('should execute tap internal', async () => {
+            vi.spyOn(amuletNamespace, 'tap').mockResolvedValue([
+                { ExerciseCommand: sampleTapCommand } as any,
+                ['dc-1'] as any,
+            ])
+
+            const result = await amuletNamespace.tapInternal('10000')
+
+            expect(amuletNamespace.tap).toHaveBeenCalledWith(
+                config.validatorParty,
+                '10000'
+            )
+            expect(mockSubmit).toHaveBeenCalledWith({
+                commands: [{ ExerciseCommand: sampleTapCommand }],
+                disclosedContracts: ['dc-1'],
+                synchronizerId: config.commonCtx.defaultSynchronizerId,
+                actAs: [config.validatorParty],
+            })
+            expect(result).toStrictEqual({
+                updateId: 'tx-123',
+                completionOffset: '1000',
+            })
+        })
     })
 
-    it('should create tap internal', async () => {
-        const tapCommand = {
-            templateId:
-                'a31be0483f3175647053f28965a4e6d97e3dbc433ea2338be303fae69bbcff6a:Splice.AmuletRules:AmuletRules',
-            contractId:
-                '001e364e529d90ba28da0c99b71bf77cf464d80fc71effa25c815e7320577d212eca1212206987ff84133b0d73585fefc687c7af9bf6a31d53419ccc575be3e994f592e0cf',
-            choice: 'AmuletRules_DevNet_Tap',
-            choiceArgument: {
-                receiver: config.validatorParty,
-                amount: '10000.0000000000',
-                openRound:
-                    '006b5fe2c819eaef2130811d27868a5fe2915dee6fa98cf1aba890543a808aba2aca121220749ca9763bfe2b5644ea0b74a27a4d85f27f33de0ae06eda17dfea6a32f52c2d',
-            },
-        }
-        ;(
-            config.amuletService.createTap as ReturnType<typeof vi.fn>
-        ).mockResolvedValue([tapCommand, []])
+    describe('Fetch amulet', () => {
+        it('fetch amulet based on configuration', async () => {
+            const result = await fetchAmulet(config)
+            expect(result).toStrictEqual(config.registry)
+        })
+    })
 
-        await amuletNamespace.tapInternal('10000')
+    describe('Featured App Namespace', () => {
+        const mockRightPayload = { contractId: 'right-id-123', payload: {} }
 
-        expect(config.amuletService.createTap).toHaveBeenCalledWith(
-            config.validatorParty,
-            '10000.0000000000',
-            'adminParty:123',
-            'Amulet',
-            'http://registry.com/'
-        )
-        const ledgerInternal = (
-            amuletNamespace as never as {
-                ledger: { internal: { submit: ReturnType<typeof vi.fn> } }
-            }
-        ).ledger.internal.submit
+        describe('rights lookup retry loop', () => {
+            it('should not retry if the rights are found', async () => {
+                vi.mocked(
+                    mockAmuletService.getFeaturedAppsByParty
+                ).mockResolvedValue(mockRightPayload)
 
-        expect(ledgerInternal).toHaveBeenCalledWith({
-            commands: [{ ExerciseCommand: tapCommand }],
-            disclosedContracts: [],
-            synchronizerId: config.commonCtx.defaultSynchronizerId,
-            actAs: [config.validatorParty],
+                const result = await amuletNamespace.featuredApp.rights({
+                    partyId: config.validatorParty,
+                })
+
+                expect(result).toStrictEqual(mockRightPayload)
+                expect(
+                    mockAmuletService.getFeaturedAppsByParty
+                ).toHaveBeenCalledTimes(1)
+            })
+
+            it('should exhaust loop parameters to the threshold before abandoning lookup', async () => {
+                vi.mocked(
+                    mockAmuletService.getFeaturedAppsByParty
+                ).mockResolvedValue(undefined)
+
+                const trackingPromise = amuletNamespace.featuredApp.rights({
+                    partyId: config.validatorParty,
+                    maxRetries: 3,
+                    delayMs: 10,
+                })
+
+                await vi.runAllTimersAsync()
+                const result = await trackingPromise
+
+                expect(result).toBeUndefined()
+                expect(
+                    mockAmuletService.getFeaturedAppsByParty
+                ).toHaveBeenCalledTimes(3)
+            })
+        })
+
+        describe('grant sequence execution', () => {
+            it('skip granting featured rights if rights are already found', async () => {
+                vi.mocked(
+                    mockAmuletService.getFeaturedAppsByParty
+                ).mockResolvedValue(mockRightPayload)
+
+                const result = await amuletNamespace.featuredApp.grant()
+
+                expect(result).toStrictEqual(mockRightPayload)
+                expect(mockSubmit).not.toHaveBeenCalled()
+            })
         })
     })
 })
