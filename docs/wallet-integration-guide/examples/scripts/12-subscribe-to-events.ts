@@ -1,5 +1,10 @@
 import pino from 'pino'
-import { Event, localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import {
+    CompletionEvent,
+    UpdateEvent,
+    localNetStaticConfig,
+    SDK,
+} from '@canton-network/wallet-sdk'
 import { TOKEN_PROVIDER_CONFIG_DEFAULT } from './utils/index.js'
 
 const logger = pino({ name: 'v1-12-subscribe-to-events', level: 'info' })
@@ -65,7 +70,7 @@ const charlie = await sdk.party.external
 
 logger.info(charlie, 'Multi hosted party allocated successfully')
 
-const commandsCompletionsEvents: Event[] = []
+const commandsCompletionsEvents: CompletionEvent[] = []
 const commandsCompletionsController = new AbortController()
 logger.info('subscribing to command completions')
 const subscribeToCommandsMultiHostedParty = (async () => {
@@ -125,7 +130,7 @@ logger.info(
     'Multi hosted party with observing participant allocated successfully'
 )
 
-const updateEvents: Event[] = []
+const updateEvents: UpdateEvent[] = []
 const updatesController = new AbortController()
 
 const subscribeToPingUpdates = (async () => {
@@ -171,7 +176,11 @@ logger.info(
 
 logger.debug(commandsCompletionsEvents, 'commands completions events')
 
-if (commandsCompletionsEvents.length === 0) {
+if (
+    commandsCompletionsEvents.length === 0 ||
+    commandsCompletionsEvents.filter((event) => event.completionResponse) ===
+        undefined
+) {
     logger.error(
         'No command completion events received, something went wrong with the subscription'
     )
@@ -181,7 +190,10 @@ if (commandsCompletionsEvents.length === 0) {
 
 logger.debug(updateEvents, 'Update events')
 
-if (updateEvents.length === 0) {
+if (
+    updateEvents.length === 0 ||
+    updateEvents.filter((event) => event.update) === undefined
+) {
     logger.error(
         'No command completion events received, something went wrong with the subscription'
     )

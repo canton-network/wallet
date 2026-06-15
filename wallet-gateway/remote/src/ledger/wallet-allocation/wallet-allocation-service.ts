@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
+import { AuthContext, UserId } from '@canton-network/core-wallet-auth'
 import { Store, Wallet } from '@canton-network/core-wallet-store'
 import {
     SigningDriverInterface,
@@ -93,8 +93,7 @@ export class WalletAllocationService {
     }
 
     public async createWallet(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary,
         signingProviderId: SigningProvider
@@ -102,8 +101,8 @@ export class WalletAllocationService {
         switch (signingProviderId) {
             case SigningProvider.PARTICIPANT:
                 return this.participantAllocator.createWallet(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     partyHint,
                     primary
                 )
@@ -114,8 +113,8 @@ export class WalletAllocationService {
                     )
                 }
                 return this.kernelAllocator.createWallet(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     partyHint,
                     primary
                 )
@@ -124,8 +123,8 @@ export class WalletAllocationService {
                     throw new Error('Fireblocks signing driver not available')
                 }
                 return this.fireblocksAllocator.createWallet(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     partyHint,
                     primary
                 )
@@ -133,14 +132,14 @@ export class WalletAllocationService {
                 if (!this.blockdaemonAllocator) {
                     throw new Error('Blockdaemon signing driver not available')
                 }
-                if (!email) {
+                if (!authContext.email) {
                     throw new Error(
                         'Email is required for Blockdaemon wallet allocation'
                     )
                 }
                 return this.blockdaemonAllocator.createWallet(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     partyHint,
                     primary
                 )
@@ -149,8 +148,8 @@ export class WalletAllocationService {
                     throw new Error('Dfns signing driver not available')
                 }
                 return this.dfnsAllocator.createWallet(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     partyHint,
                     primary
                 )
@@ -162,16 +161,15 @@ export class WalletAllocationService {
     }
 
     public async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet,
         signingProviderId: SigningProvider
     ): Promise<void> {
         switch (signingProviderId) {
             case SigningProvider.PARTICIPANT:
                 return this.participantAllocator.allocateParty(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     existingWallet
                 )
             case SigningProvider.WALLET_KERNEL:
@@ -181,8 +179,8 @@ export class WalletAllocationService {
                     )
                 }
                 return this.kernelAllocator.allocateParty(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     existingWallet
                 )
             case SigningProvider.FIREBLOCKS:
@@ -190,22 +188,22 @@ export class WalletAllocationService {
                     throw new Error('Fireblocks signing driver not available')
                 }
                 return this.fireblocksAllocator.allocateParty(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     existingWallet
                 )
             case SigningProvider.BLOCKDAEMON:
                 if (!this.blockdaemonAllocator) {
                     throw new Error('Blockdaemon signing driver not available')
                 }
-                if (!email) {
+                if (!authContext.email) {
                     throw new Error(
                         'Email is required for Blockdaemon wallet allocation'
                     )
                 }
                 return this.blockdaemonAllocator.allocateParty(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     existingWallet
                 )
             case SigningProvider.DFNS:
@@ -213,8 +211,8 @@ export class WalletAllocationService {
                     throw new Error('Dfns signing driver not available')
                 }
                 return this.dfnsAllocator.allocateParty(
-                    userId,
-                    email,
+                    authContext.userId,
+                    authContext.email,
                     existingWallet
                 )
             default:

@@ -26,8 +26,7 @@ export function RegistryValidationModal({
     const routerState = useRouterState()
     const currentPath = routerState.location.pathname
 
-    // TODO: remove this once old components are removed.
-    const isOnSkippablePage = ['/settings', '/old'].includes(currentPath)
+    const isOnSkippablePage = currentPath === '/settings'
 
     const shouldShowModal =
         !isOnSkippablePage &&
