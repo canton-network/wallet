@@ -51,7 +51,6 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
             }
 
             if (idp.type == 'self_signed') {
-                logger.debug(idp, 'Using self-signed IDP')
                 const sub = decoded.sub
                 if (!sub) {
                     logger.warn('JWT does not contain a subject')
@@ -65,7 +64,7 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                     ...(email ? { email } : {}),
                 }
             }
-            logger.debug(idp, 'Using IDP')
+            logger.debug({ idp }, 'Using IDP')
             const response = await fetch(idp.configUrl)
             const config = await response.json()
             const jwks = createRemoteJWKSet(new URL(config.jwks_uri))

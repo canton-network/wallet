@@ -60,7 +60,7 @@ export const attemptRemoveSession = async (
     } catch (error) {
         // If removeSession fails that's okay
         // We still want to clear local state
-        console.debug('Failed to remove session:', error)
+        console.debug('Failed to remove session: ', error)
     }
 }
 
