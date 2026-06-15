@@ -25,10 +25,11 @@
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "dev": "storybook dev -p 6006",
-        "test": "vitest run --project browser --passWithNoTests",
-        "test:coverage": "vitest run --project browser --coverage --passWithNoTests"
+        "test": "vitest run --project browser",
+        "test:coverage": "vitest run --project browser --coverage"
     },
     "devDependencies": {
+        "@open-wc/testing-helpers": "^3.0.1",
         "@storybook/web-components-vite": "^10.2.14",
         "@types/bootstrap": "^5.2.10",
         "@types/fs-extra": "^11.0.4",
