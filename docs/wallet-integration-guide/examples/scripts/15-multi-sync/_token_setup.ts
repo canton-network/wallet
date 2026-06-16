@@ -26,7 +26,7 @@ export async function createTokenRulesAndMintForBob(
         testTokenRegistryUrl,
     } = setup
 
-    await appProviderSdk.ledger.executeOnSynchronizers(
+    await appProviderSdk.ledger.prepareAndExecuteOnSynchronizers(
         {
             partyId: tokenAdmin.partyId,
             commands: buildCreateTokenRulesCommand(tokenAdmin.partyId),

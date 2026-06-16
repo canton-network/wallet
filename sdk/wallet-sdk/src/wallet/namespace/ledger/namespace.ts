@@ -284,7 +284,7 @@ export class LedgerNamespace {
      * @param synchronizerIds - Synchronizers to submit to in parallel
      * @param privateKey - Key used to sign each prepared transaction
      */
-    public async executeOnSynchronizers(
+    public async prepareAndExecuteOnSynchronizers(
         options: Omit<PrepareOptions, 'synchronizerId'>,
         synchronizerIds: string[],
         privateKey: PrivateKey
