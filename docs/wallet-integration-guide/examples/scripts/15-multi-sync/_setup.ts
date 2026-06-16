@@ -9,9 +9,7 @@ import {
     localNetStaticConfig,
     SDK,
     type SDKInterface,
-    type SDKContext,
     type TokenNamespace,
-    vetPackage,
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
@@ -55,9 +53,6 @@ export interface MultiSyncSetup {
     appUserSdk: SDKInterface<'token' | 'amulet'>
     appProviderSdk: SDKInterface<'token'>
     svSdk: SDKInterface<'token'>
-    appUserCtx: SDKContext
-    appProviderCtx: SDKContext
-    svCtx: SDKContext
     tokenNamespaceAppUser: TokenNamespace
     tokenNamespaceAppProvider: TokenNamespace
     alice: PartyInfo
@@ -104,15 +99,6 @@ export async function setupMultiSyncTrade(
         }),
     ])
 
-    const appUserCtx = (
-        appUserSdk.ledger as unknown as { sdkContext: SDKContext }
-    ).sdkContext
-    const appProviderCtx = (
-        appProviderSdk.ledger as unknown as { sdkContext: SDKContext }
-    ).sdkContext
-    const svCtx = (svSdk.ledger as unknown as { sdkContext: SDKContext })
-        .sdkContext
-
     const connectedSyncResponse =
         await appUserSdk.ledger.connectedSynchronizers({})
     const allSynchronizers = connectedSyncResponse.connectedSynchronizers ?? []
@@ -152,14 +138,14 @@ export async function setupMultiSyncTrade(
     await Promise.all([
         // app-user + app-provider vet both DARs on the global and app synchronizers.
         ...[testTokenV1Dar, tradingAppDar].flatMap((dar) =>
-            [appUserCtx, appProviderCtx].flatMap((ctx) =>
+            [appUserSdk, appProviderSdk].flatMap((sdk) =>
                 [globalSynchronizerId, appSynchronizerId].map((sid) =>
-                    vetPackage(ctx, dar, sid)
+                    sdk.ledger.dar.vet(dar, sid)
                 )
             )
         ),
         ...[testTokenV1Dar, tradingAppDar].map((dar) =>
-            vetPackage(svCtx, dar, globalSynchronizerId)
+            svSdk.ledger.dar.vet(dar, globalSynchronizerId)
         ),
     ])
     logger.info(
@@ -241,9 +227,6 @@ export async function setupMultiSyncTrade(
         appUserSdk,
         appProviderSdk,
         svSdk,
-        appUserCtx,
-        appProviderCtx,
-        svCtx,
         tokenNamespaceAppUser: appUserSdk.token,
         tokenNamespaceAppProvider: appProviderSdk.token,
         alice,

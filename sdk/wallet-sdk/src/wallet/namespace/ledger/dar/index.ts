@@ -4,6 +4,8 @@
 import { SDKContext } from '../../../sdk.js'
 import { Ops } from '@canton-network/core-provider-ledger'
 
+// NOTE: unused duplicate of `DarNamespace` (see ./client.ts), which is the
+// implementation actually wired into the ledger namespace. Kept as-is for now.
 export class DarService {
     constructor(private readonly sdkContext: SDKContext) {}
 
