@@ -400,7 +400,14 @@ describe('Party namespace', () => {
                         }
                     )
                 })
-                expect(ledgerProvider.request).toHaveBeenCalledTimes(6)
+                expect(ledgerProvider.request).toHaveBeenNthCalledWith(6, {
+                    method: 'ledgerApi',
+                    params: {
+                        resource: '/v2/state/connected-synchronizers',
+                        requestMethod: 'get',
+                        query: {},
+                    },
+                })
             })
         })
 
