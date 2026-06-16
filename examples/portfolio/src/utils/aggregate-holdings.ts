@@ -25,6 +25,10 @@ export interface AggregatedHolding {
     }
 }
 
+export function getInstrumentKey(instrumentId: { admin: string; id: string }) {
+    return `${instrumentId.admin}::${instrumentId.id}`
+}
+
 export function aggregateHoldings(
     holdings: Holding[],
     currentTime: Date = new Date()
@@ -32,7 +36,7 @@ export function aggregateHoldings(
     const aggregated = new Map<string, AggregatedHolding>()
 
     for (const holding of holdings) {
-        const key = `${holding.instrumentId.admin}::${holding.instrumentId.id}`
+        const key = getInstrumentKey(holding.instrumentId)
         const existing = aggregated.get(key)
         const isLocked = TokenStandardService.isHoldingLocked(
             holding,
