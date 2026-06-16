@@ -10,7 +10,7 @@ import { Ops } from '@canton-network/core-provider-ledger'
 import { DarNamespace } from './dar/client.js'
 import { InternalLedgerNamespace } from './internal/index.js'
 import { PreparedTransactionNamespace } from './hash/namespace.js'
-import { AcsOptions, ACSReader } from '@canton-network/core-acs-reader'
+import { ACSReader } from '@canton-network/core-acs-reader'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace
@@ -212,28 +212,5 @@ export class LedgerNamespace {
                     }
                 })
         },
-    }
-
-    /**
-     * @deprecated
-     */
-    private async resolveAcsOptions(
-        options: AcsRequestOptions
-    ): Promise<AcsOptions> {
-        const offset =
-            options.offset ??
-            (
-                await this.sdkContext.ledgerProvider.request<Ops.GetV2StateLedgerEnd>(
-                    {
-                        method: 'ledgerApi',
-                        params: {
-                            resource: '/v2/state/ledger-end',
-                            requestMethod: 'get',
-                        },
-                    }
-                )
-            ).offset!
-
-        return { ...options, offset }
     }
 }
