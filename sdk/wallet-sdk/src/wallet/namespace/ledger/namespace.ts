@@ -182,14 +182,9 @@ export class LedgerNamespace {
         readRaw: async (
             options: AcsRequestOptions
         ): Promise<Array<LedgerTypes['JsGetActiveContractsResponse']>> => {
-            const resolvedOptions = await this.resolveAcsOptions(options)
+            this.sdkContext.logger.debug(options, `Querying acs with options:`)
 
-            this.sdkContext.logger.debug(
-                resolvedOptions,
-                `Querying acs with options:`
-            )
-
-            return await this.acsReader.raw.read(resolvedOptions)
+            return await this.acsReader.raw.read(options)
         },
         /**
          * Queries the ACS and filters for JsActiveContracts
