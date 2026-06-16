@@ -2205,7 +2205,7 @@ __metadata:
     commander: "npm:^14.0.3"
     diff: "npm:^8.0.3"
     inquirer-select-pro: "npm:^1.0.0-alpha.9"
-    js-yaml: "npm:^4.1.1"
+    js-yaml: "npm:^4.2.0"
     jsonc-parser: "npm:^3.3.1"
     openapi-typescript: "npm:^7.13.0"
     pm2: "npm:^6.0.14"
@@ -14443,6 +14443,17 @@ __metadata:
   bin:
     js-yaml: bin/js-yaml.js
   checksum: 10c0/3261f25912f5dd76605e5993d0a126c2b6c346311885d3c483706cd722efe34f697ea0331f654ce27c00a42b426e524518ec89d65ed02ea47df8ad26dcc8ce69
+  languageName: node
+  linkType: hard
+
+"js-yaml@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "js-yaml@npm:4.2.0"
+  dependencies:
+    argparse: "npm:^2.0.1"
+  bin:
+    js-yaml: bin/js-yaml.js
+  checksum: 10c0/1916456c118746603b067d74bbcbb0445d9a1d5e474ad4ae775e7b20525bed902e01d9d97dd0c81fcd8d4f596162309d0eb057f4aa38f3e9647f14075e9dea45
   languageName: node
   linkType: hard
 
