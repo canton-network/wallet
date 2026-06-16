@@ -35,7 +35,12 @@ This provider is always available and requires no additional configuration. You 
 
 - Enterprise deployments where the participant node manages keys
 - Scenarios where key management is handled by the infrastructure
-- Production environments with dedicated participant nodes
+- Operator-controlled deployments where wallet creation is not exposed via the User API
+
+**Security Considerations:**
+
+> [!IMPORTANT]
+> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon) when the User API is exposed in production.
 
 **How it Works:**
 
@@ -115,8 +120,8 @@ When creating a new party through the User API or web UI, you can select which s
 **Recommendations:**
 
 - **Development/Testing**: Use Wallet Gateway (internal) or Participant-based signing
-- **Production (Enterprise)**: Use Fireblocks, Dfns, or Participant-based signing
-- **Production (Managed)**: Use Blockdaemon, Dfns, or Participant-based signing
+- **Production (User API accessible)**: Use Fireblocks, Dfns, or Blockdaemon
+- **Production (operator-controlled, User API restricted)**: Participant-based signing may be appropriate when wallet creation is limited to trusted operators
 
 The signing provider is selected per-party, so you can have different parties using different providers within the same Gateway instance.
 

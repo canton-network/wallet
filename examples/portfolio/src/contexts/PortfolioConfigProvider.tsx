@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type ReactNode } from 'react'
-import { type PortfolioConfig } from '@config/portfolio-config'
+import { type PortfolioConfig } from '@lib/schemas'
 import { PortfolioConfigContext } from '@contexts/PortfolioConfigContext'
 
 export const PortfolioConfigProvider = ({

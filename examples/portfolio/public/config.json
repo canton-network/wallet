@@ -1,4 +1,16 @@
 {
-    "validatorUrl": "http://localhost:2000/api/validator",
-    "registries": []
+    "amulet": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registry": "http://scan.localhost:4000"
+    },
+    "token": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registries": [
+            {
+                "name": "Local Scan",
+                "partyId": "",
+                "url": "http://scan.localhost:4000"
+            }
+        ]
+    }
 }

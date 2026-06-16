@@ -5,7 +5,6 @@
     "description": "Provides a service layer that wraps the token-standard-client and contains higher level functions for interacting with token standard contracts on Canton.",
     "license": "Apache-2.0",
     "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
-    "packageManager": "yarn@4.9.4",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",

@@ -1,38 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { z } from 'zod'
+import { type ZodError } from 'zod'
+import { portfolioConfigSchema, type PortfolioConfig } from '@lib/schemas'
 
 const DEFAULT_CONFIG_URL = '/config.json'
 
-const httpUrlSchema = z
-    .url({
-        message: 'Must be a valid HTTP or HTTPS URL',
-        protocol: /^https?$/,
-    })
-    .transform((value) => new URL(value).toString())
-
-const optionalStringSchema = () => z.string().trim().optional()
-
-export const registryConfigSchema = z
-    .object({
-        name: optionalStringSchema(),
-        partyId: optionalStringSchema(),
-        url: httpUrlSchema,
-    })
-    .strict()
-
-export const portfolioConfigSchema = z
-    .object({
-        validatorUrl: httpUrlSchema,
-        registries: z.array(registryConfigSchema),
-    })
-    .strict()
-
-export type PortfolioRegistryConfig = z.infer<typeof registryConfigSchema>
-export type PortfolioConfig = z.infer<typeof portfolioConfigSchema>
-
-const formatConfigError = (error: z.ZodError): string =>
+const formatConfigError = (error: ZodError): string =>
     error.issues
         .map((issue) => {
             const path = issue.path.length > 0 ? issue.path.join('.') : '<root>'

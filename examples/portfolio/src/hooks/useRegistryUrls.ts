@@ -1,9 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type PartyId } from '@canton-network/core-types'
+import { type PortfolioRegistryConfig } from '@lib/schemas'
+import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
 import { resolveTokenStandardClient } from '@services/resolve'
 import { queryKeys } from '@hooks/query-keys'
 
@@ -23,16 +25,98 @@ const writeToStorage = (next: ReadonlyMap<PartyId, string>): void => {
     )
 }
 
+// Build the best synchronous view we can from config alone. Registries without
+// a partyId are skipped here because resolving their party requires a network call.
+const configuredRegistriesWithPartyIdsToMap = (
+    registries: PortfolioRegistryConfig[]
+): ReadonlyMap<PartyId, string> => {
+    return new Map(
+        registries.flatMap((registry) =>
+            registry.partyId ? [[registry.partyId, registry.url]] : []
+        )
+    )
+}
+
+const configuredRegistriesToMap = async (
+    registries: PortfolioRegistryConfig[]
+): Promise<ReadonlyMap<PartyId, string>> => {
+    const settled = await Promise.allSettled(
+        registries.map(async (registry): Promise<[PartyId, string]> => {
+            if (registry.partyId) {
+                return [registry.partyId, registry.url]
+            }
+
+            // Some config entries only know the registry URL. Ask the registry for
+            // its metadata so we can key the map by its admin partyId.
+            const client = await resolveTokenStandardClient({
+                registryUrl: registry.url,
+            })
+            const info = await client.get('/registry/metadata/v1/info')
+
+            return [info.adminId, registry.url]
+        })
+    )
+    const entries = settled.flatMap((result, index) => {
+        if (result.status === 'fulfilled') {
+            return [result.value]
+        }
+
+        // Keep the usable registries even if one configured registry is down or
+        // misconfigured; the UI can still operate with the remaining entries.
+        console.warn(
+            `Failed to resolve registry ${registries[index].url}:`,
+            result.reason
+        )
+        return []
+    })
+    return new Map(entries)
+}
+
+const mergeRegistryUrls = (
+    configured: ReadonlyMap<PartyId, string>,
+    stored: ReadonlyMap<PartyId, string>
+): ReadonlyMap<PartyId, string> => {
+    // User-provided overrides win over config values.
+    return new Map([...configured, ...stored])
+}
+
 const EMPTY: ReadonlyMap<PartyId, string> = new Map()
 
 export const useRegistryUrls = (): ReadonlyMap<PartyId, string> => {
+    const { amulet, token } = usePortfolioConfig()
+    const configuredRegistryConfigs = useMemo(
+        () => [{ url: amulet.registry }, ...token.registries],
+        [amulet.registry, token.registries]
+    )
+
+    const readMergedRegistries = useCallback(async () => {
+        const configuredRegistries = await configuredRegistriesToMap(
+            configuredRegistryConfigs
+        )
+        return mergeRegistryUrls(configuredRegistries, readFromStorage())
+    }, [configuredRegistryConfigs])
+
+    const readInitialRegistries = useCallback(
+        () =>
+            mergeRegistryUrls(
+                configuredRegistriesWithPartyIdsToMap(
+                    configuredRegistryConfigs
+                ),
+                readFromStorage()
+            ),
+        [configuredRegistryConfigs]
+    )
+
     const { data } = useQuery({
         queryKey: queryKeys.registries.all,
-        queryFn: readFromStorage,
-        initialData: readFromStorage,
+        queryFn: readMergedRegistries,
+        // Show immediately known registries while the async query resolves party
+        // party ids for config entries that only specify a URL.
+        placeholderData: readInitialRegistries,
         staleTime: Infinity,
         gcTime: Infinity,
     })
+
     return data ?? EMPTY
 }
 
