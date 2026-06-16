@@ -120,6 +120,7 @@ interface ApiKeyTable {
     digest: string
     name: string
     userId: UserId
+    email: string | null
     networkId: string
     createdAt: string
 }

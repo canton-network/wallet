@@ -875,6 +875,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 digest: apiKey.digest,
                 createdAt: apiKey.createdAt.toISOString(),
                 userId,
+                email: apiKey.email,
                 networkId: network.id,
             })
             .execute()
@@ -900,6 +901,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             digest: row.digest,
             createdAt: new Date(row.createdAt),
             userId: row.userId,
+            email: null, // omit email for privacy reasons, even though it's stored in the database
             networkId: row.networkId,
         }))
     }

@@ -122,6 +122,7 @@ export interface ApiKey {
     digest: string
     createdAt: Date
     userId: string
+    email: string | null
     networkId: string
 }
 

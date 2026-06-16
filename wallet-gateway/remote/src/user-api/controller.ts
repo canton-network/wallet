@@ -1049,6 +1049,7 @@ export const userController = (
                 digest: hashedApiKey,
                 userId,
                 networkId: network.id,
+                email: authContext?.email || null,
                 createdAt: new Date(),
             }
 
