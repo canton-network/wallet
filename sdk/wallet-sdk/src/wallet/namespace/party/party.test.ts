@@ -650,7 +650,9 @@ describe('Party namespace', () => {
                 // Run timers and wait for rejection
                 const runTimersPromise = vi.runAllTimersAsync()
                 await Promise.all([
-                    expect(executePromise).rejects.toThrow(),
+                    expect(executePromise).rejects.toThrow(
+                        'timed out waiting for new party to appear'
+                    ),
                     runTimersPromise,
                 ])
 
@@ -680,7 +682,9 @@ describe('Party namespace', () => {
                         newlyGrantedRights: undefined,
                     } satisfies LedgerCommonSchemas['GrantUserRightsResponse'])
 
-                await expect(signedParty.execute()).rejects.toThrow()
+                await expect(signedParty.execute()).rejects.toThrow(
+                    'Failed to grant user rights'
+                )
             })
 
             it('should handle expectHeavyLoad with timeout and continue polling', async () => {
@@ -748,7 +752,9 @@ describe('Party namespace', () => {
 
                 await expect(
                     signedParty.execute({ expectHeavyLoad: false })
-                ).rejects.toThrow()
+                ).rejects.toThrow(
+                    'The server was not able to produce a timely response to your request'
+                )
             })
 
             it('should throw error for non-timeout errors regardless of expectHeavyLoad', async () => {
@@ -762,7 +768,7 @@ describe('Party namespace', () => {
 
                 await expect(
                     signedParty.execute({ expectHeavyLoad: true })
-                ).rejects.toThrow()
+                ).rejects.toThrow('Invalid party data')
             })
         })
     })
