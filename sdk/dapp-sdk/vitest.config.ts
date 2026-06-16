@@ -9,22 +9,17 @@ export default defineConfig({
         globalSetup: ['./vitest.global-setup.ts'],
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: [
-                'src/integration-test/**',
-                'src/**/*.test.ts',
-                'src/dapp-api/rpc-gen/**',
-            ],
+            exclude: ['src/integration-test/**', 'src/dapp-api/rpc-gen/**'],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov'],
             thresholds: {
-                lines: 0,
-                functions: 0,
-                branches: 0,
-                statements: 0,
+                lines: 80,
+                functions: 80,
+                branches: 70,
+                statements: 80,
             },
         },
         environment: 'node',
-        // include: [],
         projects: [
             defineProject({
                 test: {
