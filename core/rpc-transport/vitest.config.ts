@@ -18,13 +18,14 @@ export default defineConfig({
             },
         },
         environment: 'node',
-        include: ['src/**/*.test.ts'],
         projects: [
             defineProject({
                 test: {
                     name: 'node',
                     environment: 'node',
                     include: ['src/**/*.test.ts'],
+                    // don't test parts that rely on window in node env
+                    exclude: ['src/**/*.browser.test.ts'],
                 },
             }),
             defineProject({
