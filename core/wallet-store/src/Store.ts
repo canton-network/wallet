@@ -119,7 +119,7 @@ export interface MessageRawStatusUpdate {
 export interface ApiKey {
     id: string
     name: string
-    key: string
+    digest: string
     createdAt: Date
     userId: string
     networkId: string
@@ -194,6 +194,6 @@ export interface Store {
 
     // API Key methods
     addApiKey(apiKey: ApiKey): Promise<void>
-    listApiKeys(apiKeyId: string): Promise<Array<ApiKey>>
+    listApiKeys(): Promise<Array<ApiKey>>
     removeApiKey(apiKeyId: string): Promise<void>
 }

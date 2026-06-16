@@ -942,6 +942,86 @@
                     "required": ["userId", "isAdmin"]
                 }
             }
+        },
+        {
+            "name": "generateApiKey",
+            "description": "Generates a new API key for the current user and network.",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GenerateApiKeyParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "title": "name",
+                                "type": "string",
+                                "description": "A name to identify the API key."
+                            }
+                        },
+                        "required": ["name"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/GeneratedApiKey"
+                }
+            }
+        },
+        {
+            "name": "listApiKeys",
+            "description": "Lists all API keys for the current user and network.",
+            "params": [],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ListApiKeysResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "apiKeys": {
+                            "title": "apiKeys",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/components/schemas/ApiKey"
+                            },
+                            "description": "The list of API keys."
+                        }
+                    },
+                    "required": ["apiKeys"]
+                }
+            }
+        },
+        {
+            "name": "removeApiKey",
+            "description": "Removes an API key for the current user and network.",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "RemoveApiKeyParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "id": {
+                                "title": "id",
+                                "type": "string",
+                                "description": "The unique identifier of the API key."
+                            }
+                        },
+                        "required": ["id"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/Null"
+                }
+            }
         }
     ],
     "components": {
@@ -1468,6 +1548,48 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The internal identifier of the pending message-signing request."
+            },
+            "GeneratedApiKey": {
+                "title": "GeneratedApiKey",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "The unique identifier of the API key."
+                    },
+                    "apiKey": {
+                        "title": "apiKeyResult",
+                        "type": "string",
+                        "description": "The generated API key."
+                    }
+                },
+                "required": ["apiKey", "id", "createdAt"]
+            },
+            "ApiKey": {
+                "title": "ApiKey",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "The unique identifier of the API key."
+                    },
+                    "name": {
+                        "title": "name",
+                        "type": "string",
+                        "description": "The name of the API key."
+                    },
+                    "createdAt": {
+                        "title": "createdAt",
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The timestamp when the API key was created."
+                    }
+                },
+                "required": ["id", "name", "createdAt"]
             }
         }
     }

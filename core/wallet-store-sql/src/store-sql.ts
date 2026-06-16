@@ -872,7 +872,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .values({
                 id: apiKey.id,
                 name: apiKey.name,
-                key: apiKey.key,
+                digest: apiKey.digest,
                 createdAt: apiKey.createdAt.toISOString(),
                 userId,
                 networkId: network.id,
@@ -897,7 +897,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return apiKeys.map((row) => ({
             id: row.id,
             name: row.name,
-            key: row.key,
+            digest: row.digest,
             createdAt: new Date(row.createdAt),
             userId: row.userId,
             networkId: row.networkId,

@@ -13,7 +13,7 @@ import { RpcTransport } from '@canton-network/core-rpc-transport'
 export type NetworkId = string
 /**
  *
- * Name of network
+ * The name of the API key.
  *
  */
 export type Name = string
@@ -88,7 +88,7 @@ export interface Network {
 export type NetworkName = string
 /**
  *
- * ID of the identity provider
+ * The unique identifier of the API key.
  *
  */
 export type Id = string
@@ -356,7 +356,7 @@ export type Message = string
 export type Origin = string
 /**
  *
- * The timestamp when the transaction was created.
+ * The timestamp when the API key was created.
  *
  */
 export type CreatedAt = string
@@ -443,6 +443,23 @@ export type UserIdentifier = string
  *
  */
 export type IsAdminFlag = boolean
+/**
+ *
+ * The generated API key.
+ *
+ */
+export type ApiKeyResult = string
+export interface ApiKey {
+    id: Id
+    name: Name
+    createdAt: CreatedAt
+}
+/**
+ *
+ * The list of API keys.
+ *
+ */
+export type ApiKeys = ApiKey[]
 export interface AddNetworkParams {
     network: Network
 }
@@ -507,6 +524,12 @@ export interface GetTransactionParams {
 }
 export interface DeleteTransactionParams {
     transactionId: TransactionId
+}
+export interface GenerateApiKeyParams {
+    name: Name
+}
+export interface RemoveApiKeyParams {
+    id: Id
 }
 /**
  *
@@ -608,6 +631,13 @@ export interface GetUserResult {
     userId: UserIdentifier
     isAdmin: IsAdminFlag
 }
+export interface GeneratedApiKey {
+    id: Id
+    apiKey: ApiKeyResult
+}
+export interface ListApiKeysResult {
+    apiKeys: ApiKeys
+}
 /**
  *
  * Generated! Represents an alias to any of the provided schemas
@@ -662,6 +692,11 @@ export type DeleteTransaction = (
     params: DeleteTransactionParams
 ) => Promise<Null>
 export type GetUser = () => Promise<GetUserResult>
+export type GenerateApiKey = (
+    params: GenerateApiKeyParams
+) => Promise<GeneratedApiKey>
+export type ListApiKeys = () => Promise<ListApiKeysResult>
+export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 type Params<T> = T extends (...args: infer A) => any
@@ -810,6 +845,21 @@ export type RpcTypes = {
     getUser: {
         params: Params<GetUser>
         result: Result<GetUser>
+    }
+
+    generateApiKey: {
+        params: Params<GenerateApiKey>
+        result: Result<GenerateApiKey>
+    }
+
+    listApiKeys: {
+        params: Params<ListApiKeys>
+        result: Result<ListApiKeys>
+    }
+
+    removeApiKey: {
+        params: Params<RemoveApiKey>
+        result: Result<RemoveApiKey>
     }
 }
 

@@ -117,7 +117,7 @@ interface SessionTable extends Session {
 
 interface ApiKeyTable {
     id: string
-    key: string
+    digest: string
     name: string
     userId: UserId
     networkId: string

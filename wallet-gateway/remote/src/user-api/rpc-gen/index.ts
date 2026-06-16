@@ -29,6 +29,9 @@ import { GetTransaction } from './typings.js'
 import { ListTransactions } from './typings.js'
 import { DeleteTransaction } from './typings.js'
 import { GetUser } from './typings.js'
+import { GenerateApiKey } from './typings.js'
+import { ListApiKeys } from './typings.js'
+import { RemoveApiKey } from './typings.js'
 
 export type Methods = {
     addNetwork: AddNetwork
@@ -59,6 +62,9 @@ export type Methods = {
     listTransactions: ListTransactions
     deleteTransaction: DeleteTransaction
     getUser: GetUser
+    generateApiKey: GenerateApiKey
+    listApiKeys: ListApiKeys
+    removeApiKey: RemoveApiKey
 }
 
 function buildController(methods: Methods) {
@@ -91,6 +97,9 @@ function buildController(methods: Methods) {
         listTransactions: methods.listTransactions,
         deleteTransaction: methods.deleteTransaction,
         getUser: methods.getUser,
+        generateApiKey: methods.generateApiKey,
+        listApiKeys: methods.listApiKeys,
+        removeApiKey: methods.removeApiKey,
     }
 }
 

@@ -7,7 +7,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     await db.schema
         .createTable('apiKeys')
         .addColumn('id', 'text', (col) => col.notNull().primaryKey())
-        .addColumn('key', 'text', (col) => col.notNull())
+        .addColumn('digest', 'text', (col) => col.notNull())
         .addColumn('name', 'text', (col) => col.notNull())
         .addColumn('userId', 'text', (col) => col.notNull())
         .addColumn('networkId', 'text', (col) => col.notNull())
