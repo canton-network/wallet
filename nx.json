@@ -116,5 +116,6 @@
                 "staticStorybookTargetName": "static-storybook"
             }
         }
-    ]
+    ],
+    "analytics": false
 }
