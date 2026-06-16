@@ -25,8 +25,6 @@ const sdk = await SDK.create({
     },
 })
 
-// The wallet SDK no longer auto-selects a synchronizer, so resolve the global
-// synchronizer explicitly and pass it to external party creation.
 const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
 
 const allocatedParties = await Promise.all(

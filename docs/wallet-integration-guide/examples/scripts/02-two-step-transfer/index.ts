@@ -21,8 +21,6 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
-// The wallet SDK no longer auto-selects a synchronizer, so resolve the global
-// synchronizer explicitly and pass it to external party creation.
 const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
 
 const senderKeys = sdk.keys.generate()

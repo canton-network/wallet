@@ -37,9 +37,6 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
-// The wallet SDK no longer auto-selects a synchronizer, and DAR upload cannot be
-// autodetected when the participant is connected to multiple synchronizers, so
-// resolve the global synchronizer explicitly and pass it to the upload.
 const synchronizerId = await getGlobalSynchronizerId(sdk)
 
 const darBytes = await readFile(spliceUtilTokenStandardWalletDarPath)
