@@ -20,8 +20,8 @@
         "dev": "tsup --watch --onSuccess \"tsc\"",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean && rm -rf ./dist",
-        "test": "vitest run --project node --project browser --passWithNoTests",
-        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+        "test": "vitest run --project node",
+        "test:coverage": "vitest run --project node --coverage"
     },
     "dependencies": {
         "@canton-network/core-wallet-auth": "workspace:^",
@@ -35,9 +35,7 @@
         "@types/fs-extra": "^11.0.4",
         "@types/lodash": "^4.17.24",
         "@types/node": "^25.3.3",
-        "@vitest/browser-playwright": "^4.1.2",
         "@vitest/coverage-v8": "^4.1.2",
-        "playwright": "^1.58.2",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
         "vitest": "^4.1.2"
