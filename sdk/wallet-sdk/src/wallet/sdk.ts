@@ -128,7 +128,8 @@ export class SDK {
 
         const defaultSynchronizerId = await getDefaultSynchronizerId(
             ledgerProvider,
-            logger
+            logger,
+            error
         )
 
         const ctx: SDKContext = {
@@ -171,7 +172,8 @@ export class SDK {
 
 async function getDefaultSynchronizerId(
     provider: AbstractLedgerProvider,
-    logger: SDKLogger
+    logger: SDKLogger,
+    error: SDKErrorHandler
 ) {
     const connectedSynchronizers =
         await provider.request<Ops.GetV2StateConnectedSynchronizers>({
@@ -185,7 +187,10 @@ async function getDefaultSynchronizerId(
 
     const synchronizers = connectedSynchronizers.connectedSynchronizers
     if (!synchronizers?.[0]) {
-        throw new Error('No connected synchronizers found')
+        error.throw({
+            message: 'No connected synchronizers found',
+            type: 'NotFound',
+        })
     }
     // TODO #1740 this logic is a temporary workaround to make sdk work with multiple synchronizers and ensure the
     // the choice of default synchronizer is not random. In subsequent PR we remove this logic from sdk code (and fix existing tests)

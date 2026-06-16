@@ -262,14 +262,15 @@ export class LedgerNamespace {
         /**
          * Queries the ACS and returns the first matching contract, throwing if none is found.
          * @param options AcsOptions for querying the Active Contract Set (ACS).
-         * @throws {Error} When no matching contract is found.
+         * @throws {SDKError} When no matching contract is found.
          */
         requireOne: async (options: AcsRequestOptions) => {
             const contracts = await this.acs.read(options)
             if (!contracts.length) {
-                throw new Error(
-                    `Required contract not found (templateIds: ${options.templateIds?.join(', ')}, parties: ${options.parties?.join(', ')})`
-                )
+                this.sdkContext.error.throw({
+                    message: `Required contract not found (templateIds: ${options.templateIds?.join(', ')}, parties: ${options.parties?.join(', ')})`,
+                    type: 'NotFound',
+                })
             }
             return contracts[0]
         },

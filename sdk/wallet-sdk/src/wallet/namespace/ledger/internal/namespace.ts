@@ -85,9 +85,10 @@ export class InternalLedgerNamespace {
         const events = unassignResponse.reassignment?.events ?? []
         const unassignedEvent = events.find((e) => 'JsUnassignedEvent' in e)
         if (!unassignedEvent || !('JsUnassignedEvent' in unassignedEvent)) {
-            throw new Error(
-                `No unassigned event returned for contract ${contractId} reassignment`
-            )
+            this.ctx.error.throw({
+                message: `No unassigned event returned for contract ${contractId} reassignment`,
+                type: 'Unexpected',
+            })
         }
         const reassignmentId =
             unassignedEvent.JsUnassignedEvent.value.reassignmentId

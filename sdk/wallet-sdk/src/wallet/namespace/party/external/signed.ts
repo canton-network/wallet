@@ -129,9 +129,11 @@ export class SignedPartyCreationService {
         synchronizerId: string
     ) {
         if (!this.publicKey || !this.privateKey) {
-            throw new Error(
-                'Cannot register party on additional synchronizer: publicKey and privateKey must be provided (offline signing is not supported for additionalSynchronizerIds)'
-            )
+            this.ctx.error.throw({
+                message:
+                    'Cannot register party on additional synchronizer: publicKey and privateKey must be provided (offline signing is not supported for additionalSynchronizerIds)',
+                type: 'BadRequest',
+            })
         }
 
         if (await this.checkIfPartyExists(partyId, synchronizerId)) {
@@ -344,9 +346,10 @@ export class SignedPartyCreationService {
         }
 
         if (tries >= maxTries) {
-            throw new Error(
-                `timed out waiting for new party to appear after ${maxTries} tries`
-            )
+            this.ctx.error.throw({
+                message: `timed out waiting for new party to appear after ${maxTries} tries`,
+                type: 'Unexpected',
+            })
         }
 
         const result = await this.grantRights(userId, {
@@ -354,7 +357,10 @@ export class SignedPartyCreationService {
         })
 
         if (!result.newlyGrantedRights) {
-            throw new Error('Failed to grant user rights')
+            this.ctx.error.throw({
+                message: 'Failed to grant user rights',
+                type: 'Unexpected',
+            })
         }
 
         return
@@ -427,7 +433,10 @@ export class SignedPartyCreationService {
                 },
             })
         if (!result.newlyGrantedRights) {
-            throw new Error('Failed to grant user rights')
+            this.ctx.error.throw({
+                message: 'Failed to grant user rights',
+                type: 'Unexpected',
+            })
         }
 
         return result
@@ -440,9 +449,11 @@ export class SignedPartyCreationService {
         multiHashSignatures: MultiHashSignatures
     ): Promise<Ops.PostV2PartiesExternalAllocate['ledgerApi']['result']> {
         if (!onboardingTransactions || !multiHashSignatures) {
-            throw new Error(
-                'onboardingTransactions and multiHashSignatures must be provided for party allocation'
-            )
+            this.ctx.error.throw({
+                message:
+                    'onboardingTransactions and multiHashSignatures must be provided for party allocation',
+                type: 'BadRequest',
+            })
         }
         const resp =
             await ledgerProvider.request<Ops.PostV2PartiesExternalAllocate>({
