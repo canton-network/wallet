@@ -8,11 +8,24 @@ import { z } from 'zod'
  */
 export type Logger = Pick<Console, 'debug' | 'info' | 'warn' | 'error'>
 
+export const PARTY_ID_EXAMPLE = 'party-hint::fingerprint'
+export const PARTY_ID_ERROR_MESSAGE = `Must be in the form ${PARTY_ID_EXAMPLE}`
+export const PARTY_ID_PATTERN = /^[a-zA-Z0-9:_-]*::[a-z0-9]*/
+
 export const PartyId = z
     .string()
-    .regex(/^[a-zA-Z0-9:_-]*::[a-z0-9]*/, 'Invalid party ID format')
+    .regex(PARTY_ID_PATTERN, PARTY_ID_ERROR_MESSAGE)
 
 export type PartyId = z.infer<typeof PartyId>
+
+export const HttpUrl = z
+    .url({
+        message: 'Must be a valid HTTP or HTTPS URL',
+        protocol: /^https?$/,
+    })
+    .transform((value) => new URL(value).toString())
+
+export type HttpUrl = z.infer<typeof HttpUrl>
 
 /**
  *  Requests / responses
@@ -164,6 +177,8 @@ export type ProviderAdapterConfig = z.infer<typeof ProviderAdapterConfig>
 /**
  * Wallet picker entry and result
  */
+export type BrowserPlatform = 'chrome' | 'firefox'
+
 export interface WalletPickerEntry {
     providerId: string
     name: string
@@ -173,6 +188,13 @@ export interface WalletPickerEntry {
     url?: string | undefined
     /** Keep the global wallet popup open after pick for async HTTP-gateway navigation. */
     reuseGlobalWalletPopup?: boolean | undefined
+}
+
+export interface WalletPickerSuggestedEntry extends Omit<
+    WalletPickerEntry,
+    'url' | 'reuseGlobalWalletPopup'
+> {
+    installUrls: { platform: BrowserPlatform; url: string }[]
 }
 
 export interface WalletPickerResult {

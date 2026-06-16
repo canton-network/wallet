@@ -56,11 +56,12 @@ import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import { networkStatus } from '../utils.js'
+import { logDynamically, networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
 import { TransactionService } from '../ledger/transaction-service.js'
 import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
+import { rpcErrors } from '@canton-network/core-rpc-errors'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -220,12 +221,8 @@ export const userController = (
             await store.removeIdp(params.identityProviderId)
             return null
         },
-        listIdps: async () => Promise.resolve({ idps: await store.listIdps() }),
+        listIdps: async () => ({ idps: await store.listIdps() }),
         createWallet: async (params: CreateWalletParams) => {
-            logger.info(
-                `Creating wallet with params: ${JSON.stringify(params)}`
-            )
-
             const { signingProviderId, primary, partyHint } = params
 
             const connectedContext = assertConnected(authContext)
@@ -302,10 +299,6 @@ export const userController = (
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams
         ) => {
-            logger.info(
-                `Allocating party for wallet: ${JSON.stringify(params)}`
-            )
-
             const connectedContext = assertConnected(authContext)
             const userId = connectedContext.userId
 
@@ -400,8 +393,9 @@ export const userController = (
             notifier?.emit('accountsChanged', wallets)
             return null
         },
-        removeWallet: async (params: { partyId: string }) =>
-            Promise.resolve({}),
+        removeWallet: async (params: { partyId: string }) => {
+            throw rpcErrors.methodNotSupported()
+        },
         listWallets: async (params: {
             filter?: { signingProviderIds?: string[] }
         }) => {
@@ -430,7 +424,24 @@ export const userController = (
                 drivers,
                 notifier
             )
-            return transactionService.sign(connectedContext, wallet, signParams)
+
+            logDynamically(logger, 'signing transaction with params', {
+                info: { transactionId: signParams.transactionId },
+                debug: { signParams, wallet, connectedContext },
+            })
+
+            const response = await transactionService.sign(
+                connectedContext,
+                wallet,
+                signParams
+            )
+
+            logDynamically(logger, 'transaction signed with response', {
+                info: { transactionId: signParams.transactionId },
+                debug: { response },
+            })
+
+            return response
         },
         signMessage: async (
             params: SignMessageParams
@@ -658,7 +669,12 @@ export const userController = (
                 notifier
             )
 
-            return transactionService.execute(
+            logDynamically(logger, 'executing transaction with params', {
+                info: { transactionId: executeParams.transactionId },
+                debug: { executeParams, transaction, wallet, connectedContext },
+            })
+
+            const response = await transactionService.execute(
                 connectedContext,
                 wallet,
                 transaction,
@@ -666,6 +682,13 @@ export const userController = (
                 ledgerClient,
                 network
             )
+
+            logDynamically(logger, 'transaction executed with response', {
+                info: { transactionId: executeParams.transactionId },
+                debug: { response },
+            })
+
+            return response
         },
         addSession: async function (
             params: AddSessionParams
@@ -769,7 +792,7 @@ export const userController = (
             }
         },
         removeSession: async (): Promise<Null> => {
-            logger.info(authContext, 'Removing session')
+            logger.info({ authContext }, 'Removing session')
             const userId = assertConnected(authContext).userId
             const notifier = notificationService.getNotifier(userId)
             await store.removeSession()

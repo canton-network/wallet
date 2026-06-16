@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
     Alert,
     Box,
@@ -15,6 +15,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import Decimal from 'decimal.js'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import type {
     AllocationActionItem,
@@ -22,6 +23,11 @@ import type {
 } from '@components/types'
 import { PillButton } from '@components/ui/PillButton'
 import { isReceiverOfLeg, isSenderOfLeg } from '@components/utils'
+import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
+import {
+    getInstrumentKey,
+    type AggregatedHolding,
+} from '@utils/aggregate-holdings'
 import { formatAmount } from '@utils/decimal'
 import {
     formatDistanceToNow,
@@ -54,6 +60,15 @@ export function AllocationActionDialogContent({
 }: AllocationActionDialogContentProps) {
     const [expandedLegIds, setExpandedLegIds] = useState(
         () => new Set(item.transferLegs.map((leg) => leg.transferLegId))
+    )
+    const { instruments: availableHoldings, isLoading: isHoldingsLoading } =
+        useAggregatedHoldings(item.currentPartyId)
+    const insufficientLegIds = useMemo(
+        () =>
+            isHoldingsLoading
+                ? new Set<string>()
+                : getInsufficientLegIds(item, availableHoldings),
+        [availableHoldings, isHoldingsLoading, item]
     )
     const allLegsExpanded = expandedLegIds.size === item.transferLegs.length
 
@@ -166,7 +181,9 @@ export function AllocationActionDialogContent({
                             error={
                                 failedLegId === leg.transferLegId
                                     ? allocationError
-                                    : null
+                                    : insufficientLegIds.has(leg.transferLegId)
+                                      ? 'Cannot allocate due to insufficient funds.'
+                                      : null
                             }
                             onToggle={() => toggleLeg(leg.transferLegId)}
                             onCreateAllocation={() => onCreateAllocation(leg)}
@@ -512,6 +529,33 @@ function SubtleChip({ label }: { label: string }) {
                 '& .MuiChip-label': { px: 1 },
             }}
         />
+    )
+}
+
+function getInsufficientLegIds(
+    item: AllocationActionItem,
+    availableHoldings: AggregatedHolding[]
+) {
+    return new Set(
+        item.transferLegs
+            .filter((leg) => {
+                if (
+                    !isSenderOfLeg(item.currentPartyId, leg) ||
+                    leg.allocations.length
+                ) {
+                    return false
+                }
+
+                const availableAmount =
+                    availableHoldings.find(
+                        (holding) =>
+                            getInstrumentKey(holding.instrumentId) ===
+                            getInstrumentKey(leg.transferLeg.instrumentId)
+                    )?.availableAmount ?? '0'
+
+                return new Decimal(availableAmount).lt(leg.transferLeg.amount)
+            })
+            .map((leg) => leg.transferLegId)
     )
 }
 

@@ -6,6 +6,7 @@ import {
     KeyPair,
     PublicKey,
 } from '@canton-network/core-signing-lib'
+import { base64ToBytes, bytesToHex } from '../utils/encoding'
 
 export class KeysNamespace {
     constructor() {}
@@ -18,16 +19,28 @@ export class KeysNamespace {
         return createKeyPair()
     }
 
+    /**
+     *
+     * @param publicKey base64 encoded public key
+     * @returns hex encoded fingerprint
+     */
     public async fingerprint(publicKey: PublicKey) {
         const hashPurpose = 12 // For `PublicKeyFingerprint`
-        const keyBytes = Buffer.from(publicKey, 'base64')
-        const hashInput = Buffer.alloc(4 + keyBytes.length)
-        hashInput.writeUInt32BE(hashPurpose, 0)
-        Buffer.from(keyBytes).copy(hashInput, 4)
+        const keyBytes = base64ToBytes(publicKey)
+        const hashInput = new Uint8Array(4 + keyBytes.length)
+        hashInput[0] = (hashPurpose >>> 24) & 0xff
+        hashInput[1] = (hashPurpose >>> 16) & 0xff
+        hashInput[2] = (hashPurpose >>> 8) & 0xff
+        hashInput[3] = hashPurpose & 0xff
+        hashInput.set(keyBytes, 4)
+
         const hash = new Uint8Array(
             await crypto.subtle.digest('SHA-256', hashInput)
         )
-        const multiprefix = Buffer.from([0x12, 0x20])
-        return Buffer.concat([multiprefix, hash]).toString('hex')
+        const multiprefix = new Uint8Array([0x12, 0x20])
+        const result = new Uint8Array(multiprefix.length + hash.length)
+        result.set(multiprefix, 0)
+        result.set(hash, multiprefix.length)
+        return bytesToHex(result)
     }
 }
