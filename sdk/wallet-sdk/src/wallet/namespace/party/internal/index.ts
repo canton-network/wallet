@@ -17,7 +17,7 @@ export class InternalPartyNamespace {
      * Allocates a new internal party on the ledger. If no partyHint is provided, a random UUID will be used.
      * Internal parties use the Canton keys for signing and do not use the interactive submission flow.
      */
-    async allocate(
+    public async allocate(
         params: {
             partyHint?: string
             synchronizerId?: string
