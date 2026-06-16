@@ -17,6 +17,7 @@ import { Route as NextConnectRouteImport } from './routes/next/connect'
 import { Route as LegacySettingsRouteImport } from './routes/_legacy/settings'
 import { Route as NextDashboardIndexRouteImport } from './routes/next/dashboard/index'
 import { Route as NextDashboardOffersRouteImport } from './routes/next/dashboard/offers'
+import { Route as NextDashboardFaqRouteImport } from './routes/next/dashboard/faq'
 import { Route as LegacyWalletWalletIdRouteImport } from './routes/_legacy/wallet.$walletId'
 import { Route as NextDashboardWalletWalletIdRouteImport } from './routes/next/dashboard/wallet.$walletId'
 
@@ -59,6 +60,11 @@ const NextDashboardOffersRoute = NextDashboardOffersRouteImport.update({
   path: '/offers',
   getParentRoute: () => NextDashboardRoute,
 } as any)
+const NextDashboardFaqRoute = NextDashboardFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => NextDashboardRoute,
+} as any)
 const LegacyWalletWalletIdRoute = LegacyWalletWalletIdRouteImport.update({
   id: '/wallet/$walletId',
   path: '/wallet/$walletId',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/next/connect': typeof NextConnectRoute
   '/next/dashboard': typeof NextDashboardRouteWithChildren
   '/wallet/$walletId': typeof LegacyWalletWalletIdRoute
+  '/next/dashboard/faq': typeof NextDashboardFaqRoute
   '/next/dashboard/offers': typeof NextDashboardOffersRoute
   '/next/dashboard/': typeof NextDashboardIndexRoute
   '/next/dashboard/wallet/$walletId': typeof NextDashboardWalletWalletIdRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/next/connect': typeof NextConnectRoute
   '/': typeof LegacyIndexRoute
   '/wallet/$walletId': typeof LegacyWalletWalletIdRoute
+  '/next/dashboard/faq': typeof NextDashboardFaqRoute
   '/next/dashboard/offers': typeof NextDashboardOffersRoute
   '/next/dashboard': typeof NextDashboardIndexRoute
   '/next/dashboard/wallet/$walletId': typeof NextDashboardWalletWalletIdRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/next/dashboard': typeof NextDashboardRouteWithChildren
   '/_legacy/': typeof LegacyIndexRoute
   '/_legacy/wallet/$walletId': typeof LegacyWalletWalletIdRoute
+  '/next/dashboard/faq': typeof NextDashboardFaqRoute
   '/next/dashboard/offers': typeof NextDashboardOffersRoute
   '/next/dashboard/': typeof NextDashboardIndexRoute
   '/next/dashboard/wallet/$walletId': typeof NextDashboardWalletWalletIdRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/next/connect'
     | '/next/dashboard'
     | '/wallet/$walletId'
+    | '/next/dashboard/faq'
     | '/next/dashboard/offers'
     | '/next/dashboard/'
     | '/next/dashboard/wallet/$walletId'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/next/connect'
     | '/'
     | '/wallet/$walletId'
+    | '/next/dashboard/faq'
     | '/next/dashboard/offers'
     | '/next/dashboard'
     | '/next/dashboard/wallet/$walletId'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/next/dashboard'
     | '/_legacy/'
     | '/_legacy/wallet/$walletId'
+    | '/next/dashboard/faq'
     | '/next/dashboard/offers'
     | '/next/dashboard/'
     | '/next/dashboard/wallet/$walletId'
@@ -204,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NextDashboardOffersRouteImport
       parentRoute: typeof NextDashboardRoute
     }
+    '/next/dashboard/faq': {
+      id: '/next/dashboard/faq'
+      path: '/faq'
+      fullPath: '/next/dashboard/faq'
+      preLoaderRoute: typeof NextDashboardFaqRouteImport
+      parentRoute: typeof NextDashboardRoute
+    }
     '/_legacy/wallet/$walletId': {
       id: '/_legacy/wallet/$walletId'
       path: '/wallet/$walletId'
@@ -238,12 +257,14 @@ const LegacyRouteRouteWithChildren = LegacyRouteRoute._addFileChildren(
 )
 
 interface NextDashboardRouteChildren {
+  NextDashboardFaqRoute: typeof NextDashboardFaqRoute
   NextDashboardOffersRoute: typeof NextDashboardOffersRoute
   NextDashboardIndexRoute: typeof NextDashboardIndexRoute
   NextDashboardWalletWalletIdRoute: typeof NextDashboardWalletWalletIdRoute
 }
 
 const NextDashboardRouteChildren: NextDashboardRouteChildren = {
+  NextDashboardFaqRoute: NextDashboardFaqRoute,
   NextDashboardOffersRoute: NextDashboardOffersRoute,
   NextDashboardIndexRoute: NextDashboardIndexRoute,
   NextDashboardWalletWalletIdRoute: NextDashboardWalletWalletIdRoute,

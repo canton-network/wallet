@@ -68,6 +68,8 @@ export class AmuletNamespace {
                 amulet.id,
                 amulet.registryUrl.toString()
             )
+
+        this.sdkContext.commonCtx.logger.info(tapCommand)
         return [{ ExerciseCommand: tapCommand }, disclosedContracts]
     }
 
