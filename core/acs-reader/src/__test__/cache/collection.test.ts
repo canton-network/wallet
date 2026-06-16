@@ -114,6 +114,15 @@ describe('cache collection', () => {
                         expect(MockACSCache).toHaveBeenCalledTimes(6)
                         expect(mockCache.update).toHaveBeenCalledTimes(6)
                         expect(mockCache.calculateAt).toHaveBeenCalledTimes(6)
+                        for (let i = 0; i < 6; ++i) {
+                            expect(mockCache.update).toHaveBeenNthCalledWith(
+                                i + 1,
+                                options
+                            )
+                            expect(
+                                mockCache.calculateAt
+                            ).toHaveBeenNthCalledWith(i + 1, options.offset)
+                        }
                         expect(result).toHaveLength(6)
                     })
 
