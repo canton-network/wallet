@@ -1615,12 +1615,10 @@ __metadata:
     "@canton-network/core-wallet-auth": "workspace:^"
     "@types/fs-extra": "npm:^11.0.4"
     "@types/lodash": "npm:^4.17.24"
-    "@types/node": "npm:^25.9.3"
-    "@vitest/browser-playwright": "npm:^4.1.8"
-    "@vitest/coverage-v8": "npm:^4.1.8"
+    "@types/node": "npm:^25.3.3"
+    "@vitest/coverage-v8": "npm:^4.1.2"
     fs-extra: "npm:^11.3.5"
     lodash: "npm:^4.18.1"
-    playwright: "npm:^1.60.0"
     tsup: "npm:^8.5.1"
     tweetnacl: "npm:^1.0.3"
     tweetnacl-util: "npm:^0.15.1"
@@ -8226,6 +8224,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^25.3.3":
+  version: 25.3.3
+  resolution: "@types/node@npm:25.3.3"
+  dependencies:
+    undici-types: "npm:~7.18.0"
+  checksum: 10c0/63e1d3816a9f4a706ab5d588d18cb98aa824b97748ff585537d327528e9438f58f69f45c7762e7cd3a1ab32c1619f551aabe8075d13172f9273cf10f6d83ab91
+  languageName: node
+  linkType: hard
+
 "@types/parse-json@npm:^4.0.0":
   version: 4.0.2
   resolution: "@types/parse-json@npm:4.0.2"
@@ -8729,7 +8736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/coverage-v8@npm:*":
+"@vitest/coverage-v8@npm:*, @vitest/coverage-v8@npm:^4.1.2":
   version: 4.1.2
   resolution: "@vitest/coverage-v8@npm:4.1.2"
   dependencies:
