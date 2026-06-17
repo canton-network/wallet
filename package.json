@@ -23,6 +23,7 @@
         "clean:all": "nx run-many -t clean --parallel && yarn nx reset",
         "test:all": "nx run-many -t test --parallel",
         "test-coverage:all": "nx run-many -t test:coverage --parallel",
+        "script:coverage:report": "tsx ./scripts/src/coverage-report.ts",
         "postinstall": "husky && yarn generate:tokenstandard",
         "docs:update-wg-config": "tsx ./scripts/src/docs-update-wg-config.ts",
         "script:cleancoding": "tsx ./scripts/src/clean-coding.ts",
@@ -101,7 +102,7 @@
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.1",
-        "vite": "^7.3.2"
+        "vite": "^7.3.5"
     },
     "lint-staged": {
         "*": "prettier --write --ignore-unknown",

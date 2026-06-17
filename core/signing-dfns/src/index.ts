@@ -267,12 +267,16 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
                 return params
             },
 
+            // TODO remove comment below and write a test once / if ever implemented
+            // v8 ignore next -- @preserve
             subscribeTransactions: async (
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _params: SubscribeTransactionsParams
             ): Promise<SubscribeTransactionsResult> => {
                 return Promise.resolve({} as SubscribeTransactionsResult)
             },
+            // TODO remove comment below and write a test once implemented
+            // v8 ignore next -- @preserve
             signMessage: function (): Promise<SignMessageResult> {
                 throw new Error('Function not implemented.')
             },
