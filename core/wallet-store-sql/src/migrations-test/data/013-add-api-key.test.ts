@@ -42,9 +42,10 @@ forEachDialect('migration 013 - api keys', ({ getDb }) => {
 
         const cols = await listColumns(db, TABLE)
         const byName = new Map(cols.map((c) => [c.name, c]))
-        expect(byName.get('digest')?.nullable).toBe(true)
-        expect(byName.get('name')?.nullable).toBe(true)
-        expect(byName.get('user_id')?.nullable).toBe(true)
+        expect(byName.get('digest')?.nullable).toBe(false)
+        expect(byName.get('name')?.nullable).toBe(false)
+        expect(byName.get('user_id')?.nullable).toBe(false)
+        expect(byName.get('email')?.nullable).toBe(true)
         expect(byName.get('network_id')?.nullable).toBe(false)
         expect(byName.get('created_at')?.nullable).toBe(false)
     })

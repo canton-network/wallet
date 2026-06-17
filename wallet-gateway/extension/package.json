@@ -14,19 +14,19 @@
         "clean": "tsc -b --clean; rm -rf ./dist"
     },
     "devDependencies": {
-        "@types/node": "^25.3.3",
+        "@types/node": "^25.9.3",
         "@types/webextension-polyfill": "^0.12.5",
         "esbuild": "^0.28.1",
-        "tsx": "^4.21.0",
+        "tsx": "^4.22.4",
         "typescript": "^5.9.3",
-        "web-ext": "^9.3.0"
+        "web-ext": "^9.4.0"
     },
     "dependencies": {
         "@canton-network/core-rpc-errors": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-store": "workspace:^",
         "@canton-network/core-wallet-ui-components": "workspace:^",
-        "lit": "^3.3.2",
+        "lit": "^3.3.3",
         "webextension-polyfill": "^0.12.0"
     },
     "repository": {

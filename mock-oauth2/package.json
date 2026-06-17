@@ -16,13 +16,13 @@
     "devDependencies": {
         "@types/basic-auth": "^1.1.8",
         "ts-node": "^10.9.2",
-        "tsx": "^4.21.0",
+        "tsx": "^4.22.4",
         "typescript": "^5.9.3"
     },
     "dependencies": {
-        "@types/node": "^25.3.3",
+        "@types/node": "^25.9.3",
         "basic-auth": "^2.0.1",
-        "oauth2-mock-server": "^8.2.2",
+        "oauth2-mock-server": "^8.2.3",
         "pino": "^10.3.1"
     }
 }
