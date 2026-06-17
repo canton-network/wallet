@@ -30,19 +30,19 @@
     },
     "devDependencies": {
         "@open-wc/testing-helpers": "^3.0.1",
-        "@storybook/web-components-vite": "^10.2.14",
-        "@types/bootstrap": "^5.2.10",
+        "@storybook/web-components-vite": "^10.4.4",
+        "@types/bootstrap": "^5.2.11",
         "@types/fs-extra": "^11.0.4",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
-        "fs-extra": "^11.3.3",
-        "playwright": "^1.58.2",
-        "storybook": "^10.2.16",
-        "tsx": "^4.21.0",
+        "@vitest/browser-playwright": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.8",
+        "fs-extra": "^11.3.5",
+        "playwright": "^1.60.0",
+        "storybook": "^10.4.4",
+        "tsx": "^4.22.4",
         "typescript": "^5.9.3",
         "vite": "^7.3.5",
         "vite-plugin-dts": "^4.5.4",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.8"
     },
     "dependencies": {
         "@canton-network/core-tx-visualizer": "workspace:^",
@@ -52,7 +52,7 @@
         "@canton-network/core-wallet-user-rpc-client": "workspace:^",
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.8",
-        "lit": "^3.3.2"
+        "lit": "^3.3.3"
     },
     "files": [
         "dist/**",
