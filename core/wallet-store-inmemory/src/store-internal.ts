@@ -451,7 +451,15 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.assertConnected()
         const storage = this.getStorage()
 
-        return Array.from(storage.transactions.values())
+        return Array.from(storage.transactions.values()).sort((a, b) => {
+            if (!a.createdAt) return 1
+            if (!b.createdAt) return -1
+
+            return (
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            )
+        })
     }
 
     async removeTransaction(transactionId: string): Promise<void> {
