@@ -80,5 +80,14 @@
                 ]
             }
         }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "examples/portfolio"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/examples/portfolio#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

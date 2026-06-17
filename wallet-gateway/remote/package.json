@@ -101,5 +101,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "wallet-gateway/remote"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/wallet-gateway/remote#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

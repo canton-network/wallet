@@ -48,5 +48,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/splice-client"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/splice-client#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

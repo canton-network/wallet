@@ -42,5 +42,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/daml-codegen-helpers"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/daml-codegen-helpers#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

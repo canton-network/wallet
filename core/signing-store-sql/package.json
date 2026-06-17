@@ -62,5 +62,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/signing-store-sql"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-store-sql#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

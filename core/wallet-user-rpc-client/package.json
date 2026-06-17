@@ -54,5 +54,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/wallet-user-rpc-client"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-user-rpc-client#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

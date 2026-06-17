@@ -61,5 +61,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/wallet-store-sql"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store-sql#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }
