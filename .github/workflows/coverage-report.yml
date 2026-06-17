@@ -1,0 +1,27 @@
+name: Test Coverage Summary
+run-name: Test Coverage Summary on ${{ github.ref }}
+
+on: push
+permissions:
+    contents: read
+
+jobs:
+    coverage-summary:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+
+            - uses: ./.github/actions/setup_yarn/artifacts
+              with:
+                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+
+            - name: Coverage summary
+              run: |
+                  echo "::group::Unit test coverage summary"
+                  yarn script:coverage:report \
+                    --base=origin/${{ github.base_ref }} \
+                    --head=HEAD
+                  echo "::endgroup::"
