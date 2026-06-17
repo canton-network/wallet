@@ -6,6 +6,7 @@ import { mock } from '../../../__test__/mocks'
 import { TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
 import { TransferNamespace } from './service'
+import { ProxyDelegationCommandArgs } from './proxyDelegation'
 import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
 import { TransferAllocationChoiceParams, TransferParams } from './types'
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -19,6 +20,9 @@ const mockTokenStandard = {
         createWithdrawTransferInstruction: vi.fn(),
         createRejectTransferInstruction: vi.fn(),
         createTransfer: vi.fn(),
+        exerciseDelegateProxyTransferInstructionAccept: vi.fn(),
+        exerciseDelegateProxyTransferInstructionReject: vi.fn(),
+        exerciseDelegateProxyTransferInstructioWithdraw: vi.fn(),
     },
 }
 
@@ -148,5 +152,77 @@ describe('token transfer namespace', () => {
             undefined,
             undefined
         )
+    })
+
+    const defaultProxyArgs: ProxyDelegationCommandArgs = {
+        proxyCid: 'cid-123',
+        transferInstructionCid: 'cid-456',
+        featuredAppRight: {
+            template_id: 'tid',
+            contract_id: 'cid',
+            payload: {},
+            created_event_blob: 'test',
+            created_at: 'createdat',
+        },
+        registryUrl: new URL('http://registry.com'),
+    }
+
+    it('should create proxy transfer instruction accept', async () => {
+        const spy =
+            mockTokenStandard.transfer
+                .exerciseDelegateProxyTransferInstructionAccept
+
+        spy.mockResolvedValue(mockCreateCommandResponse)
+        await transfer.delegatedProxy.commands.accept(defaultProxyArgs)
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            defaultProxyArgs.proxyCid,
+            defaultProxyArgs.transferInstructionCid,
+            new URL('http://registry.com'),
+            'cid',
+            [{ beneficiary: 'validatorParty::123', weight: 1 }]
+        )
+    })
+
+    it('should create proxy transfer instruction reject', async () => {
+        const spy =
+            mockTokenStandard.transfer
+                .exerciseDelegateProxyTransferInstructionReject
+
+        spy.mockResolvedValue(mockCreateCommandResponse)
+        await transfer.delegatedProxy.commands.reject(defaultProxyArgs)
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            defaultProxyArgs.proxyCid,
+            defaultProxyArgs.transferInstructionCid,
+            new URL('http://registry.com'),
+            'cid',
+            [{ beneficiary: 'validatorParty::123', weight: 1 }]
+        )
+    })
+
+    it('should create proxy transfer instruction withdraw', async () => {
+        const spy =
+            mockTokenStandard.transfer
+                .exerciseDelegateProxyTransferInstructioWithdraw
+
+        spy.mockResolvedValue(mockCreateCommandResponse)
+        await transfer.delegatedProxy.commands.withdraw(defaultProxyArgs)
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            defaultProxyArgs.proxyCid,
+            defaultProxyArgs.transferInstructionCid,
+            new URL('http://registry.com'),
+            'cid',
+            [{ beneficiary: 'validatorParty::123', weight: 1 }]
+        )
+    })
+
+    it('should create and submit command', async () => {
+        const delegateProxy = transfer.delegatedProxy
+
+        const mockSubmit = vi.fn().mockResolvedValue({ updateId: 'tx-999' })
+        ;(delegateProxy as any).ledger = {
+            internal: { submit: mockSubmit },
+        }
+        const result = await delegateProxy.create('delegateParty::123')
+        expect(result).toEqual({ updateId: 'tx-999' })
     })
 })
