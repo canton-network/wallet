@@ -14,9 +14,21 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - name: Enable Corepack
+              shell: bash
+              run: corepack enable
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
               with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+                  node-version: 'v24.9.0'
+                  cache: 'yarn'
+
+            - name: Install dependencies
+              shell: bash
+              env:
+                  YARN_ENABLE_HARDENED_MODE: '0'
+              run: yarn install --immutable
 
             - name: Coverage summary
               run: |
