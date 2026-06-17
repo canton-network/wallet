@@ -46,5 +46,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/rpc-transport"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/rpc-transport#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

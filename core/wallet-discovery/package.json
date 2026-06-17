@@ -47,5 +47,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/wallet-discovery"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-discovery#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }
