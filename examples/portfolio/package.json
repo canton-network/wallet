@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/example-portfolio",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "type": "module",
     "scripts": {
         "dev": "vite",
@@ -63,7 +63,7 @@
         "tsx": "^4.21.0",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.59.2",
-        "vite": "^7.3.2",
+        "vite": "^7.3.5",
         "vite-tsconfig-paths": "^6.1.1"
     },
     "files": [

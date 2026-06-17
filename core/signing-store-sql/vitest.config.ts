@@ -16,7 +16,7 @@ export default defineConfig({
                 'src/migrator.ts',
             ],
             provider: 'v8',
-            reporter: ['text', 'html', 'lcov'],
+            reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
                 lines: 80,
                 functions: 80,
