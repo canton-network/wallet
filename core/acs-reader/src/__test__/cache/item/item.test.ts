@@ -4,23 +4,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ACSCache } from '../../../cache/item'
 
-const { getActiveContracts, MockACSService } = vi.hoisted(() => {
-    const getActiveContracts = vi.fn()
+const { getActiveContracts, MockACSService, mockBuildActiveContractFilter } =
+    vi.hoisted(() => {
+        const getActiveContracts = vi.fn()
+        const mockBuildActiveContractFilter = vi.fn((options) => ({
+            filter: { filtersByParty: {} },
+            verbose: false,
+            activeAtOffset: options.offset,
+        }))
 
-    const MockACSService = vi.fn(
-        class {
-            getActiveContracts = getActiveContracts
+        const MockACSService = vi.fn(
+            class {
+                getActiveContracts = getActiveContracts
+            }
+        )
+
+        return {
+            getActiveContracts,
+            MockACSService,
+            mockBuildActiveContractFilter,
         }
-    )
+    })
 
-    return { getActiveContracts, MockACSService }
-})
-
-vi.mock('../../../service.ts', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../../service')>()
+vi.mock('../../../service.ts', () => {
     return {
-        ...actual,
         AcsService: MockACSService,
+        buildActiveContractFilter: mockBuildActiveContractFilter,
     }
 })
 

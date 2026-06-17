@@ -4,8 +4,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PaginatedACSCache } from '../../../cache/item'
 
-const { getPaginatedActiveContracts, MockACSService } = vi.hoisted(() => {
+const {
+    getPaginatedActiveContracts,
+    MockACSService,
+    mockBuildActiveContractFilter,
+} = vi.hoisted(() => {
     const getPaginatedActiveContracts = vi.fn()
+    const mockBuildActiveContractFilter = vi.fn((options) => ({
+        filter: { filtersByParty: {} },
+        verbose: false,
+        activeAtOffset: options.offset,
+    }))
 
     const MockACSService = vi.fn(
         class {
@@ -13,14 +22,17 @@ const { getPaginatedActiveContracts, MockACSService } = vi.hoisted(() => {
         }
     )
 
-    return { getPaginatedActiveContracts, MockACSService }
+    return {
+        getPaginatedActiveContracts,
+        MockACSService,
+        mockBuildActiveContractFilter,
+    }
 })
 
-vi.mock('../../../service.ts', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../../service')>()
+vi.mock('../../../service.ts', () => {
     return {
-        ...actual,
         AcsService: MockACSService,
+        buildActiveContractFilter: mockBuildActiveContractFilter,
     }
 })
 

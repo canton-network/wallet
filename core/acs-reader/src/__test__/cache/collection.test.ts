@@ -26,10 +26,8 @@ const { mockCache, MockACSCache } = vi.hoisted(() => {
     return { mockCache, MockACSCache }
 })
 
-vi.mock('../../cache/item', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../cache/item')>()
+vi.mock('../../cache/item', () => {
     return {
-        ...actual,
         ACSCache: MockACSCache,
         PaginatedACSCache: MockACSCache,
     }

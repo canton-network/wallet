@@ -39,19 +39,15 @@ const { mockService, MockAcsService } = vi.hoisted(() => {
     return { mockService, MockAcsService }
 })
 
-vi.mock('../cache/collection', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../cache/collection')>()
+vi.mock('../cache/collection', () => {
     return {
-        ...actual,
         ACSCacheCollection: MockACSCacheCollection,
         PaginatedACSCacheCollection: MockACSCacheCollection,
     }
 })
 
-vi.mock('../service', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../service')>()
+vi.mock('../service', () => {
     return {
-        ...actual,
         AcsService: MockAcsService,
     }
 })
