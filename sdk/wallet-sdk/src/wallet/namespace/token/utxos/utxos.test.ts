@@ -52,7 +52,12 @@ function makeUtxos(batchSize: number) {
                     admin: 'admin-a',
                 },
             },
-            activeContract: 'contract',
+            activeContract: {
+                createdEvent: {
+                    templateId: 'tid',
+                    contractId: 'cid',
+                },
+            },
             fetchedAtOffset: 10,
         }
         utxos.push(utxo)
@@ -236,6 +241,83 @@ describe('utxos namespace', () => {
                 updateId: 'tx-123',
                 completionOffset: '1000',
             })
+        })
+
+        it('should execute a delegated merge', async () => {
+            const inputUtxos = makeUtxos(50)
+            const mockReadJsContracts = vi.fn().mockResolvedValue([
+                {
+                    templateId: 't-id',
+                    contractId: 'cid-proposal-123',
+                    createdEventBlob: 'test',
+                    synchronizerId: 'syncId::123',
+                    offset: 10,
+                    nodeId: 1,
+                    createArgument: undefined,
+                    witnessParties: [],
+                    signatories: [],
+                    createdAt: '',
+                    packageName: '',
+                    representativePackageId: '',
+                    acsDelta: false,
+                },
+            ])
+
+            ;(delegatedMerge as any).ledger = {
+                internal: { submit: mockSubmit },
+                acsReader: {
+                    readJsContracts: mockReadJsContracts,
+                },
+            }
+
+            const spy1 = mockTokenStandard.registriesToAssets
+
+            const spy2 = mockTokenStandard.transfer.createTransfer
+            const mockCreateCommandResponse = [
+                {
+                    ExerciseCommand: {
+                        choice: 'MockedChoice',
+                        contractId: 'cid1',
+                    },
+                },
+                ['mock-contract'],
+            ]
+
+            spy1.mockResolvedValue([
+                {
+                    admin: 'admin-a',
+                    displayName: 'Amulet',
+                    id: 'Amulet',
+                    registryUrl: 'http://registry.com',
+                    symbol: 'CC',
+                },
+            ])
+            spy2.mockResolvedValue(mockCreateCommandResponse)
+
+            const result = await delegatedMerge.execute({
+                party: 'alice::abc',
+                synchronizerId: 'syncId::123',
+                inputUtxos: inputUtxos as any,
+            })
+            expect(mockTokenStandard.registriesToAssets).toHaveBeenCalled()
+            expect(mockReadJsContracts).toHaveBeenCalledTimes(2)
+
+            expect(result).toStrictEqual({
+                updateId: 'tx-123',
+                completionOffset: '1000',
+            })
+        })
+
+        it('should throw an error if there are fewer than 10 utxos', async () => {
+            const inputUtxos = makeUtxos(9)
+
+            await expect(
+                delegatedMerge.execute({
+                    party: 'alice::abc',
+                    synchronizerId: 'syncId::123',
+                    inputUtxos: inputUtxos as any,
+                })
+            ).rejects.toThrow()
         })
     })
 })
