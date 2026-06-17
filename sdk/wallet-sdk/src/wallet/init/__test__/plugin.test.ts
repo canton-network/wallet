@@ -82,9 +82,7 @@ describe('plugin', () => {
             [pluginName]: TestPlugin,
         })
 
-        const registeredPlugin = SDKWithPlugin[pluginName]
-
-        expect(registeredPlugin).toBeDefined()
-        expect(registeredPlugin.testMethod()).toBe(true)
+        expect(SDKWithPlugin[pluginName]).toBeDefined()
+        expect(SDKWithPlugin[pluginName].testMethod()).toBe(true)
     })
 })
