@@ -9,19 +9,35 @@ export default defineConfig({
         globalSetup: ['./vitest.global-setup.ts'],
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: ['src/integration-test'],
+            exclude: ['src/integration-test/**', 'src/dapp-api/rpc-gen/**'],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
-                lines: 0,
-                functions: 0,
-                branches: 0,
-                statements: 0,
+                lines: 80,
+                functions: 80,
+                branches: 70,
+                statements: 80,
             },
         },
         environment: 'node',
-        include: [],
         projects: [
+            defineProject({
+                test: {
+                    name: 'browser-unit',
+                    include: ['src/**/*.test.ts'],
+                    exclude: ['src/integration-test/*.test.ts'],
+                    browser: {
+                        enabled: true,
+                        provider: playwright({
+                            trace: 'off',
+                            screenshot: 'off',
+                            video: 'off',
+                        }),
+                        instances: [{ browser: 'chromium' }],
+                        headless: true,
+                    },
+                },
+            }),
             defineProject({
                 test: {
                     name: 'browser-integration',
