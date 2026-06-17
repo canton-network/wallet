@@ -559,10 +559,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const network = await this.getCurrentNetwork()
         const storage = this.getStorage()
 
-        return Object.values(storage.apiKeys).filter(
+        const apiKeysForUser = [...storage.apiKeys.values()].filter(
             (apiKey) =>
                 apiKey.userId === userId && apiKey.networkId === network.id
         )
+
+        return apiKeysForUser
     }
 
     async removeApiKey(apiKeyId: string): Promise<void> {
