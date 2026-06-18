@@ -3,7 +3,7 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { CompletionOptions, EventsContext, UpdatesOptions } from './types'
-import { mock } from '../../__test__/mocks'
+import { ctx } from '../../__test__/mocks'
 import { ParsedURL } from '../utils/url'
 
 import { EventsNamespace } from './namespace'
@@ -14,8 +14,6 @@ vi.mock('@canton-network/core-asyncapi-client', () => {
     }
 })
 import { WebSocketClient } from '@canton-network/core-asyncapi-client'
-
-const { ctx } = mock
 
 function makeAsyncIterable<T>(items: T[]): AsyncIterableIterator<T> {
     let index = 0
@@ -154,7 +152,7 @@ describe('events namespace', () => {
             })
             .next()
 
-        expect(mock.ctx.error.throw).toHaveBeenCalledWith(
+        expect(ctx.error.throw).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'Unexpected',
                 message: 'Failed to subscribe due to invalid options.',
@@ -171,7 +169,7 @@ describe('events namespace', () => {
             })
             .next()
 
-        expect(mock.ctx.error.throw).toHaveBeenCalledWith(
+        expect(ctx.error.throw).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'Unexpected',
                 message: 'Failed to subscribe due to invalid options.',
