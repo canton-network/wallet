@@ -7,12 +7,12 @@ import {
     AssetConfig,
     BasicSDKOptions,
     EventsConfig,
-    SDKContext,
     TokenConfig,
     TokenProviderConfig,
 } from '../sdk.js'
 import { SDKLogger } from '../logger/logger.js'
 import { SDKErrorHandler } from '../error/handler.js'
+import { SDKContext } from '../init/types/context.js'
 
 const exampleLink = 'http://example.com'
 
