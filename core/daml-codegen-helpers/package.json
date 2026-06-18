@@ -25,12 +25,12 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@types/node": "^25.0.10",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
+        "@types/node": "^25.9.3",
+        "@vitest/browser-playwright": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.8",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.8"
     },
     "files": [
         "dist/**"
@@ -42,5 +42,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/daml-codegen-helpers"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/daml-codegen-helpers#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

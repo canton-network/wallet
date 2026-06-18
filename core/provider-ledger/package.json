@@ -25,10 +25,10 @@
         "clean": "tsc -b --clean; rm -rf dist"
     },
     "devDependencies": {
-        "@vitest/coverage-v8": "^4.1.2",
+        "@vitest/coverage-v8": "^4.1.8",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.8"
     },
     "dependencies": {
         "@canton-network/core-ledger-client": "workspace:^",
@@ -48,5 +48,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/provider-ledger"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/provider-ledger#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }
