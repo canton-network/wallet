@@ -20,7 +20,6 @@ describe('TrafficNamespace', () => {
         config = {
             commonCtx: {
                 ...mock.ctx,
-                defaultSynchronizerId: 'SYNCDEFAULT::123',
             } as any,
             amuletService: {
                 getMemberTrafficStatus: vi.fn(),
@@ -59,7 +58,7 @@ describe('TrafficNamespace', () => {
             })
         })
 
-        it('should fetch defaults if synchronizer/memberId id is not specified', async () => {
+        it('should fetch default memberId if not specified', async () => {
             vi.mocked(
                 config.amuletService.getMemberTrafficStatus
             ).mockResolvedValue({
@@ -73,7 +72,9 @@ describe('TrafficNamespace', () => {
                 participantId: 'PAR::234',
             })
 
-            const result = await trafficNamespace.status()
+            const result = await trafficNamespace.status({
+                synchronizerId: 'SYNC::123',
+            })
 
             expect(mock.ledgerProvider.request).toHaveBeenCalledWith({
                 method: 'ledgerApi',
@@ -84,7 +85,7 @@ describe('TrafficNamespace', () => {
             })
             expect(
                 config.amuletService.getMemberTrafficStatus
-            ).toHaveBeenCalledWith('SYNCDEFAULT::123', 'PAR::234')
+            ).toHaveBeenCalledWith('SYNC::123', 'PAR::234')
             expect(result).toStrictEqual({
                 traffic_status: {
                     actual: { total_consumed: 0, total_limit: 1200000 },
@@ -140,7 +141,7 @@ describe('TrafficNamespace', () => {
             ])
         })
 
-        it('by member traffic with defaults params if not provided', async () => {
+        it('uses default memberId and migrationId when not provided', async () => {
             vi.mocked(fetchAmulet).mockResolvedValue({
                 admin: 'DSO::123',
             } as any)
@@ -157,6 +158,7 @@ describe('TrafficNamespace', () => {
                 buyer: buyer,
                 ccAmount: 125,
                 inputUtxos: utxos,
+                synchronizerId: 'SYNC::123',
             })
 
             expect(mock.ledgerProvider.request).toHaveBeenCalledTimes(1)
@@ -164,7 +166,7 @@ describe('TrafficNamespace', () => {
                 'DSO::123',
                 buyer,
                 125,
-                'SYNCDEFAULT::123',
+                'SYNC::123',
                 'PAR::234',
                 0,
                 utxos

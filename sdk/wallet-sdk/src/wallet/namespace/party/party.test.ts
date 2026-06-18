@@ -295,7 +295,8 @@ describe('Party namespace', () => {
                 Promise.resolve({
                     party: partyTransaction,
                     signature: 'defaultSignature',
-                })
+                }),
+                { synchronizerId: 'syncId' }
             )
         })
 
@@ -373,6 +374,7 @@ describe('Party namespace', () => {
                 })
 
                 party.external.create('publicKey', {
+                    synchronizerId: 'syncId',
                     observingParticipantEndpoints,
                     confirmingParticipantEndpoints,
                 })
@@ -441,24 +443,23 @@ describe('Party namespace', () => {
 
         describe('external.create.sign.execute', () => {
             it('should return the party if it is already existing', async () => {
-                // Mock checkIfPartyExists - party already exists
+                // Mock checkIfPartyExists - party already registered on the synchronizer
                 ledgerProvider.request.mockResolvedValueOnce({
-                    partyDetails: [
+                    connectedSynchronizers: [
                         {
-                            party: partyTransaction.partyId,
+                            synchronizerId: 'syncId',
                         },
                     ],
-                } satisfies LedgerCommonSchemas['GetPartiesResponse'])
+                })
 
                 const result = await signedParty.execute()
-
+                // We check existence of party by connected-synchronizers call
                 expect(ledgerProvider.request).toHaveBeenNthCalledWith(1, {
                     method: 'ledgerApi',
                     params: {
-                        resource: '/v2/parties/{party}',
+                        resource: '/v2/state/connected-synchronizers',
                         requestMethod: 'get',
-                        path: { party: partyTransaction.partyId },
-                        query: {},
+                        query: { party: partyTransaction.partyId },
                     },
                 })
 
@@ -496,7 +497,7 @@ describe('Party namespace', () => {
                         resource: '/v2/parties/external/allocate',
                         requestMethod: 'post',
                         body: {
-                            synchronizer: ctx.defaultSynchronizerId,
+                            synchronizer: 'syncId',
                             identityProviderId: '',
                             onboardingTransactions:
                                 partyTransaction.topologyTransactions.map(
@@ -543,7 +544,7 @@ describe('Party namespace', () => {
                         resource: '/v2/parties/external/allocate',
                         requestMethod: 'post',
                         body: {
-                            synchronizer: ctx.defaultSynchronizerId,
+                            synchronizer: 'syncId',
                             identityProviderId: '',
                             onboardingTransactions:
                                 partyTransaction.topologyTransactions.map(
