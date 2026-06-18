@@ -7,7 +7,7 @@ import { css, html } from 'lit'
 import { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
 
-/** Emitted when the user clicks the "Delete" button on a network card */
+/** Emitted when the user clicks the "Revoke" button on a api key card */
 export class ApiKeyCardRevokeEvent extends Event {
     constructor(public apiKey: ApiKey) {
         super('revoke', { bubbles: true, composed: true })
@@ -26,7 +26,7 @@ export class ApiKeyCard extends BaseElement {
                 display: block;
             }
 
-            .net-card {
+            .ak-card {
                 padding: var(--wg-space-3);
                 cursor: pointer;
                 gap: var(--wg-space-3);
@@ -35,7 +35,7 @@ export class ApiKeyCard extends BaseElement {
                     box-shadow 0.2s ease;
             }
 
-            .net-card:hover {
+            .ak-card:hover {
                 border-color: var(--wg-accent);
                 box-shadow: var(--wg-shadow-md);
             }
@@ -123,13 +123,13 @@ export class ApiKeyCard extends BaseElement {
 
     render() {
         if (!this.apiKey) {
-            return html`<article class="wg-card net-card">
+            return html`<article class="wg-card ak-card">
                 No API key supplied
             </article>`
         }
 
         return html`
-            <article class="wg-card net-card">
+            <article class="wg-card ak-card">
                 <div class="card-header">
                     <p class="card-title">${this.apiKey.name}</p>
                     <button

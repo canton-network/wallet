@@ -95,6 +95,7 @@ export class UserUiApiKeys extends BaseElement {
         this.currentPage = e.page
     }
 
+    // TODO: https://github.com/canton-network/wallet/issues/2043
     private async _revokeApiKey(apiKeyEvent: ApiKeyCardRevokeEvent) {
         try {
             const userClient = await createUserClient(

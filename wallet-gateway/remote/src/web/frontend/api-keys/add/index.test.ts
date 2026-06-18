@@ -6,11 +6,8 @@ import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import {
     createMockUserClient,
-    makeStoreNetwork,
-    mockNetworksPageFlow,
+    mockApiKeysPageFlow,
     mockRequest,
-    networkEditSaveEvent,
-    networkEditSaveEventFrom,
 } from '../../test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
@@ -40,11 +37,12 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiAddNetwork } from './index.js'
+import { UserUiAddApiKey } from './index.js'
+import { ApiKeyGenerateEvent } from '@canton-network/core-wallet-ui-components'
 
-describe('UserUiAddNetwork', () => {
-    let el: UserUiAddNetwork
-    const componentFixture = html`<user-ui-add-network></user-ui-add-network>`
+describe('UserUiAddApiKey', () => {
+    let el: UserUiAddApiKey
+    const componentFixture = html`<user-ui-add-api-key></user-ui-add-api-key>`
 
     beforeEach(async () => {
         mockCreateUserClient.mockReset()
@@ -52,8 +50,8 @@ describe('UserUiAddNetwork', () => {
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
-        mockNetworksPageFlow([])
-        el = await fixture<UserUiAddNetwork>(componentFixture)
+        mockApiKeysPageFlow([])
+        el = await fixture<UserUiAddApiKey>(componentFixture)
     })
 
     afterEach(() => {
@@ -61,26 +59,25 @@ describe('UserUiAddNetwork', () => {
         document.body.innerHTML = ''
     })
 
-    it('renders the add-network form', () => {
+    it('renders the add-api-key form', () => {
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Add a new network'
+            'Generate new API Key'
         )
-        expect(el.shadowRoot?.querySelector('network-form')).not.toBeNull()
+        expect(el.shadowRoot?.querySelector('api-key-form')).not.toBeNull()
     })
 
-    it('calls addNetwork when the form is saved', async () => {
-        const form = el.shadowRoot?.querySelector('network-form')
-        form?.dispatchEvent(networkEditSaveEvent())
+    it('calls generateApiKey when the form is saved', async () => {
+        const form = el.shadowRoot?.querySelector('api-key-form')
+        form?.dispatchEvent(new ApiKeyGenerateEvent({ name: 'New API Key' }))
 
         await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
+            mockRequest.mock.calls.some(
+                (c) => c[0]?.method === 'generateApiKey'
+            )
         )
 
         expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'addNetwork' })
-        )
-        expect(setLocationHref).toHaveBeenCalledWith(
-            expect.stringContaining('/networks/')
+            expect.objectContaining({ method: 'generateApiKey' })
         )
     })
 
@@ -91,93 +88,27 @@ describe('UserUiAddNetwork', () => {
         backBtn.click()
 
         expect(setLocationHref).toHaveBeenCalledWith(
-            expect.stringContaining('/networks')
+            expect.stringContaining('/api-keys')
         )
     })
 
-    it('calls handleErrorToast and clears loading when addNetwork fails', async () => {
+    it('calls handleErrorToast and clears loading when generateApiKey fails', async () => {
         mockRequest.mockImplementation(async ({ method }) => {
-            if (method === 'addNetwork') {
-                throw new Error('add failed')
+            if (method === 'generateApiKey') {
+                throw new Error('generate failed')
             }
             return undefined
         })
 
         el.loading = true
         el.shadowRoot
-            ?.querySelector('network-form')
-            ?.dispatchEvent(networkEditSaveEvent())
+            ?.querySelector('api-key-form')
+            ?.dispatchEvent(new ApiKeyGenerateEvent({ name: 'New API Key' }))
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
         expect(el.loading).toBe(false)
         expect(setLocationHref).not.toHaveBeenCalled()
-    })
-
-    it('includes synchronizerId and adminAuth when saving a network', async () => {
-        const network = makeStoreNetwork({
-            synchronizerId: 'sync::123',
-            adminAuth: {
-                method: 'client_credentials',
-                audience: 'admin-aud',
-                scope: 'admin-scope',
-                clientId: 'admin-client',
-                clientSecret: 'admin-secret',
-            },
-        })
-
-        el.shadowRoot
-            ?.querySelector('network-form')
-            ?.dispatchEvent(networkEditSaveEventFrom(network))
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
-        )
-
-        expect(mockRequest).toHaveBeenCalledWith({
-            method: 'addNetwork',
-            params: {
-                network: expect.objectContaining({
-                    synchronizerId: 'sync::123',
-                    adminAuth: expect.objectContaining({
-                        clientId: 'admin-client',
-                    }),
-                }),
-            },
-        })
-    })
-
-    it('uses default adminAuth when adminAuth is omitted', async () => {
-        const network = makeStoreNetwork()
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { adminAuth: _adminAuth, ...networkWithoutAdmin } = network
-
-        el.shadowRoot
-            ?.querySelector('network-form')
-            ?.dispatchEvent(
-                networkEditSaveEventFrom(
-                    networkWithoutAdmin as ReturnType<typeof makeStoreNetwork>
-                )
-            )
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
-        )
-
-        expect(mockRequest).toHaveBeenCalledWith({
-            method: 'addNetwork',
-            params: {
-                network: expect.objectContaining({
-                    adminAuth: {
-                        method: 'client_credentials',
-                        audience: '',
-                        scope: '',
-                        clientId: '',
-                        clientSecret: '',
-                    },
-                }),
-            },
-        })
     })
 })

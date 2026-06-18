@@ -13,6 +13,7 @@ import type {
     PublicNetwork,
     Transaction,
     Wallet,
+    ApiKey,
 } from '@canton-network/core-wallet-user-rpc-client'
 
 export const mockRequest = vi.fn()
@@ -89,6 +90,15 @@ export function makePublicNetwork(
         identityProviderId: 'idp-1',
         ledgerApi: 'http://localhost:6865',
         authMethod: 'client_credentials',
+        ...overrides,
+    }
+}
+
+export function makeApiKey(overrides: Partial<ApiKey> = {}): ApiKey {
+    return {
+        id: 'api-key-1',
+        name: 'Test API Key',
+        createdAt: '2026-06-18T12:00:00.000Z',
         ...overrides,
     }
 }
@@ -219,6 +229,31 @@ export function mockNetworksPageFlow(
         return undefined
     })
 }
+
+export function mockApiKeysPageFlow(
+    apiKeys: ApiKey[],
+    options: { isAdmin?: boolean } = {}
+): void {
+    mockRequest.mockImplementation(async ({ method }) => {
+        if (method === 'listApiKeys') {
+            return { apiKeys }
+        }
+        if (method === 'listSessions') {
+            return { sessions: [] }
+        }
+        if (method === 'getUser') {
+            return {
+                userId: 'user-1',
+                isAdmin: options.isAdmin ?? false,
+            }
+        }
+        if (method === 'generateApiKey' || method === 'removeApiKey') {
+            return { id: 'test-api-key' }
+        }
+        return undefined
+    })
+}
+
 export function mockReviewNetworkFlow(
     overrides: Partial<Network> = {},
     options: { isAdmin?: boolean } = {}
