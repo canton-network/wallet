@@ -43,7 +43,6 @@ class MockDarNamespace {}
 class MockInternalLedgerNamespace {
     prepare = vi.fn()
 }
-class MockPreparedTransactionNamespace {}
 
 const v4 = vi.fn()
 
@@ -71,10 +70,6 @@ vi.doMock('./internal', () => ({
     InternalLedgerNamespace: MockInternalLedgerNamespace,
 }))
 
-vi.doMock('./hash/namespace', () => ({
-    PreparedTransactionNamespace: MockPreparedTransactionNamespace,
-}))
-
 const { LedgerNamespace } = await import('./namespace')
 type LedgerNamespaceType = InstanceType<typeof LedgerNamespace>
 
@@ -92,9 +87,6 @@ describe('Ledger Namespace', () => {
     it('should expose correct interface', () => {
         expect(ledger.dar).toBeInstanceOf(MockDarNamespace)
         expect(ledger.internal).toBeInstanceOf(MockInternalLedgerNamespace)
-        expect(ledger.preparedTransaction).toBeInstanceOf(
-            MockPreparedTransactionNamespace
-        )
         expect(ledger.acsReader).toBeInstanceOf(MockACSReader)
     })
 
