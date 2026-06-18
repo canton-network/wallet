@@ -72,5 +72,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "sdk/dapp-sdk"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/sdk/dapp-sdk#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

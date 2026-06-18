@@ -720,6 +720,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('networkId', '=', network.id),
                 ])
             )
+            .orderBy('createdAt', 'desc')
             .execute()
         return transactions.map((table) => toTransaction(table))
     }

@@ -48,5 +48,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/provider-ledger"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/provider-ledger#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

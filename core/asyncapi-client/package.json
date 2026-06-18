@@ -51,5 +51,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/asyncapi-client"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/asyncapi-client#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

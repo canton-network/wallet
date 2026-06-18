@@ -59,5 +59,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/token-standard-service"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard-service#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

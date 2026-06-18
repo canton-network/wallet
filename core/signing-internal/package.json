@@ -52,5 +52,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/signing-internal"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-internal#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }
