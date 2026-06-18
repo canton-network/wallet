@@ -49,15 +49,21 @@ export class ClientCredentialsService {
     ): Promise<Response> {
         const params = new URLSearchParams({
             grant_type: 'client_credentials',
-            client_id: credentials.clientId,
-            client_secret: credentials.clientSecret,
             scope: credentials.scope ?? '',
             audience: credentials.audience ?? '',
         })
 
+        const password = toClientPassword(
+            credentials.clientId,
+            credentials.clientSecret
+        )
+
         const res = await fetch(tokenEndpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Authorization: `Basic ${password}`,
+            },
             body: params.toString(),
         })
 
@@ -88,6 +94,11 @@ export class ClientCredentialsService {
         }
         return res.json()
     }
+}
+
+const toClientPassword = (clientId: string, clientSecret: string): string => {
+    const credentials = `${clientId}:${clientSecret}`
+    return btoa(credentials)
 }
 
 export const clientCredentialsService = (
