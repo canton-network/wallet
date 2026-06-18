@@ -4,7 +4,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EXTENDED_SDK_OPTION_KEYS, SDKPlugin } from '../'
 import * as mock from '../../__test__/mocks'
-import { SDK, SDKContext } from '../..'
+import { SDK } from '../..'
+import { SDKContext } from '../types/context'
 
 const testPluginFactory = (key: string) => {
     return vi.fn(
