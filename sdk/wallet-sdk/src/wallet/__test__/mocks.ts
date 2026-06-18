@@ -2,15 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MockedObject, vi } from 'vitest'
-import { SDKContext } from '../sdk.js'
+import {
+    AmuletConfig,
+    AssetConfig,
+    BasicSDKOptions,
+    EventsConfig,
+    TokenConfig,
+    TokenProviderConfig,
+} from '../sdk.js'
 import { SDKLogger } from '../logger/logger.js'
 import { SDKErrorHandler } from '../error/handler.js'
+import { SDKContext } from '../init/types/context.js'
 
-const ledgerProvider = {
+const exampleLink = 'http://example.com'
+
+export const ledgerProvider = {
     request: vi.fn().mockResolvedValue(undefined),
 }
 
-const mockLogger = {
+export const mockLogger = {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
@@ -26,7 +36,7 @@ const mockErrorHandler = new SDKErrorHandler(mockLogger)
 const throwSpy = vi.spyOn(mockErrorHandler, 'throw')
 throwSpy.mockImplementation(vi.fn() as never)
 
-const ctx: SDKContext = {
+export const ctx: SDKContext = {
     ledgerProvider,
     userId: 'userId',
     logger: mockLogger,
@@ -34,8 +44,35 @@ const ctx: SDKContext = {
     defaultSynchronizerId: '',
 }
 
-export const mock = {
-    ledgerProvider,
-    mockLogger,
-    ctx,
+export const tokenProviderConfig: TokenProviderConfig = {
+    method: 'static',
+    token: 'token',
+}
+
+export const basicSDKOptions: BasicSDKOptions<never> = {
+    auth: tokenProviderConfig,
+    ledgerClientUrl: exampleLink,
+}
+
+export const amuletConfig: AmuletConfig = {
+    validatorUrl: exampleLink,
+    scanApiUrl: exampleLink,
+    auth: tokenProviderConfig,
+    registryUrl: exampleLink,
+}
+
+export const tokenConfig: TokenConfig = {
+    validatorUrl: exampleLink,
+    auth: tokenProviderConfig,
+    registries: [exampleLink, exampleLink],
+}
+
+export const assetConfig: AssetConfig = {
+    auth: tokenProviderConfig,
+    registries: [exampleLink, exampleLink],
+}
+
+export const eventsConfig: EventsConfig = {
+    websocketURL: exampleLink,
+    auth: tokenProviderConfig,
 }

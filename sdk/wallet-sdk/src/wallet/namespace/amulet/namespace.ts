@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import { AssetBody, SDKContext } from '../../sdk.js'
+import type { AssetBody } from '../../sdk.js'
+import type { SDKContext } from '../../init/types/context.js'
 import { PreparedCommand } from '../transactions/types.js'
 import {
     FeaturedAppRight,

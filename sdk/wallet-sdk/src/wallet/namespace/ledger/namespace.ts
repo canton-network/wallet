@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LedgerTypes, SDKContext } from '../../sdk.js'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { SDKContext } from '../../init/types/context.js'
 import { v4 } from 'uuid'
 import { PrepareOptions, ExecuteOptions, AcsRequestOptions } from './types.js'
 import { PreparedTransaction } from '../transactions/prepared.js'
@@ -181,7 +182,9 @@ export class LedgerNamespace {
          */
         readRaw: async (
             options: AcsRequestOptions
-        ): Promise<Array<LedgerTypes['JsGetActiveContractsResponse']>> => {
+        ): Promise<
+            Array<LedgerCommonSchemas['JsGetActiveContractsResponse']>
+        > => {
             this.sdkContext.logger.debug(options, `Querying acs with options:`)
 
             return await this.acsReader.raw.read(options)
@@ -202,7 +205,7 @@ export class LedgerNamespace {
                 .map((acs) => {
                     const jsActiveContract = (
                         acs.contractEntry as {
-                            JsActiveContract: LedgerTypes['JsActiveContract']
+                            JsActiveContract: LedgerCommonSchemas['JsActiveContract']
                         }
                     ).JsActiveContract
 

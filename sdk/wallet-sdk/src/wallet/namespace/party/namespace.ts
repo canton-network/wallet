@@ -4,7 +4,7 @@
 import { PartyId } from '@canton-network/core-types'
 import { ExternalPartyNamespace } from './external/index.js'
 import { Ops } from '@canton-network/core-provider-ledger'
-import { SDKContext } from '../../sdk.js'
+import type { SDKContext } from '../../init/types/context.js'
 import { InternalPartyNamespace } from './index.js'
 import { SDKUtilsNamespace } from '../utils/index.js'
 
