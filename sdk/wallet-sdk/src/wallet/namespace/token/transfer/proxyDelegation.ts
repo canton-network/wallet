@@ -14,7 +14,7 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 import { LedgerNamespace } from '../../ledger/index.js'
 import { ParsedURL, URLInput } from '../../utils/url.js'
 
-type ProxyDelegationCommandArgs = {
+export type ProxyDelegationCommandArgs = {
     proxyCid: string
     transferInstructionCid: string
     registryUrl?: URLInput

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
-import { PreapprovalNamespace } from './preapproval' // Adjust path as needed
+import { PreapprovalNamespace } from './preapproval'
 import { AmuletNamespaceConfig, fetchAmulet } from './namespace'
 import { mock } from '../../__test__/mocks'
 /* eslint-disable @typescript-eslint/no-explicit-any */
