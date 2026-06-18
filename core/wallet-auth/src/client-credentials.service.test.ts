@@ -138,11 +138,13 @@ describe('ClientCredentialsService', () => {
             credentials
         )
 
-        const params =
-            'grant_type=client_credentials&client_id=cid&client_secret=secret&scope=scope&audience=aud'
+        const params = 'grant_type=client_credentials&scope=scope&audience=aud'
         expect(fetch).toHaveBeenCalledWith('http://idp/token', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Authorization: `Basic ${btoa('cid:secret')}`,
+            },
             body: params,
         })
 
