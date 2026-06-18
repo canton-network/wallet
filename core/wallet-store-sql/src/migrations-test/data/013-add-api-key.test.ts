@@ -32,6 +32,7 @@ forEachDialect('migration 013 - api keys', ({ getDb }) => {
             [
                 'id',
                 'created_at',
+                'last_used_at',
                 'network_id',
                 'user_id',
                 'digest',
@@ -48,6 +49,7 @@ forEachDialect('migration 013 - api keys', ({ getDb }) => {
         expect(byName.get('email')?.nullable).toBe(true)
         expect(byName.get('network_id')?.nullable).toBe(false)
         expect(byName.get('created_at')?.nullable).toBe(false)
+        expect(byName.get('last_used_at')?.nullable).toBe(true)
     })
 
     test('down drops api_keys table', async () => {
@@ -62,6 +64,7 @@ forEachDialect('migration 013 - api keys', ({ getDb }) => {
             email: 'user1@example.com',
             networkId: 'net1',
             createdAt: '2026-05-08T13:00:00.000Z',
+            lastUsedAt: '2026-05-09T14:00:00.000Z',
         })
 
         await migrateDownThrough(db, TARGET)

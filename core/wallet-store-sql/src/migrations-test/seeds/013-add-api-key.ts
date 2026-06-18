@@ -14,11 +14,12 @@ export async function insertApiKey(
         email: string | null
         networkId: string
         createdAt: string
+        lastUsedAt: string | null
     }
 ): Promise<void> {
     await sql`
         INSERT INTO api_keys (
-            id, digest, name, user_id, email, network_id, created_at
+            id, digest, name, user_id, email, network_id, created_at, last_used_at
         )
         VALUES (
             ${row.id},
@@ -27,7 +28,8 @@ export async function insertApiKey(
             ${row.userId},
             ${row.email},
             ${row.networkId},
-            ${row.createdAt}
+            ${row.createdAt},
+            ${row.lastUsedAt}
         )
     `.execute(db)
 }
