@@ -5,9 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as mock from '../../__test__/mocks'
 import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { SignedTransaction } from '../transactions/signed'
-import { SDKContext } from '../../sdk.js'
-import { Ops } from '@canton-network/core-provider-ledger'
-import { ExecuteOptions } from '../ledger/types.js'
+import { SDKContext } from '../../sdk'
 
 const defaultSignedTransactionResponse = {
     preparedTransaction: 'txn',
@@ -26,20 +24,14 @@ class MockACSReader {
 }
 
 class MockSignedTransaction extends SignedTransaction {
-    constructor(
-        ctx: SDKContext,
-        signedPromise: Promise<{
-            response: Ops.PostV2InteractiveSubmissionPrepare['ledgerApi']['result']
-            signature: string
-        }>,
-        _execute?: (
-            signed: SignedTransaction,
-            options: ExecuteOptions
-        ) => Promise<
-            Ops.PostV2InteractiveSubmissionExecuteAndWait['ledgerApi']['result']
-        >
-    ) {
-        super(ctx, signedPromise, _execute)
+    constructor(ctx: SDKContext) {
+        super(
+            ctx,
+            Promise.resolve({
+                response: defaultSignedTransactionResponse,
+                signature: defaultSignature,
+            })
+        )
     }
     response = vi.fn().mockResolvedValue(defaultSignedTransactionResponse)
     signature = vi.fn().mockResolvedValue(defaultSignature)
@@ -149,13 +141,7 @@ describe('Ledger Namespace', () => {
             { updateId: 'updateId', completionOffset: 90 }
         ledgerProvider.request.mockResolvedValueOnce(expectedResult)
 
-        const signedTransaction = new MockSignedTransaction(
-            ctx,
-            Promise.resolve({
-                response: defaultSignedTransactionResponse,
-                signature: defaultSignature,
-            })
-        )
+        const signedTransaction = new MockSignedTransaction(ctx)
 
         const result = await ledger.execute(signedTransaction, {
             partyId: 'party::123',
