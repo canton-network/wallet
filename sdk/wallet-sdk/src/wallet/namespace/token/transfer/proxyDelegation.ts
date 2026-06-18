@@ -13,7 +13,7 @@ import { FeaturedAppRight } from '../../amulet/types.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { LedgerNamespace } from '../../ledger/index.js'
 
-type ProxyDelegationCommandArgs = {
+export type ProxyDelegationCommandArgs = {
     proxyCid: string
     transferInstructionCid: string
     registryUrl?: URL

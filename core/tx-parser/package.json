@@ -57,5 +57,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/tx-parser"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/tx-parser#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

@@ -13,6 +13,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
         .addColumn('email', 'text')
         .addColumn('networkId', 'text', (col) => col.notNull())
         .addColumn('createdAt', 'text', (col) => col.notNull())
+        .addColumn('lastUsedAt', 'text')
         .execute()
 }
 

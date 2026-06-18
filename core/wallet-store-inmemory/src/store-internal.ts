@@ -454,7 +454,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.assertConnected()
         const storage = this.getStorage()
 
-        return Array.from(storage.transactions.values())
+        return Array.from(storage.transactions.values()).sort(byCreatedAtDesc)
     }
 
     async removeTransaction(transactionId: string): Promise<void> {
@@ -554,17 +554,25 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.updateStorage(storage)
     }
 
-    async listApiKeys(): Promise<Array<ApiKey>> {
-        const userId = this.assertConnected()
-        const network = await this.getCurrentNetwork()
+    async listApiKeys(options?: { all?: boolean }): Promise<Array<ApiKey>> {
         const storage = this.getStorage()
-
-        const apiKeysForUser = [...storage.apiKeys.values()].filter(
-            (apiKey) =>
-                apiKey.userId === userId && apiKey.networkId === network.id
+        const apiKeys = Array.from(storage.apiKeys.values()).sort(
+            byCreatedAtDesc
         )
 
-        return apiKeysForUser
+        if (options?.all) {
+            return apiKeys
+        } else {
+            const userId = this.assertConnected()
+            const network = await this.getCurrentNetwork()
+
+            const apiKeysForUser = apiKeys.filter(
+                (apiKey) =>
+                    apiKey.userId === userId && apiKey.networkId === network.id
+            )
+
+            return apiKeysForUser
+        }
     }
 
     async removeApiKey(apiKeyId: string): Promise<void> {
@@ -592,4 +600,14 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         storage.apiKeys.delete(apiKeyId)
         this.updateStorage(storage)
     }
+}
+
+const byCreatedAtDesc = (
+    a: { createdAt?: Date | string } | undefined,
+    b: { createdAt?: Date | string } | undefined
+) => {
+    if (!a?.createdAt) return 1
+    if (!b?.createdAt) return -1
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 }

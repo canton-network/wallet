@@ -65,5 +65,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/wallet-ui-components"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-ui-components#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

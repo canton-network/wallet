@@ -57,5 +57,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/amulet-service"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/amulet-service#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

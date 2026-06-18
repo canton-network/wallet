@@ -50,5 +50,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/signing-lib"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-lib#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }
