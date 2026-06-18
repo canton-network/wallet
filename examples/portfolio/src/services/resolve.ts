@@ -180,4 +180,3 @@ const noAuthAccessTokenProvider: AccessTokenProvider = {
         }
     },
 }
-
