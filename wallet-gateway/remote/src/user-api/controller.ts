@@ -1058,7 +1058,6 @@ export const userController = (
             logDynamically(logger, 'Generated new API key', {
                 info: { apiKeyId: storedApiKey.id },
                 debug: {
-                    id: storedApiKey.id,
                     name: storedApiKey.name,
                     userId: storedApiKey.userId,
                     networkId: storedApiKey.networkId,

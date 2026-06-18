@@ -195,6 +195,6 @@ export interface Store {
 
     // API Key methods
     addApiKey(apiKey: ApiKey): Promise<void>
-    listApiKeys(): Promise<Array<ApiKey>>
+    listApiKeys(options?: { all?: boolean }): Promise<Array<ApiKey>>
     removeApiKey(apiKeyId: string): Promise<void>
 }
