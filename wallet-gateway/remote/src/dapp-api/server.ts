@@ -12,6 +12,7 @@ import { AuthService, AuthAware } from '@canton-network/core-wallet-auth'
 import { Server } from 'http'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo, ServerConfig } from '../config/Config.js'
+import { SigningDrivers } from '../signing/signing-drivers.js'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)
@@ -29,7 +30,8 @@ export const dapp = (
     serverConfig: ServerConfig,
     notificationService: NotificationService,
     authService: AuthService,
-    store: Store & AuthAware<Store>
+    store: Store & AuthAware<Store>,
+    drivers: SigningDrivers
 ) => {
     app.use(
         cors({
@@ -112,6 +114,7 @@ export const dapp = (
                 userUrl,
                 store.withAuthContext(req.authContext),
                 notificationService,
+                drivers,
                 logger,
                 origin,
                 req.authContext

@@ -32,6 +32,7 @@ import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import { SigningDrivers } from '../signing/signing-drivers.js'
 
 export const dappController = (
     kernelInfo: KernelInfoConfig,
@@ -39,6 +40,7 @@ export const dappController = (
     userUrl: string,
     store: Store,
     notificationService: NotificationService,
+    drivers: SigningDrivers,
     _logger: Logger,
     origin: string | null,
     context?: AuthContext
@@ -198,16 +200,49 @@ export const dappController = (
                 throw new Error('No primary wallet found')
             }
 
+            let userId = context.userId
+            let accessTokenProvider: AuthTokenProvider =
+                AuthTokenProvider.fromToken(context.accessToken, logger)
+
+            if (context?.isApiKey) {
+                logger.info(
+                    'Authenticated with API Key, fetching m2m token for ledger access'
+                )
+
+                const idp = await store.getIdp(network.identityProviderId)
+                if (!network.adminAuth) {
+                    throw new Error('No admin auth configured')
+                }
+
+                accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                    idp,
+                    network.adminAuth,
+                    logger
+                )
+
+                const adminClient = new LedgerClient({
+                    baseUrl: new URL(network.ledgerApi.baseUrl),
+                    logger,
+                    accessTokenProvider,
+                })
+
+                const adminUserId = (await accessTokenProvider.getAuthContext())
+                    .userId
+
+                userId = adminUserId
+                await adminClient.grantRights(adminUserId, {
+                    canReadAsAnyParty: true,
+                    canExecuteAsAnyParty: true,
+                    actAs: [wallet.partyId],
+                })
+            }
+
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
-                ),
+                accessTokenProvider,
             })
 
-            const userId = context.userId
             const notifier = notificationService.getNotifier(userId)
 
             const commandId = params.commandId || v4()
@@ -229,7 +264,7 @@ export const dappController = (
             )
 
             const prepared = await prepareSubmission(
-                context.userId,
+                userId,
                 wallet.partyId,
                 synchronizerId,
                 params,
@@ -265,7 +300,7 @@ export const dappController = (
                 {
                     actAs: params.actAs || [wallet.partyId],
                     readAs: params.readAs || [],
-                    userId: context.userId,
+                    userId,
                     commandId,
                     commands: params.commands?.[0],
                     confirmationRequestTrafficCostEstimation:
@@ -276,6 +311,32 @@ export const dappController = (
             )
 
             await store.setTransaction(transaction)
+
+            if (context?.isApiKey) {
+                // const signParams = {
+                //     transactionId,
+                //     partyId: wallet.partyId,
+                // }
+                // const transactionService = new TransactionService(
+                //     store,
+                //     logger,
+                //     drivers,
+                //     notifier
+                // )
+                // // logDynamically(logger, 'signing transaction with params', {
+                // //     info: { transactionId: signParams.transactionId },
+                // //     debug: { signParams, wallet, connectedContext },
+                // // })
+                // const response = await transactionService.sign(
+                //     context,
+                //     wallet,
+                //     signParams
+                // )
+                // logDynamically(logger, 'AAAAA sign transaction response', {
+                //     info: { transactionId },
+                //     debug: { response },
+                // })
+            }
 
             return {
                 // closeafteraction query param flag makes approving or deleting tx close the popup

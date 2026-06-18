@@ -363,7 +363,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         config.server,
         notificationService,
         authService,
-        store
+        store,
+        drivers
     )
 
     // register user API handlers

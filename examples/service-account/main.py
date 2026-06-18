@@ -1,6 +1,7 @@
 import requests
+from datetime import datetime
 
-API_KEY = "f7ab73d63b93b24501b891c6289c7cb3457d18cec9bdbe777d5f8ce00d7174f3"
+API_KEY = "76943fd0cd7e8f24e0eb5607cfa135e613363149de796e5b7607128e1353a24d"
 
 def json_rpc_request(path, method, params=None, apiKey=None):
     headers = {}
@@ -31,6 +32,40 @@ def get_primary_account():
 
     return partyId
 
+def prepare_execute(commands):
+    response = json_rpc_request("dapp", "prepareExecute", { "commands": commands }, apiKey=API_KEY)
+    print("Prepare execute response:", response.text)
+
+    return response
+
+def ping_create_command(party):
+    templateId = '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping'
+
+    return [
+        {
+            "CreateCommand": {
+                "templateId": templateId,
+                "createArguments": {
+                    "id": f"my-test-{datetime.now().isoformat()}",
+                    "initiator": party,
+                    "responder": party,
+                },
+            },
+        },
+    ]
+
+def get_transaction(transactionId):
+    response = json_rpc_request("user", "getTransaction", { "transactionId": transactionId }, apiKey=API_KEY)
+    print("Get transaction response:", response.text)
+    return response
+
+def sign(transactionId, partyId):
+    return json_rpc_request("user", "sign", { "transactionId": transactionId, "partyId": partyId }, apiKey=API_KEY)
+
+def execute(transactionId, partyId, signature, signedBy):
+    return json_rpc_request("user", "execute", { "transactionId": transactionId, "partyId": partyId, "signature": signature, "signedBy": signedBy }, apiKey=API_KEY)
+
+
 def main():
     if not API_KEY:
         print("Please create an API_KEY in the Wallet Gateway before running")
@@ -40,6 +75,37 @@ def main():
     primaryParty = get_primary_account()
 
     print("\nReceived primary party: ", primaryParty)
+
+    pingCommand = ping_create_command(primaryParty)
+
+    prepared = prepare_execute(pingCommand)
+    userUrl = prepared.json().get("result", {}).get("userUrl")
+    print("Received userUrl: ", userUrl)
+
+    # extract transactionId from userUrl query params
+    from urllib.parse import urlparse, parse_qs
+    parsedUrl = urlparse(userUrl)
+    queryParams = parse_qs(parsedUrl.query)
+    transactionId = queryParams.get("transactionId", [None])[0]
+    if not transactionId:
+        print("No transactionId found in userUrl")
+        return
+
+    print("Received transactionId: ", transactionId)
+
+    signed = sign(transactionId, primaryParty)
+    print("Sign response:", signed.text)
+
+    status = signed.json().get("result", {}).get("status")
+    # if status != "success":
+    #     print("Sign failed:", signed.text)
+    #     return
+
+    signature = signed.json().get("result", {}).get("signature")
+    signedBy = signed.json().get("result", {}).get("signedBy")
+
+    executeR = execute(transactionId, primaryParty, signature, signedBy)
+    print("Execute response:", executeR.text)
 
 if __name__ == "__main__":
     main()

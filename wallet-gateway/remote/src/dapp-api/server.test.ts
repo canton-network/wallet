@@ -48,7 +48,8 @@ test('call connect rpc', async () => {
             config.server,
             notificationService,
             authService,
-            store
+            store,
+            {}
         )
     )
         .post('/api/v0/dapp')
