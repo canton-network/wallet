@@ -4,7 +4,7 @@
 import { SDKContext } from '../../../sdk.js'
 import { Ops } from '@canton-network/core-provider-ledger'
 
-export class DarService {
+export class DarNamespace {
     constructor(private readonly sdkContext: SDKContext) {}
 
     async upload(
