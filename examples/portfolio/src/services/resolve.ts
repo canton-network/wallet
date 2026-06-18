@@ -30,32 +30,28 @@ export const resolveLedgerProvider = () => {
 const createTokenStandardClient = async ({
     logger,
     registryUrl,
-    accessTokenProvider,
 }: {
     logger: Logger
     registryUrl: string
-    accessTokenProvider?: AccessTokenProvider
 }): Promise<TokenStandardClient> => {
     return new TokenStandardClient(
         registryUrl,
         logger,
-        accessTokenProvider ?? noAuthAccessTokenProvider
+        noAuthAccessTokenProvider
     )
 }
 
 const createTokenStandardService = async ({
     logger,
-    accessTokenProvider,
 }: {
     logger: Logger
-    accessTokenProvider?: AccessTokenProvider
 }): Promise<TokenStandardService> => {
     const provider = resolveLedgerProvider()
 
     const tokenStandardService = new TokenStandardService(
         provider,
         logger,
-        accessTokenProvider ?? noAuthAccessTokenProvider,
+        noAuthAccessTokenProvider,
         false // isMasterUser
     )
     return tokenStandardService
@@ -185,20 +181,3 @@ const noAuthAccessTokenProvider: AccessTokenProvider = {
     },
 }
 
-export const defaultAccessTokenProvider: (deps: {
-    logger: Logger
-}) => AccessTokenProvider = ({ logger }) => {
-    return new AuthTokenProvider(
-        {
-            method: 'self_signed',
-            issuer: 'unsafe-auth',
-            credentials: {
-                clientId: 'ledger-api-user',
-                clientSecret: 'unsafe',
-                audience: 'https://canton.network.global',
-                scope: '',
-            },
-        },
-        logger
-    )
-}
