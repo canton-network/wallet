@@ -39,7 +39,7 @@ const createTokenStandardClient = async ({
     return new TokenStandardClient(
         registryUrl,
         logger,
-        accessTokenProvider ?? defaultAccessTokenProvider({ logger }) // access token provider
+        accessTokenProvider ?? noAuthAccessTokenProvider
     )
 }
 
@@ -55,7 +55,7 @@ const createTokenStandardService = async ({
     const tokenStandardService = new TokenStandardService(
         provider,
         logger,
-        accessTokenProvider ?? defaultAccessTokenProvider({ logger }), // access token provider
+        accessTokenProvider ?? noAuthAccessTokenProvider,
         false // isMasterUser
     )
     return tokenStandardService
@@ -171,6 +171,18 @@ export const resolveTransactionHistoryService = async ({
     })
     transactionHistoryServices.set(key, transactionHistoryService)
     return transactionHistoryService
+}
+
+const noAuthAccessTokenProvider: AccessTokenProvider = {
+    async getAccessToken() {
+        return ''
+    },
+    async getAuthContext() {
+        return {
+            accessToken: '',
+            userId: '',
+        }
+    },
 }
 
 export const defaultAccessTokenProvider: (deps: {
