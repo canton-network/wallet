@@ -47,6 +47,10 @@ export {
 export type LedgerTypes = LedgerCommonSchemas
 
 export * from './init/index.js'
+export type {
+    PrepareOptions,
+    ExecuteOptions,
+} from './namespace/ledger/index.js'
 export * from './namespace/transactions/prepared.js'
 export * from './namespace/transactions/signed.js'
 
