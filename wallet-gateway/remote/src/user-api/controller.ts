@@ -38,6 +38,10 @@ import {
     SelfSignedAccessTokenResult,
     Network as ApiNetwork,
     PublicNetwork,
+    GenerateApiKeyParams,
+    GeneratedApiKey,
+    ListApiKeysResult,
+    RemoveApiKeyParams,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -62,6 +66,7 @@ import { TransactionService } from '../ledger/transaction-service.js'
 import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
+import crypto from 'crypto'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -1023,6 +1028,60 @@ export const userController = (
                 )
             }
             await store.removeTransaction(transaction.id)
+            return null
+        },
+        generateApiKey: async (
+            params: GenerateApiKeyParams
+        ): Promise<GeneratedApiKey> => {
+            const userId = assertConnected(authContext).userId
+            const network = await store.getCurrentNetwork()
+
+            const apiKeyId = v4()
+            const generatedApiKey = crypto.randomBytes(32).toString('hex')
+            const hashedApiKey = crypto
+                .createHash('sha256')
+                .update(generatedApiKey)
+                .digest('hex')
+
+            const storedApiKey = {
+                id: apiKeyId,
+                name: params.name,
+                digest: hashedApiKey,
+                userId,
+                networkId: network.id,
+                email: authContext?.email || null,
+                createdAt: new Date(),
+            }
+
+            await store.addApiKey(storedApiKey)
+
+            logDynamically(logger, 'Generated new API key', {
+                info: { apiKeyId: storedApiKey.id },
+                debug: {
+                    name: storedApiKey.name,
+                    userId: storedApiKey.userId,
+                    networkId: storedApiKey.networkId,
+                    createdAt: storedApiKey.createdAt,
+                },
+            })
+
+            return {
+                id: storedApiKey.id,
+                apiKey: generatedApiKey,
+            }
+        },
+        listApiKeys: async (): Promise<ListApiKeysResult> => {
+            const apiKeys = await store.listApiKeys().then((keys) =>
+                keys.map((key) => ({
+                    id: key.id,
+                    name: key.name,
+                    createdAt: key.createdAt.toISOString(),
+                }))
+            )
+            return { apiKeys }
+        },
+        removeApiKey: async (params: RemoveApiKeyParams): Promise<Null> => {
+            await store.removeApiKey(params.id)
             return null
         },
     })

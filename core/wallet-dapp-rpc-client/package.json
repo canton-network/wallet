@@ -55,7 +55,7 @@
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/wallet-dapp-rpc-client"
     },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-dapp-rpc-client#readme",
+    "homepage": "https://github.com/canton-network/wallet",
     "bugs": {
         "url": "https://github.com/canton-network/wallet/issues"
     }

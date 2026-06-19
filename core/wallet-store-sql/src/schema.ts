@@ -115,6 +115,17 @@ interface SessionTable extends Session {
     userId: UserId
 }
 
+interface ApiKeysTable {
+    id: string
+    digest: string
+    name: string
+    userId: UserId
+    email: string | null
+    networkId: string
+    createdAt: string
+    lastUsedAt: string | null
+}
+
 export interface DB {
     migrations: MigrationTable
     idps: IdpTable
@@ -125,6 +136,7 @@ export interface DB {
     transactions: TransactionTable
     messagesRaw: MessageRawTable
     sessions: SessionTable
+    apiKeys: ApiKeysTable
 }
 
 export const toIdp = (table: IdpTable): Idp => {

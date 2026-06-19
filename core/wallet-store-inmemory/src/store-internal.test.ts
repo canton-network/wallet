@@ -14,6 +14,7 @@ import {
     MessageRaw,
     UserLevelRight,
     PartyLevelRight,
+    ApiKey,
 } from '@canton-network/core-wallet-store'
 import {
     AuthContext,
@@ -802,6 +803,72 @@ implementations.forEach(([name, StoreImpl]) => {
 
             await store.removeMessageRaw('msg-1')
             expect(await store.listMessageRaws()).toHaveLength(0)
+        })
+
+        test('should manage api keys', async () => {
+            await store.addNetwork(baseNetwork())
+            await store.setSession({
+                id: 'session1',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            const keys = await store.listApiKeys()
+            expect(keys).toHaveLength(0)
+
+            const apiKey: ApiKey = {
+                id: 'api-key-1',
+                digest: 'digest-1',
+                name: 'API Key 1',
+                userId: 'test-user-id',
+                email: 'user1@example.com',
+                networkId: 'network1',
+                createdAt: new Date('2026-05-08T13:00:00.000Z'),
+            }
+
+            await store.addApiKey(apiKey)
+
+            expect(await store.listApiKeys()).toHaveLength(1)
+
+            await store.removeApiKey('api-key-1')
+            expect(await store.listApiKeys()).toHaveLength(0)
+
+            // removing a non-existent key should not throw
+            expect(store.removeApiKey('non-existent')).resolves.toBeUndefined()
+        })
+
+        test('addApiKey should error with wrong userId or networkId', async () => {
+            await store.addNetwork(baseNetwork())
+            await store.setSession({
+                id: 'session1',
+                network: 'network2',
+                accessToken: 'token',
+            })
+
+            const apiKey: ApiKey = {
+                id: 'api-key-1',
+                digest: 'digest-1',
+                name: 'API Key 1',
+                userId: 'test-user-id',
+                email: 'user1@example.com',
+                networkId: 'network1',
+                createdAt: new Date('2026-05-08T13:00:00.000Z'),
+            }
+
+            expect(store.addApiKey(apiKey)).rejects.toThrow(
+                'Network "network2" not found'
+            )
+
+            const newstore = (store as StoreInternal).withAuthContext({
+                userId: 'other-user-id',
+                accessToken: 'token',
+            })
+
+            expect(
+                newstore.addApiKey({ ...apiKey, networkId: 'network2' })
+            ).rejects.toThrow(
+                'ApiKey userId mismatch: expected other-user-id, got test-user-id'
+            )
         })
     })
 })

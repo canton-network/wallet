@@ -25,8 +25,15 @@ import {
     PartyLevelRight,
     TransactionStatusUpdate,
     UserLevelRight,
+    ApiKey,
 } from '@canton-network/core-wallet-store'
-import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
+import {
+    CamelCasePlugin,
+    Kysely,
+    PostgresDialect,
+    SqliteDialect,
+    type SelectQueryBuilder,
+} from 'kysely'
 import Database from 'better-sqlite3'
 import {
     DB,
@@ -45,6 +52,9 @@ import {
     toWallet,
 } from './schema.js'
 import pg from 'pg'
+
+type QueryRowType<T> =
+    T extends SelectQueryBuilder<unknown, never, infer R> ? R : never
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -844,6 +854,86 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .where((eb) =>
                 eb.and([
                     eb('id', '=', messageId),
+                    eb('userId', '=', userId),
+                    eb('networkId', '=', network.id),
+                ])
+            )
+            .execute()
+    }
+
+    // API keys
+    async addApiKey(apiKey: ApiKey): Promise<void> {
+        const userId = this.assertConnected()
+        if (apiKey.userId !== userId) {
+            throw new Error(
+                `ApiKey userId mismatch: expected ${userId}, got ${apiKey.userId}`
+            )
+        }
+
+        const network = await this.getCurrentNetwork()
+        if (apiKey.networkId !== network.id) {
+            throw new Error(
+                `ApiKey networkId mismatch: expected ${network.id}, got ${apiKey.networkId}`
+            )
+        }
+
+        await this.db
+            .insertInto('apiKeys')
+            .values({
+                id: apiKey.id,
+                name: apiKey.name,
+                digest: apiKey.digest,
+                createdAt: apiKey.createdAt.toISOString(),
+                userId,
+                email: apiKey.email,
+                networkId: network.id,
+            })
+            .execute()
+    }
+
+    async listApiKeys(options?: { all?: boolean }): Promise<Array<ApiKey>> {
+        const query = this.db
+            .selectFrom('apiKeys')
+            .selectAll()
+            .orderBy('createdAt', 'desc')
+
+        const toResult = (row: QueryRowType<typeof query>) => ({
+            id: row.id,
+            name: row.name,
+            digest: row.digest,
+            createdAt: new Date(row.createdAt),
+            userId: row.userId,
+            email: null, // omit email for privacy reasons, even though it's stored in the database
+            networkId: row.networkId,
+        })
+
+        if (options?.all) {
+            const apiKeys = await query.execute()
+            return apiKeys.map(toResult)
+        } else {
+            const userId = this.assertConnected()
+            const network = await this.getCurrentNetwork()
+            const apiKeys = await query
+                .where((eb) =>
+                    eb.and([
+                        eb('userId', '=', userId),
+                        eb('networkId', '=', network.id),
+                    ])
+                )
+                .execute()
+
+            return apiKeys.map(toResult)
+        }
+    }
+
+    async removeApiKey(apiKeyId: string): Promise<void> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        await this.db
+            .deleteFrom('apiKeys')
+            .where((eb) =>
+                eb.and([
+                    eb('id', '=', apiKeyId),
                     eb('userId', '=', userId),
                     eb('networkId', '=', network.id),
                 ])
