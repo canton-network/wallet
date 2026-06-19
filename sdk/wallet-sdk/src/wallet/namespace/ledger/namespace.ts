@@ -10,7 +10,7 @@ import { SignedTransaction } from '../transactions/signed.js'
 import { Ops } from '@canton-network/core-provider-ledger'
 import { InternalLedgerNamespace } from './internal/index.js'
 import { ACSReader } from '@canton-network/core-acs-reader'
-import { DarNamespace } from './dar.js'
+import { DarNamespace } from './dar/index.js'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace
