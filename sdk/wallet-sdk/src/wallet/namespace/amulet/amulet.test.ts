@@ -7,7 +7,7 @@ import {
     AmuletNamespaceConfig,
     fetchAmulet,
 } from './namespace'
-import { mock } from '../../__test__/mocks'
+import * as mock from '../../__test__/mocks'
 import { Decimal } from 'decimal.js'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

@@ -3,7 +3,7 @@
 
 import { describe, it, vi, expect } from 'vitest'
 import { parseAssets, ParsedURL } from './url.js'
-import { SDKContext } from '../../sdk.js'
+import type { SDKContext } from '../../init/types/context.js'
 import { SDKLogger } from '../../logger/index.js'
 import { SDKError, SDKErrorHandler } from '../../error/index.js'
 import { SDKUtilsNamespace } from './index.js'

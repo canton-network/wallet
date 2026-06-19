@@ -3,8 +3,8 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { TrafficNamespace } from './traffic'
-import { AmuletNamespaceConfig, fetchAmulet } from './namespace.js'
-import { mock } from '../../__test__/mocks.js'
+import { AmuletNamespaceConfig, fetchAmulet } from './namespace'
+import * as mock from '../../__test__/mocks'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 vi.mock('./namespace.js', () => ({
