@@ -18,6 +18,7 @@ import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
+import { showToast } from '../utils.js'
 
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {
@@ -106,6 +107,8 @@ export class UserUiApiKeys extends BaseElement {
                 method: 'removeApiKey',
                 params: { id: apiKeyEvent.apiKey.id },
             })
+
+            showToast('', 'API key removed', 'success')
 
             this.apiKeys = this.apiKeys.filter(
                 (key) => key.id !== apiKeyEvent.apiKey.id
