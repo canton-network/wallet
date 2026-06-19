@@ -4,7 +4,7 @@
 import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
 import { PreapprovalNamespace } from './preapproval'
 import { AmuletNamespaceConfig, fetchAmulet } from './namespace'
-import { mock } from '../../__test__/mocks'
+import * as mock from '../../__test__/mocks'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 vi.mock('./namespace', () => ({
     fetchAmulet: vi.fn(),

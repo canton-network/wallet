@@ -6,20 +6,24 @@ import {
     ACSCacheCollection,
     PaginatedACSCacheCollection,
 } from '../../cache/collection'
+import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 const { mockCache, MockACSCache } = vi.hoisted(() => {
     const update = vi.fn()
     const calculateAt = vi.fn()
+    const getPage = vi.fn()
 
     const mockCache = {
         update,
         calculateAt,
+        getPage,
     }
 
     const MockACSCache = vi.fn(
         class {
             update = update
             calculateAt = calculateAt
+            getPage = getPage
         }
     )
 
@@ -38,13 +42,15 @@ const ledgerProvider = vi.hoisted(() => ({
 }))
 
 describe('cache collection', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
     ;[ACSCacheCollection, PaginatedACSCacheCollection].forEach(
         (cacheConstructor) => {
             describe(`using ${cacheConstructor.name}`, () => {
                 let collection: ACSCacheCollection | PaginatedACSCacheCollection
 
                 beforeEach(() => {
-                    vi.clearAllMocks()
                     mockCache.calculateAt.mockReturnValue([
                         {
                             workflowId: 'test-workflow',
@@ -223,4 +229,44 @@ describe('cache collection', () => {
             })
         }
     )
+
+    it('should read page from paginated cache', async () => {
+        const collection = new PaginatedACSCacheCollection(ledgerProvider)
+
+        const expectedResult: LedgerCommonSchemas['JsGetActiveContractsPageResponse'] =
+            {
+                activeAtOffset: 150,
+                activeContracts: [{}, {}],
+                nextPageToken: 'nextPageToken',
+            }
+
+        ledgerProvider.request.mockResolvedValueOnce({
+            offset: 100,
+        } satisfies LedgerCommonSchemas['GetLedgerEndResponse'])
+
+        mockCache.getPage.mockResolvedValueOnce(expectedResult)
+
+        const result = await collection.readPageFromCache({
+            party: 'partyId',
+            templateId: 'templateId',
+            interfaceId: 'interfaceId',
+            pageToken: 'somePageToken',
+        })
+
+        expect(ledgerProvider.request).toHaveBeenCalledExactlyOnceWith({
+            method: 'ledgerApi',
+            params: {
+                requestMethod: 'get',
+                resource: '/v2/state/ledger-end',
+            },
+        })
+        expect(mockCache.update).toHaveBeenCalledExactlyOnceWith({
+            pageToken: 'somePageToken',
+            offset: 100,
+            parties: ['partyId'],
+            templateIds: ['templateId'],
+            interfaceIds: ['interfaceId'],
+        })
+        expect(result).toEqual(expectedResult)
+    })
 })

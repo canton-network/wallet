@@ -4,7 +4,7 @@
 import { HashNamespace } from './hash/service.js'
 import { PingService } from './ping/index.js'
 
-import { OfflineSDKContext } from '../../sdk.js'
+import type { OfflineSDKContext } from '../../init/types/context.js'
 
 export class SDKUtilsNamespace {
     public readonly ping: PingService
