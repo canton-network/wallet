@@ -59,7 +59,7 @@ export abstract class BaseCacheCollection<
 
     protected abstract createCache(): Cache
 
-    private getCache(key: ACSKey) {
+    protected getCache(key: ACSKey) {
         const serializedKey = this.serializeKey(key)
         const existingCache = this.collection.get(serializedKey)
         if (existingCache) return existingCache
