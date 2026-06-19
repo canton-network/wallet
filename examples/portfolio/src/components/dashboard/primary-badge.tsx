@@ -1,5 +1,6 @@
 import { Chip, type ChipProps } from '@mui/material'
 import { portfolioColors } from '@lib/theme'
+import { normalizeSx } from '@components/ui/utils'
 
 type PrimaryBadgeProps = Omit<ChipProps, 'label' | 'size'>
 
@@ -19,7 +20,7 @@ export function PrimaryBadge({ sx, ...props }: PrimaryBadgeProps) {
                         px: 1,
                     },
                 },
-                ...(Array.isArray(sx) ? sx : [sx]),
+                ...normalizeSx(sx),
             ]}
             {...props}
         />

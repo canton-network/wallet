@@ -20,10 +20,6 @@ function RouteComponent() {
     const wallet = accounts.find((account) => account.partyId === walletId)
     const walletName = wallet?.hint ?? 'Unknown wallet'
     const walletHoldings = useWalletHoldings(walletId)
-    const walletIsEmpty =
-        !walletHoldings.isLoading &&
-        !walletHoldings.isError &&
-        walletHoldings.instruments.length === 0
     const [transferOpen, setTransferOpen] = useState(false)
 
     return (
@@ -68,7 +64,7 @@ function RouteComponent() {
 
                 <PillButton
                     type="button"
-                    disabled={walletIsEmpty}
+                    disabled={!wallet?.primary}
                     onClick={() => setTransferOpen(true)}
                 >
                     Transfer
@@ -85,7 +81,7 @@ function RouteComponent() {
                 Transaction History
             </Typography>
 
-            <TransactionHistory />
+            <TransactionHistory walletId={walletId} />
 
             <TransferDialog
                 open={transferOpen}
