@@ -37,13 +37,13 @@ export async function allocateTokenForBob(
     const tokenHolding = tokenHoldings[0]
     if (!tokenHolding) throw new Error('Token holding not found for Bob')
 
-    await appProviderSdk.ledger.internal.reassign({
-        submitter: bob.partyId,
-        contractId: tokenHolding.contractId,
-        source: tokenHolding.synchronizerId,
-        target: globalSynchronizerId,
-        skipIfAlreadyOn: true,
-    })
+    // await appProviderSdk.ledger.internal.reassign({
+    //     submitter: bob.partyId,
+    //     contractId: tokenHolding.contractId,
+    //     source: tokenHolding.synchronizerId,
+    //     target: globalSynchronizerId,
+    //     skipIfAlreadyOn: true,
+    // })
 
     // Fetch the AllocationFactory + choice context from the TestToken registry's
     // allocation-instruction-v1 API. The registry returns the global-synchronizer
