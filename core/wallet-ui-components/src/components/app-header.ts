@@ -298,6 +298,13 @@ export class AppHeader extends BaseElement {
                         <button
                             type="button"
                             class="menu-item"
+                            @click=${() => this.navigateTo('/api-keys/')}
+                        >
+                            <span>API Keys</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="menu-item"
                             @click=${() =>
                                 this.navigateTo('/identity-providers/')}
                         >

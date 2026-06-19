@@ -19,7 +19,7 @@ const TARGET = 13
 const TABLE = 'api_keys'
 
 forEachDialect('migration 013 - api keys', ({ getDb }) => {
-    test('creates api_keys table with expected columns, primary key, and index', async () => {
+    test('creates api_keys table with expected columns, primary key', async () => {
         const db = getDb()
         await migrateUpToBefore(db, TARGET)
         expect(await tableExists(db, TABLE)).toBe(false)
