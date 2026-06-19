@@ -72,8 +72,9 @@ export class PaginatedACSCache extends BaseACSCache<true> {
 
     /**
      * Retrieves a specific page from the cache using the page token.
+     * @param pageToken defaults to {@link PaginatedACSCache.FIRST_PAGE_TOKEN}
      */
-    public getPage(pageToken: string) {
+    public getPage(pageToken: string = PaginatedACSCache.FIRST_PAGE_TOKEN) {
         return this.state.pages[pageToken]
     }
 
