@@ -8,21 +8,18 @@ import { PrepareOptions, ExecuteOptions, AcsRequestOptions } from './types.js'
 import { PreparedTransaction } from '../transactions/prepared.js'
 import { SignedTransaction } from '../transactions/signed.js'
 import { Ops } from '@canton-network/core-provider-ledger'
-import { DarNamespace } from './dar/client.js'
 import { InternalLedgerNamespace } from './internal/index.js'
-import { PreparedTransactionNamespace } from './hash/namespace.js'
 import { ACSReader } from '@canton-network/core-acs-reader'
+import { DarNamespace } from './dar/index.js'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace
     public readonly internal: InternalLedgerNamespace
-    public readonly preparedTransaction: PreparedTransactionNamespace
     public readonly acsReader: ACSReader
 
     constructor(private readonly sdkContext: SDKContext) {
         this.dar = new DarNamespace(sdkContext)
         this.internal = new InternalLedgerNamespace(sdkContext)
-        this.preparedTransaction = new PreparedTransactionNamespace(sdkContext)
         this.acsReader = new ACSReader(sdkContext.ledgerProvider)
     }
 
