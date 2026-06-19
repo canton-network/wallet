@@ -32,7 +32,7 @@ export function TransactionHistory({ walletId }: TransactionHistoryProps) {
     )
     const handleLoadMore = useCallback(() => {
         void history.fetchNextPage()
-    }, [history.fetchNextPage])
+    }, [history])
 
     return (
         <Box>
