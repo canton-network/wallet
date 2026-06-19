@@ -105,8 +105,8 @@
         "vite": "^7.3.5"
     },
     "lint-staged": {
-        "*": "prettier --write --ignore-unknown",
-        "*.{ts,tsx,js,jsx,mjs,cjs}": "eslint --fix"
+        "*": "yarn prettier --write --ignore-unknown",
+        "*.{ts,tsx,js,jsx,mjs,cjs}": "yarn eslint --fix"
     },
     "packageManager": "yarn@4.16.0",
     "dependencies": {

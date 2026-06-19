@@ -50,26 +50,32 @@ export const useTransactionHistory = (): UseInfiniteQueryResult<
 /** Deduplicate transactions.  We don't have stable pagination, this concerns
  *  in particular the the first page, for which the cursor doesn't have any
  *  offset or limit info. */
+export const deduplicateTransactionHistory = (
+    data: InfiniteData<TransactionHistoryResponse> | undefined
+): Transaction[] => {
+    const ids = new Set<number>()
+    const transactions: Transaction[] = []
+
+    for (const page of data?.pages ?? []) {
+        for (const transaction of page?.transactions ?? []) {
+            if (!ids.has(transaction.offset)) {
+                ids.add(transaction.offset)
+                if (transaction.events.length > 0) {
+                    transactions.push(transaction)
+                }
+            }
+        }
+    }
+
+    return transactions
+}
+
 export const useDeduplicatedTransactionHistoryForParty = (
     partyId: string | undefined
 ): Transaction[] => {
     const { data } = useTransactionHistoryForParty(partyId)
 
-    return useMemo(() => {
-        const ids = new Set<number>()
-        const transactions = []
-        for (const page of data?.pages ?? []) {
-            for (const transaction of page?.transactions ?? []) {
-                if (!ids.has(transaction.offset)) {
-                    ids.add(transaction.offset)
-                    if (transaction.events.length > 0) {
-                        transactions.push(transaction)
-                    }
-                }
-            }
-        }
-        return transactions
-    }, [data])
+    return useMemo(() => deduplicateTransactionHistory(data), [data])
 }
 
 export const useDeduplicatedTransactionHistory = (): Transaction[] => {
