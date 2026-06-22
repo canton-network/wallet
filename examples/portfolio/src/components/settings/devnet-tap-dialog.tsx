@@ -62,6 +62,14 @@ const amountValidator = z
 const instrumentKey = (instrumentId: InstrumentId) =>
     `${instrumentId.admin}::${instrumentId.id}`
 
+const findInstrumentByKey = (
+    instruments: TapInstrumentOption[],
+    key: string
+): TapInstrumentOption | undefined =>
+    instruments.find(
+        (instrument) => instrumentKey(instrument.instrumentId) === key
+    )
+
 const defaultValues = {
     instrumentId: null as InstrumentId | null,
     amount: '100',
@@ -233,12 +241,9 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                             value={selectedKey}
                                             onChange={(event) => {
                                                 const selected =
-                                                    availableInstruments.find(
-                                                        (instrument) =>
-                                                            instrumentKey(
-                                                                instrument.instrumentId
-                                                            ) ===
-                                                            event.target.value
+                                                    findInstrumentByKey(
+                                                        availableInstruments,
+                                                        event.target.value
                                                     )
                                                 field.handleChange(
                                                     selected?.instrumentId ??
@@ -266,11 +271,9 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                                 }
 
                                                 const selected =
-                                                    availableInstruments.find(
-                                                        (instrument) =>
-                                                            instrumentKey(
-                                                                instrument.instrumentId
-                                                            ) === key
+                                                    findInstrumentByKey(
+                                                        availableInstruments,
+                                                        key
                                                     )
                                                 return selected?.name ?? key
                                             }}
@@ -349,66 +352,66 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                         }}
                     </form.Field>
 
-                    <form.Subscribe
-                        selector={(state) => state.values.instrumentId}
-                    >
-                        {(instrumentId) => {
-                            const selectedInstrument = instrumentId
-                                ? availableInstruments.find(
-                                      (instrument) =>
-                                          instrumentKey(
-                                              instrument.instrumentId
-                                          ) === instrumentKey(instrumentId)
-                                  )
-                                : undefined
-
-                            return (
-                                <form.Field
-                                    name="amount"
-                                    validators={{
-                                        onChange: amountValidator,
-                                        onSubmit: amountValidator,
-                                    }}
-                                >
-                                    {(field) => (
-                                        <FieldBlock label="Amount">
-                                            <TextField
-                                                type="number"
-                                                value={field.state.value}
-                                                onChange={(event) =>
-                                                    field.handleChange(
-                                                        event.target.value
-                                                    )
-                                                }
-                                                onBlur={field.handleBlur}
-                                                disabled={disabled}
-                                                error={hasFieldError(field)}
-                                                helperText={
-                                                    hasFieldError(field)
-                                                        ? getFieldError(field)
-                                                        : undefined
-                                                }
-                                                fullWidth
-                                                slotProps={{
-                                                    input: {
-                                                        endAdornment:
-                                                            selectedInstrument ? (
-                                                                <InputAdornment position="end">
-                                                                    {
-                                                                        selectedInstrument.symbol
-                                                                    }
-                                                                </InputAdornment>
-                                                            ) : undefined,
-                                                    },
-                                                }}
-                                                sx={textFieldSx}
-                                            />
-                                        </FieldBlock>
-                                    )}
-                                </form.Field>
-                            )
+                    <form.Field
+                        name="amount"
+                        validators={{
+                            onChange: amountValidator,
+                            onSubmit: amountValidator,
                         }}
-                    </form.Subscribe>
+                    >
+                        {(field) => (
+                            <FieldBlock label="Amount">
+                                <TextField
+                                    type="number"
+                                    value={field.state.value}
+                                    onChange={(event) =>
+                                        field.handleChange(event.target.value)
+                                    }
+                                    onBlur={field.handleBlur}
+                                    disabled={disabled}
+                                    error={hasFieldError(field)}
+                                    helperText={
+                                        hasFieldError(field)
+                                            ? getFieldError(field)
+                                            : undefined
+                                    }
+                                    fullWidth
+                                    slotProps={{
+                                        input: {
+                                            endAdornment: (
+                                                <form.Subscribe
+                                                    selector={(state) =>
+                                                        state.values
+                                                            .instrumentId
+                                                    }
+                                                >
+                                                    {(instrumentId) => {
+                                                        const selected =
+                                                            instrumentId
+                                                                ? findInstrumentByKey(
+                                                                      availableInstruments,
+                                                                      instrumentKey(
+                                                                          instrumentId
+                                                                      )
+                                                                  )
+                                                                : undefined
+                                                        return selected ? (
+                                                            <InputAdornment position="end">
+                                                                {
+                                                                    selected.symbol
+                                                                }
+                                                            </InputAdornment>
+                                                        ) : null
+                                                    }}
+                                                </form.Subscribe>
+                                            ),
+                                        },
+                                    }}
+                                    sx={textFieldSx}
+                                />
+                            </FieldBlock>
+                        )}
+                    </form.Field>
 
                     <form.Subscribe
                         selector={(state) => ({

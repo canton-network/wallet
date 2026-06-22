@@ -64,6 +64,7 @@ export function AddRegistryDialog({ open, onClose }: AddRegistryDialogProps) {
                 }
 
                 form.reset()
+                setRegistryUrl.reset()
                 onClose()
             } catch (error) {
                 toast.error(
@@ -83,6 +84,7 @@ export function AddRegistryDialog({ open, onClose }: AddRegistryDialogProps) {
     const handleClose = () => {
         if (!disabled) {
             form.reset()
+            setRegistryUrl.reset()
             onClose()
         }
     }
