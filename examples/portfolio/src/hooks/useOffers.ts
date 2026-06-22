@@ -12,23 +12,32 @@ import { isExpired } from '@utils/date-format'
 import { useOfferItems, type OfferItemsResult } from './useOfferItems'
 
 export type OfferDirection = 'incoming' | 'outgoing'
+export type OfferCategory = 'transfers' | 'allocations'
 export type OfferStatus =
     | 'Pending'
     | 'Action Required'
     | 'Allocated'
     | 'Expired'
 
-export type OfferItem = {
+export type TransferOfferItem = {
     id: string
-    source: ActionItem
+    source: TransferActionItem
     direction: OfferDirection
     status: OfferStatus
 }
 
+export type AllocationOfferItem = {
+    id: string
+    source: AllocationActionItem
+    status: OfferStatus
+}
+
+export type OfferItem = TransferOfferItem | AllocationOfferItem
+
 export interface OffersResult extends Omit<OfferItemsResult, 'items'> {
     all: OfferItem[]
-    incoming: OfferItem[]
-    outgoing: OfferItem[]
+    transfers: OfferItem[]
+    allocations: OfferItem[]
 }
 
 export function useOffers(): OffersResult {
@@ -37,8 +46,10 @@ export function useOffers(): OffersResult {
         const all = deriveOffers(offerItems.items)
         return {
             all,
-            incoming: all.filter((offer) => offer.direction === 'incoming'),
-            outgoing: all.filter((offer) => offer.direction === 'outgoing'),
+            transfers: all.filter((offer) => offer.source.kind === 'transfer'),
+            allocations: all.filter(
+                (offer) => offer.source.kind === 'allocation'
+            ),
         }
     }, [offerItems.items])
 
@@ -51,16 +62,23 @@ export function useOffers(): OffersResult {
 }
 
 function deriveOffers(items: ActionItem[]): OfferItem[] {
-    return items.flatMap((item) => {
+    const offers: OfferItem[] = []
+
+    for (const item of items) {
         if (item.kind === 'transfer') {
             const offer = deriveTransferOffer(item)
-            return offer ? [offer] : []
+            if (offer) offers.push(offer)
+        } else {
+            offers.push(deriveAllocationOffer(item))
         }
-        return deriveAllocationOffers(item)
-    })
+    }
+
+    return offers
 }
 
-function deriveTransferOffer(item: TransferActionItem): OfferItem | null {
+function deriveTransferOffer(
+    item: TransferActionItem
+): TransferOfferItem | null {
     const status = isExpired(item.expiry) ? 'Expired' : 'Pending'
 
     if (item.receiver === item.currentPartyId) {
@@ -84,18 +102,9 @@ function deriveTransferOffer(item: TransferActionItem): OfferItem | null {
     return null
 }
 
-function deriveAllocationOffers(item: AllocationActionItem): OfferItem[] {
-    const directions = new Set<OfferDirection>()
-
-    for (const leg of item.transferLegs) {
-        if (isCurrentPartyReceiver(item.currentPartyId, leg)) {
-            directions.add('incoming')
-        }
-        if (isCurrentPartySender(item.currentPartyId, leg)) {
-            directions.add('outgoing')
-        }
-    }
-
+function deriveAllocationOffer(
+    item: AllocationActionItem
+): AllocationOfferItem {
     const isAllocated = areCurrentPartySenderLegsAllocated(item)
     const status = isAllocated
         ? 'Allocated'
@@ -103,12 +112,11 @@ function deriveAllocationOffers(item: AllocationActionItem): OfferItem[] {
           ? 'Expired'
           : 'Action Required'
 
-    return Array.from(directions).map((direction) => ({
-        id: `${item.contractId}-${direction}`,
+    return {
+        id: `${item.contractId}-allocation`,
         source: item,
-        direction,
         status,
-    }))
+    }
 }
 
 function areCurrentPartySenderLegsAllocated(item: AllocationActionItem) {
@@ -127,11 +135,4 @@ function isCurrentPartySender(
     leg: TransferLegWithAllocation
 ) {
     return leg.transferLeg.sender === currentPartyId
-}
-
-function isCurrentPartyReceiver(
-    currentPartyId: string,
-    leg: TransferLegWithAllocation
-) {
-    return leg.transferLeg.receiver === currentPartyId
 }
