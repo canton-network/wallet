@@ -337,7 +337,11 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         '/api/*splat',
         express.json(),
         preAuthRateLimit,
-        apiKeyAuth(store, logger.child({ component: 'ApiKeyHandler' })),
+        apiKeyAuth(
+            store,
+            [config.server.dappPath],
+            logger.child({ component: 'ApiKeyHandler' })
+        ),
         jwtAuth(authService, logger.child({ component: 'JwtHandler' })),
         postAuthRateLimit,
         sessionHandler(
