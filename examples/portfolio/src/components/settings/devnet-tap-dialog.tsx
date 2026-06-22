@@ -381,7 +381,8 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                             endAdornment: (
                                                 <form.Subscribe
                                                     selector={(state) =>
-                                                        state.values.instrumentId
+                                                        state.values
+                                                            .instrumentId
                                                     }
                                                 >
                                                     {(instrumentId) => {
