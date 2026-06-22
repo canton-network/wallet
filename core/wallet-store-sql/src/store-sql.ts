@@ -27,13 +27,7 @@ import {
     UserLevelRight,
     ApiKey,
 } from '@canton-network/core-wallet-store'
-import {
-    CamelCasePlugin,
-    Kysely,
-    PostgresDialect,
-    SqliteDialect,
-    type SelectQueryBuilder,
-} from 'kysely'
+import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
 import {
     DB,
@@ -50,11 +44,10 @@ import {
     toTransaction,
     toMessageRaw,
     toWallet,
+    fromApiKey,
+    toApiKey,
 } from './schema.js'
 import pg from 'pg'
-
-type QueryRowType<T> =
-    T extends SelectQueryBuilder<unknown, never, infer R> ? R : never
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -877,18 +870,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
         }
 
-        await this.db
-            .insertInto('apiKeys')
-            .values({
-                id: apiKey.id,
-                name: apiKey.name,
-                digest: apiKey.digest,
-                createdAt: apiKey.createdAt.toISOString(),
-                userId,
-                email: apiKey.email,
-                networkId: network.id,
-            })
-            .execute()
+        await this.db.insertInto('apiKeys').values(toApiKey(apiKey)).execute()
     }
 
     async listApiKeys(): Promise<Array<ApiKey>> {
@@ -896,16 +878,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .selectFrom('apiKeys')
             .selectAll()
             .orderBy('createdAt', 'desc')
-
-        const toResult = (row: QueryRowType<typeof query>) => ({
-            id: row.id,
-            name: row.name,
-            digest: row.digest,
-            createdAt: new Date(row.createdAt),
-            userId: row.userId,
-            email: null, // omit email for privacy reasons, even though it's stored in the database
-            networkId: row.networkId,
-        })
 
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
@@ -918,7 +890,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
             .execute()
 
-        return apiKeys.map(toResult)
+        return apiKeys.map(fromApiKey)
     }
 
     async getApiKey(digest: string): Promise<ApiKey | undefined> {
@@ -928,17 +900,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .where((eb) => eb('digest', '=', digest))
             .executeTakeFirst()
 
-        return apiKey
-            ? {
-                  id: apiKey.id,
-                  name: apiKey.name,
-                  digest: apiKey.digest,
-                  createdAt: new Date(apiKey.createdAt),
-                  userId: apiKey.userId,
-                  email: null, // omit email for privacy reasons, even though it's stored in the database
-                  networkId: apiKey.networkId,
-              }
-            : undefined
+        return apiKey ? fromApiKey(apiKey) : undefined
     }
 
     async removeApiKey(apiKeyId: string): Promise<void> {
