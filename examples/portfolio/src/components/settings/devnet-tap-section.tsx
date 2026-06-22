@@ -56,8 +56,7 @@ export function DevNetTapSection() {
                         DevNet Tap
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Get free tokens to help with deploying and testing your
-                        application.
+                        Get free tokens to help with testing your application.
                     </Typography>
                 </Box>
 
