@@ -7,10 +7,12 @@ import { Logger } from 'pino'
 import { Store } from '@canton-network/core-wallet-store/dist/Store'
 import crypto from 'crypto'
 import { v4 } from 'uuid'
+import { rpcErrors } from '@canton-network/core-rpc-errors'
+import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 
 export function apiKeyAuth(
     store: Store & AuthAware<Store>,
-    allowedPaths: string[],
+    dappApiPath: string,
     logger: Logger
 ) {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -22,18 +24,29 @@ export function apiKeyAuth(
             return next()
         }
 
-        // skip if the path is not in the allowed list
-        if (!allowedPaths.includes(req.path)) {
-            logger.trace(
-                `Path ${req.path} is not in the allowed list, rejecting API Key authentication`
+        const path = req.baseUrl + req.path
+        const reqId = req.body?.id ?? null
+
+        logger.trace(
+            { baseUrl: req.baseUrl, path: req.path },
+            'Received request with API Key authentication'
+        )
+
+        // reject if the path is not in the allowed list
+        if (!path.includes(dappApiPath)) {
+            logger.debug(
+                `Path ${path} is not in the allowed list, rejecting API Key authentication`
             )
 
-            return res.status(401).json({
-                error: 'Requested path cannot be called with API Key authentication',
-            })
+            return res.status(401).json(
+                jsonRpcResponse(reqId, {
+                    error: {
+                        code: rpcErrors.invalidRequest().code,
+                        message: `Requested path '${path}' cannot be called with API Key authentication`,
+                    },
+                })
+            )
         }
-
-        logger.trace('API Key authentication attempt for path %s', req.path)
 
         const apiKey = authHeader.slice('ApiKey'.length).trim()
         const hashedApiKey = crypto
@@ -71,9 +84,14 @@ export function apiKeyAuth(
                 'Rejecting invalid API Key'
             )
 
-            return res.status(401).json({
-                error: 'Invalid API Key provided',
-            })
+            return res.status(401).json(
+                jsonRpcResponse(reqId, {
+                    error: {
+                        code: rpcErrors.invalidRequest().code,
+                        message: 'API Key is invalid',
+                    },
+                })
+            )
         }
     }
 }

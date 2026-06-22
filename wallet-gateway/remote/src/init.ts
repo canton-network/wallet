@@ -339,7 +339,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         preAuthRateLimit,
         apiKeyAuth(
             store,
-            [config.server.dappPath],
+            config.server.dappPath,
             logger.child({ component: 'ApiKeyHandler' })
         ),
         jwtAuth(authService, logger.child({ component: 'JwtHandler' })),

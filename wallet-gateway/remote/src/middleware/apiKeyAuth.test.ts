@@ -10,13 +10,13 @@ import { Store } from '@canton-network/core-wallet-store/dist/Store.js'
 import { AuthAware } from '../../../../core/wallet-auth/dist/auth-service.js'
 import crypto from 'crypto'
 
-type ApiKeyStore = Pick<Store, 'listApiKeys' | 'setSession'>
+type ApiKeyStore = Pick<Store, 'getApiKey' | 'setSession'>
 
 describe('apiKeyAuth', () => {
-    const listApiKeys = vi.fn()
+    const getApiKey = vi.fn()
     const logger = pino({ level: 'silent' }, sink())
     const store: ApiKeyStore & AuthAware<ApiKeyStore> = {
-        listApiKeys,
+        getApiKey,
         setSession: vi.fn(),
         authContext: undefined,
         withAuthContext(context) {
@@ -29,7 +29,7 @@ describe('apiKeyAuth', () => {
     let json: ReturnType<typeof vi.fn>
 
     beforeEach(() => {
-        listApiKeys.mockReset()
+        getApiKey.mockReset()
         next = vi.fn() as NextFunction
         status = vi.fn().mockReturnThis()
         json = vi.fn()
@@ -42,6 +42,8 @@ describe('apiKeyAuth', () => {
         }
     ): Request {
         return {
+            baseUrl: '/api/v0/dapp',
+            path: '/',
             headers: {},
             query: {},
             ...partial,
@@ -57,52 +59,67 @@ describe('apiKeyAuth', () => {
             headers: { authorization: 'Bearer abc' },
         })
         const res = makeRes()
-        const middleware = apiKeyAuth(store as Store & AuthAware<Store>, logger)
+        const middleware = apiKeyAuth(
+            store as Store & AuthAware<Store>,
+            '/api/v0/dapp',
+            logger
+        )
         await middleware(req, res, next)
-        expect(listApiKeys).not.toHaveBeenCalled()
+        expect(getApiKey).not.toHaveBeenCalled()
         expect(req.authContext).toBeUndefined()
         expect(next).toHaveBeenCalledOnce()
     })
 
     it('sets authContext and calls next when verification succeeds', async () => {
         const ctx = { userId: 'alice', accessToken: 'abc', isApiKey: true }
-        listApiKeys.mockResolvedValue([
-            {
-                id: 'key1',
-                digest: crypto.createHash('sha256').update('abc').digest('hex'),
-                userId: 'alice',
-            },
-        ])
+        getApiKey.mockResolvedValue({
+            id: 'key1',
+            digest: crypto.createHash('sha256').update('abc').digest('hex'),
+            userId: 'alice',
+        })
 
         const req = makeReq({
             headers: { authorization: 'ApiKey abc' },
         })
         const res = makeRes()
 
-        const middleware = apiKeyAuth(store as Store & AuthAware<Store>, logger)
+        const middleware = apiKeyAuth(
+            store as Store & AuthAware<Store>,
+            '/api/v0/dapp',
+            logger
+        )
         await middleware(req, res, next)
 
-        expect(listApiKeys).toHaveBeenCalled()
+        expect(getApiKey).toHaveBeenCalled()
         expect(req.authContext).toEqual(ctx)
         expect(next).toHaveBeenCalledOnce()
         expect(status).not.toHaveBeenCalled()
     })
 
     it('returns 401 JSON when no matching API key is found', async () => {
-        listApiKeys.mockResolvedValue([])
+        getApiKey.mockResolvedValue(null)
 
         const req = makeReq({
             headers: { authorization: 'ApiKey invalid' },
         })
         const res = makeRes()
 
-        const middleware = apiKeyAuth(store as Store & AuthAware<Store>, logger)
+        const middleware = apiKeyAuth(
+            store as Store & AuthAware<Store>,
+            '/api/v0/dapp',
+            logger
+        )
         await middleware(req, res, next)
 
         expect(next).not.toHaveBeenCalled()
         expect(status).toHaveBeenCalledWith(401)
         expect(json).toHaveBeenCalledWith({
-            error: 'Invalid API Key provided',
+            error: {
+                code: -32600,
+                message: 'API Key is invalid',
+            },
+            id: null,
+            jsonrpc: '2.0',
         })
     })
 })
