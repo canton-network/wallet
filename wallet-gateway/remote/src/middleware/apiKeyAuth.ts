@@ -4,7 +4,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { AuthAware, AuthContext } from '@canton-network/core-wallet-auth'
 import { Logger } from 'pino'
-import { Store } from '@canton-network/core-wallet-store/dist/Store'
+import { Store } from '@canton-network/core-wallet-store'
 import crypto from 'crypto'
 import { v4 } from 'uuid'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
