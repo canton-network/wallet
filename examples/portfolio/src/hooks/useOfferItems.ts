@@ -41,6 +41,20 @@ function allocationKey(settlement: SettlementInfo, transferLegId: string) {
     ])
 }
 
+function compareOfferItemsByExpiry(left: ActionItem, right: ActionItem) {
+    const leftExpiry = getExpiryTime(left.expiry)
+    const rightExpiry = getExpiryTime(right.expiry)
+    const now = Date.now()
+    const leftExpired = leftExpiry < now
+    const rightExpired = rightExpiry < now
+
+    if (leftExpired !== rightExpired) {
+        return leftExpired ? 1 : -1
+    }
+
+    return leftExpiry - rightExpiry
+}
+
 export function useOfferItems(): OfferItemsResult {
     const primaryParty = usePrimaryAccount()?.partyId
 
@@ -150,11 +164,8 @@ export function useOfferItems(): OfferItemsResult {
             offerItems.push(allocationItem)
         }
 
-        // Show the items closest to expiry first.
-        return [...offerItems].sort(
-            (left, right) =>
-                getExpiryTime(left.expiry) - getExpiryTime(right.expiry)
-        )
+        // Show active items closest to expiry first, with expired items last.
+        return [...offerItems].sort(compareOfferItemsByExpiry)
     }, [
         pendingTransfers.data,
         allocationRequests.data,

@@ -4,7 +4,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ActionRequiredDialog } from '@components/dashboard/action-required-dialog'
 import { OffersContent } from '@components/offers/offers-content'
 import { OfferTabs } from '@components/offers/offer-tabs'
-import { useOffers, type OfferDirection } from '@hooks/useOffers'
+import { OfferToolbar } from '@components/offers/offer-toolbar'
+import { useOffers, type OfferCategory } from '@hooks/useOffers'
 
 export const Route = createFileRoute('/next/dashboard/offers')({
     component: RouteComponent,
@@ -12,12 +13,25 @@ export const Route = createFileRoute('/next/dashboard/offers')({
 
 function RouteComponent() {
     const offers = useOffers()
-    const [selectedDirection, setSelectedDirection] =
-        useState<OfferDirection>('incoming')
+    const [selectedCategory, setSelectedCategory] =
+        useState<OfferCategory>('transfers')
+    const [showExpiredOffers, setShowExpiredOffers] = useState(false)
     const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
-    const selectedOffers =
-        selectedDirection === 'incoming' ? offers.incoming : offers.outgoing
-    const visibleOffers = useMemo(() => selectedOffers, [selectedOffers])
+    const visibleOffers = useMemo(() => {
+        const categoryOffers =
+            selectedCategory === 'transfers'
+                ? offers.transfers
+                : offers.allocations
+
+        return showExpiredOffers
+            ? categoryOffers
+            : categoryOffers.filter((offer) => offer.status !== 'Expired')
+    }, [
+        offers.allocations,
+        offers.transfers,
+        selectedCategory,
+        showExpiredOffers,
+    ])
     const selectedOffer = useMemo(
         () =>
             selectedOfferId
@@ -51,15 +65,19 @@ function RouteComponent() {
                 }}
             >
                 <OfferTabs
-                    value={selectedDirection}
-                    onChange={setSelectedDirection}
+                    value={selectedCategory}
+                    onChange={setSelectedCategory}
+                />
+                <OfferToolbar
+                    showExpiredOffers={showExpiredOffers}
+                    onShowExpiredOffersChange={setShowExpiredOffers}
                 />
             </Box>
 
-            <Box component="section" aria-label={`${selectedDirection} offers`}>
+            <Box component="section" aria-label={`${selectedCategory} offers`}>
                 <OffersContent
                     offers={visibleOffers}
-                    direction={selectedDirection}
+                    category={selectedCategory}
                     isLoading={offers.isLoading}
                     isError={offers.isError}
                     error={offers.error}

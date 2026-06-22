@@ -3,12 +3,17 @@
 
 import { Alert, Box, Skeleton } from '@mui/material'
 import { OfferRowGrid, OfferRowShell } from './offer-row-layout'
-import type { OfferDirection, OfferItem } from '@hooks/useOffers'
+import type { OfferCategory, OfferItem } from '@hooks/useOffers'
 import { OfferRow } from './offer-row'
+
+const OFFER_CATEGORY_LABELS = {
+    transfers: 'transfer offers',
+    allocations: 'allocation offers',
+} satisfies Record<OfferCategory, string>
 
 interface OffersContentProps {
     offers: OfferItem[]
-    direction: OfferDirection
+    category: OfferCategory
     isLoading: boolean
     isError: boolean
     error: Error | null
@@ -18,7 +23,7 @@ interface OffersContentProps {
 
 export function OffersContent({
     offers,
-    direction,
+    category,
     isLoading,
     isError,
     error,
@@ -48,7 +53,7 @@ export function OffersContent({
             <Alert severity="info">
                 {hasSearchQuery
                     ? 'No offers match your search.'
-                    : `There are currently no ${direction} offers.`}
+                    : `There are currently no ${OFFER_CATEGORY_LABELS[category]}.`}
             </Alert>
         )
     }

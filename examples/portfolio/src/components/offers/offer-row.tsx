@@ -15,7 +15,11 @@ import {
     OfferRowGrid,
     OfferRowShell,
 } from './offer-row-layout'
-import type { OfferItem, OfferStatus } from '@hooks/useOffers'
+import type {
+    OfferItem,
+    OfferStatus,
+    TransferOfferItem,
+} from '@hooks/useOffers'
 import { formatAmount } from '@utils/decimal'
 
 interface OfferRowProps {
@@ -42,7 +46,7 @@ export function OfferRow({ offer, onClick }: OfferRowProps) {
             onKeyDown={handleKeyDown}
             sx={interactiveOfferRowSx}
         >
-            {offer.source.kind === 'transfer' ? (
+            {isTransferOffer(offer) ? (
                 <TransferOfferRow offer={offer} item={offer.source} />
             ) : (
                 <AllocationOfferRow item={offer.source} status={offer.status} />
@@ -57,11 +61,15 @@ function getOfferRowLabel(offer: OfferItem) {
         : 'Allocation Request'
 }
 
+function isTransferOffer(offer: OfferItem): offer is TransferOfferItem {
+    return offer.source.kind === 'transfer'
+}
+
 function TransferOfferRow({
     offer,
     item,
 }: {
-    offer: OfferItem
+    offer: TransferOfferItem
     item: TransferActionItem
 }) {
     const counterparty =
