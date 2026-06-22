@@ -10,6 +10,7 @@ import {
     type Theme,
 } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
+import { normalizeSx } from '@components/ui/utils'
 import {
     formatDistanceToNow,
     formatIsoDateTimeString,
@@ -42,7 +43,7 @@ export function OfferRowShell({
                     bgcolor: 'background.paper',
                     borderRadius: 1,
                 },
-                ...(Array.isArray(sx) ? sx : [sx]),
+                ...normalizeSx(sx),
             ]}
         >
             {children}

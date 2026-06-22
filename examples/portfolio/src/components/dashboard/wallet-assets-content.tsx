@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Alert, Box, Paper, Typography } from '@mui/material'
+import { Alert } from '@mui/material'
 import type { WalletHoldingsResult } from '@hooks/useWalletHoldings'
 import { getInstrumentInitials } from '@utils/instrument-display'
 import {
@@ -13,6 +13,7 @@ import {
     getInstrumentKey,
     type AggregatedHolding,
 } from '@utils/aggregate-holdings'
+import { DashboardEmptyState } from './dashboard-empty-state'
 
 export function WalletAssetsContent({
     instruments,
@@ -56,23 +57,9 @@ export function WalletAssetsContent({
 
 function WalletAssetsEmptyState() {
     return (
-        <Box
-            component={Paper}
-            elevation={0}
-            sx={{
-                minHeight: 74,
-                display: 'flex',
-                alignItems: 'center',
-                bgcolor: 'background.paper',
-                borderRadius: 1,
-                px: 3,
-                py: 3,
-            }}
-        >
-            <Typography variant="body1" color="text.primary">
-                This wallet is not holding any assets
-            </Typography>
-        </Box>
+        <DashboardEmptyState>
+            This wallet is not holding any assets
+        </DashboardEmptyState>
     )
 }
 
