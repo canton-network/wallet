@@ -2144,6 +2144,7 @@ __metadata:
     pino: "npm:^10.3.1"
     react: "npm:^19.2.7"
     react-dom: "npm:^19.2.7"
+    react-intersection-observer: "npm:^10.0.3"
     sonner: "npm:^2.0.7"
     tsx: "npm:^4.22.4"
     typescript: "npm:~5.9.3"
@@ -17543,6 +17544,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-intersection-observer@npm:^10.0.3":
+  version: 10.0.3
+  resolution: "react-intersection-observer@npm:10.0.3"
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+  checksum: 10c0/64439d19793c49bf9d1701fc74cd854f4ddc646411500a4d1efa058ac0100efdde5d4dd24ce736a48eeba9de3585c164c916be2b91e9c9b2b5db7b756c8cec9d
+  languageName: node
+  linkType: hard
+
 "react-is@npm:^16.13.1, react-is@npm:^16.7.0":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
@@ -19841,17 +19855,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^7.19.0":
-  version: 7.24.1
-  resolution: "undici@npm:7.24.1"
-  checksum: 10c0/9b52d906527622278da0e9d7c6541f53cb2ccc90954c3a78dae32a762727ba5a281d2ff3dd52f19d7805b290f2696df61c3e1da4f65c0ce602bbb7c4c217a09b
-  languageName: node
-  linkType: hard
-
-"undici@npm:^7.24.5":
-  version: 7.25.0
-  resolution: "undici@npm:7.25.0"
-  checksum: 10c0/02a0b45dc14eb91bc488948750232450fe52f27a6b08086d6ac6736bb47908d600fe3a96d346f12eab24729c782e5c2f693bc8e8eca6696d4e4c09b1ed4cb4ec
+"undici@npm:^7.19.0, undici@npm:^7.24.5":
+  version: 7.28.0
+  resolution: "undici@npm:7.28.0"
+  checksum: 10c0/fe781983a26098795e99bb1f64906cbb7d0bcaa029a26baade007b53ea67f2631d189b8f9671a31f4c8d0cb3773b7559608628ba54452fef51fec90e7c78bb0d
   languageName: node
   linkType: hard
 

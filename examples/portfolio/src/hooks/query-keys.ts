@@ -42,10 +42,10 @@ export const queryKeys = {
 
     walletSdk: {
         all: ['walletSdk'],
-        forConnection: (
-            sessionToken: string | undefined,
-            registryUrlKey: string
-        ) => ['walletSdk', sessionToken, registryUrlKey],
+        forConnection: (sessionToken: string | undefined) => [
+            'walletSdk',
+            sessionToken,
+        ],
     },
 
     instruments: {

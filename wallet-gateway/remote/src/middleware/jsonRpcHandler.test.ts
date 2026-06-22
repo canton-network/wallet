@@ -221,7 +221,7 @@ describe('handleRpcError', () => {
 
     it('maps JsonRpcError to HTTP status from toHttpErrorCode and does not log RPC response as error', () => {
         const err = rpcErrors.invalidParams({ message: 'bad' })
-        const [status, body] = handleRpcError(err, 99, logger, 'whateverMethod')
+        const [status, body] = handleRpcError(err, 99, 'whateverMethod')
 
         expect(status).toBe(toHttpErrorCode(err.code))
         expect(status).toBe(400)
@@ -237,7 +237,6 @@ describe('handleRpcError', () => {
         const [status, body] = handleRpcError(
             new Error('some error'),
             'id',
-            logger,
             'submit'
         )
 
@@ -254,7 +253,7 @@ describe('handleRpcError', () => {
     })
 
     it('uses generic message when method name is omitted', () => {
-        const [status, body] = handleRpcError(new Error('x'), null, logger)
+        const [status, body] = handleRpcError(new Error('x'), null)
 
         expect(status).toBe(500)
         expect(errorPayload(body)).toMatchObject({
@@ -263,7 +262,7 @@ describe('handleRpcError', () => {
     })
 
     it('maps string errors to the error message', () => {
-        const [status, body] = handleRpcError('plain', 0, logger)
+        const [status, body] = handleRpcError('plain', 0)
 
         expect(status).toBe(500)
         expect(errorPayload(body)).toMatchObject({
@@ -279,7 +278,7 @@ describe('handleRpcError', () => {
                 data: { hint: 1 },
             },
         }
-        const [status, body] = handleRpcError(custom, 3, logger)
+        const [status, body] = handleRpcError(custom, 3)
 
         expect(status).toBe(500)
         expect(body).toEqual({
@@ -294,7 +293,7 @@ describe('handleRpcError', () => {
             code: 'CODE',
             cause: 'something went wrong',
         }
-        const [status, body] = handleRpcError(ledgerErr, null, logger)
+        const [status, body] = handleRpcError(ledgerErr, null)
 
         expect(status).toBe(500)
         expect(errorPayload(body)).toMatchObject({
@@ -305,12 +304,7 @@ describe('handleRpcError', () => {
     })
 
     it('falls back to generic internal error for unknown payloads', () => {
-        const [status, body] = handleRpcError(
-            { foo: 'bar' },
-            2,
-            logger,
-            'wrongMethod'
-        )
+        const [status, body] = handleRpcError({ foo: 'bar' }, 2, 'wrongMethod')
 
         expect(status).toBe(500)
         expect(errorPayload(body)).toMatchObject({

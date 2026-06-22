@@ -9,8 +9,9 @@ import { PartyNamespace } from '../../namespace/party/index.js'
 import { UserNamespace } from '../../namespace/user/index.js'
 import { SDKUtilsNamespace } from '../../namespace/utils/index.js'
 import { AmuletNamespace } from '../../namespace/amulet/namespace.js'
-import { AssetNamespace, SDKContext, TokenNamespace } from '../../sdk.js'
+import type { AssetNamespace, TokenNamespace } from '../../sdk.js'
 import { EventsNamespace } from '../../namespace/events/namespace.js'
+import type { SDKContext } from './context.js'
 import {
     AmuletConfig,
     AssetConfig,

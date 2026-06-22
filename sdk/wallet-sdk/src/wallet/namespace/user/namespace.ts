@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SDKContext } from '../../sdk.js'
+import type { SDKContext } from '../../init/types/context.js'
 
 import { SDKLogger } from '../../logger/logger.js'
 import { CreateUserParams, GrantOrRevokeRightsParams } from './types.js'

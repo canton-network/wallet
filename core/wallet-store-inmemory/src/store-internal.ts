@@ -554,25 +554,27 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.updateStorage(storage)
     }
 
-    async listApiKeys(options?: { all?: boolean }): Promise<Array<ApiKey>> {
+    async listApiKeys(): Promise<Array<ApiKey>> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+
         const storage = this.getStorage()
         const apiKeys = Array.from(storage.apiKeys.values()).sort(
             byCreatedAtDesc
         )
 
-        if (options?.all) {
-            return apiKeys
-        } else {
-            const userId = this.assertConnected()
-            const network = await this.getCurrentNetwork()
+        const apiKeysForUser = apiKeys.filter(
+            (apiKey) =>
+                apiKey.userId === userId && apiKey.networkId === network.id
+        )
 
-            const apiKeysForUser = apiKeys.filter(
-                (apiKey) =>
-                    apiKey.userId === userId && apiKey.networkId === network.id
-            )
+        return apiKeysForUser
+    }
 
-            return apiKeysForUser
-        }
+    async getApiKey(digest: string): Promise<ApiKey | undefined> {
+        const storage = this.getStorage()
+        const apiKeys = Array.from(storage.apiKeys.values())
+        return apiKeys.find((key) => key.digest === digest)
     }
 
     async removeApiKey(apiKeyId: string): Promise<void> {

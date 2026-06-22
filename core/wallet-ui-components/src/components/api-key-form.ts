@@ -15,15 +15,6 @@ export class ApiKeyGenerateEvent extends Event {
     }
 }
 
-/**
- * Emitted when the user clicks the Back link
- */
-export class ApiKeyFormBackEvent extends Event {
-    constructor() {
-        super('api-key-form-back', { bubbles: true, composed: true })
-    }
-}
-
 @customElement('api-key-form')
 export class ApiKeyForm extends BaseElement {
     @property({ type: Object })

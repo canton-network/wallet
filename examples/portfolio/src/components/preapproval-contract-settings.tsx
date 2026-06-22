@@ -30,6 +30,7 @@ import type { AssetBody } from '@canton-network/wallet-sdk'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useRegistryUrls } from '@hooks/useRegistryUrls'
+import { useInstruments } from '@hooks/useInstruments'
 import { useWalletSdk } from '@hooks/useWalletSdk'
 import { usePrimaryAccount } from '@hooks/useAccounts'
 import { useCreatePreapprovalContracts } from '@hooks/useCreatePreapprovalContracts'
@@ -57,6 +58,7 @@ const formatRegistryOption = (partyId: string, registryUrl: string) =>
 
 export function PreapprovalContractSettings() {
     const registryUrls = useRegistryUrls()
+    const instruments = useInstruments()
     const primaryParty = usePrimaryAccount()?.partyId
     const {
         sdk,
@@ -113,13 +115,19 @@ export function PreapprovalContractSettings() {
             return
         }
 
-        console.log('registryUrl', registryUrl)
         const normalizedRegistryUrl = new URL(registryUrl).toString()
-        console.log('normalizedRegistryUrl', normalizedRegistryUrl)
-        console.log('sdk.asset.list', sdk.asset.list)
-        const assets = sdk.asset.list.filter(
-            (asset) => asset.registryUrl.toString() === normalizedRegistryUrl
+        const registryEntry = registryOptions.find(
+            ([, url]) => new URL(url).toString() === normalizedRegistryUrl
         )
+        const assets: AssetBody[] = registryEntry
+            ? (instruments.get(registryEntry[0]) ?? []).map((instrument) => ({
+                  id: instrument.id,
+                  displayName: instrument.name,
+                  symbol: instrument.symbol,
+                  registryUrl: new URL(registryEntry[1]),
+                  admin: registryEntry[0],
+              }))
+            : []
         setFetchedAssets(assets)
         setHasFetchedAssets(true)
         form.setFieldValue('selectedAssetKeys', [])
