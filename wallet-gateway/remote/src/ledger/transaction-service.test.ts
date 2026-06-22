@@ -473,7 +473,7 @@ describe('TransactionService', () => {
                 const service = createService(store, {}, notifier, logger)
 
                 const result = await service.execute(
-                    authContext,
+                    authContext.userId,
                     walletWithProvider(SigningProvider.DFNS),
                     signedTransaction
                 )
@@ -500,7 +500,7 @@ describe('TransactionService', () => {
 
                 await expect(
                     service.execute(
-                        authContext,
+                        authContext.userId,
                         walletWithProvider(SigningProvider.DFNS),
                         pendingTransaction
                     )
@@ -533,7 +533,7 @@ describe('TransactionService', () => {
                 const service = createService(store, {}, notifier, logger)
 
                 const result = await service.execute(
-                    authContext,
+                    authContext.userId,
                     participantWallet,
                     transaction,
                     executeParams,
@@ -574,7 +574,7 @@ describe('TransactionService', () => {
                 const service = createService(store, {}, notifier, logger)
 
                 const result = await service.execute(
-                    authContext,
+                    authContext.userId,
                     wallet,
                     signedTransaction,
                     executeParams,

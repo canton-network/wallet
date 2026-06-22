@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime
 
-API_KEY = "76943fd0cd7e8f24e0eb5607cfa135e613363149de796e5b7607128e1353a24d"
+API_KEY = "4eb780fd6d6962d9d4048c569484a1b7c7e342eb953d0ae5888d7c1d4f4f4380"
 
 def json_rpc_request(path, method, params=None, apiKey=None):
     headers = {}
@@ -76,7 +76,7 @@ def main():
 
     print("\nReceived primary party: ", primaryParty)
 
-    pingCommand = ping_create_command(primaryParty)
+    pingCommand = ping_create_command("alex2::1220c698552fa35fe46181e2c5c642ea6e11222534fea32001c7a123dd4bd272d8d5")
 
     prepared = prepare_execute(pingCommand)
     userUrl = prepared.json().get("result", {}).get("userUrl")

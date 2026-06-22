@@ -38,6 +38,7 @@ interface NetworkTable {
 
     auth: string // json stringified
     adminAuth: string | undefined // json stringified
+    serviceAccountAuth: string | undefined // json stringified
 }
 
 /**
@@ -202,6 +203,13 @@ export const toNetwork = (table: NetworkTable): Network => {
                       : table.adminAuth
               )
             : undefined,
+        serviceAccountAuth: table.serviceAccountAuth
+            ? authSchema.parse(
+                  typeof table.serviceAccountAuth === 'string'
+                      ? JSON.parse(table.serviceAccountAuth)
+                      : table.serviceAccountAuth
+              )
+            : undefined,
     }
 }
 
@@ -220,6 +228,9 @@ export const fromNetwork = (
         auth: JSON.stringify(network.auth),
         adminAuth: network.adminAuth
             ? JSON.stringify(network.adminAuth)
+            : undefined,
+        serviceAccountAuth: network.serviceAccountAuth
+            ? JSON.stringify(network.serviceAccountAuth)
             : undefined,
     }
 }

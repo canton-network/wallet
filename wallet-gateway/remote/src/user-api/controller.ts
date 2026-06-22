@@ -645,8 +645,10 @@ export const userController = (
                 throw new Error('No transaction found')
             }
 
-            let connectedContext = assertConnected(authContext)
-            let accessTokenProvider: AuthTokenProvider =
+            const connectedContext = assertConnected(authContext)
+            let userId = connectedContext.userId
+
+            const accessTokenProvider: AuthTokenProvider =
                 AuthTokenProvider.fromToken(
                     connectedContext.accessToken,
                     logger
@@ -657,30 +659,32 @@ export const userController = (
                     'Authenticated with API Key, fetching m2m token for ledger access'
                 )
 
-                const idp = await store.getIdp(network.identityProviderId)
-                if (!network.adminAuth) {
-                    throw new Error('No admin auth configured')
-                }
+                userId = authContext.ledgerUserId
 
-                accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
+                // const idp = await store.getIdp(network.identityProviderId)
+                // if (!network.adminAuth) {
+                //     throw new Error('No admin auth configured')
+                // }
 
-                const adminClient = new LedgerClient({
-                    baseUrl: new URL(network.ledgerApi.baseUrl),
-                    logger,
-                    accessTokenProvider,
-                })
+                // accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                //     idp,
+                //     network.adminAuth,
+                //     logger
+                // )
 
-                connectedContext = await accessTokenProvider.getAuthContext()
+                // const adminClient = new LedgerClient({
+                //     baseUrl: new URL(network.ledgerApi.baseUrl),
+                //     logger,
+                //     accessTokenProvider,
+                // })
 
-                await adminClient.grantMasterUserRights(
-                    connectedContext.userId,
-                    true,
-                    true
-                )
+                // connectedContext = await accessTokenProvider.getAuthContext()
+
+                // await adminClient.grantMasterUserRights(
+                //     connectedContext.userId,
+                //     true,
+                //     true
+                // )
             }
 
             if (network === undefined) {
@@ -706,11 +710,11 @@ export const userController = (
 
             logDynamically(logger, 'executing transaction with params', {
                 info: { transactionId: executeParams.transactionId },
-                debug: { executeParams, transaction, wallet, connectedContext },
+                debug: { executeParams, transaction, wallet, userId },
             })
 
             const response = await transactionService.execute(
-                connectedContext,
+                userId,
                 wallet,
                 transaction,
                 executeParams,

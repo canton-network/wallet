@@ -201,40 +201,41 @@ export const dappController = (
             }
 
             let userId = context.userId
-            let accessTokenProvider: AuthTokenProvider =
+            const accessTokenProvider: AuthTokenProvider =
                 AuthTokenProvider.fromToken(context.accessToken, logger)
 
             if (context?.isApiKey) {
                 logger.info(
                     'Authenticated with API Key, fetching m2m token for ledger access'
                 )
+                userId = context.ledgerUserId
 
-                const idp = await store.getIdp(network.identityProviderId)
-                if (!network.adminAuth) {
-                    throw new Error('No admin auth configured')
-                }
+                // const idp = await store.getIdp(network.identityProviderId)
+                // if (!network.adminAuth) {
+                //     throw new Error('No admin auth configured')
+                // }
 
-                accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
+                // accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                //     idp,
+                //     network.adminAuth,
+                //     logger
+                // )
 
-                const adminClient = new LedgerClient({
-                    baseUrl: new URL(network.ledgerApi.baseUrl),
-                    logger,
-                    accessTokenProvider,
-                })
+                // const adminClient = new LedgerClient({
+                //     baseUrl: new URL(network.ledgerApi.baseUrl),
+                //     logger,
+                //     accessTokenProvider,
+                // })
 
-                const adminUserId = (await accessTokenProvider.getAuthContext())
-                    .userId
+                // const adminUserId = (await accessTokenProvider.getAuthContext())
+                //     .userId
 
-                userId = adminUserId
-                await adminClient.grantRights(adminUserId, {
-                    canReadAsAnyParty: true,
-                    canExecuteAsAnyParty: true,
-                    actAs: [wallet.partyId],
-                })
+                // userId = adminUserId
+                // await adminClient.grantRights(adminUserId, {
+                //     canReadAsAnyParty: true,
+                //     canExecuteAsAnyParty: true,
+                //     actAs: [wallet.partyId],
+                // })
             }
 
             const ledgerClient = new LedgerClient({
@@ -263,9 +264,11 @@ export const dappController = (
                 }
             )
 
+            const actAsParty = params.actAs?.[0] || wallet.partyId
+
             const prepared = await prepareSubmission(
                 userId,
-                wallet.partyId,
+                actAsParty,
                 synchronizerId,
                 params,
                 ledgerClient
@@ -279,7 +282,7 @@ export const dappController = (
                     debug: {
                         commandId,
                         userId,
-                        partyId: wallet.partyId,
+                        partyId: actAsParty,
                         prepared,
                     },
                 }

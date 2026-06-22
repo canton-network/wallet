@@ -97,6 +97,9 @@ function resolveRawConfig(rawConfig: RawConfig): Config {
             adminAuth: n.adminAuth
                 ? resolveRawNetworkAuth(n.adminAuth)
                 : undefined,
+            serviceAccountAuth: n.serviceAccountAuth
+                ? resolveRawNetworkAuth(n.serviceAccountAuth)
+                : undefined,
         }
     })
 
