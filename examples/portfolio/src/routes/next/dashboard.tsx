@@ -3,6 +3,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
+import SettingsIcon from '@mui/icons-material/Settings'
 import {
     Box,
     Divider,
@@ -175,6 +176,13 @@ function RouteComponent() {
                         >
                             Disconnect
                         </PillButton>
+                        <SidebarLink
+                            to="/next/dashboard/settings"
+                            active={pathname === '/next/dashboard/settings'}
+                            icon={<SettingsIcon fontSize="small" />}
+                        >
+                            Settings
+                        </SidebarLink>
                         <SidebarLink
                             to="/next/dashboard/faq"
                             active={pathname === '/next/dashboard/faq'}
