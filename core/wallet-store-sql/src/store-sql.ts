@@ -891,7 +891,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .execute()
     }
 
-    async listApiKeys(options?: { all?: boolean }): Promise<Array<ApiKey>> {
+    async listApiKeys(): Promise<Array<ApiKey>> {
         const query = this.db
             .selectFrom('apiKeys')
             .selectAll()
@@ -907,23 +907,38 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             networkId: row.networkId,
         })
 
-        if (options?.all) {
-            const apiKeys = await query.execute()
-            return apiKeys.map(toResult)
-        } else {
-            const userId = this.assertConnected()
-            const network = await this.getCurrentNetwork()
-            const apiKeys = await query
-                .where((eb) =>
-                    eb.and([
-                        eb('userId', '=', userId),
-                        eb('networkId', '=', network.id),
-                    ])
-                )
-                .execute()
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const apiKeys = await query
+            .where((eb) =>
+                eb.and([
+                    eb('userId', '=', userId),
+                    eb('networkId', '=', network.id),
+                ])
+            )
+            .execute()
 
-            return apiKeys.map(toResult)
-        }
+        return apiKeys.map(toResult)
+    }
+
+    async getApiKey(digest: string): Promise<ApiKey | undefined> {
+        const apiKey = await this.db
+            .selectFrom('apiKeys')
+            .selectAll()
+            .where((eb) => eb('digest', '=', digest))
+            .executeTakeFirst()
+
+        return apiKey
+            ? {
+                  id: apiKey.id,
+                  name: apiKey.name,
+                  digest: apiKey.digest,
+                  createdAt: new Date(apiKey.createdAt),
+                  userId: apiKey.userId,
+                  email: null, // omit email for privacy reasons, even though it's stored in the database
+                  networkId: apiKey.networkId,
+              }
+            : undefined
     }
 
     async removeApiKey(apiKeyId: string): Promise<void> {

@@ -121,6 +121,7 @@ export interface ApiKey {
     name: string
     digest: string
     createdAt: Date
+    lastUsedAt?: Date | undefined
     userId: string
     email: string | null
     networkId: string
@@ -195,6 +196,7 @@ export interface Store {
 
     // API Key methods
     addApiKey(apiKey: ApiKey): Promise<void>
-    listApiKeys(options?: { all?: boolean }): Promise<Array<ApiKey>>
+    listApiKeys(): Promise<Array<ApiKey>>
+    getApiKey(digest: string): Promise<ApiKey | undefined>
     removeApiKey(apiKeyId: string): Promise<void>
 }

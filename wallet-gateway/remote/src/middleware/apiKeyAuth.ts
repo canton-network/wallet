@@ -23,8 +23,7 @@ export function apiKeyAuth(store: Store & AuthAware<Store>, logger: Logger) {
             .update(apiKey)
             .digest('hex')
 
-        const apiKeys = await store.listApiKeys({ all: true })
-        const matchingKey = apiKeys.find((key) => key.digest === hashedApiKey)
+        const matchingKey = await store.getApiKey(hashedApiKey)
 
         if (matchingKey) {
             logger.info(
