@@ -5,7 +5,7 @@ import { decodeJwt } from 'jose'
 import { AuthContext } from './auth-service'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import { Logger } from '@canton-network/core-types'
-import { Auth, Idp } from './config/schema.js'
+import { Idp } from './config/schema.js'
 
 export function assertConnected(
     authContext: AuthContext | undefined
@@ -164,38 +164,4 @@ export function jwtExpired(token: string): boolean {
     } catch {
         return true
     }
-}
-
-/**
- * Returns true when the network is configured for machine-to-machine OAuth
- * (client credentials), which triggers the service account workflow.
- */
-export function isClientCredentialsNetworkAuth(auth: Auth): boolean {
-    return auth.method === 'client_credentials'
-}
-
-/**
- * Returns true when the access token was issued via the client credentials grant.
- * OIDC providers typically set the `gty` (grant type) claim accordingly.
- */
-export function isClientCredentialsToken(accessToken: string): boolean {
-    try {
-        const { gty } = decodeJwt(accessToken)
-        return gty === 'client_credentials'
-    } catch {
-        return false
-    }
-}
-
-/**
- * Detects automation (service account) requests from network auth config and/or token claims.
- */
-export function isServiceAccountRequest(
-    networkAuth: Auth,
-    accessToken: string
-): boolean {
-    return (
-        isClientCredentialsNetworkAuth(networkAuth) ||
-        isClientCredentialsToken(accessToken)
-    )
 }

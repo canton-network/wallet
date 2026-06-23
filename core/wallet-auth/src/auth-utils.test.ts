@@ -11,36 +11,17 @@ import {
     afterEach,
 } from 'vitest'
 import {
-    assertConnected,
-    fetchOidcUserInfo,
-    isClientCredentialsNetworkAuth,
-    isClientCredentialsToken,
-    isServiceAccountRequest,
-    jwtExpired,
     jwtUserEmail,
     jwtUserId,
+    assertConnected,
+    fetchOidcUserInfo,
+    jwtExpired,
     resolveUserEmail,
 } from './auth-utils.js'
 import { Idp } from './config/schema.js'
 import { TokenProviderConfig } from './auth-token-provider.js'
 import { Logger } from '@canton-network/core-types'
 import { SelfSignedTokenService } from './self-signed-token-service.js'
-
-function base64UrlEncode(value: string): string {
-    const bytes = new TextEncoder().encode(value)
-    let binary = ''
-    for (const byte of bytes) {
-        binary += String.fromCharCode(byte)
-    }
-    return btoa(binary)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '')
-}
-
-function mockJwt(payload: Record<string, unknown>): string {
-    return `${base64UrlEncode(JSON.stringify({ alg: 'none', typ: 'JWT' }))}.${base64UrlEncode(JSON.stringify(payload))}.`
-}
 
 describe('Auth Utils', () => {
     const fetchMock = vi.fn()
@@ -318,40 +299,5 @@ describe('Auth Utils', () => {
                 'Failed to resolve user email from OIDC userinfo'
             )
         })
-    })
-})
-
-describe('service account auth utils', () => {
-    const interactiveAuth = {
-        method: 'authorization_code' as const,
-        clientId: 'app',
-        audience: 'aud',
-        scope: 'scope',
-    }
-    const m2mAuth = {
-        method: 'client_credentials' as const,
-        clientId: 'svc',
-        clientSecret: 'secret',
-        audience: 'aud',
-        scope: 'scope',
-    }
-    const m2mToken = mockJwt({ gty: 'client_credentials', sub: 'svc' })
-
-    it('detects client credentials network auth', () => {
-        expect(isClientCredentialsNetworkAuth(m2mAuth)).toBe(true)
-        expect(isClientCredentialsNetworkAuth(interactiveAuth)).toBe(false)
-    })
-
-    it('detects client credentials token grant type', () => {
-        expect(isClientCredentialsToken(m2mToken)).toBe(true)
-        expect(isClientCredentialsToken('not-a-jwt')).toBe(false)
-    })
-
-    it.each([
-        ['M2M network', m2mAuth, 'any-token', true],
-        ['M2M token', interactiveAuth, m2mToken, true],
-        ['neither', interactiveAuth, 'not-a-jwt', false],
-    ])('isServiceAccountRequest when %s', (_, auth, token, expected) => {
-        expect(isServiceAccountRequest(auth, token)).toBe(expected)
     })
 })
