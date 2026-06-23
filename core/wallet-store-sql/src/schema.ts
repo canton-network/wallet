@@ -12,6 +12,7 @@ import {
     PartyLevelRight,
     UserLevelRight,
     MessageRaw,
+    ApiKey,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
@@ -396,4 +397,30 @@ export const toMessageRaw = (table: MessageRawTable): MessageRaw => {
     }
 
     return result
+}
+
+export const fromApiKey = (table: ApiKeysTable): ApiKey => {
+    return {
+        id: table.id,
+        digest: table.digest,
+        name: table.name,
+        userId: table.userId,
+        email: table.email,
+        networkId: table.networkId,
+        createdAt: new Date(table.createdAt),
+        lastUsedAt: table.lastUsedAt ? new Date(table.lastUsedAt) : undefined,
+    }
+}
+
+export const toApiKey = (apiKey: ApiKey): ApiKeysTable => {
+    return {
+        id: apiKey.id,
+        digest: apiKey.digest,
+        name: apiKey.name,
+        userId: apiKey.userId,
+        email: apiKey.email,
+        networkId: apiKey.networkId,
+        createdAt: apiKey.createdAt.toISOString(),
+        lastUsedAt: apiKey.lastUsedAt ? apiKey.lastUsedAt.toISOString() : null,
+    }
 }

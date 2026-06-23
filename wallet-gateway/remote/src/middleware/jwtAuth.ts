@@ -7,6 +7,11 @@ import { Logger } from 'pino'
 
 export function jwtAuth(authService: AuthService, logger: Logger) {
     return async (req: Request, res: Response, next: NextFunction) => {
+        // If the request has been verified as an API key, skip JWT verification
+        if (req.authContext?.isApiKey) {
+            return next()
+        }
+
         // Support both Authorization header and token query parameter (for EventSource)
         const authHeader =
             req.headers.authorization ||
