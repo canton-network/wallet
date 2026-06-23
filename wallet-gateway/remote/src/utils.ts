@@ -44,7 +44,7 @@ export interface PrepareParams {
 
 export function ledgerPrepareParams(
     userId: string,
-    partyId: string,
+    partyIds: string[],
     synchronizerId: string,
     params: PrepareParams
 ): Types['JsPrepareSubmissionRequest'] {
@@ -63,7 +63,7 @@ export function ledgerPrepareParams(
         commands: params.commands as any,
         commandId: params.commandId || v4(),
         userId,
-        actAs: params.actAs || [partyId],
+        actAs: params.actAs || partyIds,
         readAs: params.readAs || [],
         disclosedContracts,
         synchronizerId,
