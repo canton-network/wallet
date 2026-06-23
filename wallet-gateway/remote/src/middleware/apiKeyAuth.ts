@@ -70,7 +70,7 @@ export function apiKeyAuth(
             }
 
             // automatically initiate a session for the API key user
-            store.withAuthContext(context).setSession({
+            await store.withAuthContext(context).setSession({
                 id: v4(),
                 network: matchingKey.networkId,
                 accessToken: apiKey,
