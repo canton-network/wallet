@@ -45,8 +45,6 @@ import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
 import { Env } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
-import { AuthTokenProvider, type Idp } from '@canton-network/core-wallet-auth'
-import type { Network } from '@canton-network/core-wallet-store'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 
 let isReady = false
@@ -359,38 +357,15 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const kernelInfo = config.kernel
 
-    const resolveIdp = async (idpId: string): Promise<Idp> => {
-        const idps = await store.listIdps()
-        const idp = idps.find((i) => i.id === idpId)
-        if (!idp) {
-            throw new Error(`IDP "${idpId}" not found`)
-        }
-        return idp
-    }
-
-    const createAccessTokenProvider = async (network: Network) => {
-        const idp = await resolveIdp(network.identityProviderId)
-        return AuthTokenProvider.fromGatewayConfig(
-            idp,
-            network.auth,
-            logger.child({ component: 'AuthTokenProvider' })
-        )
-    }
-
-    const dappControllerDeps = {
-        signingDrivers: drivers,
-        createAccessTokenProvider,
-    }
-
     const signingWorkerLogger = logger.child({
         component: 'SigningWorker',
     })
+
     signingWorker = new SigningWorker({
         intervalMs: config.server.signingWorker.pollInterval,
         signingDrivers: drivers,
         store,
         notificationService,
-        createAccessTokenProvider,
         logger: signingWorkerLogger,
     })
     signingWorker.start()
@@ -407,7 +382,9 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         config.server,
         notificationService,
         store,
-        dappControllerDeps
+        {
+            signingDrivers: drivers,
+        }
     )
 
     // register user API handlers

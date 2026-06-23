@@ -30,7 +30,7 @@ export const dapp = (
     serverConfig: ServerConfig,
     notificationService: NotificationService,
     store: Store & AuthAware<Store>,
-    controllerDeps?: DappControllerDeps
+    controllerDeps: DappControllerDeps
 ) => {
     app.use(
         cors({
@@ -115,8 +115,8 @@ export const dapp = (
                 notificationService,
                 logger,
                 origin,
-                req.authContext,
-                controllerDeps
+                controllerDeps,
+                req.authContext
             ),
             logger,
         })(req, res, next)

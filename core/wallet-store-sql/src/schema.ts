@@ -12,6 +12,7 @@ import {
     UserLevelRight,
     MessageRaw,
     ApiKey,
+    Session,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
@@ -222,6 +223,15 @@ export const fromNetwork = (
         adminAuth: network.adminAuth
             ? JSON.stringify(network.adminAuth)
             : undefined,
+    }
+}
+
+export const toSession = (table: SessionTable): Session => {
+    return {
+        id: table.id,
+        network: table.network,
+        accessToken: table.accessToken,
+        userId: table.userId,
     }
 }
 

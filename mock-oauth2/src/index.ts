@@ -140,9 +140,6 @@ async function main() {
         token.payload.iss = `${protocol}://${host}:${port}`
         const aud = req.body.audience
         token.payload.sub = clientId // Mocked subject given the clientId
-        if (req.body.grant_type === 'client_credentials') {
-            token.payload.gty = 'client_credentials'
-        }
         token.payload.email =
             process.env.BLOCKDAEMON_API_EMAIL ||
             'phillip.olesen@digitalasset.com'

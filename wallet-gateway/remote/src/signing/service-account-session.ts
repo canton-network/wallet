@@ -7,8 +7,6 @@ import {
     AuthAware,
     AuthContext,
     AuthTokenProvider,
-    isClientCredentialsNetworkAuth,
-    isClientCredentialsToken,
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
 import { Network, Session, Store } from '@canton-network/core-wallet-store'
@@ -36,13 +34,9 @@ export async function ensureAutomationSessionForPrepare(
     const existing = await store.getSession()
     if (
         existing &&
-        isClientCredentialsToken(existing.accessToken) &&
+        // isClientCredentialsToken(existing.accessToken) &&
         !jwtExpired(existing.accessToken)
     ) {
-        return
-    }
-
-    if (!isClientCredentialsToken(context.accessToken)) {
         return
     }
 
@@ -51,14 +45,14 @@ export async function ensureAutomationSessionForPrepare(
         existing?.network
     )
 
-    const accessToken = jwtExpired(context.accessToken)
-        ? await mintAccessToken(network, createAccessTokenProvider)
-        : context.accessToken
+    // const accessToken = jwtExpired(context.accessToken)
+    //     ? await mintAccessToken(network, createAccessTokenProvider)
+    //     : context.accessToken
 
     await store.setSession({
         id: existing?.id ?? v4(),
         network: network.id,
-        accessToken,
+        accessToken: context.accessToken, // come back to this
     })
 
     logger.info(
@@ -76,7 +70,6 @@ export async function resolveAutomationRunContext(
     bootstrapStore: Store & AuthAware<Store>,
     userId: string,
     networkId: string,
-    createAccessTokenProvider: AccessTokenProviderFactory,
     logger: Logger
 ): Promise<AutomationRunContext | undefined> {
     const network = await bootstrapStore.getNetwork(networkId)
@@ -88,38 +81,39 @@ export async function resolveAutomationRunContext(
         return undefined
     }
 
-    const existingSession = await bootstrapStore.getSessionForUser(userId)
-    const sessionMatchesNetwork =
-        existingSession?.network === networkId &&
-        !jwtExpired(existingSession.accessToken) &&
-        (!isClientCredentialsNetworkAuth(network.auth) ||
-            isClientCredentialsToken(existingSession.accessToken))
+    // const existingSession = await bootstrapStore.getSessionForUser(userId)
+    // const sessionMatchesNetwork =
+    //     existingSession?.network === networkId &&
+    //     !jwtExpired(existingSession.accessToken) &&
+    //     (!isClientCredentialsNetworkAuth(network.auth) ||
+    //         isClientCredentialsToken(existingSession.accessToken))
 
-    if (sessionMatchesNetwork && existingSession) {
-        const authContext: AuthContext = {
-            userId,
-            accessToken: existingSession.accessToken,
-        }
-        const scopedStore = bootstrapStore.withAuthContext(authContext)
-        await scopedStore.setSession(existingSession)
-        return { authContext, scopedStore, network }
-    }
+    // if (sessionMatchesNetwork && existingSession) {
+    //     const authContext: AuthContext = {
+    //         userId,
+    //         accessToken: existingSession.accessToken,
+    //     }
+    //     const scopedStore = bootstrapStore.withAuthContext(authContext)
+    //     await scopedStore.setSession(existingSession)
+    //     return { authContext, scopedStore, network }
+    // }
 
-    if (!isClientCredentialsNetworkAuth(network.auth)) {
-        logger.debug(
-            { userId, networkId },
-            'Skipping signing worker tick: no valid session for interactive network'
-        )
-        return undefined
-    }
+    // if (!isClientCredentialsNetworkAuth(network.auth)) {
+    //     logger.debug(
+    //         { userId, networkId },
+    //         'Skipping signing worker tick: no valid session for interactive network'
+    //     )
+    //     return undefined
+    // }
 
-    const accessToken = await mintAccessToken(
-        network,
-        createAccessTokenProvider
-    )
+    const accessToken = 'come back to this'
+    // const accessToken = await mintAccessToken(
+    //     network,
+    //     createAccessTokenProvider
+    // )
     const authContext: AuthContext = { userId, accessToken }
     const session: Session = {
-        id: existingSession?.id ?? v4(),
+        id: v4(),
         network: networkId,
         accessToken,
     }
@@ -127,7 +121,7 @@ export async function resolveAutomationRunContext(
     await scopedStore.setSession(session)
 
     logger.debug(
-        { userId, networkId, createdSession: !existingSession },
+        { userId, networkId },
         'Signing worker prepared service account session'
     )
 
@@ -135,13 +129,12 @@ export async function resolveAutomationRunContext(
 }
 
 async function resolveClientCredentialsNetwork(
-    store: Store,
     sessionNetworkId: string | undefined
 ): Promise<Network> {
-    const networks = await store.listNetworks()
-    const m2mNetworks = networks.filter((network) =>
-        isClientCredentialsNetworkAuth(network.auth)
-    )
+    const m2mNetworks: Network[] = [] // come back to this
+    // const m2mNetworks = networks.filter((network) =>
+    //     isClientCredentialsNetworkAuth(network.auth)
+    // )
 
     if (m2mNetworks.length === 0) {
         throw new Error(
@@ -166,12 +159,4 @@ async function resolveClientCredentialsNetwork(
     throw new Error(
         'Multiple client_credentials networks configured; call addSession with networkId before prepareExecute'
     )
-}
-
-async function mintAccessToken(
-    network: Network,
-    createAccessTokenProvider: AccessTokenProviderFactory
-): Promise<string> {
-    const provider = await createAccessTokenProvider(network)
-    return provider.getAccessToken()
 }

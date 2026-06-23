@@ -2,15 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Logger } from 'pino'
-import { AuthAware, AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { AuthAware, AuthContext } from '@canton-network/core-wallet-auth'
 import { Store, Transaction } from '@canton-network/core-wallet-store'
 import { NotificationService } from '../notification/NotificationService.js'
 import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from './signing-drivers.js'
-import {
-    AccessTokenProviderFactory,
-    resolveAutomationRunContext,
-} from './service-account-session.js'
+// import { resolveAutomationRunContext } from './service-account-session.js'
 
 export type { AccessTokenProviderFactory } from './service-account-session.js'
 
@@ -21,7 +18,6 @@ export interface SigningWorkerOptions {
     signingDrivers: SigningDrivers
     store: Store & AuthAware<Store>
     notificationService: NotificationService
-    createAccessTokenProvider: AccessTokenProviderFactory
     logger: Logger
 }
 
@@ -73,10 +69,6 @@ export interface SigningWorkerOptions {
 export class SigningWorker {
     private timer: ReturnType<typeof setInterval> | undefined
     private running = false
-    private readonly accessTokenProvidersByNetworkId = new Map<
-        string,
-        AuthTokenProvider
-    >()
 
     constructor(private readonly options: SigningWorkerOptions) {}
 
@@ -109,6 +101,11 @@ export class SigningWorker {
      * tests.
      */
     async tick(): Promise<void> {
+        this.options.logger.trace(
+            { intervalMs: this.options.intervalMs },
+            `Executing tick`
+        )
+
         if (this.running) {
             return
         }
@@ -138,51 +135,53 @@ export class SigningWorker {
      * Errors are logged per transaction; other rows in the same tick still run.
      */
     private async processPending(
-        userId: string,
-        networkId: string,
+        authContext: AuthContext | undefined,
         transaction: Transaction
     ): Promise<void> {
         if (!transaction.externalTxId) {
             return
         }
 
-        const runContext = await resolveAutomationRunContext(
-            this.options.store,
-            userId,
-            networkId,
-            (network) => this.getAccessTokenProvider(network),
-            this.options.logger
-        )
-        if (!runContext) {
+        // const runContext = await resolveAutomationRunContext(
+        //     this.options.store,
+        //     userId,
+        //     networkId,
+        //     this.options.logger
+        // )
+        if (!authContext) {
             this.options.logger.debug(
-                { userId, networkId, transactionId: transaction.id },
-                'Skipping signing worker tick: no run context'
+                { authContext, transactionId: transaction.id },
+                'Skipping signing worker tick: no auth context'
             )
             return
         }
 
-        const { authContext, scopedStore, network } = runContext
+        // const { authContext, scopedStore, network } = runContext
 
-        const wallet = await scopedStore.getPrimaryWallet()
-        if (!wallet) {
-            this.options.logger.warn(
-                {
-                    userId,
-                    networkId,
-                    transactionId: transaction.id,
-                    commandId: transaction.commandId,
-                },
-                'Skipping signing worker tick: no primary wallet configured for user'
-            )
-            return
-        }
+        // const wallet = await scopedStore.getPrimaryWallet()
+        // if (!wallet) {
+        //     this.options.logger.warn(
+        //         {
+        //             userId,
+        //             networkId,
+        //             transactionId: transaction.id,
+        //             commandId: transaction.commandId,
+        //         },
+        //         'Skipping signing worker tick: no primary wallet configured for user'
+        //     )
+        //     return
+        // }
+
+        const userId = authContext.userId
 
         const refreshedTx = await scopedStore.getTransaction(transaction.id)
         if (!refreshedTx || refreshedTx.status !== 'pending') {
             return
         }
 
-        const notifier = this.options.notificationService.getNotifier(userId)
+        const notifier = this.options.notificationService.getNotifier(
+            authContext.userId
+        )
         const transactionLogger = this.options.logger.child({
             component: 'TransactionService',
         })
@@ -242,19 +241,5 @@ export class SigningWorker {
                 'Signing worker failed to complete service account transaction'
             )
         }
-    }
-
-    /** Caches one {@link AuthTokenProvider} per network for M2M token minting. */
-    private async getAccessTokenProvider(
-        network: Parameters<AccessTokenProviderFactory>[0]
-    ): Promise<AuthTokenProvider> {
-        const existing = this.accessTokenProvidersByNetworkId.get(network.id)
-        if (existing) {
-            return existing
-        }
-
-        const provider = await this.options.createAccessTokenProvider(network)
-        this.accessTokenProvidersByNetworkId.set(network.id, provider)
-        return provider
     }
 }

@@ -243,11 +243,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return this.getStorage().session
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async getSessionForUser(_userId: string): Promise<Session | undefined> {
-        return this.getStorage().session
-    }
-
     async setSession(session: Session): Promise<void> {
         const storage = this.getStorage()
         storage.session = session

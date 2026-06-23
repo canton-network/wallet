@@ -8,7 +8,6 @@ import Browser from 'webextension-polyfill'
 import buildController from './rpc-gen'
 import {
     LedgerApiParams,
-    MessageSignatureEvent,
     Network,
     PrepareExecuteParams,
     SignMessageParams,

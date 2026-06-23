@@ -149,7 +149,6 @@ export interface Store {
 
     // Session methods
     getSession(): Promise<Session | undefined>
-    getSessionForUser(userId: string): Promise<Session | undefined>
     setSession(session: Session): Promise<void>
     removeSession(): Promise<void>
 

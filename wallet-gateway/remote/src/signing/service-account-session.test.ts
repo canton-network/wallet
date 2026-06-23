@@ -7,7 +7,6 @@ vi.mock('uuid', () => ({ v4: vi.fn(() => 'session-new') }))
 
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import type { Network } from '@canton-network/core-wallet-store'
 import {
     ensureAutomationSessionForPrepare,
@@ -159,16 +158,13 @@ describe('resolveAutomationRunContext', () => {
         const scopedStore = { setSession: vi.fn() }
         const store = {
             getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
-            getSessionForUser: vi.fn().mockResolvedValue(session),
             withAuthContext: vi.fn().mockReturnValue(scopedStore),
         }
-        const createAccessTokenProvider = vi.fn()
 
         const result = await resolveAutomationRunContext(
             store as never,
             'user-1',
             'net-m2m',
-            createAccessTokenProvider,
             logger
         )
 
@@ -176,7 +172,6 @@ describe('resolveAutomationRunContext', () => {
             userId: 'user-1',
             accessToken: session.accessToken,
         })
-        expect(createAccessTokenProvider).not.toHaveBeenCalled()
         expect(scopedStore.setSession).toHaveBeenCalledWith(session)
     })
 
@@ -184,23 +179,17 @@ describe('resolveAutomationRunContext', () => {
         const scopedStore = { setSession: vi.fn() }
         const store = {
             getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
-            getSessionForUser: vi.fn().mockResolvedValue(undefined),
             withAuthContext: vi.fn().mockReturnValue(scopedStore),
         }
-        const createAccessTokenProvider = vi.fn(async () =>
-            AuthTokenProvider.fromToken(m2mJwt(), logger)
-        )
 
         const result = await resolveAutomationRunContext(
             store as never,
             'user-1',
             'net-m2m',
-            createAccessTokenProvider,
             logger
         )
 
         expect(result?.authContext.userId).toBe('user-1')
-        expect(createAccessTokenProvider).toHaveBeenCalledWith(m2mNetwork)
         expect(scopedStore.setSession).toHaveBeenCalled()
     })
 
@@ -208,32 +197,20 @@ describe('resolveAutomationRunContext', () => {
         const scopedStore = { setSession: vi.fn() }
         const store = {
             getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
-            getSessionForUser: vi.fn().mockResolvedValue({
-                id: 'session-1',
-                network: 'net-m2m',
-                accessToken: 'interactive-token',
-            }),
             withAuthContext: vi.fn().mockReturnValue(scopedStore),
         }
-        const createAccessTokenProvider = vi.fn(async () =>
-            AuthTokenProvider.fromToken(m2mJwt(), logger)
-        )
 
         await resolveAutomationRunContext(
             store as never,
             'user-1',
             'net-m2m',
-            createAccessTokenProvider,
             logger
         )
-
-        expect(createAccessTokenProvider).toHaveBeenCalled()
     })
 
     it('returns undefined for interactive networks without a session', async () => {
         const store = {
             getNetwork: vi.fn().mockResolvedValue(interactiveNetwork),
-            getSessionForUser: vi.fn().mockResolvedValue(undefined),
             withAuthContext: vi.fn(),
         }
 
@@ -241,7 +218,6 @@ describe('resolveAutomationRunContext', () => {
             store as never,
             'user-1',
             'net-interactive',
-            vi.fn(),
             logger
         )
 

@@ -5,7 +5,6 @@ import {
     assertConnected,
     AuthContext,
     AuthTokenProvider,
-    isServiceAccountRequest,
 } from '@canton-network/core-wallet-auth'
 import buildController from './rpc-gen/index.js'
 import {
@@ -35,14 +34,9 @@ import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
-import {
-    AccessTokenProviderFactory,
-    ensureAutomationSessionForPrepare,
-} from '../signing/service-account-session.js'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
-    createAccessTokenProvider: AccessTokenProviderFactory
 }
 
 export const dappController = (
@@ -53,8 +47,8 @@ export const dappController = (
     notificationService: NotificationService,
     _logger: Logger,
     origin: string | null,
-    context?: AuthContext,
-    deps?: DappControllerDeps
+    deps: DappControllerDeps,
+    context?: AuthContext
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
 
@@ -205,15 +199,6 @@ export const dappController = (
                 throw new Error('Unauthenticated context')
             }
 
-            if (deps?.createAccessTokenProvider) {
-                await ensureAutomationSessionForPrepare(
-                    store,
-                    context,
-                    deps.createAccessTokenProvider,
-                    logger
-                )
-            }
-
             const wallet = await store.getPrimaryWallet()
             const network = await store.getCurrentNetwork()
 
@@ -304,7 +289,7 @@ export const dappController = (
 
             const approveUrl = `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`
 
-            if (isServiceAccountRequest(network.auth, context.accessToken)) {
+            if (context.isApiKey) {
                 logger.info(
                     {
                         userId: context.userId,

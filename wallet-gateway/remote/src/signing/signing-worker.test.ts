@@ -4,7 +4,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { SigningWorker } from './signing-worker.js'
 import type { Network, Transaction } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
@@ -75,7 +74,6 @@ function m2mJwt(extra: Record<string, unknown> = {}): string {
 function createWorker(
     storeOverrides: {
         listAllPendingTransactions?: ReturnType<typeof vi.fn>
-        getSessionForUser?: ReturnType<typeof vi.fn>
         getNetwork?: ReturnType<typeof vi.fn>
         withAuthContext?: ReturnType<typeof vi.fn>
     } = {}
@@ -89,15 +87,11 @@ function createWorker(
         listAllPendingTransactions: vi
             .fn()
             .mockResolvedValue([pendingTransaction]),
-        getSessionForUser: vi.fn().mockResolvedValue(undefined),
         getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
         withAuthContext: vi.fn().mockReturnValue(scopedStore),
         ...storeOverrides,
     }
     const logger = pino({ level: 'silent' }, sink())
-    const createAccessTokenProvider = vi.fn(async () =>
-        AuthTokenProvider.fromToken(m2mJwt(), logger)
-    )
 
     return {
         worker: new SigningWorker({
@@ -107,12 +101,10 @@ function createWorker(
             notificationService: {
                 getNotifier: vi.fn(() => ({ emit: vi.fn() })),
             } as never,
-            createAccessTokenProvider,
             logger,
         }),
         store,
         scopedStore,
-        createAccessTokenProvider,
     }
 }
 
@@ -120,12 +112,10 @@ describe('SigningWorker', () => {
     afterEach(() => vi.clearAllMocks())
 
     it('mints a session and completes pending external transactions', async () => {
-        const { worker, store, createAccessTokenProvider } = createWorker()
+        const { worker } = createWorker()
 
         await worker.tick()
 
-        expect(store.getSessionForUser).toHaveBeenCalledWith('user-1')
-        expect(createAccessTokenProvider).toHaveBeenCalledWith(m2mNetwork)
         expect(mocks.signAndExecute).toHaveBeenCalled()
     })
 
@@ -135,15 +125,10 @@ describe('SigningWorker', () => {
             network: 'net-m2m',
             accessToken: m2mJwt(),
         }
-        const { worker, scopedStore, createAccessTokenProvider } = createWorker(
-            {
-                getSessionForUser: vi.fn().mockResolvedValue(session),
-            }
-        )
+        const { worker, scopedStore } = createWorker({})
 
         await worker.tick()
 
-        expect(createAccessTokenProvider).not.toHaveBeenCalled()
         expect(scopedStore.setSession).toHaveBeenCalledWith(session)
         expect(mocks.signAndExecute).toHaveBeenCalled()
     })

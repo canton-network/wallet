@@ -46,6 +46,7 @@ import {
     toWallet,
     fromApiKey,
     toApiKey,
+    toSession,
 } from './schema.js'
 import pg from 'pg'
 
@@ -377,7 +378,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .selectAll()
             .where('userId', '=', userId)
             .executeTakeFirst()
-        return row ? this.toSession(row) : undefined
+        return row ? toSession(row) : undefined
     }
 
     async setSession(session: Session): Promise<void> {
@@ -402,28 +403,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .deleteFrom('sessions')
             .where('userId', '=', userId)
             .execute()
-    }
-
-    /**
-     * Returns the session for a user without requiring the caller's auth context.
-     * Used by background jobs (e.g. pending external signing poller).
-     */
-    async getSessionForUser(userId: UserId): Promise<Session | undefined> {
-        const row = await this.db
-            .selectFrom('sessions')
-            .selectAll()
-            .where('userId', '=', userId)
-            .executeTakeFirst()
-        return row ? this.toSession(row) : undefined
-    }
-
-    private toSession(row: DB['sessions']): Session {
-        return {
-            id: row.id,
-            network: row.network,
-            accessToken: row.accessToken,
-            userId: row.userId,
-        }
     }
 
     /**
