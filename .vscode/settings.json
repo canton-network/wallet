@@ -11,7 +11,7 @@
         "**/.daml/unpacked-dars/**": true
     },
     "files.watcherExclude": {
-        "**/target/**": true
+        "**/target": true
     },
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "always"

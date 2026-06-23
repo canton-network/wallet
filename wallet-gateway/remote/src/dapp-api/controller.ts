@@ -254,7 +254,7 @@ export const dappController = (
                 }
             )
 
-            const actAsParty = params.actAs?.[0] || wallet.partyId
+            const actAsParty = params.actAs || [wallet.partyId]
 
             const prepared = await prepareSubmission(
                 context.userId,
