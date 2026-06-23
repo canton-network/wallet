@@ -646,46 +646,11 @@ export const userController = (
             }
 
             const connectedContext = assertConnected(authContext)
-            let userId = connectedContext.userId
-
             const accessTokenProvider: AuthTokenProvider =
                 AuthTokenProvider.fromToken(
                     connectedContext.accessToken,
                     logger
                 )
-
-            if (authContext?.isApiKey) {
-                logger.info(
-                    'Authenticated with API Key, fetching m2m token for ledger access'
-                )
-
-                userId = authContext.ledgerUserId
-
-                // const idp = await store.getIdp(network.identityProviderId)
-                // if (!network.adminAuth) {
-                //     throw new Error('No admin auth configured')
-                // }
-
-                // accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
-                //     idp,
-                //     network.adminAuth,
-                //     logger
-                // )
-
-                // const adminClient = new LedgerClient({
-                //     baseUrl: new URL(network.ledgerApi.baseUrl),
-                //     logger,
-                //     accessTokenProvider,
-                // })
-
-                // connectedContext = await accessTokenProvider.getAuthContext()
-
-                // await adminClient.grantMasterUserRights(
-                //     connectedContext.userId,
-                //     true,
-                //     true
-                // )
-            }
 
             if (network === undefined) {
                 throw new Error('No network session found')
@@ -710,11 +675,16 @@ export const userController = (
 
             logDynamically(logger, 'executing transaction with params', {
                 info: { transactionId: executeParams.transactionId },
-                debug: { executeParams, transaction, wallet, userId },
+                debug: {
+                    executeParams,
+                    transaction,
+                    wallet,
+                    userId: connectedContext.userId,
+                },
             })
 
             const response = await transactionService.execute(
-                userId,
+                connectedContext.userId,
                 wallet,
                 transaction,
                 executeParams,
