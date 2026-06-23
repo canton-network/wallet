@@ -47,6 +47,7 @@ import { Env } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { AuthTokenProvider, type Idp } from '@canton-network/core-wallet-auth'
 import type { Network } from '@canton-network/core-wallet-store'
+import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -336,15 +337,17 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         ],
     }
 
-    app.use('/api/*splat', express.json())
-    app.use('/api/*splat', preAuthRateLimit)
     app.use(
         '/api/*splat',
-        jwtAuth(authService, logger.child({ component: 'JwtHandler' }))
-    )
-    app.use('/api/*splat', postAuthRateLimit)
-    app.use(
-        '/api/*splat',
+        express.json(),
+        preAuthRateLimit,
+        apiKeyAuth(
+            store,
+            config.server.dappPath,
+            logger.child({ component: 'ApiKeyHandler' })
+        ),
+        jwtAuth(authService, logger.child({ component: 'JwtHandler' })),
+        postAuthRateLimit,
         sessionHandler(
             store,
             allowedPaths,

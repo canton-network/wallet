@@ -25,7 +25,11 @@ import {
 } from '../user-api/rpc-gen/typings.js'
 import { UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
-import { ledgerPrepareParams, type PrepareParams } from '../utils.js'
+import {
+    ledgerPrepareParams,
+    logDynamically,
+    type PrepareParams,
+} from '../utils.js'
 import {
     AuthContext,
     AuthTokenProvider,
@@ -325,7 +329,7 @@ export class TransactionService {
             GetTransactionResult | SignTransactionResult,
             SigningError
         >
-        if (tx && tx.externalTxId) {
+        if (tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
                     userId,
@@ -350,6 +354,11 @@ export class TransactionService {
         }
 
         const now = new Date()
+
+        logDynamically(this.logger, 'Blockdaemon signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
@@ -433,7 +442,7 @@ export class TransactionService {
             SigningError
         >
 
-        if (tx && tx.externalTxId) {
+        if (tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
                     userId,
@@ -457,6 +466,11 @@ export class TransactionService {
         }
 
         const now = new Date()
+
+        logDynamically(this.logger, 'Fireblocks signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
@@ -572,6 +586,11 @@ export class TransactionService {
 
         const now = new Date()
 
+        logDynamically(this.logger, 'Dfns signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
+
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
                 throw new Error('No updateId returned from Dfns')
@@ -668,7 +687,7 @@ export class TransactionService {
         })
         this.notifier.emit('txChanged', executedTx)
 
-        return { updateId: transaction.externalTxId } as ExecuteResult
+        return { updateId: transaction.externalTxId }
     }
 
     private async executeWithParticipant(
@@ -690,10 +709,15 @@ export class TransactionService {
             synchronizerId,
             transaction.payload as PrepareParams
         )
-        const res = await ledgerClient.postWithRetry(
+        const result = await ledgerClient.postWithRetry(
             '/v2/commands/submit-and-wait',
             prep
         )
+
+        logDynamically(this.logger, 'Participant execution result', {
+            info: { transactionId: transaction.id },
+            debug: { result, transaction, executeParams, userId },
+        })
 
         const executedTx: Transaction = {
             id: transaction.id,
@@ -701,7 +725,7 @@ export class TransactionService {
             status: 'executed',
             preparedTransaction: transaction.preparedTransaction,
             preparedTransactionHash: transaction.preparedTransactionHash,
-            payload: res,
+            payload: result,
             origin: transaction.origin ?? null,
             ...(transaction.createdAt && {
                 createdAt: transaction.createdAt,
@@ -711,11 +735,11 @@ export class TransactionService {
             }),
         }
         await this.store.setTransactionStatus(transaction.id, 'executed', {
-            payload: res,
+            payload: result,
         })
         this.notifier.emit('txChanged', executedTx)
 
-        return res as ExecuteResult
+        return result
     }
 
     private async executeWithExternal(
@@ -756,6 +780,11 @@ export class TransactionService {
             }
         )
 
+        logDynamically(this.logger, 'Externally signed execution result', {
+            info: { transactionId: transaction.id },
+            debug: { result, transaction, executeParams, userId },
+        })
+
         const executedTx: Transaction = {
             id: transaction.id,
             commandId,
@@ -776,6 +805,6 @@ export class TransactionService {
         })
         this.notifier.emit('txChanged', executedTx)
 
-        return result as ExecuteResult
+        return result
     }
 }

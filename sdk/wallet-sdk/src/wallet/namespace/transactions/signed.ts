@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Ops } from '@canton-network/core-provider-ledger'
-import { SDKContext } from '../../sdk.js'
+import type { SDKContext } from '../../init/types/context.js'
 import { ExecuteOptions } from '../ledger/types.js'
 import { LedgerNamespace } from '../ledger/index.js'
 

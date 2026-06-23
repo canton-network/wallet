@@ -1,10 +1,9 @@
 {
     "name": "@canton-network/core-token-standard",
-    "version": "1.4.0",
+    "version": "1.6.1",
     "type": "module",
     "description": "daml codegen js for core token standard",
     "license": "Apache-2.0",
-    "packageManager": "yarn@4.9.4",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -22,34 +21,29 @@
         "dev": "rollup -c -w",
         "clean:types-tmp": "rm -rf dist/types",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
-        "clean": "rm -rf dist",
-        "test": "vitest run --project node --project browser --passWithNoTests",
-        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+        "clean": "rm -rf dist"
     },
     "dependencies": {
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
-        "@daml/types": "^3.5.0",
+        "@daml/types": "^3.5.1",
         "@mojotech/json-type-validation": "^3.1.0",
         "lodash": "^4.18.1",
         "openapi-fetch": "^0.17.0",
         "uuid": "^14.0.0",
-        "zod": "^4.3.6"
+        "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@rollup/plugin-alias": "^5.0.0",
-        "@rollup/plugin-commonjs": "^29.0.0",
+        "@rollup/plugin-alias": "^5.1.1",
+        "@rollup/plugin-commonjs": "^29.0.3",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@rollup/plugin-typescript": "^12.3.0",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
-        "playwright": "^1.58.2",
-        "rollup": "^4.59.0",
-        "rollup-plugin-dts": "^6.3.0",
+        "playwright": "^1.60.0",
+        "rollup": "^4.62.0",
+        "rollup-plugin-dts": "^6.4.1",
         "tslib": "^2.8.1",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "typescript": "^5.9.3"
     },
     "files": [
         "dist/**"
@@ -61,5 +55,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/token-standard"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

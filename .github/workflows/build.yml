@@ -219,6 +219,14 @@ jobs:
                     --head=HEAD \
                     --parallel
 
+            - name: Coverage summary
+              run: |
+                  echo "::group::Unit test coverage summary"
+                  yarn script:coverage:report \
+                    --base=origin/${{ github.base_ref }} \
+                    --head=HEAD
+                  echo "::endgroup::"
+
     check-migration-lock:
         # Verifies migrations.lock.json is in sync with src/migrations for any
         # affected SQL store package that defines a `migrations:check-lock`
