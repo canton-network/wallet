@@ -33,11 +33,8 @@ import { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import { TransactionService } from '../ledger/transaction-service.js'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
 
-export interface DappControllerDeps {
-    signingDrivers: SigningDrivers
-}
+import { rpcErrors } from '@canton-network/core-rpc-errors'
 
 export const dappController = (
     kernelInfo: KernelInfoConfig,
@@ -195,12 +192,13 @@ export const dappController = (
             return result
         },
         prepareExecute: async (params: PrepareExecuteParams) => {
+            const wallet = await store.getPrimaryWallet()
+            const wallets = await store.getWallets()
+            const network = await store.getCurrentNetwork()
+
             if (context === undefined) {
                 throw new Error('Unauthenticated context')
             }
-
-            const wallet = await store.getPrimaryWallet()
-            const network = await store.getCurrentNetwork()
 
             if (wallet === undefined) {
                 throw new Error(
@@ -208,16 +206,23 @@ export const dappController = (
                 )
             }
 
+            let userId = context.userId
+            const accessTokenProvider: AuthTokenProvider =
+                AuthTokenProvider.fromToken(context.accessToken, logger)
+
+            if (context?.isApiKey) {
+                logger.info(
+                    'Authenticated with API Key, fetching m2m token for ledger access'
+                )
+                userId = context.ledgerUserId
+            }
+
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
-                ),
+                accessTokenProvider,
             })
 
-            const userId = context.userId
             const notifier = notificationService.getNotifier(userId)
 
             const commandId = params.commandId || v4()
@@ -229,18 +234,37 @@ export const dappController = (
                 network.synchronizerId ??
                 (await ledgerClient.getSynchronizerId())
 
+            let actAs = [wallet.partyId]
+
+            if (params.actAs && params.actAs.length > 0) {
+                actAs = params.actAs
+
+                for (const actingParty of actAs) {
+                    if (
+                        wallets.find((w) => w.partyId === actingParty) ===
+                        undefined
+                    ) {
+                        throw rpcErrors.invalidRequest(
+                            `Acting party ${actingParty} does not belong to user`
+                        )
+                    }
+                }
+            }
+
             logDynamically(
                 logger,
                 'prepareExecute: Submitting request to ledger',
                 {
                     info: { transactionId },
-                    debug: { commandId, userId, partyId: wallet.partyId },
+                    debug: { commandId, userId, actAs },
                 }
             )
 
+            const actAsParty = params.actAs || [wallet.partyId]
+
             const prepared = await prepareSubmission(
                 context.userId,
-                wallet.partyId,
+                actAsParty,
                 synchronizerId,
                 params,
                 ledgerClient
@@ -254,7 +278,7 @@ export const dappController = (
                     debug: {
                         commandId,
                         userId,
-                        partyId: wallet.partyId,
+                        partyId: actAsParty,
                         prepared,
                     },
                 }
@@ -275,7 +299,7 @@ export const dappController = (
                 {
                     actAs: params.actAs || [wallet.partyId],
                     readAs: params.readAs || [],
-                    userId: context.userId,
+                    userId,
                     commandId,
                     commands: params.commands?.[0],
                     confirmationRequestTrafficCostEstimation:
@@ -463,13 +487,13 @@ export const dappController = (
 
 async function prepareSubmission(
     userId: string,
-    partyId: string,
+    partyIds: string[],
     synchronizerId: string,
     params: PrepareExecuteParams,
     ledgerClient: LedgerClient
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(userId, partyId, synchronizerId, params)
+        ledgerPrepareParams(userId, partyIds, synchronizerId, params)
     )
 }

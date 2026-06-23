@@ -10,13 +10,50 @@ import { Store } from '@canton-network/core-wallet-store'
 import { AuthAware } from '@canton-network/core-wallet-auth'
 import crypto from 'crypto'
 
-type ApiKeyStore = Pick<Store, 'getApiKey' | 'setSession'>
+type ApiKeyStore = Pick<
+    Store,
+    'getApiKey' | 'getNetwork' | 'getIdp' | 'setSession'
+>
+
+vi.mock('@canton-network/core-wallet-auth', async () => {
+    const actual = await vi.importActual<
+        typeof import('@canton-network/core-wallet-auth')
+    >('@canton-network/core-wallet-auth')
+    return {
+        ...actual,
+        AuthTokenProvider: {
+            fromGatewayConfig: vi.fn().mockReturnValue({
+                getAuthContext: vi.fn().mockResolvedValue({
+                    userId: 'service_account',
+                    accessToken: 'abc',
+                }),
+            }),
+        },
+    }
+})
 
 describe('apiKeyAuth', () => {
     const getApiKey = vi.fn()
     const logger = pino({ level: 'silent' }, sink())
     const store: ApiKeyStore & AuthAware<ApiKeyStore> = {
         getApiKey,
+        getNetwork: vi.fn().mockResolvedValue({
+            id: 'canton:local-oauth',
+            identityProviderId: 'idp-mock-oauth',
+            serviceAccountAuth: {
+                method: 'client_credentials',
+                scope: 'daml_ledger_api',
+                audience: 'aud',
+                clientId: 'service_account',
+                clientSecret: 'service-account-secret',
+            },
+        }),
+        getIdp: vi.fn().mockResolvedValue({
+            id: 'idp-mock-oauth',
+            type: 'oauth',
+            issuer: 'http://127.0.0.1:8889',
+            configUrl: 'http://127.0.0.1:8889/.well-known/openid-configuration',
+        }),
         setSession: vi.fn(),
         authContext: undefined,
         withAuthContext(context) {
@@ -71,7 +108,14 @@ describe('apiKeyAuth', () => {
     })
 
     it('sets authContext and calls next when verification succeeds', async () => {
-        const ctx = { userId: 'alice', accessToken: 'abc', isApiKey: true }
+        const ctx = {
+            userId: 'alice',
+            ledgerUserId: 'service_account',
+            accessToken: 'abc',
+            isApiKey: true,
+            email: undefined,
+        }
+
         getApiKey.mockResolvedValue({
             id: 'key1',
             digest: crypto.createHash('sha256').update('abc').digest('hex'),

@@ -6,12 +6,20 @@ export type UserId = string
 /**
  * Authentication context containing user ID and access token
  */
-export interface AuthContext {
-    userId: UserId
-    accessToken: string
-    email?: string
-    isApiKey?: boolean
-}
+export type AuthContext =
+    | {
+          userId: UserId
+          accessToken: string
+          email?: string
+          isApiKey?: false
+      }
+    | {
+          isApiKey: true
+          userId: UserId
+          ledgerUserId: UserId
+          accessToken: string
+          email?: string
+      }
 
 /**
  * Interface for types that are aware of authentication context

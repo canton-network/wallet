@@ -110,6 +110,7 @@ const bootstrapFromEnv = bootstrapConfigSchema.extend({
         networkSchema.extend({
             auth: authFromEnvOrConfig,
             adminAuth: authFromEnvOrConfig.optional(),
+            serviceAccountAuth: authFromEnvOrConfig.optional(),
         })
     ),
 })

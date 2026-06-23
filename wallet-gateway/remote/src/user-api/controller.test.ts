@@ -881,7 +881,7 @@ describe('userController', () => {
             const result = await controller.execute(params)
 
             expect(transactionServiceMocks.execute).toHaveBeenCalledWith(
-                auth,
+                auth.userId,
                 participantWallet,
                 expect.objectContaining({ id: pendingTransaction.id }),
                 params,
@@ -914,7 +914,7 @@ describe('userController', () => {
             const result = await controller.execute(executeParams)
 
             expect(transactionServiceMocks.execute).toHaveBeenCalledWith(
-                auth,
+                auth.userId,
                 primaryWallet,
                 expect.objectContaining({ id: pendingTransaction.id }),
                 executeParams,

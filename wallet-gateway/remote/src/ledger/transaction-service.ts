@@ -108,7 +108,7 @@ export class TransactionService {
     }
 
     public execute(
-        authContext: AuthContext,
+        userId: UserId,
         wallet: Wallet,
         transaction: Transaction,
         executeParams?: ExecuteParams,
@@ -134,7 +134,7 @@ export class TransactionService {
                         )
                     }
                     return this.executeWithParticipant(
-                        authContext.userId,
+                        userId,
                         executeParams,
                         transaction,
                         ledgerClient,
@@ -159,7 +159,7 @@ export class TransactionService {
                     )
                 }
                 return this.executeWithExternal(
-                    authContext.userId,
+                    userId,
                     executeParams,
                     transaction,
                     ledgerClient
@@ -705,7 +705,7 @@ export class TransactionService {
 
         const prep = ledgerPrepareParams(
             userId,
-            partyId,
+            [partyId],
             synchronizerId,
             transaction.payload as PrepareParams
         )
