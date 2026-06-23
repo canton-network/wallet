@@ -19,19 +19,19 @@ import { createAndInitiateOtcTrade } from './_trade_propose.js'
 import { settleOtcTrade } from './_trade_settle.js'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
-// app-user participant hosts Alice, app-provider hosts Bob (+ TokenAdmin), sv hosts TradingApp.
+// app-user participant hosts Alice + TradingApp, app-provider hosts Bob (+ TokenAdmin); both
+// app-user and app-provider connect to the global + app synchronizers, sv is global-only.
 
 const logger = pino({ name: 'v1-15-multi-sync-trade', level: 'info' })
 
 // ── Setup: create SDKs, discover synchronizers, vet DARs, allocate parties ───
 // Step 1: Create SDKs for all 3 participants (app-user, app-provider, sv) and discover global + app synchronizers
 // Step 2: Vet DARs on both synchronizers for app-user + app-provider; global only for sv (not connected to app-synchronizer)
-// Step 3: Allocate parties for Alice (app-user), Bob (app-provider), TradingApp (sv), and TokenAdmin (app-provider)
+// Step 3: Allocate parties for Alice (app-user), Bob (app-provider), TradingApp (app-user, both synchronizers), and TokenAdmin (app-provider)
 const setup = await setupMultiSyncTrade(logger)
 const {
     appUserSdk,
     appProviderSdk,
-    svSdk,
     tokenNamespaceAppProvider,
     alice,
     bob,
@@ -66,7 +66,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: appUserSdk, parties: [alice.partyId] },
     { sdk: appProviderSdk, parties: [bob.partyId] },
     { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: svSdk, parties: [tradingApp.partyId] },
+    { sdk: appUserSdk, parties: [tradingApp.partyId] },
 ])
 
 // ── OTC trade terms ───────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: appUserSdk, parties: [alice.partyId] },
     { sdk: appProviderSdk, parties: [bob.partyId] },
     { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: svSdk, parties: [tradingApp.partyId] },
+    { sdk: appUserSdk, parties: [tradingApp.partyId] },
 ])
 // ── Steps 8–9: Allocate in parallel ────────────────────────────────────────
 // Step 8:  Alice allocates Amulet for leg-0 (global synchronizer)
@@ -108,7 +108,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: appUserSdk, parties: [alice.partyId] },
     { sdk: appProviderSdk, parties: [bob.partyId] },
     { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: svSdk, parties: [tradingApp.partyId] },
+    { sdk: appUserSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────────────
 const allocationsBob = await tokenNamespaceAppProvider.allocation.pending(
@@ -119,10 +119,10 @@ const testTokenAllocation = allocationsBob.find(
 )
 if (!testTokenAllocation) throw new Error('TestToken allocation not found')
 const testTokenAllocationCid = testTokenAllocation.contractId
-// Disclose Bob's TestToken allocation to the TradingApp (sv participant): the
-// allocation is created on the app-provider participant, so it may not yet be in the sv's ACS
-// when settlement runs. Disclosing it makes settlement independent of cross-
-// participant propagation timing.
+// Disclose Bob's TestToken allocation to the TradingApp's settlement
+// participant (app-user): the allocation is created on the app-provider
+// participant, so it may not yet be in app-user's ACS when settlement runs.
+// Disclosing it makes settlement independent of cross-participant propagation timing.
 const testTokenAllocationDisclosed = {
     templateId: testTokenAllocation.activeContract.createdEvent.templateId,
     contractId: testTokenAllocation.contractId,
@@ -131,7 +131,27 @@ const testTokenAllocationDisclosed = {
     synchronizerId: '',
 }
 
-// ── Step 10b: TradingApp settles the OTCTrade ─────────────────────────────────
+// ── Step 10b: Bob reassigns his TestToken allocation app → global ──────────────
+// The allocation was created on the app-synchronizer. Settlement runs on the
+// global synchronizer, so the allocation must move to global first. The
+// settlement is submitted by TradingApp, which is only an *observer* of the
+// allocation — and Canton's automatic reassignment requires the submitter to be
+// a *signatory* (SUBMITTER_ALWAYS_STAKEHOLDER otherwise). Bob is the
+// allocation's sender (a signatory) and is hosted on the app-provider
+// participant, which is connected to both synchronizers, so Bob can perform the
+// reassignment explicitly before settlement.
+await appProviderSdk.ledger.internal.reassign({
+    submitter: bob.partyId,
+    contractId: testTokenAllocationCid,
+    source: synchronizers.appSynchronizerId,
+    target: synchronizers.globalSynchronizerId,
+    skipIfAlreadyOn: true,
+})
+logger.info(
+    'Bob: TestToken allocation reassigned app-synchronizer → global ahead of settlement'
+)
+
+// ── Step 10c: TradingApp settles the OTCTrade ─────────────────────────────────
 try {
     await settleOtcTrade(
         setup,
@@ -155,7 +175,7 @@ try {
         { sdk: appUserSdk, parties: [alice.partyId] },
         { sdk: appProviderSdk, parties: [bob.partyId] },
         { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-        { sdk: svSdk, parties: [tradingApp.partyId] },
+        { sdk: appUserSdk, parties: [tradingApp.partyId] },
     ])
     await registry.stop()
     process.exit(1)
@@ -165,7 +185,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: appUserSdk, parties: [alice.partyId] },
     { sdk: appProviderSdk, parties: [bob.partyId] },
     { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: svSdk, parties: [tradingApp.partyId] },
+    { sdk: appUserSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 11: Self-transfer TestTokens back to app-synchronizer ─────────────────
 await Promise.all([
@@ -177,7 +197,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: appUserSdk, parties: [alice.partyId] },
     { sdk: appProviderSdk, parties: [bob.partyId] },
     { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: svSdk, parties: [tradingApp.partyId] },
+    { sdk: appUserSdk, parties: [tradingApp.partyId] },
 ])
 
 await registry.stop()

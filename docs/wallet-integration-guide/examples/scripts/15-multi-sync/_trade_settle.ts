@@ -113,7 +113,7 @@ export async function settleOtcTrade(
     logger: Logger
 ): Promise<void> {
     const {
-        svSdk,
+        appUserSdk,
         tokenNamespaceAppUser,
         tokenNamespaceAppProvider,
         alice,
@@ -197,7 +197,7 @@ export async function settleOtcTrade(
     ]
 
     try {
-        await svSdk.ledger
+        await appUserSdk.ledger
             .prepare({
                 partyId: tradingApp.partyId,
                 commands: [

@@ -45,6 +45,7 @@ stakeholder of `TokenRules`, so Canton refuses to reassign it automatically.
 | Baseline | reassign commented out, separate `TokenAdmin`                             | ❌ `SUBMITTER_ALWAYS_STAKEHOLDER` at allocation prepare |
 | **A**    | Bob self-transfers his `Token` to **global** first (no explicit reassign) | ❌ `PRESCRIBED_SYNCHRONIZER_ID_MISMATCH`                |
 | **B**    | **Remove the separate `TokenAdmin` — Bob is his own token's admin**       | ✅ full end-to-end success, exit 0                      |
+| **C**    | Registry-driven synchronizer selection (`_targetSynchronizerId`)          | ❌ does not help — see pincer below                     |
 
 ### Experiment A — Bob self-transfers to global (does NOT work)
 
@@ -110,6 +111,70 @@ const bobTokens = bobTokensRaw.filter(
 This holding-visibility leak is precisely **why a real deployment keeps the token
 issuer as a separate party** from the holders.
 
+### Experiment C — registry-driven synchronizer selection (does NOT help) ❌
+
+An external expert suggested that, instead of an explicit reassign, the
+**workflow should tell the registry which synchronizer the allocation factory
+must live on**, by funnelling a top-level `_targetSynchronizerId` field through
+the `choiceArguments` of the allocation-factory request and parsing it in the
+`TestTokenV1` registry handlers. The reasoning: the `TokenRules` factory is
+**un-reassignable** (signatory = `admin` only), so it must already reside on the
+transaction's synchronizer; let the client choose that synchronizer.
+
+This was implemented and tested:
+
+- `_registry/.../allocation-instruction/handlers.ts` now reads
+  `choiceArguments._targetSynchronizerId` and returns the `TokenRules` contract
+  on that synchronizer (defaulting to global).
+- `_token_allocation.ts` fetches the factory itself (passing
+  `_targetSynchronizerId`) and prepares the allocation on the chosen
+  synchronizer.
+
+The two reachable choices form a **pincer** that proves the field alone cannot
+rescue run-15:
+
+1. **Target the app-synchronizer** (where Bob's holding already lives, to avoid
+   reassigning anything):
+
+    ```text
+    code: 'INVALID_PRESCRIBED_SYNCHRONIZER_ID',
+    cause: 'Not all informees are on the specified synchronizer:
+            app-synchronizer::…, but on Set(global-domain::…)'
+    errorCategory: 9
+    ```
+
+    The allocation transaction's **informees are all on global** — most notably
+    the settlement executor **`TradingApp`, which is hosted on global only**. So
+    the allocation simply **cannot be created on the app-synchronizer**.
+
+2. **Target the global synchronizer** (where the informees actually are):
+
+    ```text
+    code: 'SUBMITTER_ALWAYS_STAKEHOLDER',
+    cause: 'The given contracts cannot be reassigned as no submitter is a stakeholder.'
+    errorCategory: 9
+    ```
+
+    This is the **baseline failure again**: Bob's input `Token` is on the
+    app-synchronizer and must be auto-reassigned to global, but Bob (the sole
+    interactive signer) is not a stakeholder of the un-reassignable factory.
+
+In other words, the allocation transaction is **forced onto global** by its
+informees, while Bob's input holding is **forced to start on the
+app-synchronizer** by leg-1's design — so a cross-synchronizer move of Bob's
+holding is unavoidable, and `_targetSynchronizerId` only lets you choose _which_
+of the two errors you hit.
+
+**The expert's mechanism is architecturally correct and useful in general** — a
+registry that offers factories on multiple synchronizers does need the workflow
+to pick the transaction synchronizer, and the un-reassignable reference data
+must reside there. The decisive lever is the **companion point**: the client
+must also pick an **input holding that already lives on the settlement
+synchronizer** (global). In run-15 Bob has no global holding, so without one of
+(a) an explicit reassign, (b) the issuer co-authorizing the move, or (c) minting
+/ holding Bob's token on global up front, the single-signer automatic
+reassignment cannot be authorized.
+
 ## Conclusion
 
 - ✅ **You can run the scenario without the explicit reassign step** by removing
@@ -118,6 +183,12 @@ issuer as a separate party** from the holders.
   submitter is a stakeholder of the `TokenRules` factory it must move.
 - ❌ A Bob self-transfer to `global` (Experiment A) cannot replace the reassign:
   the registry only exposes the transfer factory on the app-synchronizer.
+- ❌ Registry-driven synchronizer selection (Experiment C, `_targetSynchronizerId`)
+  cannot rescue run-15 on its own: the allocation is forced onto global by its
+  informees (`TradingApp` is global-only), while Bob's input holding starts on
+  the app-synchronizer, so the cross-synchronizer move is unavoidable and Bob
+  alone cannot authorize it. The field is still the right primitive when the
+  client can also supply an input holding already on the settlement synchronizer.
 - ⚠️ Removing `TokenAdmin` is a **demo simplification**, not a production
   pattern: a real token issuer is a distinct party, and with a distinct issuer
   the holder must still trigger the reassignment (explicitly, or via a workflow

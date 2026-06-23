@@ -76,7 +76,6 @@ export async function createAndInitiateOtcTrade(
     const {
         appUserSdk,
         appProviderSdk,
-        svSdk,
         alice,
         bob,
         tradingApp,
@@ -157,13 +156,13 @@ export async function createAndInitiateOtcTrade(
     const prepareUntil = new Date(Date.now() + MS_30_MIN).toISOString()
     const settleBefore = new Date(Date.now() + MS_1_HOUR).toISOString()
 
-    await svSdk.ledger
+    await appUserSdk.ledger
         .prepare({
             partyId: tradingApp.partyId,
             commands: [
                 buildInitiateSettlementCommand({
                     proposalCid: await readProposalCid(
-                        svSdk,
+                        appUserSdk,
                         tradingApp.partyId,
                         (approvers) => approvers.includes(bob.partyId)
                     ),
@@ -180,7 +179,7 @@ export async function createAndInitiateOtcTrade(
         'TradingApp: OTCTradeProposal_InitiateSettlement executed → OTCTrade created'
     )
 
-    const otcTradeContracts = await svSdk.ledger.acs.read({
+    const otcTradeContracts = await appUserSdk.ledger.acs.read({
         templateIds: [OTC_TRADE_TEMPLATE_ID],
         parties: [tradingApp.partyId],
         filterByParty: true,
