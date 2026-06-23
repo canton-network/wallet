@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime
 
-API_KEY = "4eb780fd6d6962d9d4048c569484a1b7c7e342eb953d0ae5888d7c1d4f4f4380"
+API_KEY = ""
 
 def json_rpc_request(path, method, params=None, apiKey=None):
     headers = {}
@@ -54,17 +54,6 @@ def ping_create_command(party):
         },
     ]
 
-def get_transaction(transactionId):
-    response = json_rpc_request("user", "getTransaction", { "transactionId": transactionId }, apiKey=API_KEY)
-    print("Get transaction response:", response.text)
-    return response
-
-def sign(transactionId, partyId):
-    return json_rpc_request("user", "sign", { "transactionId": transactionId, "partyId": partyId }, apiKey=API_KEY)
-
-def execute(transactionId, partyId, signature, signedBy):
-    return json_rpc_request("user", "execute", { "transactionId": transactionId, "partyId": partyId, "signature": signature, "signedBy": signedBy }, apiKey=API_KEY)
-
 
 def main():
     if not API_KEY:
@@ -76,7 +65,7 @@ def main():
 
     print("\nReceived primary party: ", primaryParty)
 
-    pingCommand = ping_create_command("alex2::1220c698552fa35fe46181e2c5c642ea6e11222534fea32001c7a123dd4bd272d8d5")
+    pingCommand = ping_create_command(primaryParty)
 
     prepared = prepare_execute(pingCommand)
     userUrl = prepared.json().get("result", {}).get("userUrl")
@@ -92,20 +81,6 @@ def main():
         return
 
     print("Received transactionId: ", transactionId)
-
-    signed = sign(transactionId, primaryParty)
-    print("Sign response:", signed.text)
-
-    status = signed.json().get("result", {}).get("status")
-    # if status != "success":
-    #     print("Sign failed:", signed.text)
-    #     return
-
-    signature = signed.json().get("result", {}).get("signature")
-    signedBy = signed.json().get("result", {}).get("signedBy")
-
-    executeR = execute(transactionId, primaryParty, signature, signedBy)
-    print("Execute response:", executeR.text)
 
 if __name__ == "__main__":
     main()

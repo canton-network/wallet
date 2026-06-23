@@ -156,7 +156,6 @@ function createController(
         userUrl,
         store,
         notificationService,
-        {},
         logger,
         requestOrigin,
         context
