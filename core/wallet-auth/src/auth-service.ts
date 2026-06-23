@@ -10,6 +10,7 @@ export interface AuthContext {
     userId: UserId
     accessToken: string
     email?: string
+    isApiKey?: boolean
 }
 
 /**

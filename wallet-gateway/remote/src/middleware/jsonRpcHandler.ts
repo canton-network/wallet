@@ -32,7 +32,6 @@ interface JsonRpcHttpOptions<T> {
 export const handleRpcError = (
     error: unknown,
     id: string | number | null,
-    logger: Logger,
     method?: string
 ): [number, JsonRpcResponse] => {
     const genericMessage = method
@@ -113,8 +112,7 @@ export const jsonRpcHandler =
                     rpcErrors.invalidRequest({
                         message: 'Invalid JSON-RPC request format',
                     }),
-                    null,
-                    logger
+                    null
                 )
 
                 return res.status(status).json(response)
@@ -142,7 +140,6 @@ export const jsonRpcHandler =
                             message: `Method ${method} not found`,
                         }),
                         null,
-                        logger,
                         method
                     )
 
@@ -164,7 +161,6 @@ export const jsonRpcHandler =
                         const [status, response] = handleRpcError(
                             error,
                             id,
-                            logger,
                             method
                         )
 
