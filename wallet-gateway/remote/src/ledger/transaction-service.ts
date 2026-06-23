@@ -642,7 +642,7 @@ export class TransactionService {
 
         const prep = ledgerPrepareParams(
             userId,
-            partyId,
+            [partyId],
             synchronizerId,
             transaction.payload as PrepareParams
         )

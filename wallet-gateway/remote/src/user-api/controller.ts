@@ -638,7 +638,7 @@ export const userController = (
             )
 
             if (wallet === undefined) {
-                throw new Error('No primary wallet found')
+                throw new Error('Requested wallet not found for user')
             }
 
             if (transaction === undefined) {
