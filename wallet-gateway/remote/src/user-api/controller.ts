@@ -646,6 +646,11 @@ export const userController = (
             }
 
             const connectedContext = assertConnected(authContext)
+            const accessTokenProvider: AuthTokenProvider =
+                AuthTokenProvider.fromToken(
+                    connectedContext.accessToken,
+                    logger
+                )
 
             if (network === undefined) {
                 throw new Error('No network session found')
@@ -655,16 +660,10 @@ export const userController = (
                 connectedContext.userId
             )
 
-            // Create AccessTokenProvider for user token
-            const userAccessTokenProvider = AuthTokenProvider.fromToken(
-                authContext!.accessToken,
-                logger
-            )
-
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
-                accessTokenProvider: userAccessTokenProvider,
+                accessTokenProvider,
             })
 
             const transactionService = new TransactionService(
@@ -676,11 +675,16 @@ export const userController = (
 
             logDynamically(logger, 'executing transaction with params', {
                 info: { transactionId: executeParams.transactionId },
-                debug: { executeParams, transaction, wallet, connectedContext },
+                debug: {
+                    executeParams,
+                    transaction,
+                    wallet,
+                    userId: connectedContext.userId,
+                },
             })
 
             const response = await transactionService.execute(
-                connectedContext,
+                connectedContext.userId,
                 wallet,
                 transaction,
                 executeParams,

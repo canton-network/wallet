@@ -1140,6 +1140,9 @@
                     "adminAuth": {
                         "$ref": "#/components/schemas/Auth"
                     },
+                    "serviceAccountAuth": {
+                        "$ref": "#/components/schemas/Auth"
+                    },
                     "ledgerApi": {
                         "title": "ledgerApi",
                         "type": "string",

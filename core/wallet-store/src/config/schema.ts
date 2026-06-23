@@ -17,6 +17,7 @@ export const networkSchema = z.object({
     ledgerApi: ledgerApiSchema,
     auth: authSchema,
     adminAuth: authSchema.optional(),
+    serviceAccountAuth: authSchema.optional(),
 })
 
 export const storeConfigSchema = z.object({

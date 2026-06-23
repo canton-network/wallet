@@ -200,16 +200,23 @@ export const dappController = (
                 throw new Error('No primary wallet found')
             }
 
+            let userId = context.userId
+            const accessTokenProvider: AuthTokenProvider =
+                AuthTokenProvider.fromToken(context.accessToken, logger)
+
+            if (context?.isApiKey) {
+                logger.info(
+                    'Authenticated with API Key, fetching m2m token for ledger access'
+                )
+                userId = context.ledgerUserId
+            }
+
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
-                ),
+                accessTokenProvider,
             })
 
-            const userId = context.userId
             const notifier = notificationService.getNotifier(userId)
 
             const commandId = params.commandId || v4()
@@ -247,9 +254,11 @@ export const dappController = (
                 }
             )
 
+            const actAsParty = params.actAs || [wallet.partyId]
+
             const prepared = await prepareSubmission(
                 context.userId,
-                actAs,
+                actAsParty,
                 synchronizerId,
                 params,
                 ledgerClient
@@ -263,7 +272,7 @@ export const dappController = (
                     debug: {
                         commandId,
                         userId,
-                        actAs,
+                        partyId: actAsParty,
                         prepared,
                     },
                 }
@@ -284,7 +293,7 @@ export const dappController = (
                 {
                     actAs: params.actAs || [wallet.partyId],
                     readAs: params.readAs || [],
-                    userId: context.userId,
+                    userId,
                     commandId,
                     commands: params.commands?.[0],
                     confirmationRequestTrafficCostEstimation:

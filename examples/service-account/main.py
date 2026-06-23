@@ -1,6 +1,7 @@
 import requests
+from datetime import datetime
 
-API_KEY = "f7ab73d63b93b24501b891c6289c7cb3457d18cec9bdbe777d5f8ce00d7174f3"
+API_KEY = ""
 
 def json_rpc_request(path, method, params=None, apiKey=None):
     headers = {}
@@ -31,6 +32,29 @@ def get_primary_account():
 
     return partyId
 
+def prepare_execute(commands):
+    response = json_rpc_request("dapp", "prepareExecute", { "commands": commands }, apiKey=API_KEY)
+    print("Prepare execute response:", response.text)
+
+    return response
+
+def ping_create_command(party):
+    templateId = '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping'
+
+    return [
+        {
+            "CreateCommand": {
+                "templateId": templateId,
+                "createArguments": {
+                    "id": f"my-test-{datetime.now().isoformat()}",
+                    "initiator": party,
+                    "responder": party,
+                },
+            },
+        },
+    ]
+
+
 def main():
     if not API_KEY:
         print("Please create an API_KEY in the Wallet Gateway before running")
@@ -40,6 +64,23 @@ def main():
     primaryParty = get_primary_account()
 
     print("\nReceived primary party: ", primaryParty)
+
+    pingCommand = ping_create_command(primaryParty)
+
+    prepared = prepare_execute(pingCommand)
+    userUrl = prepared.json().get("result", {}).get("userUrl")
+    print("Received userUrl: ", userUrl)
+
+    # extract transactionId from userUrl query params
+    from urllib.parse import urlparse, parse_qs
+    parsedUrl = urlparse(userUrl)
+    queryParams = parse_qs(parsedUrl.query)
+    transactionId = queryParams.get("transactionId", [None])[0]
+    if not transactionId:
+        print("No transactionId found in userUrl")
+        return
+
+    print("Received transactionId: ", transactionId)
 
 if __name__ == "__main__":
     main()

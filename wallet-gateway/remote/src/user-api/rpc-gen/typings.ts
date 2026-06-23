@@ -77,6 +77,7 @@ export interface Network {
     identityProviderId: IdentityProviderId
     auth: Auth
     adminAuth?: Auth
+    serviceAccountAuth?: Auth
     ledgerApi: LedgerApi
 }
 /**

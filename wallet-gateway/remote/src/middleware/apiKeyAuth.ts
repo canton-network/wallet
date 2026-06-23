@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Request, Response, NextFunction } from 'express'
-import { AuthAware, AuthContext } from '@canton-network/core-wallet-auth'
+import {
+    AuthAware,
+    AuthContext,
+    AuthTokenProvider,
+} from '@canton-network/core-wallet-auth'
 import { Logger } from 'pino'
 import { Store } from '@canton-network/core-wallet-store'
 import crypto from 'crypto'
@@ -62,19 +66,59 @@ export function apiKeyAuth(
                 'API Key authentication successful'
             )
 
+            // temporary auth context to access the store with the API key user
+            const authStore = store.withAuthContext({
+                userId: matchingKey.userId,
+                accessToken: 'unused',
+            })
+
+            // automatically initiate a session for the API key user
+            await authStore.setSession({
+                id: v4(),
+                network: matchingKey.networkId,
+                accessToken: 'unused',
+            })
+
+            const network = await authStore.getNetwork(matchingKey.networkId)
+            const idp = await authStore.getIdp(network.identityProviderId)
+
+            if (!network.serviceAccountAuth) {
+                return res.status(401).json(
+                    jsonRpcResponse(reqId, {
+                        error: {
+                            code: rpcErrors.invalidRequest().code,
+                            message: `Network '${network.id}' does not have a service account configured`,
+                        },
+                    })
+                )
+            }
+
+            if (network.serviceAccountAuth.method !== 'client_credentials') {
+                return res.status(401).json(
+                    jsonRpcResponse(reqId, {
+                        error: {
+                            code: rpcErrors.invalidRequest().code,
+                            message: `Network '${network.id}' does not have a service account configured with client_credentials method`,
+                        },
+                    })
+                )
+            }
+
+            const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                idp,
+                network.serviceAccountAuth,
+                logger
+            )
+
+            const serviceAccountCtx = await accessTokenProvider.getAuthContext()
+
             const context: AuthContext = {
                 isApiKey: true,
                 userId: matchingKey.userId,
-                accessToken: apiKey,
+                ledgerUserId: serviceAccountCtx.userId,
+                accessToken: serviceAccountCtx.accessToken,
                 email: matchingKey.email || undefined,
             }
-
-            // automatically initiate a session for the API key user
-            await store.withAuthContext(context).setSession({
-                id: v4(),
-                network: matchingKey.networkId,
-                accessToken: apiKey,
-            })
 
             req.authContext = context
             return next()
