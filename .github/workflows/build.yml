@@ -212,19 +212,15 @@ jobs:
 
             - uses: ./.github/actions/setup_playwright
 
-            - name: Run affected unit tests
+            - name: Run all unit tests
               run: |
-                  yarn nx affected -t test:coverage \
-                    --base=origin/${{ github.base_ref }} \
-                    --head=HEAD \
+                  yarn nx run-many -t test:coverage \
                     --parallel
 
             - name: Coverage summary
               run: |
                   echo "::group::Unit test coverage summary"
-                  yarn script:coverage:report \
-                    --base=origin/${{ github.base_ref }} \
-                    --head=HEAD
+                  yarn script:coverage:report
                   echo "::endgroup::"
 
     check-migration-lock:
