@@ -48,12 +48,9 @@ const configuredRegistriesToMap = async (
 
             // Some config entries only know the registry URL. Ask the registry for
             // its metadata so we can key the map by its admin partyId.
-            const client = await resolveTokenStandardClient({
-                registryUrl: registry.url,
-            })
-            const info = await client.get('/registry/metadata/v1/info')
+            const adminId = await fetchRegistryAdminId(registry.url)
 
-            return [info.adminId, registry.url]
+            return [adminId, registry.url]
         })
     )
     const entries = settled.flatMap((result, index) => {
@@ -81,6 +78,18 @@ const mergeRegistryUrls = (
 }
 
 const EMPTY: ReadonlyMap<PartyId, string> = new Map()
+
+const fetchRegistryAdminId = async (url: string): Promise<PartyId> => {
+    try {
+        const client = await resolveTokenStandardClient({ registryUrl: url })
+        const info = await client.get('/registry/metadata/v1/info')
+        return info.adminId
+    } catch {
+        throw new Error(
+            'Unable to read registry info. Check that the URL points to a reachable token registry.'
+        )
+    }
+}
 
 export const useRegistryUrls = (): ReadonlyMap<PartyId, string> => {
     const { amulet, token } = usePortfolioConfig()
@@ -131,14 +140,15 @@ export const useRegistryMutations = () => {
             party?: PartyId
             url: string
         }) => {
-            let resolvedParty = party
-            if (!resolvedParty) {
-                const client = await resolveTokenStandardClient({
-                    registryUrl: url,
-                })
-                const info = await client.get('/registry/metadata/v1/info')
-                resolvedParty = info.adminId
+            const registryAdminId = await fetchRegistryAdminId(url)
+            const resolvedParty = party ?? registryAdminId
+
+            if (party && party !== registryAdminId) {
+                throw new Error(
+                    'Registry info is invalid: admin ID does not match the provided party ID'
+                )
             }
+
             const current =
                 queryClient.getQueryData<ReadonlyMap<PartyId, string>>(
                     queryKeys.registries.all

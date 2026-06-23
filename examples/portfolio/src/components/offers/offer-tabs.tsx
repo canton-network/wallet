@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tab, Tabs } from '@mui/material'
-import type { OfferDirection } from '@hooks/useOffers'
+import type { OfferCategory } from '@hooks/useOffers'
 
 interface OfferTabsProps {
-    value: OfferDirection
-    onChange: (value: OfferDirection) => void
+    value: OfferCategory
+    onChange: (value: OfferCategory) => void
 }
 
 export function OfferTabs({ value, onChange }: OfferTabsProps) {
     return (
         <Tabs
             value={value}
-            onChange={(_, nextValue: OfferDirection) => onChange(nextValue)}
-            aria-label="Offer direction"
+            onChange={(_, nextValue: OfferCategory) => onChange(nextValue)}
+            aria-label="Offer category"
             textColor="inherit"
             slotProps={{
                 indicator: {
@@ -44,8 +44,8 @@ export function OfferTabs({ value, onChange }: OfferTabsProps) {
                 },
             }}
         >
-            <Tab disableRipple value="incoming" label="Incoming" />
-            <Tab disableRipple value="outgoing" label="Outgoing" />
+            <Tab disableRipple value="transfers" label="Transfers" />
+            <Tab disableRipple value="allocations" label="Allocations" />
         </Tabs>
     )
 }

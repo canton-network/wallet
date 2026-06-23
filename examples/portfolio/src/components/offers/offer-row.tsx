@@ -3,6 +3,7 @@
 
 import { type KeyboardEvent } from 'react'
 import { Box, Chip, type SxProps, type Theme } from '@mui/material'
+import { CopyableIdentifier } from '@components/copyable-identifier'
 import type {
     AllocationActionItem,
     TransferActionItem,
@@ -15,7 +16,11 @@ import {
     OfferRowGrid,
     OfferRowShell,
 } from './offer-row-layout'
-import type { OfferItem, OfferStatus } from '@hooks/useOffers'
+import type {
+    OfferItem,
+    OfferStatus,
+    TransferOfferItem,
+} from '@hooks/useOffers'
 import { formatAmount } from '@utils/decimal'
 
 interface OfferRowProps {
@@ -42,7 +47,7 @@ export function OfferRow({ offer, onClick }: OfferRowProps) {
             onKeyDown={handleKeyDown}
             sx={interactiveOfferRowSx}
         >
-            {offer.source.kind === 'transfer' ? (
+            {isTransferOffer(offer) ? (
                 <TransferOfferRow offer={offer} item={offer.source} />
             ) : (
                 <AllocationOfferRow item={offer.source} status={offer.status} />
@@ -57,11 +62,15 @@ function getOfferRowLabel(offer: OfferItem) {
         : 'Allocation Request'
 }
 
+function isTransferOffer(offer: OfferItem): offer is TransferOfferItem {
+    return offer.source.kind === 'transfer'
+}
+
 function TransferOfferRow({
     offer,
     item,
 }: {
-    offer: OfferItem
+    offer: TransferOfferItem
     item: TransferActionItem
 }) {
     const counterparty =
@@ -94,12 +103,19 @@ function AllocationOfferRow({
     status: OfferStatus
 }) {
     return (
-        <OfferRowGrid columns={4}>
+        <OfferRowGrid columns={5}>
             <OfferDetailBlock label="Type" value="Allocation Request" />
             <OfferExpirationBlock
                 label="Allocate Before"
                 expiration={item.expiry}
             />
+            <Box sx={{ minWidth: 0 }}>
+                <OfferFieldLabel>Settlement Reference</OfferFieldLabel>
+                <CopyableIdentifier
+                    value={item.settlement.settlementRef.id}
+                    maxLength={14}
+                />
+            </Box>
             <OfferPartyBlock
                 label="Executor Party"
                 value={item.settlement.executor}

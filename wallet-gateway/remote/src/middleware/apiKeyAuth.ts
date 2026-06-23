@@ -73,7 +73,7 @@ export function apiKeyAuth(
             })
 
             // automatically initiate a session for the API key user
-            authStore.setSession({
+            await authStore.setSession({
                 id: v4(),
                 network: matchingKey.networkId,
                 accessToken: 'unused',
