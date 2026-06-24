@@ -145,6 +145,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
 
         const driver = this.signingDriver.controller(userId)
         const keys = await driver.getKeys().then(handleSigningError)
+        // TODO Could this be removed?
         const key = keys?.keys?.find((k) => k.name === 'Canton Party')
         if (!key) throw new Error('Fireblocks key not found')
 
@@ -198,5 +199,11 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         }
 
         return this.store.updateWallet(walletUpdate)
+    }
+
+    async getVaults(userId: UserId): Promise<{ vaults: string[] }> {
+        const driver = this.signingDriver.controller(userId)
+        const keys = await driver.getKeys().then(handleSigningError)
+        return { vaults: keys?.keys.map((key) => key.name) }
     }
 }

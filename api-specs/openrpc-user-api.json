@@ -1022,6 +1022,48 @@
                     "$ref": "#/components/schemas/Null"
                 }
             }
+        },
+        {
+            "name": "listSingingProviderVaults",
+            "description": "Lists available vaults of a signing provider",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "ListSingingProviderVaultsParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "signingProviderId": {
+                                "title": "signingProviderId",
+                                "type": "string",
+                                "description": "The signing provider ID the wallet corresponds to."
+                            }
+                        },
+                        "required": ["signingProviderId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ListSingingProviderVaultsResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "vaults": {
+                            "title": "vaults",
+                            "type": "array",
+                            "items": {
+                                "title": "vaultName",
+                                "type": "string"
+                            },
+                            "description": "The list of singing provider's available vaults names."
+                        }
+                    },
+                    "required": ["vaults"]
+                }
+            }
         }
     ],
     "components": {

@@ -28,6 +28,7 @@ export interface WalletAllocator {
         email: string | undefined,
         existingWallet: Wallet
     ): Promise<void>
+    getVaults?(userId: UserId): Promise<{ vaults: string[] }>
 }
 
 export class WalletAllocationService {
@@ -219,6 +220,22 @@ export class WalletAllocationService {
                 throw new Error(
                     `Unsupported signing provider: ${signingProviderId}`
                 )
+        }
+    }
+
+    public async getVaults(
+        authContext: AuthContext,
+        signingProviderId: SigningProvider
+    ): Promise<{ vaults: string[] }> {
+        switch (signingProviderId) {
+            case SigningProvider.FIREBLOCKS:
+                if (!this.fireblocksAllocator) {
+                    throw new Error('Fireblocks signing driver not available')
+                }
+                return this.fireblocksAllocator.getVaults(authContext.userId)
+            default:
+                // TODO consider more informative return value / error
+                return { vaults: [] }
         }
     }
 }

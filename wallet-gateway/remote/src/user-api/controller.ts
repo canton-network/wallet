@@ -42,6 +42,8 @@ import {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
+    ListSingingProviderVaultsResult,
+    ListSingingProviderVaultsParams,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -1087,6 +1089,44 @@ export const userController = (
         removeApiKey: async (params: RemoveApiKeyParams): Promise<Null> => {
             await store.removeApiKey(params.id)
             return null
+        },
+        listSingingProviderVaults: async (
+            params: ListSingingProviderVaultsParams
+        ): Promise<ListSingingProviderVaultsResult> => {
+            const network = await store.getCurrentNetwork()
+            const idp = await store.getIdp(network.identityProviderId)
+
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
+            }
+
+            const adminAccessTokenProvider =
+                AuthTokenProvider.fromGatewayConfig(
+                    idp,
+                    network.adminAuth,
+                    logger
+                )
+            const partyAllocator = new PartyAllocationService({
+                synchronizerId: network.synchronizerId,
+                accessTokenProvider: adminAccessTokenProvider,
+                httpLedgerUrl: network.ledgerApi.baseUrl,
+                logger,
+            })
+            const walletAllocationService = new WalletAllocationService(
+                store,
+                logger,
+                partyAllocator,
+                drivers
+            )
+            if (!drivers[params.signingProviderId as SigningProvider]) {
+                throw new Error(
+                    `Signing provider ${params.signingProviderId} does not support listing vaults`
+                )
+            }
+            return walletAllocationService.getVaults(
+                assertConnected(authContext),
+                params.signingProviderId as SigningProvider
+            )
         },
     })
 }

@@ -460,6 +460,13 @@ export interface ApiKey {
  *
  */
 export type ApiKeys = ApiKey[]
+export type VaultName = string
+/**
+ *
+ * The list of singing provider's available vaults names.
+ *
+ */
+export type Vaults = VaultName[]
 export interface AddNetworkParams {
     network: Network
 }
@@ -530,6 +537,9 @@ export interface GenerateApiKeyParams {
 }
 export interface RemoveApiKeyParams {
     id: Id
+}
+export interface ListSingingProviderVaultsParams {
+    signingProviderId: SigningProviderId
 }
 /**
  *
@@ -638,6 +648,9 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
+export interface ListSingingProviderVaultsResult {
+    vaults: Vaults
+}
 /**
  *
  * Generated! Represents an alias to any of the provided schemas
@@ -697,3 +710,6 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListSingingProviderVaults = (
+    params: ListSingingProviderVaultsParams
+) => Promise<ListSingingProviderVaultsResult>
