@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
+import { css, html, nothing } from 'lit'
 import { customElement, property, query } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.js'
 import { chevronDownIcon } from '../icons/index.js'
@@ -10,7 +10,8 @@ export class WalletCreateEvent extends Event {
     constructor(
         public partyHint: string,
         public signingProviderId: string,
-        public primary: boolean
+        public primary: boolean,
+        public vaultName: string | undefined
     ) {
         super('wallet-create', { bubbles: true, composed: true })
     }
@@ -21,6 +22,7 @@ export class WalletCreateEvent extends Event {
 export class WgWalletCreateForm extends BaseElement {
     @property({ type: Array }) signingProviders: string[] = []
     @property({ type: Array }) networkIds: string[] = []
+    @property({ type: Array }) vaults?: string[] = []
     @property({ type: Boolean }) loading = false
     @property({ type: String }) submitLabel = 'Add'
     @property({ type: String }) loadingLabel = 'Adding...'
@@ -32,6 +34,8 @@ export class WgWalletCreateForm extends BaseElement {
     @query('#signing-provider-id')
     accessor signingProviderSelect: HTMLSelectElement | null = null
     @query('#primary') accessor primaryCheckbox: HTMLInputElement | null = null
+    @query('#vault-name')
+    accessor vaultSelect: HTMLSelectElement | null = null
 
     static styles = [
         BaseElement.styles,
@@ -161,9 +165,15 @@ export class WgWalletCreateForm extends BaseElement {
         const partyHint = this.partyHintInput?.value || ''
         const signingProviderId = this.signingProviderSelect?.value || ''
         const primary = this.primaryCheckbox?.checked || false
+        const vaultName = this.vaultSelect?.value || undefined
 
         this.dispatchEvent(
-            new WalletCreateEvent(partyHint, signingProviderId, primary)
+            new WalletCreateEvent(
+                partyHint,
+                signingProviderId,
+                primary,
+                vaultName
+            )
         )
     }
 
@@ -230,6 +240,42 @@ export class WgWalletCreateForm extends BaseElement {
                             >
                         </div>
                     </div>
+
+                    ${this.signingProviderSelect?.value === 'fireblocks' // TODO make it not hardcoded
+                        ? html`
+                              <div class="field-group d-flex flex-column">
+                                  <label
+                                      for="fireblocks-vault-name"
+                                      class="form-label field-label mb-0"
+                                  >
+                                      Vault name <span class="required">*</span>
+                                  </label>
+                                  <div class="select-wrap">
+                                      <select
+                                          ?disabled=${this.loading}
+                                          class="form-select field-control"
+                                          id="signing-provider-id"
+                                          required
+                                      >
+                                          <option disabled selected value="">
+                                              Select vault name
+                                          </option>
+                                          ${this.vaults.map(
+                                              (vaultName) =>
+                                                  html`<option
+                                                      value=${vaultName}
+                                                  >
+                                                      ${vaultName}
+                                                  </option>`
+                                          )}
+                                      </select>
+                                      <span class="select-chevron"
+                                          >${chevronDownIcon}</span
+                                      >
+                                  </div>
+                              </div>
+                          `
+                        : nothing}
 
                     <div class="primary-row mb-0">
                         <input
