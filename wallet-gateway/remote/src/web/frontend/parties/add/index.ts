@@ -25,6 +25,8 @@ export class UserUiAddParty extends BaseElement {
         Object.values(SigningProvider)
     @state() accessor networkIds: string[] = []
     @state() accessor loading = false
+    // TODO probably should be a map with signing provider id as key
+    @state() accessor vaults: string[] | undefined = undefined
 
     static styles = [
         BaseElement.styles,
@@ -50,6 +52,7 @@ export class UserUiAddParty extends BaseElement {
     override connectedCallback(): void {
         super.connectedCallback()
         this.loadContext()
+        this.listVaults()
     }
 
     private async loadContext() {
@@ -63,6 +66,20 @@ export class UserUiAddParty extends BaseElement {
         const networkId =
             currentSession?.network?.id || stateManager.networkId.get()
         this.networkIds = networkId ? [networkId] : []
+    }
+
+    // TODO Make it signing provider agnostic, probably by emitting from wallet ui components whenever signingprovider id changes
+    private async listVaults() {
+        const userClient = await createUserClient(
+            stateManager.accessToken.get()
+        )
+        const vaults = await userClient.request({
+            method: 'listSingingProviderVaults',
+            params: {
+                signingProviderId: 'fireblocks',
+            },
+        })
+        this.vaults = vaults.vaults
     }
 
     private navigateBack() {
@@ -124,6 +141,7 @@ export class UserUiAddParty extends BaseElement {
                     .submitLabel=${'Create party'}
                     .loadingLabel=${'Creating party...'}
                     .loadingMessage=${'Creating party, please wait...'}
+                    .vaults=${this.vaults}
                     ?loading=${this.loading}
                     @wallet-create=${this.onCreateParty}
                 ></wg-wallet-create-form>

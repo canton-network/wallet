@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { css, html, nothing } from 'lit'
-import { customElement, property, query } from 'lit/decorators.js'
+import { customElement, property, query, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.js'
 import { chevronDownIcon } from '../icons/index.js'
 
@@ -36,6 +36,8 @@ export class WgWalletCreateForm extends BaseElement {
     @query('#primary') accessor primaryCheckbox: HTMLInputElement | null = null
     @query('#vault-name')
     accessor vaultSelect: HTMLSelectElement | null = null
+
+    @state() accessor selectedSigningProvider: string | null = null
 
     static styles = [
         BaseElement.styles,
@@ -177,6 +179,10 @@ export class WgWalletCreateForm extends BaseElement {
         )
     }
 
+    private onSingingProviderChange(event: Event) {
+        this.selectedSigningProvider = (event.target as HTMLSelectElement).value
+    }
+
     reset() {
         if (this.partyHintInput) {
             this.partyHintInput.value = ''
@@ -224,6 +230,7 @@ export class WgWalletCreateForm extends BaseElement {
                                 class="form-select field-control"
                                 id="signing-provider-id"
                                 required
+                                @change=${this.onSingingProviderChange}
                             >
                                 <option disabled selected value="">
                                     Select signing provider
@@ -241,7 +248,7 @@ export class WgWalletCreateForm extends BaseElement {
                         </div>
                     </div>
 
-                    ${this.signingProviderSelect?.value === 'fireblocks' // TODO make it not hardcoded
+                    ${this.selectedSigningProvider === 'fireblocks' // TODO make it not hardcoded
                         ? html`
                               <div class="field-group d-flex flex-column">
                                   <label
