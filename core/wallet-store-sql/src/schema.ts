@@ -5,6 +5,7 @@ import { authSchema, Idp, UserId } from '@canton-network/core-wallet-auth'
 import {
     Wallet,
     Transaction,
+    Session,
     Network,
     WalletStatus,
     UpdateWallet,
@@ -12,7 +13,6 @@ import {
     UserLevelRight,
     MessageRaw,
     ApiKey,
-    Session,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
