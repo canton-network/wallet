@@ -275,7 +275,8 @@ export const userController = (
                 connectedContext,
                 partyHint,
                 primary ?? false,
-                signingProviderId as SigningProvider
+                signingProviderId as SigningProvider,
+                params.vaultName
             )
 
             // Sync wallets (TODO: separate rights sync from wallet sync as we only need rights sync here)

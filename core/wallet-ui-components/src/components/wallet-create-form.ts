@@ -261,13 +261,14 @@ export class WgWalletCreateForm extends BaseElement {
                                       <select
                                           ?disabled=${this.loading}
                                           class="form-select field-control"
-                                          id="signing-provider-id"
+                                          id="vault-name"
                                           required
                                       >
                                           <option disabled selected value="">
                                               Select vault name
                                           </option>
                                           ${this.vaults.map(
+                                              // TODO handle undefined
                                               (vaultName) =>
                                                   html`<option
                                                       value=${vaultName}

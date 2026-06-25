@@ -134,6 +134,7 @@ export type PartyHint = string
  *
  */
 export type SigningProviderId = string
+export type VaultName = string
 /**
  *
  * The party id of the wallet to be removed.
@@ -461,7 +462,6 @@ export interface ApiKey {
  *
  */
 export type ApiKeys = ApiKey[]
-export type VaultName = string
 /**
  *
  * The list of singing provider's available vaults names.
@@ -491,6 +491,7 @@ export interface CreateWalletParams {
     primary?: Primary
     partyHint: PartyHint
     signingProviderId: SigningProviderId
+    vaultName?: VaultName
 }
 export interface AllocatePartyForWalletParams {
     partyId: PartyId

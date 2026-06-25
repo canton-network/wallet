@@ -262,6 +262,11 @@
                                 "title": "signingProviderId",
                                 "type": "string",
                                 "description": "The signing provider ID the wallet corresponds to."
+                            },
+                            "vaultName": {
+                                "title": "vaultName",
+                                "type": "string",
+                                "description": "Name of signing provider's vault to use for getting keys."
                             }
                         },
                         "required": [
