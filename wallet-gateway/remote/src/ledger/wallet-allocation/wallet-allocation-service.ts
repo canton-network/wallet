@@ -246,8 +246,9 @@ export class WalletAllocationService {
                 }
                 return this.fireblocksAllocator.getVaults(authContext.userId)
             default:
-                // TODO consider more informative return value / error
-                return { vaults: [] }
+                throw new Error(
+                    `Signing provider ${signingProviderId} does not support listing vaults`
+                )
         }
     }
 }
