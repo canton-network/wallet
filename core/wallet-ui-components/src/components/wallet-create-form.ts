@@ -174,7 +174,7 @@ export class WgWalletCreateForm extends BaseElement {
     private onSubmit(event: Event) {
         event.preventDefault()
 
-        if (this.submitting || this.isVaultsLoading) {
+        if (this.isLoading) {
             return
         }
 
@@ -223,6 +223,10 @@ export class WgWalletCreateForm extends BaseElement {
                 this.selectedSigningProvider
             )
         )
+    }
+
+    private get isLoading(): boolean {
+        return this.submitting || this.isVaultsLoading
     }
 
     reset() {
@@ -301,11 +305,10 @@ export class WgWalletCreateForm extends BaseElement {
                                   </label>
                                   <div class="select-wrap">
                                       <select
-                                          ?disabled=${this.submitting ||
-                                          this.isVaultsLoading}
+                                          ?disabled=${this.isLoading}
                                           class="form-select field-control"
                                           id="vault-name"
-                                          ?required=${!this.isVaultsLoading}
+                                          required
                                       >
                                           <option disabled selected value="">
                                               ${this.isVaultsLoading
@@ -347,7 +350,7 @@ export class WgWalletCreateForm extends BaseElement {
                 <div class="submit-wrap mt-auto pt-3 d-flex flex-column">
                     <button
                         class="submit-button btn btn-primary rounded-pill w-100 d-inline-flex align-items-center justify-content-center gap-2"
-                        ?disabled=${this.submitting || this.isVaultsLoading}
+                        ?disabled=${this.isLoading}
                         type="submit"
                     >
                         ${this.submitting
