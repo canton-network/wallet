@@ -223,8 +223,12 @@ export class TransactionService {
             signedBy: signResult.signedBy,
         }
 
+        const userId = authContext.isApiKey
+            ? authContext.ledgerUserId
+            : authContext.userId
+
         return this.execute(
-            authContext,
+            userId,
             wallet,
             transaction,
             executeParams,

@@ -83,6 +83,11 @@ export function apiKeyAuth(
             const idp = await authStore.getIdp(network.identityProviderId)
 
             if (!network.serviceAccountAuth) {
+                logger.debug(
+                    { network },
+                    'Network does not have a service account configured'
+                )
+
                 return res.status(401).json(
                     jsonRpcResponse(reqId, {
                         error: {
@@ -94,6 +99,11 @@ export function apiKeyAuth(
             }
 
             if (network.serviceAccountAuth.method !== 'client_credentials') {
+                logger.debug(
+                    { network },
+                    'Network does not have a service account configured with client_credentials method'
+                )
+
                 return res.status(401).json(
                     jsonRpcResponse(reqId, {
                         error: {

@@ -38,7 +38,8 @@ test('call connect rpc', async () => {
             publicUrl,
             config.server,
             notificationService,
-            store
+            store,
+            { signingDrivers: {} }
         )
     )
         .post('/api/v0/dapp')

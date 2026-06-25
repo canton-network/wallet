@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Logger } from 'pino'
-import { AuthAware, AuthContext } from '@canton-network/core-wallet-auth'
-import { Store, Transaction } from '@canton-network/core-wallet-store'
+import { AuthAware } from '@canton-network/core-wallet-auth'
+import { Store, Transaction, Wallet } from '@canton-network/core-wallet-store'
 import { NotificationService } from '../notification/NotificationService.js'
 import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from './signing-drivers.js'
-// import { resolveAutomationRunContext } from './service-account-session.js'
+import { resolveAutomationRunContext } from './service-account-session.js'
 
 export type { AccessTokenProviderFactory } from './service-account-session.js'
 
@@ -101,10 +101,7 @@ export class SigningWorker {
      * tests.
      */
     async tick(): Promise<void> {
-        this.options.logger.trace(
-            { intervalMs: this.options.intervalMs },
-            `Executing tick`
-        )
+        this.options.logger.trace(`Signing worker: executing a tick`)
 
         if (this.running) {
             return
@@ -117,7 +114,7 @@ export class SigningWorker {
                 if (!tx.externalTxId) {
                     continue
                 }
-                await this.processPending(tx.userId!, tx.networkId!, tx)
+                await this.processPending(tx)
             }
         } catch (error) {
             this.options.logger.error(
@@ -131,62 +128,63 @@ export class SigningWorker {
 
     /**
      * Drives a single pending transaction through `signAndExecute`. Skips when
-     * automation context, primary wallet, or refreshed `pending` status is missing.
+     * automation context, submitting wallet, or refreshed `pending` status is missing.
      * Errors are logged per transaction; other rows in the same tick still run.
      */
-    private async processPending(
-        authContext: AuthContext | undefined,
-        transaction: Transaction
-    ): Promise<void> {
-        if (!transaction.externalTxId) {
+    private async processPending(transaction: Transaction): Promise<void> {
+        const { userId, networkId, externalTxId } = transaction
+
+        if (!externalTxId || !userId || !networkId) {
             return
         }
 
-        // const runContext = await resolveAutomationRunContext(
-        //     this.options.store,
-        //     userId,
-        //     networkId,
-        //     this.options.logger
-        // )
-        if (!authContext) {
+        const runContext = await resolveAutomationRunContext(
+            this.options.store,
+            userId,
+            networkId,
+            this.options.logger
+        )
+
+        if (!runContext) {
             this.options.logger.debug(
-                { authContext, transactionId: transaction.id },
-                'Skipping signing worker tick: no auth context'
+                { runContext, transactionId: transaction.id },
+                'Skipping signing worker tick: no run context'
             )
             return
         }
 
-        // const { authContext, scopedStore, network } = runContext
+        const wallet = await resolveWalletFromTransaction(
+            transaction,
+            this.options.store,
+            this.options.logger
+        )
+        if (!wallet) {
+            this.options.logger.warn(
+                {
+                    userId,
+                    networkId,
+                    transactionId: transaction.id,
+                    commandId: transaction.commandId,
+                },
+                'Skipping signing worker tick: could not deduce submitting wallet from transaction payload'
+            )
+            return
+        }
 
-        // const wallet = await scopedStore.getPrimaryWallet()
-        // if (!wallet) {
-        //     this.options.logger.warn(
-        //         {
-        //             userId,
-        //             networkId,
-        //             transactionId: transaction.id,
-        //             commandId: transaction.commandId,
-        //         },
-        //         'Skipping signing worker tick: no primary wallet configured for user'
-        //     )
-        //     return
-        // }
+        const store = this.options.store
 
-        const userId = authContext.userId
-
-        const refreshedTx = await scopedStore.getTransaction(transaction.id)
+        const refreshedTx = await store.getTransaction(transaction.id)
         if (!refreshedTx || refreshedTx.status !== 'pending') {
             return
         }
 
-        const notifier = this.options.notificationService.getNotifier(
-            authContext.userId
-        )
+        const notifier = this.options.notificationService.getNotifier(userId)
         const transactionLogger = this.options.logger.child({
             component: 'TransactionService',
         })
+
         const transactionService = new TransactionService(
-            scopedStore,
+            store,
             transactionLogger,
             this.options.signingDrivers,
             notifier
@@ -194,8 +192,8 @@ export class SigningWorker {
 
         try {
             const result = await transactionService.signAndExecute(
-                authContext,
-                network,
+                runContext.authContext,
+                runContext.network,
                 wallet,
                 refreshedTx
             )
@@ -242,4 +240,41 @@ export class SigningWorker {
             )
         }
     }
+}
+
+/**
+ * Given the transaction, attempt to resolve the original wallet that submitted it.
+ * It's not guaranteed that the primary wallet was used, so we check the `actAs` field in the payload and find a wallet with a matching party ID.
+ *
+ * Returns `undefined` if the wallet cannot be resolved.
+ */
+async function resolveWalletFromTransaction(
+    tx: Transaction,
+    store: Store,
+    logger: Logger
+): Promise<Wallet | undefined> {
+    const payload = tx.payload
+    if (!payload || typeof payload !== 'object') {
+        return undefined
+    }
+
+    const actAs = (payload as { actAs?: unknown }).actAs
+    if (!Array.isArray(actAs) || actAs.length === 0) {
+        return undefined
+    }
+
+    if (actAs.length > 1) {
+        logger.warn(
+            { actAs },
+            'Transaction has multiple acting parties; using the first one to resolve wallet'
+        )
+    }
+
+    const partyId = actAs[0]
+    if (typeof partyId !== 'string') {
+        return undefined
+    }
+
+    const wallets = await store.getAllWallets()
+    return wallets.find((wallet) => wallet.partyId === partyId)
 }
