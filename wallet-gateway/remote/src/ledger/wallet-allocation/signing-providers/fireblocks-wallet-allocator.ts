@@ -205,6 +205,6 @@ export class FireblocksWalletAllocator implements WalletAllocator {
     async getVaults(userId: UserId): Promise<{ vaults: string[] }> {
         const driver = this.signingDriver.controller(userId)
         const keys = await driver.getKeys().then(handleSigningError)
-        return { vaults: keys?.keys?.map((key) => key.name) ?? [] }
+        return { vaults: keys?.keys?.map((key) => key.name)?.sort() ?? [] }
     }
 }

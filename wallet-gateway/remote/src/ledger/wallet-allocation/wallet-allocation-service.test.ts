@@ -761,20 +761,20 @@ describe('WalletAllocationService', () => {
             ).rejects.toThrow('Fireblocks key not found')
         })
 
-        it('getVaults returns vault names for Fireblocks', async () => {
+        it('getVaults returns sorted vault names for Fireblocks', async () => {
             const serviceWithFireblocks = createService({
                 [SigningProvider.FIREBLOCKS]: createFireblocksDriver({
                     getKeysResult: {
                         keys: [
                             {
-                                id: 'key-1',
-                                name: 'Vault A',
-                                publicKey: 'fb-pk-a',
-                            },
-                            {
                                 id: 'key-2',
                                 name: 'Vault B',
                                 publicKey: 'fb-pk-b',
+                            },
+                            {
+                                id: 'key-1',
+                                name: 'Vault A',
+                                publicKey: 'fb-pk-a',
                             },
                         ],
                     },
