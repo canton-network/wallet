@@ -240,7 +240,7 @@ describe('UserUiAddParty', () => {
         )
     })
 
-    it('loads vaults when a vault enabled signing provider is selected', async () => {
+    it('loads vaults when a vault enabled signing provider is selected and sorts alphabetically', async () => {
         await waitUntil(() => el.networkIds.length === 1)
 
         let resolveVaults!: (value: { vaults: string[] }) => void
@@ -280,7 +280,7 @@ describe('UserUiAddParty', () => {
                 ?.textContent?.trim()
         ).toBe('Loading vaults...')
 
-        resolveVaults({ vaults: ['Vault A', 'Vault B'] })
+        resolveVaults({ vaults: ['Vault B', 'Vault A'] })
 
         await waitUntil(() => el.vaults.length === 2)
 

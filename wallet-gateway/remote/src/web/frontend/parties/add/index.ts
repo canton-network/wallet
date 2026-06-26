@@ -93,7 +93,7 @@ export class UserUiAddParty extends BaseElement {
                 method: 'listSigningProviderVaults',
                 params: { signingProviderId },
             })
-            this.vaults = result.vaults
+            this.vaults = result.vaults.sort()
             if (result.vaults.length === 0) {
                 showToast(
                     'No vault accounts found',
