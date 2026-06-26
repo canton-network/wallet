@@ -11,7 +11,7 @@ export class WalletCreateEvent extends Event {
         public partyHint: string,
         public signingProviderId: string,
         public primary: boolean,
-        public vaultName: string | undefined
+        public vaultName?: string | undefined
     ) {
         super('wallet-create', { bubbles: true, composed: true })
     }
