@@ -71,9 +71,9 @@ export interface MultiSyncSetup {
  * Bootstraps a fresh multi-synchronizer environment:
  *   - Creates SDK instances for the app-user, app-provider, and sv participants
  *   - Discovers global + app synchronizer IDs from the app-user participant
- *   - Allocates alice (app-user), bob (app-provider), tradingApp (sv), tokenAdmin (app-provider) on global synchronizer
- *     while simultaneously registering alice, bob, and tokenAdmin on app-synchronizer
- *   - tradingApp is global-only
+ *   - Allocates alice (app-user), bob (app-provider), tradingApp (app-user), tokenAdmin (app-provider) on global synchronizer
+ *     while simultaneously registering alice, bob, tradingApp, and tokenAdmin on app-synchronizer
+ *   - tradingApp is hosted on the app-user participant, which is connected to both synchronizers
  *   - Connects the scan proxy and returns the Amulet admin party ID
  */
 export async function setupMultiSyncTrade(
@@ -179,10 +179,11 @@ export async function setupMultiSyncTrade(
             })
             .sign(bobKey.privateKey)
             .execute(),
-        svSdk.party.external
+        appUserSdk.party.external
             .create(tradingAppKey.publicKey, {
                 partyHint: 'TradingApp',
                 synchronizerId: globalSynchronizerId,
+                additionalSynchronizerIds: [appSynchronizerId],
             })
             .sign(tradingAppKey.privateKey)
             .execute(),
@@ -208,7 +209,7 @@ export async function setupMultiSyncTrade(
     }
 
     logger.info(
-        `Parties allocated on global-synchronizer and registered on app-synchronizer — alice: ${alice.partyId} (app-user), bob: ${bob.partyId} (app-provider), tradingApp: ${tradingApp.partyId} (sv), tokenAdmin: ${tokenAdmin.partyId} (app-provider)`
+        `Parties allocated on global-synchronizer and registered on app-synchronizer — alice: ${alice.partyId} (app-user), bob: ${bob.partyId} (app-provider), tradingApp: ${tradingApp.partyId} (app-user, both synchronizers), tokenAdmin: ${tokenAdmin.partyId} (app-provider)`
     )
 
     const auth = new AuthTokenProvider(TOKEN_PROVIDER_CONFIG_DEFAULT, logger)
