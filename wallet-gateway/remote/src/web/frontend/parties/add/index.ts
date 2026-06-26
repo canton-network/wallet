@@ -16,6 +16,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
+import { showToast } from '../../utils.js'
 import '../../index'
 import { WALLET_CREATION_STATUS_CODE } from '../index'
 import { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
@@ -79,9 +80,6 @@ export class UserUiAddParty extends BaseElement {
         ) {
             return
         }
-        if (this.vaultsBySigningProvider[signingProviderId] !== undefined) {
-            return
-        }
 
         this.vaultSigningProvidersLoading = [
             ...this.vaultSigningProvidersLoading,
@@ -99,6 +97,13 @@ export class UserUiAddParty extends BaseElement {
             this.vaultsBySigningProvider = {
                 ...this.vaultsBySigningProvider,
                 [signingProviderId]: result.vaults,
+            }
+            if (result.vaults.length === 0) {
+                showToast(
+                    'No vault accounts found',
+                    'No vault accounts are available for the selected signing provider.',
+                    'info'
+                )
             }
         } catch (error) {
             handleErrorToast(error)
