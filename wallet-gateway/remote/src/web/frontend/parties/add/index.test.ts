@@ -76,7 +76,7 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSingingProviderVaults') {
+            if (method === 'listSigningProviderVaults') {
                 return { vaults: ['Vault A', 'Vault B'] }
             }
             return undefined
@@ -258,7 +258,7 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSingingProviderVaults') {
+            if (method === 'listSigningProviderVaults') {
                 return vaultsDeferred
             }
             return undefined
@@ -272,9 +272,7 @@ describe('UserUiAddParty', () => {
         providerSelect!.value = 'fireblocks'
         providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
 
-        await waitUntil(() =>
-            el.vaultSigningProvidersLoading.includes('fireblocks')
-        )
+        await waitUntil(() => el.vaultsLoading)
         expect(
             form?.shadowRoot
                 ?.querySelector<HTMLSelectElement>('#vault-name')
@@ -284,18 +282,14 @@ describe('UserUiAddParty', () => {
 
         resolveVaults({ vaults: ['Vault A', 'Vault B'] })
 
-        await waitUntil(
-            () => el.vaultsBySigningProvider.fireblocks?.length === 2
-        )
+        await waitUntil(() => el.vaults.length === 2)
 
-        expect(el.vaultSigningProvidersLoading).not.toContain('fireblocks')
+        expect(el.vaultsLoading).toBe(false)
         expect(mockRequest).toHaveBeenCalledWith({
-            method: 'listSingingProviderVaults',
+            method: 'listSigningProviderVaults',
             params: { signingProviderId: 'fireblocks' },
         })
-        expect(el.vaultsBySigningProvider).toEqual({
-            fireblocks: ['Vault A', 'Vault B'],
-        })
+        expect(el.vaults).toEqual(['Vault A', 'Vault B'])
     })
 
     it('shows a toast when no vault accounts are returned', async () => {
@@ -312,7 +306,7 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSingingProviderVaults') {
+            if (method === 'listSigningProviderVaults') {
                 return { vaults: [] }
             }
             return undefined
@@ -333,7 +327,7 @@ describe('UserUiAddParty', () => {
             'No vault accounts are available for the selected signing provider.',
             'info'
         )
-        expect(el.vaultsBySigningProvider).toEqual({ fireblocks: [] })
+        expect(el.vaults).toEqual([])
     })
 
     it('uses networkId from state when listSessions fails', async () => {

@@ -28,15 +28,11 @@ export class SigningProviderChangeEvent extends Event {
 export class WgWalletCreateForm extends BaseElement {
     @property({ type: Array }) signingProviders: string[] = []
     @property({ type: Array }) networkIds: string[] = []
+    // Render vaults select for those signing providers
     @property({ type: Array }) vaultSigningProviders: string[] = []
-    @property({ type: Object }) vaultsBySigningProvider: Record<
-        string,
-        string[]
-    > = {}
-    /** Disables the form while a create/submit request is in flight. */
+    @property({ type: Array }) vaults: string[] = []
     @property({ type: Boolean }) submitting = false
-    /** Signing provider ids whose vault list is currently being fetched. */
-    @property({ type: Array }) vaultSigningProvidersLoading: string[] = []
+    @property({ type: Boolean }) vaultsLoading = false
     @property({ type: String }) submitLabel = 'Add'
     @property({ type: String }) submittingLabel = 'Adding...'
     @property({ type: String }) submittingMessage =
@@ -209,20 +205,8 @@ export class WgWalletCreateForm extends BaseElement {
         )
     }
 
-    private get vaultOptions(): string[] {
-        if (!this.selectedSigningProvider) {
-            return []
-        }
-        return this.vaultsBySigningProvider[this.selectedSigningProvider] ?? []
-    }
-
     private get isVaultsLoading(): boolean {
-        return (
-            this.selectedSigningProvider !== null &&
-            this.vaultSigningProvidersLoading.includes(
-                this.selectedSigningProvider
-            )
-        )
+        return this.showVaultSelect && this.vaultsLoading
     }
 
     private get isLoading(): boolean {
@@ -315,7 +299,7 @@ export class WgWalletCreateForm extends BaseElement {
                                                   ? this.vaultsLoadingLabel
                                                   : 'Select vault name'}
                                           </option>
-                                          ${this.vaultOptions.map(
+                                          ${this.vaults.map(
                                               (vaultName) =>
                                                   html`<option
                                                       value=${vaultName}

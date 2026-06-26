@@ -464,7 +464,7 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
- * The list of singing provider's available vaults names.
+ * The list of signing provider's available vault names.
  *
  */
 export type Vaults = VaultName[]
@@ -540,7 +540,7 @@ export interface GenerateApiKeyParams {
 export interface RemoveApiKeyParams {
     id: Id
 }
-export interface ListSingingProviderVaultsParams {
+export interface ListSigningProviderVaultsParams {
     signingProviderId: SigningProviderId
 }
 /**
@@ -650,7 +650,7 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
-export interface ListSingingProviderVaultsResult {
+export interface ListSigningProviderVaultsResult {
     vaults: Vaults
 }
 /**
@@ -712,9 +712,9 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
-export type ListSingingProviderVaults = (
-    params: ListSingingProviderVaultsParams
-) => Promise<ListSingingProviderVaultsResult>
+export type ListSigningProviderVaults = (
+    params: ListSigningProviderVaultsParams
+) => Promise<ListSigningProviderVaultsResult>
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 type Params<T> = T extends (...args: infer A) => any
@@ -880,9 +880,9 @@ export type RpcTypes = {
         result: Result<RemoveApiKey>
     }
 
-    listSingingProviderVaults: {
-        params: Params<ListSingingProviderVaults>
-        result: Result<ListSingingProviderVaults>
+    listSigningProviderVaults: {
+        params: Params<ListSigningProviderVaults>
+        result: Result<ListSigningProviderVaults>
     }
 }
 

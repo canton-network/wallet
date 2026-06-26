@@ -29,8 +29,8 @@ export class UserUiAddParty extends BaseElement {
         Object.values(SigningProvider)
     @state() accessor networkIds: string[] = []
     @state() accessor submitting = false
-    @state() accessor vaultsBySigningProvider: Record<string, string[]> = {}
-    @state() accessor vaultSigningProvidersLoading: string[] = []
+    @state() accessor vaults: string[] = []
+    @state() accessor vaultsLoading = false
 
     static styles = [
         BaseElement.styles,
@@ -72,6 +72,8 @@ export class UserUiAddParty extends BaseElement {
     }
 
     private async onSigningProviderChange(event: SigningProviderChangeEvent) {
+        this.vaults = []
+
         const { signingProviderId } = event
         if (
             !UserUiAddParty.vaultSigningProviders.includes(
@@ -81,23 +83,17 @@ export class UserUiAddParty extends BaseElement {
             return
         }
 
-        this.vaultSigningProvidersLoading = [
-            ...this.vaultSigningProvidersLoading,
-            signingProviderId,
-        ]
+        this.vaultsLoading = true
 
         try {
             const userClient = await createUserClient(
                 stateManager.accessToken.get()
             )
             const result = await userClient.request({
-                method: 'listSingingProviderVaults',
+                method: 'listSigningProviderVaults',
                 params: { signingProviderId },
             })
-            this.vaultsBySigningProvider = {
-                ...this.vaultsBySigningProvider,
-                [signingProviderId]: result.vaults,
-            }
+            this.vaults = result.vaults
             if (result.vaults.length === 0) {
                 showToast(
                     'No vault accounts found',
@@ -107,15 +103,8 @@ export class UserUiAddParty extends BaseElement {
             }
         } catch (error) {
             handleErrorToast(error)
-            this.vaultsBySigningProvider = {
-                ...this.vaultsBySigningProvider,
-                [signingProviderId]: [],
-            }
         } finally {
-            this.vaultSigningProvidersLoading =
-                this.vaultSigningProvidersLoading.filter(
-                    (id) => id !== signingProviderId
-                )
+            this.vaultsLoading = false
         }
     }
 
@@ -177,9 +166,8 @@ export class UserUiAddParty extends BaseElement {
                     .signingProviders=${this.signingProviders}
                     .networkIds=${this.networkIds}
                     .vaultSigningProviders=${UserUiAddParty.vaultSigningProviders}
-                    .vaultsBySigningProvider=${this.vaultsBySigningProvider}
-                    .vaultSigningProvidersLoading=${this
-                        .vaultSigningProvidersLoading}
+                    .vaults=${this.vaults}
+                    ?vaultsLoading=${this.vaultsLoading}
                     .submitLabel=${'Create party'}
                     .submittingLabel=${'Creating party...'}
                     .submittingMessage=${'Creating party, please wait...'}

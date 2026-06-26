@@ -200,7 +200,7 @@ describe('wg-wallet-create-form', () => {
             html`<wg-wallet-create-form
                 .signingProviders=${['participant', 'fireblocks']}
                 .vaultSigningProviders=${['fireblocks']}
-                .vaultsBySigningProvider=${{ fireblocks: ['Vault A'] }}
+                .vaults=${['Vault A']}
             ></wg-wallet-create-form>`
         )
 
@@ -228,7 +228,7 @@ describe('wg-wallet-create-form', () => {
             html`<wg-wallet-create-form
                 .signingProviders=${['fireblocks']}
                 .vaultSigningProviders=${['fireblocks']}
-                .vaultsBySigningProvider=${{ fireblocks: ['Vault A'] }}
+                .vaults=${['Vault A']}
             ></wg-wallet-create-form>`
         )
 
@@ -257,7 +257,7 @@ describe('wg-wallet-create-form', () => {
             html`<wg-wallet-create-form
                 .signingProviders=${['fireblocks']}
                 .vaultSigningProviders=${['fireblocks']}
-                .vaultSigningProvidersLoading=${['fireblocks']}
+                ?vaultsLoading=${true}
             ></wg-wallet-create-form>`
         )
 
@@ -286,7 +286,7 @@ describe('wg-wallet-create-form', () => {
             html`<wg-wallet-create-form
                 .signingProviders=${['fireblocks']}
                 .vaultSigningProviders=${['fireblocks']}
-                .vaultSigningProvidersLoading=${['fireblocks']}
+                ?vaultsLoading=${true}
             ></wg-wallet-create-form>`
         )
 

@@ -42,8 +42,8 @@ import {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
-    ListSingingProviderVaultsResult,
-    ListSingingProviderVaultsParams,
+    ListSigningProviderVaultsResult,
+    ListSigningProviderVaultsParams,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -1091,9 +1091,9 @@ export const userController = (
             await store.removeApiKey(params.id)
             return null
         },
-        listSingingProviderVaults: async (
-            params: ListSingingProviderVaultsParams
-        ): Promise<ListSingingProviderVaultsResult> => {
+        listSigningProviderVaults: async (
+            params: ListSigningProviderVaultsParams
+        ): Promise<ListSigningProviderVaultsResult> => {
             const network = await store.getCurrentNetwork()
             const idp = await store.getIdp(network.identityProviderId)
 
@@ -1121,7 +1121,7 @@ export const userController = (
             )
             if (!drivers[params.signingProviderId as SigningProvider]) {
                 throw new Error(
-                    `Signing provider ${params.signingProviderId} does not support listing vaults`
+                    `Signing provider ${params.signingProviderId} not supported`
                 )
             }
             return walletAllocationService.getVaults(
