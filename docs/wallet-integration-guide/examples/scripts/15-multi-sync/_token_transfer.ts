@@ -124,7 +124,7 @@ export async function bobSelfTransferToApp(
             throw new Error('Cannot read amount from Bob Token holding')
 
         const [transferCommand, transferDisclosed] =
-            await tokenNamespaceAppProvider.transfer.create({
+            await tokenNamespaceP2.transfer.create({
                 sender: bob.partyId,
                 recipient: bob.partyId,
                 amount: holdingAmount,
