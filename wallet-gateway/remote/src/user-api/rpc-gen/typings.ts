@@ -133,6 +133,7 @@ export type PartyHint = string
  *
  */
 export type SigningProviderId = string
+export type VaultName = string
 /**
  *
  * The party id of the wallet to be removed.
@@ -460,6 +461,12 @@ export interface ApiKey {
  *
  */
 export type ApiKeys = ApiKey[]
+/**
+ *
+ * The list of signing provider's available vault names.
+ *
+ */
+export type Vaults = VaultName[]
 export interface AddNetworkParams {
     network: Network
 }
@@ -483,6 +490,7 @@ export interface CreateWalletParams {
     primary?: Primary
     partyHint: PartyHint
     signingProviderId: SigningProviderId
+    vaultName?: VaultName
 }
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
@@ -530,6 +538,9 @@ export interface GenerateApiKeyParams {
 }
 export interface RemoveApiKeyParams {
     id: Id
+}
+export interface ListSigningProviderVaultsParams {
+    signingProviderId: SigningProviderId
 }
 /**
  *
@@ -638,6 +649,9 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
+export interface ListSigningProviderVaultsResult {
+    vaults: Vaults
+}
 /**
  *
  * Generated! Represents an alias to any of the provided schemas
@@ -697,3 +711,6 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListSigningProviderVaults = (
+    params: ListSigningProviderVaultsParams
+) => Promise<ListSigningProviderVaultsResult>

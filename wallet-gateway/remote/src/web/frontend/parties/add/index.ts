@@ -5,6 +5,7 @@ import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
+    SigningProviderChangeEvent,
     WalletCreateEvent,
     chevronLeftIcon,
     handleErrorToast,
@@ -15,16 +16,21 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
+import { showToast } from '../../utils.js'
 import '../../index'
 import { WALLET_CREATION_STATUS_CODE } from '../index'
 import { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {
+    private static readonly vaultSigningProviders = [SigningProvider.FIREBLOCKS]
+
     @state() accessor signingProviders: string[] =
         Object.values(SigningProvider)
     @state() accessor networkIds: string[] = []
-    @state() accessor loading = false
+    @state() accessor submitting = false
+    @state() accessor vaults: string[] = []
+    @state() accessor vaultsLoading = false
 
     static styles = [
         BaseElement.styles,
@@ -65,12 +71,49 @@ export class UserUiAddParty extends BaseElement {
         this.networkIds = networkId ? [networkId] : []
     }
 
+    private async onSigningProviderChange(event: SigningProviderChangeEvent) {
+        this.vaults = []
+
+        const { signingProviderId } = event
+        if (
+            !UserUiAddParty.vaultSigningProviders.includes(
+                signingProviderId as SigningProvider
+            )
+        ) {
+            return
+        }
+
+        this.vaultsLoading = true
+
+        try {
+            const userClient = await createUserClient(
+                stateManager.accessToken.get()
+            )
+            const result = await userClient.request({
+                method: 'listSigningProviderVaults',
+                params: { signingProviderId },
+            })
+            this.vaults = result.vaults.sort()
+            if (result.vaults.length === 0) {
+                showToast(
+                    'No vault accounts found',
+                    'No vault accounts are available for the selected signing provider.',
+                    'info'
+                )
+            }
+        } catch (error) {
+            handleErrorToast(error)
+        } finally {
+            this.vaultsLoading = false
+        }
+    }
+
     private navigateBack() {
         setLocationHref(toRelHref('/parties'))
     }
 
     private async onCreateParty(event: WalletCreateEvent) {
-        this.loading = true
+        this.submitting = true
 
         try {
             const userClient = await createUserClient(
@@ -82,6 +125,7 @@ export class UserUiAddParty extends BaseElement {
                     primary: event.primary,
                     partyHint: event.partyHint,
                     signingProviderId: event.signingProviderId,
+                    ...(event.vaultName && { vaultName: event.vaultName }),
                 },
             })
 
@@ -98,7 +142,7 @@ export class UserUiAddParty extends BaseElement {
                 `${toRelPath('/parties/')}?createPartyStatus=${createPartyStatus}`
             )
         } catch (error) {
-            this.loading = false
+            this.submitting = false
             handleErrorToast(error)
         }
     }
@@ -121,10 +165,14 @@ export class UserUiAddParty extends BaseElement {
                 <wg-wallet-create-form
                     .signingProviders=${this.signingProviders}
                     .networkIds=${this.networkIds}
+                    .vaultSigningProviders=${UserUiAddParty.vaultSigningProviders}
+                    .vaults=${this.vaults}
+                    ?vaultsLoading=${this.vaultsLoading}
                     .submitLabel=${'Create party'}
-                    .loadingLabel=${'Creating party...'}
-                    .loadingMessage=${'Creating party, please wait...'}
-                    ?loading=${this.loading}
+                    .submittingLabel=${'Creating party...'}
+                    .submittingMessage=${'Creating party, please wait...'}
+                    ?submitting=${this.submitting}
+                    @signing-provider-change=${this.onSigningProviderChange}
                     @wallet-create=${this.onCreateParty}
                 ></wg-wallet-create-form>
             </div>

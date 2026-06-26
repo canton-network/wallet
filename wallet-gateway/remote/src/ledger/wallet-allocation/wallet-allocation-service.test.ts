@@ -54,6 +54,8 @@ const authContext = {
     email: 'user-1@example.com',
 }
 
+const FIREBLOCKS_VAULT_NAME = 'Canton Party'
+
 function createFireblocksDriver(options: {
     getKeysResult?:
         | {
@@ -610,7 +612,8 @@ describe('WalletAllocationService', () => {
                 authContext,
                 'alice',
                 false,
-                SigningProvider.FIREBLOCKS
+                SigningProvider.FIREBLOCKS,
+                FIREBLOCKS_VAULT_NAME
             )
 
             expect(result.status).toBe('allocated')
@@ -636,7 +639,8 @@ describe('WalletAllocationService', () => {
                 authContext,
                 'alice',
                 false,
-                SigningProvider.FIREBLOCKS
+                SigningProvider.FIREBLOCKS,
+                FIREBLOCKS_VAULT_NAME
             )
 
             expect(result.status).toBe('initialized')
@@ -666,7 +670,8 @@ describe('WalletAllocationService', () => {
                     authContext,
                     'alice',
                     false,
-                    SigningProvider.FIREBLOCKS
+                    SigningProvider.FIREBLOCKS,
+                    FIREBLOCKS_VAULT_NAME
                 )
 
                 expect(result.status).toBe('removed')
@@ -693,7 +698,8 @@ describe('WalletAllocationService', () => {
                 authContext,
                 'alice',
                 false,
-                SigningProvider.FIREBLOCKS
+                SigningProvider.FIREBLOCKS,
+                FIREBLOCKS_VAULT_NAME
             )
 
             expect(result.topologyTransactions).toBe('')
@@ -714,12 +720,30 @@ describe('WalletAllocationService', () => {
                     authContext,
                     'alice',
                     false,
-                    SigningProvider.FIREBLOCKS
+                    SigningProvider.FIREBLOCKS,
+                    FIREBLOCKS_VAULT_NAME
                 )
             ).rejects.toThrow('Error from signing driver: Keys unavailable')
         })
 
-        it('throws when the Canton Party key is missing', async () => {
+        it('throws when vaultName is missing for Fireblocks', async () => {
+            const serviceWithFireblocks = createService({
+                [SigningProvider.FIREBLOCKS]: createFireblocksDriver({}),
+            })
+
+            await expect(
+                serviceWithFireblocks.createWallet(
+                    authContext,
+                    'alice',
+                    false,
+                    SigningProvider.FIREBLOCKS
+                )
+            ).rejects.toThrow(
+                'vaultName is required for creating a wallet with Fireblocks'
+            )
+        })
+
+        it('throws when the selected Fireblocks vault is missing', async () => {
             const serviceWithFireblocks = createService({
                 [SigningProvider.FIREBLOCKS]: createFireblocksDriver({
                     getKeysResult: { keys: [] },
@@ -731,9 +755,53 @@ describe('WalletAllocationService', () => {
                     authContext,
                     'alice',
                     false,
-                    SigningProvider.FIREBLOCKS
+                    SigningProvider.FIREBLOCKS,
+                    'missing-vault'
                 )
             ).rejects.toThrow('Fireblocks key not found')
+        })
+
+        it('getVaults returns vault names for Fireblocks', async () => {
+            const serviceWithFireblocks = createService({
+                [SigningProvider.FIREBLOCKS]: createFireblocksDriver({
+                    getKeysResult: {
+                        keys: [
+                            {
+                                id: 'key-1',
+                                name: 'Vault A',
+                                publicKey: 'fb-pk-a',
+                            },
+                            {
+                                id: 'key-2',
+                                name: 'Vault B',
+                                publicKey: 'fb-pk-b',
+                            },
+                        ],
+                    },
+                }),
+            })
+
+            const result = await serviceWithFireblocks.getVaults(
+                authContext,
+                SigningProvider.FIREBLOCKS
+            )
+
+            expect(result).toEqual({ vaults: ['Vault A', 'Vault B'] })
+        })
+
+        it('throws when listing vaults for an unsupported signing provider', async () => {
+            const serviceWithFireblocks = createService({
+                [SigningProvider.FIREBLOCKS]: createFireblocksDriver({}),
+            })
+
+            await expect(
+                serviceWithFireblocks.getVaults(
+                    authContext,
+                    SigningProvider.PARTICIPANT
+                )
+            ).rejects.toThrow(
+                'Signing provider participant does not support listing vaults'
+            )
         })
 
         it('throws when a signed createWallet has no signature in getTransaction', async () => {
@@ -752,7 +820,8 @@ describe('WalletAllocationService', () => {
                     authContext,
                     'alice',
                     false,
-                    SigningProvider.FIREBLOCKS
+                    SigningProvider.FIREBLOCKS,
+                    FIREBLOCKS_VAULT_NAME
                 )
             ).rejects.toThrow(
                 'Transaction signed but no signature found in result'
