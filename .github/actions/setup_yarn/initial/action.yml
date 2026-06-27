@@ -18,8 +18,8 @@ runs:
         - name: Setup Node.js
           uses: actions/setup-node@v6
           with:
-              node-version: 'v24.9.0'
-              cache: 'yarn'
+              node-version-file: .nvmrc
+              cache: yarn
 
         - name: Restore DPM cache
           id: dpm_cache
