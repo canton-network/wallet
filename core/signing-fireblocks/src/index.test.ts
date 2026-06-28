@@ -329,6 +329,25 @@ describe('FireblocksSigningDriver', () => {
         expect(newConfig.apiPath).toBe(newPath)
     })
 
+    it('includes coinType in configuration when provided', async () => {
+        const keyInfo: FireblocksApiKeyInfo = {
+            apiKey: 'mocked',
+            apiSecret: 'mocked',
+        }
+        const signingDriver = new FireblocksSigningDriver({
+            defaultKeyInfo: keyInfo,
+            userApiKeys: new Map([[TEST_AUTH_CONTEXT.userId, keyInfo]]),
+            coinType: 1234,
+        })
+
+        const config = await signingDriver
+            .controller(TEST_AUTH_CONTEXT.userId)
+            .getConfiguration()
+        throwWhenRpcError(config)
+
+        expect(config.coinType).toBe(1234)
+    })
+
     it('setConfiguration returns bad_arguments for invalid config', async () => {
         const { controller } = await setupTest()
         const result = await controller.setConfiguration({ invalid: true })

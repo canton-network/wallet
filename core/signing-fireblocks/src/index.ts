@@ -37,6 +37,7 @@ export interface FireblocksConfig {
     defaultKeyInfo?: FireblocksApiKeyInfo
     userApiKeys: Map<string, FireblocksApiKeyInfo>
     apiPath?: string
+    coinType?: number
 }
 
 const FireblocksApiKeyInfoSchema = z.object({
@@ -48,6 +49,7 @@ const FireblocksConfigSchema = z.object({
     defaultApiKey: FireblocksApiKeyInfoSchema.optional(),
     userApiKeys: z.map(z.string(), FireblocksApiKeyInfoSchema),
     apiPath: z.string().optional(),
+    coinType: z.number().optional(),
 })
 
 const createFireblocksHandler = (
@@ -61,7 +63,8 @@ const createFireblocksHandler = (
               }
             : undefined,
         config.userApiKeys,
-        config.apiPath || 'https://api.fireblocks.io/v1'
+        config.apiPath || 'https://api.fireblocks.io/v1',
+        config.coinType
     )
 }
 
