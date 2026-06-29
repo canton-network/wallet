@@ -7,7 +7,7 @@ import {
     TOKEN_NAMESPACE_CONFIG_SIMPLE,
 } from './utils/index.js'
 
-const logger = pino({ name: 'v1-01-ping-localnet', level: 'info' })
+const logger = pino({ name: 'v1-15-token-namespace-simple', level: 'info' })
 
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
