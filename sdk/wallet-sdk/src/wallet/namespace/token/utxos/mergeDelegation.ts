@@ -55,13 +55,13 @@ export class MergeDelegationNamespace {
         synchronizerId?: string
         validatorParty?: PartyId
     }) {
-        if (!this.ctx.validatorParty || !args.validatorParty) {
+        const providerParty =
+            args.validatorParty ||
+            this.ctx.validatorParty ||
             this.ctx.commonCtx.error.throw({
                 type: 'BadRequest',
-                message:
-                    'Approving a delegation prooposal is unsupported.  Please intialize the token namespace with a validatorURL or provide a validatorParty in this method',
+                message: `Cannot approve merge delegation command without a validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
             })
-        }
         const { owner, synchronizerId = '' } = args
 
         const mergeDelegationProposals =
@@ -98,7 +98,7 @@ export class MergeDelegationNamespace {
             commands: [{ ExerciseCommand: exercise }],
             disclosedContracts,
             synchronizerId,
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
@@ -114,7 +114,7 @@ export class MergeDelegationNamespace {
             this.ctx.validatorParty ||
             this.ctx.commonCtx.error.throw({
                 type: 'BadRequest',
-                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+                message: `Cannot execute without a validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
             })
 
         const { party, nodeLimit = 200, inputUtxos, synchronizerId = '' } = args
@@ -248,7 +248,7 @@ export class MergeDelegationNamespace {
                 this.ctx.validatorParty ||
                 this.ctx.commonCtx.error.throw({
                     type: 'BadRequest',
-                    message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+                    message: `Cannot create propose command without validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
                 })
 
             const { owner, metadata = { values: {} } } = args

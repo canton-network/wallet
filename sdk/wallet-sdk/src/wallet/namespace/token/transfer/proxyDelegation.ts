@@ -55,7 +55,7 @@ export class ProxyDelegationNamespace {
             this.ctx.validatorParty ||
             this.ctx.commonCtx.error.throw({
                 type: 'BadRequest',
-                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+                message: `Cannot create command without validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
             })
 
         const command = {
@@ -118,7 +118,7 @@ export class ProxyDelegationNamespace {
             this.ctx.validatorParty ||
             this.ctx.commonCtx.error.throw({
                 type: 'BadRequest',
-                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+                message: `Cannot create command without validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
             })
 
         const defaultBeneficiary: Beneficiaries = {
