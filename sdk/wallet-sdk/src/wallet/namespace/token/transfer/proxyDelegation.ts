@@ -13,6 +13,7 @@ import { FeaturedAppRight } from '../../amulet/types.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { LedgerNamespace } from '../../ledger/index.js'
 import { ParsedURL, URLInput } from '../../utils/url.js'
+import { resolveProviderParty } from '../utils.js'
 
 export type ProxyDelegationCommandArgs = {
     proxyCid: string
@@ -20,6 +21,7 @@ export type ProxyDelegationCommandArgs = {
     registryUrl?: URLInput
     featuredAppRight: FeaturedAppRight
     beneficiaries?: Beneficiaries[]
+    validatorParty?: PartyId
 }
 
 type ProxyDelegationCommand = 'accept' | 'reject' | 'withdraw'
@@ -49,12 +51,18 @@ export class ProxyDelegationNamespace {
         this.ledger = new LedgerNamespace(ctx.commonCtx)
     }
 
-    public async create(delegateParty: PartyId) {
+    public async create(delegateParty: PartyId, validatorParty?: PartyId) {
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'create',
+            validatorParty
+        )
+
         const command = {
             CreateCommand: {
                 templateId: FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
                 createArguments: {
-                    provider: this.ctx.validatorParty,
+                    provider: providerParty,
                     delegate: delegateParty,
                 },
             },
@@ -62,7 +70,7 @@ export class ProxyDelegationNamespace {
 
         return await this.ledger.internal.submit({
             commands: [command],
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
@@ -102,10 +110,16 @@ export class ProxyDelegationNamespace {
             featuredAppRight,
             beneficiaries = [],
             registryUrl = localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+            validatorParty,
         } = args
 
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'command',
+            validatorParty
+        )
         const defaultBeneficiary: Beneficiaries = {
-            beneficiary: this.ctx.validatorParty,
+            beneficiary: providerParty,
             weight: beneficiaries.reduce(
                 (acc, beneficiary) => acc - beneficiary.weight,
                 1

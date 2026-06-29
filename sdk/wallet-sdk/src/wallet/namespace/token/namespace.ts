@@ -13,7 +13,7 @@ import { ParsedURL } from '../utils/url.js'
 export type TokenNamespaceConfig = {
     tokenStandardService: TokenStandardService
     registryUrls: ParsedURL[]
-    validatorParty: PartyId
+    validatorParty?: PartyId
     commonCtx: SDKContext
 }
 

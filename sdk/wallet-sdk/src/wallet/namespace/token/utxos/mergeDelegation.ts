@@ -12,6 +12,7 @@ import { WrappedCommand } from '../../ledger/types.js'
 import { PartyId } from '@canton-network/core-types'
 import { LedgerNamespace } from '../../ledger/index.js'
 import { UtxoNamespace } from './index.js'
+import { resolveProviderParty } from '../utils.js'
 
 export class MergeDelegationNamespace {
     private readonly ledger: LedgerNamespace
@@ -22,14 +23,20 @@ export class MergeDelegationNamespace {
         this.ledger = new LedgerNamespace(ctx.commonCtx)
     }
 
-    async setup(synchronizerId: string = '') {
+    async setup(synchronizerId: string = '', validatorParty?: PartyId) {
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'setup',
+            validatorParty
+        )
+
         const commands = [
             {
                 CreateCommand: {
                     templateId:
                         '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:BatchMergeUtility',
                     createArguments: {
-                        operator: this.ctx.validatorParty,
+                        operator: providerParty,
                     },
                 },
             },
@@ -38,11 +45,20 @@ export class MergeDelegationNamespace {
         return await this.ledger.internal.submit({
             commands,
             synchronizerId,
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
-    async approve(args: { owner: PartyId; synchronizerId?: string }) {
+    async approve(args: {
+        owner: PartyId
+        synchronizerId?: string
+        validatorParty?: PartyId
+    }) {
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'approve',
+            args.validatorParty
+        )
         const { owner, synchronizerId = '' } = args
 
         const mergeDelegationProposals =
@@ -79,7 +95,7 @@ export class MergeDelegationNamespace {
             commands: [{ ExerciseCommand: exercise }],
             disclosedContracts,
             synchronizerId,
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
@@ -88,7 +104,14 @@ export class MergeDelegationNamespace {
         synchronizerId?: string
         nodeLimit?: number
         inputUtxos?: PrettyContract<Holding>[]
+        validatorParty?: PartyId
     }) {
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'execute',
+            args.validatorParty
+        )
+
         const { party, nodeLimit = 200, inputUtxos, synchronizerId = '' } = args
 
         const utxos =
@@ -124,7 +147,7 @@ export class MergeDelegationNamespace {
 
         const batchMergeUtilityContracts =
             await this.ledger.acsReader.readJsContracts({
-                parties: [this.ctx.validatorParty],
+                parties: [providerParty],
                 templateIds: [
                     '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:BatchMergeUtility',
                 ],
@@ -205,12 +228,22 @@ export class MergeDelegationNamespace {
             commands: [{ ExerciseCommand: batchExerciseCommand }],
             synchronizerId,
             disclosedContracts: uniqueDisclosedContracts,
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
     command = {
-        propose: (args: { owner: PartyId; metadata?: Metadata }) => {
+        propose: (args: {
+            owner: PartyId
+            metadata?: Metadata
+            validatorParty?: PartyId
+        }) => {
+            const providerParty = resolveProviderParty(
+                this.ctx,
+                'propose',
+                args.validatorParty
+            )
+
             const { owner, metadata = { values: {} } } = args
             return {
                 CreateCommand: {
@@ -218,7 +251,7 @@ export class MergeDelegationNamespace {
                         '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:MergeDelegationProposal',
                     createArguments: {
                         delegation: {
-                            operator: this.ctx.validatorParty,
+                            operator: providerParty,
                             owner,
                             meta: metadata,
                         },

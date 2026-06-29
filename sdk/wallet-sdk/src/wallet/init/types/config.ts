@@ -12,7 +12,7 @@ export type AmuletConfig = {
 }
 
 export type TokenConfig = {
-    validatorUrl: URLInput
+    validatorUrl?: URLInput
     auth: TokenProviderConfig
     registries: URLInput[]
 }

@@ -88,19 +88,24 @@ const createNamespace: {
             auth,
             false
         )
-        const validatorParty = await getValidatorParty(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
+
+        const registryUrls = config.registries.map(
+            (input) => new ParsedURL(ctx, input)
         )
+
+        const validatorParty = config.validatorUrl
+            ? await getValidatorParty(
+                  new ParsedURL(ctx, config.validatorUrl),
+                  ctx.logger,
+                  auth
+              )
+            : undefined
 
         return new TokenNamespace({
             tokenStandardService,
-            registryUrls: config.registries.map(
-                (input) => new ParsedURL(ctx, input)
-            ),
-            validatorParty,
+            registryUrls,
             commonCtx: ctx,
+            ...(validatorParty && { validatorParty }),
         })
     },
     asset: async (ctx: SDKContext, config: AssetConfig) => {
