@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
-import { AMULET_TEMPLATE_ID } from '@canton-network/core-amulet-service'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { MultiSyncSetup } from './_setup.js'
 import { ALICE_AMULET_TAP_AMOUNT } from './_constants.js'
-
-export { AMULET_TEMPLATE_ID }
 
 export async function mintAmuletForAlice(
     setup: MultiSyncSetup,
@@ -52,12 +49,15 @@ export async function allocateAmuletForAlice(
     )!
     if (!legId) throw new Error('No transfer leg found for Alice')
 
-    const amuletHoldings = await appUserSdk.ledger.acs.read({
-        templateIds: [AMULET_TEMPLATE_ID],
-        parties: [alice.partyId],
-        filterByParty: true,
+    const amuletHoldings = await tokenNamespaceAppUser.utxos.list({
+        partyId: alice.partyId,
+        includeLocked: false,
     })
-    const amuletHoldingCid = amuletHoldings[0]?.contractId
+    const amuletHoldingCid = amuletHoldings.find(
+        (holding) =>
+            holding.interfaceViewValue.instrumentId.id === 'Amulet' &&
+            holding.interfaceViewValue.instrumentId.admin === amuletAdmin
+    )?.contractId
     if (!amuletHoldingCid) throw new Error('Amulet holding not found for Alice')
 
     const [command, disclosedContracts] =
