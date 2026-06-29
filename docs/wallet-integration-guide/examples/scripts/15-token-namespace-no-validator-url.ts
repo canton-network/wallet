@@ -1,8 +1,4 @@
-import {
-    localNetStaticConfig,
-    SDK,
-    signTransactionHash,
-} from '@canton-network/wallet-sdk'
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 
 import {
