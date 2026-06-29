@@ -437,7 +437,7 @@ export class WalletSyncService {
                     }),
                 }
 
-                this.logger.info({ wallet }, 'Wallet sync result')
+                this.logger.info({ wallet }, 'Wallet sync created a wallet')
                 await this.store.addWallet(wallet)
                 return wallet
             })
@@ -488,15 +488,12 @@ export class WalletSyncService {
             const existingAllocatedWallets = existingWallets.filter(
                 (w) => w.status === 'allocated'
             )
-            const existingPartiesOnNetwork = new Set(
-                existingAllocatedWallets.map(
-                    (w) => `${w.partyId}:${w.networkId}`
-                )
+            const existingWalletsIds = new Set(
+                existingWallets.map((w) => `${w.partyId}:${w.networkId}`)
             )
 
-            const newParties = partiesWithRights.filter(
-                (party) =>
-                    !existingPartiesOnNetwork.has(`${party}:${network.id}`)
+            const partiesWithoutWallets = partiesWithRights.filter(
+                (party) => !existingWalletsIds.has(`${party}:${network.id}`)
                 // todo: filter on idp id
             )
 
@@ -513,22 +510,24 @@ export class WalletSyncService {
 
             this.logger.info(
                 {
-                    newParties,
+                    existingAllocatedWallets,
+                    partiesWithRights,
                     updatedToInitialized: updatedToInitialized.map(
                         (w) => w.partyId
                     ),
                     updatedToDisabled: updatedToDisabled.map((w) => w.partyId),
                 },
-                'Wallets without parties'
+                'Handled wallets without parties'
             )
 
-            const newParticipantWallets = await this.handlePartiesWithoutWallet(
-                newParties,
+            const newWallets = await this.handlePartiesWithoutWallet(
+                partiesWithoutWallets,
                 network.id,
                 rightsByParty,
                 participantNamespace
             )
 
+            // TODO reconsider if that makes sense
             // Set primary wallet if none exists, or if primary is on an initialized wallet
             const networkWallets = await this.store.getWallets()
             const primaryWallet = networkWallets.find((w) => w.primary)
@@ -545,7 +544,6 @@ export class WalletSyncService {
                 )
             }
 
-            const newWallets = newParticipantWallets
             const updatedRaw = [
                 ...updatedToInitialized,
                 ...rightsUpdatedWallets,
