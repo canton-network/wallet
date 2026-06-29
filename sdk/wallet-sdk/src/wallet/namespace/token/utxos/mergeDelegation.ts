@@ -12,6 +12,7 @@ import { WrappedCommand } from '../../ledger/types.js'
 import { PartyId } from '@canton-network/core-types'
 import { LedgerNamespace } from '../../ledger/index.js'
 import { UtxoNamespace } from './index.js'
+import { resolveProviderParty } from '../utils.js'
 
 export class MergeDelegationNamespace {
     private readonly ledger: LedgerNamespace
@@ -23,13 +24,11 @@ export class MergeDelegationNamespace {
     }
 
     async setup(synchronizerId: string = '', validatorParty?: PartyId) {
-        const providerParty =
-            validatorParty ||
-            this.ctx.validatorParty ||
-            this.ctx.commonCtx.error.throw({
-                type: 'BadRequest',
-                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
-            })
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'setup',
+            validatorParty
+        )
 
         const commands = [
             {
@@ -55,13 +54,11 @@ export class MergeDelegationNamespace {
         synchronizerId?: string
         validatorParty?: PartyId
     }) {
-        const providerParty =
-            args.validatorParty ||
-            this.ctx.validatorParty ||
-            this.ctx.commonCtx.error.throw({
-                type: 'BadRequest',
-                message: `Cannot approve merge delegation command without a validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
-            })
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'approve',
+            args.validatorParty
+        )
         const { owner, synchronizerId = '' } = args
 
         const mergeDelegationProposals =
@@ -109,13 +106,11 @@ export class MergeDelegationNamespace {
         inputUtxos?: PrettyContract<Holding>[]
         validatorParty?: PartyId
     }) {
-        const providerParty =
-            args.validatorParty ||
-            this.ctx.validatorParty ||
-            this.ctx.commonCtx.error.throw({
-                type: 'BadRequest',
-                message: `Cannot execute without a validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
-            })
+        const providerParty = resolveProviderParty(
+            this.ctx,
+            'execute',
+            args.validatorParty
+        )
 
         const { party, nodeLimit = 200, inputUtxos, synchronizerId = '' } = args
 
@@ -243,13 +238,11 @@ export class MergeDelegationNamespace {
             metadata?: Metadata
             validatorParty?: PartyId
         }) => {
-            const providerParty =
-                args.validatorParty ||
-                this.ctx.validatorParty ||
-                this.ctx.commonCtx.error.throw({
-                    type: 'BadRequest',
-                    message: `Cannot create propose command without validatorParty. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
-                })
+            const providerParty = resolveProviderParty(
+                this.ctx,
+                'propose',
+                args.validatorParty
+            )
 
             const { owner, metadata = { values: {} } } = args
             return {
