@@ -1015,6 +1015,64 @@ describe('WalletSyncService - multi-network features', () => {
         })
     })
 
+    describe('Wallet sync - party already has a non-allocated wallet', () => {
+        it('syncWallets does not create a new wallet for a new party that already has a removed wallet', async () => {
+            // This should not happen with regular wallet gateway flows, but is possible when using ledger api directly to alter rights,
+            // and should not cause wallet sync errors from trying to add a wallet that already exists
+            const network1 = createNetwork('network1')
+            await store.addNetwork(network1)
+            await setSession('network1')
+
+            // Party is hosted/allocated elsewhere; the user's previous external
+            // allocation was rejected, leaving a 'removed', disabled wallet.
+            const removedWallet = createWallet(
+                'party1::namespace',
+                'network1',
+                true,
+                'removed'
+            )
+            removedWallet.signingProviderId = SigningProvider.FIREBLOCKS
+            removedWallet.reason = 'topology transaction rejected'
+            await store.addWallet(removedWallet)
+
+            // The user still has CanActAs rights to that party on the ledger.
+            mockLedgerGet
+                .mockResolvedValueOnce({
+                    participantId: 'participant1::namespace',
+                })
+                .mockResolvedValueOnce({
+                    rights: [
+                        {
+                            kind: {
+                                CanActAs: {
+                                    value: { party: 'party1::namespace' },
+                                },
+                            },
+                        },
+                    ],
+                })
+
+            const addWalletSpy = vi.spyOn(store, 'addWallet')
+            const result = await service.syncWallets()
+
+            // No attempt to re-add the already-existing party.
+            expect(addWalletSpy).not.toHaveBeenCalled()
+            expect(result.added).toHaveLength(0)
+            expect(result.disabled).toHaveLength(0)
+
+            // The existing (removed) wallet is untouched and not duplicated.
+            const wallets = await store.getAllWallets({
+                networkIds: ['network1'],
+            })
+            const party1Wallets = wallets.filter(
+                (w) => w.partyId === 'party1::namespace'
+            )
+            expect(party1Wallets).toHaveLength(1)
+            expect(party1Wallets[0].status).toBe('removed')
+            expect(party1Wallets[0].disabled).toBe(true)
+        })
+    })
+
     describe('Wallet sync - rights tracking', () => {
         it('isWalletSyncNeeded should return true when wallet rights changed on ledger', async () => {
             const network1 = createNetwork('network1')
