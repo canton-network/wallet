@@ -14,17 +14,20 @@ import {
 const {
     mockCreateUserClient,
     handleErrorToast,
+    showToast,
     setLocationHref,
     mockNetworkIdGet,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
+    showToast: vi.fn(),
     setLocationHref: vi.fn(),
     mockNetworkIdGet: vi.fn<() => string | undefined>(() => 'network1'),
 }))
 
 vi.mock('../../index.js', () => ({}))
 vi.mock('../../navigation.js', () => ({ setLocationHref }))
+vi.mock('../../utils.js', () => ({ showToast }))
 vi.mock('../../rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -57,6 +60,7 @@ describe('UserUiAddParty', () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
+        showToast.mockReset()
         setLocationHref.mockReset()
         mockNetworkIdGet.mockReset()
         mockNetworkIdGet.mockReturnValue('network1')
@@ -71,6 +75,9 @@ describe('UserUiAddParty', () => {
                         },
                     ],
                 }
+            }
+            if (method === 'listSigningProviderVaults') {
+                return { vaults: ['Vault A', 'Vault B'] }
             }
             return undefined
         })
@@ -190,7 +197,7 @@ describe('UserUiAddParty', () => {
             return undefined
         })
 
-        el.loading = true
+        el.submitting = true
         const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
         form!.dispatchEvent(
             new WalletCreateEvent('fail-party', 'participant', false)
@@ -199,7 +206,7 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
-        expect(el.loading).toBe(false)
+        expect(el.submitting).toBe(false)
     })
 
     it('redirects with removed status when wallet creation is rejected', async () => {
@@ -231,6 +238,96 @@ describe('UserUiAddParty', () => {
                 `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_REMOVED}`
             )
         )
+    })
+
+    it('loads vaults when a vault enabled signing provider is selected and sorts alphabetically', async () => {
+        await waitUntil(() => el.networkIds.length === 1)
+
+        let resolveVaults!: (value: { vaults: string[] }) => void
+        const vaultsDeferred = new Promise<{ vaults: string[] }>((resolve) => {
+            resolveVaults = resolve
+        })
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listSessions') {
+                return {
+                    sessions: [
+                        {
+                            id: 'sess-1',
+                            network: { id: 'network1', name: 'Test' },
+                        },
+                    ],
+                }
+            }
+            if (method === 'listSigningProviderVaults') {
+                return vaultsDeferred
+            }
+            return undefined
+        })
+
+        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
+        const providerSelect =
+            form?.shadowRoot?.querySelector<HTMLSelectElement>(
+                '#signing-provider-id'
+            )
+        providerSelect!.value = 'fireblocks'
+        providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
+
+        await waitUntil(() => el.vaultsLoading)
+        expect(
+            form?.shadowRoot
+                ?.querySelector<HTMLSelectElement>('#vault-name')
+                ?.querySelector('option')
+                ?.textContent?.trim()
+        ).toBe('Loading vaults...')
+
+        resolveVaults({ vaults: ['Vault B', 'Vault A'] })
+
+        await waitUntil(() => el.vaults.length === 2)
+
+        expect(el.vaultsLoading).toBe(false)
+        expect(mockRequest).toHaveBeenCalledWith({
+            method: 'listSigningProviderVaults',
+            params: { signingProviderId: 'fireblocks' },
+        })
+        expect(el.vaults).toEqual(['Vault A', 'Vault B'])
+    })
+
+    it('shows a toast when no vault accounts are returned', async () => {
+        await waitUntil(() => el.networkIds.length === 1)
+
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listSessions') {
+                return {
+                    sessions: [
+                        {
+                            id: 'sess-1',
+                            network: { id: 'network1', name: 'Test' },
+                        },
+                    ],
+                }
+            }
+            if (method === 'listSigningProviderVaults') {
+                return { vaults: [] }
+            }
+            return undefined
+        })
+
+        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
+        const providerSelect =
+            form?.shadowRoot?.querySelector<HTMLSelectElement>(
+                '#signing-provider-id'
+            )
+        providerSelect!.value = 'fireblocks'
+        providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
+
+        await waitUntil(() => showToast.mock.calls.length > 0)
+
+        expect(showToast).toHaveBeenCalledWith(
+            'No vault accounts found',
+            'No vault accounts are available for the selected signing provider.',
+            'info'
+        )
+        expect(el.vaults).toEqual([])
     })
 
     it('uses networkId from state when listSessions fails', async () => {

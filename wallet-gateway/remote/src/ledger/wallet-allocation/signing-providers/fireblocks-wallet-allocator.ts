@@ -10,7 +10,11 @@ import {
 } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
 import { PartyAllocationService } from '../../party-allocation-service.js'
-import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
+import {
+    PartyHint,
+    Primary,
+    VaultName,
+} from '../../../user-api/rpc-gen/typings.js'
 import type { WalletAllocator } from '../wallet-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 
@@ -35,12 +39,13 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        vaultName: VaultName
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
 
         const keys = await driver.getKeys().then(handleSigningError)
-        const key = keys?.keys?.find((k) => k.name === 'Canton Party')
+        const key = keys?.keys?.find((k) => k.name === vaultName)
         if (!key) throw new Error('Fireblocks key not found')
         const formattedPublicKey = Buffer.from(key.publicKey, 'hex').toString(
             'base64'
@@ -144,9 +149,6 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         }
 
         const driver = this.signingDriver.controller(userId)
-        const keys = await driver.getKeys().then(handleSigningError)
-        const key = keys?.keys?.find((k) => k.name === 'Canton Party')
-        if (!key) throw new Error('Fireblocks key not found')
 
         const { signature, status } = await driver
             .getTransaction({
@@ -198,5 +200,11 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         }
 
         return this.store.updateWallet(walletUpdate)
+    }
+
+    async getVaults(userId: UserId): Promise<{ vaults: string[] }> {
+        const driver = this.signingDriver.controller(userId)
+        const keys = await driver.getKeys().then(handleSigningError)
+        return { vaults: keys?.keys?.map((key) => key.name) ?? [] }
     }
 }

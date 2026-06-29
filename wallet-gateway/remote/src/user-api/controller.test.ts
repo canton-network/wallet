@@ -1097,7 +1097,8 @@ describe('userController', () => {
                 authWithEmail,
                 'alice',
                 false,
-                SigningProvider.WALLET_KERNEL
+                SigningProvider.WALLET_KERNEL,
+                undefined
             )
             expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
             expect(emitSpy).toHaveBeenCalledWith(
@@ -1128,7 +1129,8 @@ describe('userController', () => {
                 authWithEmail,
                 'bob',
                 false,
-                SigningProvider.WALLET_KERNEL
+                SigningProvider.WALLET_KERNEL,
+                undefined
             )
         })
 

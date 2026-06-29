@@ -5,7 +5,11 @@ import { elementUpdated, fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import './wallet-create-form.js'
-import { WalletCreateEvent, WgWalletCreateForm } from './wallet-create-form.js'
+import {
+    WalletCreateEvent,
+    SigningProviderChangeEvent,
+    WgWalletCreateForm,
+} from './wallet-create-form.js'
 
 function submitForm(el: WgWalletCreateForm) {
     const form = el.shadowRoot!.querySelector<HTMLFormElement>('form')!
@@ -89,6 +93,7 @@ describe('wg-wallet-create-form', () => {
         expect(event.partyHint).toBe('alice')
         expect(event.signingProviderId).toBe('wallet-kernel')
         expect(event.primary).toBe(false)
+        expect(event.vaultName).toBeUndefined()
     })
 
     it('includes primary=true when the checkbox is checked', async () => {
@@ -113,11 +118,11 @@ describe('wg-wallet-create-form', () => {
         )
     })
 
-    it('does not emit when loading', async () => {
+    it('does not emit when submitting', async () => {
         const el = await fixture<WgWalletCreateForm>(
             html`<wg-wallet-create-form
                 .signingProviders=${['participant']}
-                .loading=${true}
+                .submitting=${true}
             ></wg-wallet-create-form>`
         )
         fillForm(el, {
@@ -133,13 +138,13 @@ describe('wg-wallet-create-form', () => {
         expect(listener).not.toHaveBeenCalled()
     })
 
-    it('shows loading state while creating a wallet', async () => {
+    it('shows submitting state while creating a wallet', async () => {
         const el = await fixture<WgWalletCreateForm>(
             html`<wg-wallet-create-form
-                .loading=${true}
+                .submitting=${true}
                 submitLabel="Add"
-                loadingLabel="Adding..."
-                loadingMessage="Creating party, please wait..."
+                submittingLabel="Adding..."
+                submittingMessage="Creating party, please wait..."
             ></wg-wallet-create-form>`
         )
 
@@ -160,6 +165,145 @@ describe('wg-wallet-create-form', () => {
                 '#signing-provider-id'
             )?.disabled
         ).toBe(true)
+    })
+
+    it('emits SigningProviderChangeEvent when signing provider changes', async () => {
+        const el = await fixture<WgWalletCreateForm>(
+            html`<wg-wallet-create-form
+                .signingProviders=${['participant', 'fireblocks']}
+                .vaultSigningProviders=${['fireblocks']}
+            ></wg-wallet-create-form>`
+        )
+
+        const listener = vi.fn()
+        el.addEventListener('signing-provider-change', listener)
+
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.value = 'fireblocks'
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.dispatchEvent(new Event('change', { bubbles: true }))
+
+        expect(listener).toHaveBeenCalledOnce()
+        expect(listener.mock.calls[0][0]).toBeInstanceOf(
+            SigningProviderChangeEvent
+        )
+        expect(
+            (listener.mock.calls[0][0] as SigningProviderChangeEvent)
+                .signingProviderId
+        ).toBe('fireblocks')
+    })
+
+    it('shows vault select only for configured vault signing providers', async () => {
+        const el = await fixture<WgWalletCreateForm>(
+            html`<wg-wallet-create-form
+                .signingProviders=${['participant', 'fireblocks']}
+                .vaultSigningProviders=${['fireblocks']}
+                .vaults=${['Vault A']}
+            ></wg-wallet-create-form>`
+        )
+
+        expect(el.shadowRoot?.querySelector('#vault-name')).toBeNull()
+
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.value = 'fireblocks'
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.dispatchEvent(new Event('change', { bubbles: true }))
+        await elementUpdated(el)
+
+        expect(el.shadowRoot?.querySelector('#vault-name')).not.toBeNull()
+        const options = Array.from(
+            el.shadowRoot!.querySelectorAll<HTMLOptionElement>(
+                '#vault-name option'
+            )
+        ).map((option) => option.value)
+        expect(options).toContain('Vault A')
+    })
+
+    it('includes vaultName in WalletCreateEvent when selected', async () => {
+        const el = await fixture<WgWalletCreateForm>(
+            html`<wg-wallet-create-form
+                .signingProviders=${['fireblocks']}
+                .vaultSigningProviders=${['fireblocks']}
+                .vaults=${['Vault A']}
+            ></wg-wallet-create-form>`
+        )
+
+        fillForm(el, {
+            partyHint: 'alice',
+            signingProviderId: 'fireblocks',
+        })
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.dispatchEvent(new Event('change', { bubbles: true }))
+        await elementUpdated(el)
+        el.shadowRoot!.querySelector<HTMLSelectElement>('#vault-name')!.value =
+            'Vault A'
+
+        const listener = vi.fn()
+        el.addEventListener('wallet-create', listener)
+        submitForm(el)
+
+        expect((listener.mock.calls[0][0] as WalletCreateEvent).vaultName).toBe(
+            'Vault A'
+        )
+    })
+
+    it('shows vault loading state while vaults are being fetched', async () => {
+        const el = await fixture<WgWalletCreateForm>(
+            html`<wg-wallet-create-form
+                .signingProviders=${['fireblocks']}
+                .vaultSigningProviders=${['fireblocks']}
+                ?vaultsLoading=${true}
+            ></wg-wallet-create-form>`
+        )
+
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.value = 'fireblocks'
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.dispatchEvent(new Event('change', { bubbles: true }))
+        await elementUpdated(el)
+
+        const vaultSelect =
+            el.shadowRoot!.querySelector<HTMLSelectElement>('#vault-name')
+        expect(vaultSelect?.disabled).toBe(true)
+        expect(vaultSelect?.querySelector('option')?.textContent?.trim()).toBe(
+            'Loading vaults...'
+        )
+        expect(
+            el.shadowRoot?.querySelector<HTMLButtonElement>('.submit-button')
+                ?.disabled
+        ).toBe(true)
+    })
+
+    it('does not emit when vaults are loading', async () => {
+        const el = await fixture<WgWalletCreateForm>(
+            html`<wg-wallet-create-form
+                .signingProviders=${['fireblocks']}
+                .vaultSigningProviders=${['fireblocks']}
+                ?vaultsLoading=${true}
+            ></wg-wallet-create-form>`
+        )
+
+        fillForm(el, {
+            partyHint: 'alice',
+            signingProviderId: 'fireblocks',
+        })
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.dispatchEvent(new Event('change', { bubbles: true }))
+        await elementUpdated(el)
+
+        const listener = vi.fn()
+        el.addEventListener('wallet-create', listener)
+        submitForm(el)
+
+        expect(listener).not.toHaveBeenCalled()
     })
 
     it('reset clears the party hint and primary checkbox', async () => {

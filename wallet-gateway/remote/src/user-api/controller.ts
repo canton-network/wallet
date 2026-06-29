@@ -42,6 +42,8 @@ import {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
+    ListSigningProviderVaultsResult,
+    ListSigningProviderVaultsParams,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -273,7 +275,8 @@ export const userController = (
                 connectedContext,
                 partyHint,
                 primary ?? false,
-                signingProviderId as SigningProvider
+                signingProviderId as SigningProvider,
+                params.vaultName
             )
 
             // Sync wallets (TODO: separate rights sync from wallet sync as we only need rights sync here)
@@ -1087,6 +1090,44 @@ export const userController = (
         removeApiKey: async (params: RemoveApiKeyParams): Promise<Null> => {
             await store.removeApiKey(params.id)
             return null
+        },
+        listSigningProviderVaults: async (
+            params: ListSigningProviderVaultsParams
+        ): Promise<ListSigningProviderVaultsResult> => {
+            const network = await store.getCurrentNetwork()
+            const idp = await store.getIdp(network.identityProviderId)
+
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
+            }
+
+            const adminAccessTokenProvider =
+                AuthTokenProvider.fromGatewayConfig(
+                    idp,
+                    network.adminAuth,
+                    logger
+                )
+            const partyAllocator = new PartyAllocationService({
+                synchronizerId: network.synchronizerId,
+                accessTokenProvider: adminAccessTokenProvider,
+                httpLedgerUrl: network.ledgerApi.baseUrl,
+                logger,
+            })
+            const walletAllocationService = new WalletAllocationService(
+                store,
+                logger,
+                partyAllocator,
+                drivers
+            )
+            if (!drivers[params.signingProviderId as SigningProvider]) {
+                throw new Error(
+                    `Signing provider ${params.signingProviderId} not supported`
+                )
+            }
+            return walletAllocationService.getVaults(
+                assertConnected(authContext),
+                params.signingProviderId as SigningProvider
+            )
         },
     })
 }
