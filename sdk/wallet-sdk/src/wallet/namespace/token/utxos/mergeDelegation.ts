@@ -22,14 +22,22 @@ export class MergeDelegationNamespace {
         this.ledger = new LedgerNamespace(ctx.commonCtx)
     }
 
-    async setup(synchronizerId: string = '') {
+    async setup(synchronizerId: string = '', validatorParty?: PartyId) {
+        const providerParty =
+            validatorParty ||
+            this.ctx.validatorParty ||
+            this.ctx.commonCtx.error.throw({
+                type: 'BadRequest',
+                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+            })
+
         const commands = [
             {
                 CreateCommand: {
                     templateId:
                         '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:BatchMergeUtility',
                     createArguments: {
-                        operator: this.ctx.validatorParty,
+                        operator: providerParty,
                     },
                 },
             },
@@ -38,11 +46,22 @@ export class MergeDelegationNamespace {
         return await this.ledger.internal.submit({
             commands,
             synchronizerId,
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
-    async approve(args: { owner: PartyId; synchronizerId?: string }) {
+    async approve(args: {
+        owner: PartyId
+        synchronizerId?: string
+        validatorParty?: PartyId
+    }) {
+        if (!this.ctx.validatorParty || !args.validatorParty) {
+            this.ctx.commonCtx.error.throw({
+                type: 'BadRequest',
+                message:
+                    'Approving a delegation prooposal is unsupported.  Please intialize the token namespace with a validatorURL or provide a validatorParty in this method',
+            })
+        }
         const { owner, synchronizerId = '' } = args
 
         const mergeDelegationProposals =
@@ -88,7 +107,16 @@ export class MergeDelegationNamespace {
         synchronizerId?: string
         nodeLimit?: number
         inputUtxos?: PrettyContract<Holding>[]
+        validatorParty?: PartyId
     }) {
+        const providerParty =
+            args.validatorParty ||
+            this.ctx.validatorParty ||
+            this.ctx.commonCtx.error.throw({
+                type: 'BadRequest',
+                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+            })
+
         const { party, nodeLimit = 200, inputUtxos, synchronizerId = '' } = args
 
         const utxos =
@@ -124,7 +152,7 @@ export class MergeDelegationNamespace {
 
         const batchMergeUtilityContracts =
             await this.ledger.acsReader.readJsContracts({
-                parties: [this.ctx.validatorParty],
+                parties: [providerParty],
                 templateIds: [
                     '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:BatchMergeUtility',
                 ],
@@ -205,12 +233,24 @@ export class MergeDelegationNamespace {
             commands: [{ ExerciseCommand: batchExerciseCommand }],
             synchronizerId,
             disclosedContracts: uniqueDisclosedContracts,
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
     command = {
-        propose: (args: { owner: PartyId; metadata?: Metadata }) => {
+        propose: (args: {
+            owner: PartyId
+            metadata?: Metadata
+            validatorParty?: PartyId
+        }) => {
+            const providerParty =
+                args.validatorParty ||
+                this.ctx.validatorParty ||
+                this.ctx.commonCtx.error.throw({
+                    type: 'BadRequest',
+                    message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+                })
+
             const { owner, metadata = { values: {} } } = args
             return {
                 CreateCommand: {
@@ -218,7 +258,7 @@ export class MergeDelegationNamespace {
                         '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:MergeDelegationProposal',
                     createArguments: {
                         delegation: {
-                            operator: this.ctx.validatorParty,
+                            operator: providerParty,
                             owner,
                             meta: metadata,
                         },

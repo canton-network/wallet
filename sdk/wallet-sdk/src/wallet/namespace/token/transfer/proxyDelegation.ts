@@ -19,6 +19,7 @@ export type ProxyDelegationCommandArgs = {
     registryUrl?: URL
     featuredAppRight: FeaturedAppRight
     beneficiaries?: Beneficiaries[]
+    validatorParty?: PartyId
 }
 
 type ProxyDelegationCommand = 'accept' | 'reject' | 'withdraw'
@@ -48,12 +49,20 @@ export class ProxyDelegationNamespace {
         this.ledger = new LedgerNamespace(ctx.commonCtx)
     }
 
-    public async create(delegateParty: PartyId) {
+    public async create(delegateParty: PartyId, validatorParty?: PartyId) {
+        const providerParty =
+            validatorParty ||
+            this.ctx.validatorParty ||
+            this.ctx.commonCtx.error.throw({
+                type: 'BadRequest',
+                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+            })
+
         const command = {
             CreateCommand: {
                 templateId: FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
                 createArguments: {
-                    provider: this.ctx.validatorParty,
+                    provider: providerParty,
                     delegate: delegateParty,
                 },
             },
@@ -61,7 +70,7 @@ export class ProxyDelegationNamespace {
 
         return await this.ledger.internal.submit({
             commands: [command],
-            actAs: [this.ctx.validatorParty],
+            actAs: [providerParty],
         })
     }
 
@@ -101,10 +110,19 @@ export class ProxyDelegationNamespace {
             featuredAppRight,
             beneficiaries = [],
             registryUrl = localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+            validatorParty,
         } = args
 
+        const providerParty =
+            validatorParty ||
+            this.ctx.validatorParty ||
+            this.ctx.commonCtx.error.throw({
+                type: 'BadRequest',
+                message: `Error while setting up a merge delegation command. Please initialize the token namespace with a validatorURL or provide a validatorParty in this method`,
+            })
+
         const defaultBeneficiary: Beneficiaries = {
-            beneficiary: this.ctx.validatorParty,
+            beneficiary: providerParty,
             weight: beneficiaries.reduce(
                 (acc, beneficiary) => acc - beneficiary.weight,
                 1
