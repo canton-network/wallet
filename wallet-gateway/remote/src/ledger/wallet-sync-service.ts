@@ -527,7 +527,6 @@ export class WalletSyncService {
                 participantNamespace
             )
 
-            // TODO reconsider if that makes sense
             // Set primary wallet if none exists, or if primary is on an initialized wallet
             const networkWallets = await this.store.getWallets()
             const primaryWallet = networkWallets.find((w) => w.primary)

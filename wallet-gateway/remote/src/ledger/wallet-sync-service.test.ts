@@ -1023,8 +1023,6 @@ describe('WalletSyncService - multi-network features', () => {
             await store.addNetwork(network1)
             await setSession('network1')
 
-            // Party is hosted/allocated elsewhere; the user's previous external
-            // allocation was rejected, leaving a 'removed', disabled wallet.
             const removedWallet = createWallet(
                 'party1::namespace',
                 'network1',
@@ -1035,7 +1033,6 @@ describe('WalletSyncService - multi-network features', () => {
             removedWallet.reason = 'topology transaction rejected'
             await store.addWallet(removedWallet)
 
-            // The user still has CanActAs rights to that party on the ledger.
             mockLedgerGet
                 .mockResolvedValueOnce({
                     participantId: 'participant1::namespace',
@@ -1055,7 +1052,7 @@ describe('WalletSyncService - multi-network features', () => {
             const addWalletSpy = vi.spyOn(store, 'addWallet')
             const result = await service.syncWallets()
 
-            // No attempt to re-add the already-existing party.
+            // No attempt to re-add already existing wallet.
             expect(addWalletSpy).not.toHaveBeenCalled()
             expect(result.added).toHaveLength(0)
             expect(result.disabled).toHaveLength(0)
