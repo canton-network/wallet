@@ -881,7 +881,7 @@ describe('userController', () => {
             const result = await controller.execute(params)
 
             expect(transactionServiceMocks.execute).toHaveBeenCalledWith(
-                auth,
+                auth.userId,
                 participantWallet,
                 expect.objectContaining({ id: pendingTransaction.id }),
                 params,
@@ -914,7 +914,7 @@ describe('userController', () => {
             const result = await controller.execute(executeParams)
 
             expect(transactionServiceMocks.execute).toHaveBeenCalledWith(
-                auth,
+                auth.userId,
                 primaryWallet,
                 expect.objectContaining({ id: pendingTransaction.id }),
                 executeParams,
@@ -1097,7 +1097,8 @@ describe('userController', () => {
                 authWithEmail,
                 'alice',
                 false,
-                SigningProvider.WALLET_KERNEL
+                SigningProvider.WALLET_KERNEL,
+                undefined
             )
             expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
             expect(emitSpy).toHaveBeenCalledWith(
@@ -1128,7 +1129,8 @@ describe('userController', () => {
                 authWithEmail,
                 'bob',
                 false,
-                SigningProvider.WALLET_KERNEL
+                SigningProvider.WALLET_KERNEL,
+                undefined
             )
         })
 

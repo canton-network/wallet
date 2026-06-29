@@ -44,6 +44,7 @@ import { sessionHandler } from './middleware/sessionHandler.js'
 import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
 import { Env } from './env.js'
+import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 
 let isReady = false
 
@@ -332,15 +333,17 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         ],
     }
 
-    app.use('/api/*splat', express.json())
-    app.use('/api/*splat', preAuthRateLimit)
     app.use(
         '/api/*splat',
-        jwtAuth(authService, logger.child({ component: 'JwtHandler' }))
-    )
-    app.use('/api/*splat', postAuthRateLimit)
-    app.use(
-        '/api/*splat',
+        express.json(),
+        preAuthRateLimit,
+        apiKeyAuth(
+            store,
+            config.server.dappPath,
+            logger.child({ component: 'ApiKeyHandler' })
+        ),
+        jwtAuth(authService, logger.child({ component: 'JwtHandler' })),
+        postAuthRateLimit,
         sessionHandler(
             store,
             allowedPaths,

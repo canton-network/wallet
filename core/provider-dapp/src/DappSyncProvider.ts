@@ -16,9 +16,17 @@ export class DappSyncProvider extends AbstractProvider<DappRpcTypes> {
 
     constructor(transport?: RpcTransport) {
         super()
-        this.client = new SpliceWalletJSONRPCDAppAPI(
-            transport ?? new WindowTransport(window)
-        )
+        const rpcTransport = transport ?? new WindowTransport(window)
+        this.client = new SpliceWalletJSONRPCDAppAPI(rpcTransport)
+        // CIP-103 events (txChanged, accountsChanged, statusChanged,
+        // connected) arrive as wallet-pushed notifications on the window
+        // transport; bridge them into the AbstractProvider listener map so
+        // provider.on(event, listener) delivers them as the CIP requires.
+        if (rpcTransport instanceof WindowTransport) {
+            rpcTransport.onNotification((method, params) => {
+                this.emit(method, params)
+            })
+        }
     }
 
     public async request<M extends keyof DappRpcTypes>(

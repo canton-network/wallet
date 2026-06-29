@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-ui-components",
-    "version": "1.7.0",
+    "version": "1.8.1",
     "type": "module",
     "description": "Reusable UI components for the Splice wallet",
     "license": "Apache-2.0",
@@ -25,25 +25,25 @@
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "dev": "storybook dev -p 6006",
-        "test": "vitest run --project browser --passWithNoTests",
-        "test:coverage": "vitest run --project browser --coverage --passWithNoTests"
+        "test": "vitest run --project browser",
+        "test:coverage": "vitest run --project browser --coverage"
     },
     "devDependencies": {
-        "@storybook/web-components-vite": "^10.2.14",
-        "@types/bootstrap": "^5.2.10",
+        "@open-wc/testing-helpers": "^3.0.1",
+        "@storybook/web-components-vite": "^10.4.4",
+        "@types/bootstrap": "^5.2.11",
         "@types/fs-extra": "^11.0.4",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
-        "fs-extra": "^11.3.3",
-        "playwright": "^1.58.2",
-        "storybook": "^10.2.16",
-        "tsx": "^4.21.0",
+        "@vitest/browser-playwright": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.8",
+        "fs-extra": "^11.3.5",
+        "playwright": "^1.60.0",
+        "storybook": "^10.4.4",
+        "tsx": "^4.22.4",
         "typescript": "^5.9.3",
-        "vite": "^7.3.2",
+        "vite": "^7.3.5",
         "vite-plugin-dts": "^4.5.4",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.8"
     },
-    "packageManager": "yarn@4.9.4",
     "dependencies": {
         "@canton-network/core-tx-visualizer": "workspace:^",
         "@canton-network/core-types": "workspace:^",
@@ -52,7 +52,7 @@
         "@canton-network/core-wallet-user-rpc-client": "workspace:^",
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.8",
-        "lit": "^3.3.2"
+        "lit": "^3.3.3"
     },
     "files": [
         "dist/**",
@@ -65,5 +65,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/wallet-ui-components"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-ui-components#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

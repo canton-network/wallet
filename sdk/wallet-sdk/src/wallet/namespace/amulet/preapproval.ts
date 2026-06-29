@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import { AmuletNamespaceConfig, LedgerTypes } from '../../sdk.js'
+import type { AmuletNamespaceConfig } from '../../sdk.js'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { PreapprovalParties } from './types.js'
 import { LedgerNamespace } from '../ledger/namespace.js'
 import { fetchAmulet } from './namespace.js'
@@ -17,14 +18,14 @@ export class PreapprovalNamespace {
      */
     public readonly command: {
         create: (args: { parties: PreapprovalParties }) => Promise<{
-            CreateCommand: LedgerTypes['CreateCommand']
+            CreateCommand: LedgerCommonSchemas['CreateCommand']
         }>
         cancel: (args: {
             parties: PreapprovalParties
         }) => Promise<
             | [
-                  { ExerciseCommand: LedgerTypes['ExerciseCommand'] },
-                  LedgerTypes['DisclosedContract'][],
+                  { ExerciseCommand: LedgerCommonSchemas['ExerciseCommand'] },
+                  LedgerCommonSchemas['DisclosedContract'][],
               ]
             | typeof EMPTY_COMMAND_RESULT
         >
@@ -43,20 +44,20 @@ export class PreapprovalNamespace {
 
                 const amulet = await fetchAmulet(this.ctx)
 
-                const command: { CreateCommand: LedgerTypes['CreateCommand'] } =
-                    {
-                        CreateCommand: {
-                            templateId:
-                                '#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal',
-                            createArguments: {
-                                provider:
-                                    parties?.provider ??
-                                    this.ctx.validatorParty,
-                                receiver: parties.receiver,
-                                expectedDso: amulet.admin,
-                            },
+                const command: {
+                    CreateCommand: LedgerCommonSchemas['CreateCommand']
+                } = {
+                    CreateCommand: {
+                        templateId:
+                            '#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal',
+                        createArguments: {
+                            provider:
+                                parties?.provider ?? this.ctx.validatorParty,
+                            receiver: parties.receiver,
+                            expectedDso: amulet.admin,
                         },
-                    }
+                    },
+                }
 
                 return command
             },

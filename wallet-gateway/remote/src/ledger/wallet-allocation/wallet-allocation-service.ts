@@ -9,7 +9,11 @@ import {
 } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
 import { PartyAllocationService } from '../party-allocation-service.js'
-import { PartyHint, Primary } from '../../user-api/rpc-gen/typings.js'
+import {
+    PartyHint,
+    Primary,
+    VaultName,
+} from '../../user-api/rpc-gen/typings.js'
 import { ParticipantWalletAllocator } from './signing-providers/participant-wallet-allocator.js'
 import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.js'
 import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.js'
@@ -21,13 +25,15 @@ export interface WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary
+        primary: Primary,
+        vaultName?: VaultName | undefined
     ): Promise<Wallet>
     allocateParty(
         userId: UserId,
         email: string | undefined,
         existingWallet: Wallet
     ): Promise<void>
+    getVaults?(userId: UserId): Promise<{ vaults: string[] }>
 }
 
 export class WalletAllocationService {
@@ -96,7 +102,8 @@ export class WalletAllocationService {
         authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary,
-        signingProviderId: SigningProvider
+        signingProviderId: SigningProvider,
+        vaultName?: VaultName | undefined
     ): Promise<Wallet> {
         switch (signingProviderId) {
             case SigningProvider.PARTICIPANT:
@@ -122,11 +129,17 @@ export class WalletAllocationService {
                 if (!this.fireblocksAllocator) {
                     throw new Error('Fireblocks signing driver not available')
                 }
+                if (!vaultName) {
+                    throw new Error(
+                        'vaultName is required for creating a wallet with Fireblocks'
+                    )
+                }
                 return this.fireblocksAllocator.createWallet(
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    vaultName
                 )
             case SigningProvider.BLOCKDAEMON:
                 if (!this.blockdaemonAllocator) {
@@ -218,6 +231,23 @@ export class WalletAllocationService {
             default:
                 throw new Error(
                     `Unsupported signing provider: ${signingProviderId}`
+                )
+        }
+    }
+
+    public async getVaults(
+        authContext: AuthContext,
+        signingProviderId: SigningProvider
+    ): Promise<{ vaults: string[] }> {
+        switch (signingProviderId) {
+            case SigningProvider.FIREBLOCKS:
+                if (!this.fireblocksAllocator) {
+                    throw new Error('Fireblocks signing driver not available')
+                }
+                return this.fireblocksAllocator.getVaults(authContext.userId)
+            default:
+                throw new Error(
+                    `Signing provider ${signingProviderId} does not support listing vaults`
                 )
         }
     }

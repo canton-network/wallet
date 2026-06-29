@@ -11,6 +11,7 @@ describe('jwtAuth', () => {
     const verifyToken = vi.fn()
     const authService = { verifyToken }
     const logger = pino({ level: 'silent' }, sink())
+
     let next: NextFunction
     let status: ReturnType<typeof vi.fn>
     let json: ReturnType<typeof vi.fn>

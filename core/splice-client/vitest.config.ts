@@ -10,7 +10,7 @@ export default defineConfig({
             include: ['src/**/*.ts'],
             exclude: ['src/generated-clients/*', 'src/test-utils.ts'],
             provider: 'v8',
-            reporter: ['text', 'html', 'lcov'],
+            reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
                 lines: 0,
                 functions: 0,

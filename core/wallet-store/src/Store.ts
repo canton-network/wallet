@@ -115,6 +115,18 @@ export interface MessageRawStatusUpdate {
     signature?: string
 }
 
+// API keys
+export interface ApiKey {
+    id: string
+    name: string
+    digest: string
+    createdAt: Date
+    lastUsedAt?: Date | undefined
+    userId: string
+    email: string | null
+    networkId: string
+}
+
 // Store interface for managing wallets, sessions, networks, and transactions
 
 export interface Store {
@@ -181,4 +193,10 @@ export interface Store {
     getMessageRaw(messageId: string): Promise<MessageRaw | undefined>
     listMessageRaws(): Promise<Array<MessageRaw>>
     removeMessageRaw(messageId: string): Promise<void>
+
+    // API Key methods
+    addApiKey(apiKey: ApiKey): Promise<void>
+    listApiKeys(): Promise<Array<ApiKey>>
+    getApiKey(digest: string): Promise<ApiKey | undefined>
+    removeApiKey(apiKeyId: string): Promise<void>
 }

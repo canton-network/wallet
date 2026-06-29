@@ -22,6 +22,7 @@ import {
     UserLevelRight,
     MessageRaw,
     MessageRawStatusUpdate,
+    ApiKey,
 } from '@canton-network/core-wallet-store'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 
@@ -30,6 +31,7 @@ interface UserStorage {
     transactions: Map<string, Transaction>
     messageRaws: Map<string, MessageRaw>
     session: Session | undefined
+    apiKeys: Map<string, ApiKey>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
 
@@ -77,6 +79,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             transactions: new Map<string, Transaction>(),
             messageRaws: new Map<string, MessageRaw>(),
             session: undefined,
+            apiKeys: new Map<string, ApiKey>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
     }
@@ -451,7 +454,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.assertConnected()
         const storage = this.getStorage()
 
-        return Array.from(storage.transactions.values())
+        return Array.from(storage.transactions.values()).sort(byCreatedAtDesc)
     }
 
     async removeTransaction(transactionId: string): Promise<void> {
@@ -529,4 +532,84 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         storage.messageRaws.delete(messageId)
         this.updateStorage(storage)
     }
+
+    // API keys
+    async addApiKey(apiKey: ApiKey): Promise<void> {
+        const userId = this.assertConnected()
+        if (apiKey.userId !== userId) {
+            throw new Error(
+                `ApiKey userId mismatch: expected ${userId}, got ${apiKey.userId}`
+            )
+        }
+
+        const network = await this.getCurrentNetwork()
+        if (apiKey.networkId !== network.id) {
+            throw new Error(
+                `ApiKey networkId mismatch: expected ${network.id}, got ${apiKey.networkId}`
+            )
+        }
+
+        const storage = this.getStorage()
+        storage.apiKeys.set(apiKey.id, apiKey)
+        this.updateStorage(storage)
+    }
+
+    async listApiKeys(): Promise<Array<ApiKey>> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+
+        const storage = this.getStorage()
+        const apiKeys = Array.from(storage.apiKeys.values()).sort(
+            byCreatedAtDesc
+        )
+
+        const apiKeysForUser = apiKeys.filter(
+            (apiKey) =>
+                apiKey.userId === userId && apiKey.networkId === network.id
+        )
+
+        return apiKeysForUser
+    }
+
+    async getApiKey(digest: string): Promise<ApiKey | undefined> {
+        const storage = this.getStorage()
+        const apiKeys = Array.from(storage.apiKeys.values())
+        return apiKeys.find((key) => key.digest === digest)
+    }
+
+    async removeApiKey(apiKeyId: string): Promise<void> {
+        const storage = this.getStorage()
+        const apiKey = storage.apiKeys.get(apiKeyId)
+
+        if (!apiKey) {
+            return
+        }
+
+        const userId = this.assertConnected()
+        if (apiKey.userId !== userId) {
+            throw new Error(
+                `ApiKey userId mismatch: expected ${userId}, got ${apiKey.userId}`
+            )
+        }
+
+        const network = await this.getCurrentNetwork()
+        if (apiKey.networkId !== network.id) {
+            throw new Error(
+                `ApiKey networkId mismatch: expected ${network.id}, got ${apiKey.networkId}`
+            )
+        }
+
+        storage.apiKeys.delete(apiKeyId)
+        this.updateStorage(storage)
+    }
+}
+
+const byCreatedAtDesc = (
+    a: { createdAt?: Date | string } | undefined,
+    b: { createdAt?: Date | string } | undefined
+) => {
+    if (!a?.createdAt) return 1
+    if (!b?.createdAt) return -1
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 }

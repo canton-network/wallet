@@ -26,7 +26,7 @@ class RawReader extends BaseReader<AcsOptions> {
         super(ledger, cacheOptions)
     }
 
-    public async read(
+    public override async read(
         options: AcsOptions
     ): Promise<LedgerCommonSchemas['JsGetActiveContractsResponse'][]> {
         const resolvedOptions = await this.resolveAcsOptions(options)

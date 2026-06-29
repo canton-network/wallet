@@ -23,9 +23,14 @@ export const useWithdrawAllocation = () => {
                 ...args,
             }),
         onSuccess: async (_, args) => {
-            await queryClient.invalidateQueries({
-                queryKey: queryKeys.listAllocations.forParty(args.party),
-            })
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.listAllocations.forParty(args.party),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: queryKeys.listHoldings.forParty(args.party),
+                }),
+            ])
         },
     })
 }

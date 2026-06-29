@@ -28,7 +28,7 @@ export class AssetNamespace {
     }
 
     public async find(id: string, registryUrl?: URL): Promise<AssetBody> {
-        return await findAsset(this.list, id, this.ctx.error, registryUrl)
+        return findAsset(this.list, id, this.ctx.error, registryUrl)
     }
 }
 
@@ -39,7 +39,10 @@ export function findAsset(
     registryUrl?: URL
 ): AssetBody {
     const asset = registryUrl
-        ? assets.filter((asset) => asset.id === id && asset.registryUrl)
+        ? assets.filter(
+              (asset) =>
+                  asset.id === id && asset.registryUrl.href === registryUrl.href
+          )
         : assets.filter((asset) => asset.id === id)
 
     if (asset.length === 0) {

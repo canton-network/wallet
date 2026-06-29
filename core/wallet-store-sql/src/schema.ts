@@ -12,6 +12,7 @@ import {
     PartyLevelRight,
     UserLevelRight,
     MessageRaw,
+    ApiKey,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
@@ -37,6 +38,7 @@ interface NetworkTable {
 
     auth: string // json stringified
     adminAuth: string | undefined // json stringified
+    serviceAccountAuth: string | undefined // json stringified
 }
 
 /**
@@ -115,6 +117,17 @@ interface SessionTable extends Session {
     userId: UserId
 }
 
+interface ApiKeysTable {
+    id: string
+    digest: string
+    name: string
+    userId: UserId
+    email: string | null
+    networkId: string
+    createdAt: string
+    lastUsedAt: string | null
+}
+
 export interface DB {
     migrations: MigrationTable
     idps: IdpTable
@@ -125,6 +138,7 @@ export interface DB {
     transactions: TransactionTable
     messagesRaw: MessageRawTable
     sessions: SessionTable
+    apiKeys: ApiKeysTable
 }
 
 export const toIdp = (table: IdpTable): Idp => {
@@ -189,6 +203,13 @@ export const toNetwork = (table: NetworkTable): Network => {
                       : table.adminAuth
               )
             : undefined,
+        serviceAccountAuth: table.serviceAccountAuth
+            ? authSchema.parse(
+                  typeof table.serviceAccountAuth === 'string'
+                      ? JSON.parse(table.serviceAccountAuth)
+                      : table.serviceAccountAuth
+              )
+            : undefined,
     }
 }
 
@@ -207,6 +228,9 @@ export const fromNetwork = (
         auth: JSON.stringify(network.auth),
         adminAuth: network.adminAuth
             ? JSON.stringify(network.adminAuth)
+            : undefined,
+        serviceAccountAuth: network.serviceAccountAuth
+            ? JSON.stringify(network.serviceAccountAuth)
             : undefined,
     }
 }
@@ -384,4 +408,30 @@ export const toMessageRaw = (table: MessageRawTable): MessageRaw => {
     }
 
     return result
+}
+
+export const fromApiKey = (table: ApiKeysTable): ApiKey => {
+    return {
+        id: table.id,
+        digest: table.digest,
+        name: table.name,
+        userId: table.userId,
+        email: table.email,
+        networkId: table.networkId,
+        createdAt: new Date(table.createdAt),
+        lastUsedAt: table.lastUsedAt ? new Date(table.lastUsedAt) : undefined,
+    }
+}
+
+export const toApiKey = (apiKey: ApiKey): ApiKeysTable => {
+    return {
+        id: apiKey.id,
+        digest: apiKey.digest,
+        name: apiKey.name,
+        userId: apiKey.userId,
+        email: apiKey.email,
+        networkId: apiKey.networkId,
+        createdAt: apiKey.createdAt.toISOString(),
+        lastUsedAt: apiKey.lastUsedAt ? apiKey.lastUsedAt.toISOString() : null,
+    }
 }

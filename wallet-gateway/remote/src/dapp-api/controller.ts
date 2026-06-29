@@ -30,8 +30,9 @@ import { v4 } from 'uuid'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
-import { networkStatus, ledgerPrepareParams } from '../utils.js'
+import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import { rpcErrors } from '@canton-network/core-rpc-errors'
 
 export const dappController = (
     kernelInfo: KernelInfoConfig,
@@ -188,6 +189,7 @@ export const dappController = (
         },
         prepareExecute: async (params: PrepareExecuteParams) => {
             const wallet = await store.getPrimaryWallet()
+            const wallets = await store.getWallets()
             const network = await store.getCurrentNetwork()
 
             if (context === undefined) {
@@ -198,20 +200,26 @@ export const dappController = (
                 throw new Error('No primary wallet found')
             }
 
+            let userId = context.userId
+            const accessTokenProvider: AuthTokenProvider =
+                AuthTokenProvider.fromToken(context.accessToken, logger)
+
+            if (context?.isApiKey) {
+                logger.info(
+                    'Authenticated with API Key, fetching m2m token for ledger access'
+                )
+                userId = context.ledgerUserId
+            }
+
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
-                ),
+                accessTokenProvider,
             })
 
-            const userId = context.userId
             const notifier = notificationService.getNotifier(userId)
 
-            params.commandId = params.commandId || v4()
-            const commandId = params.commandId
+            const commandId = params.commandId || v4()
             const transactionId = v4()
 
             notifier.emit('txChanged', { status: 'pending', commandId })
@@ -220,19 +228,62 @@ export const dappController = (
                 network.synchronizerId ??
                 (await ledgerClient.getSynchronizerId())
 
-            const response = await prepareSubmission(
+            let actAs = [wallet.partyId]
+
+            if (params.actAs && params.actAs.length > 0) {
+                actAs = params.actAs
+
+                for (const actingParty of actAs) {
+                    if (
+                        wallets.find((w) => w.partyId === actingParty) ===
+                        undefined
+                    ) {
+                        throw rpcErrors.invalidRequest(
+                            `Acting party ${actingParty} does not belong to user`
+                        )
+                    }
+                }
+            }
+
+            logDynamically(
+                logger,
+                'prepareExecute: Submitting request to ledger',
+                {
+                    info: { transactionId },
+                    debug: { commandId, userId, actAs },
+                }
+            )
+
+            const actAsParty = params.actAs || [wallet.partyId]
+
+            const prepared = await prepareSubmission(
                 context.userId,
-                wallet.partyId,
+                actAsParty,
                 synchronizerId,
                 params,
                 ledgerClient
             )
+
+            logDynamically(
+                logger,
+                'prepareExecute: Received response from ledger',
+                {
+                    info: { transactionId },
+                    debug: {
+                        commandId,
+                        userId,
+                        partyId: actAsParty,
+                        prepared,
+                    },
+                }
+            )
+
             const transaction: Transaction = {
                 id: transactionId,
                 commandId,
                 status: 'pending',
-                preparedTransaction: response.preparedTransaction!,
-                preparedTransactionHash: response.preparedTransactionHash,
+                preparedTransaction: prepared.preparedTransaction!,
+                preparedTransactionHash: prepared.preparedTransactionHash,
                 payload: params,
                 origin: origin || null,
                 createdAt: new Date(),
@@ -242,11 +293,11 @@ export const dappController = (
                 {
                     actAs: params.actAs || [wallet.partyId],
                     readAs: params.readAs || [],
-                    userId: context.userId,
+                    userId,
                     commandId,
                     commands: params.commands?.[0],
                     confirmationRequestTrafficCostEstimation:
-                        response.costEstimation
+                        prepared.costEstimation
                             ?.confirmationRequestTrafficCostEstimation,
                 },
                 'prepared transaction traffic estimation'
@@ -290,7 +341,6 @@ export const dappController = (
                 ),
             })
             const status = await networkStatus(ledgerClient)
-
             return {
                 provider: provider,
                 connection: {
@@ -312,20 +362,8 @@ export const dappController = (
                 userUrl: `${userUrl}/login/`,
             }
         },
-        connected: async () => {
-            throw new Error('Only for events.')
-        },
-        onStatusChanged: async () => {
-            throw new Error('Only for events.')
-        },
-        accountsChanged: async () => {
-            throw new Error('Only for events.')
-        },
         listAccounts: async () => {
             return await store.getWallets()
-        },
-        txChanged: async () => {
-            throw new Error('Only for events.')
         },
         getActiveNetwork: async (): Promise<Network> => {
             const network: StoreNetwork = await store.getCurrentNetwork()
@@ -382,6 +420,18 @@ export const dappController = (
             }
             return wallet
         },
+        connected: async () => {
+            throw new Error('Only for events.')
+        },
+        onStatusChanged: async () => {
+            throw new Error('Only for events.')
+        },
+        accountsChanged: async () => {
+            throw new Error('Only for events.')
+        },
+        txChanged: async () => {
+            throw new Error('Only for events.')
+        },
         messageSignature: function (): Promise<MessageSignatureEvent> {
             throw new Error('Only for events.')
         },
@@ -390,13 +440,13 @@ export const dappController = (
 
 async function prepareSubmission(
     userId: string,
-    partyId: string,
+    partyIds: string[],
     synchronizerId: string,
     params: PrepareExecuteParams,
     ledgerClient: LedgerClient
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(userId, partyId, synchronizerId, params)
+        ledgerPrepareParams(userId, partyIds, synchronizerId, params)
     )
 }

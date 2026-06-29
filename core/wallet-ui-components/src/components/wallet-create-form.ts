@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
-import { customElement, property, query } from 'lit/decorators.js'
+import { css, html, nothing } from 'lit'
+import { customElement, property, query, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.js'
 import { chevronDownIcon } from '../icons/index.js'
 
@@ -10,9 +10,16 @@ export class WalletCreateEvent extends Event {
     constructor(
         public partyHint: string,
         public signingProviderId: string,
-        public primary: boolean
+        public primary: boolean,
+        public vaultName?: string | undefined
     ) {
         super('wallet-create', { bubbles: true, composed: true })
+    }
+}
+
+export class SigningProviderChangeEvent extends Event {
+    constructor(public signingProviderId: string) {
+        super('signing-provider-change', { bubbles: true, composed: true })
     }
 }
 
@@ -21,17 +28,26 @@ export class WalletCreateEvent extends Event {
 export class WgWalletCreateForm extends BaseElement {
     @property({ type: Array }) signingProviders: string[] = []
     @property({ type: Array }) networkIds: string[] = []
-    @property({ type: Boolean }) loading = false
+    // Render vaults select for those signing providers
+    @property({ type: Array }) vaultSigningProviders: string[] = []
+    @property({ type: Array }) vaults: string[] = []
+    @property({ type: Boolean }) submitting = false
+    @property({ type: Boolean }) vaultsLoading = false
     @property({ type: String }) submitLabel = 'Add'
-    @property({ type: String }) loadingLabel = 'Adding...'
-    @property({ type: String }) loadingMessage =
+    @property({ type: String }) submittingLabel = 'Adding...'
+    @property({ type: String }) submittingMessage =
         'Creating party, please wait...'
+    @property({ type: String }) vaultsLoadingLabel = 'Loading vaults...'
 
     @query('#party-id-hint') accessor partyHintInput: HTMLInputElement | null =
         null
     @query('#signing-provider-id')
     accessor signingProviderSelect: HTMLSelectElement | null = null
     @query('#primary') accessor primaryCheckbox: HTMLInputElement | null = null
+    @query('#vault-name')
+    accessor vaultSelect: HTMLSelectElement | null = null
+
+    @state() accessor selectedSigningProvider: string | null = null
 
     static styles = [
         BaseElement.styles,
@@ -154,17 +170,47 @@ export class WgWalletCreateForm extends BaseElement {
     private onSubmit(event: Event) {
         event.preventDefault()
 
-        if (this.loading) {
+        if (this.isLoading) {
             return
         }
 
         const partyHint = this.partyHintInput?.value || ''
         const signingProviderId = this.signingProviderSelect?.value || ''
         const primary = this.primaryCheckbox?.checked || false
+        const vaultName = this.vaultSelect?.value || undefined
 
         this.dispatchEvent(
-            new WalletCreateEvent(partyHint, signingProviderId, primary)
+            new WalletCreateEvent(
+                partyHint,
+                signingProviderId,
+                primary,
+                vaultName
+            )
         )
+    }
+
+    private onSigningProviderChange(event: Event) {
+        const signingProviderId = (event.target as HTMLSelectElement).value
+        this.selectedSigningProvider = signingProviderId
+        if (this.vaultSelect) {
+            this.vaultSelect.value = ''
+        }
+        this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
+    }
+
+    private get showVaultSelect(): boolean {
+        return (
+            this.selectedSigningProvider !== null &&
+            this.vaultSigningProviders.includes(this.selectedSigningProvider)
+        )
+    }
+
+    private get isVaultsLoading(): boolean {
+        return this.showVaultSelect && this.vaultsLoading
+    }
+
+    private get isLoading(): boolean {
+        return this.submitting || this.isVaultsLoading
     }
 
     reset() {
@@ -174,15 +220,15 @@ export class WgWalletCreateForm extends BaseElement {
         if (this.primaryCheckbox) {
             this.primaryCheckbox.checked = false
         }
+        if (this.vaultSelect) {
+            this.vaultSelect.value = ''
+        }
+        this.selectedSigningProvider = null
     }
 
     protected render() {
         return html`
-            <form
-                class="d-flex flex-column h-100"
-                aria-busy=${this.loading ? 'true' : 'false'}
-                @submit=${this.onSubmit}
-            >
+            <form class="d-flex flex-column h-100" @submit=${this.onSubmit}>
                 <div class="form-fields d-flex flex-column">
                     <div class="field-group d-flex flex-column">
                         <label
@@ -192,7 +238,7 @@ export class WgWalletCreateForm extends BaseElement {
                             Party ID Hint <span class="required">*</span>
                         </label>
                         <input
-                            ?disabled=${this.loading}
+                            ?disabled=${this.submitting}
                             class="form-control field-control"
                             id="party-id-hint"
                             type="text"
@@ -210,10 +256,11 @@ export class WgWalletCreateForm extends BaseElement {
                         </label>
                         <div class="select-wrap">
                             <select
-                                ?disabled=${this.loading}
+                                ?disabled=${this.submitting}
                                 class="form-select field-control"
                                 id="signing-provider-id"
                                 required
+                                @change=${this.onSigningProviderChange}
                             >
                                 <option disabled selected value="">
                                     Select signing provider
@@ -231,12 +278,50 @@ export class WgWalletCreateForm extends BaseElement {
                         </div>
                     </div>
 
+                    ${this.showVaultSelect
+                        ? html`
+                              <div class="field-group d-flex flex-column">
+                                  <label
+                                      for="vault-name"
+                                      class="form-label field-label mb-0"
+                                  >
+                                      Vault name <span class="required">*</span>
+                                  </label>
+                                  <div class="select-wrap">
+                                      <select
+                                          ?disabled=${this.isLoading}
+                                          class="form-select field-control"
+                                          id="vault-name"
+                                          required
+                                      >
+                                          <option disabled selected value="">
+                                              ${this.isVaultsLoading
+                                                  ? this.vaultsLoadingLabel
+                                                  : 'Select vault name'}
+                                          </option>
+                                          ${this.vaults.map(
+                                              (vaultName) =>
+                                                  html`<option
+                                                      value=${vaultName}
+                                                  >
+                                                      ${vaultName}
+                                                  </option>`
+                                          )}
+                                      </select>
+                                      <span class="select-chevron"
+                                          >${chevronDownIcon}</span
+                                      >
+                                  </div>
+                              </div>
+                          `
+                        : nothing}
+
                     <div class="primary-row mb-0">
                         <input
                             id="primary"
                             type="checkbox"
                             class="form-check-input"
-                            ?disabled=${this.loading}
+                            ?disabled=${this.submitting}
                         />
                         <label
                             for="primary"
@@ -249,25 +334,27 @@ export class WgWalletCreateForm extends BaseElement {
                 <div class="submit-wrap mt-auto pt-3 d-flex flex-column">
                     <button
                         class="submit-button btn btn-primary rounded-pill w-100 d-inline-flex align-items-center justify-content-center gap-2"
-                        ?disabled=${this.loading}
+                        ?disabled=${this.isLoading}
                         type="submit"
                     >
-                        ${this.loading
+                        ${this.submitting
                             ? html`<span
                                   class="spinner-border spinner-border-sm"
                                   aria-hidden="true"
                               ></span>`
                             : null}
-                        ${this.loading ? this.loadingLabel : this.submitLabel}
+                        ${this.submitting
+                            ? this.submittingLabel
+                            : this.submitLabel}
                     </button>
 
-                    ${this.loading
+                    ${this.submitting
                         ? html`<p
                               class="loading-message"
                               role="status"
                               aria-live="polite"
                           >
-                              ${this.loadingMessage}
+                              ${this.submittingMessage}
                           </p>`
                         : null}
                 </div>

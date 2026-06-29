@@ -1,11 +1,10 @@
 {
     "name": "@canton-network/core-wallet-store-inmemory",
-    "version": "1.7.0",
+    "version": "1.8.1",
     "type": "module",
     "description": "In-memory implementation of the Store API",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
     "license": "Apache-2.0",
-    "packageManager": "yarn@4.9.4",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
@@ -20,15 +19,15 @@
         "@canton-network/core-wallet-auth": "workspace:^",
         "@canton-network/core-wallet-store": "workspace:^",
         "pino": "^10.3.1",
-        "zod": "^4.3.6"
+        "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
-        "playwright": "^1.58.2",
+        "@vitest/browser-playwright": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.8",
+        "playwright": "^1.60.0",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.8"
     },
     "files": [
         "dist/**"
@@ -40,5 +39,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/wallet-store-inmemory"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store-inmemory#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

@@ -12,7 +12,7 @@
 export type NetworkId = string
 /**
  *
- * Name of network
+ * The name of the API key.
  *
  */
 export type Name = string
@@ -77,6 +77,7 @@ export interface Network {
     identityProviderId: IdentityProviderId
     auth: Auth
     adminAuth?: Auth
+    serviceAccountAuth?: Auth
     ledgerApi: LedgerApi
 }
 /**
@@ -87,7 +88,7 @@ export interface Network {
 export type NetworkName = string
 /**
  *
- * ID of the identity provider
+ * The unique identifier of the API key.
  *
  */
 export type Id = string
@@ -132,6 +133,7 @@ export type PartyHint = string
  *
  */
 export type SigningProviderId = string
+export type VaultName = string
 /**
  *
  * The party id of the wallet to be removed.
@@ -355,7 +357,7 @@ export type Message = string
 export type Origin = string
 /**
  *
- * The timestamp when the transaction was created.
+ * The timestamp when the API key was created.
  *
  */
 export type CreatedAt = string
@@ -442,6 +444,29 @@ export type UserIdentifier = string
  *
  */
 export type IsAdminFlag = boolean
+/**
+ *
+ * The generated API key.
+ *
+ */
+export type ApiKeyResult = string
+export interface ApiKey {
+    id: Id
+    name: Name
+    createdAt: CreatedAt
+}
+/**
+ *
+ * The list of API keys.
+ *
+ */
+export type ApiKeys = ApiKey[]
+/**
+ *
+ * The list of signing provider's available vault names.
+ *
+ */
+export type Vaults = VaultName[]
 export interface AddNetworkParams {
     network: Network
 }
@@ -465,6 +490,7 @@ export interface CreateWalletParams {
     primary?: Primary
     partyHint: PartyHint
     signingProviderId: SigningProviderId
+    vaultName?: VaultName
 }
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
@@ -506,6 +532,15 @@ export interface GetTransactionParams {
 }
 export interface DeleteTransactionParams {
     transactionId: TransactionId
+}
+export interface GenerateApiKeyParams {
+    name: Name
+}
+export interface RemoveApiKeyParams {
+    id: Id
+}
+export interface ListSigningProviderVaultsParams {
+    signingProviderId: SigningProviderId
 }
 /**
  *
@@ -607,6 +642,16 @@ export interface GetUserResult {
     userId: UserIdentifier
     isAdmin: IsAdminFlag
 }
+export interface GeneratedApiKey {
+    id: Id
+    apiKey: ApiKeyResult
+}
+export interface ListApiKeysResult {
+    apiKeys: ApiKeys
+}
+export interface ListSigningProviderVaultsResult {
+    vaults: Vaults
+}
 /**
  *
  * Generated! Represents an alias to any of the provided schemas
@@ -661,3 +706,11 @@ export type DeleteTransaction = (
     params: DeleteTransactionParams
 ) => Promise<Null>
 export type GetUser = () => Promise<GetUserResult>
+export type GenerateApiKey = (
+    params: GenerateApiKeyParams
+) => Promise<GeneratedApiKey>
+export type ListApiKeys = () => Promise<ListApiKeysResult>
+export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListSigningProviderVaults = (
+    params: ListSigningProviderVaultsParams
+) => Promise<ListSigningProviderVaultsResult>

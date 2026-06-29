@@ -5,9 +5,9 @@ import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { ContractId, PartyId } from '@canton-network/core-types'
 
 export type ACSKey = Partial<{
-    party: PartyId
-    templateId: string
-    interfaceId: string
+    party: PartyId | undefined
+    templateId: string | undefined
+    interfaceId: string | undefined
 }>
 
 export type ACEvent = {

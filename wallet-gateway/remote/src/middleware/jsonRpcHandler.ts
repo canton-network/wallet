@@ -32,7 +32,6 @@ interface JsonRpcHttpOptions<T> {
 export const handleRpcError = (
     error: unknown,
     id: string | number | null,
-    logger: Logger,
     method?: string
 ): [number, JsonRpcResponse] => {
     const genericMessage = method
@@ -79,8 +78,6 @@ export const handleRpcError = (
     }
 
     const jsonResponse = jsonRpcResponse(id, response)
-    logger.error(jsonResponse, 'RPC response')
-
     return [500, jsonResponse]
 }
 
@@ -115,24 +112,23 @@ export const jsonRpcHandler =
                     rpcErrors.invalidRequest({
                         message: 'Invalid JSON-RPC request format',
                     }),
-                    null,
-                    logger
+                    null
                 )
 
                 return res.status(status).json(response)
             } else {
                 const { method, params, id = null } = parsed.data
 
-                logger.debug(
+                logger.trace(
                     {
                         request: {
-                            id: id,
-                            method: method,
-                            params: params,
+                            id,
+                            method,
+                            params,
                             authContext: req.authContext,
                         },
                     },
-                    `RPC request: ${method}`
+                    `RPC request: Method called ${method}`
                 )
 
                 const methodFn = controller[method as keyof T] as (
@@ -144,7 +140,6 @@ export const jsonRpcHandler =
                             message: `Method ${method} not found`,
                         }),
                         null,
-                        logger,
                         method
                     )
 
@@ -156,17 +151,23 @@ export const jsonRpcHandler =
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .then((result: any) => {
                         const response = jsonRpcResponse(id, { result })
-                        logger.debug(response, 'RPC response')
+                        logger.trace(
+                            { response },
+                            'RPC response: success with response'
+                        )
                         res.json(response)
                     })
                     .catch((error: unknown) => {
                         const [status, response] = handleRpcError(
                             error,
                             id,
-                            logger,
                             method
                         )
-                        logger.error(response, 'RPC response')
+
+                        logger.error(
+                            { response },
+                            'RPC response: error with response'
+                        )
                         res.status(status).json(response)
                     })
             }

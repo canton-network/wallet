@@ -1,10 +1,9 @@
 {
     "name": "@canton-network/core-signing-lib",
-    "version": "1.5.0",
+    "version": "1.6.1",
     "type": "module",
     "description": "Core library for signing driver implementations",
     "license": "Apache-2.0",
-    "packageManager": "yarn@4.9.4",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,27 +20,25 @@
         "dev": "tsup --watch --onSuccess \"tsc\"",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean && rm -rf ./dist",
-        "test": "vitest run --project node --project browser --passWithNoTests",
-        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+        "test": "vitest run --project node",
+        "test:coverage": "vitest run --project node --coverage"
     },
     "dependencies": {
         "@canton-network/core-wallet-auth": "workspace:^",
-        "fs-extra": "^11.3.3",
+        "fs-extra": "^11.3.5",
         "lodash": "^4.18.1",
         "tweetnacl": "^1.0.3",
         "tweetnacl-util": "^0.15.1",
-        "zod": "^4.3.6"
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",
         "@types/lodash": "^4.17.24",
-        "@types/node": "^25.3.3",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
-        "playwright": "^1.58.2",
+        "@types/node": "^25.9.3",
+        "@vitest/coverage-v8": "^4.1.8",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.8"
     },
     "files": [
         "dist/**"
@@ -53,5 +50,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "core/signing-lib"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-lib#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }
