@@ -102,7 +102,7 @@ jobs:
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
     clear-blockdaemon-policies:
-        if: env.CI_SECRET_DEPENDENCY == 'true'
+        if: github.event.pull_request.head.repo.fork == false
         runs-on: ubuntu-latest
         steps:
             - name: Clear Blockdaemon policies
