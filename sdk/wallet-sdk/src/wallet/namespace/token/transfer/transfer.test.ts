@@ -226,3 +226,40 @@ describe('token transfer namespace', () => {
         expect(result).toEqual({ updateId: 'tx-999' })
     })
 })
+
+describe('token transfer namespace no validatorURL', () => {
+    let transfer: TransferNamespace
+    beforeEach(() => {
+        vi.resetAllMocks()
+        transfer = new TransferNamespace({
+            commonCtx: {
+                ...ctx,
+                defaultSynchronizerId: 'mock-synchronizer-id',
+                logger: mockLogger,
+            } as any,
+            registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
+            tokenStandardService: mockTokenStandard as unknown as any,
+        })
+    })
+
+    it('should create and submit command', async () => {
+        const delegateProxy = transfer.delegatedProxy
+
+        const mockSubmit = vi.fn().mockResolvedValue({ updateId: 'tx-999' })
+        ;(delegateProxy as any).ledger = {
+            internal: { submit: mockSubmit },
+        }
+        const result = await delegateProxy.create(
+            'delegateParty::123',
+            'validatorParty::123'
+        )
+        expect(result).toEqual({ updateId: 'tx-999' })
+    })
+
+    it('should throw an error if no validatorParty is provided', async () => {
+        const delegateProxy = transfer.delegatedProxy
+        await expect(
+            delegateProxy.create('delegateParty::123')
+        ).rejects.toThrow()
+    })
+})

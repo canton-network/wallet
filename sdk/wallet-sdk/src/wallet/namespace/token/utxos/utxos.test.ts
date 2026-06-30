@@ -321,3 +321,162 @@ describe('utxos namespace', () => {
         })
     })
 })
+
+describe('delegated utxos merge namespace without validatorParty', () => {
+    let utxos: UtxoNamespace
+    let delegatedMerge: MergeDelegationNamespace
+    let mockSubmit: Mock
+    beforeEach(() => {
+        vi.resetAllMocks()
+        utxos = new TokenNamespace({
+            commonCtx: {
+                ...ctx,
+                defaultSynchronizerId: 'mock-synchronizer-id',
+                logger: mockLogger,
+            } as any,
+            registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
+            tokenStandardService: mockTokenStandard as unknown as any,
+        }).utxos
+        delegatedMerge = utxos.delegatedMerge
+
+        mockSubmit = vi.fn().mockResolvedValue({
+            updateId: 'tx-123',
+            completionOffset: '1000',
+        })
+        ;(delegatedMerge as any).ledger = { internal: { submit: mockSubmit } }
+    })
+
+    describe('delegated merge utxos', async () => {
+        it('should create command when party is supplied', async () => {
+            const res = delegatedMerge.command.propose({
+                owner: 'alice::abc',
+                validatorParty: 'validatorParty::123',
+            })
+            expect(res).toStrictEqual({
+                CreateCommand: {
+                    createArguments: {
+                        delegation: {
+                            meta: {
+                                values: {},
+                            },
+                            operator: 'validatorParty::123',
+                            owner: 'alice::abc',
+                        },
+                    },
+                    templateId:
+                        '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:MergeDelegationProposal',
+                },
+            })
+        })
+
+        it('should set up the delegated merge when validatorParty is supplied', async () => {
+            const result = await delegatedMerge.setup(
+                'syncId::123',
+                'validatorParty::123'
+            )
+            expect(result).toStrictEqual({
+                updateId: 'tx-123',
+                completionOffset: '1000',
+            })
+            expect(mockSubmit).toHaveBeenCalledWith({
+                commands: [
+                    {
+                        CreateCommand: {
+                            createArguments: {
+                                operator: 'validatorParty::123',
+                            },
+                            templateId:
+                                '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:BatchMergeUtility',
+                        },
+                    },
+                ],
+                synchronizerId: 'syncId::123',
+                actAs: ['validatorParty::123'],
+            })
+        })
+
+        it('should approve a delegated merge', async () => {
+            const mockReadJsContracts = vi.fn().mockResolvedValueOnce([
+                {
+                    templateId: 't-id',
+                    contractId: 'cid-proposal-123',
+                    createdEventBlob: 'test',
+                    synchronizerId: 'syncId::123',
+                    offset: 10,
+                    nodeId: 1,
+                    createArgument: undefined,
+                    witnessParties: [],
+                    signatories: [],
+                    createdAt: '',
+                    packageName: '',
+                    representativePackageId: '',
+                    acsDelta: false,
+                },
+            ])
+
+            ;(delegatedMerge as any).ledger = {
+                internal: { submit: mockSubmit },
+                acsReader: {
+                    readJsContracts: mockReadJsContracts,
+                },
+            }
+
+            const result = await delegatedMerge.approve({
+                owner: 'alice::abc',
+                synchronizerId: 'syncId::123',
+                validatorParty: 'validatorParty::123',
+            })
+
+            expect(mockReadJsContracts).toHaveBeenCalledWith({
+                parties: ['alice::abc'],
+                templateIds: [
+                    '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:MergeDelegationProposal',
+                ],
+                filterByParty: true,
+            })
+
+            expect(mockSubmit).toHaveBeenCalledWith({
+                commands: [
+                    {
+                        ExerciseCommand: {
+                            templateId:
+                                '#splice-util-token-standard-wallet:Splice.Util.Token.Wallet.MergeDelegation:MergeDelegationProposal',
+                            contractId: 'cid-proposal-123',
+                            choice: 'MergeDelegationProposal_Accept',
+                            choiceArgument: {},
+                        },
+                    },
+                ],
+                disclosedContracts: expect.any(Array),
+                synchronizerId: 'syncId::123',
+                actAs: ['validatorParty::123'],
+            })
+
+            expect(result).toStrictEqual({
+                updateId: 'tx-123',
+                completionOffset: '1000',
+            })
+        })
+
+        it('should throw an error if there no validatorParty from the context or provided in the function', async () => {
+            const inputUtxos = makeUtxos(11)
+
+            await expect(
+                delegatedMerge.execute({
+                    party: 'alice::abc',
+                    synchronizerId: 'syncId::123',
+                    inputUtxos: inputUtxos as any,
+                })
+            ).rejects.toThrow()
+
+            await expect(delegatedMerge.setup('syncId::123')).rejects.toThrow()
+
+            await expect(
+                delegatedMerge.approve({
+                    owner: 'alice::abc',
+                    synchronizerId: 'syncId::123',
+                })
+            ).rejects.toThrow()
+        })
+    })
+})
