@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Network, networkSchema } from '@canton-network/core-wallet-store'
+import {
+    Network as StoreNetwork,
+    networkSchema,
+} from '@canton-network/core-wallet-store'
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
@@ -11,6 +14,10 @@ import {
     ClientCredentialsAuth,
     SelfSignedAuth,
 } from '@canton-network/core-wallet-auth'
+
+export type NetworkFormData = Omit<StoreNetwork, 'ledgerApi'> & {
+    ledgerApi: string
+}
 
 /**
  * Emitted when the user clicks the Cancel button on the form
@@ -25,9 +32,9 @@ export class NetworkEditCancelEvent extends Event {
  * Emitted when the user clicks the Save/Add/Update button on the form
  */
 export class NetworkEditSaveEvent extends Event {
-    network: Network
+    network: NetworkFormData
 
-    constructor(network: Network) {
+    constructor(network: NetworkFormData) {
         super('network-edit-save', { bubbles: true, composed: true })
         this.network = network
     }
@@ -37,9 +44,9 @@ export class NetworkEditSaveEvent extends Event {
  * Emitted when the user clicks the Delete button
  */
 export class NetworkDeleteEvent extends Event {
-    network: Network
+    network: NetworkFormData
 
-    constructor(network: Network) {
+    constructor(network: NetworkFormData) {
         super('network-delete', { bubbles: true, composed: true })
         this.network = network
     }
@@ -60,10 +67,10 @@ export class NetworkForm extends BaseElement {
     accessor mode: 'add' | 'review' = 'add'
 
     @property({ type: Object })
-    accessor network: Network = {
-        ledgerApi: {},
+    accessor network: NetworkFormData = {
+        ledgerApi: '',
         auth: {},
-    } as Network
+    } as NetworkFormData
 
     @state() private _error = ''
 
@@ -233,7 +240,10 @@ export class NetworkForm extends BaseElement {
     handleSubmit(e: Event) {
         e.preventDefault()
 
-        const parsedData = networkSchema.safeParse(this.network)
+        const parsedData = networkSchema.safeParse(
+            // TODO #1902 use validation that doesn't rely on store shapes that differ from API
+            this.toStoreNetworkForValidation(this.network)
+        )
 
         if (!parsedData.success) {
             this._error =
@@ -245,7 +255,16 @@ export class NetworkForm extends BaseElement {
         }
     }
 
-    renderAuthForm(authObj: Network['auth']) {
+    private toStoreNetworkForValidation(
+        network: NetworkFormData
+    ): StoreNetwork {
+        return {
+            ...network,
+            ledgerApi: { baseUrl: network.ledgerApi },
+        } as StoreNetwork
+    }
+
+    renderAuthForm(authObj: NetworkFormData['auth']) {
         if (typeof authObj.method === 'undefined') {
             Object.assign(authObj, {
                 method: 'authorization_code',
@@ -529,16 +548,16 @@ export class NetworkForm extends BaseElement {
                             class="form-control field-control"
                             type="text"
                             required
-                            .value=${this.network.ledgerApi.baseUrl ?? ''}
+                            .value=${this.network.ledgerApi ?? ''}
                             @change=${(e: Event) => {
-                                this.network.ledgerApi.baseUrl = (
+                                this.network.ledgerApi = (
                                     e.target as HTMLInputElement
                                 ).value
                             }}
                         />
                     </div>
 
-                    ${isReview
+                    ${isReview /*|| true*/
                         ? html`
                               <h3 class="section-title">Configure user auth</h3>
                               ${this.renderAuthForm(this.network.auth)}

@@ -123,7 +123,7 @@ export class UserUiReviewNetwork extends BaseElement {
                         ...(e.network.synchronizerId && {
                             synchronizerId: e.network.synchronizerId as string,
                         }),
-                        ledgerApi: e.network.ledgerApi.baseUrl,
+                        ledgerApi: e.network.ledgerApi,
                         auth,
                         adminAuth,
                     },

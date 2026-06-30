@@ -9,6 +9,7 @@ import {
     NetworkDeleteEvent,
     NetworkEditCancelEvent,
     NetworkEditSaveEvent,
+    // NetworkFormData,
     NetworkForm,
 } from './network-form.js'
 import { makeNetwork } from './fixtures.js'
@@ -30,6 +31,18 @@ function getFormInputs(el: NetworkForm) {
         )
     )
 }
+
+// function makeFormNetwork(overrides: Partial<NetworkFormData> = {}): NetworkFormData {
+//     const base = makeNetwork() as unknown as Omit<NetworkFormData, 'ledgerApi'> & {
+//         ledgerApi: { baseUrl: string }
+//     }
+//
+//     return {
+//         ...base,
+//         ledgerApi: base.ledgerApi.baseUrl,
+//         ...overrides,
+//     } as NetworkFormData
+// }
 
 function fillFormInputs(
     el: NetworkForm,
@@ -125,7 +138,7 @@ describe('network-form', () => {
             name: 'New Network',
             description: 'A new network',
             identityProviderId: 'idp-1',
-            ledgerApi: { baseUrl: 'http://localhost:6865' },
+            ledgerApi: 'http://localhost:6865',
         })
         const el = await fixture<NetworkForm>(
             html`<network-form mode="add" .network=${network}></network-form>`
@@ -244,5 +257,41 @@ describe('network-form', () => {
         methodSelect.dispatchEvent(new Event('change', { bubbles: true }))
         await elementUpdated(el)
         expect(el.shadowRoot?.textContent).toContain('Client Secret')
+    })
+
+    it('uses api-shaped ledgerApi string while validating with store zod', async () => {
+        const apiShapedNetwork = makeNetwork({
+            id: 'api-shaped-net',
+            name: 'API Shaped',
+            description: 'Network loaded from API',
+            identityProviderId: 'idp-api',
+            ledgerApi: 'http://localhost:9999',
+            auth: {
+                method: 'client_credentials',
+                audience: 'audience',
+                scope: 'scope',
+                clientId: 'client-id',
+                clientSecret: 'client-secret',
+            },
+        })
+        const el = await fixture<NetworkForm>(
+            html`<network-form
+                mode="review"
+                .network=${apiShapedNetwork}
+            ></network-form>`
+        )
+
+        const [, , , , , ledgerApiInput] = getFormInputs(el)
+        expect(ledgerApiInput?.value).toBe('http://localhost:9999')
+
+        const listener = vi.fn()
+        el.addEventListener('network-edit-save', listener)
+        submitForm(el)
+
+        expect(listener).toHaveBeenCalledOnce()
+        expect(
+            (listener.mock.calls[0][0] as NetworkEditSaveEvent).network
+                .ledgerApi
+        ).toBe('http://localhost:9999')
     })
 })
