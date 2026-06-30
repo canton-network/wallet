@@ -144,6 +144,29 @@ describe('FireblocksHandler', () => {
         )
     })
 
+    it('defaults to CC_COIN_TYPE in derivation path when coinType is not provided', async () => {
+        const handler = createHandler()
+        mockVaultPage([{ id: '4', name: 'vault-4' }])
+
+        const keys = await handler.getPublicKeys(USER_ID)
+
+        expect(keys[0].derivationPath[1]).toBe(CC_COIN_TYPE)
+    })
+
+    it('uses custom coinType in derivation path when provided', async () => {
+        const handler = new FireblocksHandler(
+            undefined,
+            new Map([[USER_ID, API_KEY_INFO]]),
+            'https://api.fireblocks.io/v1',
+            1234
+        )
+        mockVaultPage([{ id: '4', name: 'vault-4' }])
+
+        const keys = await handler.getPublicKeys(USER_ID)
+
+        expect(keys[0].derivationPath[1]).toBe(1234)
+    })
+
     it('returns undefined for getTransaction when the API fails', async () => {
         const handler = createHandler()
         mockGetTransaction.mockRejectedValueOnce(new Error('not found'))
