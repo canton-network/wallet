@@ -10,7 +10,7 @@ import {
     renewCommand,
     devnetTapCommand,
 } from './amulet-service-consts.test'
-import { ScanClientAmuletService } from './amulet-service-base'
+import { AmuletServiceScanOnly } from './amulet-service-scan'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -412,12 +412,12 @@ describe('AmuletServiceScanClient', () => {
         },
     }
 
-    let service: ScanClientAmuletService
+    let service: AmuletServiceScanOnly
 
     beforeEach(() => {
         vi.resetAllMocks()
 
-        service = new ScanClientAmuletService(
+        service = new AmuletServiceScanOnly(
             mockTokenStandard as any,
             mockScanClient as any
         )
