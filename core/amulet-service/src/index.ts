@@ -3,3 +3,4 @@
 
 export * from './amulet-service.js'
 export * from './amulet-service-base.js'
+export * from './amulet-service-scan.js'
