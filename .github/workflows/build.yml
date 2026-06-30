@@ -25,7 +25,7 @@ jobs:
             mainnet_splice_version: ${{ steps.version.outputs.mainnet_splice_version }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - name: Resolve version config outputs
               id: version
@@ -43,7 +43,7 @@ jobs:
         needs: version-config
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - uses: ./.github/actions/setup_yarn/initial
               with:
@@ -54,7 +54,7 @@ jobs:
               run: yarn build:all
 
             - name: Upload build artifacts
-              uses: actions/upload-artifact@v7
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: build-dist-${{ github.run_id }}
                   path: |
@@ -83,7 +83,7 @@ jobs:
                 instance: [canton, localnet]
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - uses: ./.github/actions/setup_yarn/artifacts
               with:
@@ -130,23 +130,23 @@ jobs:
         needs: build
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - name: Setup Python
               id: setup-python
-              uses: actions/setup-python@v6
+              uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version-file: .python-version
 
             - name: Install and configure Poetry
-              uses: snok/install-poetry@v1
+              uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
               with:
                   version: 2.1.3
 
             # load cached venv if cache exists
             - name: Load cached venv
               id: cached-poetry-dependencies
-              uses: actions/cache/restore@v5
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
               with:
                   path: docs/wallet-integration-guide/.venv
                   key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('docs/wallet-integration-guide/poetry.lock') }}
@@ -172,7 +172,7 @@ jobs:
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - uses: ./.github/actions/setup_yarn/artifacts
               with:
@@ -206,7 +206,7 @@ jobs:
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
               with:
                   fetch-depth: 0
 
@@ -235,7 +235,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
               with:
                   fetch-depth: 0
 
@@ -255,7 +255,7 @@ jobs:
         needs: build
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
               with:
                   fetch-depth: 0
 
@@ -279,7 +279,7 @@ jobs:
                 db: [sqlite, postgres]
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - uses: ./.github/actions/setup_yarn/artifacts
               with:
@@ -347,14 +347,14 @@ jobs:
               if: ${{ !cancelled() }}
               run: yarn pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
-            - uses: actions/upload-artifact@v7
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
               with:
                   name: example-ping-playwright-report-${{ matrix.network }}-${{ matrix.db }}
                   path: examples/ping/playwright-report/
                   retention-days: 5
 
-            - uses: actions/upload-artifact@v7
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
               with:
                   name: ping-wallet-gateway-remote-log-${{ matrix.network }}-${{ matrix.db }}
@@ -388,7 +388,8 @@ jobs:
                 network: [devnet, mainnet]
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+
             - uses: ./.github/actions/setup_yarn/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
@@ -410,14 +411,14 @@ jobs:
               if: ${{ !cancelled() }}
               run: yarn pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
-            - uses: actions/upload-artifact@v7
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
               with:
                   name: example-portfolio-playwright-report-${{ matrix.network }}
                   path: examples/portfolio/playwright-report/
                   retention-days: 5
 
-            - uses: actions/upload-artifact@v7
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
               with:
                   name: portfolio-wallet-gateway-remote-log-${{ matrix.network }}
@@ -448,7 +449,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - uses: ./.github/actions/setup_yarn/artifacts
               with:
@@ -482,7 +483,7 @@ jobs:
 
             - name: Upload logs as artifacts
               if: failure()
-              uses: actions/upload-artifact@v7
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: docker-logs-snippets-${{ matrix.network }}
                   path: logs/
@@ -498,7 +499,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - uses: ./.github/actions/setup_yarn/artifacts
               with:
@@ -534,7 +535,7 @@ jobs:
 
             - name: Upload logs as artifacts
               if: failure()
-              uses: actions/upload-artifact@v7
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: docker-logs-scripts-${{ matrix.network }}
                   path: logs/
@@ -566,7 +567,8 @@ jobs:
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+
             - uses: ./.github/actions/setup_yarn/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}

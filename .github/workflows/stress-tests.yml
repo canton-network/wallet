@@ -24,7 +24,7 @@ jobs:
             mainnet_splice_version: ${{ steps.version.outputs.mainnet_splice_version }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
               with:
                   ref: ${{ github.event.inputs.ref || github.ref }}
 
@@ -46,7 +46,7 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v6
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
               with:
                   ref: ${{ github.event.inputs.ref || github.ref }}
 
@@ -81,7 +81,7 @@ jobs:
 
             - name: Upload logs as artifacts
               if: failure()
-              uses: actions/upload-artifact@v7
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: docker-logs-${{ github.event.inputs.network || 'devnet' }}
                   path: logs/
