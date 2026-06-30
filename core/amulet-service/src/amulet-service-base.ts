@@ -300,12 +300,12 @@ export class ScanClientAmuletService extends AmuletServiceBase {
     protected async getAmuletRules(): ReturnType<
         ScanProxyClient['getAmuletRules']
     > {
-        const amuletRules = await this.scanClient.post('/v0/amulet-rules', {})
+        const amuletRules = await this.scanClient.getAmuletRules()
 
-        if (!amuletRules.amulet_rules_update.contract) {
-            throw new Error('No amulet rules found')
+        if (!amuletRules) {
+            throw new Error('AmuletRules contract not found')
         }
-        return amuletRules.amulet_rules_update.contract
+        return amuletRules
     }
 
     protected async getActiveOpenMiningRound(): ReturnType<
