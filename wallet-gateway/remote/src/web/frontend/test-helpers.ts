@@ -6,6 +6,7 @@ import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import {
     NetworkDeleteEvent,
     NetworkEditSaveEvent,
+    type NetworkFormData,
 } from '@canton-network/core-wallet-ui-components'
 import type {
     Idp,
@@ -129,8 +130,11 @@ export function makeStoreNetwork(
     } as StoreNetwork
 }
 
-function toFormNetwork(network: object): StoreNetwork {
-    return network as unknown as StoreNetwork
+function toFormNetwork(network: StoreNetwork): NetworkFormData {
+    return {
+        ...network,
+        ledgerApi: network.ledgerApi.baseUrl,
+    } as NetworkFormData
 }
 
 export function networkEditSaveEvent(

@@ -49,7 +49,7 @@ export function makeNetwork(overrides: Partial<Network> = {}): Network {
         name: 'Test Network',
         description: 'Test network description',
         identityProviderId: 'idp-1',
-        ledgerApi: { baseUrl: 'http://localhost:6865' },
+        ledgerApi: 'http://localhost:6865',
         auth: {
             method: 'authorization_code',
             audience: 'audience',
