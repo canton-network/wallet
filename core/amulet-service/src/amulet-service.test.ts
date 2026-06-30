@@ -179,7 +179,7 @@ describe('AmuletService', () => {
     it('should correctly determine devnet', async () => {
         vi.mocked(mockScanProxyClient.isDevNet).mockResolvedValue(true)
 
-        const result = await service.isDevNet()
+        const result = await service.isDevnet()
 
         expect(mockScanProxyClient.isDevNet).toHaveBeenCalledWith()
         expect(result).toEqual(true)
