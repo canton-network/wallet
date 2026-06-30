@@ -4,6 +4,9 @@ run-name: ${{ github.actor }} is perfoming a Pull Request
 on:
     pull_request:
         types: [opened, reopened, synchronize, edited]
+# Repository vars (e.g. BLOCKDAEMON_*) are not available to workflows from fork PRs.
+env:
+    CI_SECRET_DEPENDENCY: ${{ github.event.pull_request.head.repo.fork == false }}
 permissions:
     contents: read
 
@@ -99,6 +102,7 @@ jobs:
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
     clear-blockdaemon-policies:
+        if: github.event.pull_request.head.repo.fork == false
         runs-on: ubuntu-latest
         steps:
             - name: Clear Blockdaemon policies
@@ -327,16 +331,16 @@ jobs:
 
             - name: Start remote WK
               run: |
-                  BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}" \
-                  BLOCKDAEMON_API_KEY="${{ vars.BLOCKDAEMON_API_KEY }}" \
-                  BLOCKDAEMON_API_EMAIL="${{ vars.BLOCKDAEMON_API_EMAIL }}" \
+                  if [ "$CI_SECRET_DEPENDENCY" = "true" ]; then
+                    export BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}"
+                    export BLOCKDAEMON_API_KEY="${{ vars.BLOCKDAEMON_API_KEY }}"
+                    export BLOCKDAEMON_API_EMAIL="${{ vars.BLOCKDAEMON_API_EMAIL }}"
+                  fi
                   yarn pm2 start ecosystem.ci.config.js --env development
 
             - uses: ./.github/actions/setup_playwright
 
             - name: Run example e2e
-              env:
-                  CI_SECRET_DEPENDENCY: ${{ github.event.pull_request.head.repo.fork == false }}
               run: yarn nx playwright:e2e @canton-network/example-ping
 
             - name: Collect remote PM2 logs
