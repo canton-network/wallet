@@ -1,89 +1,88 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
-import {
-    ScanClient,
-    ScanProxyClient,
-    ScanProxyTypes,
-} from '@canton-network/core-splice-client'
+import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import { AmuletServiceScanOnly } from './amulet-service-scan.js'
+import { AmuletServiceScanProxy } from './amulet-service-scan-proxy.js'
+import { AmuletServiceBase } from './amulet-service-base.js'
 
-import { AmuletServiceBase } from './amulet-service-base'
+export class AmuletService {
+    private readonly serviceImpl: AmuletServiceBase
 
-/** AmuletService extends TokenStandardService to provide features that are
- *  available for amulet but not in the token standard, such as:
- *
- *   - Tapping
- *   - Transfer preapprovals
- *   - Featured apps
- */
-export class AmuletService extends AmuletServiceBase {
+    constructor(tokenStandard: TokenStandardService, scanClient: ScanClient)
+    /** @deprecated use scanClient only */
     constructor(
-        readonly tokenStandard: TokenStandardService,
-        private readonly scanProxyClient: ScanProxyClient,
-        private readonly scanClient: ScanClient | undefined
+        tokenStandard: TokenStandardService,
+        scanProxyClient: ScanProxyClient
+    )
+    /** @deprecated use scanClient only */
+    constructor(
+        tokenStandard: TokenStandardService,
+        scanProxyClient: ScanProxyClient,
+        scanClient: ScanClient | undefined
+    )
+    constructor(
+        tokenStandard: TokenStandardService,
+        arg1: ScanProxyClient | ScanClient,
+        arg2?: ScanClient
     ) {
-        super(tokenStandard)
+        this.serviceImpl = isScanClient(arg1)
+            ? new AmuletServiceScanOnly(tokenStandard, arg1)
+            : new AmuletServiceScanProxy(tokenStandard, arg1, arg2)
     }
 
-    protected getAmuletRules(): ReturnType<ScanProxyClient['getAmuletRules']> {
-        return this.scanProxyClient.getAmuletRules()
+    async buyMemberTraffic(
+        ...args: Parameters<AmuletServiceBase['buyMemberTraffic']>
+    ) {
+        return this.serviceImpl.buyMemberTraffic(...args)
     }
 
-    protected getActiveOpenMiningRound(): ReturnType<
-        ScanProxyClient['getActiveOpenMiningRound']
-    > {
-        return this.scanProxyClient.getActiveOpenMiningRound()
+    async createTap(...args: Parameters<AmuletServiceBase['createTap']>) {
+        return this.serviceImpl.createTap(...args)
     }
-    async isDevNet(): Promise<boolean> {
-        return await this.scanProxyClient.isDevNet()
-    }
-    async getTransferPreApprovalByParty(
-        partyId: PartyId
-    ): Promise<
-        ScanProxyTypes['LookupTransferPreapprovalByPartyResponse']['transfer_preapproval']
-    > {
-        const { transfer_preapproval } = await this.scanProxyClient.get(
-            '/v0/scan-proxy/transfer-preapprovals/by-party/{party}',
-            {
-                path: {
-                    party: partyId,
-                },
-            }
-        )
 
-        return transfer_preapproval
+    async cancelTransferPreapproval(
+        ...args: Parameters<AmuletServiceBase['cancelTransferPreapproval']>
+    ) {
+        return this.serviceImpl.cancelTransferPreapproval(...args)
     }
+
+    async renewTransferPreapproval(
+        ...args: Parameters<AmuletServiceBase['renewTransferPreapproval']>
+    ) {
+        return this.serviceImpl.renewTransferPreapproval(...args)
+    }
+
     async getFeaturedAppsByParty(
-        partyId: PartyId
-    ): Promise<
-        ScanProxyTypes['LookupFeaturedAppRightResponse']['featured_app_right']
-    > {
-        const { featured_app_right } = await this.scanProxyClient.get(
-            '/v0/scan-proxy/featured-apps/{provider_party_id}',
-            {
-                path: {
-                    provider_party_id: partyId,
-                },
-            }
-        )
-        return featured_app_right
+        ...args: Parameters<AmuletServiceBase['getFeaturedAppsByParty']>
+    ) {
+        return this.serviceImpl.getFeaturedAppsByParty(...args)
     }
 
-    async getMemberTrafficStatus(domainId: string, memberId: string) {
-        if (!this.scanClient) {
-            throw new Error('Scan API URL was not provided')
-        }
-        return this.scanClient.get(
-            '/v0/domains/{domain_id}/members/{member_id}/traffic-status',
-            {
-                path: {
-                    domain_id: domainId,
-                    member_id:
-                        this.tokenStandard.core.toQualifiedMemberId(memberId),
-                },
-            }
-        )
+    async getTransferPreApprovalByParty(
+        ...args: Parameters<AmuletServiceBase['getTransferPreApprovalByParty']>
+    ) {
+        return this.serviceImpl.getTransferPreApprovalByParty(...args)
     }
+
+    async selfGrantFeatureAppRight(
+        ...args: Parameters<AmuletServiceBase['selfGrantFeatureAppRight']>
+    ) {
+        return this.serviceImpl.selfGrantFeatureAppRight(...args)
+    }
+
+    async isDevNet(...args: Parameters<AmuletServiceBase['isDevNet']>) {
+        return this.serviceImpl.isDevNet(...args)
+    }
+
+    async getMemberTrafficStatus(
+        ...args: Parameters<AmuletServiceBase['getMemberTrafficStatus']>
+    ) {
+        return this.serviceImpl.getMemberTrafficStatus(...args)
+    }
+}
+
+function isScanClient(x: ScanProxyClient | ScanClient): x is ScanClient {
+    return x instanceof ScanClient
 }

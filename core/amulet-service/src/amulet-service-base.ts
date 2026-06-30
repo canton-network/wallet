@@ -37,6 +37,11 @@ export abstract class AmuletServiceBase {
         ScanTypes['LookupFeaturedAppRightResponse']['featured_app_right']
     >
 
+    abstract getMemberTrafficStatus(
+        domainId: string,
+        memberId: string
+    ): Promise<ScanTypes['GetMemberTrafficStatusResponse']>
+
     async buyMemberTraffic(
         dso: PartyId,
         provider: PartyId,
