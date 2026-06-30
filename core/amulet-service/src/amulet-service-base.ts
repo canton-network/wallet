@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
+import {
+    ScanClient,
+    ScanProxyClient,
+    ScanTypes,
+} from '@canton-network/core-splice-client'
 import {
     DisclosedContract,
     ExerciseCommand,
@@ -26,8 +30,16 @@ export abstract class AmuletServiceBase {
     >
 
     abstract isDevNet(): Promise<boolean>
-    abstract getTransferPreApprovalByParty(partyId: PartyId): Promise<unknown>
-    abstract getFeaturedAppsByParty(partyId: PartyId): Promise<unknown>
+    abstract getTransferPreApprovalByParty(
+        partyId: PartyId
+    ): Promise<
+        ScanTypes['LookupTransferPreapprovalByPartyResponse']['transfer_preapproval']
+    >
+    abstract getFeaturedAppsByParty(
+        partyId: PartyId
+    ): Promise<
+        ScanTypes['LookupFeaturedAppRightResponse']['featured_app_right']
+    >
 
     async buyMemberTraffic(
         dso: PartyId,
@@ -304,7 +316,11 @@ export class ScanClientAmuletService extends AmuletServiceBase {
     async isDevNet(): Promise<boolean> {
         return await this.scanClient.isDevNet()
     }
-    async getTransferPreApprovalByParty(partyId: PartyId): Promise<unknown> {
+    async getTransferPreApprovalByParty(
+        partyId: PartyId
+    ): Promise<
+        ScanTypes['LookupTransferPreapprovalByPartyResponse']['transfer_preapproval']
+    > {
         const { transfer_preapproval } = await this.scanClient.get(
             '/v0/transfer-preapprovals/by-party/{party}',
             {
@@ -316,7 +332,11 @@ export class ScanClientAmuletService extends AmuletServiceBase {
 
         return transfer_preapproval
     }
-    async getFeaturedAppsByParty(partyId: PartyId): Promise<unknown> {
+    async getFeaturedAppsByParty(
+        partyId: PartyId
+    ): Promise<
+        ScanTypes['LookupFeaturedAppRightResponse']['featured_app_right']
+    > {
         const { featured_app_right } = await this.scanClient.get(
             '/v0/featured-apps/{provider_party_id}',
             {

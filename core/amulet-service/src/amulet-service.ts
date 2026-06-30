@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
+import {
+    ScanClient,
+    ScanProxyClient,
+    ScanProxyTypes,
+} from '@canton-network/core-splice-client'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 
 import { AmuletServiceBase } from './amulet-service-base'
@@ -35,19 +39,27 @@ export class AmuletService extends AmuletServiceBase {
     async isDevNet(): Promise<boolean> {
         return await this.scanProxyClient.isDevNet()
     }
-    async getTransferPreApprovalByParty(partyId: PartyId): Promise<unknown> {
-        const { featured_app_right } = await this.scanProxyClient.get(
-            '/v0/scan-proxy/featured-apps/{provider_party_id}',
+    async getTransferPreApprovalByParty(
+        partyId: PartyId
+    ): Promise<
+        ScanProxyTypes['LookupTransferPreapprovalByPartyResponse']['transfer_preapproval']
+    > {
+        const { transfer_preapproval } = await this.scanProxyClient.get(
+            '/v0/scan-proxy/transfer-preapprovals/by-party/{party}',
             {
                 path: {
-                    provider_party_id: partyId,
+                    party: partyId,
                 },
             }
         )
 
-        return featured_app_right
+        return transfer_preapproval
     }
-    async getFeaturedAppsByParty(partyId: PartyId): Promise<unknown> {
+    async getFeaturedAppsByParty(
+        partyId: PartyId
+    ): Promise<
+        ScanProxyTypes['LookupFeaturedAppRightResponse']['featured_app_right']
+    > {
         const { featured_app_right } = await this.scanProxyClient.get(
             '/v0/scan-proxy/featured-apps/{provider_party_id}',
             {
