@@ -70,6 +70,7 @@ export class NetworkForm extends BaseElement {
     accessor network: NetworkFormData = {
         ledgerApi: '',
         auth: {},
+        serviceAccountAuth: {},
     } as NetworkFormData
 
     @state() private _error = ''
@@ -306,6 +307,7 @@ export class NetworkForm extends BaseElement {
                                         (authObj as SelfSignedAuth)
                                             .clientSecret ?? '',
                                 } satisfies SelfSignedAuth)
+                                // TODO should I enforce client credientials for network.serviceAccountAuth?
                             } else if (select.value === 'client_credentials') {
                                 Object.assign(authObj, {
                                     method: 'client_credentials',
@@ -557,12 +559,17 @@ export class NetworkForm extends BaseElement {
                         />
                     </div>
 
-                    ${isReview /*|| true*/
-                        ? html`
-                              <h3 class="section-title">Configure user auth</h3>
-                              ${this.renderAuthForm(this.network.auth)}
-                          `
-                        : nothing}
+                    <h3 class="section-title">Configure user auth</h3>
+                    ${this.renderAuthForm(this.network.auth)}
+
+                    <h3 class="section-title">
+                        Configure service account auth
+                    </h3>
+                    ${
+                        this.renderAuthForm(
+                            this.network.serviceAccountAuth
+                        ) /* TODO what if network doesn't have serviceAccountAuth yet? */
+                    }
                 </div>
 
                 ${this._error

@@ -128,6 +128,9 @@ export class UserUiSettings extends BaseElement {
                   clientId: '',
                   clientSecret: '',
               }
+        const serviceAccountAuth = e.network.serviceAccountAuth
+            ? this.toApiAuth(e.network.serviceAccountAuth)
+            : undefined
 
         try {
             const userClient = await createUserClient(
@@ -147,6 +150,7 @@ export class UserUiSettings extends BaseElement {
                         ledgerApi: e.network.ledgerApi,
                         auth,
                         adminAuth,
+                        ...(serviceAccountAuth && { serviceAccountAuth }),
                     },
                 },
             })
