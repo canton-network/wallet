@@ -43,6 +43,12 @@ export const AMULET_NAMESPACE_CONFIG: AmuletConfig = {
     registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
 }
 
+export const AMULET_NAMESPACE_CONFIG_SIMPLE: AmuletConfig = {
+    scanApiUrl: localNetStaticConfig.LOCALNET_SCAN_API_URL,
+    auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+    registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+}
+
 export const ASSET_CONFIG: AssetConfig = {
     registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,

@@ -44,4 +44,5 @@ export type GrantFeaturedAppRightsOptions = {
     synchronizerId?: string
     maxRetries?: number
     delayMs?: number
+    validatorParty?: PartyId
 }

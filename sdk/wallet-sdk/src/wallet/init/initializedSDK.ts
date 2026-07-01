@@ -9,7 +9,7 @@ import { PartyNamespace } from '../namespace/party/index.js'
 import { UserNamespace } from '../namespace/user/index.js'
 import { TokenNamespace } from '../namespace/token/index.js'
 import { AssetNamespace } from '../namespace/asset/index.js'
-import { OfflineSDKContext, SDKContext } from '../sdk.js'
+import { OfflineSDKContext, SDKContext, getValidatorParty } from '../sdk.js'
 import { SDKUtilsNamespace } from '../namespace/utils/index.js'
 import {
     AmuletConfig,
@@ -23,14 +23,9 @@ import {
     SDKInterface,
     TokenConfig,
 } from './types/index.js'
-import {
-    ScanClient,
-    ScanProxyClient,
-    ValidatorInternalClient,
-} from '@canton-network/core-splice-client'
+import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { SDKLogger } from '../logger/logger.js'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
 import { SDKPlugin } from './plugin.js'
@@ -43,21 +38,19 @@ const createNamespace: {
 } = {
     amulet: async (ctx: SDKContext, config: AmuletConfig) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
-        const scanProxyClient = new ScanProxyClient(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
-        )
+
         const scanClient = new ScanClient(
             new ParsedURL(ctx, config.scanApiUrl),
             ctx.logger,
             auth
         )
-        const validatorParty = await getValidatorParty(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
-        )
+        const validatorParty = config.validatorUrl
+            ? await getValidatorParty(
+                  new ParsedURL(ctx, config.validatorUrl),
+                  auth,
+                  ctx.logger
+              )
+            : undefined
 
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
@@ -66,18 +59,24 @@ const createNamespace: {
             false
         )
 
-        const amuletService = new AmuletService(
-            tokenStandardService,
-            scanProxyClient,
-            scanClient
-        )
+        const amuletService = config.validatorUrl
+            ? new AmuletService(
+                  tokenStandardService,
+                  new ScanProxyClient(
+                      new ParsedURL(ctx, config.validatorUrl),
+                      ctx.logger,
+                      auth
+                  ),
+                  scanClient
+              )
+            : new AmuletService(tokenStandardService, scanClient)
 
         return new AmuletNamespace({
             commonCtx: ctx,
             registry: new ParsedURL(ctx, config.registryUrl),
             amuletService,
             tokenStandardService,
-            validatorParty,
+            ...(validatorParty && { validatorParty }),
         })
     },
     token: async (ctx: SDKContext, config: TokenConfig) => {
@@ -96,8 +95,8 @@ const createNamespace: {
         const validatorParty = config.validatorUrl
             ? await getValidatorParty(
                   new ParsedURL(ctx, config.validatorUrl),
-                  ctx.logger,
-                  auth
+                  auth,
+                  ctx.logger
               )
             : undefined
 
@@ -260,13 +259,4 @@ export class ExtendedInitializedSDK<
 
         return await super.extend(mergedConfig)
     }
-}
-
-async function getValidatorParty(
-    validatorUrl: URL,
-    logger: SDKLogger,
-    auth: AuthTokenProvider
-) {
-    const validator = new ValidatorInternalClient(validatorUrl, logger, auth)
-    return (await validator.get('/v0/validator-user')).party_id
 }
