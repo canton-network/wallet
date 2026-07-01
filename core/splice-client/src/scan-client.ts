@@ -54,6 +54,22 @@ export class ScanClient {
     private readonly accessTokenProvider: AccessTokenProvider
     private readonly baseUrlHref: string
 
+    private static amuletRulesCache = new Map<string, ScanTypes['Contract']>()
+
+    private static roundsCache = new Map<string, ScanTypes['Contract'][]>()
+    // one in-flight fetch per baseUrl for rules/rounds
+    private static amuletRulesInflight = new Map<
+        string,
+        Promise<ScanTypes['Contract']>
+    >()
+    private static roundsInflight = new Map<
+        string,
+        Promise<ScanTypes['Contract'][]>
+    >()
+
+    // time after surpassing which mining rounds should be refreshed
+    private static roundsNextChangeAt = new Map<string, number>()
+
     constructor(
         baseUrl: URL,
         logger: Logger,
@@ -152,5 +168,148 @@ export class ScanClient {
             }
             return updatedValue ?? initActiveSynchronizer
         } else return initActiveSynchronizer
+    }
+
+    private async fetchAmuletRulesOnce(): Promise<ScanTypes['Contract']> {
+        const resp = await this.post('/v0/amulet-rules', {})
+        const contract = resp.amulet_rules_update.contract
+        if (!contract?.contract_id || !contract?.template_id) {
+            throw new Error('Malformed AmuletRules response')
+        }
+        ScanClient.amuletRulesCache.set(this.baseUrlHref, contract)
+        return contract
+    }
+
+    public async getAmuletRules(): Promise<ScanTypes['Contract']> {
+        const key = this.baseUrlHref
+
+        const cached = ScanClient.amuletRulesCache.get(key)
+        // clone to prevent external mutation of cache by object reference
+        if (cached) return structuredClone(cached)
+
+        let inflight = ScanClient.amuletRulesInflight.get(key)
+        if (!inflight) {
+            inflight = this.fetchAmuletRulesOnce().finally(() => {
+                ScanClient.amuletRulesInflight.delete(key)
+            })
+            ScanClient.amuletRulesInflight.set(key, inflight)
+        }
+
+        const contract = await inflight
+        return structuredClone(contract)
+    }
+
+    public static invalidateAmuletRulesCache(baseUrl: URL) {
+        const key = baseUrl.href
+        this.amuletRulesCache.delete(key)
+        this.amuletRulesInflight.delete(key)
+    }
+
+    private computeNextChangeAt(rounds: ScanTypes['Contract'][]): number {
+        const now = Date.now()
+        let next = Number.POSITIVE_INFINITY
+
+        for (const round of rounds) {
+            const { opensAt, targetClosesAt } = round.payload ?? {}
+            const openMs = opensAt ? Number(new Date(opensAt)) : NaN
+            const closeMs = targetClosesAt
+                ? Number(new Date(targetClosesAt))
+                : NaN
+
+            if (Number.isFinite(openMs) && openMs > now && openMs < next) {
+                next = openMs
+            }
+            if (Number.isFinite(closeMs) && closeMs > now && closeMs < next) {
+                next = closeMs
+            }
+        }
+
+        // If we couldn't parse anything sensible, force an immediate refresh.
+        return Number.isFinite(next) ? next : now
+    }
+
+    private async fetchOpenMiningRoundsOnce(): Promise<
+        ScanTypes['Contract'][]
+    > {
+        const resp = await this.post('/v0/open-and-issuing-mining-rounds', {
+            cached_open_mining_round_contract_ids: [],
+            cached_issuing_round_contract_ids: [],
+        })
+
+        const rounds = Object.values(resp.open_mining_rounds).flatMap((x) =>
+            x.contract ? [x.contract] : []
+        )
+
+        const key = this.baseUrlHref
+        ScanClient.roundsCache.set(key, rounds)
+        ScanClient.roundsNextChangeAt.set(key, this.computeNextChangeAt(rounds))
+        return rounds
+    }
+
+    private async refreshRounds(key: string): Promise<ScanTypes['Contract'][]> {
+        let inflight = ScanClient.roundsInflight.get(key)
+        if (!inflight) {
+            inflight = this.fetchOpenMiningRoundsOnce().finally(() => {
+                ScanClient.roundsInflight.delete(key)
+            })
+            ScanClient.roundsInflight.set(key, inflight)
+        }
+        return inflight
+    }
+
+    public async getOpenMiningRounds(): Promise<ScanTypes['Contract'][]> {
+        const key = this.baseUrlHref
+        const now = Date.now()
+        const cached = ScanClient.roundsCache.get(key)
+        const next = ScanClient.roundsNextChangeAt.get(key)
+
+        if (cached && next !== undefined && now < next) {
+            return structuredClone(cached)
+        }
+        const fresh = await this.refreshRounds(key)
+        return structuredClone(fresh)
+    }
+
+    public async getActiveOpenMiningRound(): Promise<
+        ScanTypes['Contract'] | null
+    > {
+        const pickActive = (
+            rounds: ScanTypes['Contract'][],
+            timestamp: number
+        ) =>
+            rounds
+                .filter((round) => {
+                    const { opensAt, targetClosesAt } = round.payload
+                    const openMs = opensAt ? Number(new Date(opensAt)) : NaN
+                    const closeMs = targetClosesAt
+                        ? Number(new Date(targetClosesAt))
+                        : NaN
+                    return (
+                        Number.isFinite(openMs) &&
+                        Number.isFinite(closeMs) &&
+                        openMs <= timestamp &&
+                        timestamp < closeMs
+                    )
+                })
+                .sort((a, b) => a.payload.opensAt - b.payload.opensAt)
+                .at(-1) ?? null
+
+        const now = Date.now()
+        const rounds = await this.getOpenMiningRounds()
+        const active = pickActive(rounds, now)
+        return active ? structuredClone(active) : null
+    }
+
+    public static invalidateOpenMiningRoundsCache(baseUrl: URL) {
+        const key = baseUrl.href
+        this.roundsCache.delete(key)
+        this.roundsInflight.delete(key)
+        this.roundsNextChangeAt.delete(key)
+    }
+
+    public async isDevNet(): Promise<boolean> {
+        const amuletRules = await this.getAmuletRules()
+        const payload = amuletRules.payload as { isDevNet?: boolean }
+        return payload?.isDevNet ?? false
     }
 }

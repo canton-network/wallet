@@ -55,6 +55,7 @@ const logger = pino({ name: 'main', level: 'debug' })
 export class FireblocksHandler {
     private defaultClient: Fireblocks | undefined = undefined
     private clients: Map<string, Fireblocks> = new Map()
+    private coinType: number
 
     private keyInfoByPublicKey: Map<string, FireblocksKey> = new Map()
     private publicKeyByDerivationPath: Map<string, string> = new Map()
@@ -72,8 +73,10 @@ export class FireblocksHandler {
     constructor(
         defaultKey: FireblocksApiKeyInfo | undefined,
         userKeys: Map<string, FireblocksApiKeyInfo>,
-        apiPath: string = 'https://api.fireblocks.io/v1'
+        apiPath: string = 'https://api.fireblocks.io/v1',
+        coinType?: number
     ) {
+        this.coinType = coinType ?? CC_COIN_TYPE
         if (defaultKey) {
             this.defaultClient = new Fireblocks({
                 apiKey: defaultKey.apiKey,
@@ -117,7 +120,7 @@ export class FireblocksHandler {
                 if (vault.id) {
                     const derivationPath = [
                         44,
-                        CC_COIN_TYPE,
+                        this.coinType,
                         Number(vault.id) || 0,
                         0,
                         0,
