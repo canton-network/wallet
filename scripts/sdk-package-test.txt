@@ -1,8 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-
-import { SDK, SDKInterface } from '@canton-network/wallet-sdk'
+import { CustomLogAdapter, SDK, SDKInterface } from '@canton-network/wallet-sdk'
 console.log('SDK imported successfully')
 
 if (typeof SDK.create !== 'function') {
@@ -19,6 +18,7 @@ if (!sdkType.create) {
 console.log('SDK structure is correct')
 
 import type {
+    LogAdapter,
     CommonCtx,
     PrepareOptions,
     ExecuteOptions,
@@ -26,3 +26,10 @@ import type {
 } from '@canton-network/wallet-sdk'
 
 console.log('Type exports are available')
+
+const logAdapter = new CustomLogAdapter((() => {}) as LogAdapter['log'])
+if (typeof logAdapter.log !== 'function') {
+    throw new Error('CustomLogAdapter does not expose log method')
+}
+
+console.log('Custom log adapter exports are available')

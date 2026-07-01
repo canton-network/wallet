@@ -7,7 +7,7 @@ import { SDKLogger } from '../logger' // eslint-disable-line @typescript-eslint/
 /**
  * CustomLogAdapter allows users to provide their own logging implementation.
  *
- * This adapter can be passed to {@link SDKLogger.create} to enable custom log handling logic,
+ * This adapter can be passed to {@link SDKLogger} to enable custom log handling logic,
  * such as integrating with third-party logging services or frameworks.
  *
  * @example
@@ -15,7 +15,7 @@ import { SDKLogger } from '../logger' // eslint-disable-line @typescript-eslint/
  * const customAdapter = new CustomLogAdapter((level, ctx, message) => {
  *   // Custom log logic here
  * });
- * const logger = new SdkLogger(customAdapter);
+ * const logger = new SDKLogger(customAdapter);
  * logger.info({}, 'Custom log message');
  */
 export default class CustomLogAdapter implements LogAdapter {
