@@ -250,8 +250,10 @@ export class TransactionService {
             throw new Error(`Transaction not found with id: ${transactionId}`)
         }
 
-        if (existingTx.status === 'executed') {
-            throw new Error('Cannot sign an already executed transaction')
+        if (existingTx.status !== 'pending') {
+            throw new Error(
+                `Cannot sign an already ${existingTx.status} transaction`
+            )
         }
 
         return existingTx
