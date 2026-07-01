@@ -4,11 +4,11 @@
 /**
  * Ledger access helpers for the TestToken registry server.
  *
- * Reads `TokenRules` contracts visible to the tokenAdmin party from the
- * app-provider participant (P2). P2 hosts tokenAdmin on both synchronizers
- * (global + app), so it returns the TokenRules contract for either one. Results
- * are cached for a short TTL to avoid hammering the ledger on every incoming
- * HTTP request.
+ * Reads the `TokenRules` contracts visible to the admin party from the
+ * configured participant. When the admin is hosted on more than one
+ * synchronizer, every visible `TokenRules` contract is returned so callers can
+ * select the one on a specific synchronizer. Results are cached for a short TTL
+ * to avoid hammering the ledger on every incoming HTTP request.
  */
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
@@ -66,12 +66,12 @@ interface JsActiveContractEntry {
 }
 
 /**
- * Reads `TokenRules` contracts visible to `tokenAdminPartyId` from the configured
+ * Reads `TokenRules` contracts visible to `adminPartyId` from the configured
  * participant. Caches results for a short TTL.
  */
 export async function readTokenRules(
     client: LedgerClient,
-    tokenAdminPartyId: string,
+    adminPartyId: string,
     logger: Logger
 ): Promise<TokenRulesContract[]> {
     const now = Date.now()
@@ -90,7 +90,7 @@ export async function readTokenRules(
     const body = {
         filter: {
             filtersByParty: {
-                [tokenAdminPartyId]: {
+                [adminPartyId]: {
                     cumulative: [
                         {
                             identifierFilter: {

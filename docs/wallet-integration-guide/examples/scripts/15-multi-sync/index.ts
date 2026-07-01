@@ -1,15 +1,15 @@
 import pino from 'pino'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
+import { startTestTokenRegistry } from '@canton-network/core-test-token/registry'
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
-import { startRegistry } from './_registry/index.js'
 import {
     TEST_TOKEN_REGISTRY_PORT,
     TRADE_AMULET_AMOUNT,
     TRADE_TOKEN_AMOUNT,
 } from './_constants.js'
 import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
-import { createTokenRulesAndMintForBob } from './_token_setup.js'
+import { createTokenRules, mintAndTransferTokenToBob } from './_token_setup.js'
 import { allocateTokenForBob } from './_token_allocation.js'
 import {
     aliceSelfTransferToApp,
@@ -42,23 +42,29 @@ const {
 } = setup
 
 // ── Start the TestToken registry (CIP-56 off-ledger APIs) ───────────────────
-const registry = await startRegistry({
-    tokenAdminPartyId: tokenAdmin.partyId,
+// The registry creates the TestToken `TokenRules` on both synchronizers as part
+// of initialization, then serves the four Token Standard registry APIs for them.
+const registry = await startTestTokenRegistry({
+    admin: tokenAdmin.partyId,
     port: TEST_TOKEN_REGISTRY_PORT,
     ledgerUrl: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-    globalSynchronizerId: setup.globalSynchronizerId,
-    appSynchronizerId: setup.appSynchronizerId,
+    synchronizerIds: [setup.globalSynchronizerId, setup.appSynchronizerId],
+    transferSynchronizerId: setup.appSynchronizerId,
+    allocationSynchronizerId: setup.globalSynchronizerId,
+    createTokenRules: (synchronizerId) =>
+        createTokenRules(setup, synchronizerId),
     logger,
 })
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)
-// Steps 5a–5e: TokenAdmin creates TokenRules on global + app, self-mints Token,
-//             offers to Bob via TransferFactory_Transfer; Bob accepts via
+// Steps 5a–5e: TokenAdmin self-mints Token, offers to Bob via
+//             TransferFactory_Transfer; Bob accepts via
 //             TransferInstruction_Accept — all single-party submissions
+//             (the TokenRules were created by the registry on start-up)
 await Promise.all([
     mintAmuletForAlice(setup, logger),
-    createTokenRulesAndMintForBob(setup, logger),
+    mintAndTransferTokenToBob(setup, logger),
 ])
 
 logger.info('Contracts after setup:')

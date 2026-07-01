@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * TestToken Registry — entry point.
+ * TestToken registry — HTTP server entry point.
  *
  * Wires the HTTP router, all feature-slice route handlers, and the ledger client
- * into a single `startRegistry()` factory that is called from the example's
- * initialization phase once the tokenAdmin party ID is known.
+ * into a single `startTestTokenRegistry()` factory. Given a deployment config
+ * (admin party, the synchronizers on which `TokenRules` contracts must exist,
+ * and a callback that performs the signed `TokenRules` creation), the server
+ * creates the `TokenRules` contracts as part of initialization and then serves
+ * the Token Standard off-ledger registry APIs for them. Once started, the token
+ * looks like any other CIP-56 token: it has an admin party and a registry URL
+ * that serves the choice contexts.
  *
  * Implements all four Token Standard off-ledger registry APIs:
  *   api-specs/splice/0.6.1/token-metadata-v1.yaml
@@ -23,7 +28,7 @@ import {
 } from 'node:http'
 import type { Logger } from 'pino'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
-import { buildLedgerClient, readTokenRules } from './ledger.js'
+import { buildLedgerClient, invalidateCache, readTokenRules } from './ledger.js'
 import type { TokenRulesContract } from './ledger.js'
 import { createRouter, respond, readBody } from './http/router.js'
 import type { GetFactoryRequest, GetChoiceContextRequest } from './types.js'
@@ -114,63 +119,111 @@ const ROUTES: RouteEntry[] = [
     },
 ]
 
-export interface RegistryConfig {
-    tokenAdminPartyId: string
+/**
+ * Deployment configuration for a single TestToken instance.
+ *
+ * Describes how an instance of the test token should be deployed: which admin
+ * party owns it, on which synchronizers its `TokenRules` contracts must be
+ * created during initialization, and how to perform that (signed) creation.
+ */
+export interface TestTokenRegistryConfig {
+    /** Admin party that owns the TestToken instrument and its `TokenRules`. */
+    admin: string
+    /** Port the registry HTTP server listens on. */
     port: number
+    /** Base URL of the participant's JSON Ledger API used to read `TokenRules`. */
     ledgerUrl: URL
     logger: Logger
-    globalSynchronizerId: string
-    appSynchronizerId: string
+    /**
+     * Synchronizers on which a `TokenRules` contract must be created as part of
+     * initialization. `createTokenRules` is invoked once per entry.
+     */
+    synchronizerIds: string[]
+    /**
+     * Creates a `TokenRules` contract for `admin` on `synchronizerId`. This
+     * encapsulates the (deployment-specific) signed ledger submission and is
+     * called once per entry in `synchronizerIds` before the server starts
+     * serving.
+     */
+    createTokenRules: (synchronizerId: string) => Promise<void>
+    /**
+     * Synchronizer whose `TokenRules` backs the transfer-instruction factory.
+     * Defaults to `synchronizerIds[0]`.
+     */
+    transferSynchronizerId?: string
+    /**
+     * Synchronizer whose `TokenRules` backs the allocation-instruction factory.
+     * Defaults to `synchronizerIds[0]`.
+     */
+    allocationSynchronizerId?: string
 }
 
-export interface RegistryHandle {
+export interface TestTokenRegistry {
+    /** Base URL at which the registry serves the Token Standard APIs. */
+    registryUrl: URL
+    /** Gracefully shuts the HTTP server down. */
     stop(): Promise<void>
 }
 
 /**
- * Starts the TestToken registry HTTP server.
+ * Deploys a TestToken instance and starts its registry HTTP server.
  *
- * @param config - Runtime configuration (party ID, port, ledger URL, logger).
- * @returns A handle with a `stop()` method for graceful shutdown.
+ * Creates the `TokenRules` contracts described by `config` and then serves the
+ * four Token Standard off-ledger registry APIs for them.
+ *
+ * @param config - Deployment configuration for the token instance.
+ * @returns A handle with the registry URL and a `stop()` method.
  */
-export async function startRegistry(
-    config: RegistryConfig
-): Promise<RegistryHandle> {
-    const {
-        tokenAdminPartyId,
-        port,
-        ledgerUrl,
-        logger,
-        globalSynchronizerId,
-        appSynchronizerId,
-    } = config
+export async function startTestTokenRegistry(
+    config: TestTokenRegistryConfig
+): Promise<TestTokenRegistry> {
+    const { admin, port, ledgerUrl, logger, synchronizerIds } = config
+
+    if (synchronizerIds.length === 0)
+        throw new Error(
+            'startTestTokenRegistry: at least one synchronizer id is required'
+        )
+
+    const transferSynchronizerId =
+        config.transferSynchronizerId ?? synchronizerIds[0]!
+    const allocationSynchronizerId =
+        config.allocationSynchronizerId ?? synchronizerIds[0]!
+
+    // ── Initialization: create the TokenRules contracts the token needs ─────
+    await Promise.all(
+        synchronizerIds.map((synchronizerId) =>
+            config.createTokenRules(synchronizerId)
+        )
+    )
+    // TokenRules may already have been cached (as empty) by an earlier run.
+    invalidateCache()
+    logger.info(
+        { admin, synchronizerIds },
+        'TestToken TokenRules created on configured synchronizers'
+    )
 
     const ledgerClient: LedgerClient = buildLedgerClient(ledgerUrl, logger)
 
     async function getTokenRules(
         synchronizerId?: string
     ): Promise<TokenRulesContract | null> {
-        const all = await readTokenRules(
-            ledgerClient,
-            tokenAdminPartyId,
-            logger
-        )
+        const all = await readTokenRules(ledgerClient, admin, logger)
         if (all.length === 0) return null
         if (!synchronizerId) return all[0]!
         return all.find((c) => c.synchronizerId === synchronizerId) ?? all[0]!
     }
 
     const metadata = createMetadataHandlers({
-        tokenAdminPartyId,
+        adminPartyId: admin,
         instrumentId: TEST_TOKEN_INSTRUMENT_ID,
     })
     const transfer = createTransferHandlers({
         getTokenRules,
-        appSynchronizerId,
+        transferSynchronizerId,
     })
     const allocInstr = createAllocationInstructionHandlers({
         getTokenRules,
-        globalSynchronizerId,
+        allocationSynchronizerId,
     })
     const alloc = createAllocationHandlers()
 
@@ -297,12 +350,14 @@ export async function startRegistry(
 
     await new Promise<void>((resolve) => server.listen(port, resolve))
 
+    const registryUrl = new URL(`http://localhost:${port}`)
     logger.info(
-        { port, tokenAdminPartyId, ledgerUrl: ledgerUrl.href },
+        { port, admin, ledgerUrl: ledgerUrl.href },
         'TestToken registry server started'
     )
 
     return {
+        registryUrl,
         stop: () =>
             new Promise<void>((resolve, reject) =>
                 server.close((err) => (err ? reject(err) : resolve()))

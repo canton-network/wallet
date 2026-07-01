@@ -60,10 +60,12 @@ cause: 'The target synchronizer=global-domain::… specified in the command
 errorCategory: 8
 ```
 
-Root cause: the local TestToken **registry hard-wires the transfer factory to the
-app-synchronizer `TokenRules`** (see `_registry/features/transfer/handlers.ts`),
-while the allocation factory is wired to the **global** `TokenRules` (see
-`_registry/features/allocation-instruction/handlers.ts`). A transfer can only be
+Root cause: the TestToken **registry hard-wires the transfer factory to the
+app-synchronizer `TokenRules`** (see
+`core/test-token-v1/src/registry/features/transfer/handlers.ts`), while the
+allocation factory is wired to the **global** `TokenRules` (see
+`core/test-token-v1/src/registry/features/allocation-instruction/handlers.ts`).
+A transfer can only be
 prepared on the app-synchronizer, so you cannot use a transfer to push the
 holding to global. ⇒ This route is a dead end with the current registry wiring.
 
@@ -123,8 +125,8 @@ transaction's synchronizer; let the client choose that synchronizer.
 
 This was implemented and tested:
 
-- `_registry/.../allocation-instruction/handlers.ts` now reads
-  `choiceArguments._targetSynchronizerId` and returns the `TokenRules` contract
+- `core/test-token-v1/src/registry/features/allocation-instruction/handlers.ts`
+  now reads `choiceArguments._targetSynchronizerId` and returns the `TokenRules` contract
   on that synchronizer (defaulting to global).
 - `_token_allocation.ts` fetches the factory itself (passing
   `_targetSynchronizerId`) and prepares the allocation on the chosen

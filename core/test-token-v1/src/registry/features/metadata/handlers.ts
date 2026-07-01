@@ -25,7 +25,7 @@ const SUPPORTED_APIS: SupportedApis = {
 }
 
 export interface MetadataHandlerContext {
-    tokenAdminPartyId: string
+    adminPartyId: string
     instrumentId: string
 }
 
@@ -42,7 +42,7 @@ export function createMetadataHandlers(
 
     return {
         getRegistryInfo: (): GetRegistryInfoResponse => ({
-            adminId: ctx.tokenAdminPartyId,
+            adminId: ctx.adminPartyId,
             supportedApis: SUPPORTED_APIS,
         }),
 

@@ -14,6 +14,12 @@
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
+        },
+        "./registry": {
+            "types": "./dist/registry/index.d.ts",
+            "import": "./dist/registry/index.js",
+            "require": "./dist/registry/index.cjs",
+            "default": "./dist/registry/index.js"
         }
     },
     "scripts": {
@@ -22,8 +28,12 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
+        "@canton-network/core-ledger-client": "workspace:^",
+        "@canton-network/core-token-standard": "workspace:^",
+        "@canton-network/core-wallet-auth": "workspace:^",
         "@daml/types": "^3.5.0",
-        "@mojotech/json-type-validation": "^3.1.0"
+        "@mojotech/json-type-validation": "^3.1.0",
+        "pino": "^10.3.1"
     },
     "devDependencies": {
         "@rollup/plugin-alias": "^5.0.0",

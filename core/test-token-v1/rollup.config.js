@@ -87,6 +87,11 @@ const external = [
     ...Object.keys(pkg.peerDependencies || {}),
 ].filter((dep) => !exceptions.includes(dep))
 
+function isExternal(id) {
+    if (id.startsWith('node:')) return true
+    return external.some((dep) => id === dep || id.startsWith(`${dep}/`))
+}
+
 // bundle ESM
 const codeEsm = {
     input: 'src/index.ts',
@@ -147,4 +152,61 @@ const types = {
     ],
 }
 
-export default [codeEsm, codeCjs, codeBrowser, types]
+const registryTsOptions = {
+    compilerOptions: { declaration: false, declarationMap: false },
+}
+const registryEsm = {
+    input: 'src/registry/index.ts',
+    output: { file: 'dist/registry/index.js', format: 'es', sourcemap: true },
+    external: isExternal,
+    plugins: [
+        json(),
+        commonjsPlugin,
+        nodeResolve(),
+        typescript(registryTsOptions),
+    ],
+}
+
+const registryCjs = {
+    input: 'src/registry/index.ts',
+    output: {
+        file: 'dist/registry/index.cjs',
+        format: 'cjs',
+        interop: 'auto',
+        sourcemap: true,
+        exports: 'named',
+    },
+    external: isExternal,
+    plugins: [
+        json(),
+        commonjsPlugin,
+        nodeResolve(),
+        typescript(registryTsOptions),
+    ],
+}
+
+const registryTypes = {
+    input: 'src/registry/index.ts',
+    output: { file: 'dist/registry/index.d.ts', format: 'es' },
+    external: isExternal,
+    plugins: [
+        dts({
+            respectExternal: false,
+            compilerOptions: {
+                baseUrl: '.',
+                declaration: true,
+                emitDeclarationOnly: true,
+            },
+        }),
+    ],
+}
+
+export default [
+    codeEsm,
+    codeCjs,
+    codeBrowser,
+    types,
+    registryEsm,
+    registryCjs,
+    registryTypes,
+]

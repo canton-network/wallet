@@ -12,7 +12,35 @@ import { BOB_TOKEN_MINT_AMOUNT } from './_constants.js'
 
 const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
 
-export async function createTokenRulesAndMintForBob(
+/**
+ * Creates a `TokenRules` contract for the TokenAdmin party on a single
+ * synchronizer. Passed to the TestToken registry as its `createTokenRules`
+ * callback so the registry can deploy the token's `TokenRules` on each
+ * configured synchronizer as part of initialization.
+ */
+export async function createTokenRules(
+    setup: MultiSyncSetup,
+    synchronizerId: string
+): Promise<void> {
+    const { appProviderSdk, tokenAdmin } = setup
+
+    await appProviderSdk.ledger
+        .prepare({
+            partyId: tokenAdmin.partyId,
+            commands: buildCreateTokenRulesCommand(tokenAdmin.partyId),
+            disclosedContracts: [],
+            synchronizerId,
+        })
+        .sign(tokenAdmin.keyPair.privateKey)
+        .execute({ partyId: tokenAdmin.partyId })
+}
+
+/**
+ * Mints TestTokens for the TokenAdmin and offers them to Bob via the registry's
+ * transfer-instruction-v1 API, which Bob then accepts. Assumes the TestToken
+ * `TokenRules` contracts already exist (created by the registry on start-up).
+ */
+export async function mintAndTransferTokenToBob(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
@@ -21,20 +49,9 @@ export async function createTokenRulesAndMintForBob(
         tokenNamespaceAppProvider,
         bob,
         tokenAdmin,
-        globalSynchronizerId,
         appSynchronizerId,
         testTokenRegistryUrl,
     } = setup
-
-    await appProviderSdk.ledger.prepareAndExecuteOnSynchronizers(
-        {
-            partyId: tokenAdmin.partyId,
-            commands: buildCreateTokenRulesCommand(tokenAdmin.partyId),
-            disclosedContracts: [],
-        },
-        [globalSynchronizerId, appSynchronizerId],
-        tokenAdmin.keyPair.privateKey
-    )
 
     await appProviderSdk.ledger
         .prepare({
@@ -112,6 +129,6 @@ export async function createTokenRulesAndMintForBob(
         .execute({ partyId: bob.partyId })
 
     logger.info(
-        `TokenAdmin: TokenRules created on global + app synchronizers; Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer via registry transfer-factory`
+        `Bob: ${BOB_TOKEN_MINT_AMOUNT} TestToken minted on app-synchronizer via registry transfer-factory`
     )
 }

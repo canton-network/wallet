@@ -5,10 +5,10 @@
  * TestToken implementation of the transfer-instruction-v1 API
  * (api-specs/splice/0.6.1/transfer-instruction-v1.yaml).
  *
- * The transfer factory is the live `TokenRules` contract on the app-synchronizer
- * — TestToken transfers (mint → Bob, and the self-transfers) are submitted there.
- * The factory contract is disclosed in the choice context so the submitting party
- * can exercise `TransferFactory_Transfer` on it.
+ * The transfer factory is the live `TokenRules` contract on the configured
+ * transfer synchronizer — TestToken transfers (mints and self-transfers) are
+ * submitted there. The factory contract is disclosed in the choice context so
+ * the submitting party can exercise `TransferFactory_Transfer` on it.
  *
  * For TestToken, the on-ledger choices read no additional contracts, so the
  * accept/reject/withdraw choice contexts are empty.
@@ -26,7 +26,7 @@ export interface TransferHandlerContext {
     getTokenRules: (
         synchronizerId?: string
     ) => Promise<TokenRulesContract | null>
-    appSynchronizerId: string
+    transferSynchronizerId: string
 }
 
 export function createTransferHandlers(
@@ -53,10 +53,12 @@ export function createTransferHandlers(
             const transferKind: 'self' | 'offer' =
                 transfer['sender'] === transfer['receiver'] ? 'self' : 'offer'
 
-            const tokenRules = await ctx.getTokenRules(ctx.appSynchronizerId)
+            const tokenRules = await ctx.getTokenRules(
+                ctx.transferSynchronizerId
+            )
             if (!tokenRules)
                 throw new Error(
-                    `getTransferFactory: TokenRules not found on app synchronizer ${ctx.appSynchronizerId}`
+                    `getTransferFactory: TokenRules not found on transfer synchronizer ${ctx.transferSynchronizerId}`
                 )
             return {
                 factoryId: tokenRules.contractId,
