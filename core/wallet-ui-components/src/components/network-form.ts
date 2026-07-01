@@ -8,20 +8,12 @@ import {
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
-import { chevronDownIcon } from '../icons/index.js'
-import {
-    AuthorizationCodeAuth,
-    Auth,
-    ClientCredentialsAuth,
-    SelfSignedAuth,
-} from '@canton-network/core-wallet-auth'
+import { AuthEditorChangeEvent } from './auth-editor.js'
+import './auth-editor.js'
 
 export type NetworkFormData = Omit<StoreNetwork, 'ledgerApi'> & {
     ledgerApi: string
 }
-
-type ServiceAccountAuthMode = 'none' | 'view' | 'edit' | 'pending-remove'
-type AuthMethod = 'authorization_code' | 'client_credentials' | 'self_signed'
 
 /**
  * Emitted when the user clicks the Cancel button on the form
@@ -59,6 +51,7 @@ export class NetworkDeleteEvent extends Event {
 /**
  * Emitted when the user clicks the Back link
  */
+// TODO can I remove that?
 export class NetworkFormBackEvent extends Event {
     constructor() {
         super('network-form-back', { bubbles: true, composed: true })
@@ -78,8 +71,6 @@ export class NetworkForm extends BaseElement {
     } as NetworkFormData
 
     @state() private _error = ''
-    @state() private _serviceAccountMode: ServiceAccountAuthMode = 'none'
-    @state() private _serviceAccountBackup?: Auth
 
     static styles = [
         BaseElement.styles,
@@ -156,71 +147,6 @@ export class NetworkForm extends BaseElement {
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
                 color: var(--wg-text);
-            }
-
-            .config-panel {
-                border: 1px solid var(--wg-border);
-                border-radius: 8px;
-                padding: var(--wg-space-3);
-                background: var(--wg-input-bg);
-                display: flex;
-                flex-direction: column;
-                gap: var(--wg-space-3);
-            }
-
-            .kv-list {
-                display: grid;
-                gap: var(--wg-space-3);
-            }
-
-            .kv-item {
-                display: flex;
-                flex-direction: column;
-                gap: var(--wg-space-1);
-            }
-
-            .kv-label {
-                font-size: var(--wg-font-size-xs);
-                color: var(--wg-text-secondary);
-                font-weight: var(--wg-font-weight-semibold);
-            }
-
-            .kv-value {
-                font-size: var(--wg-font-size-sm);
-                color: var(--wg-text);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            .inline-actions {
-                display: flex;
-                gap: var(--wg-space-2);
-            }
-
-            .btn-inline {
-                border: 1px solid var(--wg-border);
-                border-radius: var(--wg-radius-full);
-                background: var(--wg-input-bg);
-                color: var(--wg-text);
-                font-size: var(--wg-font-size-sm);
-                font-weight: var(--wg-font-weight-semibold);
-                padding: 0.35rem 0.9rem;
-                cursor: pointer;
-            }
-
-            .btn-inline.danger {
-                border-color: var(--wg-error);
-                color: var(--wg-error);
-            }
-
-            .warning-banner {
-                border: 1px solid var(--wg-error);
-                border-radius: 8px;
-                background: rgba(var(--wg-error-rgb), 0.08);
-                color: var(--wg-error);
-                padding: var(--wg-space-3);
-                font-size: var(--wg-font-size-sm);
             }
 
             .delete-section {
@@ -309,211 +235,6 @@ export class NetworkForm extends BaseElement {
         `,
     ]
 
-    override willUpdate(changedProperties: Map<PropertyKey, unknown>) {
-        if (changedProperties.has('network')) {
-            this._serviceAccountBackup = this.network.serviceAccountAuth
-                ? structuredClone(this.network.serviceAccountAuth)
-                : undefined
-            this._serviceAccountMode = this.network.serviceAccountAuth
-                ? 'view'
-                : 'none'
-        }
-    }
-
-    private _maskSecret(secret?: string): string {
-        return secret ? '********' : '(not set)'
-    }
-
-    private _serviceAccountSummary(
-        auth: Auth
-    ): Array<{ key: string; value: string }> {
-        const values: Array<{ key: string; value: string }> = [
-            { key: 'Method', value: auth.method },
-            { key: 'Client Id', value: auth.clientId ?? '' },
-            { key: 'Audience', value: auth.audience ?? '' },
-            { key: 'Scope', value: auth.scope ?? '' },
-        ]
-
-        if ('issuer' in auth) {
-            values.push({
-                key: 'Issuer',
-                value: (auth as SelfSignedAuth).issuer ?? '',
-            })
-        }
-
-        if ('clientSecret' in auth) {
-            values.push({
-                key: 'Client Secret',
-                value: this._maskSecret(
-                    (auth as ClientCredentialsAuth | SelfSignedAuth)
-                        .clientSecret
-                ),
-            })
-        }
-
-        return values
-    }
-
-    private _startEditingServiceAccountAuth() {
-        this._serviceAccountBackup = this.network.serviceAccountAuth
-            ? structuredClone(this.network.serviceAccountAuth)
-            : undefined
-
-        if (!this.network.serviceAccountAuth) {
-            this.network.serviceAccountAuth = {
-                method: 'client_credentials',
-                audience: '',
-                scope: '',
-                clientId: '',
-                clientSecret: '',
-            }
-        }
-
-        this._serviceAccountMode = 'edit'
-        this.requestUpdate()
-    }
-
-    private _markServiceAccountForRemoval() {
-        if (!this.network.serviceAccountAuth) {
-            return
-        }
-
-        this._serviceAccountBackup = structuredClone(
-            this.network.serviceAccountAuth
-        )
-        this.network.serviceAccountAuth = undefined
-        this._serviceAccountMode = 'pending-remove'
-        this.requestUpdate()
-    }
-
-    private _cancelServiceAccountRemoval() {
-        if (this._serviceAccountBackup) {
-            this.network.serviceAccountAuth = structuredClone(
-                this._serviceAccountBackup
-            )
-            this._serviceAccountMode = 'view'
-        } else {
-            this._serviceAccountMode = 'none'
-        }
-        this.requestUpdate()
-    }
-
-    private _cancelServiceAccountEditing() {
-        if (this._serviceAccountBackup) {
-            this.network.serviceAccountAuth = structuredClone(
-                this._serviceAccountBackup
-            )
-            this._serviceAccountMode = 'view'
-        } else {
-            this.network.serviceAccountAuth = undefined
-            this._serviceAccountMode = 'none'
-        }
-        this.requestUpdate()
-    }
-
-    private renderServiceAccountAuthSection() {
-        if (this._serviceAccountMode === 'none') {
-            return html`
-                <h3 class="section-title">Configure service account auth</h3>
-                <div class="config-panel">
-                    <p class="field-help mb-0">
-                        No service account auth configured.
-                    </p>
-                    <div class="inline-actions">
-                        <button
-                            type="button"
-                            class="btn-inline"
-                            @click=${this._startEditingServiceAccountAuth}
-                        >
-                            Add
-                        </button>
-                    </div>
-                </div>
-            `
-        }
-
-        if (this._serviceAccountMode === 'pending-remove') {
-            return html`
-                <h3 class="section-title">Configure service account auth</h3>
-                <div class="config-panel">
-                    <div class="warning-banner">
-                        Service account auth will be removed after submitting
-                        this form.
-                    </div>
-                    <div class="inline-actions">
-                        <button
-                            type="button"
-                            class="btn-inline"
-                            @click=${this._cancelServiceAccountRemoval}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            `
-        }
-
-        if (
-            this._serviceAccountMode === 'view' &&
-            this.network.serviceAccountAuth
-        ) {
-            const summary = this._serviceAccountSummary(
-                this.network.serviceAccountAuth
-            )
-            return html`
-                <h3 class="section-title">Configure service account auth</h3>
-                <div class="config-panel">
-                    <div class="kv-list">
-                        ${summary.map(
-                            (item) => html`
-                                <div class="kv-item">
-                                    <span class="kv-label">${item.key}</span>
-                                    <span class="kv-value" title=${item.value}
-                                        >${item.value}</span
-                                    >
-                                </div>
-                            `
-                        )}
-                    </div>
-                    <div class="inline-actions">
-                        <button
-                            type="button"
-                            class="btn-inline"
-                            @click=${this._startEditingServiceAccountAuth}
-                        >
-                            Edit
-                        </button>
-                        <button
-                            type="button"
-                            class="btn-inline danger"
-                            @click=${this._markServiceAccountForRemoval}
-                        >
-                            Remove
-                        </button>
-                    </div>
-                </div>
-            `
-        }
-
-        return html`
-            <h3 class="section-title">Configure service account auth</h3>
-            ${this.network.serviceAccountAuth
-                ? this.renderAuthForm(this.network.serviceAccountAuth, {
-                      allowedMethods: ['client_credentials'],
-                  })
-                : nothing}
-            <div class="inline-actions">
-                <button
-                    type="button"
-                    class="btn-inline"
-                    @click=${this._cancelServiceAccountEditing}
-                >
-                    Cancel
-                </button>
-            </div>
-        `
-    }
-
     handleSubmit(e: Event) {
         e.preventDefault()
 
@@ -522,6 +243,7 @@ export class NetworkForm extends BaseElement {
             this.toStoreNetworkForValidation(this.network)
         )
 
+        // TODO This doesn't really work anymore, because it allows empty string values. Previosuly required on inputs forced non empty strings, but now that auth-editor is separate shadowRoot, HTML validation doesn't capture it anymore
         if (!parsedData.success) {
             this._error =
                 'Invalid network data, please ensure all fields are set correctly'
@@ -539,204 +261,6 @@ export class NetworkForm extends BaseElement {
             ...network,
             ledgerApi: { baseUrl: network.ledgerApi },
         } as StoreNetwork
-    }
-
-    renderAuthForm(
-        authObj: NetworkFormData['auth'],
-        options?: { allowedMethods?: AuthMethod[]; defaultMethod?: AuthMethod }
-    ) {
-        const allowedMethods = options?.allowedMethods ?? [
-            'authorization_code',
-            'client_credentials',
-            'self_signed',
-        ]
-
-        if (typeof authObj.method === 'undefined') {
-            Object.assign(authObj, {
-                method: options?.defaultMethod ?? 'authorization_code',
-                clientId: '',
-                audience: '',
-                scope: '',
-            })
-        }
-
-        const commonFields = html`
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Method <span class="required">*</span>
-                </label>
-                <div class="select-wrap">
-                    <select
-                        class="form-select field-control"
-                        @change=${(e: Event) => {
-                            const select = e.target as HTMLSelectElement
-                            if (authObj.method === select.value) return
-
-                            if (select.value === 'authorization_code') {
-                                Object.assign(authObj, {
-                                    method: 'authorization_code',
-                                    clientId: authObj.clientId ?? '',
-                                    audience: authObj.audience ?? '',
-                                    scope: authObj.scope ?? '',
-                                } satisfies AuthorizationCodeAuth)
-                            } else if (select.value === 'self_signed') {
-                                Object.assign(authObj, {
-                                    method: 'self_signed',
-                                    clientId: authObj.clientId ?? '',
-                                    audience: authObj.audience ?? '',
-                                    scope: authObj.scope ?? '',
-                                    issuer:
-                                        (authObj as SelfSignedAuth).issuer ??
-                                        '',
-                                    clientSecret:
-                                        (authObj as SelfSignedAuth)
-                                            .clientSecret ?? '',
-                                } satisfies SelfSignedAuth)
-                            } else if (select.value === 'client_credentials') {
-                                Object.assign(authObj, {
-                                    method: 'client_credentials',
-                                    clientId: authObj.clientId ?? '',
-                                    audience: authObj.audience ?? '',
-                                    scope: authObj.scope ?? '',
-                                    clientSecret:
-                                        (authObj as ClientCredentialsAuth)
-                                            .clientSecret ?? '',
-                                } satisfies ClientCredentialsAuth)
-                            } else {
-                                throw new Error(
-                                    `Unsupported auth method: ${select.value}`
-                                )
-                            }
-                            this.requestUpdate()
-                        }}
-                        .value=${authObj.method}
-                    >
-                        ${allowedMethods.includes('authorization_code')
-                            ? html`<option value="authorization_code">
-                                  authorization_code
-                              </option>`
-                            : nothing}
-                        ${allowedMethods.includes('client_credentials')
-                            ? html`<option value="client_credentials">
-                                  client_credentials
-                              </option>`
-                            : nothing}
-                        ${allowedMethods.includes('self_signed')
-                            ? html`<option value="self_signed">
-                                  self_signed
-                              </option>`
-                            : nothing}
-                    </select>
-                    <span class="select-chevron">${chevronDownIcon}</span>
-                </div>
-            </div>
-
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Client Id <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${authObj.clientId}
-                    @change=${(e: Event) => {
-                        authObj.clientId = (e.target as HTMLInputElement).value
-                    }}
-                />
-            </div>
-
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Audience <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${authObj.audience}
-                    @change=${(e: Event) => {
-                        authObj.audience = (e.target as HTMLInputElement).value
-                    }}
-                />
-            </div>
-
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Scope <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${authObj.scope}
-                    @change=${(e: Event) => {
-                        authObj.scope = (e.target as HTMLInputElement).value
-                    }}
-                />
-            </div>
-        `
-
-        if (authObj.method === 'authorization_code') {
-            return html`${commonFields}`
-        } else if (authObj.method === 'client_credentials') {
-            return html`${commonFields}
-                <div class="field-group d-flex flex-column">
-                    <label class="form-label field-label mb-0">
-                        Client Secret <span class="required">*</span>
-                    </label>
-                    <input
-                        class="form-control field-control"
-                        type="text"
-                        required
-                        .value=${(authObj as ClientCredentialsAuth)
-                            .clientSecret}
-                        @change=${(e: Event) => {
-                            ;(authObj as ClientCredentialsAuth).clientSecret = (
-                                e.target as HTMLInputElement
-                            ).value
-                        }}
-                    />
-                </div>`
-        } else if (authObj.method === 'self_signed') {
-            return html`${commonFields}
-                <div class="field-group d-flex flex-column">
-                    <label class="form-label field-label mb-0">
-                        Issuer <span class="required">*</span>
-                    </label>
-                    <input
-                        class="form-control field-control"
-                        type="text"
-                        required
-                        .value=${(authObj as SelfSignedAuth).issuer}
-                        @change=${(e: Event) => {
-                            ;(authObj as SelfSignedAuth).issuer = (
-                                e.target as HTMLInputElement
-                            ).value
-                        }}
-                    />
-                </div>
-                <div class="field-group d-flex flex-column">
-                    <label class="form-label field-label mb-0">
-                        Client Secret <span class="required">*</span>
-                    </label>
-                    <input
-                        class="form-control field-control"
-                        type="text"
-                        required
-                        .value=${(authObj as SelfSignedAuth).clientSecret}
-                        @change=${(e: Event) => {
-                            ;(authObj as SelfSignedAuth).clientSecret = (
-                                e.target as HTMLInputElement
-                            ).value
-                        }}
-                    />
-                </div>`
-        } else {
-            throw new Error(
-                `Unsupported auth method: ${JSON.stringify(authObj)}`
-            )
-        }
     }
 
     render() {
@@ -852,8 +376,40 @@ export class NetworkForm extends BaseElement {
                     </div>
 
                     <h3 class="section-title">Configure user auth</h3>
-                    ${this.renderAuthForm(this.network.auth)}
-                    ${this.renderServiceAccountAuthSection()}
+                    <auth-editor
+                        .auth=${this.network.auth}
+                        .startInEdit=${true}
+                        .showActions=${false}
+                        .showCancelInEdit=${false}
+                        @auth-change=${(e: AuthEditorChangeEvent) => {
+                            if (e.auth) {
+                                this.network = {
+                                    ...this.network,
+                                    auth: e.auth,
+                                }
+                            }
+                        }}
+                    ></auth-editor>
+
+                    <h3 class="section-title">
+                        Configure service account auth
+                    </h3>
+                    <auth-editor
+                        .auth=${this.network.serviceAccountAuth}
+                        .allowedMethods=${['client_credentials']}
+                        .optional=${true}
+                        .startInEdit=${false}
+                        .showActions=${true}
+                        .showCancelInEdit=${true}
+                        .emptyText=${'No service account auth configured.'}
+                        .pendingRemoveText=${'Service account auth will be removed after submitting this form.'}
+                        @auth-change=${(e: AuthEditorChangeEvent) => {
+                            this.network = {
+                                ...this.network,
+                                serviceAccountAuth: e.auth,
+                            }
+                        }}
+                    ></auth-editor>
                 </div>
 
                 ${this._error

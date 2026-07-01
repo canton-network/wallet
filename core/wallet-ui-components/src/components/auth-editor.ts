@@ -1,0 +1,582 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { css, html, nothing } from 'lit'
+import { customElement, property, state } from 'lit/decorators.js'
+import { BaseElement } from '../internal/base-element'
+import { chevronDownIcon } from '../icons/index.js'
+import type {
+    Auth,
+    AuthorizationCodeAuth,
+    ClientCredentialsAuth,
+    SelfSignedAuth,
+} from '@canton-network/core-wallet-auth'
+
+export type AuthMethod =
+    | 'authorization_code'
+    | 'client_credentials'
+    | 'self_signed'
+
+type EditorMode = 'none' | 'view' | 'edit' | 'pending-remove'
+
+export class AuthEditorChangeEvent extends Event {
+    auth: Auth | undefined
+
+    constructor(auth?: Auth) {
+        super('auth-change', { bubbles: true, composed: true })
+        this.auth = auth
+    }
+}
+
+@customElement('auth-editor')
+export class AuthEditor extends BaseElement {
+    @property({ type: Object }) accessor auth: Auth | undefined
+    @property({ type: Array })
+    accessor allowedMethods: AuthMethod[] = [
+        'authorization_code',
+        'client_credentials',
+        'self_signed',
+    ]
+    @property({ type: Boolean }) accessor optional = false
+    @property({ type: Boolean }) accessor startInEdit = false
+    @property({ type: Boolean }) accessor showCancelInEdit = true
+    @property({ type: Boolean }) accessor showActions = true
+    @property({ type: String }) accessor emptyText = 'No auth configured.'
+    @property({ type: String }) accessor pendingRemoveText =
+        'Auth will be removed after submitting this form.'
+
+    @state() private _mode: EditorMode = 'none'
+    @state() private _backup?: Auth
+
+    static styles = [
+        BaseElement.styles,
+        css`
+            :host {
+                display: block;
+            }
+
+            .field-group {
+                gap: var(--wg-space-2);
+                margin-bottom: var(--wg-space-3);
+            }
+
+            .field-label {
+                font-size: var(--wg-font-size-sm);
+                font-weight: var(--wg-font-weight-medium);
+                color: var(--wg-text-secondary);
+                line-height: var(--wg-line-height-tight);
+            }
+
+            .required {
+                color: var(--wg-label-required-color);
+            }
+
+            .field-control {
+                width: 100%;
+                border: 1px solid var(--wg-input-border);
+                border-radius: 4px;
+                background: var(--wg-input-bg);
+                color: var(--wg-input-text);
+                padding: 12px 14px;
+            }
+
+            .select-wrap {
+                position: relative;
+            }
+
+            .select-wrap .field-control {
+                padding-right: 40px;
+                appearance: none;
+                -webkit-appearance: none;
+            }
+
+            .select-chevron {
+                position: absolute;
+                top: 50%;
+                right: 12px;
+                transform: translateY(-50%);
+                color: var(--wg-text-secondary);
+                pointer-events: none;
+                display: inline-flex;
+            }
+
+            .config-panel {
+                border: 1px solid var(--wg-border);
+                border-radius: 8px;
+                padding: var(--wg-space-3);
+                background: var(--wg-input-bg);
+                display: flex;
+                flex-direction: column;
+                gap: var(--wg-space-3);
+            }
+
+            .field-help {
+                font-size: var(--wg-font-size-xs);
+                color: var(--wg-text-secondary);
+                margin: 0;
+            }
+
+            .kv-list {
+                display: flex;
+                flex-direction: column;
+                gap: var(--wg-space-3);
+            }
+
+            .kv-item {
+                display: flex;
+                flex-direction: column;
+                gap: var(--wg-space-1);
+            }
+
+            .kv-label {
+                font-size: var(--wg-font-size-xs);
+                color: var(--wg-text-secondary);
+                font-weight: var(--wg-font-weight-semibold);
+            }
+
+            .kv-value {
+                font-size: var(--wg-font-size-sm);
+                color: var(--wg-text);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                margin: 0;
+            }
+
+            .inline-actions {
+                display: flex;
+                gap: var(--wg-space-2);
+            }
+
+            .btn-inline {
+                border: 1px solid var(--wg-border);
+                border-radius: var(--wg-radius-full);
+                background: var(--wg-input-bg);
+                color: var(--wg-text);
+                font-size: var(--wg-font-size-sm);
+                font-weight: var(--wg-font-weight-semibold);
+                padding: 0.35rem 0.9rem;
+                cursor: pointer;
+            }
+
+            .btn-inline.danger {
+                border-color: var(--wg-error);
+                color: var(--wg-error);
+            }
+
+            .warning-banner {
+                border: 1px solid var(--wg-error);
+                border-radius: 8px;
+                background: rgba(var(--wg-error-rgb), 0.08);
+                color: var(--wg-error);
+                padding: var(--wg-space-3);
+                font-size: var(--wg-font-size-sm);
+            }
+        `,
+    ]
+
+    connectedCallback(): void {
+        super.connectedCallback()
+        this._mode = this.startInEdit
+            ? 'edit'
+            : this.auth
+              ? 'view'
+              : this.optional
+                ? 'none'
+                : 'edit'
+    }
+
+    private _emit(auth?: Auth) {
+        this.dispatchEvent(new AuthEditorChangeEvent(structuredClone(auth)))
+    }
+
+    private _defaultAuth(method: AuthMethod): Auth {
+        if (method === 'authorization_code') {
+            return {
+                method,
+                clientId: '',
+                audience: '',
+                scope: '',
+            } satisfies AuthorizationCodeAuth
+        }
+
+        if (method === 'client_credentials') {
+            return {
+                method,
+                clientId: '',
+                audience: '',
+                scope: '',
+                clientSecret: '',
+            } satisfies ClientCredentialsAuth
+        }
+
+        return {
+            method: 'self_signed',
+            clientId: '',
+            audience: '',
+            scope: '',
+            issuer: '',
+            clientSecret: '',
+        } satisfies SelfSignedAuth
+    }
+
+    private _maskSecret(secret?: string): string {
+        return secret ? '********' : '(not set)'
+    }
+
+    private _getSummary(auth: Auth): Array<{ key: string; value: string }> {
+        const rows: Array<{ key: string; value: string }> = [
+            { key: 'Method', value: auth.method },
+            { key: 'Client Id', value: auth.clientId ?? '' },
+            { key: 'Audience', value: auth.audience ?? '' },
+            { key: 'Scope', value: auth.scope ?? '' },
+        ]
+
+        if ('issuer' in auth) {
+            rows.push({ key: 'Issuer', value: auth.issuer ?? '' })
+        }
+        if ('clientSecret' in auth) {
+            rows.push({
+                key: 'Client Secret',
+                value: this._maskSecret(auth.clientSecret),
+            })
+        }
+        return rows
+    }
+
+    private _startAdd() {
+        this._mode = 'edit'
+    }
+
+    private _startEdit() {
+        if (this.auth) {
+            this._backup = structuredClone(this.auth)
+        }
+        this._mode = 'edit'
+    }
+
+    private _markForRemove() {
+        if (this.auth) {
+            this._backup = structuredClone(this.auth)
+        }
+        this._emit(undefined)
+        this._mode = 'pending-remove'
+    }
+
+    private _cancelRemove() {
+        if (this._backup) {
+            const formState: Auth = structuredClone(this._backup)
+            this._emit(formState)
+            this._mode = 'view'
+        } else {
+            this._mode = this.optional ? 'none' : 'edit'
+        }
+    }
+
+    private _cancelEdit() {
+        if (this._backup) {
+            const formState: Auth = structuredClone(this._backup)
+            this._emit(formState)
+            this._mode = 'view'
+        } else {
+            this._emit(undefined)
+            this._mode = this.optional ? 'none' : 'edit'
+        }
+    }
+
+    private _onAuthMethodChange(e: Event) {
+        const value = (e.target as HTMLSelectElement).value
+
+        switch (value) {
+            case 'authorization_code':
+                this._emit({
+                    method: 'authorization_code',
+                    clientId: this.auth?.clientId ?? '',
+                    audience: this.auth?.audience ?? '',
+                    scope: this.auth?.scope ?? '',
+                } satisfies AuthorizationCodeAuth)
+                break
+
+            case 'self_signed':
+                this._emit({
+                    method: 'self_signed',
+                    clientId: this.auth?.clientId ?? '',
+                    audience: this.auth?.audience ?? '',
+                    scope: this.auth?.scope ?? '',
+                    issuer: (this.auth as SelfSignedAuth)?.issuer ?? '',
+                    clientSecret:
+                        (this.auth as SelfSignedAuth)?.clientSecret ?? '',
+                } satisfies SelfSignedAuth)
+                break
+
+            case 'client_credentials':
+                this._emit({
+                    method: 'client_credentials',
+                    clientId: this.auth?.clientId ?? '',
+                    audience: this.auth?.audience ?? '',
+                    scope: this.auth?.scope ?? '',
+                    clientSecret:
+                        (this.auth as ClientCredentialsAuth)?.clientSecret ??
+                        '',
+                } satisfies ClientCredentialsAuth)
+                break
+            default:
+                throw new Error(`Unsupported auth method: ${value}`)
+        }
+    }
+
+    private _renderAuthForm(authObj: Auth) {
+        const commonFields = html`
+            <div class="field-group d-flex flex-column">
+                <label class="form-label field-label mb-0">
+                    Method <span class="required">*</span>
+                </label>
+                <div class="select-wrap">
+                    <select
+                        class="form-select field-control"
+                        .value=${authObj.method}
+                        @change=${(e: Event) => {
+                            this._onAuthMethodChange(e)
+                        }}
+                    >
+                        ${this.allowedMethods.includes('authorization_code')
+                            ? html`<option
+                                  ?value="authorization_code"
+                                  ?selected=${authObj.method ===
+                                  'authorization_code'}
+                              >
+                                  authorization_code
+                              </option>`
+                            : nothing}
+                        ${this.allowedMethods.includes('client_credentials')
+                            ? html`<option
+                                  value="client_credentials"
+                                  ?selected=${authObj.method ===
+                                  'client_credentials'}
+                              >
+                                  client_credentials
+                              </option>`
+                            : nothing}
+                        ${this.allowedMethods.includes('self_signed')
+                            ? html`<option
+                                  value="self_signed"
+                                  ?selected=${authObj.method === 'self_signed'}
+                              >
+                                  self_signed
+                              </option>`
+                            : nothing}
+                    </select>
+                    <span class="select-chevron">${chevronDownIcon}</span>
+                </div>
+            </div>
+
+            <div class="field-group d-flex flex-column">
+                <label class="form-label field-label mb-0">
+                    Client Id <span class="required">*</span>
+                </label>
+                <input
+                    class="form-control field-control"
+                    type="text"
+                    required
+                    .value=${authObj.clientId}
+                    @change=${(e: Event) => {
+                        authObj.clientId = (e.target as HTMLInputElement).value
+                        this._emit(authObj)
+                    }}
+                />
+            </div>
+
+            <div class="field-group d-flex flex-column">
+                <label class="form-label field-label mb-0">
+                    Audience <span class="required">*</span>
+                </label>
+                <input
+                    class="form-control field-control"
+                    type="text"
+                    required
+                    .value=${authObj.audience}
+                    @change=${(e: Event) => {
+                        authObj.audience = (e.target as HTMLInputElement).value
+                        this._emit(authObj)
+                    }}
+                />
+            </div>
+
+            <div class="field-group d-flex flex-column">
+                <label class="form-label field-label mb-0">
+                    Scope <span class="required">*</span>
+                </label>
+                <input
+                    class="form-control field-control"
+                    type="text"
+                    required
+                    .value=${authObj.scope}
+                    @change=${(e: Event) => {
+                        authObj.scope = (e.target as HTMLInputElement).value
+                        this._emit(authObj)
+                    }}
+                />
+            </div>
+        `
+
+        if (authObj.method === 'authorization_code') {
+            return commonFields
+        }
+
+        if (authObj.method === 'client_credentials') {
+            return html`${commonFields}
+                <div class="field-group d-flex flex-column">
+                    <label class="form-label field-label mb-0">
+                        Client Secret <span class="required">*</span>
+                    </label>
+                    <input
+                        class="form-control field-control"
+                        type="text"
+                        required
+                        .value=${(authObj as ClientCredentialsAuth)
+                            .clientSecret}
+                        @change=${(e: Event) => {
+                            ;(authObj as ClientCredentialsAuth).clientSecret = (
+                                e.target as HTMLInputElement
+                            ).value
+                            this._emit(authObj)
+                        }}
+                    />
+                </div>`
+        }
+
+        return html`${commonFields}
+            <div class="field-group d-flex flex-column">
+                <label class="form-label field-label mb-0">
+                    Issuer <span class="required">*</span>
+                </label>
+                <input
+                    class="form-control field-control"
+                    type="text"
+                    required
+                    .value=${(authObj as SelfSignedAuth).issuer}
+                    @change=${(e: Event) => {
+                        ;(authObj as SelfSignedAuth).issuer = (
+                            e.target as HTMLInputElement
+                        ).value
+                        this._emit(authObj)
+                    }}
+                />
+            </div>
+            <div class="field-group d-flex flex-column">
+                <label class="form-label field-label mb-0">
+                    Client Secret <span class="required">*</span>
+                </label>
+                <input
+                    class="form-control field-control"
+                    type="text"
+                    required
+                    .value=${(authObj as SelfSignedAuth).clientSecret}
+                    @change=${(e: Event) => {
+                        ;(authObj as SelfSignedAuth).clientSecret = (
+                            e.target as HTMLInputElement
+                        ).value
+                        this._emit(authObj)
+                    }}
+                />
+            </div>`
+    }
+
+    protected render() {
+        if (this._mode === 'none') {
+            return html`
+                <div class="config-panel">
+                    <p class="field-help">${this.emptyText}</p>
+                    ${this.showActions
+                        ? html`<div class="inline-actions">
+                              <button
+                                  type="button"
+                                  class="btn-inline"
+                                  @click=${this._startAdd}
+                              >
+                                  Add
+                              </button>
+                          </div>`
+                        : nothing}
+                </div>
+            `
+        }
+
+        if (this._mode === 'pending-remove') {
+            return html`
+                <div class="config-panel">
+                    <div class="warning-banner">${this.pendingRemoveText}</div>
+                    <div class="inline-actions">
+                        <button
+                            type="button"
+                            class="btn-inline"
+                            @click=${this._cancelRemove}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `
+        }
+
+        if (this._mode === 'view' && this.auth) {
+            const rows = this._getSummary(this.auth)
+            // TODO let's make it separate method
+            return html`
+                <div class="config-panel">
+                    <dl class="kv-list">
+                        ${rows.map(
+                            (row) => html`
+                                <div class="kv-item">
+                                    <dt class="kv-label">${row.key}</dt>
+                                    <dd class="kv-value" title=${row.value}>
+                                        ${row.value}
+                                    </dd>
+                                </div>
+                            `
+                        )}
+                    </dl>
+                    ${this.showActions
+                        ? html`<div class="inline-actions">
+                              <button
+                                  type="button"
+                                  class="btn-inline"
+                                  @click=${this._startEdit}
+                              >
+                                  Edit
+                              </button>
+                              ${this.optional
+                                  ? html`<button
+                                        type="button"
+                                        class="btn-inline danger"
+                                        @click=${this._markForRemove}
+                                    >
+                                        Remove
+                                    </button>`
+                                  : nothing}
+                          </div>`
+                        : nothing}
+                </div>
+            `
+        }
+
+        const auth = this.auth
+            ? structuredClone(this.auth)
+            : this._defaultAuth(this.allowedMethods[0])
+
+        return html`
+            <div>${this._renderAuthForm(auth)}</div>
+            ${this.showCancelInEdit && this.showActions
+                ? html`<div class="inline-actions">
+                      <button
+                          type="button"
+                          class="btn-inline"
+                          @click=${this._cancelEdit}
+                      >
+                          Cancel
+                      </button>
+                  </div>`
+                : nothing}
+        `
+    }
+}
