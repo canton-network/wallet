@@ -8,7 +8,7 @@ import {
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
-import { AuthEditorChangeEvent } from './auth-editor.js'
+import { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
 import './auth-editor.js'
 
 export type NetworkFormData = Omit<StoreNetwork, 'ledgerApi'> & {
@@ -233,6 +233,7 @@ export class NetworkForm extends BaseElement {
                 border-width: 1px;
             }
         `,
+        AuthEditor.styles,
     ]
 
     handleSubmit(e: Event) {

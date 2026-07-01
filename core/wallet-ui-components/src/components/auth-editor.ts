@@ -175,6 +175,10 @@ export class AuthEditor extends BaseElement {
         `,
     ]
 
+    protected createRenderRoot(): HTMLElement {
+        return this
+    }
+
     connectedCallback(): void {
         super.connectedCallback()
         this._mode = this.startInEdit
