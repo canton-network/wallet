@@ -115,6 +115,10 @@ export class TransactionService {
         ledgerClient?: LedgerClient,
         network?: Network
     ): Promise<ExecuteResult> {
+        if (transaction.status === 'executed') {
+            throw new Error('Cannot execute an already executed transaction')
+        }
+
         switch (wallet.signingProviderId) {
             case SigningProvider.PARTICIPANT: {
                 try {
@@ -245,6 +249,11 @@ export class TransactionService {
         if (!existingTx) {
             throw new Error(`Transaction not found with id: ${transactionId}`)
         }
+
+        if (existingTx.status === 'executed') {
+            throw new Error('Cannot sign an already executed transaction')
+        }
+
         return existingTx
     }
 
