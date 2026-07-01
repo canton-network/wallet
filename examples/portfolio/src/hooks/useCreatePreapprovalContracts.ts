@@ -6,7 +6,7 @@ import { v4 } from 'uuid'
 import type { AssetBody } from '@canton-network/wallet-sdk'
 import type { PartyId } from '@canton-network/core-types'
 import * as dappSdk from '@canton-network/dapp-sdk'
-import { WalletSDKUtilitiesPluginName } from '@lib/wallet-sdk-utility/src/extension'
+import { WalletSDKUtilitiesPluginName } from '@lib/utilities-wallet-sdk-plugin'
 import { useWalletSdk } from '@hooks/useWalletSdk'
 
 type WalletSdkWithUtilities = ReturnType<typeof useWalletSdk>['sdk']
