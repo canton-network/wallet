@@ -244,7 +244,6 @@ export class NetworkForm extends BaseElement {
             this.toStoreNetworkForValidation(this.network)
         )
 
-        // TODO This doesn't really work anymore, because it allows empty string values. Previosuly required on inputs forced non empty strings, but now that auth-editor is separate shadowRoot, HTML validation doesn't capture it anymore
         if (!parsedData.success) {
             this._error =
                 'Invalid network data, please ensure all fields are set correctly'
@@ -388,6 +387,23 @@ export class NetworkForm extends BaseElement {
                                     ...this.network,
                                     auth: e.auth,
                                 }
+                            }
+                        }}
+                    ></auth-editor>
+
+                    <h3 class="section-title">Configure admin auth</h3>
+                    <auth-editor
+                        .auth=${this.network.serviceAccountAuth}
+                        .optional=${true}
+                        .startInEdit=${false}
+                        .showActions=${true}
+                        .showCancelInEdit=${true}
+                        .emptyText=${'No admin auth configured.'}
+                        .pendingRemoveText=${'Admin auth will be removed after submitting this form.'}
+                        @auth-change=${(e: AuthEditorChangeEvent) => {
+                            this.network = {
+                                ...this.network,
+                                adminAuth: e.auth,
                             }
                         }}
                     ></auth-editor>
