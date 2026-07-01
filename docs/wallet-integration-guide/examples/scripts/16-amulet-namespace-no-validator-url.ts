@@ -60,6 +60,22 @@ const bob = await sdk.party.external
     .execute()
 
 // --- TEST CREATE COMMAND
+let createError: Error | undefined
+try {
+    const cmd = await sdk.amulet.preapproval.command.create({
+        parties: {
+            receiver: bob.partyId,
+        },
+    })
+    logger.info(cmd)
+} catch (e) {
+    createError = e as Error
+}
+if (createError === undefined) {
+    throw new Error(
+        `Should not have been able to create the command with the provider party`
+    )
+}
 
 const createPreapprovalCommand = await sdk.amulet.preapproval.command.create({
     parties: {
