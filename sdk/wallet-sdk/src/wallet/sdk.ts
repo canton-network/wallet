@@ -16,7 +16,10 @@ import {
     GetExtendedKeys,
     SDKInterface,
 } from './init/types/sdk.js'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import {
+    AuthTokenProvider,
+    TokenProviderConfig,
+} from '@canton-network/core-wallet-auth'
 import {
     ExtendedInitializedSDK,
     OfflineInitializedSDK,
@@ -28,6 +31,7 @@ import {
 import { AllowedLogAdapters } from './logger/types.js'
 import { DappLedgerRpc } from '@canton-network/core-provider-dapp'
 import { SDKContext } from './index.js'
+import { ValidatorInternalClient } from '@canton-network/core-splice-client'
 export { findAsset } from './namespace/asset/index.js'
 export type * from './namespace/asset/index.js'
 export type * from './namespace/token/index.js'
@@ -187,4 +191,22 @@ async function getDefaultSynchronizerId(
     }
 
     return defaultSynchronizerId
+}
+
+export async function getValidatorParty(
+    validatorUrl: URL,
+    auth: AuthTokenProvider | TokenProviderConfig,
+    sdkLogger?: SDKLogger
+) {
+    const logger = sdkLogger ?? new SDKLogger('pino')
+    const validatorAuth =
+        auth instanceof AuthTokenProvider
+            ? auth
+            : new AuthTokenProvider(auth, logger)
+    const validator = new ValidatorInternalClient(
+        validatorUrl,
+        logger,
+        validatorAuth
+    )
+    return (await validator.get('/v0/validator-user')).party_id
 }
