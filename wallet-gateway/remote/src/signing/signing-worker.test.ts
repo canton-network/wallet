@@ -6,19 +6,42 @@ import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { SigningWorker } from './signing-worker.js'
 import type { Network, Transaction } from '@canton-network/core-wallet-store'
+import type { Idp } from '@canton-network/core-wallet-auth'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
 const mocks = vi.hoisted(() => ({
     signAndExecute: vi.fn().mockResolvedValue({ commandId: 'cmd-1' }),
-    uuidV4: vi.fn(() => 'session-new'),
 }))
 
-vi.mock('uuid', () => ({ v4: mocks.uuidV4 }))
+vi.mock('@canton-network/core-wallet-auth', async () => {
+    const actual = await vi.importActual<
+        typeof import('@canton-network/core-wallet-auth')
+    >('@canton-network/core-wallet-auth')
+    return {
+        ...actual,
+        AuthTokenProvider: {
+            fromGatewayConfig: vi.fn().mockReturnValue({
+                getAuthContext: vi.fn().mockResolvedValue({
+                    userId: 'service_account',
+                    accessToken: 'abc',
+                }),
+            }),
+        },
+    }
+})
+
 vi.mock('../ledger/transaction-service.js', () => ({
     TransactionService: vi.fn(function TransactionServiceMock() {
         return { signAndExecute: mocks.signAndExecute }
     }),
 }))
+
+const idp: Idp = {
+    id: 'idp1',
+    type: 'oauth',
+    issuer: 'https://issuer.example',
+    configUrl: 'https://issuer.example/.well-known/openid-configuration',
+}
 
 const m2mNetwork: Network = {
     id: 'net-m2m',
@@ -28,6 +51,12 @@ const m2mNetwork: Network = {
     identityProviderId: 'idp1',
     ledgerApi: { baseUrl: 'http://ledger' },
     auth: {
+        method: 'authorization_code',
+        clientId: 'user',
+        audience: 'aud',
+        scope: 'scope',
+    },
+    serviceAccountAuth: {
         method: 'client_credentials',
         clientId: 'svc',
         clientSecret: 'secret',
@@ -48,6 +77,18 @@ const wallet = {
     rights: [],
 }
 
+const aliceWallet = {
+    primary: false,
+    partyId: 'alice::ns2',
+    status: 'allocated' as const,
+    hint: 'alice',
+    publicKey: 'pk2',
+    namespace: 'ns2',
+    networkId: 'net-m2m',
+    signingProviderId: SigningProvider.FIREBLOCKS,
+    rights: [],
+}
+
 const pendingTransaction: Transaction = {
     id: 'tx-1',
     commandId: 'cmd-1',
@@ -60,17 +101,6 @@ const pendingTransaction: Transaction = {
     networkId: 'net-m2m',
 }
 
-function m2mJwt(extra: Record<string, unknown> = {}): string {
-    const encode = (value: unknown) =>
-        Buffer.from(JSON.stringify(value)).toString('base64url')
-    return `${encode({ alg: 'none' })}.${encode({
-        sub: 'user-1',
-        gty: 'client_credentials',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        ...extra,
-    })}.`
-}
-
 function createWorker(
     storeOverrides: {
         listAllPendingTransactions?: ReturnType<typeof vi.fn>
@@ -81,12 +111,14 @@ function createWorker(
     const scopedStore = {
         setSession: vi.fn().mockResolvedValue(undefined),
         getPrimaryWallet: vi.fn().mockResolvedValue(wallet),
+        getAllWallets: vi.fn().mockResolvedValue([wallet, aliceWallet]),
         getTransaction: vi.fn().mockResolvedValue(pendingTransaction),
     }
     const store = {
         listAllPendingTransactions: vi
             .fn()
             .mockResolvedValue([pendingTransaction]),
+        getIdp: vi.fn().mockResolvedValue(idp),
         getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
         withAuthContext: vi.fn().mockReturnValue(scopedStore),
         ...storeOverrides,
@@ -111,26 +143,28 @@ function createWorker(
 describe('SigningWorker', () => {
     afterEach(() => vi.clearAllMocks())
 
-    it('mints a session and completes pending external transactions', async () => {
+    it('completes pending external transactions with a primary wallet', async () => {
         const { worker } = createWorker()
 
         await worker.tick()
 
-        expect(mocks.signAndExecute).toHaveBeenCalled()
+        expect(mocks.signAndExecute.mock.calls[0][2].partyId).toBe('party::ns')
     })
 
-    it('reuses a valid client-credentials session without minting', async () => {
-        const session = {
-            id: 'session-1',
-            network: 'net-m2m',
-            accessToken: m2mJwt(),
-        }
-        const { worker, scopedStore } = createWorker({})
+    it('uses a non-primary wallet when actAs payload is present', async () => {
+        const { worker } = createWorker({
+            listAllPendingTransactions: vi.fn().mockResolvedValue([
+                {
+                    ...pendingTransaction,
+                    payload: { actAs: ['alice::ns2'] },
+                },
+            ]),
+        })
 
         await worker.tick()
 
-        expect(scopedStore.setSession).toHaveBeenCalledWith(session)
-        expect(mocks.signAndExecute).toHaveBeenCalled()
+        expect(mocks.signAndExecute).toHaveBeenCalledOnce()
+        expect(mocks.signAndExecute.mock.calls[0][2].partyId).toBe('alice::ns2')
     })
 
     it('skips pending transactions without an externalTxId', async () => {
@@ -140,31 +174,6 @@ describe('SigningWorker', () => {
                 .mockResolvedValue([
                     { ...pendingTransaction, externalTxId: undefined },
                 ]),
-        })
-
-        await worker.tick()
-
-        expect(mocks.signAndExecute).not.toHaveBeenCalled()
-    })
-
-    it('skips interactive networks without a stored session', async () => {
-        const interactiveNetwork: Network = {
-            ...m2mNetwork,
-            id: 'net-interactive',
-            auth: {
-                method: 'authorization_code',
-                clientId: 'app',
-                audience: 'aud',
-                scope: 'scope',
-            },
-        }
-        const { worker } = createWorker({
-            listAllPendingTransactions: vi
-                .fn()
-                .mockResolvedValue([
-                    { ...pendingTransaction, networkId: 'net-interactive' },
-                ]),
-            getNetwork: vi.fn().mockResolvedValue(interactiveNetwork),
         })
 
         await worker.tick()

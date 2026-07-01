@@ -421,8 +421,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     // IDP methods
 
     async getIdp(idpId: string): Promise<Idp> {
-        this.assertConnected()
-
         const idps = await this.listIdps()
         if (!idps) throw new Error('No IDPs available')
 
@@ -490,8 +488,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     // Network methods
     async getNetwork(networkId: string): Promise<Network> {
-        this.assertConnected()
-
         const networks = await this.listNetworks()
         if (!networks) throw new Error('No networks available')
 

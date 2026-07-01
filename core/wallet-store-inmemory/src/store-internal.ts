@@ -257,7 +257,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     // IDP methods
     async getIdp(idpId: string): Promise<Idp> {
-        this.assertConnected()
         const idps = await this.listIdps()
         const idp = idps.find((i) => i.id === idpId)
         if (!idp) {
@@ -300,8 +299,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     // Network methods
     async getNetwork(networkId: string): Promise<Network> {
-        this.assertConnected()
-
         const networks = await this.listNetworks()
         if (!networks) throw new Error('No networks available')
 
@@ -433,7 +430,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async listAllPendingTransactions(): Promise<Array<Transaction>> {
-        this.assertConnected()
         const storage = this.getStorage()
         return Array.from(storage.transactions.values()).filter(
             (tx) => tx.status === 'pending'

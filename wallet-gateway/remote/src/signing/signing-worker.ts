@@ -132,9 +132,14 @@ export class SigningWorker {
      * Errors are logged per transaction; other rows in the same tick still run.
      */
     private async processPending(transaction: Transaction): Promise<void> {
+        const logger = this.options.logger
         const { userId, networkId, externalTxId } = transaction
 
         if (!externalTxId || !userId || !networkId) {
+            logger.debug(
+                { transaction },
+                'Skipping signing worker tick: missing required fields'
+            )
             return
         }
 
@@ -142,24 +147,25 @@ export class SigningWorker {
             this.options.store,
             userId,
             networkId,
-            this.options.logger
+            logger
         )
 
         if (!runContext) {
-            this.options.logger.debug(
+            logger.debug(
                 { runContext, transactionId: transaction.id },
                 'Skipping signing worker tick: no run context'
             )
             return
         }
 
+        const store = runContext.scopedStore
         const wallet = await resolveWalletFromTransaction(
             transaction,
-            this.options.store,
-            this.options.logger
+            store,
+            logger
         )
         if (!wallet) {
-            this.options.logger.warn(
+            logger.warn(
                 {
                     userId,
                     networkId,
@@ -171,10 +177,12 @@ export class SigningWorker {
             return
         }
 
-        const store = this.options.store
-
         const refreshedTx = await store.getTransaction(transaction.id)
         if (!refreshedTx || refreshedTx.status !== 'pending') {
+            logger.debug(
+                { refreshedTx },
+                'Skipping signing worker tick: transaction no longer pending'
+            )
             return
         }
 
@@ -198,7 +206,7 @@ export class SigningWorker {
                 refreshedTx
             )
             if ('status' in result && result.status === 'pending') {
-                this.options.logger.info(
+                logger.info(
                     {
                         userId,
                         networkId,
@@ -210,7 +218,7 @@ export class SigningWorker {
                     'Signing worker: transaction still awaiting external signing'
                 )
             } else {
-                this.options.logger.info(
+                logger.info(
                     {
                         userId,
                         networkId,
@@ -225,7 +233,7 @@ export class SigningWorker {
                 )
             }
         } catch (error) {
-            this.options.logger.error(
+            logger.error(
                 {
                     err: error,
                     userId,
@@ -253,28 +261,38 @@ async function resolveWalletFromTransaction(
     store: Store,
     logger: Logger
 ): Promise<Wallet | undefined> {
+    logger.debug({ tx, store }, 'Resolving wallet from transaction payload')
+
+    // first see if we can determine the wallet from the payload's actAs field.
+    // If not, we will default to the primary wallet.
+    let wallet = undefined
+
     const payload = tx.payload
-    if (!payload || typeof payload !== 'object') {
-        return undefined
+    if (payload && typeof payload === 'object') {
+        const actAs = (payload as { actAs?: unknown }).actAs
+
+        if (Array.isArray(actAs) && actAs.length !== 0) {
+            if (actAs.length > 1) {
+                logger.warn(
+                    { actAs },
+                    'Transaction has multiple acting parties; using the first one to resolve wallet'
+                )
+            }
+
+            const partyId = actAs[0]
+            const wallets = await store.getAllWallets()
+            wallet = wallets.find((wallet) => wallet.partyId === partyId)
+        }
     }
 
-    const actAs = (payload as { actAs?: unknown }).actAs
-    if (!Array.isArray(actAs) || actAs.length === 0) {
-        return undefined
-    }
-
-    if (actAs.length > 1) {
-        logger.warn(
-            { actAs },
-            'Transaction has multiple acting parties; using the first one to resolve wallet'
+    if (!wallet) {
+        // No actAs was given: lets default to the primary party.
+        wallet = await store.getPrimaryWallet()
+        logger.debug(
+            { wallet, tx },
+            'Transaction has no actAs; using primary wallet'
         )
     }
 
-    const partyId = actAs[0]
-    if (typeof partyId !== 'string') {
-        return undefined
-    }
-
-    const wallets = await store.getAllWallets()
-    return wallets.find((wallet) => wallet.partyId === partyId)
+    return wallet
 }
