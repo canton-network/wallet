@@ -42,6 +42,11 @@ export class PreapprovalNamespace {
         this.command = {
             create: async (args) => {
                 const { parties } = args
+                const providerParty = resolveProviderParty(
+                    this.ctx,
+                    'create',
+                    parties?.provider
+                )
 
                 const amulet = await fetchAmulet(this.ctx)
 
@@ -52,8 +57,7 @@ export class PreapprovalNamespace {
                         templateId:
                             '#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal',
                         createArguments: {
-                            provider:
-                                parties?.provider ?? this.ctx.validatorParty,
+                            provider: providerParty,
                             receiver: parties.receiver,
                             expectedDso: amulet.admin,
                         },
