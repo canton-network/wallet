@@ -257,3 +257,62 @@ const renewedPreapprovalStillActive = preapprovalACS.some(
 if (cancelled === null && !renewedPreapprovalStillActive) {
     logger.info(`Successfully cancelled`)
 }
+
+//member traffic
+
+const [amuletTapCommand2, amuletTapDisclosedContracts2] = await sdk.amulet.tap(
+    alice.partyId,
+    '2000000'
+)
+
+await sdk.ledger
+    .prepare({
+        partyId: alice.partyId,
+        commands: amuletTapCommand2,
+        disclosedContracts: amuletTapDisclosedContracts2,
+    })
+    .sign(aliceKeys.privateKey)
+    .execute({ partyId: alice.partyId })
+
+logger.info(`Tapped holdings for alice`)
+
+const trafficStatusBeforePurchase = await sdk.amulet.traffic.status()
+
+logger.info(
+    `Traffic status before purchase: ${JSON.stringify(trafficStatusBeforePurchase)}`
+)
+
+const ccAmount = 200000
+
+const [buyTrafficCommand, buyTrafficDisclosedContracts] =
+    await sdk.amulet.traffic.buy({
+        buyer: alice.partyId,
+        ccAmount,
+        inputUtxos: [],
+    })
+
+await sdk.ledger
+    .prepare({
+        partyId: alice.partyId,
+        commands: buyTrafficCommand,
+        disclosedContracts: buyTrafficDisclosedContracts,
+    })
+    .sign(aliceKeys.privateKey)
+    .execute({ partyId: alice.partyId })
+
+logger.info(`buy member traffic for sender (${alice.partyId}) party completed`)
+
+const featuredAppRights = await sdk.amulet.featuredApp.grant({
+    validatorParty: validatorParty,
+})
+
+if (!featuredAppRights) {
+    throw new Error(
+        'Failed to obtain featured app rights for validator operator party'
+    )
+} else {
+    logger.info(
+        featuredAppRights,
+        'Featured app rights for validator operator party'
+    )
+}
