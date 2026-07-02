@@ -9,7 +9,6 @@ import {
     NetworkDeleteEvent,
     NetworkEditCancelEvent,
     NetworkEditSaveEvent,
-    // NetworkFormData,
     NetworkForm,
 } from './network-form.js'
 import { makeNetwork } from './fixtures.js'
@@ -31,18 +30,6 @@ function getFormInputs(el: NetworkForm) {
         )
     )
 }
-
-// function makeFormNetwork(overrides: Partial<NetworkFormData> = {}): NetworkFormData {
-//     const base = makeNetwork() as unknown as Omit<NetworkFormData, 'ledgerApi'> & {
-//         ledgerApi: { baseUrl: string }
-//     }
-//
-//     return {
-//         ...base,
-//         ledgerApi: base.ledgerApi.baseUrl,
-//         ...overrides,
-//     } as NetworkFormData
-// }
 
 function fillFormInputs(
     el: NetworkForm,

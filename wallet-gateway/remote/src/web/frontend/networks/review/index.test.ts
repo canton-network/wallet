@@ -8,7 +8,6 @@ import { NetworkEditCancelEvent } from '@canton-network/core-wallet-ui-component
 import {
     createMockUserClient,
     makeNetwork,
-    makeStoreNetwork,
     mockReviewNetworkFlow,
     mockRequest,
     networkDeleteEvent,
@@ -278,7 +277,7 @@ describe('UserUiReviewNetwork', () => {
     it('includes synchronizerId and adminAuth when saving a network', async () => {
         await waitUntil(() => el.network !== null)
 
-        const storeNetwork = makeStoreNetwork({
+        const network = makeNetwork({
             id: 'net-review',
             name: 'Review Net',
             synchronizerId: 'sync::456',
@@ -293,7 +292,7 @@ describe('UserUiReviewNetwork', () => {
 
         el.shadowRoot
             ?.querySelector('network-form')
-            ?.dispatchEvent(networkEditSaveEventFrom(storeNetwork))
+            ?.dispatchEvent(networkEditSaveEventFrom(network))
 
         await waitUntil(() =>
             mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')

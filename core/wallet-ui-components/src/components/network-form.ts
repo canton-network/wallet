@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import {
     Network as StoreNetwork,
     networkSchema,
@@ -10,10 +11,6 @@ import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
 import './auth-editor.js'
-
-export type NetworkFormData = Omit<StoreNetwork, 'ledgerApi'> & {
-    ledgerApi: string
-}
 
 /**
  * Emitted when the user clicks the Cancel button on the form
@@ -28,9 +25,9 @@ export class NetworkEditCancelEvent extends Event {
  * Emitted when the user clicks the Save/Add/Update button on the form
  */
 export class NetworkEditSaveEvent extends Event {
-    network: NetworkFormData
+    network: ApiNetwork
 
-    constructor(network: NetworkFormData) {
+    constructor(network: ApiNetwork) {
         super('network-edit-save', { bubbles: true, composed: true })
         this.network = network
     }
@@ -40,9 +37,9 @@ export class NetworkEditSaveEvent extends Event {
  * Emitted when the user clicks the Delete button
  */
 export class NetworkDeleteEvent extends Event {
-    network: NetworkFormData
+    network: ApiNetwork
 
-    constructor(network: NetworkFormData) {
+    constructor(network: ApiNetwork) {
         super('network-delete', { bubbles: true, composed: true })
         this.network = network
     }
@@ -64,11 +61,19 @@ export class NetworkForm extends BaseElement {
     accessor mode: 'add' | 'review' = 'add'
 
     @property({ type: Object })
-    accessor network: NetworkFormData = {
+    accessor network: ApiNetwork = {
+        id: '',
+        name: '',
+        description: '',
+        identityProviderId: '',
         ledgerApi: '',
-        auth: {},
-        serviceAccountAuth: undefined,
-    } as NetworkFormData
+        auth: {
+            method: 'authorization_code',
+            audience: '',
+            scope: '',
+            clientId: '',
+        },
+    }
 
     @state() private _error = ''
 
@@ -240,7 +245,6 @@ export class NetworkForm extends BaseElement {
         e.preventDefault()
 
         const parsedData = networkSchema.safeParse(
-            // TODO #1902 use validation that doesn't rely on store shapes that differ from API
             this.toStoreNetworkForValidation(this.network)
         )
 
@@ -254,9 +258,7 @@ export class NetworkForm extends BaseElement {
         }
     }
 
-    private toStoreNetworkForValidation(
-        network: NetworkFormData
-    ): StoreNetwork {
+    private toStoreNetworkForValidation(network: ApiNetwork): StoreNetwork {
         return {
             ...network,
             ledgerApi: { baseUrl: network.ledgerApi },
@@ -333,8 +335,14 @@ export class NetworkForm extends BaseElement {
                             .value=${this.network.synchronizerId ?? ''}
                             @change=${(e: Event) => {
                                 const val = (e.target as HTMLInputElement).value
-                                this.network.synchronizerId =
-                                    val === '' ? undefined : val
+
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                const { synchronizerId, ...network } =
+                                    this.network
+                                this.network = {
+                                    ...network,
+                                    ...(val && { synchronizerId: val }),
+                                }
                             }}
                         />
                     </div>
@@ -395,9 +403,11 @@ export class NetworkForm extends BaseElement {
                         .emptyText=${'No admin auth configured.'}
                         .pendingRemoveText=${'Admin auth will be removed after submitting this form.'}
                         @auth-change=${(e: AuthEditorChangeEvent) => {
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            const { adminAuth, ...network } = this.network
                             this.network = {
-                                ...this.network,
-                                adminAuth: e.auth,
+                                ...network,
+                                ...(e.auth && { adminAuth: e.auth }),
                             }
                         }}
                     ></auth-editor>
@@ -412,9 +422,12 @@ export class NetworkForm extends BaseElement {
                         .emptyText=${'No service account auth configured.'}
                         .pendingRemoveText=${'Service account auth will be removed after submitting this form.'}
                         @auth-change=${(e: AuthEditorChangeEvent) => {
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            const { serviceAccountAuth, ...network } =
+                                this.network
                             this.network = {
-                                ...this.network,
-                                serviceAccountAuth: e.auth,
+                                ...network,
+                                ...(e.auth && { serviceAccountAuth: e.auth }),
                             }
                         }}
                     ></auth-editor>
