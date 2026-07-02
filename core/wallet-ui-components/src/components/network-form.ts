@@ -45,16 +45,6 @@ export class NetworkDeleteEvent extends Event {
     }
 }
 
-/**
- * Emitted when the user clicks the Back link
- */
-// TODO can I remove that?
-export class NetworkFormBackEvent extends Event {
-    constructor() {
-        super('network-form-back', { bubbles: true, composed: true })
-    }
-}
-
 @customElement('network-form')
 export class NetworkForm extends BaseElement {
     @property({ type: String })
