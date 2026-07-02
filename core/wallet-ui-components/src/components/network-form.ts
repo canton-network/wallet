@@ -378,9 +378,6 @@ export class NetworkForm extends BaseElement {
                     <h3 class="section-title">Configure user auth</h3>
                     <auth-editor
                         .auth=${this.network.auth}
-                        .startInEdit=${true}
-                        .showActions=${false}
-                        .showCancelInEdit=${false}
                         @auth-change=${(e: AuthEditorChangeEvent) => {
                             if (e.auth) {
                                 this.network = {
@@ -395,9 +392,6 @@ export class NetworkForm extends BaseElement {
                     <auth-editor
                         .auth=${this.network.adminAuth}
                         .optional=${true}
-                        .startInEdit=${false}
-                        .showActions=${true}
-                        .showCancelInEdit=${true}
                         .emptyText=${'No admin auth configured.'}
                         .pendingRemoveText=${'Admin auth will be removed after submitting this form.'}
                         @auth-change=${(e: AuthEditorChangeEvent) => {
@@ -415,9 +409,6 @@ export class NetworkForm extends BaseElement {
                         .auth=${this.network.serviceAccountAuth}
                         .allowedMethods=${['client_credentials']}
                         .optional=${true}
-                        .startInEdit=${false}
-                        .showActions=${true}
-                        .showCancelInEdit=${true}
                         .emptyText=${'No service account auth configured.'}
                         .pendingRemoveText=${'Service account auth will be removed after submitting this form.'}
                         @auth-change=${(e: AuthEditorChangeEvent) => {

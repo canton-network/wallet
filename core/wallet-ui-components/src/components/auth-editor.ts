@@ -38,9 +38,6 @@ export class AuthEditor extends BaseElement {
         'self_signed',
     ]
     @property({ type: Boolean }) accessor optional = false
-    @property({ type: Boolean }) accessor startInEdit = false
-    @property({ type: Boolean }) accessor showCancelInEdit = true
-    @property({ type: Boolean }) accessor showActions = true
     @property({ type: String }) accessor emptyText = 'No auth configured.'
     @property({ type: String }) accessor pendingRemoveText =
         'Auth will be removed after submitting this form.'
@@ -182,13 +179,21 @@ export class AuthEditor extends BaseElement {
 
     connectedCallback(): void {
         super.connectedCallback()
-        this._mode = this.startInEdit
-            ? 'edit'
-            : this.auth
-              ? 'view'
-              : this.optional
-                ? 'none'
-                : 'edit'
+        this._mode = this._initialMode()
+    }
+
+    private _hasConfiguredAuth(auth: Auth | undefined): auth is Auth {
+        return typeof auth?.method === 'string'
+    }
+
+    private _initialMode(): EditorMode {
+        if (!this.optional) {
+            return 'edit'
+        }
+        if (this._hasConfiguredAuth(this.auth)) {
+            return 'view'
+        }
+        return 'none'
     }
 
     private _emit(auth?: Auth) {
@@ -531,17 +536,15 @@ export class AuthEditor extends BaseElement {
             return html`
                 <div class="config-panel">
                     <p class="field-help">${this.emptyText}</p>
-                    ${this.showActions
-                        ? html`<div class="inline-actions">
-                              <button
-                                  type="button"
-                                  class="btn-inline"
-                                  @click=${this._startAdd}
-                              >
-                                  Add
-                              </button>
-                          </div>`
-                        : nothing}
+                    <div class="inline-actions">
+                        <button
+                            type="button"
+                            class="btn-inline"
+                            @click=${this._startAdd}
+                        >
+                            Add
+                        </button>
+                    </div>
                 </div>
             `
         }
@@ -563,7 +566,7 @@ export class AuthEditor extends BaseElement {
             `
         }
 
-        if (this._mode === 'view' && this.auth) {
+        if (this._mode === 'view' && this._hasConfiguredAuth(this.auth)) {
             const rows = this._getSummary(this.auth)
             // TODO let's make it separate method
             return html`
@@ -580,37 +583,34 @@ export class AuthEditor extends BaseElement {
                             `
                         )}
                     </dl>
-                    ${this.showActions
-                        ? html`<div class="inline-actions">
-                              <button
-                                  type="button"
-                                  class="btn-inline"
-                                  @click=${this._startEdit}
-                              >
-                                  Edit
-                              </button>
-                              ${this.optional
-                                  ? html`<button
-                                        type="button"
-                                        class="btn-inline danger"
-                                        @click=${this._markForRemove}
-                                    >
-                                        Remove
-                                    </button>`
-                                  : nothing}
-                          </div>`
-                        : nothing}
+                    <div class="inline-actions">
+                        <button
+                            type="button"
+                            class="btn-inline"
+                            @click=${this._startEdit}
+                        >
+                            Edit
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-inline danger"
+                            @click=${this._markForRemove}
+                        >
+                            Remove
+                        </button>
+                    </div>
                 </div>
             `
         }
 
-        const auth = this.auth
-            ? structuredClone(this.auth)
-            : this._defaultAuth(this.allowedMethods[0])
+        const auth =
+            this.auth && this._hasConfiguredAuth(this.auth)
+                ? structuredClone(this.auth)
+                : this._defaultAuth(this.allowedMethods[0])
 
         return html`
             <div>${this._renderAuthForm(auth)}</div>
-            ${this.showCancelInEdit && this.showActions
+            ${this.optional
                 ? html`<div class="inline-actions">
                       <button
                           type="button"
