@@ -7,6 +7,7 @@ import {
     AssetConfig,
     TokenConfig,
     TokenProviderConfig,
+    getValidatorParty,
 } from '@canton-network/wallet-sdk'
 
 declare global {
@@ -70,13 +71,11 @@ async function beforeEachSetup() {
     }
 
     global.TOKEN_NAMESPACE_CONFIG = {
-        validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
         registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
         auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     }
 
     global.AMULET_NAMESPACE_CONFIG = {
-        validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
         scanApiUrl: localNetStaticConfig.LOCALNET_SCAN_API_URL,
         auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
         registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
@@ -94,6 +93,11 @@ async function beforeEachSetup() {
         amulet: global.AMULET_NAMESPACE_CONFIG,
         asset: global.ASSET_CONFIG,
     })
+
+    global.VALIDATOR_OPERATOR_PARTY = await getValidatorParty(
+        localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
+        TOKEN_PROVIDER_CONFIG_DEFAULT
+    )
 
     // ========= Setup Existing Party 1 =========
 
@@ -165,6 +169,7 @@ async function beforeEachSetup() {
             await sdk.amulet.preapproval.command.create({
                 parties: {
                     receiver: global.EXISTING_PARTY_WITH_PREAPPROVAL,
+                    provider: global.VALIDATOR_OPERATOR_PARTY,
                 },
             })
 
