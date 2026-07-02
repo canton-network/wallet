@@ -393,7 +393,7 @@ export class NetworkForm extends BaseElement {
 
                     <h3 class="section-title">Configure admin auth</h3>
                     <auth-editor
-                        .auth=${this.network.serviceAccountAuth}
+                        .auth=${this.network.adminAuth}
                         .optional=${true}
                         .startInEdit=${false}
                         .showActions=${true}
