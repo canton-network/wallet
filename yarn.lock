@@ -1843,10 +1843,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@canton-network/core-test-token@workspace:^, @canton-network/core-test-token@workspace:core/test-token":
+"@canton-network/core-test-token@workspace:^, @canton-network/core-test-token@workspace:core/test-token-v1":
   version: 0.0.0-use.local
-  resolution: "@canton-network/core-test-token@workspace:core/test-token"
+  resolution: "@canton-network/core-test-token@workspace:core/test-token-v1"
   dependencies:
+    "@canton-network/core-ledger-client": "workspace:^"
+    "@canton-network/core-token-standard": "workspace:^"
+    "@canton-network/core-wallet-auth": "workspace:^"
     "@daml/types": "npm:^3.5.0"
     "@mojotech/json-type-validation": "npm:^3.1.0"
     "@rollup/plugin-alias": "npm:^5.0.0"
@@ -1854,6 +1857,9 @@ __metadata:
     "@rollup/plugin-json": "npm:^6.1.0"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@rollup/plugin-typescript": "npm:^12.3.0"
+    "@types/express": "npm:^5.0.6"
+    express: "npm:^5.2.1"
+    pino: "npm:^10.3.1"
     rollup: "npm:^4.59.0"
     rollup-plugin-dts: "npm:^6.3.0"
     tslib: "npm:^2.8.1"

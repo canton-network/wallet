@@ -20,18 +20,17 @@
  *   api-specs/splice/0.6.1/allocation-v1.yaml
  */
 
-import {
-    createServer,
-    type IncomingMessage,
-    type Server,
-    type ServerResponse,
-} from 'node:http'
+import express, { type ErrorRequestHandler } from 'express'
+import type { Server } from 'node:http'
 import type { Logger } from 'pino'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
 import { buildLedgerClient, invalidateCache, readTokenRules } from './ledger.js'
 import type { TokenRulesContract } from './ledger.js'
-import { createRouter, respond, readBody } from './http/router.js'
-import type { GetFactoryRequest, GetChoiceContextRequest } from './types.js'
+import { createOpenApiRouter } from './http/openapi-router.js'
+import {
+    REGISTRY_ROUTES,
+    type RegistryHandlers,
+} from './generated-server/registry-server.js'
 import { createMetadataHandlers } from './features/metadata/handlers.js'
 import { createTransferHandlers } from './features/transfer/handlers.js'
 import { createAllocationInstructionHandlers } from './features/allocation-instruction/handlers.js'
@@ -39,85 +38,6 @@ import { createAllocationHandlers } from './features/allocation/handlers.js'
 
 // ── static instrument metadata ─────────────────────────────────────────────
 const TEST_TOKEN_INSTRUMENT_ID = 'TestToken'
-
-// ── Route table (source of truth: api-specs/splice/0.6.1/) ────────────────
-interface RouteEntry {
-    method: string
-    pattern: string
-    operationId: string
-    nullable?: boolean
-}
-
-const ROUTES: RouteEntry[] = [
-    // token-metadata-v1
-    {
-        method: 'GET',
-        pattern: '/registry/metadata/v1/info',
-        operationId: 'getRegistryInfo',
-    },
-    {
-        method: 'GET',
-        pattern: '/registry/metadata/v1/instruments',
-        operationId: 'listInstruments',
-    },
-    {
-        method: 'GET',
-        pattern: '/registry/metadata/v1/instruments/:instrumentId',
-        operationId: 'getInstrument',
-        nullable: true,
-    },
-    // transfer-instruction-v1
-    {
-        method: 'POST',
-        pattern: '/registry/transfer-instruction/v1/transfer-factory',
-        operationId: 'getTransferFactory',
-        nullable: true,
-    },
-    {
-        method: 'POST',
-        pattern:
-            '/registry/transfer-instruction/v1/:transferInstructionId/choice-contexts/accept',
-        operationId: 'getTransferInstructionAcceptContext',
-    },
-    {
-        method: 'POST',
-        pattern:
-            '/registry/transfer-instruction/v1/:transferInstructionId/choice-contexts/reject',
-        operationId: 'getTransferInstructionRejectContext',
-    },
-    {
-        method: 'POST',
-        pattern:
-            '/registry/transfer-instruction/v1/:transferInstructionId/choice-contexts/withdraw',
-        operationId: 'getTransferInstructionWithdrawContext',
-    },
-    // allocation-instruction-v1
-    {
-        method: 'POST',
-        pattern: '/registry/allocation-instruction/v1/allocation-factory',
-        operationId: 'getAllocationFactory',
-        nullable: true,
-    },
-    // allocation-v1
-    {
-        method: 'POST',
-        pattern:
-            '/registry/allocations/v1/:allocationId/choice-contexts/execute-transfer',
-        operationId: 'getAllocationTransferContext',
-    },
-    {
-        method: 'POST',
-        pattern:
-            '/registry/allocations/v1/:allocationId/choice-contexts/withdraw',
-        operationId: 'getAllocationWithdrawContext',
-    },
-    {
-        method: 'POST',
-        pattern:
-            '/registry/allocations/v1/:allocationId/choice-contexts/cancel',
-        operationId: 'getAllocationCancelContext',
-    },
-]
 
 /**
  * Deployment configuration for a single TestToken instance.
@@ -227,128 +147,90 @@ export async function startTestTokenRegistry(
     })
     const alloc = createAllocationHandlers()
 
-    // Dispatch map: operationId → (params, body) → Promise<result | null>
-    type DispatchFn = (
-        params: Record<string, string>,
-        body: unknown
-    ) => Promise<unknown>
-    const dispatch = new Map<string, DispatchFn>([
-        // Metadata
-        ['getRegistryInfo', async () => metadata.getRegistryInfo()],
-        ['listInstruments', async () => metadata.listInstruments()],
-        [
-            'getInstrument',
-            async (p) =>
-                metadata.getInstrument({ instrumentId: p['instrumentId']! }),
-        ],
-        // Transfer
-        [
-            'getTransferFactory',
-            async (_, b) => transfer.getTransferFactory(b as GetFactoryRequest),
-        ],
-        [
-            'getTransferInstructionAcceptContext',
-            async (p, b) =>
-                transfer.getTransferInstructionAcceptContext(
-                    { transferInstructionId: p['transferInstructionId']! },
-                    b as GetChoiceContextRequest
-                ),
-        ],
-        [
-            'getTransferInstructionRejectContext',
-            async (p, b) =>
-                transfer.getTransferInstructionRejectContext(
-                    { transferInstructionId: p['transferInstructionId']! },
-                    b as GetChoiceContextRequest
-                ),
-        ],
-        [
-            'getTransferInstructionWithdrawContext',
-            async (p, b) =>
-                transfer.getTransferInstructionWithdrawContext(
-                    { transferInstructionId: p['transferInstructionId']! },
-                    b as GetChoiceContextRequest
-                ),
-        ],
-        // Allocation Instruction
-        [
-            'getAllocationFactory',
-            async (_, b) =>
-                allocInstr.getAllocationFactory(b as GetFactoryRequest),
-        ],
-        // Allocation
-        [
-            'getAllocationTransferContext',
-            async (p, b) =>
-                alloc.getAllocationTransferContext(
-                    { allocationId: p['allocationId']! },
-                    b as GetChoiceContextRequest
-                ),
-        ],
-        [
-            'getAllocationWithdrawContext',
-            async (p, b) =>
-                alloc.getAllocationWithdrawContext(
-                    { allocationId: p['allocationId']! },
-                    b as GetChoiceContextRequest
-                ),
-        ],
-        [
-            'getAllocationCancelContext',
-            async (p, b) =>
-                alloc.getAllocationCancelContext(
-                    { allocationId: p['allocationId']! },
-                    b as GetChoiceContextRequest
-                ),
-        ],
-    ])
+    // Map each OpenAPI operationId to its business logic. TypeScript checks — via
+    // the generated `RegistryHandlers` type — that every operation is implemented
+    // and that params/body/response types match the spec.
+    const handlers: RegistryHandlers = {
+        // token-metadata-v1
+        getRegistryInfo: () => metadata.getRegistryInfo(),
+        listInstruments: () => metadata.listInstruments(),
+        getInstrument: ({ params }) =>
+            metadata.getInstrument({ instrumentId: params.instrumentId }),
 
-    const { route, matchRoute } = createRouter()
-    for (const { method, pattern, operationId, nullable = false } of ROUTES) {
-        route(method, pattern, async (_req, res, body, params) => {
-            const fn = dispatch.get(operationId)!
-            const result = await fn(params, body)
-            if (nullable && result === null) {
-                respond(res, 404, { error: `${operationId}: not found` })
-            } else {
-                respond(res, 200, result)
-            }
-        })
+        // transfer-instruction-v1
+        getTransferFactory: ({ body }) => transfer.getTransferFactory(body),
+        getTransferInstructionAcceptContext: ({ params, body }) =>
+            transfer.getTransferInstructionAcceptContext(
+                { transferInstructionId: params.transferInstructionId },
+                body
+            ),
+        getTransferInstructionRejectContext: ({ params, body }) =>
+            transfer.getTransferInstructionRejectContext(
+                { transferInstructionId: params.transferInstructionId },
+                body
+            ),
+        getTransferInstructionWithdrawContext: ({ params, body }) =>
+            transfer.getTransferInstructionWithdrawContext(
+                { transferInstructionId: params.transferInstructionId },
+                body
+            ),
+
+        // allocation-instruction-v1
+        getAllocationFactory: ({ body }) =>
+            allocInstr.getAllocationFactory(body),
+
+        // allocation-v1
+        getAllocationTransferContext: ({ params, body }) =>
+            alloc.getAllocationTransferContext(
+                { allocationId: params.allocationId },
+                body
+            ),
+        getAllocationWithdrawContext: ({ params, body }) =>
+            alloc.getAllocationWithdrawContext(
+                { allocationId: params.allocationId },
+                body
+            ),
+        getAllocationCancelContext: ({ params, body }) =>
+            alloc.getAllocationCancelContext(
+                { allocationId: params.allocationId },
+                body
+            ),
     }
 
-    const server: Server = createServer(
-        async (req: IncomingMessage, res: ServerResponse) => {
-            const url = new URL(req.url ?? '/', 'http://localhost')
-            const method = req.method?.toUpperCase() ?? 'GET'
-            const pathname = url.pathname
+    // Routing (method + path per operationId) is generated from the OpenAPI
+    // specs; here we only mount the router and cross-cutting middleware.
+    const app = express()
+    app.use(express.json())
+    app.use((req, _res, next) => {
+        logger.debug(
+            { method: req.method, path: req.path },
+            'incoming registry request'
+        )
+        next()
+    })
+    app.use(createOpenApiRouter(REGISTRY_ROUTES, handlers))
 
-            logger.debug({ method, pathname }, 'incoming registry request')
+    // Unmatched routes → 404
+    app.use((req, res) => {
+        res.status(404).json({ error: `${req.method} ${req.path} not found` })
+    })
 
-            try {
-                const match = matchRoute(method, pathname)
-                if (!match) {
-                    respond(res, 404, {
-                        error: `${method} ${pathname} not found`,
-                    })
-                    return
-                }
-                const body =
-                    method === 'POST' || method === 'PUT'
-                        ? await readBody(req)
-                        : {}
-                await match.handler(req, res, body, match.params)
-            } catch (err) {
-                logger.error(err, 'registry request handler error')
-                if (!res.headersSent) {
-                    respond(res, 500, {
-                        error: err instanceof Error ? err.message : String(err),
-                    })
-                }
-            }
+    // Uncaught handler errors → 500
+    const onError: ErrorRequestHandler = (err, _req, res, next) => {
+        logger.error(err, 'registry request handler error')
+        if (res.headersSent) {
+            next(err)
+            return
         }
-    )
+        res.status(500).json({
+            error: err instanceof Error ? err.message : String(err),
+        })
+    }
+    app.use(onError)
 
-    await new Promise<void>((resolve) => server.listen(port, resolve))
+    const server = await new Promise<Server>((resolve) => {
+        const httpServer = app.listen(port, () => resolve(httpServer))
+    })
 
     const registryUrl = new URL(`http://localhost:${port}`)
     logger.info(
