@@ -380,6 +380,7 @@ export class AuthEditor extends BaseElement {
             </label>
             <input
                 class="form-control field-control"
+                data-test-id="auth-editor-issuer-input"
                 type="text"
                 required
                 .value=${(authObj as SelfSignedAuth).issuer}
@@ -398,6 +399,7 @@ export class AuthEditor extends BaseElement {
             </label>
             <input
                 class="form-control field-control"
+                data-test-id="auth-editor-client-secret-input"
                 type="text"
                 ?required=${!this._hasExistingSecret(authObj)}
                 .value=${this._secretReplacement}
@@ -413,7 +415,10 @@ export class AuthEditor extends BaseElement {
                 }}
             />
             ${this._hasExistingSecret(authObj)
-                ? html`<p class="field-help mb-0">
+                ? html`<p
+                      class="field-help mb-0"
+                      data-test-id="auth-editor-secret-help"
+                  >
                       Current secret is hidden. Enter a new value to replace it.
                   </p>`
                 : nothing}
@@ -429,6 +434,7 @@ export class AuthEditor extends BaseElement {
                 <div class="select-wrap">
                     <select
                         class="form-select field-control"
+                        data-test-id="auth-editor-method-select"
                         .value=${authObj.method}
                         @change=${(e: Event) => {
                             this._onAuthMethodChange(e)
@@ -471,6 +477,7 @@ export class AuthEditor extends BaseElement {
                 </label>
                 <input
                     class="form-control field-control"
+                    data-test-id="auth-editor-client-id-input"
                     type="text"
                     required
                     .value=${authObj.clientId}
@@ -487,6 +494,7 @@ export class AuthEditor extends BaseElement {
                 </label>
                 <input
                     class="form-control field-control"
+                    data-test-id="auth-editor-audience-input"
                     type="text"
                     required
                     .value=${authObj.audience}
@@ -503,6 +511,7 @@ export class AuthEditor extends BaseElement {
                 </label>
                 <input
                     class="form-control field-control"
+                    data-test-id="auth-editor-scope-input"
                     type="text"
                     required
                     .value=${authObj.scope}
@@ -534,12 +543,18 @@ export class AuthEditor extends BaseElement {
     protected render() {
         if (this._mode === 'none') {
             return html`
-                <div class="config-panel">
-                    <p class="field-help">${this.emptyText}</p>
+                <div
+                    class="config-panel"
+                    data-test-id="auth-editor-empty-state"
+                >
+                    <p class="field-help" data-test-id="auth-editor-empty-text">
+                        ${this.emptyText}
+                    </p>
                     <div class="inline-actions">
                         <button
                             type="button"
                             class="btn-inline"
+                            data-test-id="auth-editor-add-button"
                             @click=${this._startAdd}
                         >
                             Add
@@ -551,12 +566,21 @@ export class AuthEditor extends BaseElement {
 
         if (this._mode === 'pending-remove') {
             return html`
-                <div class="config-panel">
-                    <div class="warning-banner">${this.pendingRemoveText}</div>
+                <div
+                    class="config-panel"
+                    data-test-id="auth-editor-pending-remove-state"
+                >
+                    <div
+                        class="warning-banner"
+                        data-test-id="auth-editor-pending-remove-text"
+                    >
+                        ${this.pendingRemoveText}
+                    </div>
                     <div class="inline-actions">
                         <button
                             type="button"
                             class="btn-inline"
+                            data-test-id="auth-editor-cancel-remove-button"
                             @click=${this._cancelRemove}
                         >
                             Cancel
@@ -570,11 +594,14 @@ export class AuthEditor extends BaseElement {
             const rows = this._getSummary(this.auth)
             // TODO let's make it separate method
             return html`
-                <div class="config-panel">
-                    <dl class="kv-list">
+                <div class="config-panel" data-test-id="auth-editor-view-state">
+                    <dl class="kv-list" data-test-id="auth-editor-summary-list">
                         ${rows.map(
                             (row) => html`
-                                <div class="kv-item">
+                                <div
+                                    class="kv-item"
+                                    data-test-id="auth-editor-summary-row"
+                                >
                                     <dt class="kv-label">${row.key}</dt>
                                     <dd class="kv-value" title=${row.value}>
                                         ${row.value}
@@ -587,6 +614,7 @@ export class AuthEditor extends BaseElement {
                         <button
                             type="button"
                             class="btn-inline"
+                            data-test-id="auth-editor-edit-button"
                             @click=${this._startEdit}
                         >
                             Edit
@@ -594,6 +622,7 @@ export class AuthEditor extends BaseElement {
                         <button
                             type="button"
                             class="btn-inline danger"
+                            data-test-id="auth-editor-remove-button"
                             @click=${this._markForRemove}
                         >
                             Remove
@@ -609,12 +638,15 @@ export class AuthEditor extends BaseElement {
                 : this._defaultAuth(this.allowedMethods[0])
 
         return html`
-            <div>${this._renderAuthForm(auth)}</div>
+            <div data-test-id="auth-editor-edit-state">
+                ${this._renderAuthForm(auth)}
+            </div>
             ${this.optional
                 ? html`<div class="inline-actions">
                       <button
                           type="button"
                           class="btn-inline"
+                          data-test-id="auth-editor-cancel-edit-button"
                           @click=${this._cancelEdit}
                       >
                           Cancel
