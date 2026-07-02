@@ -47,6 +47,7 @@ export class AuthEditor extends BaseElement {
 
     @state() private _mode: EditorMode = 'none'
     @state() private _backup?: Auth
+    @state() private _secretReplacement = ''
 
     static styles = [
         BaseElement.styles,
@@ -249,6 +250,7 @@ export class AuthEditor extends BaseElement {
     }
 
     private _startAdd() {
+        this._secretReplacement = ''
         this._mode = 'edit'
     }
 
@@ -256,6 +258,7 @@ export class AuthEditor extends BaseElement {
         if (this.auth) {
             this._backup = structuredClone(this.auth)
         }
+        this._secretReplacement = ''
         this._mode = 'edit'
     }
 
@@ -286,6 +289,42 @@ export class AuthEditor extends BaseElement {
             this._emit(undefined)
             this._mode = this.optional ? 'none' : 'edit'
         }
+        this._secretReplacement = ''
+    }
+
+    private _resolveClientSecret(
+        authObj: ClientCredentialsAuth | SelfSignedAuth
+    ): string {
+        if (this._secretReplacement.trim() !== '') {
+            return this._secretReplacement
+        }
+
+        const backupSecret =
+            this._backup && 'clientSecret' in this._backup
+                ? this._backup.clientSecret
+                : undefined
+        if (typeof backupSecret === 'string') {
+            return backupSecret
+        }
+
+        return authObj.clientSecret ?? ''
+    }
+
+    private _hasExistingSecret(
+        authObj: ClientCredentialsAuth | SelfSignedAuth
+    ): boolean {
+        if (
+            typeof authObj.clientSecret === 'string' &&
+            authObj.clientSecret !== ''
+        ) {
+            return true
+        }
+
+        const backupSecret =
+            this._backup && 'clientSecret' in this._backup
+                ? this._backup.clientSecret
+                : undefined
+        return typeof backupSecret === 'string' && backupSecret.length > 0
     }
 
     private _onAuthMethodChange(e: Event) {
@@ -327,6 +366,53 @@ export class AuthEditor extends BaseElement {
             default:
                 throw new Error(`Unsupported auth method: ${value}`)
         }
+    }
+
+    _renderIssuerInput(authObj: SelfSignedAuth) {
+        return html` <div class="field-group d-flex flex-column">
+            <label class="form-label field-label mb-0">
+                Issuer <span class="required">*</span>
+            </label>
+            <input
+                class="form-control field-control"
+                type="text"
+                required
+                .value=${(authObj as SelfSignedAuth).issuer}
+                @change=${(e: Event) => {
+                    authObj.issuer = (e.target as HTMLInputElement).value
+                    this._emit(authObj)
+                }}
+            />
+        </div>`
+    }
+
+    _renderClientSecretInput(authObj: ClientCredentialsAuth | SelfSignedAuth) {
+        return html` <div class="field-group d-flex flex-column">
+            <label class="form-label field-label mb-0">
+                Client Secret <span class="required">*</span>
+            </label>
+            <input
+                class="form-control field-control"
+                type="text"
+                ?required=${!this._hasExistingSecret(authObj)}
+                .value=${this._secretReplacement}
+                placeholder=${this._hasExistingSecret(authObj)
+                    ? '********'
+                    : ''}
+                @change=${(e: Event) => {
+                    this._secretReplacement = (
+                        e.target as HTMLInputElement
+                    ).value
+                    authObj.clientSecret = this._resolveClientSecret(authObj)
+                    this._emit(authObj)
+                }}
+            />
+            ${this._hasExistingSecret(authObj)
+                ? html`<p class="field-help mb-0">
+                      Current secret is hidden. Enter a new value to replace it.
+                  </p>`
+                : nothing}
+        </div>`
     }
 
     private _renderAuthForm(authObj: Auth) {
@@ -428,62 +514,16 @@ export class AuthEditor extends BaseElement {
         }
 
         if (authObj.method === 'client_credentials') {
-            return html`${commonFields}
-                <div class="field-group d-flex flex-column">
-                    <label class="form-label field-label mb-0">
-                        Client Secret <span class="required">*</span>
-                    </label>
-                    <input
-                        class="form-control field-control"
-                        type="text"
-                        required
-                        .value=${(authObj as ClientCredentialsAuth)
-                            .clientSecret}
-                        @change=${(e: Event) => {
-                            ;(authObj as ClientCredentialsAuth).clientSecret = (
-                                e.target as HTMLInputElement
-                            ).value
-                            this._emit(authObj)
-                        }}
-                    />
-                </div>`
+            return html` ${commonFields}
+            ${this._renderClientSecretInput(authObj)}`
         }
 
-        return html`${commonFields}
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Issuer <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${(authObj as SelfSignedAuth).issuer}
-                    @change=${(e: Event) => {
-                        ;(authObj as SelfSignedAuth).issuer = (
-                            e.target as HTMLInputElement
-                        ).value
-                        this._emit(authObj)
-                    }}
-                />
-            </div>
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Client Secret <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${(authObj as SelfSignedAuth).clientSecret}
-                    @change=${(e: Event) => {
-                        ;(authObj as SelfSignedAuth).clientSecret = (
-                            e.target as HTMLInputElement
-                        ).value
-                        this._emit(authObj)
-                    }}
-                />
-            </div>`
+        if (authObj.method === 'self_signed') {
+            return html` ${commonFields} ${this._renderIssuerInput(authObj)}
+            ${this._renderClientSecretInput(authObj)}`
+        }
+
+        return nothing // TODO show some error maybe?
     }
 
     protected render() {
