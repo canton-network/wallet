@@ -15,6 +15,7 @@ import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
 import { ScanProxyClient } from '@canton-network/wallet-sdk'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { readTestTokenV1Dar } from '@canton-network/core-test-token/setup'
 import {
     AMULET_NAMESPACE_CONFIG,
     TOKEN_NAMESPACE_CONFIG,
@@ -44,8 +45,6 @@ export type PartyInfo = Omit<
     keyPair: KeyPair
 }
 
-const TEST_TOKEN_V1_DAR =
-    '../../../../../damljs/splice-test-token-v1/.daml/dist/splice-test-token-v1-1.0.0.dar'
 const LOCALNET_PATH = '../../../../../.localnet'
 const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
 
@@ -131,7 +130,7 @@ export async function setupMultiSyncTrade(
 
     const here = path.dirname(fileURLToPath(import.meta.url))
     const [testTokenV1Dar, tradingAppDar] = await Promise.all([
-        fs.readFile(path.join(here, TEST_TOKEN_V1_DAR)),
+        readTestTokenV1Dar(),
         fs.readFile(path.join(here, LOCALNET_PATH, TRADING_APP_DAR_LOCALNET)),
     ])
 

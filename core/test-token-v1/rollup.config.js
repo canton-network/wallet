@@ -201,6 +201,52 @@ const registryTypes = {
     ],
 }
 
+const setupEsm = {
+    input: 'src/setup/index.ts',
+    output: { file: 'dist/setup/index.js', format: 'es', sourcemap: true },
+    external: isExternal,
+    plugins: [
+        json(),
+        commonjsPlugin,
+        nodeResolve(),
+        typescript(registryTsOptions),
+    ],
+}
+
+const setupCjs = {
+    input: 'src/setup/index.ts',
+    output: {
+        file: 'dist/setup/index.cjs',
+        format: 'cjs',
+        interop: 'auto',
+        sourcemap: true,
+        exports: 'named',
+    },
+    external: isExternal,
+    plugins: [
+        json(),
+        commonjsPlugin,
+        nodeResolve(),
+        typescript(registryTsOptions),
+    ],
+}
+
+const setupTypes = {
+    input: 'src/setup/index.ts',
+    output: { file: 'dist/setup/index.d.ts', format: 'es' },
+    external: isExternal,
+    plugins: [
+        dts({
+            respectExternal: false,
+            compilerOptions: {
+                baseUrl: '.',
+                declaration: true,
+                emitDeclarationOnly: true,
+            },
+        }),
+    ],
+}
+
 export default [
     codeEsm,
     codeCjs,
@@ -209,4 +255,7 @@ export default [
     registryEsm,
     registryCjs,
     registryTypes,
+    setupEsm,
+    setupCjs,
+    setupTypes,
 ]

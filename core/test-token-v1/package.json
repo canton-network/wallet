@@ -20,6 +20,12 @@
             "import": "./dist/registry/index.js",
             "require": "./dist/registry/index.cjs",
             "default": "./dist/registry/index.js"
+        },
+        "./setup": {
+            "types": "./dist/setup/index.d.ts",
+            "import": "./dist/setup/index.js",
+            "require": "./dist/setup/index.cjs",
+            "default": "./dist/setup/index.js"
         }
     },
     "scripts": {
