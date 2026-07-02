@@ -17,9 +17,9 @@
 import type {
     TransferFactoryWithChoiceContext,
     ChoiceContext,
-    TransferHandlers,
-    GetFactoryRequest,
 } from '../../types.js'
+import type { transferInstructionApiOperations } from '@canton-network/core-token-standard'
+import type { OperationHandlers } from '../../http/openapi-router.js'
 import type { TokenRulesContract } from '../../ledger.js'
 
 export interface TransferHandlerContext {
@@ -31,12 +31,12 @@ export interface TransferHandlerContext {
 
 export function createTransferHandlers(
     ctx: TransferHandlerContext
-): TransferHandlers {
+): OperationHandlers<transferInstructionApiOperations> {
     return {
-        getTransferFactory: async (
-            req: GetFactoryRequest
-        ): Promise<TransferFactoryWithChoiceContext> => {
-            const transfer = req.choiceArguments?.['transfer'] as
+        getTransferFactory: async ({
+            body,
+        }): Promise<TransferFactoryWithChoiceContext> => {
+            const transfer = body.choiceArguments?.['transfer'] as
                 | Record<string, unknown>
                 | undefined
             if (transfer === undefined)

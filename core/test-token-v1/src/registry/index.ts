@@ -147,54 +147,14 @@ export async function startTestTokenRegistry(
     })
     const alloc = createAllocationHandlers()
 
-    // Map each OpenAPI operationId to its business logic. TypeScript checks — via
-    // the generated `RegistryHandlers` type — that every operation is implemented
-    // and that params/body/response types match the spec.
+    // Every OpenAPI operationId maps to its feature handler. TypeScript checks —
+    // via the generated `RegistryHandlers` type — that every operation is
+    // implemented and that params/body/response types match the spec.
     const handlers: RegistryHandlers = {
-        // token-metadata-v1
-        getRegistryInfo: () => metadata.getRegistryInfo(),
-        listInstruments: () => metadata.listInstruments(),
-        getInstrument: ({ params }) =>
-            metadata.getInstrument({ instrumentId: params.instrumentId }),
-
-        // transfer-instruction-v1
-        getTransferFactory: ({ body }) => transfer.getTransferFactory(body),
-        getTransferInstructionAcceptContext: ({ params, body }) =>
-            transfer.getTransferInstructionAcceptContext(
-                { transferInstructionId: params.transferInstructionId },
-                body
-            ),
-        getTransferInstructionRejectContext: ({ params, body }) =>
-            transfer.getTransferInstructionRejectContext(
-                { transferInstructionId: params.transferInstructionId },
-                body
-            ),
-        getTransferInstructionWithdrawContext: ({ params, body }) =>
-            transfer.getTransferInstructionWithdrawContext(
-                { transferInstructionId: params.transferInstructionId },
-                body
-            ),
-
-        // allocation-instruction-v1
-        getAllocationFactory: ({ body }) =>
-            allocInstr.getAllocationFactory(body),
-
-        // allocation-v1
-        getAllocationTransferContext: ({ params, body }) =>
-            alloc.getAllocationTransferContext(
-                { allocationId: params.allocationId },
-                body
-            ),
-        getAllocationWithdrawContext: ({ params, body }) =>
-            alloc.getAllocationWithdrawContext(
-                { allocationId: params.allocationId },
-                body
-            ),
-        getAllocationCancelContext: ({ params, body }) =>
-            alloc.getAllocationCancelContext(
-                { allocationId: params.allocationId },
-                body
-            ),
+        ...metadata,
+        ...transfer,
+        ...allocInstr,
+        ...alloc,
     }
 
     // Routing (method + path per operationId) is generated from the OpenAPI

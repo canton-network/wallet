@@ -9,10 +9,9 @@
  * configured allocation synchronizer.
  */
 
-import type {
-    FactoryWithChoiceContext,
-    AllocationInstructionHandlers,
-} from '../../types.js'
+import type { FactoryWithChoiceContext } from '../../types.js'
+import type { allocationInstructionApiOperations } from '@canton-network/core-token-standard'
+import type { OperationHandlers } from '../../http/openapi-router.js'
 import type { TokenRulesContract } from '../../ledger.js'
 
 export interface AllocationInstructionHandlerContext {
@@ -24,7 +23,7 @@ export interface AllocationInstructionHandlerContext {
 
 export function createAllocationInstructionHandlers(
     ctx: AllocationInstructionHandlerContext
-): AllocationInstructionHandlers {
+): OperationHandlers<allocationInstructionApiOperations> {
     return {
         getAllocationFactory:
             async (): Promise<FactoryWithChoiceContext | null> => {

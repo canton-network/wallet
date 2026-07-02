@@ -12,9 +12,10 @@ import type {
     GetRegistryInfoResponse,
     Instrument,
     ListInstrumentsResponse,
-    MetadataHandlers,
     SupportedApis,
 } from '../../types.js'
+import type { metadataApiOperations } from '@canton-network/core-token-standard'
+import type { OperationHandlers } from '../../http/openapi-router.js'
 
 // Token Standard APIs implemented by this registry (api-specs/splice/0.6.1/).
 const SUPPORTED_APIS: SupportedApis = {
@@ -31,7 +32,7 @@ export interface MetadataHandlerContext {
 
 export function createMetadataHandlers(
     ctx: MetadataHandlerContext
-): MetadataHandlers {
+): OperationHandlers<metadataApiOperations> {
     const instrument: Instrument = {
         id: ctx.instrumentId,
         name: 'TestToken',
@@ -50,7 +51,7 @@ export function createMetadataHandlers(
             instruments: [instrument],
         }),
 
-        getInstrument: ({ instrumentId }): Instrument | null =>
-            instrumentId === ctx.instrumentId ? instrument : null,
+        getInstrument: ({ params }): Instrument | null =>
+            params.instrumentId === ctx.instrumentId ? instrument : null,
     }
 }

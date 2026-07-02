@@ -10,9 +10,11 @@
  * `Allocation_Cancel` choices read no additional contracts.
  */
 
-import type { ChoiceContext, AllocationHandlers } from '../../types.js'
+import type { ChoiceContext } from '../../types.js'
+import type { allocationApiOperations } from '@canton-network/core-token-standard'
+import type { OperationHandlers } from '../../http/openapi-router.js'
 
-export function createAllocationHandlers(): AllocationHandlers {
+export function createAllocationHandlers(): OperationHandlers<allocationApiOperations> {
     const emptyContext: ChoiceContext = {
         choiceContextData: { values: {} },
         disclosedContracts: [],
