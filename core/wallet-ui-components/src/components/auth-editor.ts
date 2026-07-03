@@ -114,25 +114,25 @@ export class AuthEditor extends BaseElement {
                 margin: 0;
             }
 
-            .kv-list {
+            .auth-summary-list {
                 display: flex;
                 flex-direction: column;
                 gap: var(--wg-space-3);
             }
 
-            .kv-item {
+            .auth-summary-item {
                 display: flex;
                 flex-direction: column;
                 gap: var(--wg-space-1);
             }
 
-            .kv-label {
+            .auth-summary-label {
                 font-size: var(--wg-font-size-xs);
                 color: var(--wg-text-secondary);
                 font-weight: var(--wg-font-weight-semibold);
             }
 
-            .kv-value {
+            .auth-summary-value {
                 font-size: var(--wg-font-size-sm);
                 color: var(--wg-text);
                 overflow: hidden;
@@ -592,18 +592,25 @@ export class AuthEditor extends BaseElement {
 
         if (this._mode === 'view' && this._hasConfiguredAuth(this.auth)) {
             const rows = this._getSummary(this.auth)
-            // TODO let's make it separate method
             return html`
                 <div class="config-panel" data-test-id="auth-editor-view-state">
-                    <dl class="kv-list" data-test-id="auth-editor-summary-list">
+                    <dl
+                        class="auth-summary-list"
+                        data-test-id="auth-editor-summary-list"
+                    >
                         ${rows.map(
                             (row) => html`
                                 <div
-                                    class="kv-item"
+                                    class="auth-summary-item"
                                     data-test-id="auth-editor-summary-row"
                                 >
-                                    <dt class="kv-label">${row.key}</dt>
-                                    <dd class="kv-value" title=${row.value}>
+                                    <dt class="auth-summary-label">
+                                        ${row.key}
+                                    </dt>
+                                    <dd
+                                        class="auth-summary-value"
+                                        title=${row.value}
+                                    >
                                         ${row.value}
                                     </dd>
                                 </div>
