@@ -116,7 +116,7 @@ export class TransactionService {
         network?: Network
     ): Promise<ExecuteResult> {
         if (transaction.status === 'executed') {
-            throw new Error('Cannot execute an already executed transaction')
+            throw new Error('Transaction is already executed.')
         }
 
         switch (wallet.signingProviderId) {

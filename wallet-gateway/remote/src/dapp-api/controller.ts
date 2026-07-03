@@ -34,8 +34,8 @@ import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import { TransactionService } from '../ledger/transaction-service.js'
 
-import { rpcErrors } from '@canton-network/core-rpc-errors'
 import { SigningDrivers } from '../signing/signing-drivers.js'
+import { rpcErrors } from '@canton-network/core-rpc-errors'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
@@ -53,6 +53,19 @@ export const dappController = (
     context?: AuthContext
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
+
+    function assertActAsPartiesBelongToUser(
+        actAs: string[],
+        wallets: Wallet[]
+    ): void {
+        for (const party of actAs) {
+            if (wallets.find((w) => w.partyId === party) === undefined) {
+                throw rpcErrors.invalidRequest(
+                    `Acting party ${party} does not belong to user`
+                )
+            }
+        }
+    }
 
     return buildController({
         connect: async () => {
@@ -228,13 +241,7 @@ export const dappController = (
                 actAs = [primaryWallet.partyId]
             }
 
-            for (const party of actAs) {
-                if (wallets.find((w) => w.partyId === party) === undefined) {
-                    throw rpcErrors.invalidRequest(
-                        `Acting party ${party} does not belong to user`
-                    )
-                }
-            }
+            assertActAsPartiesBelongToUser(actAs, wallets)
 
             // determine wallet
             const wallet = wallets.find((w) => w.partyId === actAs[0])
