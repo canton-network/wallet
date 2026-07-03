@@ -206,6 +206,65 @@ describe('auth-editor', () => {
         })
     })
 
+    it('does not treat cleared add mode secret as hidden existing secret', async () => {
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${true}
+                .allowedMethods=${['client_credentials']}
+            ></auth-editor>`
+        )
+        const listener = vi.fn()
+        el.addEventListener('auth-change', listener)
+        // Keep test behavior aligned with parent component being source of state for auth-editor
+        el.addEventListener('auth-change', (event: Event) => {
+            el.auth = (event as AuthEditorChangeEvent).auth
+        })
+
+        byTestId<HTMLButtonElement>(el, 'auth-editor-add-button')?.click()
+        await elementUpdated(el)
+
+        const secretInput = byTestId<HTMLInputElement>(
+            el,
+            'auth-editor-client-secret-input'
+        )
+        secretInput!.value = 'new-secret'
+        secretInput!.dispatchEvent(new Event('change', { bubbles: true }))
+        await elementUpdated(el)
+        secretInput!.value = ''
+        secretInput!.dispatchEvent(new Event('change', { bubbles: true }))
+        await elementUpdated(el)
+
+        expect(secretInput?.placeholder).toBe('')
+        expect(byTestId(el, 'auth-editor-secret-help')).toBeNull()
+
+        const lastEvent = listener.mock.calls.at(
+            -1
+        )?.[0] as AuthEditorChangeEvent
+        expect(lastEvent.auth).toMatchObject({
+            method: 'client_credentials',
+            clientSecret: '',
+        })
+    })
+
+    it('keeps method select visible and shows warning for unsupported method', async () => {
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${false}
+                .auth=${{
+                    method: 'unexpected_method',
+                    clientId: 'client-id',
+                    audience: 'aud',
+                    scope: 'scope',
+                }}
+            ></auth-editor>`
+        )
+
+        expect(byTestId(el, 'auth-editor-method-select')).not.toBeNull()
+        expect(
+            byTestId(el, 'auth-editor-unsupported-method-warning')?.textContent
+        ).toContain('Unsupported auth method')
+    })
+
     it('renders auth inputs directly when optional is false', async () => {
         const el = await fixture<AuthEditor>(
             html`<auth-editor .optional=${false}></auth-editor>`

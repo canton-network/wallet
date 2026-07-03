@@ -17,7 +17,7 @@ export type AuthMethod =
     | 'client_credentials'
     | 'self_signed'
 
-type EditorMode = 'none' | 'view' | 'edit' | 'pending-remove'
+type EditorMode = 'none' | 'view' | 'edit' | 'add' | 'pending-remove'
 
 export class AuthEditorChangeEvent extends Event {
     auth: Auth | undefined
@@ -256,7 +256,7 @@ export class AuthEditor extends BaseElement {
 
     private _startAdd() {
         this._secretReplacement = ''
-        this._mode = 'edit'
+        this._mode = 'add'
     }
 
     private _startEdit() {
@@ -304,6 +304,10 @@ export class AuthEditor extends BaseElement {
             return this._secretReplacement
         }
 
+        if (this._mode === 'add') {
+            return ''
+        }
+
         const backupSecret =
             this._backup && 'clientSecret' in this._backup
                 ? this._backup.clientSecret
@@ -318,6 +322,14 @@ export class AuthEditor extends BaseElement {
     private _hasExistingSecret(
         authObj: ClientCredentialsAuth | SelfSignedAuth
     ): boolean {
+        if (this._secretReplacement.trim() !== '') {
+            return false
+        }
+
+        if (this._mode === 'add') {
+            return false
+        }
+
         if (
             typeof authObj.clientSecret === 'string' &&
             authObj.clientSecret !== ''
@@ -330,6 +342,16 @@ export class AuthEditor extends BaseElement {
                 ? this._backup.clientSecret
                 : undefined
         return typeof backupSecret === 'string' && backupSecret.length > 0
+    }
+
+    private _renderUnsupportedMethodWarning(method: string) {
+        return html`<div
+            class="warning-banner"
+            data-test-id="auth-editor-unsupported-method-warning"
+        >
+            Unsupported auth method "${method}". Select a supported method to
+            continue.
+        </div>`
     }
 
     private _onAuthMethodChange(e: Event) {
@@ -426,6 +448,7 @@ export class AuthEditor extends BaseElement {
     }
 
     private _renderAuthForm(authObj: Auth) {
+        const method = authObj.method
         const commonFields = html`
             <div class="field-group d-flex flex-column">
                 <label class="form-label field-label mb-0">
@@ -435,7 +458,7 @@ export class AuthEditor extends BaseElement {
                     <select
                         class="form-select field-control"
                         data-test-id="auth-editor-method-select"
-                        .value=${authObj.method}
+                        .value=${method}
                         @change=${(e: Event) => {
                             this._onAuthMethodChange(e)
                         }}
@@ -443,8 +466,7 @@ export class AuthEditor extends BaseElement {
                         ${this.allowedMethods.includes('authorization_code')
                             ? html`<option
                                   ?value="authorization_code"
-                                  ?selected=${authObj.method ===
-                                  'authorization_code'}
+                                  ?selected=${method === 'authorization_code'}
                               >
                                   authorization_code
                               </option>`
@@ -452,8 +474,7 @@ export class AuthEditor extends BaseElement {
                         ${this.allowedMethods.includes('client_credentials')
                             ? html`<option
                                   value="client_credentials"
-                                  ?selected=${authObj.method ===
-                                  'client_credentials'}
+                                  ?selected=${method === 'client_credentials'}
                               >
                                   client_credentials
                               </option>`
@@ -461,7 +482,7 @@ export class AuthEditor extends BaseElement {
                         ${this.allowedMethods.includes('self_signed')
                             ? html`<option
                                   value="self_signed"
-                                  ?selected=${authObj.method === 'self_signed'}
+                                  ?selected=${method === 'self_signed'}
                               >
                                   self_signed
                               </option>`
@@ -523,21 +544,23 @@ export class AuthEditor extends BaseElement {
             </div>
         `
 
-        if (authObj.method === 'authorization_code') {
+        if (method === 'authorization_code') {
             return commonFields
         }
 
-        if (authObj.method === 'client_credentials') {
+        if (method === 'client_credentials') {
             return html` ${commonFields}
             ${this._renderClientSecretInput(authObj)}`
         }
 
-        if (authObj.method === 'self_signed') {
+        if (method === 'self_signed') {
             return html` ${commonFields} ${this._renderIssuerInput(authObj)}
             ${this._renderClientSecretInput(authObj)}`
         }
 
-        return nothing // TODO show some error maybe?
+        // shouldn't happen, unless parent passes wrong method value. just in case make it recoverable
+        return html` ${commonFields}
+        ${this._renderUnsupportedMethodWarning(method)}`
     }
 
     protected render() {
