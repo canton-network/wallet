@@ -11,6 +11,201 @@ const byTestId = <T extends Element>(el: Element, id: string): T | null =>
     el.querySelector<T>(`[data-test-id="${id}"]`)
 
 describe('auth-editor', () => {
+    it('starts add mode and uses first allowed method as default auth', async () => {
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${true}
+                .allowedMethods=${['client_credentials']}
+            ></auth-editor>`
+        )
+
+        expect(byTestId(el, 'auth-editor-empty-state')).not.toBeNull()
+
+        byTestId<HTMLButtonElement>(el, 'auth-editor-add-button')?.click()
+        await elementUpdated(el)
+
+        const methodSelect = byTestId<HTMLSelectElement>(
+            el,
+            'auth-editor-method-select'
+        )
+        expect(byTestId(el, 'auth-editor-edit-state')).not.toBeNull()
+        expect(methodSelect?.value).toBe('client_credentials')
+        expect(byTestId(el, 'auth-editor-client-secret-input')).not.toBeNull()
+    })
+
+    it('starts edit mode with values from auth when edit is clicked', async () => {
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${true}
+                .auth=${{
+                    method: 'authorization_code',
+                    clientId: 'client-id',
+                    audience: 'aud',
+                    scope: 'scope',
+                }}
+            ></auth-editor>`
+        )
+
+        expect(byTestId(el, 'auth-editor-view-state')).not.toBeNull()
+
+        byTestId<HTMLButtonElement>(el, 'auth-editor-edit-button')?.click()
+        await elementUpdated(el)
+
+        expect(byTestId(el, 'auth-editor-view-state')).toBeNull()
+        expect(byTestId(el, 'auth-editor-edit-state')).not.toBeNull()
+        expect(byTestId(el, 'auth-editor-cancel-edit-button')).not.toBeNull()
+        expect(byTestId(el, 'auth-editor-method-select')).not.toBeNull()
+    })
+
+    it('cancels add mode to empty state and emits undefined auth', async () => {
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor .optional=${true}></auth-editor>`
+        )
+        const listener = vi.fn()
+        el.addEventListener('auth-change', listener)
+
+        byTestId<HTMLButtonElement>(el, 'auth-editor-add-button')?.click()
+        await elementUpdated(el)
+        byTestId<HTMLButtonElement>(
+            el,
+            'auth-editor-cancel-edit-button'
+        )?.click()
+        await elementUpdated(el)
+
+        expect(byTestId(el, 'auth-editor-empty-state')).not.toBeNull()
+        const lastEvent = listener.mock.calls.at(
+            -1
+        )?.[0] as AuthEditorChangeEvent
+        expect(lastEvent.auth).toBeUndefined()
+    })
+
+    it('cancels edit and restores backup auth values', async () => {
+        const existingAuth = {
+            method: 'authorization_code',
+            clientId: 'client-id',
+            audience: 'aud',
+            scope: 'scope',
+        }
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${true}
+                .auth=${existingAuth}
+            ></auth-editor>`
+        )
+        const listener = vi.fn()
+        el.addEventListener('auth-change', listener)
+        // Keep test behavior aligned with parent component being source of state for auth-editor
+        el.addEventListener('auth-change', (event: Event) => {
+            el.auth = (event as AuthEditorChangeEvent).auth
+        })
+
+        byTestId<HTMLButtonElement>(el, 'auth-editor-edit-button')?.click()
+        await elementUpdated(el)
+
+        const clientIdInput = byTestId<HTMLInputElement>(
+            el,
+            'auth-editor-client-id-input'
+        )
+        clientIdInput!.value = 'changed-client-id'
+        clientIdInput!.dispatchEvent(new Event('change', { bubbles: true }))
+        await elementUpdated(el)
+
+        byTestId<HTMLButtonElement>(
+            el,
+            'auth-editor-cancel-edit-button'
+        )?.click()
+        await elementUpdated(el)
+
+        const lastEvent = listener.mock.calls.at(
+            -1
+        )?.[0] as AuthEditorChangeEvent
+        expect(lastEvent.auth).toMatchObject(existingAuth)
+        expect(byTestId(el, 'auth-editor-view-state')).not.toBeNull()
+    })
+
+    it('resolves secret from backup when replacement input stays empty', async () => {
+        const existingAuth = {
+            method: 'client_credentials' as const,
+            clientId: 'client-id',
+            audience: 'aud',
+            scope: 'scope',
+            clientSecret: 'existing-secret',
+        }
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${true}
+                .auth=${existingAuth}
+            ></auth-editor>`
+        )
+        const listener = vi.fn()
+        el.addEventListener('auth-change', listener)
+        // Keep test behavior aligned with parent component being source of state for auth-editor
+        el.addEventListener('auth-change', (event: Event) => {
+            el.auth = (event as AuthEditorChangeEvent).auth
+        })
+
+        byTestId<HTMLButtonElement>(el, 'auth-editor-edit-button')?.click()
+        await elementUpdated(el)
+
+        const secretInput = byTestId<HTMLInputElement>(
+            el,
+            'auth-editor-client-secret-input'
+        )
+        secretInput!.value = 'new-secret'
+        secretInput!.dispatchEvent(new Event('change', { bubbles: true }))
+
+        secretInput!.value = ''
+        secretInput!.dispatchEvent(new Event('change', { bubbles: true }))
+
+        const lastEvent = listener.mock.calls.at(
+            -1
+        )?.[0] as AuthEditorChangeEvent
+        expect(lastEvent.auth).toMatchObject({
+            method: 'client_credentials',
+            clientSecret: 'existing-secret',
+        })
+    })
+
+    it('emits new secret when replacement input has value', async () => {
+        const existingAuth = {
+            method: 'client_credentials' as const,
+            clientId: 'client-id',
+            audience: 'aud',
+            scope: 'scope',
+            clientSecret: 'existing-secret',
+        }
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${true}
+                .auth=${existingAuth}
+            ></auth-editor>`
+        )
+        const listener = vi.fn()
+        el.addEventListener('auth-change', listener)
+        // Keep test behavior aligned with parent component being source of state for auth-editor
+        el.addEventListener('auth-change', (event: Event) => {
+            el.auth = (event as AuthEditorChangeEvent).auth
+        })
+
+        byTestId<HTMLButtonElement>(el, 'auth-editor-edit-button')?.click()
+        await elementUpdated(el)
+
+        const secretInput = byTestId<HTMLInputElement>(
+            el,
+            'auth-editor-client-secret-input'
+        )
+        secretInput!.value = 'new-secret'
+        secretInput!.dispatchEvent(new Event('change', { bubbles: true }))
+
+        const lastEvent = listener.mock.calls.at(
+            -1
+        )?.[0] as AuthEditorChangeEvent
+        expect(lastEvent.auth).toMatchObject({
+            method: 'client_credentials',
+            clientSecret: 'new-secret',
+        })
+    })
+
     it('renders auth inputs directly when optional is false', async () => {
         const el = await fixture<AuthEditor>(
             html`<auth-editor .optional=${false}></auth-editor>`
