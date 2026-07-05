@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { ACSReader } from '@canton-network/core-acs-reader'
 import {
     SDKPlugin,
     type PreparedCommand,
@@ -42,21 +43,6 @@ type FetchStatusOptions = {
     intervalMs?: number
 }
 
-type ActiveContractResponse = {
-    contractEntry?: {
-        JsActiveContract?: {
-            synchronizerId?: string
-            createdEvent?: {
-                contractId?: string
-                templateId?: string
-                createArgument?: unknown
-            }
-        }
-    }
-}
-
-type LedgerEnd = { offset?: number }
-
 type CancelArgs = FetchPreapprovalArgs & {
     actor?: TransferPreapprovalParty
 }
@@ -72,8 +58,11 @@ const TRANSFER_PREAPPROVAL_TEMPLATE_ID =
 const TRANSFER_PREAPPROVAL_WITHDRAW_CHOICE = 'TransferPreapproval_Withdraw'
 
 export class WalletSDKUtilitiesPlugin extends SDKPlugin {
+    private readonly acsReader: ACSReader
+
     constructor(ctx: SDKContext) {
         super(WalletSDKUtilitiesPluginName, ctx)
+        this.acsReader = new ACSReader(this.ctx.ledgerProvider)
     }
 
     public preapprovalTransfer = {
@@ -208,72 +197,32 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin {
     private async readTransferPreapprovals(
         args: FetchPreapprovalArgs
     ): Promise<TransferPreapprovalStatus[]> {
-        const ledgerEnd = (await this.ctx.ledgerProvider.request({
-            method: 'ledgerApi',
-            params: {
-                resource: '/v2/state/ledger-end',
-                requestMethod: 'get',
-            },
-        })) as LedgerEnd
+        const contracts = await this.acsReader.paginated.raw.readJsContracts({
+            templateIds: [TRANSFER_PREAPPROVAL_TEMPLATE_ID],
+            parties: [args.receiver],
+            filterByParty: true,
+            continueUntilCompletion: true,
+        })
 
-        const responses = (await this.ctx.ledgerProvider.request({
-            method: 'ledgerApi',
-            params: {
-                resource: '/v2/state/active-contracts',
-                requestMethod: 'post',
-                body: {
-                    filter: {
-                        filtersByParty: {
-                            [args.receiver]: {
-                                cumulative: [
-                                    {
-                                        identifierFilter: {
-                                            TemplateFilter: {
-                                                value: {
-                                                    templateId:
-                                                        TRANSFER_PREAPPROVAL_TEMPLATE_ID,
-                                                    includeCreatedEventBlob: true,
-                                                },
-                                            },
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                    verbose: false,
-                    activeAtOffset: ledgerEnd.offset ?? 0,
-                },
-                // TODO: paginate — this caps results at 100 active TransferPreapproval
-                // contracts and silently drops any beyond the first page.
-                query: { limit: 100 },
-            },
-        })) as ActiveContractResponse[]
-
-        return responses.flatMap((response) => {
-            const activeContract = response.contractEntry?.JsActiveContract
-            const createdEvent = activeContract?.createdEvent
-
-            if (
-                !activeContract?.synchronizerId ||
-                !createdEvent?.contractId ||
-                !createdEvent.templateId
-            ) {
-                return []
-            }
-
-            const payload = createdEvent.createArgument as
+        return contracts.flatMap((contract) => {
+            const payload = contract.createArgument as
                 | TransferPreapproval
                 | undefined
-            if (!payload || !this.matchesPreapproval(payload, args)) {
+            if (
+                !contract.synchronizerId ||
+                !contract.contractId ||
+                !contract.templateId ||
+                !payload ||
+                !this.matchesPreapproval(payload, args)
+            ) {
                 return []
             }
 
             return [
                 {
-                    contractId: createdEvent.contractId,
-                    templateId: createdEvent.templateId,
-                    synchronizerId: activeContract.synchronizerId,
+                    contractId: contract.contractId,
+                    templateId: contract.templateId,
+                    synchronizerId: contract.synchronizerId,
                     payload,
                 },
             ]
