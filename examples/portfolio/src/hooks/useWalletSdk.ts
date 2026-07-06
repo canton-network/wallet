@@ -5,14 +5,24 @@ import { useQuery } from '@tanstack/react-query'
 import * as dappSdk from '@canton-network/dapp-sdk'
 import * as walletSdk from '@canton-network/wallet-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
+import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
 import { queryKeys } from './query-keys'
 import {
     WalletSDKUtilitiesPlugin,
     WalletSDKUtilitiesPluginName,
-} from '@lib/wallet-sdk-utility/src/extension'
+} from '@lib/utilities-wallet-sdk-plugin'
+
+const deriveScanApiUrl = (registryUrl: string): URL => {
+    const url = new URL(registryUrl)
+    url.pathname = '/api/scan'
+    url.search = ''
+    url.hash = ''
+    return url
+}
 
 export const useWalletSdk = () => {
     const { status } = useConnection()
+    const { amulet } = usePortfolioConfig()
     const sessionToken = status?.session?.accessToken
     const isConnected = status?.connection?.isConnected ?? false
 
@@ -36,6 +46,12 @@ export const useWalletSdk = () => {
 
             const sdk = await walletSdk.SDK.create({
                 ledgerProvider: provider as never,
+                amulet: {
+                    validatorUrl: amulet.validatorUrl,
+                    scanApiUrl: deriveScanApiUrl(amulet.registry),
+                    registryUrl: amulet.registry,
+                    auth: { method: 'static', token: sessionToken },
+                },
             })
 
             const pluginSDK = sdk.registerPlugins({

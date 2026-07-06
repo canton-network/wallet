@@ -34,6 +34,9 @@ export const useCreateTransfer = () => {
             await queryClient.invalidateQueries({
                 queryKey: queryKeys.listHoldings.all,
             })
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.getTransactionHistory.all,
+            })
         },
     })
 }

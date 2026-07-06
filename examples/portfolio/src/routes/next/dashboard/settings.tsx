@@ -4,6 +4,7 @@
 import { Box, Typography } from '@mui/material'
 import { createFileRoute } from '@tanstack/react-router'
 import { DevNetTapSection } from '@components/settings/devnet-tap-section'
+import { PreapprovalsSection } from '@components/settings/preapprovals-section'
 import { RegistriesSection } from '@components/settings/registries-section'
 
 export const Route = createFileRoute('/next/dashboard/settings')({
@@ -17,6 +18,7 @@ function RouteComponent() {
                 Settings
             </Typography>
 
+            <PreapprovalsSection />
             <RegistriesSection />
             <DevNetTapSection />
         </Box>

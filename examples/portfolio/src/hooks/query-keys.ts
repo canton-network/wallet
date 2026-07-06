@@ -60,4 +60,28 @@ export const queryKeys = {
     registries: {
         all: ['registries'],
     },
+
+    utilityOperators: {
+        all: ['utilityOperators'],
+        forRegistry: (registryPartyId: string, registryUrl: string) => [
+            'utilityOperators',
+            registryPartyId,
+            registryUrl,
+        ],
+    },
+
+    preapprovals: {
+        all: ['preapprovals'],
+        status: ({
+            party,
+            kind,
+            registryPartyId,
+            instrumentId,
+        }: {
+            party: string | undefined
+            kind: string
+            registryPartyId: string
+            instrumentId: string
+        }) => ['preapprovals', party, kind, registryPartyId, instrumentId],
+    },
 }
