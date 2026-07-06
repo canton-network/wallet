@@ -14,6 +14,10 @@ type ArgValueOf<T extends NonNullable<Value['sum']['oneofKind']>> =
 export class LedgerApiValueEncoder extends Encoder {
     private readonly encodePrimitive: PrimitiveEncoder
     private readonly encodeCollection: CollectionEncoder
+
+    private readonly MAX_DEPTH = 100
+    private currentDepth = 0
+
     constructor(protected ctx: OfflineSDKContext) {
         super(ctx)
         this.encodePrimitive = new PrimitiveEncoder(ctx)
@@ -168,17 +172,30 @@ export class LedgerApiValueEncoder extends Encoder {
     public readonly value = (value: Value | undefined): Uint8Array => {
         if (!value || value.sum.oneofKind === undefined) return this.emptyByte
 
-        const { oneofKind, ...rest } = value.sum
-
-        if (!(oneofKind in rest))
+        this.currentDepth++
+        if (this.currentDepth > this.MAX_DEPTH) {
+            this.currentDepth = 0
             this.ctx.error.throw({
-                message: 'Wrong data structure input',
-                type: 'CantonError',
+                message: `Exceeded maximum object nesting depth of ${this.MAX_DEPTH}`,
+                type: 'Unexpected',
             })
+        }
 
-        const argValue = rest[oneofKind as keyof typeof rest]
-        const method = this[oneofKind]
+        try {
+            const { oneofKind, ...rest } = value.sum
 
-        return method(argValue)
+            if (!(oneofKind in rest))
+                this.ctx.error.throw({
+                    message: 'Wrong data structure input',
+                    type: 'CantonError',
+                })
+
+            const argValue = rest[oneofKind as keyof typeof rest]
+            const method = this[oneofKind]
+
+            return method(argValue)
+        } finally {
+            this.currentDepth--
+        }
     }
 }
