@@ -91,7 +91,9 @@ function AssetRow({ asset, onClick }: AssetRowProps) {
         <AssetBalanceCard
             name={name}
             symbol={symbol}
-            amount={asset.totalAmount}
+            totalAmount={asset.totalAmount}
+            lockedAmount={asset.lockedAmount}
+            unlockedAmount={asset.availableAmount}
             initials={initials}
             ariaLabel={`View ${name} holdings by wallet`}
             onClick={onClick}
