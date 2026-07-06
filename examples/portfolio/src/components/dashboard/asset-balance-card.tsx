@@ -10,8 +10,11 @@ import {
     Skeleton,
     Typography,
 } from '@mui/material'
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import type { SxProps, Theme } from '@mui/material/styles'
 import { normalizeSx } from '@components/ui/utils'
+import { formatAmount } from '@utils/decimal'
 
 type AssetsPanelProps = {
     children: ReactNode
@@ -50,7 +53,9 @@ export function AssetsPanel({ children, grid = false, sx }: AssetsPanelProps) {
 type AssetBalanceCardProps = {
     name: string
     symbol: string
-    amount: string
+    totalAmount: string
+    lockedAmount: string
+    unlockedAmount: string
     initials: string
     onClick?: () => void
     ariaLabel?: string
@@ -59,11 +64,18 @@ type AssetBalanceCardProps = {
 export function AssetBalanceCard({
     name,
     symbol,
-    amount,
+    totalAmount,
+    lockedAmount,
+    unlockedAmount,
     initials,
     onClick,
     ariaLabel,
 }: AssetBalanceCardProps) {
+    const formattedTotalAmount = formatAmount(totalAmount)
+    const formattedLockedAmount = formatAmount(lockedAmount)
+    const formattedUnlockedAmount = formatAmount(unlockedAmount)
+    const balanceSummaryLabel = `Total balance: ${formattedTotalAmount} ${symbol}. Locked balance: ${formattedLockedAmount} ${symbol}. Unlocked balance: ${formattedUnlockedAmount} ${symbol}.`
+
     const content = (
         <>
             <Box
@@ -77,11 +89,11 @@ export function AssetBalanceCard({
                 <Avatar
                     aria-hidden="true"
                     sx={{
-                        width: 32,
-                        height: 32,
+                        width: 28,
+                        height: 28,
                         bgcolor: 'text.primary',
                         color: 'background.default',
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: 700,
                     }}
                 >
@@ -100,21 +112,45 @@ export function AssetBalanceCard({
                 </Typography>
             </Box>
 
-            <Typography variant="body1" sx={{ whiteSpace: 'nowrap' }}>
-                {amount} {symbol}
+            <Typography
+                variant="body1"
+                aria-label={`Total balance: ${formattedTotalAmount} ${symbol}`}
+                sx={{ mt: 1.25, whiteSpace: 'nowrap' }}
+            >
+                {formattedTotalAmount} {symbol}
             </Typography>
+
+            <Box
+                sx={{
+                    mt: 0.75,
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 1.25,
+                }}
+            >
+                <BalanceBreakdownItem
+                    icon={<LockOutlinedIcon sx={{ fontSize: 14 }} />}
+                    label="Locked balance"
+                    amount={formattedLockedAmount}
+                    symbol={symbol}
+                />
+                <BalanceBreakdownItem
+                    icon={<LockOpenOutlinedIcon sx={{ fontSize: 14 }} />}
+                    label="Unlocked balance"
+                    amount={formattedUnlockedAmount}
+                    symbol={symbol}
+                />
+            </Box>
         </>
     )
 
     const cardSx: SxProps<Theme> = {
         width: '100%',
-        minHeight: 64,
+        minHeight: 94,
         px: 2,
         py: 1.5,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 2,
+        display: 'block',
         color: 'text.primary',
         textAlign: 'left',
         border: (theme) => `1px solid ${theme.palette.divider}`,
@@ -147,7 +183,11 @@ export function AssetBalanceCard({
                 component={ButtonBase}
                 type="button"
                 aria-haspopup="dialog"
-                aria-label={ariaLabel}
+                aria-label={
+                    ariaLabel
+                        ? `${ariaLabel}. ${balanceSummaryLabel}`
+                        : balanceSummaryLabel
+                }
                 onClick={onClick}
                 sx={cardSx}
             >
@@ -159,26 +199,76 @@ export function AssetBalanceCard({
     return <Box sx={cardSx}>{content}</Box>
 }
 
+type BalanceBreakdownItemProps = {
+    icon: ReactNode
+    label: string
+    amount: string
+    symbol: string
+}
+
+function BalanceBreakdownItem({
+    icon,
+    label,
+    amount,
+    symbol,
+}: BalanceBreakdownItemProps) {
+    return (
+        <Box
+            component="span"
+            aria-label={`${label}: ${amount} ${symbol}`}
+            sx={{
+                minWidth: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                color: 'text.secondary',
+            }}
+        >
+            <Box
+                component="span"
+                aria-hidden="true"
+                sx={{ display: 'inline-flex', color: 'inherit' }}
+            >
+                {icon}
+            </Box>
+            <Typography
+                component="span"
+                variant="caption"
+                aria-hidden="true"
+                sx={{
+                    minWidth: 0,
+                    lineHeight: 1.4,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {amount} {symbol}
+            </Typography>
+        </Box>
+    )
+}
+
 export function AssetBalanceCardSkeleton() {
     return (
         <Box
             sx={{
-                minHeight: 64,
+                minHeight: 94,
                 px: 2,
                 py: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 2,
                 border: (theme) => `1px solid ${theme.palette.divider}`,
                 borderRadius: 1,
             }}
         >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Skeleton variant="circular" width={32} height={32} />
+                <Skeleton variant="circular" width={28} height={28} />
                 <Skeleton variant="text" width={160} />
             </Box>
-            <Skeleton variant="text" width={140} />
+            <Skeleton variant="text" width={180} sx={{ mt: 1.25 }} />
+            <Box sx={{ mt: 0.75, display: 'flex', gap: 1.25 }}>
+                <Skeleton variant="text" width={120} />
+                <Skeleton variant="text" width={120} />
+            </Box>
         </Box>
     )
 }

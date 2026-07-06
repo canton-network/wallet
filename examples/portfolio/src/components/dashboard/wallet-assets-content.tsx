@@ -76,7 +76,9 @@ function WalletAssetCard({ asset }: WalletAssetCardProps) {
         <AssetBalanceCard
             name={name}
             symbol={symbol}
-            amount={asset.totalAmount}
+            totalAmount={asset.totalAmount}
+            lockedAmount={asset.lockedAmount}
+            unlockedAmount={asset.availableAmount}
             initials={initials}
         />
     )
