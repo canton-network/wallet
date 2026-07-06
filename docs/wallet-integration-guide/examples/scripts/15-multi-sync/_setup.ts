@@ -149,7 +149,7 @@ export async function setupMultiSyncTrade(
         ),
     ])
     logger.info(
-        'DARs vetted: app-user + app-provider have TestTokenV1 + trading-app on both synchronizers; sv has both on global only'
+        'DARs vetted: app-user participant node + app-provider participant node have TestTokenV1 + trading-app on both synchronizers; sv has both on global only'
     )
 
     const aliceKey = appUserSdk.keys.generate()
