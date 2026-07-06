@@ -13,11 +13,10 @@ import {
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
-import { ScanProxyClient } from '@canton-network/wallet-sdk'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { readTestTokenV1Dar } from '@canton-network/core-test-token/setup'
 import {
     AMULET_NAMESPACE_CONFIG,
+    ASSET_CONFIG,
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     resolveGlobalSynchronizerId,
@@ -49,7 +48,7 @@ const LOCALNET_PATH = '../../../../../.localnet'
 const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
 
 export interface MultiSyncSetup {
-    appUserSdk: SDKInterface<'token' | 'amulet'>
+    appUserSdk: SDKInterface<'token' | 'amulet' | 'asset'>
     appProviderSdk: SDKInterface<'token'>
     svSdk: SDKInterface<'token'>
     appUserTokenNamespace: TokenNamespace
@@ -61,7 +60,6 @@ export interface MultiSyncSetup {
     globalSynchronizerId: string
     testTokenSynchronizerId: string
     synchronizers: SynchronizerMap
-    scanProxy: ScanProxyClient
     amuletAdmin: string
     testTokenRegistryUrl: URL
 }
@@ -73,7 +71,7 @@ export interface MultiSyncSetup {
  *   - Allocates alice (app-user), bob (app-provider), tradingApp (app-user), tokenAdmin (app-provider) on global synchronizer
  *     while simultaneously registering alice, bob, tradingApp, and tokenAdmin on app-synchronizer
  *   - tradingApp is hosted on the app-user participant, which is connected to both synchronizers
- *   - Connects the scan proxy and returns the Amulet admin party ID
+ *   - Resolves the Amulet admin party ID from the registry metadata API
  */
 export async function setupMultiSyncTrade(
     logger: Logger
@@ -84,6 +82,7 @@ export async function setupMultiSyncTrade(
             ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
             amulet: AMULET_NAMESPACE_CONFIG,
             token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+            asset: ASSET_CONFIG,
         }),
         SDK.create({
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
@@ -211,16 +210,7 @@ export async function setupMultiSyncTrade(
         `Parties allocated on global-synchronizer and registered on app-synchronizer — alice: ${alice.partyId} (app-user), bob: ${bob.partyId} (app-provider), tradingApp: ${tradingApp.partyId} (app-user, both synchronizers), tokenAdmin: ${tokenAdmin.partyId} (app-provider)`
     )
 
-    const auth = new AuthTokenProvider(TOKEN_PROVIDER_CONFIG_DEFAULT, logger)
-    const scanProxy = new ScanProxyClient(
-        localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
-        logger,
-        auth
-    )
-    const amuletRules = await scanProxy.getAmuletRules()
-    const amuletAdmin = (amuletRules.payload as Record<string, unknown>)[
-        'dso'
-    ] as string
+    const { admin: amuletAdmin } = await appUserSdk.asset.find('Amulet')
     logger.info(`Amulet asset discovered — admin: ${amuletAdmin}`)
 
     return {
@@ -236,7 +226,6 @@ export async function setupMultiSyncTrade(
         globalSynchronizerId,
         testTokenSynchronizerId,
         synchronizers,
-        scanProxy,
         amuletAdmin,
         testTokenRegistryUrl: TEST_TOKEN_REGISTRY_URL,
     }
