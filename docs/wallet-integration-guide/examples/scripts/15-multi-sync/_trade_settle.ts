@@ -44,10 +44,10 @@ async function withdrawAllocationsOnFailure(
     logger: Logger
 ): Promise<void> {
     const {
-        appUserSdk,
-        appProviderSdk,
-        appUserTokenNamespace,
-        appProviderTokenNamespace,
+        appAliceSdk,
+        appBobSdk,
+        aliceTokenNamespace,
+        bobTokenNamespace,
         alice,
         bob,
         tokenAdmin,
@@ -59,7 +59,7 @@ async function withdrawAllocationsOnFailure(
     await Promise.all([
         (async () => {
             const [cmd, disclosed] =
-                await appUserTokenNamespace.allocation.withdraw({
+                await aliceTokenNamespace.allocation.withdraw({
                     allocationCid: amuletAllocationCid,
                     asset: {
                         id: 'Amulet',
@@ -70,7 +70,7 @@ async function withdrawAllocationsOnFailure(
                         admin: amuletAdmin,
                     },
                 })
-            await appUserSdk.ledger
+            await appAliceSdk.ledger
                 .prepare({
                     partyId: alice.partyId,
                     commands: [cmd],
@@ -83,7 +83,7 @@ async function withdrawAllocationsOnFailure(
         })(),
         (async () => {
             const [cmd, disclosed] =
-                await appProviderTokenNamespace.allocation.withdraw({
+                await bobTokenNamespace.allocation.withdraw({
                     allocationCid: testTokenAllocationCid,
                     asset: {
                         id: 'TestToken',
@@ -93,7 +93,7 @@ async function withdrawAllocationsOnFailure(
                         admin: tokenAdmin.partyId,
                     },
                 })
-            await appProviderSdk.ledger
+            await appBobSdk.ledger
                 .prepare({
                     partyId: bob.partyId,
                     commands: [cmd],
@@ -113,9 +113,9 @@ export async function settleOtcTrade(
     logger: Logger
 ): Promise<void> {
     const {
-        appUserSdk,
-        appUserTokenNamespace,
-        appProviderTokenNamespace,
+        tradingAppSdk,
+        aliceTokenNamespace,
+        bobTokenNamespace,
         alice,
         tradingApp,
         globalSynchronizerId,
@@ -129,7 +129,7 @@ export async function settleOtcTrade(
         testTokenAllocationDisclosed,
     } = params
 
-    const allocationsAlice = await appUserTokenNamespace.allocation.pending(
+    const allocationsAlice = await aliceTokenNamespace.allocation.pending(
         alice.partyId
     )
     const amuletAllocation = allocationsAlice.find(
@@ -137,19 +137,19 @@ export async function settleOtcTrade(
     )
     if (!amuletAllocation) throw new Error('Amulet allocation not found')
 
-    const amuletExecCtx =
-        await appUserTokenNamespace.allocation.context.execute({
-            allocationCid: amuletAllocation.contractId,
-            registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
-        })
+    const amuletExecCtx = await aliceTokenNamespace.allocation.context.execute({
+        allocationCid: amuletAllocation.contractId,
+        registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+    })
 
     // Fetch Bob's TestToken execute-transfer choice context from the registry's
     // allocation-v1 API (instead of hard-coding an empty context).
-    const testTokenExecCtx =
-        await appProviderTokenNamespace.allocation.context.execute({
+    const testTokenExecCtx = await bobTokenNamespace.allocation.context.execute(
+        {
             allocationCid: testTokenAllocationCid,
             registryUrl: testTokenRegistryUrl,
-        })
+        }
+    )
 
     const allocationsWithContext = {
         [legIdAlice]: {
@@ -197,7 +197,7 @@ export async function settleOtcTrade(
     ]
 
     try {
-        await appUserSdk.ledger
+        await tradingAppSdk.ledger
             .prepare({
                 partyId: tradingApp.partyId,
                 commands: [

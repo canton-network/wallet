@@ -10,11 +10,11 @@ export async function mintAmuletForAlice(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { appUserSdk, alice, globalSynchronizerId } = setup
+    const { appAliceSdk, alice, globalSynchronizerId } = setup
     const [aliceTapCreateCommand, aliceTapCreateDisclosedContracts] =
-        await appUserSdk.amulet.tap(alice.partyId, ALICE_AMULET_TAP_AMOUNT)
+        await appAliceSdk.amulet.tap(alice.partyId, ALICE_AMULET_TAP_AMOUNT)
 
-    await appUserSdk.ledger
+    await appAliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: aliceTapCreateCommand,
@@ -34,22 +34,22 @@ export async function allocateAmuletForAlice(
     logger: Logger
 ): Promise<string> {
     const {
-        appUserSdk,
-        appUserTokenNamespace,
+        appAliceSdk,
+        aliceTokenNamespace,
         alice,
         globalSynchronizerId,
         amuletAdmin,
     } = setup
 
     const pendingRequests =
-        await appUserTokenNamespace.allocation.request.pending(alice.partyId)
+        await aliceTokenNamespace.allocation.request.pending(alice.partyId)
     const requestView = pendingRequests[0].interfaceViewValue!
     const legId = Object.keys(requestView.transferLegs).find(
         (key) => requestView.transferLegs[key].sender === alice.partyId
     )!
     if (!legId) throw new Error('No transfer leg found for Alice')
 
-    const amuletHoldings = await appUserTokenNamespace.utxos.list({
+    const amuletHoldings = await aliceTokenNamespace.utxos.list({
         partyId: alice.partyId,
         includeLocked: false,
     })
@@ -61,7 +61,7 @@ export async function allocateAmuletForAlice(
     if (!amuletHoldingCid) throw new Error('Amulet holding not found for Alice')
 
     const [command, disclosedContracts] =
-        await appUserTokenNamespace.allocation.instruction.create({
+        await aliceTokenNamespace.allocation.instruction.create({
             allocationSpecification: {
                 settlement: requestView.settlement,
                 transferLegId: legId,
@@ -78,7 +78,7 @@ export async function allocateAmuletForAlice(
             requestedAt: new Date().toISOString(),
         })
 
-    await appUserSdk.ledger
+    await appAliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: [command],

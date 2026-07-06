@@ -74,8 +74,9 @@ export async function createAndInitiateOtcTrade(
     logger: Logger
 ): Promise<string> {
     const {
-        appUserSdk,
-        appProviderSdk,
+        appAliceSdk,
+        appBobSdk,
+        tradingAppSdk,
         alice,
         bob,
         tradingApp,
@@ -117,7 +118,7 @@ export async function createAndInitiateOtcTrade(
         }
     }
 
-    await appUserSdk.ledger
+    await appAliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: buildOtcTradeProposalCommand({
@@ -134,15 +135,12 @@ export async function createAndInitiateOtcTrade(
         `Alice: OTCTradeProposal created (leg-0: ${TRADE_AMULET_AMOUNT} Amulet → Bob, leg-1: ${TRADE_TOKEN_AMOUNT} TestToken → Alice)`
     )
 
-    await appProviderSdk.ledger
+    await appBobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [
                 buildAcceptOtcTradeCommand({
-                    proposalCid: await readProposalCid(
-                        appProviderSdk,
-                        bob.partyId
-                    ),
+                    proposalCid: await readProposalCid(appBobSdk, bob.partyId),
                     approver: bob.partyId,
                 }),
             ],
@@ -156,13 +154,13 @@ export async function createAndInitiateOtcTrade(
     const prepareUntil = new Date(Date.now() + MS_30_MIN).toISOString()
     const settleBefore = new Date(Date.now() + MS_1_HOUR).toISOString()
 
-    await appUserSdk.ledger
+    await tradingAppSdk.ledger
         .prepare({
             partyId: tradingApp.partyId,
             commands: [
                 buildInitiateSettlementCommand({
                     proposalCid: await readProposalCid(
-                        appUserSdk,
+                        tradingAppSdk,
                         tradingApp.partyId,
                         (approvers) => approvers.includes(bob.partyId)
                     ),
@@ -179,7 +177,7 @@ export async function createAndInitiateOtcTrade(
         'TradingApp: OTCTradeProposal_InitiateSettlement executed → OTCTrade created'
     )
 
-    const otcTradeContracts = await appUserSdk.ledger.acs.read({
+    const otcTradeContracts = await tradingAppSdk.ledger.acs.read({
         templateIds: [OTC_TRADE_TEMPLATE_ID],
         parties: [tradingApp.partyId],
         filterByParty: true,

@@ -22,9 +22,9 @@ export async function createTokenRules(
     setup: MultiSyncSetup,
     synchronizerId: string
 ): Promise<void> {
-    const { appProviderSdk, tokenAdmin } = setup
+    const { tokenAdminSdk, tokenAdmin } = setup
 
-    await appProviderSdk.ledger
+    await tokenAdminSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
             commands: buildCreateTokenRulesCommand(tokenAdmin.partyId),
@@ -45,15 +45,17 @@ export async function mintAndTransferTokenToBob(
     logger: Logger
 ): Promise<void> {
     const {
-        appProviderSdk,
-        appProviderTokenNamespace,
+        appBobSdk,
+        tokenAdminSdk,
+        bobTokenNamespace,
+        tokenAdminTokenNamespace,
         bob,
         tokenAdmin,
         testTokenSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
-    await appProviderSdk.ledger
+    await tokenAdminSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
             commands: [
@@ -69,7 +71,7 @@ export async function mintAndTransferTokenToBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
-    const adminTokenHoldings = await appProviderSdk.ledger.acs.read({
+    const adminTokenHoldings = await tokenAdminSdk.ledger.acs.read({
         templateIds: [TestTokenV1.Token.templateId],
         parties: [tokenAdmin.partyId],
         filterByParty: true,
@@ -82,7 +84,7 @@ export async function mintAndTransferTokenToBob(
     // and choice context come from the registry's transfer-instruction-v1 API
     // (the TestToken registry is also resolved via the metadata-v1 API).
     const [transferCommand, transferDisclosed] =
-        await appProviderTokenNamespace.transfer.create({
+        await tokenAdminTokenNamespace.transfer.create({
             sender: tokenAdmin.partyId,
             recipient: bob.partyId,
             amount: BOB_TOKEN_MINT_AMOUNT,
@@ -91,7 +93,7 @@ export async function mintAndTransferTokenToBob(
             inputUtxos: [adminTokenCid],
         })
 
-    await appProviderSdk.ledger
+    await tokenAdminSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
             commands: [transferCommand],
@@ -101,7 +103,7 @@ export async function mintAndTransferTokenToBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
-    const transferOffers = await appProviderSdk.ledger.acs.read({
+    const transferOffers = await appBobSdk.ledger.acs.read({
         templateIds: [TestTokenV1.TokenTransferOffer.templateId],
         parties: [bob.partyId],
         filterByParty: true,
@@ -113,12 +115,12 @@ export async function mintAndTransferTokenToBob(
     // Bob accepts the transfer offer using the registry's transfer-instruction-v1
     // accept choice context.
     const [acceptCommand, acceptDisclosed] =
-        await appProviderTokenNamespace.transfer.accept({
+        await bobTokenNamespace.transfer.accept({
             transferInstructionCid: transferOfferCid,
             registryUrl: testTokenRegistryUrl,
         })
 
-    await appProviderSdk.ledger
+    await appBobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [acceptCommand],

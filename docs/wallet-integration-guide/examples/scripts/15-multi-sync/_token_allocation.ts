@@ -12,23 +12,25 @@ export async function allocateTokenForBob(
     logger: Logger
 ): Promise<{ legId: string }> {
     const {
-        appProviderSdk,
-        appProviderTokenNamespace,
+        appBobSdk,
+        tokenAdminSdk,
+        bobTokenNamespace,
         bob,
         tokenAdmin,
         testTokenSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
-    const pendingRequests =
-        await appProviderTokenNamespace.allocation.request.pending(bob.partyId)
+    const pendingRequests = await bobTokenNamespace.allocation.request.pending(
+        bob.partyId
+    )
     const requestView = pendingRequests[0].interfaceViewValue!
     const legId = Object.keys(requestView.transferLegs).find(
         (key) => requestView.transferLegs[key].sender === bob.partyId
     )!
     if (!legId) throw new Error('No transfer leg found for Bob')
 
-    const tokenHoldings = await appProviderSdk.ledger.acs.read({
+    const tokenHoldings = await appBobSdk.ledger.acs.read({
         templateIds: [TestTokenV1.Token.templateId],
         parties: [bob.partyId],
         filterByParty: true,
@@ -41,7 +43,7 @@ export async function allocateTokenForBob(
     // allocation-instruction-v1 API. The registry returns the global-synchronizer
     // TokenRules contract as the factory (disclosed in `disclosedFromHelper`).
     const [command, disclosedFromHelper] =
-        await appProviderTokenNamespace.allocation.instruction.create({
+        await bobTokenNamespace.allocation.instruction.create({
             allocationSpecification: {
                 settlement: requestView.settlement,
                 transferLegId: legId,
@@ -71,7 +73,7 @@ export async function allocateTokenForBob(
     // (TradingApp is a stakeholder of the allocation, satisfying the
     // submitter-must-be-stakeholder rule for reassignment).
     const appTokenRules = (
-        await appProviderSdk.ledger.acs.read({
+        await tokenAdminSdk.ledger.acs.read({
             templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
@@ -98,7 +100,7 @@ export async function allocateTokenForBob(
             : dc
     )
 
-    await appProviderSdk.ledger
+    await appBobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [command],

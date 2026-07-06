@@ -25,14 +25,16 @@ import { settleOtcTrade } from './_trade_settle.js'
 const logger = pino({ name: 'v1-15-multi-sync-trade', level: 'info' })
 
 // ── Setup: create SDKs, discover synchronizers, vet DARs, allocate parties ───
-// Step 1: Create SDKs for all 3 participants (app-user, app-provider, sv) and discover global + app synchronizers
+// Step 1: Create one SDK per party (Alice, TradingApp on the app-user participant; Bob, TokenAdmin on the app-provider participant; sv on its own) and discover global + app synchronizers
 // Step 2: Vet DARs on both synchronizers for app-user + app-provider; global only for sv (not connected to app-synchronizer)
 // Step 3: Allocate parties for Alice (app-user), Bob (app-provider), TradingApp (app-user, both synchronizers), and TokenAdmin (app-provider)
 const setup = await setupMultiSyncTrade(logger)
 const {
-    appUserSdk,
-    appProviderSdk,
-    appProviderTokenNamespace,
+    appAliceSdk,
+    appBobSdk,
+    tradingAppSdk,
+    tokenAdminSdk,
+    bobTokenNamespace,
     alice,
     bob,
     tradingApp,
@@ -72,10 +74,10 @@ await Promise.all([
 
 logger.info('Contracts after setup:')
 await logAllContracts(logger, synchronizers, [
-    { sdk: appUserSdk, parties: [alice.partyId] },
-    { sdk: appProviderSdk, parties: [bob.partyId] },
-    { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: appUserSdk, parties: [tradingApp.partyId] },
+    { sdk: appAliceSdk, parties: [alice.partyId] },
+    { sdk: appBobSdk, parties: [bob.partyId] },
+    { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
+    { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 
 // ── OTC trade terms ───────────────────────────────────────────────────────────
@@ -100,10 +102,10 @@ const transferLegs = {
 const otcTradeCid = await createAndInitiateOtcTrade(setup, transferLegs, logger)
 logger.info('Contracts after trade initiation:')
 await logAllContracts(logger, synchronizers, [
-    { sdk: appUserSdk, parties: [alice.partyId] },
-    { sdk: appProviderSdk, parties: [bob.partyId] },
-    { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: appUserSdk, parties: [tradingApp.partyId] },
+    { sdk: appAliceSdk, parties: [alice.partyId] },
+    { sdk: appBobSdk, parties: [bob.partyId] },
+    { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
+    { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 // ── Steps 8–9: Allocate in parallel ────────────────────────────────────────
 // Step 8:  Alice allocates Amulet for leg-0 (global synchronizer)
@@ -114,15 +116,13 @@ const [legIdAlice, { legId: legIdBob }] = await Promise.all([
 ])
 logger.info('Contracts after allocations:')
 await logAllContracts(logger, synchronizers, [
-    { sdk: appUserSdk, parties: [alice.partyId] },
-    { sdk: appProviderSdk, parties: [bob.partyId] },
-    { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: appUserSdk, parties: [tradingApp.partyId] },
+    { sdk: appAliceSdk, parties: [alice.partyId] },
+    { sdk: appBobSdk, parties: [bob.partyId] },
+    { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
+    { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────────────
-const allocationsBob = await appProviderTokenNamespace.allocation.pending(
-    bob.partyId
-)
+const allocationsBob = await bobTokenNamespace.allocation.pending(bob.partyId)
 const testTokenAllocation = allocationsBob.find(
     (a) => a.interfaceViewValue.allocation.transferLegId === legIdBob
 )
@@ -149,7 +149,7 @@ const testTokenAllocationDisclosed = {
 // allocation's sender (a signatory) and is hosted on the app-provider
 // participant, which is connected to both synchronizers, so Bob can perform the
 // reassignment explicitly before settlement.
-await appProviderSdk.ledger.internal.reassign({
+await appBobSdk.ledger.internal.reassign({
     submitter: bob.partyId,
     contractId: testTokenAllocationCid,
     source: synchronizers.testTokenSynchronizerId,
@@ -181,20 +181,20 @@ try {
     await bobSelfTransferToApp(setup, logger)
     logger.info('Contracts after settlement failure (compensation applied):')
     await logAllContracts(logger, synchronizers, [
-        { sdk: appUserSdk, parties: [alice.partyId] },
-        { sdk: appProviderSdk, parties: [bob.partyId] },
-        { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-        { sdk: appUserSdk, parties: [tradingApp.partyId] },
+        { sdk: appAliceSdk, parties: [alice.partyId] },
+        { sdk: appBobSdk, parties: [bob.partyId] },
+        { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
+        { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
     ])
     await registry.stop()
     process.exit(1)
 }
 logger.info('Contracts after settlement:')
 await logAllContracts(logger, synchronizers, [
-    { sdk: appUserSdk, parties: [alice.partyId] },
-    { sdk: appProviderSdk, parties: [bob.partyId] },
-    { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: appUserSdk, parties: [tradingApp.partyId] },
+    { sdk: appAliceSdk, parties: [alice.partyId] },
+    { sdk: appBobSdk, parties: [bob.partyId] },
+    { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
+    { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 11: Self-transfer TestTokens back to app-synchronizer ─────────────────
 await Promise.all([
@@ -203,10 +203,10 @@ await Promise.all([
 ])
 logger.info('Final contract state:')
 await logAllContracts(logger, synchronizers, [
-    { sdk: appUserSdk, parties: [alice.partyId] },
-    { sdk: appProviderSdk, parties: [bob.partyId] },
-    { sdk: appProviderSdk, parties: [tokenAdmin.partyId] },
-    { sdk: appUserSdk, parties: [tradingApp.partyId] },
+    { sdk: appAliceSdk, parties: [alice.partyId] },
+    { sdk: appBobSdk, parties: [bob.partyId] },
+    { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
+    { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 
 await registry.stop()

@@ -3,7 +3,7 @@
 ## The question
 
 `_token_allocation.ts` (Bob's TestToken allocation) used to call
-`appProviderSdk.ledger.internal.reassign(...)` to move Bob's `Token` from the
+`appBobSdk.ledger.internal.reassign(...)` to move Bob's `Token` from the
 **app-synchronizer** to the **global** synchronizer before allocating it for
 leg-1. We expected the scenario to work via Canton's **automatic**
 reassignment once that explicit step was commented out — but it fails:
