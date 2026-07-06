@@ -48,6 +48,12 @@ const baseNetwork: Network = {
     identityProviderId: 'idp-oauth',
     ledgerApi: { baseUrl: 'http://localhost:6865' },
     auth: {
+        method: 'authorization_code',
+        audience: 'aud',
+        scope: 'scope',
+        clientId: 'cid',
+    },
+    serviceAccountAuth: {
         method: 'client_credentials',
         audience: 'aud',
         scope: 'scope',
@@ -175,6 +181,8 @@ describe('schema mappers', () => {
                 createdAt,
                 signedAt,
                 externalTxId: 'ext-1',
+                networkId: 'net-1',
+                userId: 'user-1',
             }
 
             const table = fromTransaction(transaction, 'user-1', 'net-1')

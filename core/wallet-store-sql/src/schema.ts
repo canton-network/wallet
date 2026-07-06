@@ -112,8 +112,10 @@ interface MessageRawTable {
     signature: string | null
 }
 
-interface SessionTable extends Session {
+interface SessionTable {
     id: string
+    network: string
+    accessToken: string
     userId: UserId
 }
 
@@ -235,6 +237,15 @@ export const fromNetwork = (
     }
 }
 
+export const toSession = (table: SessionTable): Session => {
+    return {
+        id: table.id,
+        network: table.network,
+        accessToken: table.accessToken,
+        userId: table.userId,
+    }
+}
+
 export const fromWallet = (wallet: Wallet, userId: UserId): WalletTable => {
     const { externalTxId, topologyTransactions, rights, ...rest } = wallet
     void rights
@@ -346,6 +357,8 @@ export const toTransaction = (table: TransactionTable): Transaction => {
         preparedTransactionHash: table.preparedTransactionHash,
         payload: table.payload ? JSON.parse(table.payload) : undefined,
         origin: table.origin || null,
+        userId: table.userId,
+        networkId: table.networkId,
     }
 
     if (table.createdAt) {

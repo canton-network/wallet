@@ -607,4 +607,57 @@ describe('TransactionService', () => {
             })
         })
     })
+
+    describe('signAndExecute', () => {
+        const participantWallet = walletWithProvider(
+            SigningProvider.PARTICIPANT
+        )
+
+        it('signs and executes when signing completes synchronously', async () => {
+            const service = createService(createStore(), {}, notifier, logger)
+            const executeSpy = vi
+                .spyOn(service, 'execute')
+                .mockResolvedValue({ commandId: 'cmd-1' })
+            vi.spyOn(service, 'sign').mockResolvedValue({
+                status: 'signed',
+                signature: 'sig',
+                signedBy: 'namespace',
+                partyId: participantWallet.partyId,
+            })
+
+            const result = await service.signAndExecute(
+                authContext,
+                network,
+                participantWallet,
+                pendingTransaction
+            )
+
+            expect(result).toEqual({ commandId: 'cmd-1' })
+            expect(executeSpy).toHaveBeenCalled()
+        })
+
+        it('returns pending sign result without executing', async () => {
+            const service = createService(createStore(), {}, notifier, logger)
+            const executeSpy = vi.spyOn(service, 'execute')
+            vi.spyOn(service, 'sign').mockResolvedValue({
+                status: 'pending',
+                externalTxId: 'ext-1',
+                partyId: participantWallet.partyId,
+            })
+
+            const result = await service.signAndExecute(
+                authContext,
+                network,
+                participantWallet,
+                pendingTransaction
+            )
+
+            expect(result).toEqual({
+                status: 'pending',
+                externalTxId: 'ext-1',
+                partyId: participantWallet.partyId,
+            })
+            expect(executeSpy).not.toHaveBeenCalled()
+        })
+    })
 })

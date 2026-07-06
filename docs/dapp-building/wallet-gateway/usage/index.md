@@ -102,6 +102,14 @@ Use the same host as `kernel.publicUrl` and the default `server.dappPath` (`/api
 - Calls `listNetworks()` / `listIdps()`, then `createWallet()` with desired network and signing provider.
 - Uses `listWallets()`, `sign()`, `execute()`, etc. as needed for your use case.
 
+**5. Service account automation**
+
+- A user creates an API key in the Wallet Gateway (User UI or User API `generateApiKey`).
+- Backend jobs call the dApp API with `Authorization: ApiKey …` and `prepareExecute` for straight-through prepare/sign/execute.
+- The network must define `serviceAccountAuth` so the Gateway can obtain ledger tokens for automation.
+- Requires a ledger user, primary wallet, and configured signing provider before submitting commands.
+- See [Automations](../automations/index.md) for the full setup and operations guide.
+
 ## Next steps
 
 - Configure the Gateway: [Configuration](../configuration/index.md)

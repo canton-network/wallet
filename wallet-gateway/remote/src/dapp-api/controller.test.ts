@@ -15,7 +15,7 @@ import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '../notification/NotificationService.js'
-import { dappController } from './controller.js'
+import { dappController, DappControllerDeps } from './controller.js'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -148,7 +148,8 @@ function createController(
     notificationService: NotificationService,
     logger: Logger,
     context: AuthContext | undefined,
-    requestOrigin: string | null = origin
+    requestOrigin: string | null = origin,
+    deps?: DappControllerDeps
 ) {
     return dappController(
         kernelInfo,
@@ -158,6 +159,7 @@ function createController(
         notificationService,
         logger,
         requestOrigin,
+        deps || { signingDrivers: {} },
         context
     )
 }

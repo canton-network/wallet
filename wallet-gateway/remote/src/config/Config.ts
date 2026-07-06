@@ -73,6 +73,15 @@ export const serverConfigSchema = z.object({
         description:
             'The JWT claim (e.g. "sub") identifying the admin user. If set, requests with a matching claim will be granted admin privileges.',
     }),
+    signingWorker: z.preprocess(
+        (val) => val ?? {},
+        z.object({
+            pollInterval: z.number().int().positive().default(5000).meta({
+                description:
+                    'Interval in milliseconds for the signing worker to poll external signing providers on pending transactions. Defaults to 5000.',
+            }),
+        })
+    ),
 })
 
 const loggingConfigSchema = z

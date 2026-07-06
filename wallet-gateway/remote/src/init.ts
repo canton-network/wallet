@@ -44,9 +44,11 @@ import { sessionHandler } from './middleware/sessionHandler.js'
 import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
 import { Env } from './env.js'
+import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 
 let isReady = false
+let signingWorker: SigningWorker | undefined
 
 async function initializeDatabase(
     config: Config,
@@ -355,6 +357,19 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const kernelInfo = config.kernel
 
+    const signingWorkerLogger = logger.child({
+        component: 'SigningWorker',
+    })
+
+    signingWorker = new SigningWorker({
+        intervalMs: config.server.signingWorker.pollInterval,
+        signingDrivers: drivers,
+        store,
+        notificationService,
+        logger: signingWorkerLogger,
+    })
+    signingWorker.start()
+
     // register dapp API handlers
     dapp(
         config.server.dappPath,
@@ -366,8 +381,10 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         publicUrl,
         config.server,
         notificationService,
-        authService,
-        store
+        store,
+        {
+            signingDrivers: drivers,
+        }
     )
 
     // register user API handlers

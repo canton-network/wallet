@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Idp } from '@canton-network/core-wallet-auth'
+import type { Idp } from '@canton-network/core-wallet-auth'
 import { Network } from './config/schema'
 
 export enum AddressType {
@@ -76,6 +76,7 @@ export interface Session {
     id: string
     network: string
     accessToken: string
+    userId?: string
 }
 
 export interface Transaction {
@@ -89,6 +90,8 @@ export interface Transaction {
     createdAt?: Date
     signedAt?: Date
     externalTxId?: string
+    userId?: string
+    networkId?: string
 }
 
 export interface TransactionStatusUpdate {
@@ -181,6 +184,7 @@ export interface Store {
         commandId: string
     ): Promise<Transaction | undefined>
     listTransactions(): Promise<Array<Transaction>>
+    listAllPendingTransactions(): Promise<Array<Transaction>>
     removeTransaction(transactionId: string): Promise<void>
 
     // Message signing request methods

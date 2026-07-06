@@ -21,6 +21,9 @@ export default {
         requestRateLimit: 10000,
         trustProxy: false,
         admin: 'sub',
+        signingWorker: {
+            pollInterval: 5000,
+        },
     },
     signingStore: {
         connection: {
