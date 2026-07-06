@@ -140,25 +140,16 @@ const testTokenAllocationDisclosed = {
     synchronizerId: '',
 }
 
-// ── Step 10b: Bob reassigns his TestToken allocation app → global ──────────────
-// The allocation was created on the app-synchronizer. Settlement runs on the
-// global synchronizer, so the allocation must move to global first. The
-// settlement is submitted by TradingApp, which is only an *observer* of the
-// allocation — and Canton's automatic reassignment requires the submitter to be
-// a *signatory* (SUBMITTER_ALWAYS_STAKEHOLDER otherwise). Bob is the
-// allocation's sender (a signatory) and is hosted on the app-provider
-// participant, which is connected to both synchronizers, so Bob can perform the
-// reassignment explicitly before settlement.
-await appBobSdk.ledger.internal.reassign({
-    submitter: bob.partyId,
-    contractId: testTokenAllocationCid,
-    source: synchronizers.testTokenSynchronizerId,
-    target: synchronizers.globalSynchronizerId,
-    skipIfAlreadyOn: true,
-})
-logger.info(
-    'Bob: TestToken allocation reassigned app-synchronizer → global ahead of settlement'
-)
+// await appBobSdk.ledger.internal.reassign({
+//     submitter: bob.partyId,
+//     contractId: testTokenAllocationCid,
+//     source: synchronizers.testTokenSynchronizerId,
+//     target: synchronizers.globalSynchronizerId,
+//     skipIfAlreadyOn: true,
+// })
+// logger.info(
+//     'Bob: TestToken allocation reassigned app-synchronizer → global ahead of settlement'
+// )
 
 // ── Step 10c: TradingApp settles the OTCTrade ─────────────────────────────────
 try {

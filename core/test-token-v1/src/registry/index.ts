@@ -145,7 +145,10 @@ export async function startTestTokenRegistry(
         getTokenRules,
         allocationSynchronizerId,
     })
-    const alloc = createAllocationHandlers()
+    const alloc = createAllocationHandlers({
+        getTokenRules,
+        allocationSynchronizerId,
+    })
 
     // Every OpenAPI operationId maps to its feature handler. TypeScript checks —
     // via the generated `RegistryHandlers` type — that every operation is

@@ -60,18 +60,6 @@ export async function allocateTokenForBob(
             requestedAt: new Date(Date.now()).toISOString(),
         })
 
-    // Re-point the allocation factory (and its disclosed contract) at the
-    // TokenRules instance that lives on the app-synchronizer, and prepare the
-    // allocation there too. Bob's input Token already lives on the
-    // app-synchronizer, so co-locating the factory on the same synchronizer means
-    // no reassignment is needed to create the allocation.
-    //
-    // The resulting TokenAllocation has `observer settlement.executor`
-    // (= TradingApp), which is hosted on the app-user participant — connected to
-    // both synchronizers. Settlement (the next step) is submitted via app-user, so
-    // it can automatically reassign this app-synchronizer allocation to global
-    // (TradingApp is a stakeholder of the allocation, satisfying the
-    // submitter-must-be-stakeholder rule for reassignment).
     const appTokenRules = (
         await tokenAdminSdk.ledger.acs.read({
             templateIds: [TestTokenV1.TokenRules.templateId],
