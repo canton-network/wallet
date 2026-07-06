@@ -39,6 +39,27 @@ export function resolveGlobalSynchronizerId(
     return global.synchronizerId
 }
 
+/**
+ * Fetches connected synchronizers from the ledger API and returns the ID of the
+ * synchronizer aliased `'global'`.
+ *
+ * The wallet SDK no longer auto-selects a synchronizer, so client code (these
+ * examples) resolves it explicitly and passes it to SDK calls that require one.
+ */
+export async function getGlobalSynchronizerId(sdk: {
+    ledger: {
+        connectedSynchronizers(args: object): Promise<{
+            connectedSynchronizers?: Array<{
+                synchronizerAlias: string
+                synchronizerId: string
+            }>
+        }>
+    }
+}): Promise<string> {
+    const response = await sdk.ledger.connectedSynchronizers({})
+    return resolveGlobalSynchronizerId(response.connectedSynchronizers ?? [])
+}
+
 export const TOKEN_PROVIDER_CONFIG_DEFAULT: TokenProviderConfig = {
     method: 'self_signed',
     issuer: 'unsafe-auth',

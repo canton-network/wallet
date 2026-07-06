@@ -3,7 +3,10 @@ import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
-import { TOKEN_PROVIDER_CONFIG_DEFAULT } from './index.js'
+import {
+    getGlobalSynchronizerId,
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+} from './index.js'
 
 /*
 This script is so that the CI can run all the scripts in parallel
@@ -28,6 +31,8 @@ const TRADING_APP_PACKAGE_ID =
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
+const synchronizerId = await getGlobalSynchronizerId(sdk)
+
 const tradingDarPath = path.join(
     here,
     PATH_TO_LOCALNET,
@@ -36,7 +41,7 @@ const tradingDarPath = path.join(
 
 //upload dar
 const darBytes = await fs.readFile(tradingDarPath)
-await sdk.ledger.dar.upload(darBytes, TRADING_APP_PACKAGE_ID)
+await sdk.ledger.dar.upload(darBytes, TRADING_APP_PACKAGE_ID, synchronizerId)
 
 const PATH_TO_TOKEN_STANDARD_DAR_IN_LOCALNET =
     '/dars/splice-util-token-standard-wallet-1.0.0.dar'
@@ -55,7 +60,8 @@ const tokenStandardDarBytes = await fs.readFile(
 )
 await sdk.ledger.dar.upload(
     tokenStandardDarBytes,
-    SPLICE_UTIL_TOKEN_STANDARD_WALLET_PACKAGE_ID
+    SPLICE_UTIL_TOKEN_STANDARD_WALLET_PACKAGE_ID,
+    synchronizerId
 )
 
 logger.info('upload dars completed')

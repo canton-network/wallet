@@ -12,9 +12,11 @@ export class TrafficNamespace {
     async status(
         params?: Partial<{ memberId?: string; synchronizerId?: string }>
     ) {
-        const synchronizerId =
-            params?.synchronizerId ||
-            this.sdkContext.commonCtx.defaultSynchronizerId
+        const synchronizerId = params?.synchronizerId
+        if (!synchronizerId)
+            throw new Error(
+                'synchronizerId is required for traffic.status — pass the synchronizer ID explicitly'
+            )
 
         const memberId =
             params?.memberId ??
@@ -46,6 +48,11 @@ export class TrafficNamespace {
     }): Promise<PreparedCommand> {
         const { buyer, ccAmount, inputUtxos } = params
         const migrationId = params.migrationId ?? 0
+        const synchronizerId = params.synchronizerId
+        if (!synchronizerId)
+            throw new Error(
+                'synchronizerId is required for traffic.buy — pass the synchronizer ID explicitly'
+            )
         const defaultAmulet = await fetchAmulet(this.sdkContext)
         const memberId =
             params.memberId ??
@@ -60,10 +67,6 @@ export class TrafficNamespace {
                     }
                 )
             ).participantId
-
-        const synchronizerId =
-            params.synchronizerId ||
-            this.sdkContext.commonCtx.defaultSynchronizerId
 
         const [command, dc] =
             await this.sdkContext.amuletService.buyMemberTraffic(

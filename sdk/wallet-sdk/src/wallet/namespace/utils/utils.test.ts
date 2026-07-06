@@ -20,7 +20,6 @@ const ctx: SDKContext = {
     userId: 'ledger-api-user',
     logger: new SDKLogger('console'),
     error: new SDKErrorHandler(new SDKLogger('console')),
-    defaultSynchronizerId: 'synchronizerId',
 }
 
 const amuletAsset = {

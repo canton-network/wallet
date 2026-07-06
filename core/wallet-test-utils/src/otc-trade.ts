@@ -79,9 +79,18 @@ export class OTCTrade {
             PATH_TO_DAR_IN_LOCALNET
         )
 
+        // Resolve the global synchronizer explicitly: the SDK no longer
+        // auto-selects one, and DAR upload cannot be autodetected when the
+        // participant is connected to multiple synchronizers.
+        const synchronizerId = await this.resolveGlobalSynchronizerId()
+
         //upload dar
         const darBytes = await fs.readFile(tradingDarPath)
-        await this.sdk.ledger.dar.upload(darBytes, TRADING_APP_PACKAGE_ID)
+        await this.sdk.ledger.dar.upload(
+            darBytes,
+            TRADING_APP_PACKAGE_ID,
+            synchronizerId
+        )
 
         // Alice creates OTCTradeProposal
 
@@ -205,6 +214,20 @@ export class OTCTrade {
             expectedAllocationCount: this.expectedAllocationCount,
             settlementRefCid,
         }
+    }
+
+    private async resolveGlobalSynchronizerId(): Promise<string> {
+        if (!this.sdk) throw new Error('SDK not initialized')
+
+        const { connectedSynchronizers } =
+            await this.sdk.ledger.connectedSynchronizers({})
+        const globalSynchronizer = (connectedSynchronizers ?? []).find(
+            (s) => s.synchronizerAlias === 'global'
+        )
+        if (!globalSynchronizer) {
+            throw new Error('Global synchronizer not found')
+        }
+        return globalSynchronizer.synchronizerId
     }
 
     private async acceptProposal(

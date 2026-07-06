@@ -4,6 +4,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from '../utils/index.js'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -31,12 +32,15 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
+const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
+
 const aliceKeys = sdk.keys.generate()
 const treasuryKeys = sdk.keys.generate()
 
 const alice = await sdk.party.external
     .create(aliceKeys.publicKey, {
         partyHint: 'v1-13-alice',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(aliceKeys.privateKey)
     .execute()
@@ -44,6 +48,7 @@ const alice = await sdk.party.external
 const treasury = await sdk.party.external
     .create(treasuryKeys.publicKey, {
         partyHint: 'v1-13-treasury',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(treasuryKeys.privateKey)
     .execute()
@@ -57,7 +62,11 @@ const spliceUtilFeaturedAppProxyDarPath = path.join(
 )
 
 const darBytes = await fs.readFile(spliceUtilFeaturedAppProxyDarPath)
-await sdk.ledger.dar.upload(darBytes, SPLICE_UTIL_PROXY_PACKAGE_ID)
+await sdk.ledger.dar.upload(
+    darBytes,
+    SPLICE_UTIL_PROXY_PACKAGE_ID,
+    globalSynchronizerId
+)
 
 const transferPreApprovalProposal = await sdk.amulet.preapproval.command.create(
     {
@@ -77,7 +86,9 @@ await sdk.ledger
         partyId: alice.partyId,
     })
 
-const featuredAppRight = await sdk.amulet.featuredApp.grant()
+const featuredAppRight = await sdk.amulet.featuredApp.grant({
+    synchronizerId: globalSynchronizerId,
+})
 logger.info(featuredAppRight, 'Featured app rights:')
 
 if (!featuredAppRight) throw Error('featuredAppRightCid is undefined')

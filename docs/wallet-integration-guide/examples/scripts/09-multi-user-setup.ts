@@ -1,6 +1,9 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
-import { TOKEN_PROVIDER_CONFIG_DEFAULT } from './utils/index.js'
+import {
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+    getGlobalSynchronizerId,
+} from './utils/index.js'
 const logger = pino({ name: 'v1-multi-user-setup', level: 'info' })
 
 logger.info('Operator sets up users and primary parties')
@@ -10,16 +13,21 @@ const operatorSdk = await SDK.create({
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
 })
 
+const globalSynchronizerId = await getGlobalSynchronizerId(operatorSdk)
+
 const aliceInternal = await operatorSdk.party.internal.allocate({
     partyHint: 'v1-09-alice',
+    synchronizerId: globalSynchronizerId,
 })
 
 const bobInternal = await operatorSdk.party.internal.allocate({
     partyHint: 'v1-09-bob',
+    synchronizerId: globalSynchronizerId,
 })
 
 const masterPartyInternal = await operatorSdk.party.internal.allocate({
     partyHint: 'v1-09-master',
+    synchronizerId: globalSynchronizerId,
 })
 
 logger.info('Created the internal parties')
@@ -90,6 +98,7 @@ const aliceKeyPair = aliceSdk.keys.generate()
 const aliceExternal = await aliceSdk.party.external
     .create(aliceKeyPair.publicKey, {
         partyHint: 'v1-09-alice',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(aliceKeyPair.privateKey)
     .execute()
@@ -114,6 +123,7 @@ const bobKeyPair = bobSdk.keys.generate()
 const bobExternal = await bobSdk.party.external
     .create(bobKeyPair.publicKey, {
         partyHint: 'v1-09-bob',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(bobKeyPair.privateKey)
     .execute()

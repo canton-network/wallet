@@ -10,6 +10,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-token-standard-allocation', level: 'info' })
@@ -43,9 +44,15 @@ const tradingDarPath = path.join(
     PATH_TO_DAR_IN_LOCALNET
 )
 
+const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
+
 //upload dar
 const darBytes = await fs.readFile(tradingDarPath)
-await sdk.ledger.dar.upload(darBytes, TRADING_APP_PACKAGE_ID)
+await sdk.ledger.dar.upload(
+    darBytes,
+    TRADING_APP_PACKAGE_ID,
+    globalSynchronizerId
+)
 
 //allocate parties
 const allocatedParties = await Promise.all(
@@ -54,6 +61,7 @@ const allocatedParties = await Promise.all(
         const party = await sdk.party.external
             .create(partyKeys.publicKey, {
                 partyHint,
+                synchronizerId: globalSynchronizerId,
             })
             .sign(partyKeys.privateKey)
             .execute()

@@ -9,7 +9,10 @@ export default async function () {
     const key = sdk.keys.generate()
 
     const party = await sdk.party.external
-        .create(key.publicKey, { partyHint: 'my-party-without-rights' })
+        .create(key.publicKey, {
+            partyHint: 'my-party-without-rights',
+            synchronizerId: global.SYNCHRONIZER_ID,
+        })
         .sign(key.privateKey)
         .execute({ grantUserRights: false }) //do not grant user actAs and readAs for the party
 }

@@ -5,7 +5,10 @@ import {
     localNetStaticConfig,
     SDK,
 } from '@canton-network/wallet-sdk'
-import { TOKEN_PROVIDER_CONFIG_DEFAULT } from './utils/index.js'
+import {
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+    getGlobalSynchronizerId,
+} from './utils/index.js'
 
 const logger = pino({ name: 'v1-12-subscribe-to-events', level: 'info' })
 
@@ -22,12 +25,15 @@ const sdk = await SDK.create({
     },
 })
 
+const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
+
 const allocatedParties = await Promise.all(
     ['v1-12-alice', 'v1-12-bob'].map((partyHint) => {
         const partyKeys = sdk.keys.generate()
         return sdk.party.external
             .create(partyKeys.publicKey, {
                 partyHint,
+                synchronizerId: globalSynchronizerId,
             })
             .sign(partyKeys.privateKey)
             .execute()
@@ -63,6 +69,7 @@ const charlieKeys = sdk.keys.generate()
 const charlie = await sdk.party.external
     .create(charlieKeys.publicKey, {
         partyHint: 'v1-12-charlie',
+        synchronizerId: globalSynchronizerId,
         confirmingParticipantEndpoints: participantEndpoints,
     })
     .sign(charlieKeys.privateKey)
@@ -120,6 +127,7 @@ const observingCharlieKeys = sdk.keys.generate()
 const observingCharlie = await sdk.party.external
     .create(observingCharlieKeys.publicKey, {
         partyHint: 'v1-12-observingCharlie',
+        synchronizerId: globalSynchronizerId,
         observingParticipantEndpoints: participantEndpoints,
     })
     .sign(observingCharlieKeys.privateKey)

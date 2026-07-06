@@ -86,8 +86,7 @@ export class LedgerNamespace {
      */
     public prepare(options: PrepareOptions): PreparedTransaction {
         const preparePromise = async () => {
-            const synchronizerId =
-                options.synchronizerId || this.sdkContext.defaultSynchronizerId
+            const synchronizerId = options.synchronizerId
 
             const {
                 partyId,
@@ -103,7 +102,7 @@ export class LedgerNamespace {
                 commandId,
                 actAs: [partyId],
                 disclosedContracts,
-                synchronizerId,
+                ...(synchronizerId !== undefined && { synchronizerId }),
             })
         }
 

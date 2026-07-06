@@ -4,6 +4,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-06-merge-utxos', level: 'info' })
@@ -14,11 +15,15 @@ const sdk = await SDK.create({
     token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
 })
+
+const globalSynchronizerId = await getGlobalSynchronizerId(sdk)
+
 const aliceKeys = sdk.keys.generate()
 
 const alice = await sdk.party.external
     .create(aliceKeys.publicKey, {
         partyHint: 'v1-07-alice',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(aliceKeys.privateKey)
     .execute()
@@ -28,6 +33,7 @@ const bobKeys = sdk.keys.generate()
 const bob = await sdk.party.external
     .create(bobKeys.publicKey, {
         partyHint: 'v1-07-bob',
+        synchronizerId: globalSynchronizerId,
     })
     .sign(bobKeys.privateKey)
     .execute()
@@ -66,7 +72,9 @@ await sdk.ledger
 
 logger.info(`Tapped holdings for alice`)
 
-const trafficStatusBeforePurchase = await sdk.amulet.traffic.status()
+const trafficStatusBeforePurchase = await sdk.amulet.traffic.status({
+    synchronizerId: globalSynchronizerId,
+})
 
 logger.info(
     `Traffic status before purchase: ${JSON.stringify(trafficStatusBeforePurchase)}`
@@ -79,6 +87,7 @@ const [buyTrafficCommand, buyTrafficDisclosedContracts] =
         buyer: alice.partyId,
         ccAmount,
         inputUtxos: [],
+        synchronizerId: globalSynchronizerId,
     })
 
 await sdk.ledger

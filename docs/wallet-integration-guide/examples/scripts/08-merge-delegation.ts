@@ -8,6 +8,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    getGlobalSynchronizerId,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-08-merge-delegation', level: 'info' })
@@ -36,10 +37,13 @@ const sdk = await SDK.create({
     amulet: AMULET_NAMESPACE_CONFIG,
 })
 
+const synchronizerId = await getGlobalSynchronizerId(sdk)
+
 const darBytes = await readFile(spliceUtilTokenStandardWalletDarPath)
 await sdk.ledger.dar.upload(
     darBytes,
-    SPLICE_UTIL_TOKEN_STANDARD_WALLET_PACKAGE_ID
+    SPLICE_UTIL_TOKEN_STANDARD_WALLET_PACKAGE_ID,
+    synchronizerId
 )
 
 logger.info(`DAR ${PATH_TO_DAR_IN_LOCALNET} successfully uploaded`)
@@ -49,6 +53,7 @@ const aliceKeys = sdk.keys.generate()
 const alice = await sdk.party.external
     .create(aliceKeys.publicKey, {
         partyHint: 'v1-08-alice',
+        synchronizerId,
     })
     .sign(aliceKeys.privateKey)
     .execute()
