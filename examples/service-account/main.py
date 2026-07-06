@@ -2,6 +2,7 @@ import requests
 from datetime import datetime
 
 API_KEY = ""
+SUBMITTER = "alex5::12204b83b5e0d1fac1c2b42a6228615a44e2e782f503a9c3e4841eeb01ee6fb5fde4"
 
 def json_rpc_request(path, method, params=None, apiKey=None):
     headers = {}
@@ -32,8 +33,8 @@ def get_primary_account():
 
     return partyId
 
-def prepare_execute(commands):
-    response = json_rpc_request("dapp", "prepareExecute", { "commands": commands }, apiKey=API_KEY)
+def prepare_execute(commands, party):
+    response = json_rpc_request("dapp", "prepareExecute", { "commands": commands, "actAs": [party] }, apiKey=API_KEY)
     print("Prepare execute response:", response.text)
 
     return response
@@ -65,9 +66,9 @@ def main():
 
     print("\nReceived primary party: ", primaryParty)
 
-    pingCommand = ping_create_command(primaryParty)
+    pingCommand = ping_create_command(SUBMITTER)
 
-    prepared = prepare_execute(pingCommand)
+    prepared = prepare_execute(pingCommand, SUBMITTER)
     userUrl = prepared.json().get("result", {}).get("userUrl")
     print("Received userUrl: ", userUrl)
 

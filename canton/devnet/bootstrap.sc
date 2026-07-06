@@ -129,7 +129,7 @@ participant1.ledger_api.users.create(id = "operator", actAs = Set(operatorParty)
 
 participant1.ledger_api.users.create(id = "operator2", actAs = Set(operatorParty), readAs = Set(operatorParty), primaryParty = Some(operatorParty), participantAdmin = false, isDeactivated = false, annotations = Map("foo" -> "bar", "description" -> "This is a description"))
 
-participant1.ledger_api.users.create(id = "service_account", participantAdmin = false, isDeactivated = false, executeAsAnyParty = true)
+participant1.ledger_api.users.create(id = "service_account", participantAdmin = false, isDeactivated = false, executeAsAnyParty = true, readAsAnyParty = true)
 
 participant1.ledger_api.identity_provider_config.create("mock-oauth2", isDeactivated = false, jwksUrl = "http://127.0.0.1:8889/jwks", issuer = "http://127.0.0.1:8889", audience = None)
 

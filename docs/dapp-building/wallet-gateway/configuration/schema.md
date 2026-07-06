@@ -119,6 +119,20 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 "admin": {
                     "description": "The JWT claim (e.g. \"sub\") identifying the admin user. If set, requests with a matching claim will be granted admin privileges.",
                     "type": "string"
+                },
+                "signingWorker": {
+                    "type": "object",
+                    "properties": {
+                        "pollInterval": {
+                            "default": 5000,
+                            "description": "Interval in milliseconds for the signing worker to poll external signing providers on pending transactions. Defaults to 5000.",
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                        }
+                    },
+                    "required": ["pollInterval"],
+                    "additionalProperties": false
                 }
             },
             "required": [
@@ -128,7 +142,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 "allowedOrigins",
                 "requestSizeLimit",
                 "requestRateLimit",
-                "trustProxy"
+                "trustProxy",
+                "signingWorker"
             ],
             "additionalProperties": false
         },

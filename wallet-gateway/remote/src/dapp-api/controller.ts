@@ -32,7 +32,14 @@ import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import { TransactionService } from '../ledger/transaction-service.js'
+
+import { SigningDrivers } from '../signing/signing-drivers.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
+
+export interface DappControllerDeps {
+    signingDrivers: SigningDrivers
+}
 
 export const dappController = (
     kernelInfo: KernelInfoConfig,
@@ -42,9 +49,24 @@ export const dappController = (
     notificationService: NotificationService,
     _logger: Logger,
     origin: string | null,
+    deps: DappControllerDeps,
     context?: AuthContext
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
+
+    function assertActAsPartiesBelongToUser(
+        actAs: string[],
+        wallets: Wallet[]
+    ): void {
+        for (const party of actAs) {
+            if (wallets.find((w) => w.partyId === party) === undefined) {
+                throw rpcErrors.invalidRequest(
+                    `Acting party ${party} does not belong to user`
+                )
+            }
+        }
+    }
+
     return buildController({
         connect: async () => {
             if (!context || !(await store.getSession())) {
@@ -188,7 +210,7 @@ export const dappController = (
             return result
         },
         prepareExecute: async (params: PrepareExecuteParams) => {
-            const wallet = await store.getPrimaryWallet()
+            const primaryWallet = await store.getPrimaryWallet()
             const wallets = await store.getWallets()
             const network = await store.getCurrentNetwork()
 
@@ -196,10 +218,7 @@ export const dappController = (
                 throw new Error('Unauthenticated context')
             }
 
-            if (wallet === undefined) {
-                throw new Error('No primary wallet found')
-            }
-
+            // determine user ID
             let userId = context.userId
             const accessTokenProvider: AuthTokenProvider =
                 AuthTokenProvider.fromToken(context.accessToken, logger)
@@ -209,6 +228,27 @@ export const dappController = (
                     'Authenticated with API Key, fetching m2m token for ledger access'
                 )
                 userId = context.ledgerUserId
+            }
+
+            // determine party ID
+            let actAs = params.actAs || []
+            if (actAs.length === 0) {
+                if (!primaryWallet) {
+                    throw new Error(
+                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
+                    )
+                }
+                actAs = [primaryWallet.partyId]
+            }
+
+            assertActAsPartiesBelongToUser(actAs, wallets)
+
+            // determine wallet
+            const wallet = wallets.find((w) => w.partyId === actAs[0])
+            if (wallet === undefined) {
+                throw new Error(
+                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
+                )
             }
 
             const ledgerClient = new LedgerClient({
@@ -228,37 +268,18 @@ export const dappController = (
                 network.synchronizerId ??
                 (await ledgerClient.getSynchronizerId())
 
-            let actAs = [wallet.partyId]
-
-            if (params.actAs && params.actAs.length > 0) {
-                actAs = params.actAs
-
-                for (const actingParty of actAs) {
-                    if (
-                        wallets.find((w) => w.partyId === actingParty) ===
-                        undefined
-                    ) {
-                        throw rpcErrors.invalidRequest(
-                            `Acting party ${actingParty} does not belong to user`
-                        )
-                    }
-                }
-            }
-
             logDynamically(
                 logger,
                 'prepareExecute: Submitting request to ledger',
                 {
                     info: { transactionId },
-                    debug: { commandId, userId, actAs },
+                    debug: { commandId, userId, actAs, params },
                 }
             )
 
-            const actAsParty = params.actAs || [wallet.partyId]
-
             const prepared = await prepareSubmission(
-                context.userId,
-                actAsParty,
+                userId,
+                actAs,
                 synchronizerId,
                 params,
                 ledgerClient
@@ -272,7 +293,7 @@ export const dappController = (
                     debug: {
                         commandId,
                         userId,
-                        partyId: actAsParty,
+                        actAs,
                         prepared,
                     },
                 }
@@ -282,7 +303,7 @@ export const dappController = (
                 id: transactionId,
                 commandId,
                 status: 'pending',
-                preparedTransaction: prepared.preparedTransaction!,
+                preparedTransaction: prepared.preparedTransaction,
                 preparedTransactionHash: prepared.preparedTransactionHash,
                 payload: params,
                 origin: origin || null,
@@ -291,7 +312,7 @@ export const dappController = (
 
             logger.info(
                 {
-                    actAs: params.actAs || [wallet.partyId],
+                    actAs,
                     readAs: params.readAs || [],
                     userId,
                     commandId,
@@ -305,9 +326,50 @@ export const dappController = (
 
             await store.setTransaction(transaction)
 
+            const approveUrl = `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`
+
+            if (context.isApiKey) {
+                logger.info(
+                    {
+                        userId,
+                        commandId,
+                        transactionId,
+                        signingProviderId: wallet.signingProviderId,
+                    },
+                    'Service account straight-through prepare/sign/execute'
+                )
+                const transactionService = new TransactionService(
+                    store,
+                    logger,
+                    deps!.signingDrivers,
+                    notifier
+                )
+                try {
+                    await transactionService.signAndExecute(
+                        context,
+                        network,
+                        wallet,
+                        transaction
+                    )
+                } catch (error) {
+                    logger.error(
+                        {
+                            err: error,
+                            userId,
+                            commandId,
+                            transactionId,
+                            actAs,
+                            signingProviderId: wallet.signingProviderId,
+                        },
+                        'Service account sign/execute failed after prepare'
+                    )
+                    throw error
+                }
+            }
+
             return {
                 // closeafteraction query param flag makes approving or deleting tx close the popup
-                userUrl: `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`,
+                userUrl: approveUrl,
             }
         },
         status: async () => {

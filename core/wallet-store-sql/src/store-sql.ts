@@ -46,6 +46,7 @@ import {
     toWallet,
     fromApiKey,
     toApiKey,
+    toSession,
 } from './schema.js'
 import pg from 'pg'
 
@@ -372,12 +373,12 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     // Session methods
     async getSession(): Promise<Session | undefined> {
         const userId = this.assertConnected()
-        const sessions = await this.db
+        const row = await this.db
             .selectFrom('sessions')
             .selectAll()
             .where('userId', '=', userId)
             .executeTakeFirst()
-        return sessions
+        return row ? toSession(row) : undefined
     }
 
     async setSession(session: Session): Promise<void> {
@@ -404,11 +405,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .execute()
     }
 
+    /**
+     * Lists all pending transactions across all users.
+     */
+    async listAllPendingTransactions(): Promise<Array<Transaction>> {
+        const rows = await this.db
+            .selectFrom('transactions')
+            .selectAll()
+            .where('status', '=', 'pending')
+            .execute()
+
+        return rows.map((row) => toTransaction(row))
+    }
+
     // IDP methods
 
     async getIdp(idpId: string): Promise<Idp> {
-        this.assertConnected()
-
         const idps = await this.listIdps()
         if (!idps) throw new Error('No IDPs available')
 
@@ -476,8 +488,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     // Network methods
     async getNetwork(networkId: string): Promise<Network> {
-        this.assertConnected()
-
         const networks = await this.listNetworks()
         if (!networks) throw new Error('No networks available')
 

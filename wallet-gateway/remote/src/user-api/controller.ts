@@ -711,12 +711,12 @@ export const userController = (
                     `Adding session with ID ${newSessionId} for network ${params.networkId}`
                 )
 
+                const network = await store.getNetwork(params.networkId)
                 await store.setSession({
                     id: newSessionId,
                     network: params.networkId,
                     accessToken: authContext?.accessToken || '',
                 })
-                const network = await store.getCurrentNetwork()
                 const idp = await store.getIdp(network.identityProviderId)
                 // Assumption: `setSession` calls `assertConnected`, so its safe to declare that the authContext is defined.
                 const { userId, accessToken } = authContext!
