@@ -35,21 +35,21 @@ export async function allocateAmuletForAlice(
 ): Promise<string> {
     const {
         appUserSdk,
-        tokenNamespaceAppUser,
+        appUserTokenNamespace,
         alice,
         globalSynchronizerId,
         amuletAdmin,
     } = setup
 
     const pendingRequests =
-        await tokenNamespaceAppUser.allocation.request.pending(alice.partyId)
+        await appUserTokenNamespace.allocation.request.pending(alice.partyId)
     const requestView = pendingRequests[0].interfaceViewValue!
     const legId = Object.keys(requestView.transferLegs).find(
         (key) => requestView.transferLegs[key].sender === alice.partyId
     )!
     if (!legId) throw new Error('No transfer leg found for Alice')
 
-    const amuletHoldings = await tokenNamespaceAppUser.utxos.list({
+    const amuletHoldings = await appUserTokenNamespace.utxos.list({
         partyId: alice.partyId,
         includeLocked: false,
     })
@@ -61,7 +61,7 @@ export async function allocateAmuletForAlice(
     if (!amuletHoldingCid) throw new Error('Amulet holding not found for Alice')
 
     const [command, disclosedContracts] =
-        await tokenNamespaceAppUser.allocation.instruction.create({
+        await appUserTokenNamespace.allocation.instruction.create({
             allocationSpecification: {
                 settlement: requestView.settlement,
                 transferLegId: legId,

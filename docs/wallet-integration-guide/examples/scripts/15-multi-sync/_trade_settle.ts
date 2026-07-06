@@ -46,8 +46,8 @@ async function withdrawAllocationsOnFailure(
     const {
         appUserSdk,
         appProviderSdk,
-        tokenNamespaceAppUser,
-        tokenNamespaceAppProvider,
+        appUserTokenNamespace,
+        appProviderTokenNamespace,
         alice,
         bob,
         tokenAdmin,
@@ -59,7 +59,7 @@ async function withdrawAllocationsOnFailure(
     await Promise.all([
         (async () => {
             const [cmd, disclosed] =
-                await tokenNamespaceAppUser.allocation.withdraw({
+                await appUserTokenNamespace.allocation.withdraw({
                     allocationCid: amuletAllocationCid,
                     asset: {
                         id: 'Amulet',
@@ -83,7 +83,7 @@ async function withdrawAllocationsOnFailure(
         })(),
         (async () => {
             const [cmd, disclosed] =
-                await tokenNamespaceAppProvider.allocation.withdraw({
+                await appProviderTokenNamespace.allocation.withdraw({
                     allocationCid: testTokenAllocationCid,
                     asset: {
                         id: 'TestToken',
@@ -114,8 +114,8 @@ export async function settleOtcTrade(
 ): Promise<void> {
     const {
         appUserSdk,
-        tokenNamespaceAppUser,
-        tokenNamespaceAppProvider,
+        appUserTokenNamespace,
+        appProviderTokenNamespace,
         alice,
         tradingApp,
         globalSynchronizerId,
@@ -129,7 +129,7 @@ export async function settleOtcTrade(
         testTokenAllocationDisclosed,
     } = params
 
-    const allocationsAlice = await tokenNamespaceAppUser.allocation.pending(
+    const allocationsAlice = await appUserTokenNamespace.allocation.pending(
         alice.partyId
     )
     const amuletAllocation = allocationsAlice.find(
@@ -138,7 +138,7 @@ export async function settleOtcTrade(
     if (!amuletAllocation) throw new Error('Amulet allocation not found')
 
     const amuletExecCtx =
-        await tokenNamespaceAppUser.allocation.context.execute({
+        await appUserTokenNamespace.allocation.context.execute({
             allocationCid: amuletAllocation.contractId,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         })
@@ -146,7 +146,7 @@ export async function settleOtcTrade(
     // Fetch Bob's TestToken execute-transfer choice context from the registry's
     // allocation-v1 API (instead of hard-coding an empty context).
     const testTokenExecCtx =
-        await tokenNamespaceAppProvider.allocation.context.execute({
+        await appProviderTokenNamespace.allocation.context.execute({
             allocationCid: testTokenAllocationCid,
             registryUrl: testTokenRegistryUrl,
         })

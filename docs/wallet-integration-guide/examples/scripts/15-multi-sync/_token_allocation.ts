@@ -13,15 +13,15 @@ export async function allocateTokenForBob(
 ): Promise<{ legId: string }> {
     const {
         appProviderSdk,
-        tokenNamespaceAppProvider,
+        appProviderTokenNamespace,
         bob,
         tokenAdmin,
-        appSynchronizerId,
+        testTokenSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
     const pendingRequests =
-        await tokenNamespaceAppProvider.allocation.request.pending(bob.partyId)
+        await appProviderTokenNamespace.allocation.request.pending(bob.partyId)
     const requestView = pendingRequests[0].interfaceViewValue!
     const legId = Object.keys(requestView.transferLegs).find(
         (key) => requestView.transferLegs[key].sender === bob.partyId
@@ -41,7 +41,7 @@ export async function allocateTokenForBob(
     // allocation-instruction-v1 API. The registry returns the global-synchronizer
     // TokenRules contract as the factory (disclosed in `disclosedFromHelper`).
     const [command, disclosedFromHelper] =
-        await tokenNamespaceAppProvider.allocation.instruction.create({
+        await appProviderTokenNamespace.allocation.instruction.create({
             allocationSpecification: {
                 settlement: requestView.settlement,
                 transferLegId: legId,
@@ -76,7 +76,7 @@ export async function allocateTokenForBob(
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         })
-    ).find((c) => c.synchronizerId === appSynchronizerId)
+    ).find((c) => c.synchronizerId === testTokenSynchronizerId)
     if (!appTokenRules)
         throw new Error('TokenRules not found on app synchronizer')
 
@@ -103,7 +103,7 @@ export async function allocateTokenForBob(
             partyId: bob.partyId,
             commands: [command],
             disclosedContracts: disclosedOnApp,
-            synchronizerId: appSynchronizerId,
+            synchronizerId: testTokenSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
         .execute({ partyId: bob.partyId })

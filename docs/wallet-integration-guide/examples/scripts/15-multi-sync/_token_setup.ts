@@ -46,10 +46,10 @@ export async function mintAndTransferTokenToBob(
 ): Promise<void> {
     const {
         appProviderSdk,
-        tokenNamespaceAppProvider,
+        appProviderTokenNamespace,
         bob,
         tokenAdmin,
-        appSynchronizerId,
+        testTokenSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
@@ -64,7 +64,7 @@ export async function mintAndTransferTokenToBob(
                 }),
             ],
             disclosedContracts: [],
-            synchronizerId: appSynchronizerId,
+            synchronizerId: testTokenSynchronizerId,
         })
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
@@ -82,7 +82,7 @@ export async function mintAndTransferTokenToBob(
     // and choice context come from the registry's transfer-instruction-v1 API
     // (the TestToken registry is also resolved via the metadata-v1 API).
     const [transferCommand, transferDisclosed] =
-        await tokenNamespaceAppProvider.transfer.create({
+        await appProviderTokenNamespace.transfer.create({
             sender: tokenAdmin.partyId,
             recipient: bob.partyId,
             amount: BOB_TOKEN_MINT_AMOUNT,
@@ -96,7 +96,7 @@ export async function mintAndTransferTokenToBob(
             partyId: tokenAdmin.partyId,
             commands: [transferCommand],
             disclosedContracts: transferDisclosed,
-            synchronizerId: appSynchronizerId,
+            synchronizerId: testTokenSynchronizerId,
         })
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
@@ -113,7 +113,7 @@ export async function mintAndTransferTokenToBob(
     // Bob accepts the transfer offer using the registry's transfer-instruction-v1
     // accept choice context.
     const [acceptCommand, acceptDisclosed] =
-        await tokenNamespaceAppProvider.transfer.accept({
+        await appProviderTokenNamespace.transfer.accept({
             transferInstructionCid: transferOfferCid,
             registryUrl: testTokenRegistryUrl,
         })
@@ -123,7 +123,7 @@ export async function mintAndTransferTokenToBob(
             partyId: bob.partyId,
             commands: [acceptCommand],
             disclosedContracts: acceptDisclosed,
-            synchronizerId: appSynchronizerId,
+            synchronizerId: testTokenSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
         .execute({ partyId: bob.partyId })

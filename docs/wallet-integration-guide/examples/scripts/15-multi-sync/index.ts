@@ -32,7 +32,7 @@ const setup = await setupMultiSyncTrade(logger)
 const {
     appUserSdk,
     appProviderSdk,
-    tokenNamespaceAppProvider,
+    appProviderTokenNamespace,
     alice,
     bob,
     tradingApp,
@@ -48,8 +48,11 @@ const registry = await startTestTokenRegistry({
     admin: tokenAdmin.partyId,
     port: TEST_TOKEN_REGISTRY_PORT,
     ledgerUrl: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-    synchronizerIds: [setup.globalSynchronizerId, setup.appSynchronizerId],
-    transferSynchronizerId: setup.appSynchronizerId,
+    synchronizerIds: [
+        setup.globalSynchronizerId,
+        setup.testTokenSynchronizerId,
+    ],
+    transferSynchronizerId: setup.testTokenSynchronizerId,
     allocationSynchronizerId: setup.globalSynchronizerId,
     createTokenRules: (synchronizerId) =>
         createTokenRules(setup, synchronizerId),
@@ -117,7 +120,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: appUserSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────────────
-const allocationsBob = await tokenNamespaceAppProvider.allocation.pending(
+const allocationsBob = await appProviderTokenNamespace.allocation.pending(
     bob.partyId
 )
 const testTokenAllocation = allocationsBob.find(
@@ -149,7 +152,7 @@ const testTokenAllocationDisclosed = {
 await appProviderSdk.ledger.internal.reassign({
     submitter: bob.partyId,
     contractId: testTokenAllocationCid,
-    source: synchronizers.appSynchronizerId,
+    source: synchronizers.testTokenSynchronizerId,
     target: synchronizers.globalSynchronizerId,
     skipIfAlreadyOn: true,
 })

@@ -52,14 +52,14 @@ export interface MultiSyncSetup {
     appUserSdk: SDKInterface<'token' | 'amulet'>
     appProviderSdk: SDKInterface<'token'>
     svSdk: SDKInterface<'token'>
-    tokenNamespaceAppUser: TokenNamespace
-    tokenNamespaceAppProvider: TokenNamespace
+    appUserTokenNamespace: TokenNamespace
+    appProviderTokenNamespace: TokenNamespace
     alice: PartyInfo
     bob: PartyInfo
     tradingApp: PartyInfo
     tokenAdmin: PartyInfo
     globalSynchronizerId: string
-    appSynchronizerId: string
+    testTokenSynchronizerId: string
     synchronizers: SynchronizerMap
     scanProxy: ScanProxyClient
     amuletAdmin: string
@@ -107,11 +107,11 @@ export async function setupMultiSyncTrade(
         )
 
     const globalSynchronizerId = resolveGlobalSynchronizerId(allSynchronizers)
-    const appSynchronizerId = allSynchronizers.find(
+    const testTokenSynchronizerId = allSynchronizers.find(
         (s) => s.synchronizerAlias === 'app-synchronizer'
     )?.synchronizerId
 
-    if (!appSynchronizerId)
+    if (!testTokenSynchronizerId)
         throw new Error(
             'App synchronizer not found — start localnet in multi-sync mode (the default; do not pass --no-multi-sync).'
         )
@@ -120,12 +120,12 @@ export async function setupMultiSyncTrade(
         `Connected synchronizers: ${allSynchronizers.map((s) => s.synchronizerAlias).join(', ')}`
     )
     logger.info(
-        `Synchronizer IDs — global: ${globalSynchronizerId}, app: ${appSynchronizerId}`
+        `Synchronizer IDs — global: ${globalSynchronizerId}, app: ${testTokenSynchronizerId}`
     )
 
     const synchronizers: SynchronizerMap = {
         globalSynchronizerId,
-        appSynchronizerId,
+        testTokenSynchronizerId,
     }
 
     const here = path.dirname(fileURLToPath(import.meta.url))
@@ -138,7 +138,7 @@ export async function setupMultiSyncTrade(
         // app-user + app-provider vet both DARs on the global and app synchronizers.
         ...[testTokenV1Dar, tradingAppDar].flatMap((dar) =>
             [appUserSdk, appProviderSdk].flatMap((sdk) =>
-                [globalSynchronizerId, appSynchronizerId].map((sid) =>
+                [globalSynchronizerId, testTokenSynchronizerId].map((sid) =>
                     sdk.ledger.dar.vet(dar, sid)
                 )
             )
@@ -166,7 +166,7 @@ export async function setupMultiSyncTrade(
             .create(aliceKey.publicKey, {
                 partyHint: 'Alice',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [appSynchronizerId],
+                additionalSynchronizerIds: [testTokenSynchronizerId],
             })
             .sign(aliceKey.privateKey)
             .execute(),
@@ -174,7 +174,7 @@ export async function setupMultiSyncTrade(
             .create(bobKey.publicKey, {
                 partyHint: 'Bob',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [appSynchronizerId],
+                additionalSynchronizerIds: [testTokenSynchronizerId],
             })
             .sign(bobKey.privateKey)
             .execute(),
@@ -182,7 +182,7 @@ export async function setupMultiSyncTrade(
             .create(tradingAppKey.publicKey, {
                 partyHint: 'TradingApp',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [appSynchronizerId],
+                additionalSynchronizerIds: [testTokenSynchronizerId],
             })
             .sign(tradingAppKey.privateKey)
             .execute(),
@@ -190,7 +190,7 @@ export async function setupMultiSyncTrade(
             .create(tokenAdminKey.publicKey, {
                 partyHint: 'TokenAdmin',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [appSynchronizerId],
+                additionalSynchronizerIds: [testTokenSynchronizerId],
             })
             .sign(tokenAdminKey.privateKey)
             .execute(),
@@ -227,14 +227,14 @@ export async function setupMultiSyncTrade(
         appUserSdk,
         appProviderSdk,
         svSdk,
-        tokenNamespaceAppUser: appUserSdk.token,
-        tokenNamespaceAppProvider: appProviderSdk.token,
+        appUserTokenNamespace: appUserSdk.token,
+        appProviderTokenNamespace: appProviderSdk.token,
         alice,
         bob,
         tradingApp,
         tokenAdmin,
         globalSynchronizerId,
-        appSynchronizerId,
+        testTokenSynchronizerId,
         synchronizers,
         scanProxy,
         amuletAdmin,

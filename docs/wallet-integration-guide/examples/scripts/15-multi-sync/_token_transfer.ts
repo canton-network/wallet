@@ -18,9 +18,9 @@ export async function aliceSelfTransferToApp(
 ): Promise<void> {
     const {
         appUserSdk,
-        tokenNamespaceAppUser,
+        appUserTokenNamespace,
         alice,
-        appSynchronizerId,
+        testTokenSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
@@ -46,18 +46,18 @@ export async function aliceSelfTransferToApp(
 
     // The settled holding lands on the global synchronizer; move it to the
     // app-synchronizer before self-transferring there (mirrors Bob's flow).
-    if (aliceToken.synchronizerId !== appSynchronizerId) {
+    if (aliceToken.synchronizerId !== testTokenSynchronizerId) {
         await appUserSdk.ledger.internal.reassign({
             submitter: alice.partyId,
             contractId: aliceToken.contractId,
             source: aliceToken.synchronizerId,
-            target: appSynchronizerId,
+            target: testTokenSynchronizerId,
             skipIfAlreadyOn: true,
         })
     }
 
     const [transferCommand, transferDisclosed] =
-        await tokenNamespaceAppUser.transfer.create({
+        await appUserTokenNamespace.transfer.create({
             sender: alice.partyId,
             recipient: alice.partyId,
             amount: TRADE_TOKEN_AMOUNT,
@@ -71,7 +71,7 @@ export async function aliceSelfTransferToApp(
             partyId: alice.partyId,
             commands: [transferCommand],
             disclosedContracts: transferDisclosed,
-            synchronizerId: appSynchronizerId,
+            synchronizerId: testTokenSynchronizerId,
         })
         .sign(alice.keyPair.privateKey)
         .execute({ partyId: alice.partyId })
@@ -87,9 +87,9 @@ export async function bobSelfTransferToApp(
 ): Promise<void> {
     const {
         appProviderSdk,
-        tokenNamespaceAppProvider,
+        appProviderTokenNamespace,
         bob,
-        appSynchronizerId,
+        testTokenSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
@@ -105,12 +105,12 @@ export async function bobSelfTransferToApp(
     }
 
     for (const token of bobTokens) {
-        if (token.synchronizerId !== appSynchronizerId) {
+        if (token.synchronizerId !== testTokenSynchronizerId) {
             await appProviderSdk.ledger.internal.reassign({
                 submitter: bob.partyId,
                 contractId: token.contractId,
                 source: token.synchronizerId,
-                target: appSynchronizerId,
+                target: testTokenSynchronizerId,
                 skipIfAlreadyOn: true,
             })
         }
@@ -124,7 +124,7 @@ export async function bobSelfTransferToApp(
             throw new Error('Cannot read amount from Bob Token holding')
 
         const [transferCommand, transferDisclosed] =
-            await tokenNamespaceAppProvider.transfer.create({
+            await appProviderTokenNamespace.transfer.create({
                 sender: bob.partyId,
                 recipient: bob.partyId,
                 amount: holdingAmount,
@@ -138,7 +138,7 @@ export async function bobSelfTransferToApp(
                 partyId: bob.partyId,
                 commands: [transferCommand],
                 disclosedContracts: transferDisclosed,
-                synchronizerId: appSynchronizerId,
+                synchronizerId: testTokenSynchronizerId,
             })
             .sign(bob.keyPair.privateKey)
             .execute({ partyId: bob.partyId })
