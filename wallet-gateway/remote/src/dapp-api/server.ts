@@ -84,11 +84,21 @@ export const dapp = (
             writeSSE(res, 'messageSignature', event)
         }
 
+        const onLogout = () => {
+            logger.info(
+                { userId: context.userId },
+                'Session terinated by server. Forcing SSE teardown.'
+            )
+            cleanup()
+            res.end()
+        }
+
         notifier.on('accountsChanged', onAccountsChanged)
         notifier.on('connected', onConnected)
         notifier.on('statusChanged', onStatusChanged)
         notifier.on('txChanged', onTxChanged)
         notifier.on('messageSignature', onMessageSignature)
+        notifier.on('logout', onLogout)
 
         const cleanup = () => {
             logger.debug('SSE client disconnected')
@@ -97,6 +107,7 @@ export const dapp = (
             notifier.removeListener('statusChanged', onStatusChanged)
             notifier.removeListener('txChanged', onTxChanged)
             notifier.removeListener('messageSignature', onMessageSignature)
+            notifier.removeListener('logout', onLogout)
         }
 
         req.on('close', cleanup)
