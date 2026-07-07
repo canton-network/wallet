@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi } from 'vitest'
-import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import {
     NetworkDeleteEvent,
     NetworkEditSaveEvent,
@@ -109,63 +108,35 @@ function withoutUndefinedKeys<T extends object>(value: Partial<T>): Partial<T> {
     ) as Partial<T>
 }
 
-export function makeStoreNetwork(
-    overrides: Partial<StoreNetwork> = {}
-): StoreNetwork {
-    return {
-        id: 'net-1',
-        name: 'Test Network',
-        description: 'Test network description',
-        identityProviderId: 'idp-1',
-        ledgerApi: { baseUrl: 'http://localhost:6865' },
-        auth: {
-            method: 'client_credentials',
-            audience: 'audience',
-            scope: 'scope',
-            clientId: 'client-id',
-            clientSecret: 'client-secret',
-        },
-        ...withoutUndefinedKeys(overrides),
-    } as StoreNetwork
-}
-
-function toFormNetwork(network: object): StoreNetwork {
-    return network as unknown as StoreNetwork
-}
-
 export function networkEditSaveEvent(
-    overrides: Partial<StoreNetwork> = {}
+    overrides: Partial<Network> = {}
 ): NetworkEditSaveEvent {
-    return new NetworkEditSaveEvent(toFormNetwork(makeStoreNetwork(overrides)))
+    return new NetworkEditSaveEvent(
+        makeNetwork(withoutUndefinedKeys(overrides))
+    )
 }
 
 export function networkEditSaveEventFrom(
-    network: StoreNetwork
+    network: Network
 ): NetworkEditSaveEvent {
-    return new NetworkEditSaveEvent(toFormNetwork(network))
+    return new NetworkEditSaveEvent(network)
 }
 
 export function networkDeleteEvent(
-    overrides: Partial<StoreNetwork> = {}
+    overrides: Partial<Network> = {}
 ): NetworkDeleteEvent {
-    return new NetworkDeleteEvent(toFormNetwork(makeStoreNetwork(overrides)))
+    return new NetworkDeleteEvent(makeNetwork(withoutUndefinedKeys(overrides)))
 }
 
-export function toPublicNetwork(
-    network: StoreNetwork | Network
-): PublicNetwork {
+export function toPublicNetwork(network: Network): PublicNetwork {
     const auth = network.auth
-    const ledgerApi =
-        typeof network.ledgerApi === 'string'
-            ? network.ledgerApi
-            : network.ledgerApi.baseUrl
 
     return {
         id: network.id,
         name: network.name,
         description: network.description,
         identityProviderId: network.identityProviderId,
-        ledgerApi,
+        ledgerApi: network.ledgerApi,
         authMethod: auth.method,
         ...(network.synchronizerId !== undefined && {
             synchronizerId: network.synchronizerId,

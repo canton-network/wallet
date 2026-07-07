@@ -3,6 +3,7 @@
 
 export * from './components/api-key-card.js'
 export * from './components/api-key-form.js'
+export * from './components/auth-editor.js'
 export * from './components/app-header.js'
 export * from './components/app-layout.js'
 export * from './components/back-link.js'
