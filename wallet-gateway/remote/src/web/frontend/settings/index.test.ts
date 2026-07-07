@@ -12,7 +12,7 @@ import {
 import {
     createMockUserClient,
     makeIdp,
-    makeStoreNetwork,
+    makeNetwork,
     toPublicNetwork,
     mockRequest,
     mockSettingsPageFlow,
@@ -141,7 +141,7 @@ describe('UserUiSettings', () => {
     })
 
     it('adds a network when wg-networks emits network-edit-save', async () => {
-        const network = makeStoreNetwork({
+        const network = makeNetwork({
             id: 'net-new',
             synchronizerId: 'sync-1',
             adminAuth: {
@@ -178,55 +178,6 @@ describe('UserUiSettings', () => {
         )
     })
 
-    it('adds a network when auth fields are partially omitted', async () => {
-        const network = makeStoreNetwork({
-            auth: { method: 'client_credentials' } as ReturnType<
-                typeof makeStoreNetwork
-            >['auth'],
-        })
-
-        el.shadowRoot
-            ?.querySelector('wg-networks')
-            ?.dispatchEvent(networkEditSaveEventFrom(network))
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
-        )
-
-        const addCall = mockRequest.mock.calls.find(
-            (c) => c[0]?.method === 'addNetwork'
-        )
-        expect(addCall?.[0].params.network.auth).toEqual({
-            method: 'client_credentials',
-            audience: '',
-            scope: '',
-            clientId: '',
-            issuer: '',
-            clientSecret: '',
-        })
-    })
-
-    it('adds a network without adminAuth using default credentials', async () => {
-        el.shadowRoot
-            ?.querySelector('wg-networks')
-            ?.dispatchEvent(networkEditSaveEvent())
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
-        )
-
-        const addCall = mockRequest.mock.calls.find(
-            (c) => c[0]?.method === 'addNetwork'
-        )
-        expect(addCall?.[0].params.network.adminAuth).toEqual({
-            method: 'client_credentials',
-            audience: '',
-            scope: '',
-            clientId: '',
-            clientSecret: '',
-        })
-    })
-
     it('calls handleErrorToast when adding a network fails', async () => {
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'addNetwork') {
@@ -257,7 +208,7 @@ describe('UserUiSettings', () => {
     })
 
     it('removes a network when delete is confirmed', async () => {
-        const network = makeStoreNetwork({ id: 'net-del', name: 'Remove Me' })
+        const network = makeNetwork({ id: 'net-del', name: 'Remove Me' })
         el.shadowRoot
             ?.querySelector('wg-networks')
             ?.dispatchEvent(
@@ -289,7 +240,7 @@ describe('UserUiSettings', () => {
             ?.dispatchEvent(
                 new NetworkCardDeleteEvent(
                     toPublicNetwork(
-                        makeStoreNetwork({ id: 'net-del', name: 'Keep Me' })
+                        makeNetwork({ id: 'net-del', name: 'Keep Me' })
                     )
                 )
             )
@@ -325,7 +276,7 @@ describe('UserUiSettings', () => {
             ?.querySelector('wg-networks')
             ?.dispatchEvent(
                 new NetworkCardDeleteEvent(
-                    toPublicNetwork(makeStoreNetwork({ id: 'net-del' }))
+                    toPublicNetwork(makeNetwork({ id: 'net-del' }))
                 )
             )
 

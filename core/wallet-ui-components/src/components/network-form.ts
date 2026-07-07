@@ -1,16 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Network, networkSchema } from '@canton-network/core-wallet-store'
+import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    Network as StoreNetwork,
+    networkSchema,
+} from '@canton-network/core-wallet-store'
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
-import { chevronDownIcon } from '../icons/index.js'
-import {
-    AuthorizationCodeAuth,
-    ClientCredentialsAuth,
-    SelfSignedAuth,
-} from '@canton-network/core-wallet-auth'
+import { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
+import './auth-editor.js'
 
 /**
  * Emitted when the user clicks the Cancel button on the form
@@ -25,9 +25,9 @@ export class NetworkEditCancelEvent extends Event {
  * Emitted when the user clicks the Save/Add/Update button on the form
  */
 export class NetworkEditSaveEvent extends Event {
-    network: Network
+    network: ApiNetwork
 
-    constructor(network: Network) {
+    constructor(network: ApiNetwork) {
         super('network-edit-save', { bubbles: true, composed: true })
         this.network = network
     }
@@ -37,20 +37,11 @@ export class NetworkEditSaveEvent extends Event {
  * Emitted when the user clicks the Delete button
  */
 export class NetworkDeleteEvent extends Event {
-    network: Network
+    network: ApiNetwork
 
-    constructor(network: Network) {
+    constructor(network: ApiNetwork) {
         super('network-delete', { bubbles: true, composed: true })
         this.network = network
-    }
-}
-
-/**
- * Emitted when the user clicks the Back link
- */
-export class NetworkFormBackEvent extends Event {
-    constructor() {
-        super('network-form-back', { bubbles: true, composed: true })
     }
 }
 
@@ -60,10 +51,19 @@ export class NetworkForm extends BaseElement {
     accessor mode: 'add' | 'review' = 'add'
 
     @property({ type: Object })
-    accessor network: Network = {
-        ledgerApi: {},
-        auth: {},
-    } as Network
+    accessor network: ApiNetwork = {
+        id: '',
+        name: '',
+        description: '',
+        identityProviderId: '',
+        ledgerApi: '',
+        auth: {
+            method: 'authorization_code',
+            audience: '',
+            scope: '',
+            clientId: '',
+        },
+    }
 
     @state() private _error = ''
 
@@ -228,12 +228,15 @@ export class NetworkForm extends BaseElement {
                 border-width: 1px;
             }
         `,
+        AuthEditor.styles,
     ]
 
     handleSubmit(e: Event) {
         e.preventDefault()
 
-        const parsedData = networkSchema.safeParse(this.network)
+        const parsedData = networkSchema.safeParse(
+            this.toStoreNetworkForValidation(this.network)
+        )
 
         if (!parsedData.success) {
             this._error =
@@ -245,185 +248,11 @@ export class NetworkForm extends BaseElement {
         }
     }
 
-    renderAuthForm(authObj: Network['auth']) {
-        if (typeof authObj.method === 'undefined') {
-            Object.assign(authObj, {
-                method: 'authorization_code',
-                clientId: '',
-                audience: '',
-                scope: '',
-            } satisfies AuthorizationCodeAuth)
-        }
-
-        const commonFields = html`
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Method <span class="required">*</span>
-                </label>
-                <div class="select-wrap">
-                    <select
-                        class="form-select field-control"
-                        @change=${(e: Event) => {
-                            const select = e.target as HTMLSelectElement
-                            if (authObj.method === select.value) return
-
-                            if (select.value === 'authorization_code') {
-                                Object.assign(authObj, {
-                                    method: 'authorization_code',
-                                    clientId: authObj.clientId ?? '',
-                                    audience: authObj.audience ?? '',
-                                    scope: authObj.scope ?? '',
-                                } satisfies AuthorizationCodeAuth)
-                            } else if (select.value === 'self_signed') {
-                                Object.assign(authObj, {
-                                    method: 'self_signed',
-                                    clientId: authObj.clientId ?? '',
-                                    audience: authObj.audience ?? '',
-                                    scope: authObj.scope ?? '',
-                                    issuer:
-                                        (authObj as SelfSignedAuth).issuer ??
-                                        '',
-                                    clientSecret:
-                                        (authObj as SelfSignedAuth)
-                                            .clientSecret ?? '',
-                                } satisfies SelfSignedAuth)
-                            } else if (select.value === 'client_credentials') {
-                                Object.assign(authObj, {
-                                    method: 'client_credentials',
-                                    clientId: authObj.clientId ?? '',
-                                    audience: authObj.audience ?? '',
-                                    scope: authObj.scope ?? '',
-                                    clientSecret:
-                                        (authObj as ClientCredentialsAuth)
-                                            .clientSecret ?? '',
-                                } satisfies ClientCredentialsAuth)
-                            } else {
-                                throw new Error(
-                                    `Unsupported auth method: ${select.value}`
-                                )
-                            }
-                            this.requestUpdate()
-                        }}
-                        .value=${authObj.method}
-                    >
-                        <option value="authorization_code">
-                            authorization_code
-                        </option>
-                        <option value="client_credentials">
-                            client_credentials
-                        </option>
-                        <option value="self_signed">self_signed</option>
-                    </select>
-                    <span class="select-chevron">${chevronDownIcon}</span>
-                </div>
-            </div>
-
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Client Id <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${authObj.clientId}
-                    @change=${(e: Event) => {
-                        authObj.clientId = (e.target as HTMLInputElement).value
-                    }}
-                />
-            </div>
-
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Audience <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${authObj.audience}
-                    @change=${(e: Event) => {
-                        authObj.audience = (e.target as HTMLInputElement).value
-                    }}
-                />
-            </div>
-
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Scope <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    type="text"
-                    required
-                    .value=${authObj.scope}
-                    @change=${(e: Event) => {
-                        authObj.scope = (e.target as HTMLInputElement).value
-                    }}
-                />
-            </div>
-        `
-
-        if (authObj.method === 'authorization_code') {
-            return html`${commonFields}`
-        } else if (authObj.method === 'client_credentials') {
-            return html`${commonFields}
-                <div class="field-group d-flex flex-column">
-                    <label class="form-label field-label mb-0">
-                        Client Secret <span class="required">*</span>
-                    </label>
-                    <input
-                        class="form-control field-control"
-                        type="text"
-                        required
-                        .value=${(authObj as ClientCredentialsAuth)
-                            .clientSecret}
-                        @change=${(e: Event) => {
-                            ;(authObj as ClientCredentialsAuth).clientSecret = (
-                                e.target as HTMLInputElement
-                            ).value
-                        }}
-                    />
-                </div>`
-        } else if (authObj.method === 'self_signed') {
-            return html`${commonFields}
-                <div class="field-group d-flex flex-column">
-                    <label class="form-label field-label mb-0">
-                        Issuer <span class="required">*</span>
-                    </label>
-                    <input
-                        class="form-control field-control"
-                        type="text"
-                        required
-                        .value=${(authObj as SelfSignedAuth).issuer}
-                        @change=${(e: Event) => {
-                            ;(authObj as SelfSignedAuth).issuer = (
-                                e.target as HTMLInputElement
-                            ).value
-                        }}
-                    />
-                </div>
-                <div class="field-group d-flex flex-column">
-                    <label class="form-label field-label mb-0">
-                        Client Secret <span class="required">*</span>
-                    </label>
-                    <input
-                        class="form-control field-control"
-                        type="text"
-                        required
-                        .value=${(authObj as SelfSignedAuth).clientSecret}
-                        @change=${(e: Event) => {
-                            ;(authObj as SelfSignedAuth).clientSecret = (
-                                e.target as HTMLInputElement
-                            ).value
-                        }}
-                    />
-                </div>`
-        } else {
-            throw new Error(
-                `Unsupported auth method: ${JSON.stringify(authObj)}`
-            )
-        }
+    private toStoreNetworkForValidation(network: ApiNetwork): StoreNetwork {
+        return {
+            ...network,
+            ledgerApi: { baseUrl: network.ledgerApi },
+        } as StoreNetwork
     }
 
     render() {
@@ -496,8 +325,14 @@ export class NetworkForm extends BaseElement {
                             .value=${this.network.synchronizerId ?? ''}
                             @change=${(e: Event) => {
                                 const val = (e.target as HTMLInputElement).value
-                                this.network.synchronizerId =
-                                    val === '' ? undefined : val
+
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                const { synchronizerId, ...network } =
+                                    this.network
+                                this.network = {
+                                    ...network,
+                                    ...(val && { synchronizerId: val }),
+                                }
                             }}
                         />
                     </div>
@@ -529,21 +364,63 @@ export class NetworkForm extends BaseElement {
                             class="form-control field-control"
                             type="text"
                             required
-                            .value=${this.network.ledgerApi.baseUrl ?? ''}
+                            .value=${this.network.ledgerApi ?? ''}
                             @change=${(e: Event) => {
-                                this.network.ledgerApi.baseUrl = (
+                                this.network.ledgerApi = (
                                     e.target as HTMLInputElement
                                 ).value
                             }}
                         />
                     </div>
 
-                    ${isReview
-                        ? html`
-                              <h3 class="section-title">Configure user auth</h3>
-                              ${this.renderAuthForm(this.network.auth)}
-                          `
-                        : nothing}
+                    <h3 class="section-title">Configure user auth</h3>
+                    <auth-editor
+                        .auth=${this.network.auth}
+                        @auth-change=${(e: AuthEditorChangeEvent) => {
+                            if (e.auth) {
+                                this.network = {
+                                    ...this.network,
+                                    auth: e.auth,
+                                }
+                            }
+                        }}
+                    ></auth-editor>
+
+                    <h3 class="section-title">Configure admin auth</h3>
+                    <auth-editor
+                        .auth=${this.network.adminAuth}
+                        .optional=${true}
+                        .emptyText=${'No admin auth configured.'}
+                        .pendingRemoveText=${'Admin auth will be removed after submitting this form.'}
+                        @auth-change=${(e: AuthEditorChangeEvent) => {
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            const { adminAuth, ...network } = this.network
+                            this.network = {
+                                ...network,
+                                ...(e.auth && { adminAuth: e.auth }),
+                            }
+                        }}
+                    ></auth-editor>
+
+                    <h3 class="section-title">
+                        Configure service account auth
+                    </h3>
+                    <auth-editor
+                        .auth=${this.network.serviceAccountAuth}
+                        .allowedMethods=${['client_credentials']}
+                        .optional=${true}
+                        .emptyText=${'No service account auth configured.'}
+                        .pendingRemoveText=${'Service account auth will be removed after submitting this form.'}
+                        @auth-change=${(e: AuthEditorChangeEvent) => {
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            const { serviceAccountAuth, ...network } =
+                                this.network
+                            this.network = {
+                                ...network,
+                                ...(e.auth && { serviceAccountAuth: e.auth }),
+                            }
+                        }}
+                    ></auth-editor>
                 </div>
 
                 ${this._error
