@@ -239,6 +239,10 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                         <Select
                                             displayEmpty
                                             value={selectedKey}
+                                            inputProps={{
+                                                'aria-label':
+                                                    'Select instrument',
+                                            }}
                                             onChange={(event) => {
                                                 const selected =
                                                     findInstrumentByKey(
@@ -377,6 +381,9 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                     }
                                     fullWidth
                                     slotProps={{
+                                        htmlInput: {
+                                            'aria-label': 'Amount',
+                                        },
                                         input: {
                                             endAdornment: (
                                                 <form.Subscribe
