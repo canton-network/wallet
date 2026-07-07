@@ -12,11 +12,7 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import {
-    Auth as ApiAuth,
-    Network,
-} from '@canton-network/core-wallet-user-rpc-client'
-import { Auth } from '@canton-network/core-wallet-auth'
+import { Network } from '@canton-network/core-wallet-user-rpc-client'
 import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
@@ -85,28 +81,8 @@ export class UserUiReviewNetwork extends BaseElement {
         setLocationHref(toRelHref('/networks'))
     }
 
-    private toApiAuth(auth: Auth): ApiAuth {
-        return {
-            method: auth.method,
-            audience: auth.audience ?? '',
-            scope: auth.scope ?? '',
-            clientId: auth.clientId ?? '',
-            issuer: (auth as ApiAuth).issuer ?? '',
-            clientSecret: (auth as ApiAuth).clientSecret ?? '',
-        }
-    }
-
     private async onSave(e: NetworkEditSaveEvent) {
-        const auth = this.toApiAuth(e.network.auth)
-        const adminAuth = e.network.adminAuth
-            ? this.toApiAuth(e.network.adminAuth)
-            : {
-                  method: 'client_credentials',
-                  audience: '',
-                  scope: '',
-                  clientId: '',
-                  clientSecret: '',
-              }
+        const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
             const userClient = await createUserClient(
@@ -123,9 +99,10 @@ export class UserUiReviewNetwork extends BaseElement {
                         ...(e.network.synchronizerId && {
                             synchronizerId: e.network.synchronizerId as string,
                         }),
-                        ledgerApi: e.network.ledgerApi.baseUrl,
+                        ledgerApi: e.network.ledgerApi,
                         auth,
-                        adminAuth,
+                        ...(adminAuth && { adminAuth }),
+                        ...(serviceAccountAuth && { serviceAccountAuth }),
                     },
                 },
             })

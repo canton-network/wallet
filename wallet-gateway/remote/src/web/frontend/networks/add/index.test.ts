@@ -6,7 +6,7 @@ import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import {
     createMockUserClient,
-    makeStoreNetwork,
+    makeNetwork,
     mockNetworksPageFlow,
     mockRequest,
     networkEditSaveEvent,
@@ -116,7 +116,7 @@ describe('UserUiAddNetwork', () => {
     })
 
     it('includes synchronizerId and adminAuth when saving a network', async () => {
-        const network = makeStoreNetwork({
+        const network = makeNetwork({
             synchronizerId: 'sync::123',
             adminAuth: {
                 method: 'client_credentials',
@@ -143,39 +143,6 @@ describe('UserUiAddNetwork', () => {
                     adminAuth: expect.objectContaining({
                         clientId: 'admin-client',
                     }),
-                }),
-            },
-        })
-    })
-
-    it('uses default adminAuth when adminAuth is omitted', async () => {
-        const network = makeStoreNetwork()
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { adminAuth: _adminAuth, ...networkWithoutAdmin } = network
-
-        el.shadowRoot
-            ?.querySelector('network-form')
-            ?.dispatchEvent(
-                networkEditSaveEventFrom(
-                    networkWithoutAdmin as ReturnType<typeof makeStoreNetwork>
-                )
-            )
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'addNetwork')
-        )
-
-        expect(mockRequest).toHaveBeenCalledWith({
-            method: 'addNetwork',
-            params: {
-                network: expect.objectContaining({
-                    adminAuth: {
-                        method: 'client_credentials',
-                        audience: '',
-                        scope: '',
-                        clientId: '',
-                        clientSecret: '',
-                    },
                 }),
             },
         })

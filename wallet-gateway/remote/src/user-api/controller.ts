@@ -117,6 +117,9 @@ export const userController = (
             const adminAuth = network.adminAuth
                 ? authSchema.parse(network.adminAuth)
                 : undefined
+            const serviceAccountAuth = network.serviceAccountAuth
+                ? authSchema.parse(network.serviceAccountAuth)
+                : undefined
 
             const newNetwork: Network = {
                 name: network.name,
@@ -126,6 +129,7 @@ export const userController = (
                 identityProviderId: network.identityProviderId,
                 auth,
                 adminAuth,
+                serviceAccountAuth,
                 ledgerApi,
             }
 
@@ -1169,6 +1173,9 @@ function toNetworkDto(network: Network): ApiNetwork {
         auth: toAuthDto(network.auth),
         ...(network.adminAuth
             ? { adminAuth: toAuthDto(network.adminAuth) }
+            : {}),
+        ...(network.serviceAccountAuth
+            ? { serviceAccountAuth: toAuthDto(network.serviceAccountAuth) }
             : {}),
     }
 }
