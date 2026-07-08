@@ -219,7 +219,8 @@ export const dappController = (
             }
 
             // determine user ID
-            let userId = context.userId
+            const gatewayUserId = context.userId
+            let ledgerUserId = context.userId
             const accessTokenProvider: AuthTokenProvider =
                 AuthTokenProvider.fromToken(context.accessToken, logger)
 
@@ -227,7 +228,7 @@ export const dappController = (
                 logger.info(
                     'Authenticated with API Key, fetching m2m token for ledger access'
                 )
-                userId = context.ledgerUserId
+                ledgerUserId = context.ledgerUserId
             }
 
             // determine party ID
@@ -257,7 +258,7 @@ export const dappController = (
                 accessTokenProvider,
             })
 
-            const notifier = notificationService.getNotifier(userId)
+            const notifier = notificationService.getNotifier(gatewayUserId)
 
             const commandId = params.commandId || v4()
             const transactionId = v4()
@@ -273,12 +274,18 @@ export const dappController = (
                 'prepareExecute: Submitting request to ledger',
                 {
                     info: { transactionId },
-                    debug: { commandId, userId, actAs, params },
+                    debug: {
+                        commandId,
+                        gatewayUserId,
+                        ledgerUserId,
+                        actAs,
+                        params,
+                    },
                 }
             )
 
             const prepared = await prepareSubmission(
-                userId,
+                ledgerUserId,
                 actAs,
                 synchronizerId,
                 params,
@@ -292,7 +299,8 @@ export const dappController = (
                     info: { transactionId },
                     debug: {
                         commandId,
-                        userId,
+                        gatewayUserId,
+                        ledgerUserId,
                         actAs,
                         prepared,
                     },
@@ -314,7 +322,8 @@ export const dappController = (
                 {
                     actAs,
                     readAs: params.readAs || [],
-                    userId,
+                    gatewayUserId,
+                    ledgerUserId,
                     commandId,
                     commands: params.commands?.[0],
                     confirmationRequestTrafficCostEstimation:
@@ -331,7 +340,8 @@ export const dappController = (
             if (context.isApiKey) {
                 logger.info(
                     {
-                        userId,
+                        gatewayUserId,
+                        ledgerUserId,
                         commandId,
                         transactionId,
                         signingProviderId: wallet.signingProviderId,
@@ -355,7 +365,8 @@ export const dappController = (
                     logger.error(
                         {
                             err: error,
-                            userId,
+                            gatewayUserId,
+                            ledgerUserId,
                             commandId,
                             transactionId,
                             actAs,
