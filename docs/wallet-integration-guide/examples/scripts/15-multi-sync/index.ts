@@ -140,16 +140,16 @@ const testTokenAllocationDisclosed = {
     synchronizerId: '',
 }
 
-// await appBobSdk.ledger.internal.reassign({
-//     submitter: bob.partyId,
-//     contractId: testTokenAllocationCid,
-//     source: synchronizers.testTokenSynchronizerId,
-//     target: synchronizers.globalSynchronizerId,
-//     skipIfAlreadyOn: true,
-// })
-// logger.info(
-//     'Bob: TestToken allocation reassigned app-synchronizer → global ahead of settlement'
-// )
+await appBobSdk.ledger.internal.reassign({
+    submitter: bob.partyId,
+    contractId: testTokenAllocationCid,
+    source: synchronizers.testTokenSynchronizerId,
+    target: synchronizers.globalSynchronizerId,
+    skipIfAlreadyOn: true,
+})
+logger.info(
+    'Bob: TestToken allocation reassigned app-synchronizer → global ahead of settlement'
+)
 
 // ── Step 10c: TradingApp settles the OTCTrade ─────────────────────────────────
 try {
