@@ -45,7 +45,7 @@ export async function mintAndTransferTokenToBob(
     logger: Logger
 ): Promise<void> {
     const {
-        appBobSdk,
+        bobSdk,
         tokenAdminSdk,
         bobTokenNamespace,
         tokenAdminTokenNamespace,
@@ -103,7 +103,7 @@ export async function mintAndTransferTokenToBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
-    const transferOffers = await appBobSdk.ledger.acs.read({
+    const transferOffers = await bobSdk.ledger.acs.read({
         templateIds: [TestTokenV1.TokenTransferOffer.templateId],
         parties: [bob.partyId],
         filterByParty: true,
@@ -120,7 +120,7 @@ export async function mintAndTransferTokenToBob(
             registryUrl: testTokenRegistryUrl,
         })
 
-    await appBobSdk.ledger
+    await bobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [acceptCommand],

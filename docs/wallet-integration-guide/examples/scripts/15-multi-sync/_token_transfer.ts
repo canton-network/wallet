@@ -17,7 +17,7 @@ export async function aliceSelfTransferToApp(
     logger: Logger
 ): Promise<void> {
     const {
-        appAliceSdk,
+        aliceSdk,
         aliceTokenNamespace,
         alice,
         testTokenSynchronizerId,
@@ -30,7 +30,7 @@ export async function aliceSelfTransferToApp(
     const deadline = Date.now() + TOKEN_POLL_TIMEOUT_MS
     let aliceToken
     for (;;) {
-        const aliceTokens = await appAliceSdk.ledger.acs.read({
+        const aliceTokens = await aliceSdk.ledger.acs.read({
             templateIds: [TestTokenV1.Token.templateId],
             parties: [alice.partyId],
             filterByParty: true,
@@ -47,7 +47,7 @@ export async function aliceSelfTransferToApp(
     // The settled holding lands on the global synchronizer; move it to the
     // app-synchronizer before self-transferring there (mirrors Bob's flow).
     if (aliceToken.synchronizerId !== testTokenSynchronizerId) {
-        await appAliceSdk.ledger.internal.reassign({
+        await aliceSdk.ledger.internal.reassign({
             submitter: alice.partyId,
             contractId: aliceToken.contractId,
             source: aliceToken.synchronizerId,
@@ -66,7 +66,7 @@ export async function aliceSelfTransferToApp(
             inputUtxos: [aliceToken.contractId],
         })
 
-    await appAliceSdk.ledger
+    await aliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: [transferCommand],
@@ -86,14 +86,14 @@ export async function bobSelfTransferToApp(
     logger: Logger
 ): Promise<void> {
     const {
-        appBobSdk,
+        bobSdk,
         bobTokenNamespace,
         bob,
         testTokenSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
-    const bobTokens = await appBobSdk.ledger.acs.read({
+    const bobTokens = await bobSdk.ledger.acs.read({
         templateIds: [TestTokenV1.Token.templateId],
         parties: [bob.partyId],
         filterByParty: true,
@@ -106,7 +106,7 @@ export async function bobSelfTransferToApp(
 
     for (const token of bobTokens) {
         if (token.synchronizerId !== testTokenSynchronizerId) {
-            await appBobSdk.ledger.internal.reassign({
+            await bobSdk.ledger.internal.reassign({
                 submitter: bob.partyId,
                 contractId: token.contractId,
                 source: token.synchronizerId,
@@ -133,7 +133,7 @@ export async function bobSelfTransferToApp(
                 inputUtxos: [token.contractId],
             })
 
-        await appBobSdk.ledger
+        await bobSdk.ledger
             .prepare({
                 partyId: bob.partyId,
                 commands: [transferCommand],

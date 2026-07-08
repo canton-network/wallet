@@ -10,11 +10,11 @@ export async function mintAmuletForAlice(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const { appAliceSdk, alice, globalSynchronizerId } = setup
+    const { aliceSdk, alice, globalSynchronizerId } = setup
     const [aliceTapCreateCommand, aliceTapCreateDisclosedContracts] =
-        await appAliceSdk.amulet.tap(alice.partyId, ALICE_AMULET_TAP_AMOUNT)
+        await aliceSdk.amulet.tap(alice.partyId, ALICE_AMULET_TAP_AMOUNT)
 
-    await appAliceSdk.ledger
+    await aliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: aliceTapCreateCommand,
@@ -34,7 +34,7 @@ export async function allocateAmuletForAlice(
     logger: Logger
 ): Promise<string> {
     const {
-        appAliceSdk,
+        aliceSdk,
         aliceTokenNamespace,
         alice,
         globalSynchronizerId,
@@ -78,7 +78,7 @@ export async function allocateAmuletForAlice(
             requestedAt: new Date().toISOString(),
         })
 
-    await appAliceSdk.ledger
+    await aliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: [command],

@@ -74,8 +74,8 @@ export async function createAndInitiateOtcTrade(
     logger: Logger
 ): Promise<string> {
     const {
-        appAliceSdk,
-        appBobSdk,
+        aliceSdk,
+        bobSdk,
         tradingAppSdk,
         alice,
         bob,
@@ -118,7 +118,7 @@ export async function createAndInitiateOtcTrade(
         }
     }
 
-    await appAliceSdk.ledger
+    await aliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
             commands: buildOtcTradeProposalCommand({
@@ -135,12 +135,12 @@ export async function createAndInitiateOtcTrade(
         `Alice: OTCTradeProposal created (leg-0: ${TRADE_AMULET_AMOUNT} Amulet → Bob, leg-1: ${TRADE_TOKEN_AMOUNT} TestToken → Alice)`
     )
 
-    await appBobSdk.ledger
+    await bobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [
                 buildAcceptOtcTradeCommand({
-                    proposalCid: await readProposalCid(appBobSdk, bob.partyId),
+                    proposalCid: await readProposalCid(bobSdk, bob.partyId),
                     approver: bob.partyId,
                 }),
             ],

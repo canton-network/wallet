@@ -12,7 +12,7 @@ export async function allocateTokenForBob(
     logger: Logger
 ): Promise<{ legId: string }> {
     const {
-        appBobSdk,
+        bobSdk,
         tokenAdminSdk,
         bobTokenNamespace,
         bob,
@@ -30,7 +30,7 @@ export async function allocateTokenForBob(
     )!
     if (!legId) throw new Error('No transfer leg found for Bob')
 
-    const tokenHoldings = await appBobSdk.ledger.acs.read({
+    const tokenHoldings = await bobSdk.ledger.acs.read({
         templateIds: [TestTokenV1.Token.templateId],
         parties: [bob.partyId],
         filterByParty: true,
@@ -88,7 +88,7 @@ export async function allocateTokenForBob(
             : dc
     )
 
-    await appBobSdk.ledger
+    await bobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [command],

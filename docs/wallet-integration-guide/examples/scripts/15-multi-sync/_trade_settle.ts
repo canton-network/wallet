@@ -44,8 +44,8 @@ async function withdrawAllocationsOnFailure(
     logger: Logger
 ): Promise<void> {
     const {
-        appAliceSdk,
-        appBobSdk,
+        aliceSdk,
+        bobSdk,
         aliceTokenNamespace,
         bobTokenNamespace,
         alice,
@@ -70,7 +70,7 @@ async function withdrawAllocationsOnFailure(
                         admin: amuletAdmin,
                     },
                 })
-            await appAliceSdk.ledger
+            await aliceSdk.ledger
                 .prepare({
                     partyId: alice.partyId,
                     commands: [cmd],
@@ -93,7 +93,7 @@ async function withdrawAllocationsOnFailure(
                         admin: tokenAdmin.partyId,
                     },
                 })
-            await appBobSdk.ledger
+            await bobSdk.ledger
                 .prepare({
                     partyId: bob.partyId,
                     commands: [cmd],

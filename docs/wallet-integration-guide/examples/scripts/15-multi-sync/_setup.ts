@@ -52,9 +52,9 @@ export interface MultiSyncSetup {
     // participant; Bob + TokenAdmin on the app-provider participant. Each party
     // still gets its own wallet SDK so submissions are made through the party's
     // own client, mirroring a real multi-wallet deployment.
-    appAliceSdk: SDKInterface<'token' | 'amulet' | 'asset'>
+    aliceSdk: SDKInterface<'token' | 'amulet' | 'asset'>
     tradingAppSdk: SDKInterface<'token'>
-    appBobSdk: SDKInterface<'token'>
+    bobSdk: SDKInterface<'token'>
     tokenAdminSdk: SDKInterface<'token'>
     svSdk: SDKInterface<'token'>
     aliceTokenNamespace: TokenNamespace
@@ -84,7 +84,7 @@ export interface MultiSyncSetup {
 export async function setupMultiSyncTrade(
     logger: Logger
 ): Promise<MultiSyncSetup> {
-    const [appAliceSdk, tradingAppSdk, appBobSdk, tokenAdminSdk, svSdk] =
+    const [aliceSdk, tradingAppSdk, bobSdk, tokenAdminSdk, svSdk] =
         await Promise.all([
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
@@ -119,8 +119,9 @@ export async function setupMultiSyncTrade(
             }),
         ])
 
-    const connectedSyncResponse =
-        await appAliceSdk.ledger.connectedSynchronizers({})
+    const connectedSyncResponse = await aliceSdk.ledger.connectedSynchronizers(
+        {}
+    )
     const allSynchronizers = connectedSyncResponse.connectedSynchronizers ?? []
     if (allSynchronizers.length < 2)
         throw new Error(
@@ -156,11 +157,11 @@ export async function setupMultiSyncTrade(
     ])
 
     await Promise.all([
-        // Vetting is per (participant, synchronizer). appAliceSdk represents the
-        // app-user participant and appBobSdk the app-provider participant, so
+        // Vetting is per (participant, synchronizer). aliceSdk represents the
+        // app-user participant and bobSdk the app-provider participant, so
         // vetting through one SDK per participant covers every party hosted there.
         ...[testTokenV1Dar, tradingAppDar].flatMap((dar) =>
-            [appAliceSdk, appBobSdk].flatMap((sdk) =>
+            [aliceSdk, bobSdk].flatMap((sdk) =>
                 [globalSynchronizerId, testTokenSynchronizerId].map((sid) =>
                     sdk.ledger.dar.vet(dar, sid)
                 )
@@ -174,8 +175,8 @@ export async function setupMultiSyncTrade(
         'DARs vetted: app-user + app-provider have TestTokenV1 + trading-app on both synchronizers; sv has both on global only'
     )
 
-    const aliceKey = appAliceSdk.keys.generate()
-    const bobKey = appBobSdk.keys.generate()
+    const aliceKey = aliceSdk.keys.generate()
+    const bobKey = bobSdk.keys.generate()
     const tradingAppKey = tradingAppSdk.keys.generate()
     const tokenAdminKey = tokenAdminSdk.keys.generate()
 
@@ -185,7 +186,7 @@ export async function setupMultiSyncTrade(
         allocatedTradingApp,
         allocatedTokenAdmin,
     ] = await Promise.all([
-        appAliceSdk.party.external
+        aliceSdk.party.external
             .create(aliceKey.publicKey, {
                 partyHint: 'Alice',
                 synchronizerId: globalSynchronizerId,
@@ -193,7 +194,7 @@ export async function setupMultiSyncTrade(
             })
             .sign(aliceKey.privateKey)
             .execute(),
-        appBobSdk.party.external
+        bobSdk.party.external
             .create(bobKey.publicKey, {
                 partyHint: 'Bob',
                 synchronizerId: globalSynchronizerId,
@@ -234,17 +235,17 @@ export async function setupMultiSyncTrade(
         `Parties allocated on global-synchronizer and registered on app-synchronizer — alice: ${alice.partyId} (app-user), bob: ${bob.partyId} (app-provider), tradingApp: ${tradingApp.partyId} (app-user, both synchronizers), tokenAdmin: ${tokenAdmin.partyId} (app-provider)`
     )
 
-    const { admin: amuletAdmin } = await appAliceSdk.asset.find('Amulet')
+    const { admin: amuletAdmin } = await aliceSdk.asset.find('Amulet')
     logger.info(`Amulet asset discovered — admin: ${amuletAdmin}`)
 
     return {
-        appAliceSdk,
+        aliceSdk,
         tradingAppSdk,
-        appBobSdk,
+        bobSdk,
         tokenAdminSdk,
         svSdk,
-        aliceTokenNamespace: appAliceSdk.token,
-        bobTokenNamespace: appBobSdk.token,
+        aliceTokenNamespace: aliceSdk.token,
+        bobTokenNamespace: bobSdk.token,
         tokenAdminTokenNamespace: tokenAdminSdk.token,
         alice,
         bob,
