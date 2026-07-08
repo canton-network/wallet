@@ -928,6 +928,31 @@ describe('userController', () => {
     })
 
     describe('sessions', () => {
+        const validAddSessionClaims = {
+            iss: idp.issuer,
+            aud: storeNetwork.auth.audience,
+            sub: storeNetwork.auth.clientId,
+            exp: 1_900_000_000,
+            iat: 1_800_000_000,
+        }
+
+        const createAuthWithAddSessionClaims = (
+            claimsOverride: Partial<typeof validAddSessionClaims> = {}
+        ): AuthContext => ({
+            ...auth,
+            accessToken: createJwt({
+                ...validAddSessionClaims,
+                ...claimsOverride,
+            }),
+        })
+
+        const createJwt = (payload: Record<string, unknown>): string => {
+            const encode = (value: Record<string, unknown>): string =>
+                Buffer.from(JSON.stringify(value)).toString('base64url')
+
+            return `${encode({ alg: 'none', typ: 'JWT' })}.${encode(payload)}.signature`
+        }
+
         it('returns an empty list when there is no session', async () => {
             const store = await createStore(logger, auth, {
                 withSession: false,
@@ -995,14 +1020,19 @@ describe('userController', () => {
         })
 
         it('addSession creates a session and emits connected', async () => {
-            const store = await createStore(logger, auth, { withWallet: false })
-            const notifier = notificationService.getNotifier(auth.userId)
+            const authWithValidClaims = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithValidClaims, {
+                withWallet: false,
+            })
+            const notifier = notificationService.getNotifier(
+                authWithValidClaims.userId
+            )
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
                 notificationService,
                 logger,
-                auth
+                authWithValidClaims
             )
 
             const result = await controller.addSession({
@@ -1015,14 +1045,71 @@ describe('userController', () => {
                 'connected',
                 expect.objectContaining({
                     session: {
-                        accessToken: auth.accessToken,
-                        userId: auth.userId,
+                        accessToken: authWithValidClaims.accessToken,
+                        userId: authWithValidClaims.userId,
                     },
                 })
             )
             await expect(store.getSession()).resolves.toMatchObject({
                 network: 'network1',
             })
+        })
+
+        it('addSession rejects token with issuer mismatch', async () => {
+            const authWithInvalidIssuer = createAuthWithAddSessionClaims({
+                iss: 'http://wrong-issuer',
+            })
+            const store = await createStore(logger, authWithInvalidIssuer, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidIssuer
+            )
+
+            await expect(
+                controller.addSession({ networkId: 'network1' })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession rejects token with audience mismatch', async () => {
+            const authWithInvalidAudience = createAuthWithAddSessionClaims({
+                aud: 'wrong-audience',
+            })
+            const store = await createStore(logger, authWithInvalidAudience, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidAudience
+            )
+
+            await expect(
+                controller.addSession({ networkId: 'network1' })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession rejects token with subject mismatch', async () => {
+            const authWithInvalidSubject = createAuthWithAddSessionClaims({
+                sub: 'wrong-client-id',
+            })
+            const store = await createStore(logger, authWithInvalidSubject, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidSubject
+            )
+
+            await expect(
+                controller.addSession({ networkId: 'network1' })
+            ).rejects.toThrow('Failed to add session')
         })
     })
 
