@@ -13,15 +13,15 @@
     "devDependencies": {
         "@open-rpc/meta-schema": "^1.14.9",
         "@types/js-yaml": "^4.0.9",
-        "@types/node": "^25.9.3",
+        "@types/node": "^25.9.4",
         "@types/tar-fs": "^2.0.4",
-        "axios": "^1.18.0",
+        "axios": "^1.18.1",
         "colors": "^1.4.0",
         "diff": "^8.0.4",
-        "js-yaml": "^4.2.0",
+        "js-yaml": "^4.3.0",
         "openapi-typescript": "^7.13.0",
-        "tar-fs": "^3.1.2",
-        "tsx": "^4.22.4",
+        "tar-fs": "^3.1.3",
+        "tsx": "^4.23.0",
         "typescript": "^5.9.3"
     },
     "dependencies": {
