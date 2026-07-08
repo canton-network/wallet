@@ -11,7 +11,8 @@ Below are the release notes for the Wallet SDK versions, detailing new features,
 * Optional validatorUrl in the token and amulet namespaces
 
 *the Wallet SDK token and amulet namespaces can now be initialized without a validatorUrl.
-The only requirement now is to expose just the ledger API and registry urls for amulet and token specific operations.*
+The only requirement now is to expose just the ledger API and registry urls for amulet and token specific operations.
+However, users can continue to provide the validatorUrl, if they want to expose their validatorApi to these namespaces as this is an optional parameter.*
 
 .. code-block:: javascript
 
