@@ -3,6 +3,95 @@ Wallet SDK Release Notes
 
 Below are the release notes for the Wallet SDK versions, detailing new features, improvements, and bug fixes in each version.
 
+1.4.0
+-----
+
+**Released on July 8th, 2026**
+
+* Optional validatorUrl in the token and amulet namespaces
+
+*the Wallet SDK token and amulet namespaces can now be initialized without a validatorUrl.
+The only requirement now is to expose just the ledger API and registry urls for amulet and token specific operations.*
+
+.. code-block:: javascript
+
+    import { SDK } from '@canton-network/wallet-sdk'
+
+
+    const sdk = await SDK.create({
+        auth: {
+            method: 'self_signed',
+            issuer: 'unsafe-auth',
+            credentials: {
+                clientId: 'ledger-api-user',
+                clientSecret: 'unsafe',
+                audience: 'https://canton.network.global',
+                scope: '',
+            },
+        },
+        ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+        token: {
+            registries: [
+                new URL('http://localhost:2000/api/validator/v0/scan-proxy'),
+            ],
+            auth: {
+            method: 'self_signed',
+            issuer: 'unsafe-auth',
+            credentials: {
+                clientId: 'ledger-api-user',
+                clientSecret: 'unsafe',
+                audience: 'https://canton.network.global',
+                scope: '',
+            },
+        },
+        },
+        amulet: {
+            scanApiUrl: 'http://scanapi:8080',
+            auth: {
+            method: 'self_signed',
+            issuer: 'unsafe-auth',
+            credentials: {
+                clientId: 'ledger-api-user',
+                clientSecret: 'unsafe',
+                audience: 'https://canton.network.global',
+                scope: '',
+            },
+        },
+            registryUrl: 'http://registry:8080',
+        },
+    })
+
+
+* Function for retrieving validator party
+
+*For certain functions that require a validator operator party, we have provided a method to retrieve given the validator URL*
+
+.. code-block:: javascript
+
+    import { getValidatorParty } from '@canton-network/wallet-sdk'
+
+    const validatorParty = await getValidatorParty(
+        new URL('http://validatorurl'),
+        {
+        method: 'self_signed',
+        issuer: 'unsafe-auth',
+        credentials: {
+            clientId: 'ledger-api-user',
+            clientSecret: 'unsafe',
+            audience: 'https://canton.network.global',
+            scope: '',
+        }
+    )
+
+* Export custom logger types. 
+
+*exports CustomLogAdapter and the logger adapter types from @canton-network/wallet-sdk, so SDK users can provide their own logging implementation without importing from internal paths.*
+
+* Bug fix: Filter holdings by instrument when creating a transfer. 
+
+*When instrumentId/instrumentAdmin are passed to sdk.token.transfer.create, the sdk will filter holdings by instrument prior to creating a transfer.
+Previously, if there was more than one instrument in a party's holdings, the inputUtxos would have to be passed in as a workaround.*
+
 1.3.1
 -----
 
