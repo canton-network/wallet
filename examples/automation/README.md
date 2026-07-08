@@ -1,4 +1,4 @@
-# Service account automation example
+# Wallet Gateway automations example
 
 This example demonstrates how a **backend automation** submits Canton ledger transactions through the Wallet Gateway **without** a human clicking through the approval UI.
 
