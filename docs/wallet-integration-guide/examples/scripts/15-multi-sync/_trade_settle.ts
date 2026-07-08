@@ -26,6 +26,22 @@ function buildSettleOtcTradeCommand(params: {
     }
 }
 
+function buildCancelOtcTradeCommand(params: {
+    tradeCid: string
+    allocationsWithContext: Record<string, unknown>
+}) {
+    return {
+        ExerciseCommand: {
+            templateId: OTC_TRADE_TEMPLATE_ID,
+            contractId: params.tradeCid,
+            choice: 'OTCTrade_Cancel',
+            choiceArgument: {
+                allocationsWithContext: params.allocationsWithContext,
+            },
+        },
+    }
+}
+
 type DisclosedContract = LedgerCommonSchemas['DisclosedContract']
 
 export interface SettleParams {
@@ -36,75 +52,120 @@ export interface SettleParams {
     testTokenAllocationDisclosed: DisclosedContract
 }
 
-/** Withdraws both allocations in parallel after a settlement failure, returning funds to each party. */
-async function withdrawAllocationsOnFailure(
+interface CancelParams {
+    otcTradeCid: string
+    legIdAlice: string
+    legIdBob: string
+    amuletAllocationCid: string
+    testTokenAllocationCid: string
+    testTokenAllocationDisclosed: DisclosedContract
+}
+
+/**
+ * Cancels both allocations in a single venue-authorized `OTCTrade_Cancel` after
+ * settlement has definitively failed, releasing the locked holdings back to each
+ * party. Unlike a per-party withdraw, cancellation requires sender, receiver, and
+ * executor authorization, which the OTCTrade contract delegates to the venue.
+ */
+async function cancelAllocationsOnFailure(
     setup: MultiSyncSetup,
-    amuletAllocationCid: string,
-    testTokenAllocationCid: string,
+    params: CancelParams,
     logger: Logger
 ): Promise<void> {
     const {
-        aliceSdk,
-        bobSdk,
+        tradingAppSdk,
         aliceTokenNamespace,
         bobTokenNamespace,
-        alice,
-        bob,
-        tokenAdmin,
+        tradingApp,
         globalSynchronizerId,
-        amuletAdmin,
         testTokenRegistryUrl,
     } = setup
+    const {
+        otcTradeCid,
+        legIdAlice,
+        legIdBob,
+        amuletAllocationCid,
+        testTokenAllocationCid,
+        testTokenAllocationDisclosed,
+    } = params
 
-    await Promise.all([
-        (async () => {
-            const [cmd, disclosed] =
-                await aliceTokenNamespace.allocation.withdraw({
-                    allocationCid: amuletAllocationCid,
-                    asset: {
-                        id: 'Amulet',
-                        displayName: 'Amulet',
-                        symbol: 'CC',
-                        registryUrl:
-                            localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
-                        admin: amuletAdmin,
-                    },
-                })
-            await aliceSdk.ledger
-                .prepare({
-                    partyId: alice.partyId,
-                    commands: [cmd],
-                    disclosedContracts: disclosed,
-                    synchronizerId: globalSynchronizerId,
-                })
-                .sign(alice.keyPair.privateKey)
-                .execute({ partyId: alice.partyId })
-            logger.info('Alice: Amulet allocation withdrawn — funds returned')
-        })(),
-        (async () => {
-            const [cmd, disclosed] =
-                await bobTokenNamespace.allocation.withdraw({
-                    allocationCid: testTokenAllocationCid,
-                    asset: {
-                        id: 'TestToken',
-                        displayName: 'TestToken',
-                        symbol: 'TT',
-                        registryUrl: testTokenRegistryUrl,
-                        admin: tokenAdmin.partyId,
-                    },
-                })
-            await bobSdk.ledger
-                .prepare({
-                    partyId: bob.partyId,
-                    commands: [cmd],
-                    disclosedContracts: disclosed,
-                    synchronizerId: globalSynchronizerId,
-                })
-                .sign(bob.keyPair.privateKey)
-                .execute({ partyId: bob.partyId })
-            logger.info('Bob: TestToken allocation withdrawn — funds returned')
-        })(),
+    // Fetch each allocation's cancel choice context from its registry's
+    // allocation-v1 API (Amulet from the scan-proxy registry, TestToken from the
+    // local TestToken registry).
+    const [amuletCancelCtx, testTokenCancelCtx] = await Promise.all([
+        aliceTokenNamespace.allocation.context.cancel({
+            allocationCid: amuletAllocationCid,
+            registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+        }),
+        bobTokenNamespace.allocation.context.cancel({
+            allocationCid: testTokenAllocationCid,
+            registryUrl: testTokenRegistryUrl,
+        }),
     ])
+
+    const allocationsWithContext = {
+        [legIdAlice]: {
+            _1: amuletAllocationCid,
+            _2: {
+                context: {
+                    ...(amuletCancelCtx.choiceContextData ?? {}),
+                    values:
+                        (amuletCancelCtx.choiceContextData?.values as Record<
+                            string,
+                            unknown
+                        >) ?? {},
+                },
+                meta: { values: {} },
+            },
+        },
+        [legIdBob]: {
+            _1: testTokenAllocationCid,
+            _2: {
+                context: {
+                    ...(testTokenCancelCtx.choiceContextData ?? {}),
+                    values:
+                        (testTokenCancelCtx.choiceContextData?.values as Record<
+                            string,
+                            unknown
+                        >) ?? {},
+                },
+                meta: { values: {} },
+            },
+        },
+    }
+
+    const disclosedContracts = [
+        ...(amuletCancelCtx.disclosedContracts ?? []).map((c) => ({
+            ...c,
+            synchronizerId: '',
+        })),
+        ...(testTokenCancelCtx.disclosedContracts ?? []).map((c) => ({
+            ...c,
+            synchronizerId: '',
+        })),
+        // Disclose Bob's TestToken allocation so the TradingApp's participant can
+        // fetch it when validating the cancel, mirroring the settle path.
+        testTokenAllocationDisclosed,
+    ]
+
+    await tradingAppSdk.ledger
+        .prepare({
+            partyId: tradingApp.partyId,
+            commands: [
+                buildCancelOtcTradeCommand({
+                    tradeCid: otcTradeCid,
+                    allocationsWithContext,
+                }),
+            ],
+            disclosedContracts,
+            synchronizerId: globalSynchronizerId,
+        })
+        .sign(tradingApp.keyPair.privateKey)
+        .execute({ partyId: tradingApp.partyId })
+
+    logger.info(
+        'TradingApp: OTCTrade cancelled — allocations released, funds returned to Alice and Bob'
+    )
 }
 
 export async function settleOtcTrade(
@@ -196,8 +257,8 @@ export async function settleOtcTrade(
         testTokenAllocationDisclosed,
     ]
 
-    try {
-        await tradingAppSdk.ledger
+    const submitSettlement = () =>
+        tradingAppSdk.ledger
             .prepare({
                 partyId: tradingApp.partyId,
                 commands: [
@@ -211,25 +272,42 @@ export async function settleOtcTrade(
             })
             .sign(tradingApp.keyPair.privateKey)
             .execute({ partyId: tradingApp.partyId })
-    } catch (settleError) {
-        logger.error(
-            { err: settleError },
-            'Settlement failed — withdrawing allocations to return funds'
+
+    try {
+        await submitSettlement()
+    } catch (firstError) {
+        logger.warn(
+            { err: firstError },
+            'Settlement failed — retrying once before cancelling allocations'
         )
         try {
-            await withdrawAllocationsOnFailure(
-                setup,
-                amuletAllocation.contractId,
-                testTokenAllocationCid,
-                logger
-            )
-        } catch (compensationError) {
+            await submitSettlement()
+        } catch (retryError) {
             logger.error(
-                { err: compensationError },
-                'Compensation failed — manual intervention required to withdraw allocations'
+                { err: retryError },
+                'Settlement retry failed — cancelling allocations to return funds'
             )
+            try {
+                await cancelAllocationsOnFailure(
+                    setup,
+                    {
+                        otcTradeCid,
+                        legIdAlice,
+                        legIdBob,
+                        amuletAllocationCid: amuletAllocation.contractId,
+                        testTokenAllocationCid,
+                        testTokenAllocationDisclosed,
+                    },
+                    logger
+                )
+            } catch (compensationError) {
+                logger.error(
+                    { err: compensationError },
+                    'Compensation failed — manual intervention required to cancel allocations'
+                )
+            }
+            throw retryError
         }
-        throw settleError
     }
 
     logger.info(
