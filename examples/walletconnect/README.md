@@ -26,7 +26,7 @@ VITE_WC_PROJECT_ID=...
 From the repo root:
 
 ```bash
-yarn workspace @canton-network/example-wallet-connect-server dev
+yarn workspace @canton-network/example-walletconnect dev
 ```
 
 Or from this folder:
