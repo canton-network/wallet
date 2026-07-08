@@ -245,5 +245,49 @@ export const expectWalletHasNoAssets = async (
     ).toBeVisible({ timeout: 15000 })
 }
 
+/**
+ * Tap funds and create allocation(s) via the Action Required dialog.
+ */
+export const tapAndCreateAllocation = async (
+    page: Page,
+    wg: WalletGateway,
+    amount: string,
+    allocationsToCreate = 1
+): Promise<void> => {
+    await tap(page, wg, amount)
+
+    await expect(
+        page.getByRole('heading', { name: 'Action Required' })
+    ).toBeVisible({ timeout: 10000 })
+
+    const allocationRequest = page
+        .getByRole('button', { name: 'Open Allocation Request' })
+        .first()
+    await expect(allocationRequest).toBeVisible({ timeout: 15000 })
+    await allocationRequest.click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(
+        dialog.getByRole('heading', { name: 'Allocation Request' })
+    ).toBeVisible()
+
+    const allocateButtons = dialog.getByRole('button', { name: 'Allocate' })
+    await expect(allocateButtons).toHaveCount(allocationsToCreate, {
+        timeout: 15000,
+    })
+
+    for (let i = 0; i < allocationsToCreate; i++) {
+        await wg.approveTransaction(() => allocateButtons.first().click())
+        await expect(allocateButtons).toHaveCount(allocationsToCreate - i - 1, {
+            timeout: 15000,
+        })
+    }
+
+    if (await dialog.isVisible()) {
+        await dialog.getByLabel('Close allocation request dialog').click()
+        await expect(dialog).not.toBeVisible({ timeout: 10000 })
+    }
+}
+
 const escapeRegExp = (value: string) =>
     value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
