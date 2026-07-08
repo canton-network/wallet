@@ -6,7 +6,8 @@
         "declaration": false,
         "declarationMap": false,
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "types": ["node"]
     },
     "include": ["src/migrations/**/*.ts", "src/schema.ts"]
 }

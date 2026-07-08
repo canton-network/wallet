@@ -6,5 +6,6 @@ import { base } from '../../tsup.base'
 
 export default defineConfig({
     ...base,
+    platform: 'node',
     entry: ['src/index.ts'],
 })

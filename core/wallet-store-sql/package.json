@@ -43,6 +43,7 @@
     "devDependencies": {
         "@testcontainers/postgresql": "^12.0.4",
         "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^26.1.0",
         "@types/pg": "^8.20.0",
         "@vitest/coverage-v8": "^4.1.10",
         "pino-test": "^2.0.0",

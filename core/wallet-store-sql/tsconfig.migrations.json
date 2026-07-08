@@ -9,7 +9,8 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "module": "esnext",
-        "moduleResolution": "bundler"
+        "moduleResolution": "bundler",
+        "types": ["node"]
     },
     "include": ["src/migrations/**/*.ts", "src/schema.ts"]
 }
