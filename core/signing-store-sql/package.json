@@ -33,24 +33,24 @@
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
         "@canton-network/core-wallet-store": "workspace:^",
-        "better-sqlite3": "^12.10.1",
-        "commander": "^14.0.3",
-        "kysely": "^0.28.17",
-        "pg": "^8.21.0",
+        "better-sqlite3": "^12.11.1",
+        "commander": "^15.0.0",
+        "kysely": "^0.29.3",
+        "pg": "^8.22.0",
         "pino": "^10.3.1",
         "umzug": "^3.8.3",
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@swc/core": "^1.15.41",
-        "@testcontainers/postgresql": "^11.14.0",
+        "@swc/core": "^1.15.43",
+        "@testcontainers/postgresql": "^12.0.4",
         "@types/better-sqlite3": "^7.6.13",
         "@types/pg": "^8.20.0",
-        "@vitest/coverage-v8": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.10",
         "tsup": "^8.5.1",
-        "tsx": "^4.22.4",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.8"
+        "tsx": "^4.23.0",
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.10"
     },
     "files": [
         "dist/**"

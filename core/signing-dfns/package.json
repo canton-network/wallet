@@ -26,19 +26,19 @@
     "dependencies": {
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
-        "@dfns/sdk": "^0.8.21",
-        "@dfns/sdk-keysigner": "^0.8.21",
+        "@dfns/sdk": "^0.8.24",
+        "@dfns/sdk-keysigner": "^0.8.24",
         "lodash": "^4.18.1",
         "pino": "^10.3.1",
         "zod": "^4.4.3"
     },
     "devDependencies": {
         "@types/lodash": "^4.17.24",
-        "@types/node": "^25.9.3",
-        "@vitest/coverage-v8": "^4.1.8",
+        "@types/node": "^26.1.0",
+        "@vitest/coverage-v8": "^4.1.10",
         "tsup": "^8.5.1",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.8"
+        "typescript": "^6.0.3",
+        "vitest": "^4.1.10"
     },
     "files": [
         "dist/**"

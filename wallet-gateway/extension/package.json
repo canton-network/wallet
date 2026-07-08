@@ -14,12 +14,12 @@
         "clean": "tsc -b --clean; rm -rf ./dist"
     },
     "devDependencies": {
-        "@types/node": "^25.9.3",
+        "@types/node": "^26.1.0",
         "@types/webextension-polyfill": "^0.12.5",
         "esbuild": "^0.28.1",
-        "tsx": "^4.22.4",
-        "typescript": "^5.9.3",
-        "web-ext": "^9.4.0"
+        "tsx": "^4.23.0",
+        "typescript": "^6.0.3",
+        "web-ext": "^10.4.0"
     },
     "dependencies": {
         "@canton-network/core-rpc-errors": "workspace:^",
