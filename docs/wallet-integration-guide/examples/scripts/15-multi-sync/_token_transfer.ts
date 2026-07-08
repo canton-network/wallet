@@ -20,7 +20,7 @@ export async function aliceSelfTransferToApp(
         aliceSdk,
         aliceTokenNamespace,
         alice,
-        testTokenSynchronizerId,
+        appSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
@@ -46,12 +46,12 @@ export async function aliceSelfTransferToApp(
 
     // The settled holding lands on the global synchronizer; move it to the
     // app-synchronizer before self-transferring there (mirrors Bob's flow).
-    if (aliceToken.synchronizerId !== testTokenSynchronizerId) {
+    if (aliceToken.synchronizerId !== appSynchronizerId) {
         await aliceSdk.ledger.internal.reassign({
             submitter: alice.partyId,
             contractId: aliceToken.contractId,
             source: aliceToken.synchronizerId,
-            target: testTokenSynchronizerId,
+            target: appSynchronizerId,
             skipIfAlreadyOn: true,
         })
     }
@@ -71,7 +71,7 @@ export async function aliceSelfTransferToApp(
             partyId: alice.partyId,
             commands: [transferCommand],
             disclosedContracts: transferDisclosed,
-            synchronizerId: testTokenSynchronizerId,
+            synchronizerId: appSynchronizerId,
         })
         .sign(alice.keyPair.privateKey)
         .execute({ partyId: alice.partyId })
@@ -89,7 +89,7 @@ export async function bobSelfTransferToApp(
         bobSdk,
         bobTokenNamespace,
         bob,
-        testTokenSynchronizerId,
+        appSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
@@ -105,12 +105,12 @@ export async function bobSelfTransferToApp(
     }
 
     for (const token of bobTokens) {
-        if (token.synchronizerId !== testTokenSynchronizerId) {
+        if (token.synchronizerId !== appSynchronizerId) {
             await bobSdk.ledger.internal.reassign({
                 submitter: bob.partyId,
                 contractId: token.contractId,
                 source: token.synchronizerId,
-                target: testTokenSynchronizerId,
+                target: appSynchronizerId,
                 skipIfAlreadyOn: true,
             })
         }
@@ -138,7 +138,7 @@ export async function bobSelfTransferToApp(
                 partyId: bob.partyId,
                 commands: [transferCommand],
                 disclosedContracts: transferDisclosed,
-                synchronizerId: testTokenSynchronizerId,
+                synchronizerId: appSynchronizerId,
             })
             .sign(bob.keyPair.privateKey)
             .execute({ partyId: bob.partyId })

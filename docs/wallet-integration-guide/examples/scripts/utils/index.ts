@@ -20,7 +20,7 @@ export function getActiveContractCid(entry: JSContractEntry) {
 /** Maps the two synchronizer roles used in multi-synchronizer setups. */
 export type SynchronizerMap = {
     globalSynchronizerId: string
-    testTokenSynchronizerId: string
+    appSynchronizerId: string
 }
 
 /**

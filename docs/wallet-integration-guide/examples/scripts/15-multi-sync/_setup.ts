@@ -65,7 +65,7 @@ export interface MultiSyncSetup {
     tradingApp: PartyInfo
     tokenAdmin: PartyInfo
     globalSynchronizerId: string
-    testTokenSynchronizerId: string
+    appSynchronizerId: string
     synchronizers: SynchronizerMap
     amuletAdmin: string
     testTokenRegistryUrl: URL
@@ -129,11 +129,11 @@ export async function setupMultiSyncTrade(
         )
 
     const globalSynchronizerId = resolveGlobalSynchronizerId(allSynchronizers)
-    const testTokenSynchronizerId = allSynchronizers.find(
+    const appSynchronizerId = allSynchronizers.find(
         (s) => s.synchronizerAlias === 'app-synchronizer'
     )?.synchronizerId
 
-    if (!testTokenSynchronizerId)
+    if (!appSynchronizerId)
         throw new Error(
             'App synchronizer not found — start localnet in multi-sync mode (the default; do not pass --no-multi-sync).'
         )
@@ -142,12 +142,12 @@ export async function setupMultiSyncTrade(
         `Connected synchronizers: ${allSynchronizers.map((s) => s.synchronizerAlias).join(', ')}`
     )
     logger.info(
-        `Synchronizer IDs — global: ${globalSynchronizerId}, app: ${testTokenSynchronizerId}`
+        `Synchronizer IDs — global: ${globalSynchronizerId}, app: ${appSynchronizerId}`
     )
 
     const synchronizers: SynchronizerMap = {
         globalSynchronizerId,
-        testTokenSynchronizerId,
+        appSynchronizerId,
     }
 
     const here = path.dirname(fileURLToPath(import.meta.url))
@@ -162,7 +162,7 @@ export async function setupMultiSyncTrade(
         // vetting through one SDK per participant covers every party hosted there.
         ...[testTokenV1Dar, tradingAppDar].flatMap((dar) =>
             [aliceSdk, bobSdk].flatMap((sdk) =>
-                [globalSynchronizerId, testTokenSynchronizerId].map((sid) =>
+                [globalSynchronizerId, appSynchronizerId].map((sid) =>
                     sdk.ledger.dar.vet(dar, sid)
                 )
             )
@@ -190,7 +190,7 @@ export async function setupMultiSyncTrade(
             .create(aliceKey.publicKey, {
                 partyHint: 'Alice',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [testTokenSynchronizerId],
+                additionalSynchronizerIds: [appSynchronizerId],
             })
             .sign(aliceKey.privateKey)
             .execute(),
@@ -198,7 +198,7 @@ export async function setupMultiSyncTrade(
             .create(bobKey.publicKey, {
                 partyHint: 'Bob',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [testTokenSynchronizerId],
+                additionalSynchronizerIds: [appSynchronizerId],
             })
             .sign(bobKey.privateKey)
             .execute(),
@@ -206,7 +206,7 @@ export async function setupMultiSyncTrade(
             .create(tradingAppKey.publicKey, {
                 partyHint: 'TradingApp',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [testTokenSynchronizerId],
+                additionalSynchronizerIds: [appSynchronizerId],
             })
             .sign(tradingAppKey.privateKey)
             .execute(),
@@ -214,7 +214,7 @@ export async function setupMultiSyncTrade(
             .create(tokenAdminKey.publicKey, {
                 partyHint: 'TokenAdmin',
                 synchronizerId: globalSynchronizerId,
-                additionalSynchronizerIds: [testTokenSynchronizerId],
+                additionalSynchronizerIds: [appSynchronizerId],
             })
             .sign(tokenAdminKey.privateKey)
             .execute(),
@@ -252,7 +252,7 @@ export async function setupMultiSyncTrade(
         tradingApp,
         tokenAdmin,
         globalSynchronizerId,
-        testTokenSynchronizerId,
+        appSynchronizerId,
         synchronizers,
         amuletAdmin,
         testTokenRegistryUrl: TEST_TOKEN_REGISTRY_URL,

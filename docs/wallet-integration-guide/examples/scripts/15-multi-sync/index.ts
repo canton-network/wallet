@@ -50,11 +50,8 @@ const registry = await startTestTokenRegistry({
     admin: tokenAdmin.partyId,
     port: TEST_TOKEN_REGISTRY_PORT,
     ledgerUrl: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-    synchronizerIds: [
-        setup.globalSynchronizerId,
-        setup.testTokenSynchronizerId,
-    ],
-    transferSynchronizerId: setup.testTokenSynchronizerId,
+    synchronizerIds: [setup.globalSynchronizerId, setup.appSynchronizerId],
+    transferSynchronizerId: setup.appSynchronizerId,
     allocationSynchronizerId: setup.globalSynchronizerId,
     createTokenRules: (synchronizerId) =>
         createTokenRules(setup, synchronizerId),
@@ -143,7 +140,7 @@ const testTokenAllocationDisclosed = {
 await bobSdk.ledger.internal.reassign({
     submitter: bob.partyId,
     contractId: testTokenAllocationCid,
-    source: synchronizers.testTokenSynchronizerId,
+    source: synchronizers.appSynchronizerId,
     target: synchronizers.globalSynchronizerId,
     skipIfAlreadyOn: true,
 })

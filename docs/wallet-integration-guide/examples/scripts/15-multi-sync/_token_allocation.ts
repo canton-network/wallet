@@ -17,7 +17,7 @@ export async function allocateTokenForBob(
         bobTokenNamespace,
         bob,
         tokenAdmin,
-        testTokenSynchronizerId,
+        appSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
@@ -66,7 +66,7 @@ export async function allocateTokenForBob(
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         })
-    ).find((c) => c.synchronizerId === testTokenSynchronizerId)
+    ).find((c) => c.synchronizerId === appSynchronizerId)
     if (!appTokenRules)
         throw new Error('TokenRules not found on app synchronizer')
 
@@ -93,7 +93,7 @@ export async function allocateTokenForBob(
             partyId: bob.partyId,
             commands: [command],
             disclosedContracts: disclosedOnApp,
-            synchronizerId: testTokenSynchronizerId,
+            synchronizerId: appSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
         .execute({ partyId: bob.partyId })

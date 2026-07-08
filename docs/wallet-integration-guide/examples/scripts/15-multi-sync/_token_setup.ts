@@ -51,7 +51,7 @@ export async function mintAndTransferTokenToBob(
         tokenAdminTokenNamespace,
         bob,
         tokenAdmin,
-        testTokenSynchronizerId,
+        appSynchronizerId,
         testTokenRegistryUrl,
     } = setup
 
@@ -66,7 +66,7 @@ export async function mintAndTransferTokenToBob(
                 }),
             ],
             disclosedContracts: [],
-            synchronizerId: testTokenSynchronizerId,
+            synchronizerId: appSynchronizerId,
         })
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
@@ -98,7 +98,7 @@ export async function mintAndTransferTokenToBob(
             partyId: tokenAdmin.partyId,
             commands: [transferCommand],
             disclosedContracts: transferDisclosed,
-            synchronizerId: testTokenSynchronizerId,
+            synchronizerId: appSynchronizerId,
         })
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
@@ -125,7 +125,7 @@ export async function mintAndTransferTokenToBob(
             partyId: bob.partyId,
             commands: [acceptCommand],
             disclosedContracts: acceptDisclosed,
-            synchronizerId: testTokenSynchronizerId,
+            synchronizerId: appSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
         .execute({ partyId: bob.partyId })
