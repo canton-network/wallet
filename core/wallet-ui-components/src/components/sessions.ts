@@ -130,49 +130,57 @@ export class WgSessions extends BaseElement {
                         <article class="wg-card session-card">
                             <div class="card-header">
                                 <span
-                                    class="status-dot ${isConnected
-                                        ? 'connected'
-                                        : 'disconnected'}"
+                                    class="status-dot ${
+                                        isConnected
+                                            ? 'connected'
+                                            : 'disconnected'
+                                    }"
                                 ></span>
                                 <h3 class="card-title">
                                     ${session.network.id}
                                 </h3>
                                 <span
-                                    class="status-label ${isConnected
-                                        ? 'connected'
-                                        : 'disconnected'}"
+                                    class="status-label ${
+                                        isConnected
+                                            ? 'connected'
+                                            : 'disconnected'
+                                    }"
                                 >
                                     ${session.status}
                                 </span>
                             </div>
 
                             <div class="meta">
-                                ${session.rights?.length
-                                    ? html`
-                                          <div class="meta-row">
-                                              <span class="meta-label"
-                                                  >Permissions:</span
-                                              >
-                                              <span class="meta-value"
-                                                  >${session.rights.join(
-                                                      ', '
-                                                  )}</span
-                                              >
-                                          </div>
-                                      `
-                                    : ''}
-                                ${session.reason
-                                    ? html`
-                                          <div class="meta-row">
-                                              <span class="meta-label"
-                                                  >Reason:</span
-                                              >
-                                              <span class="meta-value"
-                                                  >${session.reason}</span
-                                              >
-                                          </div>
-                                      `
-                                    : ''}
+                                ${
+                                    session.rights?.length
+                                        ? html`
+                                              <div class="meta-row">
+                                                  <span class="meta-label"
+                                                      >Permissions:</span
+                                                  >
+                                                  <span class="meta-value"
+                                                      >${session.rights.join(
+                                                          ', '
+                                                      )}</span
+                                                  >
+                                              </div>
+                                          `
+                                        : ''
+                                }
+                                ${
+                                    session.reason
+                                        ? html`
+                                              <div class="meta-row">
+                                                  <span class="meta-label"
+                                                      >Reason:</span
+                                                  >
+                                                  <span class="meta-value"
+                                                      >${session.reason}</span
+                                                  >
+                                              </div>
+                                          `
+                                        : ''
+                                }
 
                                 <div class="meta-row">
                                     <span class="meta-label"

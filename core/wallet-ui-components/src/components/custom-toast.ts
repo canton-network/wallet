@@ -203,9 +203,9 @@ export class Toast extends BaseElement {
 
         return html`
             <div
-                class="toast-wrapper ${this.type} ${this.closing
-                    ? 'closing'
-                    : ''}"
+                class="toast-wrapper ${this.type} ${
+                    this.closing ? 'closing' : ''
+                }"
                 role=${isAssertive ? 'alert' : 'status'}
                 aria-live=${isAssertive ? 'assertive' : 'polite'}
                 aria-atomic="true"
