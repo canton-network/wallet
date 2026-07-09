@@ -126,5 +126,10 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git"
+    },
+    "dependenciesMeta": {
+        "bootstrap@5.3.8": {
+            "unplugged": true
+        }
     }
 }

@@ -3,7 +3,7 @@
 
 import { html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { Idp } from '@canton-network/core-wallet-user-rpc-client'
+import { type Idp } from '@canton-network/core-wallet-user-rpc-client'
 
 import { BaseElement } from '../internal/base-element'
 import { modalStyles } from '../styles/modal'
@@ -167,15 +167,15 @@ export class WgIdps extends BaseElement {
                                                   ? html`<form-input
                                                         label="Config URL"
                                                         @form-input-change=${(
-                                                        e: FormInputChangedEvent
-                                                    ) => {
-                                                        this.modalIdp.configUrl =
-                                                            e.value
-                                                    }}
+                                                            e: FormInputChangedEvent
+                                                        ) => {
+                                                            this.modalIdp.configUrl =
+                                                                e.value
+                                                        }}
                                                         .value=${
-                                                        this.modalIdp
-                                                            .configUrl || ''
-                                                    }
+                                                            this.modalIdp
+                                                                .configUrl || ''
+                                                        }
                                                     ></form-input>`
                                                   : ''
                                           }

@@ -4,6 +4,7 @@
         "outDir": "./dist",
         "rootDir": "./src",
         "emitDeclarationOnly": false,
+        "allowSyntheticDefaultImports": true,
         "moduleResolution": "nodenext",
         "module": "nodenext"
     },

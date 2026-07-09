@@ -8,7 +8,7 @@
             "language": "typescript",
             "openRPCPath": null,
             "outPath": "./core/signing-lib/src/rpc-gen",
-            "customComponent": "./core/rpc-generator/dist/components/controller.js",
+            "customComponent": "./core/rpc-generator/dist/components/controller.cjs",
             "customType": "controller"
         }
     ]

@@ -7,13 +7,13 @@
         "module": "ESNext",
         "skipLibCheck": true,
         "paths": {
-            "@components/*": ["src/components/*"],
-            "@config/*": ["src/config/*"],
-            "@contexts/*": ["src/contexts/*"],
-            "@hooks/*": ["src/hooks/*"],
-            "@lib/*": ["src/lib/*"],
-            "@utils/*": ["src/utils/*"],
-            "@services/*": ["src/services/*"]
+            "@components/*": ["./src/components/*"],
+            "@config/*": ["./src/config/*"],
+            "@contexts/*": ["./src/contexts/*"],
+            "@hooks/*": ["./src/hooks/*"],
+            "@lib/*": ["./src/lib/*"],
+            "@utils/*": ["./src/utils/*"],
+            "@services/*": ["./src/services/*"]
         },
 
         /* Bundler mode */

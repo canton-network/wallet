@@ -7,7 +7,7 @@
             "name": "@canton-network/core-wallet-dapp-rpc-client",
             "language": "typescript",
             "outPath": "./core/wallet-dapp-rpc-client",
-            "customComponent": "./core/rpc-generator/dist/components/client.js"
+            "customComponent": "./core/rpc-generator/dist/components/client.cjs"
         },
         {
             "type": "custom",
@@ -15,7 +15,7 @@
             "language": "typescript",
             "openRPCPath": null,
             "outPath": "./sdk/dapp-sdk/src/dapp-api/rpc-gen",
-            "customComponent": "./core/rpc-generator/dist/components/controller.js",
+            "customComponent": "./core/rpc-generator/dist/components/controller.cjs",
             "customType": "controller"
         },
         {
@@ -24,7 +24,7 @@
             "language": "typescript",
             "openRPCPath": null,
             "outPath": "./wallet-gateway/extension/src/dapp-api/rpc-gen",
-            "customComponent": "./core/rpc-generator/dist/components/controller.js",
+            "customComponent": "./core/rpc-generator/dist/components/controller.cjs",
             "customType": "controller"
         }
     ]

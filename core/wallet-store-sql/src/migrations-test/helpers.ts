@@ -8,7 +8,7 @@ import pg from 'pg'
 
 import { connection } from '../store-sql.js'
 import { migrator } from '../migrator.js'
-import { DB } from '../schema.js'
+import type { DB } from '../schema.js'
 import { PG_ENV } from './global-setup.js'
 import { isPostgres } from '../utils'
 

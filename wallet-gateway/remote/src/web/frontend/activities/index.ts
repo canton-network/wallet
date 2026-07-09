@@ -94,10 +94,10 @@ export class UserUiActivities extends BaseElement {
                                             .externalTxId=${tx.externalTxId ?? null}
                                             .status=${tx.status}
                                             .parsed=${
-                                            this.parsedTransactions.get(
-                                                tx.id
-                                            ) || null
-                                        }
+                                                this.parsedTransactions.get(
+                                                    tx.id
+                                                ) || null
+                                            }
                                             .createdAt=${tx.createdAt ?? null}
                                             .signedAt=${tx.signedAt ?? null}
                                             .origin=${tx.origin ?? null}

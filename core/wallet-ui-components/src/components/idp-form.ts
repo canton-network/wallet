@@ -3,7 +3,7 @@
 
 import { css, html, nothing } from 'lit'
 import { customElement, property, query, state } from 'lit/decorators.js'
-import { Idp } from '@canton-network/core-wallet-user-rpc-client'
+import { type Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { BaseElement } from '../internal/base-element'
 import { chevronDownIcon } from '../icons/index.js'
 

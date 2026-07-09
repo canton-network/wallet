@@ -4,7 +4,7 @@
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
-import { GenerateApiKeyParams } from '@canton-network/core-wallet-user-rpc-client'
+import { type GenerateApiKeyParams } from '@canton-network/core-wallet-user-rpc-client'
 
 /**
  * Emitted when the user clicks the Generate button on the form
