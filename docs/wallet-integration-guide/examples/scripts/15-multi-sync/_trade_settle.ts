@@ -175,8 +175,6 @@ export async function settleOtcTrade(
 ): Promise<void> {
     const {
         tradingAppSdk,
-        aliceTokenNamespace,
-        bobTokenNamespace,
         alice,
         tradingApp,
         globalSynchronizerId,
@@ -190,7 +188,8 @@ export async function settleOtcTrade(
         testTokenAllocationDisclosed,
     } = params
 
-    const allocationsAlice = await aliceTokenNamespace.allocation.pending(
+    const tokenNamespace = tradingAppSdk.token
+    const allocationsAlice = await tokenNamespace.allocation.pending(
         alice.partyId
     )
     const amuletAllocation = allocationsAlice.find(
@@ -198,19 +197,17 @@ export async function settleOtcTrade(
     )
     if (!amuletAllocation) throw new Error('Amulet allocation not found')
 
-    const amuletExecCtx = await aliceTokenNamespace.allocation.context.execute({
+    const amuletExecCtx = await tokenNamespace.allocation.context.execute({
         allocationCid: amuletAllocation.contractId,
         registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
     })
 
     // Fetch Bob's TestToken execute-transfer choice context from the registry's
     // allocation-v1 API (instead of hard-coding an empty context).
-    const testTokenExecCtx = await bobTokenNamespace.allocation.context.execute(
-        {
-            allocationCid: testTokenAllocationCid,
-            registryUrl: testTokenRegistryUrl,
-        }
-    )
+    const testTokenExecCtx = await tokenNamespace.allocation.context.execute({
+        allocationCid: testTokenAllocationCid,
+        registryUrl: testTokenRegistryUrl,
+    })
 
     const allocationsWithContext = {
         [legIdAlice]: {
