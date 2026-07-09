@@ -12,14 +12,17 @@ const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
 const TOKEN_POLL_TIMEOUT_MS = 30_000
 const TOKEN_POLL_INTERVAL_MS = 500
 
-export async function aliceSelfTransferToApp(
+export async function aliceTransferToCharlie(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
     const {
         aliceSdk,
         aliceTokenNamespace,
+        charlieSdk,
+        charlieTokenNamespace,
         alice,
+        charlie,
         appSynchronizerId,
         testTokenRegistryUrl,
     } = setup
@@ -45,7 +48,7 @@ export async function aliceSelfTransferToApp(
     }
 
     // The settled holding lands on the global synchronizer; move it to the
-    // app-synchronizer before self-transferring there (mirrors Bob's flow).
+    // app-synchronizer before transferring it to Charlie there (mirrors Bob's flow).
     // TODO #2097 remove after bugfix in canton
     if (aliceToken.synchronizerId !== appSynchronizerId) {
         await aliceSdk.ledger.internal.reassign({
@@ -56,10 +59,11 @@ export async function aliceSelfTransferToApp(
         })
     }
 
+    // Alice offers her freshly-received TestToken to Charlie via the registry's
     const [transferCommand, transferDisclosed] =
         await aliceTokenNamespace.transfer.create({
             sender: alice.partyId,
-            recipient: alice.partyId,
+            recipient: charlie.partyId,
             amount: TRADE_TOKEN_AMOUNT,
             instrumentId: 'TestToken',
             registryUrl: testTokenRegistryUrl,
@@ -76,8 +80,33 @@ export async function aliceSelfTransferToApp(
         .sign(alice.keyPair.privateKey)
         .execute({ partyId: alice.partyId })
 
+    const transferOffers = await charlieSdk.ledger.acs.read({
+        templateIds: [TestTokenV1.TokenTransferOffer.templateId],
+        parties: [charlie.partyId],
+        filterByParty: true,
+    })
+    const transferOfferCid = transferOffers[0]?.contractId
+    if (!transferOfferCid)
+        throw new Error('TokenTransferOffer not found for Charlie')
+
+    const [acceptCommand, acceptDisclosed] =
+        await charlieTokenNamespace.transfer.accept({
+            transferInstructionCid: transferOfferCid,
+            registryUrl: testTokenRegistryUrl,
+        })
+
+    await charlieSdk.ledger
+        .prepare({
+            partyId: charlie.partyId,
+            commands: [acceptCommand],
+            disclosedContracts: acceptDisclosed,
+            synchronizerId: appSynchronizerId,
+        })
+        .sign(charlie.keyPair.privateKey)
+        .execute({ partyId: charlie.partyId })
+
     logger.info(
-        `Alice: ${TRADE_TOKEN_AMOUNT} TestToken self-transferred on app-synchronizer via registry transfer-factory`
+        `Alice: ${TRADE_TOKEN_AMOUNT} TestToken transferred to Charlie on app-synchronizer via registry transfer-factory`
     )
 }
 
