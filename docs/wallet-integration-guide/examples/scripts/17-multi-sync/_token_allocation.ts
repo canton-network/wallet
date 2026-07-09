@@ -11,17 +11,14 @@ export async function allocateTokenForBob(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<{ legId: string }> {
-    const {
-        bobSdk,
-        tokenAdminSdk,
-        bobTokenNamespace,
-        bob,
-        tokenAdmin,
-        appSynchronizerId,
-        testTokenRegistryUrl,
-    } = setup
+    const { bobSdk, tokenAdminSdk, bob, tokenAdmin, appSynchronizerId } = setup
 
-    const pendingRequests = await bobTokenNamespace.allocation.request.pending(
+    // Resolve the TestToken registry URL from the SDK's configured registries
+    // (`token.find`) rather than passing it in through the setup object.
+    const { registryUrl: testTokenRegistryUrl } =
+        await bobSdk.token.find('TestToken')
+
+    const pendingRequests = await bobSdk.token.allocation.request.pending(
         bob.partyId
     )
     const requestView = pendingRequests[0].interfaceViewValue!
@@ -43,7 +40,7 @@ export async function allocateTokenForBob(
     // allocation-instruction-v1 API. The registry returns the global-synchronizer
     // TokenRules contract as the factory (disclosed in `disclosedFromHelper`).
     const [command, disclosedFromHelper] =
-        await bobTokenNamespace.allocation.instruction.create({
+        await bobSdk.token.allocation.instruction.create({
             allocationSpecification: {
                 settlement: requestView.settlement,
                 transferLegId: legId,
