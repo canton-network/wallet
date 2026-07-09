@@ -8,7 +8,8 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 import { PartyId } from '@canton-network/core-types'
 import { PrettyTransactions } from '@canton-network/core-tx-parser'
 import type { SDKContext } from '../../init/types/context.js'
-import { ParsedURL } from '../utils/url.js'
+import { ParsedURL, parseAssets } from '../utils/url.js'
+import { findAsset, type AssetBody } from '../asset/index.js'
 
 export type TokenNamespaceConfig = {
     tokenStandardService: TokenStandardService
@@ -52,6 +53,38 @@ export class TokenNamespace {
         return await this.tokenContext.tokenStandardService.getTransactionById(
             params.updateId,
             params.partyId
+        )
+    }
+
+    /**
+     * Lists the token-standard assets served by the registries this namespace
+     * was configured with (the `registries` passed to `token` in `SDK.create`).
+     *
+     * Unlike the `asset` namespace — which resolves its list once when the SDK
+     * is created — this queries the configured registries on each call, so it
+     * also works with registries that only come online after the SDK exists.
+     */
+    async assets(): Promise<AssetBody[]> {
+        return parseAssets(
+            this.tokenContext.commonCtx,
+            await this.tokenContext.tokenStandardService.registriesToAssets(
+                this.tokenContext.registryUrls.map((url) => url.href)
+            )
+        )
+    }
+
+    /**
+     * Resolves a single asset — including the `registryUrl` that serves it — by
+     * instrument id from the configured registries. Provide `registryUrl` to
+     * disambiguate when the same instrument id is served by more than one
+     * registry.
+     */
+    async find(instrumentId: string, registryUrl?: URL): Promise<AssetBody> {
+        return findAsset(
+            await this.assets(),
+            instrumentId,
+            this.tokenContext.commonCtx.error,
+            registryUrl
         )
     }
 }

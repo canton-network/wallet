@@ -9,7 +9,6 @@ import {
     localNetStaticConfig,
     SDK,
     type SDKInterface,
-    type TokenNamespace,
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
@@ -58,10 +57,6 @@ export interface MultiSyncSetup {
     tokenAdminSdk: SDKInterface<'token'>
     charlieSdk: SDKInterface<'token'>
     svSdk: SDKInterface<'token'>
-    aliceTokenNamespace: TokenNamespace
-    bobTokenNamespace: TokenNamespace
-    tokenAdminTokenNamespace: TokenNamespace
-    charlieTokenNamespace: TokenNamespace
     alice: PartyInfo
     bob: PartyInfo
     tradingApp: PartyInfo
@@ -71,7 +66,6 @@ export interface MultiSyncSetup {
     appSynchronizerId: string
     synchronizers: SynchronizerMap
     amuletAdmin: string
-    testTokenRegistryUrl: URL
 }
 
 /**
@@ -265,10 +259,6 @@ export async function setupMultiSyncTrade(
         tokenAdminSdk,
         charlieSdk,
         svSdk,
-        aliceTokenNamespace: aliceSdk.token,
-        bobTokenNamespace: bobSdk.token,
-        tokenAdminTokenNamespace: tokenAdminSdk.token,
-        charlieTokenNamespace: charlieSdk.token,
         alice,
         bob,
         tradingApp,
@@ -278,6 +268,5 @@ export async function setupMultiSyncTrade(
         appSynchronizerId,
         synchronizers,
         amuletAdmin,
-        testTokenRegistryUrl: TEST_TOKEN_REGISTRY_URL,
     }
 }
