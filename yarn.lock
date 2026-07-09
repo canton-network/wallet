@@ -1393,7 +1393,6 @@ __metadata:
   resolution: "@canton-network/core-daml-codegen-helpers@workspace:core/daml-codegen-helpers"
   dependencies:
     "@types/node": "npm:^25.9.4"
-    "@vitest/browser-playwright": "npm:^4.1.10"
     "@vitest/coverage-v8": "npm:^4.1.10"
     tsup: "npm:^8.5.1"
     typescript: "npm:^5.9.3"
