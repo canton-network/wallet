@@ -249,9 +249,9 @@ export class AppHeader extends BaseElement {
 
                 <div class="network-pill" title=${this.networkName}>
                     <span
-                        class="status-dot ${this.networkConnected
-                            ? 'online'
-                            : 'offline'}"
+                        class="status-dot ${
+                            this.networkConnected ? 'online' : 'offline'
+                        }"
                     ></span>
                     <span class="network-name">${this.networkName}</span>
                 </div>
@@ -265,9 +265,9 @@ export class AppHeader extends BaseElement {
                         @click=${this.toggleMenu}
                     >
                         <span
-                            class="page-trigger-icon ${this.menuOpen
-                                ? 'open'
-                                : ''}"
+                            class="page-trigger-icon ${
+                                this.menuOpen ? 'open' : ''
+                            }"
                         >
                             ${menuIcon}
                         </span>

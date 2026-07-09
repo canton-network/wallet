@@ -156,9 +156,13 @@ export class NetworkCard extends BaseElement {
             <article class="wg-card net-card" @click=${this._onClick}>
                 <div class="card-header">
                     <p class="card-title">${this.network.name}</p>
-                    ${this.activeSession
-                        ? html`<span class="badge-connected">CONNECTED</span>`
-                        : ''}
+                    ${
+                        this.activeSession
+                            ? html`<span class="badge-connected"
+                                  >CONNECTED</span
+                              >`
+                            : ''
+                    }
                 </div>
 
                 <div class="meta">
@@ -167,53 +171,61 @@ export class NetworkCard extends BaseElement {
                         <p class="meta-value">${this.network.id}</p>
                     </div>
 
-                    ${this.activeSession
-                        ? html`
-                              <div class="meta-row meta-row--copy">
-                                  <p class="meta-title">Access Token</p>
-                                  <p class="meta-value meta-value-muted">
-                                      [private]
-                                  </p>
-                                  <wg-copy-button
-                                      .value=${this.accessToken}
-                                      label="Copy access token"
-                                  ></wg-copy-button>
-                              </div>
-                          `
-                        : ''}
+                    ${
+                        this.activeSession
+                            ? html`
+                                  <div class="meta-row meta-row--copy">
+                                      <p class="meta-title">Access Token</p>
+                                      <p class="meta-value meta-value-muted">
+                                          [private]
+                                      </p>
+                                      <wg-copy-button
+                                          .value=${this.accessToken}
+                                          label="Copy access token"
+                                      ></wg-copy-button>
+                                  </div>
+                              `
+                            : ''
+                    }
 
                     <div class="meta-row">
                         <p class="meta-title">Auth</p>
                         <p class="meta-value">${this.network.authMethod}</p>
                     </div>
 
-                    ${syncId
-                        ? html`
-                              <div class="meta-row meta-row--copy">
-                                  <p class="meta-title">Synchronizer</p>
-                                  <p class="meta-value" title=${syncId}>
-                                      ${syncId}
-                                  </p>
-                                  <wg-copy-button
-                                      .value=${syncId}
-                                      label="Copy synchronizer ID"
-                                  ></wg-copy-button>
-                              </div>
-                          `
-                        : ''}
-                    ${this.network.identityProviderId
-                        ? html`
-                              <div class="meta-row">
-                                  <p class="meta-title">Identity provider</p>
-                                  <p
-                                      class="meta-value"
-                                      title=${this.network.identityProviderId}
-                                  >
-                                      ${this.network.identityProviderId}
-                                  </p>
-                              </div>
-                          `
-                        : ''}
+                    ${
+                        syncId
+                            ? html`
+                                  <div class="meta-row meta-row--copy">
+                                      <p class="meta-title">Synchronizer</p>
+                                      <p class="meta-value" title=${syncId}>
+                                          ${syncId}
+                                      </p>
+                                      <wg-copy-button
+                                          .value=${syncId}
+                                          label="Copy synchronizer ID"
+                                      ></wg-copy-button>
+                                  </div>
+                              `
+                            : ''
+                    }
+                    ${
+                        this.network.identityProviderId
+                            ? html`
+                                  <div class="meta-row">
+                                      <p class="meta-title">
+                                          Identity provider
+                                      </p>
+                                      <p
+                                          class="meta-value"
+                                          title=${this.network.identityProviderId}
+                                      >
+                                          ${this.network.identityProviderId}
+                                      </p>
+                                  </div>
+                              `
+                            : ''
+                    }
                 </div>
             </article>
         `

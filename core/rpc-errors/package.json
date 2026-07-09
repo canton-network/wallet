@@ -34,10 +34,10 @@
         "@metamask/rpc-errors": "^7.0.3"
     },
     "devDependencies": {
-        "@vitest/coverage-v8": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.10",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.8"
+        "vitest": "^4.1.10"
     },
     "repository": {
         "type": "git",
