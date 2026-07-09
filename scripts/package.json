@@ -17,23 +17,23 @@
         "@types/tar-fs": "^2.0.4",
         "axios": "^1.18.1",
         "colors": "^1.4.0",
-        "diff": "^8.0.4",
-        "js-yaml": "^4.3.0",
+        "diff": "^9.0.0",
+        "js-yaml": "^5.2.1",
         "openapi-typescript": "^7.13.0",
         "tar-fs": "^3.1.3",
         "tsx": "^4.23.0",
         "typescript": "^5.9.3"
     },
     "dependencies": {
-        "@commander-js/extra-typings": "^14.0.0",
+        "@commander-js/extra-typings": "^15.0.0",
         "@inquirer/prompts": "^8.5.2",
-        "@scalar/json-magic": "^0.11.7",
-        "@scalar/openapi-parser": "^0.24.17",
-        "@scalar/openapi-types": "^0.5.4",
-        "commander": "^14.0.3",
+        "@scalar/json-magic": "^0.12.17",
+        "@scalar/openapi-parser": "^0.28.8",
+        "@scalar/openapi-types": "^0.9.1",
+        "commander": "^15.0.0",
         "inquirer-select-pro": "^1.0.0-alpha.9",
         "jsonc-parser": "^3.3.1",
-        "pm2": "^6.0.14",
+        "pm2": "^7.0.3",
         "yoctocolors": "^2.1.2"
     }
 }
