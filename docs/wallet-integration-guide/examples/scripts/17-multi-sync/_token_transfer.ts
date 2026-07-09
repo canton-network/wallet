@@ -16,16 +16,12 @@ export async function aliceTransferToCharlie(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const {
-        aliceSdk,
-        aliceTokenNamespace,
-        charlieSdk,
-        charlieTokenNamespace,
-        alice,
-        charlie,
-        appSynchronizerId,
-        testTokenRegistryUrl,
-    } = setup
+    const { aliceSdk, charlieSdk, alice, charlie, appSynchronizerId } = setup
+
+    // Resolve the TestToken registry URL from the SDK's configured registries
+    // (`token.find`) instead of threading it through the setup object.
+    const { registryUrl: testTokenRegistryUrl } =
+        await aliceSdk.token.find('TestToken')
 
     // The settlement is submitted by TradingApp (sv), so Alice's resulting Token
     // holding propagates to her participant (app-user) asynchronously. Poll app-user until it
@@ -61,7 +57,7 @@ export async function aliceTransferToCharlie(
 
     // Alice offers her freshly-received TestToken to Charlie via the registry's
     const [transferCommand, transferDisclosed] =
-        await aliceTokenNamespace.transfer.create({
+        await aliceSdk.token.transfer.create({
             sender: alice.partyId,
             recipient: charlie.partyId,
             amount: TRADE_TOKEN_AMOUNT,
@@ -90,7 +86,7 @@ export async function aliceTransferToCharlie(
         throw new Error('TokenTransferOffer not found for Charlie')
 
     const [acceptCommand, acceptDisclosed] =
-        await charlieTokenNamespace.transfer.accept({
+        await charlieSdk.token.transfer.accept({
             transferInstructionCid: transferOfferCid,
             registryUrl: testTokenRegistryUrl,
         })
@@ -114,13 +110,7 @@ export async function bobSelfTransferToApp(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const {
-        bobSdk,
-        bobTokenNamespace,
-        bob,
-        appSynchronizerId,
-        testTokenRegistryUrl,
-    } = setup
+    const { bobSdk, bob, appSynchronizerId } = setup
 
     const bobTokens = await bobSdk.ledger.acs.read({
         templateIds: [TestTokenV1.Token.templateId],
@@ -132,6 +122,10 @@ export async function bobSelfTransferToApp(
         logger.info('Bob: no TestToken holdings to self-transfer')
         return
     }
+
+    // Resolve the TestToken registry URL from the SDK's configured registries.
+    const { registryUrl: testTokenRegistryUrl } =
+        await bobSdk.token.find('TestToken')
 
     for (const token of bobTokens) {
         if (token.synchronizerId !== appSynchronizerId) {
@@ -153,7 +147,7 @@ export async function bobSelfTransferToApp(
             throw new Error('Cannot read amount from Bob Token holding')
 
         const [transferCommand, transferDisclosed] =
-            await bobTokenNamespace.transfer.create({
+            await bobSdk.token.transfer.create({
                 sender: bob.partyId,
                 recipient: bob.partyId,
                 amount: holdingAmount,

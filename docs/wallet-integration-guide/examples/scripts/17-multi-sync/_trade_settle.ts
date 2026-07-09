@@ -68,12 +68,7 @@ async function cancelAllocationsOnFailure(
     params: CancelParams,
     logger: Logger
 ): Promise<void> {
-    const {
-        tradingAppSdk,
-        tradingApp,
-        globalSynchronizerId,
-        testTokenRegistryUrl,
-    } = setup
+    const { tradingAppSdk, tradingApp, globalSynchronizerId } = setup
     const {
         otcTradeCid,
         legIdAlice,
@@ -83,6 +78,9 @@ async function cancelAllocationsOnFailure(
     } = params
 
     const tokenNamespace = tradingAppSdk.token
+    // TestToken registry URL comes from the SDK's configured registries.
+    const { registryUrl: testTokenRegistryUrl } =
+        await tokenNamespace.find('TestToken')
     // Fetch each allocation's cancel choice context from its registry's
     // allocation-v1 API (Amulet from the scan-proxy registry, TestToken from the
     // local TestToken registry).
@@ -164,12 +162,7 @@ export async function settleOtcTrade(
     params: SettleParams,
     logger: Logger
 ): Promise<void> {
-    const {
-        tradingAppSdk,
-        tradingApp,
-        globalSynchronizerId,
-        testTokenRegistryUrl,
-    } = setup
+    const { tradingAppSdk, tradingApp, globalSynchronizerId } = setup
     const {
         otcTradeCid,
         legIdAlice,
@@ -179,6 +172,9 @@ export async function settleOtcTrade(
     } = params
 
     const tokenNamespace = tradingAppSdk.token
+    // TestToken registry URL comes from the SDK's configured registries.
+    const { registryUrl: testTokenRegistryUrl } =
+        await tokenNamespace.find('TestToken')
     const amuletExecCtx = await tokenNamespace.allocation.context.execute({
         allocationCid: amuletAllocationCid,
         registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,

@@ -44,16 +44,13 @@ export async function mintAndTransferTokenToBob(
     setup: MultiSyncSetup,
     logger: Logger
 ): Promise<void> {
-    const {
-        bobSdk,
-        tokenAdminSdk,
-        bobTokenNamespace,
-        tokenAdminTokenNamespace,
-        bob,
-        tokenAdmin,
-        appSynchronizerId,
-        testTokenRegistryUrl,
-    } = setup
+    const { bobSdk, tokenAdminSdk, bob, tokenAdmin, appSynchronizerId } = setup
+
+    // The TestToken registry URL comes from the SDK's own configured registries
+    // (`token.find` resolves assets from the registries passed to `SDK.create`),
+    // so it no longer needs to be threaded through the setup object.
+    const { registryUrl: testTokenRegistryUrl } =
+        await tokenAdminSdk.token.find('TestToken')
 
     await tokenAdminSdk.ledger
         .prepare({
@@ -84,7 +81,7 @@ export async function mintAndTransferTokenToBob(
     // and choice context come from the registry's transfer-instruction-v1 API
     // (the TestToken registry is also resolved via the metadata-v1 API).
     const [transferCommand, transferDisclosed] =
-        await tokenAdminTokenNamespace.transfer.create({
+        await tokenAdminSdk.token.transfer.create({
             sender: tokenAdmin.partyId,
             recipient: bob.partyId,
             amount: BOB_TOKEN_MINT_AMOUNT,
@@ -114,11 +111,12 @@ export async function mintAndTransferTokenToBob(
 
     // Bob accepts the transfer offer using the registry's transfer-instruction-v1
     // accept choice context.
-    const [acceptCommand, acceptDisclosed] =
-        await bobTokenNamespace.transfer.accept({
+    const [acceptCommand, acceptDisclosed] = await bobSdk.token.transfer.accept(
+        {
             transferInstructionCid: transferOfferCid,
             registryUrl: testTokenRegistryUrl,
-        })
+        }
+    )
 
     await bobSdk.ledger
         .prepare({

@@ -35,7 +35,6 @@ const {
     tradingAppSdk,
     tokenAdminSdk,
     charlieSdk,
-    bobTokenNamespace,
     alice,
     bob,
     tradingApp,
@@ -121,7 +120,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────────────
-const allocationsBob = await bobTokenNamespace.allocation.pending(bob.partyId)
+const allocationsBob = await bobSdk.token.allocation.pending(bob.partyId)
 const testTokenAllocation = allocationsBob.find(
     (a) => a.interfaceViewValue.allocation.transferLegId === legIdBob
 )
