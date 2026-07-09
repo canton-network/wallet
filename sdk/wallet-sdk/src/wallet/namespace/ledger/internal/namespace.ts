@@ -76,6 +76,8 @@ export class InternalLedgerNamespace {
                     originalError: e,
                 })
             }
+
+            // TODO #2103 implement proper compensation algorigthms for reassign
             throw e
         }
 
