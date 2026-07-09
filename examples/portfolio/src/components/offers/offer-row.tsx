@@ -57,9 +57,14 @@ export function OfferRow({ offer, onClick }: OfferRowProps) {
 }
 
 function getOfferRowLabel(offer: OfferItem) {
-    return offer.source.kind === 'transfer'
-        ? 'Transfer Offer'
-        : 'Allocation Request'
+    if (isTransferOffer(offer)) {
+        const message = offer.source.message ? `: ${offer.source.message}` : ''
+        return `Transfer Offer for ${formatAmount(offer.source.amount)} ${
+            offer.source.instrumentId.id
+        }${message}`
+    }
+
+    return 'Allocation Request'
 }
 
 function isTransferOffer(offer: OfferItem): offer is TransferOfferItem {

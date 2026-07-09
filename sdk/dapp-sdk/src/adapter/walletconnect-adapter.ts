@@ -490,7 +490,19 @@ export class WalletConnectAdapter
                 // qrcode package not installed — skip QR generation
             }
 
-            popupWin.postMessage({ type: 'wc-uri', uri, qrDataUrl }, '*')
+            const targetOrigin =
+                typeof window !== 'undefined' ? window.location.origin : '*'
+
+            if (targetOrigin !== '*') {
+                popupWin.postMessage(
+                    { type: 'wc-uri', uri, qrDataUrl },
+                    targetOrigin
+                )
+            } else {
+                throw new Error(
+                    'Cannot securely send WalletConnect URI: Origin undefined'
+                )
+            }
         } catch {
             // Best-effort — onUri callback is the fallback.
         }
