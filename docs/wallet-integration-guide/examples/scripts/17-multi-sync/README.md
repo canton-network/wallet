@@ -73,7 +73,7 @@ GLOBAL synchronizer  —  Amulet*  ·  leg-0:  Alice --100 CC-->  Bob
    │ TradingApp   │        │ TokenAdmin   │        │  parties)    │
    └──────┬───────┘        └──────┬───────┘        └──────────────┘
           │                       │
-          │ vetted on APP:  TestTokenV1, trading-app  — app-user & app-provider only (sv not connected)
+          │ vetted on PRIVATE:  TestTokenV1, — app-user & app-provider only (sv not connected)
           │                       │
 ══════════╧═══════════════════════╧═════════════════════════════════════════
 APP synchronizer  —  TestToken  ·  leg-1:  Bob --20 TT-->  Alice
