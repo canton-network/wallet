@@ -69,40 +69,7 @@ import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
-import { decodeJwt, JWTPayload } from 'jose'
-
-function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
-    if (typeof value === 'string') {
-        return [value]
-    }
-
-    if (Array.isArray(value)) {
-        return value
-    }
-
-    return []
-}
-
-function assertAddSessionTokenClaimsMatchNetwork(
-    tokenClaims: JWTPayload,
-    network: Network,
-    expectedIssuer: string
-): void {
-    const tokenIssuer = tokenClaims.iss
-    if (tokenIssuer !== expectedIssuer) {
-        throw new Error(`Token issuer mismatch for addSession.`)
-    }
-
-    const tokenAudiences = normalizeAudienceClaim(tokenClaims.aud)
-    if (!tokenAudiences.includes(network.auth.audience)) {
-        throw new Error(`Token audience mismatch for addSession.`)
-    }
-
-    const tokenSubject = tokenClaims.sub
-    if (tokenSubject !== network.auth.clientId) {
-        throw new Error(`Token subject mismatch for addSession.`)
-    }
-}
+import { assertTokenClaimsMatchNetwork } from './token-network-matching'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -753,12 +720,7 @@ export const userController = (
                 const connectedContext = assertConnected(authContext)
                 const { userId, accessToken } = connectedContext
 
-                const tokenClaims = decodeJwt(accessToken)
-                assertAddSessionTokenClaimsMatchNetwork(
-                    tokenClaims,
-                    network,
-                    idp.issuer
-                )
+                assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
                 await store.setSession({
                     id: newSessionId,
