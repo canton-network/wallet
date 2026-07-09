@@ -12,7 +12,7 @@ import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
 import { createTokenRules, mintAndTransferTokenToBob } from './_token_setup.js'
 import { allocateTokenForBob } from './_token_allocation.js'
 import {
-    aliceSelfTransferToApp,
+    aliceTransferToCharlie,
     bobSelfTransferToApp,
 } from './_token_transfer.js'
 import { createAndInitiateOtcTrade } from './_trade_propose.js'
@@ -34,11 +34,13 @@ const {
     bobSdk,
     tradingAppSdk,
     tokenAdminSdk,
+    charlieSdk,
     bobTokenNamespace,
     alice,
     bob,
     tradingApp,
     tokenAdmin,
+    charlie,
     synchronizers,
     amuletAdmin,
 } = setup
@@ -182,8 +184,8 @@ await logAllContracts(logger, synchronizers, [
     { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
     { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
-// ── Step 11: Alice self-transfers her received TestToken back to app-synchronizer ─
-await aliceSelfTransferToApp(setup, logger)
+// ── Step 11: Alice transfers her received TestToken to Charlie on app-synchronizer ─
+await aliceTransferToCharlie(setup, logger)
 
 logger.info('Final contract state:')
 await logAllContracts(logger, synchronizers, [
@@ -191,6 +193,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: bobSdk, parties: [bob.partyId] },
     { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
     { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
+    { sdk: charlieSdk, parties: [charlie.partyId] },
 ])
 
 await registry.stop()
