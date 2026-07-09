@@ -136,7 +136,7 @@ async function main() {
         logger.info({ body: req.body }, 'Received token request')
         const credentials = basicAuth(req)
         const clientId = credentials ? credentials.name : req.body.client_id
-        const scope = 'openid email daml_ledger_api'
+        const scope = 'openid email daml_ledger_api offline_access'
 
         token.payload.iss = `${protocol}://${host}:${port}`
         const aud = req.body.audience
