@@ -4,7 +4,13 @@
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { SDKContext } from '../../init/types/context.js'
 import { v4 } from 'uuid'
-import { PrepareOptions, ExecuteOptions, AcsRequestOptions } from './types.js'
+import {
+    PrepareOptions,
+    ExecuteOptions,
+    AcsRequestOptions,
+    ConnectedSynchronizersOptions,
+} from './types.js'
+import { PrivateKey } from '@canton-network/core-signing-lib'
 import { PreparedTransaction } from '../transactions/prepared.js'
 import { SignedTransaction } from '../transactions/signed.js'
 import { Ops } from '@canton-network/core-provider-ledger'
@@ -21,6 +27,42 @@ export class LedgerNamespace {
         this.dar = new DarNamespace(sdkContext)
         this.internal = new InternalLedgerNamespace(sdkContext)
         this.acsReader = new ACSReader(sdkContext.ledgerProvider)
+    }
+
+    /**
+     * Returns connected synchronizers visible to the caller, optionally filtered
+     * by party, participant, or identity provider.
+     *
+     * Uses the Ledger API endpoint GET /v2/state/connected-synchronizers.
+     */
+    public async connectedSynchronizers(
+        options?: ConnectedSynchronizersOptions
+    ) {
+        this.sdkContext.logger.debug(
+            { options },
+            'Fetching connected synchronizers'
+        )
+
+        return this.sdkContext.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
+            {
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/state/connected-synchronizers',
+                    requestMethod: 'get',
+                    query: {
+                        ...(options?.party !== undefined && {
+                            party: options.party,
+                        }),
+                        ...(options?.participantId !== undefined && {
+                            participantId: options.participantId,
+                        }),
+                        ...(options?.identityProviderId !== undefined && {
+                            identityProviderId: options.identityProviderId,
+                        }),
+                    },
+                },
+            }
+        )
     }
 
     public async ledgerEnd() {
@@ -212,5 +254,42 @@ export class LedgerNamespace {
                     }
                 })
         },
+        /**
+         * Queries the ACS and returns the first matching contract, throwing if none is found.
+         * @param options AcsOptions for querying the Active Contract Set (ACS).
+         * @throws {SDKError} When no matching contract is found.
+         */
+        requireOne: async (options: AcsRequestOptions) => {
+            const contracts = await this.acs.read(options)
+            if (!contracts.length) {
+                this.sdkContext.error.throw({
+                    message: `Required contract not found (templateIds: ${options.templateIds?.join(', ')}, parties: ${options.parties?.join(', ')})`,
+                    type: 'NotFound',
+                })
+            }
+            return contracts[0]
+        },
+    }
+
+    /**
+     * Prepares, signs, and executes the same command set on multiple synchronizers in parallel.
+     * Equivalent to calling `prepare(...).sign(privateKey).execute({ partyId })` for each
+     * synchronizer, but without repeating the command payload.
+     * @param options - Command options without a synchronizerId (it is provided per-element)
+     * @param synchronizerIds - Synchronizers to submit to in parallel
+     * @param privateKey - Key used to sign each prepared transaction
+     */
+    public async prepareAndExecuteOnSynchronizers(
+        options: Omit<PrepareOptions, 'synchronizerId'>,
+        synchronizerIds: string[],
+        privateKey: PrivateKey
+    ): Promise<void> {
+        await Promise.all(
+            synchronizerIds.map((synchronizerId) =>
+                this.prepare({ ...options, synchronizerId })
+                    .sign(privateKey)
+                    .execute({ partyId: options.partyId })
+            )
+        )
     }
 }

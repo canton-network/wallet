@@ -15,6 +15,13 @@ export { components as metadataRegistryTypes } from './generated-clients/splice-
 export { components as transferInstructionRegistryTypes } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
 export { components as allocationInstructionRegistryTypes } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
 
+// OpenAPI `operations` (keyed by operationId) for the registry server side.
+// Consumed by the generated Express server stub in core/test-token-v1.
+export { operations as metadataApiOperations } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
+export { operations as transferInstructionApiOperations } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
+export { operations as allocationInstructionApiOperations } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
+export { operations as allocationApiOperations } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
+
 type paths = allocationPaths &
     metadataPaths &
     transferInstructionPaths &
