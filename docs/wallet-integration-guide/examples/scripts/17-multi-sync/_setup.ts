@@ -163,12 +163,12 @@ export async function setupMultiSyncTrade(
         ...[testTokenV1Dar, tradingAppDar].flatMap((dar) =>
             [aliceSdk, bobSdk].flatMap((sdk) =>
                 [globalSynchronizerId, appSynchronizerId].map((sid) =>
-                    sdk.ledger.dar.vet(dar, sid)
+                    sdk.ledger.dar.uploadAndVet(dar, sid)
                 )
             )
         ),
         ...[testTokenV1Dar, tradingAppDar].map((dar) =>
-            svSdk.ledger.dar.vet(dar, globalSynchronizerId)
+            svSdk.ledger.dar.uploadAndVet(dar, globalSynchronizerId)
         ),
     ])
     logger.info(

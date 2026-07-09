@@ -64,7 +64,7 @@ export class DarNamespace {
      * @param synchronizerId - The synchronizer on which the package should be
      *   vetted. Defaults to the SDK's configured synchronizer.
      */
-    async vet(
+    async uploadAndVet(
         darBytes: Uint8Array | Buffer,
         synchronizerId?: string
     ): Promise<void> {
