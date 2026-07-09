@@ -99,6 +99,9 @@ export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
             <Select
                 displayEmpty
                 value={selectedKey}
+                inputProps={{
+                    'aria-label': 'Select asset',
+                }}
                 onChange={(event) => handleChange(event.target.value)}
                 IconComponent={KeyboardArrowDownIcon}
                 renderValue={(key) => {
