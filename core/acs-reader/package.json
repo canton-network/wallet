@@ -25,14 +25,14 @@
         "test:coverage": "vitest run --project node --project browser --coverage"
     },
     "devDependencies": {
-        "@types/node": "^25.9.3",
-        "@vitest/browser-playwright": "^4.1.8",
-        "@vitest/coverage-v8": "^4.1.8",
+        "@types/node": "^25.9.4",
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
         "openapi-typescript": "^7.13.0",
-        "playwright": "^1.60.0",
+        "playwright": "^1.61.1",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.8"
+        "vitest": "^4.1.10"
     },
     "dependencies": {
         "@canton-network/core-ledger-client-types": "workspace:^",

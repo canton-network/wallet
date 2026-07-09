@@ -203,9 +203,9 @@ export class UserUiSettings extends BaseElement {
                     <strong>User:</strong> ${this.userId || '—'} &nbsp;
                     <strong>Role:</strong>
                     <span
-                        class="badge ${this.isAdmin
-                            ? 'bg-primary'
-                            : 'bg-secondary'}"
+                        class="badge ${
+                            this.isAdmin ? 'bg-primary' : 'bg-secondary'
+                        }"
                     >
                         ${this.isAdmin ? 'Admin' : 'User'}
                     </span>

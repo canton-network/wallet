@@ -278,43 +278,53 @@ export class WgWalletCreateForm extends BaseElement {
                         </div>
                     </div>
 
-                    ${this.showVaultSelect
-                        ? html`
-                              <div class="field-group d-flex flex-column">
-                                  <label
-                                      for="vault-name"
-                                      class="form-label field-label mb-0"
-                                  >
-                                      Vault name <span class="required">*</span>
-                                  </label>
-                                  <div class="select-wrap">
-                                      <select
-                                          ?disabled=${this.isLoading}
-                                          class="form-select field-control"
-                                          id="vault-name"
-                                          required
+                    ${
+                        this.showVaultSelect
+                            ? html`
+                                  <div class="field-group d-flex flex-column">
+                                      <label
+                                          for="vault-name"
+                                          class="form-label field-label mb-0"
                                       >
-                                          <option disabled selected value="">
-                                              ${this.isVaultsLoading
-                                                  ? this.vaultsLoadingLabel
-                                                  : 'Select vault name'}
-                                          </option>
-                                          ${this.vaults.map(
-                                              (vaultName) =>
-                                                  html`<option
-                                                      value=${vaultName}
-                                                  >
-                                                      ${vaultName}
-                                                  </option>`
-                                          )}
-                                      </select>
-                                      <span class="select-chevron"
-                                          >${chevronDownIcon}</span
-                                      >
+                                          Vault name
+                                          <span class="required">*</span>
+                                      </label>
+                                      <div class="select-wrap">
+                                          <select
+                                              ?disabled=${this.isLoading}
+                                              class="form-select field-control"
+                                              id="vault-name"
+                                              required
+                                          >
+                                              <option
+                                                  disabled
+                                                  selected
+                                                  value=""
+                                              >
+                                                  ${
+                                                      this.isVaultsLoading
+                                                          ? this
+                                                                .vaultsLoadingLabel
+                                                          : 'Select vault name'
+                                                  }
+                                              </option>
+                                              ${this.vaults.map(
+                                                  (vaultName) =>
+                                                      html`<option
+                                                          value=${vaultName}
+                                                      >
+                                                          ${vaultName}
+                                                      </option>`
+                                              )}
+                                          </select>
+                                          <span class="select-chevron"
+                                              >${chevronDownIcon}</span
+                                          >
+                                      </div>
                                   </div>
-                              </div>
-                          `
-                        : nothing}
+                              `
+                            : nothing
+                    }
 
                     <div class="primary-row mb-0">
                         <input
@@ -337,26 +347,32 @@ export class WgWalletCreateForm extends BaseElement {
                         ?disabled=${this.isLoading}
                         type="submit"
                     >
-                        ${this.submitting
-                            ? html`<span
-                                  class="spinner-border spinner-border-sm"
-                                  aria-hidden="true"
-                              ></span>`
-                            : null}
-                        ${this.submitting
-                            ? this.submittingLabel
-                            : this.submitLabel}
+                        ${
+                            this.submitting
+                                ? html`<span
+                                      class="spinner-border spinner-border-sm"
+                                      aria-hidden="true"
+                                  ></span>`
+                                : null
+                        }
+                        ${
+                            this.submitting
+                                ? this.submittingLabel
+                                : this.submitLabel
+                        }
                     </button>
 
-                    ${this.submitting
-                        ? html`<p
-                              class="loading-message"
-                              role="status"
-                              aria-live="polite"
-                          >
-                              ${this.submittingMessage}
-                          </p>`
-                        : null}
+                    ${
+                        this.submitting
+                            ? html`<p
+                                  class="loading-message"
+                                  role="status"
+                                  aria-live="polite"
+                              >
+                                  ${this.submittingMessage}
+                              </p>`
+                            : null
+                    }
                 </div>
             </form>
         `

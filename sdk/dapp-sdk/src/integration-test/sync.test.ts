@@ -345,10 +345,7 @@ describe('dApp SDK - sync', () => {
         type EventListenerCase = {
             title: string
             eventKey:
-                | 'statusChanged'
-                | 'accountsChanged'
-                | 'connected'
-                | 'txChanged'
+                'statusChanged' | 'accountsChanged' | 'connected' | 'txChanged'
             subscribe: (sdk: DappSDK, h: ListenerFn) => Promise<void>
             unsubscribe: (sdk: DappSDK, h: ListenerFn) => Promise<void>
             buildEmitArg: () => unknown

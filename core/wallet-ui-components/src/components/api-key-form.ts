@@ -214,9 +214,11 @@ export class ApiKeyForm extends BaseElement {
                     </div>
                 </div>
 
-                ${this._error
-                    ? html`<div class="form-error">${this._error}</div>`
-                    : nothing}
+                ${
+                    this._error
+                        ? html`<div class="form-error">${this._error}</div>`
+                        : nothing
+                }
 
                 <div class="mt-auto pt-3">
                     <button

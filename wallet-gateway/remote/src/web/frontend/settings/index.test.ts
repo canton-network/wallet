@@ -120,22 +120,18 @@ describe('UserUiSettings', () => {
         el = await fixture<UserUiSettings>(componentFixture)
         await ready(el)
         const networks = el.shadowRoot?.querySelector('wg-networks') as
-            | (HTMLElement & { readonly: boolean })
-            | null
+            (HTMLElement & { readonly: boolean }) | null
         const idps = el.shadowRoot?.querySelector('wg-idps') as
-            | (HTMLElement & { readonly: boolean })
-            | null
+            (HTMLElement & { readonly: boolean }) | null
         expect(networks?.readonly).toBe(true)
         expect(idps?.readonly).toBe(true)
     })
 
     it('shows settings in write mode for admin users', async () => {
         const networks = el.shadowRoot?.querySelector('wg-networks') as
-            | (HTMLElement & { readonly: boolean })
-            | null
+            (HTMLElement & { readonly: boolean }) | null
         const idps = el.shadowRoot?.querySelector('wg-idps') as
-            | (HTMLElement & { readonly: boolean })
-            | null
+            (HTMLElement & { readonly: boolean }) | null
         expect(networks?.readonly).toBe(false)
         expect(idps?.readonly).toBe(false)
     })

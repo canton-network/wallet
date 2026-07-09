@@ -144,23 +144,25 @@ export class IdpCard extends BaseElement {
                         ></wg-copy-button>
                     </div>
 
-                    ${'configUrl' in this.idp && this.idp.configUrl
-                        ? html`
-                              <div class="meta-row meta-row--copy">
-                                  <p class="meta-title">Config URL</p>
-                                  <p
-                                      class="meta-value"
-                                      title=${this.idp.configUrl}
-                                  >
-                                      ${this.idp.configUrl}
-                                  </p>
-                                  <wg-copy-button
-                                      .value=${this.idp.configUrl}
-                                      label="Copy config URL"
-                                  ></wg-copy-button>
-                              </div>
-                          `
-                        : ''}
+                    ${
+                        'configUrl' in this.idp && this.idp.configUrl
+                            ? html`
+                                  <div class="meta-row meta-row--copy">
+                                      <p class="meta-title">Config URL</p>
+                                      <p
+                                          class="meta-value"
+                                          title=${this.idp.configUrl}
+                                      >
+                                          ${this.idp.configUrl}
+                                      </p>
+                                      <wg-copy-button
+                                          .value=${this.idp.configUrl}
+                                          label="Copy config URL"
+                                      ></wg-copy-button>
+                                  </div>
+                              `
+                            : ''
+                    }
                 </div>
             </article>
         `

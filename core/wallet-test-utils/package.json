@@ -18,15 +18,15 @@
     "dependencies": {
         "@canton-network/core-types": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
-        "@playwright/test": "^1.60.0",
+        "@playwright/test": "^1.61.1",
         "pino": "^10.3.1",
-        "uuid": "^14.0.0"
+        "uuid": "^14.0.1"
     },
     "devDependencies": {
-        "@vitest/coverage-v8": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.10",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.8"
+        "vitest": "^4.1.10"
     },
     "scripts": {
         "build": "tsup --onSuccess \"tsc\"",

@@ -78,49 +78,55 @@ export class UserUiActivities extends BaseElement {
                 <h1 class="h4 fw-semibold mb-0 text-body">Activities</h1>
             </div>
 
-            ${this.loading && !this.transactions.length
-                ? html`<p class="mb-0 text-body-secondary">
-                      Loading activities...
-                  </p>`
-                : this.transactions.length
-                  ? html`
-                        <div class="activity-list">
-                            ${this.pagedTransactions.map(
-                                (tx) => html`
-                                    <wg-transaction-card
-                                        .transactionId=${tx.id}
-                                        .commandId=${tx.commandId}
-                                        .externalTxId=${tx.externalTxId ?? null}
-                                        .status=${tx.status}
-                                        .parsed=${this.parsedTransactions.get(
-                                            tx.id
-                                        ) || null}
-                                        .createdAt=${tx.createdAt ?? null}
-                                        .signedAt=${tx.signedAt ?? null}
-                                        .origin=${tx.origin ?? null}
-                                        .loading=${this.loading}
-                                        @transaction-review=${this._onReview}
-                                    ></wg-transaction-card>
-                                `
-                            )}
-                        </div>
+            ${
+                this.loading && !this.transactions.length
+                    ? html`<p class="mb-0 text-body-secondary">
+                          Loading activities...
+                      </p>`
+                    : this.transactions.length
+                      ? html`
+                            <div class="activity-list">
+                                ${this.pagedTransactions.map(
+                                    (tx) => html`
+                                        <wg-transaction-card
+                                            .transactionId=${tx.id}
+                                            .commandId=${tx.commandId}
+                                            .externalTxId=${tx.externalTxId ?? null}
+                                            .status=${tx.status}
+                                            .parsed=${
+                                                this.parsedTransactions.get(
+                                                    tx.id
+                                                ) || null
+                                            }
+                                            .createdAt=${tx.createdAt ?? null}
+                                            .signedAt=${tx.signedAt ?? null}
+                                            .origin=${tx.origin ?? null}
+                                            .loading=${this.loading}
+                                            @transaction-review=${this._onReview}
+                                        ></wg-transaction-card>
+                                    `
+                                )}
+                            </div>
 
-                        ${this.transactions.length > this.pageSize
-                            ? html`
-                                  <div class="pagination-wrap">
-                                      <wg-pagination
-                                          .total=${this.transactions.length}
-                                          .pageSize=${this.pageSize}
-                                          .page=${this.currentPage}
-                                          @page-change=${this._onPageChange}
-                                      ></wg-pagination>
-                                  </div>
-                              `
-                            : ''}
-                    `
-                  : html`<p class="mb-0 text-body-secondary">
-                        No activities yet.
-                    </p>`}
+                            ${
+                                this.transactions.length > this.pageSize
+                                    ? html`
+                                          <div class="pagination-wrap">
+                                              <wg-pagination
+                                                  .total=${this.transactions.length}
+                                                  .pageSize=${this.pageSize}
+                                                  .page=${this.currentPage}
+                                                  @page-change=${this._onPageChange}
+                                              ></wg-pagination>
+                                          </div>
+                                      `
+                                    : ''
+                            }
+                        `
+                      : html`<p class="mb-0 text-body-secondary">
+                            No activities yet.
+                        </p>`
+            }
         `
     }
 
