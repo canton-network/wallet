@@ -17,6 +17,11 @@ import {
     Ops,
 } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import {
+    PrivateKey,
+    PublicKey,
+    signTransactionHash,
+} from '@canton-network/core-signing-lib'
 
 /**
  * Represents a signed party creation, ready to be allocated on the ledger.
@@ -26,7 +31,9 @@ export class SignedPartyCreationService {
     constructor(
         private readonly ctx: SDKContext,
         private readonly signedPartyPromise: Promise<ExecuteOptions>,
-        private readonly createPartyOptions?: CreatePartyOptions
+        private readonly createPartyOptions?: CreatePartyOptions,
+        private readonly publicKey?: PublicKey,
+        private readonly privateKey?: PrivateKey
     ) {}
 
     /**
@@ -50,7 +57,14 @@ export class SignedPartyCreationService {
                 type: 'SDKOperationUnsupported',
             })
 
-        if (await this.checkIfPartyExists(party.partyId)) {
+        // When a specific synchronizerId is provided, check whether the party
+        // is already registered on that synchronizer (not just on the participant).
+        if (
+            await this.checkIfPartyExists(
+                party.partyId,
+                this.createPartyOptions?.synchronizerId
+            )
+        ) {
             this.ctx.logger.info('Party already created.')
             return party
         }
@@ -78,6 +92,15 @@ export class SignedPartyCreationService {
             })
         }
 
+        const additionalSynchronizerIds =
+            this.createPartyOptions?.additionalSynchronizerIds ?? []
+        for (const synchronizerId of additionalSynchronizerIds) {
+            await this.registerOnAdditionalSynchronizer(
+                party.partyId,
+                synchronizerId
+            )
+        }
+
         const grantUserRights = options?.grantUserRights ?? true
 
         if (grantUserRights) {
@@ -93,6 +116,81 @@ export class SignedPartyCreationService {
 
         this.ctx.logger.info('Party allocated successfully.')
         return party
+    }
+
+    /**
+     * Registers the party on an additional synchronizer without granting user rights.
+     * Used when additionalSynchronizerIds is provided in CreatePartyOptions.
+     * @param partyId - The party ID returned from primary allocation
+     * @param synchronizerId - The secondary synchronizer to register the party on
+     */
+    private async registerOnAdditionalSynchronizer(
+        partyId: PartyId,
+        synchronizerId: string
+    ) {
+        if (!this.publicKey || !this.privateKey) {
+            this.ctx.error.throw({
+                message:
+                    'Cannot register party on additional synchronizer: publicKey and privateKey must be provided (offline signing is not supported for additionalSynchronizerIds)',
+                type: 'BadRequest',
+            })
+        }
+
+        if (await this.checkIfPartyExists(partyId, synchronizerId)) {
+            this.ctx.logger.info(
+                `Party already registered on synchronizer ${synchronizerId}.`
+            )
+            return
+        }
+
+        const topology =
+            await this.ctx.ledgerProvider.request<Ops.PostV2PartiesExternalGenerateTopology>(
+                {
+                    method: 'ledgerApi',
+                    params: {
+                        resource: '/v2/parties/external/generate-topology',
+                        body: {
+                            synchronizer: synchronizerId,
+                            partyHint: this.createPartyOptions?.partyHint ?? '',
+                            publicKey: {
+                                format: 'CRYPTO_KEY_FORMAT_RAW',
+                                keyData: this.publicKey,
+                                keySpec: 'SIGNING_KEY_SPEC_EC_CURVE25519',
+                            },
+                            localParticipantObservationOnly: false,
+                            confirmationThreshold: 1,
+                            otherConfirmingParticipantUids: [],
+                            observingParticipantUids: [],
+                        },
+                        requestMethod: 'post',
+                    },
+                }
+            )
+
+        const signature = signTransactionHash(
+            topology.multiHash,
+            this.privateKey
+        )
+
+        await this.allocate(
+            this.ctx.ledgerProvider,
+            synchronizerId,
+            topology.topologyTransactions!.map((transaction) => ({
+                transaction,
+            })),
+            [
+                {
+                    format: 'SIGNATURE_FORMAT_CONCAT',
+                    signature,
+                    signedBy: topology.publicKeyFingerprint,
+                    signingAlgorithmSpec: 'SIGNING_ALGORITHM_SPEC_ED25519',
+                },
+            ]
+        )
+
+        this.ctx.logger.info(
+            `Party registered on additional synchronizer ${synchronizerId}.`
+        )
     }
 
     /**
@@ -144,7 +242,9 @@ export class SignedPartyCreationService {
         } = options
         const ledgerProvider = defaultLedgerProvider ?? this.ctx.ledgerProvider
         try {
-            const synchronizerId = this.ctx.defaultSynchronizerId
+            const synchronizerId =
+                this.createPartyOptions?.synchronizerId ??
+                this.ctx.defaultSynchronizerId
 
             await this.allocate(
                 ledgerProvider,
@@ -185,8 +285,30 @@ export class SignedPartyCreationService {
         }
     }
 
-    private async checkIfPartyExists(partyId: PartyId): Promise<boolean> {
+    private async checkIfPartyExists(
+        partyId: PartyId,
+        synchronizerId?: string
+    ): Promise<boolean> {
         try {
+            if (synchronizerId) {
+                const response =
+                    await this.ctx.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
+                        {
+                            method: 'ledgerApi',
+                            params: {
+                                resource: '/v2/state/connected-synchronizers',
+                                requestMethod: 'get',
+                                query: { party: partyId },
+                            },
+                        }
+                    )
+                return (
+                    response.connectedSynchronizers?.some(
+                        (s) => s.synchronizerId === synchronizerId
+                    ) ?? false
+                )
+            }
+
             const party =
                 await this.ctx.ledgerProvider.request<Ops.GetV2PartiesParty>({
                     method: 'ledgerApi',
@@ -224,9 +346,10 @@ export class SignedPartyCreationService {
         }
 
         if (tries >= maxTries) {
-            throw new Error(
-                `timed out waiting for new party to appear after ${maxTries} tries`
-            )
+            this.ctx.error.throw({
+                message: `timed out waiting for new party to appear after ${maxTries} tries`,
+                type: 'Unexpected',
+            })
         }
 
         const result = await this.grantRights(userId, {
@@ -234,7 +357,10 @@ export class SignedPartyCreationService {
         })
 
         if (!result.newlyGrantedRights) {
-            throw new Error('Failed to grant user rights')
+            this.ctx.error.throw({
+                message: 'Failed to grant user rights',
+                type: 'Unexpected',
+            })
         }
 
         return
@@ -307,7 +433,10 @@ export class SignedPartyCreationService {
                 },
             })
         if (!result.newlyGrantedRights) {
-            throw new Error('Failed to grant user rights')
+            this.ctx.error.throw({
+                message: 'Failed to grant user rights',
+                type: 'Unexpected',
+            })
         }
 
         return result
@@ -320,9 +449,11 @@ export class SignedPartyCreationService {
         multiHashSignatures: MultiHashSignatures
     ): Promise<Ops.PostV2PartiesExternalAllocate['ledgerApi']['result']> {
         if (!onboardingTransactions || !multiHashSignatures) {
-            throw new Error(
-                'onboardingTransactions and multiHashSignatures must be provided for party allocation'
-            )
+            this.ctx.error.throw({
+                message:
+                    'onboardingTransactions and multiHashSignatures must be provided for party allocation',
+                type: 'BadRequest',
+            })
         }
         const resp =
             await ledgerProvider.request<Ops.PostV2PartiesExternalAllocate>({
