@@ -212,11 +212,13 @@ export class UserUiSignMessage extends BaseElement {
         return html`
             <div class="card">
                 <h1 class="h5 fw-semibold mb-2 text-body">Sign message</h1>
-                ${this.origin
-                    ? html`<p class="mb-2 text-body-secondary">
-                          Requested by: <strong>${this.origin}</strong>
-                      </p>`
-                    : ''}
+                ${
+                    this.origin
+                        ? html`<p class="mb-2 text-body-secondary">
+                              Requested by: <strong>${this.origin}</strong>
+                          </p>`
+                        : ''
+                }
 
                 <p class="mb-2 text-body-secondary">
                     Please confirm you want to sign this message with your

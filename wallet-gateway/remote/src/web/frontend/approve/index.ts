@@ -195,11 +195,13 @@ export class ApproveUi extends BaseElement {
 
     protected render() {
         return html`
-            ${this.walletCapabilityMessage
-                ? html`<div class="alert alert-warning" role="alert">
-                      ${this.walletCapabilityMessage}
-                  </div>`
-                : ''}
+            ${
+                this.walletCapabilityMessage
+                    ? html`<div class="alert alert-warning" role="alert">
+                          ${this.walletCapabilityMessage}
+                      </div>`
+                    : ''
+            }
             <wg-transaction-detail
                 .commandId=${this.commandId}
                 .status=${this.status}

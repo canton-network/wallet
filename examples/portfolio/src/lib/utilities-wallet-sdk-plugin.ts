@@ -48,8 +48,7 @@ type CancelArgs = FetchPreapprovalArgs & {
 }
 
 type CancelCommandResult =
-    | PreparedCommand<'ExerciseCommand'>
-    | typeof EMPTY_COMMAND_RESULT
+    PreparedCommand<'ExerciseCommand'> | typeof EMPTY_COMMAND_RESULT
 
 export const WalletSDKUtilitiesPluginName = 'utilities'
 
@@ -206,8 +205,7 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin {
 
         return contracts.flatMap((contract) => {
             const payload = contract.createArgument as
-                | TransferPreapproval
-                | undefined
+                TransferPreapproval | undefined
             if (
                 !contract.synchronizerId ||
                 !contract.contractId ||

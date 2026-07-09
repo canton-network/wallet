@@ -262,8 +262,10 @@ export class WgLoginForm extends BaseElement {
                                 (net, index) =>
                                     html`<option
                                         value=${index}
-                                        ?disabled=${net.authMethod ===
-                                        'client_credentials'}
+                                        ?disabled=${
+                                            net.authMethod ===
+                                            'client_credentials'
+                                        }
                                     >
                                         ${net.name}
                                     </option>`
@@ -272,38 +274,46 @@ export class WgLoginForm extends BaseElement {
                         <span class="select-chevron">${chevronDownIcon}</span>
                     </div>
 
-                    ${this.selectedIdp?.type === 'self_signed'
-                        ? html`
-                              <label
-                                  class="form-label fw-semibold text-body mt-3 mb-2"
-                                  for="client-id"
-                                  >Client ID</label
+                    ${
+                        this.selectedIdp?.type === 'self_signed'
+                            ? html`
+                                  <label
+                                      class="form-label fw-semibold text-body mt-3 mb-2"
+                                      for="client-id"
+                                      >Client ID</label
+                                  >
+                                  <input
+                                      id="client-id"
+                                      class="client-id-input form-control"
+                                      type="text"
+                                      .value=${this.selectedNetwork?.clientId || ''}
+                                      ?disabled=${this.connecting}
+                                  />
+                              `
+                            : null
+                    }
+                    ${
+                        this.message
+                            ? html`<div
+                                  class="alert ${
+                                      this.messageType === 'error'
+                                          ? 'alert-danger'
+                                          : 'alert-info'
+                                  } py-2 px-3 small mt-2 mb-0"
+                                  role="alert"
                               >
-                              <input
-                                  id="client-id"
-                                  class="client-id-input form-control"
-                                  type="text"
-                                  .value=${this.selectedNetwork?.clientId || ''}
-                                  ?disabled=${this.connecting}
-                              />
-                          `
-                        : null}
-                    ${this.message
-                        ? html`<div
-                              class="alert ${this.messageType === 'error'
-                                  ? 'alert-danger'
-                                  : 'alert-info'} py-2 px-3 small mt-2 mb-0"
-                              role="alert"
-                          >
-                              ${this.message}
-                          </div>`
-                        : html`<p
-                              class="form-text text-body-secondary mt-2 mb-0"
-                          >
-                              ${this.selectedNetwork
-                                  ? `Selected: ${this.selectedNetwork.name}`
-                                  : 'Choose a network to continue.'}
-                          </p>`}
+                                  ${this.message}
+                              </div>`
+                            : html`<p
+                                  class="form-text text-body-secondary mt-2 mb-0"
+                              >
+                                  ${
+                                      this.selectedNetwork
+                                          ? `Selected: ${this.selectedNetwork.name}`
+                                          : 'Choose a network to continue.'
+                                  }
+                              </p>`
+                    }
                 </div>
 
                 <div class="footer">

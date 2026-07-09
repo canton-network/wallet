@@ -56,14 +56,16 @@ export class WgIdps extends BaseElement {
                     <h1>Identity Providers</h1>
                 </div>
 
-                ${this.readonly
-                    ? ''
-                    : html`<button
-                          class="btn btn-primary"
-                          @click=${this.openAddModal}
-                      >
-                          Add Identity Provider
-                      </button>`}
+                ${
+                    this.readonly
+                        ? ''
+                        : html`<button
+                              class="btn btn-primary"
+                              @click=${this.openAddModal}
+                          >
+                              Add Identity Provider
+                          </button>`
+                }
 
                 <div class="mt-4">
                     ${this.idps.map(
@@ -82,110 +84,123 @@ export class WgIdps extends BaseElement {
                     )}
                 </div>
 
-                ${this.isModalOpen
-                    ? html`
-                          <div class="modal" @click=${this.closeModal}>
-                              <div
-                                  class="modal-content"
-                                  @click=${(e: Event) => e.stopPropagation()}
-                              >
-                                  <h3>
-                                      ${this.modalIdp
-                                          ? 'Edit Identity Provider'
-                                          : 'Add Identity Provider'}
-                                  </h3>
-
-                                  <form
-                                      @submit=${(e: Event) => {
-                                          e.preventDefault()
-                                          this.dispatchEvent(
-                                              new IdpAddEvent(this.modalIdp)
-                                          )
-                                          this.closeModal()
-                                      }}
+                ${
+                    this.isModalOpen
+                        ? html`
+                              <div class="modal" @click=${this.closeModal}>
+                                  <div
+                                      class="modal-content"
+                                      @click=${(e: Event) => e.stopPropagation()}
                                   >
-                                      <form-input
-                                          label="ID"
-                                          @form-input-change=${(
-                                              e: FormInputChangedEvent
-                                          ) => {
-                                              this.modalIdp.id = e.value
+                                      <h3>
+                                          ${
+                                              this.modalIdp
+                                                  ? 'Edit Identity Provider'
+                                                  : 'Add Identity Provider'
+                                          }
+                                      </h3>
+
+                                      <form
+                                          @submit=${(e: Event) => {
+                                              e.preventDefault()
+                                              this.dispatchEvent(
+                                                  new IdpAddEvent(this.modalIdp)
+                                              )
+                                              this.closeModal()
                                           }}
-                                          .value=${this.modalIdp.id}
-                                          required
-                                      ></form-input>
-
-                                      <label for="idp-type">Type</label>
-                                      <select
-                                          id="idp-type"
-                                          class="form-select mb-3"
-                                          @change=${(e: Event) => {
-                                              const select =
-                                                  e.target as HTMLSelectElement
-
-                                              this.modalIdp.type = select.value
-
-                                              if (
-                                                  this.modalIdp.type !== 'oauth'
-                                              ) {
-                                                  delete this.modalIdp.configUrl
-                                              }
-
-                                              this.requestUpdate()
-                                          }}
-                                          .value=${this.modalIdp.type}
                                       >
-                                          <option value="oauth">oauth</option>
-                                          <option value="self_signed">
-                                              self_signed
-                                          </option>
-                                      </select>
+                                          <form-input
+                                              label="ID"
+                                              @form-input-change=${(
+                                                  e: FormInputChangedEvent
+                                              ) => {
+                                                  this.modalIdp.id = e.value
+                                              }}
+                                              .value=${this.modalIdp.id}
+                                              required
+                                          ></form-input>
 
-                                      <form-input
-                                          label="Issuer"
-                                          @form-input-change=${(
-                                              e: FormInputChangedEvent
-                                          ) => {
-                                              this.modalIdp.issuer = e.value
-                                          }}
-                                          .value=${this.modalIdp.issuer}
-                                          required
-                                      ></form-input>
+                                          <label for="idp-type">Type</label>
+                                          <select
+                                              id="idp-type"
+                                              class="form-select mb-3"
+                                              @change=${(e: Event) => {
+                                                  const select =
+                                                      e.target as HTMLSelectElement
 
-                                      ${this.modalIdp.type === 'oauth'
-                                          ? html`<form-input
-                                                label="Config URL"
-                                                @form-input-change=${(
-                                                    e: FormInputChangedEvent
-                                                ) => {
-                                                    this.modalIdp.configUrl =
-                                                        e.value
-                                                }}
-                                                .value=${this.modalIdp
-                                                    .configUrl || ''}
-                                            ></form-input>`
-                                          : ''}
+                                                  this.modalIdp.type =
+                                                      select.value
 
-                                      <div>
-                                          <button
-                                              class="btn btn-primary btn-sm"
-                                              type="submit"
+                                                  if (
+                                                      this.modalIdp.type !==
+                                                      'oauth'
+                                                  ) {
+                                                      delete this.modalIdp
+                                                          .configUrl
+                                                  }
+
+                                                  this.requestUpdate()
+                                              }}
+                                              .value=${this.modalIdp.type}
                                           >
-                                              Save
-                                          </button>
+                                              <option value="oauth">
+                                                  oauth
+                                              </option>
+                                              <option value="self_signed">
+                                                  self_signed
+                                              </option>
+                                          </select>
 
-                                          <button
-                                              class="btn btn-secondary btn-sm"
-                                              @click=${() => this.closeModal()}
-                                          >
-                                              Cancel
-                                          </button>
-                                      </div>
-                                  </form>
+                                          <form-input
+                                              label="Issuer"
+                                              @form-input-change=${(
+                                                  e: FormInputChangedEvent
+                                              ) => {
+                                                  this.modalIdp.issuer = e.value
+                                              }}
+                                              .value=${this.modalIdp.issuer}
+                                              required
+                                          ></form-input>
+
+                                          ${
+                                              this.modalIdp.type === 'oauth'
+                                                  ? html`<form-input
+                                                        label="Config URL"
+                                                        @form-input-change=${(
+                                                            e: FormInputChangedEvent
+                                                        ) => {
+                                                            this.modalIdp.configUrl =
+                                                                e.value
+                                                        }}
+                                                        .value=${
+                                                            this.modalIdp
+                                                                .configUrl || ''
+                                                        }
+                                                    ></form-input>`
+                                                  : ''
+                                          }
+
+                                          <div>
+                                              <button
+                                                  class="btn btn-primary btn-sm"
+                                                  type="submit"
+                                              >
+                                                  Save
+                                              </button>
+
+                                              <button
+                                                  class="btn btn-secondary btn-sm"
+                                                  @click=${() => this.closeModal()}
+                                              >
+                                                  Cancel
+                                              </button>
+                                          </div>
+                                      </form>
+                                  </div>
                               </div>
-                          </div>
-                      `
-                    : ''}
+                          `
+                        : ''
+                }
             </div>
         `
     }

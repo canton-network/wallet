@@ -123,11 +123,13 @@ export class UserUiParties extends BaseElement {
                 </button>
             </div>
 
-            ${this.wallets === undefined
-                ? html`<p class="text-body-secondary mb-3">
-                      Loading parties...
-                  </p>`
-                : ''}
+            ${
+                this.wallets === undefined
+                    ? html`<p class="text-body-secondary mb-3">
+                          Loading parties...
+                      </p>`
+                    : ''
+            }
 
             <div class="row g-3 my-1">
                 ${shownWallets.unverifiedWallets.map(
