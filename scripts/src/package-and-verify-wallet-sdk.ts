@@ -27,9 +27,7 @@ async function main() {
             // write Yarn config for isolated, node_modules-based test project
             fs.writeFileSync(
                 path.join(tmpDir, '.yarnrc.yml'),
-                ['nodeLinker: node-modules', 'enableGlobalCache: false'].join(
-                    '\n'
-                ) + '\n'
+                ['enableGlobalCache: false'].join('\n') + '\n'
             )
 
             // Write test import file
