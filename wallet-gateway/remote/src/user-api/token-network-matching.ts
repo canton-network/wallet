@@ -51,17 +51,21 @@ export function assertTokenClaimsMatchNetwork(
     const tokenClaims: JWTPayload = decodeJwt(accessToken)
     const tokenIssuer = tokenClaims.iss
     if (tokenIssuer !== expectedIssuer) {
-        throw new Error(`Token issuer mismatch for addSession.`)
+        throw new Error(`Token iss claim doesn't match IDP's issuer.`)
     }
 
     const tokenAudiences = normalizeAudienceClaim(tokenClaims.aud)
     if (!tokenAudiences.includes(network.auth.audience)) {
-        throw new Error(`Token audience mismatch for addSession.`)
+        throw new Error(
+            `Token aud claim doesn't match network's auth audience.`
+        )
     }
 
     const tokenSubject = tokenClaims.sub
     if (tokenSubject !== network.auth.clientId) {
-        throw new Error(`Token subject mismatch for addSession.`)
+        throw new Error(
+            `Token sub claim doesn't match network's auth clientId.`
+        )
     }
 
     const requiredScopes = normalizeScopeClaim(network.auth.scope)
