@@ -212,6 +212,11 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                 disabled={disabled}
                                 error={hasFieldError(field)}
                                 helperText={getFieldError(field)}
+                                slotProps={{
+                                    htmlInput: {
+                                        'aria-label': 'Recipient Address',
+                                    },
+                                }}
                                 fullWidth
                                 sx={darkTextFieldSx}
                             />
@@ -318,6 +323,11 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                     helperText={getFieldError(field)}
                                     multiline
                                     rows={4}
+                                    slotProps={{
+                                        htmlInput: {
+                                            'aria-label': 'Description',
+                                        },
+                                    }}
                                     fullWidth
                                     sx={darkTextFieldSx}
                                 />
@@ -452,6 +462,7 @@ const AmountField: React.FC<AmountFieldProps> = ({
                         helperText={getFieldError(field)}
                         slotProps={{
                             htmlInput: {
+                                'aria-label': 'Amount',
                                 min: 0,
                                 step: 'any',
                             },

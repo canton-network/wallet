@@ -171,6 +171,11 @@ export function AddRegistryDialog({ open, onClose }: AddRegistryDialogProps) {
                                     error={hasFieldError(field)}
                                     helperText={getFieldError(field)}
                                     placeholder="party-hint::fingerprint"
+                                    slotProps={{
+                                        htmlInput: {
+                                            'aria-label': 'Party ID',
+                                        },
+                                    }}
                                     fullWidth
                                     sx={darkTextFieldSx}
                                 />
@@ -206,6 +211,9 @@ export function AddRegistryDialog({ open, onClose }: AddRegistryDialogProps) {
                                         }
                                         placeholder="https://registry.example.com"
                                         slotProps={{
+                                            htmlInput: {
+                                                'aria-label': 'Registry URL',
+                                            },
                                             formHelperText: {
                                                 sx: showInsecureWarning
                                                     ? { color: 'warning.main' }
