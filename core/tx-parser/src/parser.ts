@@ -97,8 +97,7 @@ function getPendingTransferInstructionCid(
 ): string | undefined {
     const output = (
         exercisedEvent.exerciseResult as
-            | { output?: { tag?: string; value?: any } }
-            | undefined
+            { output?: { tag?: string; value?: any } } | undefined
     )?.output
     if (output?.tag !== 'TransferInstructionResult_Pending') return undefined
 
@@ -575,8 +574,7 @@ export class TransactionParser {
         const resultTag =
             (
                 exercisedEvent.exerciseResult as
-                    | { output?: { tag?: string } }
-                    | undefined
+                    { output?: { tag?: string } } | undefined
             )?.output?.tag || undefined
         const pendingCid = getPendingTransferInstructionCid(exercisedEvent)
         const currentTag = currentStatusFromChoiceOrResult(
@@ -722,8 +720,7 @@ export class TransactionParser {
         const resultTag =
             (
                 exercisedEvent.exerciseResult as
-                    | { output?: { tag?: string } }
-                    | undefined
+                    { output?: { tag?: string } } | undefined
             )?.output?.tag || undefined
 
         const currentTag = currentStatusFromChoiceOrResult(

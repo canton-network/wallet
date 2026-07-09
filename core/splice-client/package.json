@@ -27,16 +27,16 @@
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
         "openapi-fetch": "^0.17.0",
-        "uuid": "^14.0.0",
+        "uuid": "^14.0.1",
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.8",
-        "@vitest/coverage-v8": "^4.1.8",
-        "playwright": "^1.60.0",
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
+        "playwright": "^1.61.1",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.8"
+        "vitest": "^4.1.10"
     },
     "files": [
         "dist/**"

@@ -14,10 +14,10 @@
         "clean": "tsc -b --clean; rm -rf ./dist"
     },
     "devDependencies": {
-        "@types/node": "^25.9.3",
+        "@types/node": "^25.9.4",
         "@types/webextension-polyfill": "^0.12.5",
         "esbuild": "^0.28.1",
-        "tsx": "^4.22.4",
+        "tsx": "^4.23.0",
         "typescript": "^5.9.3",
         "web-ext": "^9.4.0"
     },

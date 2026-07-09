@@ -423,58 +423,64 @@ export class NetworkForm extends BaseElement {
                     ></auth-editor>
                 </div>
 
-                ${this._error
-                    ? html`<div class="form-error">${this._error}</div>`
-                    : nothing}
-                ${isReview
-                    ? html`
-                          <div class="delete-section">
-                              <h4 class="delete-title">Delete network</h4>
-                              <p class="delete-desc">
-                                  You will not be able to undo the change once
-                                  you delete this network.
-                              </p>
-                              <button
-                                  type="button"
-                                  class="btn-delete"
-                                  @click=${() =>
-                                      this.dispatchEvent(
-                                          new NetworkDeleteEvent(this.network)
-                                      )}
-                              >
-                                  Delete Network
-                              </button>
-                          </div>
+                ${
+                    this._error
+                        ? html`<div class="form-error">${this._error}</div>`
+                        : nothing
+                }
+                ${
+                    isReview
+                        ? html`
+                              <div class="delete-section">
+                                  <h4 class="delete-title">Delete network</h4>
+                                  <p class="delete-desc">
+                                      You will not be able to undo the change
+                                      once you delete this network.
+                                  </p>
+                                  <button
+                                      type="button"
+                                      class="btn-delete"
+                                      @click=${() =>
+                                          this.dispatchEvent(
+                                              new NetworkDeleteEvent(
+                                                  this.network
+                                              )
+                                          )}
+                                  >
+                                      Delete Network
+                                  </button>
+                              </div>
 
-                          <div class="form-actions">
-                              <button
-                                  type="button"
-                                  class="btn-cancel"
-                                  @click=${() =>
-                                      this.dispatchEvent(
-                                          new NetworkEditCancelEvent()
-                                      )}
-                              >
-                                  Cancel
-                              </button>
-                              <button
-                                  class="btn btn-primary rounded-pill btn-submit"
-                                  type="submit"
-                              >
-                                  Update
-                              </button>
-                          </div>
-                      `
-                    : html`
-                          <div class="mt-auto pt-3">
-                              <button
-                                  class="btn btn-primary rounded-pill w-100"
-                                  type="submit"
-                              >
-                                  Add
-                              </button>
-                          </div>
-                      `}
+                              <div class="form-actions">
+                                  <button
+                                      type="button"
+                                      class="btn-cancel"
+                                      @click=${() =>
+                                          this.dispatchEvent(
+                                              new NetworkEditCancelEvent()
+                                          )}
+                                  >
+                                      Cancel
+                                  </button>
+                                  <button
+                                      class="btn btn-primary rounded-pill btn-submit"
+                                      type="submit"
+                                  >
+                                      Update
+                                  </button>
+                              </div>
+                          `
+                        : html`
+                              <div class="mt-auto pt-3">
+                                  <button
+                                      class="btn btn-primary rounded-pill w-100"
+                                      type="submit"
+                                  >
+                                      Add
+                                  </button>
+                              </div>
+                          `
+                }
             </form>
         `
     }

@@ -327,62 +327,66 @@ export class IdpFormComponent extends BaseElement {
                     </div>
                 </div>
 
-                ${this._error
-                    ? html`<div class="form-error">${this._error}</div>`
-                    : nothing}
-                ${isReview
-                    ? html`
-                          <div class="delete-section">
-                              <h4 class="delete-title">
-                                  Delete identity provider
-                              </h4>
-                              <p class="delete-desc">
-                                  You will not be able to undo the change once
-                                  you delete this Identity Provider.
-                              </p>
-                              <button
-                                  type="button"
-                                  class="btn-delete"
-                                  @click=${() =>
-                                      this.dispatchEvent(
-                                          new IdpFormDeleteEvent(this.idp)
-                                      )}
-                              >
-                                  Delete identity provider
-                              </button>
-                          </div>
+                ${
+                    this._error
+                        ? html`<div class="form-error">${this._error}</div>`
+                        : nothing
+                }
+                ${
+                    isReview
+                        ? html`
+                              <div class="delete-section">
+                                  <h4 class="delete-title">
+                                      Delete identity provider
+                                  </h4>
+                                  <p class="delete-desc">
+                                      You will not be able to undo the change
+                                      once you delete this Identity Provider.
+                                  </p>
+                                  <button
+                                      type="button"
+                                      class="btn-delete"
+                                      @click=${() =>
+                                          this.dispatchEvent(
+                                              new IdpFormDeleteEvent(this.idp)
+                                          )}
+                                  >
+                                      Delete identity provider
+                                  </button>
+                              </div>
 
-                          <div class="form-actions">
-                              <button
-                                  type="button"
-                                  class="btn-cancel"
-                                  @click=${() =>
-                                      this.dispatchEvent(
-                                          new IdpFormCancelEvent()
-                                      )}
-                              >
-                                  Cancel
-                              </button>
-                              <button
-                                  class="btn btn-primary rounded-pill btn-submit"
-                                  ?disabled=${this.loading}
-                                  type="submit"
-                              >
-                                  Update
-                              </button>
-                          </div>
-                      `
-                    : html`
-                          <div class="mt-auto pt-3">
-                              <button
-                                  class="btn btn-primary rounded-pill w-100"
-                                  ?disabled=${this.loading}
-                                  type="submit"
-                              >
-                                  Add
-                              </button>
-                          </div>
-                      `}
+                              <div class="form-actions">
+                                  <button
+                                      type="button"
+                                      class="btn-cancel"
+                                      @click=${() =>
+                                          this.dispatchEvent(
+                                              new IdpFormCancelEvent()
+                                          )}
+                                  >
+                                      Cancel
+                                  </button>
+                                  <button
+                                      class="btn btn-primary rounded-pill btn-submit"
+                                      ?disabled=${this.loading}
+                                      type="submit"
+                                  >
+                                      Update
+                                  </button>
+                              </div>
+                          `
+                        : html`
+                              <div class="mt-auto pt-3">
+                                  <button
+                                      class="btn btn-primary rounded-pill w-100"
+                                      ?disabled=${this.loading}
+                                      type="submit"
+                                  >
+                                      Add
+                                  </button>
+                              </div>
+                          `
+                }
             </form>
         `
     }

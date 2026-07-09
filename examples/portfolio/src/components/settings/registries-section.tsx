@@ -32,12 +32,10 @@ export function RegistriesSection() {
     const registries = useMemo(
         () =>
             Array.from(registryUrls.entries())
-                .map(
-                    ([partyId, registryUrl]): RegistryRow => ({
-                        partyId,
-                        registryUrl,
-                    })
-                )
+                .map(([partyId, registryUrl]): RegistryRow => ({
+                    partyId,
+                    registryUrl,
+                }))
                 .sort((left, right) =>
                     left.partyId.localeCompare(right.partyId)
                 ),
