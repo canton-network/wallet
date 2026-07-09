@@ -11,7 +11,6 @@ import { SDKUtilsNamespace } from '../../namespace/utils/index.js'
 import { AmuletNamespace } from '../../namespace/amulet/namespace.js'
 import type { AssetNamespace, TokenNamespace } from '../../sdk.js'
 import { EventsNamespace } from '../../namespace/events/namespace.js'
-import type { SDKContext } from './context.js'
 import {
     AmuletConfig,
     AssetConfig,
@@ -20,7 +19,7 @@ import {
 } from './config.js'
 import { Provider } from '@canton-network/core-splice-provider'
 import { LedgerTypes } from '@canton-network/core-ledger-client-types'
-import { SDKPlugin } from '../plugin.js'
+import { SDKPlugin, SDKPluginContext } from '../plugin.js'
 
 // SDK OPTIONS
 
@@ -89,9 +88,7 @@ export type BasicSDKInterface<
     extend: <ExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, ExtendedItems>
     ) => Promise<SDKInterface<ExtendedItems | CurrentlyExtended>>
-    registerPlugins: <
-        P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
-    >(
+    registerPlugins: <P extends PluginConstructor[]>(
         plugins: P
     ) => SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
 }>
@@ -110,18 +107,10 @@ export type NullableExtendedFullSDKInterface = {
 export type ExtendedSDKInterface<
     ExtendedItems extends keyof ExtendedSDKOptions,
 > = {
-    [
-        K in keyof Pick<ExtendedSDKOptions, ExtendedItems>
-    ]: ExtendedFullSDKInterface[K]
-} & {
-    extend: <NewExtendedItems extends keyof ExtendedSDKOptions>(
-        config: Pick<ExtendedSDKOptions, NewExtendedItems>
-    ) => Promise<SDKInterface<NewExtendedItems | ExtendedItems>>
-    registerPlugins: <
-        P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
-    >(
-        plugins: P
-    ) => SDKInterface<ExtendedItems> & RegisteredPlugins<P>
+    [K in keyof Pick<
+        ExtendedSDKOptions,
+        ExtendedItems
+    >]: ExtendedFullSDKInterface[K]
 }
 
 export type SDKInterface<
@@ -135,11 +124,13 @@ export type OfflineSDKInterface = Readonly<{
 
 // PLUGINS
 
+export type PluginConstructor = new (ctx: SDKPluginContext) => SDKPlugin
+
 export type RegisteredPlugins<
-    P extends Record<string, new (ctx: SDKContext) => SDKPlugin> = Record<
-        string,
-        new (ctx: SDKContext) => SDKPlugin
-    >,
+    P extends PluginConstructor[] = PluginConstructor[],
 > = {
-    [K in keyof P]: InstanceType<P[K]>
+    [K in InstanceType<P[number]>['name']]: Extract<
+        InstanceType<P[number]>,
+        { name: K }
+    >
 }

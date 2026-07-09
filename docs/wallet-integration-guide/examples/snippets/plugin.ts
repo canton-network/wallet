@@ -1,4 +1,4 @@
-import { SDK, SDKContext, SDKPlugin } from '@canton-network/wallet-sdk'
+import { SDK, SDKPlugin, SDKPluginContext } from '@canton-network/wallet-sdk'
 
 export default async function () {
     const sdk = (
@@ -15,10 +15,10 @@ export default async function () {
             },
             ledgerClientUrl: 'http://localhost:2975',
         })
-    ).registerPlugins({
-        myPlugin: class extends SDKPlugin {
-            // wallet-sdk plugin should always accept SDKContext
-            constructor(protected readonly ctx: SDKContext) {
+    ).registerPlugins([
+        class extends SDKPlugin {
+            // wallet-sdk plugin should always accept SDKPluginContext
+            constructor(protected readonly ctx: SDKPluginContext) {
                 super('myPlugin', ctx)
             }
 
@@ -27,7 +27,7 @@ export default async function () {
                 return
             }
         },
-    })
+    ])
 
     sdk.myPlugin.myMethod()
 }

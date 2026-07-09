@@ -19,6 +19,7 @@ import {
     ExtendedFullSDKInterface,
     ExtendedSDKOptions,
     OfflineSDKInterface,
+    PluginConstructor,
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
@@ -28,7 +29,6 @@ import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
-import { SDKPlugin } from './plugin.js'
 
 const createNamespace: {
     [K in keyof ExtendedSDKOptions]: (
@@ -168,11 +168,11 @@ export class InitializedSDK<
         ) as Promise<SDKInterface<CurrentlyExtended | ExtendedItems>>
     }
 
-    public registerPlugins<
-        P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
-    >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
+    public registerPlugins<P extends PluginConstructor[]>(
+        plugins: P
+    ): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
         for (const name in plugins) {
-            const plugin = new plugins[name](this.ctx)
+            const plugin = new plugins[name]({ ...this.ctx, namespace: this })
             Object.defineProperty(this, name, {
                 value: plugin,
                 writable: false,
