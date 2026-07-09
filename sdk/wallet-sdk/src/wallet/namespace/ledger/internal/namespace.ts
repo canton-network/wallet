@@ -14,7 +14,7 @@ export class InternalLedgerNamespace {
      * Performs the two-phase Canton reassignment (Unassign → Assign) via
      * `/v2/commands/submit-and-wait-for-reassignment`.
      *
-     * TODO (i2097)
+     * TODO #2097
      */
     async reassign(params: ReassignParams): Promise<void> {
         const { submitter, contractId, source, target, skipIfAlreadyOn } =
