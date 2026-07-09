@@ -932,6 +932,8 @@ describe('userController', () => {
             iss: idp.issuer,
             aud: storeNetwork.auth.audience,
             sub: storeNetwork.auth.clientId,
+            scope: 'scope',
+            scp: ['scope'],
             exp: 1_900_000_000,
             iat: 1_800_000_000,
         }
@@ -1053,6 +1055,94 @@ describe('userController', () => {
             await expect(store.getSession()).resolves.toMatchObject({
                 network: 'network1',
             })
+        })
+
+        it('addSession rejects token when both scope and scp are missing', async () => {
+            const authWithoutScopeClaims: AuthContext = {
+                ...auth,
+                accessToken: createJwt({
+                    iss: idp.issuer,
+                    aud: storeNetwork.auth.audience,
+                    sub: storeNetwork.auth.clientId,
+                    exp: 1_900_000_000,
+                    iat: 1_800_000_000,
+                }),
+            }
+            const store = await createStore(logger, authWithoutScopeClaims, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithoutScopeClaims
+            )
+
+            await expect(
+                controller.addSession({ networkId: 'network1' })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession passes when only scope is present and matches', async () => {
+            const authWithScopeOnly = createAuthWithAddSessionClaims({
+                scp: undefined,
+            })
+            const store = await createStore(logger, authWithScopeOnly, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithScopeOnly
+            )
+
+            await expect(
+                controller.addSession({ networkId: 'network1' })
+            ).resolves.toMatchObject({
+                network: expect.objectContaining({ id: 'network1' }),
+                status: 'connected',
+            })
+        })
+
+        it('addSession rejects when only scope is present and mismatches', async () => {
+            const authWithInvalidScope = createAuthWithAddSessionClaims({
+                scope: 'openid email',
+                scp: undefined,
+            })
+            const store = await createStore(logger, authWithInvalidScope, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidScope
+            )
+
+            await expect(
+                controller.addSession({ networkId: 'network1' })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession rejects when both scope and scp are present but one mismatches', async () => {
+            const authWithMismatchedScp = createAuthWithAddSessionClaims({
+                scope: 'scope',
+                scp: ['scope openid'],
+            })
+            const store = await createStore(logger, authWithMismatchedScp, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithMismatchedScp
+            )
+
+            await expect(
+                controller.addSession({ networkId: 'network1' })
+            ).rejects.toThrow('Failed to add session')
         })
 
         it('addSession rejects token with issuer mismatch', async () => {
