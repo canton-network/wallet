@@ -33,15 +33,15 @@ provided that at some point the contracts are re-assigned (automatically or expl
 
 The parties in the example are:
 
-- **Alice** — app-user, hosted on the **app-user** participant. Holds Amulet, buys `TestToken`.
-- **Bob** — app-provider, hosted on the **app-provider** participant. Holds `TestToken`, buys Amulet.
-- **TokenAdmin** — issuer / admin of `TestToken`, also hosted on the **app-provider** participant.
-- **TradingApp** — the OTC settlement venue (DvP), hosted on the **app-user** participant (which is connected to both synchronizers).
+- **Alice** - hosted on the **app-user** participant. Holds Amulet, buys `TestToken`.
+- **Bob** - hosted on the **app-provider** participant. Holds `TestToken`, buys Amulet.
+- **TokenAdmin** - issuer / admin of `TestToken`, also hosted on the **app-provider** participant.
+- **TradingApp** - the OTC settlement venue (DvP), hosted on the **app-user** participant (which is connected to both synchronizers).
 
 The trade is a two-legged Delivery-vs-Payment:
 
-- **leg-0:** Alice pays **100 Amulet** to Bob — Amulet lives on the **global** synchronizer.
-- **leg-1:** Bob delivers **20 `TestToken`** to Alice — `TestToken` lives on the **app** synchronizer.
+- **leg-0:** Alice pays **100 Amulet** to Bob - Amulet lives on the **global** synchronizer.
+- **leg-1:** Bob delivers **20 `TestToken`** to Alice - `TestToken` lives on the **app** synchronizer.
 
 Bob's `TestToken` allocation for leg-1 is created **on the app-synchronizer** (where his
 holding lives, so no reassignment is needed to allocate). Because `TradingApp` is hosted on
