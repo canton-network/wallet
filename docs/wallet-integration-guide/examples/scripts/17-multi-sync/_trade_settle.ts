@@ -49,61 +49,6 @@ export interface SettleParams {
     testTokenAllocationCid: string
 }
 
-export interface ScannedAllocations {
-    amuletAllocationCid: string
-    testTokenAllocationCid: string
-}
-
-/**
- * Polls the TradingApp's ACS until both the Amulet (leg-0) and TestToken (leg-1)
- * allocations have propagated to the TradingApp's settlement participant, then
- * returns their contract IDs.
- */
-export async function scanAllocations(
-    setup: MultiSyncSetup,
-    legIds: { legIdAlice: string; legIdBob: string },
-    logger: Logger
-): Promise<ScannedAllocations> {
-    const { tradingAppSdk, tradingApp } = setup
-    const { legIdAlice, legIdBob } = legIds
-
-    const MAX_ATTEMPTS = 30
-    const RETRY_INTERVAL_MS = 1000
-
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        const allocations = await tradingAppSdk.token.allocation.pending(
-            tradingApp.partyId
-        )
-        const amuletAllocation = allocations.find(
-            (a) => a.interfaceViewValue.allocation.transferLegId === legIdAlice
-        )
-        const testTokenAllocation = allocations.find(
-            (a) => a.interfaceViewValue.allocation.transferLegId === legIdBob
-        )
-
-        if (amuletAllocation && testTokenAllocation) {
-            logger.info(
-                'TradingApp: both Amulet and TestToken allocations are visible — ready to settle'
-            )
-            return {
-                amuletAllocationCid: amuletAllocation.contractId,
-                testTokenAllocationCid: testTokenAllocation.contractId,
-            }
-        }
-
-        logger.info(
-            `TradingApp: waiting for allocations to propagate (attempt ${attempt}/${MAX_ATTEMPTS}; amulet=${Boolean(
-                amuletAllocation
-            )}, testToken=${Boolean(testTokenAllocation)})`
-        )
-        await new Promise((resolve) => setTimeout(resolve, RETRY_INTERVAL_MS))
-    }
-
-    throw new Error(
-        'Allocations did not propagate to the TradingApp participant in time'
-    )
-}
-
 interface CancelParams {
     otcTradeCid: string
     legIdAlice: string
