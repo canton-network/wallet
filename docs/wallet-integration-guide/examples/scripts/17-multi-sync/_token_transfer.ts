@@ -46,6 +46,7 @@ export async function aliceSelfTransferToApp(
 
     // The settled holding lands on the global synchronizer; move it to the
     // app-synchronizer before self-transferring there (mirrors Bob's flow).
+    // TODO #2097 remove after bugfix in canton
     if (aliceToken.synchronizerId !== appSynchronizerId) {
         await aliceSdk.ledger.internal.reassign({
             submitter: alice.partyId,
@@ -106,6 +107,7 @@ export async function bobSelfTransferToApp(
 
     for (const token of bobTokens) {
         if (token.synchronizerId !== appSynchronizerId) {
+            //TODO #2097 remove after bugfix in canton
             await bobSdk.ledger.internal.reassign({
                 submitter: bob.partyId,
                 contractId: token.contractId,
