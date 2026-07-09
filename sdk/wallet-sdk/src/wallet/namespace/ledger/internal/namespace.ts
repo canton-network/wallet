@@ -17,12 +17,7 @@ export class InternalLedgerNamespace {
      * TODO #2097
      */
     async reassign(params: ReassignParams): Promise<void> {
-        const { submitter, contractId, source, target, skipIfAlreadyOn } =
-            params
-
-        if (skipIfAlreadyOn && source === target) {
-            return
-        }
+        const { submitter, contractId, source, target } = params
 
         // Phase 1: Unassign
         let unassignResponse: Awaited<

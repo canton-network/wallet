@@ -53,7 +53,6 @@ export async function aliceSelfTransferToApp(
             contractId: aliceToken.contractId,
             source: aliceToken.synchronizerId,
             target: appSynchronizerId,
-            skipIfAlreadyOn: true,
         })
     }
 
@@ -113,7 +112,6 @@ export async function bobSelfTransferToApp(
                 contractId: token.contractId,
                 source: token.synchronizerId,
                 target: appSynchronizerId,
-                skipIfAlreadyOn: true,
             })
         }
 

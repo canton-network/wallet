@@ -131,7 +131,6 @@ await bobSdk.ledger.internal.reassign({
     contractId: testTokenAllocation.contractId,
     source: synchronizers.appSynchronizerId,
     target: synchronizers.globalSynchronizerId,
-    skipIfAlreadyOn: true,
 })
 logger.info(
     'Bob: TestToken allocation reassigned app-synchronizer → global ahead of settlement'
