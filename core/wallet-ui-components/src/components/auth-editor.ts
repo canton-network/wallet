@@ -435,13 +435,13 @@ export class AuthEditor extends BaseElement {
                 }}
             />
             ${
+                // prettier-ignore
                 this._hasExistingSecret(authObj)
                     ? html`<p
                           class="field-help mb-0"
                           data-test-id="auth-editor-secret-help"
                       >
-                          Current secret is hidden. Enter a new value to replace
-                          it.
+                          Current secret is hidden. Enter a new value to replace it.
                       </p>`
                     : nothing
             }
