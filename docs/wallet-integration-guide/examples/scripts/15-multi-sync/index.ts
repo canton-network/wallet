@@ -164,10 +164,9 @@ try {
 } catch (e) {
     logger.error(
         { err: e },
-        'Settlement failed — compensation applied, funds returned'
+        'Settlement failed — allocations cancelled, funds returned to Alice and Bob'
     )
-    await bobSelfTransferToApp(setup, logger)
-    logger.info('Contracts after settlement failure (compensation applied):')
+    logger.info('Contracts after settlement failure (allocations cancelled):')
     await logAllContracts(logger, synchronizers, [
         { sdk: aliceSdk, parties: [alice.partyId] },
         { sdk: bobSdk, parties: [bob.partyId] },
@@ -184,11 +183,9 @@ await logAllContracts(logger, synchronizers, [
     { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
     { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
-// ── Step 11: Self-transfer TestTokens back to app-synchronizer ─────────────────
-await Promise.all([
-    aliceSelfTransferToApp(setup, logger),
-    bobSelfTransferToApp(setup, logger),
-])
+// ── Step 11: Alice self-transfers her received TestToken back to app-synchronizer ─
+await aliceSelfTransferToApp(setup, logger)
+
 logger.info('Final contract state:')
 await logAllContracts(logger, synchronizers, [
     { sdk: aliceSdk, parties: [alice.partyId] },
