@@ -125,6 +125,7 @@ const testTokenAllocation = allocationsBob.find(
 )
 if (!testTokenAllocation) throw new Error('TestToken allocation not found')
 // ── Step 10b: Reassign Bob's TestToken allocation app-synchronizer → global ──
+// TODO #2097 remove after bugfix in canton
 await bobSdk.ledger.internal.reassign({
     submitter: bob.partyId,
     contractId: testTokenAllocation.contractId,
