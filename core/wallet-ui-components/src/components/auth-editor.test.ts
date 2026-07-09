@@ -5,7 +5,11 @@ import { elementUpdated, fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { describe, expect, it, vi } from 'vitest'
 import './auth-editor.js'
-import { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
+import {
+    AuthEditor,
+    AuthEditorChangeEvent,
+    type AuthMethod,
+} from './auth-editor.js'
 
 const byTestId = <T extends Element>(el: Element, id: string): T | null =>
     el.querySelector<T>(`[data-test-id="${id}"]`)
@@ -15,7 +19,7 @@ describe('auth-editor', () => {
         const el = await fixture<AuthEditor>(
             html`<auth-editor
                 .optional=${true}
-                .allowedMethods=${['client_credentials']}
+                .allowedMethods=${['client_credentials' as AuthMethod]}
             ></auth-editor>`
         )
 
@@ -210,7 +214,7 @@ describe('auth-editor', () => {
         const el = await fixture<AuthEditor>(
             html`<auth-editor
                 .optional=${true}
-                .allowedMethods=${['client_credentials']}
+                .allowedMethods=${['client_credentials' as AuthMethod]}
             ></auth-editor>`
         )
         const listener = vi.fn()

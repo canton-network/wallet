@@ -6,12 +6,12 @@
 import {
     buildController,
     PartyMode,
-    SigningDriverInterface,
     SigningProvider,
-    SignMessageResult,
+    type SigningDriverInterface,
+    type SignMessageResult,
 } from '@canton-network/core-signing-lib'
 
-import {
+import type {
     SignTransactionParams,
     SignTransactionResult,
     GetTransactionParams,
@@ -28,10 +28,10 @@ import {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
-import { FireblocksHandler, FireblocksApiKeyInfo } from './fireblocks.js'
+import { FireblocksHandler, type FireblocksApiKeyInfo } from './fireblocks.js'
 import _ from 'lodash'
 import { z } from 'zod'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import { type AuthContext } from '@canton-network/core-wallet-auth'
 
 export interface FireblocksConfig {
     defaultKeyInfo?: FireblocksApiKeyInfo

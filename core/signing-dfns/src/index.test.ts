@@ -11,7 +11,7 @@ import {
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
 
-import DfnsSigningDriver, { DfnsCredentials } from './index.js'
+import DfnsSigningDriver, { type DfnsCredentials } from './index.js'
 import type { DfnsKey, DfnsSignature } from './dfns.js'
 
 const TEST_USER_ID = 'test-user-id'

@@ -3,10 +3,10 @@
 
 import { LedgerClient } from './ledger-client.js'
 
-import { Types } from './ledger-client.js'
+import { type Types } from './ledger-client.js'
 import { PartyId } from '@canton-network/core-types'
 
-import { Logger } from '@canton-network/core-types'
+import { type Logger } from '@canton-network/core-types'
 import { ErrorInfo, RetryInfo } from '@canton-network/core-ledger-proto'
 
 type Completion = Types['Completion']['value']

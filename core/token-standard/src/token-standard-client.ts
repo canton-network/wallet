@@ -1,19 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import createClient, { Client } from 'openapi-fetch'
-import { Logger } from '@canton-network/core-types'
+import createClient, { type Client } from 'openapi-fetch'
+import type { Logger } from '@canton-network/core-types'
 
-import { paths as allocationPaths } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
-import { paths as allocationInstructionPaths } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
-import { paths as metadataPaths } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
-import { paths as transferInstructionPaths } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type { paths as allocationPaths } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
+import type { paths as allocationInstructionPaths } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
+import type { paths as metadataPaths } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
+import type { paths as transferInstructionPaths } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
-export { components as allocationRegistryTypes } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
-export { components as metadataRegistryTypes } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
-export { components as transferInstructionRegistryTypes } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
-export { components as allocationInstructionRegistryTypes } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
+export type { components as allocationRegistryTypes } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
+export type { components as metadataRegistryTypes } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
+export type { components as transferInstructionRegistryTypes } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
+export type { components as allocationInstructionRegistryTypes } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
 
 type paths = allocationPaths &
     metadataPaths &

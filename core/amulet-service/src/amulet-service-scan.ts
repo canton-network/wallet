@@ -4,7 +4,7 @@
 import {
     ScanClient,
     ScanProxyClient,
-    ScanTypes,
+    type ScanTypes,
 } from '@canton-network/core-splice-client'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { PartyId } from '@canton-network/core-types'

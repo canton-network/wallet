@@ -4,7 +4,7 @@
 import { css } from 'lit'
 import { BaseElement } from '../internal/base-element'
 import { cssToString } from '../utils'
-import {
+import type {
     BrowserPlatform,
     WalletPickerEntry,
     WalletPickerSuggestedEntry,

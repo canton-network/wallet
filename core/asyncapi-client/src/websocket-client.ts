@@ -11,8 +11,8 @@ import {
     type AsyncCommonChannels,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
-import pino, { Logger } from 'pino'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import pino, { type Logger } from 'pino'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export const supportedVersions = supportedAsyncApiVersions
 

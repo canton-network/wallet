@@ -4,14 +4,14 @@
 import {
     Fireblocks,
     PublicKeyInformationAlgorithmEnum,
-    TransactionResponse,
-    VaultAccount,
+    type TransactionResponse,
+    type VaultAccount,
 } from '@fireblocks/ts-sdk'
 import { pino } from 'pino'
 import {
-    SigningStatus,
     CC_COIN_TYPE,
-    KeyIdentifier,
+    type SigningStatus,
+    type KeyIdentifier,
 } from '@canton-network/core-signing-lib'
 import { z } from 'zod'
 

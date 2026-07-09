@@ -4,12 +4,12 @@
 import {
     buildController,
     PartyMode,
-    SigningDriverInterface,
+    type SigningDriverInterface,
     SigningProvider,
-    SignMessageResult,
+    type SignMessageResult,
 } from '@canton-network/core-signing-lib'
 
-import {
+import type {
     SignTransactionParams,
     SignTransactionResult,
     GetTransactionParams,
@@ -26,8 +26,12 @@ import {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
-import { DfnsHandler, DfnsCredentials, DfnsSignature } from './dfns.js'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import {
+    DfnsHandler,
+    type DfnsCredentials,
+    type DfnsSignature,
+} from './dfns.js'
+import { type AuthContext } from '@canton-network/core-wallet-auth'
 import _ from 'lodash'
 import { z } from 'zod'
 

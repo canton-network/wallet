@@ -1,10 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ScanProxyClient, ScanTypes } from '@canton-network/core-splice-client'
 import {
-    DisclosedContract,
-    ExerciseCommand,
+    ScanProxyClient,
+    type ScanTypes,
+} from '@canton-network/core-splice-client'
+import {
+    type DisclosedContract,
+    type ExerciseCommand,
     TokenStandardService,
 } from '@canton-network/core-token-standard-service'
 import { PartyId } from '@canton-network/core-types'

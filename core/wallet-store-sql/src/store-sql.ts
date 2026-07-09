@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
-    AuthContext,
-    UserId,
-    AuthAware,
+    type AuthContext,
+    type UserId,
+    type AuthAware,
     assertConnected,
-    Idp,
+    type Idp,
 } from '@canton-network/core-wallet-auth'
 import {
     Store as BaseStore,
@@ -30,7 +30,7 @@ import {
 import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
 import {
-    DB,
+    type DB,
     fromIdp,
     fromNetwork,
     fromTransaction,
@@ -929,7 +929,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 }
 
-export const connection = (config: StoreConfig) => {
+export const connection = (config: StoreConfig): Kysely<DB> => {
     let database
     switch (config.connection.type) {
         case 'sqlite':

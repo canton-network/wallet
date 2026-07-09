@@ -5,7 +5,7 @@ import { css, html, nothing, type TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.js'
 import { cardStyles } from '../styles/card.js'
-import { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
+import { type ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import {
     formatActivityDate,
     getActivityAmount,

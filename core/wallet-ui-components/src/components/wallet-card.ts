@@ -4,7 +4,7 @@
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.js'
-import { PartyLevelRight, Wallet } from '@canton-network/core-wallet-store'
+import { PartyLevelRight, type Wallet } from '@canton-network/core-wallet-store'
 import { cardStyles } from '../styles/card.js'
 
 export class WalletSetPrimaryEvent extends Event {

@@ -3,13 +3,17 @@
 
 import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import {
-    Network as StoreNetwork,
+    type Network as StoreNetwork,
     networkSchema,
 } from '@canton-network/core-wallet-store'
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
-import { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
+import {
+    AuthEditor,
+    AuthEditorChangeEvent,
+    type AuthMethod,
+} from './auth-editor.js'
 import './auth-editor.js'
 
 /**
@@ -407,7 +411,7 @@ export class NetworkForm extends BaseElement {
                     </h3>
                     <auth-editor
                         .auth=${this.network.serviceAccountAuth}
-                        .allowedMethods=${['client_credentials']}
+                        .allowedMethods=${['client_credentials' as AuthMethod]}
                         .optional=${true}
                         .emptyText=${'No service account auth configured.'}
                         .pendingRemoveText=${'Service account auth will be removed after submitting this form.'}

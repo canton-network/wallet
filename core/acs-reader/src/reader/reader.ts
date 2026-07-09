@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
-import { AcsOptions, PaginatedAcsOptions } from '../service'
+import type { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
+import type { AcsOptions, PaginatedAcsOptions } from '../service'
 import { BaseReader } from './base'
 import {
     ACSCacheCollection,
-    ACSCacheCollectionOptions,
     PaginatedACSCacheCollection,
+    type ACSCacheCollectionOptions,
 } from '../cache/collection'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 function isPageResponse(
     obj: unknown

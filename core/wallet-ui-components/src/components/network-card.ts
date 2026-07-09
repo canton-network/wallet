@@ -4,7 +4,7 @@
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
-import { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
+import { type PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
 
 /** Emitted when the user clicks a network card to review it */
