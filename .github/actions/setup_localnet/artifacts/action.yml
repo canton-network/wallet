@@ -7,6 +7,10 @@ inputs:
     splice_version:
         description: 'Splice version (required)'
         required: true
+    multi_sync:
+        description: 'Enable multi-sync profile (default: true)'
+        required: false
+        default: 'true'
 runs:
     using: 'composite'
     steps:
@@ -31,4 +35,4 @@ runs:
 
         - name: Start Localnet
           shell: bash
-          run: pnpm run start:localnet -- --network=${{ inputs.network }}
+          run: pnpm run start:localnet -- --network=${{ inputs.network }} ${{ inputs.multi_sync == 'false' && '--no-multi-sync' || '' }}

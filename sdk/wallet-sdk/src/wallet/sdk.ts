@@ -57,6 +57,7 @@ export type {
 } from './namespace/ledger/index.js'
 export * from './namespace/transactions/prepared.js'
 export * from './namespace/transactions/signed.js'
+export { ScanProxyClient } from '@canton-network/core-splice-client'
 
 export class SDK {
     static async create<
@@ -123,7 +124,8 @@ export class SDK {
 
         const defaultSynchronizerId = await getDefaultSynchronizerId(
             ledgerProvider,
-            logger
+            logger,
+            error
         )
 
         const ctx: SDKContext = {
@@ -166,7 +168,8 @@ export class SDK {
 
 async function getDefaultSynchronizerId(
     provider: AbstractLedgerProvider,
-    logger: SDKLogger
+    logger: SDKLogger,
+    error: SDKErrorHandler
 ) {
     const connectedSynchronizers =
         await provider.request<Ops.GetV2StateConnectedSynchronizers>({
@@ -178,15 +181,25 @@ async function getDefaultSynchronizerId(
             },
         })
 
-    if (!connectedSynchronizers.connectedSynchronizers?.[0]) {
-        throw new Error('No connected synchronizers found')
+    const synchronizers = connectedSynchronizers.connectedSynchronizers
+    if (!synchronizers?.[0]) {
+        error.throw({
+            message: 'No connected synchronizers found',
+            type: 'NotFound',
+        })
     }
+    // TODO #1740 this logic is a temporary workaround to make sdk work with multiple synchronizers and ensure the
+    // the choice of default synchronizer is not random. In subsequent PR we remove this logic from sdk code (and fix existing tests)
+    const defaultEntry =
+        synchronizers.find((s) => s.synchronizerAlias === 'global') ??
+        synchronizers.find((s) => s.synchronizerAlias === 'global-domain') ??
+        synchronizers.find((s) => s.synchronizerAlias !== 'app-synchronizer') ??
+        synchronizers[0]
 
-    const defaultSynchronizerId =
-        connectedSynchronizers.connectedSynchronizers[0].synchronizerId
-    if (connectedSynchronizers.connectedSynchronizers.length > 1) {
+    const defaultSynchronizerId = defaultEntry.synchronizerId
+    if (synchronizers.length > 1) {
         logger.warn(
-            `Found ${connectedSynchronizers.connectedSynchronizers.length} synchronizers, defaulting to ${defaultSynchronizerId}`
+            `Found ${synchronizers.length} synchronizers, defaulting to ${defaultSynchronizerId}`
         )
     }
 

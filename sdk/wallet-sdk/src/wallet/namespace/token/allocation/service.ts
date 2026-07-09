@@ -51,7 +51,7 @@ export class AllocationNamespace {
         return [{ ExerciseCommand: command }, disclosedConctracts]
     }
 
-    async withdraw(params: AllocationParams) {
+    async withdraw(params: AllocationParams): Promise<PreparedCommand> {
         const [command, disclosedConctracts] =
             await this.sdkContext.tokenStandardService.allocation.createWithdrawAllocation(
                 params.allocationCid,
@@ -62,7 +62,7 @@ export class AllocationNamespace {
         return [{ ExerciseCommand: command }, disclosedConctracts]
     }
 
-    async cancel(params: AllocationParams) {
+    async cancel(params: AllocationParams): Promise<PreparedCommand> {
         const [command, disclosedConctracts] =
             await this.sdkContext.tokenStandardService.allocation.createCancelAllocation(
                 params.allocationCid,

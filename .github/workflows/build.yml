@@ -385,6 +385,7 @@ jobs:
               with:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  multi_sync: 'true'
 
             - name: Start remote WK
               run: pnpm pm2 start ecosystem.ci.config.js --env development
@@ -446,6 +447,7 @@ jobs:
               with:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  multi_sync: 'true'
 
             - uses: ./.github/actions/check_resources
 
@@ -496,6 +498,21 @@ jobs:
               with:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  multi_sync: 'true'
+
+            - name: Restore DPM cache
+              uses: actions/cache/restore@v5
+              with:
+                  path: |
+                      ~/.dpm
+                  key: dpm-${{ runner.os }}-${{ needs.version-config.outputs.daml_release_version }}
+
+            - name: Generate featured DARs
+              run: yarn script:generate:featured-dars
+
+            - name: Rebuild DAML-dependent packages
+              run: |
+                  yarn workspace @canton-network/core-test-token build
 
             - uses: ./.github/actions/check_resources
 
