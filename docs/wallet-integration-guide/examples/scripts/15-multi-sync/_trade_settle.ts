@@ -74,8 +74,6 @@ async function cancelAllocationsOnFailure(
 ): Promise<void> {
     const {
         tradingAppSdk,
-        aliceTokenNamespace,
-        bobTokenNamespace,
         tradingApp,
         globalSynchronizerId,
         testTokenRegistryUrl,
@@ -89,15 +87,16 @@ async function cancelAllocationsOnFailure(
         testTokenAllocationDisclosed,
     } = params
 
+    const tokenNamespace = tradingAppSdk.token
     // Fetch each allocation's cancel choice context from its registry's
     // allocation-v1 API (Amulet from the scan-proxy registry, TestToken from the
     // local TestToken registry).
     const [amuletCancelCtx, testTokenCancelCtx] = await Promise.all([
-        aliceTokenNamespace.allocation.context.cancel({
+        tokenNamespace.allocation.context.cancel({
             allocationCid: amuletAllocationCid,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         }),
-        bobTokenNamespace.allocation.context.cancel({
+        tokenNamespace.allocation.context.cancel({
             allocationCid: testTokenAllocationCid,
             registryUrl: testTokenRegistryUrl,
         }),
