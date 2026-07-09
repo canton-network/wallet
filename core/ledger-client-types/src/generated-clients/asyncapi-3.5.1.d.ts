@@ -36,8 +36,7 @@ export interface CompletionStreamRequest {
     beginExclusive?: number
 }
 export type Either_JsCantonError_CompletionStreamResponse =
-    | CompletionStreamResponse
-    | JsCantonError
+    CompletionStreamResponse | JsCantonError
 export type Map_K_V = Record<string, string>
 export interface CompletionStreamResponse {
     completionResponse?: CompletionResponse
@@ -157,9 +156,7 @@ export interface Field {
     lengthDelimited?: string[]
 }
 export type DeduplicationPeriod =
-    | DeduplicationDuration
-    | DeduplicationOffset
-    | Empty
+    DeduplicationDuration | DeduplicationOffset | Empty
 export interface DeduplicationDuration {
     value: Duration
 }
@@ -282,10 +279,7 @@ export interface CumulativeFilter {
     identifierFilter?: IdentifierFilter
 }
 export type IdentifierFilter =
-    | Empty2
-    | InterfaceFilter
-    | TemplateFilter
-    | WildcardFilter
+    Empty2 | InterfaceFilter | TemplateFilter | WildcardFilter
 export type Empty2 = Record<string, any>
 export interface InterfaceFilter {
     value: InterfaceFilter1
@@ -364,8 +358,7 @@ export interface EventFormat {
     verbose?: boolean
 }
 export type Either_JsCantonError_JsGetActiveContractsResponse =
-    | JsCantonError
-    | JsGetActiveContractsResponse
+    JsCantonError | JsGetActiveContractsResponse
 export interface JsGetActiveContractsResponse {
     /** The workflow ID used in command submission which corresponds to the contract_entry. Only set if
    the ``workflow_id`` for the command was set.
@@ -382,10 +375,7 @@ export interface JsGetActiveContractsResponse {
     streamContinuationToken?: string
 }
 export type JsContractEntry =
-    | JsActiveContract
-    | JsEmpty
-    | JsIncompleteAssigned
-    | JsIncompleteUnassigned
+    JsActiveContract | JsEmpty | JsIncompleteAssigned | JsIncompleteUnassigned
 export interface JsActiveContract {
     /** The event as it appeared in the context of its last update (i.e. daml transaction or
    reassignment). In particular, the last offset, node_id pair is preserved.
@@ -757,16 +747,12 @@ export interface ParticipantAuthorizationTopologyFormat {
     parties?: string[]
 }
 export type Either_JsCantonError_JsGetUpdatesResponse =
-    | JsCantonError
-    | JsGetUpdatesResponse
+    JsCantonError | JsGetUpdatesResponse
 export interface JsGetUpdatesResponse {
     update?: Update
 }
 export type Update =
-    | OffsetCheckpoint2
-    | Reassignment
-    | TopologyTransaction
-    | Transaction
+    OffsetCheckpoint2 | Reassignment | TopologyTransaction | Transaction
 export interface OffsetCheckpoint2 {
     value: OffsetCheckpoint1
 }
@@ -1176,8 +1162,7 @@ export interface ExercisedEvent {
     acsDelta: boolean
 }
 export type Either_JsCantonError_JsGetUpdateTreesResponse =
-    | JsCantonError
-    | JsGetUpdateTreesResponse
+    JsCantonError | JsGetUpdateTreesResponse
 export interface JsGetUpdateTreesResponse {
     update?: Update1
 }

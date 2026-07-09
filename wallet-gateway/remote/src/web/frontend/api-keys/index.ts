@@ -133,35 +133,39 @@ export class UserUiApiKeys extends BaseElement {
                 </button>
             </div>
 
-            ${this.apiKeys.length === 0
-                ? html`<p class="mb-0 text-body-secondary">
-                      No API keys configured.
-                  </p>`
-                : html`
-                      <div class="api-key-list">
-                          ${this.pagedApiKeys.map((apiKey) => {
-                              return html`
-                                  <api-key-card
-                                      .apiKey=${apiKey}
-                                      @revoke=${this._revokeApiKey}
-                                  ></api-key-card>
-                              `
-                          })}
-                      </div>
+            ${
+                this.apiKeys.length === 0
+                    ? html`<p class="mb-0 text-body-secondary">
+                          No API keys configured.
+                      </p>`
+                    : html`
+                          <div class="api-key-list">
+                              ${this.pagedApiKeys.map((apiKey) => {
+                                  return html`
+                                      <api-key-card
+                                          .apiKey=${apiKey}
+                                          @revoke=${this._revokeApiKey}
+                                      ></api-key-card>
+                                  `
+                              })}
+                          </div>
 
-                      ${this.apiKeys.length > this.pageSize
-                          ? html`
-                                <div class="pagination-wrap">
-                                    <wg-pagination
-                                        .total=${this.apiKeys.length}
-                                        .pageSize=${this.pageSize}
-                                        .page=${this.currentPage}
-                                        @page-change=${this._onPageChange}
-                                    ></wg-pagination>
-                                </div>
-                            `
-                          : ''}
-                  `}
+                          ${
+                              this.apiKeys.length > this.pageSize
+                                  ? html`
+                                        <div class="pagination-wrap">
+                                            <wg-pagination
+                                                .total=${this.apiKeys.length}
+                                                .pageSize=${this.pageSize}
+                                                .page=${this.currentPage}
+                                                @page-change=${this._onPageChange}
+                                            ></wg-pagination>
+                                        </div>
+                                    `
+                                  : ''
+                          }
+                      `
+            }
         `
     }
 }

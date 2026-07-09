@@ -116,21 +116,23 @@ export class WgErrorPage extends BaseElement {
                     <div class="error-icon">${warningTriangleIcon}</div>
                     <h1>${this.title}</h1>
                     <p>${this.message}</p>
-                    ${this.mode === 'refresh'
-                        ? html`<button
-                              type="button"
-                              class="action-btn"
-                              @click=${this.onRefresh}
-                          >
-                              ${refreshIcon} Refresh
-                          </button>`
-                        : html`<button
-                              type="button"
-                              class="action-btn"
-                              @click=${this.onBack}
-                          >
-                              ${arrowLeftIcon} Back
-                          </button>`}
+                    ${
+                        this.mode === 'refresh'
+                            ? html`<button
+                                  type="button"
+                                  class="action-btn"
+                                  @click=${this.onRefresh}
+                              >
+                                  ${refreshIcon} Refresh
+                              </button>`
+                            : html`<button
+                                  type="button"
+                                  class="action-btn"
+                                  @click=${this.onBack}
+                              >
+                                  ${arrowLeftIcon} Back
+                              </button>`
+                    }
                 </article>
             </section>
         `

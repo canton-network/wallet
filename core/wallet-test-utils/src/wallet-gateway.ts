@@ -132,18 +132,26 @@ export class WalletGateway {
                 name: 'Create a new party',
             })
         ).toBeVisible({ timeout: 15000 })
-        await (await this.popup())
+        await (
+            await this.popup()
+        )
             .getByLabel('Party ID Hint')
             .fill(args.partyHint)
-        await (await this.popup())
+        await (
+            await this.popup()
+        )
             .getByLabel('Signing Provider')
             .selectOption(args.signingProvider)
         if (args.primary) {
-            await (await this.popup())
+            await (
+                await this.popup()
+            )
                 .getByRole('checkbox', { name: 'Set as primary wallet' })
                 .check()
         }
-        await (await this.popup())
+        await (
+            await this.popup()
+        )
             .getByRole('button', { name: 'Create' })
             .click()
 

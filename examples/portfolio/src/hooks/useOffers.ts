@@ -14,10 +14,7 @@ import { useOfferItems, type OfferItemsResult } from './useOfferItems'
 export type OfferDirection = 'incoming' | 'outgoing'
 export type OfferCategory = 'transfers' | 'allocations'
 export type OfferStatus =
-    | 'Pending'
-    | 'Action Required'
-    | 'Allocated'
-    | 'Expired'
+    'Pending' | 'Action Required' | 'Allocated' | 'Expired'
 
 export type TransferOfferItem = {
     id: string

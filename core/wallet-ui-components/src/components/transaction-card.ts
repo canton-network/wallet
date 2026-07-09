@@ -170,16 +170,18 @@ export class WgTransactionCard extends BaseElement {
                         title: this.commandId,
                         truncate: true,
                     })}
-                    ${this.externalTxId
-                        ? this.renderFieldRow(
-                              'External transaction ID',
-                              this.externalTxId,
-                              {
-                                  title: this.externalTxId,
-                                  truncate: true,
-                              }
-                          )
-                        : nothing}
+                    ${
+                        this.externalTxId
+                            ? this.renderFieldRow(
+                                  'External transaction ID',
+                                  this.externalTxId,
+                                  {
+                                      title: this.externalTxId,
+                                      truncate: true,
+                                  }
+                              )
+                            : nothing
+                    }
                     ${this.renderFieldRow(
                         'Status',
                         html`
