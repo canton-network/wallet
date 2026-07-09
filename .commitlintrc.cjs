@@ -1,3 +1,4 @@
+/* eslint-disable */
 const proc = require('child_process')
 
 const scopes = ['release', 'deps', 'deps-dev']
