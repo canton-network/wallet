@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { PartyId } from '@canton-network/core-types'
 import { AssetBody } from '../../asset/index.js'
 import {
     allocationInstructionRegistryTypes,
@@ -27,4 +28,15 @@ export type AllocationParams = {
 export type AllocationContextParams = {
     allocationCid: string
     registryUrl: URL | string
+}
+
+export type AllocationScanParams = {
+    /** Party whose visible allocations are polled. */
+    partyId: PartyId
+    /** Transfer leg ids to wait for; each one must become visible. */
+    transferLegIds: string[]
+    /** Maximum number of polling attempts before giving up. Default 30. */
+    maxAttempts?: number
+    /** Delay between polling attempts in milliseconds. Default 1000. */
+    retryIntervalMs?: number
 }

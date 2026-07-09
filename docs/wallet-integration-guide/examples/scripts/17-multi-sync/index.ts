@@ -16,7 +16,7 @@ import {
     bobSelfTransferToApp,
 } from './_token_transfer.js'
 import { createAndInitiateOtcTrade } from './_trade_propose.js'
-import { scanAllocations, settleOtcTrade } from './_trade_settle.js'
+import { settleOtcTrade } from './_trade_settle.js'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
 // app-user participant hosts Alice + TradingApp, app-provider hosts Bob (+ TokenAdmin); both
@@ -141,11 +141,12 @@ logger.info(
 // Poll the TradingApp's ACS until Alice's Amulet allocation (leg-0) and Bob's
 // reassigned TestToken allocation (leg-1) have both propagated — this replaces
 // disclosing the TestToken allocation to the TradingApp's settlement participant.
-const { amuletAllocationCid, testTokenAllocationCid } = await scanAllocations(
-    setup,
-    { legIdAlice, legIdBob },
-    logger
-)
+const allocationsByLeg = await tradingAppSdk.token.allocation.scan({
+    partyId: tradingApp.partyId,
+    transferLegIds: [legIdAlice, legIdBob],
+})
+const amuletAllocationCid = allocationsByLeg[legIdAlice].contractId
+const testTokenAllocationCid = allocationsByLeg[legIdBob].contractId
 
 // ── Step 10d: TradingApp settles the OTCTrade ─────────────────────────────────
 try {
