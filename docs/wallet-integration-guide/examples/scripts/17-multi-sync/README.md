@@ -27,7 +27,7 @@ yarn stop:localnet
 
 # Example details
 
-The goal here is to show an exchange operation with a custom token (`TestToken`) that is deployed to a private / local `app-synchronizer`.
+The goal here is to show an exchange operation with a custom token (`TestToken`) that supports running workflows on both a private synchronizer and the global synchronizer.
 A private synchronizer helps avoid some of the traffic costs of using the global synchronizer, but still enables parties to do transactions on the global network,
 provided that at some point the contracts are re-assigned (automatically or explicitly) to the global synchronizer.
 
