@@ -7,9 +7,9 @@
                 "hash": "3debf0d5f3a79ea5e29ab682e31428f9f853a5236d56bf9bd1d3af45673a6ca7"
             },
             "splice": {
-                "version": "0.6.1",
+                "version": "0.6.12",
                 "hashes": {
-                    "localnet": "1873f3b630823d8b71b6e6e1116e331d66db05c8ac32bb296778ab02420b3da9",
+                    "localnet": "e15e8263156f4f220ce44046332830abf3f83f6f40c68a8152eaae5504ebcd73",
                     "splice": "a075448a786ce91b80079466ba8b8a71fa6d8d2d74864e47f328ddb552441af3",
                     "spliceSpec": "3968a0e4fbb77a6a643a59429bf5ecd6d88df1fbce31c58f5102c0a9924006e2"
                 }
