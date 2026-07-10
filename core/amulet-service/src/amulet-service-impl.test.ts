@@ -260,6 +260,17 @@ describe('AmuletServiceScanProxy', () => {
         expect(dc.length).toBe(0)
     })
 
+    it('should correctly build the cancelFeaturedAppRight command', async () => {
+        const [command, dc] = await service.cancelFeaturedAppRight(
+            '0022871f63af26ccb13dc48f58d189568618bea77a5e7ff6f49d273096f0eee5b7ca1212200b214acf13730a0296c9910174d26822baf45c52dbb3e09d01a4e428e7a9f1f2',
+            '6c5802f86709a0ad4784af81f0bab40f3070b2f58128d8843da1e1784c147802:Splice.Amulet:FeaturedAppRight'
+        )
+
+        expect(command.choice).toEqual('FeaturedAppRight_Cancel')
+        expect(command.choiceArgument).toEqual({})
+        expect(dc.length).toBe(0)
+    })
+
     it('should correctly build the renewPreapproval command', async () => {
         vi.mocked(mockScanProxyClient.getAmuletRules).mockResolvedValue(
             amuletRules
@@ -612,6 +623,17 @@ describe('AmuletServiceScanClient', () => {
         )
 
         expect(command.choice).toEqual('TransferPreapproval_Cancel')
+        expect(dc.length).toBe(0)
+    })
+
+    it('should correctly build the cancelFeaturedAppRight command', async () => {
+        const [command, dc] = await service.cancelFeaturedAppRight(
+            '0022871f63af26ccb13dc48f58d189568618bea77a5e7ff6f49d273096f0eee5b7ca1212200b214acf13730a0296c9910174d26822baf45c52dbb3e09d01a4e428e7a9f1f2',
+            '6c5802f86709a0ad4784af81f0bab40f3070b2f58128d8843da1e1784c147802:Splice.Amulet:FeaturedAppRight'
+        )
+
+        expect(command.choice).toEqual('FeaturedAppRight_Cancel')
+        expect(command.choiceArgument).toEqual({})
         expect(dc.length).toBe(0)
     })
 

@@ -1697,6 +1697,7 @@ __metadata:
   dependencies:
     "@canton-network/core-types": "workspace:^"
     "@canton-network/core-wallet-auth": "workspace:^"
+    "@types/node": "npm:^25.9.4"
     "@vitest/browser-playwright": "npm:^4.1.10"
     "@vitest/coverage-v8": "npm:^4.1.10"
     openapi-fetch: "npm:^0.17.0"

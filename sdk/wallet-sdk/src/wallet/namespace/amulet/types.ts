@@ -24,6 +24,13 @@ export interface FeaturedAppService {
     grant: (
         options?: GrantFeaturedAppRightsOptions
     ) => Promise<FeaturedAppRight | undefined>
+    /**
+     * Submits a command to revoke featured app rights for validator operator.
+     * Polls Scan until the revoked contract is no longer visible (Scan can lag
+     * behind ledger completion; default wait is up to ~5 minutes).
+     * @returns `true` if no featured app rights remain after revoke.
+     */
+    revoke: (options?: RevokeFeaturedAppRightsOptions) => Promise<boolean>
 }
 
 export type FeaturedAppRight = {
@@ -41,6 +48,13 @@ export type LookupFeaturedAppRightsOptions = {
 }
 
 export type GrantFeaturedAppRightsOptions = {
+    synchronizerId?: string
+    maxRetries?: number
+    delayMs?: number
+    validatorParty?: PartyId
+}
+
+export type RevokeFeaturedAppRightsOptions = {
     synchronizerId?: string
     maxRetries?: number
     delayMs?: number

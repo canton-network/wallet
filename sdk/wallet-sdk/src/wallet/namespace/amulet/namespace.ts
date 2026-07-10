@@ -9,6 +9,7 @@ import {
     FeaturedAppRight,
     GrantFeaturedAppRightsOptions,
     LookupFeaturedAppRightsOptions,
+    RevokeFeaturedAppRightsOptions,
 } from './types.js'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
@@ -21,6 +22,9 @@ import { resolveProviderParty } from './utils.js'
 
 const defaultMaxRetries = 10
 const defaultDelayMs = 5000
+/** Scan can lag well beyond ledger completion; match preapproval cancel polling. */
+const defaultRevokeMaxRetries = 30
+const defaultRevokeDelayMs = 10_000
 
 export type AmuletNamespaceConfig = {
     commonCtx: SDKContext
@@ -118,6 +122,11 @@ export class AmuletNamespace {
         ): Promise<FeaturedAppRight | undefined> => {
             return this.grantFeatureAppRightsForValidator(options)
         },
+        revoke: async (
+            options: RevokeFeaturedAppRightsOptions = {}
+        ): Promise<boolean> => {
+            return this.revokeFeatureAppRightsForValidator(options)
+        },
     }
 
     private async grantFeatureAppRightsForValidator(
@@ -161,6 +170,49 @@ export class AmuletNamespace {
         })
     }
 
+    private async revokeFeatureAppRightsForValidator(
+        options: RevokeFeaturedAppRightsOptions
+    ): Promise<boolean> {
+        const providerParty = resolveProviderParty(
+            this.sdkContext,
+            'revokeFeatureAppRightsForValidator',
+            options.validatorParty
+        )
+        const featuredAppRights = await this.lookUpFeaturedAppRights({
+            partyId: providerParty,
+            maxRetries: 1,
+            delayMs: 0,
+        })
+
+        if (!featuredAppRights) {
+            return true
+        }
+
+        const synchronizerId =
+            options.synchronizerId ??
+            this.sdkContext.commonCtx.defaultSynchronizerId
+
+        const [cancelCommand, dc] =
+            await this.sdkContext.amuletService.cancelFeaturedAppRight(
+                featuredAppRights.contract_id,
+                featuredAppRights.template_id
+            )
+
+        await this.ledger.internal.submit({
+            commands: [{ ExerciseCommand: cancelCommand }],
+            disclosedContracts: dc,
+            synchronizerId,
+            actAs: [providerParty],
+        })
+
+        return this.waitUntilNoFeaturedAppRights({
+            partyId: providerParty,
+            contractId: featuredAppRights.contract_id,
+            maxRetries: options.maxRetries ?? defaultRevokeMaxRetries,
+            delayMs: options.delayMs ?? defaultRevokeDelayMs,
+        })
+    }
+
     private async lookUpFeaturedAppRights(
         options: LookupFeaturedAppRightsOptions
     ): Promise<FeaturedAppRight | undefined> {
@@ -192,6 +244,44 @@ export class AmuletNamespace {
 
         return undefined
     }
+
+    private async waitUntilNoFeaturedAppRights(options: {
+        partyId: string
+        contractId: string
+        maxRetries?: number
+        delayMs?: number
+    }): Promise<boolean> {
+        const { partyId, contractId } = options
+        const maxRetries = options.maxRetries ?? defaultRevokeMaxRetries
+        const delayMs = options.delayMs ?? defaultRevokeDelayMs
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            const result =
+                await this.sdkContext.amuletService.getFeaturedAppsByParty(
+                    partyId
+                )
+
+            const stillPresent =
+                result &&
+                typeof result === 'object' &&
+                Object.keys(result).length > 0 &&
+                result.contract_id === contractId
+
+            if (!stillPresent) {
+                return true
+            }
+
+            this.sdkContext.commonCtx.logger.info(
+                `featured app rights still present after revoke attempt ${attempt}. retrying again...`
+            )
+
+            if (attempt < maxRetries) {
+                await new Promise((res) => setTimeout(res, delayMs))
+            }
+        }
+
+        return false
+    }
 }
 
 interface FeaturedAppNamespace {
@@ -210,6 +300,13 @@ interface FeaturedAppNamespace {
     grant: (
         options?: GrantFeaturedAppRightsOptions
     ) => Promise<FeaturedAppRight | undefined>
+    /**
+     * Submits a command to revoke featured app rights for validator operator.
+     * Polls Scan until the revoked contract is no longer visible (Scan can lag
+     * behind ledger completion; default wait is up to ~5 minutes).
+     * @returns `true` if no featured app rights remain after revoke.
+     */
+    revoke: (options?: RevokeFeaturedAppRightsOptions) => Promise<boolean>
 }
 
 export async function fetchAmulet(

@@ -161,6 +161,16 @@ describe('AmuletService (Forwarding Layer)', () => {
             expect(result).toBe(true)
         })
 
+        it('should correctly forward cancelFeaturedAppRight', async () => {
+            mockImplInstance.cancelFeaturedAppRight.mockResolvedValue(null)
+
+            await service.cancelFeaturedAppRight('cid1', 'tid1')
+
+            expect(
+                mockImplInstance.cancelFeaturedAppRight
+            ).toHaveBeenCalledWith('cid1', 'tid1')
+        })
+
         it('should correctly forward isDevNet', async () => {
             mockImplInstance.isDevNet.mockResolvedValue(false)
 
