@@ -23,6 +23,9 @@
             ],
             "@daml.js/daml-stdlib-DA-Time-Types-1.0.0/*": [
                 "../../damljs/token-standard-models/daml-stdlib-DA-Time-Types-1.0.0/*"
+            ],
+            "@daml.js/test-token-v1": [
+                "../../damljs/test-token-v1/splice-test-token-v1-1.0.0/lib/index.d.ts"
             ]
         }
     },

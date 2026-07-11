@@ -23,6 +23,7 @@ export type RawCommandMap = {
     CreateCommand: LedgerCommonSchemas['CreateCommand']
     CreateAndExerciseCommand: LedgerCommonSchemas['CreateAndExerciseCommand']
 }
+
 export type WrappedCommand<
     K extends keyof RawCommandMap = keyof RawCommandMap,
 > = {
