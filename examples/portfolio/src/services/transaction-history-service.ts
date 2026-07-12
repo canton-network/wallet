@@ -80,18 +80,21 @@ const paginateUpdates = async function* ({
         } else {
             // Filter out updates after endInclusive.  If we received any at
             // or after endInclusive, we immediately know that we won't have
-            // more pages.
+            // more pages.  Note that the update at exactly endInclusive is
+            // still part of the requested range and must be kept, otherwise
+            // the most recent transaction (at the ledger end) would be
+            // silently lost.
             const relevantUpdates: Update[] = []
             let latestOffset: number | undefined = undefined
             for (const update of updates) {
                 const offset = updateOffset(update)
-                if (latestOffset !== null || offset >= latestOffset) {
+                if (latestOffset === undefined || offset > latestOffset) {
                     latestOffset = offset
                 }
                 if (offset >= endInclusive) {
                     more = false
                 }
-                if (offset < endInclusive) {
+                if (offset <= endInclusive) {
                     relevantUpdates.push(update)
                 }
             }
@@ -187,6 +190,22 @@ export class TransactionHistoryService {
                                 },
                             })
                         ),
+                        // Also include plain template events (like the
+                        // reference implementation's listHoldingTransactions
+                        // does).  Direct transfers, e.g. via a transfer
+                        // pre-approval, carry their tx-kind/sender metadata
+                        // on exercise nodes that do not implement any token
+                        // standard interface; without them the parser cannot
+                        // label the transfer or determine the counterparty.
+                        {
+                            identifierFilter: {
+                                WildcardFilter: {
+                                    value: {
+                                        includeCreatedEventBlob: true,
+                                    },
+                                },
+                            },
+                        },
                     ],
                 },
             },
@@ -265,7 +284,11 @@ export class TransactionHistoryService {
         this.logger.debug({ request }, 'query')
 
         if (request === null) {
-            await this.fetchOlder()
+            // First page: catch up with anything newer than what we already
+            // have (e.g. after the user accepted a transfer and the query is
+            // invalidated).  On the very first call this falls back to
+            // fetching a batch of older transactions.
+            await this.fetchMoreRecent()
         } else if ('endInclusive' in request) {
             await this.fetchOlder()
         } else if ('beginExclusive' in request) {

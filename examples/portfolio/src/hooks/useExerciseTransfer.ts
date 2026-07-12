@@ -27,6 +27,12 @@ export const useExerciseTransfer = () => {
             await queryClient.invalidateQueries({
                 queryKey: queryKeys.listPendingTransfers.forParty(args.party),
             })
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.listHoldings.all,
+            })
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.getTransactionHistory.all,
+            })
         },
     })
 }
