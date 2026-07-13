@@ -4,12 +4,7 @@
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { SDKContext } from '../../init/types/context.js'
 import { v4 } from 'uuid'
-import {
-    PrepareOptions,
-    ExecuteOptions,
-    AcsRequestOptions,
-    ConnectedSynchronizersOptions,
-} from './types.js'
+import { PrepareOptions, ExecuteOptions, AcsRequestOptions } from './types.js'
 import { PrivateKey } from '@canton-network/core-signing-lib'
 import { PreparedTransaction } from '../transactions/prepared.js'
 import { SignedTransaction } from '../transactions/signed.js'
@@ -36,7 +31,7 @@ export class LedgerNamespace {
      * Uses the Ledger API endpoint GET /v2/state/connected-synchronizers.
      */
     public async connectedSynchronizers(
-        options?: ConnectedSynchronizersOptions
+        options?: Ops.GetV2StateConnectedSynchronizers['ledgerApi']['params']['query']
     ) {
         this.sdkContext.logger.debug(
             { options },
@@ -259,16 +254,6 @@ export class LedgerNamespace {
          * @param options AcsOptions for querying the Active Contract Set (ACS).
          * @throws {SDKError} When no matching contract is found.
          */
-        requireOne: async (options: AcsRequestOptions) => {
-            const contracts = await this.acs.read(options)
-            if (!contracts.length) {
-                this.sdkContext.error.throw({
-                    message: `Required contract not found (templateIds: ${options.templateIds?.join(', ')}, parties: ${options.parties?.join(', ')})`,
-                    type: 'NotFound',
-                })
-            }
-            return contracts[0]
-        },
     }
 
     /**
