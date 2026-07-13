@@ -29,7 +29,10 @@ export async function logAllContracts(
 ): Promise<void> {
     const results = await Promise.all(
         specs.map(({ sdk, parties }) =>
-            sdk.ledger.acs.read({ parties, filterByParty: true })
+            sdk.ledger.acsReader.raw.readJsContracts({
+                parties,
+                filterByParty: true,
+            })
         )
     )
 

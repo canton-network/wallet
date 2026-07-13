@@ -29,11 +29,13 @@ export async function aliceTransferToCharlie(
     const deadline = Date.now() + TOKEN_POLL_TIMEOUT_MS
     let aliceToken
     for (;;) {
-        const aliceTokens = await aliceSdk.ledger.acs.read({
-            templateIds: [TestTokenV1.Token.templateId],
-            parties: [alice.partyId],
-            filterByParty: true,
-        })
+        const aliceTokens = await aliceSdk.ledger.acsReader.raw.readJsContracts(
+            {
+                templateIds: [TestTokenV1.Token.templateId],
+                parties: [alice.partyId],
+                filterByParty: true,
+            }
+        )
         aliceToken = aliceTokens[0]
         if (aliceToken) break
         if (Date.now() >= deadline)
@@ -76,11 +78,12 @@ export async function aliceTransferToCharlie(
         .sign(alice.keyPair.privateKey)
         .execute({ partyId: alice.partyId })
 
-    const transferOffers = await charlieSdk.ledger.acs.read({
-        templateIds: [TestTokenV1.TokenTransferOffer.templateId],
-        parties: [charlie.partyId],
-        filterByParty: true,
-    })
+    const transferOffers =
+        await charlieSdk.ledger.acsReader.raw.readJsContracts({
+            templateIds: [TestTokenV1.TokenTransferOffer.templateId],
+            parties: [charlie.partyId],
+            filterByParty: true,
+        })
     const transferOfferCid = transferOffers[0]?.contractId
     if (!transferOfferCid)
         throw new Error('TokenTransferOffer not found for Charlie')
@@ -112,7 +115,7 @@ export async function bobSelfTransferToApp(
 ): Promise<void> {
     const { bobSdk, bob, appSynchronizerId } = setup
 
-    const bobTokens = await bobSdk.ledger.acs.read({
+    const bobTokens = await bobSdk.ledger.acsReader.raw.readJsContracts({
         templateIds: [TestTokenV1.Token.templateId],
         parties: [bob.partyId],
         filterByParty: true,
