@@ -4,21 +4,25 @@
 import {
     localNetStaticConfig,
     SDK,
+    TokenProviderConfig,
     WalletSDKTestTokenPlugin,
 } from '@canton-network/wallet-sdk'
 
+// TODO: consider switching to another auth method
+const auth: TokenProviderConfig = {
+    method: 'self_signed',
+    issuer: 'unsafe-auth',
+    credentials: {
+        clientId: localNetStaticConfig.LOCALNET_USER_ID,
+        clientSecret: 'unsafe',
+        audience: 'https://canton.network.global',
+        scope: '',
+    },
+}
+
 const sdk = (
     await SDK.create({
-        auth: {
-            method: 'self_signed',
-            issuer: 'unsafe-auth',
-            credentials: {
-                clientId: localNetStaticConfig.LOCALNET_USER_ID,
-                clientSecret: 'unsafe',
-                audience: 'https://canton.network.global',
-                scope: '',
-            },
-        },
+        auth,
         ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
     })
 ).registerPlugins({

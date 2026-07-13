@@ -1,21 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import OpenAPIBackend, { Context } from 'openapi-backend'
+import { OpenAPIBackend } from 'openapi-backend'
 import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
-import { GetRegistryInfoResponse } from '../../openapi-ts/token-metadata-v1'
+import { getRegistryInfo } from './getRegistryInfo'
+import { listInstruments } from './listInstruments'
+import { getInstrument } from './getInstrument'
 
-const api = new OpenAPIBackend({
+export const metatadaAPI = new OpenAPIBackend({
     definition: availableOpenAPIPaths['token-metadata-v1.yaml'],
+    quick: true,
     handlers: {
-        getRegistryInfo(ctx: Context): GetRegistryInfoResponse {
-            console.log(ctx)
-            return {
-                adminId: '',
-                supportedApis: {},
-            }
-        },
+        getRegistryInfo,
+        listInstruments,
+        getInstrument,
     },
 })
 
-api.init()
+await metatadaAPI.init()

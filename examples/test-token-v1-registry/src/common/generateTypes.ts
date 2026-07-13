@@ -28,5 +28,3 @@ for (const file of Object.values(availableOpenAPIPaths)) {
         console.error(`✗ Failed to generate for ${file}:`, error)
     }
 }
-
-console.log('Done!')

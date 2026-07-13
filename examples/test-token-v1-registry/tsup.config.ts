@@ -7,4 +7,9 @@ import { base } from '../../tsup.base'
 export default defineConfig({
     ...base,
     entry: ['src/index.ts'],
+
+    // Overrides to support top-level await
+    target: 'es2022',
+    outExtension: () => ({ js: '.js' }),
+    format: 'esm',
 })

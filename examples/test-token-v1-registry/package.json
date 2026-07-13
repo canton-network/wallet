@@ -19,7 +19,7 @@
     "scripts": {
         "generate:types": "tsx ./src/common/generateTypes.ts",
         "build": "yarn generate:types && tsup --onSuccess \"tsc\"",
-        "dev": "yarn generate:types && node --experimental-transform-types --watch src/index.ts",
+        "dev": "yarn generate:types && tsx --watch src/index.ts",
         "clean": "tsc -b --clean; rm -rf dist",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "test": "vitest run --project node --project browser",
@@ -27,21 +27,23 @@
     },
     "devDependencies": {
         "@types/koa": "^3",
+        "@types/koa-bodyparser": "^4",
         "@types/lodash": "^4.17.24",
         "@types/node": "^25.9.3",
         "@vitest/browser-playwright": "^4.1.8",
         "@vitest/coverage-v8": "^4.1.8",
+        "openapicmd": "^2.9.2",
         "playwright": "^1.60.0",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
         "vitest": "^4.1.8"
     },
     "dependencies": {
+        "@canton-network/core-token-standard": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
         "koa": "^3.2.1",
-        "lodash": "^4.18.1",
+        "koa-bodyparser": "^4.4.1",
         "openapi-backend": "^5.18.0",
-        "openapicmd": "^2.9.2",
         "tsx": "^4.23.0"
     },
     "files": [

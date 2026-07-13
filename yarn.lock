@@ -2609,14 +2609,16 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/example-test-token-v1-registry@workspace:examples/test-token-v1-registry"
   dependencies:
+    "@canton-network/core-token-standard": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
     "@types/koa": "npm:^3"
+    "@types/koa-bodyparser": "npm:^4"
     "@types/lodash": "npm:^4.17.24"
     "@types/node": "npm:^25.9.3"
     "@vitest/browser-playwright": "npm:^4.1.8"
     "@vitest/coverage-v8": "npm:^4.1.8"
     koa: "npm:^3.2.1"
-    lodash: "npm:^4.18.1"
+    koa-bodyparser: "npm:^4.4.1"
     openapi-backend: "npm:^5.18.0"
     openapicmd: "npm:^2.9.2"
     playwright: "npm:^1.60.0"
@@ -9556,6 +9558,15 @@ __metadata:
   version: 1.0.6
   resolution: "@types/keygrip@npm:1.0.6"
   checksum: 10c0/1045a79913259f539ac1d04384ea8f61cf29f1d299040eb4b67d92304ec3bcea59b7e4b83cf95a73aa251ff62e55924e380d0c563a21fe8f6e91de20cc610386
+  languageName: node
+  linkType: hard
+
+"@types/koa-bodyparser@npm:^4":
+  version: 4.3.13
+  resolution: "@types/koa-bodyparser@npm:4.3.13"
+  dependencies:
+    "@types/koa": "npm:*"
+  checksum: 10c0/b29f9b3a6a03050f51b087ab8eeb15b0fc0322c374a23e8ab3005a0fd1cc7dba129a472ce42eebda739e604409eb15304be639c3adaf0a57b2b0b3c4407a3151
   languageName: node
   linkType: hard
 
@@ -17732,7 +17743,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"koa-bodyparser@npm:^4.3.0":
+"koa-bodyparser@npm:^4.3.0, koa-bodyparser@npm:^4.4.1":
   version: 4.4.1
   resolution: "koa-bodyparser@npm:4.4.1"
   dependencies:
@@ -18331,17 +18342,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash@npm:*, lodash@npm:^4.17.15, lodash@npm:^4.18.1":
+  version: 4.18.1
+  resolution: "lodash@npm:4.18.1"
+  checksum: 10c0/757228fc68805c59789e82185135cf85f05d0b2d3d54631d680ca79ec21944ec8314d4533639a14b8bcfbd97a517e78960933041a5af17ecb693ec6eecb99a27
+  languageName: node
+  linkType: hard
+
 "lodash@npm:^4.17.14, lodash@npm:^4.17.19, lodash@npm:^4.17.21, lodash@npm:^4.5, lodash@npm:~4.17.23":
   version: 4.17.23
   resolution: "lodash@npm:4.17.23"
   checksum: 10c0/1264a90469f5bb95d4739c43eb6277d15b6d9e186df4ac68c3620443160fc669e2f14c11e7d8b2ccf078b81d06147c01a8ccced9aab9f9f63d50dcf8cace6bf6
-  languageName: node
-  linkType: hard
-
-"lodash@npm:^4.17.15, lodash@npm:^4.18.1":
-  version: 4.18.1
-  resolution: "lodash@npm:4.18.1"
-  checksum: 10c0/757228fc68805c59789e82185135cf85f05d0b2d3d54631d680ca79ec21944ec8314d4533639a14b8bcfbd97a517e78960933041a5af17ecb693ec6eecb99a27
   languageName: node
   linkType: hard
 
