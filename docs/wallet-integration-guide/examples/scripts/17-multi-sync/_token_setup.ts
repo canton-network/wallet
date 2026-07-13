@@ -68,11 +68,12 @@ export async function mintAndTransferTokenToBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
-    const adminTokenHoldings = await tokenAdminSdk.ledger.acs.read({
-        templateIds: [TestTokenV1.Token.templateId],
-        parties: [tokenAdmin.partyId],
-        filterByParty: true,
-    })
+    const adminTokenHoldings =
+        await tokenAdminSdk.ledger.acsReader.raw.readJsContracts({
+            templateIds: [TestTokenV1.Token.templateId],
+            parties: [tokenAdmin.partyId],
+            filterByParty: true,
+        })
     const adminTokenCid = adminTokenHoldings[0]?.contractId
     if (!adminTokenCid)
         throw new Error('TokenAdmin Token holding not found after mint')
@@ -100,7 +101,7 @@ export async function mintAndTransferTokenToBob(
         .sign(tokenAdmin.keyPair.privateKey)
         .execute({ partyId: tokenAdmin.partyId })
 
-    const transferOffers = await bobSdk.ledger.acs.read({
+    const transferOffers = await bobSdk.ledger.acsReader.raw.readJsContracts({
         templateIds: [TestTokenV1.TokenTransferOffer.templateId],
         parties: [bob.partyId],
         filterByParty: true,
