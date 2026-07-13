@@ -282,6 +282,194 @@
             ]
         },
         {
+            "updateId": "1220d6a90817a4a6162e88b2360ab180838783fc444fc262ba2c883303ef62accf5a",
+            "offset": 60684,
+            "recordTime": "2025-10-14T11:30:08.715136Z",
+            "synchronizerId": "global-domain::1220458886f67bf93662e28d6f39dbd564e59769f696d5ff870891a79d9e8be75534",
+            "events": [
+                {
+                    "label": {
+                        "burnAmount": "0",
+                        "mintAmount": "500",
+                        "type": "TransferOut",
+                        "receiverAmounts": [
+                            {
+                                "receiver": "test-receiver::122054ada01e6117c91bc34048fdd10e329782e24f8b19e839bbd8a0e6e290d1a3b7",
+                                "amount": "500"
+                            }
+                        ],
+                        "tokenStandardChoice": {
+                            "name": "TransferRule_Transfer",
+                            "choiceArgument": {
+                                "transfer": {
+                                    "sender": "test-sender::122073884bbde76324a563e585afc3f3f9cc309d8d28f36424bd899a364f5e0a6fad",
+                                    "receiver": "test-receiver::122054ada01e6117c91bc34048fdd10e329782e24f8b19e839bbd8a0e6e290d1a3b7",
+                                    "amount": "500.0000000000",
+                                    "instrumentId": {
+                                        "admin": "test-registrar::122002e9e6d1d24cf3fc613d9c6e44919e13f6577b805000f629a773f3817081efc6",
+                                        "id": "LOAD"
+                                    },
+                                    "requestedAt": "2025-10-14T11:29:57.439Z",
+                                    "executeBefore": "2025-10-17T11:29:57.439Z",
+                                    "inputHoldingCids": [
+                                        "006198156f4beb54d9560a078b7af9cb4307932452606d75af2c84aede3f580ab5ca111220de456481f0a63514ca03bc13769c87fb38dd1e2481be9462768e373c6f9ec870"
+                                    ],
+                                    "meta": {
+                                        "values": {
+                                            "splice.lfdecentralizedtrust.org/reason": "test-transfer-phillip"
+                                        }
+                                    }
+                                },
+                                "instrumentConfigurationCid": "00bc33a1c983560308dfcfdd76abc4b17470920f657fe758f28dc66275e7411366ca111220974dbc855659e003d6e517e223bbdbfa48d014fe579d442ef06c271da35b84a4",
+                                "senderCredentialCids": [
+                                    "0078480230feaa9adbff03cd4acf14c1ff6aab9fd29f15a914e9b64ff9a468d81bca111220aad1a068b344fb6adb04337e9487cc26ba1b875afac77e4a8cb27419bfa066f2"
+                                ],
+                                "receiverCredentialCids": [
+                                    "00f0686d1a22d1a8c9ceee4368248a1c9156b890bc5c94b81e1bec06b7bb1cfbfbca111220e57ebdcef0a41b49503c36b14295025ef9d259888c2fc634a8492c54191e6e55"
+                                ],
+                                "appRewardConfigurationCid": "0053d693d9638d285460e86c52705f0243a739a39929e52f5800dfa05e59bbad8cca1112204c3bac16479e469e08248e91e8a9e60fe5faaee46a7c28d98459350b745aeb38"
+                            },
+                            "exerciseResult": {
+                                "receiverHoldingCid": "00c3cee26b3c8b26df01c5b8ebfc83aa7659407b0a40cff087962d3487fd7c4e77ca11122046569c2e2c85cbb8b75f042d21197e364aae3a97426e5d073c00c01c7e07abc1"
+                            }
+                        },
+                        "reason": "test-transfer-phillip",
+                        "meta": {
+                            "values": {}
+                        }
+                    },
+                    "lockedHoldingsChange": null,
+                    "lockedHoldingsChangeSummaries": [],
+                    "lockedHoldingsChangeSummary": null,
+                    "unlockedHoldingsChange": null,
+                    "unlockedHoldingsChangeSummaries": [],
+                    "unlockedHoldingsChangeSummary": null,
+                    "transferInstruction": {
+                        "originalInstructionCid": null,
+                        "transfer": {
+                            "sender": "test-sender::122073884bbde76324a563e585afc3f3f9cc309d8d28f36424bd899a364f5e0a6fad",
+                            "receiver": "test-receiver::122054ada01e6117c91bc34048fdd10e329782e24f8b19e839bbd8a0e6e290d1a3b7",
+                            "amount": "500.0000000000",
+                            "instrumentId": {
+                                "admin": "test-registrar::122002e9e6d1d24cf3fc613d9c6e44919e13f6577b805000f629a773f3817081efc6",
+                                "id": "LOAD"
+                            },
+                            "requestedAt": "2025-10-14T11:29:57.439Z",
+                            "executeBefore": "2025-10-17T11:29:57.439Z",
+                            "inputHoldingCids": [
+                                "006198156f4beb54d9560a078b7af9cb4307932452606d75af2c84aede3f580ab5ca111220de456481f0a63514ca03bc13769c87fb38dd1e2481be9462768e373c6f9ec870"
+                            ],
+                            "meta": {
+                                "values": {
+                                    "splice.lfdecentralizedtrust.org/reason": "test-transfer-phillip"
+                                }
+                            }
+                        },
+                        "status": {
+                            "before": null,
+                            "current": {
+                                "tag": "Pending",
+                                "value": {}
+                            }
+                        },
+                        "meta": null
+                    }
+                }
+            ]
+        },
+        {
+            "updateId": "1220f0b6eb958bdd0379fc362efb2a80ba5cb7b4b01f22be32fc9caed9e29356c13d",
+            "offset": 60687,
+            "recordTime": "2025-10-14T11:30:31.852470Z",
+            "synchronizerId": "global-domain::1220458886f67bf93662e28d6f39dbd564e59769f696d5ff870891a79d9e8be75534",
+            "events": [
+                {
+                    "label": {
+                        "type": "Create",
+                        "parentChoice": "none (root node)",
+                        "contractId": "0067ce723e4462d2b3b45215fc568d3434b6067adc54f57313cdd8591fc296b3eeca111220709cb2b1ab7eb982a145bb16f4956c082880b634a200698295cf0f3d60636e42",
+                        "offset": 60687,
+                        "templateId": "170929b11d5f0ed1385f890f42887c31ff7e289c0f4bc482aff193a7173d576c:Utility.Registry.App.V0.Model.Transfer:TransferOffer",
+                        "payload": {
+                            "originalInstructionCid": null,
+                            "transfer": {
+                                "sender": "test-receiver::122054ada01e6117c91bc34048fdd10e329782e24f8b19e839bbd8a0e6e290d1a3b7",
+                                "receiver": "test-sender::122073884bbde76324a563e585afc3f3f9cc309d8d28f36424bd899a364f5e0a6fad",
+                                "amount": "400.0000000000",
+                                "instrumentId": {
+                                    "admin": "test-registrar::122002e9e6d1d24cf3fc613d9c6e44919e13f6577b805000f629a773f3817081efc6",
+                                    "id": "LOAD"
+                                },
+                                "requestedAt": "2025-10-14T11:30:32.482Z",
+                                "executeBefore": "2025-10-17T11:30:32.482Z",
+                                "inputHoldingCids": [
+                                    "003999dffd3c65f0116c24de64b7d298e6f5bc31db13f7c78f4678eb9423520402ca111220f0a93d15e59d6c8b4c74a88a4cd5abcf4746643ad6192e82e1531bda16b6b1fa"
+                                ],
+                                "meta": {
+                                    "values": {
+                                        "splice.lfdecentralizedtrust.org/reason": "send-some-back-phillip"
+                                    }
+                                }
+                            },
+                            "status": {
+                                "tag": "TransferPendingReceiverAcceptance",
+                                "value": {}
+                            },
+                            "meta": {
+                                "values": {}
+                            }
+                        },
+                        "packageName": "utility-registry-app-v0",
+                        "meta": {
+                            "values": {}
+                        }
+                    },
+                    "unlockedHoldingsChange": null,
+                    "lockedHoldingsChange": null,
+                    "lockedHoldingsChangeSummaries": [],
+                    "lockedHoldingsChangeSummary": null,
+                    "unlockedHoldingsChangeSummaries": [],
+                    "unlockedHoldingsChangeSummary": null,
+                    "transferInstruction": {
+                        "originalInstructionCid": null,
+                        "transfer": {
+                            "sender": "test-receiver::122054ada01e6117c91bc34048fdd10e329782e24f8b19e839bbd8a0e6e290d1a3b7",
+                            "receiver": "test-sender::122073884bbde76324a563e585afc3f3f9cc309d8d28f36424bd899a364f5e0a6fad",
+                            "amount": "400.0000000000",
+                            "instrumentId": {
+                                "admin": "test-registrar::122002e9e6d1d24cf3fc613d9c6e44919e13f6577b805000f629a773f3817081efc6",
+                                "id": "LOAD"
+                            },
+                            "requestedAt": "2025-10-14T11:30:32.482Z",
+                            "executeBefore": "2025-10-17T11:30:32.482Z",
+                            "inputHoldingCids": [
+                                "003999dffd3c65f0116c24de64b7d298e6f5bc31db13f7c78f4678eb9423520402ca111220f0a93d15e59d6c8b4c74a88a4cd5abcf4746643ad6192e82e1531bda16b6b1fa"
+                            ],
+                            "meta": {
+                                "values": {
+                                    "splice.lfdecentralizedtrust.org/reason": "send-some-back-phillip"
+                                }
+                            }
+                        },
+                        "meta": {
+                            "values": {}
+                        },
+                        "status": {
+                            "before": {
+                                "tag": "TransferPendingReceiverAcceptance",
+                                "value": {}
+                            },
+                            "current": {
+                                "tag": "Pending",
+                                "value": {}
+                            }
+                        },
+                        "multiStepCorrelationId": "0067ce723e4462d2b3b45215fc568d3434b6067adc54f57313cdd8591fc296b3eeca111220709cb2b1ab7eb982a145bb16f4956c082880b634a200698295cf0f3d60636e42"
+                    }
+                }
+            ]
+        },
+        {
             "updateId": "1220154e7b17ed2f96cc234b5160bce375a850c2a30362f86bd85e738aec0a19c941",
             "offset": 60689,
             "recordTime": "2025-10-14T11:30:41.763539Z",
