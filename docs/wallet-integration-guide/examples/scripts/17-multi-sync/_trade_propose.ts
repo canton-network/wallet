@@ -93,11 +93,12 @@ export async function createAndInitiateOtcTrade(
     ): Promise<string> =>
         pollUntil(
             async () => {
-                const proposals = await sdk.ledger.acs.read({
-                    templateIds: [OTC_TRADE_PROPOSAL_TEMPLATE_ID],
-                    parties: [party],
-                    filterByParty: true,
-                })
+                const proposals =
+                    await sdk.ledger.acsReader.raw.readJsContracts({
+                        templateIds: [OTC_TRADE_PROPOSAL_TEMPLATE_ID],
+                        parties: [party],
+                        filterByParty: true,
+                    })
                 return proposals.find((proposal) =>
                     predicate(
                         ((
@@ -174,11 +175,12 @@ export async function createAndInitiateOtcTrade(
         'TradingApp: OTCTradeProposal_InitiateSettlement executed → OTCTrade created'
     )
 
-    const otcTradeContracts = await tradingAppSdk.ledger.acs.read({
-        templateIds: [OTC_TRADE_TEMPLATE_ID],
-        parties: [tradingApp.partyId],
-        filterByParty: true,
-    })
+    const otcTradeContracts =
+        await tradingAppSdk.ledger.acsReader.raw.readJsContracts({
+            templateIds: [OTC_TRADE_TEMPLATE_ID],
+            parties: [tradingApp.partyId],
+            filterByParty: true,
+        })
     const otcTradeCid = otcTradeContracts[0]?.contractId
     if (!otcTradeCid)
         throw new Error('OTCTrade contract not found after initiation')

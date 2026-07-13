@@ -27,7 +27,7 @@ export async function allocateTokenForBob(
     )!
     if (!legId) throw new Error('No transfer leg found for Bob')
 
-    const tokenHoldings = await bobSdk.ledger.acs.read({
+    const tokenHoldings = await bobSdk.ledger.acsReader.raw.readJsContracts({
         templateIds: [TestTokenV1.Token.templateId],
         parties: [bob.partyId],
         filterByParty: true,
@@ -58,7 +58,7 @@ export async function allocateTokenForBob(
         })
 
     const appTokenRules = (
-        await tokenAdminSdk.ledger.acs.read({
+        await tokenAdminSdk.ledger.acsReader.raw.readJsContracts({
             templateIds: [TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
