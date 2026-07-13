@@ -10,7 +10,7 @@ import {
     AssetConfig,
 } from '@canton-network/wallet-sdk'
 
-export { syncAlias, logAllContracts } from './acs-logger.js'
+export { logAllContracts } from './acs-logger.js'
 export type { ContractReadSpec as ContractSpec } from './acs-logger.js'
 export function getActiveContractCid(entry: JSContractEntry) {
     if ('JsActiveContract' in entry) {
