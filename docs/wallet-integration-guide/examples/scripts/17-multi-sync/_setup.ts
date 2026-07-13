@@ -20,7 +20,7 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     resolveGlobalSynchronizerId,
 } from '../utils/index.js'
-import type { SynchronizerMap } from '../utils/index.js'
+import type { KnownSynchronizers } from '../utils/index.js'
 import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
 
 // Token namespace config that also points the SDK at the local TestToken
@@ -64,7 +64,7 @@ export interface MultiSyncSetup {
     charlie: PartyInfo
     globalSynchronizerId: string
     appSynchronizerId: string
-    synchronizers: SynchronizerMap
+    synchronizers: KnownSynchronizers
     amuletAdmin: string
 }
 
@@ -146,7 +146,7 @@ export async function setupMultiSyncTrade(
         `Synchronizer IDs — global: ${globalSynchronizerId}, app: ${appSynchronizerId}`
     )
 
-    const synchronizers: SynchronizerMap = {
+    const synchronizers: KnownSynchronizers = {
         globalSynchronizerId,
         appSynchronizerId,
     }
