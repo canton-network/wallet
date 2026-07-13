@@ -828,6 +828,7 @@ export const userController = (
                 session: undefined,
                 userUrl: `${userUrl}/login/`,
             })
+            notifier.emit('logout')
 
             return null
         },
