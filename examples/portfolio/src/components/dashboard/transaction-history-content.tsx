@@ -141,13 +141,11 @@ export function TransactionHistoryContent({
                         </TransactionHistoryMessageRow>
                     ) : (
                         transactions.map((transaction) => (
-                            <>
-                                <TransactionHistoryRow
-                                    key={transaction.updateId}
-                                    transaction={transaction}
-                                    walletId={walletId}
-                                />
-                            </>
+                            <TransactionHistoryRow
+                                key={transaction.updateId}
+                                transaction={transaction}
+                                walletId={walletId}
+                            />
                         ))
                     )}
 

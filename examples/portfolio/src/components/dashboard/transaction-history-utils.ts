@@ -103,7 +103,12 @@ function getTransactionType(
     event: TransactionEvent | undefined,
     direction: TransactionDirection
 ): string {
-    const status = event?.transferInstruction?.status.current?.tag
+    // Only honor status tags when a real transfer view exists. The synthetic
+    // instruction the parser builds for direct transfers carries a placeholder
+    // 'Pending' status.
+    const status = event?.transferInstruction?.transfer
+        ? event.transferInstruction.status.current?.tag
+        : undefined
 
     if (status === 'Pending') {
         if (direction === 'received') return 'Offer received ↘'
@@ -184,6 +189,11 @@ function getTransactionDirection(
         return 'unknown'
     }
 
+    // Direct transfers have no transfer view, but the parsed label states
+    // the direction.
+    if (event.label.type === 'TransferIn') return 'received'
+    if (event.label.type === 'TransferOut') return 'sent'
+
     const summary = getHoldingSummary(event)
     if (!summary?.amountChange) return 'unknown'
 
@@ -200,10 +210,21 @@ function getCounterparty(
     if (!event) return null
 
     const transfer = event.transferInstruction?.transfer
-    if (!transfer) return null
+    if (transfer) {
+        if (transfer.sender === walletId) return transfer.receiver || null
+        if (transfer.receiver === walletId) return transfer.sender || null
+        return null
+    }
 
-    if (transfer.sender === walletId) return transfer.receiver || null
-    if (transfer.receiver === walletId) return transfer.sender || null
+    // Direct transfers have no transfer view; the parsed label carries the
+    // counterparty instead.
+    if (event.label.type === 'TransferIn') return event.label.sender || null
+    if (event.label.type === 'TransferOut') {
+        const receiver = event.label.receiverAmounts
+            .map(({ receiver }) => receiver)
+            .find((receiver) => receiver !== walletId)
+        return receiver ?? null
+    }
 
     return null
 }
