@@ -3,7 +3,7 @@
 
 import type { SDKInterface } from '@canton-network/wallet-sdk'
 import type { Logger } from 'pino'
-import type { SynchronizerMap } from './index.js'
+import type { KnownSynchronizers } from './index.js'
 
 export type ContractReadSpec = {
     sdk: SDKInterface
@@ -13,7 +13,7 @@ export type ContractReadSpec = {
 /** Resolve a synchronizer ID to a logical role alias */
 export function syncAlias(
     syncId: string,
-    synchronizers: SynchronizerMap
+    synchronizers: KnownSynchronizers
 ): string {
     if (syncId === synchronizers.globalSynchronizerId) return 'global'
     if (syncId === synchronizers.appSynchronizerId) return 'app-synchronizer'
@@ -27,7 +27,7 @@ export function syncAlias(
  */
 export async function logAllContracts(
     logger: Logger,
-    synchronizers: SynchronizerMap,
+    synchronizers: KnownSynchronizers,
     specs: ContractReadSpec[]
 ): Promise<void> {
     const results = await Promise.all(
