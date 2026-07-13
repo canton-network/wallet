@@ -25,6 +25,8 @@ import {
     GetEndpoint,
     PostEndpoint,
     PrepareSubmissionResponse,
+    isValidGetEndpoint,
+    isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
 import { v4 } from 'uuid'
 import { NotificationService } from '../notification/NotificationService.js'
@@ -188,6 +190,11 @@ export const dappController = (
 
             switch (params.requestMethod) {
                 case 'get':
+                    if (!isValidGetEndpoint(params.resource)) {
+                        throw new Error(
+                            `Unsupported get resource: ${params.resource}`
+                        )
+                    }
                     result = await ledgerClient.getWithRetry(
                         params.resource as GetEndpoint,
                         undefined,
@@ -195,6 +202,11 @@ export const dappController = (
                     )
                     break
                 case 'post':
+                    if (!isValidPostEndpoint(params.resource)) {
+                        throw new Error(
+                            `Unsupported post resource: ${params.resource}`
+                        )
+                    }
                     result = await ledgerClient.postWithRetry(
                         params.resource as PostEndpoint,
                         params.body as never,
