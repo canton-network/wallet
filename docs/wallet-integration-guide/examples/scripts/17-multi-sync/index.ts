@@ -196,4 +196,3 @@ await logAllContracts(logger, synchronizers, [
 ])
 
 await registry.stop()
-process.exit(0)
