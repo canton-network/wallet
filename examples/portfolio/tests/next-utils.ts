@@ -246,6 +246,54 @@ export const expectWalletHasNoAssets = async (
 }
 
 /**
+ * Toggle a preapproval switch on the dashboard settings page.
+ * Waits for the status query to resolve, approves the ledger transaction,
+ * and waits for the switch to reflect the new state.
+ */
+export const togglePreapproval = async (
+    page: Page,
+    wg: WalletGateway,
+    opts: { instrument: string; enabled: boolean }
+): Promise<void> => {
+    await page.goto(`${BASE_URL}/next/dashboard/settings`)
+
+    const preapprovalsSection = page.locator(
+        'section[aria-labelledby="preapprovals-heading"]'
+    )
+    await expect(
+        preapprovalsSection.getByRole('heading', {
+            name: 'Pre-approved Assets',
+        })
+    ).toBeVisible({ timeout: 10000 })
+
+    // The switch label flips between Enable/Disable based on current state.
+    const action = opts.enabled ? 'Enable' : 'Disable'
+    const toggle = preapprovalsSection.getByLabel(
+        `${action} preapproval for ${opts.instrument}`
+    )
+
+    // Disabled until the status query resolves.
+    await expect(toggle).toBeEnabled({ timeout: 30000 })
+
+    await wg.approveTransaction(() => toggle.click())
+
+    // After the toggle, the switch label flips to the opposite action.
+    // Enabling an amulet preapproval waits for the validator automation to
+    // accept the preapproval proposal, which can take a while on LocalNet.
+    const oppositeAction = opts.enabled ? 'Disable' : 'Enable'
+    await expect(
+        preapprovalsSection.getByLabel(
+            `${oppositeAction} preapproval for ${opts.instrument}`
+        )
+    ).toBeEnabled({ timeout: 90000 })
+    await expect(
+        preapprovalsSection.getByText(opts.enabled ? 'Enabled' : 'Disabled', {
+            exact: true,
+        })
+    ).toBeVisible()
+}
+
+/**
  * Tap funds and create allocation(s) via the Action Required dialog.
  */
 export const tapAndCreateAllocation = async (
