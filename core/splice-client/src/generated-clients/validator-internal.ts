@@ -168,28 +168,6 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/admin/domain/data-snapshot': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @description Returns a snapshot of the global synchronizer data for this validator.
-         *     The snapshot includes a list of parties, the active contract set (ACS), and node identities.
-         *
-         *     Use this endpoint if instructed to do so by an operational manual or support.
-         */
-        get: operations['getValidatorDomainDataSnapshot']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
     '/v0/admin/transfer-preapprovals/by-party/{receiver-party}': {
         parameters: {
             query?: never
@@ -668,6 +646,18 @@ export interface components {
             authorizedStoreSnapshot: string
             version?: string
         }
+        Contract: {
+            template_id: string
+            contract_id: string
+            payload: Record<string, never>
+            created_event_blob: string
+            created_at: string
+        }
+        ContractWithState: {
+            contract: components['schemas']['Contract']
+            domain_id?: string
+        }
+        ContractId: string
         ParticipantIdentityProvider: {
             id: string
             /** @default false */
@@ -706,18 +696,6 @@ export interface components {
             identityProviders: components['schemas']['ParticipantIdentityProvider'][]
             users: components['schemas']['ParticipantUser'][]
         }
-        Contract: {
-            template_id: string
-            contract_id: string
-            payload: Record<string, never>
-            created_event_blob: string
-            created_at: string
-        }
-        ContractWithState: {
-            contract: components['schemas']['Contract']
-            domain_id?: string
-        }
-        ContractId: string
     }
     responses: {
         /** @description bad request */
@@ -740,15 +718,6 @@ export interface components {
         }
         /** @description conflict */
         409: {
-            headers: {
-                [name: string]: unknown
-            }
-            content: {
-                'application/json': components['schemas']['ErrorResponse']
-            }
-        }
-        /** @description internal server error */
-        500: {
             headers: {
                 [name: string]: unknown
             }
@@ -970,43 +939,6 @@ export interface operations {
                     'application/json': components['schemas']['GetDecentralizedSynchronizerConnectionConfigResponse']
                 }
             }
-        }
-    }
-    getValidatorDomainDataSnapshot: {
-        parameters: {
-            query: {
-                /**
-                 * @description The timestamp as of which the dump (in particular, the ACS) is valid.
-                 *
-                 *     Must in the ISO-8601 format in UTC timezone, e.g.,
-                 *     `yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`.
-                 */
-                timestamp: string
-                /** @description The current migration id. */
-                migration_id?: number
-                /**
-                 * @description If true, do not check whether the provided timestamp is clean.
-                 *     Not recommended for production,
-                 *     see the `ExportAcs` endpoint of the `ParticipantRepairService` participant gRPC API.
-                 */
-                force?: boolean
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetValidatorDomainDataSnapshotResponse']
-                }
-            }
-            500: components['responses']['500']
         }
     }
     lookupTransferPreapprovalByParty: {

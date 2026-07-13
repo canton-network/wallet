@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import * as mock from '../../wallet/__test__/mocks'
-import WalletSDKTestTokenPlugin from '../testToken'
+import { WalletSDKTestTokenPlugin } from '../testToken'
 import {
     Holding,
     Transfer,

@@ -14,7 +14,7 @@ import { SDKContext, SDKPlugin } from '../wallet'
 import { WrappedCommand } from '@/wallet/namespace/ledger'
 import { PartyId } from '@canton-network/core-types'
 
-export default class WalletSDKTestTokenPlugin extends SDKPlugin {
+export class WalletSDKTestTokenPlugin extends SDKPlugin {
     constructor(protected readonly ctx: SDKContext) {
         super('testToken', ctx)
     }
