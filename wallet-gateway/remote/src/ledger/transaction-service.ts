@@ -69,7 +69,7 @@ export class TransactionService {
 
         switch (signingProvider) {
             case SigningProvider.PARTICIPANT: {
-                return this.signWithParticipant(wallet)
+                return this.signWithParticipant(wallet, signParams)
             }
             case SigningProvider.WALLET_KERNEL: {
                 return this.signWithWalletKernel(
@@ -115,8 +115,10 @@ export class TransactionService {
         ledgerClient?: LedgerClient,
         network?: Network
     ): Promise<ExecuteResult> {
-        if (transaction.status === 'executed') {
-            throw new Error('Transaction is already executed.')
+        if (transaction.status !== 'signed') {
+            throw new Error(
+                `Cannot execute a ${transaction.status} transaction. Expected status: signed.`
+            )
         }
 
         switch (wallet.signingProviderId) {
@@ -259,7 +261,35 @@ export class TransactionService {
         return existingTx
     }
 
-    private signWithParticipant(wallet: Wallet): SignResultSigned {
+    // This doesn't really sign the transaction.
+    // For participant both signing and execution are handled by /v2/commands/submit-and-wait using participant keys
+    // This behavior is unique to signing provider participant.
+    // This step intended for making participant wallets conform to a common API.
+    private async signWithParticipant(
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResultSigned> {
+        const tx = await this.loadPreparedTransactionForSigning(
+            signParams.transactionId
+        )
+        const now = new Date()
+
+        const signedTx: Transaction = {
+            id: tx.id,
+            commandId: tx.commandId,
+            status: 'signed',
+            preparedTransaction: tx.preparedTransaction,
+            preparedTransactionHash: tx.preparedTransactionHash,
+            origin: tx?.origin ?? null,
+            ...(tx?.createdAt && {
+                createdAt: tx.createdAt,
+            }),
+            signedAt: now,
+        }
+
+        await this.store.setTransactionSigned(tx.id, now)
+        this.notifier.emit('txChanged', signedTx)
+
         return {
             status: 'signed',
             signature: 'none',
