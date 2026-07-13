@@ -122,9 +122,7 @@ export async function setupMultiSyncTrade(
             }),
         ])
 
-    const connectedSyncResponse = await aliceSdk.ledger.connectedSynchronizers(
-        {}
-    )
+    const connectedSyncResponse = await aliceSdk.ledger.connectedSynchronizers()
     const allSynchronizers = connectedSyncResponse.connectedSynchronizers ?? []
     if (allSynchronizers.length < 2)
         throw new Error(
