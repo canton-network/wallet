@@ -69,7 +69,7 @@ import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
-import { assertTokenClaimsMatchNetwork } from './token-network-matching'
+import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 
 export const userController = (
     kernelInfo: KernelInfo,
