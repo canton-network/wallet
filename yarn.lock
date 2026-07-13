@@ -1917,6 +1917,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@canton-network/core-signing-securosys@workspace:^, @canton-network/core-signing-securosys@workspace:core/signing-securosys":
+  version: 0.0.0-use.local
+  resolution: "@canton-network/core-signing-securosys@workspace:core/signing-securosys"
+  dependencies:
+    "@canton-network/core-signing-lib": "workspace:^"
+    "@canton-network/core-wallet-auth": "workspace:^"
+    "@types/node": "npm:^25.9.4"
+    "@vitest/coverage-v8": "npm:^4.1.10"
+    tsdown: "npm:^0.22.9"
+    typescript: "npm:^5.9.3"
+    undici: "npm:^7.24.5"
+    vitest: "npm:^4.1.10"
+  languageName: unknown
+  linkType: soft
+
 "@canton-network/core-signing-store-sql@workspace:^, @canton-network/core-signing-store-sql@workspace:core/signing-store-sql":
   version: 0.0.0-use.local
   resolution: "@canton-network/core-signing-store-sql@workspace:core/signing-store-sql"
@@ -2565,6 +2580,7 @@ __metadata:
     "@canton-network/core-signing-internal": "workspace:^"
     "@canton-network/core-signing-lib": "workspace:^"
     "@canton-network/core-signing-participant": "workspace:^"
+    "@canton-network/core-signing-securosys": "workspace:^"
     "@canton-network/core-signing-store-sql": "workspace:^"
     "@canton-network/core-tx-visualizer": "workspace:^"
     "@canton-network/core-types": "workspace:^"
