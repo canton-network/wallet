@@ -5,7 +5,6 @@ import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-typ
 import type { SDKContext } from '../../init/types/context.js'
 import { v4 } from 'uuid'
 import { PrepareOptions, ExecuteOptions, AcsRequestOptions } from './types.js'
-import { PrivateKey } from '@canton-network/core-signing-lib'
 import { PreparedTransaction } from '../transactions/prepared.js'
 import { SignedTransaction } from '../transactions/signed.js'
 import { Ops } from '@canton-network/core-provider-ledger'
@@ -254,27 +253,5 @@ export class LedgerNamespace {
          * @param options AcsOptions for querying the Active Contract Set (ACS).
          * @throws {SDKError} When no matching contract is found.
          */
-    }
-
-    /**
-     * Prepares, signs, and executes the same command set on multiple synchronizers in parallel.
-     * Equivalent to calling `prepare(...).sign(privateKey).execute({ partyId })` for each
-     * synchronizer, but without repeating the command payload.
-     * @param options - Command options without a synchronizerId (it is provided per-element)
-     * @param synchronizerIds - Synchronizers to submit to in parallel
-     * @param privateKey - Key used to sign each prepared transaction
-     */
-    public async prepareAndExecuteOnSynchronizers(
-        options: Omit<PrepareOptions, 'synchronizerId'>,
-        synchronizerIds: string[],
-        privateKey: PrivateKey
-    ): Promise<void> {
-        await Promise.all(
-            synchronizerIds.map((synchronizerId) =>
-                this.prepare({ ...options, synchronizerId })
-                    .sign(privateKey)
-                    .execute({ partyId: options.partyId })
-            )
-        )
     }
 }
