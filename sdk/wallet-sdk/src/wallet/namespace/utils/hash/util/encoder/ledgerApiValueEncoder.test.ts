@@ -5,7 +5,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { LedgerApiValueEncoder } from './ledgerApiValueEncoder.js'
 import * as mock from '../../../../../__test__/mocks.js'
 import { Value } from '@canton-network/core-ledger-proto'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const { offlineCtx } = mock
 
@@ -18,7 +17,7 @@ describe('LedgerApiValueEncoder', () => {
     })
 
     it('should successfully encode structures below or equal to MAX_DEPTH (100)', () => {
-        const generateNestedList = (depth: number): any => {
+        const generateNestedList = (depth: number): Value => {
             if (depth === 1) {
                 return { sum: { oneofKind: 'bool', bool: true } }
             }
@@ -38,7 +37,7 @@ describe('LedgerApiValueEncoder', () => {
     })
 
     it('should stop execution and throw error when nesting depth exceeds 100', () => {
-        const generateDeeplyNestedList = (depth: number): any => {
+        const generateDeeplyNestedList = (depth: number): Value => {
             if (depth === 1) {
                 return { sum: { oneofKind: 'bool', bool: true } }
             }
@@ -70,6 +69,6 @@ describe('LedgerApiValueEncoder', () => {
         encoder.value(simplePayload)
         encoder.value(simplePayload)
 
-        expect((encoder as any).currentDepth).toBe(0)
+        expect(encoder['currentDepth']).toBe(0)
     })
 })
