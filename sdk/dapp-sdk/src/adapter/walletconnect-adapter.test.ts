@@ -289,4 +289,32 @@ describe('WalletConnectAdapter', () => {
             adapter.request({ method: 'listAccounts' })
         ).rejects.toThrow('RPC error: 4001 - User rejected')
     })
+
+    it('only posts WalletConnect URI to dApp origin, not wildcard', async () => {
+        const mockPostMessage = vi.fn()
+        const mockPopupWindow = {
+            postMessage: mockPostMessage,
+            closed: false,
+        }
+
+        const windowSpy = vi
+            .spyOn(window, 'open')
+            .mockReturnValue(mockPopupWindow as unknown as Window)
+
+        const adapter = makeAdapter()
+        await adapter.request({ method: 'connect' })
+
+        expect(windowSpy).toHaveBeenCalledWith('', 'wallet-popup')
+        expect(mockPostMessage).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: 'wc-uri',
+                uri: 'wc:test-uri',
+            }),
+            window.location.origin
+        )
+        expect(mockPostMessage).not.toHaveBeenCalledWith(
+            expect.any(Object),
+            '*'
+        )
+    })
 })
