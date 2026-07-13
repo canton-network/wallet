@@ -11,10 +11,7 @@ export type ContractReadSpec = {
 }
 
 /** Resolve a synchronizer ID to a logical role alias */
-export function syncAlias(
-    syncId: string,
-    synchronizers: KnownSynchronizers
-): string {
+function syncAlias(syncId: string, synchronizers: KnownSynchronizers): string {
     if (syncId === synchronizers.globalSynchronizerId) return 'global'
     if (syncId === synchronizers.appSynchronizerId) return 'app-synchronizer'
     throw new Error(`Unknown synchronizer ID ${syncId}`)
