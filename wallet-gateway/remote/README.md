@@ -55,7 +55,7 @@ The JSON-RPC API specs from `api-specs/` are generated into strongly-typed metho
     - `DFNS_PRIVATE_KEY` — service account private key (PEM)
     - `DFNS_AUTH_TOKEN` — service account auth token
 
-Dfns provisions and activates Canton wallets through its validator integration, so no additional Gateway configuration is required. Only `Canton` and `CantonTestnet` network wallets are supported. See [`@canton-network/core-signing-dfns`](../../core/signing-dfns/README.md) for full driver details.
+Dfns is configured as an external signing provider. The Gateway uses Dfns for key/signature operations, transaction execution follows the standard Gateway execute flow. See [`@canton-network/core-signing-dfns`](../../core/signing-dfns/README.md) for full driver details.
 
 ## Fireblocks
 
