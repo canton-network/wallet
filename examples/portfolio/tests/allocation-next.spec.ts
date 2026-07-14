@@ -9,6 +9,7 @@ import {
     gotoConnect,
     setupRegistry,
     switchWallet,
+    tap,
     tapAndCreateAllocation,
 } from './next-utils'
 
@@ -63,6 +64,60 @@ const expectHistoryRow = async (
     await expect(row).toHaveCount(1, { timeout: HISTORY_TIMEOUT })
 }
 
+const setupOtcTrade = async (page: Page) => {
+    const rnd = Math.floor(Math.random() * 100000)
+    const wg = createWalletGateway(page)
+
+    await gotoConnect(page)
+    await wg.connect({ network: 'LocalNet' })
+
+    const venueHint = `venue-${rnd}`
+    const aliceHint = `alice-${rnd}`
+    const bobHint = `bob-${rnd}`
+    const charlieHint = `charlie-${rnd}`
+    const venue = await wg.createWalletIfNotExists({
+        partyHint: venueHint,
+        signingProvider: 'participant',
+    })
+    const alice = await wg.createWalletIfNotExists({
+        partyHint: aliceHint,
+        signingProvider: 'participant',
+    })
+    const bob = await wg.createWalletIfNotExists({
+        partyHint: bobHint,
+        signingProvider: 'participant',
+    })
+    const charlie = await wg.createWalletIfNotExists({
+        partyHint: charlieHint,
+        signingProvider: 'participant',
+    })
+
+    await wg.setPrimaryWallet(alice)
+    await setupRegistry(page)
+
+    const logger = pino({ name: 'otc-trade', level: 'info' })
+    const otcTrade = new OTCTrade({
+        logger,
+        venue,
+        alice,
+        bob,
+        charlie,
+    })
+    const otcTradeDetails = await otcTrade.setup()
+
+    return {
+        wg,
+        otcTrade,
+        otcTradeDetails,
+        alice,
+        aliceHint,
+        bob,
+        bobHint,
+        charlie,
+        charlieHint,
+    }
+}
+
 test.describe('OTC allocations', () => {
     // OTC setup includes multiple taps, allocations, and settlement.
     test.setTimeout(180_000)
@@ -70,45 +125,17 @@ test.describe('OTC allocations', () => {
     test('shows reservations and every settlement leg', async ({
         page: dappPage,
     }) => {
-        const rnd = Math.floor(Math.random() * 100000)
-        const wg = createWalletGateway(dappPage)
-
-        await gotoConnect(dappPage)
-        await wg.connect({ network: 'LocalNet' })
-
-        const venueHint = `venue-${rnd}`
-        const aliceHint = `alice-${rnd}`
-        const bobHint = `bob-${rnd}`
-        const charlieHint = `charlie-${rnd}`
-        const venue = await wg.createWalletIfNotExists({
-            partyHint: venueHint,
-            signingProvider: 'participant',
-        })
-        const alice = await wg.createWalletIfNotExists({
-            partyHint: aliceHint,
-            signingProvider: 'participant',
-        })
-        const bob = await wg.createWalletIfNotExists({
-            partyHint: bobHint,
-            signingProvider: 'participant',
-        })
-        const charlie = await wg.createWalletIfNotExists({
-            partyHint: charlieHint,
-            signingProvider: 'participant',
-        })
-
-        await wg.setPrimaryWallet(alice)
-        await setupRegistry(dappPage)
-
-        const logger = pino({ name: 'otc-trade', level: 'info' })
-        const otcTrade = new OTCTrade({
-            logger,
-            venue,
+        const {
+            wg,
+            otcTrade,
+            otcTradeDetails,
             alice,
+            aliceHint,
             bob,
+            bobHint,
             charlie,
-        })
-        const otcTradeDetails = await otcTrade.setup()
+            charlieHint,
+        } = await setupOtcTrade(dappPage)
 
         await tapAndCreateAllocation(dappPage, wg, '1000', 2)
 
@@ -184,6 +211,71 @@ test.describe('OTC allocations', () => {
             activity: 'Transfer sent ↗',
             amount: '-80',
             counterpartyHint: aliceHint,
+        })
+    })
+
+    test('withdraws an allocation and restores the leg', async ({
+        page: dappPage,
+    }) => {
+        const { wg, alice, aliceHint, bobHint } = await setupOtcTrade(dappPage)
+
+        await tap(dappPage, wg, '1000')
+
+        const allocationRequest = dappPage
+            .getByRole('button', { name: 'Open Allocation Request' })
+            .first()
+        await expect(allocationRequest).toBeVisible({ timeout: 15_000 })
+        await allocationRequest.click()
+
+        const dialog = dappPage.getByRole('dialog')
+        await expect(
+            dialog.getByRole('heading', { name: 'Allocation Request' })
+        ).toBeVisible()
+
+        const aliceToBobLeg = dialog.getByRole('group', {
+            name: 'Transfer leg 1',
+        })
+        await expect(
+            aliceToBobLeg.getByText('-100 Amulet', { exact: true })
+        ).toBeVisible()
+        await expect(aliceToBobLeg).toContainText(bobHint.slice(0, 10))
+
+        await wg.approveTransaction(() =>
+            aliceToBobLeg.getByRole('button', { name: 'Allocate' }).click()
+        )
+        await expect(
+            aliceToBobLeg.getByRole('button', { name: 'Withdraw' })
+        ).toBeVisible({ timeout: 15_000 })
+
+        await dialog.getByLabel('Close allocation request dialog').click()
+        await expect(dialog).not.toBeVisible({ timeout: 10_000 })
+        await expect(allocationRequest).toBeVisible({ timeout: 15_000 })
+        await allocationRequest.click()
+
+        const withdrawButton = aliceToBobLeg.getByRole('button', {
+            name: 'Withdraw',
+        })
+        await expect(withdrawButton).toBeVisible({ timeout: 15_000 })
+        await wg.approveTransaction(() => withdrawButton.click())
+
+        await expect(
+            aliceToBobLeg.getByRole('button', { name: 'Allocate' })
+        ).toBeVisible({ timeout: 15_000 })
+        await expect(withdrawButton).not.toBeVisible()
+
+        await dialog.getByLabel('Close allocation request dialog').click()
+        await expect(dialog).not.toBeVisible({ timeout: 10_000 })
+
+        await gotoWalletHistory(dappPage, alice, aliceHint)
+        await expectHistoryRow(dappPage, {
+            activity: 'Allocation reserved',
+            amount: '100',
+            counterpartyHint: bobHint,
+        })
+        await expectHistoryRow(dappPage, {
+            activity: 'Allocation withdrawn',
+            amount: '100',
+            counterpartyHint: 'Self',
         })
     })
 })
