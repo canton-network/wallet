@@ -9,19 +9,11 @@ let
   java = pkgs.openjdk;
 in
 pkgs.mkShell rec {
-  # Some of the scripting uses tsup, but we rely on nix instead to provision
-  # this, so replace it by a stub.
-  tsup = pkgs.writeShellScriptBin "tsup" ''
-    #!/usr/bin/env bash
-    exec true
-  '';
-
   buildInputs = [
     java
     pkgs.corepack # This provides yarn.
     pkgs.nodejs_24
     pkgs.typescript-language-server
-    tsup
   ];
 
   # nix-shell sets the $name environment variable.  This causes a "bug" in
