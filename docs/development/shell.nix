@@ -1,3 +1,7 @@
+# WARNING: This development environment is contributed by the community.
+# It is provided as a convenience and is not part of our build or CI
+# configuration. It can (and probably will) be broken many times in the future
+# as this repo evolves. Pull requests to keep it working are welcome.
 {
   pkgs ? import <nixpkgs> { },
 }:
