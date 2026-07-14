@@ -1400,6 +1400,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@canton-network/core-eslint-config@workspace:^, @canton-network/core-eslint-config@workspace:core/eslint-config":
+  version: 0.0.0-use.local
+  resolution: "@canton-network/core-eslint-config@workspace:core/eslint-config"
+  dependencies:
+    "@eslint/compat": "npm:^2.1.0"
+    "@eslint/js": "npm:^10.0.1"
+    "@nx/eslint-plugin": "npm:22.7.6"
+    eslint-plugin-headers: "npm:^1.3.4"
+    globals: "npm:^17.7.0"
+    typescript-eslint: "npm:^8.63.0"
+  peerDependencies:
+    eslint: ^10.0.0
+  languageName: unknown
+  linkType: soft
+
 "@canton-network/core-ledger-client-types@workspace:^, @canton-network/core-ledger-client-types@workspace:core/ledger-client-types":
   version: 0.0.0-use.local
   resolution: "@canton-network/core-ledger-client-types@workspace:core/ledger-client-types"
@@ -1858,19 +1873,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/core-wallet-dapp-remote-rpc-client@workspace:core/wallet-dapp-remote-rpc-client"
   dependencies:
+    "@canton-network/core-eslint-config": "workspace:^"
     "@canton-network/core-rpc-transport": "workspace:^"
     "@canton-network/core-types": "workspace:^"
-    "@eslint/js": "npm:^10.0.1"
     "@types/isomorphic-fetch": "npm:^0.0.39"
     "@types/json-schema": "npm:7.0.15"
     "@types/lodash": "npm:^4.17.24"
     "@types/ws": "npm:^8.18.1"
-    "@typescript-eslint/eslint-plugin": "npm:^8.63.0"
-    "@typescript-eslint/parser": "npm:^8.63.0"
     eslint: "npm:^10.6.0"
-    eslint-config-prettier: "npm:^10.1.8"
-    eslint-plugin-prettier: "npm:^5.5.6"
-    globals: "npm:^17.7.0"
     lodash: "npm:^4.18.1"
     prettier: "npm:3.9.4"
     tsup: "npm:^8.5.1"
@@ -1883,19 +1893,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/core-wallet-dapp-rpc-client@workspace:core/wallet-dapp-rpc-client"
   dependencies:
+    "@canton-network/core-eslint-config": "workspace:^"
     "@canton-network/core-rpc-transport": "workspace:^"
     "@canton-network/core-types": "workspace:^"
-    "@eslint/js": "npm:^10.0.1"
     "@types/isomorphic-fetch": "npm:^0.0.39"
     "@types/json-schema": "npm:7.0.15"
     "@types/lodash": "npm:^4.17.24"
     "@types/ws": "npm:^8.18.1"
-    "@typescript-eslint/eslint-plugin": "npm:^8.63.0"
-    "@typescript-eslint/parser": "npm:^8.63.0"
     eslint: "npm:^10.6.0"
-    eslint-config-prettier: "npm:^10.1.8"
-    eslint-plugin-prettier: "npm:^5.5.6"
-    globals: "npm:^17.7.0"
     lodash: "npm:^4.18.1"
     prettier: "npm:3.9.4"
     tsup: "npm:^8.5.1"
@@ -2028,19 +2033,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/core-wallet-user-rpc-client@workspace:core/wallet-user-rpc-client"
   dependencies:
+    "@canton-network/core-eslint-config": "workspace:^"
     "@canton-network/core-rpc-transport": "workspace:^"
     "@canton-network/core-types": "workspace:^"
-    "@eslint/js": "npm:^10.0.1"
     "@types/isomorphic-fetch": "npm:^0.0.39"
     "@types/json-schema": "npm:7.0.15"
     "@types/lodash": "npm:^4.17.24"
     "@types/ws": "npm:^8.18.1"
-    "@typescript-eslint/eslint-plugin": "npm:^8.63.0"
-    "@typescript-eslint/parser": "npm:^8.63.0"
     eslint: "npm:^10.6.0"
-    eslint-config-prettier: "npm:^10.1.8"
-    eslint-plugin-prettier: "npm:^5.5.6"
-    globals: "npm:^17.7.0"
     lodash: "npm:^4.18.1"
     prettier: "npm:3.9.4"
     tsup: "npm:^8.5.1"
@@ -2088,13 +2088,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/example-ping@workspace:examples/ping"
   dependencies:
+    "@canton-network/core-eslint-config": "workspace:^"
     "@canton-network/core-tx-visualizer": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/core-wallet-test-utils": "workspace:^"
     "@canton-network/core-wallet-ui-components": "workspace:^"
     "@canton-network/dapp-sdk": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
-    "@eslint/js": "npm:^10.0.1"
     "@playwright/test": "npm:^1.61.1"
     "@types/node": "npm:^25.9.4"
     "@types/react": "npm:^19.2.17"
@@ -2103,12 +2103,10 @@ __metadata:
     eslint: "npm:^10.6.0"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.3"
-    globals: "npm:^17.7.0"
     nx: "npm:^22.7.6"
     react: "npm:^19.2.7"
     react-dom: "npm:^19.2.7"
     typescript: "npm:~5.9.3"
-    typescript-eslint: "npm:^8.63.0"
     vite: "npm:^7.3.6"
   languageName: unknown
   linkType: soft
@@ -2119,6 +2117,7 @@ __metadata:
   dependencies:
     "@canton-network/core-acs-reader": "workspace:^"
     "@canton-network/core-amulet-service": "workspace:^"
+    "@canton-network/core-eslint-config": "workspace:^"
     "@canton-network/core-ledger-client": "workspace:^"
     "@canton-network/core-provider-ledger": "workspace:^"
     "@canton-network/core-splice-client": "workspace:^"
@@ -2132,7 +2131,6 @@ __metadata:
     "@canton-network/wallet-sdk": "workspace:^"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
-    "@eslint/js": "npm:^10.0.1"
     "@fontsource/inter": "npm:^5.2.8"
     "@inquirer/prompts": "npm:^8.5.2"
     "@mui/icons-material": "npm:^9.2.0"
@@ -2158,7 +2156,6 @@ __metadata:
     eslint: "npm:^10.6.0"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.3"
-    globals: "npm:^17.7.0"
     nx: "npm:^22.7.6"
     pino: "npm:^10.3.1"
     react: "npm:^19.2.7"
@@ -2167,7 +2164,6 @@ __metadata:
     sonner: "npm:^2.0.7"
     tsx: "npm:^4.23.0"
     typescript: "npm:~5.9.3"
-    typescript-eslint: "npm:^8.63.0"
     uuid: "npm:^14.0.1"
     vite: "npm:^7.3.6"
     vite-tsconfig-paths: "npm:^6.1.1"
@@ -2179,6 +2175,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/example-walletconnect@workspace:examples/walletconnect"
   dependencies:
+    "@canton-network/core-eslint-config": "workspace:^"
     "@canton-network/core-wallet-auth": "workspace:^"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
@@ -2190,6 +2187,7 @@ __metadata:
     "@vitejs/plugin-react": "npm:^5.2.0"
     "@walletconnect/core": "npm:^2.23.10"
     "@walletconnect/types": "npm:^2.23.10"
+    eslint: "npm:^10.6.0"
     react: "npm:^19.2.7"
     react-dom: "npm:^19.2.7"
     typescript: "npm:~5.9.3"
@@ -6037,13 +6035,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pkgr/core@npm:^0.3.6":
-  version: 0.3.6
-  resolution: "@pkgr/core@npm:0.3.6"
-  checksum: 10c0/153f0f4563f505faeba13c733efa0e05e467ce1c6b941055a5fd3b4560da60fbf1dff4b11da0075f034ddda11f2842b90395f60895dde5825875b616edccc11c
-  languageName: node
-  linkType: hard
-
 "@playwright/test@npm:^1.61.1":
   version: 1.61.1
   resolution: "@playwright/test@npm:1.61.1"
@@ -8452,7 +8443,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:8.63.0, @typescript-eslint/eslint-plugin@npm:^8.63.0":
+"@typescript-eslint/eslint-plugin@npm:8.63.0":
   version: 8.63.0
   resolution: "@typescript-eslint/eslint-plugin@npm:8.63.0"
   dependencies:
@@ -12343,17 +12334,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-prettier@npm:^10.1.8":
-  version: 10.1.8
-  resolution: "eslint-config-prettier@npm:10.1.8"
-  peerDependencies:
-    eslint: ">=7.0.0"
-  bin:
-    eslint-config-prettier: bin/cli.js
-  checksum: 10c0/e1bcfadc9eccd526c240056b1e59c5cd26544fe59feb85f38f4f1f116caed96aea0b3b87868e68b3099e55caaac3f2e5b9f58110f85db893e83a332751192682
-  languageName: node
-  linkType: hard
-
 "eslint-plugin-headers@npm:^1.3.4":
   version: 1.3.4
   resolution: "eslint-plugin-headers@npm:1.3.4"
@@ -12369,26 +12349,6 @@ __metadata:
   peerDependencies:
     eslint: ^9 || ^10
   checksum: 10c0/c3dc2636ec698d4e4b7bc5bb744e8bf24975dc513b5dc9aaf616df5a32392ae5f5eaed91050b8a647cfa1ec717edea6e870d0418887d62a8afa8f1f5fcc1ed0c
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-prettier@npm:^5.5.6":
-  version: 5.5.6
-  resolution: "eslint-plugin-prettier@npm:5.5.6"
-  dependencies:
-    prettier-linter-helpers: "npm:^1.0.1"
-    synckit: "npm:^0.11.13"
-  peerDependencies:
-    "@types/eslint": ">=8.0.0"
-    eslint: ">=8.0.0"
-    eslint-config-prettier: ">= 7.0.0 <10.0.0 || >=10.1.0"
-    prettier: ">=3.0.0"
-  peerDependenciesMeta:
-    "@types/eslint":
-      optional: true
-    eslint-config-prettier:
-      optional: true
-  checksum: 10c0/af37126c947ff3e87ff1ea76408db8cb1c7da966ebdaba68c6dd5924da7eb1b43b1abc4796d753a97b1bc26ea94c5497093e6ab9f8588fffe558d5a554e19bbf
   languageName: node
   linkType: hard
 
@@ -12855,13 +12815,6 @@ __metadata:
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
   checksum: 10c0/40dedc862eb8992c54579c66d914635afbec43350afbbe991235fdcb4e3a8d5af1b23ae7e79bef7d4882d0ecee06c3197488026998fb19f72dc95acff1d1b1d0
-  languageName: node
-  linkType: hard
-
-"fast-diff@npm:^1.1.2":
-  version: 1.3.0
-  resolution: "fast-diff@npm:1.3.0"
-  checksum: 10c0/5c19af237edb5d5effda008c891a18a585f74bf12953be57923f17a3a4d0979565fc64dbc73b9e20926b9d895f5b690c618cbb969af0cf022e3222471220ad29
   languageName: node
   linkType: hard
 
@@ -17278,15 +17231,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier-linter-helpers@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "prettier-linter-helpers@npm:1.0.1"
-  dependencies:
-    fast-diff: "npm:^1.1.2"
-  checksum: 10c0/91cea965681bc5f62c9d26bd3ca6358b81557261d4802e96ec1cf0acbd99d4b61632d53320cd2c3ec7d7f7805a81345644108a41ef46ddc9688e783a9ac792d1
-  languageName: node
-  linkType: hard
-
 "prettier@npm:3.9.4":
   version: 3.9.4
   resolution: "prettier@npm:3.9.4"
@@ -19113,15 +19057,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"synckit@npm:^0.11.13":
-  version: 0.11.13
-  resolution: "synckit@npm:0.11.13"
-  dependencies:
-    "@pkgr/core": "npm:^0.3.6"
-  checksum: 10c0/5a6c19f4f79045aaa7994106401bff6dbe7cca23a6d0a0723ff14eb8b1bebeb4a71729118f6914905598e304ea2fa13509885e11ba07d92e7cb68a06740cb328
-  languageName: node
-  linkType: hard
-
 "systeminformation@npm:^5.7":
   version: 5.31.6
   resolution: "systeminformation@npm:5.31.6"
@@ -20404,6 +20339,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "wallet-kernel@workspace:."
   dependencies:
+    "@canton-network/core-eslint-config": "workspace:^"
     "@commitlint/config-conventional": "npm:^20.5.3"
     "@eslint/compat": "npm:^2.1.0"
     "@eslint/js": "npm:^10.0.1"
