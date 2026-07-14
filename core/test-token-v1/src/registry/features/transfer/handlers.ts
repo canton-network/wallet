@@ -37,8 +37,7 @@ export function createTransferHandlers(
             body,
         }): Promise<TransferFactoryWithChoiceContext> => {
             const transfer = body.choiceArguments?.['transfer'] as
-                | Record<string, unknown>
-                | undefined
+                Record<string, unknown> | undefined
             if (transfer === undefined)
                 throw new Error(
                     'getTransferFactory: missing "transfer" choice argument'
