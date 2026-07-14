@@ -5,7 +5,8 @@
         "outDir": "./dist",
         "noUncheckedIndexedAccess": true,
         "allowImportingTsExtensions": true,
-        "noEmit": true
+        "noEmit": true,
+        "noImplicitAny": true
     },
     "include": ["src"]
 }

@@ -1,7 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Instrument, SupportedApis } from '../../openapi-ts/token-metadata-v1'
+import {
+    Instrument,
+    OperationHandler,
+    Operations,
+    SupportedApis,
+} from '../../openapi-ts/token-metadata-v1'
+import { APIOperationHandler } from '../../types'
 
 export const supportedApis: SupportedApis = {
     'splice-api-token-metadata-v1': 1,
@@ -22,3 +28,6 @@ export const instruments: Instrument[] = [
         supportedApis,
     },
 ]
+
+export type MetadataAPIHandler<operationId extends keyof Operations> =
+    APIOperationHandler<OperationHandler<operationId>>
