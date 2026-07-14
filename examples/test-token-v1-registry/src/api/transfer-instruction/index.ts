@@ -4,12 +4,18 @@
 import { OpenAPIBackend } from 'openapi-backend'
 import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
 import { getTransferFactory } from './getTransferFactory'
+import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
+import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
+import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
 
 export const transferInstructionAPI = new OpenAPIBackend({
     definition: availableOpenAPIPaths['transfer-instruction-v1.yaml'],
     quick: true,
     handlers: {
         getTransferFactory,
+        getTransferInstructionAcceptContext,
+        getTransferInstructionRejectContext,
+        getTransferInstructionWithdrawContext,
     },
 })
 
