@@ -228,8 +228,12 @@ export class TransactionParser {
                 )
             }
             if (parsed && isLeafEventNode(parsed)) {
-                // Exclude events where nothing happened
-                if (holdingChangesNonEmpty(parsed.event)) {
+                // Exclude events with no holding changes, but keep transfer
+                // instruction events so pending offers remain visible.
+                if (
+                    holdingChangesNonEmpty(parsed.event) ||
+                    parsed.event.transferInstruction?.transfer != null
+                ) {
                     result.push({
                         ...parsed.event,
                         label: {
@@ -553,16 +557,22 @@ export class TransactionParser {
             transferInstructions?.transfer?.meta
         )
         const reason = getMetaKeyValue(ReasonMetaKey, meta)
-        const choiceArgumentTransfer = (
+        const rawTransferArg = (
             exercisedEvent.choiceArgument as {
                 transfer?: any
             }
         ).transfer
+        // Ignore `transfer` arguments that aren't a token-standard transfer,
+        // e.g. AmuletRules_Transfer's, which has no receiver or amount.
+        const choiceArgumentTransfer =
+            rawTransferArg?.receiver != null && rawTransferArg?.amount != null
+                ? rawTransferArg
+                : undefined
 
         const sender: string =
             transferInstructions?.transfer?.sender ||
             getMetaKeyValue(SenderMetaKey, meta) ||
-            choiceArgumentTransfer.sender
+            rawTransferArg?.sender
         if (!sender) {
             console.error(
                 `Malformed transfer didn't contain sender. Will instead attempt to parse the children.
@@ -931,7 +941,7 @@ export class TransactionParser {
                 // This will happen for holdings with consuming choices
                 // where the party the script is running on is an actor on the choice
                 // but not a stakeholder.
-                if (err.code === 'CONTRACT_EVENTS_NOT_FOUND') {
+                if (isContractEventsNotFoundError(err)) {
                     return null
                 } else {
                     throw err
@@ -1122,6 +1132,28 @@ function computeSummaries(
     const byInstrument = holdingsChangeByInstrument(changes)
     return [...byInstrument.entries()].map(([instrumentId, change]) =>
         computeSummary(instrumentId, change, partyId)
+    )
+}
+
+const CONTRACT_EVENTS_NOT_FOUND = 'CONTRACT_EVENTS_NOT_FOUND'
+
+/** Detects the ledger API CONTRACT_EVENTS_NOT_FOUND error across the
+ *  different error shapes thrown by the various provider/transport stacks:
+ *  - JsCantonError from a direct ledger client:
+ *    `{ code: 'CONTRACT_EVENTS_NOT_FOUND', cause, ... }`
+ *  - JSON-RPC error response (e.g. wallet gateway over HTTP):
+ *    `{ error: { code, message, data: JsCantonError } }`
+ *  - JSON-RPC error object (e.g. extension window transport):
+ *    `{ code, message, data: JsCantonError }`
+ *  - As a last resort, a stringified error body containing the code. */
+export function isContractEventsNotFoundError(err: unknown): boolean {
+    const e = err as any
+    return (
+        e?.code === CONTRACT_EVENTS_NOT_FOUND ||
+        e?.data?.code === CONTRACT_EVENTS_NOT_FOUND ||
+        e?.error?.data?.code === CONTRACT_EVENTS_NOT_FOUND ||
+        (typeof e?.error?.data === 'string' &&
+            e.error.data.includes(CONTRACT_EVENTS_NOT_FOUND))
     )
 }
 
