@@ -3,11 +3,14 @@
 
 import { OpenAPIBackend } from 'openapi-backend'
 import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
+import { getTransferFactory } from './getTransferFactory'
 
 export const transferInstructionAPI = new OpenAPIBackend({
     definition: availableOpenAPIPaths['transfer-instruction-v1.yaml'],
     quick: true,
-    handlers: {},
+    handlers: {
+        getTransferFactory,
+    },
 })
 
 await transferInstructionAPI.init()

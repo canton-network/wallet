@@ -41,6 +41,7 @@
     "dependencies": {
         "@canton-network/core-token-standard": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
+        "@koa/router": "^15.7.0",
         "koa": "^3.2.1",
         "koa-bodyparser": "^4.4.1",
         "openapi-backend": "^5.18.0",

@@ -9,6 +9,9 @@ import {
 } from '../../openapi-ts/token-metadata-v1'
 import { APIOperationHandler } from '../../types'
 
+export type MetadataAPIHandler<operationId extends keyof Operations> =
+    APIOperationHandler<OperationHandler<operationId>>
+
 export const supportedApis: SupportedApis = {
     'splice-api-token-metadata-v1': 1,
     'splice-api-token-transfer-instruction-v1': 1,
@@ -28,6 +31,3 @@ export const instruments: Instrument[] = [
         supportedApis,
     },
 ]
-
-export type MetadataAPIHandler<operationId extends keyof Operations> =
-    APIOperationHandler<OperationHandler<operationId>>
