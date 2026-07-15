@@ -46,6 +46,7 @@ import { sql } from 'kysely'
 import { Env } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
+import { securityHeaders } from './middleware/securityHeaders.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -242,6 +243,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const app = express()
     app.set('trust proxy', config.server.trustProxy)
+    app.use(securityHeaders())
 
     const server = app.listen(port, () => {
         logger.info(`Remote Wallet Gateway starting on ${serviceUrl})`)
