@@ -52,6 +52,12 @@ const pendingTransaction: Transaction = {
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
 }
 
+const signedTransaction: Transaction = {
+    ...pendingTransaction,
+    status: 'signed',
+    signedAt: new Date('2026-01-01T00:01:00.000Z'),
+}
+
 const executedTransaction: Transaction = {
     ...pendingTransaction,
     status: 'executed',
@@ -528,13 +534,40 @@ describe('TransactionService', () => {
     })
 
     describe('execute', () => {
+        it.each(['pending', 'failed', 'executed'] as const)(
+            'throws when execute is called for a %s transaction',
+            async (status) => {
+                const service = createService(
+                    createStore(),
+                    {},
+                    notifier,
+                    logger
+                )
+                const transaction = {
+                    ...pendingTransaction,
+                    status,
+                }
+
+                expect(() =>
+                    service.execute(
+                        authContext.userId,
+                        wallet,
+                        transaction,
+                        executeParams
+                    )
+                ).toThrow(
+                    `Cannot execute a ${status} transaction. Expected status: signed.`
+                )
+            }
+        )
+
         describe('participant', () => {
             it('submits the prepared transaction to the ledger', async () => {
                 const participantWallet = walletWithProvider(
                     SigningProvider.PARTICIPANT
                 )
                 const transaction = {
-                    ...pendingTransaction,
+                    ...signedTransaction,
                     payload: {
                         commandId: pendingTransaction.commandId,
                         commands: [],

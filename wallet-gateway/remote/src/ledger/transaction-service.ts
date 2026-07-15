@@ -115,8 +115,10 @@ export class TransactionService {
         ledgerClient?: LedgerClient,
         network?: Network
     ): Promise<ExecuteResult> {
-        if (transaction.status === 'executed') {
-            throw new Error('Transaction is already executed.')
+        if (transaction.status !== 'signed') {
+            throw new Error(
+                `Cannot execute a ${transaction.status} transaction. Expected status: signed.`
+            )
         }
 
         switch (wallet.signingProviderId) {
