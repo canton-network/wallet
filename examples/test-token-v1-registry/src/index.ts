@@ -3,9 +3,9 @@
 
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
-import router from './router'
 import { initAdminParty } from './common/admin'
 import vetDaml from './common/vetDaml'
+import { setRoutes } from './router'
 
 const app = new Koa()
 
@@ -17,6 +17,5 @@ await initAdminParty()
 if (process.env.NODE_ENV === 'development') await vetDaml()
 
 app.use(bodyParser())
-    .use(router.routes())
-    .use(router.allowedMethods())
+    .use(setRoutes)
     .listen(3000, () => console.info('api listening on http://localhost:3000'))
