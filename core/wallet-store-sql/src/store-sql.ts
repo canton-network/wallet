@@ -737,6 +737,46 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return transactions.map((table) => toTransaction(table))
     }
 
+    async listTransactionsV2(cursor?: string, limit?: number) {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const lim = limit ? Math.min(limit, 100) : 100
+
+        let query = this.db
+            .selectFrom('transactions')
+            .selectAll()
+            .where((eb) =>
+                eb.and([
+                    eb('userId', '=', userId),
+                    eb('networkId', '=', network.id),
+                ])
+            )
+            .orderBy('createdAt', 'desc')
+            .orderBy('id', 'asc')
+            .limit(lim)
+
+        if (cursor) {
+            const split = cursor.split('::')
+            query = query.where((eb) =>
+                eb.and([
+                    eb('id', '>', split[1]),
+                    eb('createdAt', '<', split[0]),
+                ])
+            )
+        }
+
+        const rows = await query.execute()
+        const txs = rows.map((r) => toTransaction(r))
+        const nextCursor =
+            rows.length === limit
+                ? `${txs[txs.length - 1].createdAt}::${txs[txs.length - 1].id}`
+                : null
+        return {
+            transactions: txs,
+            nextCursor: nextCursor,
+        }
+    }
+
     async removeTransaction(transactionId: string): Promise<void> {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
