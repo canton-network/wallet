@@ -89,7 +89,7 @@ The SDK is built around three layers:
 
 ## Wallet providers
 
-Wallet and extension authors: see **[Wallet providers (discovery)](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/provider.md)** in the dApp Building docs for how to appear in the picker (`RemoteAdapter`, `canton:announceProvider`, and `additionalAdapters`).
+Wallet and extension authors: see **[Wallet providers (discovery)](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/wallet-providers/integration-overview.md)** in the dApp Building docs for how to appear in the picker (`RemoteAdapter`, `canton:announceProvider`, and `additionalAdapters`).
 
 ## Usage
 
@@ -205,7 +205,7 @@ const result = await client.connect()
 
 | Adapter            | Provider Type | Transport     | Description                                                                                                                                                                         |
 | ------------------ | ------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ExtensionAdapter` | `'browser'`   | `postMessage` | Browser extensions discovered via `canton:announceProvider` ([Wallet providers guide](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/provider.md)). |
+| `ExtensionAdapter` | `'browser'`   | `postMessage` | Browser extensions discovered via `canton:announceProvider` ([Wallet providers guide](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/wallet-providers/integration-overview.md)). |
 | `RemoteAdapter`    | `'remote'`    | HTTP/SSE      | CIP-103 Wallet Gateways over the network.                                                                                                                                           |
 
 ## Documentation
@@ -214,7 +214,7 @@ Full documentation, including detailed usage guides, API reference, and configur
 
 - [dApp Building Guide](https://github.com/canton-network/wallet/tree/main/docs/dapp-building)
 - [dApp SDK Documentation](https://github.com/canton-network/wallet/tree/main/docs/dapp-building/dapp-sdk)
-- [Wallet providers (discovery)](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/provider.md)
+- [Wallet providers (discovery)](https://github.com/canton-network/wallet/blob/main/docs/dapp-building/dapp-sdk/wallet-providers/integration-overview.md)
 - [API Specifications (OpenRPC)](https://github.com/canton-network/wallet/tree/main/api-specs)
 - [Example dApps](https://github.com/canton-network/wallet/tree/main/examples)
 

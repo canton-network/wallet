@@ -8,13 +8,16 @@ Build decentralized applications (dApps) that interact with the **Canton Network
 ## Contents
 
 - [Overview](overview/index.md) — Architecture, key concepts, and how the pieces connect
-- [dApp SDK](dapp-sdk/index.md) — TypeScript library for wallet connectivity, accounts, signing, and transactions
-    - [Installation](dapp-sdk/installation.md)
-    - [Usage](dapp-sdk/usage.md)
-    - [Adapters & Discovery](dapp-sdk/discovery.md)
-    - [API Reference](dapp-sdk/api-reference.md)
-    - [Wallet providers (discovery)](dapp-sdk/provider.md) — How wallets and extensions appear in the SDK picker
-    - [Best Practices](dapp-sdk/best-practices.md)
+- [dApp SDK](dapp-sdk/overview.md) — TypeScript library for wallet connectivity, accounts, signing, and transactions
+    - [Overview](dapp-sdk/overview.md)
+    - [Quickstart](dapp-sdk/quickstart.md)
+    - [Wallet discovery](dapp-sdk/guides/wallet-discovery.md)
+    - [Connect & sessions](dapp-sdk/guides/connect-and-sessions.md)
+    - [Parties & transactions](dapp-sdk/guides/parties-and-transactions.md)
+    - [Handle events](dapp-sdk/guides/handle-events.md)
+    - [SDK methods](dapp-sdk/reference/sdk-methods.md)
+    - [Provider API](dapp-sdk/reference/provider-api.md)
+    - [Wallet providers](dapp-sdk/wallet-providers/integration-overview.md) — How wallets and extensions appear in the SDK picker
 - [Wallet Gateway](wallet-gateway/index.md) — Server setup, configuration, APIs, signing providers, and troubleshooting
     - [Getting Started](wallet-gateway/getting-started/index.md)
     - [Configuration](wallet-gateway/configuration/index.md)
