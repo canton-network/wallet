@@ -444,11 +444,11 @@ describe('TransactionService', () => {
         })
 
         describe('dfns', () => {
-            it('persists the update id as the signature when signing completes', async () => {
+            it('returns the driver signature when signing completes', async () => {
                 const signTransaction = vi.fn().mockResolvedValue({
                     status: 'signed',
                     txId: 'dfns-tx-1',
-                    signature: 'update-id-123',
+                    signature: 'dfns-signature',
                 })
                 const store = createStore()
                 const service = createService(
@@ -470,7 +470,7 @@ describe('TransactionService', () => {
 
                 expect(result).toEqual({
                     status: 'signed',
-                    signature: 'update-id-123',
+                    signature: 'dfns-signature',
                     signedBy: wallet.namespace,
                     partyId: wallet.partyId,
                     externalTxId: 'dfns-tx-1',
@@ -528,54 +528,6 @@ describe('TransactionService', () => {
     })
 
     describe('execute', () => {
-        describe('dfns', () => {
-            it('marks the transaction executed using the external tx id', async () => {
-                const signedTransaction: Transaction = {
-                    ...pendingTransaction,
-                    status: 'signed',
-                    externalTxId: 'dfns-update-id',
-                }
-                const store = createStore(signedTransaction)
-                const service = createService(store, {}, notifier, logger)
-
-                const result = await service.execute(
-                    authContext.userId,
-                    walletWithProvider(SigningProvider.DFNS),
-                    signedTransaction
-                )
-
-                expect(store.setTransactionStatus).toHaveBeenCalledWith(
-                    signedTransaction.id,
-                    'executed',
-                    { externalTxId: 'dfns-update-id' }
-                )
-                expect(emit).toHaveBeenCalledWith(
-                    'txChanged',
-                    expect.objectContaining({ status: 'executed' })
-                )
-                expect(result).toEqual({ updateId: 'dfns-update-id' })
-            })
-
-            it('throws when the transaction has no external tx id', async () => {
-                const service = createService(
-                    createStore(),
-                    {},
-                    notifier,
-                    logger
-                )
-
-                await expect(
-                    service.execute(
-                        authContext.userId,
-                        walletWithProvider(SigningProvider.DFNS),
-                        pendingTransaction
-                    )
-                ).rejects.toThrow(
-                    'Cannot execute Dfns transaction without externalTxId from Dfns'
-                )
-            })
-        })
-
         describe('participant', () => {
             it('submits the prepared transaction to the ledger', async () => {
                 const participantWallet = walletWithProvider(
@@ -625,52 +577,60 @@ describe('TransactionService', () => {
         })
 
         describe('external signing providers', () => {
-            it('executes the prepared transaction with the provided signature', async () => {
-                const signedTransaction = {
-                    ...pendingTransaction,
-                    status: 'signed' as const,
+            it.each([
+                SigningProvider.WALLET_KERNEL,
+                SigningProvider.BLOCKDAEMON,
+                SigningProvider.FIREBLOCKS,
+                SigningProvider.DFNS,
+            ])(
+                'executes with the provided signature for %s',
+                async (signingProviderId) => {
+                    const signedTransaction = {
+                        ...pendingTransaction,
+                        status: 'signed' as const,
+                    }
+                    const store = createStore(signedTransaction)
+                    const postWithRetry = vi
+                        .fn()
+                        .mockResolvedValue({ updateId: 'external-update-1' })
+                    const ledgerClient = {
+                        postWithRetry,
+                    } as unknown as LedgerClient
+                    const service = createService(store, {}, notifier, logger)
+
+                    const result = await service.execute(
+                        authContext.userId,
+                        walletWithProvider(signingProviderId),
+                        signedTransaction,
+                        executeParams,
+                        ledgerClient,
+                        network
+                    )
+
+                    expect(postWithRetry).toHaveBeenCalledWith(
+                        '/v2/interactive-submission/executeAndWait',
+                        expect.objectContaining({
+                            userId: authContext.userId,
+                            preparedTransaction:
+                                pendingTransaction.preparedTransaction,
+                            submissionId: pendingTransaction.commandId,
+                            partySignatures: expect.objectContaining({
+                                signatures: [
+                                    expect.objectContaining({
+                                        party: wallet.partyId,
+                                    }),
+                                ],
+                            }),
+                        })
+                    )
+                    expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                        pendingTransaction.id,
+                        'executed',
+                        { payload: { updateId: 'external-update-1' } }
+                    )
+                    expect(result).toEqual({ updateId: 'external-update-1' })
                 }
-                const store = createStore(signedTransaction)
-                const postWithRetry = vi
-                    .fn()
-                    .mockResolvedValue({ updateId: 'external-update-1' })
-                const ledgerClient = {
-                    postWithRetry,
-                } as unknown as LedgerClient
-                const service = createService(store, {}, notifier, logger)
-
-                const result = await service.execute(
-                    authContext.userId,
-                    wallet,
-                    signedTransaction,
-                    executeParams,
-                    ledgerClient,
-                    network
-                )
-
-                expect(postWithRetry).toHaveBeenCalledWith(
-                    '/v2/interactive-submission/executeAndWait',
-                    expect.objectContaining({
-                        userId: authContext.userId,
-                        preparedTransaction:
-                            pendingTransaction.preparedTransaction,
-                        submissionId: pendingTransaction.commandId,
-                        partySignatures: expect.objectContaining({
-                            signatures: [
-                                expect.objectContaining({
-                                    party: wallet.partyId,
-                                }),
-                            ],
-                        }),
-                    })
-                )
-                expect(store.setTransactionStatus).toHaveBeenCalledWith(
-                    pendingTransaction.id,
-                    'executed',
-                    { payload: { updateId: 'external-update-1' } }
-                )
-                expect(result).toEqual({ updateId: 'external-update-1' })
-            })
+            )
         })
     })
 
