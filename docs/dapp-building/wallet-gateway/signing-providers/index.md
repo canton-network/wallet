@@ -109,10 +109,6 @@ Set the following environment variables:
 - Multi-party approval workflows
 - High-security production environments
 
-**How it Works:**
-
-When a transaction is submitted, the Gateway forwards the command to Dfns's participant node, which signs it using the party's key stored in the participant's keystore.
-
 ## Selecting a Provider
 
 When creating a new party through the User API or web UI, you can select which signing provider to use. The choice depends on your security requirements, infrastructure setup, and compliance needs.
