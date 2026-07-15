@@ -136,6 +136,7 @@ async function main() {
         logger.info({ body: req.body }, 'Received token request')
         const credentials = basicAuth(req)
         const clientId = credentials ? credentials.name : req.body.client_id
+        const scope = 'openid email daml_ledger_api offline_access'
 
         token.payload.iss = `${protocol}://${host}:${port}`
         const aud = req.body.audience
@@ -144,8 +145,8 @@ async function main() {
             process.env.BLOCKDAEMON_API_EMAIL ||
             'phillip.olesen@digitalasset.com'
         token.payload.aud = aud
-        //alternative to scope claim
-        token.payload.scp = ['daml_ledger_api']
+        token.payload.scope = scope
+        token.payload.scp = scope.split(' ')
 
         // Set token expiration to 1 hour from now
         const now = Math.floor(Date.now() / 1000)
