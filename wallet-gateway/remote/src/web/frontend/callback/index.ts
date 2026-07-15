@@ -88,6 +88,8 @@ export class LoginCallback extends LitElement {
     }
 
     render() {
-        return html`<h2>Logged in!</h2>`
+        return html`<wg-loading-state
+            .text=${'Logging in...'}
+        ></wg-loading-state>`
     }
 }
