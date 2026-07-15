@@ -16,31 +16,44 @@ const TEST_TOKEN_BASE = path.resolve(
     '../../damljs/test-token-v1'
 )
 
-const DAML_JS_PACKAGES = {
-    '@daml.js/test-token-v1': path.join(
-        TEST_TOKEN_BASE,
-        'splice-test-token-v1-1.0.0'
-    ),
-    '@daml.js/splice-api-token-allocation-instruction-v1-1.0.0': path.join(
-        TEST_TOKEN_BASE,
-        'splice-api-token-allocation-instruction-v1-1.0.0'
-    ),
-    '@daml.js/splice-api-token-transfer-instruction-v1-1.0.0': path.join(
-        TEST_TOKEN_BASE,
-        'splice-api-token-transfer-instruction-v1-1.0.0'
-    ),
-    '@daml.js/splice-api-token-holding-v1-1.0.0': path.join(
-        TEST_TOKEN_BASE,
-        'splice-api-token-holding-v1-1.0.0'
-    ),
-    '@daml.js/splice-api-token-allocation-v1-1.0.0': path.join(
-        TEST_TOKEN_BASE,
-        'splice-api-token-allocation-v1-1.0.0'
-    ),
-    '@daml.js/splice-api-token-metadata-v1-1.0.0': path.join(
-        TEST_TOKEN_BASE,
-        'splice-api-token-metadata-v1-1.0.0'
-    ),
+function buildDamlJsPackagesMap(baseDir) {
+    const packages = {}
+    const entries = fs.readdirSync(baseDir, { withFileTypes: true })
+
+    for (const entry of entries) {
+        if (!entry.isDirectory()) {
+            continue
+        }
+
+        const pkgDir = path.join(baseDir, entry.name)
+        const pkgJsonPath = path.join(pkgDir, 'package.json')
+
+        if (!fs.existsSync(pkgJsonPath)) {
+            continue
+        }
+
+        const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'))
+        if (typeof pkgJson.name !== 'string') {
+            continue
+        }
+
+        if (!pkgJson.name.startsWith('@daml.js/')) {
+            continue
+        }
+
+        packages[pkgJson.name] = pkgDir
+    }
+
+    return packages
+}
+
+const DAML_JS_PACKAGES = buildDamlJsPackagesMap(TEST_TOKEN_BASE)
+const TEST_TOKEN_COMPAT_ALIAS = '@daml.js/test-token-v1'
+const TEST_TOKEN_CANONICAL_NAME = '@daml.js/splice-test-token-v1-1.0.0'
+
+if (DAML_JS_PACKAGES[TEST_TOKEN_CANONICAL_NAME]) {
+    DAML_JS_PACKAGES[TEST_TOKEN_COMPAT_ALIAS] =
+        DAML_JS_PACKAGES[TEST_TOKEN_CANONICAL_NAME]
 }
 
 function buildPathsMap(packageDirs) {

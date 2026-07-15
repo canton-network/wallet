@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as mock from '../../__test__/mocks'
 import {
     Holding,
     Transfer,
-    TestTokenV1,
     AllocationSpecification,
     TransferLeg,
     Metadata,
@@ -18,6 +16,7 @@ import {
 import { ContractId, Time } from '@daml/types'
 import { PartyId } from '@canton-network/core-types'
 import { TestTokenNamespace } from './namespace'
+import { TestTokenV1 } from '@canton-network/core-test-token'
 
 const time: Time = new Date().toISOString()
 const meta: Metadata = {
@@ -65,7 +64,7 @@ describe('testToken plugin', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
-        plugin = new TestTokenNamespace(mock.ctx)
+        plugin = new TestTokenNamespace()
     })
 
     describe('CreateCommand', () => {
