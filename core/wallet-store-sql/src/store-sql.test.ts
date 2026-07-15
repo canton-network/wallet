@@ -77,6 +77,20 @@ const network: Network = {
     auth,
 }
 
+function addTx(id: string, createdAt: Date) {
+    const initial: Transaction = {
+        id: id,
+        commandId: 'cmd-immutable',
+        status: 'pending',
+        preparedTransaction: 'prepared-1',
+        preparedTransactionHash: 'hash-1',
+        payload: { amount: 100 },
+        origin: 'https://safe.example',
+        createdAt: createdAt,
+    }
+    return initial
+}
+
 implementations.forEach(([name, StoreImpl]) => {
     describe(name, () => {
         let db: Kysely<DB>
@@ -623,6 +637,40 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(
                 duplicates.filter((tx) => tx.commandId === initial.commandId)
             ).toHaveLength(2)
+        })
+
+        test('paginate list transactions', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-tx-immutable',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            for (let i = 0; i < 10; i++) {
+                const date =
+                    i % 2 > 0
+                        ? new Date(`2026-01-02T00:00:00.000Z`)
+                        : new Date(`2026-01-01T00:00:00.000Z`)
+
+                const tx = addTx(`tx${i}`, date)
+
+                await store.setTransaction(tx)
+            }
+
+            const listAllTxs = await store.listTransactionsV2()
+
+            const collected: Transaction[] = []
+            let page = await store.listTransactionsV2(undefined, 5)
+            collected.push(...page.transactions)
+            while (page.nextCursor !== null) {
+                page = await store.listTransactionsV2(page.nextCursor, 6)
+                collected.push(...page.transactions)
+            }
+
+            expect(listAllTxs.transactions).toEqual(collected)
         })
 
         test('removeWallet should cascade-delete userPartyRights', async () => {

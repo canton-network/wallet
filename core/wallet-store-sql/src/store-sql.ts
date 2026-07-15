@@ -714,7 +714,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 ])
             )
             .orderBy('createdAt', 'desc')
-            .orderBy('id', 'desc')
             .executeTakeFirst()
 
         return transaction ? toTransaction(transaction) : undefined
@@ -733,6 +732,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 ])
             )
             .orderBy('createdAt', 'desc')
+            .orderBy('id', 'desc')
             .execute()
         return transactions.map((table) => toTransaction(table))
     }
@@ -752,25 +752,30 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 ])
             )
             .orderBy('createdAt', 'desc')
-            .orderBy('id', 'asc')
+            .orderBy('id', 'desc')
             .limit(lim)
 
         if (cursor) {
             const split = cursor.split('::')
+            const dateString = split[0]
             query = query.where((eb) =>
-                eb.and([
-                    eb('id', '>', split[1]),
-                    eb('createdAt', '<', split[0]),
+                eb.or([
+                    eb('createdAt', '<', dateString),
+                    eb.and([
+                        eb('createdAt', '=', dateString),
+                        eb('id', '<', split[1]),
+                    ]),
                 ])
             )
         }
 
         const rows = await query.execute()
         const txs = rows.map((r) => toTransaction(r))
+        const d = new Date(txs[txs.length - 1].createdAt!).toISOString()
         const nextCursor =
-            rows.length === limit
-                ? `${txs[txs.length - 1].createdAt}::${txs[txs.length - 1].id}`
-                : null
+            rows.length === limit ? `${d}::${txs[txs.length - 1].id}` : null
+        console.log('next cursor')
+        console.log(nextCursor)
         return {
             transactions: txs,
             nextCursor: nextCursor,
