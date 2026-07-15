@@ -31,8 +31,8 @@ vi.mock('../state-manager.js', () => ({
     },
 }))
 
-import './login-callback.js'
-import { LoginCallback } from './login-callback.js'
+import './index.js'
+import { LoginCallback } from './index.js'
 
 const oauthState = {
     configUrl: 'https://idp.example/.well-known/openid-configuration',
@@ -111,10 +111,15 @@ describe('LoginCallback', () => {
         vi.unstubAllGlobals()
     })
 
-    it('renders the logged-in heading', async () => {
+    it('renders the loading state', async () => {
         el = await fixture<LoginCallback>(componentFixture)
 
-        expect(el.shadowRoot?.textContent).toContain('Logged in!')
+        const loadingState = el.shadowRoot?.querySelector(
+            'wg-loading-state'
+        ) as (HTMLElement & { text?: string }) | null
+
+        expect(loadingState).not.toBeNull()
+        expect(loadingState?.text).toBe('Logging in...')
     })
 
     it('does nothing when both code and state are missing', async () => {
