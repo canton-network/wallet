@@ -70,7 +70,7 @@ Use a **stable, unique** `providerId` string and the same **`target`** your exte
 | -------------------------------------- | -------------------------------------------------------------------------- |
 | Browser extension (default)            | **`canton:announceProvider`** with optional **`target`** for `postMessage` |
 | Extension not yet in announce registry | Host dApp registers **`ExtensionAdapter`** via **`additionalAdapters`**    |
-| Hosted gateway                         | **`RemoteAdapter`** with public RPC URL                                    |
+| Remote wallet                          | **`RemoteAdapter`** with public RPC URL                                    |
 | Mobile / QR wallet                     | **`WalletConnectAdapter`** via **`additionalAdapters`**                    |
 
 Implementing [CIP-103](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md) RPC and events on the resulting provider is **separate** from picker visibility: discovery only decides **that** a connection option exists; runtime behavior still must honor the spec for dApps to work correctly.
