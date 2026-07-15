@@ -143,4 +143,8 @@ export type RegisteredPlugins<
               { name: K }
           >
       }
-    : P
+    : P extends Record<string, PluginConstructor>
+      ? {
+            [K in keyof P]: InstanceType<P[K]>
+        }
+      : never

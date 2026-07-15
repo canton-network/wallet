@@ -15,8 +15,8 @@ export default async function () {
             },
             ledgerClientUrl: 'http://localhost:2975',
         })
-    ).registerPlugins([
-        class extends SDKPlugin {
+    ).registerPlugins({
+        myPlugin: class extends SDKPlugin {
             // wallet-sdk plugin should always accept SDKPluginContext
             constructor(protected readonly ctx: SDKPluginContext) {
                 super('myPlugin', ctx)
@@ -27,7 +27,21 @@ export default async function () {
                 return
             }
         },
-    ])
+    })
+
+    const test = {
+        myPlugin: class extends SDKPlugin {
+            // wallet-sdk plugin should always accept SDKPluginContext
+            constructor(protected readonly ctx: SDKPluginContext) {
+                super('myPlugin', ctx)
+            }
+
+            myMethod() {
+                // do some logic
+                return
+            }
+        },
+    }
 
     sdk.myPlugin.myMethod()
 }
