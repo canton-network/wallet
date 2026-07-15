@@ -15,7 +15,7 @@
 - **Ledger API Access** — Proxy authenticated requests to the Canton JSON Ledger API
 - **Real-time Events** — Subscribe to status changes, account changes, and transaction lifecycle events
 - **Multi-transport** — HTTP/SSE for remote Wallet Gateways, `postMessage` for browser extension wallets
-- **Provider Interface** — `window.canton` provider following CIP-103 conventions
+- **Provider Interface** — EIP-1193-style CIP-103 provider via `getConnectedProvider()` after `connect()`
 
 ## Installation
 

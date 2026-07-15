@@ -9,33 +9,22 @@ The SDK **merges** these sources, **deduplicates** by `providerId` where applica
 ## What the SDK registers by default on `connect()`
 
 1. **`RemoteAdapter` entries** — Built-in and configured Wallet Gateway URLs (HTTP/SSE CIP-103 bridge).
-2. **Injected providers from `window` (namespace scan)** — See [Injected / namespaced providers](#injected--namespaced-providers). These are registered **without** running adapter `detect()`; if the scan finds a provider-shaped object, a picker entry is added (including a direct `window.canton` provider).
-3. **Announced extensions** — See [Announcement events (EIP-6963-style)](#announcement-events-eip-6963-style). Each announcement becomes an `ExtensionAdapter` with a **distinct** `providerId` and optional `target`; **`detect()`** must succeed (extension visible and handshake OK).
+2. **Announced extensions** — See [Announcement events (EIP-6963-style)](#announcement-events-eip-6963-style). Each announcement becomes an `ExtensionAdapter` with a **distinct** `providerId` and optional `target`; **`detect()`** must succeed (extension visible and handshake OK).
 
 Additionally, the host dApp may pass **`additionalAdapters`** (or configure `DiscoveryClient` directly) to register more `ExtensionAdapter`, `RemoteAdapter`, or custom adapters.
+
+> **Note:** The SDK does **not** scan `window` for injected providers (for example `window.canton` or `window.canton.<brand>`). Browser wallets must use the announce protocol or be registered explicitly via `additionalAdapters`.
 
 ## Remote Wallets (`RemoteAdapter`)
 
 Server-side wallets (such as the Wallet Gateway) are **not** injected into the page; they are listed as remote entries with an RPC URL.
 Bundled defaults come from the SDK’s gateway list; dApps can add more by calling `init({ additionalAdapters: [...] })` before `connect()`, or by constructing `DiscoveryClient` with extra `RemoteAdapter` instances.
 
-## Injected / namespaced providers
+## Browser extension wallets (`ExtensionAdapter`)
 
-The SDK scans **global roots** on `window` for objects that look like a CIP-103 **`Provider`** (`request`, `on`, `emit`, `removeListener`).
+Browser extensions communicate with the dApp over **`postMessage`** (CIP-103 sync API). To appear in the picker, an extension must either [**announce**](#announcement-events-eip-6963-style) itself or be registered by the host dApp via **`additionalAdapters`**.
 
-**Roots scanned today** (each entry is optional; missing roots are skipped):
-
-| Global root     | Purpose                                                                               |
-| --------------- | ------------------------------------------------------------------------------------- |
-| `window.canton` | Common CIP-103 global; may be a provider **or** a bag of named providers (see below). |
-
-**Direct provider:** If `window.<root>` itself is provider-shaped, discovery adds one entry. Its stable id is the root name (e.g. `canton`), and the picker uses an adapter with `providerId` `browser:<id>` (e.g. `browser:canton`).
-
-**Namespaced bag:** If `window.<root>` is a plain object, **each own property** whose value is provider-shaped becomes a separate entry with id `<root>.<key>` (e.g. `canton.myBrand`), i.e. `providerId` `browser:canton.myBrand`.
-
-**Why namespace:** `window.canton.myWallet` allows **multiple** extensions or scripts to expose distinct providers **without** overwriting a single shared `window.canton` reference.
-
-If nothing provider-shaped appears on a scanned root, the picker will not list your wallet until you [**announce**](#announcement-events-eip-6963-style) or register an **`ExtensionAdapter`** via **`additionalAdapters`** (see below—e.g. when you only bridge over `postMessage`).
+Wallets may still expose a provider on `window.canton` for dApps that integrate directly, but the SDK does not discover wallets by scanning that global. `ExtensionAdapter.detect()` treats `window.canton` as a positive signal when checking whether an announced extension is present.
 
 ## Announcement events (EIP-6963-style)
 
@@ -77,11 +66,11 @@ Use a **stable, unique** `providerId` string and the same **`target`** your exte
 
 ## Summary: choose your integration
 
-| Goal                                                    | Recommended approach                                                                                  |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Single extension, provider-shaped `window.canton`       | Namespace scan (injected) + CIP-103 `postMessage` / inject                                            |
-| Multiple extensions or avoid `window.canton` collisions | **`canton:announceProvider`** + **`target`**, and/or **`window.canton.<brand>`** namespaced providers |
-| In-page script / non-extension inject                   | Place provider at **`window.<root>`** or **`window.<root>.<name>`** under a scanned root              |
-| Hosted gateway                                          | **`RemoteAdapter`** with public RPC URL                                                               |
+| Goal                                   | Recommended approach                                                       |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| Browser extension (default)            | **`canton:announceProvider`** with optional **`target`** for `postMessage` |
+| Extension not yet in announce registry | Host dApp registers **`ExtensionAdapter`** via **`additionalAdapters`**    |
+| Hosted gateway                         | **`RemoteAdapter`** with public RPC URL                                    |
+| Mobile / QR wallet                     | **`WalletConnectAdapter`** via **`additionalAdapters`**                    |
 
 Implementing [CIP-103](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md) RPC and events on the resulting provider is **separate** from picker visibility: discovery only decides **that** a connection option exists; runtime behavior still must honor the spec for dApps to work correctly.
