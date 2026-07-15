@@ -234,6 +234,8 @@ function TransferLegCard({
 
     return (
         <Box
+            role="group"
+            aria-label={`Transfer leg ${index + 1}`}
             sx={{
                 border: '1px solid',
                 borderColor: 'divider',
