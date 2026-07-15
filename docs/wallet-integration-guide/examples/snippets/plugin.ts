@@ -29,19 +29,5 @@ export default async function () {
         },
     })
 
-    const test = {
-        myPlugin: class extends SDKPlugin {
-            // wallet-sdk plugin should always accept SDKPluginContext
-            constructor(protected readonly ctx: SDKPluginContext) {
-                super('myPlugin', ctx)
-            }
-
-            myMethod() {
-                // do some logic
-                return
-            }
-        },
-    }
-
     sdk.myPlugin.myMethod()
 }
