@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as mock from '../../wallet/__test__/mocks'
-import WalletSDKTestTokenPlugin from '../testToken'
+import * as mock from '../../__test__/mocks'
 import {
     Holding,
     Transfer,
@@ -18,6 +17,7 @@ import {
 } from '@canton-network/core-token-standard'
 import { ContractId, Time } from '@daml/types'
 import { PartyId } from '@canton-network/core-types'
+import { TestTokenNamespace } from './namespace'
 
 const time: Time = new Date().toISOString()
 const meta: Metadata = {
@@ -61,11 +61,11 @@ const allocation: AllocationSpecification = {
 const admin: PartyId = 'admin'
 
 describe('testToken plugin', () => {
-    let plugin: WalletSDKTestTokenPlugin
+    let plugin: TestTokenNamespace
 
     beforeEach(() => {
         vi.clearAllMocks()
-        plugin = new WalletSDKTestTokenPlugin(mock.ctx)
+        plugin = new TestTokenNamespace(mock.ctx)
     })
 
     describe('CreateCommand', () => {

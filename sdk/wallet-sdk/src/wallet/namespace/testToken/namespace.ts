@@ -10,15 +10,10 @@ import {
     TestTokenV1,
     AllocationSpecification,
 } from '@canton-network/core-token-standard'
-import { SDKContext, SDKPlugin } from '../wallet'
-import { WrappedCommand } from '@/wallet/namespace/ledger'
+import { WrappedCommand } from '../ledger/index.js'
 import { PartyId } from '@canton-network/core-types'
 
-export default class WalletSDKTestTokenPlugin extends SDKPlugin {
-    constructor(protected readonly ctx: SDKContext) {
-        super('testToken', ctx)
-    }
-
+export class TestTokenNamespace {
     private readonly generateCommand = {
         create<CreateArgs>(templateId: string) {
             return (

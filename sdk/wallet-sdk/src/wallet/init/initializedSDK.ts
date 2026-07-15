@@ -29,6 +29,7 @@ import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
+import { TestTokenNamespace } from '../namespace/testToken/namespace.js'
 
 const createNamespace: {
     [K in keyof ExtendedSDKOptions]: (
@@ -144,6 +145,7 @@ export class InitializedSDK<
     CurrentlyExtended extends keyof ExtendedSDKOptions = never,
 > implements BasicSDKInterface<CurrentlyExtended> {
     public readonly keys = new KeysNamespace()
+    public readonly testToken = new TestTokenNamespace()
     public readonly ledger: LedgerNamespace
     public readonly party: PartyNamespace
     public readonly user: UserNamespace

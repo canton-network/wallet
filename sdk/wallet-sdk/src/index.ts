@@ -3,4 +3,3 @@
 
 export * from './wallet/index.js'
 export * from './config.js'
-export * from './plugins/index.js'

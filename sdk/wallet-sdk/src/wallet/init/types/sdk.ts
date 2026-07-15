@@ -20,6 +20,7 @@ import {
 import { Provider } from '@canton-network/core-splice-provider'
 import { LedgerTypes } from '@canton-network/core-ledger-client-types'
 import { SDKPlugin, SDKPluginContext } from '../plugin.js'
+import { TestTokenNamespace } from '@/wallet/namespace/testToken/namespace.js'
 
 // SDK OPTIONS
 
@@ -81,6 +82,7 @@ export type BasicSDKInterface<
     CurrentlyExtended extends keyof ExtendedSDKOptions = never,
 > = Readonly<{
     keys: KeysNamespace
+    testToken: TestTokenNamespace
     ledger: LedgerNamespace
     party: PartyNamespace
     user: UserNamespace
@@ -112,9 +114,10 @@ export type NullableExtendedFullSDKInterface = {
 export type ExtendedSDKInterface<
     ExtendedItems extends keyof ExtendedSDKOptions,
 > = {
-    [
-        K in keyof Pick<ExtendedSDKOptions, ExtendedItems>
-    ]: ExtendedFullSDKInterface[K]
+    [K in keyof Pick<
+        ExtendedSDKOptions,
+        ExtendedItems
+    >]: ExtendedFullSDKInterface[K]
 }
 
 export type SDKInterface<
