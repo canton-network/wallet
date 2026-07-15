@@ -88,7 +88,12 @@ export type BasicSDKInterface<
     extend: <ExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, ExtendedItems>
     ) => Promise<SDKInterface<ExtendedItems | CurrentlyExtended>>
-    registerPlugins: <P extends PluginConstructor[]>(
+    registerPlugins: <
+        /**
+         * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
+         */
+        P extends PluginConstructor[] | Record<string, PluginConstructor>,
+    >(
         plugins: P
     ) => SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
 }>
@@ -107,10 +112,9 @@ export type NullableExtendedFullSDKInterface = {
 export type ExtendedSDKInterface<
     ExtendedItems extends keyof ExtendedSDKOptions,
 > = {
-    [K in keyof Pick<
-        ExtendedSDKOptions,
-        ExtendedItems
-    >]: ExtendedFullSDKInterface[K]
+    [
+        K in keyof Pick<ExtendedSDKOptions, ExtendedItems>
+    ]: ExtendedFullSDKInterface[K]
 }
 
 export type SDKInterface<
@@ -127,10 +131,16 @@ export type OfflineSDKInterface = Readonly<{
 export type PluginConstructor = new (ctx: SDKPluginContext) => SDKPlugin
 
 export type RegisteredPlugins<
-    P extends PluginConstructor[] = PluginConstructor[],
-> = {
-    [K in InstanceType<P[number]>['name']]: Extract<
-        InstanceType<P[number]>,
-        { name: K }
-    >
-}
+    /**
+     * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
+     */
+    P extends PluginConstructor[] | Record<string, PluginConstructor> =
+        PluginConstructor[],
+> = P extends PluginConstructor[]
+    ? {
+          [K in InstanceType<P[number]>['name']]: Extract<
+              InstanceType<P[number]>,
+              { name: K }
+          >
+      }
+    : P

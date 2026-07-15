@@ -168,17 +168,41 @@ export class InitializedSDK<
         ) as Promise<SDKInterface<CurrentlyExtended | ExtendedItems>>
     }
 
-    public registerPlugins<P extends PluginConstructor[]>(
-        plugins: P
-    ): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
-        for (const name in plugins) {
-            const plugin = new plugins[name]({ ...this.ctx, namespace: this })
-            Object.defineProperty(this, name, {
-                value: plugin,
-                writable: false,
-                enumerable: true,
-                configurable: false,
-            })
+    public registerPlugins<
+        /**
+         * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
+         */
+        P extends PluginConstructor[] | Record<string, PluginConstructor>,
+    >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
+        if (plugins instanceof Array) {
+            for (const name in plugins) {
+                const plugin = new plugins[name]({
+                    ...this.ctx,
+                    namespace: this,
+                })
+                Object.defineProperty(this, name, {
+                    value: plugin,
+                    writable: false,
+                    enumerable: true,
+                    configurable: false,
+                })
+            }
+            /**
+             * @deprecated use PluginConstructor[] instead.
+             */
+        } else {
+            for (const [name, ctr] of Object.entries(plugins)) {
+                const plugin = new ctr({
+                    ...this.ctx,
+                    namespace: this,
+                })
+                Object.defineProperty(this, name, {
+                    value: plugin,
+                    writable: false,
+                    enumerable: true,
+                    configurable: false,
+                })
+            }
         }
 
         return this as SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
