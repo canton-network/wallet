@@ -151,7 +151,8 @@ export class TransactionService {
             }
             case SigningProvider.WALLET_KERNEL:
             case SigningProvider.BLOCKDAEMON:
-            case SigningProvider.FIREBLOCKS: {
+            case SigningProvider.FIREBLOCKS:
+            case SigningProvider.DFNS: {
                 if (!executeParams) {
                     throw new Error(
                         'Execute params are required for external signing'
@@ -168,9 +169,6 @@ export class TransactionService {
                     transaction,
                     ledgerClient
                 )
-            }
-            case SigningProvider.DFNS: {
-                return this.executeWithDfns(transaction)
             }
             default:
                 throw new Error(
@@ -555,12 +553,6 @@ export class TransactionService {
         }
     }
 
-    /**
-     * Dfns broadcasts the prepared transaction to Canton itself, so we get back
-     * an updateId rather than a raw signature. We persist the updateId as the
-     * signature payload (the controller short-circuits Dfns execute) and surface
-     * the same SignResult shape the other external providers use.
-     */
     private async signWithDfns(
         userId: UserId,
         wallet: Wallet,
@@ -608,7 +600,9 @@ export class TransactionService {
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
-                throw new Error('No updateId returned from Dfns')
+                throw new Error(
+                    'No signature returned from Dfns signing driver'
+                )
             }
 
             const signedTx: Transaction = {
@@ -666,43 +660,6 @@ export class TransactionService {
                 partyId: wallet.partyId,
             }
         }
-    }
-
-    /**
-     * Dfns has already broadcast the transaction at sign-time, so execute is a
-     * state reconciliation: mark the stored transaction as executed and return
-     * the updateId Dfns gave us. We deliberately don't post to the ledger here.
-     */
-    private async executeWithDfns(
-        transaction: Transaction
-    ): Promise<ExecuteResult> {
-        if (!transaction.externalTxId) {
-            throw new Error(
-                'Cannot execute Dfns transaction without externalTxId from Dfns'
-            )
-        }
-
-        const executedTx: Transaction = {
-            id: transaction.id,
-            commandId: transaction.commandId,
-            status: 'executed',
-            preparedTransaction: transaction.preparedTransaction,
-            preparedTransactionHash: transaction.preparedTransactionHash,
-            origin: transaction.origin ?? null,
-            ...(transaction.createdAt && {
-                createdAt: transaction.createdAt,
-            }),
-            ...(transaction.signedAt && {
-                signedAt: transaction.signedAt,
-            }),
-            externalTxId: transaction.externalTxId,
-        }
-        await this.store.setTransactionStatus(transaction.id, 'executed', {
-            externalTxId: transaction.externalTxId,
-        })
-        this.notifier.emit('txChanged', executedTx)
-
-        return { updateId: transaction.externalTxId }
     }
 
     private async executeWithParticipant(
