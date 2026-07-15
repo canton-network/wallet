@@ -52,6 +52,11 @@ const pendingTransaction: Transaction = {
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
 }
 
+const executedTransaction: Transaction = {
+    ...pendingTransaction,
+    status: 'executed',
+}
+
 const signParams = {
     transactionId: pendingTransaction.id,
     partyId: wallet.partyId,
@@ -142,7 +147,7 @@ describe('TransactionService', () => {
 
     describe('sign', () => {
         describe('participant', () => {
-            it('returns a signed result without calling external drivers', async () => {
+            it('returns a signed result and persists signed status', async () => {
                 const store = createStore()
                 const service = createService(
                     store,
@@ -168,7 +173,20 @@ describe('TransactionService', () => {
                     signedBy: wallet.namespace,
                     partyId: wallet.partyId,
                 })
-                expect(store.getTransaction).not.toHaveBeenCalled()
+                expect(store.getTransaction).toHaveBeenCalledWith(
+                    pendingTransaction.id
+                )
+                expect(store.setTransactionSigned).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    expect.any(Date)
+                )
+                expect(emit).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.objectContaining({
+                        id: pendingTransaction.id,
+                        status: 'signed',
+                    })
+                )
             })
         })
 
@@ -459,6 +477,54 @@ describe('TransactionService', () => {
                 })
             })
         })
+
+        it.each([
+            {
+                name: 'participant',
+                provider: SigningProvider.PARTICIPANT,
+                auth: authContext,
+            },
+            {
+                name: 'wallet-kernel',
+                provider: SigningProvider.WALLET_KERNEL,
+                auth: authContext,
+            },
+            {
+                name: 'blockdaemon',
+                provider: SigningProvider.BLOCKDAEMON,
+                auth: authContextWithEmail,
+            },
+            {
+                name: 'fireblocks',
+                provider: SigningProvider.FIREBLOCKS,
+                auth: authContext,
+            },
+            {
+                name: 'dfns',
+                provider: SigningProvider.DFNS,
+                auth: authContext,
+            },
+        ])(
+            'rejects signing an already executed transaction for $name',
+            async ({ provider, auth }) => {
+                const store = createStore(executedTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [provider]: createDriver({}),
+                    },
+                    notifier,
+                    logger
+                )
+                const providerWallet = walletWithProvider(provider)
+
+                await expect(
+                    service.sign(auth, providerWallet, signParams)
+                ).rejects.toThrow('Cannot sign an already executed transaction')
+                expect(store.setTransactionSigned).not.toHaveBeenCalled()
+                expect(store.setTransactionStatus).not.toHaveBeenCalled()
+            }
+        )
     })
 
     describe('execute', () => {
