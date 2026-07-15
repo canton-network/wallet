@@ -8,7 +8,9 @@ import {
     WalletSDKTestTokenPlugin,
 } from '@canton-network/wallet-sdk'
 
-// TODO: consider switching to another auth method
+/**
+ * @customize consider switching to another auth method
+ */
 const auth: TokenProviderConfig = {
     method: 'self_signed',
     issuer: 'unsafe-auth',

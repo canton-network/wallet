@@ -2610,6 +2610,7 @@ __metadata:
   resolution: "@canton-network/example-test-token-v1-registry@workspace:examples/test-token-v1-registry"
   dependencies:
     "@canton-network/core-token-standard": "workspace:^"
+    "@canton-network/core-types": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
     "@koa/router": "npm:^15.7.0"
     "@types/koa": "npm:^3"
@@ -2627,6 +2628,7 @@ __metadata:
     tsx: "npm:^4.23.0"
     typescript: "npm:^5.9.3"
     vitest: "npm:^4.1.8"
+    zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
 

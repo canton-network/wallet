@@ -17,9 +17,9 @@
         }
     },
     "scripts": {
-        "generate:types": "tsx ./src/common/generateTypes.ts",
+        "generate:types": "tsx ./src/scripts/generateTypes.ts",
         "build": "yarn generate:types && tsup --onSuccess \"tsc\"",
-        "dev": "yarn generate:types && tsx --watch src/index.ts",
+        "dev": "yarn generate:types && NODE_ENV=development tsx --watch src/index.ts",
         "clean": "tsc -b --clean; rm -rf dist",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "test": "vitest run --project node --project browser",
@@ -40,6 +40,7 @@
     },
     "dependencies": {
         "@canton-network/core-token-standard": "workspace:^",
+        "@canton-network/core-types": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
         "@koa/router": "^15.7.0",
         "koa": "^3.2.1",

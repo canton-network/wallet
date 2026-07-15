@@ -19,7 +19,9 @@ export const supportedApis: SupportedApis = {
     'splice-api-token-allocation-instruction-v1': 1,
 }
 
-// TODO: link with a database
+/**
+ * @customize link data with a database
+ */
 export const instruments: Instrument[] = [
     {
         id: 'test-token-v1',

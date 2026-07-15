@@ -4,7 +4,7 @@
 import { execSync } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import path, { basename } from 'node:path'
-import { availableOpenAPIPaths } from './getOpenApiPath'
+import { availableOpenAPIPaths } from '../common/getOpenApiPath'
 
 const outDir = path.join(import.meta.dirname, '../openapi-ts')
 
