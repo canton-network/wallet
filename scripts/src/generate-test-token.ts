@@ -10,6 +10,10 @@ import { execSync } from 'child_process'
 
 const repoRoot = getRepoRoot()
 
+/**
+ * Installs DPM, ensures localnet DAR artifacts exist, and runs DAML codegen
+ * for the test-token package into damljs/test-token-v1.
+ */
 async function main() {
     await installDPM()
 
