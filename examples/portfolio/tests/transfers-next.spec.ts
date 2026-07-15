@@ -11,6 +11,7 @@ import {
     fillAndSubmitTransfer,
     gotoConnect,
     gotoDashboard,
+    gotoOffers,
     openTransferDialog,
     openTransferOfferDialog,
     setupRegistry,
@@ -151,11 +152,22 @@ test.describe('dashboard transfer flow', () => {
             message,
         })
 
-        // Re-assert alice as primary wallet so the dashboard shows her perspective
-        // (sender sees a "Withdraw" button for their outgoing transfers).
+        // Re-assert alice as primary wallet and wait for the outgoing transfer
+        // to load on Offers.
         await switchWallet(dappPage, wg, alice)
-        await gotoDashboard(dappPage)
+        await gotoOffers(dappPage)
+        const loadedDialog = await openTransferOfferDialog(dappPage, {
+            amount: '100',
+            message,
+        })
+        await loadedDialog.getByLabel('Close transfer offer dialog').click()
 
+        // Outgoing transfers do not appear as actions required on the dashboard.
+        await gotoDashboard(dappPage)
+        await expectTransferOfferGone(dappPage, { amount: '100', message })
+
+        // The transfer remains available on Offers so the sender can withdraw it.
+        await gotoOffers(dappPage)
         const dialog = await openTransferOfferDialog(dappPage, {
             amount: '100',
             message,
@@ -165,8 +177,8 @@ test.describe('dashboard transfer flow', () => {
             dialog.getByRole('button', { name: 'Withdraw' }).click()
         )
 
-        // Verify the transfer is gone.
-        await gotoDashboard(dappPage)
+        // Verify the transfer is gone from Offers.
+        await gotoOffers(dappPage)
         await expectTransferOfferGone(dappPage, { amount: '100', message })
 
         // Verify alice's balance is restored after withdrawal.

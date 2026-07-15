@@ -15,11 +15,15 @@ export function useActionRequiredItems(): ActionRequiredItemsResult {
     const offers = useOffers()
     const items = useMemo(
         () =>
-            offers.all.filter(
-                (offer) =>
+            offers.all.filter((offer) => {
+                const hasActionableStatus =
                     offer.status === 'Pending' ||
                     offer.status === 'Action Required'
-            ),
+                const isOutgoingTransfer =
+                    'direction' in offer && offer.direction === 'outgoing'
+
+                return hasActionableStatus && !isOutgoingTransfer
+            }),
         [offers.all]
     )
 
