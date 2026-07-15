@@ -17,6 +17,7 @@ import {
     Ops,
 } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { resolveSynchronizerId } from '../../../synchronizer.js'
 
 /**
  * Represents a signed party creation, ready to be allocated on the ledger.
@@ -144,7 +145,11 @@ export class SignedPartyCreationService {
         } = options
         const ledgerProvider = defaultLedgerProvider ?? this.ctx.ledgerProvider
         try {
-            const synchronizerId = this.ctx.defaultSynchronizerId
+            const synchronizerId = await resolveSynchronizerId(
+                this.ctx.ledgerProvider,
+                this.ctx.error,
+                this.createPartyOptions?.synchronizerId
+            )
 
             await this.allocate(
                 ledgerProvider,

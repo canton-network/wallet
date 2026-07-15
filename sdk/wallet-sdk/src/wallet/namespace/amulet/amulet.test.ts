@@ -46,7 +46,6 @@ const mockAmuletService = {
 const config: AmuletNamespaceConfig = {
     commonCtx: {
         ...ctx,
-        defaultSynchronizerId: 'mock-synchronizer-id',
         logger: mockLogger,
     } as any,
     registry: {
@@ -64,7 +63,6 @@ const config: AmuletNamespaceConfig = {
 const configNoValidator: AmuletNamespaceConfig = {
     commonCtx: {
         ...ctx,
-        defaultSynchronizerId: 'mock-synchronizer-id',
         logger: mockLogger,
     } as any,
     registry: {
@@ -133,7 +131,9 @@ describe('AmuletNamespace', () => {
                 ['dc-1'] as any,
             ])
 
-            const result = await amuletNamespace.tapInternal('10000')
+            const result = await amuletNamespace.tapInternal('10000', {
+                synchronizerId: 'mock-synchronizer-id',
+            })
 
             expect(amuletNamespace.tap).toHaveBeenCalledWith(
                 config.validatorParty,
@@ -142,7 +142,7 @@ describe('AmuletNamespace', () => {
             expect(mockSubmit).toHaveBeenCalledWith({
                 commands: [{ ExerciseCommand: tapCommand }],
                 disclosedContracts: ['dc-1'],
-                synchronizerId: config.commonCtx.defaultSynchronizerId,
+                synchronizerId: 'mock-synchronizer-id',
                 actAs: [config.validatorParty],
             })
             expect(result).toStrictEqual({
@@ -253,6 +253,7 @@ describe('AmuletNamespace with no validator party', () => {
 
             const result = await amuletNamespace.tapInternal('10000', {
                 partyId: 'providerParty::123',
+                synchronizerId: 'mock-synchronizer-id',
             })
 
             expect(amuletNamespace.tap).toHaveBeenCalledWith(
@@ -262,7 +263,7 @@ describe('AmuletNamespace with no validator party', () => {
             expect(mockSubmit).toHaveBeenCalledWith({
                 commands: [{ ExerciseCommand: tapCommand }],
                 disclosedContracts: ['dc-1'],
-                synchronizerId: config.commonCtx.defaultSynchronizerId,
+                synchronizerId: 'mock-synchronizer-id',
                 actAs: ['providerParty::123'],
             })
             expect(result).toStrictEqual({

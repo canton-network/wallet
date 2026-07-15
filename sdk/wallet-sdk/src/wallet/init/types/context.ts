@@ -10,7 +10,6 @@ export type SDKContext = {
     userId: string
     logger: SDKLogger
     error: SDKErrorHandler
-    defaultSynchronizerId: string
 }
 
 export type OfflineSDKContext = {

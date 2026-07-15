@@ -31,7 +31,7 @@ describe('Dar Namespace', () => {
         const uploadSpy = vi.spyOn(dar, 'upload')
 
         const darBytes = new Uint8Array()
-        await dar.upload(darBytes, 'packageId')
+        await dar.upload(darBytes, 'packageId', 'synchronizerId')
 
         expect(checkSpy).toHaveBeenCalledExactlyOnceWith('packageId')
         expect(checkSpy).toHaveResolvedWith(false)

@@ -31,7 +31,6 @@ const mockTokenStandard = {
 const config: TokenNamespaceConfig = {
     commonCtx: {
         ...ctx,
-        defaultSynchronizerId: 'mock-synchronizer-id',
         logger: mockLogger,
     } as any,
     registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
@@ -331,7 +330,6 @@ describe('delegated utxos merge namespace without validatorParty', () => {
         utxos = new TokenNamespace({
             commonCtx: {
                 ...ctx,
-                defaultSynchronizerId: 'mock-synchronizer-id',
                 logger: mockLogger,
             } as any,
             registryUrls: [new ParsedURL(ctx, 'http://registry.com')],

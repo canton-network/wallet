@@ -42,14 +42,9 @@ describe('plugin', () => {
 
     it('should call a plugin constructor when registering', async () => {
         // Mock the authenticated user response
-        mock.ledgerProvider.request
-            .mockResolvedValueOnce({
-                user: { id: 'test-user-id' },
-            })
-            // Mock the connected synchronizers response
-            .mockResolvedValueOnce({
-                connectedSynchronizers: [{ id: 'sync-1' }],
-            })
+        mock.ledgerProvider.request.mockResolvedValueOnce({
+            user: { id: 'test-user-id' },
+        })
 
         const sdk = await SDK.create({
             ledgerProvider: mock.ledgerProvider as never,
@@ -67,14 +62,9 @@ describe('plugin', () => {
 
     it('should successfully register a plugin under provided name', async () => {
         // Mock the authenticated user response
-        mock.ledgerProvider.request
-            .mockResolvedValueOnce({
-                user: { id: 'test-user-id' },
-            })
-            // Mock the connected synchronizers response
-            .mockResolvedValueOnce({
-                connectedSynchronizers: [{ id: 'sync-1' }],
-            })
+        mock.ledgerProvider.request.mockResolvedValueOnce({
+            user: { id: 'test-user-id' },
+        })
 
         const sdk = await SDK.create({
             ledgerProvider: mock.ledgerProvider as never,
