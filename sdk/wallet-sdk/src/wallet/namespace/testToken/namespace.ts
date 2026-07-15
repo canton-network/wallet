@@ -7,11 +7,11 @@ import {
     Transfer,
     TransferFactory,
     TransferInstruction,
-    TestTokenV1,
     AllocationSpecification,
 } from '@canton-network/core-token-standard'
 import { WrappedCommand } from '../ledger/index.js'
 import { PartyId } from '@canton-network/core-types'
+import { TestTokenV1 } from '@canton-network/core-test-token'
 
 export class TestTokenNamespace {
     private readonly generateCommand = {

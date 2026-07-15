@@ -11,23 +11,35 @@ import fs from 'node:fs'
 import path from 'node:path'
 import dts from 'rollup-plugin-dts'
 
-const DAML_JS_BASE = path.resolve(
+const TEST_TOKEN_BASE = path.resolve(
     import.meta.dirname,
-    '../../damljs/token-standard-models'
+    '../../damljs/test-token-v1'
 )
 
 const DAML_JS_PACKAGES = {
-    '@daml.js/token-standard-models-1.0.0': path.join(
-        DAML_JS_BASE,
-        'token-standard-models-1.0.0'
+    '@daml.js/test-token-v1': path.join(
+        TEST_TOKEN_BASE,
+        'splice-test-token-v1-1.0.0'
     ),
-    '@daml.js/ghc-stdlib-DA-Internal-Template-1.0.0': path.join(
-        DAML_JS_BASE,
-        'ghc-stdlib-DA-Internal-Template-1.0.0'
+    '@daml.js/splice-api-token-allocation-instruction-v1-1.0.0': path.join(
+        TEST_TOKEN_BASE,
+        'splice-api-token-allocation-instruction-v1-1.0.0'
     ),
-    '@daml.js/daml-stdlib-DA-Time-Types-1.0.0': path.join(
-        DAML_JS_BASE,
-        'daml-stdlib-DA-Time-Types-1.0.0'
+    '@daml.js/splice-api-token-transfer-instruction-v1-1.0.0': path.join(
+        TEST_TOKEN_BASE,
+        'splice-api-token-transfer-instruction-v1-1.0.0'
+    ),
+    '@daml.js/splice-api-token-holding-v1-1.0.0': path.join(
+        TEST_TOKEN_BASE,
+        'splice-api-token-holding-v1-1.0.0'
+    ),
+    '@daml.js/splice-api-token-allocation-v1-1.0.0': path.join(
+        TEST_TOKEN_BASE,
+        'splice-api-token-allocation-v1-1.0.0'
+    ),
+    '@daml.js/splice-api-token-metadata-v1-1.0.0': path.join(
+        TEST_TOKEN_BASE,
+        'splice-api-token-metadata-v1-1.0.0'
     ),
 }
 

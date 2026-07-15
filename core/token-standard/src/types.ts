@@ -3,9 +3,6 @@
 
 import { Splice } from '@daml.js/token-standard-models-1.0.0'
 import { PartyId } from '@canton-network/core-types'
-import * as testTokenCodegen from '@daml.js/test-token-v1'
-
-export const TestTokenV1 = testTokenCodegen.Splice.Testing.Tokens.TestTokenV1
 
 export * from './interface-ids.const.js'
 
