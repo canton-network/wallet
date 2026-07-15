@@ -3,6 +3,6 @@
 
 export * from './token-standard-client.js'
 export * from './interface-ids.const.js'
-export * from './types'
-
+export * from './types.js'
+export * from './test-token.js'
 export * from '@daml.js/token-standard-models-1.0.0'
