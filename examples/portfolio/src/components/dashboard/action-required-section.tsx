@@ -117,8 +117,7 @@ function SectionShell({ totalCount, children }: SectionShellProps) {
                     />
                 </Box>
                 <Typography variant="body1" color="text.primary">
-                    All offers here are offers sent to and from your primary
-                    wallet
+                    Offers that require action from your primary wallet
                 </Typography>
             </Box>
 
