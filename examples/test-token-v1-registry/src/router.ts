@@ -12,7 +12,7 @@ const contextToRequest = (ctx: Context) => {
     return {
         method: ctx.method,
         path: ctx.path,
-        body: ctx.body,
+        body: ctx.request.body,
         query: ctx.query as Record<string, string | string[]>,
         headers: ctx.headers as Record<string, string | string[]>,
     }
@@ -25,7 +25,7 @@ const routeMap = new Map([
     ['/registry/allocation-instruction/v1/', allocationInstructionAPI],
 ])
 
-export const setRoutes = async (ctx: Context) => {
+export const router = async (ctx: Context) => {
     const route = [...routeMap.keys()].find((route) =>
         ctx.path.startsWith(route)
     )

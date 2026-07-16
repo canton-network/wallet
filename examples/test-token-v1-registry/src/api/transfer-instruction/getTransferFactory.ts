@@ -3,12 +3,45 @@
 
 import { TestTokenV1 } from '@canton-network/core-token-standard'
 import sdk from '../../common/sdk'
-import { TransferInstructionAPIHandler } from './common'
+import { emptyChoiceContext, TransferInstructionAPIHandler } from './common'
 import { admin } from '../../common/admin'
+import { GetFactoryRequest } from '../../openapi-ts/transfer-instruction-v1'
+import z from 'zod'
+
+export const GetTransferFactoryChoiceArguments = z.object({
+    sender: z.string(),
+    receiver: z.string(),
+    transferKind: z.optional(
+        z.union([z.literal('self'), z.literal('offer'), z.literal('direct')])
+    ),
+})
 
 export const getTransferFactory: TransferInstructionAPIHandler<
     'getTransferFactory'
-> = async () => {
+> = async (ctx) => {
+    const { choiceArguments } = ctx.request.body as GetFactoryRequest
+
+    const parsedChoiceArguments =
+        GetTransferFactoryChoiceArguments.safeParse(choiceArguments)
+
+    if (!parsedChoiceArguments.success) {
+        return {
+            status: 400,
+            payload: {
+                error: JSON.stringify(
+                    JSON.parse(parsedChoiceArguments.error.message)
+                ),
+            },
+        }
+    }
+
+    const transferKind =
+        (parsedChoiceArguments.data.transferKind ??
+        parsedChoiceArguments.data.sender ===
+            parsedChoiceArguments.data.receiver)
+            ? 'self'
+            : 'offer'
+
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
@@ -21,11 +54,8 @@ export const getTransferFactory: TransferInstructionAPIHandler<
         return {
             payload: {
                 factoryId: fetchedFactory.contractId,
-                transferKind: 'offer',
-                choiceContext: {
-                    choiceContextData: {},
-                    disclosedContracts: [],
-                },
+                transferKind,
+                choiceContext: emptyChoiceContext,
             },
         }
     }
@@ -61,11 +91,8 @@ export const getTransferFactory: TransferInstructionAPIHandler<
     return {
         payload: {
             factoryId: factoryContract.contractId,
-            transferKind: 'offer',
-            choiceContext: {
-                choiceContextData: {},
-                disclosedContracts: [],
-            },
+            transferKind,
+            choiceContext: emptyChoiceContext,
         },
     }
 }

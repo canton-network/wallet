@@ -2612,7 +2612,6 @@ __metadata:
     "@canton-network/core-token-standard": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
-    "@koa/router": "npm:^15.7.0"
     "@types/koa": "npm:^3"
     "@types/koa-bodyparser": "npm:^4"
     "@types/lodash": "npm:^4.17.24"
@@ -5170,23 +5169,6 @@ __metadata:
   dependencies:
     vary: "npm:^1.1.2"
   checksum: 10c0/49e5f3b861590bd81aa3663a2f0658234a9b378840bb54a2947b3c5f2067f9d966b6fa2e9049fdc7c74c787456d1885bacd0b7ee1f134274d28282c7df99c3fd
-  languageName: node
-  linkType: hard
-
-"@koa/router@npm:^15.7.0":
-  version: 15.7.0
-  resolution: "@koa/router@npm:15.7.0"
-  dependencies:
-    debug: "npm:^4.4.3"
-    http-errors: "npm:^2.0.1"
-    koa-compose: "npm:^4.1.0"
-    path-to-regexp: "npm:^8.4.2"
-  peerDependencies:
-    koa: ^2.0.0 || ^3.0.0
-  peerDependenciesMeta:
-    koa:
-      optional: false
-  checksum: 10c0/da1f23f07684f5b39db5536cd6d4b77f7e38930786c2c0c13cf27d84ab90b6c9eea5ecf17f8f4c1b87ccc822a874f64c351b6e9b4c2e6c9324765564fce689cb
   languageName: node
   linkType: hard
 
@@ -20604,13 +20586,6 @@ __metadata:
   version: 8.3.0
   resolution: "path-to-regexp@npm:8.3.0"
   checksum: 10c0/ee1544a73a3f294a97a4c663b0ce71bbf1621d732d80c9c9ed201b3e911a86cb628ebad691b9d40f40a3742fe22011e5a059d8eed2cf63ec2cb94f6fb4efe67c
-  languageName: node
-  linkType: hard
-
-"path-to-regexp@npm:^8.4.2":
-  version: 8.4.2
-  resolution: "path-to-regexp@npm:8.4.2"
-  checksum: 10c0/05b115c49b47ad252ce05faa32930f643f23769c68b8bcfe78ad833545140c48bbffb3266986d6c8d5db13a64cf12e07e0d72d9882cab830efeefa553533ebaf
   languageName: node
   linkType: hard
 
