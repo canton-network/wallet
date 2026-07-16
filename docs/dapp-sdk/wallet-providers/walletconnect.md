@@ -1,6 +1,6 @@
 ---
-title: "WalletConnect"
-description: "Connect mobile and cross-device wallets to Canton dApps via WalletConnect."
+title: 'WalletConnect'
+description: 'Connect mobile and cross-device wallets to Canton dApps via WalletConnect.'
 ---
 
 WalletConnect lets mobile and cross-device wallets connect to dApps. Wallets add Canton

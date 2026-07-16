@@ -1,6 +1,6 @@
 ---
-title: "Overview"
-description: "Connect your application to Canton Network wallets with the dApp SDK."
+title: 'Overview'
+description: 'Connect your application to Canton Network wallets with the dApp SDK.'
 ---
 
 The dApp SDK is a TypeScript library for connecting web applications to wallets on Canton Network. It lets your
@@ -41,12 +41,12 @@ flowchart TB
     W <-->|Ledger API| C
 ```
 
-| Layer | Responsibility |
-| --- | --- |
-| **dApp SDK** | High-level, convenient API. The recommended entry point for dApps. |
+| Layer                | Responsibility                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **dApp SDK**         | High-level, convenient API. The recommended entry point for dApps.                                           |
 | **CIP-103 provider** | Low-level, EIP-1193–style interface. Use directly only for infrastructure or existing provider integrations. |
-| **Adapters** | Locate and connect to CIP-103 implementations (announced extensions, remote wallets, or WalletConnect). |
-| **Wallet** | Holds the user's parties, authorizes requests, and signs transactions. |
+| **Adapters**         | Locate and connect to CIP-103 implementations (announced extensions, remote wallets, or WalletConnect).      |
+| **Wallet**           | Holds the user's parties, authorizes requests, and signs transactions.                                       |
 
 Wallets connect in one of two ways:
 

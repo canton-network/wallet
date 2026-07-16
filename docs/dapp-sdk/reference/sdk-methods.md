@@ -1,6 +1,6 @@
 ---
-title: "SDK Methods"
-description: "Reference for the high-level dApp SDK methods."
+title: 'SDK Methods'
+description: 'Reference for the high-level dApp SDK methods.'
 ---
 
 ## Lifecycle
@@ -10,10 +10,10 @@ description: "Reference for the high-level dApp SDK methods."
 Registers wallet adapters and silently restores a previous session **without** opening the
 wallet picker. Call once, early in the app lifecycle.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `options.additionalAdapters` | `Adapter[]` | Extra adapters to register alongside the defaults. |
-| `options.defaultAdapters` | `Adapter[]` | Replaces the default list of remote wallets. Pass `[]` to register none. |
+| Parameter                    | Type        | Description                                                              |
+| ---------------------------- | ----------- | ------------------------------------------------------------------------ |
+| `options.additionalAdapters` | `Adapter[]` | Extra adapters to register alongside the defaults.                       |
+| `options.defaultAdapters`    | `Adapter[]` | Replaces the default list of remote wallets. Pass `[]` to register none. |
 
 ### `connect()`
 
@@ -55,26 +55,26 @@ Returns the account the user marked as primary.
 
 Signs an arbitrary string with the primary account.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
+| Parameter | Type     | Description          |
+| --------- | -------- | -------------------- |
 | `message` | `string` | The message to sign. |
 
 ### `prepareExecute(commands)`
 
 Prepares, requests signature for, and executes a Daml transaction.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
+| Parameter  | Type                      | Description                   |
+| ---------- | ------------------------- | ----------------------------- |
 | `commands` | `{ commands: Command[] }` | The Daml commands to execute. |
 
 ### `ledgerApi(request)`
 
 Proxies an authenticated request to the Canton JSON Ledger API.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `request.requestMethod` | `string` | HTTP method, e.g. `'GET'`. |
-| `request.resource` | `string` | Ledger API path, e.g. `'/v2/version'`. |
+| Parameter               | Type     | Description                            |
+| ----------------------- | -------- | -------------------------------------- |
+| `request.requestMethod` | `string` | HTTP method, e.g. `'GET'`.             |
+| `request.resource`      | `string` | Ledger API path, e.g. `'/v2/version'`. |
 
 ## Provider access
 

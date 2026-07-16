@@ -1,6 +1,6 @@
 ---
-title: "Remote Wallet"
-description: "Expose a remote (server-side) wallet to Canton dApps via a CIP-103 RPC endpoint."
+title: 'Remote Wallet'
+description: 'Expose a remote (server-side) wallet to Canton dApps via a CIP-103 RPC endpoint.'
 ---
 
 Remote wallets are server-side wallets. They are not injected into the page; instead they

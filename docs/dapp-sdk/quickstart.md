@@ -1,6 +1,6 @@
 ---
-title: "Quickstart"
-description: "Install the dApp SDK and build a working wallet connection in a few minutes."
+title: 'Quickstart'
+description: 'Install the dApp SDK and build a working wallet connection in a few minutes.'
 ---
 
 This is the shortest working integration: install the SDK, initialize it, let the user
@@ -37,6 +37,7 @@ import * as sdk from '@canton-network/dapp-sdk'
 
 await sdk.init()
 ```
+
 </Step>
 
 <Step title="Connect a wallet">
@@ -45,10 +46,11 @@ This opens the wallet picker and runs the authentication flow.
 
 ```typescript
 async function onConnectClick() {
-  const result = await sdk.connect()
-  console.log('Connected:', result.isConnected)
+    const result = await sdk.connect()
+    console.log('Connected:', result.isConnected)
 }
 ```
+
 </Step>
 
 <Step title="Read the connected party">
@@ -58,6 +60,7 @@ Once connected, read the account the user marked as primary.
 const account = await sdk.getPrimaryAccount()
 console.log('Primary party:', account.partyId)
 ```
+
 </Step>
 
 <Step title="Submit a transaction">
@@ -68,18 +71,18 @@ the user to approve and sign it in their wallet, and submits it to the ledger.
 const account = await sdk.getPrimaryAccount()
 
 await sdk.prepareExecute({
-  commands: [
-    {
-      CreateCommand: {
-        templateId: '#AdminWorkflows:Canton.Internal.Ping:Ping',
-        createArguments: {
-          id: `ping-${Date.now()}`,
-          initiator: account.partyId,
-          responder: account.partyId,
+    commands: [
+        {
+            CreateCommand: {
+                templateId: '#AdminWorkflows:Canton.Internal.Ping:Ping',
+                createArguments: {
+                    id: `ping-${Date.now()}`,
+                    initiator: account.partyId,
+                    responder: account.partyId,
+                },
+            },
         },
-      },
-    },
-  ],
+    ],
 })
 ```
 
@@ -95,9 +98,10 @@ Let the user end their session.
 
 ```typescript
 async function onDisconnectClick() {
-  await sdk.disconnect()
+    await sdk.disconnect()
 }
 ```
+
 </Step>
 </Steps>
 

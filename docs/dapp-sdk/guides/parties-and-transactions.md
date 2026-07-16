@@ -1,6 +1,6 @@
 ---
-title: "Parties & Transactions"
-description: "Read parties, sign messages, execute transactions, and query the ledger."
+title: 'Parties & Transactions'
+description: 'Read parties, sign messages, execute transactions, and query the ledger.'
 ---
 
 Once a wallet is connected, your dApp can read the user's Canton parties, sign messages,
@@ -38,8 +38,8 @@ it indefinitely.
 
 ```typescript
 const handler = (accounts) => {
-  const primary = accounts.find((a) => a.primary)
-  setActiveParty(primary?.partyId)
+    const primary = accounts.find((a) => a.primary)
+    setActiveParty(primary?.partyId)
 }
 
 sdk.onAccountsChanged(handler)
@@ -74,16 +74,16 @@ user's approval and signature in their wallet, and submits the transaction to th
 const account = await sdk.getPrimaryAccount()
 
 await sdk.prepareExecute({
-  commands: [
-    {
-      CreateCommand: {
-        templateId: '<your-package>:<Module>:<Template>',
-        createArguments: {
-          // template fields
+    commands: [
+        {
+            CreateCommand: {
+                templateId: '<your-package>:<Module>:<Template>',
+                createArguments: {
+                    // template fields
+                },
+            },
         },
-      },
-    },
-  ],
+    ],
 })
 ```
 
@@ -100,11 +100,11 @@ Subscribe to `onTxChanged` to follow a transaction through its lifecycle
 
 ```typescript
 sdk.onTxChanged((tx) => {
-  if (tx.status === 'executed') {
-    console.log('Update ID:', tx.payload.updateId)
-  } else if (tx.status === 'failed') {
-    // Surface the failure to the user
-  }
+    if (tx.status === 'executed') {
+        console.log('Update ID:', tx.payload.updateId)
+    } else if (tx.status === 'failed') {
+        // Surface the failure to the user
+    }
 })
 ```
 
@@ -114,8 +114,8 @@ Proxy authenticated requests to the Canton JSON Ledger API through the user's se
 
 ```typescript
 const response = await sdk.ledgerApi({
-  requestMethod: 'GET',
-  resource: '/v2/version',
+    requestMethod: 'GET',
+    resource: '/v2/version',
 })
 
 console.log(JSON.parse(response.response))

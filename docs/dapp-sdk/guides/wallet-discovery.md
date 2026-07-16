@@ -1,6 +1,6 @@
 ---
-title: "Wallet Discovery"
-description: "Customize the wallet picker, add WalletConnect, and register custom remote wallets."
+title: 'Wallet Discovery'
+description: 'Customize the wallet picker, add WalletConnect, and register custom remote wallets.'
 ---
 
 By default, `sdk.init()` makes the wallet picker list every CIP-103 wallet the SDK can
@@ -31,10 +31,10 @@ By default, `init()` also loads the SDK's bundled **verified wallet** list from
 The SDK ships curated wallet lists for the picker. There are two bundled files, serving
 different wallet types and roles:
 
-| File | Typical `type` values | Role |
-| --- | --- | --- |
-| [`gateways.json`](https://github.com/canton-network/wallet/blob/main/sdk/dapp-sdk/src/gateways.json) | `remote` | Pre-registered **remote** wallets (`RemoteAdapter` defaults) — connectable entries in the main picker list |
-| [`wallets.json`](https://github.com/canton-network/wallet/blob/main/sdk/dapp-sdk/src/wallets.json) | `browser`, `desktop`, `mobile`, `remote` | **Verified** wallets not yet available to the user — install or setup prompts shown when no matching wallet is detected |
+| File                                                                                                 | Typical `type` values                    | Role                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [`gateways.json`](https://github.com/canton-network/wallet/blob/main/sdk/dapp-sdk/src/gateways.json) | `remote`                                 | Pre-registered **remote** wallets (`RemoteAdapter` defaults) — connectable entries in the main picker list              |
+| [`wallets.json`](https://github.com/canton-network/wallet/blob/main/sdk/dapp-sdk/src/wallets.json)   | `browser`, `desktop`, `mobile`, `remote` | **Verified** wallets not yet available to the user — install or setup prompts shown when no matching wallet is detected |
 
 ### Verified wallet list (`wallets.json`)
 
@@ -49,27 +49,27 @@ On `init()`, when `enableSuggestedWallets` is `true` (the default), the bundled
 
 ```json
 {
-  "name": "Example Wallet",
-  "type": "browser",
-  "providerId": "browser:ext:uniqueextensionid",
-  "description": "Connect via a browser extension wallet",
-  "icon": "https://example.com/favicon.svg",
-  "installUrls": [
-    {
-      "platform": "chrome",
-      "url": "https://chromewebstore.google.com/detail/..."
-    }
-  ]
+    "name": "Example Wallet",
+    "type": "browser",
+    "providerId": "browser:ext:uniqueextensionid",
+    "description": "Connect via a browser extension wallet",
+    "icon": "https://example.com/favicon.svg",
+    "installUrls": [
+        {
+            "platform": "chrome",
+            "url": "https://chromewebstore.google.com/detail/..."
+        }
+    ]
 }
 ```
 
-| Field | Description |
-| --- | --- |
-| `name` | Display name in the picker |
-| `type` | Provider type: `browser`, `desktop`, `mobile`, or `remote` |
-| `providerId` | Must match the wallet's discovery id once installed (e.g. `browser:ext:<id>` for extensions, `remote:<rpcUrl>` for remote wallets) |
-| `description` | Optional short description |
-| `icon` | Optional icon URL |
+| Field         | Description                                                                                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Display name in the picker                                                                                                                                  |
+| `type`        | Provider type: `browser`, `desktop`, `mobile`, or `remote`                                                                                                  |
+| `providerId`  | Must match the wallet's discovery id once installed (e.g. `browser:ext:<id>` for extensions, `remote:<rpcUrl>` for remote wallets)                          |
+| `description` | Optional short description                                                                                                                                  |
+| `icon`        | Optional icon URL                                                                                                                                           |
 | `installUrls` | Setup or install links. For `browser` wallets, use `chrome` / `firefox` store URLs. For other types, link to download pages, app stores, or onboarding docs |
 
 **Adding a wallet:** Wallet authors can open a PR that adds an entry to `wallets.json`. The
@@ -99,7 +99,7 @@ import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
 
 const wc = WalletConnectAdapter.create({
-  projectId: import.meta.env.VITE_WC_PROJECT_ID,
+    projectId: import.meta.env.VITE_WC_PROJECT_ID,
 })
 
 await sdk.init({ additionalAdapters: [wc] })
@@ -116,12 +116,12 @@ through an environment variable as shown above.
 import { RemoteAdapter } from '@canton-network/dapp-sdk'
 
 await sdk.init({
-  additionalAdapters: [
-    new RemoteAdapter({
-      name: 'My Remote Wallet',
-      rpcUrl: 'https://my-wallet.example/api/v0/dapp',
-    }),
-  ],
+    additionalAdapters: [
+        new RemoteAdapter({
+            name: 'My Remote Wallet',
+            rpcUrl: 'https://my-wallet.example/api/v0/dapp',
+        }),
+    ],
 })
 ```
 
@@ -131,13 +131,13 @@ await sdk.init({
 import { ExtensionAdapter } from '@canton-network/dapp-sdk'
 
 await sdk.init({
-  additionalAdapters: [
-    new ExtensionAdapter({
-      providerId: 'browser:ext:com.example.mywallet' as never,
-      name: 'My Wallet',
-      target: 'com.example.mywallet',
-    }),
-  ],
+    additionalAdapters: [
+        new ExtensionAdapter({
+            providerId: 'browser:ext:com.example.mywallet' as never,
+            name: 'My Wallet',
+            target: 'com.example.mywallet',
+        }),
+    ],
 })
 ```
 
@@ -149,12 +149,12 @@ To offer only specific remote wallets (and not the SDK defaults), pass `defaultA
 import { RemoteAdapter } from '@canton-network/dapp-sdk'
 
 await sdk.init({
-  defaultAdapters: [
-    new RemoteAdapter({
-      name: 'Production Wallet',
-      rpcUrl: 'https://wallet.example/api/v0/dapp',
-    }),
-  ],
+    defaultAdapters: [
+        new RemoteAdapter({
+            name: 'Production Wallet',
+            rpcUrl: 'https://wallet.example/api/v0/dapp',
+        }),
+    ],
 })
 ```
 
@@ -174,9 +174,12 @@ remote wallets you have vetted, which is a common production requirement.
 
 ```typescript
 await sdk.init({
-  defaultAdapters: [
-    new RemoteAdapter({ name: 'Approved Wallet', rpcUrl: 'https://approved.example/api/v0/dapp' }),
-  ],
+    defaultAdapters: [
+        new RemoteAdapter({
+            name: 'Approved Wallet',
+            rpcUrl: 'https://approved.example/api/v0/dapp',
+        }),
+    ],
 })
 ```
 

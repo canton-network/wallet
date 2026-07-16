@@ -1,6 +1,6 @@
 ---
-title: "Handle Events"
-description: "Subscribe to connection, account, and transaction events, and clean up listeners."
+title: 'Handle Events'
+description: 'Subscribe to connection, account, and transaction events, and clean up listeners.'
 ---
 
 The dApp SDK emits events so your UI can stay in sync with the wallet's state. Subscribe
@@ -16,7 +16,7 @@ For the full list of events and their payloads, see the
 
 ```typescript
 const handler = (status) => {
-  console.log('Connected:', status.connection.isConnected)
+    console.log('Connected:', status.connection.isConnected)
 }
 
 sdk.onStatusChanged(handler)
@@ -31,7 +31,7 @@ changes. Re-read the primary party rather than caching it.
 
 ```typescript
 sdk.onAccountsChanged((accounts) => {
-  const primary = accounts.find((a) => a.primary)
+    const primary = accounts.find((a) => a.primary)
 })
 ```
 
@@ -42,9 +42,9 @@ lifecycle (`pending`, `signed`, `executed`, `failed`).
 
 ```typescript
 sdk.onTxChanged((tx) => {
-  if (tx.status === 'executed') {
-    console.log('Update ID:', tx.payload.updateId)
-  }
+    if (tx.status === 'executed') {
+        console.log('Update ID:', tx.payload.updateId)
+    }
 })
 ```
 

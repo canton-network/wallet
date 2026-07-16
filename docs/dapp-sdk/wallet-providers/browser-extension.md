@@ -1,6 +1,6 @@
 ---
-title: "Browser Extension"
-description: "Make a browser-extension wallet discoverable by announcing it to dApps."
+title: 'Browser Extension'
+description: 'Make a browser-extension wallet discoverable by announcing it to dApps.'
 ---
 
 A browser-extension wallet becomes discoverable by announcing itself with an event, or by
@@ -19,25 +19,25 @@ The SDK does **not** scan `window` for injected providers (for example `window.c
 The SDK uses an [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963)-style request/announce
 pair with Canton-specific event names.
 
-| Direction | Event | Payload (`detail`) |
-| --- | --- | --- |
-| dApp → wallets | `canton:requestProvider` | Optional, may be `{}` |
-| Wallet → dApp | `canton:announceProvider` | `id` (required), `name` (required), optional `icon`, optional `target` |
+| Direction      | Event                     | Payload (`detail`)                                                     |
+| -------------- | ------------------------- | ---------------------------------------------------------------------- |
+| dApp → wallets | `canton:requestProvider`  | Optional, may be `{}`                                                  |
+| Wallet → dApp  | `canton:announceProvider` | `id` (required), `name` (required), optional `icon`, optional `target` |
 
 Respond to the request by announcing yourself:
 
 ```javascript
 window.addEventListener('canton:requestProvider', () => {
-  window.dispatchEvent(
-    new CustomEvent('canton:announceProvider', {
-      detail: {
-        id: 'com.example.mywallet',
-        name: 'My Wallet',
-        icon: 'data:image/svg+xml;base64,...',
-        target: 'com.example.mywallet',
-      },
-    }),
-  )
+    window.dispatchEvent(
+        new CustomEvent('canton:announceProvider', {
+            detail: {
+                id: 'com.example.mywallet',
+                name: 'My Wallet',
+                icon: 'data:image/svg+xml;base64,...',
+                target: 'com.example.mywallet',
+            },
+        })
+    )
 })
 ```
 

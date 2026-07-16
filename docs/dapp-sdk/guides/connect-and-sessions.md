@@ -1,6 +1,6 @@
 ---
-title: "Connect & Sessions"
-description: "Initialize the SDK, connect a wallet, restore sessions, and disconnect."
+title: 'Connect & Sessions'
+description: 'Initialize the SDK, connect a wallet, restore sessions, and disconnect.'
 ---
 
 This guide covers the connection lifecycle: initializing the SDK, connecting a wallet,
@@ -42,10 +42,10 @@ authentication flow if the user is not already authenticated.
 
 ```typescript
 async function onConnectClick() {
-  const result = await sdk.connect()
-  if (result.isConnected) {
-    // Show the connected UI
-  }
+    const result = await sdk.connect()
+    if (result.isConnected) {
+        // Show the connected UI
+    }
 }
 ```
 
@@ -74,9 +74,9 @@ await sdk.init()
 
 const { isConnected } = await sdk.isConnected()
 if (isConnected) {
-  // Returning user: render the connected UI
+    // Returning user: render the connected UI
 } else {
-  // Show the "Connect wallet" button
+    // Show the "Connect wallet" button
 }
 ```
 
@@ -101,14 +101,14 @@ component unmounts.
 
 ```typescript
 function subscribe() {
-  const handler = (status) => {
-    setConnected(status.connection.isConnected)
-  }
+    const handler = (status) => {
+        setConnected(status.connection.isConnected)
+    }
 
-  sdk.onStatusChanged(handler)
+    sdk.onStatusChanged(handler)
 
-  // Call on unmount to avoid leaks:
-  return () => sdk.offStatusChanged(handler)
+    // Call on unmount to avoid leaks:
+    return () => sdk.offStatusChanged(handler)
 }
 ```
 
@@ -118,7 +118,7 @@ End the session between your app and the wallet.
 
 ```typescript
 async function onDisconnectClick() {
-  await sdk.disconnect()
+    await sdk.disconnect()
 }
 ```
 
