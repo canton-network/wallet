@@ -1,6 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    isSpliceMessageEvent,
+    SpliceMessage,
+    WalletEvent,
+} from '@canton-network/core-types'
+
 interface PopupOptions {
     title?: string
     target?: string
@@ -57,7 +63,41 @@ class PopupInstance {
             urlOrComponent instanceof URL
         ) {
             const win = PopupInstance.getInstance()
-            win.location.href = urlOrComponent.toString()
+            const url = urlOrComponent.toString()
+            const childOrigin = new URL(url).origin
+            win.location.href = url
+
+            const message: SpliceMessage = {
+                type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                origin: window.location.origin,
+            }
+
+            // due to the asynchronicity when sending the postMessage immediately after redirecting,
+            // there is a chance that the child window has not yet loaded,
+            // and does not an event listener established yet. Therefore,
+            // we repeatedly poll until the child window sends back an acknowledgment message.
+            const handleMessage = (event: MessageEvent) => {
+                if (!isSpliceMessageEvent(event)) return
+                if (
+                    event.data.type !==
+                    WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+                )
+                    return
+                if (childOrigin !== event.origin) return
+
+                console.log('Received acknowledgment from child window:', event)
+
+                clearInterval(originPoller)
+                window.removeEventListener('message', handleMessage)
+            }
+
+            window.addEventListener('message', handleMessage)
+
+            const originPoller = setInterval(() => {
+                console.log('posting message!', { message, childOrigin })
+                win.postMessage(message, childOrigin)
+            }, 500)
+
             win.focus()
             return win
         } else {

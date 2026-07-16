@@ -22,6 +22,7 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
+import './listeners'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `
@@ -287,9 +288,18 @@ export class UserUIAuthRedirect extends LitElement {
 
 export const addUserSession = async (token: string, networkId: string) => {
     const authenticatedUserClient = await createUserClient(token)
+    const origin = window.sessionStorage.getItem('dappOrigin')
+
+    if (!origin) {
+        throw new Error(
+            'Missing dApp origin in sessionStorage. Cannot add user session.'
+        )
+    }
+
     const session = await authenticatedUserClient.request({
         method: 'addSession',
         params: {
+            origin,
             networkId,
         },
     })
