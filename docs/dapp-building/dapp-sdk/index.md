@@ -35,7 +35,7 @@ The SDK automatically handles the transport layer, allowing your dApp to work wi
 
 **Provider Discovery**
 
-When using browser extension wallets, the SDK exposes an EIP-1193-compatible provider at `window.canton`, following the pattern established by Ethereum wallets. This enables wallet discovery and connection in browser environments. For extension authors, the SDK also supports namespace scanning, EIP-6963-style announcement events, and targeted `postMessage` routing. See the docs section [Wallet providers](provider.md).
+The SDK discovers wallets through configured **remote gateways**, EIP-6963-style **`canton:announceProvider`** events, and **`additionalAdapters`** passed to `init()`. Browser extensions communicate over targeted **`postMessage`** routing. After `connect()`, use `getConnectedProvider()` for low-level [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193)-style access to the active CIP-103 provider. See [Wallet providers](provider.md).
 
 ## Contents
 

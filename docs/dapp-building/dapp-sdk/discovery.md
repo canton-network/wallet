@@ -8,7 +8,7 @@ user will see in the **wallet picker** opened by `connect()`. In other words:
 
 ## Option 1: Use the built-in default gateways
 
-This registers the SDK’s default gateway list (from `gateways.json`) plus any injected / announced wallets:
+This registers the SDK’s default gateway list (from `gateways.json`) plus any wallets that announce via `canton:announceProvider`:
 
 ```typescript
 await sdk.init()
@@ -82,7 +82,7 @@ await sdk.init({
 ## Option 4: Intentionally register no remote gateways
 
 If you pass an empty list, you are explicitly choosing “none” (useful if your dApp only supports
-injected/announced wallets, or only supports adapters you add later).
+announced extension wallets or adapters you add later).
 
 ```typescript
 await sdk.init({ defaultAdapters: [] })
