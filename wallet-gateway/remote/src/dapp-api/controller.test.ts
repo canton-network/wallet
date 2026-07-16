@@ -107,6 +107,7 @@ const auth: AuthContext = {
 
 const session: Session = {
     id: 'session-1',
+    origin: 'dapp-1',
     network: 'network1',
     accessToken: 'session-token',
 }

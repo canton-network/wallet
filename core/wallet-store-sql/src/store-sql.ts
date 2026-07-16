@@ -383,16 +383,28 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     async setSession(session: Session): Promise<void> {
         const userId = this.assertConnected()
+
+        if (!session.origin) {
+            throw new Error('Session origin is required')
+        }
+
         await this.db.transaction().execute(async (trx) => {
             const deleted = await trx
                 .deleteFrom('sessions')
-                .where('userId', '=', userId)
+                .where((eb) =>
+                    eb.and([
+                        eb('userId', '=', userId),
+                        eb('origin', '=', session.origin),
+                    ])
+                )
                 .execute()
             this.logger.debug(deleted, 'Deleted old session')
+
             const inserted = await trx
                 .insertInto('sessions')
                 .values({ ...session, userId })
                 .execute()
+
             this.logger.debug(inserted, 'Inserted new session')
         })
     }

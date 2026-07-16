@@ -182,6 +182,12 @@ export type Signature = string
 export type SignedBy = string
 /**
  *
+ * The origin (dApp URL) that initiated this transaction request.
+ *
+ */
+export type Origin = string
+/**
+ *
  * Authentication method configured for this network
  *
  */
@@ -349,12 +355,6 @@ export type Status = string
  *
  */
 export type Message = string
-/**
- *
- * The origin (dApp URL) that initiated this transaction request.
- *
- */
-export type Origin = string
 /**
  *
  * The timestamp when the API key was created.
@@ -525,6 +525,7 @@ export interface ExecuteParams {
     signedBy: SignedBy
 }
 export interface AddSessionParams {
+    origin: Origin
     networkId: NetworkId
 }
 export interface GetTransactionParams {

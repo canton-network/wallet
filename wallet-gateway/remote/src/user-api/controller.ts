@@ -724,6 +724,7 @@ export const userController = (
 
                 await store.setSession({
                     id: newSessionId,
+                    origin: params.origin,
                     network: params.networkId,
                     accessToken: connectedContext.accessToken || '',
                 })
@@ -812,9 +813,10 @@ export const userController = (
         },
         removeSession: async (): Promise<Null> => {
             logger.info({ authContext }, 'Removing session')
-            const userId = assertConnected(authContext).userId
+            const { accessToken, userId } = assertConnected(authContext)
+
             const notifier = notificationService.getNotifier(userId)
-            await store.removeSession()
+            await store.removeSession(accessToken)
 
             notifier.emit('statusChanged', {
                 provider: provider,
@@ -833,7 +835,10 @@ export const userController = (
             return null
         },
         listSessions: async (): Promise<ListSessionsResult> => {
-            const session = await store.getSession()
+            // todo: can we call assertConnected here?
+            const session = await store.getSession(
+                authContext?.accessToken || ''
+            )
             if (!session) {
                 return { sessions: [] }
             }

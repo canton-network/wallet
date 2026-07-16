@@ -308,6 +308,7 @@ describe('WalletSyncService - multi-network features', () => {
     const setSession = async (networkId: string) => {
         await store.setSession({
             id: `sess-${networkId}`,
+            origin: 'dapp-1',
             network: networkId,
             accessToken: 'token',
         })

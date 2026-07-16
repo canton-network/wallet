@@ -47,7 +47,7 @@ export const dapp = (
         }
 
         const newStore = store.withAuthContext(context)
-        const session = await newStore.getSession()
+        const session = await newStore.getSession(context.accessToken)
         const sessionId = session?.id
 
         if (!sessionId) {

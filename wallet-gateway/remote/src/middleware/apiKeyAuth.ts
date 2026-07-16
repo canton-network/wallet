@@ -75,6 +75,7 @@ export function apiKeyAuth(
             // automatically initiate a session for the API key user
             await authStore.setSession({
                 id: v4(),
+                origin: req.ip || 'unknown', // use the requestor's IP address as the origin for the session
                 network: matchingKey.networkId,
                 accessToken: 'unused',
             })

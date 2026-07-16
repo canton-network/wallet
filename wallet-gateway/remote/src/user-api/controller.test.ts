@@ -150,6 +150,7 @@ const adminAuth: AuthContext = {
 
 const session: Session = {
     id: 'session-1',
+    origin: 'dapp-1',
     network: 'network1',
     accessToken: 'session-token',
 }
@@ -1038,6 +1039,7 @@ describe('userController', () => {
             )
 
             const result = await controller.addSession({
+                origin: 'dapp-1',
                 networkId: 'network1',
             })
 
@@ -1079,7 +1081,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1098,7 +1103,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).resolves.toMatchObject({
                 network: expect.objectContaining({ id: 'network1' }),
                 status: 'connected',
@@ -1121,7 +1129,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1141,7 +1152,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1160,7 +1174,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1179,7 +1196,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1198,7 +1218,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
     })
