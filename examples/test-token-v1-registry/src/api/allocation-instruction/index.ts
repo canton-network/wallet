@@ -3,11 +3,14 @@
 
 import { OpenAPIBackend } from 'openapi-backend'
 import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
+import { getAllocationFactory } from './getAllocationFactory'
 
 export const allocationInstructionAPI = new OpenAPIBackend({
     definition: availableOpenAPIPaths['allocation-instruction-v1.yaml'],
     quick: true,
-    handlers: {},
+    handlers: {
+        getAllocationFactory,
+    },
 })
 
 await allocationInstructionAPI.init()
