@@ -65,7 +65,21 @@ export class WgLoginForm extends BaseElement {
             .modal-card {
                 width: 100%;
                 max-width: 420px;
-                background: var(--wg-surface);
+                background-color: var(--wg-surface);
+                background-image:
+                    linear-gradient(
+                        90deg,
+                        rgba(0, 0, 0, 0.04) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        0deg,
+                        rgba(0, 0, 0, 0.04) 1px,
+                        transparent 1px
+                    );
+                background-size:
+                    25px 25px,
+                    25px 25px;
                 border-radius: 16px;
                 box-shadow: var(--wg-shadow-lg);
                 overflow: hidden;
@@ -124,7 +138,7 @@ export class WgLoginForm extends BaseElement {
             }
 
             .content {
-                padding: 1rem 1.25rem 0;
+                padding: 1rem 1.25rem 16px;
                 display: flex;
                 flex-direction: column;
                 gap: 0.75rem;
@@ -142,33 +156,102 @@ export class WgLoginForm extends BaseElement {
             .network-item {
                 width: 100%;
                 display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                padding: 0.75rem 1rem;
-                border: 1px solid var(--wg-border);
-                border-radius: var(--wg-radius-lg);
-                background: var(--wg-input-bg);
+                flex-direction: column;
+                border-radius: 8px;
+                background: rgb(255 255 255 / 80%);
+                border: 1px solid transparent;
+                box-shadow:
+                    0 2px 6px rgba(0, 0, 0, 0.06),
+                    0 4px 12px rgba(0, 0, 0, 0.04);
                 cursor: pointer;
-                transition:
-                    border-color 0.15s ease,
-                    box-shadow 0.15s ease;
+                transition: all 0.15s ease;
                 text-align: left;
+                margin-bottom: 8px;
+                opacity: 0.9;
+                position: relative;
                 font: inherit;
                 color: var(--wg-text);
                 box-sizing: border-box;
             }
 
+            .network-item-top {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 12px;
+            }
+
+            .network-item::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 8px;
+                background:
+                    radial-gradient(
+                        ellipse 120% 100% at calc(var(--mx, 10) * 1%)
+                            calc(var(--my, 40) * 1%),
+                        rgba(124, 58, 237, 0.12) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        ellipse 100% 120% at calc(100% - var(--mx, 85) * 1%)
+                            calc(var(--my, 60) * 1%),
+                        rgba(124, 58, 237, 0.12) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        ellipse 80% 80% at 50% 80%,
+                        rgba(0, 0, 0, 0.06) 0%,
+                        transparent 50%
+                    );
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                pointer-events: none;
+                z-index: -1;
+            }
+
+            .network-item:hover::before {
+                opacity: 1;
+            }
+
             .network-item:hover {
-                border-color: var(--wg-accent);
+                border-color: rgba(0, 0, 0, 0.08);
+                box-shadow:
+                    -8px -8px 20px rgba(255, 255, 255, 0.95),
+                    10px 10px 28px rgba(0, 0, 0, 0.16);
+            }
+
+            .network-item:focus-visible {
+                outline: 2px solid var(--wg-theme-accent-color);
+                outline-offset: 2px;
             }
 
             .network-item.selected {
                 border-color: var(--wg-accent);
                 box-shadow: 0 0 0 3px rgba(var(--wg-accent-rgb), 0.15);
-                background: rgba(var(--wg-accent-rgb), 0.04);
             }
 
-            .network-item:disabled {
+            .network-item.selected::before {
+                opacity: 1;
+                background:
+                    radial-gradient(
+                        ellipse 120% 100% at 10% 40%,
+                        rgba(124, 58, 237, 0.12) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        ellipse 100% 120% at 90% 60%,
+                        rgba(124, 58, 237, 0.12) 0%,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        ellipse 80% 80% at 50% 80%,
+                        rgba(0, 0, 0, 0.06) 0%,
+                        transparent 50%
+                    );
+            }
+
+            .network-item.disabled {
                 opacity: 0.5;
                 cursor: not-allowed;
             }
@@ -193,63 +276,66 @@ export class WgLoginForm extends BaseElement {
                 margin-top: 0.125rem;
             }
 
-            .network-check {
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                border: 2px solid var(--wg-border);
-                flex: 0 0 auto;
+            .network-item-client-id {
+                padding: 0 12px 14px;
+            }
+
+            .client-id-input-wrap {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                transition: border-color 0.15s ease;
+                border: 1px solid var(--wg-border);
+                border-radius: 8px;
+                background: var(--wg-input-bg);
+                transition:
+                    border-color 0.15s,
+                    box-shadow 0.15s;
             }
 
-            .network-check.selected {
+            .client-id-input-wrap:focus-within {
                 border-color: var(--wg-accent);
-                background: var(--wg-accent);
-            }
-
-            .network-check.selected::after {
-                content: '';
-                width: 6px;
-                height: 6px;
-                border-radius: 50%;
-                background: var(--wg-primary-text);
-            }
-
-            .section-divider {
-                height: 1px;
-                background: var(--wg-border);
-                margin: 0.125rem 0;
+                box-shadow: 0 0 0 2px rgba(var(--wg-accent-rgb), 0.15);
             }
 
             .client-id-input {
-                width: 100%;
-                border: 1px solid var(--wg-border);
-                border-radius: var(--wg-radius-md);
-                background: var(--wg-input-bg);
-                padding: 0.625rem 0.75rem;
-                font: inherit;
-                font-size: var(--wg-font-size-sm);
-                line-height: var(--bs-body-line-height);
+                flex: 1;
+                padding: 10px 12px;
+                border: none;
                 outline: none;
-                box-sizing: border-box;
+                font-size: 14px;
+                background: transparent;
+                color: var(--wg-text);
+                min-width: 0;
+                font: inherit;
             }
 
-            .client-id-input:focus {
-                border-color: var(--wg-input-border-focus);
-                box-shadow: 0 0 0 3px rgba(var(--wg-accent-rgb), 0.12);
+            .client-id-input::placeholder {
+                color: var(--wg-text-secondary);
             }
 
-            .footer {
-                padding: 1rem 1.25rem;
+            .btn-connect {
+                background: transparent;
+                color: var(--wg-text-secondary);
+                border: 1px solid var(--wg-border);
+                border-radius: 6px;
+                padding: 5px 10px;
+                margin-right: 5px;
+                font-size: 12px;
+                font-weight: 500;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: all 0.15s;
+                flex-shrink: 0;
             }
 
-            .connect-btn {
-                padding: 0.7rem 1.25rem;
-                font-size: var(--wg-font-size-sm);
-                font-weight: var(--wg-font-weight-semibold);
+            .btn-connect:hover {
+                background: var(--wg-surface-hover);
+                color: var(--wg-text);
+                border-color: var(--wg-accent);
+            }
+
+            .btn-connect:disabled {
+                opacity: 0.5;
+                cursor: default;
             }
         `,
     ]
@@ -317,7 +403,7 @@ export class WgLoginForm extends BaseElement {
         const clientId =
             (
                 this.renderRoot.querySelector(
-                    '#client-id'
+                    `#client-id-${this.selectedNetwork.id}`
                 ) as HTMLInputElement | null
             )?.value || this.selectedNetwork.clientId
 
@@ -338,30 +424,111 @@ export class WgLoginForm extends BaseElement {
         this.messageType = null
     }
 
+    connectedCallback(): void {
+        super.connectedCallback()
+        this.addEventListener('mousemove', this.onMouseMove)
+    }
+
+    disconnectedCallback(): void {
+        super.disconnectedCallback()
+        this.removeEventListener('mousemove', this.onMouseMove)
+    }
+
+    private readonly onMouseMove = (event: MouseEvent): void => {
+        const rect = this.getBoundingClientRect()
+        const x = ((event.clientX - rect.left) / rect.width) * 100
+        const y = ((event.clientY - rect.top) / rect.height) * 100
+        this.style.setProperty('--mx', String(x))
+        this.style.setProperty('--my', String(y))
+    }
+
     private renderNetworkItem(network: PublicNetwork) {
+        const isSelfSigned = this.selectedIdp?.type === 'self_signed'
         const isSelected = this.selectedNetwork?.id === network.id
         const disabled =
             this.connecting || network.authMethod === 'client_credentials'
+        const showClientId = isSelected && isSelfSigned
+
+        const handleClick = () => {
+            if (disabled) return
+            if (isSelfSigned) {
+                this.selectNetwork(network)
+            } else {
+                this.selectNetwork(network)
+                this.handleConnect()
+            }
+        }
+
+        const handleKeydown = (e: KeyboardEvent) => {
+            if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault()
+                handleClick()
+            }
+        }
+
+        const handleConnectClick = (e: Event) => {
+            e.stopPropagation()
+            this.handleConnect()
+        }
+
+        const handleInputKeydown = (e: KeyboardEvent) => {
+            e.stopPropagation()
+            if (e.key === 'Enter') {
+                this.handleConnect()
+            }
+        }
 
         return html`
-            <button
-                type="button"
-                class="network-item ${isSelected ? 'selected' : ''}"
-                ?disabled=${disabled}
-                @click=${() => this.selectNetwork(network)}
+            <div
+                class="network-item ${isSelected ? 'selected' : ''} ${disabled
+                    ? 'disabled'
+                    : ''}"
+                role="button"
+                tabindex=${disabled ? '-1' : '0'}
+                @click=${handleClick}
+                @keydown=${handleKeydown}
             >
-                <div class="network-item-body">
-                    <span class="network-item-name">${network.name}</span>
-                    ${network.description
-                        ? html`<span class="network-item-desc"
-                              >${network.description}</span
-                          >`
-                        : ''}
+                <div class="network-item-top">
+                    <div class="network-item-body">
+                        <span class="network-item-name">${network.name}</span>
+                        ${network.description
+                            ? html`<span class="network-item-desc"
+                                  >${network.description}</span
+                              >`
+                            : ''}
+                    </div>
                 </div>
-                <div
-                    class="network-check ${isSelected ? 'selected' : ''}"
-                ></div>
-            </button>
+                ${showClientId
+                    ? html`
+                          <div class="network-item-client-id">
+                              <div class="client-id-input-wrap">
+                                  <input
+                                      id="client-id-${network.id}"
+                                      class="client-id-input"
+                                      type="text"
+                                      placeholder="Client ID"
+                                      .value=${this.selectedNetwork?.clientId ||
+                                      ''}
+                                      ?disabled=${this.connecting}
+                                      @click=${(e: Event) =>
+                                          e.stopPropagation()}
+                                      @keydown=${handleInputKeydown}
+                                  />
+                                  <button
+                                      type="button"
+                                      class="btn-connect"
+                                      ?disabled=${this.connecting}
+                                      @click=${handleConnectClick}
+                                  >
+                                      ${this.connecting
+                                          ? 'Connecting…'
+                                          : 'Connect'}
+                                  </button>
+                              </div>
+                          </div>
+                      `
+                    : ''}
+            </div>
         `
     }
 
@@ -402,9 +569,6 @@ export class WgLoginForm extends BaseElement {
                               ${recommended.map((n) =>
                                   this.renderNetworkItem(n)
                               )}
-                              ${other.length > 0
-                                  ? html`<div class="section-divider"></div>`
-                                  : ''}
                           `
                         : ''}
                     ${other.length > 0
@@ -413,43 +577,18 @@ export class WgLoginForm extends BaseElement {
                               ${other.map((n) => this.renderNetworkItem(n))}
                           `
                         : ''}
-                    ${this.selectedIdp?.type === 'self_signed'
-                        ? html`
-                              <label
-                                  class="form-label fw-semibold text-body mt-2 mb-1"
-                                  for="client-id"
-                                  >Client ID</label
-                              >
-                              <input
-                                  id="client-id"
-                                  class="client-id-input form-control"
-                                  type="text"
-                                  .value=${this.selectedNetwork?.clientId || ''}
-                                  ?disabled=${this.connecting}
-                              />
-                          `
-                        : null}
-                    ${this.message
-                        ? html`<div
-                              class="alert ${this.messageType === 'error'
-                                  ? 'alert-danger'
-                                  : 'alert-info'} py-2 px-3 small mt-1 mb-0"
-                              role="alert"
-                          >
-                              ${this.message}
-                          </div>`
-                        : ''}
                 </div>
 
-                <div class="footer">
-                    <button
-                        class="connect-btn btn btn-primary w-100 rounded-pill"
-                        @click=${this.handleConnect}
-                        ?disabled=${this.connecting || !this.selectedNetwork}
-                    >
-                        ${this.connecting ? 'Connecting…' : 'Connect'}
-                    </button>
-                </div>
+                ${this.message
+                    ? html`<div
+                          class="alert ${this.messageType === 'error'
+                              ? 'alert-danger'
+                              : 'alert-info'} py-2 px-3 small mt-1 mb-0"
+                          role="alert"
+                      >
+                          ${this.message}
+                      </div>`
+                    : ''}
             </div>
         `
     }
