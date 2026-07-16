@@ -34,6 +34,7 @@ declare module '@mui/material/styles' {
             status: {
                 pending: { background: string; text: string }
                 'action-required': { background: string; text: string }
+                'partially-allocated': { background: string; text: string }
                 allocated: { background: string; text: string }
                 expired: { background: string; text: string }
             }
@@ -122,6 +123,10 @@ export const darkPortfolioTokens: ThemeOptions = {
                 background: portfolioColors.yellow99,
                 text: portfolioColors.black,
             },
+            'partially-allocated': {
+                background: portfolioColors.yellow99,
+                text: portfolioColors.black,
+            },
             allocated: {
                 background: portfolioColors.purple30,
                 text: portfolioColors.black,
@@ -194,6 +199,10 @@ export const lightPortfolioTokens: ThemeOptions = {
                 text: portfolioColors.white,
             },
             'action-required': {
+                background: portfolioColors.grey69,
+                text: portfolioColors.white,
+            },
+            'partially-allocated': {
                 background: portfolioColors.grey69,
                 text: portfolioColors.white,
             },

@@ -18,7 +18,8 @@ export function useActionRequiredItems(): ActionRequiredItemsResult {
             offers.all.filter((offer) => {
                 const hasActionableStatus =
                     offer.status === 'Pending' ||
-                    offer.status === 'Action Required'
+                    offer.status === 'Action Required' ||
+                    offer.status === 'Partially Allocated'
                 const isOutgoingTransfer =
                     'direction' in offer && offer.direction === 'outgoing'
 
