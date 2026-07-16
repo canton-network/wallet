@@ -21,7 +21,7 @@ const contextToRequest = (ctx: Context) => {
 const routeMap = new Map([
     ['/registry/metadata/v1/', metatadaAPI],
     ['/registry/transfer-instruction/v1/', transferInstructionAPI],
-    ['/registry/allocation/v1/', allocationAPI],
+    ['/registry/allocations/v1/', allocationAPI],
     ['/registry/allocation-instruction/v1/', allocationInstructionAPI],
 ])
 

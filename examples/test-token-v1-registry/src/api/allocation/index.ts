@@ -3,11 +3,18 @@
 
 import { OpenAPIBackend } from 'openapi-backend'
 import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
+import { getAllocationCancelContext } from './getAllocationCancelContext'
+import { getAllocationTransferContext } from './getAllocationTransferContext'
+import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
 
 export const allocationAPI = new OpenAPIBackend({
     definition: availableOpenAPIPaths['allocation-v1.yaml'],
     quick: true,
-    handlers: {},
+    handlers: {
+        getAllocationTransferContext,
+        getAllocationWithdrawContext,
+        getAllocationCancelContext,
+    },
 })
 
 await allocationAPI.init()
