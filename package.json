@@ -63,6 +63,7 @@
         "wallet-gateway/**"
     ],
     "devDependencies": {
+        "@canton-network/core-eslint-config": "workspace:^",
         "@commitlint/config-conventional": "^20.5.3",
         "@eslint/compat": "^2.1.0",
         "@eslint/js": "^10.0.1",

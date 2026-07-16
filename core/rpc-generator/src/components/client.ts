@@ -103,12 +103,15 @@ const hooks: IHooks = {
     afterCopyStatic: [
         async (dest, frm, component): Promise<void> => {
             if (component.language === 'typescript') {
-                return await move(
+                await move(
                     path.join(dest, '_package.json'),
                     path.join(dest, 'package.json'),
-                    {
-                        overwrite: true,
-                    }
+                    { overwrite: true }
+                )
+                return await move(
+                    path.join(dest, '_eslint.config.mjs'),
+                    path.join(dest, 'eslint.config.mjs'),
+                    { overwrite: true }
                 )
             }
         },
