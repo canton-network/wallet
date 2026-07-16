@@ -18,7 +18,7 @@ Additionally, the host dApp may pass **`additionalAdapters`** (or configure `Dis
 ## Remote Wallets (`RemoteAdapter`)
 
 Server-side wallets (such as the Wallet Gateway) are **not** injected into the page; they are listed as remote entries with an RPC URL.
-Bundled defaults come from the SDK’s gateway list; dApps can add more by calling `init({ additionalAdapters: [...] })` before `connect()`, or by constructing `DiscoveryClient` with extra `RemoteAdapter` instances.
+Bundled defaults come from the SDK’s remote wallet list; dApps can add more by calling `init({ additionalAdapters: [...] })` before `connect()`, or by constructing `DiscoveryClient` with extra `RemoteAdapter` instances.
 
 ## Browser extension wallets (`ExtensionAdapter`)
 
