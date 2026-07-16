@@ -9,21 +9,10 @@ const rootDir = join(dirname(fileURLToPath(import.meta.url)), '../..')
 
 export default [
     ...createConfig({ rootDir }),
-    { ignores: ['docs/**'] },
     {
         files: ['**/*.{ts,tsx}'],
         rules: {
             'headers/header-format': 'off',
-        },
-    },
-    {
-        files: ['src/**/*.{ts,tsx}'],
-        rules: {
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-unused-vars': [
-                'warn',
-                { argsIgnorePattern: '^_' },
-            ],
         },
     },
 ]
