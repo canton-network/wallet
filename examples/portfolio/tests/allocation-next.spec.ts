@@ -240,22 +240,28 @@ test.describe('OTC allocations', () => {
         ).toBeVisible()
         await expect(aliceToBobLeg).toContainText(bobHint.slice(0, 10))
 
-        await wg.approveTransaction(() =>
-            aliceToBobLeg.getByRole('button', { name: 'Allocate' }).click()
-        )
+        const allocateButton = aliceToBobLeg.getByRole('button', {
+            name: 'Allocate',
+        })
+        await expect(allocateButton).toHaveClass(/MuiButton-sizeSmall/)
+        await wg.approveTransaction(() => allocateButton.click())
         await expect(
             aliceToBobLeg.getByRole('button', { name: 'Withdraw' })
         ).toBeVisible({ timeout: 15_000 })
 
         await dialog.getByLabel('Close allocation request dialog').click()
         await expect(dialog).not.toBeVisible({ timeout: 10_000 })
-        await expect(allocationRequest).toBeVisible({ timeout: 15_000 })
+        await expect(allocationRequest).toContainText('Partially Allocated', {
+            timeout: 15_000,
+        })
         await allocationRequest.click()
 
         const withdrawButton = aliceToBobLeg.getByRole('button', {
             name: 'Withdraw',
         })
         await expect(withdrawButton).toBeVisible({ timeout: 15_000 })
+        await expect(withdrawButton).toHaveClass(/MuiButton-sizeSmall/)
+        await expect(withdrawButton).toHaveClass(/MuiButton-colorSecondary/)
         await wg.approveTransaction(() => withdrawButton.click())
 
         await expect(
