@@ -3,10 +3,11 @@
 
 import { TestTokenV1 } from '@canton-network/core-token-standard'
 import sdk from '../../common/sdk'
-import { emptyChoiceContext, TransferInstructionAPIHandler } from './common'
+import { TransferInstructionAPIHandler } from './common'
 import { admin } from '../../common/admin'
 import { GetFactoryRequest } from '../../openapi-ts/transfer-instruction-v1'
 import z from 'zod'
+import { emptyChoiceContext } from '../common'
 
 export const GetTransferFactoryChoiceArguments = z.object({
     sender: z.string(),
