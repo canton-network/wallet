@@ -5,6 +5,7 @@ import {
     SigningProviderMockModule,
     SigningProviderMockRoute,
 } from '../server.js'
+import { generateKeyPairSync } from 'node:crypto'
 
 type SigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
 
@@ -60,9 +61,13 @@ interface SetTransactionStateBody {
 
 const DEFAULT_PREFIX = '/blockdaemon'
 
-function createPublicKeyFromCounter(counter: number): string {
-    const oneByte = (counter % 255).toString(16).padStart(2, '0')
-    return Buffer.from(oneByte.repeat(32), 'hex').toString('base64')
+function createPublicKey(): string {
+    // Canton validates Ed25519 points for topology generation, so the mock must
+    // return cryptographically valid public keys.
+    const { publicKey } = generateKeyPairSync('ed25519')
+    const spkiDer = publicKey.export({ type: 'spki', format: 'der' }) // TODO is this correct format?
+    const keyBytes = Buffer.from(spkiDer).subarray(-32)
+    return keyBytes.toString('base64')
 }
 
 function createSignatureFromCounter(counter: number): string {
@@ -87,11 +92,11 @@ export function createBlockdaemonMockProvider(
             handler: ({ body }) => {
                 const { name, userIdentifier } = body as CreateKeyBody
 
-                keyCounter += 1
+                keyCounter++
                 const key: BlockdaemonMockKey = {
                     id: `mock-key-${keyCounter}`,
                     name: name ?? `mock-key-${keyCounter}`,
-                    publicKey: createPublicKeyFromCounter(keyCounter),
+                    publicKey: createPublicKey(),
                     ...(userIdentifier !== undefined && { userIdentifier }),
                 }
                 keysByPublicKey.set(key.publicKey, key)
@@ -115,8 +120,7 @@ export function createBlockdaemonMockProvider(
             handler: ({ body }) => {
                 const parsed = body as SignTransactionBody
                 const publicKey =
-                    parsed.keyIdentifier?.publicKey ??
-                    createPublicKeyFromCounter(keyCounter + 1)
+                    parsed.keyIdentifier?.publicKey ?? createPublicKey()
 
                 txCounter += 1
                 const txId =
@@ -218,33 +222,48 @@ export function createBlockdaemonMockProvider(
         handler: ({ body }) => {
             const { txId, status, signature, publicKey } =
                 body as SetTransactionStateBody
-            const resolvedTxId = txId ?? `mock-admin-tx-${++txCounter}`
             const resolvedStatus = status ?? 'pending'
-            const existing = transactionsById.get(resolvedTxId)
-            const resolvedPublicKey =
-                publicKey ??
-                existing?.publicKey ??
-                createPublicKeyFromCounter(keyCounter + 1)
-            const resolvedSignature =
-                signature ??
-                existing?.signature ??
-                createSignatureFromCounter(txCounter + 1)
-
-            const nextTx: BlockdaemonMockTransaction = {
-                txId: resolvedTxId,
-                status: resolvedStatus,
-                ...(existing?.tx !== undefined && { tx: existing.tx }),
-                ...(existing?.txHash !== undefined && {
-                    txHash: existing.txHash,
-                }),
-                ...(existing?.userIdentifier !== undefined && {
-                    userIdentifier: existing.userIdentifier,
-                }),
-                publicKey: resolvedPublicKey,
-                signature: resolvedSignature,
+            if (!txId) {
+                return {
+                    status: 400,
+                    body: {
+                        error: 'missing_tx_id',
+                    },
+                }
+            }
+            const existing = transactionsById.get(txId)
+            if (!existing) {
+                return {
+                    status: 404,
+                    body: {
+                        error: 'tx_not_found',
+                        txId,
+                    },
+                }
             }
 
-            transactionsById.set(resolvedTxId, nextTx)
+            const nextTx: BlockdaemonMockTransaction = {
+                txId,
+                status: resolvedStatus,
+                ...(existing.tx !== undefined && { tx: existing.tx }),
+                ...(existing.txHash !== undefined && {
+                    txHash: existing.txHash,
+                }),
+                ...(existing.userIdentifier !== undefined && {
+                    userIdentifier: existing.userIdentifier,
+                }),
+                ...(publicKey !== undefined
+                    ? { publicKey }
+                    : existing.publicKey !== undefined
+                      ? { publicKey: existing.publicKey }
+                      : {}),
+                ...(signature !== undefined
+                    ? { signature }
+                    : existing.signature !== undefined
+                      ? { signature: existing.signature }
+                      : {}),
+            }
+            transactionsById.set(txId, nextTx)
 
             return {
                 body: {

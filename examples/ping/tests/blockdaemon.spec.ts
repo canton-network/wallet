@@ -9,6 +9,32 @@ import {
 import { Page } from '@playwright/test'
 
 const dappApiPort = 3030
+const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:6666'
+
+function toBlockdaemonMockEndpoint(path: string): string {
+    const base = blockdaemonApiUrl.endsWith('/')
+        ? blockdaemonApiUrl
+        : `${blockdaemonApiUrl}/`
+    const relativePath = path.startsWith('/') ? path.slice(1) : path
+    return new URL(relativePath, base).toString()
+}
+
+async function signMockBlockdaemonTransaction(
+    txId: string
+): Promise<void> {
+    const promoteResponse = await fetch(
+        toBlockdaemonMockEndpoint('/_admin/setTransactionState'),
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                txId,
+                status: 'signed',
+            }),
+        }
+    )
+    expect(promoteResponse.ok).toBeTruthy()
+}
 
 test('dApp: execute externally signed tx with Blockdaemon', async ({
     page: dappPage,
@@ -45,6 +71,9 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
         signingProvider: 'blockdaemon',
         primary: true,
     })
+    const blockdaemonExternalTxId =
+        await wg.getWalletExternalTxId(blockdaemonPartyId)
+    await signMockBlockdaemonTransaction(blockdaemonExternalTxId)
 
     await dappPage.getByRole('button', { name: 'Accounts' }).click()
     expect(

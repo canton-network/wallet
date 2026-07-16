@@ -182,6 +182,24 @@ export class WalletGateway {
         return partyId
     }
 
+    async getWalletExternalTxId(partyId: string): Promise<string> {
+        await this.gotoPartiesPage()
+        const walletCard = (await this.popup())
+            .locator(`wg-wallet-card[party-id="${partyId}"]`)
+            .first()
+        await expect(walletCard).toBeVisible({ timeout: 15000 })
+
+        const txId = await walletCard
+            .locator('.meta')
+            .getAttribute('data-test-external-tx-id')
+
+        if (!txId) {
+            throw new Error(`did not find external tx id for party ${partyId}`)
+        }
+
+        return txId
+    }
+
     async approveTransaction(
         start: () => Promise<void>,
         opts?: { waitForClose?: boolean; isExternalSigning?: boolean }

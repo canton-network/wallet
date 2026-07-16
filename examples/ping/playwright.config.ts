@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig, devices } from '@playwright/test'
-
-const includeCiSecretDependency = process.env.CI_SECRET_DEPENDENCY === 'true'
+const blockdaemonApiUrl =
+    process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031/blockdaemon'
+const blockdaemonApi = new URL(blockdaemonApiUrl)
+const mockServerHealthUrl = `${blockdaemonApi.protocol}//${blockdaemonApi.host}/_healthz`
 
 /**
  * Read environment variables from file.
@@ -19,9 +21,10 @@ const includeCiSecretDependency = process.env.CI_SECRET_DEPENDENCY === 'true'
 export default defineConfig({
     timeout: 120 * 1000,
     testDir: './tests',
-    testIgnore: includeCiSecretDependency
-        ? undefined
-        : ['**/blockdaemon.spec.ts'],
+    // globalSetup: './tests/global-setup.ts',
+    // testIgnore: false && includeCiSecretDependency
+    //     ? undefined
+    //     : ['**/blockdaemon.spec.ts'],
     /* Run tests in files in parallel */
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -80,10 +83,10 @@ export default defineConfig({
         // },
     ],
 
-    /* Run your local dev server before starting the tests */
-    // webServer: {
-    //   command: 'npm run start',
-    //   url: 'http://localhost:3030',
-    //   reuseExistingServer: !process.env.CI,
-    // },
+    webServer: {
+        command: 'yarn workspace @canton-network/example-ping mock:signing-providers',
+        url: mockServerHealthUrl,
+        reuseExistingServer: !process.env.CI,
+        timeout: 30 * 1000,
+    },
 })
