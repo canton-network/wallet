@@ -32,10 +32,13 @@ If you want to add or replace wallets (e.g. WalletConnect), see
 
 **Provider API:**
 
-Import and create a provider instance:
+After connecting, obtain the active CIP-103 provider from the SDK:
 
 ```typescript
-const provider = window.canton
+await sdk.init()
+await sdk.connect()
+const provider = sdk.getConnectedProvider()
+if (!provider) throw new Error('Not connected')
 ```
 
 ## Request-Response Methods
