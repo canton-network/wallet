@@ -60,20 +60,20 @@ export const getAllocationFactory: AllocationInstructionAPIHandler<
             partyId: admin.party,
         })
 
-    const factoryContracts = await sdk.ledger.acsReader.readJsContracts({
-        filterByParty: true,
-        parties: [admin.party],
-        offset: executionResult.completionOffset,
-        templateIds: [TestTokenV1.TokenRules.templateId],
-    })
-
-    const factoryContract = factoryContracts[0]
+    const factoryContract = (
+        await sdk.ledger.acsReader.readJsContracts({
+            filterByParty: true,
+            parties: [admin.party],
+            offset: executionResult.completionOffset,
+            templateIds: [TestTokenV1.TokenRules.templateId],
+        })
+    )[0]
 
     if (!factoryContract) {
         return {
             status: 500,
             payload: {
-                error: `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}, contractsAtOffset=${factoryContracts.length}`,
+                error: `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`,
             },
         }
     }
