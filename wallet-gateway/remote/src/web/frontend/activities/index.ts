@@ -152,6 +152,7 @@ export class UserUiActivities extends BaseElement {
             )
             const result = await userClient.request({
                 method: 'listTransactions',
+                params: {},
             })
             this.transactions = result.transactions || []
             this.parsedTransactions = new Map(
