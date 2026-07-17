@@ -247,71 +247,71 @@ export function createBlockdaemonMockProvider(
                 }
             },
         },
-    ]
+        {
+            method: 'POST',
+            path: '/_admin/setTransactionState',
+            handler: ({ body }) => {
+                const { txId, status, signature, publicKey } =
+                    body as SetTransactionStateBody
+                const resolvedStatus = status ?? 'pending'
+                if (!txId) {
+                    return {
+                        status: 400,
+                        body: {
+                            error: 'missing_tx_id',
+                        },
+                    }
+                }
 
-    routes.push({
-        method: 'POST',
-        path: '/_admin/setTransactionState',
-        handler: ({ body }) => {
-            const { txId, status, signature, publicKey } =
-                body as SetTransactionStateBody
-            const resolvedStatus = status ?? 'pending'
-            if (!txId) {
+                const existing = transactionsById.get(txId)
+                if (!existing) {
+                    return {
+                        status: 404,
+                        body: {
+                            error: 'tx_not_found',
+                            txId,
+                        },
+                    }
+                }
+
+                const nextTx: BlockdaemonMockTransaction = {
+                    txId,
+                    status: resolvedStatus,
+                    ...(existing.tx !== undefined && { tx: existing.tx }),
+                    ...(existing.txHash !== undefined && {
+                        txHash: existing.txHash,
+                    }),
+                    ...(existing.userIdentifier !== undefined && {
+                        userIdentifier: existing.userIdentifier,
+                    }),
+                    ...(publicKey !== undefined
+                        ? { publicKey }
+                        : existing.publicKey !== undefined
+                          ? { publicKey: existing.publicKey }
+                          : {}),
+                    ...(signature !== undefined
+                        ? { signature }
+                        : existing.signature !== undefined
+                          ? { signature: existing.signature }
+                          : {}),
+                }
+                transactionsById.set(txId, nextTx)
+
                 return {
-                    status: 400,
                     body: {
-                        error: 'missing_tx_id',
+                        txId: nextTx.txId,
+                        status: nextTx.status,
+                        ...(nextTx.signature !== undefined && {
+                            signature: nextTx.signature,
+                        }),
+                        ...(nextTx.publicKey !== undefined && {
+                            publicKey: nextTx.publicKey,
+                        }),
                     },
                 }
-            }
-            const existing = transactionsById.get(txId)
-            if (!existing) {
-                return {
-                    status: 404,
-                    body: {
-                        error: 'tx_not_found',
-                        txId,
-                    },
-                }
-            }
-
-            const nextTx: BlockdaemonMockTransaction = {
-                txId,
-                status: resolvedStatus,
-                ...(existing.tx !== undefined && { tx: existing.tx }),
-                ...(existing.txHash !== undefined && {
-                    txHash: existing.txHash,
-                }),
-                ...(existing.userIdentifier !== undefined && {
-                    userIdentifier: existing.userIdentifier,
-                }),
-                ...(publicKey !== undefined
-                    ? { publicKey }
-                    : existing.publicKey !== undefined
-                      ? { publicKey: existing.publicKey }
-                      : {}),
-                ...(signature !== undefined
-                    ? { signature }
-                    : existing.signature !== undefined
-                      ? { signature: existing.signature }
-                      : {}),
-            }
-            transactionsById.set(txId, nextTx)
-
-            return {
-                body: {
-                    txId: nextTx.txId,
-                    status: nextTx.status,
-                    ...(nextTx.signature !== undefined && {
-                        signature: nextTx.signature,
-                    }),
-                    ...(nextTx.publicKey !== undefined && {
-                        publicKey: nextTx.publicKey,
-                    }),
-                },
-            }
+            },
         },
-    })
+    ]
 
     return {
         pathPrefix,
