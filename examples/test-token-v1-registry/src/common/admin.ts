@@ -11,7 +11,6 @@ export const admin = {
 export const initAdminParty = async () => {
     const createdParty = await sdk.party.external
         .create(admin.keys.publicKey, {
-            // isAdmin: true,
             partyHint: 'admin',
         })
         .sign(admin.keys.privateKey)

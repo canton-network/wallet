@@ -8,6 +8,7 @@ const execute = vi.fn().mockResolvedValue({
 })
 const sign = vi.fn().mockReturnValue({ execute })
 const prepare = vi.fn().mockReturnValue({ sign })
+const create = vi.fn().mockReturnValue({ sign })
 
 const sdk = {
     ledger: {
@@ -27,6 +28,11 @@ const sdk = {
             rules: vi.fn(),
         },
     },
+    party: {
+        external: {
+            create,
+        },
+    },
 }
 
 export const mock = {
@@ -34,4 +40,5 @@ export const mock = {
     prepare,
     sign,
     execute,
+    create,
 }
