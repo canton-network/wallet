@@ -25,7 +25,11 @@ For **dApp developers** integrating `@canton-network/dapp-sdk` to discover walle
     - [Handle events](dapp-sdk/guides/handle-events.md)
 - [SDK methods](dapp-sdk/reference/sdk-methods.md)
 - [Provider API](dapp-sdk/reference/provider-api.md)
-- [Wallet providers](dapp-sdk/wallet-providers/integration-overview.md) — How wallets and extensions appear in the SDK picker
+- Wallet providers
+    - [Integration overview](dapp-sdk/wallet-providers/integration-overview.md) — How wallets and extensions appear in the SDK picker
+    - [Browser extension](dapp-sdk/wallet-providers/browser-extension.md)
+    - [Remote wallet](dapp-sdk/wallet-providers/remote-wallet.md)
+    - [WalletConnect](dapp-sdk/wallet-providers/walletconnect.md)
 
 **Audience:** Frontend developers building dApps that connect users to Canton wallets. Start here if you want to call `connect()`, list accounts, or prepare and execute transactions.
 
