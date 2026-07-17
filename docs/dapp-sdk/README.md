@@ -1,5 +1,7 @@
 # dApp SDK
 
+**Published:** [NPM](https://www.npmjs.com/package/@canton-network/dapp-sdk)
+
 For **dApp developers** integrating `@canton-network/dapp-sdk` to discover wallets, connect users, read parties, request signatures, and submit transactions.
 
 ## Contents

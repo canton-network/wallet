@@ -9,7 +9,7 @@ This directory contains developer guides and supporting reference documents for 
 
 ### dApp SDK
 
-**Published:** TBD
+**Published:** [NPM](https://www.npmjs.com/package/@canton-network/dapp-sdk)
 **Path:** [`dapp-sdk/`](dapp-sdk/)
 
 For **dApp developers** integrating `@canton-network/dapp-sdk` to discover wallets, connect users, read parties, request signatures, and submit transactions.
@@ -37,7 +37,7 @@ For **dApp developers** integrating `@canton-network/dapp-sdk` to discover walle
 
 ### Wallet Gateway
 
-**Published:** TBD
+**Published:** [NPM](https://www.npmjs.com/package/@canton-network/dapp-sdk), [Docker](https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fdocker%2Fwallet-gateway), [Helm](https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fhelm%2Fwallet-gateway)
 **Path:** [`wallet-gateway/`](wallet-gateway/)
 
 For developers **running or configuring** the Wallet Gateway server that mediates between dApps, Canton validators, and signing providers.
@@ -54,30 +54,6 @@ For developers **running or configuring** the Wallet Gateway server that mediate
 - [Troubleshooting](wallet-gateway/troubleshooting/index.md)
 
 **Audience:** Operators and backend developers deploying the Wallet Gateway or integrating it with signing providers and identity systems.
-
----
-
-### dApp Building Guide
-
-**Published:** TBD
-**Path:** [`dapp-building/`](dapp-building/)
-
-High-level orientation for **dApp developers** building on the Canton Network. Use the [dApp SDK](dapp-sdk/) in your frontend to connect users to their wallets, and the [Wallet Gateway](wallet-gateway/) to mediate between your dApp, Canton validator nodes, and signing providers.
-
-**Contents:**
-
-- [Overview](dapp-building/Readme.md) — Architecture, key concepts, and how the pieces connect
-- [Examples](dapp-building/examples/index.md) — Sample dApps (Ping and Portfolio) you can run and learn from
-
-**Audience:** Developers who want the big picture before diving into the SDK or Gateway docs.
-
-**Preview locally:**
-
-```bash
-cd docs/dapp-building
-poetry install
-poetry run sphinx-autobuild -c . src build -W
-```
 
 ---
 
