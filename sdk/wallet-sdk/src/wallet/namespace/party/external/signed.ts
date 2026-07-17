@@ -244,9 +244,11 @@ export class SignedPartyCreationService {
         try {
             const synchronizerId = this.createPartyOptions?.synchronizerId
             if (!synchronizerId)
-                throw new Error(
-                    'synchronizerId is required for external party allocation — pass it via createPartyOptions.synchronizerId'
-                )
+                this.ctx.error.throw({
+                    type: 'BadRequest',
+                    message:
+                        'synchronizerId is required for external party allocation — pass it via createPartyOptions.synchronizerId',
+                })
 
             await this.allocate(
                 ledgerProvider,
