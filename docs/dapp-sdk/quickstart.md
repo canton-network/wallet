@@ -7,27 +7,27 @@ This is the shortest working integration: install the SDK, initialize it, let th
 connect a wallet, read their party, and submit a transaction. It uses only the high-level
 SDK. You do not need the Provider API to build a dApp.
 
-### 1. Install the SDK
+## Install the SDK
 
-#### npm
+### npm
 
 ```shell
 npm install @canton-network/dapp-sdk
 ```
 
-#### yarn
+### yarn
 
 ```shell
 yarn add @canton-network/dapp-sdk
 ```
 
-#### pnpm
+### pnpm
 
 ```shell
 pnpm add @canton-network/dapp-sdk
 ```
 
-### 2. Initialize on app load
+## Initialize on app load
 
 Call `init()` once, early in your app's lifecycle. This registers the default wallet
 adapters and silently restores a previous session **without** opening the wallet picker.
@@ -38,7 +38,7 @@ import * as sdk from '@canton-network/dapp-sdk'
 await sdk.init()
 ```
 
-### 3. Connect a wallet
+## Connect a wallet
 
 Call `connect()` in response to a user action (for example, a "Connect wallet" button).
 This opens the wallet picker and runs the authentication flow.
@@ -50,7 +50,7 @@ async function onConnectClick() {
 }
 ```
 
-### 4. Read the connected party
+## Read the connected party
 
 Once connected, read the account the user marked as primary.
 
@@ -59,7 +59,7 @@ const account = await sdk.getPrimaryAccount()
 console.log('Primary party:', account.partyId)
 ```
 
-### 5. Submit a transaction
+## Submit a transaction
 
 Use `prepareExecute()` to submit Daml commands. The SDK prepares the transaction, asks
 the user to approve and sign it in their wallet, and submits it to the ledger.
@@ -88,7 +88,7 @@ await sdk.prepareExecute({
 > dApp, submit commands from your own Daml package. See
 > [Parties & transactions](guides/parties-and-transactions.md) for details.
 
-### 6. Handle disconnect
+## Handle disconnect
 
 Let the user end their session.
 
