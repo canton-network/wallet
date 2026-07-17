@@ -5,7 +5,7 @@ import {
     SigningProviderMockModule,
     SigningProviderMockRoute,
 } from '../server.js'
-import { generateKeyPairSync } from 'node:crypto'
+import { generateKeyPairSync, KeyObject, sign as cryptoSign } from 'node:crypto'
 
 type SigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
 
@@ -13,6 +13,7 @@ interface BlockdaemonMockKey {
     id: string
     name: string
     publicKey: string
+    privateKey: KeyObject
     userIdentifier?: string
 }
 
@@ -61,18 +62,29 @@ interface SetTransactionStateBody {
 
 const DEFAULT_PREFIX = '/blockdaemon'
 
-function createPublicKey(): string {
+function createMockEd25519KeyPair(): {
+    publicKey: string
+    privateKey: KeyObject
+} {
     // Canton validates Ed25519 points for topology generation, so the mock must
     // return cryptographically valid public keys.
-    const { publicKey } = generateKeyPairSync('ed25519')
-    const spkiDer = publicKey.export({ type: 'spki', format: 'der' }) // TODO is this correct format?
+    const { publicKey, privateKey } = generateKeyPairSync('ed25519')
+    const spkiDer = publicKey.export({ type: 'spki', format: 'der' })
     const keyBytes = Buffer.from(spkiDer).subarray(-32)
-    return keyBytes.toString('base64')
+    return {
+        publicKey: keyBytes.toString('base64'),
+        privateKey,
+    }
 }
 
 function createSignatureFromCounter(counter: number): string {
     const oneByte = ((counter + 127) % 255).toString(16).padStart(2, '0')
     return Buffer.from(oneByte.repeat(64), 'hex').toString('base64')
+}
+
+function signTxHashBase64(txHashBase64: string, privateKey: KeyObject): string {
+    const txHashBytes = Buffer.from(txHashBase64, 'base64')
+    return cryptoSign(null, txHashBytes, privateKey).toString('base64')
 }
 
 export function createBlockdaemonMockProvider(
@@ -93,14 +105,22 @@ export function createBlockdaemonMockProvider(
                 const { name, userIdentifier } = body as CreateKeyBody
 
                 keyCounter++
+                const keyPair = createMockEd25519KeyPair()
                 const key: BlockdaemonMockKey = {
                     id: `mock-key-${keyCounter}`,
                     name: name ?? `mock-key-${keyCounter}`,
-                    publicKey: createPublicKey(),
+                    publicKey: keyPair.publicKey,
+                    privateKey: keyPair.privateKey,
                     ...(userIdentifier !== undefined && { userIdentifier }),
                 }
                 keysByPublicKey.set(key.publicKey, key)
-                return { body: key }
+                return {
+                    body: {
+                        id: key.id,
+                        name: key.name,
+                        publicKey: key.publicKey,
+                    },
+                }
             },
         },
         {
@@ -119,8 +139,18 @@ export function createBlockdaemonMockProvider(
             path: '/signTransaction',
             handler: ({ body }) => {
                 const parsed = body as SignTransactionBody
-                const publicKey =
-                    parsed.keyIdentifier?.publicKey ?? createPublicKey()
+                const requestedPublicKey = parsed.keyIdentifier?.publicKey
+                const key = requestedPublicKey
+                    ? keysByPublicKey.get(requestedPublicKey)
+                    : undefined
+                if (!key) {
+                    return {
+                        status: 400,
+                        body: {
+                            error: 'incorrect_key',
+                        },
+                    }
+                }
 
                 txCounter += 1
                 const txId =
@@ -134,11 +164,14 @@ export function createBlockdaemonMockProvider(
                     ...(parsed.txHash !== undefined && {
                         txHash: parsed.txHash,
                     }),
-                    publicKey,
+                    publicKey: key.publicKey,
                     ...(parsed.userIdentifier !== undefined && {
                         userIdentifier: parsed.userIdentifier,
                     }),
-                    signature: createSignatureFromCounter(txCounter),
+                    signature:
+                        parsed.txHash !== undefined
+                            ? signTxHashBase64(parsed.txHash, key.privateKey)
+                            : createSignatureFromCounter(txCounter),
                 }
                 transactionsById.set(txId, tx)
 
