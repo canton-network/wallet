@@ -44,6 +44,7 @@ import {
     RemoveApiKeyParams,
     ListSigningProviderVaultsResult,
     ListSigningProviderVaultsParams,
+    ListTransactionsParams,
 } from './rpc-gen/typings.js'
 import { Store, Network, Transaction } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -1002,14 +1003,14 @@ export const userController = (
                 }),
             }
         },
-        listTransactions: async function (): Promise<ListTransactionsResult> {
-            const transactions: Transaction[] = []
-            let page = await store.listTransactions()
-            transactions.push(...page.transactions)
-            while (page.nextCursor !== null) {
-                page = await store.listTransactions(page.nextCursor, 5)
-                transactions.push(...page.transactions)
-            }
+        listTransactions: async function (
+            params: ListTransactionsParams
+        ): Promise<ListTransactionsResult> {
+            const page = await store.listTransactions(
+                params.cursor,
+                params.limit
+            )
+            const transactions = page.transactions
             const txs = transactions.map((transaction) => ({
                 id: transaction.id,
                 commandId: transaction.commandId,
@@ -1032,7 +1033,12 @@ export const userController = (
                     externalTxId: transaction.externalTxId,
                 }),
             }))
-            return { transactions: txs }
+
+            if (page.nextCursor === null) {
+                return { transactions: txs }
+            } else {
+                return { transactions: txs, nextCursor: page.nextCursor }
+            }
         },
         deleteTransaction: async (
             params: DeleteTransactionParams

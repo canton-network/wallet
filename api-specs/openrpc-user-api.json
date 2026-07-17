@@ -876,7 +876,28 @@
         },
         {
             "name": "listTransactions",
-            "params": [],
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "ListTransactionsParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "limit": {
+                                "title": "limit",
+                                "type": "integer",
+                                "description": "Limit of transactions to return."
+                            },
+                            "cursor": {
+                                "title": "cursor",
+                                "type": ["string"],
+                                "description": "Cursor for next page of results."
+                            }
+                        }
+                    }
+                }
+            ],
             "result": {
                 "name": "result",
                 "schema": {
@@ -890,6 +911,11 @@
                             "items": {
                                 "$ref": "#/components/schemas/Transaction"
                             }
+                        },
+                        "nextCursor": {
+                            "title": "nextCursor",
+                            "type": "string",
+                            "description": "Cursor for next page of results."
                         }
                     },
                     "required": ["transactions"]
