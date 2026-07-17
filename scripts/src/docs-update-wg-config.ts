@@ -9,7 +9,7 @@ import { error, getRepoRoot, success, warn } from './lib/utils.js'
 const ex = promisify(exec)
 const repoRoot = getRepoRoot()
 
-const SCHEMA_PATH = `${repoRoot}/docs/dapp-building/wallet-gateway/configuration/schema.md`
+const SCHEMA_PATH = `${repoRoot}/docs/wallet-gateway/configuration/schema.md`
 
 async function main() {
     // first build
