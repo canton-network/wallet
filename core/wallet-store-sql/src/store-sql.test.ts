@@ -697,8 +697,6 @@ implementations.forEach(([name, StoreImpl]) => {
             }
 
             const listAllTxs = await store.listTransactionsV2()
-            console.log('list all txs')
-            console.log(listAllTxs)
 
             const collected: Transaction[] = []
 
@@ -716,8 +714,8 @@ implementations.forEach(([name, StoreImpl]) => {
                 console.log(page)
             }
 
-            // expect(listAllTxs.transactions).toEqual(collected)
-            // expect(timesCalled).toBe(2)
+            expect(listAllTxs.transactions).toEqual(collected)
+            expect(timesCalled).toBe(2)
         })
 
         test('removeWallet should cascade-delete userPartyRights', async () => {

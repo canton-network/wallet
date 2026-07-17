@@ -49,6 +49,7 @@ import {
     toSession,
 } from './schema.js'
 import pg from 'pg'
+import { sql } from 'kysely'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -751,7 +752,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('networkId', '=', network.id),
                 ])
             )
-            .orderBy('createdAt', 'desc')
+            .orderBy(sql`${sql.ref('createdAt')} desc nulls last`)
             .orderBy('id', 'desc')
             .limit(lim + 1)
 
