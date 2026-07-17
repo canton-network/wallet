@@ -1,26 +1,71 @@
 # Documentation
 
-This directory contains two developer guides and supporting reference documents for the Wallet Gateway project.
+This directory contains developer guides and supporting reference documents for the Wallet Gateway project.
+
+> [!NOTE]
+> Migration guides for each release are published in [Discussions](https://github.com/canton-network/wallet/discussions).
 
 ## Guides
+
+### dApp SDK
+
+**Published:** TBD
+**Path:** [`dapp-sdk/`](dapp-sdk/)
+
+For **dApp developers** integrating `@canton-network/dapp-sdk` to discover wallets, connect users, read parties, request signatures, and submit transactions.
+
+**Contents:**
+
+- [Overview](dapp-sdk/overview.md) — How the SDK, CIP-103 provider, adapters, and wallets fit together
+- [Quickstart](dapp-sdk/quickstart.md) — Install, connect a wallet, read the primary party, and submit a transaction
+- Guides
+    - [Wallet discovery](dapp-sdk/guides/wallet-discovery.md)
+    - [Connect & sessions](dapp-sdk/guides/connect-and-sessions.md)
+    - [Parties & transactions](dapp-sdk/guides/parties-and-transactions.md)
+    - [Handle events](dapp-sdk/guides/handle-events.md)
+- [SDK methods](dapp-sdk/reference/sdk-methods.md)
+- [Provider API](dapp-sdk/reference/provider-api.md)
+- [Wallet providers](dapp-sdk/wallet-providers/integration-overview.md) — How wallets and extensions appear in the SDK picker
+
+**Audience:** Frontend developers building dApps that connect users to Canton wallets. Start here if you want to call `connect()`, list accounts, or prepare and execute transactions.
+
+---
+
+### Wallet Gateway
+
+**Published:** TBD
+**Path:** [`wallet-gateway/`](wallet-gateway/)
+
+For developers **running or configuring** the Wallet Gateway server that mediates between dApps, Canton validators, and signing providers.
+
+**Contents:**
+
+- [Getting Started](wallet-gateway/getting-started/index.md)
+- [Configuration](wallet-gateway/configuration/index.md)
+- [Automations](wallet-gateway/automations/index.md)
+- [Usage](wallet-gateway/usage/index.md)
+- [APIs](wallet-gateway/apis/index.md)
+- [Signing Providers](wallet-gateway/signing-providers/index.md)
+- [Deployment](wallet-gateway/deployment/index.md)
+- [Troubleshooting](wallet-gateway/troubleshooting/index.md)
+
+**Audience:** Operators and backend developers deploying the Wallet Gateway or integrating it with signing providers and identity systems.
+
+---
 
 ### dApp Building Guide
 
 **Published:** TBD
 **Path:** [`dapp-building/`](dapp-building/)
 
-For **dApp developers** who want to build applications on the Canton Network using the Wallet Gateway and the dApp SDK.
+High-level orientation for **dApp developers** building on the Canton Network. Use the [dApp SDK](dapp-sdk/) in your frontend to connect users to their wallets, and the [Wallet Gateway](wallet-gateway/) to mediate between your dApp, Canton validator nodes, and signing providers.
 
-**Topics covered:**
+**Contents:**
 
-| Section            | Description                                                                                                |
-| ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| **Overview**       | Architecture, discovery and connection flow, dApp API (CIP-103), User API                                  |
-| **dApp SDK**       | Installation, usage patterns, API reference, best practices                                                |
-| **Wallet Gateway** | Getting started, configuration, running the server, APIs (dApp + User), signing providers, troubleshooting |
-| **Examples**       | Walkthrough of the included example dApps                                                                  |
+- [Overview](dapp-building/Readme.md) — Architecture, key concepts, and how the pieces connect
+- [Examples](dapp-building/examples/index.md) — Sample dApps (Ping and Portfolio) you can run and learn from
 
-**Audience:** Frontend and backend developers building dApps that connect users to Canton wallets. Start here if you want to call `connect()`, list accounts, or prepare and execute transactions.
+**Audience:** Developers who want the big picture before diving into the SDK or Gateway docs.
 
 **Preview locally:**
 
