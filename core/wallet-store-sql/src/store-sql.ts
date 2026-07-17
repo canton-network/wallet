@@ -753,7 +753,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
             .orderBy('createdAt', 'desc')
             .orderBy('id', 'desc')
-            .limit(lim)
+            .limit(lim + 1)
 
         if (cursor) {
             const split = cursor.split('::')
@@ -771,19 +771,29 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
         const rows = await query.execute()
         const txs = rows.map((r) => toTransaction(r))
-        const lastCreatedAt = txs[txs.length - 1].createdAt
-        if (lastCreatedAt === undefined) {
+
+        const hasNextPage = txs.length > lim
+        if (hasNextPage) {
+            txs.pop()
+        }
+
+        if (txs.length === 0) {
+            return {
+                transactions: [],
+                nextCursor: null,
+            }
+        }
+
+        const lastTx = txs[txs.length - 1]
+        if (lastTx === undefined) {
             return {
                 transactions: txs,
                 nextCursor: null,
             }
         }
 
-        const d = new Date(lastCreatedAt).toISOString()
-        const nextCursor =
-            rows.length === limit ? `${d}::${txs[txs.length - 1].id}` : null
-        console.log('next cursor')
-        console.log(nextCursor)
+        const d = new Date(lastTx.createdAt!).toISOString()
+        const nextCursor = hasNextPage ? `${d}::${lastTx.id}` : null
         return {
             transactions: txs,
             nextCursor: nextCursor,

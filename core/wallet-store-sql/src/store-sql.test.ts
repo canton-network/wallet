@@ -662,23 +662,19 @@ implementations.forEach(([name, StoreImpl]) => {
 
             const listAllTxs = await store.listTransactionsV2()
 
-            // console.log(listAllTxs)
             const collected: Transaction[] = []
 
-            try {
-                let page = await store.listTransactionsV2(undefined, 5)
+            let page = await store.listTransactionsV2(undefined, 5)
+            collected.push(...page.transactions)
+            let timesCalled = 1
+            while (page.nextCursor !== null) {
+                timesCalled++
+                page = await store.listTransactionsV2(page.nextCursor, 5)
                 collected.push(...page.transactions)
-                while (page.nextCursor !== null) {
-                    page = await store.listTransactionsV2(page.nextCursor, 6)
-                    console.log('page')
-                    console.log(page)
-                    collected.push(...page.transactions)
-                }
-            } catch (e) {
-                console.log(e)
             }
 
             expect(listAllTxs.transactions).toEqual(collected)
+            expect(timesCalled).toBe(2)
         })
 
         test('removeWallet should cascade-delete userPartyRights', async () => {
