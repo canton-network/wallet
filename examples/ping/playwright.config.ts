@@ -86,7 +86,11 @@ export default defineConfig({
     webServer: {
         command: 'yarn workspace @canton-network/example-ping mock:signing-providers',
         url: mockServerHealthUrl,
+        // TODO Does this make sense?
         reuseExistingServer: !process.env.CI,
         timeout: 30 * 1000,
+        // TODO problably can remove that after adding pino
+        stdout: 'pipe',
+        stderr: 'pipe',
     },
 })

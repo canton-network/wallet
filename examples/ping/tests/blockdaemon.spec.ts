@@ -9,14 +9,38 @@ import {
 import { Page } from '@playwright/test'
 
 const dappApiPort = 3030
-const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:6666'
+const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031/blockdaemon'
 
+// TODO inline it
 function toBlockdaemonMockEndpoint(path: string): string {
     const base = blockdaemonApiUrl.endsWith('/')
         ? blockdaemonApiUrl
         : `${blockdaemonApiUrl}/`
     const relativePath = path.startsWith('/') ? path.slice(1) : path
     return new URL(relativePath, base).toString()
+}
+
+async function getExternalTxIdFromPendingResult(
+    page: Page,
+    commandId: string
+): Promise<string> {
+    // TODO can I make it shorter?
+    const pendingResult = page
+        .getByRole('paragraph')
+        .filter({ hasText: `"commandId": "${commandId}"` })
+        .filter({ hasText: '"status": "pending"' })
+        .filter({ hasText: '"externalTxId"' })
+        .first()
+
+    await expect(pendingResult).toBeVisible()
+    const pendingText = await pendingResult.textContent()
+    const externalTxId = pendingText?.match(/"externalTxId":\s*"([^"]+)"/)?.[1]
+    if (!externalTxId) {
+        throw new Error(
+            `did not find externalTxId in pending tx response for commandId ${commandId}`
+        )
+    }
+    return externalTxId
 }
 
 async function signMockBlockdaemonTransaction(
@@ -34,6 +58,19 @@ async function signMockBlockdaemonTransaction(
         }
     )
     expect(promoteResponse.ok).toBeTruthy()
+
+    const txResponse = await fetch(toBlockdaemonMockEndpoint('/getTransaction'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txId }),
+    })
+    expect(txResponse.ok).toBeTruthy()
+    const tx = (await txResponse.json()) as {
+        txId: string
+        status: string
+    }
+    expect(tx.txId).toBe(txId)
+    expect(tx.status).toBe('signed')
 }
 
 test('dApp: execute externally signed tx with Blockdaemon', async ({
@@ -74,6 +111,7 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
     const blockdaemonExternalTxId =
         await wg.getWalletExternalTxId(blockdaemonPartyId)
     await signMockBlockdaemonTransaction(blockdaemonExternalTxId)
+    await wg.allocateWalletParty(blockdaemonPartyId)
 
     await dappPage.getByRole('button', { name: 'Accounts' }).click()
     expect(
@@ -103,8 +141,14 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
                     exact: true,
                 })
                 .click(),
-        { isExternalSigning: true }
+        { isExternalSigning: true, waitForClose: false }
     )
+    const commandSubmissionExternalTxId = await getExternalTxIdFromPendingResult(
+        dappPage,
+        commandId.commandId
+    )
+    await signMockBlockdaemonTransaction(commandSubmissionExternalTxId)
+    await wg.executeSignedTransaction()
 
     await expect(
         dappPage

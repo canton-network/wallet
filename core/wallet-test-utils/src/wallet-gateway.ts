@@ -96,7 +96,7 @@ export class WalletGateway {
 
     async createWalletIfNotExists(args: {
         partyHint: string
-        signingProvider: 'participant' | 'wallet-kernel' | 'blockdaemon'
+        signingProvider: 'participant' | 'wallet-kernel' | 'blockdaemon' // TODO let's import all signing providers type
         primary?: boolean
     }): Promise<string> {
         await this.gotoPartiesPage()
@@ -167,19 +167,23 @@ export class WalletGateway {
             throw new Error(`did not find partyID for ${args.partyHint}`)
         }
 
-        if (args.signingProvider == 'blockdaemon') {
-            const allocateButton = newWallet.getByRole('button', {
-                name: 'Allocate party',
-                exact: true,
-            })
-
-            if (await allocateButton.isVisible().catch(() => false)) {
-                await allocateButton.click()
-                await expect(allocateButton).not.toBeVisible({ timeout: 15000 })
-            }
-        }
-
         return partyId
+    }
+
+    async allocateWalletParty(partyId: string): Promise<void> {
+        await this.gotoPartiesPage()
+        const walletCard = (await this.popup())
+            .locator(`wg-wallet-card[party-id="${partyId}"]`)
+            .first()
+        await expect(walletCard).toBeVisible({ timeout: 15000 })
+
+        const allocateButton = walletCard.getByRole('button', {
+            name: 'Allocate party',
+            exact: true,
+        })
+        await expect(allocateButton).toBeVisible({ timeout: 15000 })
+        await allocateButton.click()
+        await expect(allocateButton).not.toBeVisible({ timeout: 15000 })
     }
 
     async getWalletExternalTxId(partyId: string): Promise<string> {
@@ -222,6 +226,7 @@ export class WalletGateway {
             name: 'Approve',
         })
 
+        // TODO is that polling part really needed?
         let commandId: string | null = null
         for (let i = 0; i < 30 && !commandId; i++) {
             commandId = new URL(popupPage.url()).searchParams.get('commandId')
@@ -239,27 +244,27 @@ export class WalletGateway {
                     'Complete signing in your external provider'
                 )
             ).toBeVisible({ timeout: 15000 })
-            await approveButton.click()
         }
 
         if (opts?.waitForClose !== false) {
-            // For dApp-triggered approvals the popup is opened with
-            // `closeafteraction`, so success is signalled by the popup closing.
-            try {
-                await popupPage.waitForEvent('close', { timeout: 30000 })
-            } catch (e: unknown) {
-                const message = e instanceof Error ? e.message : String(e)
-                if (
-                    !message.includes(
-                        'Target page, context or browser has been closed'
-                    ) &&
-                    !message.includes('Target closed')
-                ) {
-                    throw e
-                }
-            }
+            await this.waitForPopupToCloseAfterAction(popupPage)
         }
         return { commandId }
+    }
+
+    async executeSignedTransaction(opts?: {
+        waitForClose?: boolean
+    }): Promise<void> {
+        const popupPage = await this.popup()
+        const approveButton = await popupPage.getByRole('button', {
+            name: 'Approve',
+        })
+        await expect(approveButton).toBeVisible({ timeout: 15000 })
+        await approveButton.click()
+
+        if (opts?.waitForClose !== false) {
+            await this.waitForPopupToCloseAfterAction(popupPage)
+        }
     }
 
     async reconnect(args: {
@@ -381,6 +386,26 @@ export class WalletGateway {
         const popup = await this.popup()
 
         return popup.waitForURL(expectedUrl, { timeout: 5000 })
+    }
+
+    private async waitForPopupToCloseAfterAction(
+        popupPage: Page
+    ): Promise<void> {
+        // For dApp-triggered approvals the popup is opened with
+        // `closeafteraction`, so success is signalled by the popup closing.
+        try {
+            await popupPage.waitForEvent('close', { timeout: 30000 })
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : String(e)
+            if (
+                !message.includes(
+                    'Target page, context or browser has been closed'
+                ) &&
+                !message.includes('Target closed')
+            ) {
+                throw e
+            }
+        }
     }
 
     private async gotoPartiesPage(): Promise<void> {
