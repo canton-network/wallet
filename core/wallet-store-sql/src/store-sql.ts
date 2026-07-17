@@ -757,16 +757,26 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
         if (cursor) {
             const split = cursor.split('::')
-            const dateString = split[0]
-            query = query.where((eb) =>
-                eb.or([
+            const dateString = split[0] === 'null' ? null : split[0]
+            const cursorId = split[1]
+
+            query = query.where((eb) => {
+                if (dateString === null) {
+                    return eb.and([
+                        eb('createdAt', 'is', null),
+                        eb('id', '<', cursorId),
+                    ])
+                }
+
+                return eb.or([
                     eb('createdAt', '<', dateString),
                     eb.and([
                         eb('createdAt', '=', dateString),
                         eb('id', '<', split[1]),
                     ]),
+                    eb('createdAt', 'is', null),
                 ])
-            )
+            })
         }
 
         const rows = await query.execute()
@@ -792,11 +802,20 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             }
         }
 
-        const d = new Date(lastTx.createdAt!).toISOString()
-        const nextCursor = hasNextPage ? `${d}::${lastTx.id}` : null
-        return {
-            transactions: txs,
-            nextCursor: nextCursor,
+        //handle case for if timestamp is null
+        if (lastTx.createdAt) {
+            const d = new Date(lastTx.createdAt).toISOString()
+            const nextCursor = hasNextPage ? `${d}::${lastTx.id}` : null
+            return {
+                transactions: txs,
+                nextCursor: nextCursor,
+            }
+        } else {
+            const nextCursor = hasNextPage ? `null::${lastTx.id}` : null
+            return {
+                transactions: txs,
+                nextCursor: nextCursor,
+            }
         }
     }
 

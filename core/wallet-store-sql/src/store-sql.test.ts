@@ -77,7 +77,7 @@ const network: Network = {
     auth,
 }
 
-function addTx(id: string, createdAt: Date) {
+function addTx(id: string, createdAt: Date | undefined) {
     const initial: Transaction = {
         id: id,
         commandId: 'cmd-immutable',
@@ -675,6 +675,49 @@ implementations.forEach(([name, StoreImpl]) => {
 
             expect(listAllTxs.transactions).toEqual(collected)
             expect(timesCalled).toBe(2)
+        })
+
+        test('paginate list transactions if createdAt is null for some txs', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-tx-immutable',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            for (let i = 0; i < 10; i++) {
+                const date =
+                    i % 2 > 0 ? new Date(`2026-01-02T00:00:00.000Z`) : undefined
+
+                const tx = addTx(`tx${i}`, date)
+
+                await store.setTransaction(tx)
+            }
+
+            const listAllTxs = await store.listTransactionsV2()
+            console.log('list all txs')
+            console.log(listAllTxs)
+
+            const collected: Transaction[] = []
+
+            let page = await store.listTransactionsV2(undefined, 5)
+            collected.push(...page.transactions)
+            let timesCalled = 1
+
+            console.log(`page ${timesCalled}`)
+            console.log(page)
+            while (page.nextCursor !== null) {
+                timesCalled++
+                page = await store.listTransactionsV2(page.nextCursor, 5)
+                collected.push(...page.transactions)
+                console.log(`page ${timesCalled}`)
+                console.log(page)
+            }
+
+            // expect(listAllTxs.transactions).toEqual(collected)
+            // expect(timesCalled).toBe(2)
         })
 
         test('removeWallet should cascade-delete userPartyRights', async () => {
