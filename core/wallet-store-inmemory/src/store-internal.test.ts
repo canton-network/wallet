@@ -663,7 +663,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 new Date('2026-01-01T00:01:00.000Z')
             )
 
-            const duplicates = await store.listTransactions()
+            const duplicates = (await store.listTransactions()).transactions
             expect(
                 duplicates.filter((tx) => tx.commandId === initial.commandId)
             ).toHaveLength(2)
@@ -767,7 +767,9 @@ implementations.forEach(([name, StoreImpl]) => {
             ).rejects.toThrow('Transaction not found')
 
             await store.removeTransaction('tx-0')
-            expect(await store.listTransactions()).toHaveLength(1)
+            expect((await store.listTransactions()).transactions).toHaveLength(
+                1
+            )
         })
 
         test('should manage message signing requests', async () => {

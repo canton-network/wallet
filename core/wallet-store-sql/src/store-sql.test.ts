@@ -633,7 +633,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 new Date('2026-01-01T00:01:00.000Z')
             )
 
-            const duplicates = await store.listTransactions()
+            const duplicates = (await store.listTransactions()).transactions
             expect(
                 duplicates.filter((tx) => tx.commandId === initial.commandId)
             ).toHaveLength(2)
@@ -660,16 +660,16 @@ implementations.forEach(([name, StoreImpl]) => {
                 await store.setTransaction(tx)
             }
 
-            const listAllTxs = await store.listTransactionsV2()
+            const listAllTxs = await store.listTransactions()
 
             const collected: Transaction[] = []
 
-            let page = await store.listTransactionsV2(undefined, 5)
+            let page = await store.listTransactions(undefined, 5)
             collected.push(...page.transactions)
             let timesCalled = 1
             while (page.nextCursor !== null) {
                 timesCalled++
-                page = await store.listTransactionsV2(page.nextCursor, 5)
+                page = await store.listTransactions(page.nextCursor, 5)
                 collected.push(...page.transactions)
             }
 
@@ -696,11 +696,11 @@ implementations.forEach(([name, StoreImpl]) => {
                 await store.setTransaction(tx)
             }
 
-            const listAllTxs = await store.listTransactionsV2()
+            const listAllTxs = await store.listTransactions()
 
             const collected: Transaction[] = []
 
-            let page = await store.listTransactionsV2(undefined, 5)
+            let page = await store.listTransactions(undefined, 5)
             collected.push(...page.transactions)
             let timesCalled = 1
 
@@ -708,7 +708,7 @@ implementations.forEach(([name, StoreImpl]) => {
             console.log(page)
             while (page.nextCursor !== null) {
                 timesCalled++
-                page = await store.listTransactionsV2(page.nextCursor, 5)
+                page = await store.listTransactions(page.nextCursor, 5)
                 collected.push(...page.transactions)
                 console.log(`page ${timesCalled}`)
                 console.log(page)
@@ -790,7 +790,9 @@ implementations.forEach(([name, StoreImpl]) => {
                 'network1',
             ])
             expect(await store.getWallets()).toHaveLength(1)
-            expect(await store.listTransactions()).toHaveLength(1)
+            expect((await store.listTransactions()).transactions).toHaveLength(
+                1
+            )
 
             await store.removeNetwork('network1')
 
@@ -951,7 +953,9 @@ implementations.forEach(([name, StoreImpl]) => {
 
             await store.removeTransaction('tx-old')
             expect(await store.getTransaction('tx-old')).toBeUndefined()
-            expect(await store.listTransactions()).toHaveLength(1)
+            expect((await store.listTransactions()).transactions).toHaveLength(
+                1
+            )
         })
 
         test('should throw when updating a missing transaction or message', async () => {

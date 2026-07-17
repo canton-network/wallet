@@ -183,7 +183,10 @@ export interface Store {
     getLatestTransactionByCommandId(
         commandId: string
     ): Promise<Transaction | undefined>
-    listTransactions(): Promise<Array<Transaction>>
+    listTransactions(
+        cursor?: string,
+        limit?: number
+    ): Promise<{ transactions: Array<Transaction>; nextCursor: string | null }>
     listAllPendingTransactions(): Promise<Array<Transaction>>
     removeTransaction(transactionId: string): Promise<void>
 

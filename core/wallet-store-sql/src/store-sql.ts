@@ -720,25 +720,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return transaction ? toTransaction(transaction) : undefined
     }
 
-    async listTransactions(): Promise<Array<Transaction>> {
-        const userId = this.assertConnected()
-        const network = await this.getCurrentNetwork()
-        const transactions = await this.db
-            .selectFrom('transactions')
-            .selectAll()
-            .where((eb) =>
-                eb.and([
-                    eb('userId', '=', userId),
-                    eb('networkId', '=', network.id),
-                ])
-            )
-            .orderBy('createdAt', 'desc')
-            .orderBy('id', 'desc')
-            .execute()
-        return transactions.map((table) => toTransaction(table))
-    }
-
-    async listTransactionsV2(cursor?: string, limit?: number) {
+    async listTransactions(cursor?: string, limit?: number) {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
         const lim = limit ? Math.min(limit, 100) : 100

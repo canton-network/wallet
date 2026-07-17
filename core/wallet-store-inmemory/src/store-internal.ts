@@ -454,11 +454,17 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             })[0]
     }
 
-    async listTransactions(): Promise<Array<Transaction>> {
+    async listTransactions() {
         this.assertConnected()
         const storage = this.getStorage()
 
-        return Array.from(storage.transactions.values()).sort(byCreatedAtDesc)
+        //does this need the same pagination logic?
+        return {
+            transactions: Array.from(storage.transactions.values()).sort(
+                byCreatedAtDesc
+            ),
+            nextCursor: null,
+        }
     }
 
     async removeTransaction(transactionId: string): Promise<void> {
