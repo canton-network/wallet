@@ -43,8 +43,9 @@ async function getExternalTxIdFromPendingResult(
     return externalTxId
 }
 
-async function signMockBlockdaemonTransaction(
-    txId: string
+async function setMockBlockdaemonTransactionState(
+    txId: string,
+    status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
     const promoteResponse = await fetch(
         toBlockdaemonMockEndpoint('/_admin/setTransactionState'),
@@ -53,7 +54,7 @@ async function signMockBlockdaemonTransaction(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 txId,
-                status: 'signed',
+                status,
             }),
         }
     )
@@ -70,7 +71,29 @@ async function signMockBlockdaemonTransaction(
         status: string
     }
     expect(tx.txId).toBe(txId)
-    expect(tx.status).toBe('signed')
+    expect(tx.status).toBe(status)
+}
+
+// TODO let's make it shared in scope of ping dapp tests
+async function startExternalSigningFlow(
+    wg: WalletGateway,
+    dappPage: Page
+): Promise<{ commandId: string; externalTxId: string }> {
+    const { commandId } = await wg.approveTransaction(
+        () =>
+            dappPage
+                .getByRole('button', {
+                    name: 'create Ping contract',
+                    exact: true,
+                })
+                .click(),
+        { isExternalSigning: true, waitForClose: false }
+    )
+    const externalTxId = await getExternalTxIdFromPendingResult(
+        dappPage,
+        commandId
+    )
+    return { commandId, externalTxId }
 }
 
 test('dApp: execute externally signed tx with Blockdaemon', async ({
@@ -107,10 +130,11 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
         partyHint: blockdaemonPartyHint,
         signingProvider: 'blockdaemon',
         primary: true,
+        // autoAllocateExternal: false,
     })
     const blockdaemonExternalTxId =
         await wg.getWalletExternalTxId(blockdaemonPartyId)
-    await signMockBlockdaemonTransaction(blockdaemonExternalTxId)
+    await setMockBlockdaemonTransactionState(blockdaemonExternalTxId, 'signed')
     await wg.allocateWalletParty(blockdaemonPartyId)
 
     await dappPage.getByRole('button', { name: 'Accounts' }).click()
@@ -133,34 +157,21 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
         })
     ).toBeEnabled()
 
-    const commandId = await wg.approveTransaction(
-        () =>
-            dappPage
-                .getByRole('button', {
-                    name: 'create Ping contract',
-                    exact: true,
-                })
-                .click(),
-        { isExternalSigning: true, waitForClose: false }
-    )
-    const commandSubmissionExternalTxId = await getExternalTxIdFromPendingResult(
-        dappPage,
-        commandId.commandId
-    )
-    await signMockBlockdaemonTransaction(commandSubmissionExternalTxId)
-    await wg.executeSignedTransaction()
+    const firstSubmission = await startExternalSigningFlow(wg, dappPage)
+    await setMockBlockdaemonTransactionState(firstSubmission.externalTxId, 'signed')
+    await wg.executeSignedTransaction({ waitForClose: false })
 
     await expect(
         dappPage
             .getByRole('paragraph')
-            .filter({ hasText: `"commandId": "${commandId.commandId}"` })
+            .filter({ hasText: `"commandId": "${firstSubmission.commandId}"` })
             .filter({ hasText: '"status": "pending"' })
             .filter({ hasText: '"externalTxId"' })
     ).toHaveCount(1)
     await expect(
         dappPage
             .getByRole('paragraph')
-            .filter({ hasText: `"commandId": "${commandId.commandId}"` })
+            .filter({ hasText: `"commandId": "${firstSubmission.commandId}"` })
             .filter({ hasText: '"status": "signed"' })
             .filter({ hasText: '"externalTxId"' })
     ).toHaveCount(1)
@@ -168,7 +179,7 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
         dappPage
             .getByRole('paragraph')
             .filter({
-                hasText: `"commandId": "${commandId.commandId}"`,
+                hasText: `"commandId": "${firstSubmission.commandId}"`,
             })
             .filter({
                 hasText: '"status": "executed"',
@@ -178,4 +189,72 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
                     /"payload": \{[\s\S]*"updateId": "[^"]+"[\s\S]*"completionOffset": \d+/,
             })
     ).toHaveCount(1)
+
+    await wg.rejectTransaction(
+        () =>
+            dappPage
+                .getByRole('button', {
+                    name: 'create Ping contract',
+                    exact: true,
+                })
+                .click(),
+        { waitForClose: true }
+    )
+    // TODO this would be nice to check, but removing transaction doesn't emit txChanged and I don't know what should it emit
+    // await expect(
+    //     dappPage
+    //         .getByRole('paragraph')
+    //         .filter({ hasText: `"commandId": "${rejectedByUser.commandId}"` })
+    // ).toHaveCount(0)
+
+    // TODO fails here
+    const adminRejectedSubmission = await startExternalSigningFlow(wg, dappPage)
+    await setMockBlockdaemonTransactionState(
+        adminRejectedSubmission.externalTxId,
+        'rejected'
+    )
+    await wg.executeSignedTransaction({ waitForClose: false })
+    await expect(
+        dappPage
+            .getByRole('paragraph')
+            .filter({
+                hasText: `"commandId": "${adminRejectedSubmission.commandId}"`,
+            })
+            .filter({ hasText: '"status": "pending"' })
+            .filter({ hasText: '"externalTxId"' })
+    ).toHaveCount(1)
+    await expect(
+        dappPage
+            .getByRole('paragraph')
+            .filter({
+                hasText: `"commandId": "${adminRejectedSubmission.commandId}"`,
+            })
+            .filter({ hasText: '"status": "failed"' })
+    ).toHaveCount(1)
+
+    // const adminFailedSubmission = await startExternalSigningFlow(wg, dappPage)
+    // await setMockBlockdaemonTransactionState(
+    //     adminFailedSubmission.externalTxId,
+    //     'failed'
+    // )
+    // await wg.executeSignedTransaction()
+    // await expect(
+    //     dappPage
+    //         .getByRole('paragraph')
+    //         .filter({
+    //             hasText: `"commandId": "${adminFailedSubmission.commandId}"`,
+    //         })
+    //         .filter({ hasText: '"status": "pending"' })
+    //         .filter({ hasText: '"externalTxId"' })
+    // ).toHaveCount(1)
+    // await expect(
+    //     dappPage
+    //         .getByRole('paragraph')
+    //         .filter({
+    //             hasText: `"commandId": "${adminFailedSubmission.commandId}"`,
+    //         })
+    //         .filter({ hasText: '"status": "failed"' })
+    // ).toHaveCount(1)
+
+    // TODO I think we should check wg transactions additionally to validate the state is correct. Either at the end of big test, or at the end of each tx flow.
 })

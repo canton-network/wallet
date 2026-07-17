@@ -252,6 +252,45 @@ export class WalletGateway {
         return { commandId }
     }
 
+    async rejectTransaction(
+        start: () => Promise<void>,
+        opts?: { waitForClose?: boolean }
+    ): Promise<{
+        commandId: string
+    }> {
+        await start()
+
+        const popupPage = await this.popup()
+        await expect(
+            await popupPage.getByRole('button', { name: 'Reject' })
+        ).toBeVisible({ timeout: 15000 })
+        const rejectButton = await popupPage.getByRole('button', {
+            name: 'Reject',
+        })
+
+        // TODO is that polling part really needed?
+        let commandId: string | null = null
+        for (let i = 0; i < 30 && !commandId; i++) {
+            commandId = new URL(popupPage.url()).searchParams.get('commandId')
+            if (!commandId) {
+                await new Promise((resolve) => setTimeout(resolve, 500))
+            }
+        }
+        if (!commandId) throw new Error('Reject popup has no commandId in URL')
+        popupPage.once('dialog', async (dialog) => {
+            expect(dialog.type()).toBe('confirm')
+
+            await dialog.accept()
+        })
+
+        await rejectButton.click()
+
+        if (opts?.waitForClose !== false) {
+            await this.waitForPopupToCloseAfterAction(popupPage)
+        }
+        return { commandId }
+    }
+
     async executeSignedTransaction(opts?: {
         waitForClose?: boolean
     }): Promise<void> {
@@ -263,6 +302,7 @@ export class WalletGateway {
         await approveButton.click()
 
         if (opts?.waitForClose !== false) {
+            // TODO maybe lack of option should be considered as false?
             await this.waitForPopupToCloseAfterAction(popupPage)
         }
     }
