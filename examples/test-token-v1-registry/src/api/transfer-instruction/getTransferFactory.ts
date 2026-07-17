@@ -37,11 +37,11 @@ export const getTransferFactory: TransferInstructionAPIHandler<
     }
 
     const transferKind =
-        (parsedChoiceArguments.data.transferKind ??
-        parsedChoiceArguments.data.sender ===
-            parsedChoiceArguments.data.receiver)
+        parsedChoiceArguments.data.transferKind ??
+        (parsedChoiceArguments.data.sender ===
+        parsedChoiceArguments.data.receiver
             ? 'self'
-            : 'offer'
+            : 'offer')
 
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
@@ -71,20 +71,20 @@ export const getTransferFactory: TransferInstructionAPIHandler<
             partyId: admin.party,
         })
 
-    const factoryContracts = await sdk.ledger.acsReader.readJsContracts({
-        filterByParty: true,
-        parties: [admin.party],
-        offset: executionResult.completionOffset,
-        templateIds: [TestTokenV1.TokenRules.templateId],
-    })
-
-    const factoryContract = factoryContracts[0]
+    const factoryContract = (
+        await sdk.ledger.acsReader.readJsContracts({
+            filterByParty: true,
+            parties: [admin.party],
+            offset: executionResult.completionOffset,
+            templateIds: [TestTokenV1.TokenRules.templateId],
+        })
+    )[0]
 
     if (!factoryContract) {
         return {
             status: 500,
             payload: {
-                error: `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}, contractsAtOffset=${factoryContracts.length}`,
+                error: `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`,
             },
         }
     }

@@ -12,6 +12,15 @@ vi.mock('../../common/sdk', () => {
     }
 })
 
+vi.mock('../../common/admin', () => ({
+    admin: {
+        party: 'party',
+        keys: {
+            privateKey: 'privateKey',
+        },
+    },
+}))
+
 const { getAllocationFactory } = await import('./getAllocationFactory')
 
 const correctChoiceArguments = {
