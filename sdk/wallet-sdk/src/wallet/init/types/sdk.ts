@@ -114,10 +114,9 @@ export type NullableExtendedFullSDKInterface = {
 export type ExtendedSDKInterface<
     ExtendedItems extends keyof ExtendedSDKOptions,
 > = {
-    [K in keyof Pick<
-        ExtendedSDKOptions,
-        ExtendedItems
-    >]: ExtendedFullSDKInterface[K]
+    [
+        K in keyof Pick<ExtendedSDKOptions, ExtendedItems>
+    ]: ExtendedFullSDKInterface[K]
 }
 
 export type SDKInterface<
