@@ -3,6 +3,12 @@
 
 import { instruments, MetadataAPIHandler } from './common'
 
+/**
+ * Returns metadata for a single instrument identified by its instrument ID.
+ *
+ * @throws {494} When the instrument was not found.
+ * @returns Instrument metadata.
+ */
 export const getInstrument: MetadataAPIHandler<'getInstrument'> = async (
     ctx
 ) => {

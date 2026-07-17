@@ -17,6 +17,13 @@ export const GetTransferFactoryChoiceArguments = z.object({
     ),
 })
 
+/**
+ * Resolves or creates a transfer factory for initiating transfer instruction workflows.
+ *
+ * @throws {400} When provided body request is invalid.
+ * @throws {500} when instantiating new allocation factory contract has failed.
+ * @returns Factory identifier, resolved transfer kind, and choice context on success.
+ */
 export const getTransferFactory: TransferInstructionAPIHandler<
     'getTransferFactory'
 > = async (ctx) => {

@@ -3,6 +3,9 @@
 
 import { instruments, MetadataAPIHandler } from './common'
 
+/**
+ * @returns API payload containing the full in-memory list of instrument metadata.
+ */
 export const listInstruments: MetadataAPIHandler<
     'listInstruments'
 > = async () => {

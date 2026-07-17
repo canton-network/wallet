@@ -14,6 +14,13 @@ export const GetTransferFactoryChoiceArguments = z.object({
     receiver: z.string(),
 })
 
+/**
+ * Resolves or creates an allocation factory for initiating allocation workflows.
+ *
+ * @throws {400} When provided body request is invalid.
+ * @throws {500} when instantiating new allocation factory contract has failed.
+ * @returns Factory identifier with choice context on success.
+ */
 export const getAllocationFactory: AllocationInstructionAPIHandler<
     'getAllocationFactory'
 > = async (ctx) => {

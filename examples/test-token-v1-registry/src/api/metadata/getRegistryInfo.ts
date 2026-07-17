@@ -4,6 +4,9 @@
 import { admin } from '../../common/admin'
 import { MetadataAPIHandler, supportedApis } from './common'
 
+/**
+ * @returns API payload with registry info for token metadata clients.
+ */
 export const getRegistryInfo: MetadataAPIHandler<
     'getRegistryInfo'
 > = async () => {

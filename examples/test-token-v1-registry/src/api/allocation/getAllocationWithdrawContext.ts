@@ -4,6 +4,9 @@
 import { emptyChoiceContext } from '../common'
 import { AllocationAPIHandler } from './common'
 
+/**
+ * @returns Empty choice context payload for the allocation withdraw operation.
+ */
 export const getAllocationWithdrawContext: AllocationAPIHandler<
     'getAllocationWithdrawContext'
 > = async () => {

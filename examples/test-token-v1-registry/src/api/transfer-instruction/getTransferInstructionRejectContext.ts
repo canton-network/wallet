@@ -4,6 +4,9 @@
 import { emptyChoiceContext } from '../common'
 import { TransferInstructionAPIHandler } from './common'
 
+/**
+ * @returns Empty choice context payload for the transfer reject operation.
+ */
 export const getTransferInstructionRejectContext: TransferInstructionAPIHandler<
     'getTransferInstructionRejectContext'
 > = async () => {
