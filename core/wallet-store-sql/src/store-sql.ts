@@ -771,7 +771,15 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
         const rows = await query.execute()
         const txs = rows.map((r) => toTransaction(r))
-        const d = new Date(txs[txs.length - 1].createdAt!).toISOString()
+        const lastCreatedAt = txs[txs.length - 1].createdAt
+        if (lastCreatedAt === undefined) {
+            return {
+                transactions: txs,
+                nextCursor: null,
+            }
+        }
+
+        const d = new Date(lastCreatedAt).toISOString()
         const nextCursor =
             rows.length === limit ? `${d}::${txs[txs.length - 1].id}` : null
         console.log('next cursor')
