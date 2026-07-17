@@ -17,10 +17,9 @@ Use the SDK to:
 - **Prepare and execute transactions**: submit Daml commands for user approval.
 - **Call the JSON Ledger API**: proxy authenticated requests through the user's wallet session.
 
-<Note>
-The SDK is framework agnostic and works with any browser-based application, including
-React, Next.js, Vue, Svelte, or vanilla TypeScript.
-</Note>
+> [!NOTE]
+> The SDK is framework agnostic and works with any browser-based application, including
+> React, Next.js, Vue, Svelte, or vanilla TypeScript.
 
 ## How it fits together
 
@@ -57,16 +56,15 @@ Wallets connect in one of two ways:
 By default, the wallet picker lists the browser wallets that announce themselves, together
 with the SDK's built-in list of remote wallets. You can add more wallets, such as
 WalletConnect or a custom remote wallet, by registering adapters. See
-[Wallet discovery](/sdks-tools/sdks/dapp-sdk/guides/wallet-discovery).
+[Wallet discovery](guides/wallet-discovery.md).
 
-<Note>
-The SDK is built over the CIP-103 provider API. Most dApps should use the SDK. Use the
-[Provider API](/sdks-tools/sdks/dapp-sdk/reference/provider-api) directly only when building
-lower-level infrastructure or adapting an existing provider-based integration.
-</Note>
+> [!NOTE]
+> The SDK is built over the CIP-103 provider API. Most dApps should use the SDK. Use the
+> [Provider API](reference/provider-api.md) directly only when building
+> lower-level infrastructure or adapting an existing provider-based integration.
 
 ## Quickstart
 
-Ready to build? The [Quickstart](/sdks-tools/sdks/dapp-sdk/quickstart) walks through
+Ready to build? The [Quickstart](quickstart.md) walks through
 installing the SDK, connecting a wallet, reading the user's party, and submitting a
 transaction, using only the high-level SDK.

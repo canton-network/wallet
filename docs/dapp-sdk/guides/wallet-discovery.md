@@ -105,10 +105,9 @@ const wc = WalletConnectAdapter.create({
 await sdk.init({ additionalAdapters: [wc] })
 ```
 
-<Warning>
-Treat your WalletConnect `projectId` as configuration, not a secret to hardcode. Inject it
-through an environment variable as shown above.
-</Warning>
+> [!WARNING]
+> Treat your WalletConnect `projectId` as configuration, not a secret to hardcode. Inject it
+> through an environment variable as shown above.
 
 ### Add a custom remote wallet
 
@@ -185,11 +184,5 @@ await sdk.init({
 
 ## Next steps
 
-<CardGroup cols={2}>
-  <Card title="Wallet Providers" href="/sdks-tools/sdks/dapp-sdk/wallet-providers/integration-overview">
-    How wallets make themselves discoverable.
-  </Card>
-  <Card title="Adapters Reference" href="/sdks-tools/sdks/dapp-sdk/reference/sdk-methods">
-    Adapter constructors and options.
-  </Card>
-</CardGroup>
+- [Wallet Providers](../wallet-providers/integration-overview.md) — How wallets make themselves discoverable.
+- [Adapters Reference](../reference/sdk-methods.md) — Adapter constructors and options.

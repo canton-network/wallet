@@ -7,28 +7,28 @@ This is the shortest working integration: install the SDK, initialize it, let th
 connect a wallet, read their party, and submit a transaction. It uses only the high-level
 SDK. You do not need the Provider API to build a dApp.
 
-<Steps>
-<Step title="Install the SDK">
-<Tabs>
-  <Tab title="npm">
-  ```shell
-  npm install @canton-network/dapp-sdk
-  ```
-  </Tab>
-  <Tab title="yarn">
-  ```shell
-  yarn add @canton-network/dapp-sdk
-  ```
-  </Tab>
-  <Tab title="pnpm">
-  ```shell
-  pnpm add @canton-network/dapp-sdk
-  ```
-  </Tab>
-</Tabs>
-</Step>
+### 1. Install the SDK
 
-<Step title="Initialize on app load">
+#### npm
+
+```shell
+npm install @canton-network/dapp-sdk
+```
+
+#### yarn
+
+```shell
+yarn add @canton-network/dapp-sdk
+```
+
+#### pnpm
+
+```shell
+pnpm add @canton-network/dapp-sdk
+```
+
+### 2. Initialize on app load
+
 Call `init()` once, early in your app's lifecycle. This registers the default wallet
 adapters and silently restores a previous session **without** opening the wallet picker.
 
@@ -38,9 +38,8 @@ import * as sdk from '@canton-network/dapp-sdk'
 await sdk.init()
 ```
 
-</Step>
+### 3. Connect a wallet
 
-<Step title="Connect a wallet">
 Call `connect()` in response to a user action (for example, a "Connect wallet" button).
 This opens the wallet picker and runs the authentication flow.
 
@@ -51,9 +50,8 @@ async function onConnectClick() {
 }
 ```
 
-</Step>
+### 4. Read the connected party
 
-<Step title="Read the connected party">
 Once connected, read the account the user marked as primary.
 
 ```typescript
@@ -61,9 +59,8 @@ const account = await sdk.getPrimaryAccount()
 console.log('Primary party:', account.partyId)
 ```
 
-</Step>
+### 5. Submit a transaction
 
-<Step title="Submit a transaction">
 Use `prepareExecute()` to submit Daml commands. The SDK prepares the transaction, asks
 the user to approve and sign it in their wallet, and submits it to the ledger.
 
@@ -86,14 +83,13 @@ await sdk.prepareExecute({
 })
 ```
 
-<Note>
-This example uses the built-in `Ping` template to prove the round-trip works. For a real
-dApp, submit commands from your own Daml package. See
-[Parties & transactions](/sdks-tools/sdks/dapp-sdk/guides/parties-and-transactions) for details.
-</Note>
-</Step>
+> [!NOTE]
+> This example uses the built-in `Ping` template to prove the round-trip works. For a real
+> dApp, submit commands from your own Daml package. See
+> [Parties & transactions](guides/parties-and-transactions.md) for details.
 
-<Step title="Handle disconnect">
+### 6. Handle disconnect
+
 Let the user end their session.
 
 ```typescript
@@ -102,19 +98,8 @@ async function onDisconnectClick() {
 }
 ```
 
-</Step>
-</Steps>
-
 ## Next steps
 
-<CardGroup cols={2}>
-  <Card title="Connect & Sessions" href="/sdks-tools/sdks/dapp-sdk/guides/connect-and-sessions">
-    Connect, restore sessions, check status, and disconnect.
-  </Card>
-  <Card title="Parties & Transactions" href="/sdks-tools/sdks/dapp-sdk/guides/parties-and-transactions">
-    Work with parties, sign messages, execute transactions, and query the ledger.
-  </Card>
-  <Card title="Wallet Discovery" href="/sdks-tools/sdks/dapp-sdk/guides/wallet-discovery">
-    Customize the wallet picker and add WalletConnect or custom remote wallets.
-  </Card>
-</CardGroup>
+- [Connect & Sessions](guides/connect-and-sessions.md) — Connect, restore sessions, check status, and disconnect.
+- [Parties & Transactions](guides/parties-and-transactions.md) — Work with parties, sign messages, execute transactions, and query the ledger.
+- [Wallet Discovery](guides/wallet-discovery.md) — Customize the wallet picker and add WalletConnect or custom remote wallets.

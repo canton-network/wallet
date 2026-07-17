@@ -7,7 +7,7 @@ Once a wallet is connected, your dApp can read the user's Canton parties, sign m
 submit transactions, and query the ledger through the authenticated session.
 
 All examples use the high-level SDK. For the equivalent low-level calls, see the
-[Provider API](/sdks-tools/sdks/dapp-sdk/reference/provider-api).
+[Provider API](../reference/provider-api.md).
 
 ## List the user's parties
 
@@ -28,11 +28,10 @@ const account = await sdk.getPrimaryAccount()
 console.log(account.partyId)
 ```
 
-<Warning>
-Do not assume the primary party never changes. The user can switch it in their wallet.
-Subscribe to `onAccountsChanged` (below) and re-read the primary party rather than caching
-it indefinitely.
-</Warning>
+> [!WARNING]
+> Do not assume the primary party never changes. The user can switch it in their wallet.
+> Subscribe to `onAccountsChanged` (below) and re-read the primary party rather than caching
+> it indefinitely.
 
 ## React to account changes
 
@@ -87,11 +86,10 @@ await sdk.prepareExecute({
 })
 ```
 
-<Note>
-For a first end-to-end test you can use the built-in `Ping` template
-(`#AdminWorkflows:Canton.Internal.Ping:Ping`) to prove the round-trip works. For a real
-dApp, submit commands from your own Daml package.
-</Note>
+> [!NOTE]
+> For a first end-to-end test you can use the built-in `Ping` template
+> (`#AdminWorkflows:Canton.Internal.Ping:Ping`) to prove the round-trip works. For a real
+> dApp, submit commands from your own Daml package.
 
 ## Track a transaction
 
@@ -126,11 +124,5 @@ authenticated Ledger API client.
 
 ## Next steps
 
-<CardGroup cols={2}>
-  <Card title="Wallet Discovery" href="/sdks-tools/sdks/dapp-sdk/guides/wallet-discovery">
-    Customize the wallet picker and add WalletConnect or custom remote wallets.
-  </Card>
-  <Card title="API Reference" href="/sdks-tools/sdks/dapp-sdk/reference/sdk-methods">
-    Full signatures, parameters, and return types.
-  </Card>
-</CardGroup>
+- [Wallet Discovery](wallet-discovery.md) — Customize the wallet picker and add WalletConnect or custom remote wallets.
+- [API Reference](../reference/sdk-methods.md) — Full signatures, parameters, and return types.

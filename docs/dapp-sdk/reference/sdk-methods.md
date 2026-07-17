@@ -85,11 +85,5 @@ connected. Use it for direct `provider.request(...)` calls or provider-level eve
 
 ## Related
 
-<CardGroup cols={2}>
-  <Card title="Events" href="/sdks-tools/sdks/dapp-sdk/reference/events">
-    Subscribe to status, account, and transaction changes.
-  </Card>
-  <Card title="Provider API" href="/sdks-tools/sdks/dapp-sdk/reference/provider-api">
-    The low-level CIP-103 interface.
-  </Card>
-</CardGroup>
+- [Events](events.md) — Subscribe to status, account, and transaction changes.
+- [Provider API](provider-api.md) — The low-level CIP-103 interface.

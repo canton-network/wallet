@@ -8,7 +8,7 @@ with the `on*` functions and always unsubscribe with the matching `off*` functio
 component unmounts.
 
 For the full list of events and their payloads, see the
-[Events reference](/sdks-tools/sdks/dapp-sdk/reference/events).
+[Events reference](../reference/events.md).
 
 ## React to connection status changes
 
@@ -64,11 +64,5 @@ sdk.offStatusChanged(handler)
 
 ## Next steps
 
-<CardGroup cols={2}>
-  <Card title="Events" href="/sdks-tools/sdks/dapp-sdk/reference/events">
-    The full event list and payload shapes.
-  </Card>
-  <Card title="Parties & Transactions" href="/sdks-tools/sdks/dapp-sdk/guides/parties-and-transactions">
-    Read parties and submit transactions.
-  </Card>
-</CardGroup>
+- [Events](../reference/events.md) — The full event list and payload shapes.
+- [Parties & Transactions](parties-and-transactions.md) — Read parties and submit transactions.

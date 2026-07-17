@@ -28,6 +28,4 @@ For the complete specification, see
 
 ## Related
 
-<Card title="Provider API" href="/sdks-tools/sdks/dapp-sdk/reference/provider-api">
-  The methods that can return these errors.
-</Card>
+- [Provider API](provider-api.md) — The methods that can return these errors.

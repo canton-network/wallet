@@ -6,7 +6,7 @@ description: 'Connect mobile and cross-device wallets to Canton dApps via Wallet
 WalletConnect lets mobile and cross-device wallets connect to dApps. Wallets add Canton
 support through the WalletConnect wallet SDK; dApps enable WalletConnect by registering the
 `WalletConnectAdapter`, which is covered in
-[Wallet discovery](/sdks-tools/sdks/dapp-sdk/guides/wallet-discovery).
+[Wallet discovery](../guides/wallet-discovery.md).
 
 ## Add Canton support to your wallet
 
@@ -21,6 +21,4 @@ Your wallet must still honor CIP-103 at runtime, the same as any other integrati
 
 ## Next steps
 
-<Card title="CIP-103 Specification" href="https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md">
-  The required methods and events behind the namespaces.
-</Card>
+- [CIP-103 Specification](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md) — The required methods and events behind the namespaces.

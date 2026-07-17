@@ -6,13 +6,12 @@ description: 'Make a browser-extension wallet discoverable by announcing it to d
 A browser-extension wallet becomes discoverable by announcing itself with an event, or by
 being registered explicitly by the host dApp. Extensions communicate with the dApp over
 targeted `postMessage` and implement the synchronous
-[dApp API](/sdks-tools/sdks/dapp-sdk/reference/provider-api#sync-and-async-apis).
+[dApp API](../reference/provider-api.md#sync-and-async-apis).
 
-<Note>
-The SDK does **not** scan `window` for injected providers (for example `window.canton` or
-`window.canton.<brand>`). A browser wallet must announce itself or be registered via
-`additionalAdapters` to appear in the picker.
-</Note>
+> [!NOTE]
+> The SDK does **not** scan `window` for injected providers (for example `window.canton` or
+> `window.canton.<brand>`). A browser wallet must announce itself or be registered via
+> `additionalAdapters` to appear in the picker.
 
 ## Announce your provider
 
@@ -56,10 +55,8 @@ extension is present.
 If your wallet is not auto-discovered, dApps can register it explicitly with an
 `ExtensionAdapter`. Give integrating dApps a stable, unique `providerId` and the `target`
 your extension filters on. The dApp-side registration steps are covered in
-[Wallet discovery](/sdks-tools/sdks/dapp-sdk/guides/wallet-discovery).
+[Wallet discovery](../guides/wallet-discovery.md).
 
 ## Next steps
 
-<Card title="CIP-103 Specification" href="https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md">
-  Ensure your provider implements the required methods and events.
-</Card>
+- [CIP-103 Specification](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md) — Ensure your provider implements the required methods and events.

@@ -7,11 +7,10 @@ The **Provider API** is the low-level interface the dApp SDK is built on. It fol
 [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) request/event pattern and implements
 [CIP-103](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md).
 
-<Note>
-Most dApps should use the [high-level SDK](/sdks-tools/sdks/dapp-sdk/reference/sdk-methods).
-Use the Provider API directly only when building lower-level infrastructure or adapting an
-existing provider-based integration.
-</Note>
+> [!NOTE]
+> Most dApps should use the [high-level SDK](sdk-methods.md).
+> Use the Provider API directly only when building lower-level infrastructure or adapting an
+> existing provider-based integration.
 
 ## OpenRPC specifications
 
@@ -105,7 +104,7 @@ provider.removeListener('statusChanged', handler)
 ```
 
 The provider emits `statusChanged`, `accountsChanged`, and `txChanged`. For payload shapes,
-see [Events](/sdks-tools/sdks/dapp-sdk/reference/events).
+see [Events](events.md).
 
 ## Sync and Async APIs
 
@@ -132,10 +131,9 @@ Key differences in the Async API:
 - `prepareExecute` returns `{ userUrl }`; a `txChanged` event is emitted after the prepare
   phase.
 
-<Note>
-The dApp SDK implements the Sync API interface and relays to an Async API server internally,
-so dApp code written against the SDK works with both wallet types without changes.
-</Note>
+> [!NOTE]
+> The dApp SDK implements the Sync API interface and relays to an Async API server internally,
+> so dApp code written against the SDK works with both wallet types without changes.
 
 ## Provider interface
 
@@ -165,11 +163,5 @@ interface Provider {
 
 ## Related
 
-<CardGroup cols={2}>
-  <Card title="SDK Methods" href="/sdks-tools/sdks/dapp-sdk/reference/sdk-methods">
-    The high-level equivalents of these request methods.
-  </Card>
-  <Card title="Errors" href="/sdks-tools/sdks/dapp-sdk/reference/errors">
-    Standard error codes returned by the API.
-  </Card>
-</CardGroup>
+- [SDK Methods](sdk-methods.md) — The high-level equivalents of these request methods.
+- [Errors](errors.md) — Standard error codes returned by the API.

@@ -5,7 +5,7 @@ description: 'Connection, account, and transaction events emitted by the dApp SD
 
 The dApp SDK emits events so your UI can stay in sync with the wallet's state. Subscribe
 with the `on*` functions and unsubscribe with the matching `off*` function. For usage
-examples, see [Handle Events](/sdks-tools/sdks/dapp-sdk/guides/handle-events).
+examples, see [Handle Events](../guides/handle-events.md).
 
 ## `onStatusChanged(handler)` / `offStatusChanged(handler)`
 
@@ -34,11 +34,5 @@ Fires as a transaction submitted via `prepareExecute` moves through its lifecycl
 
 ## Related
 
-<CardGroup cols={2}>
-  <Card title="Handle Events" href="/sdks-tools/sdks/dapp-sdk/guides/handle-events">
-    Examples for subscribing to and cleaning up these events.
-  </Card>
-  <Card title="SDK Methods" href="/sdks-tools/sdks/dapp-sdk/reference/sdk-methods">
-    The functions that trigger these events.
-  </Card>
-</CardGroup>
+- [Handle Events](../guides/handle-events.md) — Examples for subscribing to and cleaning up these events.
+- [SDK Methods](sdk-methods.md) — The functions that trigger these events.

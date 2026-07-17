@@ -7,7 +7,7 @@ This guide covers the connection lifecycle: initializing the SDK, connecting a w
 inspecting connection status, restoring a returning user's session, and disconnecting.
 
 All examples use the high-level SDK. For the equivalent low-level calls, see the
-[Provider API](/sdks-tools/sdks/dapp-sdk/reference/provider-api).
+[Provider API](../reference/provider-api.md).
 
 ## Connection flow
 
@@ -30,10 +30,9 @@ import * as sdk from '@canton-network/dapp-sdk'
 await sdk.init()
 ```
 
-<Note>
-Call `init()` exactly once. To add or replace wallets (WalletConnect, custom remote wallets),
-pass options to `init()`. See [Wallet discovery](/sdks-tools/sdks/dapp-sdk/guides/wallet-discovery).
-</Note>
+> [!NOTE]
+> Call `init()` exactly once. To add or replace wallets (WalletConnect, custom remote wallets),
+> pass options to `init()`. See [Wallet discovery](wallet-discovery.md).
 
 ## Connect a wallet
 
@@ -55,7 +54,7 @@ session restore instead.
 
 If the user is not already authenticated, the wallet prompts them to log in before the
 connection completes. Remote wallets do this by returning a `userUrl` for the user to open;
-see [Sync and Async APIs](/sdks-tools/sdks/dapp-sdk/reference/provider-api#sync-and-async-apis).
+see [Sync and Async APIs](../reference/provider-api.md#sync-and-async-apis).
 
 ## Sessions
 
@@ -124,11 +123,5 @@ async function onDisconnectClick() {
 
 ## Next steps
 
-<CardGroup cols={2}>
-  <Card title="Parties & Transactions" href="/sdks-tools/sdks/dapp-sdk/guides/parties-and-transactions">
-    Read parties, sign messages, execute transactions, and query the ledger.
-  </Card>
-  <Card title="Wallet Discovery" href="/sdks-tools/sdks/dapp-sdk/guides/wallet-discovery">
-    Customize the wallet picker and add WalletConnect or custom remote wallets.
-  </Card>
-</CardGroup>
+- [Parties & Transactions](parties-and-transactions.md) — Read parties, sign messages, execute transactions, and query the ledger.
+- [Wallet Discovery](wallet-discovery.md) — Customize the wallet picker and add WalletConnect or custom remote wallets.
