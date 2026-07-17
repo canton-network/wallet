@@ -42,6 +42,7 @@ export interface SigningProviderMockServerOptions {
     host: string
     port: number
     providers: SigningProviderMockModule[]
+    logger?: (message: string) => void // TODO maybe required?
 }
 
 export interface SigningProviderMockServer {
@@ -120,6 +121,7 @@ export async function startSigningProviderMockServer(
 ): Promise<SigningProviderMockServer> {
     const host = options.host
     const requestedPort = options.port
+    const logger = options.logger ?? ((message: string) => console.log(message)) // TODO Maybe let's use pino from outside, and as this will be required, no default console.log?
     const routeMap = toRouteMap(options.providers)
 
     const server = http.createServer(async (req, res) => {
@@ -127,6 +129,8 @@ export async function startSigningProviderMockServer(
         const incomingUrl = new URL(req.url ?? '/', `http://${host}`)
         const routeKey = `${method.toUpperCase()} ${incomingUrl.pathname}`
         const route = routeMap.get(routeKey)
+
+        logger(`[signing-mocks] -> ${routeKey}`)
 
         if (!route) {
             sendJson(res, {
@@ -136,6 +140,7 @@ export async function startSigningProviderMockServer(
                     error_description: `No mock route registered for ${routeKey}`,
                 },
             })
+            logger(`[signing-mocks] <- ${routeKey} 404 route_not_found`)
             return
         }
 
@@ -151,6 +156,7 @@ export async function startSigningProviderMockServer(
                         error instanceof Error ? error.message : String(error),
                 },
             })
+            logger(`[signing-mocks] <- ${routeKey} 400 invalid_json`)
             return
         }
 
@@ -165,6 +171,7 @@ export async function startSigningProviderMockServer(
                 body,
             })
             sendJson(res, response)
+            logger(`[signing-mocks] <- ${routeKey} ${response.status ?? 200}`)
         } catch (error) {
             sendJson(res, {
                 status: 500,
@@ -174,6 +181,7 @@ export async function startSigningProviderMockServer(
                         error instanceof Error ? error.message : String(error),
                 },
             })
+            logger(`[signing-mocks] <- ${routeKey} 500 mock_handler_error`)
         }
     })
 

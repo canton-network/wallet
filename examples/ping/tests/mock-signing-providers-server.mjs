@@ -23,6 +23,7 @@ const pathPrefix =
 const server = await startSigningProviderMockServer({
     host: parsedUrl.hostname,
     port: Number(parsedUrl.port),
+    logger: (message) => console.log(message),
     providers: [
         {
             pathPrefix: '',
