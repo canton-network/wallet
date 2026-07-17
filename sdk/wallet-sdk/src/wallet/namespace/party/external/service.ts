@@ -32,46 +32,41 @@ export class ExternalPartyNamespace {
             this.resolveParticipantUids(
                 options?.confirmingParticipantEndpoints ?? []
             ),
-            options?.synchronizerId,
-        ]).then(
-            ([
-                observingParticipantUids,
-                otherHostingParticipantUids,
-                synchronizerId,
-            ]) => {
-                if (!synchronizerId)
-                    throw new Error(
-                        'synchronizerId is required for party creation — pass it via options.synchronizerId'
-                    )
-                return this.ctx.ledgerProvider.request<Ops.PostV2PartiesExternalGenerateTopology>(
-                    {
-                        method: 'ledgerApi',
-                        params: {
-                            resource: '/v2/parties/external/generate-topology',
-                            body: {
-                                synchronizer: synchronizerId,
-                                partyHint: options?.partyHint ?? v4(),
-                                publicKey: {
-                                    format: 'CRYPTO_KEY_FORMAT_RAW',
-                                    keyData: publicKey,
-                                    keySpec: 'SIGNING_KEY_SPEC_EC_CURVE25519',
-                                },
-                                localParticipantObservationOnly:
-                                    options?.localParticipantObservationOnly ??
-                                    false,
-                                confirmationThreshold:
-                                    options?.confirmingThreshold ?? 1,
-                                otherConfirmingParticipantUids:
-                                    otherHostingParticipantUids,
-                                observingParticipantUids:
-                                    observingParticipantUids,
+        ]).then(([observingParticipantUids, otherHostingParticipantUids]) => {
+            const synchronizerId = options?.synchronizerId
+            if (!synchronizerId)
+                this.ctx.error.throw({
+                    message:
+                        'synchronizerId is required for party creation — pass it via options.synchronizerId',
+                    type: 'BadRequest',
+                })
+            return this.ctx.ledgerProvider.request<Ops.PostV2PartiesExternalGenerateTopology>(
+                {
+                    method: 'ledgerApi',
+                    params: {
+                        resource: '/v2/parties/external/generate-topology',
+                        body: {
+                            synchronizer: synchronizerId,
+                            partyHint: options?.partyHint ?? v4(),
+                            publicKey: {
+                                format: 'CRYPTO_KEY_FORMAT_RAW',
+                                keyData: publicKey,
+                                keySpec: 'SIGNING_KEY_SPEC_EC_CURVE25519',
                             },
-                            requestMethod: 'post',
+                            localParticipantObservationOnly:
+                                options?.localParticipantObservationOnly ??
+                                false,
+                            confirmationThreshold:
+                                options?.confirmingThreshold ?? 1,
+                            otherConfirmingParticipantUids:
+                                otherHostingParticipantUids,
+                            observingParticipantUids: observingParticipantUids,
                         },
-                    }
-                )
-            }
-        )
+                        requestMethod: 'post',
+                    },
+                }
+            )
+        })
 
         this.logger.debug('Prepared party creation successfully.')
         return new PreparedPartyCreationService(
