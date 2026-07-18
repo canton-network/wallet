@@ -1411,20 +1411,9 @@ export class TokenStandardService {
     }
 
     async instrumentsToAsset(registryUrl: string) {
-        let instrumentsResponse = await this.listInstruments(registryUrl)
-        const instruments = [...instrumentsResponse.instruments]
-
-        while (instrumentsResponse.nextPageToken) {
-            instrumentsResponse = await this.listInstruments(
-                registryUrl,
-                undefined,
-                instrumentsResponse.nextPageToken
-            )
-            instruments.push(...instrumentsResponse.instruments)
-        }
-
+        const instrumentsResponse = await this.listInstruments(registryUrl)
         const instrumentAdmin = await this.getInstrumentAdmin(registryUrl)
-        return instruments.map((instrument) => ({
+        return instrumentsResponse.instruments.map((instrument) => ({
             id: instrument.id,
             displayName: instrument.name,
             symbol: instrument.symbol,
