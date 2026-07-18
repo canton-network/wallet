@@ -93,7 +93,39 @@ export interface components {
              * @default 10
              */
             decimals: number
+            /**
+             * @description Indicates whether the instrument is currently paused. A paused instrument cannot be
+             *     transferred or allocated.
+             * @default false
+             */
+            paused: boolean
+            pauseInfo?: components['schemas']['PauseInfo']
             supportedApis: components['schemas']['SupportedApis']
+            /**
+             * @deprecated
+             * @description Informs wallets whether the instrument supports non-basic accounts
+             *     and the wallet should thus show input fields for both the account
+             *     provider and the account id in input forms for transfers and allocations.
+             *
+             *     Note that wallets should always show non-null account providers and
+             *     account ids when displaying transfers and allocations.
+             *
+             *     This property is deprecated in favor of the more fine-grained
+             *     `accountInputFieldsToShow` property.
+             * @default false
+             */
+            showAccountInputFields: boolean
+            /**
+             * @description Fine-grained control for account input field display in wallets.
+             *
+             *     If set, then wallets should only display the specified input
+             *     field(s) in transfer and allocation input forms
+             *     *independently* of the `showAccountInputFields` property.
+             *
+             *     Note that wallets should always show non-null account providers and
+             *     account ids when displaying transfers and allocations.
+             */
+            accountInputFieldsToShow?: components['schemas']['AccountInputFieldsToShow']
         }
         ListInstrumentsResponse: {
             instruments: components['schemas']['Instrument'][]
@@ -110,6 +142,23 @@ export interface components {
         SupportedApis: {
             [key: string]: number
         }
+        /** @description Additional information about the instrument pause state. */
+        PauseInfo: {
+            /** @description Why the instrument is paused. */
+            reason?: string
+            /**
+             * Format: date-time
+             * @description Timestamp (exclusive) until which the instrument is paused, if known.
+             */
+            until?: string
+        }
+        /** @description Which account input field(s) wallets should show in forms. */
+        AccountInputFieldsToShow: components['schemas']['AccountInputFieldToShow'][]
+        /**
+         * @description Which single account input field wallets should show in forms.
+         * @enum {string}
+         */
+        AccountInputFieldToShow: 'provider' | 'accountId'
     }
     responses: {
         /** @description bad request */
