@@ -8,11 +8,11 @@ import {
     ExerciseCommand,
 } from '@canton-network/core-token-standard-service'
 import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
-import { WrappedCommand } from '../../ledger/types.js'
 import { PartyId } from '@canton-network/core-types'
 import { LedgerNamespace } from '../../ledger/index.js'
 import { UtxoNamespace } from './index.js'
 import { resolveProviderParty } from '../utils.js'
+import { WrappedCommand } from '@canton-network/core-ledger-client-types'
 
 export class MergeDelegationNamespace {
     private readonly ledger: LedgerNamespace
