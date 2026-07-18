@@ -1,5 +1,5 @@
 {
-    "DAML_RELEASE_VERSION": "3.5.8",
+    "DAML_RELEASE_VERSION": "3.5.2",
     "SUPPORTED_VERSIONS": {
         "devnet": {
             "canton": {
