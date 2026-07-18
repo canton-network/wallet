@@ -1,0 +1,22 @@
+{
+    "name": "@canton-network/core-eslint-config",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Shared ESLint flat config for the wallet monorepo",
+    "license": "Apache-2.0",
+    "exports": {
+        ".": "./index.mjs"
+    },
+    "dependencies": {
+        "@eslint/compat": "^2.1.0",
+        "@eslint/js": "^10.0.1",
+        "@nx/eslint-plugin": "22.7.6",
+        "eslint-plugin-headers": "^1.3.4",
+        "globals": "^17.7.0",
+        "typescript-eslint": "^8.63.0"
+    },
+    "peerDependencies": {
+        "eslint": "^10.0.0"
+    }
+}

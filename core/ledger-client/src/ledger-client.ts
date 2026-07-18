@@ -6,6 +6,8 @@ import {
     type LedgerApiVersion,
     type LedgerCommonPaths,
     type LedgerCommonSchemas,
+    LedgerGetRoutes,
+    LedgerPostRoutes,
 } from '@canton-network/core-ledger-client-types'
 import createClient, { Client, FetchOptions } from 'openapi-fetch'
 import { Logger } from 'pino'
@@ -93,6 +95,14 @@ export type GetEndpoint = {
         ? Pathname
         : never
 }[keyof paths]
+
+export function isValidGetEndpoint(resource: string): resource is GetEndpoint {
+    return LedgerGetRoutes.has(resource)
+}
+
+export function isValidPostEndpoint(resource: string): resource is GetEndpoint {
+    return LedgerPostRoutes.has(resource)
+}
 
 // Similar as above, for GETs
 export type GetResponse<Path extends GetEndpoint> = paths[Path] extends {

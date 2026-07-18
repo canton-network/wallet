@@ -153,7 +153,7 @@ export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
                     }),
                     '& .MuiSelect-icon': {
                         color: 'text.primary',
-                        right: 20,
+                        right: (theme) => theme.spacing(2.5),
                     },
                     '&.Mui-disabled': {
                         bgcolor: 'action.disabledBackground',

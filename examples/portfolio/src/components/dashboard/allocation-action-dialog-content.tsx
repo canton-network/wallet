@@ -234,6 +234,8 @@ function TransferLegCard({
 
     return (
         <Box
+            role="group"
+            aria-label={`Transfer leg ${index + 1}`}
             sx={{
                 border: '1px solid',
                 borderColor: 'divider',
@@ -392,9 +394,10 @@ function TransferLegCard({
                         >
                             {canCreateAllocation ? (
                                 <PillButton
+                                    size="small"
                                     disabled={actionDisabled}
                                     onClick={onCreateAllocation}
-                                    sx={{ minWidth: 104, px: 2, fontSize: 16 }}
+                                    sx={{ minWidth: 90, fontSize: 14 }}
                                 >
                                     {isLegLoading ? (
                                         <CircularProgress
@@ -409,14 +412,15 @@ function TransferLegCard({
                             {canWithdrawAllocation ? (
                                 <PillButton
                                     variant="outlined"
-                                    color="warning"
+                                    color="secondary"
+                                    size="small"
                                     disabled={isLoading}
                                     onClick={() =>
                                         onWithdrawAllocation(
                                             allocationContractId
                                         )
                                     }
-                                    sx={{ minWidth: 104, px: 2, fontSize: 16 }}
+                                    sx={{ minWidth: 90, fontSize: 14 }}
                                 >
                                     {isLegLoading ? (
                                         <CircularProgress

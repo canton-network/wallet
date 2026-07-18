@@ -3,7 +3,8 @@
 
 import { format, formatDistance, formatISO } from 'date-fns'
 
-export const formatIsoDateTime = (date: Date): string => formatISO(date)
+export const formatDateTime = (date: Date): string =>
+    format(date, 'yyyy-MM-dd HH:mm')
 
 export function getExpiryTime(expiry: string): number {
     const time = Date.parse(expiry)
@@ -26,7 +27,7 @@ export function formatDateTimeString(date: string): string {
 
     return Number.isNaN(parsedDate.getTime())
         ? date
-        : format(parsedDate, 'yyyy-MM-dd HH:mm')
+        : formatDateTime(parsedDate)
 }
 
 export function formatDistanceToNow(date: string): string {

@@ -25,11 +25,15 @@ export function LedgerQuery(props: {
                         setLoading(true)
                         const packageName = 'canton-builtin-admin-workflow-ping'
                         sdk.ledgerApi({
-                            requestMethod: 'get',
-                            resource: `/v2/interactive-submission/preferred-package-version`,
-                            query: {
-                                'package-name': packageName,
-                                parties: props.primaryParty!,
+                            requestMethod: 'post',
+                            resource: `/v2/interactive-submission/preferred-packages`,
+                            body: {
+                                packageVettingRequirements: [
+                                    {
+                                        parties: [props.primaryParty!],
+                                        packageName,
+                                    },
+                                ],
                             },
                         }).then((response) => {
                             setQueryResponses((prev) => [
@@ -40,7 +44,7 @@ export function LedgerQuery(props: {
                         })
                     }}
                 >
-                    query preferred package version
+                    query preferred packages
                 </button>
 
                 {loading && <p>Loading...</p>}

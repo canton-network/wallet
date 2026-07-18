@@ -7,10 +7,7 @@ import * as walletSdk from '@canton-network/wallet-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
 import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
 import { queryKeys } from './query-keys'
-import {
-    WalletSDKUtilitiesPlugin,
-    WalletSDKUtilitiesPluginName,
-} from '@lib/utilities-wallet-sdk-plugin'
+import { WalletSDKUtilitiesPlugin } from '@lib/utilities-wallet-sdk-plugin'
 
 const deriveScanApiUrl = (registryUrl: string): URL => {
     const url = new URL(registryUrl)
@@ -54,11 +51,7 @@ export const useWalletSdk = () => {
                 },
             })
 
-            const pluginSDK = sdk.registerPlugins({
-                [WalletSDKUtilitiesPluginName]: WalletSDKUtilitiesPlugin,
-            })
-
-            return pluginSDK
+            return sdk.registerPlugins([WalletSDKUtilitiesPlugin])
         },
     })
 

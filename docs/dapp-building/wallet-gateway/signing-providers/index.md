@@ -109,10 +109,6 @@ Set the following environment variables:
 - Multi-party approval workflows
 - High-security production environments
 
-**How it Works:**
-
-Dfns creates and activates Canton wallets directly through its validator integration. When the Gateway requests a wallet, Dfns provisions a Canton-formatted key, registers the party on the network, and returns the wallet ready for use. When signing a prepared transaction, Dfns broadcasts it to Canton in a single step and returns the resulting update ID. Only `Canton` and `CantonTestnet` network wallets are supported.
-
 ## Selecting a Provider
 
 When creating a new party through the User API or web UI, you can select which signing provider to use. The choice depends on your security requirements, infrastructure setup, and compliance needs.

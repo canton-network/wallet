@@ -10,8 +10,9 @@ import {
 import { TransactionHistoryContent } from './transaction-history-content'
 import { TransactionHistoryTabs } from './transaction-history-tabs'
 import {
+    createTransactionHistoryEntries,
     FILTER_LABEL_BY_FILTER,
-    filterTransactions,
+    filterTransactionHistoryEntries,
     type TransactionFilter,
 } from './transaction-history-utils'
 
@@ -26,9 +27,13 @@ export function TransactionHistory({ walletId }: TransactionHistoryProps) {
         () => deduplicateTransactionHistory(history.data),
         [history.data]
     )
-    const visibleTransactions = useMemo(
-        () => filterTransactions(transactions, walletId, filter),
-        [transactions, walletId, filter]
+    const entries = useMemo(
+        () => createTransactionHistoryEntries(transactions),
+        [transactions]
+    )
+    const visibleEntries = useMemo(
+        () => filterTransactionHistoryEntries(entries, walletId, filter),
+        [entries, walletId, filter]
     )
     const handleLoadMore = useCallback(() => {
         void history.fetchNextPage()
@@ -58,9 +63,9 @@ export function TransactionHistory({ walletId }: TransactionHistoryProps) {
                 <TransactionHistoryContent
                     filter={filter}
                     walletId={walletId}
-                    transactions={visibleTransactions}
-                    totalLoadedTransactions={transactions.length}
-                    isLoading={history.isPending && transactions.length === 0}
+                    entries={visibleEntries}
+                    totalLoadedTransactions={entries.length}
+                    isLoading={history.isPending && entries.length === 0}
                     isError={history.isError}
                     error={history.error}
                     hasNextPage={history.hasNextPage ?? false}

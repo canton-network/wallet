@@ -183,9 +183,14 @@ const interactiveOfferRowSx: SxProps<Theme> = {
 const STATUS_THEME_KEY_BY_STATUS = {
     Pending: 'pending',
     'Action Required': 'action-required',
+    'Partially Allocated': 'partially-allocated',
     Allocated: 'allocated',
     Expired: 'expired',
 } satisfies Record<
     OfferStatus,
-    'pending' | 'action-required' | 'allocated' | 'expired'
+    | 'pending'
+    | 'action-required'
+    | 'partially-allocated'
+    | 'allocated'
+    | 'expired'
 >
