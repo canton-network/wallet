@@ -704,14 +704,10 @@ implementations.forEach(([name, StoreImpl]) => {
             collected.push(...page.transactions)
             let timesCalled = 1
 
-            console.log(`page ${timesCalled}`)
-            console.log(page)
             while (page.nextCursor !== null) {
                 timesCalled++
                 page = await store.listTransactions(page.nextCursor, 5)
                 collected.push(...page.transactions)
-                console.log(`page ${timesCalled}`)
-                console.log(page)
             }
 
             expect(listAllTxs.transactions).toEqual(collected)

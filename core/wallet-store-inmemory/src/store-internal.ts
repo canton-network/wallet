@@ -454,16 +454,61 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             })[0]
     }
 
-    async listTransactions() {
+    async listTransactions(cursor?: string, limit?: number) {
         this.assertConnected()
         const storage = this.getStorage()
+        const lim = limit ? Math.min(limit, 100) : 100
 
-        //does this need the same pagination logic?
+        const sortedTxs = Array.from(storage.transactions.values()).sort(
+            (a, b) => {
+                if (a.createdAt && b.createdAt) {
+                    const diff =
+                        new Date(b.createdAt).getTime() -
+                        new Date(a.createdAt).getTime()
+                    if (diff !== 0) return diff
+                } else if (a.createdAt && !b.createdAt) {
+                    return -1
+                } else if (!a.createdAt && b.createdAt) {
+                    return 1
+                }
+
+                return b.id.localeCompare(a.id)
+            }
+        )
+
+        let startIndex = 0
+        if (cursor) {
+            const [cursorDate, cursorId] = cursor.split('::')
+            const index = sortedTxs.findIndex((tx) => {
+                const txDateStr = tx.createdAt
+                    ? new Date(tx.createdAt).toISOString()
+                    : 'null'
+                return txDateStr === cursorDate && tx.id === cursorId
+            })
+            if (index !== -1) {
+                startIndex = index + 1
+            }
+        }
+
+        const pagedTxs = sortedTxs.slice(startIndex, startIndex + lim + 1)
+        const hasNextPage = pagedTxs.length > lim
+        if (hasNextPage) {
+            pagedTxs.pop()
+        }
+
+        if (pagedTxs.length === 0) {
+            return { transactions: [], nextCursor: null }
+        }
+
+        const lastTx = pagedTxs[pagedTxs.length - 1]
+        const d = lastTx.createdAt
+            ? new Date(lastTx.createdAt).toISOString()
+            : 'null'
+        const nextCursor = hasNextPage ? `${d}::${lastTx.id}` : null
+
         return {
-            transactions: Array.from(storage.transactions.values()).sort(
-                byCreatedAtDesc
-            ),
-            nextCursor: null,
+            transactions: pagedTxs,
+            nextCursor: nextCursor,
         }
     }
 
