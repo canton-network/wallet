@@ -207,6 +207,24 @@ export const expectTransferOfferGone = async (
     await expect(offerRow).not.toBeVisible({ timeout: 15000 })
 }
 
+/**
+ * Assert the sidebar Offers badge shows the expected count of
+ * non-expired offers. Use 0 to assert the badge is hidden.
+ */
+export const expectOffersBadgeCount = async (
+    page: Page,
+    count: number
+): Promise<void> => {
+    const badge = page.getByLabel(/^\d+ pending offers?$/)
+
+    if (count === 0) {
+        await expect(badge).not.toBeVisible({ timeout: 15000 })
+        return
+    }
+
+    await expect(badge).toHaveText(String(count), { timeout: 15000 })
+}
+
 export const switchWallet = async (
     page: Page,
     wg: WalletGateway,
