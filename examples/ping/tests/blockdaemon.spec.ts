@@ -232,29 +232,29 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
             .filter({ hasText: '"status": "failed"' })
     ).toHaveCount(1)
 
-    // const adminFailedSubmission = await startExternalSigningFlow(wg, dappPage)
-    // await setMockBlockdaemonTransactionState(
-    //     adminFailedSubmission.externalTxId,
-    //     'failed'
-    // )
-    // await wg.executeSignedTransaction()
-    // await expect(
-    //     dappPage
-    //         .getByRole('paragraph')
-    //         .filter({
-    //             hasText: `"commandId": "${adminFailedSubmission.commandId}"`,
-    //         })
-    //         .filter({ hasText: '"status": "pending"' })
-    //         .filter({ hasText: '"externalTxId"' })
-    // ).toHaveCount(1)
-    // await expect(
-    //     dappPage
-    //         .getByRole('paragraph')
-    //         .filter({
-    //             hasText: `"commandId": "${adminFailedSubmission.commandId}"`,
-    //         })
-    //         .filter({ hasText: '"status": "failed"' })
-    // ).toHaveCount(1)
+    const adminFailedSubmission = await startExternalSigningFlow(wg, dappPage)
+    await setMockBlockdaemonTransactionState(
+        adminFailedSubmission.externalTxId,
+        'failed'
+    )
+    await wg.executeSignedTransaction({ waitForClose: false })
+    await expect(
+        dappPage
+            .getByRole('paragraph')
+            .filter({
+                hasText: `"commandId": "${adminFailedSubmission.commandId}"`,
+            })
+            .filter({ hasText: '"status": "pending"' })
+            .filter({ hasText: '"externalTxId"' })
+    ).toHaveCount(1)
+    await expect(
+        dappPage
+            .getByRole('paragraph')
+            .filter({
+                hasText: `"commandId": "${adminFailedSubmission.commandId}"`,
+            })
+            .filter({ hasText: '"status": "failed"' })
+    ).toHaveCount(1)
 
     // TODO I think we should check wg transactions additionally to validate the state is correct. Either at the end of big test, or at the end of each tx flow.
 })
