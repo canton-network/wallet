@@ -72,7 +72,7 @@ export class UserUiActivities extends BaseElement {
         `,
     ]
 
-    private get _computedTotal() {
+    private get computedTotal() {
         if (this.hasNextPage) {
             return this.pageSize * this.pageSize * 1
         }
@@ -120,7 +120,7 @@ export class UserUiActivities extends BaseElement {
                                     ? html`
                                           <div class="pagination-wrap">
                                               <wg-pagination
-                                                  .total=${this._computedTotal}
+                                                  .total=${this.computedTotal}
                                                   .pageSize=${this.pageSize}
                                                   .page=${this.currentPage}
                                                   @page-change=${this._onPageChange}
