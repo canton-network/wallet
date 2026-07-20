@@ -5,7 +5,7 @@ You can use the Wallet Gateway in two ways:
 - mainly through the **User UI** (Web UI) for end users
 - or through the **User API** (for automation, custom UIs, or integration with your own systems).
 
-The **dApp API** is used by your dApp via the dApp SDK when users connect their wallet. See the [dApp SDK](../../dapp-sdk/index.md) for more details.
+The **dApp API** is used by your dApp via the dApp SDK when users connect their wallet. See the [dApp SDK](../../dapp-sdk/overview.md) for more details.
 
 This section describes typical workflows, the User UI, session handling, and when to use which interface.
 
@@ -73,7 +73,7 @@ Use the same host as `kernel.publicUrl` and the default `server.dappPath` (`/api
     - Build a custom wallet UI (e.g. embedded in your app) instead of the default User UI.
     - Automate session, network, IDP, or wallet operations.
 
-- **dApp API** (via dApp SDK): Use from your **dApp** frontend. The SDK calls the dApp API to connect, list accounts, and prepare/execute transactions. Users approve via the Web UI or browser extension. See [dApp SDK usage](../../dapp-sdk/usage.md) and [APIs](../apis/index.md) for details.
+- **dApp API** (via dApp SDK): Use from your **dApp** frontend. The SDK calls the dApp API to connect, list accounts, and prepare/execute transactions. Users approve via the Web UI or browser extension. See the [dApp SDK Quickstart](../../dapp-sdk/quickstart.md) and [APIs](../apis/index.md) for details.
 
 ## Typical flows
 
