@@ -38,12 +38,45 @@ npm install @canton-network/core-splice-provider
 What this package does **not** define: which LAPI or dApp methods exist, how authentication
 works, or wallet / UI behaviour. Those belong to specs, codegen, and concrete providers.
 
-```
-┌─────────────┐     ┌──────────────┐     ┌─────────────────────────┐
-│  Consumer   │────▶│   Provider   │────▶│ Transport / data source │
-│ (SDK, dApp, │     │ request / on │     │ HTTP, postMessage, SSE, │
-│  tooling)   │◀────│ emit / …     │◀────│ in-process, …           │
-└─────────────┘     └──────────────┘     └─────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph consumers [Consumers]
+        DappSDK["dApp SDK"]
+        WalletSDK["Wallet SDK"]
+        Custom["Custom app / tooling"]
+    end
+
+    Provider["Provider / AbstractProvider<br/><i>request · on · emit · removeListener</i>"]
+
+    subgraph impls [Implementations]
+        LedgerP["LedgerProvider"]
+        SyncP["DappSyncProvider"]
+        AsyncP["DappAsyncProvider"]
+    end
+
+    subgraph transports [Transports]
+        HTTP["HTTP"]
+        PM["postMessage"]
+        SSE["HTTPS + SSE"]
+    end
+
+    subgraph backends [Backends]
+        LAPI["JSON Ledger API"]
+        LocalW["Extension / desktop wallet"]
+        RemoteW["Remote wallet gateway"]
+    end
+
+    DappSDK --> Provider
+    WalletSDK --> Provider
+    Custom --> Provider
+
+    Provider --> LedgerP
+    Provider --> SyncP
+    Provider --> AsyncP
+
+    LedgerP --> HTTP --> LAPI
+    SyncP --> PM --> LocalW
+    AsyncP --> SSE --> RemoteW
 ```
 
 ## Provider interface
