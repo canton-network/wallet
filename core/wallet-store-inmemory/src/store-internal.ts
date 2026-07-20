@@ -23,6 +23,7 @@ import {
     MessageRaw,
     MessageRawStatusUpdate,
     ApiKey,
+    ListTransactionsOptions,
 } from '@canton-network/core-wallet-store'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 
@@ -454,9 +455,10 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             })[0]
     }
 
-    async listTransactions(cursor?: string, limit?: number) {
+    async listTransactions(options?: ListTransactionsOptions) {
         this.assertConnected()
         const storage = this.getStorage()
+        const { cursor, limit } = options ?? {}
         const lim = limit ? Math.min(limit, 100) : 100
 
         const sortedTxs = Array.from(storage.transactions.values()).sort(

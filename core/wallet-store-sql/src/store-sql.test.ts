@@ -664,12 +664,15 @@ implementations.forEach(([name, StoreImpl]) => {
 
             const collected: Transaction[] = []
 
-            let page = await store.listTransactions(undefined, 5)
+            let page = await store.listTransactions({ limit: 5 })
             collected.push(...page.transactions)
             let timesCalled = 1
             while (page.nextCursor !== null) {
                 timesCalled++
-                page = await store.listTransactions(page.nextCursor, 5)
+                page = await store.listTransactions({
+                    cursor: page.nextCursor,
+                    limit: 5,
+                })
                 collected.push(...page.transactions)
             }
 
@@ -700,13 +703,16 @@ implementations.forEach(([name, StoreImpl]) => {
 
             const collected: Transaction[] = []
 
-            let page = await store.listTransactions(undefined, 5)
+            let page = await store.listTransactions({ limit: 5 })
             collected.push(...page.transactions)
             let timesCalled = 1
 
             while (page.nextCursor !== null) {
                 timesCalled++
-                page = await store.listTransactions(page.nextCursor, 5)
+                page = await store.listTransactions({
+                    cursor: page.nextCursor,
+                    limit: 5,
+                })
                 collected.push(...page.transactions)
             }
 

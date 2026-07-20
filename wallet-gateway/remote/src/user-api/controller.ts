@@ -46,7 +46,7 @@ import {
     ListSigningProviderVaultsParams,
     ListTransactionsParams,
 } from './rpc-gen/typings.js'
-import { Store, Network, Transaction } from '@canton-network/core-wallet-store'
+import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
 import { NotificationService } from '../notification/NotificationService.js'
 import {
@@ -1004,12 +1004,9 @@ export const userController = (
             }
         },
         listTransactions: async function (
-            params: ListTransactionsParams
+            params?: ListTransactionsParams
         ): Promise<ListTransactionsResult> {
-            const page = await store.listTransactions(
-                params.cursor,
-                params.limit
-            )
+            const page = await store.listTransactions(params)
             const transactions = page.transactions
             const txs = transactions.map((transaction) => ({
                 id: transaction.id,

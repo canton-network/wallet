@@ -100,6 +100,11 @@ export interface TransactionStatusUpdate {
     externalTxId?: string
 }
 
+export interface ListTransactionsOptions {
+    cursor?: string
+    limit?: number
+}
+
 export interface MessageRaw {
     id: string
     status: 'pending' | 'signed' | 'failed'
@@ -184,8 +189,7 @@ export interface Store {
         commandId: string
     ): Promise<Transaction | undefined>
     listTransactions(
-        cursor?: string,
-        limit?: number
+        options?: ListTransactionsOptions
     ): Promise<{ transactions: Array<Transaction>; nextCursor: string | null }>
     listAllPendingTransactions(): Promise<Array<Transaction>>
     removeTransaction(transactionId: string): Promise<void>

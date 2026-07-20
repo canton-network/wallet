@@ -26,6 +26,7 @@ import {
     TransactionStatusUpdate,
     UserLevelRight,
     ApiKey,
+    ListTransactionsOptions,
 } from '@canton-network/core-wallet-store'
 import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
@@ -720,9 +721,10 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return transaction ? toTransaction(transaction) : undefined
     }
 
-    async listTransactions(cursor?: string, limit?: number) {
+    async listTransactions(options?: ListTransactionsOptions) {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
+        const { cursor, limit } = options ?? {}
         const lim = limit ? Math.min(limit, 100) : 100
 
         let query = this.db
