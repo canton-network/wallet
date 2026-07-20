@@ -11,4 +11,6 @@ core/wallet-user-rpc-client/docs/*
 core/wallet-dapp-rpc-client/docs/*
 core/wallet-dapp-remote-rpc-client/docs/*
 **/routetree.gen.ts
+**/playwright-report/*
+**/test-results/*
 damljs/*
