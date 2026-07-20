@@ -72,7 +72,7 @@ export class UserUiActivities extends BaseElement {
         `,
     ]
 
-    private get computedTotal() {
+    private get _computedTotal() {
         if (this.hasNextPage) {
             return this.pageSize * this.pageSize * 1
         }
@@ -160,14 +160,14 @@ export class UserUiActivities extends BaseElement {
 
             const currentCursor = this.pageCursors[this.currentPage - 1]
 
-            const params =
-                currentCursor !== undefined
-                    ? { limit: this.pageSize, cursor: currentCursor }
-                    : { limit: this.pageSize }
-
             const result = await userClient.request({
                 method: 'listTransactions',
-                params,
+                params: {
+                    limit: this.pageSize,
+                    ...(currentCursor !== undefined
+                        ? { cursor: currentCursor }
+                        : {}),
+                },
             })
             this.transactions = result.transactions || []
             this.hasNextPage = !!result.nextCursor
