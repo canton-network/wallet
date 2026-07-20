@@ -1,5 +1,7 @@
 # Wallet Gateway
 
+**Published:** [NPM](https://www.npmjs.com/package/@canton-network/dapp-sdk), [Docker](https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fdocker%2Fwallet-gateway), [Helm](https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fhelm%2Fwallet-gateway)
+
 The Wallet Gateway is a JavaScript/TypeScript-based server that facilitates secure communication between decentralized applications (dApps), Canton Validator nodes, and Wallet Providers. It acts as a mediator, enabling seamless transaction signing and ledger interactions while maintaining the privacy and security guarantees of the Canton protocol.
 
 > [!IMPORTANT]
