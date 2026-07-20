@@ -360,4 +360,4 @@ See also [Troubleshooting](../troubleshooting/index.md) for ledger connectivity,
 - [Signing providers](../signing-providers/index.md) — Fireblocks, Blockdaemon, Dfns, participant
 - [APIs](../apis/index.md) — dApp and User API reference
 - [Usage](../usage/index.md) — interactive flows and User UI
-- [Service account example](../../../../examples/service-account/README.md) — Python sample automation
+- [Service account example](../../../examples/automation/README.md) — sample automation
