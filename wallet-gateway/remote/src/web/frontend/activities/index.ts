@@ -38,6 +38,11 @@ export class UserUiActivities extends BaseElement {
     @state()
     accessor currentPage = 1
 
+    @state()
+    accessor hasNextPage = false
+
+    private pageCursors: (string | undefined)[] = [undefined]
+
     private readonly pageSize = 4
 
     static styles = [
@@ -67,9 +72,11 @@ export class UserUiActivities extends BaseElement {
         `,
     ]
 
-    private get pagedTransactions() {
-        const start = (this.currentPage - 1) * this.pageSize
-        return this.transactions.slice(start, start + this.pageSize)
+    private get computedTotal() {
+        if (this.hasNextPage) {
+            return this.pageSize * this.pageSize * 1
+        }
+        return (this.currentPage - 1) * this.pageSize + this.transactions.length
     }
 
     protected render() {
@@ -86,7 +93,7 @@ export class UserUiActivities extends BaseElement {
                     : this.transactions.length
                       ? html`
                             <div class="activity-list">
-                                ${this.pagedTransactions.map(
+                                ${this.transactions.map(
                                     (tx) => html`
                                         <wg-transaction-card
                                             .transactionId=${tx.id}
@@ -109,11 +116,11 @@ export class UserUiActivities extends BaseElement {
                             </div>
 
                             ${
-                                this.transactions.length > this.pageSize
+                                this.hasNextPage || this.currentPage > 1
                                     ? html`
                                           <div class="pagination-wrap">
                                               <wg-pagination
-                                                  .total=${this.transactions.length}
+                                                  .total=${this._computedTotal}
                                                   .pageSize=${this.pageSize}
                                                   .page=${this.currentPage}
                                                   @page-change=${this._onPageChange}
@@ -150,11 +157,25 @@ export class UserUiActivities extends BaseElement {
             const userClient = await createUserClient(
                 stateManager.accessToken.get()
             )
+
+            const currentCursor = this.pageCursors[this.currentPage - 1]
+
+            const params =
+                currentCursor !== undefined
+                    ? { limit: this.pageSize, cursor: currentCursor }
+                    : { limit: this.pageSize }
+
             const result = await userClient.request({
                 method: 'listTransactions',
-                params: {},
+                params,
             })
             this.transactions = result.transactions || []
+            this.hasNextPage = !!result.nextCursor
+
+            if (result.nextCursor) {
+                this.pageCursors[this.currentPage] = result.nextCursor
+            }
+
             this.parsedTransactions = new Map(
                 this.transactions.map((tx) => {
                     try {
