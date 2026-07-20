@@ -9,22 +9,18 @@ import {
 import { Page } from '@playwright/test'
 
 const dappApiPort = 3030
-const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031'
+const dfnsApiUrl = process.env.DFNS_BASE_URL ?? 'http://localhost:3032'
 
-// TODO inline it
-function toBlockdaemonMockEndpoint(path: string): string {
-    const base = blockdaemonApiUrl.endsWith('/')
-        ? blockdaemonApiUrl
-        : `${blockdaemonApiUrl}/`
-    const relativePath = path.startsWith('/') ? path.slice(1) : path
-    return new URL(relativePath, base).toString()
+function toDfnsMockEndpoint(path: string): string {
+    const origin = new URL(dfnsApiUrl).origin
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    return `${origin}${normalizedPath}`
 }
 
 async function getExternalTxIdFromPendingResult(
     page: Page,
     commandId: string
 ): Promise<string> {
-    // TODO can I make it shorter?
     const pendingResult = page
         .getByRole('paragraph')
         .filter({ hasText: `"commandId": "${commandId}"` })
@@ -43,38 +39,24 @@ async function getExternalTxIdFromPendingResult(
     return externalTxId
 }
 
-async function setMockBlockdaemonTransactionState(
-    txId: string,
-    status: 'signed' | 'rejected' | 'failed'
+async function setMockDfnsTransactionState(
+    signatureId: string,
+    status: 'Signed' | 'Rejected' | 'Failed'
 ): Promise<void> {
-    const promoteResponse = await fetch(
-        toBlockdaemonMockEndpoint('/_admin/setTransactionState'),
+    const setResponse = await fetch(
+        toDfnsMockEndpoint('/_admin/setSignatureState'),
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                txId,
-                status,
-            }),
+            body: JSON.stringify({ signatureId, status }),
         }
     )
-    expect(promoteResponse.ok).toBeTruthy()
+    expect(setResponse.ok).toBeTruthy()
 
-    const txResponse = await fetch(toBlockdaemonMockEndpoint('/getTransaction'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txId }),
-    })
-    expect(txResponse.ok).toBeTruthy()
-    const tx = (await txResponse.json()) as {
-        txId: string
-        status: string
-    }
-    expect(tx.txId).toBe(txId)
-    expect(tx.status).toBe(status)
+    const updated = (await setResponse.json()) as { status: string }
+    expect(updated.status).toBe(status)
 }
 
-// TODO let's make it shared in scope of ping dapp tests
 async function startExternalSigningFlow(
     wg: WalletGateway,
     dappPage: Page
@@ -96,7 +78,7 @@ async function startExternalSigningFlow(
     return { commandId, externalTxId }
 }
 
-test('dApp: execute externally signed tx with Blockdaemon', async ({
+test('dApp: execute externally signed tx with Dfns', async ({
     page: dappPage,
 }: {
     page: Page
@@ -124,29 +106,29 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
     await expect(dappPage.getByText('Loading...')).toHaveCount(0)
     await expect(dappPage.getByText(/.*gateway: remote-da*/)).toBeVisible()
 
-    const blockdaemonPartyHint = `blockdaemon${Date.now()}`
+    const dfnsPartyHint = `dfns${Date.now()}`
 
-    const blockdaemonPartyId = await wg.createWalletIfNotExists({
-        partyHint: blockdaemonPartyHint,
-        signingProvider: 'blockdaemon',
+    const dfnsPartyId = await wg.createWalletIfNotExists({
+        partyHint: dfnsPartyHint,
+        signingProvider: 'dfns',
         primary: true,
         // autoAllocateExternal: false,
     })
-    const blockdaemonExternalTxId =
-        await wg.getWalletExternalTxId(blockdaemonPartyId)
-    await setMockBlockdaemonTransactionState(blockdaemonExternalTxId, 'signed')
-    await wg.allocateWalletParty(blockdaemonPartyId)
+    const dfnsExternalTxId =
+        await wg.getWalletExternalTxId(dfnsPartyId)
+    await setMockDfnsTransactionState(dfnsExternalTxId, 'Signed')
+    await wg.allocateWalletParty(dfnsPartyId)
 
     await dappPage.getByRole('button', { name: 'Accounts' }).click()
     expect(
         await dappPage
-            .getByText(`${blockdaemonPartyHint}::`)
+            .getByText(`${dfnsPartyHint}::`)
             .filter({ visible: true })
             .count()
     ).toBe(1)
 
     // Guard against another wallet being selected as primary.
-    await wg.setPrimaryWallet(blockdaemonPartyId)
+    await wg.setPrimaryWallet(dfnsPartyId)
 
     await dappPage.getByRole('button', { name: 'Ledger Submission' }).click()
 
@@ -158,7 +140,7 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
     ).toBeEnabled()
 
     const firstSubmission = await startExternalSigningFlow(wg, dappPage)
-    await setMockBlockdaemonTransactionState(firstSubmission.externalTxId, 'signed')
+    await setMockDfnsTransactionState(firstSubmission.externalTxId, 'Signed')
     await wg.executeSignedTransaction({ waitForClose: false })
 
     await expect(
@@ -209,9 +191,9 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
 
     // TODO fails here
     const adminRejectedSubmission = await startExternalSigningFlow(wg, dappPage)
-    await setMockBlockdaemonTransactionState(
+    await setMockDfnsTransactionState(
         adminRejectedSubmission.externalTxId,
-        'rejected'
+        'Rejected'
     )
     await wg.executeSignedTransaction({ waitForClose: false })
     await expect(
@@ -233,9 +215,9 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
     ).toHaveCount(1)
 
     const adminFailedSubmission = await startExternalSigningFlow(wg, dappPage)
-    await setMockBlockdaemonTransactionState(
+    await setMockDfnsTransactionState(
         adminFailedSubmission.externalTxId,
-        'failed'
+        'Failed'
     )
     await wg.executeSignedTransaction({ waitForClose: false })
     await expect(
@@ -255,6 +237,4 @@ test('dApp: execute externally signed tx with Blockdaemon', async ({
             })
             .filter({ hasText: '"status": "failed"' })
     ).toHaveCount(1)
-
-    // TODO I think we should check wg transactions additionally to validate the state is correct. Either at the end of big test, or at the end of each tx flow.
 })

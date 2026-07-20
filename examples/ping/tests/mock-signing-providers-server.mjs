@@ -3,54 +3,94 @@
 
 import {
     createBlockdaemonMockProvider,
+    createDfnsMockProvider,
     startSigningProviderMockServer,
 } from '@canton-network/core-wallet-test-utils'
 
-const configuredUrl = process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031/blockdaemon'
-const parsedUrl = new URL(configuredUrl)
+function parseProviderUrl(envVar, fallback) {
+    const configuredUrl = process.env[envVar] ?? fallback
+    const parsedUrl = new URL(configuredUrl)
+    if (!parsedUrl.port) {
+        throw new Error(`${envVar} must include a port, got: ${configuredUrl}`)
+    }
 
-if (!parsedUrl.port) {
-    throw new Error(
-        `BLOCKDAEMON_API_URL must include a port, got: ${configuredUrl}`
-    )
+    return {
+        configuredUrl,
+        hostname: parsedUrl.hostname,
+        port: Number(parsedUrl.port),
+    }
 }
 
-const pathPrefix =
-    parsedUrl.pathname === '/' || parsedUrl.pathname.length === 0
-        ? ''
-        : parsedUrl.pathname.replace(/\/+$/, '')
-
-const server = await startSigningProviderMockServer({
-    host: parsedUrl.hostname,
-    port: Number(parsedUrl.port),
-    logger: (message) => console.log(message),
-    providers: [
+function createHealthRoutes() {
+    return [
         {
-            pathPrefix: '',
-            routes: [
-                {
-                    method: 'GET',
-                    path: '/_healthz',
-                    handler: () => ({
-                        body: { ok: true },
-                    }),
-                },
-            ],
+            method: 'GET',
+            path: '/_healthz',
+            handler: () => ({
+                body: { ok: true },
+            }),
         },
-        createBlockdaemonMockProvider({ pathPrefix }),
-    ],
-})
+    ]
+}
 
-console.log(
-    `[signing-mocks] listening on ${server.baseUrl} with blockdaemon prefix "${pathPrefix || '/'}"`
-)
+async function startBlockdaemonMockServer() {
+    const blockdaemon = parseProviderUrl(
+        'BLOCKDAEMON_API_URL',
+        'http://localhost:3031'
+    )
+
+    const server = await startSigningProviderMockServer({
+        host: blockdaemon.hostname,
+        port: blockdaemon.port,
+        logger: (message) =>
+            console.log(`[signing-mocks:blockdaemon] ${message}`),
+        routes: [
+            ...createHealthRoutes(),
+            ...createBlockdaemonMockProvider(),
+        ],
+    })
+
+    console.log(
+        `[signing-mocks] blockdaemon listening on ${server.baseUrl}`
+    )
+    return server
+}
+
+async function startDfnsMockServer() {
+    const dfns = parseProviderUrl('DFNS_BASE_URL', 'http://localhost:3032')
+
+    const server = await startSigningProviderMockServer({
+        host: dfns.hostname,
+        port: dfns.port,
+        logger: (message) => console.log(`[signing-mocks:dfns] ${message}`),
+        routes: [...createHealthRoutes(), ...createDfnsMockProvider()],
+    })
+
+    console.log(`[signing-mocks] dfns listening on ${server.baseUrl}`)
+    return server
+}
+
+const mode = process.argv[2] ?? 'all'
+const servers = []
+
+if (mode === 'all' || mode === 'blockdaemon') {
+    servers.push(await startBlockdaemonMockServer())
+}
+if (mode === 'all' || mode === 'dfns') {
+    servers.push(await startDfnsMockServer())
+}
+if (servers.length === 0) {
+    throw new Error(
+        `Unknown mock signing provider mode "${mode}". Expected all, blockdaemon, or dfns.`
+    )
+}
 
 let shuttingDown = false
 const shutdown = async (signal) => {
     if (shuttingDown) return
     shuttingDown = true
     console.log(`[signing-mocks] received ${signal}, shutting down`)
-    await server.close()
+    await Promise.all(servers.map((server) => server.close()))
     process.exit(0)
 }
 

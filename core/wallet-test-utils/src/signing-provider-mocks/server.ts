@@ -3,21 +3,13 @@
 
 import * as http from 'node:http'
 
-export interface MockHttpRequest {
-    headers: http.IncomingHttpHeaders
-    method: string
-    path: string
-    query: URLSearchParams
-}
-
 export interface MockHttpResponse {
     status?: number
-    headers?: Record<string, string>
     body?: unknown
 }
 
 export interface SigningProviderMockContext {
-    request: MockHttpRequest
+    pathParams: Record<string, string>
     body: unknown
 }
 
@@ -25,7 +17,7 @@ export type SigningProviderMockHandler = (
     context: SigningProviderMockContext
 ) => Promise<MockHttpResponse> | MockHttpResponse
 
-export type MockHttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+export type MockHttpMethod = 'GET' | 'POST'
 
 export interface SigningProviderMockRoute {
     method: MockHttpMethod
@@ -33,16 +25,18 @@ export interface SigningProviderMockRoute {
     handler: SigningProviderMockHandler
 }
 
-export interface SigningProviderMockModule {
-    pathPrefix: string
-    routes: SigningProviderMockRoute[]
+interface CompiledSigningProviderRoute {
+    method: string
+    matcher: RegExp
+    paramNames: string[]
+    handler: SigningProviderMockHandler
 }
 
 export interface SigningProviderMockServerOptions {
     host: string
     port: number
-    providers: SigningProviderMockModule[]
-    logger?: (message: string) => void // TODO maybe required?
+    routes: SigningProviderMockRoute[]
+    logger?: (message: string) => void
 }
 
 export interface SigningProviderMockServer {
@@ -64,9 +58,7 @@ function readRawBody(req: http.IncomingMessage): Promise<string> {
 }
 
 async function parseRequestBody(req: http.IncomingMessage): Promise<unknown> {
-    const method = (req.method ?? 'GET').toUpperCase()
-    const methodsWithBody = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
-    if (!methodsWithBody.has(method)) {
+    if ((req.method ?? 'GET').toUpperCase() !== 'POST') {
         return {}
     }
 
@@ -78,37 +70,99 @@ async function parseRequestBody(req: http.IncomingMessage): Promise<unknown> {
     return JSON.parse(rawBody) as unknown
 }
 
-function toRouteMap(
-    providers: SigningProviderMockModule[]
-): Map<string, SigningProviderMockHandler> {
-    const routeMap = new Map<string, SigningProviderMockHandler>()
-
-    for (const provider of providers) {
-        const normalizedPrefix = provider.pathPrefix.replace(/\/+$/, '')
-        for (const route of provider.routes) {
-            const normalizedPath = route.path.startsWith('/')
-                ? route.path
-                : `/${route.path}`
-            const fullPath = `${normalizedPrefix}${normalizedPath}`
-            const routeKey = `${route.method.toUpperCase()} ${fullPath}`
-
-            if (routeMap.has(routeKey)) {
-                throw new Error(`Duplicate mock route declared: ${routeKey}`)
+function compilePathPattern(path: string): {
+    matcher: RegExp
+    paramNames: string[]
+} {
+    const normalized = path.startsWith('/') ? path : `/${path}`
+    const segments = normalized
+        .split('/')
+        .filter((segment) => segment.length > 0)
+        .map((segment) => {
+            if (segment.startsWith(':')) {
+                return { pattern: '([^/]+)', name: segment.slice(1) }
             }
-            routeMap.set(routeKey, route.handler)
+            return {
+                pattern: segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+                name: undefined,
+            }
+        })
+
+    const paramNames = segments
+        .map((segment) => segment.name)
+        .filter((name): name is string => Boolean(name))
+    const matcher =
+        segments.length === 0
+            ? /^\/$/
+            : new RegExp(
+                  `^/${segments.map((segment) => segment.pattern).join('/')}$`
+              )
+
+    return { matcher, paramNames }
+}
+
+function compileRoutes(
+    routes: SigningProviderMockRoute[]
+): CompiledSigningProviderRoute[] {
+    const compiled: CompiledSigningProviderRoute[] = []
+    const routeKeys = new Set<string>()
+
+    for (const route of routes) {
+        const normalizedPath = route.path.startsWith('/')
+            ? route.path
+            : `/${route.path}`
+        const routeKey = `${route.method.toUpperCase()} ${normalizedPath}`
+
+        if (routeKeys.has(routeKey)) {
+            throw new Error(`Duplicate mock route declared: ${routeKey}`)
         }
+        routeKeys.add(routeKey)
+
+        const { matcher, paramNames } = compilePathPattern(normalizedPath)
+        compiled.push({
+            method: route.method.toUpperCase(),
+            matcher,
+            paramNames,
+            handler: route.handler,
+        })
     }
 
-    return routeMap
+    return compiled
+}
+
+function findRoute(
+    routes: CompiledSigningProviderRoute[],
+    method: string,
+    path: string
+): {
+    route: CompiledSigningProviderRoute
+    pathParams: Record<string, string>
+} | null {
+    for (const route of routes) {
+        if (route.method !== method.toUpperCase()) {
+            continue
+        }
+        const match = route.matcher.exec(path)
+        if (!match) {
+            continue
+        }
+
+        const pathParams = Object.fromEntries(
+            route.paramNames.map((name, index) => [
+                name,
+                decodeURIComponent(match[index + 1] ?? ''),
+            ])
+        )
+
+        return { route, pathParams }
+    }
+
+    return null
 }
 
 function sendJson(res: http.ServerResponse, response: MockHttpResponse): void {
     const status = response.status ?? 200
-    const headers = {
-        'Content-Type': 'application/json',
-        ...(response.headers ?? {}),
-    }
-    res.writeHead(status, headers)
+    res.writeHead(status, { 'Content-Type': 'application/json' })
     if (response.body === undefined) {
         res.end('{}')
         return
@@ -121,18 +175,22 @@ export async function startSigningProviderMockServer(
 ): Promise<SigningProviderMockServer> {
     const host = options.host
     const requestedPort = options.port
-    const logger = options.logger ?? ((message: string) => console.log(message)) // TODO Maybe let's use pino from outside, and as this will be required, no default console.log?
-    const routeMap = toRouteMap(options.providers)
+    const logger = options.logger ?? ((message: string) => console.log(message))
+    const routes = compileRoutes(options.routes)
 
     const server = http.createServer(async (req, res) => {
         const method = req.method ?? 'GET'
         const incomingUrl = new URL(req.url ?? '/', `http://${host}`)
         const routeKey = `${method.toUpperCase()} ${incomingUrl.pathname}`
-        const route = routeMap.get(routeKey)
+        const matchedRoute = findRoute(
+            routes,
+            method.toUpperCase(),
+            incomingUrl.pathname
+        )
 
         logger(`[signing-mocks] -> ${routeKey}`)
 
-        if (!route) {
+        if (!matchedRoute) {
             sendJson(res, {
                 status: 404,
                 body: {
@@ -161,13 +219,8 @@ export async function startSigningProviderMockServer(
         }
 
         try {
-            const response = await route({
-                request: {
-                    headers: req.headers,
-                    method,
-                    path: incomingUrl.pathname,
-                    query: incomingUrl.searchParams,
-                },
+            const response = await matchedRoute.route.handler({
+                pathParams: matchedRoute.pathParams,
                 body,
             })
             sendJson(res, response)

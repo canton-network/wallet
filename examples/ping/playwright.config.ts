@@ -3,9 +3,10 @@
 
 import { defineConfig, devices } from '@playwright/test'
 const blockdaemonApiUrl =
-    process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031/blockdaemon'
-const blockdaemonApi = new URL(blockdaemonApiUrl)
-const mockServerHealthUrl = `${blockdaemonApi.protocol}//${blockdaemonApi.host}/_healthz`
+    process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031'
+const dfnsApiUrl = process.env.DFNS_BASE_URL ?? 'http://localhost:3032'
+const blockdaemonHealthUrl = `${new URL(blockdaemonApiUrl).origin}/_healthz`
+const dfnsHealthUrl = `${new URL(dfnsApiUrl).origin}/_healthz`
 
 /**
  * Read environment variables from file.
@@ -83,14 +84,27 @@ export default defineConfig({
         // },
     ],
 
-    webServer: {
-        command: 'yarn workspace @canton-network/example-ping mock:signing-providers',
-        url: mockServerHealthUrl,
-        // TODO Does this make sense?
-        reuseExistingServer: !process.env.CI,
-        timeout: 30 * 1000,
-        // TODO problably can remove that after adding pino
-        stdout: 'pipe',
-        stderr: 'pipe',
-    },
+    webServer: [
+        {
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+            url: blockdaemonHealthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        },
+        {
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:dfns',
+            url: dfnsHealthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+            env: {
+                ...process.env,
+            },
+        },
+    ],
 })

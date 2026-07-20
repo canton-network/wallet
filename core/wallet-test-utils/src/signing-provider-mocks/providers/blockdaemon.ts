@@ -1,10 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    SigningProviderMockModule,
-    SigningProviderMockRoute,
-} from '../server.js'
+import { SigningProviderMockRoute } from '../server.js'
 import { generateKeyPairSync, KeyObject, sign as cryptoSign } from 'node:crypto'
 
 type SigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
@@ -25,10 +22,6 @@ interface BlockdaemonMockTransaction {
     signature?: string
     publicKey?: string
     userIdentifier?: string
-}
-
-export interface BlockdaemonMockProviderOptions {
-    pathPrefix?: string
 }
 
 interface SignTransactionBody {
@@ -60,8 +53,6 @@ interface SetTransactionStateBody {
     publicKey?: string
 }
 
-const DEFAULT_PREFIX = '/blockdaemon'
-
 function createMockEd25519KeyPair(): {
     publicKey: string
     privateKey: KeyObject
@@ -87,11 +78,7 @@ function signTxHashBase64(txHashBase64: string, privateKey: KeyObject): string {
     return cryptoSign(null, txHashBytes, privateKey).toString('base64')
 }
 
-export function createBlockdaemonMockProvider(
-    options: BlockdaemonMockProviderOptions = {}
-): SigningProviderMockModule {
-    const pathPrefix = options.pathPrefix ?? DEFAULT_PREFIX
-
+export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
     const keysByPublicKey = new Map<string, BlockdaemonMockKey>()
     const transactionsById = new Map<string, BlockdaemonMockTransaction>()
     let keyCounter = 0
@@ -313,8 +300,5 @@ export function createBlockdaemonMockProvider(
         },
     ]
 
-    return {
-        pathPrefix,
-        routes,
-    }
+    return routes
 }

@@ -3,11 +3,9 @@
 
 export {
     startSigningProviderMockServer,
-    type MockHttpRequest,
     type MockHttpResponse,
     type SigningProviderMockContext,
     type SigningProviderMockHandler,
-    type SigningProviderMockModule,
     type SigningProviderMockRoute,
     type SigningProviderMockServer,
     type SigningProviderMockServerOptions,

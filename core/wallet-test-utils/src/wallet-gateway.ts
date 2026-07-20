@@ -96,7 +96,8 @@ export class WalletGateway {
 
     async createWalletIfNotExists(args: {
         partyHint: string
-        signingProvider: 'participant' | 'wallet-kernel' | 'blockdaemon' // TODO let's import all signing providers type
+        signingProvider:
+            'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' // TODO let's import all signing providers type
         primary?: boolean
     }): Promise<string> {
         await this.gotoPartiesPage()
