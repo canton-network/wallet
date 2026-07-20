@@ -35,18 +35,18 @@ if (!provider) throw new Error('Not connected')
 Every operation is a `request({ method, params })` call. The methods mirror the SDK
 functions one-to-one.
 
-| Method              | Output          | Description                                             |
-| ------------------- | --------------- | ------------------------------------------------------- |
-| `connect`           | `ConnectResult` | Establishes a connection to the wallet.                 |
-| `disconnect`        | `void`          | Closes the session between the client and the provider. |
-| `isConnected`       | `ConnectResult` | Reports connectivity without triggering login.          |
-| `status`            | `StatusEvent`   | Information about the connected wallet and network.     |
-| `getActiveNetwork`  | `Network`       | Details of the connected network.                       |
-| `listAccounts`      | `Account[]`     | Lists all accounts the user has access to.              |
-| `getPrimaryAccount` | `Account`       | Returns the account set as primary.                     |
-| `signMessage`       | `string`        | Signs an arbitrary string message.                      |
-| `prepareExecute`    | `void`          | Prepares, signs, and executes Daml commands.            |
-| `ledgerApi`         | `string`        | Proxies requests to the JSON Ledger API.                |
+| Method              | Output              | Description                                             |
+| ------------------- | ------------------- | ------------------------------------------------------- |
+| `connect`           | `ConnectResult`     | Establishes a connection to the wallet.                 |
+| `disconnect`        | `void`              | Closes the session between the client and the provider. |
+| `isConnected`       | `ConnectResult`     | Reports connectivity without triggering login.          |
+| `status`            | `StatusEvent`       | Information about the connected wallet and network.     |
+| `getActiveNetwork`  | `Network`           | Details of the connected network.                       |
+| `listAccounts`      | `Account[]`         | Lists all accounts the user has access to.              |
+| `getPrimaryAccount` | `Account`           | Returns the account set as primary.                     |
+| `signMessage`       | `SignMessageResult` | Signs an arbitrary string message.                      |
+| `prepareExecute`    | `void`              | Prepares, signs, and executes Daml commands.            |
+| `ledgerApi`         | `string`            | Proxies requests to the JSON Ledger API.                |
 
 ```typescript
 // Connect
@@ -103,8 +103,9 @@ provider.on('statusChanged', handler)
 provider.removeListener('statusChanged', handler)
 ```
 
-The provider emits `statusChanged`, `accountsChanged`, and `txChanged`. For payload shapes,
-see [Events](events.md).
+The provider emits `statusChanged`, `accountsChanged`, and `txChanged`. The Async API
+also emits `connected` and `messageSignature`. For payload shapes, see
+[Events](events.md).
 
 ## Sync and Async APIs
 
