@@ -119,12 +119,13 @@ describe('UserUiActivities', () => {
 
     it('shows pagination when there are more than one page of activities', async () => {
         mockRequest.mockResolvedValue({
-            transactions: makeTransactions(5),
+            transactions: makeTransactions(4),
+            nextCursor: 'tx-4:randomisodatestring',
         })
 
         el = await fixture<UserUiActivities>(componentFixture)
 
-        await waitUntil(() => el.transactions.length === 5)
+        await waitUntil(() => el.transactions.length === 4)
 
         expect(el.shadowRoot?.querySelector('wg-pagination')).not.toBeNull()
         expect(getTransactionCards(el).map((c) => c.transactionId)).toEqual([
@@ -136,12 +137,36 @@ describe('UserUiActivities', () => {
     })
 
     it('updates current page when pagination emits page-change', async () => {
-        mockRequest.mockResolvedValue({
-            transactions: makeTransactions(5),
+        mockRequest.mockResolvedValueOnce({
+            transactions: makeTransactions(4),
+            nextCursor: 'next-page-cursor',
+        })
+
+        mockRequest.mockResolvedValueOnce({
+            transactions: [makeTransaction({ id: 'tx-5', commandId: 'cmd-5' })],
+            nextCursor: null,
+        })
+
+        mockRequest.mockImplementation(async (request) => {
+            const cursor = request?.params?.cursor
+
+            if (cursor === 'next-page-cursor') {
+                return {
+                    transactions: [
+                        makeTransaction({ id: 'tx-5', commandId: 'cmd-5' }),
+                    ],
+                    nextCursor: null,
+                }
+            }
+
+            return {
+                transactions: makeTransactions(4),
+                nextCursor: 'next-page-cursor',
+            }
         })
 
         el = await fixture<UserUiActivities>(componentFixture)
-        await waitUntil(() => el.transactions.length === 5)
+        await waitUntil(() => el.transactions.length === 4)
 
         const pagination = el.shadowRoot?.querySelector(
             'wg-pagination'
@@ -149,13 +174,23 @@ describe('UserUiActivities', () => {
         pagination!.dispatchEvent(new PageChangeEvent(2))
 
         await waitUntil(
-            () => getTransactionCards(el)[0]?.transactionId === 'tx-5',
+            () =>
+                el.transactions.length === 1 &&
+                getTransactionCards(el)[0]?.transactionId === 'tx-5',
             'page 2 rendered'
         )
 
         expect(pagination!.page).toBe(2)
         expect(getTransactionCards(el)).toHaveLength(1)
         expect(getTransactionCards(el)[0]?.transactionId).toBe('tx-5')
+        expect(mockRequest).toHaveBeenCalledTimes(2)
+        expect(mockRequest).toHaveBeenNthCalledWith(2, {
+            method: 'listTransactions',
+            params: {
+                limit: 4,
+                cursor: 'next-page-cursor',
+            },
+        })
     })
 
     it('navigates to approve page when a card emits transaction-review', async () => {

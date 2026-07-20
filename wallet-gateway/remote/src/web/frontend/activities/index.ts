@@ -74,7 +74,7 @@ export class UserUiActivities extends BaseElement {
 
     private get computedTotal() {
         if (this.hasNextPage) {
-            return this.pageSize * this.pageSize * 1
+            return this.pageSize * this.pageSize + 1
         }
         return (this.currentPage - 1) * this.pageSize + this.transactions.length
     }
@@ -149,6 +149,7 @@ export class UserUiActivities extends BaseElement {
 
     private _onPageChange(e: PageChangeEvent) {
         this.currentPage = e.page
+        this.updateTransactions()
     }
 
     private async updateTransactions() {
@@ -189,14 +190,6 @@ export class UserUiActivities extends BaseElement {
                     }
                 })
             )
-
-            const maxPage = Math.max(
-                1,
-                Math.ceil(this.transactions.length / this.pageSize)
-            )
-            if (this.currentPage > maxPage) {
-                this.currentPage = maxPage
-            }
         } catch (error) {
             handleErrorToast(error)
         } finally {
