@@ -14,14 +14,12 @@ export default async function () {
         },
         ledgerClientUrl: new URL('http://localhost:2975'),
         token: {
-            validatorUrl: new URL('http://localhost:2000/api/validator'),
             registries: [
                 new URL('http://localhost:2000/api/validator/v0/scan-proxy'),
             ],
             auth: global.TOKEN_PROVIDER_CONFIG_DEFAULT,
         },
         amulet: {
-            validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
             scanApiUrl: localNetStaticConfig.LOCALNET_SCAN_API_URL,
             auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,

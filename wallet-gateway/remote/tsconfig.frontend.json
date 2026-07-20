@@ -5,5 +5,13 @@
         "outDir": "./src/web/frontend/dist"
     },
     "include": ["./src/web/frontend/**/*"],
-    "exclude": ["dist", "**/dist", "node_modules"]
+    "exclude": [
+        "dist",
+        "**/dist",
+        "node_modules",
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/__tests__/**",
+        "./src/web/frontend/test-helpers.ts"
+    ]
 }

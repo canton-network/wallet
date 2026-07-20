@@ -128,12 +128,10 @@ export class WalletConnectAdapter
     private readonly projectId: string
     private readonly chainId: string
     private readonly metadata:
-        | WalletConnectAdapterConfig['metadata']
-        | undefined
+        WalletConnectAdapterConfig['metadata'] | undefined
     private readonly onUri: ((uri: string) => void) | undefined
     private readonly onSignInWithCanton:
-        | ((result: SignInWithCantonResult) => void)
-        | undefined
+        ((result: SignInWithCantonResult) => void) | undefined
     private readonly signInWithCanton: WalletConnectAdapterConfig['signInWithCanton']
 
     private signClient: SignClient | null = null
@@ -490,7 +488,19 @@ export class WalletConnectAdapter
                 // qrcode package not installed — skip QR generation
             }
 
-            popupWin.postMessage({ type: 'wc-uri', uri, qrDataUrl }, '*')
+            const targetOrigin =
+                typeof window !== 'undefined' ? window.location.origin : '*'
+
+            if (targetOrigin !== '*') {
+                popupWin.postMessage(
+                    { type: 'wc-uri', uri, qrDataUrl },
+                    targetOrigin
+                )
+            } else {
+                throw new Error(
+                    'Cannot securely send WalletConnect URI: Origin undefined'
+                )
+            }
         } catch {
             // Best-effort — onUri callback is the fallback.
         }

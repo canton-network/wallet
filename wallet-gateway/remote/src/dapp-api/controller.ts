@@ -25,13 +25,23 @@ import {
     GetEndpoint,
     PostEndpoint,
     PrepareSubmissionResponse,
+    isValidGetEndpoint,
+    isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
 import { v4 } from 'uuid'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
-import { networkStatus, ledgerPrepareParams } from '../utils.js'
+import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import { TransactionService } from '../ledger/transaction-service.js'
+
+import { SigningDrivers } from '../signing/signing-drivers.js'
+import { rpcErrors } from '@canton-network/core-rpc-errors'
+
+export interface DappControllerDeps {
+    signingDrivers: SigningDrivers
+}
 
 export const dappController = (
     kernelInfo: KernelInfoConfig,
@@ -41,9 +51,24 @@ export const dappController = (
     notificationService: NotificationService,
     _logger: Logger,
     origin: string | null,
+    deps: DappControllerDeps,
     context?: AuthContext
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
+
+    function assertActAsPartiesBelongToUser(
+        actAs: string[],
+        wallets: Wallet[]
+    ): void {
+        for (const party of actAs) {
+            if (wallets.find((w) => w.partyId === party) === undefined) {
+                throw rpcErrors.invalidRequest(
+                    `Acting party ${party} does not belong to user`
+                )
+            }
+        }
+    }
+
     return buildController({
         connect: async () => {
             if (!context || !(await store.getSession())) {
@@ -165,6 +190,11 @@ export const dappController = (
 
             switch (params.requestMethod) {
                 case 'get':
+                    if (!isValidGetEndpoint(params.resource)) {
+                        throw new Error(
+                            `Unsupported get resource: ${params.resource}`
+                        )
+                    }
                     result = await ledgerClient.getWithRetry(
                         params.resource as GetEndpoint,
                         undefined,
@@ -172,6 +202,11 @@ export const dappController = (
                     )
                     break
                 case 'post':
+                    if (!isValidPostEndpoint(params.resource)) {
+                        throw new Error(
+                            `Unsupported post resource: ${params.resource}`
+                        )
+                    }
                     result = await ledgerClient.postWithRetry(
                         params.resource as PostEndpoint,
                         params.body as never,
@@ -187,31 +222,57 @@ export const dappController = (
             return result
         },
         prepareExecute: async (params: PrepareExecuteParams) => {
-            const wallet = await store.getPrimaryWallet()
+            const primaryWallet = await store.getPrimaryWallet()
+            const wallets = await store.getWallets()
             const network = await store.getCurrentNetwork()
 
             if (context === undefined) {
                 throw new Error('Unauthenticated context')
             }
 
+            // determine user ID
+            const gatewayUserId = context.userId
+            let ledgerUserId = context.userId
+            const accessTokenProvider: AuthTokenProvider =
+                AuthTokenProvider.fromToken(context.accessToken, logger)
+
+            if (context?.isApiKey) {
+                logger.info(
+                    'Authenticated with API Key, fetching m2m token for ledger access'
+                )
+                ledgerUserId = context.ledgerUserId
+            }
+
+            // determine party ID
+            let actAs = params.actAs || []
+            if (actAs.length === 0) {
+                if (!primaryWallet) {
+                    throw new Error(
+                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
+                    )
+                }
+                actAs = [primaryWallet.partyId]
+            }
+
+            assertActAsPartiesBelongToUser(actAs, wallets)
+
+            // determine wallet
+            const wallet = wallets.find((w) => w.partyId === actAs[0])
             if (wallet === undefined) {
-                throw new Error('No primary wallet found')
+                throw new Error(
+                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
+                )
             }
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
-                ),
+                accessTokenProvider,
             })
 
-            const userId = context.userId
-            const notifier = notificationService.getNotifier(userId)
+            const notifier = notificationService.getNotifier(gatewayUserId)
 
-            params.commandId = params.commandId || v4()
-            const commandId = params.commandId
+            const commandId = params.commandId || v4()
             const transactionId = v4()
 
             notifier.emit('txChanged', { status: 'pending', commandId })
@@ -220,19 +281,50 @@ export const dappController = (
                 network.synchronizerId ??
                 (await ledgerClient.getSynchronizerId())
 
-            const response = await prepareSubmission(
-                context.userId,
-                wallet.partyId,
+            logDynamically(
+                logger,
+                'prepareExecute: Submitting request to ledger',
+                {
+                    info: { transactionId },
+                    debug: {
+                        commandId,
+                        gatewayUserId,
+                        ledgerUserId,
+                        actAs,
+                        params,
+                    },
+                }
+            )
+
+            const prepared = await prepareSubmission(
+                ledgerUserId,
+                actAs,
                 synchronizerId,
                 params,
                 ledgerClient
             )
+
+            logDynamically(
+                logger,
+                'prepareExecute: Received response from ledger',
+                {
+                    info: { transactionId },
+                    debug: {
+                        commandId,
+                        gatewayUserId,
+                        ledgerUserId,
+                        actAs,
+                        prepared,
+                    },
+                }
+            )
+
             const transaction: Transaction = {
                 id: transactionId,
                 commandId,
                 status: 'pending',
-                preparedTransaction: response.preparedTransaction!,
-                preparedTransactionHash: response.preparedTransactionHash,
+                preparedTransaction: prepared.preparedTransaction,
+                preparedTransactionHash: prepared.preparedTransactionHash,
                 payload: params,
                 origin: origin || null,
                 createdAt: new Date(),
@@ -240,13 +332,14 @@ export const dappController = (
 
             logger.info(
                 {
-                    actAs: params.actAs || [wallet.partyId],
+                    actAs,
                     readAs: params.readAs || [],
-                    userId: context.userId,
+                    gatewayUserId,
+                    ledgerUserId,
                     commandId,
                     commands: params.commands?.[0],
                     confirmationRequestTrafficCostEstimation:
-                        response.costEstimation
+                        prepared.costEstimation
                             ?.confirmationRequestTrafficCostEstimation,
                 },
                 'prepared transaction traffic estimation'
@@ -254,9 +347,52 @@ export const dappController = (
 
             await store.setTransaction(transaction)
 
+            const approveUrl = `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`
+
+            if (context.isApiKey) {
+                logger.info(
+                    {
+                        gatewayUserId,
+                        ledgerUserId,
+                        commandId,
+                        transactionId,
+                        signingProviderId: wallet.signingProviderId,
+                    },
+                    'Service account straight-through prepare/sign/execute'
+                )
+                const transactionService = new TransactionService(
+                    store,
+                    logger,
+                    deps!.signingDrivers,
+                    notifier
+                )
+                try {
+                    await transactionService.signAndExecute(
+                        context,
+                        network,
+                        wallet,
+                        transaction
+                    )
+                } catch (error) {
+                    logger.error(
+                        {
+                            err: error,
+                            gatewayUserId,
+                            ledgerUserId,
+                            commandId,
+                            transactionId,
+                            actAs,
+                            signingProviderId: wallet.signingProviderId,
+                        },
+                        'Service account sign/execute failed after prepare'
+                    )
+                    throw error
+                }
+            }
+
             return {
                 // closeafteraction query param flag makes approving or deleting tx close the popup
-                userUrl: `${userUrl}/approve/index.html?transactionId=${transactionId}&commandId=${commandId}&closeafteraction`,
+                userUrl: approveUrl,
             }
         },
         status: async () => {
@@ -290,7 +426,6 @@ export const dappController = (
                 ),
             })
             const status = await networkStatus(ledgerClient)
-
             return {
                 provider: provider,
                 connection: {
@@ -312,20 +447,8 @@ export const dappController = (
                 userUrl: `${userUrl}/login/`,
             }
         },
-        connected: async () => {
-            throw new Error('Only for events.')
-        },
-        onStatusChanged: async () => {
-            throw new Error('Only for events.')
-        },
-        accountsChanged: async () => {
-            throw new Error('Only for events.')
-        },
         listAccounts: async () => {
             return await store.getWallets()
-        },
-        txChanged: async () => {
-            throw new Error('Only for events.')
         },
         getActiveNetwork: async (): Promise<Network> => {
             const network: StoreNetwork = await store.getCurrentNetwork()
@@ -382,6 +505,18 @@ export const dappController = (
             }
             return wallet
         },
+        connected: async () => {
+            throw new Error('Only for events.')
+        },
+        onStatusChanged: async () => {
+            throw new Error('Only for events.')
+        },
+        accountsChanged: async () => {
+            throw new Error('Only for events.')
+        },
+        txChanged: async () => {
+            throw new Error('Only for events.')
+        },
         messageSignature: function (): Promise<MessageSignatureEvent> {
             throw new Error('Only for events.')
         },
@@ -390,13 +525,13 @@ export const dappController = (
 
 async function prepareSubmission(
     userId: string,
-    partyId: string,
+    partyIds: string[],
     synchronizerId: string,
     params: PrepareExecuteParams,
     ledgerClient: LedgerClient
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(userId, partyId, synchronizerId, params)
+        ledgerPrepareParams(userId, partyIds, synchronizerId, params)
     )
 }

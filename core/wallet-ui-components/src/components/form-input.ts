@@ -119,31 +119,35 @@ export class FormInput extends BaseElement {
             <div class="field">
                 <label class="field-label" for=${this.label}>
                     ${this.label}
-                    ${this.required
-                        ? html`<span class="required" aria-hidden="true"
-                              >*</span
-                          >`
-                        : null}
+                    ${
+                        this.required
+                            ? html`<span class="required" aria-hidden="true"
+                                  >*</span
+                              >`
+                            : null
+                    }
                 </label>
                 <div class="input-group">
-                    ${this.hideable
-                        ? html`<button
-                              class="input-addon"
-                              @click=${() => (this.hidden = !this.hidden)}
-                              type="button"
-                              aria-label=${this.hidden
-                                  ? 'Show value'
-                                  : 'Hide value'}
-                          >
-                              ${this.hidden ? eyeSlashIcon : eyeFillIcon}
-                          </button>`
-                        : null}
+                    ${
+                        this.hideable
+                            ? html`<button
+                                  class="input-addon"
+                                  @click=${() => (this.hidden = !this.hidden)}
+                                  type="button"
+                                  aria-label=${
+                                      this.hidden ? 'Show value' : 'Hide value'
+                                  }
+                              >
+                                  ${this.hidden ? eyeSlashIcon : eyeFillIcon}
+                              </button>`
+                            : null
+                    }
                     <input
                         .value=${this.value}
                         ?required=${this.required}
-                        type=${this.hideable && this.hidden
-                            ? 'password'
-                            : 'text'}
+                        type=${
+                            this.hideable && this.hidden ? 'password' : 'text'
+                        }
                         @change=${(e: Event) => {
                             const input = e.target as HTMLInputElement
                             this.value = input.value
@@ -156,9 +160,11 @@ export class FormInput extends BaseElement {
                         name=${this.label}
                     />
                 </div>
-                ${this.text
-                    ? html`<div class="field-help">${this.text}</div>`
-                    : null}
+                ${
+                    this.text
+                        ? html`<div class="field-help">${this.text}</div>`
+                        : null
+                }
             </div>
         `
     }

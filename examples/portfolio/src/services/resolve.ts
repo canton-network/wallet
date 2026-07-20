@@ -30,63 +30,57 @@ export const resolveLedgerProvider = () => {
 const createTokenStandardClient = async ({
     logger,
     registryUrl,
-    accessTokenProvider,
 }: {
     logger: Logger
     registryUrl: string
-    accessTokenProvider?: AccessTokenProvider
 }): Promise<TokenStandardClient> => {
     return new TokenStandardClient(
         registryUrl,
         logger,
-        accessTokenProvider ?? defaultAccessTokenProvider({ logger }) // access token provider
+        noAuthAccessTokenProvider
     )
 }
 
 const createTokenStandardService = async ({
     logger,
-    accessTokenProvider,
 }: {
     logger: Logger
-    accessTokenProvider?: AccessTokenProvider
 }): Promise<TokenStandardService> => {
     const provider = resolveLedgerProvider()
 
     const tokenStandardService = new TokenStandardService(
         provider,
         logger,
-        accessTokenProvider ?? defaultAccessTokenProvider({ logger }), // access token provider
+        noAuthAccessTokenProvider,
         false // isMasterUser
     )
     return tokenStandardService
 }
 
-const DEFAULT_SCAN_PROXY_URL = 'http://localhost:2000/api/validator'
+const resolveValidatorUrl = (validatorUrl: string): URL => {
+    const url = new URL(validatorUrl)
 
-const resolveScanProxyUrl = (): URL => {
-    const scanProxyUrl = new URL(
-        import.meta.env.VITE_SCAN_PROXY_URL ?? DEFAULT_SCAN_PROXY_URL
-    )
-
-    if (scanProxyUrl.protocol === 'http:') {
+    if (url.protocol === 'http:') {
         logger.warn(
-            { scanProxyUrl: scanProxyUrl.toString() },
-            'Using a non-TLS scan proxy endpoint. This is acceptable only in trusted environments. Set VITE_SCAN_PROXY_URL to an HTTPS endpoint if the scan proxy is reachable over an untrusted network.'
+            { validatorUrl: url.toString() },
+            'Using a non-TLS validator endpoint. This is acceptable only in trusted environments. Set validatorUrl in portfolio config to an HTTPS endpoint if the validator API is reachable over an untrusted network.'
         )
     }
 
-    return scanProxyUrl
+    return url
 }
 
 const createAmuletService = async ({
     sessionToken,
+    validatorUrl,
     tokenStandardService,
 }: {
     sessionToken: string
+    validatorUrl: string
     tokenStandardService: TokenStandardService
 }): Promise<AmuletService> => {
     const scanProxyClient = new ScanProxyClient(
-        resolveScanProxyUrl(),
+        resolveValidatorUrl(validatorUrl),
         logger,
         AuthTokenProvider.fromToken(sessionToken, logger)
     )
@@ -102,7 +96,7 @@ const tokenStandardClients = new Map()
 const tokenStandardService: { singleton: TokenStandardService | undefined } = {
     singleton: undefined,
 }
-const amuletServices = new Map()
+const amuletServices = new Map<string, AmuletService>()
 const transactionHistoryServices = new Map()
 
 // Can be called to reset clients on disconnects.
@@ -137,15 +131,18 @@ export const resolveTokenStandardService =
     }
 
 export const resolveAmuletService = async ({
-    sessionToken, // todo: scan URLs?
+    sessionToken,
+    validatorUrl,
 }: {
     sessionToken: string
+    validatorUrl: string
 }): Promise<AmuletService> => {
-    const key = sessionToken
-    if (amuletServices.has(key)) return amuletServices.get(key)
+    const key = `${validatorUrl}:current-session`
+    if (amuletServices.has(key)) return amuletServices.get(key)!
     const tokenStandardService = await resolveTokenStandardService()
     const amuletService = await createAmuletService({
         sessionToken,
+        validatorUrl,
         tokenStandardService,
     })
     amuletServices.set(key, amuletService)
@@ -172,20 +169,14 @@ export const resolveTransactionHistoryService = async ({
     return transactionHistoryService
 }
 
-export const defaultAccessTokenProvider: (deps: {
-    logger: Logger
-}) => AccessTokenProvider = ({ logger }) => {
-    return new AuthTokenProvider(
-        {
-            method: 'self_signed',
-            issuer: 'unsafe-auth',
-            credentials: {
-                clientId: 'ledger-api-user',
-                clientSecret: 'unsafe',
-                audience: 'https://canton.network.global',
-                scope: '',
-            },
-        },
-        logger
-    )
+const noAuthAccessTokenProvider: AccessTokenProvider = {
+    async getAccessToken() {
+        return ''
+    },
+    async getAuthContext() {
+        return {
+            accessToken: '',
+            userId: '',
+        }
+    },
 }

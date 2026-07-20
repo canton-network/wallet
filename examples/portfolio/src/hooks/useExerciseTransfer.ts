@@ -4,7 +4,7 @@
 import { PartyId } from '@canton-network/core-types'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { usePortfolio } from '../contexts/PortfolioContext'
-import { useRegistryUrls } from '../contexts/RegistryServiceContext'
+import { useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from './query-keys'
 
 export const useExerciseTransfer = () => {
@@ -26,6 +26,12 @@ export const useExerciseTransfer = () => {
         onSuccess: async (_, args) => {
             await queryClient.invalidateQueries({
                 queryKey: queryKeys.listPendingTransfers.forParty(args.party),
+            })
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.listHoldings.all,
+            })
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.getTransactionHistory.all,
             })
         },
     })

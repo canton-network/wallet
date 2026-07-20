@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Idp } from '@canton-network/core-wallet-auth'
+import type { Idp } from '@canton-network/core-wallet-auth'
 import { Network } from './config/schema'
 
 export enum AddressType {
@@ -76,6 +76,7 @@ export interface Session {
     id: string
     network: string
     accessToken: string
+    userId?: string
 }
 
 export interface Transaction {
@@ -89,6 +90,8 @@ export interface Transaction {
     createdAt?: Date
     signedAt?: Date
     externalTxId?: string
+    userId?: string
+    networkId?: string
 }
 
 export interface TransactionStatusUpdate {
@@ -113,6 +116,18 @@ export interface MessageRaw {
 export interface MessageRawStatusUpdate {
     signedAt?: Date
     signature?: string
+}
+
+// API keys
+export interface ApiKey {
+    id: string
+    name: string
+    digest: string
+    createdAt: Date
+    lastUsedAt?: Date | undefined
+    userId: string
+    email: string | null
+    networkId: string
 }
 
 // Store interface for managing wallets, sessions, networks, and transactions
@@ -169,6 +184,7 @@ export interface Store {
         commandId: string
     ): Promise<Transaction | undefined>
     listTransactions(): Promise<Array<Transaction>>
+    listAllPendingTransactions(): Promise<Array<Transaction>>
     removeTransaction(transactionId: string): Promise<void>
 
     // Message signing request methods
@@ -181,4 +197,10 @@ export interface Store {
     getMessageRaw(messageId: string): Promise<MessageRaw | undefined>
     listMessageRaws(): Promise<Array<MessageRaw>>
     removeMessageRaw(messageId: string): Promise<void>
+
+    // API Key methods
+    addApiKey(apiKey: ApiKey): Promise<void>
+    listApiKeys(): Promise<Array<ApiKey>>
+    getApiKey(digest: string): Promise<ApiKey | undefined>
+    removeApiKey(apiKeyId: string): Promise<void>
 }

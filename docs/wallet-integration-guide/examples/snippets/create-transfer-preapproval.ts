@@ -15,6 +15,7 @@ export default async function () {
         await sdk.amulet.preapproval.command.create({
             parties: {
                 receiver: myParty,
+                provider: global.VALIDATOR_OPERATOR_PARTY,
             },
         })
 

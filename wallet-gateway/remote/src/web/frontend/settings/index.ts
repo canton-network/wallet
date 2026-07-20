@@ -15,17 +15,15 @@ import {
 import { html, css } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
-    Network,
+    PublicNetwork,
     Session,
     Idp,
-    Auth as ApiAuth,
 } from '@canton-network/core-wallet-user-rpc-client'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 
 import '../index'
 import { stateManager } from '../state-manager'
 import { createUserClient } from '../rpc-client'
-import { Auth } from '@canton-network/core-wallet-auth'
 import { UserLevelRight } from '@canton-network/core-wallet-store'
 
 @customElement('user-ui-settings')
@@ -41,7 +39,7 @@ export class UserUiSettings extends BaseElement {
         `,
     ]
 
-    @state() accessor networks: Network[] = []
+    @state() accessor networks: PublicNetwork[] = []
     @state() accessor sessions: Session[] = []
     @state() accessor idps: Idp[] = []
     @state() accessor client: UserApiClient | null = null
@@ -104,30 +102,10 @@ export class UserUiSettings extends BaseElement {
         this.idps = response.idps
     }
 
-    private toApiAuth(auth: Auth): ApiAuth {
-        return {
-            method: auth.method,
-            audience: auth.audience ?? '',
-            scope: auth.scope ?? '',
-            clientId: auth.clientId ?? '',
-            issuer: (auth as ApiAuth).issuer ?? '',
-            clientSecret: (auth as ApiAuth).clientSecret ?? '',
-        }
-    }
-
     private handleNetworkSubmit = async (e: NetworkEditSaveEvent) => {
         e.preventDefault()
 
-        const auth = this.toApiAuth(e.network.auth)
-        const adminAuth = e.network.adminAuth
-            ? this.toApiAuth(e.network.adminAuth)
-            : {
-                  method: 'client_credentials',
-                  audience: '',
-                  scope: '',
-                  clientId: '',
-                  clientSecret: '',
-              }
+        const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
             const userClient = await createUserClient(
@@ -144,9 +122,10 @@ export class UserUiSettings extends BaseElement {
                         ...(e.network.synchronizerId && {
                             synchronizerId: e.network.synchronizerId as string,
                         }),
-                        ledgerApi: e.network.ledgerApi.baseUrl,
+                        ledgerApi: e.network.ledgerApi,
                         auth,
-                        adminAuth,
+                        ...(adminAuth && { adminAuth }),
+                        ...(serviceAccountAuth && { serviceAccountAuth }),
                     },
                 },
             })
@@ -224,9 +203,9 @@ export class UserUiSettings extends BaseElement {
                     <strong>User:</strong> ${this.userId || '—'} &nbsp;
                     <strong>Role:</strong>
                     <span
-                        class="badge ${this.isAdmin
-                            ? 'bg-primary'
-                            : 'bg-secondary'}"
+                        class="badge ${
+                            this.isAdmin ? 'bg-primary' : 'bg-secondary'
+                        }"
                     >
                         ${this.isAdmin ? 'Admin' : 'User'}
                     </span>

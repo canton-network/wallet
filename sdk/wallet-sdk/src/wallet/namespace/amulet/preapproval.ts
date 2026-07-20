@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import { AmuletNamespaceConfig, LedgerTypes } from '../../sdk.js'
+import type { AmuletNamespaceConfig } from '../../sdk.js'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { PreapprovalParties } from './types.js'
 import { LedgerNamespace } from '../ledger/namespace.js'
 import { fetchAmulet } from './namespace.js'
 import { SDKLogger } from '../../logger/logger.js'
+import { resolveProviderParty } from './utils.js'
 
 const EMPTY_COMMAND_RESULT = [null, []] as const
 
@@ -17,14 +19,14 @@ export class PreapprovalNamespace {
      */
     public readonly command: {
         create: (args: { parties: PreapprovalParties }) => Promise<{
-            CreateCommand: LedgerTypes['CreateCommand']
+            CreateCommand: LedgerCommonSchemas['CreateCommand']
         }>
         cancel: (args: {
             parties: PreapprovalParties
         }) => Promise<
             | [
-                  { ExerciseCommand: LedgerTypes['ExerciseCommand'] },
-                  LedgerTypes['DisclosedContract'][],
+                  { ExerciseCommand: LedgerCommonSchemas['ExerciseCommand'] },
+                  LedgerCommonSchemas['DisclosedContract'][],
               ]
             | typeof EMPTY_COMMAND_RESULT
         >
@@ -40,23 +42,27 @@ export class PreapprovalNamespace {
         this.command = {
             create: async (args) => {
                 const { parties } = args
+                const providerParty = resolveProviderParty(
+                    this.ctx,
+                    'create',
+                    parties?.provider
+                )
 
                 const amulet = await fetchAmulet(this.ctx)
 
-                const command: { CreateCommand: LedgerTypes['CreateCommand'] } =
-                    {
-                        CreateCommand: {
-                            templateId:
-                                '#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal',
-                            createArguments: {
-                                provider:
-                                    parties?.provider ??
-                                    this.ctx.validatorParty,
-                                receiver: parties.receiver,
-                                expectedDso: amulet.admin,
-                            },
+                const command: {
+                    CreateCommand: LedgerCommonSchemas['CreateCommand']
+                } = {
+                    CreateCommand: {
+                        templateId:
+                            '#splice-wallet:Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal',
+                        createArguments: {
+                            provider: providerParty,
+                            receiver: parties.receiver,
+                            expectedDso: amulet.admin,
                         },
-                    }
+                    },
+                }
 
                 return command
             },
@@ -115,7 +121,12 @@ export class PreapprovalNamespace {
     }) {
         const { parties, inputUtxos, expiresAt } = args
         const preapprovalStatus = await this.fetchStatus(parties.receiver)
-        const provider = parties?.provider ?? this.ctx.validatorParty
+        const provider = resolveProviderParty(
+            this.ctx,
+            'renew',
+            parties?.provider
+        )
+
         const synchronizerId =
             args.synchronizerId ?? this.ctx.commonCtx.defaultSynchronizerId
         if (!synchronizerId)

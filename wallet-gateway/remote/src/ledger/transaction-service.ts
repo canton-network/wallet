@@ -13,10 +13,10 @@ import type { SignResult } from '../user-api/rpc-gen/typings.js'
 import {
     Error as SigningError,
     GetTransactionResult,
-    SigningDriverInterface,
     SigningProvider,
     SignTransactionResult,
 } from '@canton-network/core-signing-lib'
+import type { SigningDrivers } from '../signing/signing-drivers.js'
 import {
     ExecuteParams,
     ExecuteResult,
@@ -25,7 +25,17 @@ import {
 } from '../user-api/rpc-gen/typings.js'
 import { UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
-import { ledgerPrepareParams, type PrepareParams } from '../utils.js'
+import {
+    ledgerPrepareParams,
+    logDynamically,
+    type PrepareParams,
+} from '../utils.js'
+import {
+    AuthContext,
+    AuthTokenProvider,
+} from '@canton-network/core-wallet-auth'
+
+export type SignAndExecuteResult = SignResult | ExecuteResult
 
 function handleSigningError<T extends object>(result: SigningError | T): T {
     if ('error' in result) {
@@ -40,11 +50,196 @@ export class TransactionService {
     constructor(
         private store: Store,
         private logger: Logger,
-        private signingDrivers: Partial<
-            Record<SigningProvider, SigningDriverInterface>
-        > = {},
+        private signingDrivers: SigningDrivers = {},
         private notifier: Notifier
     ) {}
+
+    public async sign(
+        authContext: AuthContext,
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResult> {
+        const signingProvider = wallet.signingProviderId as SigningProvider
+        const driver = this.signingDrivers[signingProvider]?.controller(
+            authContext.userId
+        )
+        if (!driver) {
+            throw new Error(`No driver found for ${signingProvider}`)
+        }
+
+        switch (signingProvider) {
+            case SigningProvider.PARTICIPANT: {
+                return this.signWithParticipant(wallet, signParams)
+            }
+            case SigningProvider.WALLET_KERNEL: {
+                return this.signWithWalletKernel(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.BLOCKDAEMON: {
+                if (!authContext.email) {
+                    throw new Error(
+                        'Email is required for Blockdaemon wallet allocation'
+                    )
+                }
+                return this.signWithBlockdaemon(
+                    authContext.email,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.FIREBLOCKS: {
+                return this.signWithFireblocks(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.DFNS: {
+                return this.signWithDfns(authContext.userId, wallet, signParams)
+            }
+            default:
+                throw new Error(
+                    `Unsupported signing provider: ${wallet.signingProviderId}`
+                )
+        }
+    }
+
+    public execute(
+        userId: UserId,
+        wallet: Wallet,
+        transaction: Transaction,
+        executeParams?: ExecuteParams,
+        ledgerClient?: LedgerClient,
+        network?: Network
+    ): Promise<ExecuteResult> {
+        if (transaction.status !== 'signed') {
+            throw new Error(
+                `Cannot execute a ${transaction.status} transaction. Expected status: signed.`
+            )
+        }
+
+        switch (wallet.signingProviderId) {
+            case SigningProvider.PARTICIPANT: {
+                try {
+                    if (!executeParams) {
+                        throw new Error(
+                            'Execute params are required for participant signing'
+                        )
+                    }
+                    if (!ledgerClient) {
+                        throw new Error(
+                            'Ledger client is required for participant signing'
+                        )
+                    }
+                    if (!network) {
+                        throw new Error(
+                            'Network is required for participant signing'
+                        )
+                    }
+                    return this.executeWithParticipant(
+                        userId,
+                        executeParams,
+                        transaction,
+                        ledgerClient,
+                        network
+                    )
+                } catch (error) {
+                    this.logger.error(error, 'Failed to submit transaction')
+                    throw error
+                }
+            }
+            case SigningProvider.WALLET_KERNEL:
+            case SigningProvider.BLOCKDAEMON:
+            case SigningProvider.FIREBLOCKS:
+            case SigningProvider.DFNS: {
+                if (!executeParams) {
+                    throw new Error(
+                        'Execute params are required for external signing'
+                    )
+                }
+                if (!ledgerClient) {
+                    throw new Error(
+                        'Ledger client is required for external signing'
+                    )
+                }
+                return this.executeWithExternal(
+                    userId,
+                    executeParams,
+                    transaction,
+                    ledgerClient
+                )
+            }
+            default:
+                throw new Error(
+                    `Unsupported signing provider: ${wallet.signingProviderId}`
+                )
+        }
+    }
+
+    public async signAndExecute(
+        authContext: AuthContext,
+        network: Network,
+        wallet: Wallet,
+        transaction: Transaction
+    ): Promise<SignAndExecuteResult> {
+        const signParams: SignParams = {
+            transactionId: transaction.id,
+            partyId: wallet.partyId,
+        }
+
+        const signResult = await this.sign(authContext, wallet, signParams)
+
+        if (signResult.status === 'pending') {
+            return signResult
+        }
+
+        if (signResult.status !== 'signed') {
+            throw new Error(
+                `Service account signing failed with status: ${signResult.status}`
+            )
+        }
+
+        if (
+            !('signature' in signResult) ||
+            signResult.signature === undefined
+        ) {
+            throw new Error(
+                'Service account signing did not return a signature'
+            )
+        }
+
+        const ledgerClient = new LedgerClient({
+            baseUrl: new URL(network.ledgerApi.baseUrl),
+            logger: this.logger,
+            accessTokenProvider: AuthTokenProvider.fromToken(
+                authContext.accessToken,
+                this.logger
+            ),
+        })
+
+        const executeParams: ExecuteParams = {
+            transactionId: transaction.id,
+            partyId: wallet.partyId,
+            signature: signResult.signature,
+            signedBy: signResult.signedBy,
+        }
+
+        const userId = authContext.isApiKey
+            ? authContext.ledgerUserId
+            : authContext.userId
+
+        return this.execute(
+            userId,
+            wallet,
+            transaction,
+            executeParams,
+            ledgerClient,
+            network
+        )
+    }
 
     private async loadPreparedTransactionForSigning(
         transactionId: Transaction['id']
@@ -54,10 +249,45 @@ export class TransactionService {
         if (!existingTx) {
             throw new Error(`Transaction not found with id: ${transactionId}`)
         }
+
+        if (existingTx.status !== 'pending') {
+            throw new Error(
+                `Cannot sign an already ${existingTx.status} transaction`
+            )
+        }
+
         return existingTx
     }
 
-    public signWithParticipant(wallet: Wallet): SignResultSigned {
+    // This doesn't really sign the transaction.
+    // For participant both signing and execution are handled by /v2/commands/submit-and-wait using participant keys
+    // This behavior is unique to signing provider participant.
+    // This step intended for making participant wallets conform to a common API.
+    private async signWithParticipant(
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResultSigned> {
+        const tx = await this.loadPreparedTransactionForSigning(
+            signParams.transactionId
+        )
+        const now = new Date()
+
+        const signedTx: Transaction = {
+            id: tx.id,
+            commandId: tx.commandId,
+            status: 'signed',
+            preparedTransaction: tx.preparedTransaction,
+            preparedTransactionHash: tx.preparedTransactionHash,
+            origin: tx?.origin ?? null,
+            ...(tx?.createdAt && {
+                createdAt: tx.createdAt,
+            }),
+            signedAt: now,
+        }
+
+        await this.store.setTransactionSigned(tx.id, now)
+        this.notifier.emit('txChanged', signedTx)
+
         return {
             status: 'signed',
             signature: 'none',
@@ -66,7 +296,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithWalletKernel(
+    private async signWithWalletKernel(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -123,7 +353,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithBlockdaemon(
+    private async signWithBlockdaemon(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -142,7 +372,7 @@ export class TransactionService {
             GetTransactionResult | SignTransactionResult,
             SigningError
         >
-        if (tx && tx.externalTxId) {
+        if (tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
                     userId,
@@ -167,6 +397,11 @@ export class TransactionService {
         }
 
         const now = new Date()
+
+        logDynamically(this.logger, 'Blockdaemon signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
@@ -231,7 +466,7 @@ export class TransactionService {
         }
     }
 
-    public async signWithFireblocks(
+    private async signWithFireblocks(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -250,7 +485,7 @@ export class TransactionService {
             SigningError
         >
 
-        if (tx && tx.externalTxId) {
+        if (tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
                     userId,
@@ -274,6 +509,11 @@ export class TransactionService {
         }
 
         const now = new Date()
+
+        logDynamically(this.logger, 'Fireblocks signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
@@ -343,13 +583,7 @@ export class TransactionService {
         }
     }
 
-    /**
-     * Dfns broadcasts the prepared transaction to Canton itself, so we get back
-     * an updateId rather than a raw signature. We persist the updateId as the
-     * signature payload (the controller short-circuits Dfns execute) and surface
-     * the same SignResult shape the other external providers use.
-     */
-    public async signWithDfns(
+    private async signWithDfns(
         userId: UserId,
         wallet: Wallet,
         signParams: SignParams
@@ -389,9 +623,16 @@ export class TransactionService {
 
         const now = new Date()
 
+        logDynamically(this.logger, 'Dfns signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
+
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
-                throw new Error('No updateId returned from Dfns')
+                throw new Error(
+                    'No signature returned from Dfns signing driver'
+                )
             }
 
             const signedTx: Transaction = {
@@ -451,44 +692,7 @@ export class TransactionService {
         }
     }
 
-    /**
-     * Dfns has already broadcast the transaction at sign-time, so execute is a
-     * state reconciliation: mark the stored transaction as executed and return
-     * the updateId Dfns gave us. We deliberately don't post to the ledger here.
-     */
-    public async executeWithDfns(
-        transaction: Transaction
-    ): Promise<ExecuteResult> {
-        if (!transaction.externalTxId) {
-            throw new Error(
-                'Cannot execute Dfns transaction without externalTxId from Dfns'
-            )
-        }
-
-        const executedTx: Transaction = {
-            id: transaction.id,
-            commandId: transaction.commandId,
-            status: 'executed',
-            preparedTransaction: transaction.preparedTransaction,
-            preparedTransactionHash: transaction.preparedTransactionHash,
-            origin: transaction.origin ?? null,
-            ...(transaction.createdAt && {
-                createdAt: transaction.createdAt,
-            }),
-            ...(transaction.signedAt && {
-                signedAt: transaction.signedAt,
-            }),
-            externalTxId: transaction.externalTxId,
-        }
-        await this.store.setTransactionStatus(transaction.id, 'executed', {
-            externalTxId: transaction.externalTxId,
-        })
-        this.notifier.emit('txChanged', executedTx)
-
-        return { updateId: transaction.externalTxId } as ExecuteResult
-    }
-
-    public async executeWithParticipant(
+    private async executeWithParticipant(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,
@@ -503,14 +707,19 @@ export class TransactionService {
 
         const prep = ledgerPrepareParams(
             userId,
-            partyId,
+            [partyId],
             synchronizerId,
             transaction.payload as PrepareParams
         )
-        const res = await ledgerClient.postWithRetry(
+        const result = await ledgerClient.postWithRetry(
             '/v2/commands/submit-and-wait',
             prep
         )
+
+        logDynamically(this.logger, 'Participant execution result', {
+            info: { transactionId: transaction.id },
+            debug: { result, transaction, executeParams, userId },
+        })
 
         const executedTx: Transaction = {
             id: transaction.id,
@@ -518,7 +727,7 @@ export class TransactionService {
             status: 'executed',
             preparedTransaction: transaction.preparedTransaction,
             preparedTransactionHash: transaction.preparedTransactionHash,
-            payload: res,
+            payload: result,
             origin: transaction.origin ?? null,
             ...(transaction.createdAt && {
                 createdAt: transaction.createdAt,
@@ -528,14 +737,14 @@ export class TransactionService {
             }),
         }
         await this.store.setTransactionStatus(transaction.id, 'executed', {
-            payload: res,
+            payload: result,
         })
         this.notifier.emit('txChanged', executedTx)
 
-        return res as ExecuteResult
+        return result
     }
 
-    public async executeWithExternal(
+    private async executeWithExternal(
         userId: UserId,
         executeParams: ExecuteParams,
         transaction: Transaction,
@@ -573,6 +782,11 @@ export class TransactionService {
             }
         )
 
+        logDynamically(this.logger, 'Externally signed execution result', {
+            info: { transactionId: transaction.id },
+            debug: { result, transaction, executeParams, userId },
+        })
+
         const executedTx: Transaction = {
             id: transaction.id,
             commandId,
@@ -593,6 +807,6 @@ export class TransactionService {
         })
         this.notifier.emit('txChanged', executedTx)
 
-        return result as ExecuteResult
+        return result
     }
 }

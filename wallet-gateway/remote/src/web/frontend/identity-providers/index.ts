@@ -15,6 +15,7 @@ import {
 import { Idp } from '@canton-network/core-wallet-user-rpc-client'
 
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 
@@ -99,7 +100,9 @@ export class UserUiIdentityProviders extends BaseElement {
     }
 
     private _onReview(e: IdpCardReviewEvent) {
-        window.location.href = `${toRelPath('/identity-providers/review/')}?id=${encodeURIComponent(e.idp.id)}`
+        setLocationHref(
+            `${toRelPath('/identity-providers/review/')}?id=${encodeURIComponent(e.idp.id)}`
+        )
     }
 
     private _onPageChange(e: PageChangeEvent) {
@@ -111,53 +114,59 @@ export class UserUiIdentityProviders extends BaseElement {
             <div class="page-header">
                 <h1 class="h4 fw-semibold mb-0">Identity Providers</h1>
 
-                ${this.isAdmin
-                    ? html`
-                          <button
-                              class="btn btn-primary btn-sm rounded-pill btn-add"
-                              type="button"
-                              @click=${() =>
-                                  (window.location.href = toRelPath(
-                                      '/identity-providers/add/'
-                                  ))}
-                          >
-                              <span aria-hidden="true">+</span>
-                              New
-                          </button>
-                      `
-                    : ''}
+                ${
+                    this.isAdmin
+                        ? html`
+                              <button
+                                  class="btn btn-primary btn-sm rounded-pill btn-add"
+                                  type="button"
+                                  @click=${() =>
+                                      setLocationHref(
+                                          toRelPath('/identity-providers/add/')
+                                      )}
+                              >
+                                  <span aria-hidden="true">+</span>
+                                  New
+                              </button>
+                          `
+                        : ''
+                }
             </div>
 
-            ${this.idps.length === 0
-                ? html`<p class="mb-0 text-body-secondary">
-                      No identity providers configured.
-                  </p>`
-                : html`
-                      <div class="idp-list">
-                          ${this.pagedIdps.map(
-                              (idp) => html`
-                                  <idp-card
-                                      .idp=${idp}
-                                      .readonly=${!this.isAdmin}
-                                      @idp-review=${this._onReview}
-                                  ></idp-card>
-                              `
-                          )}
-                      </div>
+            ${
+                this.idps.length === 0
+                    ? html`<p class="mb-0 text-body-secondary">
+                          No identity providers configured.
+                      </p>`
+                    : html`
+                          <div class="idp-list">
+                              ${this.pagedIdps.map(
+                                  (idp) => html`
+                                      <idp-card
+                                          .idp=${idp}
+                                          .readonly=${!this.isAdmin}
+                                          @idp-review=${this._onReview}
+                                      ></idp-card>
+                                  `
+                              )}
+                          </div>
 
-                      ${this.idps.length > this.pageSize
-                          ? html`
-                                <div class="pagination-wrap">
-                                    <wg-pagination
-                                        .total=${this.idps.length}
-                                        .pageSize=${this.pageSize}
-                                        .page=${this.currentPage}
-                                        @page-change=${this._onPageChange}
-                                    ></wg-pagination>
-                                </div>
-                            `
-                          : ''}
-                  `}
+                          ${
+                              this.idps.length > this.pageSize
+                                  ? html`
+                                        <div class="pagination-wrap">
+                                            <wg-pagination
+                                                .total=${this.idps.length}
+                                                .pageSize=${this.pageSize}
+                                                .page=${this.currentPage}
+                                                @page-change=${this._onPageChange}
+                                            ></wg-pagination>
+                                        </div>
+                                    `
+                                  : ''
+                          }
+                      `
+            }
         `
     }
 }

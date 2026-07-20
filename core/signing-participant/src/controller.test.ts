@@ -32,3 +32,45 @@ test('transaction signature', async () => {
         })
     expect(tx.status).toBe('signed')
 })
+
+test('unimplemented controller methods throw "Function not implemented."', () => {
+    const controller = new ParticipantSigningDriver().controller(
+        authContext.userId
+    )
+    const notImplementedMessage = 'Function not implemented.'
+
+    const unimplemented: Array<{
+        name: string
+        invoke: () => unknown
+    }> = [
+        {
+            name: 'getTransaction',
+            invoke: () => controller.getTransaction({ txId: 'tx-1' }),
+        },
+        {
+            name: 'getTransactions',
+            invoke: () => controller.getTransactions({ txIds: ['tx-1'] }),
+        },
+        { name: 'getKeys', invoke: () => controller.getKeys() },
+        {
+            name: 'createKey',
+            invoke: () => controller.createKey({ name: 'key' }),
+        },
+        {
+            name: 'getConfiguration',
+            invoke: () => controller.getConfiguration(),
+        },
+        {
+            name: 'setConfiguration',
+            invoke: () => controller.setConfiguration({}),
+        },
+        {
+            name: 'subscribeTransactions',
+            invoke: () => controller.subscribeTransactions({ txIds: [] }),
+        },
+    ]
+
+    for (const { name, invoke } of unimplemented) {
+        expect(invoke, name).toThrow(notImplementedMessage)
+    }
+})

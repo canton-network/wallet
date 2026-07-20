@@ -25,6 +25,7 @@ import {
     PartyLevelRight,
     TransactionStatusUpdate,
     UserLevelRight,
+    ApiKey,
 } from '@canton-network/core-wallet-store'
 import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
@@ -43,6 +44,9 @@ import {
     toTransaction,
     toMessageRaw,
     toWallet,
+    fromApiKey,
+    toApiKey,
+    toSession,
 } from './schema.js'
 import pg from 'pg'
 
@@ -369,12 +373,12 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     // Session methods
     async getSession(): Promise<Session | undefined> {
         const userId = this.assertConnected()
-        const sessions = await this.db
+        const row = await this.db
             .selectFrom('sessions')
             .selectAll()
             .where('userId', '=', userId)
             .executeTakeFirst()
-        return sessions
+        return row ? toSession(row) : undefined
     }
 
     async setSession(session: Session): Promise<void> {
@@ -401,11 +405,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .execute()
     }
 
+    /**
+     * Lists all pending transactions across all users.
+     */
+    async listAllPendingTransactions(): Promise<Array<Transaction>> {
+        const rows = await this.db
+            .selectFrom('transactions')
+            .selectAll()
+            .where('status', '=', 'pending')
+            .execute()
+
+        return rows.map((row) => toTransaction(row))
+    }
+
     // IDP methods
 
     async getIdp(idpId: string): Promise<Idp> {
-        this.assertConnected()
-
         const idps = await this.listIdps()
         if (!idps) throw new Error('No IDPs available')
 
@@ -473,8 +488,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     // Network methods
     async getNetwork(networkId: string): Promise<Network> {
-        this.assertConnected()
-
         const networks = await this.listNetworks()
         if (!networks) throw new Error('No networks available')
 
@@ -719,6 +732,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('networkId', '=', network.id),
                 ])
             )
+            .orderBy('createdAt', 'desc')
             .execute()
         return transactions.map((table) => toTransaction(table))
     }
@@ -849,6 +863,70 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
             .execute()
     }
+
+    // API keys
+    async addApiKey(apiKey: ApiKey): Promise<void> {
+        const userId = this.assertConnected()
+        if (apiKey.userId !== userId) {
+            throw new Error(
+                `ApiKey userId mismatch: expected ${userId}, got ${apiKey.userId}`
+            )
+        }
+
+        const network = await this.getCurrentNetwork()
+        if (apiKey.networkId !== network.id) {
+            throw new Error(
+                `ApiKey networkId mismatch: expected ${network.id}, got ${apiKey.networkId}`
+            )
+        }
+
+        await this.db.insertInto('apiKeys').values(toApiKey(apiKey)).execute()
+    }
+
+    async listApiKeys(): Promise<Array<ApiKey>> {
+        const query = this.db
+            .selectFrom('apiKeys')
+            .selectAll()
+            .orderBy('createdAt', 'desc')
+
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const apiKeys = await query
+            .where((eb) =>
+                eb.and([
+                    eb('userId', '=', userId),
+                    eb('networkId', '=', network.id),
+                ])
+            )
+            .execute()
+
+        return apiKeys.map(fromApiKey)
+    }
+
+    async getApiKey(digest: string): Promise<ApiKey | undefined> {
+        const apiKey = await this.db
+            .selectFrom('apiKeys')
+            .selectAll()
+            .where((eb) => eb('digest', '=', digest))
+            .executeTakeFirst()
+
+        return apiKey ? fromApiKey(apiKey) : undefined
+    }
+
+    async removeApiKey(apiKeyId: string): Promise<void> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        await this.db
+            .deleteFrom('apiKeys')
+            .where((eb) =>
+                eb.and([
+                    eb('id', '=', apiKeyId),
+                    eb('userId', '=', userId),
+                    eb('networkId', '=', network.id),
+                ])
+            )
+            .execute()
+    }
 }
 
 export const connection = (config: StoreConfig) => {
@@ -870,13 +948,7 @@ export const connection = (config: StoreConfig) => {
         case 'postgres':
             return new Kysely<DB>({
                 dialect: new PostgresDialect({
-                    pool: new pg.Pool({
-                        database: config.connection.database,
-                        user: config.connection.user,
-                        password: config.connection.password,
-                        port: config.connection.port,
-                        host: config.connection.host,
-                    }),
+                    pool: new pg.Pool(config.connection),
                 }),
                 plugins: [new CamelCasePlugin()],
             })

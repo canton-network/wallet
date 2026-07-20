@@ -9,6 +9,7 @@ import {
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 import { stateManager } from '../state-manager'
 import '../index'
 
@@ -111,7 +112,7 @@ export class UserUiSignMessage extends BaseElement {
             if (shouldClose && window.opener) {
                 window.close()
             } else {
-                window.location.href = toRelHref('/activities')
+                setLocationHref(toRelHref('/activities'))
             }
         }, 500)
     }
@@ -211,11 +212,13 @@ export class UserUiSignMessage extends BaseElement {
         return html`
             <div class="card">
                 <h1 class="h5 fw-semibold mb-2 text-body">Sign message</h1>
-                ${this.origin
-                    ? html`<p class="mb-2 text-body-secondary">
-                          Requested by: <strong>${this.origin}</strong>
-                      </p>`
-                    : ''}
+                ${
+                    this.origin
+                        ? html`<p class="mb-2 text-body-secondary">
+                              Requested by: <strong>${this.origin}</strong>
+                          </p>`
+                        : ''
+                }
 
                 <p class="mb-2 text-body-secondary">
                     Please confirm you want to sign this message with your

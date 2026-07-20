@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+export * from './components/api-key-card.js'
+export * from './components/api-key-form.js'
+export * from './components/auth-editor.js'
 export * from './components/app-header.js'
 export * from './components/app-layout.js'
 export * from './components/back-link.js'

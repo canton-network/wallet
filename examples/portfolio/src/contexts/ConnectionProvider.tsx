@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
 import { queryKeys } from '../hooks/query-keys'
+import { clear as clearResolvedServices } from '../services/resolve'
 import { ConnectionContext } from './ConnectionContext'
 
 const wcProjectId = import.meta.env.VITE_WC_PROJECT_ID as string
@@ -29,10 +30,12 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         sdk.connect()
             .then(() => sdk.status())
             .then((status) => {
+                clearResolvedServices()
                 setConnectionStatus(status)
                 setAccounts([])
             })
             .catch((err) => {
+                clearResolvedServices()
                 setConnectionStatus(undefined)
                 setError(err.details)
                 setAccounts([])
@@ -42,6 +45,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     const open = useCallback(() => sdk.open(), [])
 
     const doDisconnect = useCallback(() => {
+        clearResolvedServices()
         setConnectionStatus(undefined)
         setAccounts([])
         setError(undefined)
@@ -91,6 +95,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!connectionStatus?.connection?.isConnected) return
 
         const onStatusChanged = (status: sdk.dappAPI.StatusEvent) => {
+            clearResolvedServices()
             if (!status.connection?.isConnected) {
                 doDisconnect()
                 return

@@ -288,14 +288,16 @@ export class WgTransactionDetail extends BaseElement {
                     </h2>
                     <div class="detail-value">
                         <p class="value mb-0 text-body">${resolvedValue}</p>
-                        ${value
-                            ? html`
-                                  <wg-copy-button
-                                      .value=${value}
-                                      .label=${copyLabel}
-                                  ></wg-copy-button>
-                              `
-                            : nothing}
+                        ${
+                            value
+                                ? html`
+                                      <wg-copy-button
+                                          .value=${value}
+                                          .label=${copyLabel}
+                                      ></wg-copy-button>
+                                  `
+                                : nothing
+                        }
                     </div>
                 </div>
             </section>
@@ -331,27 +333,29 @@ export class WgTransactionDetail extends BaseElement {
                         Signatories
                     </h2>
                     <div class="detail-value detail-value--stacked">
-                        ${signatories.length
-                            ? html`
-                                  <ul class="signatory-list">
-                                      ${signatories.map(
-                                          (signatory) => html`
-                                              <li class="copyable-row">
-                                                  <p
-                                                      class="value mb-0 text-body"
-                                                  >
-                                                      ${signatory}
-                                                  </p>
-                                                  <wg-copy-button
-                                                      .value=${signatory}
-                                                      label="Copy signatory"
-                                                  ></wg-copy-button>
-                                              </li>
-                                          `
-                                      )}
-                                  </ul>
-                              `
-                            : html`<p class="value mb-0 text-body">N/A</p>`}
+                        ${
+                            signatories.length
+                                ? html`
+                                      <ul class="signatory-list">
+                                          ${signatories.map(
+                                              (signatory) => html`
+                                                  <li class="copyable-row">
+                                                      <p
+                                                          class="value mb-0 text-body"
+                                                      >
+                                                          ${signatory}
+                                                      </p>
+                                                      <wg-copy-button
+                                                          .value=${signatory}
+                                                          label="Copy signatory"
+                                                      ></wg-copy-button>
+                                                  </li>
+                                              `
+                                          )}
+                                      </ul>
+                                  `
+                                : html`<p class="value mb-0 text-body">N/A</p>`
+                        }
                     </div>
                 </div>
             </section>
@@ -370,9 +374,13 @@ export class WgTransactionDetail extends BaseElement {
         return html`
             <div class="page-header">
                 <h1 class="page-title h4 fw-semibold mb-0">Activity Details</h1>
-                ${this.backHref
-                    ? html`<wg-back-link href=${this.backHref}></wg-back-link>`
-                    : nothing}
+                ${
+                    this.backHref
+                        ? html`<wg-back-link
+                              href=${this.backHref}
+                          ></wg-back-link>`
+                        : nothing
+                }
             </div>
 
             <div class="detail-grid">
@@ -403,13 +411,15 @@ export class WgTransactionDetail extends BaseElement {
                     this.commandId,
                     'Copy command ID'
                 )}
-                ${this.externalTxId
-                    ? this.renderCopyableValue(
-                          'External transaction ID',
-                          this.externalTxId,
-                          'Copy external transaction ID'
-                      )
-                    : nothing}
+                ${
+                    this.externalTxId
+                        ? this.renderCopyableValue(
+                              'External transaction ID',
+                              this.externalTxId,
+                              'Copy external transaction ID'
+                          )
+                        : nothing
+                }
                 ${this.renderCopyableValue(
                     'Transaction hash',
                     this.txHash,
@@ -430,25 +440,29 @@ export class WgTransactionDetail extends BaseElement {
                                 Transaction JSON Object
                             </h2>
                             <span
-                                class="toggle-icon ${this.decodedExpanded
-                                    ? 'open'
-                                    : ''}"
+                                class="toggle-icon ${
+                                    this.decodedExpanded ? 'open' : ''
+                                }"
                             >
                                 ${chevronDownIcon}
                             </span>
                         </button>
-                        ${this.parsed?.jsonString
-                            ? html`
-                                  <wg-copy-button
-                                      .value=${this.parsed.jsonString}
-                                      label="Copy transaction json object"
-                                  ></wg-copy-button>
-                              `
-                            : nothing}
+                        ${
+                            this.parsed?.jsonString
+                                ? html`
+                                      <wg-copy-button
+                                          .value=${this.parsed.jsonString}
+                                          label="Copy transaction json object"
+                                      ></wg-copy-button>
+                                  `
+                                : nothing
+                        }
                     </div>
-                    ${this.decodedExpanded
-                        ? this.renderDecodedBox(decoded)
-                        : nothing}
+                    ${
+                        this.decodedExpanded
+                            ? this.renderDecodedBox(decoded)
+                            : nothing
+                    }
                 </section>
             </div>
 
@@ -463,25 +477,31 @@ export class WgTransactionDetail extends BaseElement {
 
         return html`
             <div class="actions">
-                ${this.status === 'pending'
-                    ? html`
-                          <button
-                              class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center justify-content-center gap-2"
-                              ?disabled=${this.isDeleteDisabled}
-                              @click=${() =>
-                                  this.dispatchEvent(
-                                      new TransactionDeleteEvent(this.commandId)
-                                  )}
-                          >
-                              ${this.isDeleting
-                                  ? html`<div
-                                        class="spinner-border spinner-border-sm"
-                                    ></div>`
-                                  : nothing}
-                              Reject
-                          </button>
-                      `
-                    : nothing}
+                ${
+                    this.status === 'pending'
+                        ? html`
+                              <button
+                                  class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center justify-content-center gap-2"
+                                  ?disabled=${this.isDeleteDisabled}
+                                  @click=${() =>
+                                      this.dispatchEvent(
+                                          new TransactionDeleteEvent(
+                                              this.commandId
+                                          )
+                                      )}
+                              >
+                                  ${
+                                      this.isDeleting
+                                          ? html`<div
+                                                class="spinner-border spinner-border-sm"
+                                            ></div>`
+                                          : nothing
+                                  }
+                                  Reject
+                              </button>
+                          `
+                        : nothing
+                }
 
                 <button
                     class="btn btn-primary rounded-pill d-inline-flex align-items-center justify-content-center gap-2"
@@ -491,11 +511,13 @@ export class WgTransactionDetail extends BaseElement {
                             new TransactionApproveEvent(this.commandId)
                         )}
                 >
-                    ${this.isApproving
-                        ? html`<div
-                              class="spinner-border spinner-border-sm"
-                          ></div>`
-                        : nothing}
+                    ${
+                        this.isApproving
+                            ? html`<div
+                                  class="spinner-border spinner-border-sm"
+                              ></div>`
+                            : nothing
+                    }
                     Approve
                 </button>
             </div>

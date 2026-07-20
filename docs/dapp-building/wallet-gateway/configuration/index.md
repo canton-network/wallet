@@ -189,6 +189,7 @@ For production deployments, PostgreSQL is recommended due to its robustness, con
 - _user_ (required): The database user to connect with
 - _password_ (required): The password for the database user
 - _database_ (required): The name of the database to use (must exist)
+- _ssl_ (optional): Additional TLS/SSL settings for the PostgreSQL connection. This is passed through to the underlying Node.js `pg` driver.
 
 **Example:**
 
@@ -202,6 +203,66 @@ For production deployments, PostgreSQL is recommended due to its robustness, con
             "user": "wallet_gateway",
             "password": "secure-password",
             "database": "wallet_gateway_db"
+        }
+    }
+}
+```
+
+### PostgreSQL over TLS/SSL
+
+If your PostgreSQL server requires TLS (common in managed databases and hardened deployments), configure `ssl` under both `store.connection` and (if used) `signingStore.connection`.
+
+> [!IMPORTANT]
+> The Wallet Gateway does **not** need the PostgreSQL server's private key. The server keeps `server.key`. The Wallet Gateway only configures client-side TLS behavior.
+
+**Local testing (self-signed server cert, encryption only):**
+
+```json
+{
+    "store": {
+        "connection": {
+            "type": "postgres",
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "postgres",
+            "database": "app_db",
+            "ssl": { "rejectUnauthorized": false }
+        }
+    },
+    "signingStore": {
+        "connection": {
+            "type": "postgres",
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "postgres",
+            "database": "app_signing_db",
+            "ssl": { "rejectUnauthorized": false }
+        }
+    }
+}
+```
+
+**Production (verify server certificate):**
+
+- Set `ssl.rejectUnauthorized: true`
+- Provide the CA certificate PEM that signed the server certificate via `ssl.ca` (string PEM)
+
+```json
+{
+    "store": {
+        "connection": {
+            "type": "postgres",
+            "host": "db.example.com",
+            "port": 5432,
+            "user": "wallet_gateway",
+            "password": "secure-password",
+            "database": "wallet_gateway_db",
+            "ssl": {
+                "rejectUnauthorized": true,
+                "ca": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"
+            }
         }
     }
 }
@@ -368,7 +429,7 @@ Networks is an array, so you can define multiple networks in a single configurat
 - _ledgerApi_ (required): Configuration object for the Ledger API:
     - _baseUrl_ (required): The base URL of the Canton validator's Ledger API (e.g., `"http://localhost:2975"` or `"https://ledger.example.com"`)
 - _auth_ (required): Authentication configuration for normal ledger operations
-- _adminAuth_ (optional): Authentication configuration for admin operations. Only needed for operations requiring elevated privileges
+- _adminAuth_ (optional): Authentication configuration for admin operations (wallet sync, party allocation). See [Authentication: `auth` and `adminAuth`](#authentication-auth-and-adminauth) below.
 
 **Authentication Methods:**
 
@@ -487,12 +548,55 @@ Used for development and testing. The Gateway generates and signs JWT tokens loc
 }
 ```
 
+## Authentication: `auth` and `adminAuth`
+
+Each network defines two independent OAuth configurations:
+
+|                           | `auth`                                                                                 | `adminAuth`                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Typical method**        | `authorization_code`                                                                   | `client_credentials`                                                            |
+| **Used by**               | End users logging into the User UI; tokens for ledger reads/writes in normal operation | Gateway background jobs: automatic wallet sync on first login, party allocation |
+| **Client ID**             | User-facing OAuth client                                                               | Service account / M2M client (often separate)                                   |
+| **Must match validator?** | `audience` and scopes must match ledger expectations                                   | Same                                                                            |
+
+**Can `clientId` be the same?** Yes, if a single OAuth client supports both authorization-code and client-credentials flows with the right scopes. Many deployments use a dedicated Wallet Gateway client for `auth` and reuse or separate `adminAuth` — either is valid.
+
+**Does `auth.clientId` need a wallet or party?** No. The client only needs to obtain tokens for users who already have ledger rights (or who will receive them via your IDP).
+
+**When is `adminAuth` required?** Required for automatic wallet sync when a user logs in and the Gateway has no wallets stored yet. Without valid `adminAuth`, `addSession` may fail with HTTP 500. If you only create wallets manually and never rely on sync, some flows may still call admin APIs — configure `adminAuth` unless you know your deployment does not need it.
+
+Store `adminAuth` secrets via `clientSecretEnv` and Kubernetes secrets (Helm `oauthSecrets`) rather than plain text in config files.
+
+For participant-only signing with no external custody, leave the Helm chart `signing: {}` block empty — see [Deployment](../deployment/index.md#signing-chart-values-signing-).
+
+## Service account automation
+
+When a network defines **`serviceAccountAuth`** (typically `client_credentials` machine-to-machine OAuth), the Wallet Gateway can run **service account automation**: backend jobs authenticate to the dApp API with an **API key** (`Authorization: ApiKey …`) generated by the user in the Wallet Gateway. The Gateway validates the key, obtains a ledger access token via `serviceAccountAuth`, and on `prepareExecute` runs **prepare → sign → execute** straight through without opening the approval UI.
+
+End users still sign in with the network's normal **`auth`** configuration (for example `authorization_code`). `serviceAccountAuth` is separate credentials the Gateway uses on behalf of automations for ledger access.
+
+Clients should still use the existing dApp API (`prepareExecute`, `txChanged` events). API keys are created through the User API (`generateApiKey`) or the User UI. For setup prerequisites and step-by-step examples, see [Automations](../automations/index.md).
+
+Optional server setting for external custody signers:
+
+```json
+{
+    "server": {
+        "signingWorker": {
+            "pollInterval": 5000
+        }
+    }
+}
+```
+
+- **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns) when automation signing stays `pending` until custody approves.
+
 ## Configuring Signing Store
 
 The signing store is an optional secondary database used for storing private keys when the Wallet Gateway is configured to act as a signing provider (using the `wallet-kernel` signing provider).
 
 > [!IMPORTANT]
-> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, Blockdaemon, or Participant-based) for production.
+> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, or Blockdaemon) for production when the User API is accessible. Participant-based signing is only appropriate in production when wallet creation is restricted to trusted operators; see [Signing Providers](../signing-providers/index.md#participant-based-signing).
 
 **Configuration:**
 

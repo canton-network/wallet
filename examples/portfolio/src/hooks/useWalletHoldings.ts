@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Holding } from '@canton-network/core-tx-parser'
 import { listHoldings } from '../services/portfolio-service-implementation'
-import { useInstruments } from '../contexts/RegistryServiceContext'
+import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,

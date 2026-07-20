@@ -15,6 +15,7 @@ import {
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 
 import '../index'
 import { stateManager } from '../state-manager'
@@ -115,19 +116,20 @@ export class UserUiParties extends BaseElement {
                 <button
                     class="btn btn-primary btn-sm rounded-pill btn-add"
                     type="button"
-                    @click=${() =>
-                        (window.location.href = toRelPath('/parties/add/'))}
+                    @click=${() => setLocationHref(toRelPath('/parties/add/'))}
                 >
                     <span class="btn-add-icon" aria-hidden="true">+</span>
                     <span>New</span>
                 </button>
             </div>
 
-            ${this.wallets === undefined
-                ? html`<p class="text-body-secondary mb-3">
-                      Loading parties...
-                  </p>`
-                : ''}
+            ${
+                this.wallets === undefined
+                    ? html`<p class="text-body-secondary mb-3">
+                          Loading parties...
+                      </p>`
+                    : ''
+            }
 
             <div class="row g-3 my-1">
                 ${shownWallets.unverifiedWallets.map(
@@ -198,7 +200,7 @@ export class UserUiParties extends BaseElement {
         }
 
         url.searchParams.delete('createPartyStatus')
-        window.history.replaceState({}, '', url)
+        window.history.replaceState({}, '', url.toString())
     }
 
     private async updateWallets() {

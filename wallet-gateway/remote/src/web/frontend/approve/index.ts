@@ -13,6 +13,7 @@ import {
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 import { stateManager } from '../state-manager'
 import '../index'
 import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
@@ -56,7 +57,7 @@ export class ApproveUi extends BaseElement {
             if (shouldClose && window.opener) {
                 window.close()
             } else {
-                window.location.href = toRelHref(ACTIVITIES_PAGE_REDIRECT)
+                setLocationHref(toRelHref(ACTIVITIES_PAGE_REDIRECT))
             }
         }, 2000)
     }
@@ -194,11 +195,13 @@ export class ApproveUi extends BaseElement {
 
     protected render() {
         return html`
-            ${this.walletCapabilityMessage
-                ? html`<div class="alert alert-warning" role="alert">
-                      ${this.walletCapabilityMessage}
-                  </div>`
-                : ''}
+            ${
+                this.walletCapabilityMessage
+                    ? html`<div class="alert alert-warning" role="alert">
+                          ${this.walletCapabilityMessage}
+                      </div>`
+                    : ''
+            }
             <wg-transaction-detail
                 .commandId=${this.commandId}
                 .status=${this.status}

@@ -17,13 +17,11 @@ import {
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { CopyableIdentifier } from './copyable-identifier'
-import {
-    useRegistryService,
-    useRegistryUrls,
-} from '../contexts/RegistryServiceContext'
+import { useRegistryUrls, useRegistryMutations } from '@hooks/useRegistryUrls'
 import { useForm } from '@tanstack/react-form'
-import { z } from 'zod'
+import { HttpUrl } from '@canton-network/core-types'
 import { toast } from 'sonner'
+import { registryFormSchema, type RegistryFormData } from '@lib/schemas'
 
 interface Registry {
     partyId: string
@@ -32,25 +30,15 @@ interface Registry {
 
 const INSECURE_REGISTRY_URL_WARNING =
     'Registry responses can be spoofed by network attackers. Use HTTPS.'
-const registryUrlSchema = z.url({
-    message: 'Must be a valid HTTP or HTTPS URL',
-    protocol: /^https?$/,
-})
+const registryUrlSchema = HttpUrl
 
 const isInsecureRegistryUrl = (value: string) => {
     const result = registryUrlSchema.safeParse(value)
     return result.success && new URL(result.data).protocol === 'http:'
 }
 
-const registryFormSchema = z.object({
-    partyId: z.string().min(1, 'Party ID is required'),
-    registryUrl: registryUrlSchema,
-})
-
-type RegistryFormData = z.infer<typeof registryFormSchema>
-
 export function RegistrySettings() {
-    const registryService = useRegistryService()
+    const { setRegistryUrl, deleteRegistryUrl } = useRegistryMutations()
     const registryUrls = useRegistryUrls()
     const registries = Array.from(registryUrls.entries()).map(
         ([partyId, registryUrl]) =>
@@ -67,16 +55,24 @@ export function RegistrySettings() {
         } as RegistryFormData,
 
         onSubmit: async ({ value: formData }) => {
-            // TODO: this is temporary for easy developemnt
             const partyId =
                 formData.partyId.trim() === '' ? undefined : formData.partyId
-            registryService.setRegistryUrl(partyId, formData.registryUrl)
-            if (isInsecureRegistryUrl(formData.registryUrl)) {
-                toast.warning(INSECURE_REGISTRY_URL_WARNING)
-            } else {
-                toast.success('Registry URL set')
+            try {
+                await setRegistryUrl.mutateAsync({
+                    party: partyId,
+                    url: formData.registryUrl,
+                })
+                if (isInsecureRegistryUrl(formData.registryUrl)) {
+                    toast.warning(INSECURE_REGISTRY_URL_WARNING)
+                } else {
+                    toast.success('Registry URL set')
+                }
+                form.reset()
+            } catch (error) {
+                toast.error(
+                    `Failed to add registry: ${error instanceof Error ? error.message : 'Unknown error'}`
+                )
             }
-            form.reset()
         },
         validators: {
             onChange: registryFormSchema,
@@ -84,7 +80,7 @@ export function RegistrySettings() {
     })
 
     const handleDeleteRegistry = (partyId: string) => {
-        registryService.deleteRegistryUrl(partyId)
+        deleteRegistryUrl(partyId)
         toast.success('Registry URL deleted')
     }
 
@@ -123,6 +119,7 @@ export function RegistrySettings() {
                                 {(field) => (
                                     <TextField
                                         label="Party ID"
+                                        placeholder="party-hint::fingerprint"
                                         value={field.state.value}
                                         onChange={(e) =>
                                             field.handleChange(e.target.value)

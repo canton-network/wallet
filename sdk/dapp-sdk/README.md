@@ -2,8 +2,8 @@
 
 **`@canton-network/dapp-sdk`** — TypeScript SDK for building decentralized applications on the [Canton Network](https://www.canton.network/). Connect users to Canton wallets, manage accounts, sign messages, and execute transactions — all through a vendor-neutral interface defined by [CIP-0103](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md).
 
-> [!IMPORTANT]
-> This project is under active development and may introduce breaking changes until version 1.0.0. Migration guides for each release are published in [Discussions](https://github.com/canton-network/wallet/discussions).
+> [!NOTE]
+> Migration guides for each release are published in [Discussions](https://github.com/canton-network/wallet/discussions).
 
 ## Features
 
@@ -15,7 +15,7 @@
 - **Ledger API Access** — Proxy authenticated requests to the Canton JSON Ledger API
 - **Real-time Events** — Subscribe to status changes, account changes, and transaction lifecycle events
 - **Multi-transport** — HTTP/SSE for remote Wallet Gateways, `postMessage` for browser extension wallets
-- **Provider Interface** — `window.canton` provider following CIP-103 conventions
+- **Provider Interface** — EIP-1193-style CIP-103 provider via `getConnectedProvider()` after `connect()`
 
 ## Installation
 

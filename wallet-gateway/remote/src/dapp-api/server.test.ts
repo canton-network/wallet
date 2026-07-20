@@ -8,20 +8,11 @@ import request from 'supertest'
 import express from 'express'
 import { dapp } from './server.js'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { AuthService } from '@canton-network/core-wallet-auth'
 import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { createServer } from 'http'
-
-const authService: AuthService = {
-    verifyToken: async () => {
-        return new Promise((resolve) =>
-            resolve({ userId: 'user123', accessToken: 'token123' })
-        )
-    },
-}
 
 const configPath = '../test/config.json'
 const config = ConfigUtils.loadConfigFile(configPath)
@@ -47,8 +38,8 @@ test('call connect rpc', async () => {
             publicUrl,
             config.server,
             notificationService,
-            authService,
-            store
+            store,
+            { signingDrivers: {} }
         )
     )
         .post('/api/v0/dapp')

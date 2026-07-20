@@ -31,8 +31,19 @@ export const TOKEN_NAMESPACE_CONFIG: TokenConfig = {
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
 }
 
+export const TOKEN_NAMESPACE_CONFIG_SIMPLE: TokenConfig = {
+    registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
+    auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+}
+
 export const AMULET_NAMESPACE_CONFIG: AmuletConfig = {
     validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
+    scanApiUrl: localNetStaticConfig.LOCALNET_SCAN_API_URL,
+    auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+    registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+}
+
+export const AMULET_NAMESPACE_CONFIG_SIMPLE: AmuletConfig = {
     scanApiUrl: localNetStaticConfig.LOCALNET_SCAN_API_URL,
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,

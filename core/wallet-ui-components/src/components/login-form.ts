@@ -5,14 +5,14 @@ import { css, html, PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import './back-link.js'
 import { BaseElement } from '../internal/base-element.js'
-import { Network, Idp } from '@canton-network/core-wallet-user-rpc-client'
+import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { chevronDownIcon } from '../icons'
 import cantonLogo from '../../images/logos/canton-logo.png'
 
 /** Emitted when the user clicks the Connect button */
 export class LoginConnectEvent extends Event {
     constructor(
-        public selectedNetwork: Network,
+        public selectedNetwork: PublicNetwork,
         public selectedIdp: Idp,
         public clientId: string
     ) {
@@ -34,7 +34,7 @@ export class LoginBackEvent extends Event {
 @customElement('wg-login-form')
 export class WgLoginForm extends BaseElement {
     /** Available networks to show in the dropdown */
-    @property({ type: Array }) networks: Network[] = []
+    @property({ type: Array }) networks: PublicNetwork[] = []
 
     /** Available identity providers */
     @property({ type: Array }) idps: Idp[] = []
@@ -42,7 +42,7 @@ export class WgLoginForm extends BaseElement {
     @property({ type: Boolean }) connecting = false
     @property({ type: String }) backHref = '/'
 
-    @state() accessor selectedNetwork: Network | null = null
+    @state() accessor selectedNetwork: PublicNetwork | null = null
     @state() accessor selectedIdp: Idp | null = null
     @state() accessor message: string | null = null
     @state() accessor messageType: 'error' | 'info' | null = null
@@ -141,7 +141,7 @@ export class WgLoginForm extends BaseElement {
 
         if (changedProperties.has('networks') && !this.selectedNetwork) {
             const index = this.networks.findIndex(
-                (network) => network.auth.method !== 'client_credentials'
+                (network) => network.authMethod !== 'client_credentials'
             )
 
             if (index >= 0) {
@@ -211,10 +211,10 @@ export class WgLoginForm extends BaseElement {
                 this.renderRoot.querySelector(
                     '#client-id'
                 ) as HTMLInputElement | null
-            )?.value || this.selectedNetwork.auth.clientId
+            )?.value || this.selectedNetwork.clientId
 
         this.dispatchEvent(
-            new LoginConnectEvent(this.selectedNetwork, idp, clientId)
+            new LoginConnectEvent(this.selectedNetwork, idp, clientId || '')
         )
     }
 
@@ -262,8 +262,10 @@ export class WgLoginForm extends BaseElement {
                                 (net, index) =>
                                     html`<option
                                         value=${index}
-                                        ?disabled=${net.auth.method ===
-                                        'client_credentials'}
+                                        ?disabled=${
+                                            net.authMethod ===
+                                            'client_credentials'
+                                        }
                                     >
                                         ${net.name}
                                     </option>`
@@ -272,39 +274,46 @@ export class WgLoginForm extends BaseElement {
                         <span class="select-chevron">${chevronDownIcon}</span>
                     </div>
 
-                    ${this.selectedIdp?.type === 'self_signed'
-                        ? html`
-                              <label
-                                  class="form-label fw-semibold text-body mt-3 mb-2"
-                                  for="client-id"
-                                  >Client ID</label
+                    ${
+                        this.selectedIdp?.type === 'self_signed'
+                            ? html`
+                                  <label
+                                      class="form-label fw-semibold text-body mt-3 mb-2"
+                                      for="client-id"
+                                      >Client ID</label
+                                  >
+                                  <input
+                                      id="client-id"
+                                      class="client-id-input form-control"
+                                      type="text"
+                                      .value=${this.selectedNetwork?.clientId || ''}
+                                      ?disabled=${this.connecting}
+                                  />
+                              `
+                            : null
+                    }
+                    ${
+                        this.message
+                            ? html`<div
+                                  class="alert ${
+                                      this.messageType === 'error'
+                                          ? 'alert-danger'
+                                          : 'alert-info'
+                                  } py-2 px-3 small mt-2 mb-0"
+                                  role="alert"
                               >
-                              <input
-                                  id="client-id"
-                                  class="client-id-input form-control"
-                                  type="text"
-                                  .value=${this.selectedNetwork?.auth
-                                      .clientId || ''}
-                                  ?disabled=${this.connecting}
-                              />
-                          `
-                        : null}
-                    ${this.message
-                        ? html`<div
-                              class="alert ${this.messageType === 'error'
-                                  ? 'alert-danger'
-                                  : 'alert-info'} py-2 px-3 small mt-2 mb-0"
-                              role="alert"
-                          >
-                              ${this.message}
-                          </div>`
-                        : html`<p
-                              class="form-text text-body-secondary mt-2 mb-0"
-                          >
-                              ${this.selectedNetwork
-                                  ? `Selected: ${this.selectedNetwork.name}`
-                                  : 'Choose a network to continue.'}
-                          </p>`}
+                                  ${this.message}
+                              </div>`
+                            : html`<p
+                                  class="form-text text-body-secondary mt-2 mb-0"
+                              >
+                                  ${
+                                      this.selectedNetwork
+                                          ? `Selected: ${this.selectedNetwork.name}`
+                                          : 'Choose a network to continue.'
+                                  }
+                              </p>`
+                    }
                 </div>
 
                 <div class="footer">

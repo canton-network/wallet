@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
-    "version": "1.3.0",
+    "version": "1.6.0",
     "description": "A server-side Wallet Gateway implementation over HTTP",
     "main": "dist/index.js",
     "bin": {
@@ -11,9 +11,9 @@
     "scripts": {
         "build": "vite build && tsc -b && tsc -b tsconfig.frontend.json",
         "clean": "tsc -b --clean && rm -rf ./dist && rm ./*.sqlite || true",
-        "dev": "NODE_ENV=development tsx watch src/index.ts -c ../test/config.json",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage",
+        "dev": "NODE_ENV=development tsx watch --exclude 'vite.config.ts.timestamp-*.mjs' src/index.ts -c ../test/config.json",
+        "test": "vitest run --project node --project browser",
+        "test:coverage": "vitest run --project node --project browser --coverage",
         "start": "yarn node dist/index.js -c ../test/config.json",
         "debug": "yarn node --inspect-brk dist/index.js -c ../test/config.json",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
@@ -59,31 +59,34 @@
         "@commander-js/extra-typings": "^14.0.0",
         "commander": "^14.0.3",
         "cors": "^2.8.6",
-        "dotenv": "^17.3.1",
+        "dotenv": "^17.4.2",
         "express": "^5.2.1",
-        "express-rate-limit": "^8.2.2",
-        "jose": "^6.1.3",
+        "express-rate-limit": "^8.5.2",
+        "jose": "^6.2.3",
         "kysely": "^0.28.17",
-        "lit": "^3.3.2",
+        "lit": "^3.3.3",
         "pino": "^10.3.1",
         "pino-pretty": "^13.1.3",
-        "uuid": "^14.0.0",
-        "vite": "^7.3.2",
+        "uuid": "^14.0.1",
+        "vite": "^7.3.6",
         "vite-express": "^0.22.1",
-        "zod": "^4.3.6"
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@canton-network/core-wallet-store-inmemory": "workspace:^",
+        "@open-wc/testing-helpers": "^3.0.1",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
-        "@types/node": "^25.3.3",
+        "@types/node": "^25.9.4",
         "@types/supertest": "^7.2.0",
-        "@vitest/coverage-v8": "^4.1.2",
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
         "pino-test": "^1.1.0",
+        "playwright": "^1.61.1",
         "supertest": "^7.2.2",
-        "tsx": "^4.21.0",
+        "tsx": "^4.23.0",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.10"
     },
     "nx": {
         "targets": {
@@ -98,5 +101,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "wallet-gateway/remote"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/wallet-gateway/remote#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

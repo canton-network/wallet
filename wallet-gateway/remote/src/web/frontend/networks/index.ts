@@ -12,15 +12,19 @@ import {
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 
-import { Network, Session } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    PublicNetwork,
+    Session,
+} from '@canton-network/core-wallet-user-rpc-client'
 
 import { createUserClient } from '../rpc-client'
+import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 
 @customElement('user-ui-networks')
 export class UserUiNetworks extends BaseElement {
-    @state() accessor networks: Network[] = []
+    @state() accessor networks: PublicNetwork[] = []
     @state() accessor sessions: Session[] = []
     @state() accessor isAdmin = false
     @state() accessor currentPage = 1
@@ -105,7 +109,9 @@ export class UserUiNetworks extends BaseElement {
     }
 
     private _onReview(e: NetworkCardReviewEvent) {
-        window.location.href = `${toRelPath('/networks/review/')}?id=${encodeURIComponent(e.network.id)}`
+        setLocationHref(
+            `${toRelPath('/networks/review/')}?id=${encodeURIComponent(e.network.id)}`
+        )
     }
 
     private _onPageChange(e: PageChangeEvent) {
@@ -117,57 +123,64 @@ export class UserUiNetworks extends BaseElement {
             <div class="page-header">
                 <h1 class="h4 fw-semibold mb-0">Networks</h1>
 
-                ${this.isAdmin
-                    ? html`
-                          <button
-                              class="btn btn-primary btn-sm rounded-pill btn-add"
-                              type="button"
-                              @click=${() =>
-                                  (window.location.href =
-                                      toRelPath('/networks/add/'))}
-                          >
-                              <span aria-hidden="true">+</span>
-                              New
-                          </button>
-                      `
-                    : ''}
+                ${
+                    this.isAdmin
+                        ? html`
+                              <button
+                                  class="btn btn-primary btn-sm rounded-pill btn-add"
+                                  type="button"
+                                  @click=${() =>
+                                      setLocationHref(
+                                          toRelPath('/networks/add/')
+                                      )}
+                              >
+                                  <span aria-hidden="true">+</span>
+                                  New
+                              </button>
+                          `
+                        : ''
+                }
             </div>
 
-            ${this.networks.length === 0
-                ? html`<p class="mb-0 text-body-secondary">
-                      No networks configured.
-                  </p>`
-                : html`
-                      <div class="network-list">
-                          ${this.pagedNetworks.map((network) => {
-                              const session = this.sessions.find(
-                                  (s) => s.network.id === network.id
-                              )
-                              return html`
-                                  <network-card
-                                      .network=${network}
-                                      .activeSession=${!!session}
-                                      .accessToken=${session?.accessToken ?? ''}
-                                      .readonly=${!this.isAdmin}
-                                      @network-review=${this._onReview}
-                                  ></network-card>
-                              `
-                          })}
-                      </div>
+            ${
+                this.networks.length === 0
+                    ? html`<p class="mb-0 text-body-secondary">
+                          No networks configured.
+                      </p>`
+                    : html`
+                          <div class="network-list">
+                              ${this.pagedNetworks.map((network) => {
+                                  const session = this.sessions.find(
+                                      (s) => s.network.id === network.id
+                                  )
+                                  return html`
+                                      <network-card
+                                          .network=${network}
+                                          .activeSession=${!!session}
+                                          .accessToken=${session?.accessToken ?? ''}
+                                          .readonly=${!this.isAdmin}
+                                          @network-review=${this._onReview}
+                                      ></network-card>
+                                  `
+                              })}
+                          </div>
 
-                      ${this.networks.length > this.pageSize
-                          ? html`
-                                <div class="pagination-wrap">
-                                    <wg-pagination
-                                        .total=${this.networks.length}
-                                        .pageSize=${this.pageSize}
-                                        .page=${this.currentPage}
-                                        @page-change=${this._onPageChange}
-                                    ></wg-pagination>
-                                </div>
-                            `
-                          : ''}
-                  `}
+                          ${
+                              this.networks.length > this.pageSize
+                                  ? html`
+                                        <div class="pagination-wrap">
+                                            <wg-pagination
+                                                .total=${this.networks.length}
+                                                .pageSize=${this.pageSize}
+                                                .page=${this.currentPage}
+                                                @page-change=${this._onPageChange}
+                                            ></wg-pagination>
+                                        </div>
+                                    `
+                                  : ''
+                          }
+                      `
+            }
         `
     }
 }

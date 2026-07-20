@@ -9,24 +9,17 @@ export default defineConfig({
         coverage: {
             include: ['src/**/*.ts'],
             provider: 'v8',
-            reporter: ['text', 'html', 'lcov'],
+            reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
-                lines: 0,
-                functions: 0,
-                branches: 0,
-                statements: 0,
+                lines: 80,
+                functions: 80,
+                branches: 70,
+                statements: 80,
             },
         },
         environment: 'node',
         include: ['src/**/*.test.ts'],
         projects: [
-            defineProject({
-                test: {
-                    name: 'node',
-                    environment: 'node',
-                    include: ['src/**/*.test.ts'],
-                },
-            }),
             defineProject({
                 test: {
                     name: 'browser',

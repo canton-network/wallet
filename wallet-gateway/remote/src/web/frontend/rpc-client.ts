@@ -5,6 +5,7 @@ import { HttpTransport } from '@canton-network/core-rpc-transport'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from './state-manager'
 import { LOGIN_PAGE_REDIRECT } from './constants'
+import { setLocationHref } from './navigation.js'
 import {
     getCurrentRoute,
     toRelHref,
@@ -13,6 +14,12 @@ import {
 
 let isLoggingOut = false
 let userApiPathPromise: Promise<URL> | null = null
+
+// Clears module-level caches between unit tests
+export function resetRpcClientCachesForTests(): void {
+    userApiPathPromise = null
+    isLoggingOut = false
+}
 
 const getUserApiPath = async (): Promise<URL> => {
     const defaultUserPath = new URL(
@@ -53,7 +60,7 @@ export const attemptRemoveSession = async (
     } catch (error) {
         // If removeSession fails that's okay
         // We still want to clear local state
-        console.debug('Failed to remove session:', error)
+        console.debug('Failed to remove session: ', error)
     }
 }
 
@@ -75,7 +82,7 @@ const handleAutoLogout = async (): Promise<void> => {
         isLoggingOut = false
 
         if (getCurrentRoute(window.location.pathname) !== LOGIN_PAGE_REDIRECT) {
-            window.location.href = toRelHref(LOGIN_PAGE_REDIRECT)
+            setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
         }
     }
 }

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import { AssetBody, SDKContext } from '../../sdk.js'
+import type { AssetBody } from '../../sdk.js'
+import type { SDKContext } from '../../init/types/context.js'
 import { PreparedCommand } from '../transactions/types.js'
 import {
     FeaturedAppRight,
@@ -16,6 +17,7 @@ import { LedgerNamespace } from '../ledger/namespace.js'
 import { PreapprovalNamespace } from './preapproval.js'
 import { Decimal } from 'decimal.js'
 import { parseAssets, ParsedURL } from '../utils/url.js'
+import { resolveProviderParty } from './utils.js'
 
 const defaultMaxRetries = 10
 const defaultDelayMs = 5000
@@ -25,7 +27,7 @@ export type AmuletNamespaceConfig = {
     registry: ParsedURL | AssetBody
     amuletService: AmuletService
     tokenStandardService: TokenStandardService
-    validatorParty: PartyId
+    validatorParty?: PartyId
 }
 
 export class AmuletNamespace {
@@ -68,6 +70,8 @@ export class AmuletNamespace {
                 amulet.id,
                 amulet.registryUrl.toString()
             )
+
+        this.sdkContext.commonCtx.logger.info(tapCommand)
         return [{ ExerciseCommand: tapCommand }, disclosedContracts]
     }
 
@@ -85,7 +89,11 @@ export class AmuletNamespace {
         amount: string,
         options?: { partyId?: PartyId; synchronizerId?: string }
     ) {
-        const partyId = options?.partyId ?? this.sdkContext.validatorParty
+        const partyId = resolveProviderParty(
+            this.sdkContext,
+            'tapInternal',
+            options?.partyId
+        )
         const synchronizerId =
             options?.synchronizerId ??
             this.sdkContext.commonCtx.defaultSynchronizerId
@@ -115,8 +123,13 @@ export class AmuletNamespace {
     private async grantFeatureAppRightsForValidator(
         options: GrantFeaturedAppRightsOptions
     ): Promise<FeaturedAppRight | undefined> {
+        const providerParty = resolveProviderParty(
+            this.sdkContext,
+            'grantFeatureAppRightsForValidator',
+            options.validatorParty
+        )
         const featuredAppRights = await this.lookUpFeaturedAppRights({
-            partyId: this.sdkContext.validatorParty,
+            partyId: providerParty,
             maxRetries: 20,
             delayMs: 1000,
         })
@@ -130,7 +143,7 @@ export class AmuletNamespace {
 
         const [featuredAppCommand, dc] =
             await this.sdkContext.amuletService.selfGrantFeatureAppRight(
-                this.sdkContext.validatorParty,
+                providerParty,
                 synchronizerId
             )
 
@@ -138,11 +151,11 @@ export class AmuletNamespace {
             commands: [{ ExerciseCommand: featuredAppCommand }],
             disclosedContracts: dc,
             synchronizerId,
-            actAs: [this.sdkContext.validatorParty],
+            actAs: [providerParty],
         })
 
         return this.lookUpFeaturedAppRights({
-            partyId: this.sdkContext.validatorParty,
+            partyId: providerParty,
             maxRetries: options.maxRetries ?? defaultMaxRetries,
             delayMs: options.delayMs ?? defaultDelayMs,
         })

@@ -8,10 +8,11 @@ import { Logger } from 'pino'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
 import { Methods } from './rpc-gen/index.js'
 import { Store } from '@canton-network/core-wallet-store'
-import { AuthService, AuthAware } from '@canton-network/core-wallet-auth'
+import { AuthAware } from '@canton-network/core-wallet-auth'
 import { Server } from 'http'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo, ServerConfig } from '../config/Config.js'
+import { DappControllerDeps } from './controller.js'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)
@@ -28,8 +29,8 @@ export const dapp = (
     userUrl: string,
     serverConfig: ServerConfig,
     notificationService: NotificationService,
-    authService: AuthService,
-    store: Store & AuthAware<Store>
+    store: Store & AuthAware<Store>,
+    controllerDeps: DappControllerDeps
 ) => {
     app.use(
         cors({
@@ -83,11 +84,21 @@ export const dapp = (
             writeSSE(res, 'messageSignature', event)
         }
 
+        const onLogout = () => {
+            logger.info(
+                { userId: context.userId },
+                'Session terinated by server. Forcing SSE teardown.'
+            )
+            cleanup()
+            res.end()
+        }
+
         notifier.on('accountsChanged', onAccountsChanged)
         notifier.on('connected', onConnected)
         notifier.on('statusChanged', onStatusChanged)
         notifier.on('txChanged', onTxChanged)
         notifier.on('messageSignature', onMessageSignature)
+        notifier.on('logout', onLogout)
 
         const cleanup = () => {
             logger.debug('SSE client disconnected')
@@ -96,6 +107,7 @@ export const dapp = (
             notifier.removeListener('statusChanged', onStatusChanged)
             notifier.removeListener('txChanged', onTxChanged)
             notifier.removeListener('messageSignature', onMessageSignature)
+            notifier.removeListener('logout', onLogout)
         }
 
         req.on('close', cleanup)
@@ -114,6 +126,7 @@ export const dapp = (
                 notificationService,
                 logger,
                 origin,
+                controllerDeps,
                 req.authContext
             ),
             logger,

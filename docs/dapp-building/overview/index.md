@@ -35,7 +35,7 @@ A typical setup involves:
 
 The **dApp API** is a JSON-RPC 2.0 interface specified by **CIP-103**.
 You can call it directly (e.g. over HTTP or WebSocket) from your frontend or backend.
-In practice, most developers use the **dApp SDK**, which implements the same protocol and adds a simpler API, multi-transport support (HTTP for remote Gateways, `postMessage` for browser-extension wallets), and an EIP-1193–style provider (`window.canton`).
+In practice, most developers use the **dApp SDK**, which implements the same protocol and adds a simpler API, multi-transport support (HTTP for remote Gateways, `postMessage` for browser-extension wallets), and an EIP-1193–style provider interface via `getConnectedProvider()` after `connect()`.
 The dApp API lets your frontend connect to a wallet, list accounts, prepare and execute transactions, and receive real-time updates; all of this requires a valid session (JWT).
 See [APIs](../wallet-gateway/apis/index.md) and the [dApp SDK](../dapp-sdk/index.md) documentation.
 

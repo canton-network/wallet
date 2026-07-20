@@ -9,7 +9,7 @@ import { PartyNamespace } from '../namespace/party/index.js'
 import { UserNamespace } from '../namespace/user/index.js'
 import { TokenNamespace } from '../namespace/token/index.js'
 import { AssetNamespace } from '../namespace/asset/index.js'
-import { OfflineSDKContext, SDKContext } from '../sdk.js'
+import { OfflineSDKContext, SDKContext, getValidatorParty } from '../sdk.js'
 import { SDKUtilsNamespace } from '../namespace/utils/index.js'
 import {
     AmuletConfig,
@@ -19,21 +19,16 @@ import {
     ExtendedFullSDKInterface,
     ExtendedSDKOptions,
     OfflineSDKInterface,
+    PluginConstructor,
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
 } from './types/index.js'
-import {
-    ScanClient,
-    ScanProxyClient,
-    ValidatorInternalClient,
-} from '@canton-network/core-splice-client'
+import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { SDKLogger } from '../logger/logger.js'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
-import { SDKPlugin } from './plugin.js'
 
 const createNamespace: {
     [K in keyof ExtendedSDKOptions]: (
@@ -43,21 +38,19 @@ const createNamespace: {
 } = {
     amulet: async (ctx: SDKContext, config: AmuletConfig) => {
         const auth = new AuthTokenProvider(config.auth, ctx.logger)
-        const scanProxyClient = new ScanProxyClient(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
-        )
+
         const scanClient = new ScanClient(
             new ParsedURL(ctx, config.scanApiUrl),
             ctx.logger,
             auth
         )
-        const validatorParty = await getValidatorParty(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
-        )
+        const validatorParty = config.validatorUrl
+            ? await getValidatorParty(
+                  new ParsedURL(ctx, config.validatorUrl),
+                  auth,
+                  ctx.logger
+              )
+            : undefined
 
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
@@ -66,18 +59,24 @@ const createNamespace: {
             false
         )
 
-        const amuletService = new AmuletService(
-            tokenStandardService,
-            scanProxyClient,
-            scanClient
-        )
+        const amuletService = config.validatorUrl
+            ? new AmuletService(
+                  tokenStandardService,
+                  new ScanProxyClient(
+                      new ParsedURL(ctx, config.validatorUrl),
+                      ctx.logger,
+                      auth
+                  ),
+                  scanClient
+              )
+            : new AmuletService(tokenStandardService, scanClient)
 
         return new AmuletNamespace({
             commonCtx: ctx,
             registry: new ParsedURL(ctx, config.registryUrl),
             amuletService,
             tokenStandardService,
-            validatorParty,
+            ...(validatorParty && { validatorParty }),
         })
     },
     token: async (ctx: SDKContext, config: TokenConfig) => {
@@ -88,19 +87,24 @@ const createNamespace: {
             auth,
             false
         )
-        const validatorParty = await getValidatorParty(
-            new ParsedURL(ctx, config.validatorUrl),
-            ctx.logger,
-            auth
+
+        const registryUrls = config.registries.map(
+            (input) => new ParsedURL(ctx, input)
         )
+
+        const validatorParty = config.validatorUrl
+            ? await getValidatorParty(
+                  new ParsedURL(ctx, config.validatorUrl),
+                  auth,
+                  ctx.logger
+              )
+            : undefined
 
         return new TokenNamespace({
             tokenStandardService,
-            registryUrls: config.registries.map(
-                (input) => new ParsedURL(ctx, input)
-            ),
-            validatorParty,
+            registryUrls,
             commonCtx: ctx,
+            ...(validatorParty && { validatorParty }),
         })
     },
     asset: async (ctx: SDKContext, config: AssetConfig) => {
@@ -136,7 +140,9 @@ const createNamespace: {
     },
 }
 
-export class InitializedSDK implements BasicSDKInterface {
+export class InitializedSDK<
+    CurrentlyExtended extends keyof ExtendedSDKOptions = never,
+> implements BasicSDKInterface<CurrentlyExtended> {
     public readonly keys = new KeysNamespace()
     public readonly ledger: LedgerNamespace
     public readonly party: PartyNamespace
@@ -155,26 +161,51 @@ export class InitializedSDK implements BasicSDKInterface {
 
     public async extend<ExtendedItems extends keyof ExtendedSDKOptions>(
         config: Pick<ExtendedSDKOptions, ExtendedItems>
-    ) {
-        return await ExtendedInitializedSDK.create(this.ctx, config)
+    ): Promise<SDKInterface<CurrentlyExtended | ExtendedItems>> {
+        return ExtendedInitializedSDK.create<ExtendedItems>(
+            this.ctx,
+            config
+        ) as Promise<SDKInterface<CurrentlyExtended | ExtendedItems>>
     }
 
     public registerPlugins<
-        P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
-    >(plugins: P): InitializedSDK & RegisteredPlugins<P> {
-        const newSDK = new InitializedSDK(this.ctx)
-
-        for (const name in plugins) {
-            const plugin = new plugins[name](this.ctx)
-            Object.defineProperty(newSDK, plugin.name, {
-                value: plugin,
-                writable: false,
-                enumerable: true,
-                configurable: false,
-            })
+        /**
+         * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
+         */
+        P extends PluginConstructor[] | Record<string, PluginConstructor>,
+    >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
+        if (plugins instanceof Array) {
+            for (const name in plugins) {
+                const plugin = new plugins[name]({
+                    ...this.ctx,
+                    namespace: this,
+                })
+                Object.defineProperty(this, name, {
+                    value: plugin,
+                    writable: false,
+                    enumerable: true,
+                    configurable: false,
+                })
+            }
+            /**
+             * @deprecated use PluginConstructor[] instead.
+             */
+        } else {
+            for (const [name, ctr] of Object.entries(plugins)) {
+                const plugin = new ctr({
+                    ...this.ctx,
+                    namespace: this,
+                })
+                Object.defineProperty(this, name, {
+                    value: plugin,
+                    writable: false,
+                    enumerable: true,
+                    configurable: false,
+                })
+            }
         }
 
-        return newSDK as InitializedSDK & RegisteredPlugins<P>
+        return this as SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
     }
 }
 
@@ -188,7 +219,7 @@ export class OfflineInitializedSDK implements OfflineSDKInterface {
 
 export class ExtendedInitializedSDK<
     ExtendedItems extends keyof ExtendedSDKOptions,
-> extends InitializedSDK {
+> extends InitializedSDK<ExtendedItems> {
     // Declare the dynamically assigned properties
     // These are set via Object.assign in the constructor
     declare readonly amulet: ExtendedItems extends 'amulet'
@@ -252,13 +283,4 @@ export class ExtendedInitializedSDK<
 
         return await super.extend(mergedConfig)
     }
-}
-
-async function getValidatorParty(
-    validatorUrl: URL,
-    logger: SDKLogger,
-    auth: AuthTokenProvider
-) {
-    const validator = new ValidatorInternalClient(validatorUrl, logger, auth)
-    return (await validator.get('/v0/validator-user')).party_id
 }

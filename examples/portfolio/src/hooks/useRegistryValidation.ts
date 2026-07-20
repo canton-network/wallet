@@ -2,14 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useQuery } from '@tanstack/react-query'
-import { useRegistryUrls } from '../contexts/RegistryServiceContext'
+import { useRegistryUrls } from './useRegistryUrls'
 import { resolveTokenStandardClient } from '../services/resolve'
 
 export type RegistryValidationStatus =
-    | 'valid'
-    | 'no-registries'
-    | 'all-unreachable'
-    | 'checking'
+    'valid' | 'no-registries' | 'all-unreachable' | 'checking'
 
 interface RegistryCheckResult {
     partyId: string

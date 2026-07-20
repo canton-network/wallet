@@ -16,7 +16,10 @@ import {
     GetExtendedKeys,
     SDKInterface,
 } from './init/types/sdk.js'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import {
+    AuthTokenProvider,
+    TokenProviderConfig,
+} from '@canton-network/core-wallet-auth'
 import {
     ExtendedInitializedSDK,
     OfflineInitializedSDK,
@@ -27,12 +30,19 @@ import {
 } from '@canton-network/core-ledger-client-types'
 import { AllowedLogAdapters } from './logger/types.js'
 import { DappLedgerRpc } from '@canton-network/core-provider-dapp'
-export * from './namespace/asset/index.js'
+import { SDKContext } from './index.js'
+import { ValidatorInternalClient } from '@canton-network/core-splice-client'
+export { findAsset } from './namespace/asset/index.js'
+export type * from './namespace/asset/index.js'
 export type * from './namespace/token/index.js'
 export type * from './namespace/amulet/index.js'
 export { type TokenProviderConfig } from '@canton-network/core-wallet-auth'
 export { LedgerProvider } from '@canton-network/core-provider-ledger'
-export { type Event } from './namespace/events/index.js'
+export {
+    type Event,
+    type CompletionEvent,
+    type UpdateEvent,
+} from './namespace/events/index.js'
 export type * from './namespace/transactions/types.js'
 export {
     signTransactionHash,
@@ -40,21 +50,11 @@ export {
 } from '@canton-network/core-signing-lib'
 export type LedgerTypes = LedgerCommonSchemas
 
-export type SDKContext = {
-    ledgerProvider: AbstractLedgerProvider
-    userId: string
-    logger: SDKLogger
-    error: SDKErrorHandler
-    defaultSynchronizerId: string
-}
-
-export type OfflineSDKContext = {
-    logger: SDKLogger
-    error: SDKErrorHandler
-}
-
 export * from './init/index.js'
-export { PrepareOptions, ExecuteOptions } from './namespace/ledger/index.js'
+export type {
+    PrepareOptions,
+    ExecuteOptions,
+} from './namespace/ledger/index.js'
 export * from './namespace/transactions/prepared.js'
 export * from './namespace/transactions/signed.js'
 
@@ -191,4 +191,22 @@ async function getDefaultSynchronizerId(
     }
 
     return defaultSynchronizerId
+}
+
+export async function getValidatorParty(
+    validatorUrl: URL,
+    auth: AuthTokenProvider | TokenProviderConfig,
+    sdkLogger?: SDKLogger
+) {
+    const logger = sdkLogger ?? new SDKLogger('pino')
+    const validatorAuth =
+        auth instanceof AuthTokenProvider
+            ? auth
+            : new AuthTokenProvider(auth, logger)
+    const validator = new ValidatorInternalClient(
+        validatorUrl,
+        logger,
+        validatorAuth
+    )
+    return (await validator.get('/v0/validator-user')).party_id
 }

@@ -17,6 +17,7 @@ export const networkSchema = z.object({
     ledgerApi: ledgerApiSchema,
     auth: authSchema,
     adminAuth: authSchema.optional(),
+    serviceAccountAuth: authSchema.optional(),
 })
 
 export const storeConfigSchema = z.object({
@@ -28,7 +29,9 @@ export const storeConfigSchema = z.object({
             type: z.literal('sqlite'),
             database: z.string(),
         }),
-        z.object({
+        // Add validation for some of the most important properties of the postgres driver,
+        // but allow for any additional properties to be passed in (e.g. `ssl` for TLS).
+        z.looseObject({
             type: z.literal('postgres'),
             host: z.string(),
             port: z.number(),

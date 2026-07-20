@@ -4,7 +4,7 @@
 import Decimal from 'decimal.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { type Holding } from '@canton-network/core-tx-parser'
-import type { Instruments } from '../services/registry-service'
+import type { Instruments } from '../types/instruments'
 
 export interface AggregatedWalletBalance {
     owner: string
@@ -25,6 +25,10 @@ export interface AggregatedHolding {
     }
 }
 
+export function getInstrumentKey(instrumentId: { admin: string; id: string }) {
+    return `${instrumentId.admin}::${instrumentId.id}`
+}
+
 export function aggregateHoldings(
     holdings: Holding[],
     currentTime: Date = new Date()
@@ -32,7 +36,7 @@ export function aggregateHoldings(
     const aggregated = new Map<string, AggregatedHolding>()
 
     for (const holding of holdings) {
-        const key = `${holding.instrumentId.admin}::${holding.instrumentId.id}`
+        const key = getInstrumentKey(holding.instrumentId)
         const existing = aggregated.get(key)
         const isLocked = TokenStandardService.isHoldingLocked(
             holding,

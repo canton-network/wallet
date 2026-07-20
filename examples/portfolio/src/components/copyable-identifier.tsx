@@ -1,15 +1,19 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material/styles'
+import { normalizeSx } from '@components/ui/utils'
 import { CopyIconButton } from './ui/CopyIconButton'
 
 interface CopyableIdentifierProps {
     value: string
     maxLength?: number
+    sx?: SxProps<Theme>
 }
 
 export const CopyableIdentifier: React.FC<CopyableIdentifierProps> = ({
     value,
     maxLength = 8,
+    sx,
 }) => {
     const truncate = (str: string, len: number) => {
         if (str.length <= len) {
@@ -22,7 +26,7 @@ export const CopyableIdentifier: React.FC<CopyableIdentifierProps> = ({
         const parts = val.split('::')
         const prefix = parts[0] || ''
         const suffix = parts[1] || ''
-        return `${prefix}::${truncate(suffix, maxLength)}`
+        return `${truncate(prefix, maxLength)}::${truncate(suffix, maxLength)}`
     }
 
     const getDisplayValue = () => {
@@ -35,11 +39,31 @@ export const CopyableIdentifier: React.FC<CopyableIdentifierProps> = ({
     const displayValue = getDisplayValue()
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" component="span">
+        <Box
+            sx={[
+                {
+                    minWidth: 0,
+                    maxWidth: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                },
+                ...normalizeSx(sx),
+            ]}
+        >
+            <Typography
+                variant="body2"
+                component="span"
+                sx={{
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                }}
+            >
                 {displayValue}
             </Typography>
-            <CopyIconButton value={value} sx={{ p: 0.5 }} />
+            <CopyIconButton value={value} sx={{ flexShrink: 0, p: 0.5 }} />
         </Box>
     )
 }

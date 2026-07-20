@@ -4,19 +4,19 @@
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
-import { Network } from '@canton-network/core-wallet-store'
+import { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
 
 /** Emitted when the user clicks a network card to review it */
 export class NetworkCardReviewEvent extends Event {
-    constructor(public network: Network) {
+    constructor(public network: PublicNetwork) {
         super('network-review', { bubbles: true, composed: true })
     }
 }
 
 /** Emitted when the user clicks the "Delete" button on a network card */
 export class NetworkCardDeleteEvent extends Event {
-    constructor(public network: Network) {
+    constructor(public network: PublicNetwork) {
         super('delete', { bubbles: true, composed: true })
     }
 }
@@ -30,7 +30,7 @@ export class NetworkCardUpdateEvent extends Event {
 
 @customElement('network-card')
 export class NetworkCard extends BaseElement {
-    @property({ type: Object }) network: Network | null = null
+    @property({ type: Object }) network: PublicNetwork | null = null
     @property({ type: Boolean }) activeSession = false
     @property({ type: String }) accessToken = ''
     @property({ type: Boolean }) readonly = false
@@ -156,9 +156,13 @@ export class NetworkCard extends BaseElement {
             <article class="wg-card net-card" @click=${this._onClick}>
                 <div class="card-header">
                     <p class="card-title">${this.network.name}</p>
-                    ${this.activeSession
-                        ? html`<span class="badge-connected">CONNECTED</span>`
-                        : ''}
+                    ${
+                        this.activeSession
+                            ? html`<span class="badge-connected"
+                                  >CONNECTED</span
+                              >`
+                            : ''
+                    }
                 </div>
 
                 <div class="meta">
@@ -167,53 +171,61 @@ export class NetworkCard extends BaseElement {
                         <p class="meta-value">${this.network.id}</p>
                     </div>
 
-                    ${this.activeSession
-                        ? html`
-                              <div class="meta-row meta-row--copy">
-                                  <p class="meta-title">Access Token</p>
-                                  <p class="meta-value meta-value-muted">
-                                      [private]
-                                  </p>
-                                  <wg-copy-button
-                                      .value=${this.accessToken}
-                                      label="Copy access token"
-                                  ></wg-copy-button>
-                              </div>
-                          `
-                        : ''}
+                    ${
+                        this.activeSession
+                            ? html`
+                                  <div class="meta-row meta-row--copy">
+                                      <p class="meta-title">Access Token</p>
+                                      <p class="meta-value meta-value-muted">
+                                          [private]
+                                      </p>
+                                      <wg-copy-button
+                                          .value=${this.accessToken}
+                                          label="Copy access token"
+                                      ></wg-copy-button>
+                                  </div>
+                              `
+                            : ''
+                    }
 
                     <div class="meta-row">
                         <p class="meta-title">Auth</p>
-                        <p class="meta-value">${this.network.auth.method}</p>
+                        <p class="meta-value">${this.network.authMethod}</p>
                     </div>
 
-                    ${syncId
-                        ? html`
-                              <div class="meta-row meta-row--copy">
-                                  <p class="meta-title">Synchronizer</p>
-                                  <p class="meta-value" title=${syncId}>
-                                      ${syncId}
-                                  </p>
-                                  <wg-copy-button
-                                      .value=${syncId}
-                                      label="Copy synchronizer ID"
-                                  ></wg-copy-button>
-                              </div>
-                          `
-                        : ''}
-                    ${this.network.identityProviderId
-                        ? html`
-                              <div class="meta-row">
-                                  <p class="meta-title">Identity provider</p>
-                                  <p
-                                      class="meta-value"
-                                      title=${this.network.identityProviderId}
-                                  >
-                                      ${this.network.identityProviderId}
-                                  </p>
-                              </div>
-                          `
-                        : ''}
+                    ${
+                        syncId
+                            ? html`
+                                  <div class="meta-row meta-row--copy">
+                                      <p class="meta-title">Synchronizer</p>
+                                      <p class="meta-value" title=${syncId}>
+                                          ${syncId}
+                                      </p>
+                                      <wg-copy-button
+                                          .value=${syncId}
+                                          label="Copy synchronizer ID"
+                                      ></wg-copy-button>
+                                  </div>
+                              `
+                            : ''
+                    }
+                    ${
+                        this.network.identityProviderId
+                            ? html`
+                                  <div class="meta-row">
+                                      <p class="meta-title">
+                                          Identity provider
+                                      </p>
+                                      <p
+                                          class="meta-value"
+                                          title=${this.network.identityProviderId}
+                                      >
+                                          ${this.network.identityProviderId}
+                                      </p>
+                                  </div>
+                              `
+                            : ''
+                    }
                 </div>
             </article>
         `

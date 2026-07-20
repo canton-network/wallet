@@ -22,6 +22,7 @@ export const portfolioColors = {
     purple30: '#C6B2FF',
     red99: '#FD8575',
     green76: '#33C200',
+    green80: '#BBFBD7',
 } as const
 
 declare module '@mui/material/styles' {
@@ -30,6 +31,13 @@ declare module '@mui/material/styles' {
             sidebar: { background: string; active: string }
             surface: { subtle: string; border: string; required: string }
             nav: { main: string; hover: string; soft: string }
+            status: {
+                pending: { background: string; text: string }
+                'action-required': { background: string; text: string }
+                'partially-allocated': { background: string; text: string }
+                allocated: { background: string; text: string }
+                expired: { background: string; text: string }
+            }
         }
     }
 
@@ -104,7 +112,31 @@ export const darkPortfolioTokens: ThemeOptions = {
         },
     },
     typography,
-    ...portfolioAppTokens,
+    portfolio: {
+        ...portfolioAppTokens.portfolio,
+        status: {
+            pending: {
+                background: portfolioColors.lightBlue89,
+                text: portfolioColors.black,
+            },
+            'action-required': {
+                background: portfolioColors.yellow99,
+                text: portfolioColors.black,
+            },
+            'partially-allocated': {
+                background: portfolioColors.yellow99,
+                text: portfolioColors.black,
+            },
+            allocated: {
+                background: portfolioColors.purple30,
+                text: portfolioColors.black,
+            },
+            expired: {
+                background: portfolioColors.grey54,
+                text: portfolioColors.grey207,
+            },
+        },
+    },
 }
 
 export const lightPortfolioTokens: ThemeOptions = {
@@ -161,6 +193,28 @@ export const lightPortfolioTokens: ThemeOptions = {
             required: portfolioColors.grey226,
         },
         nav: portfolioAppTokens.portfolio.nav,
+        status: {
+            pending: {
+                background: portfolioColors.purple100,
+                text: portfolioColors.white,
+            },
+            'action-required': {
+                background: portfolioColors.grey69,
+                text: portfolioColors.white,
+            },
+            'partially-allocated': {
+                background: portfolioColors.grey69,
+                text: portfolioColors.white,
+            },
+            allocated: {
+                background: portfolioColors.purple30,
+                text: portfolioColors.black,
+            },
+            expired: {
+                background: portfolioColors.grey207,
+                text: portfolioColors.grey54,
+            },
+        },
     },
 }
 

@@ -43,7 +43,7 @@ async function main() {
 
             fs.copyFileSync(sourceTestFile, destTestFile)
 
-            run('yarn add typescript tsx', { cwd: tmpDir })
+            run('yarn add typescript@^5.9.3 tsx', { cwd: tmpDir })
         })
         flatpacker.pack()
         run('yarn install --no-immutable', { cwd: tmpDir })

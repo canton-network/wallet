@@ -13,7 +13,7 @@ import { RpcTransport } from '@canton-network/core-rpc-transport'
 export type NetworkId = string
 /**
  *
- * Name of network
+ * The name of the API key.
  *
  */
 export type Name = string
@@ -78,6 +78,7 @@ export interface Network {
     identityProviderId: IdentityProviderId
     auth: Auth
     adminAuth?: Auth
+    serviceAccountAuth?: Auth
     ledgerApi: LedgerApi
 }
 /**
@@ -88,7 +89,7 @@ export interface Network {
 export type NetworkName = string
 /**
  *
- * ID of the identity provider
+ * The unique identifier of the API key.
  *
  */
 export type Id = string
@@ -133,6 +134,7 @@ export type PartyHint = string
  *
  */
 export type SigningProviderId = string
+export type VaultName = string
 /**
  *
  * The party id of the wallet to be removed.
@@ -179,7 +181,36 @@ export type MessageId = string
  */
 export type Signature = string
 export type SignedBy = string
-export type Networks = Network[]
+/**
+ *
+ * Authentication method configured for this network
+ *
+ */
+export type AuthMethod = string
+/**
+ *
+ * Network metadata exposed by listNetworks without sensitive auth configuration
+ *
+ */
+export interface PublicNetwork {
+    id: NetworkId
+    name: Name
+    description: Description
+    synchronizerId?: SynchronizerId
+    identityProviderId: IdentityProviderId
+    ledgerApi: LedgerApi
+    authMethod: AuthMethod
+    clientId?: ClientId
+    scope?: Scope
+    audience?: Audience
+}
+export type Networks = PublicNetwork[]
+/**
+ *
+ * The access token for the session.
+ *
+ */
+export type AccessToken = string
 export type Idps = Idp[]
 /**
  *
@@ -327,7 +358,7 @@ export type Message = string
 export type Origin = string
 /**
  *
- * The timestamp when the transaction was created.
+ * The timestamp when the API key was created.
  *
  */
 export type CreatedAt = string
@@ -349,12 +380,6 @@ export interface MessageRaw {
     signature?: Signature
 }
 export type Messages = MessageRaw[]
-/**
- *
- * The access token for the session.
- *
- */
-export type AccessToken = string
 export type UserLevelRight = any
 /**
  *
@@ -420,11 +445,41 @@ export type UserIdentifier = string
  *
  */
 export type IsAdminFlag = boolean
+/**
+ *
+ * The generated API key.
+ *
+ */
+export type ApiKeyResult = string
+export interface ApiKey {
+    id: Id
+    name: Name
+    createdAt: CreatedAt
+}
+/**
+ *
+ * The list of API keys.
+ *
+ */
+export type ApiKeys = ApiKey[]
+/**
+ *
+ * The list of signing provider's available vault names.
+ *
+ */
+export type Vaults = VaultName[]
 export interface AddNetworkParams {
     network: Network
 }
 export interface RemoveNetworkParams {
     networkName: NetworkName
+}
+export interface GetNetworkParams {
+    networkId: NetworkId
+}
+export interface SelfSignedAccessTokenParams {
+    networkId: NetworkId
+    clientId: ClientId
 }
 export interface AddIdpParams {
     idp: Idp
@@ -436,6 +491,7 @@ export interface CreateWalletParams {
     primary?: Primary
     partyHint: PartyHint
     signingProviderId: SigningProviderId
+    vaultName?: VaultName
 }
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
@@ -478,6 +534,15 @@ export interface GetTransactionParams {
 export interface DeleteTransactionParams {
     transactionId: TransactionId
 }
+export interface GenerateApiKeyParams {
+    name: Name
+}
+export interface RemoveApiKeyParams {
+    id: Id
+}
+export interface ListSigningProviderVaultsParams {
+    signingProviderId: SigningProviderId
+}
 /**
  *
  * Represents a null value, used in responses where no data is returned.
@@ -486,6 +551,12 @@ export interface DeleteTransactionParams {
 export type Null = null
 export interface ListNetworksResult {
     networks: Networks
+}
+export interface GetNetworkResult {
+    network: Network
+}
+export interface SelfSignedAccessTokenResult {
+    accessToken: AccessToken
 }
 export interface ListIdpsResult {
     idps: Idps
@@ -519,10 +590,7 @@ export interface IsWalletSyncNeededResult {
     walletSyncNeeded: WalletSyncNeeded
 }
 export type SignResult =
-    | SignResultSigned
-    | SignResultPending
-    | SignResultRejected
-    | SignResultFailed
+    SignResultSigned | SignResultPending | SignResultRejected | SignResultFailed
 export interface SignMessageResult {
     signature: Signature
     publicKey: PublicKey
@@ -572,6 +640,16 @@ export interface GetUserResult {
     userId: UserIdentifier
     isAdmin: IsAdminFlag
 }
+export interface GeneratedApiKey {
+    id: Id
+    apiKey: ApiKeyResult
+}
+export interface ListApiKeysResult {
+    apiKeys: ApiKeys
+}
+export interface ListSigningProviderVaultsResult {
+    vaults: Vaults
+}
 /**
  *
  * Generated! Represents an alias to any of the provided schemas
@@ -581,6 +659,10 @@ export interface GetUserResult {
 export type AddNetwork = (params: AddNetworkParams) => Promise<Null>
 export type RemoveNetwork = (params: RemoveNetworkParams) => Promise<Null>
 export type ListNetworks = () => Promise<ListNetworksResult>
+export type GetNetwork = (params: GetNetworkParams) => Promise<GetNetworkResult>
+export type SelfSignedAccessToken = (
+    params: SelfSignedAccessTokenParams
+) => Promise<SelfSignedAccessTokenResult>
 export type AddIdp = (params: AddIdpParams) => Promise<Null>
 export type RemoveIdp = (params: RemoveIdpParams) => Promise<Null>
 export type ListIdps = () => Promise<ListIdpsResult>
@@ -622,6 +704,14 @@ export type DeleteTransaction = (
     params: DeleteTransactionParams
 ) => Promise<Null>
 export type GetUser = () => Promise<GetUserResult>
+export type GenerateApiKey = (
+    params: GenerateApiKeyParams
+) => Promise<GeneratedApiKey>
+export type ListApiKeys = () => Promise<ListApiKeysResult>
+export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListSigningProviderVaults = (
+    params: ListSigningProviderVaultsParams
+) => Promise<ListSigningProviderVaultsResult>
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 type Params<T> = T extends (...args: infer A) => any
@@ -645,6 +735,16 @@ export type RpcTypes = {
     listNetworks: {
         params: Params<ListNetworks>
         result: Result<ListNetworks>
+    }
+
+    getNetwork: {
+        params: Params<GetNetwork>
+        result: Result<GetNetwork>
+    }
+
+    selfSignedAccessToken: {
+        params: Params<SelfSignedAccessToken>
+        result: Result<SelfSignedAccessToken>
     }
 
     addIdp: {
@@ -760,6 +860,26 @@ export type RpcTypes = {
     getUser: {
         params: Params<GetUser>
         result: Result<GetUser>
+    }
+
+    generateApiKey: {
+        params: Params<GenerateApiKey>
+        result: Result<GenerateApiKey>
+    }
+
+    listApiKeys: {
+        params: Params<ListApiKeys>
+        result: Result<ListApiKeys>
+    }
+
+    removeApiKey: {
+        params: Params<RemoveApiKey>
+        result: Result<RemoveApiKey>
+    }
+
+    listSigningProviderVaults: {
+        params: Params<ListSigningProviderVaults>
+        result: Result<ListSigningProviderVaults>
     }
 }
 

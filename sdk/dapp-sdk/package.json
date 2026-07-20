@@ -1,7 +1,7 @@
 {
     "name": "@canton-network/dapp-sdk",
     "type": "module",
-    "version": "1.1.0",
+    "version": "1.4.0",
     "description": "Browser SDK for dApp development on the Canton Network",
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
@@ -21,8 +21,8 @@
         "dev": "tsup --watch --onSuccess \"tsc\"",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run --project browser-integration --passWithNoTests",
-        "test:coverage": "vitest run --project browser-integration --coverage --passWithNoTests"
+        "test": "vitest run --project browser-unit --project browser-integration",
+        "test:coverage": "vitest run --project browser-integration && vitest run --project browser-unit --coverage"
     },
     "dependencies": {
         "@canton-network/core-provider-dapp": "workspace:^",
@@ -34,7 +34,7 @@
         "@canton-network/core-wallet-discovery": "workspace:^",
         "@canton-network/core-wallet-ui-components": "workspace:^",
         "qrcode": "^1.5.4",
-        "uuid": "^14.0.0"
+        "uuid": "^14.0.1"
     },
     "peerDependencies": {
         "@walletconnect/sign-client": "^2.23.8",
@@ -49,17 +49,17 @@
         }
     },
     "devDependencies": {
-        "@types/node": "^25.3.3",
+        "@types/node": "^25.9.4",
         "@types/qrcode": "^1.5.6",
-        "@vitest/browser-playwright": "^4.1.2",
-        "@vitest/coverage-v8": "^4.1.2",
-        "@walletconnect/sign-client": "^2.23.8",
-        "@walletconnect/types": "^2.23.8",
-        "playwright": "^1.58.2",
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
+        "@walletconnect/sign-client": "^2.23.10",
+        "@walletconnect/types": "^2.23.10",
+        "playwright": "^1.61.1",
         "qrcode": "^1.5.4",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.2"
+        "vitest": "^4.1.10"
     },
     "files": [
         "dist/**",
@@ -72,5 +72,9 @@
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
         "directory": "sdk/dapp-sdk"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/sdk/dapp-sdk#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

@@ -41,6 +41,33 @@ yarn workspace @canton-network/example-portfolio dev
 
 The app will be available at [http://localhost:8081](http://localhost:8081).
 
+## Runtime configuration
+
+The app loads `config.json` at startup and validates it before rendering. The local/default config is in [`public/config.json`](public/config.json):
+
+```json
+{
+    "amulet": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registry": "http://scan.localhost:4000/registry/"
+    },
+    "token": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registries": [
+            {
+                "name": "DA Registry",
+                "partyId": "operator::1234567890",
+                "url": "https://apps.da.com/registrar/operator::1234567890/"
+            }
+        ]
+    }
+}
+```
+
+The `amulet` section configures Canton Coin (Amulet) operations. The `token` section configures token-standard operations and default registries. Registry `partyId` values are optional; when omitted, the app discovers the registry admin party from the registry metadata endpoint.
+
+For static or Docker deployments, replace or mount `/config.json`.
+
 Alternatively, start all services (Wallet Gateway + example dApps) together from the repository root:
 
 ```bash

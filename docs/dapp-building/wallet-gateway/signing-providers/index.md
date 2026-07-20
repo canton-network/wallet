@@ -35,7 +35,12 @@ This provider is always available and requires no additional configuration. You 
 
 - Enterprise deployments where the participant node manages keys
 - Scenarios where key management is handled by the infrastructure
-- Production environments with dedicated participant nodes
+- Operator-controlled deployments where wallet creation is not exposed via the User API
+
+**Security Considerations:**
+
+> [!IMPORTANT]
+> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon) when the User API is exposed in production.
 
 **How it Works:**
 
@@ -104,10 +109,6 @@ Set the following environment variables:
 - Multi-party approval workflows
 - High-security production environments
 
-**How it Works:**
-
-Dfns creates and activates Canton wallets directly through its validator integration. When the Gateway requests a wallet, Dfns provisions a Canton-formatted key, registers the party on the network, and returns the wallet ready for use. When signing a prepared transaction, Dfns broadcasts it to Canton in a single step and returns the resulting update ID. Only `Canton` and `CantonTestnet` network wallets are supported.
-
 ## Selecting a Provider
 
 When creating a new party through the User API or web UI, you can select which signing provider to use. The choice depends on your security requirements, infrastructure setup, and compliance needs.
@@ -115,8 +116,8 @@ When creating a new party through the User API or web UI, you can select which s
 **Recommendations:**
 
 - **Development/Testing**: Use Wallet Gateway (internal) or Participant-based signing
-- **Production (Enterprise)**: Use Fireblocks, Dfns, or Participant-based signing
-- **Production (Managed)**: Use Blockdaemon, Dfns, or Participant-based signing
+- **Production (User API accessible)**: Use Fireblocks, Dfns, or Blockdaemon
+- **Production (operator-controlled, User API restricted)**: Participant-based signing may be appropriate when wallet creation is limited to trusted operators
 
 The signing provider is selected per-party, so you can have different parties using different providers within the same Gateway instance.
 

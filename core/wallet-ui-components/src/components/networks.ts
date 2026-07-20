@@ -3,7 +3,10 @@
 
 import { html, css } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { Network, Session } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    PublicNetwork,
+    Session,
+} from '@canton-network/core-wallet-user-rpc-client'
 
 import { BaseElement } from '../internal/base-element'
 import { modalStyles } from '../styles/modal'
@@ -25,13 +28,13 @@ export class WgNetworks extends BaseElement {
         `,
     ]
 
-    @property({ type: Array }) accessor networks: Network[] = []
+    @property({ type: Array }) accessor networks: PublicNetwork[] = []
     @property({ type: Array }) accessor activeSessions: Session[] = []
     @property({ type: Boolean }) accessor readonly = false
     @state() accessor isModalOpen = false
-    @state() accessor editingNetwork: Network | null = null
+    @state() accessor editingNetwork: PublicNetwork | null = null
     @state() accessor authType: string =
-        this.editingNetwork?.auth?.method ?? 'authorization_code'
+        this.editingNetwork?.authMethod ?? 'authorization_code'
 
     connectedCallback(): void {
         super.connectedCallback()
@@ -53,14 +56,16 @@ export class WgNetworks extends BaseElement {
                     <h1>Networks</h1>
                 </div>
 
-                ${this.readonly
-                    ? ''
-                    : html`<button
-                          class="btn btn-primary"
-                          @click=${this.openAddModal}
-                      >
-                          Add Network
-                      </button>`}
+                ${
+                    this.readonly
+                        ? ''
+                        : html`<button
+                              class="btn btn-primary"
+                              @click=${this.openAddModal}
+                          >
+                              Add Network
+                          </button>`
+                }
 
                 <div class="mt-2">
                     <network-table
@@ -70,28 +75,32 @@ export class WgNetworks extends BaseElement {
                     ></network-table>
                 </div>
 
-                ${this.isModalOpen
-                    ? html`
-                          <div class="modal" @click=${this.closeModal}>
-                              <div
-                                  class="modal-content"
-                                  @click=${(e: Event) => e.stopPropagation()}
-                              >
-                                  <h3>
-                                      ${this.editingNetwork
-                                          ? 'Edit Network'
-                                          : 'Add Network'}
-                                  </h3>
-                                  <network-form
-                                      .editingNetwork=${this.editingNetwork}
-                                      .authType=${this.authType}
-                                      @network-edit-save=${this.closeModal}
-                                      @network-edit-cancel=${this.closeModal}
-                                  ></network-form>
+                ${
+                    this.isModalOpen
+                        ? html`
+                              <div class="modal" @click=${this.closeModal}>
+                                  <div
+                                      class="modal-content"
+                                      @click=${(e: Event) => e.stopPropagation()}
+                                  >
+                                      <h3>
+                                          ${
+                                              this.editingNetwork
+                                                  ? 'Edit Network'
+                                                  : 'Add Network'
+                                          }
+                                      </h3>
+                                      <network-form
+                                          .editingNetwork=${this.editingNetwork}
+                                          .authType=${this.authType}
+                                          @network-edit-save=${this.closeModal}
+                                          @network-edit-cancel=${this.closeModal}
+                                      ></network-form>
+                                  </div>
                               </div>
-                          </div>
-                      `
-                    : ''}
+                          `
+                        : ''
+                }
             </div>
         `
     }
