@@ -16,7 +16,7 @@
         }
     },
     "scripts": {
-        "build": "tsup --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc\"",
         "clean": "rm -rf ./dist",
         "test": "vitest run --project node --project browser",
         "test:coverage": "vitest run --project node --project browser --coverage"
@@ -28,7 +28,7 @@
     "devDependencies": {
         "@types/node": "^25.9.4",
         "@vitest/coverage-v8": "^4.1.10",
-        "tsup": "^8.5.1",
+        "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },
