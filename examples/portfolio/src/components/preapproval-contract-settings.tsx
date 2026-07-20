@@ -34,6 +34,7 @@ import { useInstruments } from '@hooks/useInstruments'
 import { useWalletSdk } from '@hooks/useWalletSdk'
 import { usePrimaryAccount } from '@hooks/useAccounts'
 import { useCreatePreapprovalContracts } from '@hooks/useCreatePreapprovalContracts'
+import { normalizeRegistryUrl } from '@utils/registry'
 
 type PreapprovalFormData = {
     registryUrl: string
@@ -115,9 +116,9 @@ export function PreapprovalContractSettings() {
             return
         }
 
-        const normalizedRegistryUrl = new URL(registryUrl).toString()
+        const normalizedRegistryUrl = normalizeRegistryUrl(registryUrl)
         const registryEntry = registryOptions.find(
-            ([, url]) => new URL(url).toString() === normalizedRegistryUrl
+            ([, url]) => normalizeRegistryUrl(url) === normalizedRegistryUrl
         )
         const assets: AssetBody[] = registryEntry
             ? (instruments.get(registryEntry[0]) ?? []).map((instrument) => ({

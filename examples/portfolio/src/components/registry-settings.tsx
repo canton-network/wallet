@@ -17,35 +17,29 @@ import {
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { CopyableIdentifier } from './copyable-identifier'
-import { useRegistryUrls, useRegistryMutations } from '@hooks/useRegistryUrls'
+import {
+    useRegistryEntries,
+    useRegistryMutations,
+} from '@hooks/useRegistryUrls'
 import { useForm } from '@tanstack/react-form'
-import { HttpUrl } from '@canton-network/core-types'
 import { toast } from 'sonner'
 import { registryFormSchema, type RegistryFormData } from '@lib/schemas'
+import { isInsecureRegistryUrl } from '@utils/registry'
 
 interface Registry {
     partyId: string
     registryUrl: string
+    isRemovable: boolean
 }
 
 const INSECURE_REGISTRY_URL_WARNING =
     'Registry responses can be spoofed by network attackers. Use HTTPS.'
-const registryUrlSchema = HttpUrl
-
-const isInsecureRegistryUrl = (value: string) => {
-    const result = registryUrlSchema.safeParse(value)
-    return result.success && new URL(result.data).protocol === 'http:'
-}
-
 export function RegistrySettings() {
     const { setRegistryUrl, deleteRegistryUrl } = useRegistryMutations()
-    const registryUrls = useRegistryUrls()
-    const registries = Array.from(registryUrls.entries()).map(
-        ([partyId, registryUrl]) =>
-            ({
-                partyId,
-                registryUrl,
-            }) as Registry
+    const registryEntries = useRegistryEntries()
+    const registries = registryEntries.flatMap(
+        ({ partyId, registryUrl, isRemovable }): Registry[] =>
+            partyId ? [{ partyId, registryUrl, isRemovable }] : []
     )
 
     const form = useForm({
@@ -268,17 +262,20 @@ export function RegistrySettings() {
                                                     gap: 1,
                                                 }}
                                             >
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() =>
-                                                        handleDeleteRegistry(
-                                                            registry.partyId
-                                                        )
-                                                    }
-                                                    color="error"
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
+                                                {registry.isRemovable ? (
+                                                    <IconButton
+                                                        size="small"
+                                                        aria-label={`Delete registry ${registry.registryUrl}`}
+                                                        onClick={() =>
+                                                            handleDeleteRegistry(
+                                                                registry.partyId
+                                                            )
+                                                        }
+                                                        color="error"
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                ) : null}
                                             </Box>
                                         </TableCell>
                                     </TableRow>
