@@ -1,7 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, WalletGateway } from '@canton-network/core-wallet-test-utils'
+import {
+    test,
+    expect,
+    WalletGateway,
+    MOCK_FIREBLOCKS_VAULT_NAME,
+} from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
@@ -12,33 +17,43 @@ import {
     createPingContractAndApproveExternal,
 } from './external-signing-test-helpers.js'
 
-const dfnsApiUrl = process.env.DFNS_BASE_URL ?? 'http://localhost:3032'
+const fireblocksApiPath =
+    process.env.FIREBLOCKS_API_PATH ?? 'http://localhost:3033/v1'
 
-function toDfnsMockEndpoint(path: string): string {
-    const origin = new URL(dfnsApiUrl).origin
+function toFireblocksMockOriginEndpoint(path: string): string {
+    const origin = new URL(fireblocksApiPath).origin
     const normalizedPath = path.startsWith('/') ? path : `/${path}`
     return `${origin}${normalizedPath}`
 }
 
-async function setMockDfnsTransactionState(
-    signatureId: string,
-    status: 'Signed' | 'Rejected' | 'Failed'
+async function setMockFireblocksTransactionState(
+    txId: string,
+    status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
     const setResponse = await fetch(
-        toDfnsMockEndpoint('/_admin/setSignatureState'),
+        toFireblocksMockOriginEndpoint('/_admin/setTransactionState'),
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ signatureId, status }),
+            body: JSON.stringify({ txId, status }),
         }
     )
     expect(setResponse.ok).toBeTruthy()
 
-    const updated = (await setResponse.json()) as { status: string }
-    expect(updated.status).toBe(status)
+    const updated = (await setResponse.json()) as {
+        signedMessages?: unknown[]
+        status?: string
+    }
+    if (status === 'signed') {
+        expect(updated.signedMessages?.length).toBeGreaterThan(0)
+    } else {
+        expect(updated.status).toBe(
+            status === 'rejected' ? 'REJECTED' : 'FAILED'
+        )
+    }
 }
 
-test.describe('Dfns external signing', () => {
+test.describe('Fireblocks external signing', () => {
     test.describe.configure({ mode: 'serial' })
 
     let dappPage: Page
@@ -50,14 +65,15 @@ test.describe('Dfns external signing', () => {
         wg = createPingDappWalletGateway(dappPage)
         await connectPingDapp(wg, dappPage)
 
-        const partyHint = `dfns${Date.now()}`
+        const partyHint = `fireblocks${Date.now()}`
         await setupExternalSigningParty({
             wg,
             dappPage,
             partyHint,
-            signingProvider: 'dfns',
+            signingProvider: 'fireblocks',
+            vaultName: MOCK_FIREBLOCKS_VAULT_NAME,
             promoteAllocationTx: (externalTxId) =>
-                setMockDfnsTransactionState(externalTxId, 'Signed'),
+                setMockFireblocksTransactionState(externalTxId, 'signed'),
         })
     })
 
@@ -67,7 +83,7 @@ test.describe('Dfns external signing', () => {
 
     test('executes a successfully signed transaction', async () => {
         const submission = await createPingContractAndApproveExternal(wg, dappPage)
-        await setMockDfnsTransactionState(submission.externalTxId, 'Signed')
+        await setMockFireblocksTransactionState(submission.externalTxId, 'signed')
         await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(dappPage, submission.commandId, 'signed')
@@ -80,17 +96,23 @@ test.describe('Dfns external signing', () => {
         })
     })
 
-    test('fails when Dfns rejects signing', async () => {
+    test('fails when Fireblocks rejects signing', async () => {
         const submission = await createPingContractAndApproveExternal(wg, dappPage)
-        await setMockDfnsTransactionState(submission.externalTxId, 'Rejected')
+        await setMockFireblocksTransactionState(
+            submission.externalTxId,
+            'rejected'
+        )
         await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
     })
 
-    test('fails when Dfns fails signing', async () => {
+    test('fails when Fireblocks fails signing', async () => {
         const submission = await createPingContractAndApproveExternal(wg, dappPage)
-        await setMockDfnsTransactionState(submission.externalTxId, 'Failed')
+        await setMockFireblocksTransactionState(
+            submission.externalTxId,
+            'failed'
+        )
         await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
