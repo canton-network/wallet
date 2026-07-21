@@ -752,7 +752,7 @@ describe('userController', () => {
                 auth
             )
 
-            const result = await controller.listTransactions()
+            const result = await controller.listTransactions({})
             expect(result.transactions).toHaveLength(1)
             expect(result.transactions[0]?.id).toBe('tx-1')
         })
