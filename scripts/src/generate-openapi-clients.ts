@@ -20,6 +20,7 @@ import generateSchema, { astToString } from 'openapi-typescript'
 import * as path from 'path'
 import crypto from 'crypto'
 import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.js'
+import jsYaml from 'js-yaml'
 
 /**
  * OpenAPI specification details.
@@ -30,6 +31,7 @@ interface OpenApiFileSpec {
     input: string
     output: string
     includeProviderTypes?: boolean
+    generatePaths?: boolean
 }
 
 /**
@@ -44,6 +46,11 @@ interface OpenApiUrlSpec {
     specdir: string
     includeProviderTypes?: boolean
     hash?: string
+    generatePaths?: boolean
+}
+
+interface MinimalParsedSpec {
+    paths?: Record<string, Record<string, unknown>>
 }
 
 type OpenApiSpec = OpenApiFileSpec | OpenApiUrlSpec
@@ -80,7 +87,7 @@ async function fetchSpliceSpecs(
  * @param spec OpenApiSpec
  */
 async function generateOpenApiClient(spec: OpenApiSpec) {
-    const { input, output, includeProviderTypes } = spec
+    const { input, output, includeProviderTypes, generatePaths } = spec
     const message =
         spec.input instanceof URL
             ? 'Generating OpenAPI client from url'
@@ -103,6 +110,27 @@ async function generateOpenApiClient(spec: OpenApiSpec) {
         } else {
             filePath = path.join(root, input.toString())
             specs = fs.readFileSync(filePath, 'utf8')
+        }
+
+        if (generatePaths) {
+            const parsedSpec = jsYaml.load(specs) as
+                MinimalParsedSpec | undefined
+            const apiPaths = parsedSpec?.paths || {}
+            const getRoutes = Object.keys(apiPaths).filter(
+                (p) => apiPaths[p] && 'get' in apiPaths[p]
+            )
+            const postRoutes = Object.keys(apiPaths).filter(
+                (p) => apiPaths[p] && 'post' in apiPaths[p]
+            )
+
+            const pathsFileContent = [
+                `// Generated automatically from OpenAPI spec. Do not edit manually.`,
+                `export const getPaths = ${JSON.stringify(getRoutes, null, 4)} as const;`,
+                `export const postPaths = ${JSON.stringify(postRoutes, null, 4)} as const`,
+            ].join('\n\n')
+
+            const pathsTsOtuput = output.replace('.ts', '-paths.ts')
+            fs.writeFileSync(path.join(root, pathsTsOtuput), pathsFileContent)
         }
 
         console.log(filePath)
@@ -137,6 +165,7 @@ const getSpecs = (
         input: `api-specs/ledger-api/${cantonVersion}/openapi.yaml`,
         output: `core/ledger-client-types/src/generated-clients/openapi-${cantonVersion}.ts`,
         includeProviderTypes: true,
+        generatePaths: true,
     },
     // Splice Scan API
     {

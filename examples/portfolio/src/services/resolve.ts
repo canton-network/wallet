@@ -5,7 +5,6 @@ import { type Logger, pino } from 'pino'
 import { LedgerClient } from '@canton-network/core-ledger-client'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletService } from '@canton-network/core-amulet-service'
-import { TokenStandardClient } from '@canton-network/core-token-standard'
 import { ScanProxyClient } from '@canton-network/core-splice-client'
 import { TransactionHistoryService } from './transaction-history-service'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
@@ -25,20 +24,6 @@ export const resolveLedgerProvider = () => {
     } else {
         throw new Error('Dapp Provider is not available')
     }
-}
-
-const createTokenStandardClient = async ({
-    logger,
-    registryUrl,
-}: {
-    logger: Logger
-    registryUrl: string
-}): Promise<TokenStandardClient> => {
-    return new TokenStandardClient(
-        registryUrl,
-        logger,
-        noAuthAccessTokenProvider
-    )
 }
 
 const createTokenStandardService = async ({
@@ -92,7 +77,6 @@ const logger = pino({ name: 'example-portfolio', level: 'debug' })
 const ledgerClient: { singleton: LedgerClient | undefined } = {
     singleton: undefined,
 }
-const tokenStandardClients = new Map()
 const tokenStandardService: { singleton: TokenStandardService | undefined } = {
     singleton: undefined,
 }
@@ -102,22 +86,9 @@ const transactionHistoryServices = new Map()
 // Can be called to reset clients on disconnects.
 export const clear = () => {
     ledgerClient.singleton = undefined
-    tokenStandardClients.clear()
     tokenStandardService.singleton = undefined
     amuletServices.clear()
     transactionHistoryServices.clear()
-}
-
-export const resolveTokenStandardClient = async ({
-    registryUrl,
-}: {
-    registryUrl: string
-}): Promise<TokenStandardClient> => {
-    const key = registryUrl
-    if (tokenStandardClients.has(key)) return tokenStandardClients.get(key)
-    const client = await createTokenStandardClient({ logger, registryUrl })
-    tokenStandardClients.set(key, client)
-    return client
 }
 
 export const resolveTokenStandardService =

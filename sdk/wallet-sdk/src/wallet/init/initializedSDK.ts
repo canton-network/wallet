@@ -19,6 +19,7 @@ import {
     ExtendedFullSDKInterface,
     ExtendedSDKOptions,
     OfflineSDKInterface,
+    PluginConstructor,
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
@@ -28,7 +29,6 @@ import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
-import { SDKPlugin } from './plugin.js'
 
 const createNamespace: {
     [K in keyof ExtendedSDKOptions]: (
@@ -169,16 +169,40 @@ export class InitializedSDK<
     }
 
     public registerPlugins<
-        P extends Record<string, new (ctx: SDKContext) => SDKPlugin>,
+        /**
+         * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
+         */
+        P extends PluginConstructor[] | Record<string, PluginConstructor>,
     >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
-        for (const name in plugins) {
-            const plugin = new plugins[name](this.ctx)
-            Object.defineProperty(this, name, {
-                value: plugin,
-                writable: false,
-                enumerable: true,
-                configurable: false,
-            })
+        if (plugins instanceof Array) {
+            for (const name in plugins) {
+                const plugin = new plugins[name]({
+                    ...this.ctx,
+                    namespace: this,
+                })
+                Object.defineProperty(this, name, {
+                    value: plugin,
+                    writable: false,
+                    enumerable: true,
+                    configurable: false,
+                })
+            }
+            /**
+             * @deprecated use PluginConstructor[] instead.
+             */
+        } else {
+            for (const [name, ctr] of Object.entries(plugins)) {
+                const plugin = new ctr({
+                    ...this.ctx,
+                    namespace: this,
+                })
+                Object.defineProperty(this, name, {
+                    value: plugin,
+                    writable: false,
+                    enumerable: true,
+                    configurable: false,
+                })
+            }
         }
 
         return this as SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>

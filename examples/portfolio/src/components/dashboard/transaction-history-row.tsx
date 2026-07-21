@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Chip, TableCell, TableRow, Typography } from '@mui/material'
-import type { Transaction } from '@canton-network/core-tx-parser'
 import { CopyableIdentifier } from '@components/copyable-identifier'
-import { getTransactionDisplay } from './transaction-history-utils'
+import {
+    getTransactionDisplay,
+    type TransactionHistoryEntry,
+} from './transaction-history-utils'
 
 interface TransactionHistoryRowProps {
-    transaction: Transaction
+    entry: TransactionHistoryEntry
     walletId: string
 }
 
@@ -20,10 +22,10 @@ const bodyCellSx = {
 }
 
 export function TransactionHistoryRow({
-    transaction,
+    entry,
     walletId,
 }: TransactionHistoryRowProps) {
-    const display = getTransactionDisplay(transaction, walletId)
+    const display = getTransactionDisplay(entry, walletId)
     const amountColor =
         display.direction === 'received'
             ? 'success.main'
@@ -100,7 +102,11 @@ export function TransactionHistoryRow({
             </TableCell>
 
             <TableCell sx={bodyCellSx}>
-                {display.counterparty ? (
+                {display.counterparty === 'Self' ? (
+                    <Typography variant="body1" color="text.secondary">
+                        Self
+                    </Typography>
+                ) : display.counterparty ? (
                     <CopyableIdentifier
                         value={display.counterparty}
                         maxLength={10}

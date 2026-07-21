@@ -12,7 +12,7 @@ import {
 } from '../sdk.js'
 import { SDKLogger } from '../logger/logger.js'
 import { SDKErrorHandler } from '../error/handler.js'
-import { SDKContext } from '../init/types/context.js'
+import { OfflineSDKContext, SDKContext } from '../init/types/context.js'
 
 const exampleLink = 'http://example.com'
 
@@ -42,6 +42,11 @@ export const ctx: SDKContext = {
     logger: mockLogger,
     error: mockErrorHandler,
     defaultSynchronizerId: '',
+}
+
+export const offlineCtx: OfflineSDKContext = {
+    logger: mockLogger,
+    error: mockErrorHandler,
 }
 
 export const tokenProviderConfig: TokenProviderConfig = {

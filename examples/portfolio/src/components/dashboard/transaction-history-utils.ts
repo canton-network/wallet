@@ -10,6 +10,21 @@ export type TransactionDirection = 'received' | 'sent' | 'unknown'
 
 type TransactionEvent = Transaction['events'][number]
 
+type AllocationTransferLeg = {
+    sender: string
+    receiver: string
+    amount: string
+    instrumentId: { admin: string; id: string }
+}
+
+type AllocationLifecycle = 'reserved' | 'withdrawn' | 'cancelled' | null
+
+export type TransactionHistoryEntry = {
+    transaction: Transaction
+    event: TransactionEvent
+    eventIndex: number
+}
+
 export type TransactionDisplay = {
     type: string
     date: string
@@ -26,43 +41,46 @@ export const FILTER_LABEL_BY_FILTER = {
     sent: 'Sent',
 } satisfies Record<TransactionFilter, string>
 
-export function filterTransactions(
-    transactions: Transaction[],
+export function createTransactionHistoryEntries(
+    transactions: Transaction[]
+): TransactionHistoryEntry[] {
+    return transactions.flatMap((transaction) =>
+        transaction.events.map((event, eventIndex) => ({
+            transaction,
+            event,
+            eventIndex,
+        }))
+    )
+}
+
+export function filterTransactionHistoryEntries(
+    entries: TransactionHistoryEntry[],
     walletId: string,
     filter: TransactionFilter
 ) {
-    if (filter === 'all') return transactions
+    if (filter === 'all') return entries
 
-    return transactions.filter(
-        (transaction) =>
-            getTransactionDirection(transaction, walletId) === filter
+    return entries.filter(
+        ({ event }) => getTransactionDirection(event, walletId) === filter
     )
 }
 
 export function getTransactionDisplay(
-    transaction: Transaction,
+    entry: TransactionHistoryEntry,
     walletId: string
 ): TransactionDisplay {
-    const event = getPrimaryEvent(transaction)
-    const direction = getTransactionDirection(transaction, walletId)
-    const amount = getTransactionAmount(event)
-    // console.log('Event', event)
+    const { transaction, event } = entry
+    const direction = getTransactionDirection(event, walletId)
 
     return {
         type: getTransactionType(event, direction),
         date: formatDateTimeString(transaction.recordTime),
         asset: getTransactionAsset(event),
-        amount,
+        amount: getTransactionAmount(event),
         direction,
         counterparty: getCounterparty(event, walletId),
         updateId: transaction.updateId,
     }
-}
-
-export function getCounterpartyLabel(direction: TransactionDirection) {
-    if (direction === 'received') return 'Sender'
-    if (direction === 'sent') return 'Recipient'
-    return 'Counterparty'
 }
 
 export function getEmptyMessage({
@@ -85,12 +103,6 @@ export function getEmptyMessage({
         : `No ${filter} transactions.`
 }
 
-function getPrimaryEvent(
-    transaction: Transaction
-): TransactionEvent | undefined {
-    return transaction.events[0]
-}
-
 /**
  * Returns the user-facing Activity label for a parsed transaction event.
  *
@@ -100,10 +112,20 @@ function getPrimaryEvent(
  * so multiple rows from the same logical transfer do not look like duplicates.
  */
 function getTransactionType(
-    event: TransactionEvent | undefined,
+    event: TransactionEvent,
     direction: TransactionDirection
 ): string {
-    const status = event?.transferInstruction?.status.current?.tag
+    const allocationLifecycle = getAllocationLifecycle(event)
+    if (allocationLifecycle === 'reserved') return 'Allocation reserved'
+    if (allocationLifecycle === 'withdrawn') return 'Allocation withdrawn'
+    if (allocationLifecycle === 'cancelled') return 'Allocation cancelled'
+
+    // Only honor status tags when a real transfer view exists. The synthetic
+    // instruction the parser builds for direct transfers carries a placeholder
+    // 'Pending' status.
+    const status = event.transferInstruction?.transfer
+        ? event.transferInstruction.status.current?.tag
+        : undefined
 
     if (status === 'Pending') {
         if (direction === 'received') return 'Offer received ↘'
@@ -121,19 +143,22 @@ function getTransactionType(
     if (status === 'Withdrawn') return 'Offer withdrawn'
     if (status === 'Failed') return 'Offer failed'
 
-    if (event?.label.type === 'TransferOut') return 'Transfer sent ↗'
-    if (event?.label.type === 'TransferIn') return 'Transfer received ↘'
-    if (event?.label.type === 'MergeSplit') return 'Merge/Split'
-    if (event?.label.type === 'ExpireDust') return 'Dust expired'
+    if (event.label.type === 'TransferOut') return 'Transfer sent ↗'
+    if (event.label.type === 'TransferIn') return 'Transfer received ↘'
+    if (event.label.type === 'MergeSplit') return 'Merge/Split'
+    if (event.label.type === 'ExpireDust') return 'Dust expired'
 
     if (direction === 'received') return 'Received ↘'
     if (direction === 'sent') return 'Sent ↗'
 
-    return event?.label.type ?? 'Unknown'
+    return event.label.type
 }
 
-function getTransactionAsset(event: TransactionEvent | undefined): string {
-    if (!event) return '—'
+function getTransactionAsset(event: TransactionEvent): string {
+    const allocationLeg = getAllocationTransferLeg(event)
+    if (allocationLeg?.instrumentId) {
+        return allocationLeg.instrumentId.id || allocationLeg.instrumentId.admin
+    }
 
     const transfer = event.transferInstruction?.transfer
     if (transfer?.instrumentId) {
@@ -149,33 +174,34 @@ function getTransactionAsset(event: TransactionEvent | undefined): string {
     return '—'
 }
 
-function getTransactionAmount(
-    event: TransactionEvent | undefined
-): string | null {
-    if (!event) return null
+function getTransactionAmount(event: TransactionEvent): string | null {
+    const allocationLeg = getAllocationTransferLeg(event)
+    if (allocationLeg) return formatAmount(allocationLeg.amount)
 
     const transfer = event.transferInstruction?.transfer
-    if (transfer) {
-        return formatAmount(transfer.amount ?? '0')
+    if (transfer) return formatAmount(transfer.amount ?? '0')
+
+    if (event.label.type === 'TransferOut') {
+        const total = sumAmounts(
+            event.label.receiverAmounts.map(({ amount }) => amount)
+        )
+        if (total) return formatAmount(total)
     }
 
     const summary = getHoldingSummary(event)
     if (!summary?.amountChange) return null
 
     const amountChange = toDecimalOrNull(summary.amountChange)
-    if (amountChange) {
-        return formatAmount(amountChange.abs())
-    }
+    if (amountChange) return formatAmount(amountChange.abs())
 
     return formatAmount(summary.amountChange)
 }
 
 function getTransactionDirection(
-    transaction: Transaction,
+    event: TransactionEvent,
     walletId: string
 ): TransactionDirection {
-    const event = getPrimaryEvent(transaction)
-    if (!event) return 'unknown'
+    if (getAllocationLifecycle(event)) return 'unknown'
 
     const transfer = event.transferInstruction?.transfer
     if (transfer) {
@@ -183,6 +209,11 @@ function getTransactionDirection(
         if (transfer.receiver === walletId) return 'received'
         return 'unknown'
     }
+
+    // Direct transfers have no transfer view, but the parsed label states
+    // the direction.
+    if (event.label.type === 'TransferIn') return 'received'
+    if (event.label.type === 'TransferOut') return 'sent'
 
     const summary = getHoldingSummary(event)
     if (!summary?.amountChange) return 'unknown'
@@ -194,18 +225,80 @@ function getTransactionDirection(
 }
 
 function getCounterparty(
-    event: TransactionEvent | undefined,
+    event: TransactionEvent,
     walletId: string
 ): string | null {
-    if (!event) return null
+    const allocationLifecycle = getAllocationLifecycle(event)
+    const allocationLeg = getAllocationTransferLeg(event)
+    if (allocationLifecycle === 'reserved' && allocationLeg) {
+        if (allocationLeg.sender === walletId) return allocationLeg.receiver
+        if (allocationLeg.receiver === walletId) return allocationLeg.sender
+    }
+    if (
+        allocationLifecycle === 'withdrawn' ||
+        allocationLifecycle === 'cancelled'
+    ) {
+        return 'Self'
+    }
 
     const transfer = event.transferInstruction?.transfer
-    if (!transfer) return null
+    if (transfer) {
+        if (transfer.sender === walletId) return transfer.receiver || null
+        if (transfer.receiver === walletId) return transfer.sender || null
+        return null
+    }
 
-    if (transfer.sender === walletId) return transfer.receiver || null
-    if (transfer.receiver === walletId) return transfer.sender || null
+    // Direct transfers have no transfer view; the parsed label carries the
+    // counterparty instead.
+    if (event.label.type === 'TransferIn') return event.label.sender || null
+    if (event.label.type === 'TransferOut') {
+        const receiver = event.label.receiverAmounts
+            .map(({ receiver }) => receiver)
+            .find((receiver) => receiver !== walletId)
+        return receiver ?? null
+    }
+    if (event.label.type === 'MergeSplit') return 'Self'
 
     return null
+}
+
+function getAllocationLifecycle(event: TransactionEvent): AllocationLifecycle {
+    const choiceName = getTokenStandardChoiceName(event)
+    if (choiceName === 'AllocationFactory_Allocate') return 'reserved'
+    if (choiceName === 'Allocation_Withdraw') return 'withdrawn'
+    if (choiceName === 'Allocation_Cancel') return 'cancelled'
+    return null
+}
+
+function getAllocationTransferLeg(
+    event: TransactionEvent
+): AllocationTransferLeg | null {
+    if (getTokenStandardChoiceName(event) !== 'AllocationFactory_Allocate') {
+        return null
+    }
+
+    const choice = getTokenStandardChoice(event)
+    return (
+        (choice?.choiceArgument?.allocation
+            ?.transferLeg as AllocationTransferLeg) ?? null
+    )
+}
+
+function getTokenStandardChoice(event: TransactionEvent) {
+    return 'tokenStandardChoice' in event.label
+        ? event.label.tokenStandardChoice
+        : null
+}
+
+function getTokenStandardChoiceName(event: TransactionEvent) {
+    return getTokenStandardChoice(event)?.name
+}
+
+function sumAmounts(amounts: string[]) {
+    return amounts.reduce((total, amount) => {
+        const parsed = toDecimalOrNull(amount)
+        return total && parsed ? total.plus(parsed) : null
+    }, toDecimalOrNull('0'))
 }
 
 function getHoldingSummary(event: TransactionEvent) {

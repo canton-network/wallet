@@ -35,6 +35,14 @@ export const gotoDashboard = async (page: Page): Promise<void> => {
     })
 }
 
+export const gotoOffers = async (page: Page): Promise<void> => {
+    await page.goto(`${BASE_URL}/next/dashboard/offers`)
+    await expect(page).toHaveTitle(/dApp Portfolio/)
+    await expect(page.getByRole('heading', { name: 'Offers' })).toBeVisible({
+        timeout: 10000,
+    })
+}
+
 export const setupRegistry = async (page: Page): Promise<void> => {
     await page.goto(`${BASE_URL}/next/dashboard/settings`)
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({
@@ -142,6 +150,9 @@ export const fillAndSubmitTransfer = async (
     await expect(
         dialog.getByRole('heading', { name: 'Transfer Summary' })
     ).toBeVisible({ timeout: 15000 })
+    await expect(
+        dialog.getByText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+    ).toHaveCount(2)
     await dialog.getByRole('button', { name: 'Close', exact: true }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10000 })
 }
@@ -196,6 +207,24 @@ export const expectTransferOfferGone = async (
     await expect(offerRow).not.toBeVisible({ timeout: 15000 })
 }
 
+/**
+ * Assert the sidebar Offers badge shows the expected count of
+ * non-expired offers. Use 0 to assert the badge is hidden.
+ */
+export const expectOffersBadgeCount = async (
+    page: Page,
+    count: number
+): Promise<void> => {
+    const badge = page.getByLabel(/^\d+ pending offers?$/)
+
+    if (count === 0) {
+        await expect(badge).not.toBeVisible({ timeout: 15000 })
+        return
+    }
+
+    await expect(badge).toHaveText(String(count), { timeout: 15000 })
+}
+
 export const switchWallet = async (
     page: Page,
     wg: WalletGateway,
@@ -243,6 +272,54 @@ export const expectWalletHasNoAssets = async (
     await expect(
         page.getByText('This wallet is not holding any assets')
     ).toBeVisible({ timeout: 15000 })
+}
+
+/**
+ * Toggle a preapproval switch on the dashboard settings page.
+ * Waits for the status query to resolve, approves the ledger transaction,
+ * and waits for the switch to reflect the new state.
+ */
+export const togglePreapproval = async (
+    page: Page,
+    wg: WalletGateway,
+    opts: { instrument: string; enabled: boolean }
+): Promise<void> => {
+    await page.goto(`${BASE_URL}/next/dashboard/settings`)
+
+    const preapprovalsSection = page.locator(
+        'section[aria-labelledby="preapprovals-heading"]'
+    )
+    await expect(
+        preapprovalsSection.getByRole('heading', {
+            name: 'Pre-approved Assets',
+        })
+    ).toBeVisible({ timeout: 10000 })
+
+    // The switch label flips between Enable/Disable based on current state.
+    const action = opts.enabled ? 'Enable' : 'Disable'
+    const toggle = preapprovalsSection.getByLabel(
+        `${action} preapproval for ${opts.instrument}`
+    )
+
+    // Disabled until the status query resolves.
+    await expect(toggle).toBeEnabled({ timeout: 30000 })
+
+    await wg.approveTransaction(() => toggle.click())
+
+    // After the toggle, the switch label flips to the opposite action.
+    // Enabling an amulet preapproval waits for the validator automation to
+    // accept the preapproval proposal, which can take a while on LocalNet.
+    const oppositeAction = opts.enabled ? 'Disable' : 'Enable'
+    await expect(
+        preapprovalsSection.getByLabel(
+            `${oppositeAction} preapproval for ${opts.instrument}`
+        )
+    ).toBeEnabled({ timeout: 90000 })
+    await expect(
+        preapprovalsSection.getByText(opts.enabled ? 'Enabled' : 'Disabled', {
+            exact: true,
+        })
+    ).toBeVisible()
 }
 
 /**

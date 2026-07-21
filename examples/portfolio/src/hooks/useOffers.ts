@@ -6,7 +6,6 @@ import type {
     ActionItem,
     AllocationActionItem,
     TransferActionItem,
-    TransferLegWithAllocation,
 } from '@components/types'
 import { isExpired } from '@utils/date-format'
 import { useOfferItems, type OfferItemsResult } from './useOfferItems'
@@ -14,7 +13,11 @@ import { useOfferItems, type OfferItemsResult } from './useOfferItems'
 export type OfferDirection = 'incoming' | 'outgoing'
 export type OfferCategory = 'transfers' | 'allocations'
 export type OfferStatus =
-    'Pending' | 'Action Required' | 'Allocated' | 'Expired'
+    | 'Pending'
+    | 'Action Required'
+    | 'Partially Allocated'
+    | 'Allocated'
+    | 'Expired'
 
 export type TransferOfferItem = {
     id: string
@@ -102,34 +105,28 @@ function deriveTransferOffer(
 function deriveAllocationOffer(
     item: AllocationActionItem
 ): AllocationOfferItem {
-    const isAllocated = areCurrentPartySenderLegsAllocated(item)
-    const status = isAllocated
-        ? 'Allocated'
-        : isExpired(item.expiry)
-          ? 'Expired'
-          : 'Action Required'
-
     return {
         id: `${item.contractId}-allocation`,
         source: item,
-        status,
+        status: deriveAllocationStatus(item),
     }
 }
 
-function areCurrentPartySenderLegsAllocated(item: AllocationActionItem) {
-    const senderLegs = item.transferLegs.filter((leg) =>
-        isCurrentPartySender(item.currentPartyId, leg)
+function deriveAllocationStatus(item: AllocationActionItem): OfferStatus {
+    const senderLegs = item.transferLegs.filter(
+        (leg) => leg.transferLeg.sender === item.currentPartyId
     )
+    const allocatedSenderLegCount = senderLegs.filter(
+        (leg) => leg.allocations.length > 0
+    ).length
 
-    return (
+    if (
         senderLegs.length === 0 ||
-        senderLegs.every((leg) => leg.allocations.length > 0)
-    )
-}
-
-function isCurrentPartySender(
-    currentPartyId: string,
-    leg: TransferLegWithAllocation
-) {
-    return leg.transferLeg.sender === currentPartyId
+        allocatedSenderLegCount === senderLegs.length
+    ) {
+        return 'Allocated'
+    }
+    if (allocatedSenderLegCount > 0) return 'Partially Allocated'
+    if (isExpired(item.expiry)) return 'Expired'
+    return 'Action Required'
 }
