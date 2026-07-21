@@ -116,6 +116,21 @@ describe('UserUiActivities', () => {
 
         expect(el.shadowRoot?.textContent).toContain('No activities yet')
     })
+    it('shows pagination when there are more than one page of activities', async () => {
+        mockRequest.mockResolvedValue({
+            transactions: makeTransactions(4),
+            count: 4,
+        })
+
+        el = await fixture<UserUiActivities>(componentFixture)
+
+        await waitUntil(() => el.transactions.length === 4)
+        const pagination = el.shadowRoot?.querySelector(
+            'wg-pagination'
+        ) as HTMLElement & { count: number }
+
+        expect(pagination).toBeNull()
+    })
 
     it('shows pagination when there are more than one page of activities', async () => {
         mockRequest.mockResolvedValue({
