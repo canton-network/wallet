@@ -6,20 +6,28 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 
 export type URLInput = URL | string
 
+function validateUrl(ctx: SDKContext, input: URLInput): URLInput {
+    try {
+        new URL(input)
+        return input
+    } catch (e) {
+        ctx.error.throw({
+            message: `Invalid URL provided ${input}.`,
+            type: 'BadRequest',
+            originalError: e,
+        })
+        throw e
+    }
+}
+
 export class ParsedURL extends URL {
-    constructor(
-        private readonly ctx: SDKContext,
-        private readonly input: URLInput
-    ) {
-        try {
-            super(input)
-        } catch (e) {
-            ctx.error.throw({
-                message: `Invalid URL provided ${input}.`,
-                type: 'BadRequest',
-                originalError: e,
-            })
-        }
+    private readonly ctx: SDKContext
+    private readonly input: URLInput
+
+    constructor(ctx: SDKContext, input: URLInput) {
+        super(validateUrl(ctx, input))
+        this.ctx = ctx
+        this.input = input
     }
 }
 
