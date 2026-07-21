@@ -4,15 +4,18 @@
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { type PartyId } from '@canton-network/core-types'
-import { type Instrument, type Instruments } from '../types/instruments'
-import { resolveTokenStandardClient } from '@services/resolve'
+import {
+    type Instrument,
+    type Instruments,
+    type PortfolioInstrument,
+    toPortfolioInstrument,
+} from '../types/instruments'
+import { resolveRegistryClient } from '@lib/registry-client'
 import { useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from '@hooks/query-keys'
 
-const INSTRUMENTS_STALE_TIME = 5 * 60 * 1000 // 5 minutes
-
 const fetchAllInstruments = async (url: string): Promise<Instrument[]> => {
-    const client = await resolveTokenStandardClient({ registryUrl: url })
+    const client = resolveRegistryClient(url)
     const collected: Instrument[] = []
     let page = await client.get('/registry/metadata/v1/instruments')
     collected.push(...page.instruments)
@@ -36,13 +39,20 @@ export const useInstruments = (): Instruments => {
     const queries = useQueries({
         queries: entries.map(([party, url]) => ({
             queryKey: queryKeys.instruments.forRegistry(party, url),
-            queryFn: () => fetchAllInstruments(url),
-            staleTime: INSTRUMENTS_STALE_TIME,
+            queryFn: async () =>
+                (await fetchAllInstruments(url)).map((instrument) =>
+                    toPortfolioInstrument({
+                        instrument,
+                        admin: party,
+                        registryUrl: url,
+                    })
+                ),
+            staleTime: Infinity,
         })),
     })
 
     return useMemo(() => {
-        const map = new Map<PartyId, Instrument[]>()
+        const map = new Map<PartyId, PortfolioInstrument[]>()
         entries.forEach(([party], index) => {
             const data = queries[index]?.data
             if (data) map.set(party, data)
