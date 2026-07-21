@@ -11,7 +11,7 @@ import { SigningProvider } from './config/schema.js'
 // Re-export SigningProvider from config schema
 export { SigningProvider }
 
-export { default as buildController, Methods } from './rpc-gen/index.js'
+export { default as buildController, type Methods } from './rpc-gen/index.js'
 export * from './rpc-gen/typings.js'
 export * from './SigningDriverStore.js'
 export * from './config/schema.js'
