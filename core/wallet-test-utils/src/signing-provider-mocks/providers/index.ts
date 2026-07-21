@@ -3,3 +3,7 @@
 
 export { createBlockdaemonMockProvider } from './blockdaemon.js'
 export { createDfnsMockProvider } from './dfns.js'
+export {
+    createFireblocksMockProvider,
+    MOCK_FIREBLOCKS_VAULT_NAME,
+} from './fireblocks.js'

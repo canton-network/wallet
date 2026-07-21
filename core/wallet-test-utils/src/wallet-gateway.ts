@@ -97,7 +97,12 @@ export class WalletGateway {
     async createWalletIfNotExists(args: {
         partyHint: string
         signingProvider:
-            'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' // TODO let's import all signing providers type
+            | 'participant'
+            | 'wallet-kernel'
+            | 'blockdaemon'
+            | 'dfns'
+            | 'fireblocks'
+        vaultName?: string
         primary?: boolean
     }): Promise<string> {
         await this.gotoPartiesPage()
@@ -143,6 +148,18 @@ export class WalletGateway {
         )
             .getByLabel('Signing Provider')
             .selectOption(args.signingProvider)
+        if (args.signingProvider === 'fireblocks') {
+            if (!args.vaultName) {
+                throw new Error(
+                    'vaultName is required when signingProvider is fireblocks'
+                )
+            }
+            const vaultSelect = (await this.popup()).getByLabel('Vault name')
+            await expect(
+                vaultSelect.getByRole('option', { name: args.vaultName })
+            ).toBeAttached({ timeout: 15000 })
+            await vaultSelect.selectOption({ label: args.vaultName })
+        }
         if (args.primary) {
             await (
                 await this.popup()

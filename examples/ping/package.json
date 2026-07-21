@@ -11,6 +11,7 @@
         "mock:signing-providers": "node ./tests/mock-signing-providers-server.mjs all",
         "mock:signing-providers:blockdaemon": "node ./tests/mock-signing-providers-server.mjs blockdaemon",
         "mock:signing-providers:dfns": "node ./tests/mock-signing-providers-server.mjs dfns",
+        "mock:signing-providers:fireblocks": "node ./tests/mock-signing-providers-server.mjs fireblocks",
         "preview": "vite preview"
     },
     "dependencies": {

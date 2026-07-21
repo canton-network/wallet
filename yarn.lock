@@ -1983,12 +1983,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/core-wallet-test-utils@workspace:core/wallet-test-utils"
   dependencies:
+    "@canton-network/core-signing-lib": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
     "@playwright/test": "npm:^1.61.1"
     "@vitest/coverage-v8": "npm:^4.1.10"
     pino: "npm:^10.3.1"
     tsup: "npm:^8.5.1"
+    tweetnacl: "npm:^1.0.3"
+    tweetnacl-util: "npm:^0.15.1"
     typescript: "npm:^5.9.3"
     uuid: "npm:^14.0.1"
     vitest: "npm:^4.1.10"

@@ -4,6 +4,7 @@
 import {
     createBlockdaemonMockProvider,
     createDfnsMockProvider,
+    createFireblocksMockProvider,
     startSigningProviderMockServer,
 } from '@canton-network/core-wallet-test-utils'
 
@@ -70,6 +71,27 @@ async function startDfnsMockServer() {
     return server
 }
 
+async function startFireblocksMockServer() {
+    const fireblocks = parseProviderUrl(
+        'FIREBLOCKS_API_PATH',
+        'http://localhost:3033/v1'
+    )
+
+    const server = await startSigningProviderMockServer({
+        host: fireblocks.hostname,
+        port: fireblocks.port,
+        logger: (message) =>
+            console.log(`[signing-mocks:fireblocks] ${message}`),
+        routes: [
+            ...createHealthRoutes(),
+            ...createFireblocksMockProvider(),
+        ],
+    })
+
+    console.log(`[signing-mocks] fireblocks listening on ${server.baseUrl}`)
+    return server
+}
+
 const mode = process.argv[2] ?? 'all'
 const servers = []
 
@@ -79,9 +101,12 @@ if (mode === 'all' || mode === 'blockdaemon') {
 if (mode === 'all' || mode === 'dfns') {
     servers.push(await startDfnsMockServer())
 }
+if (mode === 'all' || mode === 'fireblocks') {
+    servers.push(await startFireblocksMockServer())
+}
 if (servers.length === 0) {
     throw new Error(
-        `Unknown mock signing provider mode "${mode}". Expected all, blockdaemon, or dfns.`
+        `Unknown mock signing provider mode "${mode}". Expected all, blockdaemon, dfns, or fireblocks.`
     )
 }
 

@@ -10,6 +10,7 @@ export interface MockHttpResponse {
 
 export interface SigningProviderMockContext {
     pathParams: Record<string, string>
+    query: URLSearchParams
     body: unknown
 }
 
@@ -221,6 +222,7 @@ export async function startSigningProviderMockServer(
         try {
             const response = await matchedRoute.route.handler({
                 pathParams: matchedRoute.pathParams,
+                query: incomingUrl.searchParams,
                 body,
             })
             sendJson(res, response)
