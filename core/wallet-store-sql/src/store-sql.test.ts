@@ -720,6 +720,29 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(timesCalled).toBe(2)
         })
 
+        test('count correct number of transactions', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-tx-immutable',
+                network: 'network1',
+                accessToken: 'token',
+            })
+
+            for (let i = 0; i < 10; i++) {
+                const date =
+                    i % 2 > 0 ? new Date(`2026-01-02T00:00:00.000Z`) : undefined
+
+                const tx = addTx(`tx${i}`, date)
+
+                await store.setTransaction(tx)
+            }
+
+            const count = await store.transactionsCount()
+            expect(count).toBe(10)
+        })
+
         test('removeWallet should cascade-delete userPartyRights', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)

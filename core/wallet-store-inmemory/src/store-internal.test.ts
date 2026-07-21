@@ -948,5 +948,21 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(listAllTxs.transactions).toEqual(collected)
             expect(timesCalled).toBe(2)
         })
+
+        test('return total number of transactions', async () => {
+            for (let i = 0; i < 10; i++) {
+                const date =
+                    i % 2 > 0
+                        ? new Date(`2026-01-02T00:00:00.000Z`)
+                        : new Date(`2026-01-01T00:00:00.000Z`)
+
+                const tx = addTx(`tx${i}`, date)
+
+                await store.setTransaction(tx)
+            }
+
+            const count = await store.transactionsCount()
+            expect(count).toBe(10)
+        })
     })
 })
