@@ -16,7 +16,6 @@
         }
     },
     "dependencies": {
-        "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
         "@playwright/test": "^1.61.1",

@@ -1983,7 +1983,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/core-wallet-test-utils@workspace:core/wallet-test-utils"
   dependencies:
-    "@canton-network/core-signing-lib": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
     "@playwright/test": "npm:^1.61.1"

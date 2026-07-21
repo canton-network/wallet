@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SigningProviderMockRoute } from '../server.js'
-import { generateKeyPairSync, KeyObject, sign as cryptoSign } from 'node:crypto'
+import {
+    createMockEd25519KeyPair,
+    MockEd25519KeyPair,
+    signMultiHashBase64,
+} from '../crypto.js'
 
 type SigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
 
 interface BlockdaemonMockKey {
     id: string
     name: string
-    publicKey: string
-    privateKey: KeyObject
+    key: MockEd25519KeyPair
     userIdentifier?: string
 }
 
@@ -53,29 +56,9 @@ interface SetTransactionStateBody {
     publicKey?: string
 }
 
-function createMockEd25519KeyPair(): {
-    publicKey: string
-    privateKey: KeyObject
-} {
-    // Canton validates Ed25519 points for topology generation, so the mock must
-    // return cryptographically valid public keys.
-    const { publicKey, privateKey } = generateKeyPairSync('ed25519')
-    const spkiDer = publicKey.export({ type: 'spki', format: 'der' })
-    const keyBytes = Buffer.from(spkiDer).subarray(-32)
-    return {
-        publicKey: keyBytes.toString('base64'),
-        privateKey,
-    }
-}
-
 function createSignatureFromCounter(counter: number): string {
     const oneByte = ((counter + 127) % 255).toString(16).padStart(2, '0')
     return Buffer.from(oneByte.repeat(64), 'hex').toString('base64')
-}
-
-function signTxHashBase64(txHashBase64: string, privateKey: KeyObject): string {
-    const txHashBytes = Buffer.from(txHashBase64, 'base64')
-    return cryptoSign(null, txHashBytes, privateKey).toString('base64')
 }
 
 export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
@@ -96,16 +79,15 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                 const key: BlockdaemonMockKey = {
                     id: `mock-key-${keyCounter}`,
                     name: name ?? `mock-key-${keyCounter}`,
-                    publicKey: keyPair.publicKey,
-                    privateKey: keyPair.privateKey,
+                    key: keyPair,
                     ...(userIdentifier !== undefined && { userIdentifier }),
                 }
-                keysByPublicKey.set(key.publicKey, key)
+                keysByPublicKey.set(key.key.publicKeyBase64, key)
                 return {
                     body: {
                         id: key.id,
                         name: key.name,
-                        publicKey: key.publicKey,
+                        publicKey: key.key.publicKeyBase64,
                     },
                 }
             },
@@ -117,7 +99,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                 body: Array.from(keysByPublicKey.values()).map((key) => ({
                     id: key.id,
                     name: key.name,
-                    publicKey: key.publicKey,
+                    publicKey: key.key.publicKeyBase64,
                 })),
             }),
         },
@@ -149,15 +131,16 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     status: 'pending',
                     ...(parsed.tx !== undefined && { tx: parsed.tx }),
                     ...(parsed.txHash !== undefined && {
+                        // TODO could there be no hash?
                         txHash: parsed.txHash,
                     }),
-                    publicKey: key.publicKey,
+                    publicKey: key.key.publicKeyBase64,
                     ...(parsed.userIdentifier !== undefined && {
                         userIdentifier: parsed.userIdentifier,
                     }),
                     signature:
                         parsed.txHash !== undefined
-                            ? signTxHashBase64(parsed.txHash, key.privateKey)
+                            ? signMultiHashBase64(parsed.txHash, key.key)
                             : createSignatureFromCounter(txCounter),
                 }
                 transactionsById.set(txId, tx)
@@ -182,6 +165,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     'mock-tx-1'
                 let tx = transactionsById.get(resolvedTxId)
                 if (!tx) {
+                    // TODO remove
                     tx = {
                         txId: resolvedTxId,
                         status: 'pending',

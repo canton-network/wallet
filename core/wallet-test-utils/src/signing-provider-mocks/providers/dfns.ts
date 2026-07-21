@@ -3,12 +3,13 @@
 
 import { SigningProviderMockRoute } from '../server.js'
 import {
-    generateKeyPairSync,
-    KeyObject,
-    randomBytes,
-    randomUUID,
-    sign as cryptoSign,
-} from 'node:crypto'
+    createMockEd25519KeyPair,
+    MockEd25519KeyPair,
+    normalizeHex,
+    signMultiHashHexPrefixed,
+    toPrefixedHex,
+} from '../crypto.js'
+import { randomBytes, randomUUID } from 'node:crypto'
 
 type DfnsApiStatus = 'Pending' | 'Signed' | 'Rejected' | 'Failed'
 
@@ -18,8 +19,7 @@ interface DfnsMockKey {
     status: 'Active'
     scheme: 'EdDSA'
     curve: 'ed25519'
-    publicKeyHex: string
-    privateKey: KeyObject
+    key: MockEd25519KeyPair
 }
 
 interface DfnsMockSignature {
@@ -51,32 +51,6 @@ interface DfnsSetSignatureStateBody {
 }
 
 const MOCK_CRED_ID = 'mock-cred-id'
-
-function normalizeHex(hex: string): string {
-    return hex.startsWith('0x') ? hex.slice(2) : hex
-}
-
-function toPrefixedHex(hex: string): string {
-    return hex.startsWith('0x') ? hex : `0x${hex}`
-}
-
-function createMockEd25519KeyPair(): {
-    publicKeyHex: string
-    privateKey: KeyObject
-} {
-    const { publicKey, privateKey } = generateKeyPairSync('ed25519')
-    const spkiDer = publicKey.export({ type: 'spki', format: 'der' })
-    const keyBytes = Buffer.from(spkiDer).subarray(-32)
-    return {
-        publicKeyHex: toPrefixedHex(keyBytes.toString('hex')),
-        privateKey,
-    }
-}
-
-function signMessageHex(messageHex: string, privateKey: KeyObject): string {
-    const message = Buffer.from(normalizeHex(messageHex), 'hex')
-    return toPrefixedHex(cryptoSign(null, message, privateKey).toString('hex'))
-}
 
 function signatureResponse(signature: DfnsMockSignature):
     | {
@@ -110,7 +84,7 @@ function keyResponse(key: DfnsMockKey): {
         status: key.status,
         scheme: key.scheme,
         curve: key.curve,
-        publicKey: key.publicKeyHex,
+        publicKey: toPrefixedHex(key.key.publicKeyHex),
     }
 }
 
@@ -197,8 +171,7 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
                     status: 'Active',
                     scheme: 'EdDSA',
                     curve: 'ed25519',
-                    publicKeyHex: keyPair.publicKeyHex,
-                    privateKey: keyPair.privateKey,
+                    key: keyPair,
                 }
                 keysById.set(key.id, key)
                 return { body: keyResponse(key) }
@@ -261,9 +234,9 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
                     ...(signatureBody.externalId !== undefined && {
                         externalId: signatureBody.externalId,
                     }),
-                    signatureHex: signMessageHex(
+                    signatureHex: signMultiHashHexPrefixed(
                         signatureBody.message,
-                        key.privateKey
+                        key.key
                     ),
                 }
                 signaturesById.set(signatureId, signature)
