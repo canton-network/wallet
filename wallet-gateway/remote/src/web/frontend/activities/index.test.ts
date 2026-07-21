@@ -121,7 +121,7 @@ describe('UserUiActivities', () => {
         mockRequest.mockResolvedValue({
             transactions: makeTransactions(4),
             nextCursor: 'tx-4:randomisodatestring',
-            total: 5,
+            count: 5,
         })
 
         el = await fixture<UserUiActivities>(componentFixture)
@@ -129,11 +129,11 @@ describe('UserUiActivities', () => {
         await waitUntil(() => el.transactions.length === 4)
         const pagination = el.shadowRoot?.querySelector(
             'wg-pagination'
-        ) as HTMLElement & { total: number }
+        ) as HTMLElement & { count: number }
 
         expect(pagination).not.toBeNull()
         console.log(pagination)
-        // expect(pagination.total).toBe(5)
+        expect(pagination.count).toBe(5)
         expect(getTransactionCards(el).map((c) => c.transactionId)).toEqual([
             'tx-1',
             'tx-2',
@@ -146,13 +146,13 @@ describe('UserUiActivities', () => {
         mockRequest.mockResolvedValueOnce({
             transactions: makeTransactions(4),
             nextCursor: 'next-page-cursor',
-            tota: 5,
+            count: 5,
         })
 
         mockRequest.mockResolvedValueOnce({
             transactions: [makeTransaction({ id: 'tx-5', commandId: 'cmd-5' })],
             nextCursor: null,
-            total: 5,
+            count: 5,
         })
 
         el = await fixture<UserUiActivities>(componentFixture)
@@ -160,7 +160,7 @@ describe('UserUiActivities', () => {
 
         const pagination = el.shadowRoot?.querySelector(
             'wg-pagination'
-        ) as HTMLElement & { page: number; total: number }
+        ) as HTMLElement & { page: number; count: number }
         pagination!.dispatchEvent(new PageChangeEvent(2))
 
         await waitUntil(

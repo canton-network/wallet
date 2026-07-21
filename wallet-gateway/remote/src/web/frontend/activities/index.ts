@@ -72,13 +72,6 @@ export class UserUiActivities extends BaseElement {
         `,
     ]
 
-    // private get computedTotal() {
-    //     if (this.hasNextPage) {
-    //         return this.pageSize * this.pageSize + 1
-    //     }
-    //     return (this.currentPage - 1) * this.pageSize + this.transactions.length
-    // }
-
     protected render() {
         return html`
             <div class="page-header">
