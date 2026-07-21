@@ -16,9 +16,9 @@
         }
     },
     "scripts": {
-        "build": "tsup --onSuccess \"tsc --emitDeclarationOnly --declarationMap && yarn run docs\"",
+        "build": "tsdown --onSuccess \"tsc --emitDeclarationOnly --declarationMap && yarn run docs\"",
         "docs": "typedoc --tsconfig tsconfig.docs.json",
-        "dev": "tsup --watch --onSuccess \"tsc --emitDeclarationOnly --declarationMap && yarn run docs\"",
+        "dev": "tsdown --watch --onSuccess \"tsc --emitDeclarationOnly --declarationMap && yarn run docs\"",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist"
     },
@@ -39,7 +39,7 @@
         "@types/ws": "^8.18.1",
         "eslint": "^10.6.0",
         "prettier": "3.9.4",
-        "tsup": "^8.5.1",
+        "tsdown": "^0.22.9",
         "typedoc": "^0.28.20",
         "typescript": "^5.9.3"
     },

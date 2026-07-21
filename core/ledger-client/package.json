@@ -17,8 +17,8 @@
         }
     },
     "scripts": {
-        "build": "tsup --onSuccess \"tsc\"",
-        "dev": "tsup --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "tsdown --watch --onSuccess \"tsc\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "test": "vitest run --project node --project browser",
@@ -30,7 +30,7 @@
         "@vitest/coverage-v8": "^4.1.10",
         "openapi-typescript": "^7.13.0",
         "playwright": "^1.61.1",
-        "tsup": "^8.5.1",
+        "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },
