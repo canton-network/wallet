@@ -193,6 +193,7 @@ export interface Store {
     ): Promise<{ transactions: Array<Transaction>; nextCursor: string | null }>
     listAllPendingTransactions(): Promise<Array<Transaction>>
     removeTransaction(transactionId: string): Promise<void>
+    transactionsCount(): Promise<number>
 
     // Message signing request methods
     setMessageRaw(message: MessageRaw): Promise<void>

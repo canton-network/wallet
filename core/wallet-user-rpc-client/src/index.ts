@@ -459,6 +459,12 @@ export type Transactions = Transaction[]
 export type NextCursor = string
 /**
  *
+ * Number of total transactions for the user.
+ *
+ */
+export type Count = number
+/**
+ *
  * The unique identifier of the current user.
  *
  */
@@ -664,6 +670,7 @@ export interface GetTransactionResult {
 export interface ListTransactionsResult {
     transactions: Transactions
     nextCursor?: NextCursor
+    count: Count
 }
 export interface GetUserResult {
     userId: UserIdentifier

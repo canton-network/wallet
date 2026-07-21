@@ -39,7 +39,7 @@ export class UserUiActivities extends BaseElement {
     accessor currentPage = 1
 
     @state()
-    accessor hasNextPage = false
+    accessor totalTransactionCount = 0
 
     private pageCursors: (string | undefined)[] = [undefined]
 
@@ -72,12 +72,12 @@ export class UserUiActivities extends BaseElement {
         `,
     ]
 
-    private get computedTotal() {
-        if (this.hasNextPage) {
-            return this.pageSize * this.pageSize + 1
-        }
-        return (this.currentPage - 1) * this.pageSize + this.transactions.length
-    }
+    // private get computedTotal() {
+    //     if (this.hasNextPage) {
+    //         return this.pageSize * this.pageSize + 1
+    //     }
+    //     return (this.currentPage - 1) * this.pageSize + this.transactions.length
+    // }
 
     protected render() {
         return html`
@@ -116,11 +116,11 @@ export class UserUiActivities extends BaseElement {
                             </div>
 
                             ${
-                                this.hasNextPage || this.currentPage > 1
+                                this.totalTransactionCount > this.pageSize
                                     ? html`
                                           <div class="pagination-wrap">
                                               <wg-pagination
-                                                  .total=${this.computedTotal}
+                                                  .total=${this.totalTransactionCount}
                                                   .pageSize=${this.pageSize}
                                                   .page=${this.currentPage}
                                                   @page-change=${this._onPageChange}
@@ -148,7 +148,9 @@ export class UserUiActivities extends BaseElement {
     }
 
     private _onPageChange(e: PageChangeEvent) {
-        this.currentPage = e.page
+        const targetPage = e.detail.page
+        if (targetPage === this.currentPage || targetPage < 1) return
+        this.currentPage = targetPage
         this.updateTransactions()
     }
 
@@ -171,7 +173,8 @@ export class UserUiActivities extends BaseElement {
                 },
             })
             this.transactions = result.transactions || []
-            this.hasNextPage = !!result.nextCursor
+
+            this.totalTransactionCount = result.count ?? 0
 
             if (result.nextCursor) {
                 this.pageCursors[this.currentPage] = result.nextCursor

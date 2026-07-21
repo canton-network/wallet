@@ -721,6 +721,24 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return transaction ? toTransaction(transaction) : undefined
     }
 
+    async transactionsCount(): Promise<number> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+
+        const result = await this.db
+            .selectFrom('transactions')
+            .where((eb) =>
+                eb.and([
+                    eb('userId', '=', userId),
+                    eb('networkId', '=', network.id),
+                ])
+            )
+            .select((eb) => eb.fn.count<number>('id').as('count'))
+            .executeTakeFirstOrThrow()
+
+        return Number(result.count)
+    }
+
     async listTransactions(options?: ListTransactionsOptions) {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()

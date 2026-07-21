@@ -455,6 +455,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             })[0]
     }
 
+    async transactionsCount(): Promise<number> {
+        this.assertConnected()
+        const storage = this.getStorage()
+        return storage.transactions.size
+    }
+
     async listTransactions(options?: ListTransactionsOptions) {
         this.assertConnected()
         const storage = this.getStorage()

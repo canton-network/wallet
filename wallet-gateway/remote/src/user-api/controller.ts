@@ -1006,6 +1006,7 @@ export const userController = (
         listTransactions: async function (
             params?: ListTransactionsParams
         ): Promise<ListTransactionsResult> {
+            const txCount = await store.transactionsCount()
             const page = await store.listTransactions(params)
             const transactions = page.transactions
             const txs = transactions.map((transaction) => ({
@@ -1032,9 +1033,13 @@ export const userController = (
             }))
 
             if (page.nextCursor === null) {
-                return { transactions: txs }
+                return { transactions: txs, count: txCount }
             } else {
-                return { transactions: txs, nextCursor: page.nextCursor }
+                return {
+                    transactions: txs,
+                    nextCursor: page.nextCursor,
+                    count: txCount,
+                }
             }
         },
         deleteTransaction: async (
