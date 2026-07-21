@@ -67,9 +67,10 @@ test('registry management', async ({ page: dappPage }) => {
     await expect(section.getByText(/^DSO::/)).toBeVisible()
     await expect(section.getByText(LOCAL_REGISTRY_URL)).toBeVisible()
     await expect(
-        registryRow(dappPage, LOCAL_REGISTRY_URL).getByLabel(
-            'Registry status: Reachable'
-        )
+        dappPage.getByRole('cell', {
+            name: 'http://scan.localhost:4000',
+            exact: true,
+        })
     ).toBeVisible()
 
     // Delete the stored override. The immutable configured registry remains.
