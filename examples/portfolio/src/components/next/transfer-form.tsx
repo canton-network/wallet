@@ -500,13 +500,22 @@ const darkTextFieldSx: SxProps<Theme> = {
             border: 'none',
         },
     },
-    '& .MuiInputBase-input, & .MuiPickersInputBase-input': {
+    '& .MuiInputBase-root.MuiInputBase-multiline': {
+        p: 0,
+    },
+    '& .MuiInputBase-root.MuiInputBase-adornedEnd': {
+        pr: 2.5,
+    },
+    '& .MuiInputBase-input': {
         px: 2.5,
         py: 1.25,
         '&::placeholder': {
             color: 'text.disabled',
             opacity: 1,
         },
+    },
+    '& .MuiPickersInputBase-root': {
+        px: 2.5,
     },
     '& .MuiFormHelperText-root': {
         ml: 0,

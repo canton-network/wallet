@@ -1,11 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ACSReader } from '@canton-network/core-acs-reader'
 import {
     SDKPlugin,
     type PreparedCommand,
-    type SDKContext,
+    type SDKPluginContext,
 } from '@canton-network/wallet-sdk'
 
 interface InstrumentAllowance {
@@ -48,21 +47,17 @@ type CancelArgs = FetchPreapprovalArgs & {
 }
 
 type CancelCommandResult =
-    | PreparedCommand<'ExerciseCommand'>
-    | typeof EMPTY_COMMAND_RESULT
+    PreparedCommand<'ExerciseCommand'> | typeof EMPTY_COMMAND_RESULT
 
-export const WalletSDKUtilitiesPluginName = 'utilities'
+export const WalletSDKUtilitiesPluginName = 'utilities' as const
 
 const TRANSFER_PREAPPROVAL_TEMPLATE_ID =
     '#utility-registry-app-v0:Utility.Registry.App.V0.Model.TransferPreapproval:TransferPreapproval'
 const TRANSFER_PREAPPROVAL_WITHDRAW_CHOICE = 'TransferPreapproval_Withdraw'
 
 export class WalletSDKUtilitiesPlugin extends SDKPlugin {
-    private readonly acsReader: ACSReader
-
-    constructor(ctx: SDKContext) {
+    constructor(ctx: SDKPluginContext) {
         super(WalletSDKUtilitiesPluginName, ctx)
-        this.acsReader = new ACSReader(this.ctx.ledgerProvider)
     }
 
     public preapprovalTransfer = {
@@ -197,17 +192,19 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin {
     private async readTransferPreapprovals(
         args: FetchPreapprovalArgs
     ): Promise<TransferPreapprovalStatus[]> {
-        const contracts = await this.acsReader.paginated.raw.readJsContracts({
-            templateIds: [TRANSFER_PREAPPROVAL_TEMPLATE_ID],
-            parties: [args.receiver],
-            filterByParty: true,
-            continueUntilCompletion: true,
-        })
+        const contracts =
+            await this.ctx.namespace.ledger.acsReader.paginated.raw.readJsContracts(
+                {
+                    templateIds: [TRANSFER_PREAPPROVAL_TEMPLATE_ID],
+                    parties: [args.receiver],
+                    filterByParty: true,
+                    continueUntilCompletion: true,
+                }
+            )
 
         return contracts.flatMap((contract) => {
             const payload = contract.createArgument as
-                | TransferPreapproval
-                | undefined
+                TransferPreapproval | undefined
             if (
                 !contract.synchronizerId ||
                 !contract.contractId ||

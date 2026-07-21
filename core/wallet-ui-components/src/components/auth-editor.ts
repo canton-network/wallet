@@ -13,9 +13,7 @@ import type {
 } from '@canton-network/core-wallet-auth'
 
 export type AuthMethod =
-    | 'authorization_code'
-    | 'client_credentials'
-    | 'self_signed'
+    'authorization_code' | 'client_credentials' | 'self_signed'
 
 type EditorMode = 'none' | 'view' | 'edit' | 'add' | 'pending-remove'
 
@@ -425,9 +423,9 @@ export class AuthEditor extends BaseElement {
                 type="text"
                 ?required=${!this._hasExistingSecret(authObj)}
                 .value=${this._secretReplacement}
-                placeholder=${this._hasExistingSecret(authObj)
-                    ? '********'
-                    : ''}
+                placeholder=${
+                    this._hasExistingSecret(authObj) ? '********' : ''
+                }
                 @change=${(e: Event) => {
                     this._secretReplacement = (
                         e.target as HTMLInputElement
@@ -436,14 +434,17 @@ export class AuthEditor extends BaseElement {
                     this._emit(authObj)
                 }}
             />
-            ${this._hasExistingSecret(authObj)
-                ? html`<p
-                      class="field-help mb-0"
-                      data-test-id="auth-editor-secret-help"
-                  >
-                      Current secret is hidden. Enter a new value to replace it.
-                  </p>`
-                : nothing}
+            ${
+                // prettier-ignore
+                this._hasExistingSecret(authObj)
+                    ? html`<p
+                          class="field-help mb-0"
+                          data-test-id="auth-editor-secret-help"
+                      >
+                          Current secret is hidden. Enter a new value to replace it.
+                      </p>`
+                    : nothing
+            }
         </div>`
     }
 
@@ -463,30 +464,36 @@ export class AuthEditor extends BaseElement {
                             this._onAuthMethodChange(e)
                         }}
                     >
-                        ${this.allowedMethods.includes('authorization_code')
-                            ? html`<option
-                                  ?value="authorization_code"
-                                  ?selected=${method === 'authorization_code'}
-                              >
-                                  authorization_code
-                              </option>`
-                            : nothing}
-                        ${this.allowedMethods.includes('client_credentials')
-                            ? html`<option
-                                  value="client_credentials"
-                                  ?selected=${method === 'client_credentials'}
-                              >
-                                  client_credentials
-                              </option>`
-                            : nothing}
-                        ${this.allowedMethods.includes('self_signed')
-                            ? html`<option
-                                  value="self_signed"
-                                  ?selected=${method === 'self_signed'}
-                              >
-                                  self_signed
-                              </option>`
-                            : nothing}
+                        ${
+                            this.allowedMethods.includes('authorization_code')
+                                ? html`<option
+                                      ?value="authorization_code"
+                                      ?selected=${method === 'authorization_code'}
+                                  >
+                                      authorization_code
+                                  </option>`
+                                : nothing
+                        }
+                        ${
+                            this.allowedMethods.includes('client_credentials')
+                                ? html`<option
+                                      value="client_credentials"
+                                      ?selected=${method === 'client_credentials'}
+                                  >
+                                      client_credentials
+                                  </option>`
+                                : nothing
+                        }
+                        ${
+                            this.allowedMethods.includes('self_signed')
+                                ? html`<option
+                                      value="self_signed"
+                                      ?selected=${method === 'self_signed'}
+                                  >
+                                      self_signed
+                                  </option>`
+                                : nothing
+                        }
                     </select>
                     <span class="select-chevron">${chevronDownIcon}</span>
                 </div>
@@ -671,18 +678,20 @@ export class AuthEditor extends BaseElement {
             <div data-test-id="auth-editor-edit-state">
                 ${this._renderAuthForm(auth)}
             </div>
-            ${this.optional
-                ? html`<div class="inline-actions">
-                      <button
-                          type="button"
-                          class="btn-inline"
-                          data-test-id="auth-editor-cancel-edit-button"
-                          @click=${this._cancelEdit}
-                      >
-                          Cancel
-                      </button>
-                  </div>`
-                : nothing}
+            ${
+                this.optional
+                    ? html`<div class="inline-actions">
+                          <button
+                              type="button"
+                              class="btn-inline"
+                              data-test-id="auth-editor-cancel-edit-button"
+                              @click=${this._cancelEdit}
+                          >
+                              Cancel
+                          </button>
+                      </div>`
+                    : nothing
+            }
         `
     }
 }

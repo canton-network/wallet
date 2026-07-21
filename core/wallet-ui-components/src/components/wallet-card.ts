@@ -166,15 +166,23 @@ export class WgWalletCard extends BaseElement {
 
         return html`
             <span class="rights-badges">
-                ${this.wallet.rights.includes(PartyLevelRight.CanActAs)
-                    ? html`<span class="badge badge-right">CanActAs</span>`
-                    : ''}
-                ${this.wallet.rights.includes(PartyLevelRight.CanReadAs)
-                    ? html`<span class="badge badge-right">CanReadAs</span>`
-                    : ''}
-                ${this.wallet.rights.includes(PartyLevelRight.CanExecuteAs)
-                    ? html`<span class="badge badge-right">CanExecuteAs</span>`
-                    : ''}
+                ${
+                    this.wallet.rights.includes(PartyLevelRight.CanActAs)
+                        ? html`<span class="badge badge-right">CanActAs</span>`
+                        : ''
+                }
+                ${
+                    this.wallet.rights.includes(PartyLevelRight.CanReadAs)
+                        ? html`<span class="badge badge-right">CanReadAs</span>`
+                        : ''
+                }
+                ${
+                    this.wallet.rights.includes(PartyLevelRight.CanExecuteAs)
+                        ? html`<span class="badge badge-right"
+                              >CanExecuteAs</span
+                          >`
+                        : ''
+                }
             </span>
         `
     }
@@ -207,22 +215,26 @@ export class WgWalletCard extends BaseElement {
         return html`
             <div class="meta">
                 <div
-                    class=${this.wallet.hint
-                        ? 'meta-row meta-row--copy'
-                        : 'meta-row'}
+                    class=${
+                        this.wallet.hint
+                            ? 'meta-row meta-row--copy'
+                            : 'meta-row'
+                    }
                 >
                     <p class="meta-title">Party hint</p>
                     <p class="meta-value" title=${this.wallet.hint || '-'}>
                         ${this.wallet.hint || '-'}
                     </p>
-                    ${this.wallet.hint
-                        ? html`
-                              <wg-copy-button
-                                  .value=${this.wallet.hint}
-                                  label="Copy party hint"
-                              ></wg-copy-button>
-                          `
-                        : null}
+                    ${
+                        this.wallet.hint
+                            ? html`
+                                  <wg-copy-button
+                                      .value=${this.wallet.hint}
+                                      label="Copy party hint"
+                                  ></wg-copy-button>
+                              `
+                            : null
+                    }
                 </div>
 
                 <div class="meta-row meta-row--copy">
@@ -249,35 +261,43 @@ export class WgWalletCard extends BaseElement {
                     </p>
                 </div>
 
-                ${this.wallet.reason
-                    ? html`
-                          <div
-                              class=${shouldStackReason
-                                  ? 'meta-row meta-row--stacked'
-                                  : 'meta-row'}
-                          >
-                              <p class="meta-title">Reason</p>
-                              <p
-                                  class=${shouldStackReason
-                                      ? 'meta-value meta-value-wrap'
-                                      : 'meta-value'}
-                                  title=${this.wallet.reason}
+                ${
+                    this.wallet.reason
+                        ? html`
+                              <div
+                                  class=${
+                                      shouldStackReason
+                                          ? 'meta-row meta-row--stacked'
+                                          : 'meta-row'
+                                  }
                               >
-                                  ${this.wallet.reason}
-                              </p>
-                          </div>
-                      `
-                    : null}
-                ${this.wallet.rights?.length
-                    ? html`
-                          <div class="meta-row">
-                              <p class="meta-title">Permissions</p>
-                              <p class="meta-value meta-value--badges">
-                                  ${this.renderRightsBadges()}
-                              </p>
-                          </div>
-                      `
-                    : null}
+                                  <p class="meta-title">Reason</p>
+                                  <p
+                                      class=${
+                                          shouldStackReason
+                                              ? 'meta-value meta-value-wrap'
+                                              : 'meta-value'
+                                      }
+                                      title=${this.wallet.reason}
+                                  >
+                                      ${this.wallet.reason}
+                                  </p>
+                              </div>
+                          `
+                        : null
+                }
+                ${
+                    this.wallet.rights?.length
+                        ? html`
+                              <div class="meta-row">
+                                  <p class="meta-title">Permissions</p>
+                                  <p class="meta-value meta-value--badges">
+                                      ${this.renderRightsBadges()}
+                                  </p>
+                              </div>
+                          `
+                        : null
+                }
             </div>
         `
     }

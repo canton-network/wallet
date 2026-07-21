@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
     Box,
     Paper,
@@ -16,32 +16,29 @@ import {
 import { toast } from 'sonner'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { PillButton } from '@components/ui/PillButton'
-import { useRegistryMutations, useRegistryUrls } from '@hooks/useRegistryUrls'
+import {
+    useReachableRegistryUrls,
+    useRegistryMutations,
+} from '@hooks/useRegistryUrls'
+import type { RegistryReachabilityStatus } from '../../types/registries'
 import { AddRegistryDialog } from './add-registry-dialog'
 
-interface RegistryRow {
-    partyId: string
-    registryUrl: string
+const statusDetails: Record<
+    RegistryReachabilityStatus,
+    { label: string; color: string }
+> = {
+    reachable: { label: 'Reachable', color: 'success.main' },
+    unreachable: { label: 'Unreachable', color: 'error.main' },
+    checking: { label: 'Checking', color: 'text.disabled' },
 }
 
 export function RegistriesSection() {
-    const registryUrls = useRegistryUrls()
+    const { entries } = useReachableRegistryUrls()
     const { deleteRegistryUrl } = useRegistryMutations()
     const [addDialogOpen, setAddDialogOpen] = useState(false)
 
-    const registries = useMemo(
-        () =>
-            Array.from(registryUrls.entries())
-                .map(
-                    ([partyId, registryUrl]): RegistryRow => ({
-                        partyId,
-                        registryUrl,
-                    })
-                )
-                .sort((left, right) =>
-                    left.partyId.localeCompare(right.partyId)
-                ),
-        [registryUrls]
+    const registries = [...entries].sort((left, right) =>
+        (left.partyId ?? '').localeCompare(right.partyId ?? '')
     )
 
     const handleDeleteRegistry = (partyId: string) => {
@@ -87,12 +84,13 @@ export function RegistriesSection() {
             >
                 <Table
                     aria-label="Registries"
-                    sx={{ minWidth: 760, tableLayout: 'fixed' }}
+                    sx={{ minWidth: 880, tableLayout: 'fixed' }}
                 >
                     <TableHead>
                         <TableRow>
-                            <HeaderCell width="42%">Party ID</HeaderCell>
-                            <HeaderCell width="42%">Registry URL</HeaderCell>
+                            <HeaderCell width="32%">Party ID</HeaderCell>
+                            <HeaderCell width="32%">Registry URL</HeaderCell>
+                            <HeaderCell width="20%">Status</HeaderCell>
                             <HeaderCell width={160}>Action</HeaderCell>
                         </TableRow>
                     </TableHead>
@@ -100,16 +98,25 @@ export function RegistriesSection() {
                         {registries.length > 0 ? (
                             registries.map((registry) => (
                                 <TableRow
-                                    key={registry.partyId}
+                                    key={registry.registryUrl}
                                     sx={{
                                         '&:last-child td': { borderBottom: 0 },
                                     }}
                                 >
                                     <BodyCell>
-                                        <CopyableIdentifier
-                                            value={registry.partyId}
-                                            maxLength={24}
-                                        />
+                                        {registry.partyId ? (
+                                            <CopyableIdentifier
+                                                value={registry.partyId}
+                                                maxLength={24}
+                                            />
+                                        ) : (
+                                            <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                            >
+                                                Resolving…
+                                            </Typography>
+                                        )}
                                     </BodyCell>
                                     <BodyCell>
                                         <CopyableIdentifier
@@ -117,26 +124,33 @@ export function RegistriesSection() {
                                             maxLength={30}
                                         />
                                     </BodyCell>
+                                    <RegistryStatusCell
+                                        status={registry.status}
+                                    />
                                     <BodyCell width={160}>
-                                        <PillButton
-                                            type="button"
-                                            tone="danger"
-                                            size="small"
-                                            onClick={() =>
-                                                handleDeleteRegistry(
-                                                    registry.partyId
-                                                )
-                                            }
-                                            sx={{ px: 2 }}
-                                        >
-                                            Delete
-                                        </PillButton>
+                                        {registry.partyId &&
+                                        registry.isRemovable ? (
+                                            <PillButton
+                                                type="button"
+                                                tone="danger"
+                                                size="small"
+                                                onClick={() =>
+                                                    registry.partyId &&
+                                                    handleDeleteRegistry(
+                                                        registry.partyId
+                                                    )
+                                                }
+                                                sx={{ px: 2 }}
+                                            >
+                                                Delete
+                                            </PillButton>
+                                        ) : null}
                                     </BodyCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} sx={{ px: 2, py: 4 }}>
+                                <TableCell colSpan={4} sx={{ px: 2, py: 4 }}>
                                     <Typography
                                         variant="body2"
                                         sx={{
@@ -161,9 +175,36 @@ export function RegistriesSection() {
     )
 }
 
+function RegistryStatusCell({
+    status,
+}: {
+    status: RegistryReachabilityStatus
+}) {
+    const details = statusDetails[status]
+
+    return (
+        <BodyCell ariaLabel={`Registry status: ${details.label}`}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                    aria-hidden="true"
+                    sx={{
+                        width: 8,
+                        height: 8,
+                        flex: '0 0 auto',
+                        borderRadius: '50%',
+                        bgcolor: details.color,
+                    }}
+                />
+                <Typography variant="body2">{details.label}</Typography>
+            </Box>
+        </BodyCell>
+    )
+}
+
 interface CellProps {
     children: React.ReactNode
     width?: string | number
+    ariaLabel?: string
 }
 
 function HeaderCell({ children, width }: CellProps) {
@@ -184,9 +225,10 @@ function HeaderCell({ children, width }: CellProps) {
     )
 }
 
-function BodyCell({ children, width }: CellProps) {
+function BodyCell({ children, width, ariaLabel }: CellProps) {
     return (
         <TableCell
+            aria-label={ariaLabel}
             sx={{
                 px: 2,
                 py: 2.25,

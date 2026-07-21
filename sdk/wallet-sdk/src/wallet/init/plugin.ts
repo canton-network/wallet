@@ -2,20 +2,33 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SDKLogger } from '../logger/index.js'
-import { EXTENDED_SDK_OPTION_KEYS, ExtendedSDKOptions } from './types/sdk.js'
+import {
+    EXTENDED_SDK_OPTION_KEYS,
+    ExtendedFullSDKInterface,
+    ExtendedSDKOptions,
+    SDKInterface,
+} from './types/sdk.js'
 import type { SDKContext } from './types/context.js'
 
-export abstract class SDKPlugin {
+export type SDKPluginContext<
+    ExtendedItems extends keyof ExtendedFullSDKInterface = never,
+> = SDKContext & {
+    namespace: Omit<SDKInterface<ExtendedItems>, 'extend' | 'registerPlugins'>
+}
+
+export abstract class SDKPlugin<
+    ExtendedNamespaceItems extends keyof ExtendedFullSDKInterface = never,
+> {
     /**
      *
      * @deprecated use this.ctx.logger instead
      */
     protected readonly logger: ReturnType<SDKLogger['child']>
-    protected readonly ctx: SDKContext
+    protected readonly ctx: SDKPluginContext<ExtendedNamespaceItems>
 
     constructor(
         public readonly name: string,
-        protected readonly _ctx: SDKContext
+        protected readonly _ctx: SDKPluginContext<ExtendedNamespaceItems>
     ) {
         if (EXTENDED_SDK_OPTION_KEYS.includes(name as keyof ExtendedSDKOptions))
             throw Error(

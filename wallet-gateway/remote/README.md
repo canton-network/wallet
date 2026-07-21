@@ -55,13 +55,20 @@ The JSON-RPC API specs from `api-specs/` are generated into strongly-typed metho
     - `DFNS_PRIVATE_KEY` — service account private key (PEM)
     - `DFNS_AUTH_TOKEN` — service account auth token
 
-Dfns provisions and activates Canton wallets through its validator integration, so no additional Gateway configuration is required. Only `Canton` and `CantonTestnet` network wallets are supported. See [`@canton-network/core-signing-dfns`](../../core/signing-dfns/README.md) for full driver details.
-
 ## Fireblocks
 
 1. Complete steps 1–3 from the instructions at https://github.com/canton-network/wallet/tree/main/core/signing-fireblocks
 
 2. set the environment variable `FIREBLOCKS_API_KEY` (get it from `API User (ID)` column in fireblocks api users table).
+
+# Blockdaemon
+
+1. Create a system user in the Blockdaemon dashboard and save the API key displayed after successful creation.
+
+2. set the environment variables
+
+- `BLOCKDAEMON_API_URL` - The base URL for the Blockdaemon API
+- `BLOCKDAEMON_API_KEY` - Your Blockdaemon API key
 
 ## Postgres connection
 

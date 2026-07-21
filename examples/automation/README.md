@@ -15,7 +15,7 @@ When the network is configured with `serviceAccountAuth` and the wallet uses par
 
 ## Prerequisites
 
-Before running this script, complete the one-time setup described in [Service account automations](../../docs/dapp-building/wallet-gateway/automations/index.md):
+Before running this script, complete the one-time setup described in [Service account automations](../../docs/wallet-gateway/automations/index.md):
 
 1. **Wallet Gateway** running locally (default `http://localhost:3030`) or pointing at your deployment.
 2. **Network configuration** with `serviceAccountAuth` (`client_credentials`) on the target network.
@@ -65,9 +65,9 @@ On success you should see:
 
 - Store API keys in environment variables or a secrets manager — do not commit them.
 - Subscribe to dApp API **Server-Sent Events** (`txChanged`) for reliable completion notification, especially with external signing providers.
-- See the full operations guide: [Automations](../../docs/dapp-building/wallet-gateway/automations/index.md).
+- See the full operations guide: [Automations](../../docs/wallet-gateway/automations/index.md).
 
 ## Related documentation
 
-- [Wallet Gateway — Automations](../../docs/dapp-building/wallet-gateway/automations/index.md)
-- [Wallet Gateway — Configuration](../../docs/dapp-building/wallet-gateway/configuration/index.md)
+- [Wallet Gateway — Automations](../../docs/wallet-gateway/automations/index.md)
+- [Wallet Gateway — Configuration](../../docs/wallet-gateway/configuration/index.md)

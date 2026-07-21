@@ -69,6 +69,7 @@ import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
+import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -714,16 +715,18 @@ export const userController = (
                 logger.info(
                     `Adding session with ID ${newSessionId} for network ${params.networkId}`
                 )
-
                 const network = await store.getNetwork(params.networkId)
+                const idp = await store.getIdp(network.identityProviderId)
+                const connectedContext = assertConnected(authContext)
+                const { userId, accessToken } = connectedContext
+
+                assertTokenClaimsMatchNetwork(accessToken, network, idp)
+
                 await store.setSession({
                     id: newSessionId,
                     network: params.networkId,
-                    accessToken: authContext?.accessToken || '',
+                    accessToken: connectedContext.accessToken || '',
                 })
-                const idp = await store.getIdp(network.identityProviderId)
-                // Assumption: `setSession` calls `assertConnected`, so its safe to declare that the authContext is defined.
-                const { userId, accessToken } = authContext!
                 const notifier = notificationService.getNotifier(userId)
 
                 const ledgerClient = new LedgerClient({
@@ -779,7 +782,7 @@ export const userController = (
                     const service = new WalletSyncService(
                         store,
                         ledgerClient,
-                        authContext!,
+                        connectedContext,
                         logger,
                         drivers,
                         partyAllocator
@@ -801,7 +804,7 @@ export const userController = (
                     rights: rights,
                 }
             } catch (error) {
-                logger.error({ error }, 'Failed to add session')
+                logger.error(error, 'Failed to add session')
                 throw new Error(`Failed to add session`, {
                     cause: error,
                 })
@@ -825,6 +828,7 @@ export const userController = (
                 session: undefined,
                 userUrl: `${userUrl}/login/`,
             })
+            notifier.emit('logout')
 
             return null
         },

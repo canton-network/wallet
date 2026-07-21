@@ -55,8 +55,7 @@ export interface SigningWorkerOptions {
  *
  * - returns early while the provider still reports `pending` (worker logs and
  *   waits for the next tick), or
- * - calls `execute()` once signing is `signed` (Dfns is special: it broadcasts
- *   at sign-time, so execute only reconciles local state).
+ * - calls `execute()` once signing is `signed`.
  *
  * A transaction is re-read before processing so a concurrent DApp call or an
  * earlier tick that already completed it is skipped.
