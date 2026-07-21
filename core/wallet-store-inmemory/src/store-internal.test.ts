@@ -78,6 +78,19 @@ const implementations: Array<[string, StoreCtor]> = [
     ['StoreInternal', StoreInternal],
 ]
 
+function addTx(id: string, createdAt: Date | undefined) {
+    const initial: Transaction = {
+        id: id,
+        commandId: 'cmd-immutable',
+        status: 'pending',
+        preparedTransaction: 'prepared-1',
+        preparedTransactionHash: 'hash-1',
+        payload: { amount: 100 },
+        origin: 'https://safe.example',
+        createdAt: createdAt,
+    }
+    return initial
+}
 implementations.forEach(([name, StoreImpl]) => {
     describe(name, () => {
         let store: Store
@@ -663,7 +676,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 new Date('2026-01-01T00:01:00.000Z')
             )
 
-            const duplicates = await store.listTransactions()
+            const duplicates = (await store.listTransactions()).transactions
             expect(
                 duplicates.filter((tx) => tx.commandId === initial.commandId)
             ).toHaveLength(2)
@@ -767,7 +780,9 @@ implementations.forEach(([name, StoreImpl]) => {
             ).rejects.toThrow('Transaction not found')
 
             await store.removeTransaction('tx-0')
-            expect(await store.listTransactions()).toHaveLength(1)
+            expect((await store.listTransactions()).transactions).toHaveLength(
+                1
+            )
         })
 
         test('should manage message signing requests', async () => {
@@ -869,6 +884,85 @@ implementations.forEach(([name, StoreImpl]) => {
             ).rejects.toThrow(
                 'ApiKey userId mismatch: expected other-user-id, got test-user-id'
             )
+        })
+
+        test('paginate list transactions', async () => {
+            for (let i = 0; i < 10; i++) {
+                const date =
+                    i % 2 > 0
+                        ? new Date(`2026-01-02T00:00:00.000Z`)
+                        : new Date(`2026-01-01T00:00:00.000Z`)
+
+                const tx = addTx(`tx${i}`, date)
+
+                await store.setTransaction(tx)
+            }
+
+            const listAllTxs = await store.listTransactions()
+
+            const collected: Transaction[] = []
+
+            let page = await store.listTransactions({ limit: 5 })
+            collected.push(...page.transactions)
+            let timesCalled = 1
+            while (page.nextCursor !== null) {
+                timesCalled++
+                page = await store.listTransactions({
+                    cursor: page.nextCursor,
+                    limit: 5,
+                })
+                collected.push(...page.transactions)
+            }
+
+            expect(listAllTxs.transactions).toEqual(collected)
+            expect(timesCalled).toBe(2)
+        })
+
+        test('paginate list transactions if createdAt is null for some txs', async () => {
+            for (let i = 0; i < 10; i++) {
+                const date =
+                    i % 2 > 0 ? new Date(`2026-01-02T00:00:00.000Z`) : undefined
+
+                const tx = addTx(`tx${i}`, date)
+
+                await store.setTransaction(tx)
+            }
+
+            const listAllTxs = await store.listTransactions()
+
+            const collected: Transaction[] = []
+
+            let page = await store.listTransactions({ limit: 5 })
+            collected.push(...page.transactions)
+            let timesCalled = 1
+
+            while (page.nextCursor !== null) {
+                timesCalled++
+                page = await store.listTransactions({
+                    cursor: page.nextCursor,
+                    limit: 5,
+                })
+                collected.push(...page.transactions)
+            }
+
+            expect(listAllTxs.transactions).toEqual(collected)
+            expect(timesCalled).toBe(2)
+        })
+
+        test('return total number of transactions', async () => {
+            for (let i = 0; i < 10; i++) {
+                const date =
+                    i % 2 > 0
+                        ? new Date(`2026-01-02T00:00:00.000Z`)
+                        : new Date(`2026-01-01T00:00:00.000Z`)
+
+                const tx = addTx(`tx${i}`, date)
+
+                await store.setTransaction(tx)
+            }
+
+            const count = await store.transactionsCount()
+            expect(count).toBe(10)
         })
     })
 })
