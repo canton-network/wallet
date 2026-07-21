@@ -17,8 +17,8 @@
         }
     },
     "scripts": {
-        "build": "tsup --onSuccess \"tsc\"",
-        "dev": "tsup --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "tsdown --watch --onSuccess \"tsc\"",
         "test": "vitest run --project node",
         "test:coverage": "vitest run --project node --coverage",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
@@ -26,7 +26,7 @@
     },
     "devDependencies": {
         "@vitest/coverage-v8": "^4.1.10",
-        "tsup": "^8.5.1",
+        "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },

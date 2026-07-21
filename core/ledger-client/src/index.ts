@@ -7,7 +7,7 @@ export {
     promiseWithTimeout,
     isJsCantonError,
     asJsCantonError,
-    JsCantonError,
-    JSContractEntry,
+    type JsCantonError,
+    type JSContractEntry,
     defaultRetryableOptions,
 } from './ledger-api-utils.js'
