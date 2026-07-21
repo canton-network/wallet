@@ -132,8 +132,8 @@ describe('UserUiActivities', () => {
         ) as HTMLElement & { count: number }
 
         expect(pagination).not.toBeNull()
-        console.log(pagination)
-        expect(pagination.count).toBe(5)
+        expect(el.totalTransactionCount).toBe(5)
+
         expect(getTransactionCards(el).map((c) => c.transactionId)).toEqual([
             'tx-1',
             'tx-2',
