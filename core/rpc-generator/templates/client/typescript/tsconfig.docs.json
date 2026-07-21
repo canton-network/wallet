@@ -9,7 +9,7 @@
         "**/*.spec.*",
         "**/__tests__/**",
         "**/*.config.*",
-        "tsup.config.ts",
+        "tsdown.config.ts",
         "node_modules",
         "docs",
         "dist"
