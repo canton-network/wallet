@@ -1136,7 +1136,11 @@ export class WalletPicker extends HTMLElement {
 
         // Listen for WalletConnect URI from the adapter via postMessage
         window.addEventListener('message', (e) => {
-            if (e.data?.type === 'wc-uri' && typeof e.data.uri === 'string') {
+            if (
+                e.origin === window.location.origin &&
+                e.data?.type === 'wc-uri' &&
+                typeof e.data.uri === 'string'
+            ) {
                 this.wcUri = e.data.uri
                 this.wcQrDataUrl = e.data.qrDataUrl ?? null
                 if (this.state === 'connecting') this.render()

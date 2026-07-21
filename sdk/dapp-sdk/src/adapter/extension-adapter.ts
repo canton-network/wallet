@@ -73,6 +73,7 @@ export class ExtensionAdapter implements ProviderAdapter {
 
             const handler = (event: MessageEvent) => {
                 if (
+                    event.origin === window.location.origin &&
                     event.data?.type === WalletEvent.SPLICE_WALLET_EXT_ACK &&
                     (!this.target || event.data?.target === this.target)
                 ) {

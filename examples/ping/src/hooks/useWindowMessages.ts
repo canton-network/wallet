@@ -16,6 +16,7 @@ export function useWindowMessages() {
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) return
             const messageType =
                 event.data.type &&
                 Object.values(WalletEvent).includes(event.data.type)
