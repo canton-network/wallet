@@ -109,6 +109,11 @@ export const queryKeys = {
         forRegistry: (url: string) => ['registryInfo', url] as const,
     },
 
+    registryInfo: {
+        all: ['registryInfo'],
+        forRegistry: (url: string) => ['registryInfo', url],
+    },
+
     utilityOperators: {
         all: ['utilityOperators'] as const,
         forRegistry: (registryPartyId: string, registryUrl: string) =>
