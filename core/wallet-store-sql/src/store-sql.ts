@@ -715,7 +715,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('networkId', '=', network.id),
                 ])
             )
-            .orderBy('createdAt', 'desc')
+            .orderBy(sql`${sql.ref('createdAt')} desc nulls last`)
             .executeTakeFirst()
 
         return transaction ? toTransaction(transaction) : undefined
