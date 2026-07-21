@@ -51,7 +51,6 @@ import {
 } from './schema.js'
 import pg from 'pg'
 import { sql } from 'kysely'
-import { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
