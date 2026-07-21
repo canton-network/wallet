@@ -9,8 +9,7 @@ import { Operations } from '../../openapi-ts/token-metadata-v1'
 import { instruments, supportedApis } from './common'
 
 const emptyCtx = {} as Operations[
-    | 'getRegistryInfo'
-    | 'listInstruments']['context']
+    'getRegistryInfo' | 'listInstruments']['context']
 
 vi.mock('../../common/admin', () => ({
     admin: {
