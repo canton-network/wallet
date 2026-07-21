@@ -9,6 +9,7 @@ type Connection = {
     status?: sdk.dappAPI.StatusEvent
     accounts: sdk.dappAPI.Wallet[]
     error?: string
+    sessionTokenVersion: number
 
     connect: () => void
     open: () => void

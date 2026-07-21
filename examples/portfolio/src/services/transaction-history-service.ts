@@ -11,7 +11,6 @@ import {
 } from '@canton-network/core-tx-parser'
 import { type Transaction } from '@canton-network/core-tx-parser'
 import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
-import { resolveLedgerProvider } from './resolve'
 
 type FiltersByParty = Types['Map_Filters']
 
@@ -224,9 +223,8 @@ export class TransactionHistoryService {
 
             const newUnprocessed: JsTransaction[] = []
             for (const jsTransaction of unapplied) {
-                const provider = resolveLedgerProvider()
                 const parser = new TransactionParser(
-                    provider,
+                    this.provider,
                     jsTransaction,
                     this.party,
                     false // isMasterUser

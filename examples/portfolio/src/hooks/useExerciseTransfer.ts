@@ -25,13 +25,15 @@ export const useExerciseTransfer = () => {
             }),
         onSuccess: async (_, args) => {
             await queryClient.invalidateQueries({
-                queryKey: queryKeys.listPendingTransfers.forParty(args.party),
+                queryKey: queryKeys.walletConnection.pendingTransfers.forParty(
+                    args.party
+                ),
             })
             await queryClient.invalidateQueries({
-                queryKey: queryKeys.listHoldings.all,
+                queryKey: queryKeys.walletConnection.holdings.all,
             })
             await queryClient.invalidateQueries({
-                queryKey: queryKeys.getTransactionHistory.all,
+                queryKey: queryKeys.walletConnection.transactionHistory.all,
             })
         },
     })

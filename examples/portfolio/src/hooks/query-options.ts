@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { queryOptions, type QueryClient } from '@tanstack/react-query'
+import * as dappSdk from '@canton-network/dapp-sdk'
+import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import { usePortfolio } from '../contexts/PortfolioContext'
 import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
+import { useConnection } from '../contexts/ConnectionContext'
 import { queryKeys } from './query-keys'
-import type { useWalletSdk } from './useWalletSdk'
+import type { WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
-
-type WalletSdk = ReturnType<typeof useWalletSdk>['sdk'] | undefined
+import { logger } from '@lib/logger'
+import { TransactionHistoryService } from '../services/transaction-history-service'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -52,13 +55,36 @@ export const utilityOperatorQueryOptions = ({
         staleTime: Infinity,
     })
 
+export const transactionHistoryServiceQueryOptions = (partyId: string) =>
+    queryOptions({
+        queryKey:
+            queryKeys.walletConnection.transactionHistoryService.forParty(
+                partyId
+            ),
+        queryFn: () => {
+            const provider = dappSdk.getConnectedProvider()
+            if (!provider) {
+                throw new Error('Dapp provider is not available')
+            }
+
+            return new TransactionHistoryService({
+                logger,
+                provider: provider as unknown as LedgerProvider,
+                party: partyId,
+            })
+        },
+        staleTime: Infinity,
+        gcTime: Infinity,
+    })
+
 export const usePendingTransfersQueryOptions = (party: string | undefined) => {
     const { listPendingTransfers } = usePortfolio()
+    const { status } = useConnection()
     return queryOptions({
         retry: 10,
-        queryKey: queryKeys.listPendingTransfers.forParty(party),
-        queryFn: async () =>
-            party ? listPendingTransfers({ party: party! }) : [],
+        queryKey: queryKeys.walletConnection.pendingTransfers.forParty(party),
+        queryFn: () => listPendingTransfers({ party: party! }),
+        enabled: !!status?.connection?.isConnected && !!party,
     })
 }
 
@@ -66,19 +92,21 @@ export const useAllocationRequestsQueryOptions = (
     party: string | undefined
 ) => {
     const { listAllocationRequests } = usePortfolio()
+    const { status } = useConnection()
     return queryOptions({
-        queryKey: queryKeys.listAllocationRequests.forParty(party),
+        queryKey: queryKeys.walletConnection.allocationRequests.forParty(party),
         queryFn: () => listAllocationRequests({ party: party! }),
-        enabled: !!party,
+        enabled: !!status?.connection?.isConnected && !!party,
     })
 }
 
 export const useAllocationsQueryOptions = (party: string | undefined) => {
     const { listAllocations } = usePortfolio()
+    const { status } = useConnection()
     return queryOptions({
-        queryKey: queryKeys.listAllocations.forParty(party),
+        queryKey: queryKeys.walletConnection.allocations.forParty(party),
         queryFn: () => listAllocations({ party: party! }),
-        enabled: !!party,
+        enabled: !!status?.connection?.isConnected && !!party,
     })
 }
 
@@ -108,7 +136,7 @@ export const preapprovalStatusQueryOptions = ({
     queryClient: QueryClient
 }) =>
     queryOptions({
-        queryKey: queryKeys.preapprovals.status({
+        queryKey: queryKeys.walletConnection.preapprovals.status({
             party,
             kind: row.kind,
             registryPartyId: row.registryPartyId,
