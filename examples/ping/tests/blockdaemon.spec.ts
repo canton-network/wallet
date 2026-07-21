@@ -6,9 +6,10 @@ import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,
+    initializeExternalSigningParty,
     createPingDappWalletGateway,
     expectTxStatusInDappEvents,
-    setupExternalSigningParty,
+    allocateExternalSigningParty,
     createPingContractAndApproveExternal,
 } from './external-signing-test-helpers.js'
 
@@ -66,13 +67,17 @@ test.describe('Blockdaemon external signing', () => {
         await connectPingDapp(wg, dappPage)
 
         const partyHint = `blockdaemon${Date.now()}`
-        await setupExternalSigningParty({
+        const { partyId, externalTxId } = await initializeExternalSigningParty({
+            wg,
+            partyHint,
+            signingProvider: 'blockdaemon',
+        })
+        await setMockBlockdaemonTransactionState(externalTxId, 'signed')
+        await allocateExternalSigningParty({
             wg,
             dappPage,
             partyHint,
-            signingProvider: 'blockdaemon',
-            promoteAllocationTx: (externalTxId) =>
-                setMockBlockdaemonTransactionState(externalTxId, 'signed'),
+            partyId,
         })
     })
 

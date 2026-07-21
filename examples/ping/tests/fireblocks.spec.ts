@@ -11,9 +11,10 @@ import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,
+    initializeExternalSigningParty,
     createPingDappWalletGateway,
     expectTxStatusInDappEvents,
-    setupExternalSigningParty,
+    allocateExternalSigningParty,
     createPingContractAndApproveExternal,
 } from './external-signing-test-helpers.js'
 
@@ -66,14 +67,18 @@ test.describe('Fireblocks external signing', () => {
         await connectPingDapp(wg, dappPage)
 
         const partyHint = `fireblocks${Date.now()}`
-        await setupExternalSigningParty({
+        const { partyId, externalTxId } = await initializeExternalSigningParty({
             wg,
-            dappPage,
             partyHint,
             signingProvider: 'fireblocks',
             vaultName: MOCK_FIREBLOCKS_VAULT_NAME,
-            promoteAllocationTx: (externalTxId) =>
-                setMockFireblocksTransactionState(externalTxId, 'signed'),
+        })
+        await setMockFireblocksTransactionState(externalTxId, 'signed')
+        await allocateExternalSigningParty({
+            wg,
+            dappPage,
+            partyHint,
+            partyId,
         })
     })
 

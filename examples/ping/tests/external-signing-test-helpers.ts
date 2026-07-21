@@ -48,14 +48,12 @@ export async function connectPingDapp(
     await expect(dappPage.getByText(/.*gateway: remote-da*/)).toBeVisible({ timeout: 15000 })
 }
 
-export async function setupExternalSigningParty(args: {
+export async function initializeExternalSigningParty(args: {
     wg: WalletGateway
-    dappPage: Page
     partyHint: string
     signingProvider: ExternalSigningProvider
     vaultName?: string
-    promoteAllocationTx: (externalTxId: string) => Promise<void>
-}): Promise<string> {
+}): Promise<{ partyId: string; externalTxId: string }> {
     const partyId = await args.wg.createWalletIfNotExists({
         partyHint: args.partyHint,
         signingProvider: args.signingProvider,
@@ -63,9 +61,18 @@ export async function setupExternalSigningParty(args: {
         primary: true,
     })
 
-    const topologyExternalTxId = await args.wg.getWalletExternalTxId(partyId)
-    await args.promoteAllocationTx(topologyExternalTxId)
-    await args.wg.allocateWalletParty(partyId)
+    const externalTxId = await args.wg.getWalletExternalTxId(partyId)
+
+    return { partyId, externalTxId }
+}
+
+export async function allocateExternalSigningParty(args: {
+    wg: WalletGateway
+    dappPage: Page
+    partyHint: string
+    partyId: string
+}): Promise<void> {
+    await args.wg.allocateWalletParty(args.partyId)
 
     await args.dappPage.getByRole('button', { name: 'Accounts' }).click()
     expect(
@@ -75,9 +82,7 @@ export async function setupExternalSigningParty(args: {
             .count()
     ).toBe(1)
 
-    await args.wg.setPrimaryWallet(partyId)
-
-    return partyId
+    await args.wg.setPrimaryWallet(args.partyId)
 }
 
 export async function clickCreatePingContract(dappPage: Page): Promise<void> {

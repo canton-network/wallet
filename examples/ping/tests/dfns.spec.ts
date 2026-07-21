@@ -6,9 +6,10 @@ import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,
+    initializeExternalSigningParty,
     createPingDappWalletGateway,
     expectTxStatusInDappEvents,
-    setupExternalSigningParty,
+    allocateExternalSigningParty,
     createPingContractAndApproveExternal,
 } from './external-signing-test-helpers.js'
 
@@ -51,13 +52,17 @@ test.describe('Dfns external signing', () => {
         await connectPingDapp(wg, dappPage)
 
         const partyHint = `dfns${Date.now()}`
-        await setupExternalSigningParty({
+        const { partyId, externalTxId } = await initializeExternalSigningParty({
+            wg,
+            partyHint,
+            signingProvider: 'dfns',
+        })
+        await setMockDfnsTransactionState(externalTxId, 'Signed')
+        await allocateExternalSigningParty({
             wg,
             dappPage,
             partyHint,
-            signingProvider: 'dfns',
-            promoteAllocationTx: (externalTxId) =>
-                setMockDfnsTransactionState(externalTxId, 'Signed'),
+            partyId,
         })
     })
 
