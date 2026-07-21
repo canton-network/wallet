@@ -41,7 +41,7 @@ const generateCommand = {
     },
 }
 
-export default {
+export const command = {
     create: {
         transferOffer: generateCommand.create<{ transfer: Transfer }>(
             TestTokenV1.TokenTransferOffer.templateId

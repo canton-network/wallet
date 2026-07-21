@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TestTokenV1 } from '@canton-network/core-test-token'
+import { TestTokenV1, command } from '@canton-network/core-test-token'
 import sdk from '../../common/sdk'
 import { TransferInstructionAPIHandler } from './common'
 import { admin } from '../../common/admin'
@@ -71,7 +71,7 @@ export const getTransferFactory: TransferInstructionAPIHandler<
     const executionResult = await sdk.ledger
         .prepare({
             partyId: admin.party,
-            commands: sdk.testToken.create.rules({ admin: admin.party }),
+            commands: command.create.rules({ admin: admin.party }),
         })
         .sign(admin.keys.privateKey)
         .execute({

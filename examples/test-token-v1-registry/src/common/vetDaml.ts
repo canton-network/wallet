@@ -5,7 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sdk from './sdk'
 import { readFileSync } from 'node:fs'
-import { TestTokenV1 } from '@canton-network/core-test-token'
+import { packageId } from '@canton-network/core-test-token'
 
 /**
  * @customize The registry shouldn't be responsible for vetting daml files. We're doing this for development purposes only. Feel free to remove this when constructing your own token.
@@ -17,7 +17,7 @@ const vetDaml = async () => {
     )
     const darBytes = readFileSync(darFile)
 
-    await sdk.ledger.dar.upload(darBytes, TestTokenV1.packageId)
+    await sdk.ledger.dar.upload(darBytes, packageId)
 }
 
 export default vetDaml

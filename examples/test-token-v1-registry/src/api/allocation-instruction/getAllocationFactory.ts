@@ -6,7 +6,7 @@ import { AllocationInstructionAPIHandler } from './common'
 import { GetFactoryRequest } from '../../openapi-ts/allocation-instruction-v1'
 import sdk from '../../common/sdk'
 import { admin } from '../../common/admin'
-import { TestTokenV1 } from '@canton-network/core-test-token'
+import { command, TestTokenV1 } from '@canton-network/core-test-token'
 import { emptyChoiceContext } from '../common'
 
 export const GetTransferFactoryChoiceArguments = z.object({
@@ -60,7 +60,7 @@ export const getAllocationFactory: AllocationInstructionAPIHandler<
     const executionResult = await sdk.ledger
         .prepare({
             partyId: admin.party,
-            commands: sdk.testToken.create.rules({ admin: admin.party }),
+            commands: command.create.rules({ admin: admin.party }),
         })
         .sign(admin.keys.privateKey)
         .execute({
