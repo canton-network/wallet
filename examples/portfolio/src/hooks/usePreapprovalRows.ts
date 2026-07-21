@@ -6,17 +6,10 @@ import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
 import { useInstruments } from './useInstruments'
 import { useRegistryUrls } from './useRegistryUrls'
 import type { PreapprovalRow } from '../types/preapprovals'
-import type { Instrument } from '../types/instruments'
+import type { PortfolioInstrument } from '../types/instruments'
+import { normalizeRegistryUrl } from '@utils/registry'
 
 const AMULET_INSTRUMENT_ID = 'Amulet'
-
-const normalizeRegistryUrl = (value: string) => {
-    const { origin, pathname } = new URL(value)
-    const normalizedPath = pathname
-        .replace(/\/+$/, '')
-        .replace(/\/registry$/, '')
-    return `${origin}${normalizedPath}`
-}
 
 const isAmuletInstrument = ({
     registryUrl,
@@ -24,14 +17,14 @@ const isAmuletInstrument = ({
     amuletRegistryUrl,
 }: {
     registryUrl: string
-    instrument: Instrument
+    instrument: PortfolioInstrument
     amuletRegistryUrl: string
 }) =>
     instrument.id === AMULET_INSTRUMENT_ID &&
     normalizeRegistryUrl(registryUrl) ===
         normalizeRegistryUrl(amuletRegistryUrl)
 
-export const formatInstrumentName = (instrument: Instrument) => {
+export const formatInstrumentName = (instrument: PortfolioInstrument) => {
     const name = instrument.name || instrument.id
     return instrument.symbol ? `${name} (${instrument.symbol})` : name
 }

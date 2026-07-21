@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { createLink, useRouterState } from '@tanstack/react-router'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import type { RegistryValidationStatus } from '../hooks/useRegistryValidation'
+import type { RegistryValidationStatus } from '../types/registries'
 
 const RouterLink = createLink(MuiLink)
 
