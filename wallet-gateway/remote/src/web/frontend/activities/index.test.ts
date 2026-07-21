@@ -116,17 +116,39 @@ describe('UserUiActivities', () => {
 
         expect(el.shadowRoot?.textContent).toContain('No activities yet')
     })
-
     it('shows pagination when there are more than one page of activities', async () => {
         mockRequest.mockResolvedValue({
-            transactions: makeTransactions(5),
+            transactions: makeTransactions(4),
+            count: 4,
         })
 
         el = await fixture<UserUiActivities>(componentFixture)
 
-        await waitUntil(() => el.transactions.length === 5)
+        await waitUntil(() => el.transactions.length === 4)
+        const pagination = el.shadowRoot?.querySelector(
+            'wg-pagination'
+        ) as HTMLElement & { count: number }
 
-        expect(el.shadowRoot?.querySelector('wg-pagination')).not.toBeNull()
+        expect(pagination).toBeNull()
+    })
+
+    it('shows pagination when there are more than one page of activities', async () => {
+        mockRequest.mockResolvedValue({
+            transactions: makeTransactions(4),
+            nextCursor: 'tx-4:randomisodatestring',
+            count: 5,
+        })
+
+        el = await fixture<UserUiActivities>(componentFixture)
+
+        await waitUntil(() => el.transactions.length === 4)
+        const pagination = el.shadowRoot?.querySelector(
+            'wg-pagination'
+        ) as HTMLElement & { count: number }
+
+        expect(pagination).not.toBeNull()
+        expect(el.totalTransactionCount).toBe(5)
+
         expect(getTransactionCards(el).map((c) => c.transactionId)).toEqual([
             'tx-1',
             'tx-2',
@@ -136,26 +158,44 @@ describe('UserUiActivities', () => {
     })
 
     it('updates current page when pagination emits page-change', async () => {
-        mockRequest.mockResolvedValue({
-            transactions: makeTransactions(5),
+        mockRequest.mockResolvedValueOnce({
+            transactions: makeTransactions(4),
+            nextCursor: 'next-page-cursor',
+            count: 5,
+        })
+
+        mockRequest.mockResolvedValueOnce({
+            transactions: [makeTransaction({ id: 'tx-5', commandId: 'cmd-5' })],
+            nextCursor: null,
+            count: 5,
         })
 
         el = await fixture<UserUiActivities>(componentFixture)
-        await waitUntil(() => el.transactions.length === 5)
+        await waitUntil(() => el.transactions.length === 4)
 
         const pagination = el.shadowRoot?.querySelector(
             'wg-pagination'
-        ) as HTMLElement & { page: number }
+        ) as HTMLElement & { page: number; count: number }
         pagination!.dispatchEvent(new PageChangeEvent(2))
 
         await waitUntil(
-            () => getTransactionCards(el)[0]?.transactionId === 'tx-5',
+            () =>
+                el.transactions.length === 1 &&
+                getTransactionCards(el)[0]?.transactionId === 'tx-5',
             'page 2 rendered'
         )
 
         expect(pagination!.page).toBe(2)
         expect(getTransactionCards(el)).toHaveLength(1)
         expect(getTransactionCards(el)[0]?.transactionId).toBe('tx-5')
+        expect(mockRequest).toHaveBeenCalledTimes(2)
+        expect(mockRequest).toHaveBeenNthCalledWith(2, {
+            method: 'listTransactions',
+            params: {
+                limit: 4,
+                cursor: 'next-page-cursor',
+            },
+        })
     })
 
     it('navigates to approve page when a card emits transaction-review', async () => {
