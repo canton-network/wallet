@@ -1,0 +1,66 @@
+{
+    "name": "@canton-network/example-test-token-v1-registry",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Example registry backend app for CIP-0056 token.",
+    "license": "Apache-2.0",
+    "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "generate:types": "tsx ./src/scripts/generateTypes.ts",
+        "build": "yarn generate:types && tsup --onSuccess \"tsc\"",
+        "dev": "yarn generate:types && NODE_ENV=development tsx --watch src/index.ts",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "test": "yarn generate:types && vitest run --project node --project browser",
+        "test:coverage": "yarn generate:types && vitest run --project node --project browser --coverage"
+    },
+    "devDependencies": {
+        "@types/koa": "^3",
+        "@types/koa-bodyparser": "^4",
+        "@types/lodash": "^4.17.24",
+        "@types/node": "^25.9.3",
+        "@vitest/browser-playwright": "^4.1.8",
+        "@vitest/coverage-v8": "^4.1.8",
+        "openapicmd": "^2.9.2",
+        "playwright": "^1.60.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.8"
+    },
+    "dependencies": {
+        "@canton-network/core-test-token": "workspace:^",
+        "@canton-network/core-types": "workspace:^",
+        "@canton-network/wallet-sdk": "workspace:^",
+        "koa": "^3.2.1",
+        "koa-bodyparser": "^4.4.1",
+        "openapi-backend": "^5.18.0",
+        "tsx": "^4.23.0",
+        "zod": "^4.4.3"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "examples/test-token-v1-registry"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/examples/test-token-v1-registry#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
