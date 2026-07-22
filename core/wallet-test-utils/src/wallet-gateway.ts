@@ -244,14 +244,7 @@ export class WalletGateway {
             name: 'Approve',
         })
 
-        // TODO is that polling part really needed?
-        let commandId: string | null = null
-        for (let i = 0; i < 30 && !commandId; i++) {
-            commandId = new URL(popupPage.url()).searchParams.get('commandId')
-            if (!commandId) {
-                await new Promise((resolve) => setTimeout(resolve, 500))
-            }
-        }
+        const commandId = new URL(popupPage.url()).searchParams.get('commandId')
         if (!commandId) throw new Error('Approve popup has no commandId in URL')
 
         await approveButton.click()
@@ -286,15 +279,8 @@ export class WalletGateway {
             name: 'Reject',
         })
 
-        // TODO is that polling part really needed?
-        let commandId: string | null = null
-        for (let i = 0; i < 30 && !commandId; i++) {
-            commandId = new URL(popupPage.url()).searchParams.get('commandId')
-            if (!commandId) {
-                await new Promise((resolve) => setTimeout(resolve, 500))
-            }
-        }
-        if (!commandId) throw new Error('Reject popup has no commandId in URL')
+        const commandId = new URL(popupPage.url()).searchParams.get('commandId')
+        if (!commandId) throw new Error('Approve popup has no commandId in URL')
         popupPage.once('dialog', async (dialog) => {
             expect(dialog.type()).toBe('confirm')
 

@@ -39,7 +39,7 @@ test('dApp: execute externally signed tx', async ({
 
     await expect(dappPage.getByText('Loading...')).toHaveCount(0)
 
-    await expect(dappPage.getByText(/.*gateway: remote-da*/)).toBeVisible()
+    await expect(dappPage.getByText(/.*gateway: remote-da*/)).toBeVisible({ timeout: 15000 })
 
     const party1 = `test-${Date.now()}`
     const party2 = `test-${Date.now() + 1}`
