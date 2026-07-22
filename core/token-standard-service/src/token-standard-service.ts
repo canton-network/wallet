@@ -1422,7 +1422,6 @@ export class TokenStandardService {
             )
             instruments.push(...instrumentsResponse.instruments)
         }
-
         const instrumentAdmin = await this.getInstrumentAdmin(registryUrl)
         return instruments.map((instrument) => ({
             id: instrument.id,
