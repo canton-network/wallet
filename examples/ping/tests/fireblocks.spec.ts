@@ -16,23 +16,18 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
+    toMockEndpoint,
 } from './external-signing-test-helpers.js'
 
 const fireblocksApiPath =
     process.env.FIREBLOCKS_API_PATH ?? 'http://localhost:3033/v1'
-
-function toFireblocksMockOriginEndpoint(path: string): string {
-    const origin = new URL(fireblocksApiPath).origin
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`
-    return `${origin}${normalizedPath}`
-}
 
 async function setMockFireblocksTransactionState(
     txId: string,
     status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
     const setResponse = await fetch(
-        toFireblocksMockOriginEndpoint('/_admin/setTransactionState'),
+        toMockEndpoint(fireblocksApiPath, '/_admin/setTransactionState'),
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

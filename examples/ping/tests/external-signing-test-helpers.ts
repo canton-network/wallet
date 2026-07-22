@@ -1,10 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    expect,
-    WalletGateway,
-} from '@canton-network/core-wallet-test-utils'
+import { expect, WalletGateway } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 
 export const DAPP_API_PORT = 3030
@@ -13,10 +10,13 @@ export const DAPP_URL = 'http://localhost:8080/'
 const EXECUTED_PAYLOAD_PATTERN =
     /"payload": \{[\s\S]*"updateId": "[^"]+"[\s\S]*"completionOffset": \d+/
 
-export type ExternalSigningProvider =
-    | 'blockdaemon'
-    | 'dfns'
-    | 'fireblocks'
+export type ExternalSigningProvider = 'blockdaemon' | 'dfns' | 'fireblocks'
+
+export function toMockEndpoint(baseUrl: string, path: string): string {
+    const origin = new URL(baseUrl).origin
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    return `${origin}${normalizedPath}`
+}
 
 export function createPingDappWalletGateway(dappPage: Page): WalletGateway {
     return new WalletGateway({

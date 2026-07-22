@@ -11,24 +11,17 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
+    toMockEndpoint,
 } from './external-signing-test-helpers.js'
 
 const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031'
-
-function toBlockdaemonMockEndpoint(path: string): string {
-    const base = blockdaemonApiUrl.endsWith('/')
-        ? blockdaemonApiUrl
-        : `${blockdaemonApiUrl}/`
-    const relativePath = path.startsWith('/') ? path.slice(1) : path
-    return new URL(relativePath, base).toString()
-}
 
 async function setMockBlockdaemonTransactionState(
     txId: string,
     status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
     const promoteResponse = await fetch(
-        toBlockdaemonMockEndpoint('/_admin/setTransactionState'),
+        toMockEndpoint(blockdaemonApiUrl, '/_admin/setTransactionState'),
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -40,11 +33,14 @@ async function setMockBlockdaemonTransactionState(
     )
     expect(promoteResponse.ok).toBeTruthy()
 
-    const txResponse = await fetch(toBlockdaemonMockEndpoint('/getTransaction'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txId }),
-    })
+    const txResponse = await fetch(
+        toMockEndpoint(blockdaemonApiUrl, '/getTransaction'),
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ txId }),
+        }
+    )
     expect(txResponse.ok).toBeTruthy()
     const tx = (await txResponse.json()) as {
         txId: string
