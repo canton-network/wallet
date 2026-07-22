@@ -2,13 +2,6 @@
 
 TypeScript wrapper package for the Test Token DAML codegen.
 
-This package exposes a stable import surface for selected symbols from
-`@daml.js/test-token-v1`, including:
-
-- `TestTokenV1`
-- `packageId`
-- `commands`
-
 ## Exports
 
 From [src/index.ts](src/index.ts):
