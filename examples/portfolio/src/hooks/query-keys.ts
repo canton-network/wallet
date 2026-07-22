@@ -92,6 +92,7 @@ export const queryKeys = {
     isDevNet: {
         forValidator: (validatorUrl: string) =>
             ['isDevNet', validatorUrl] as const,
+        all: ['isDevNet'] as const,
     },
 
     instruments: {
@@ -107,11 +108,6 @@ export const queryKeys = {
     registryInfo: {
         all: ['registryInfo'] as const,
         forRegistry: (url: string) => ['registryInfo', url] as const,
-    },
-
-    registryInfo: {
-        all: ['registryInfo'],
-        forRegistry: (url: string) => ['registryInfo', url],
     },
 
     utilityOperators: {
