@@ -5,12 +5,12 @@ import { MergeUtxosParams, ListHoldingsParams } from './types.js'
 import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
-import { WrappedCommand } from '../../ledger/types.js'
 import { findAsset, LedgerTypes, TokenNamespaceConfig } from '../../../sdk.js'
 import { Decimal } from 'decimal.js'
 import { TransferNamespace } from '../transfer/index.js'
 import { MergeDelegationNamespace } from './mergeDelegation.js'
 import { parseAssets } from '../../utils/url.js'
+import { WrappedCommand } from '@canton-network/core-ledger-client-types'
 
 export class UtxoNamespace {
     public readonly delegatedMerge: MergeDelegationNamespace
