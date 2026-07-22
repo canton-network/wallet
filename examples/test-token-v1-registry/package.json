@@ -18,7 +18,7 @@
     },
     "scripts": {
         "generate:types": "tsx ./src/scripts/generateTypes.ts",
-        "build": "yarn generate:types && tsup --onSuccess \"tsc\"",
+        "build": "yarn generate:types && tsdown --onSuccess \"tsc\"",
         "dev": "yarn generate:types && NODE_ENV=development tsx --watch src/index.ts",
         "clean": "tsc -b --clean; rm -rf dist",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
@@ -34,7 +34,6 @@
         "@vitest/coverage-v8": "^4.1.8",
         "openapicmd": "^2.9.2",
         "playwright": "^1.60.0",
-        "tsup": "^8.5.1",
         "typescript": "^5.9.3",
         "vitest": "^4.1.8"
     },
@@ -45,6 +44,7 @@
         "koa": "^3.2.1",
         "koa-bodyparser": "^4.4.1",
         "openapi-backend": "^5.18.0",
+        "tsdown": "^0.22.12",
         "tsx": "^4.23.0",
         "zod": "^4.4.3"
     },
