@@ -66,6 +66,23 @@ export function createMockEd25519KeyPair(): MockEd25519KeyPair {
     }
 }
 
+// Make a deterministic keypair to handle cases when mock api gets reset and wg not,
+// which causes drift between fireblocks driver cache and what mock API returned when it was randomized
+export function createMockEd25519KeyPairFromSeed(
+    seed: Uint8Array
+): MockEd25519KeyPair {
+    if (seed.length !== 32) {
+        throw new Error(`Ed25519 seed must be 32 bytes, got ${seed.length}`)
+    }
+    const keyPair = nacl.sign.keyPair.fromSeed(seed)
+
+    return {
+        publicKeyBase64: naclUtil.encodeBase64(keyPair.publicKey),
+        publicKeyHex: Buffer.from(keyPair.publicKey).toString('hex'),
+        secretKeyBase64: naclUtil.encodeBase64(keyPair.secretKey),
+    }
+}
+
 export function signMultiHashBase64(
     txHashBase64: string,
     key: MockEd25519KeyPair

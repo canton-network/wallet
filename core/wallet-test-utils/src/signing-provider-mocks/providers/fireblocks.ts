@@ -1,19 +1,37 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { createHash } from 'node:crypto'
 import { SigningProviderMockRoute } from '../server.js'
 import {
-    createMockEd25519KeyPair,
+    createMockEd25519KeyPairFromSeed,
     MockEd25519KeyPair,
     signMultiHashHex,
 } from '../crypto.js'
 
 type AdminSigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
 
+type FireblocksTransactionStatus =
+    'SUBMITTED' | 'COMPLETED' | 'REJECTED' | 'FAILED'
+
+const ADMIN_STATUS_TO_FIREBLOCKS: Record<
+    AdminSigningStatus,
+    FireblocksTransactionStatus
+> = {
+    pending: 'SUBMITTED',
+    signed: 'COMPLETED',
+    rejected: 'REJECTED',
+    failed: 'FAILED',
+}
+
 const CC_COIN_TYPE = 6767
 const MOCK_VAULT_ID = '4'
 
 export const MOCK_FIREBLOCKS_VAULT_NAME = 'Mock Vault'
+
+const MOCK_VAULT_KEY_SEED = createHash('sha256')
+    .update('mock-fireblocks-vault')
+    .digest()
 
 interface MockVaultKey extends MockEd25519KeyPair {
     derivationPath: number[]
@@ -26,8 +44,7 @@ interface MockFireblocksTransaction {
     derivationPath: number[]
     publicKeyHex: string
     signatureHex?: string
-    // TODO probably can remove
-    adminStatus: AdminSigningStatus
+    status: FireblocksTransactionStatus
     externalTxId?: string
 }
 
@@ -47,7 +64,7 @@ interface SetTransactionStateBody {
 }
 
 function createMockVaultKey(): MockVaultKey {
-    const key = createMockEd25519KeyPair()
+    const key = createMockEd25519KeyPairFromSeed(MOCK_VAULT_KEY_SEED)
     return {
         ...key,
         derivationPath: [44, CC_COIN_TYPE, Number(MOCK_VAULT_ID), 0, 0],
@@ -57,35 +74,10 @@ function createMockVaultKey(): MockVaultKey {
 function formatTransactionResponse(
     tx: MockFireblocksTransaction
 ): Record<string, unknown> {
-    if (tx.adminStatus === 'signed') {
-        if (!tx.signatureHex) {
-            throw new Error(`Missing signature for signed transaction ${tx.id}`)
-        }
-        return {
-            id: tx.id,
-            createdAt: tx.createdAt,
-            signedMessages: [
-                {
-                    publicKey: tx.publicKeyHex,
-                    content: tx.messageHex,
-                    signature: { fullSig: tx.signatureHex },
-                    derivationPath: tx.derivationPath,
-                },
-            ],
-        }
-    }
-
-    const fireblocksStatus =
-        tx.adminStatus === 'rejected'
-            ? 'REJECTED'
-            : tx.adminStatus === 'failed'
-              ? 'FAILED'
-              : 'PENDING'
-
-    return {
+    const response: Record<string, unknown> = {
         id: tx.id,
+        status: tx.status,
         createdAt: tx.createdAt,
-        status: fireblocksStatus,
         extraParameters: {
             rawMessageData: {
                 messages: [
@@ -98,6 +90,24 @@ function formatTransactionResponse(
             },
         },
     }
+
+    if (tx.status === 'COMPLETED') {
+        if (!tx.signatureHex) {
+            throw new Error(
+                `Missing signature for completed transaction ${tx.id}`
+            )
+        }
+        response.signedMessages = [
+            {
+                publicKey: tx.publicKeyHex,
+                content: tx.messageHex,
+                signature: { fullSig: tx.signatureHex },
+                derivationPath: tx.derivationPath,
+            },
+        ]
+    }
+
+    return response
 }
 
 export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
@@ -200,7 +210,7 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                     messageHex: message.content,
                     derivationPath: message.derivationPath,
                     publicKeyHex: key.publicKeyHex,
-                    adminStatus: 'pending',
+                    status: 'SUBMITTED',
                     ...(parsed.externalTxId !== undefined && {
                         externalTxId: parsed.externalTxId,
                     }),
@@ -210,7 +220,7 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                 return {
                     body: {
                         id,
-                        status: 'PENDING',
+                        status: tx.status,
                     },
                 }
             },
@@ -271,15 +281,8 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                 }
 
                 const nextTx: MockFireblocksTransaction = {
-                    id: existing.id,
-                    createdAt: existing.createdAt,
-                    messageHex: existing.messageHex,
-                    derivationPath: existing.derivationPath,
-                    publicKeyHex: existing.publicKeyHex,
-                    adminStatus,
-                    ...(existing.externalTxId !== undefined && {
-                        externalTxId: existing.externalTxId,
-                    }),
+                    ...existing,
+                    status: ADMIN_STATUS_TO_FIREBLOCKS[adminStatus],
                     ...(adminStatus === 'signed' && key
                         ? {
                               signatureHex: signMultiHashHex(
