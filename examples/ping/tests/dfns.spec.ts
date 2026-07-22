@@ -22,7 +22,7 @@ async function setMockDfnsTransactionState(
     status: 'Signed' | 'Rejected' | 'Failed'
 ): Promise<void> {
     const setResponse = await fetch(
-        toMockEndpoint(dfnsApiUrl, '/_admin/setSignatureState'),
+        toMockEndpoint(dfnsApiUrl, '/_admin/setTransactionState'),
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

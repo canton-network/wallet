@@ -3,6 +3,7 @@
 
 import { createHash } from 'node:crypto'
 import { SigningProviderMockRoute } from '../server.js'
+import { createMockTxStore } from '../tx-store.js'
 import {
     createMockEd25519KeyPairFromSeed,
     MockEd25519KeyPair,
@@ -119,8 +120,7 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
     const keysByPublicKeyHex = new Map<string, MockVaultKey>([
         [vaultKey.publicKeyHex, vaultKey],
     ])
-    const transactionsById = new Map<string, MockFireblocksTransaction>()
-    let txCounter = 0
+    const txStore = createMockTxStore<MockFireblocksTransaction>((tx) => tx.id)
 
     const routes: SigningProviderMockRoute[] = [
         {
@@ -202,10 +202,8 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                txCounter += 1
-                const id = `mock-fb-tx-${txCounter}`
-                const tx: MockFireblocksTransaction = {
-                    id,
+                const tx = txStore.save({
+                    id: txStore.nextId('mock-fb-tx'),
                     createdAt: Date.now(),
                     messageHex: message.content,
                     derivationPath: message.derivationPath,
@@ -214,12 +212,11 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                     ...(parsed.externalTxId !== undefined && {
                         externalTxId: parsed.externalTxId,
                     }),
-                }
-                transactionsById.set(id, tx)
+                })
 
                 return {
                     body: {
-                        id,
+                        id: tx.id,
                         status: tx.status,
                     },
                 }
@@ -229,16 +226,14 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
             method: 'GET',
             path: '/v1/transactions',
             handler: () => ({
-                body: Array.from(transactionsById.values()).map((tx) =>
-                    formatTransactionResponse(tx)
-                ),
+                body: txStore.list().map(formatTransactionResponse),
             }),
         },
         {
             method: 'GET',
             path: '/v1/transactions/:txId',
             handler: ({ pathParams }) => {
-                const tx = transactionsById.get(pathParams.txId)
+                const tx = txStore.get(pathParams.txId)
                 if (!tx) {
                     return {
                         status: 404,
@@ -263,7 +258,7 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                const existing = transactionsById.get(txId)
+                const existing = txStore.get(txId)
                 if (!existing) {
                     return {
                         status: 404,
@@ -280,7 +275,7 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                const nextTx: MockFireblocksTransaction = {
+                const nextTx = txStore.save({
                     ...existing,
                     status: ADMIN_STATUS_TO_FIREBLOCKS[adminStatus],
                     ...(adminStatus === 'signed' && key
@@ -291,8 +286,7 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                               ),
                           }
                         : {}),
-                }
-                transactionsById.set(txId, nextTx)
+                })
 
                 return {
                     body: formatTransactionResponse(nextTx),

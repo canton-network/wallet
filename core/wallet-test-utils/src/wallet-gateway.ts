@@ -71,9 +71,7 @@ export class WalletGateway {
             await new Promise((resolve) => setTimeout(resolve, 1000))
         }
         if (!this._popup) {
-            if (!this._popup) {
-                throw new Error('popup closed: call openPopup() first')
-            }
+            throw new Error('popup closed: call openPopup() first')
         }
         return this._popup
     }

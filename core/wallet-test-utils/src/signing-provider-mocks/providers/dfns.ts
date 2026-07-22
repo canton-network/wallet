@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SigningProviderMockRoute } from '../server.js'
+import { createMockTxStore } from '../tx-store.js'
 import {
     createMockEd25519KeyPair,
     MockEd25519KeyPair,
@@ -44,7 +45,7 @@ interface DfnsGenerateSignatureBody {
     externalId?: string
 }
 
-interface DfnsSetSignatureStateBody {
+interface DfnsSetTransactionStateBody {
     signatureId?: string
     status?: DfnsApiStatus
     signatureHex?: string
@@ -110,9 +111,8 @@ function signatureApiResponse(signature: DfnsMockSignature): {
 
 export function createDfnsMockProvider(): SigningProviderMockRoute[] {
     const keysById = new Map<string, DfnsMockKey>()
-    const signaturesById = new Map<string, DfnsMockSignature>()
+    const signatureStore = createMockTxStore<DfnsMockSignature>((sig) => sig.id)
     let keyCounter = 0
-    let signatureCounter = 0
 
     const routes: SigningProviderMockRoute[] = [
         {
@@ -217,10 +217,8 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                signatureCounter += 1
-                const signatureId = `sig-mock-${signatureCounter}`
-                const signature: DfnsMockSignature = {
-                    id: signatureId,
+                const signature = signatureStore.save({
+                    id: signatureStore.nextId('mock-dfns-tx'),
                     keyId: key.id,
                     status: 'Pending',
                     kind: signatureBody.kind,
@@ -232,8 +230,7 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
                         signatureBody.message,
                         key.key
                     ),
-                }
-                signaturesById.set(signatureId, signature)
+                })
                 return {
                     body: signatureApiResponse(signature),
                 }
@@ -243,7 +240,7 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
             method: 'GET',
             path: '/keys/:keyId/signatures/:signatureId',
             handler: ({ pathParams }) => {
-                const signature = signaturesById.get(pathParams.signatureId)
+                const signature = signatureStore.get(pathParams.signatureId)
                 if (!signature || signature.keyId !== pathParams.keyId) {
                     return {
                         status: 404,
@@ -259,9 +256,9 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
             method: 'GET',
             path: '/keys/:keyId/signatures',
             handler: ({ pathParams }) => {
-                const signatures = Array.from(signaturesById.values()).filter(
-                    (signature) => signature.keyId === pathParams.keyId
-                )
+                const signatures = signatureStore
+                    .list()
+                    .filter((signature) => signature.keyId === pathParams.keyId)
                 return {
                     body: {
                         items: signatures.map((signature) =>
@@ -274,33 +271,37 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
         },
         {
             method: 'POST',
-            path: '/_admin/setSignatureState',
+            path: '/_admin/setTransactionState',
             handler: ({ body }) => {
                 const { signatureId, status, signatureHex } =
-                    body as DfnsSetSignatureStateBody
+                    body as DfnsSetTransactionStateBody
                 if (!signatureId) {
                     return {
                         status: 400,
                         body: { error: 'missing_signature_id' },
                     }
                 }
-                const existing = signaturesById.get(signatureId)
-                if (!existing) {
+
+                const nextTx = signatureStore.setState(
+                    signatureId,
+                    (existing) => ({
+                        ...existing,
+                        status: status ?? 'Pending',
+                        ...(signatureHex !== undefined && {
+                            signatureHex: toPrefixedHex(
+                                normalizeHex(signatureHex)
+                            ),
+                        }),
+                    })
+                )
+                if (!nextTx) {
                     return {
                         status: 404,
                         body: { error: 'signature_not_found', signatureId },
                     }
                 }
 
-                const nextSignature: DfnsMockSignature = {
-                    ...existing,
-                    status: status ?? 'Pending',
-                    ...(signatureHex !== undefined && {
-                        signatureHex: toPrefixedHex(normalizeHex(signatureHex)),
-                    }),
-                }
-                signaturesById.set(signatureId, nextSignature)
-                return { body: signatureApiResponse(nextSignature) }
+                return { body: signatureApiResponse(nextTx) }
             },
         },
     ]

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SigningProviderMockRoute } from '../server.js'
+import { createMockTxStore } from '../tx-store.js'
 import {
     createMockEd25519KeyPair,
     MockEd25519KeyPair,
@@ -56,11 +57,28 @@ interface SetTransactionStateBody {
     publicKey?: string
 }
 
+function toTransactionResponse(tx: BlockdaemonMockTransaction): {
+    txId: string
+    status: SigningStatus
+    signature?: string
+    publicKey?: string
+} {
+    return {
+        txId: tx.txId,
+        status: tx.status,
+        ...(tx.status === 'signed' && {
+            signature: tx.signature,
+            publicKey: tx.publicKey,
+        }),
+    }
+}
+
 export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
     const keysByPublicKey = new Map<string, BlockdaemonMockKey>()
-    const transactionsById = new Map<string, BlockdaemonMockTransaction>()
+    const txStore = createMockTxStore<BlockdaemonMockTransaction>(
+        (tx) => tx.txId
+    )
     let keyCounter = 0
-    let txCounter = 0
 
     const routes: SigningProviderMockRoute[] = [
         {
@@ -116,12 +134,11 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                txCounter += 1
                 const txId =
                     parsed.internalTxId && parsed.internalTxId.length > 0
                         ? parsed.internalTxId
-                        : `mock-tx-${txCounter}`
-                const tx: BlockdaemonMockTransaction = {
+                        : txStore.nextId('mock-tx')
+                const tx = txStore.save({
                     txId,
                     status: 'pending',
                     tx: parsed.tx,
@@ -131,8 +148,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     ...(parsed.userIdentifier !== undefined && {
                         userIdentifier: parsed.userIdentifier,
                     }),
-                }
-                transactionsById.set(txId, tx)
+                })
 
                 return {
                     body: {
@@ -148,7 +164,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
             path: '/getTransaction',
             handler: ({ body }) => {
                 const { txId } = body as GetTransactionBody
-                const tx = transactionsById.get(txId)
+                const tx = txStore.get(txId)
                 if (!tx) {
                     return {
                         status: 404,
@@ -156,16 +172,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                return {
-                    body: {
-                        txId: tx.txId,
-                        status: tx.status,
-                        ...(tx.status === 'signed' && {
-                            signature: tx.signature,
-                            publicKey: tx.publicKey,
-                        }),
-                    },
-                }
+                return { body: toTransactionResponse(tx) }
             },
         },
         {
@@ -173,30 +180,19 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
             path: '/getTransactions',
             handler: ({ body }) => {
                 const { txIds, publicKeys } = body as GetTransactionsBody
-                const filtered = Array.from(transactionsById.values()).filter(
-                    (transaction) => {
-                        const txIdMatches =
-                            !txIds ||
-                            txIds.length === 0 ||
-                            txIds.includes(transaction.txId)
-                        const publicKeyMatches =
-                            !publicKeys ||
-                            publicKeys.length === 0 ||
-                            publicKeys.includes(transaction.publicKey)
-                        return txIdMatches && publicKeyMatches
-                    }
-                )
+                const filtered = txStore.list().filter((transaction) => {
+                    const txIdMatches =
+                        !txIds ||
+                        txIds.length === 0 ||
+                        txIds.includes(transaction.txId)
+                    const publicKeyMatches =
+                        !publicKeys ||
+                        publicKeys.length === 0 ||
+                        publicKeys.includes(transaction.publicKey)
+                    return txIdMatches && publicKeyMatches
+                })
 
-                return {
-                    body: filtered.map((tx) => ({
-                        txId: tx.txId,
-                        status: tx.status,
-                        ...(tx.status === 'signed' && {
-                            signature: tx.signature,
-                            publicKey: tx.publicKey,
-                        }),
-                    })),
-                }
+                return { body: filtered.map(toTransactionResponse) }
             },
         },
         {
@@ -205,7 +201,6 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
             handler: ({ body }) => {
                 const { txId, status, signature, publicKey } =
                     body as SetTransactionStateBody
-                const resolvedStatus = status ?? 'pending'
                 if (!txId) {
                     return {
                         status: 400,
@@ -215,8 +210,13 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                const existing = transactionsById.get(txId)
-                if (!existing) {
+                const nextTx = txStore.setState(txId, (existing) => ({
+                    ...existing,
+                    status: status ?? 'pending',
+                    ...(publicKey !== undefined && { publicKey }),
+                    ...(signature !== undefined && { signature }),
+                }))
+                if (!nextTx) {
                     return {
                         status: 404,
                         body: {
@@ -226,24 +226,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     }
                 }
 
-                const nextTx: BlockdaemonMockTransaction = {
-                    ...existing,
-                    status: resolvedStatus,
-                    ...(publicKey !== undefined && { publicKey }),
-                    ...(signature !== undefined && { signature }),
-                }
-                transactionsById.set(txId, nextTx)
-
-                return {
-                    body: {
-                        txId: nextTx.txId,
-                        status: nextTx.status,
-                        ...(nextTx.status === 'signed' && {
-                            signature: nextTx.signature,
-                            publicKey: nextTx.publicKey,
-                        }),
-                    },
-                }
+                return { body: toTransactionResponse(nextTx) }
             },
         },
     ]
