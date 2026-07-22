@@ -5,7 +5,6 @@ import { v4 } from 'uuid'
 import { PartyId } from '@canton-network/core-types'
 import * as sdk from '@canton-network/dapp-sdk'
 import {
-    type Holding,
     type TransferInstructionView,
     type PrettyContract,
 } from '@canton-network/core-tx-parser'
@@ -13,7 +12,6 @@ import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
-    HOLDING_INTERFACE_ID,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
     type AllocationInstructionView,
     type AllocationRequestView,
@@ -21,40 +19,6 @@ import {
     type AllocationView,
 } from '@canton-network/core-token-standard'
 import { resolveTokenStandardService, resolveAmuletService } from './resolve'
-
-// PortfolioService is a fat interface that tries to capture everything our
-// portflio can do.  Separating the interface from the implementation will
-// hopefully help us when we port the codebase to use web components instead
-// of react.
-
-export const listHoldings = async ({
-    party,
-}: {
-    party: string
-}): Promise<Holding[]> => {
-    const tokenStandardService = await resolveTokenStandardService()
-
-    // TODO: copy more from tokenStandardController
-    const utxoContracts =
-        await tokenStandardService.listContractsByInterface<Holding>(
-            HOLDING_INTERFACE_ID,
-            party
-        )
-
-    const uniqueContractIds = new Set<string>()
-    const uniqueUtxos: Holding[] = []
-    for (const utxo of utxoContracts) {
-        if (!uniqueContractIds.has(utxo.contractId)) {
-            uniqueContractIds.add(utxo.contractId)
-            uniqueUtxos.push({
-                ...utxo.interfaceViewValue,
-                contractId: utxo.contractId,
-            })
-        }
-    }
-
-    return uniqueUtxos
-}
 
 export const createTransfer = async ({
     registryUrls,
