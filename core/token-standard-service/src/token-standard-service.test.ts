@@ -876,6 +876,39 @@ describe('Token standard service', () => {
         ])
     })
 
+    it('toPretty transactions', async () => {
+        const { service } = makeService()
+        const result = await service.core.toPrettyTransactions([], senderParty)
+        expect(result.transactions).toHaveLength(0)
+        expect(result.nextOffset).toBe(0)
+
+        const updates = [
+            { update: { OffsetCheckpoint: { value: { offset: 50 } } } },
+            { update: { OffsetCheckpoint: { value: { offset: 80 } } } },
+        ]
+
+        const updatesResult = await service.core.toPrettyTransactions(
+            updates as any,
+            senderParty
+        )
+        expect(updatesResult.nextOffset).toBeGreaterThanOrEqual(80)
+    })
+
+    it('toQualfiedMemberId()', async () => {
+        const { service } = makeService()
+        expect(service.core.toQualifiedMemberId('abc123')).toBe('PAR::abc123')
+        expect(service.core.toQualifiedMemberId('PAR::abc123')).toBe(
+            'PAR::abc123'
+        )
+        expect(service.core.toQualifiedMemberId('MED::abc123')).toBe(
+            'MED::abc123'
+        )
+
+        expect(() => service.core.toQualifiedMemberId('')).toThrow(
+            'memberId is required'
+        )
+    })
+
     it('converts all instrument pages to assets', async () => {
         const { service, tokenClient } = makeService()
 
@@ -931,38 +964,6 @@ describe('Token standard service', () => {
         ])
     })
 
-    it('toPretty transactions', async () => {
-        const { service } = makeService()
-        const result = await service.core.toPrettyTransactions([], senderParty)
-        expect(result.transactions).toHaveLength(0)
-        expect(result.nextOffset).toBe(0)
-
-        const updates = [
-            { update: { OffsetCheckpoint: { value: { offset: 50 } } } },
-            { update: { OffsetCheckpoint: { value: { offset: 80 } } } },
-        ]
-
-        const updatesResult = await service.core.toPrettyTransactions(
-            updates as any,
-            senderParty
-        )
-        expect(updatesResult.nextOffset).toBeGreaterThanOrEqual(80)
-    })
-
-    it('toQualfiedMemberId()', async () => {
-        const { service } = makeService()
-        expect(service.core.toQualifiedMemberId('abc123')).toBe('PAR::abc123')
-        expect(service.core.toQualifiedMemberId('PAR::abc123')).toBe(
-            'PAR::abc123'
-        )
-        expect(service.core.toQualifiedMemberId('MED::abc123')).toBe(
-            'MED::abc123'
-        )
-
-        expect(() => service.core.toQualifiedMemberId('')).toThrow(
-            'memberId is required'
-        )
-    })
     it('holding locked returns correctly', async () => {
         const future = new Date(Date.now() + 100_000).toISOString()
         const past = new Date(Date.now() - 100_000).toISOString()
