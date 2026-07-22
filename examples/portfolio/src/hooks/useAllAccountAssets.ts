@@ -12,6 +12,7 @@ import {
 } from '../utils/aggregate-holdings'
 import { useAccounts } from './useAccounts'
 import { queryKeys } from './query-keys'
+import { useConnection } from '../contexts/ConnectionContext'
 
 export interface PortfolioAssetWalletBalanceView {
     id: string
@@ -38,11 +39,16 @@ export interface PortfolioAssetsResult {
 export const useAllAccountAssets = (): PortfolioAssetsResult => {
     const accounts = useAccounts()
     const registryInstruments = useInstruments()
+    const { status } = useConnection()
+    const isConnected = status?.connection?.isConnected ?? false
 
     const holdingsQueries = useQueries({
         queries: accounts.map((account) => ({
-            queryKey: queryKeys.listHoldings.forParty(account.partyId),
+            queryKey: queryKeys.walletConnection.holdings.forParty(
+                account.partyId
+            ),
             queryFn: () => listHoldings({ party: account.partyId }),
+            enabled: isConnected,
         })),
     })
 

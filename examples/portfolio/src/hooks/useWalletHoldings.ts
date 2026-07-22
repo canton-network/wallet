@@ -12,6 +12,7 @@ import {
     type AggregatedHolding,
 } from '../utils/aggregate-holdings'
 import { queryKeys } from './query-keys'
+import { useConnection } from '../contexts/ConnectionContext'
 
 export interface WalletHoldingsResult {
     instruments: AggregatedHolding[]
@@ -26,11 +27,12 @@ export const useWalletHoldings = (
     partyId: string | undefined
 ): WalletHoldingsResult => {
     const registryInstruments = useInstruments()
+    const { status } = useConnection()
 
     const holdingsQuery = useQuery({
-        queryKey: queryKeys.listHoldings.forParty(partyId),
+        queryKey: queryKeys.walletConnection.holdings.forParty(partyId),
         queryFn: () => listHoldings({ party: partyId as string }),
-        enabled: !!partyId,
+        enabled: !!status?.connection?.isConnected && !!partyId,
     })
 
     const aggregatedInstruments = useMemo(() => {

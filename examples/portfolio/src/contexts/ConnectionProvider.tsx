@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
@@ -25,32 +25,67 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     >()
     const [accounts, setAccounts] = useState<sdk.dappAPI.Wallet[]>([])
     const [error, setError] = useState<string | undefined>()
+    const [sessionTokenVersion, setSessionTokenVersion] = useState(0)
+    const currentSessionToken = useRef<string | undefined>(undefined)
+
+    const clearWalletConnectionQueries = useCallback(() => {
+        queryClient.removeQueries({
+            queryKey: queryKeys.walletConnection.all,
+        })
+    }, [queryClient])
+
+    const updateSessionToken = useCallback(
+        (status: sdk.dappAPI.StatusEvent) => {
+            const nextToken = status.session?.accessToken
+            if (nextToken && nextToken !== currentSessionToken.current) {
+                clearResolvedServices()
+                currentSessionToken.current = nextToken
+                setSessionTokenVersion((version) => version + 1)
+            }
+        },
+        []
+    )
+
+    const publishConnectedStatus = useCallback(
+        (status: sdk.dappAPI.StatusEvent, connectionBoundary: boolean) => {
+            if (connectionBoundary) {
+                clearWalletConnectionQueries()
+                clearResolvedServices()
+                currentSessionToken.current = undefined
+                setAccounts([])
+            }
+            updateSessionToken(status)
+            setConnectionStatus(status)
+            setError(undefined)
+        },
+        [clearWalletConnectionQueries, updateSessionToken]
+    )
 
     const connect = useCallback(() => {
         sdk.connect()
             .then(() => sdk.status())
-            .then((status) => {
+            .then((status) => publishConnectedStatus(status, true))
+            .catch((err: unknown) => {
+                clearWalletConnectionQueries()
                 clearResolvedServices()
-                setConnectionStatus(status)
-                setAccounts([])
-            })
-            .catch((err) => {
-                clearResolvedServices()
+                currentSessionToken.current = undefined
                 setConnectionStatus(undefined)
-                setError(err.details)
+                setError(err instanceof Error ? err.message : String(err))
                 setAccounts([])
             })
-    }, [])
+    }, [clearWalletConnectionQueries, publishConnectedStatus])
 
     const open = useCallback(() => sdk.open(), [])
 
     const doDisconnect = useCallback(() => {
+        clearWalletConnectionQueries()
         clearResolvedServices()
+        currentSessionToken.current = undefined
         setConnectionStatus(undefined)
         setAccounts([])
         setError(undefined)
         sdk.disconnect().catch(() => {})
-    }, [])
+    }, [clearWalletConnectionQueries])
 
     const disconnect = useCallback(() => {
         doDisconnect()
@@ -63,8 +98,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             .then(() => sdk.status())
             .then((status) => {
                 if (active) {
-                    setConnectionStatus(status)
-                    setError(undefined)
+                    publishConnectedStatus(status, true)
                 }
             })
             .catch((reason) => {
@@ -88,19 +122,18 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         return () => {
             active = false
         }
-    }, [])
+    }, [publishConnectedStatus])
 
     // Listen for status changes when connected (re-registers after each connect/disconnect)
     useEffect(() => {
         if (!connectionStatus?.connection?.isConnected) return
 
         const onStatusChanged = (status: sdk.dappAPI.StatusEvent) => {
-            clearResolvedServices()
             if (!status.connection?.isConnected) {
                 doDisconnect()
                 return
             }
-            setConnectionStatus(status)
+            publishConnectedStatus(status, false)
         }
 
         sdk.onStatusChanged(onStatusChanged)
@@ -108,9 +141,13 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         return () => {
             void sdk.removeOnStatusChanged(onStatusChanged)
         }
-    }, [connectionStatus?.connection?.isConnected, doDisconnect])
+    }, [
+        connectionStatus?.connection?.isConnected,
+        doDisconnect,
+        publishConnectedStatus,
+    ])
 
-    // Second effect: request accounts only when connected
+    // Request accounts and listen for provider events only while connected.
     useEffect(() => {
         const provider = sdk.getConnectedProvider()
         if (!provider || !connectionStatus?.connection?.isConnected) return
@@ -133,10 +170,10 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log('incoming event', event)
             if (event.status === 'executed') {
                 await queryClient.invalidateQueries({
-                    queryKey: queryKeys.listPendingTransfers.all,
+                    queryKey: queryKeys.walletConnection.pendingTransfers.all,
                 })
                 await queryClient.invalidateQueries({
-                    queryKey: queryKeys.getTransactionHistory.all,
+                    queryKey: queryKeys.walletConnection.transactionHistory.all,
                 })
             }
         }
@@ -160,6 +197,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
                 status: connectionStatus,
                 accounts,
                 error,
+                sessionTokenVersion,
                 connect,
                 open,
                 disconnect,

@@ -1,12 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import * as dappSdk from '@canton-network/dapp-sdk'
 import * as walletSdk from '@canton-network/wallet-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
 import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
 import { queryKeys } from './query-keys'
+import { useReachableRegistryUrls } from './useRegistryUrls'
 import { WalletSDKUtilitiesPlugin } from '@lib/utilities-wallet-sdk-plugin'
 
 const deriveScanApiUrl = (registryUrl: string): URL => {
@@ -18,14 +20,22 @@ const deriveScanApiUrl = (registryUrl: string): URL => {
 }
 
 export const useWalletSdk = () => {
-    const { status } = useConnection()
-    const { amulet } = usePortfolioConfig()
+    const { status, sessionTokenVersion } = useConnection()
+    const { amulet, token } = usePortfolioConfig()
+    const { reachableRegistryUrls, isChecking } = useReachableRegistryUrls()
     const sessionToken = status?.session?.accessToken
     const isConnected = status?.connection?.isConnected ?? false
+    const sdkRegistryUrls = useMemo(
+        () => [...new Set(reachableRegistryUrls.values())].sort(),
+        [reachableRegistryUrls]
+    )
 
     const walletSdkQuery = useQuery({
-        queryKey: queryKeys.walletSdk.forConnection(sessionToken),
-        enabled: isConnected && !!sessionToken,
+        queryKey: queryKeys.walletConnection.walletSdk.forConfig({
+            tokenVersion: sessionTokenVersion,
+            registryUrls: sdkRegistryUrls,
+        }),
+        enabled: isConnected && !!sessionToken && !isChecking,
         staleTime: Infinity,
         gcTime: 0,
         refetchInterval: false,
@@ -41,13 +51,23 @@ export const useWalletSdk = () => {
                 throw new Error('Dapp provider is not available')
             }
 
+            const auth = { method: 'static' as const, token: sessionToken }
             const sdk = await walletSdk.SDK.create({
                 ledgerProvider: provider as never,
                 amulet: {
                     validatorUrl: amulet.validatorUrl,
                     scanApiUrl: deriveScanApiUrl(amulet.registry),
                     registryUrl: amulet.registry,
-                    auth: { method: 'static', token: sessionToken },
+                    auth,
+                },
+                token: {
+                    validatorUrl: token.validatorUrl,
+                    registries: sdkRegistryUrls,
+                    auth,
+                },
+                asset: {
+                    registries: sdkRegistryUrls,
+                    auth,
                 },
             })
 
@@ -56,8 +76,9 @@ export const useWalletSdk = () => {
     })
 
     return {
-        sdk: walletSdkQuery.data!,
-        isLoading: walletSdkQuery.isLoading || walletSdkQuery.isFetching,
+        sdk: walletSdkQuery.data,
+        isLoading:
+            isChecking || walletSdkQuery.isLoading || walletSdkQuery.isFetching,
         error:
             walletSdkQuery.error instanceof Error
                 ? walletSdkQuery.error.message
@@ -69,3 +90,6 @@ export const useWalletSdk = () => {
         },
     }
 }
+
+export type WalletSdk = ReturnType<typeof useWalletSdk>['sdk']
+export type ReadyWalletSdk = NonNullable<WalletSdk>

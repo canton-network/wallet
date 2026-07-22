@@ -13,7 +13,7 @@ import {
     useAllocationRequestsQueryOptions,
     useAllocationsQueryOptions,
 } from '../../hooks/query-options'
-import { useSuspenseQuery, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { WalletsPreview } from '../../components/wallets-preview'
 import type {
     ActionItem,
@@ -24,7 +24,7 @@ import type {
 export function Index() {
     const primaryParty = usePrimaryAccount()?.partyId
 
-    const pendingTransfers = useSuspenseQuery(
+    const pendingTransfers = useQuery(
         usePendingTransfersQueryOptions(primaryParty)
     )
 

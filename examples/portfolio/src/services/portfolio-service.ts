@@ -13,10 +13,6 @@ import type {
     AllocationSpecification,
     AllocationView,
 } from '@canton-network/core-token-standard'
-import type {
-    TransactionHistoryRequest,
-    TransactionHistoryResponse,
-} from './transaction-history-service'
 
 // PortfolioService is a fat interface that tries to capture everything our
 // portflio can do.  Separating the interface from the implementation will
@@ -68,12 +64,6 @@ export interface PortfolioService {
     listAllocationInstructions: (_: {
         party: PartyId
     }) => Promise<PrettyContract<AllocationInstructionView>[]>
-
-    // History
-    getTransactionHistory: (_: {
-        party: PartyId
-        request: TransactionHistoryRequest
-    }) => Promise<TransactionHistoryResponse>
 
     // Network info
     isDevNet: (_: {
