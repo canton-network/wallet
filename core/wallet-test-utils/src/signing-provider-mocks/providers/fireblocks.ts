@@ -31,41 +31,19 @@ interface MockFireblocksTransaction {
     externalTxId?: string
 }
 
-interface TransactionRequestBody {
-    operation?: string
+interface CreateTransactionBody {
     externalTxId?: string
-    note?: string
-    extraParameters?: {
-        rawMessageData?: {
-            messages?: Array<{
-                content?: string
-                derivationPath?: number[]
-            }>
+    extraParameters: {
+        rawMessageData: {
+            messages: Array<{ content: string; derivationPath: number[] }>
             algorithm?: string
         }
     }
 }
 
-interface CreateTransactionBody extends TransactionRequestBody {
-    transactionRequest?: TransactionRequestBody
-}
-
 interface SetTransactionStateBody {
     txId?: string
     status?: AdminSigningStatus
-}
-
-function asTransactionRequest(
-    body: unknown
-): TransactionRequestBody | undefined {
-    const parsed = body as CreateTransactionBody
-    if (parsed.transactionRequest) {
-        return parsed.transactionRequest
-    }
-    if (parsed.extraParameters?.rawMessageData) {
-        return parsed
-    }
-    return undefined
 }
 
 function createMockVaultKey(): MockVaultKey {
@@ -193,15 +171,9 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
             method: 'POST',
             path: '/v1/transactions',
             handler: ({ body }) => {
-                const request = asTransactionRequest(body)
-                if (!request) {
-                    return {
-                        status: 400,
-                        body: { error: 'missing_raw_message' },
-                    }
-                }
+                const parsed = body as CreateTransactionBody
                 const message =
-                    request.extraParameters?.rawMessageData?.messages?.[0]
+                    parsed.extraParameters?.rawMessageData?.messages?.[0]
                 if (!message?.content || !message.derivationPath) {
                     return {
                         status: 400,
@@ -229,8 +201,8 @@ export function createFireblocksMockProvider(): SigningProviderMockRoute[] {
                     derivationPath: message.derivationPath,
                     publicKeyHex: key.publicKeyHex,
                     adminStatus: 'pending',
-                    ...(request.externalTxId !== undefined && {
-                        externalTxId: request.externalTxId,
+                    ...(parsed.externalTxId !== undefined && {
+                        externalTxId: parsed.externalTxId,
                     }),
                 }
                 transactionsById.set(id, tx)

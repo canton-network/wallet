@@ -33,14 +33,14 @@ interface DfnsMockSignature {
 }
 
 interface DfnsCreateKeyBody {
-    scheme?: string
-    curve?: string
-    name?: string
+    scheme: string
+    curve: string
+    name: string
 }
 
 interface DfnsGenerateSignatureBody {
-    kind?: string
-    message?: string
+    kind: string
+    message: string
     externalId?: string
 }
 
@@ -144,19 +144,13 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
             path: '/keys',
             handler: ({ body }) => {
                 const createBody = body as DfnsCreateKeyBody
-                if (
-                    createBody.scheme !== undefined &&
-                    createBody.scheme !== 'EdDSA'
-                ) {
+                if (createBody.scheme !== 'EdDSA') {
                     return {
                         status: 400,
                         body: { error: 'unsupported_scheme' },
                     }
                 }
-                if (
-                    createBody.curve !== undefined &&
-                    createBody.curve !== 'ed25519'
-                ) {
+                if (createBody.curve !== 'ed25519') {
                     return {
                         status: 400,
                         body: { error: 'unsupported_curve' },
@@ -167,7 +161,7 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
                 const keyPair = createMockEd25519KeyPair()
                 const key: DfnsMockKey = {
                     id: `key-mock-${keyCounter}`,
-                    name: createBody.name ?? `mock-key-${keyCounter}`,
+                    name: createBody.name,
                     status: 'Active',
                     scheme: 'EdDSA',
                     curve: 'ed25519',
@@ -229,7 +223,7 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
                     id: signatureId,
                     keyId: key.id,
                     status: 'Pending',
-                    kind: signatureBody.kind ?? 'Message',
+                    kind: signatureBody.kind,
                     messageHex: normalizeHex(signatureBody.message),
                     ...(signatureBody.externalId !== undefined && {
                         externalId: signatureBody.externalId,

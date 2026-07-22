@@ -20,28 +20,28 @@ interface BlockdaemonMockKey {
 interface BlockdaemonMockTransaction {
     txId: string
     status: SigningStatus
-    tx?: string
-    txHash?: string
-    signature?: string
-    publicKey?: string
+    tx: string
+    txHash: string
+    signature: string
+    publicKey: string
     userIdentifier?: string
 }
 
 interface SignTransactionBody {
-    tx?: string
-    txHash?: string
-    keyIdentifier?: { publicKey?: string }
+    tx: string
+    txHash: string
+    keyIdentifier: { publicKey: string; id?: string }
     internalTxId?: string
     userIdentifier?: string
 }
 
 interface CreateKeyBody {
-    name?: string
+    name: string
     userIdentifier?: string
 }
 
 interface GetTransactionBody {
-    txId?: string
+    txId: string
 }
 
 interface GetTransactionsBody {
@@ -54,11 +54,6 @@ interface SetTransactionStateBody {
     status?: SigningStatus
     signature?: string
     publicKey?: string
-}
-
-function createSignatureFromCounter(counter: number): string {
-    const oneByte = ((counter + 127) % 255).toString(16).padStart(2, '0')
-    return Buffer.from(oneByte.repeat(64), 'hex').toString('base64')
 }
 
 export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
@@ -78,7 +73,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                 const keyPair = createMockEd25519KeyPair()
                 const key: BlockdaemonMockKey = {
                     id: `mock-key-${keyCounter}`,
-                    name: name ?? `mock-key-${keyCounter}`,
+                    name,
                     key: keyPair,
                     ...(userIdentifier !== undefined && { userIdentifier }),
                 }
@@ -129,19 +124,13 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                 const tx: BlockdaemonMockTransaction = {
                     txId,
                     status: 'pending',
-                    ...(parsed.tx !== undefined && { tx: parsed.tx }),
-                    ...(parsed.txHash !== undefined && {
-                        // TODO could there be no hash?
-                        txHash: parsed.txHash,
-                    }),
+                    tx: parsed.tx,
+                    txHash: parsed.txHash,
                     publicKey: key.key.publicKeyBase64,
+                    signature: signMultiHashBase64(parsed.txHash, key.key),
                     ...(parsed.userIdentifier !== undefined && {
                         userIdentifier: parsed.userIdentifier,
                     }),
-                    signature:
-                        parsed.txHash !== undefined
-                            ? signMultiHashBase64(parsed.txHash, key.key)
-                            : createSignatureFromCounter(txCounter),
                 }
                 transactionsById.set(txId, tx)
 
@@ -159,19 +148,12 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
             path: '/getTransaction',
             handler: ({ body }) => {
                 const { txId } = body as GetTransactionBody
-                const resolvedTxId =
-                    txId ??
-                    Array.from(transactionsById.keys())[0] ??
-                    'mock-tx-1'
-                let tx = transactionsById.get(resolvedTxId)
+                const tx = transactionsById.get(txId)
                 if (!tx) {
-                    // TODO remove
-                    tx = {
-                        txId: resolvedTxId,
-                        status: 'pending',
-                        signature: createSignatureFromCounter(txCounter + 1),
+                    return {
+                        status: 404,
+                        body: { error: 'transaction_not_found', txId },
                     }
-                    transactionsById.set(resolvedTxId, tx)
                 }
 
                 return {
@@ -200,8 +182,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                         const publicKeyMatches =
                             !publicKeys ||
                             publicKeys.length === 0 ||
-                            (transaction.publicKey !== undefined &&
-                                publicKeys.includes(transaction.publicKey))
+                            publicKeys.includes(transaction.publicKey)
                         return txIdMatches && publicKeyMatches
                     }
                 )
@@ -246,25 +227,10 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                 }
 
                 const nextTx: BlockdaemonMockTransaction = {
-                    txId,
+                    ...existing,
                     status: resolvedStatus,
-                    ...(existing.tx !== undefined && { tx: existing.tx }),
-                    ...(existing.txHash !== undefined && {
-                        txHash: existing.txHash,
-                    }),
-                    ...(existing.userIdentifier !== undefined && {
-                        userIdentifier: existing.userIdentifier,
-                    }),
-                    ...(publicKey !== undefined
-                        ? { publicKey }
-                        : existing.publicKey !== undefined
-                          ? { publicKey: existing.publicKey }
-                          : {}),
-                    ...(signature !== undefined
-                        ? { signature }
-                        : existing.signature !== undefined
-                          ? { signature: existing.signature }
-                          : {}),
+                    ...(publicKey !== undefined && { publicKey }),
+                    ...(signature !== undefined && { signature }),
                 }
                 transactionsById.set(txId, nextTx)
 
@@ -272,10 +238,8 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     body: {
                         txId: nextTx.txId,
                         status: nextTx.status,
-                        ...(nextTx.signature !== undefined && {
+                        ...(nextTx.status === 'signed' && {
                             signature: nextTx.signature,
-                        }),
-                        ...(nextTx.publicKey !== undefined && {
                             publicKey: nextTx.publicKey,
                         }),
                     },
