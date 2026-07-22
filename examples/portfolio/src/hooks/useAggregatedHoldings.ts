@@ -9,14 +9,16 @@ import {
     enrichWithInstrumentInfo,
 } from '../utils/aggregate-holdings'
 import { queryKeys } from './query-keys'
+import { useConnection } from '../contexts/ConnectionContext'
 
 export const useAggregatedHoldings = (partyId: string | undefined) => {
     const instruments = useInstruments()
+    const { status } = useConnection()
 
     const holdingsQuery = useQuery({
-        queryKey: queryKeys.listHoldings.forParty(partyId),
+        queryKey: queryKeys.walletConnection.holdings.forParty(partyId),
         queryFn: () => listHoldings({ party: partyId as string }),
-        enabled: !!partyId,
+        enabled: !!status?.connection?.isConnected && !!partyId,
         select: (holdings) =>
             enrichWithInstrumentInfo(aggregateHoldings(holdings), instruments),
     })

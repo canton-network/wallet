@@ -29,13 +29,13 @@ export const useCreateTransfer = () => {
             }),
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: queryKeys.listPendingTransfers.all,
+                queryKey: queryKeys.walletConnection.pendingTransfers.all,
             })
             await queryClient.invalidateQueries({
-                queryKey: queryKeys.listHoldings.all,
+                queryKey: queryKeys.walletConnection.holdings.all,
             })
             await queryClient.invalidateQueries({
-                queryKey: queryKeys.getTransactionHistory.all,
+                queryKey: queryKeys.walletConnection.transactionHistory.all,
             })
         },
     })
