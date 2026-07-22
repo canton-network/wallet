@@ -91,6 +91,11 @@ test.describe('Blockdaemon external signing', () => {
         await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(dappPage, submission.commandId, 'signed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'executed'
+        )
     })
 
     test('rejects a transaction in the wallet UI', async () => {
