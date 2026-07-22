@@ -11,6 +11,7 @@ import {
     jsonResponse,
     mockLogger,
 } from './test-utils.js'
+import { isValidGetEndpoint, isValidPostEndpoint } from './ledger-client.js'
 
 function versionResponse(version = '3.5.0') {
     return jsonResponse({ version })
@@ -444,6 +445,28 @@ describe('LedgerClient', () => {
                     { path: { 'user-id': 'alice' } }
                 )
             ).resolves.toMatchObject({ user: { id: 'alice' } })
+        })
+    })
+
+    describe('is valid get endpoint', () => {
+        it('should return true if endpoint is in get endpoint set', () => {
+            expect(isValidGetEndpoint('/v2/state/ledger-end')).toBe(true)
+        })
+
+        it('should return false if not in the get endpoint set', () => {
+            expect(isValidGetEndpoint('/v4/state/ledger-end')).toBe(false)
+        })
+    })
+
+    describe('is valid post endpoint', () => {
+        it('should return true if endpoint is in post endpoint set', () => {
+            expect(isValidPostEndpoint('/v2/commands/submit-and-wait')).toBe(
+                true
+            )
+        })
+
+        it('should return false if not in the post endpoint set', () => {
+            expect(isValidPostEndpoint('/v2/state/ledger-end')).toBe(false)
         })
     })
 })

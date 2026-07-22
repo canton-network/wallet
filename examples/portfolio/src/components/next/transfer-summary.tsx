@@ -4,7 +4,7 @@
 import { Box, Typography } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { PillButton } from '@components/ui/PillButton'
-import { formatIsoDateTime } from '@utils/date-format'
+import { formatDateTime } from '@utils/date-format'
 import type { SubmittedTransfer } from './transfer-types'
 
 interface TransferSummaryProps {
@@ -54,11 +54,11 @@ export const TransferSummary: React.FC<TransferSummaryProps> = ({
                 />
                 <SummaryRow
                     label="Date"
-                    value={formatIsoDateTime(transfer.submittedAt)}
+                    value={formatDateTime(transfer.submittedAt)}
                 />
                 <SummaryRow
                     label="Expiration"
-                    value={formatIsoDateTime(transfer.expiry)}
+                    value={formatDateTime(transfer.expiry)}
                 />
                 <SummaryRow
                     label="Recipient"

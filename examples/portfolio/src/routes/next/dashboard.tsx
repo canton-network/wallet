@@ -23,9 +23,11 @@ import {
 } from '@tanstack/react-router'
 import type { RegisteredRouter } from '@tanstack/router-core'
 import { PrimaryBadge } from '@components/dashboard/primary-badge'
+import { CountBadge } from '@components/ui/count-badge'
 import { PillButton } from '@components/ui/PillButton'
 import { useConnection } from '@contexts/ConnectionContext'
 import { useAccounts } from '@hooks/useAccounts'
+import { useOffers } from '@hooks/useOffers'
 
 const SIDEBAR_WIDTH = (theme: Theme) =>
     `clamp(${theme.spacing(25)}, 18vw, ${theme.spacing(35)})`
@@ -39,6 +41,15 @@ function RouteComponent() {
     const { initialized, status, open, disconnect } = useConnection()
     const pathname = useLocation({ select: (location) => location.pathname })
     const matchRoute = useMatchRoute()
+    const offers = useOffers()
+    const activeOfferCount = useMemo(
+        () =>
+            offers.isLoading || offers.isError
+                ? 0
+                : offers.all.filter((offer) => offer.status !== 'Expired')
+                      .length,
+        [offers.all, offers.isLoading, offers.isError]
+    )
     const wallets = useMemo(
         () =>
             accounts.slice().sort(
@@ -119,6 +130,14 @@ function RouteComponent() {
                             to="/next/dashboard/offers"
                             active={pathname === '/next/dashboard/offers'}
                             icon={<NotificationsNoneIcon fontSize="small" />}
+                            endAdornment={
+                                activeOfferCount > 0 ? (
+                                    <CountBadge
+                                        count={activeOfferCount}
+                                        aria-label={`${activeOfferCount} pending ${activeOfferCount === 1 ? 'offer' : 'offers'}`}
+                                    />
+                                ) : undefined
+                            }
                         >
                             Offers
                         </SidebarLink>
@@ -263,8 +282,9 @@ const sidebarLinkSx = (
 ): SxProps<Theme> => ({
     display: 'grid',
     gridTemplateColumns: hasEndAdornment
-        ? '18px minmax(0, 1fr) auto'
+        ? '18px minmax(0, max-content) auto'
         : '18px minmax(0, 1fr)',
+    justifyItems: 'start',
     alignItems: 'center',
     gap: 1,
     minHeight: 34,

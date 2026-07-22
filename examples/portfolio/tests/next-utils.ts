@@ -35,6 +35,14 @@ export const gotoDashboard = async (page: Page): Promise<void> => {
     })
 }
 
+export const gotoOffers = async (page: Page): Promise<void> => {
+    await page.goto(`${BASE_URL}/next/dashboard/offers`)
+    await expect(page).toHaveTitle(/dApp Portfolio/)
+    await expect(page.getByRole('heading', { name: 'Offers' })).toBeVisible({
+        timeout: 10000,
+    })
+}
+
 export const setupRegistry = async (page: Page): Promise<void> => {
     await page.goto(`${BASE_URL}/next/dashboard/settings`)
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({
@@ -142,6 +150,9 @@ export const fillAndSubmitTransfer = async (
     await expect(
         dialog.getByRole('heading', { name: 'Transfer Summary' })
     ).toBeVisible({ timeout: 15000 })
+    await expect(
+        dialog.getByText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+    ).toHaveCount(2)
     await dialog.getByRole('button', { name: 'Close', exact: true }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10000 })
 }
@@ -194,6 +205,24 @@ export const expectTransferOfferGone = async (
               .filter({ hasText: new RegExp(escapeRegExp(opts.amount)) })
 
     await expect(offerRow).not.toBeVisible({ timeout: 15000 })
+}
+
+/**
+ * Assert the sidebar Offers badge shows the expected count of
+ * non-expired offers. Use 0 to assert the badge is hidden.
+ */
+export const expectOffersBadgeCount = async (
+    page: Page,
+    count: number
+): Promise<void> => {
+    const badge = page.getByLabel(/^\d+ pending offers?$/)
+
+    if (count === 0) {
+        await expect(badge).not.toBeVisible({ timeout: 15000 })
+        return
+    }
+
+    await expect(badge).toHaveText(String(count), { timeout: 15000 })
 }
 
 export const switchWallet = async (

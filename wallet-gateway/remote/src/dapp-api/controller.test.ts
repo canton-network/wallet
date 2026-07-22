@@ -514,6 +514,40 @@ describe('dappController', () => {
                 })
             ).rejects.toThrow()
         })
+
+        it('throws an error if an incorrect get endpoint is supplied', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(
+                controller.ledgerApi({
+                    requestMethod: 'get',
+                    resource: '/v2/badresource',
+                })
+            ).rejects.toThrow(`Unsupported get resource: /v2/badresource`)
+        })
+
+        it('throws an error if an incorrect post endpoint is supplied', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(
+                controller.ledgerApi({
+                    requestMethod: 'post',
+                    resource: '/v2/state/ledger-end',
+                })
+            ).rejects.toThrow(`Unsupported post resource: /v2/state/ledger-end`)
+        })
     })
 
     describe('prepareExecute', () => {

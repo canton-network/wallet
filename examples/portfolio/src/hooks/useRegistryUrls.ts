@@ -2,14 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useCallback, useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+    useMutation,
+    useQueries,
+    useQuery,
+    useQueryClient,
+} from '@tanstack/react-query'
 import { type PartyId } from '@canton-network/core-types'
-import { type PortfolioRegistryConfig } from '@lib/schemas'
 import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
-import { resolveTokenStandardClient } from '@services/resolve'
+import { fetchRegistryInfo } from '@lib/registry-client'
+import { normalizeRegistryUrl } from '@utils/registry'
+import type {
+    RegistryEntry,
+    RegistryReachabilityStatus,
+} from '../types/registries'
 import { queryKeys } from '@hooks/query-keys'
 
 const STORAGE_KEY = 'registries'
+const EMPTY: ReadonlyMap<PartyId, string> = new Map()
+
+type RegistryCandidate = {
+    configuredPartyId?: PartyId
+    registryUrl: string
+    isRemovable: boolean
+}
 
 const readFromStorage = (): ReadonlyMap<PartyId, string> => {
     const raw = window.localStorage.getItem(STORAGE_KEY)
@@ -25,108 +41,179 @@ const writeToStorage = (next: ReadonlyMap<PartyId, string>): void => {
     )
 }
 
-// Build the best synchronous view we can from config alone. Registries without
-// a partyId are skipped here because resolving their party requires a network call.
-const configuredRegistriesWithPartyIdsToMap = (
-    registries: PortfolioRegistryConfig[]
-): ReadonlyMap<PartyId, string> => {
-    return new Map(
-        registries.flatMap((registry) =>
-            registry.partyId ? [[registry.partyId, registry.url]] : []
-        )
-    )
-}
+// Combines Amulet, configured token, and stored registries into normalized,
+// URL-keyed candidates. Stored entries replace matching configured URLs.
+const collectRegistryCandidates = (
+    amuletRegistryUrl: string,
+    configuredRegistries: ReadonlyArray<{
+        partyId?: PartyId
+        url: string
+    }>,
+    storedRegistries: ReadonlyMap<PartyId, string>
+): RegistryCandidate[] => {
+    const byUrl = new Map<string, RegistryCandidate>()
 
-const configuredRegistriesToMap = async (
-    registries: PortfolioRegistryConfig[]
-): Promise<ReadonlyMap<PartyId, string>> => {
-    const settled = await Promise.allSettled(
-        registries.map(async (registry): Promise<[PartyId, string]> => {
-            if (registry.partyId) {
-                return [registry.partyId, registry.url]
-            }
-
-            // Some config entries only know the registry URL. Ask the registry for
-            // its metadata so we can key the map by its admin partyId.
-            const adminId = await fetchRegistryAdminId(registry.url)
-
-            return [adminId, registry.url]
+    // Start with application configuration, deduplicating equivalent URLs.
+    for (const registry of [
+        { url: amuletRegistryUrl },
+        ...configuredRegistries,
+    ]) {
+        const registryUrl = normalizeRegistryUrl(registry.url)
+        const current = byUrl.get(registryUrl)
+        byUrl.set(registryUrl, {
+            configuredPartyId: registry.partyId ?? current?.configuredPartyId,
+            registryUrl,
+            isRemovable: current?.isRemovable ?? false,
         })
+    }
+
+    // Overlay registries added through settings so they remain removable.
+    for (const [partyId, url] of storedRegistries) {
+        const registryUrl = normalizeRegistryUrl(url)
+        byUrl.set(registryUrl, {
+            configuredPartyId: partyId,
+            registryUrl,
+            isRemovable: true,
+        })
+    }
+
+    return Array.from(byUrl.values()).sort((left, right) =>
+        left.registryUrl.localeCompare(right.registryUrl)
     )
-    const entries = settled.flatMap((result, index) => {
-        if (result.status === 'fulfilled') {
-            return [result.value]
-        }
-
-        // Keep the usable registries even if one configured registry is down or
-        // misconfigured; the UI can still operate with the remaining entries.
-        console.warn(
-            `Failed to resolve registry ${registries[index].url}:`,
-            result.reason
-        )
-        return []
-    })
-    return new Map(entries)
 }
 
-const mergeRegistryUrls = (
-    configured: ReadonlyMap<PartyId, string>,
-    stored: ReadonlyMap<PartyId, string>
-): ReadonlyMap<PartyId, string> => {
-    // User-provided overrides win over config values.
-    return new Map([...configured, ...stored])
+type RegistryInfoQuery = {
+    data?: { adminId: PartyId }
+    isPending: boolean
+    isError: boolean
 }
 
-const EMPTY: ReadonlyMap<PartyId, string> = new Map()
+const toRegistryEntry = (
+    candidate: RegistryCandidate,
+    query?: RegistryInfoQuery
+): RegistryEntry => {
+    const partyId = candidate.configuredPartyId ?? query?.data?.adminId
+    const status: RegistryReachabilityStatus =
+        !query || query.isPending
+            ? 'checking'
+            : query.isError
+              ? 'unreachable'
+              : 'reachable'
 
-const fetchRegistryAdminId = async (url: string): Promise<PartyId> => {
-    try {
-        const client = await resolveTokenStandardClient({ registryUrl: url })
-        const info = await client.get('/registry/metadata/v1/info')
-        return info.adminId
-    } catch {
-        throw new Error(
-            'Unable to read registry info. Check that the URL points to a reachable token registry.'
-        )
+    return {
+        partyId,
+        registryUrl: candidate.registryUrl,
+        status,
+        isRemovable: candidate.isRemovable,
     }
 }
 
-export const useRegistryUrls = (): ReadonlyMap<PartyId, string> => {
-    const { amulet, token } = usePortfolioConfig()
-    const configuredRegistryConfigs = useMemo(
-        () => [{ url: amulet.registry }, ...token.registries],
-        [amulet.registry, token.registries]
-    )
-
-    const readMergedRegistries = useCallback(async () => {
-        const configuredRegistries = await configuredRegistriesToMap(
-            configuredRegistryConfigs
+const deduplicateRegistryEntriesByParty = (
+    entries: RegistryEntry[]
+): RegistryEntry[] => {
+    const resolvedByParty = new Map(
+        entries.flatMap((entry) =>
+            entry.partyId ? [[entry.partyId, entry] as const] : []
         )
-        return mergeRegistryUrls(configuredRegistries, readFromStorage())
-    }, [configuredRegistryConfigs])
-
-    const readInitialRegistries = useCallback(
-        () =>
-            mergeRegistryUrls(
-                configuredRegistriesWithPartyIdsToMap(
-                    configuredRegistryConfigs
-                ),
-                readFromStorage()
-            ),
-        [configuredRegistryConfigs]
     )
+    const unresolved = entries.filter((entry) => !entry.partyId)
 
-    const { data } = useQuery({
+    return [...unresolved, ...resolvedByParty.values()].sort((left, right) =>
+        left.registryUrl.localeCompare(right.registryUrl)
+    )
+}
+
+export const useRegistryEntries = (): RegistryEntry[] => {
+    const { amulet, token } = usePortfolioConfig()
+
+    // Keep local-storage registries in React Query so mutations update all consumers.
+    const { data: storedRegistries = EMPTY } = useQuery({
         queryKey: queryKeys.registries.all,
-        queryFn: readMergedRegistries,
-        // Show immediately known registries while the async query resolves party
-        // party ids for config entries that only specify a URL.
-        placeholderData: readInitialRegistries,
+        queryFn: readFromStorage,
+        initialData: readFromStorage,
         staleTime: Infinity,
         gcTime: Infinity,
     })
 
-    return data ?? EMPTY
+    const candidates = useMemo(
+        () =>
+            collectRegistryCandidates(
+                amulet.registry,
+                token.registries,
+                storedRegistries
+            ),
+        [amulet.registry, token.registries, storedRegistries]
+    )
+
+    // One metadata query per URL provides both its admin party and reachability.
+    const queries = useQueries({
+        queries: candidates.map(({ registryUrl }) => ({
+            queryKey: queryKeys.registryInfo.forRegistry(registryUrl),
+            queryFn: () => fetchRegistryInfo(registryUrl),
+            retry: false,
+            refetchInterval: 30_000,
+            refetchOnWindowFocus: true,
+        })),
+    })
+
+    return useMemo(() => {
+        const storedParties = new Set(storedRegistries.keys())
+        const entries = candidates.map((candidate, index) =>
+            toRegistryEntry(candidate, queries[index])
+        )
+
+        // A registry added through settings overrides configured entries for the same party
+        const visibleEntries = entries.filter(
+            (entry) =>
+                entry.isRemovable ||
+                !entry.partyId ||
+                !storedParties.has(entry.partyId)
+        )
+
+        return deduplicateRegistryEntriesByParty(visibleEntries)
+    }, [candidates, queries, storedRegistries])
+}
+
+export const useReachableRegistryUrls = () => {
+    const entries = useRegistryEntries()
+
+    const reachableRegistryUrls = useMemo<ReadonlyMap<PartyId, string>>(
+        () =>
+            new Map(
+                entries.flatMap((entry) =>
+                    entry.status === 'reachable' && entry.partyId
+                        ? [[entry.partyId, entry.registryUrl]]
+                        : []
+                )
+            ),
+        [entries]
+    )
+
+    const unreachableEntries = useMemo(
+        () => entries.filter((entry) => entry.status === 'unreachable'),
+        [entries]
+    )
+
+    return {
+        entries,
+        reachableRegistryUrls,
+        unreachableEntries,
+        isChecking: entries.some((entry) => entry.status === 'checking'),
+    }
+}
+
+export const useRegistryUrls = (): ReadonlyMap<PartyId, string> => {
+    const entries = useRegistryEntries()
+
+    return useMemo(
+        () =>
+            new Map(
+                entries.flatMap((entry) =>
+                    entry.partyId ? [[entry.partyId, entry.registryUrl]] : []
+                )
+            ),
+        [entries]
+    )
 }
 
 export const useRegistryMutations = () => {
@@ -140,23 +227,30 @@ export const useRegistryMutations = () => {
             party?: PartyId
             url: string
         }) => {
-            const registryAdminId = await fetchRegistryAdminId(url)
-            const resolvedParty = party ?? registryAdminId
-
-            if (party && party !== registryAdminId) {
+            const registryUrl = normalizeRegistryUrl(url)
+            let info
+            try {
+                info = await fetchRegistryInfo(registryUrl)
+            } catch {
                 throw new Error(
-                    'Registry info is invalid: admin ID does not match the provided party ID'
+                    'Unable to read registry info. Check that the URL points to a reachable token registry.'
                 )
             }
+
+            const resolvedParty = party ?? info.adminId
 
             const current =
                 queryClient.getQueryData<ReadonlyMap<PartyId, string>>(
                     queryKeys.registries.all
                 ) ?? readFromStorage()
             const next = new Map(current)
-            next.set(resolvedParty, url)
+            next.set(resolvedParty, registryUrl)
             writeToStorage(next)
             queryClient.setQueryData(queryKeys.registries.all, next)
+            queryClient.setQueryData(
+                queryKeys.registryInfo.forRegistry(registryUrl),
+                info
+            )
         },
     })
 

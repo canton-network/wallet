@@ -876,6 +876,61 @@ describe('Token standard service', () => {
         ])
     })
 
+    it('converts all instrument pages to assets', async () => {
+        const { service, tokenClient } = makeService()
+
+        tokenClient.get
+            .mockResolvedValueOnce({
+                instruments: [
+                    {
+                        id: 'first-token',
+                        name: 'First Token',
+                        symbol: 'FIRST',
+                    },
+                ],
+                nextPageToken: 'page-2',
+            })
+            .mockResolvedValueOnce({
+                instruments: [
+                    {
+                        id: 'second-token',
+                        name: 'Second Token',
+                        symbol: 'SECOND',
+                    },
+                ],
+            })
+            .mockResolvedValueOnce({ adminId: 'admin-id' })
+
+        const response = await service.instrumentsToAsset(registryUrl)
+
+        expect(tokenClient.get).toHaveBeenNthCalledWith(
+            2,
+            '/registry/metadata/v1/instruments',
+            { query: { pageToken: 'page-2' } }
+        )
+        expect(
+            tokenClient.get.mock.calls.filter(
+                ([path]) => path === '/registry/metadata/v1/instruments'
+            )
+        ).toHaveLength(2)
+        expect(response).toStrictEqual([
+            {
+                admin: 'admin-id',
+                displayName: 'First Token',
+                id: 'first-token',
+                registryUrl,
+                symbol: 'FIRST',
+            },
+            {
+                admin: 'admin-id',
+                displayName: 'Second Token',
+                id: 'second-token',
+                registryUrl,
+                symbol: 'SECOND',
+            },
+        ])
+    })
+
     it('toPretty transactions', async () => {
         const { service } = makeService()
         const result = await service.core.toPrettyTransactions([], senderParty)

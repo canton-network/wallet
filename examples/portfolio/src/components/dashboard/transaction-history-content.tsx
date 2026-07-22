@@ -14,18 +14,18 @@ import {
     TableRow,
     Typography,
 } from '@mui/material'
-import type { Transaction } from '@canton-network/core-tx-parser'
 import { useInView } from 'react-intersection-observer'
 import { TransactionHistoryRow } from './transaction-history-row'
 import {
     getEmptyMessage,
     type TransactionFilter,
+    type TransactionHistoryEntry,
 } from './transaction-history-utils'
 
 interface TransactionHistoryContentProps {
     filter: TransactionFilter
     walletId: string
-    transactions: Transaction[]
+    entries: TransactionHistoryEntry[]
     totalLoadedTransactions: number
     isLoading: boolean
     isError: boolean
@@ -36,12 +36,12 @@ interface TransactionHistoryContentProps {
 }
 
 const TRANSACTION_HISTORY_COLUMNS = [
-    { id: 'type', label: 'Activity', width: '13%' },
+    { id: 'type', label: 'Activity', width: '18%' },
     { id: 'asset', label: 'Asset', width: '13%' },
     { id: 'amount', label: 'Amount', width: '13%' },
     { id: 'date', label: 'Date', width: '17%' },
     { id: 'update-id', label: 'Update ID', width: '22%' },
-    { id: 'counterparty', label: 'Counterparty', width: '22%' },
+    { id: 'counterparty', label: 'Counterparty', width: '17%' },
 ] as const
 
 const TRANSACTION_HISTORY_COLUMN_COUNT = TRANSACTION_HISTORY_COLUMNS.length
@@ -61,7 +61,7 @@ const headerCellSx = {
 export function TransactionHistoryContent({
     filter,
     walletId,
-    transactions,
+    entries,
     totalLoadedTransactions,
     isLoading,
     isError,
@@ -131,7 +131,7 @@ export function TransactionHistoryContent({
                 <TableBody>
                     {isLoading ? (
                         <TransactionHistorySkeletonRows />
-                    ) : transactions.length === 0 ? (
+                    ) : entries.length === 0 ? (
                         <TransactionHistoryMessageRow>
                             {getEmptyMessage({
                                 filter,
@@ -140,10 +140,10 @@ export function TransactionHistoryContent({
                             })}
                         </TransactionHistoryMessageRow>
                     ) : (
-                        transactions.map((transaction) => (
+                        entries.map((entry) => (
                             <TransactionHistoryRow
-                                key={transaction.updateId}
-                                transaction={transaction}
+                                key={`${entry.transaction.updateId}:${entry.eventIndex}`}
+                                entry={entry}
                                 walletId={walletId}
                             />
                         ))
@@ -161,9 +161,7 @@ export function TransactionHistoryContent({
                         <TransactionHistoryMessageRow muted>
                             Loading more transactions…
                         </TransactionHistoryMessageRow>
-                    ) : !hasNextPage &&
-                      !isLoading &&
-                      transactions.length > 0 ? (
+                    ) : !hasNextPage && !isLoading && entries.length > 0 ? (
                         <TransactionHistoryMessageRow muted>
                             No more transactions to load
                         </TransactionHistoryMessageRow>

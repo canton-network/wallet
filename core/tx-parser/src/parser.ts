@@ -448,7 +448,17 @@ export class TransactionParser {
         switch (exercise.choice) {
             case 'TransferRule_Transfer':
             case 'TransferFactory_Transfer':
+            case 'AllocationFactory_Allocate':
+            case 'Allocation_ExecuteTransfer':
                 result = await this.buildTransfer(exercise, tokenStandardChoice)
+                break
+            case 'Allocation_Withdraw':
+            case 'Allocation_Cancel':
+                result = await this.buildBasic(
+                    exercise,
+                    'Unlock',
+                    tokenStandardChoice
+                )
                 break
             case 'TransferInstruction_Accept':
             case 'TransferInstruction_Reject':
