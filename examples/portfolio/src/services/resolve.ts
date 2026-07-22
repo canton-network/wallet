@@ -1,18 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { type Logger, pino } from 'pino'
+import { type Logger } from 'pino'
 import { LedgerClient } from '@canton-network/core-ledger-client'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { ScanProxyClient } from '@canton-network/core-splice-client'
-import { TransactionHistoryService } from './transaction-history-service'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import * as sdk from '@canton-network/dapp-sdk'
 import {
     AuthTokenProvider,
     type AccessTokenProvider,
 } from '@canton-network/core-wallet-auth'
+import { logger } from '@lib/logger'
 
 // This module allows us to resolve (i.e. get an instance of) the different
 // dependency services used throughout the project.
@@ -73,7 +73,6 @@ const createAmuletService = async ({
 }
 
 // Global, but so is the dApp SDK.
-const logger = pino({ name: 'example-portfolio', level: 'debug' })
 const ledgerClient: { singleton: LedgerClient | undefined } = {
     singleton: undefined,
 }
@@ -81,14 +80,12 @@ const tokenStandardService: { singleton: TokenStandardService | undefined } = {
     singleton: undefined,
 }
 const amuletServices = new Map<string, AmuletService>()
-const transactionHistoryServices = new Map()
 
 // Can be called to reset clients on disconnects.
 export const clear = () => {
     ledgerClient.singleton = undefined
     tokenStandardService.singleton = undefined
     amuletServices.clear()
-    transactionHistoryServices.clear()
 }
 
 export const resolveTokenStandardService =
@@ -118,26 +115,6 @@ export const resolveAmuletService = async ({
     })
     amuletServices.set(key, amuletService)
     return amuletService
-}
-
-export const resolveTransactionHistoryService = async ({
-    party,
-}: {
-    party: string
-}): Promise<TransactionHistoryService> => {
-    const key = party
-    const provider = resolveLedgerProvider()
-
-    if (transactionHistoryServices.has(key))
-        return transactionHistoryServices.get(key)
-
-    const transactionHistoryService = new TransactionHistoryService({
-        logger,
-        provider,
-        party,
-    })
-    transactionHistoryServices.set(key, transactionHistoryService)
-    return transactionHistoryService
 }
 
 const noAuthAccessTokenProvider: AccessTokenProvider = {

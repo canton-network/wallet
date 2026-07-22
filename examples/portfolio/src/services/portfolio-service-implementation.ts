@@ -20,15 +20,7 @@ import {
     type AllocationSpecification,
     type AllocationView,
 } from '@canton-network/core-token-standard'
-import {
-    resolveTokenStandardService,
-    resolveTransactionHistoryService,
-    resolveAmuletService,
-} from './resolve'
-import type {
-    TransactionHistoryRequest,
-    TransactionHistoryResponse,
-} from './transaction-history-service'
+import { resolveTokenStandardService, resolveAmuletService } from './resolve'
 
 // PortfolioService is a fat interface that tries to capture everything our
 // portflio can do.  Separating the interface from the implementation will
@@ -288,19 +280,6 @@ export const listAllocationInstructions = async ({
             party
         )
     return contracts
-}
-
-export const getTransactionHistory = async ({
-    party,
-    request,
-}: {
-    party: PartyId
-    request: TransactionHistoryRequest
-}): Promise<TransactionHistoryResponse> => {
-    const transactionHistoryService = await resolveTransactionHistoryService({
-        party,
-    })
-    return transactionHistoryService.query(request)
 }
 
 export const tap = async ({

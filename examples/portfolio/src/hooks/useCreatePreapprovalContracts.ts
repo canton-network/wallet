@@ -2,17 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMutation } from '@tanstack/react-query'
-import { v4 } from 'uuid'
 import type { AssetBody } from '@canton-network/wallet-sdk'
 import type { PartyId } from '@canton-network/core-types'
-import * as dappSdk from '@canton-network/dapp-sdk'
 import { WalletSDKUtilitiesPluginName } from '@lib/utilities-wallet-sdk-plugin'
-import { useWalletSdk } from '@hooks/useWalletSdk'
-
-type WalletSdkWithUtilities = ReturnType<typeof useWalletSdk>['sdk']
+import { useWalletSdk, type ReadyWalletSdk } from '@hooks/useWalletSdk'
+import { submitViaProvider } from '@lib/submit'
 
 type CreatePreapprovalContractsInput = {
-    sdk: WalletSdkWithUtilities
+    sdk: ReadyWalletSdk
     receiver: PartyId
     operator: PartyId
     instrumentAdmin: PartyId
@@ -42,16 +39,7 @@ const createPreapprovalContracts = async ({
         })),
     })
 
-    const provider = dappSdk.getConnectedProvider()
-    await provider?.request({
-        method: 'prepareExecuteAndWait',
-        params: {
-            commands: [preapprovalCommand],
-            commandId: v4(),
-            actAs: [receiver],
-            disclosedContracts,
-        },
-    })
+    await submitViaProvider([preapprovalCommand, disclosedContracts], receiver)
 }
 
 export const useCreatePreapprovalContracts = () => {

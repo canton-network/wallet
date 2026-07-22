@@ -3,10 +3,8 @@
 
 import { useQueries, useQueryClient } from '@tanstack/react-query'
 import { preapprovalStatusQueryOptions } from './query-options'
-import type { useWalletSdk } from './useWalletSdk'
+import type { WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
-
-type WalletSdk = ReturnType<typeof useWalletSdk>['sdk'] | undefined
 
 type UsePreapprovalStatusesArgs = {
     rows: PreapprovalRow[]
