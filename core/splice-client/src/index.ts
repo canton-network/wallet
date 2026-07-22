@@ -5,8 +5,8 @@ export * from './scan-client.js'
 export * from './scan-api-fetch.js'
 export * from './scan-proxy-client.js'
 export {
-    GetResponse,
-    PostRequest,
-    PostResponse,
+    type GetResponse,
+    type PostRequest,
+    type PostResponse,
     ValidatorInternalClient,
 } from './validator-internal-client.js'
