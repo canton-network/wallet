@@ -10,13 +10,58 @@ const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
 const dfnsApiUrl = process.env.DFNS_BASE_URL
 const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
 
-if (!blockdaemonApiUrl || !dfnsApiUrl || !fireblocksApiPath) {
-    throw new Error(`external signing provider api url missing`)
+const webServers = []
+const isLocalhost = (url: URL) => ['localhost', '127.0.0.1'].includes(url.hostname)
+
+// If localhost is set as external signing provider url, then start a mock api for tests
+if (blockdaemonApiUrl) {
+    const url = new URL(blockdaemonApiUrl)
+    if (isLocalhost(url)) {
+    const healthUrl = `${url.origin}/_healthz`
+        webServers.push({
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+            url: healthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        })
+    }
 }
 
-const blockdaemonHealthUrl = `${new URL(blockdaemonApiUrl).origin}/_healthz`
-const dfnsHealthUrl = `${new URL(dfnsApiUrl).origin}/_healthz`
-const fireblocksHealthUrl = `${new URL(fireblocksApiPath).origin}/_healthz`
+if (dfnsApiUrl) {
+    const dfnsHealthUrl = `${new URL(dfnsApiUrl).origin}/_healthz`
+    const url = new URL(dfnsHealthUrl)
+    if (isLocalhost(url)) {
+        const healthUrl = `${url.origin}/_healthz`
+        webServers.push({
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+            url: healthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        })
+    }
+}
+
+if (fireblocksApiPath) {
+    const url = new URL(fireblocksApiPath)
+    if (isLocalhost(url)) {
+        const healthUrl = `${url.origin}/_healthz`
+        webServers.push({
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+            url: healthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        })
+    }
+}
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -86,39 +131,5 @@ export default defineConfig({
         // },
     ],
 
-    webServer: [
-        {
-            command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
-            url: blockdaemonHealthUrl,
-            reuseExistingServer: !process.env.CI,
-            timeout: 30 * 1000,
-            stdout: 'pipe',
-            stderr: 'pipe',
-        },
-        {
-            command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:dfns',
-            url: dfnsHealthUrl,
-            reuseExistingServer: !process.env.CI,
-            timeout: 30 * 1000,
-            stdout: 'pipe',
-            stderr: 'pipe',
-            env: {
-                ...process.env,
-            },
-        },
-        {
-            command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:fireblocks',
-            url: fireblocksHealthUrl,
-            reuseExistingServer: !process.env.CI,
-            timeout: 30 * 1000,
-            stdout: 'pipe',
-            stderr: 'pipe',
-            env: {
-                ...process.env,
-            },
-        },
-    ],
+    webServer: webServers
 })
