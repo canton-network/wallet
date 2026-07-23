@@ -8,6 +8,13 @@ export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
+            exclude: [
+                'src/index.ts',
+                'src/router.ts',
+                'src/**/openapi-ts/**',
+                'src/scripts/**',
+                'src/common/vetDaml.ts', // for dev-mode only
+            ],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
@@ -31,6 +38,7 @@ export default defineConfig({
                 test: {
                     name: 'browser',
                     include: ['src/**/*.test.ts'],
+                    exclude: ['src/common/getOpenApiPath.test.ts'],
                     browser: {
                         enabled: true,
                         provider: playwright({
