@@ -2,22 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig, devices } from '@playwright/test'
-// const blockdaemonApiUrl =
-//     process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031'
-const dfnsApiUrl = process.env.DFNS_BASE_URL ?? 'http://localhost:3032' // TODO get rid of defaults
-const fireblocksApiPath =
-    process.env.FIREBLOCKS_API_PATH ?? 'http://localhost:3033/v1'
-// const blockdaemonHealthUrl = `${new URL(blockdaemonApiUrl).origin}/_healthz`
+import { config as loadEnv } from 'dotenv'
+
+loadEnv({ quiet: true, path: ['.env', '.env.local'] })
+
+const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
+const dfnsApiUrl = process.env.DFNS_BASE_URL
+const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
+
+if (!blockdaemonApiUrl || !dfnsApiUrl || !fireblocksApiPath) {
+    throw new Error(`external signing provider api url missing`)
+}
+
+const blockdaemonHealthUrl = `${new URL(blockdaemonApiUrl).origin}/_healthz`
 const dfnsHealthUrl = `${new URL(dfnsApiUrl).origin}/_healthz`
 const fireblocksHealthUrl = `${new URL(fireblocksApiPath).origin}/_healthz`
-
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -88,15 +87,15 @@ export default defineConfig({
     ],
 
     webServer: [
-        // {
-        //     command:
-        //         'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
-        //     url: blockdaemonHealthUrl,
-        //     reuseExistingServer: !process.env.CI,
-        //     timeout: 30 * 1000,
-        //     stdout: 'pipe',
-        //     stderr: 'pipe',
-        // },
+        {
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+            url: blockdaemonHealthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        },
         {
             command:
                 'yarn workspace @canton-network/example-ping mock:signing-providers:dfns',
