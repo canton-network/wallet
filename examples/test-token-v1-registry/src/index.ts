@@ -18,4 +18,4 @@ if (process.env.NODE_ENV === 'development') await vetDaml()
 
 app.use(bodyParser())
     .use(router)
-    .listen(3000, () => console.info('api listening on http://localhost:3000'))
+    .listen(5634, () => console.info('api listening on http://localhost:5634'))
