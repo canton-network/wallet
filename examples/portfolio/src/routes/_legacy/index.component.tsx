@@ -79,10 +79,7 @@ export function Index() {
             for (const contract of pendingTransfers.data) {
                 const view = contract.interfaceViewValue
                 const transfer = view.transfer
-                const status = view.status
-                const tag = (
-                    'tag' in status ? status.tag : status.current?.tag
-                ) as string
+                const tag = view.status.tag
 
                 const memo =
                     transfer?.meta?.values?.[TokenStandardService.MEMO_KEY] ??

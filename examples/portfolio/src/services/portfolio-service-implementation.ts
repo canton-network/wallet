@@ -4,127 +4,17 @@
 import { v4 } from 'uuid'
 import { PartyId } from '@canton-network/core-types'
 import * as sdk from '@canton-network/dapp-sdk'
-import {
-    type TransferInstructionView,
-    type PrettyContract,
-} from '@canton-network/core-tx-parser'
+import { type PrettyContract } from '@canton-network/core-tx-parser'
 import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
-    TRANSFER_INSTRUCTION_INTERFACE_ID,
     type AllocationInstructionView,
     type AllocationRequestView,
     type AllocationSpecification,
     type AllocationView,
 } from '@canton-network/core-token-standard'
 import { resolveTokenStandardService, resolveAmuletService } from './resolve'
-
-export const createTransfer = async ({
-    registryUrls,
-    sender,
-    receiver,
-    instrumentId,
-    amount,
-    expiry,
-    memo,
-}: {
-    registryUrls: ReadonlyMap<PartyId, string>
-    sender: PartyId
-    receiver: PartyId
-    instrumentId: { admin: PartyId; id: string }
-    amount: string
-    expiry: Date
-    memo?: string
-}) => {
-    const registryUrl = registryUrls.get(instrumentId.admin)
-    if (!registryUrl)
-        throw new Error(`no registry URL for admin ${instrumentId.admin}`)
-    const tokenStandardService = await resolveTokenStandardService()
-
-    const [transferCommand, disclosedContracts] =
-        await tokenStandardService.transfer.createTransfer(
-            sender,
-            receiver,
-            amount,
-            instrumentId.admin,
-            instrumentId.id,
-            registryUrl,
-            undefined, // inputUtxos
-            memo,
-            expiry, // expiryDate
-            undefined, // Metadata
-            undefined // prefetchedRegistryChoiceContext
-        )
-
-    const request = {
-        commands: [{ ExerciseCommand: transferCommand }],
-        commandId: v4(),
-        actAs: [sender],
-        disclosedContracts,
-    }
-
-    const provider = sdk.getConnectedProvider()
-    // TODO: check success
-    await provider?.request({
-        method: 'prepareExecuteAndWait',
-        params: request,
-    })
-}
-
-export const exerciseTransfer = async ({
-    registryUrls,
-    party,
-    contractId,
-    instrumentId,
-    instructionChoice,
-}: {
-    registryUrls: ReadonlyMap<PartyId, string>
-    party: PartyId
-    contractId: string
-    instrumentId: { admin: string; id: string }
-    instructionChoice: 'Accept' | 'Reject' | 'Withdraw'
-}) => {
-    // TODO: resolve this BEFORE calling this function so we can gray out the
-    // button?
-    const registryUrl = registryUrls.get(instrumentId.admin)
-    if (!registryUrl)
-        throw new Error(`no registry URL for admin ${instrumentId.admin}`)
-
-    const tokenStandardService = await resolveTokenStandardService()
-    const [acceptCommand, disclosedContracts] =
-        await tokenStandardService.transfer.createTransferInstruction(
-            contractId,
-            registryUrl,
-            instructionChoice
-        )
-
-    const request = {
-        commands: [{ ExerciseCommand: acceptCommand }],
-        commandId: v4(),
-        actAs: [party],
-        disclosedContracts,
-    }
-
-    const provider = sdk.getConnectedProvider()
-    // TODO: check success
-    await provider?.request({
-        method: 'prepareExecuteAndWait',
-        params: request,
-    })
-}
-
-export const listPendingTransfers = async ({
-    party,
-}: {
-    party: PartyId
-}): Promise<PrettyContract<TransferInstructionView>[]> => {
-    const tokenStandardService = await resolveTokenStandardService()
-    return await tokenStandardService.listContractsByInterface<TransferInstructionView>(
-        TRANSFER_INSTRUCTION_INTERFACE_ID,
-        party
-    )
-}
 
 export const listAllocationRequests = async ({
     party,
