@@ -1,18 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import z from 'zod'
 import { AllocationInstructionAPIHandler } from './common'
-import { GetFactoryRequest } from '../../openapi-ts/allocation-instruction-v1'
 import sdk from '../../common/sdk'
 import { admin } from '../../common/admin'
 import { command, TestTokenV1 } from '@canton-network/core-test-token'
 import { emptyChoiceContext } from '../common'
-
-export const GetTransferFactoryChoiceArguments = z.object({
-    sender: z.string(),
-    receiver: z.string(),
-})
 
 /**
  * Resolves or creates an allocation factory for initiating allocation workflows.
@@ -23,23 +16,7 @@ export const GetTransferFactoryChoiceArguments = z.object({
  */
 export const getAllocationFactory: AllocationInstructionAPIHandler<
     'getAllocationFactory'
-> = async (ctx) => {
-    const { choiceArguments } = ctx.request.body as GetFactoryRequest
-
-    const parsedChoiceArguments =
-        GetTransferFactoryChoiceArguments.safeParse(choiceArguments)
-
-    if (!parsedChoiceArguments.success) {
-        return {
-            status: 400,
-            payload: {
-                error: JSON.stringify(
-                    JSON.parse(parsedChoiceArguments.error.message)
-                ),
-            },
-        }
-    }
-
+> = async () => {
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
