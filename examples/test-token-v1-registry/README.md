@@ -47,7 +47,7 @@ Run in development mode:
 yarn workspace @canton-network/example-test-token-v1-registry dev
 ```
 
-The API listens on `http://localhost:3000`.
+The API listens on `http://localhost:5634`.
 
 ## Project Structure
 
@@ -100,6 +100,28 @@ Notes:
 - coverage thresholds are defined in `vitest.config.ts`
 
 ## Development & Contribution Guide
+
+## @customize Flag
+
+This example includes `@customize` comments in selected files.
+
+What it is for:
+
+- marks places that are intentionally project-specific
+- highlights decisions made for this reference implementation that you will likely want to change in your own token backend
+- acts as a migration checklist when copying this project into a new repository or package
+
+When to look it up:
+
+- right after copying/scaffolding this example for your own token
+- before first production-like deployment
+- when replacing test/demo behavior with your real business logic and infrastructure
+
+How to use it:
+
+1. Search the project for `@customize`.
+1. Review each marked location and decide whether to keep, replace, or remove that logic.
+1. Prioritize security, auth, persistence, and startup/init code paths first.
 
 Development loop:
 
