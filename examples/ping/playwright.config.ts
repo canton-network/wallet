@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig, devices } from '@playwright/test'
-const blockdaemonApiUrl =
-    process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031'
-const dfnsApiUrl = process.env.DFNS_BASE_URL ?? 'http://localhost:3032'
+// const blockdaemonApiUrl =
+//     process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031'
+const dfnsApiUrl = process.env.DFNS_BASE_URL ?? 'http://localhost:3032' // TODO get rid of defaults
 const fireblocksApiPath =
     process.env.FIREBLOCKS_API_PATH ?? 'http://localhost:3033/v1'
-const blockdaemonHealthUrl = `${new URL(blockdaemonApiUrl).origin}/_healthz`
+// const blockdaemonHealthUrl = `${new URL(blockdaemonApiUrl).origin}/_healthz`
 const dfnsHealthUrl = `${new URL(dfnsApiUrl).origin}/_healthz`
 const fireblocksHealthUrl = `${new URL(fireblocksApiPath).origin}/_healthz`
 
@@ -88,15 +88,15 @@ export default defineConfig({
     ],
 
     webServer: [
-        {
-            command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
-            url: blockdaemonHealthUrl,
-            reuseExistingServer: !process.env.CI,
-            timeout: 30 * 1000,
-            stdout: 'pipe',
-            stderr: 'pipe',
-        },
+        // {
+        //     command:
+        //         'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+        //     url: blockdaemonHealthUrl,
+        //     reuseExistingServer: !process.env.CI,
+        //     timeout: 30 * 1000,
+        //     stdout: 'pipe',
+        //     stderr: 'pipe',
+        // },
         {
             command:
                 'yarn workspace @canton-network/example-ping mock:signing-providers:dfns',
