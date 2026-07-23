@@ -18,12 +18,12 @@
     },
     "scripts": {
         "generate:types": "tsx ./src/scripts/generateTypes.ts",
-        "build": "yarn generate:types && tsdown --onSuccess \"tsc\"",
-        "dev": "yarn generate:types && NODE_ENV=development tsx --watch src/index.ts",
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "NODE_ENV=development tsx --watch src/index.ts",
         "clean": "tsc -b --clean; rm -rf dist",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
-        "test": "yarn generate:types && vitest run --project node --project browser",
-        "test:coverage": "yarn generate:types && vitest run --project node --project browser --coverage"
+        "test": "vitest run --project node --project browser",
+        "test:coverage": "vitest run --project node --project browser --coverage"
     },
     "devDependencies": {
         "@types/koa": "^3",
