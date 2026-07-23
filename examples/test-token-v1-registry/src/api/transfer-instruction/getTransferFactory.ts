@@ -44,12 +44,12 @@ export const getTransferFactory: TransferInstructionAPIHandler<
         }
     }
 
-    const transferKind =
-        parsedChoiceArguments.data.transferKind ??
-        (parsedChoiceArguments.data.sender ===
+    const isToSelf =
+        parsedChoiceArguments.data.sender ===
         parsedChoiceArguments.data.receiver
-            ? 'self'
-            : 'offer')
+
+    const transferKind =
+        parsedChoiceArguments.data.transferKind ?? (isToSelf ? 'self' : 'offer')
 
     // fetch the factory contract (if existing)...
     const fetchedFactory = (
