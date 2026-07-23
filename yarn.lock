@@ -1741,6 +1741,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@canton-network/core-test-token@workspace:core/test-token":
+  version: 0.0.0-use.local
+  resolution: "@canton-network/core-test-token@workspace:core/test-token"
+  dependencies:
+    "@canton-network/core-ledger-client-types": "workspace:^"
+    "@canton-network/core-token-standard": "workspace:^"
+    "@canton-network/core-types": "workspace:^"
+    "@canton-network/core-wallet-auth": "workspace:^"
+    "@daml/types": "npm:^3.5.1"
+    "@mojotech/json-type-validation": "npm:^3.1.0"
+    "@rollup/plugin-alias": "npm:^5.1.1"
+    "@rollup/plugin-commonjs": "npm:^29.0.3"
+    "@rollup/plugin-json": "npm:^6.1.0"
+    "@rollup/plugin-node-resolve": "npm:^16.0.3"
+    "@rollup/plugin-typescript": "npm:^12.3.0"
+    lodash: "npm:^4.18.1"
+    openapi-fetch: "npm:^0.17.0"
+    playwright: "npm:^1.60.0"
+    rollup: "npm:^4.62.0"
+    rollup-plugin-dts: "npm:^6.4.1"
+    tslib: "npm:^2.8.1"
+    typescript: "npm:^5.9.3"
+    uuid: "npm:^14.0.0"
+    zod: "npm:^4.4.3"
+  languageName: unknown
+  linkType: soft
+
 "@canton-network/core-token-standard-service@workspace:^, @canton-network/core-token-standard-service@workspace:core/token-standard-service":
   version: 0.0.0-use.local
   resolution: "@canton-network/core-token-standard-service@workspace:core/token-standard-service"
@@ -2576,7 +2603,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@daml/types@npm:^3.5.2":
+"@daml/types@npm:^3.5.1, @daml/types@npm:^3.5.2":
   version: 3.5.2
   resolution: "@daml/types@npm:3.5.2"
   dependencies:
@@ -13194,9 +13221,9 @@ __metadata:
   linkType: hard
 
 "fast-uri@npm:^3.0.1":
-  version: 3.1.2
-  resolution: "fast-uri@npm:3.1.2"
-  checksum: 10c0/5b35641895959f3f7ab7a7b1b5542bded159346f25ec9f256817b206d50b64eda5828e90d605a2e2fc645c90519a7259c2bab2c942ee728c88b88e5be21b090d
+  version: 3.1.4
+  resolution: "fast-uri@npm:3.1.4"
+  checksum: 10c0/f90948821ceb49980f64f89b8216ba498f5957f26035be813526a55b6145d26cbd63ef5618d5205a3292b31edc9c08589749350cd72bd86c7095eb434dceb757
   languageName: node
   linkType: hard
 
@@ -18401,7 +18428,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:^4.62.2":
+"rollup@npm:^4.62.0, rollup@npm:^4.62.2":
   version: 4.62.2
   resolution: "rollup@npm:4.62.2"
   dependencies:
@@ -20489,7 +20516,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^14.0.1":
+"uuid@npm:^14.0.0, uuid@npm:^14.0.1":
   version: 14.0.1
   resolution: "uuid@npm:14.0.1"
   bin:
