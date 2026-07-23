@@ -11,7 +11,8 @@ import { queryKeys } from './query-keys'
 import type { WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
 import { logger } from '@lib/logger'
-import { TransactionHistoryService } from '../services/transaction-history-service'
+import { TransactionHistoryService } from '@services/transaction-history-service'
+import { toUniquePortfolioHoldings } from '@utils/holdings'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -75,6 +76,30 @@ export const transactionHistoryServiceQueryOptions = (partyId: string) =>
         },
         staleTime: Infinity,
         gcTime: Infinity,
+    })
+
+export const holdingsQueryOptions = ({
+    partyId,
+    sdk,
+}: {
+    partyId: string | undefined
+    sdk: WalletSdk
+}) =>
+    queryOptions({
+        queryKey: queryKeys.walletConnection.holdings.forParty(partyId),
+        enabled: !!partyId && !!sdk,
+        queryFn: async () => {
+            if (!partyId || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+
+            const contracts = await sdk.token.utxos.list({
+                partyId,
+                includeLocked: true,
+            })
+
+            return toUniquePortfolioHoldings(contracts)
+        },
     })
 
 export const usePendingTransfersQueryOptions = (party: string | undefined) => {
