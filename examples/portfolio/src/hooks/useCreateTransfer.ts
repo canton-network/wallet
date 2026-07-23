@@ -25,6 +25,10 @@ export const useCreateTransfer = () => {
 
     return useMutation({
         mutationFn: async (args: CreateTransferArgs) => {
+            if (!sdk) {
+                throw new Error('Wallet SDK is not ready')
+            }
+
             const registryUrl = registryUrls.get(args.instrumentId.admin)
             if (!registryUrl) {
                 throw new Error(
@@ -39,10 +43,6 @@ export const useCreateTransfer = () => {
                 throw new Error(
                     `Registry for admin ${args.instrumentId.admin} is not reachable`
                 )
-            }
-
-            if (!sdk) {
-                throw new Error('Wallet SDK is not ready')
             }
 
             const preparedCommand = await sdk.token.transfer.create({

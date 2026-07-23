@@ -22,6 +22,10 @@ export const useExerciseTransfer = () => {
             instrumentId: { admin: string; id: string }
             instructionChoice: 'Accept' | 'Reject' | 'Withdraw'
         }) => {
+            if (!sdk) {
+                throw new Error('Wallet SDK is not ready')
+            }
+
             const registryUrl = registryUrls.get(args.instrumentId.admin)
             if (!registryUrl) {
                 throw new Error(
@@ -36,10 +40,6 @@ export const useExerciseTransfer = () => {
                 throw new Error(
                     `Registry for admin ${args.instrumentId.admin} is not reachable`
                 )
-            }
-
-            if (!sdk) {
-                throw new Error('Wallet SDK is not ready')
             }
 
             const choiceArgs = {
@@ -61,6 +61,12 @@ export const useExerciseTransfer = () => {
                     preparedCommand =
                         await sdk.token.transfer.withdraw(choiceArgs)
                     break
+                default: {
+                    const unsupportedChoice: never = args.instructionChoice
+                    throw new Error(
+                        `Unsupported instruction choice: ${unsupportedChoice}`
+                    )
+                }
             }
 
             await submitViaProvider(preparedCommand, args.party)
