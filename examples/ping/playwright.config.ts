@@ -37,7 +37,7 @@ if (dfnsApiUrl) {
         const healthUrl = `${url.origin}/_healthz`
         webServers.push({
             command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+                'yarn workspace @canton-network/example-ping mock:signing-providers:dfns',
             url: healthUrl,
             reuseExistingServer: !process.env.CI,
             timeout: 30 * 1000,
@@ -53,7 +53,7 @@ if (fireblocksApiPath) {
         const healthUrl = `${url.origin}/_healthz`
         webServers.push({
             command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+                'yarn workspace @canton-network/example-ping mock:signing-providers:fireblocks',
             url: healthUrl,
             reuseExistingServer: !process.env.CI,
             timeout: 30 * 1000,
