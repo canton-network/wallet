@@ -32,17 +32,29 @@ export const resolveAllocationAsset = ({
         )
     }
 
-    const asset = instruments
-        .get(instrumentId.admin)
-        ?.find((instrument) => instrument.id === instrumentId.id)
+    const registryInstruments = instruments.get(instrumentId.admin)
+    if (!registryInstruments) {
+        throw new Error(
+            `Instrument metadata for admin ${instrumentId.admin} is not available`
+        )
+    }
+
+    const asset = registryInstruments.find(
+        (instrument) => instrument.id === instrumentId.id
+    )
+
+    if (!asset) {
+        throw new Error(
+            `Instrument ${instrumentId.id} was not found for admin ${instrumentId.admin}`
+        )
+    }
 
     if (
-        !asset ||
         normalizeRegistryUrl(asset.registryUrl.href) !==
-            normalizeRegistryUrl(reachableRegistryUrl)
+        normalizeRegistryUrl(reachableRegistryUrl)
     ) {
         throw new Error(
-            `Instrument ${instrumentId.id} for admin ${instrumentId.admin} is not available`
+            `Registry URL for instrument ${instrumentId.id} does not match the reachable registry URL`
         )
     }
 
