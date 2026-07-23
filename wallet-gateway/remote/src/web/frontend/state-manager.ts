@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AllowedRoute } from '@canton-network/core-wallet-ui-components'
+import {
+    encryptString,
+    destroyTokenKey,
+    decryptString,
+} from './access-token-utils.js'
 
 class StateManager {
     static localStorageKey(item: string): string {
@@ -35,6 +40,43 @@ class StateManager {
         this.state.delete(key)
     }
 
+    private accessTokenCache: string | undefined
+    private accessTokenLoaded = false
+
+    accessToken2 = {
+        get: async (): Promise<string | undefined> => {
+            if (this.accessToken) return this.accessTokenCache
+            const stored = localStorage.getItem(
+                StateManager.localStorageKey('accessToken')
+            )
+            if (!stored) {
+                this.accessTokenLoaded = true
+                return undefined
+            }
+            try {
+                this.accessTokenCache = await decryptString(stored)
+            } catch (error) {
+                localStorage.removeItem(
+                    StateManager.localStorageKey('accessToken')
+                )
+                console.warn(error)
+                this.accessTokenCache = undefined
+            }
+            this.accessTokenLoaded = true
+            return this.accessTokenCache
+        },
+        set: async (token: string) => {
+            const encryptedToken = await encryptString(token)
+            this.accessTokenCache = encryptedToken
+            this.accessTokenLoaded = true
+        },
+        clear: async () => {
+            localStorage.removeItem(StateManager.localStorageKey('accessToken'))
+            this.accessTokenCache = undefined
+            this.accessTokenLoaded = false
+        },
+    }
+
     accessToken = {
         get: () => this.getWithStorage('accessToken'),
         set: (token: string) => this.setWithStorage('accessToken', token),
@@ -66,6 +108,11 @@ class StateManager {
         this.networkId.clear()
         this.expirationDate.clear()
         this.intendedPage.clear()
+    }
+
+    async revokeAccessToken(): Promise<void> {
+        await this.accessToken2.clear()
+        await destroyTokenKey()
     }
 }
 
