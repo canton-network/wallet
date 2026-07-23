@@ -3,7 +3,6 @@
 
 import { PartyId } from '@canton-network/core-types'
 import type {
-    Holding,
     PrettyContract,
     TransferInstructionView,
 } from '@canton-network/core-tx-parser'
@@ -19,9 +18,6 @@ import type {
 // hopefully help us when we port the codebase to use web components instead
 // of react.
 export interface PortfolioService {
-    // Holdings
-    listHoldings: ({ party }: { party: string }) => Promise<Holding[]>
-
     // Transfers
     createTransfer: (_: {
         registryUrls: ReadonlyMap<PartyId, string>
