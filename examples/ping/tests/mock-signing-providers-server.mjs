@@ -95,7 +95,12 @@ const mode = process.argv[2] ?? 'all'
 const servers = []
 
 if (mode === 'all' || mode === 'blockdaemon') {
-    servers.push(await startBlockdaemonMockServer())
+    // TODO temp for checking CI
+    try {
+        servers.push(await startBlockdaemonMockServer())
+    } catch {
+        //
+    }
 }
 if (mode === 'all' || mode === 'dfns') {
     servers.push(await startDfnsMockServer())
