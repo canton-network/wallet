@@ -17,6 +17,7 @@ import { emptyChoiceContext } from '../common'
 export const getAllocationFactory: AllocationInstructionAPIHandler<
     'getAllocationFactory'
 > = async () => {
+    // fetch factory contract (if existing)...
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
@@ -34,6 +35,7 @@ export const getAllocationFactory: AllocationInstructionAPIHandler<
         }
     }
 
+    // ...and create one otherwise
     const executionResult = await sdk.ledger
         .prepare({
             partyId: admin.party,
@@ -44,6 +46,7 @@ export const getAllocationFactory: AllocationInstructionAPIHandler<
             partyId: admin.party,
         })
 
+    // fetch the newly created contract id
     const factoryContract = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,

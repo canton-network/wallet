@@ -27,6 +27,7 @@ export const GetTransferFactoryChoiceArguments = z.object({
 export const getTransferFactory: TransferInstructionAPIHandler<
     'getTransferFactory'
 > = async (ctx) => {
+    // get choice arguments and invalidate them
     const { choiceArguments } = ctx.request.body as GetFactoryRequest
 
     const parsedChoiceArguments =
@@ -50,6 +51,7 @@ export const getTransferFactory: TransferInstructionAPIHandler<
             ? 'self'
             : 'offer')
 
+    // fetch the factory contract (if existing)...
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
@@ -68,6 +70,7 @@ export const getTransferFactory: TransferInstructionAPIHandler<
         }
     }
 
+    // ...and create one otherwise
     const executionResult = await sdk.ledger
         .prepare({
             partyId: admin.party,
@@ -78,6 +81,7 @@ export const getTransferFactory: TransferInstructionAPIHandler<
             partyId: admin.party,
         })
 
+    // fetch the newly created contract id
     const factoryContract = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
