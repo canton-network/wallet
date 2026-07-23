@@ -20,7 +20,7 @@ import {
 } from './external-signing-test-helpers.js'
 
 const fireblocksApiPath =
-    process.env.FIREBLOCKS_API_PATH ?? 'http://localhost:3033/v1'
+    process.env.FIREBLOCKS_API_PATH
 
 async function setMockFireblocksTransactionState(
     txId: string,

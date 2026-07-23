@@ -14,7 +14,7 @@ import {
     toMockEndpoint,
 } from './external-signing-test-helpers.js'
 
-const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL ?? 'http://localhost:3031'
+const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
 
 async function setMockBlockdaemonTransactionState(
     txId: string,

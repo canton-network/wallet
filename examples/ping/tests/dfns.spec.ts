@@ -15,7 +15,7 @@ import {
 } from './external-signing-test-helpers.js'
 
 // TODO let's remove those defaults from here and maybe make playwright run providers tests only if env var is available
-const dfnsApiUrl = process.env.DFNS_BASE_URL ?? 'http://localhost:3032'
+const dfnsApiUrl = process.env.DFNS_BASE_URL
 
 async function setMockDfnsTransactionState(
     signatureId: string,

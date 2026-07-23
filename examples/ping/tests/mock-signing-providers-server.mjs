@@ -8,8 +8,9 @@ import {
     startSigningProviderMockServer,
 } from '@canton-network/core-wallet-test-utils'
 
-function parseProviderUrl(envVar, fallback) {
-    const configuredUrl = process.env[envVar] ?? fallback
+function parseProviderUrl(envVar) {
+    const configuredUrl = process.env[envVar]
+    // TODO Maybe early error if env var not defined
     const parsedUrl = new URL(configuredUrl)
     if (!parsedUrl.port) {
         throw new Error(`${envVar} must include a port, got: ${configuredUrl}`)
@@ -36,8 +37,7 @@ function createHealthRoutes() {
 
 async function startBlockdaemonMockServer() {
     const blockdaemon = parseProviderUrl(
-        'BLOCKDAEMON_API_URL',
-        'http://localhost:3031'
+        'BLOCKDAEMON_API_URL'
     )
 
     const server = await startSigningProviderMockServer({
@@ -58,7 +58,7 @@ async function startBlockdaemonMockServer() {
 }
 
 async function startDfnsMockServer() {
-    const dfns = parseProviderUrl('DFNS_BASE_URL', 'http://localhost:3032')
+    const dfns = parseProviderUrl('DFNS_BASE_URL')
 
     const server = await startSigningProviderMockServer({
         host: dfns.hostname,
@@ -73,8 +73,7 @@ async function startDfnsMockServer() {
 
 async function startFireblocksMockServer() {
     const fireblocks = parseProviderUrl(
-        'FIREBLOCKS_API_PATH',
-        'http://localhost:3033/v1'
+        'FIREBLOCKS_API_PATH'
     )
 
     const server = await startSigningProviderMockServer({
