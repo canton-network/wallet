@@ -8,7 +8,7 @@ vi.mock('./sdk', () => ({
     default: mock.sdk,
 }))
 
-const { initAdminParty, admin } = await import('./admin')
+const { initOperatorParty, operator } = await import('./operator')
 
 describe('Admin', () => {
     afterEach(() => {
@@ -18,19 +18,19 @@ describe('Admin', () => {
     it('should call for keys generation', () => {
         expect(mock.sdk.keys.generate).toHaveBeenCalledOnce()
 
-        expect(admin.keys).toStrictEqual(mock.sdk.keys.generate())
+        expect(operator.keys).toStrictEqual(mock.sdk.keys.generate())
     })
 
     it('should init admin party', async () => {
         mock.execute.mockResolvedValueOnce({
             partyId: 'id',
         })
-        await initAdminParty()
+        await initOperatorParty()
 
         expect(mock.create).toHaveBeenCalledOnce()
         expect(mock.sign).toHaveBeenCalledOnce()
         expect(mock.execute).toHaveBeenCalledOnce()
 
-        expect(admin.party).toBe('id')
+        expect(operator.party).toBe('id')
     })
 })

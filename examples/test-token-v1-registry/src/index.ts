@@ -3,13 +3,13 @@
 
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
-import { initAdminParty } from './common/admin'
+import { initOperatorParty } from './common/operator'
 import vetDaml from './common/vetDaml'
 import { router } from './router'
 
 const app = new Koa()
 
-await initAdminParty()
+await initOperatorParty()
 
 /**
  * @customize see {@link ./common/vetDaml.ts}

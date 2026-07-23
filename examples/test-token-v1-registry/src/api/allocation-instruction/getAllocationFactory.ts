@@ -3,7 +3,7 @@
 
 import { AllocationInstructionAPIHandler } from './common'
 import sdk from '../../common/sdk'
-import { admin } from '../../common/admin'
+import { operator } from '../../common/operator'
 import { command, TestTokenV1 } from '@canton-network/core-test-token'
 import { emptyChoiceContext } from '../common'
 
@@ -21,7 +21,7 @@ export const getAllocationFactory: AllocationInstructionAPIHandler<
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
-            parties: [admin.party],
+            parties: [operator.party],
             templateIds: [TestTokenV1.TokenRules.templateId],
         })
     )[0]
@@ -38,19 +38,19 @@ export const getAllocationFactory: AllocationInstructionAPIHandler<
     // ...and create one otherwise
     const executionResult = await sdk.ledger
         .prepare({
-            partyId: admin.party,
-            commands: command.create.rules({ admin: admin.party }),
+            partyId: operator.party,
+            commands: command.create.rules({ admin: operator.party }),
         })
-        .sign(admin.keys.privateKey)
+        .sign(operator.keys.privateKey)
         .execute({
-            partyId: admin.party,
+            partyId: operator.party,
         })
 
     // fetch the newly created contract id
     const factoryContract = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
-            parties: [admin.party],
+            parties: [operator.party],
             offset: executionResult.completionOffset,
             templateIds: [TestTokenV1.TokenRules.templateId],
         })

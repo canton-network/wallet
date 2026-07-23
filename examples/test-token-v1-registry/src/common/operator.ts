@@ -3,18 +3,18 @@
 
 import sdk from './sdk'
 
-export const admin = {
+export const operator = {
     party: '',
     keys: sdk.keys.generate(),
 }
 
-export const initAdminParty = async () => {
+export const initOperatorParty = async () => {
     const createdParty = await sdk.party.external
-        .create(admin.keys.publicKey, {
-            partyHint: 'admin',
+        .create(operator.keys.publicKey, {
+            partyHint: 'operator',
         })
-        .sign(admin.keys.privateKey)
+        .sign(operator.keys.privateKey)
         .execute()
 
-    admin.party = createdParty.partyId
+    operator.party = createdParty.partyId
 }

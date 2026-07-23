@@ -4,7 +4,7 @@
 import { TestTokenV1, command } from '@canton-network/core-test-token'
 import sdk from '../../common/sdk'
 import { TransferInstructionAPIHandler } from './common'
-import { admin } from '../../common/admin'
+import { operator } from '../../common/operator'
 import { GetFactoryRequest } from '../../openapi-ts/transfer-instruction-v1'
 import z from 'zod'
 import { emptyChoiceContext } from '../common'
@@ -55,7 +55,7 @@ export const getTransferFactory: TransferInstructionAPIHandler<
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
-            parties: [admin.party],
+            parties: [operator.party],
             templateIds: [TestTokenV1.TokenRules.templateId],
         })
     )[0]
@@ -73,19 +73,19 @@ export const getTransferFactory: TransferInstructionAPIHandler<
     // ...and create one otherwise
     const executionResult = await sdk.ledger
         .prepare({
-            partyId: admin.party,
-            commands: command.create.rules({ admin: admin.party }),
+            partyId: operator.party,
+            commands: command.create.rules({ admin: operator.party }),
         })
-        .sign(admin.keys.privateKey)
+        .sign(operator.keys.privateKey)
         .execute({
-            partyId: admin.party,
+            partyId: operator.party,
         })
 
     // fetch the newly created contract id
     const factoryContract = (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
-            parties: [admin.party],
+            parties: [operator.party],
             offset: executionResult.completionOffset,
             templateIds: [TestTokenV1.TokenRules.templateId],
         })
