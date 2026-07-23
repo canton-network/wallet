@@ -3,7 +3,7 @@
 
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import versionConfig from '/Users/mpiatkowski/projects/wallet/scripts/src/lib/version-config.json' with { type: 'json' }
+import versionConfig from '../../../../scripts/src/lib/version-config.json' with { type: 'json' }
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
