@@ -8,7 +8,7 @@ import { usePortfolio } from '../contexts/PortfolioContext'
 import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
 import { useConnection } from '../contexts/ConnectionContext'
 import { queryKeys } from './query-keys'
-import type { WalletSdk } from './useWalletSdk'
+import { useWalletSdk, type WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
 import { logger } from '@lib/logger'
 import { TransactionHistoryService } from '@services/transaction-history-service'
@@ -103,13 +103,18 @@ export const holdingsQueryOptions = ({
     })
 
 export const usePendingTransfersQueryOptions = (party: string | undefined) => {
-    const { listPendingTransfers } = usePortfolio()
-    const { status } = useConnection()
+    const { sdk } = useWalletSdk()
+
     return queryOptions({
-        retry: 10,
         queryKey: queryKeys.walletConnection.pendingTransfers.forParty(party),
-        queryFn: () => listPendingTransfers({ party: party! }),
-        enabled: !!status?.connection?.isConnected && !!party,
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+
+            return await sdk.token.transfer.pending(party)
+        },
     })
 }
 
