@@ -6,7 +6,6 @@ import * as dappSdk from '@canton-network/dapp-sdk'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import { usePortfolio } from '../contexts/PortfolioContext'
 import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
-import { useConnection } from '../contexts/ConnectionContext'
 import { queryKeys } from './query-keys'
 import { useWalletSdk, type WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
@@ -121,22 +120,32 @@ export const usePendingTransfersQueryOptions = (party: string | undefined) => {
 export const useAllocationRequestsQueryOptions = (
     party: string | undefined
 ) => {
-    const { listAllocationRequests } = usePortfolio()
-    const { status } = useConnection()
+    const { sdk } = useWalletSdk()
+
     return queryOptions({
         queryKey: queryKeys.walletConnection.allocationRequests.forParty(party),
-        queryFn: () => listAllocationRequests({ party: party! }),
-        enabled: !!status?.connection?.isConnected && !!party,
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return await sdk.token.allocation.request.pending(party)
+        },
     })
 }
 
 export const useAllocationsQueryOptions = (party: string | undefined) => {
-    const { listAllocations } = usePortfolio()
-    const { status } = useConnection()
+    const { sdk } = useWalletSdk()
+
     return queryOptions({
         queryKey: queryKeys.walletConnection.allocations.forParty(party),
-        queryFn: () => listAllocations({ party: party! }),
-        enabled: !!status?.connection?.isConnected && !!party,
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return await sdk.token.allocation.pending(party)
+        },
     })
 }
 
