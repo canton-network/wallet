@@ -10,8 +10,8 @@ import { Handler } from 'openapi-backend'
 
 const emptyCtx = {} as Parameters<Handler>[0]
 
-vi.mock('../../common/admin', () => ({
-    admin: {
+vi.mock('../../common/operator', () => ({
+    operator: {
         party: 'admin',
     },
 }))

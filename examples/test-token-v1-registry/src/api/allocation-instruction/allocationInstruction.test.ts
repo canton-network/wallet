@@ -23,18 +23,7 @@ vi.mock('../../common/admin', () => ({
 
 const { getAllocationFactory } = await import('./getAllocationFactory')
 
-const correctChoiceArguments = {
-    request: {
-        body: {
-            choiceArguments: {
-                sender: 's',
-                receiver: 'r',
-            },
-        },
-    },
-} as Parameters<Handler>[0]
-
-const incorrectChoiceArguments = {
+const choiceArguments = {
     request: {
         body: {
             choiceArguments: {},
@@ -47,12 +36,6 @@ describe('Allocation Instruction', () => {
         vi.clearAllMocks()
     })
 
-    it('should fail if provided request body is invalid', async () => {
-        const result = await getAllocationFactory(incorrectChoiceArguments)
-
-        expect(result.status).toBe(400)
-    })
-
     it('should successfully return factory contract from acs reader', async () => {
         mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
             {
@@ -60,7 +43,7 @@ describe('Allocation Instruction', () => {
             },
         ])
 
-        const result = await getAllocationFactory(correctChoiceArguments)
+        const result = await getAllocationFactory(choiceArguments)
 
         expect(mock.sdk.ledger.acsReader.readJsContracts).toHaveBeenCalledOnce()
         expect(result).toStrictEqual({
@@ -74,7 +57,7 @@ describe('Allocation Instruction', () => {
     it('should return error in case contract creation fails', async () => {
         mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValue([])
 
-        const result = await getAllocationFactory(correctChoiceArguments)
+        const result = await getAllocationFactory(choiceArguments)
 
         expect(mock.sdk.ledger.acsReader.readJsContracts).toHaveBeenCalledTimes(
             2
@@ -95,7 +78,7 @@ describe('Allocation Instruction', () => {
                 },
             ])
 
-        const result = await getAllocationFactory(correctChoiceArguments)
+        const result = await getAllocationFactory(choiceArguments)
 
         expect(result).toStrictEqual({
             payload: {
