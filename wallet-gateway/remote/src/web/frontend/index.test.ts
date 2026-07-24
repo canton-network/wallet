@@ -437,7 +437,7 @@ describe('UserUIAuthRedirect', () => {
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
 
-        waitUntil(() => setLocationHref.mock.calls.length > 0)
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(DEFAULT_PAGE_REDIRECT)
         )
