@@ -463,6 +463,7 @@ export class NetworkForm extends BaseElement {
                                       Cancel
                                   </button>
                                   <button
+                                      data-test-id="update-network-button"
                                       class="btn btn-primary rounded-pill btn-submit"
                                       type="submit"
                                   >
@@ -473,6 +474,7 @@ export class NetworkForm extends BaseElement {
                         : html`
                               <div class="mt-auto pt-3">
                                   <button
+                                      data-test-id="add-network-button"
                                       class="btn btn-primary rounded-pill w-100"
                                       type="submit"
                                   >

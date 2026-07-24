@@ -52,7 +52,11 @@ export class NetworkCard extends BaseElement {
                     box-shadow 0.2s ease;
             }
 
-            .net-card:hover {
+            .net-card.readonly {
+                cursor: initial;
+            }
+
+            .net-card:not(.readonly):hover {
                 border-color: var(--wg-accent);
                 box-shadow: var(--wg-shadow-md);
             }
@@ -138,14 +142,16 @@ export class NetworkCard extends BaseElement {
     ]
 
     private _onClick() {
-        if (this.network) {
+        if (this.network && !this.readonly) {
             this.dispatchEvent(new NetworkCardReviewEvent(this.network))
         }
     }
 
     render() {
         if (!this.network) {
-            return html`<article class="wg-card net-card">
+            return html`<article
+                class="wg-card net-card${this.readonly ? ' readonly' : ''}"
+            >
                 No network supplied
             </article>`
         }
@@ -153,7 +159,10 @@ export class NetworkCard extends BaseElement {
         const syncId = this.network.synchronizerId || ''
 
         return html`
-            <article class="wg-card net-card" @click=${this._onClick}>
+            <article
+                class="wg-card net-card${this.readonly ? ' readonly' : ''}"
+                @click=${this._onClick}
+            >
                 <div class="card-header">
                     <p class="card-title">${this.network.name}</p>
                     ${

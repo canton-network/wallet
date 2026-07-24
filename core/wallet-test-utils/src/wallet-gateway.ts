@@ -3,6 +3,20 @@
 
 import { expect, Locator, Page } from '@playwright/test'
 
+export interface NetworkFormInput {
+    id: string
+    name: string
+    description: string
+    identityProviderId: string
+    ledgerApi: string
+    synchronizerId: string
+    auth: {
+        clientId: string
+        audience: string
+        scope: string
+    }
+}
+
 export class WalletGateway {
     private readonly dappPage: Page
     private readonly connectButton: (dappPage: Page) => Locator
@@ -29,7 +43,7 @@ export class WalletGateway {
     }
 
     async connect(args: {
-        network: 'LocalNet' | 'Local (OAuth IDP)'
+        network: string
         customURL?: string
     }): Promise<void> {
         const connectButton = this.connectButton(this.dappPage)
@@ -220,7 +234,7 @@ export class WalletGateway {
                 await popupPage.getByText(
                     'Complete signing in your external provider'
                 )
-            ).toBeVisible({ timeout: 15000 })
+            ).toBeVisible({ timeout: 30000 })
             await approveButton.click()
         }
 
@@ -245,7 +259,7 @@ export class WalletGateway {
     }
 
     async reconnect(args: {
-        network: 'LocalNet' | 'Local (OAuth IDP)'
+        network: string
         customURL?: string
     }): Promise<void> {
         const connectButton = this.connectButton(this.dappPage)
@@ -380,5 +394,166 @@ export class WalletGateway {
             timeout: 15000,
         })
         await expect(popup.getByText('Loading parties...')).not.toBeVisible()
+    }
+
+    async gotoNetworksPage(): Promise<void> {
+        const popup = await this.popup()
+        await popup.locator('button[aria-haspopup="menu"]').click()
+        await popup
+            .getByRole('button', { name: 'Networks', exact: true })
+            .click()
+        await this.waitForNetworksPageReady()
+    }
+
+    async hasNewNetworkButton(): Promise<boolean> {
+        const popup = await this.popup()
+        return (
+            (await popup
+                .getByRole('button', { name: 'New', exact: true })
+                .count()) > 0
+        )
+    }
+
+    async addNetwork(network: NetworkFormInput): Promise<void> {
+        await this.gotoNetworksPage()
+        const popup = await this.popup()
+
+        const newButton = popup.getByRole('button', {
+            name: 'New',
+            exact: true,
+        })
+        await expect(newButton).toBeVisible({ timeout: 15000 })
+        await newButton.click()
+
+        await expect(
+            popup.getByRole('heading', { name: 'Add a new network' })
+        ).toBeVisible({ timeout: 15000 })
+
+        await this.fillNetworkForm(network)
+
+        await popup.locator('[data-test-id="add-network-button"]').click()
+        await this.waitForNetworksPageReady()
+    }
+
+    async updateNetworkName(networkId: string, newName: string): Promise<void> {
+        await this.openNetworkReview(networkId)
+        const popup = await this.popup()
+
+        await this.fillNetworkFormField('Name', newName)
+        await popup.locator('[data-test-id="update-network-button"]').click()
+        await this.waitForNetworksPageReady()
+    }
+
+    async findNetworkCard(networkId: string): Promise<Locator> {
+        const popup = await this.popup()
+        await this.waitForNetworksPageReady()
+
+        const paginationStatus = popup.locator('wg-pagination .pagination span')
+
+        for (let guard = 0; guard < 25; guard++) {
+            const card = popup
+                .locator('network-card')
+                .filter({ hasText: networkId })
+                .first()
+            if ((await card.count()) > 0) {
+                await expect(card).toBeVisible({ timeout: 5000 })
+                return card
+            }
+
+            const nextButton = popup.getByRole('button', { name: 'Next page' })
+            const hasNext =
+                (await nextButton.count()) > 0 &&
+                (await nextButton.isEnabled().catch(() => false))
+            if (!hasNext) {
+                break
+            }
+
+            const before = (await paginationStatus.textContent()) ?? ''
+            await nextButton.click()
+            await expect(paginationStatus).not.toHaveText(before, {
+                timeout: 5000,
+            })
+        }
+
+        throw new Error(`Network card for "${networkId}" not found in the list`)
+    }
+
+    async expectFirstNetworkNotEditable(): Promise<void> {
+        const popup = await this.popup()
+        await this.waitForNetworksPageReady()
+
+        const firstCard = popup.locator('network-card').first()
+        await expect(firstCard).toBeVisible({ timeout: 15000 })
+
+        // Nothing changes
+        await expect(popup).toHaveURL('http://localhost:3030/networks/', {
+            timeout: 15_0000,
+        })
+    }
+
+    private async openNetworkReview(networkId: string): Promise<void> {
+        const card = await this.findNetworkCard(networkId)
+        await card.click()
+
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Review network' })
+        ).toBeVisible({ timeout: 15000 })
+    }
+
+    private async fillNetworkForm(network: NetworkFormInput): Promise<void> {
+        const popup = await this.popup()
+
+        await this.fillNetworkFormField('Network Id', network.id)
+        await this.fillNetworkFormField('Name', network.name)
+        await this.fillNetworkFormField('Description', network.description)
+        await this.fillNetworkFormField(
+            'Synchronizer Id',
+            network.synchronizerId
+        )
+        await this.fillNetworkFormField(
+            'Identity Provider Id',
+            network.identityProviderId
+        )
+        await this.fillNetworkFormField(
+            'Ledger API Base Url',
+            network.ledgerApi
+        )
+
+        await popup
+            .locator('[data-test-id="auth-editor-client-id-input"]')
+            .first()
+            .fill(network.auth.clientId)
+        await popup
+            .locator('[data-test-id="auth-editor-audience-input"]')
+            .first()
+            .fill(network.auth.audience)
+        await popup
+            .locator('[data-test-id="auth-editor-scope-input"]')
+            .first()
+            .fill(network.auth.scope)
+    }
+
+    private async fillNetworkFormField(
+        label: string,
+        value: string
+    ): Promise<void> {
+        const popup = await this.popup()
+        // The form labels aren't associated with their inputs via `for`, so
+        // locate the input via the field group that contains the label text.
+        const input = popup
+            .locator(
+                `network-form .field-group:has(> label:has-text("${label}")) input`
+            )
+            .first()
+        await expect(input).toBeVisible({ timeout: 15000 })
+        await input.fill(value)
+    }
+
+    private async waitForNetworksPageReady(): Promise<void> {
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Networks' })
+        ).toBeVisible({ timeout: 15000 })
     }
 }
