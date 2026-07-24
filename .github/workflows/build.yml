@@ -308,7 +308,7 @@ jobs:
             - name: Start remote WK
               run: |
                   if [ "$CI_SECRET_DEPENDENCY" = "true" ]; then
-                    export BLOCKDAEMON_API_URL="http://localhost:12002" # TODO temporary, before merge replace with ${{ vars.BLOCKDAEMON_API_URL }} and change github variable and rerun tests
+                    export BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}"
                     export BLOCKDAEMON_API_KEY="${{ vars.BLOCKDAEMON_API_KEY }}"
                     export BLOCKDAEMON_API_EMAIL="${{ vars.BLOCKDAEMON_API_EMAIL }}"
                     export FIREBLOCKS_API_PATH="${{ vars.FIREBLOCKS_API_PATH }}"
@@ -327,7 +327,7 @@ jobs:
             - name: Run example e2e
               run: |
                   if [ "$CI_SECRET_DEPENDENCY" = "true" ]; then
-                    export BLOCKDAEMON_API_URL="http://localhost:12002" # TODO temporary, before merge replace with ${{ vars.BLOCKDAEMON_API_URL }} and change github variable and rerun tests
+                    export BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}"
                     export FIREBLOCKS_API_PATH="${{ vars.FIREBLOCKS_API_PATH }}"
                     export DFNS_BASE_URL="${{ vars.DFNS_BASE_URL }}"
                   fi
