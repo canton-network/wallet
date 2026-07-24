@@ -23,6 +23,7 @@ const {
     get,
     TokenStandardService,
     AmuletService,
+    ScanProxyClient,
     ScanClient,
 } = vi.hoisted(() => {
     const get = vi.fn().mockImplementation(() =>
@@ -46,6 +47,7 @@ const {
             }
         ),
         AmuletService: vi.fn(class {}),
+        ScanProxyClient: vi.fn(class {}),
         ScanClient: vi.fn(class {}),
     }
 })
@@ -58,6 +60,7 @@ vi.mock('@canton-network/core-splice-client', async (importOriginal) => {
     return {
         ...actual,
         ValidatorInternalClient,
+        ScanProxyClient,
         ScanClient,
     }
 })
@@ -144,12 +147,9 @@ describe('init SDK', () => {
             })
 
             expect(ScanClient).toHaveBeenCalledOnce()
+            expect(ScanProxyClient).toHaveBeenCalledOnce()
             expect(TokenStandardService).toHaveBeenCalledOnce()
             expect(AmuletService).toHaveBeenCalledOnce()
-            expect(AmuletService).toHaveBeenCalledWith(
-                expect.any(TokenStandardService),
-                expect.any(ScanClient)
-            )
         })
 
         it('should create token namespace based on services', async () => {

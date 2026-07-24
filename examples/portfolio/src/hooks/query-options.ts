@@ -151,7 +151,7 @@ export const useAllocationsQueryOptions = (party: string | undefined) => {
 export const useIsDevNetQueryOptions = () => {
     const { sdk } = useWalletSdk()
     const {
-        token: { validatorUrl },
+        amulet: { validatorUrl },
     } = usePortfolioConfig()
     return queryOptions({
         queryKey: queryKeys.isDevNet.forValidator(validatorUrl),

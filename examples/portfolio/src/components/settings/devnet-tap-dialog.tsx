@@ -199,7 +199,7 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                         input: {
                                             endAdornment: (
                                                 <InputAdornment position="end">
-                                                    Amulet
+                                                    AMT
                                                 </InputAdornment>
                                             ),
                                         },

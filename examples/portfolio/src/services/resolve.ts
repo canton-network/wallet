@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Logger } from 'pino'
-import { LedgerClient } from '@canton-network/core-ledger-client'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import * as sdk from '@canton-network/dapp-sdk'
@@ -37,16 +36,11 @@ const createTokenStandardService = async ({
     return tokenStandardService
 }
 
-// Global, but so is the dApp SDK.
-const ledgerClient: { singleton: LedgerClient | undefined } = {
-    singleton: undefined,
-}
 const tokenStandardService: { singleton: TokenStandardService | undefined } = {
     singleton: undefined,
 }
 // Can be called to reset clients on disconnects.
 export const clear = () => {
-    ledgerClient.singleton = undefined
     tokenStandardService.singleton = undefined
 }
 
