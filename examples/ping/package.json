@@ -8,10 +8,10 @@
         "build": "tsc -b && vite build",
         "e2e": "nx playwright:e2e --ui",
         "e2e2": "nx playwright:e2e",
-        "mock:signing-providers": "node ./tests/mock-signing-providers-server.mjs all",
-        "mock:signing-providers:blockdaemon": "node ./tests/mock-signing-providers-server.mjs blockdaemon",
-        "mock:signing-providers:dfns": "node ./tests/mock-signing-providers-server.mjs dfns",
-        "mock:signing-providers:fireblocks": "node ./tests/mock-signing-providers-server.mjs fireblocks",
+        "mock:signing-providers": "node tests/mock-signing-providers-server.ts all",
+        "mock:signing-providers:blockdaemon": "node tests/mock-signing-providers-server.ts blockdaemon",
+        "mock:signing-providers:dfns": "node tests/mock-signing-providers-server.ts dfns",
+        "mock:signing-providers:fireblocks": "node tests/mock-signing-providers-server.ts fireblocks",
         "preview": "vite preview"
     },
     "dependencies": {

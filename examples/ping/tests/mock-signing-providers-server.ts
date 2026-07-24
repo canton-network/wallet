@@ -13,7 +13,6 @@ loadEnv({ quiet: true, path: ['.env', '.env.local'] })
 
 function parseProviderUrl(envVar) {
     const configuredUrl = process.env[envVar]
-    // TODO Maybe early error if env var not defined
     const parsedUrl = new URL(configuredUrl)
     if (!parsedUrl.port) {
         throw new Error(`${envVar} must include a port, got: ${configuredUrl}`)
@@ -86,12 +85,7 @@ const mode = process.argv[2] ?? 'all'
 const servers = []
 
 if (mode === 'all' || mode === 'blockdaemon') {
-    // TODO temp for checking CI
-    try {
-        servers.push(await startBlockdaemonMockServer())
-    } catch {
-        //
-    }
+    servers.push(await startBlockdaemonMockServer())
 }
 if (mode === 'all' || mode === 'dfns') {
     servers.push(await startDfnsMockServer())
