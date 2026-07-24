@@ -11,12 +11,41 @@ This project is a reference implementation of a token registry backend for the T
 - allocations
 - allocation instructions
 
-Purpose:
+### Purpose
 
-- provide a reusable second CIP-0056 test token backend (beyond Amulet) so application tests do not become Amulet-specific
-- reduce duplication across teams by offering a shared, easy-to-deploy testing token instead of requiring each team to build a token from scratch
-- modernize and harden the earlier prototype by aligning with current Wallet SDK usage and adding verification via automated tests
-- provide practical coverage of registry-facing CIP-0056 workflows to complement on-ledger-only token examples
+- provides a reusable second CIP-0056 test token backend (beyond Amulet) so application tests do not become Amulet-specific
+- reduces duplication across teams by offering a shared, easy-to-deploy testing token instead of requiring each team to build a token from scratch
+- modernizes and harden the earlier prototype by aligning with current Wallet SDK usage and adding verification via automated tests
+- provides practical coverage of registry-facing CIP-0056 workflows to complement on-ledger-only token examples
+
+### App Logic Flow
+
+```mermaid
+flowchart LR
+  subgraph MAIN[Main request path]
+    direction LR
+    REQ[/HTTP Request/] --> APP[Registry App] --> ROUTER[Router] --> HANDLER[API handlers] --> RES[/HTTP Response/]
+  end
+
+  subgraph INIT[Startup and initialization]
+    direction TB
+    APP --> ADMIN[Admin initialization]
+    APP --> VET[DAR vetting in dev mode]
+  end
+
+  subgraph DEPS[Package dependencies]
+    direction TB
+    WSDK{{"@canton-network/wallet-sdk"}}
+    CORETEST{{"@canton-network/core-test-token"}}
+    CORESTD{{"@canton-network/core-token-standard"}}
+  end
+
+  WSDK --> ADMIN
+  WSDK --> VET
+  WSDK --> HANDLER
+  CORETEST --> HANDLER
+  CORESTD --> HANDLER
+```
 
 ## Getting Started
 
