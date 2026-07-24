@@ -16,6 +16,7 @@ import {
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
     toMockEndpoint,
+    isLocalhost,
 } from './external-signing-test-helpers.js'
 
 const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
@@ -24,6 +25,10 @@ async function setMockBlockdaemonTransactionState(
     txId: string,
     status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
+    const isMockedApi = blockdaemonApiUrl && isLocalhost(new URL(blockdaemonApiUrl))
+    if (!isMockedApi) {
+        return
+    }
     const promoteResponse = await fetch(
         toMockEndpoint(blockdaemonApiUrl, '/_admin/setTransactionState'),
         {

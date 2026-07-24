@@ -4,6 +4,9 @@
 import { expect, WalletGateway } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 
+export const isLocalhost = (url: URL) =>
+    ['localhost', '127.0.0.1'].includes(url.hostname)
+
 export const DAPP_API_PORT = 3030
 export const DAPP_URL = 'http://localhost:8080/'
 

@@ -16,15 +16,19 @@ import {
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
     toMockEndpoint,
+    isLocalhost,
 } from './external-signing-test-helpers.js'
 
-// TODO let's remove those defaults from here and maybe make playwright run providers tests only if env var is available
 const dfnsApiUrl = process.env.DFNS_BASE_URL
 
 async function setMockDfnsTransactionState(
     signatureId: string,
     status: 'Signed' | 'Rejected' | 'Failed'
 ): Promise<void> {
+    const isMockedApi = dfnsApiUrl && isLocalhost(new URL(dfnsApiUrl))
+    if (!isMockedApi) {
+        return
+    }
     const setResponse = await fetch(
         toMockEndpoint(dfnsApiUrl, '/_admin/setTransactionState'),
         {

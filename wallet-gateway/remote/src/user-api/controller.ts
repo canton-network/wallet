@@ -1056,7 +1056,6 @@ export const userController = (
                     `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
                 )
             }
-            // TODO should I emit txChanged?
             await store.removeTransaction(transaction.id)
             return null
         },

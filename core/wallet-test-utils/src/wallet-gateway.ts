@@ -304,7 +304,6 @@ export class WalletGateway {
         await approveButton.click()
 
         if (opts?.waitForClose !== false) {
-            // TODO maybe lack of option should be considered as false?
             await this.waitForPopupToCloseAfterAction(popupPage)
         }
     }
