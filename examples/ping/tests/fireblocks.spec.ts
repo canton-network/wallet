@@ -5,6 +5,7 @@ import {
     test,
     expect,
     WalletGateway,
+    MOCK_FIREBLOCKS_VAULT_NAME,
 } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 import {
@@ -19,48 +20,41 @@ import {
     isLocalhost,
 } from './external-signing-test-helpers.js'
 
-const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
+const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
 
-async function setMockBlockdaemonTransactionState(
+async function setMockFireblocksTransactionState(
     txId: string,
     status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
     const isMockedApi =
-        blockdaemonApiUrl && isLocalhost(new URL(blockdaemonApiUrl))
+        fireblocksApiPath && isLocalhost(new URL(fireblocksApiPath))
     if (!isMockedApi) {
         return
     }
-    const promoteResponse = await fetch(
-        toMockEndpoint(blockdaemonApiUrl, '/_admin/setTransactionState'),
+    const setResponse = await fetch(
+        toMockEndpoint(fireblocksApiPath, '/_admin/setTransactionState'),
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                txId,
-                status,
-            }),
+            body: JSON.stringify({ txId, status }),
         }
     )
-    expect(promoteResponse.ok).toBeTruthy()
+    expect(setResponse.ok).toBeTruthy()
 
-    const txResponse = await fetch(
-        toMockEndpoint(blockdaemonApiUrl, '/getTransaction'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ txId }),
-        }
-    )
-    expect(txResponse.ok).toBeTruthy()
-    const tx = (await txResponse.json()) as {
-        txId: string
-        status: string
+    const updated = (await setResponse.json()) as {
+        signedMessages?: unknown[]
+        status?: string
     }
-    expect(tx.txId).toBe(txId)
-    expect(tx.status).toBe(status)
+    if (status === 'signed') {
+        expect(updated.signedMessages?.length).toBeGreaterThan(0)
+    } else {
+        expect(updated.status).toBe(
+            status === 'rejected' ? 'REJECTED' : 'FAILED'
+        )
+    }
 }
 
-test.describe('Blockdaemon external signing', () => {
+test.describe('Fireblocks external signing', () => {
     test.describe.configure({ mode: 'serial' })
 
     let dappPage: Page
@@ -72,13 +66,14 @@ test.describe('Blockdaemon external signing', () => {
         wg = createPingDappWalletGateway(dappPage)
         await connectPingDapp(wg, dappPage)
 
-        const partyHint = `blockdaemon${Date.now()}`
+        const partyHint = `fireblocks${Date.now()}`
         const { partyId, externalTxId } = await initializeExternalSigningParty({
             wg,
             partyHint,
-            signingProvider: 'blockdaemon',
+            signingProvider: 'fireblocks',
+            vaultName: MOCK_FIREBLOCKS_VAULT_NAME,
         })
-        await setMockBlockdaemonTransactionState(externalTxId, 'signed')
+        await setMockFireblocksTransactionState(externalTxId, 'signed')
         await allocateExternalSigningParty({
             wg,
             dappPage,
@@ -96,7 +91,7 @@ test.describe('Blockdaemon external signing', () => {
             wg,
             dappPage
         )
-        await setMockBlockdaemonTransactionState(
+        await setMockFireblocksTransactionState(
             submission.externalTxId,
             'signed'
         )
@@ -120,12 +115,12 @@ test.describe('Blockdaemon external signing', () => {
         })
     })
 
-    test('fails when Blockdaemon rejects signing', async () => {
+    test('fails when Fireblocks rejects signing', async () => {
         const submission = await createPingContractAndApproveExternal(
             wg,
             dappPage
         )
-        await setMockBlockdaemonTransactionState(
+        await setMockFireblocksTransactionState(
             submission.externalTxId,
             'rejected'
         )
@@ -138,12 +133,12 @@ test.describe('Blockdaemon external signing', () => {
         )
     })
 
-    test('fails when Blockdaemon fails signing', async () => {
+    test('fails when Fireblocks fails signing', async () => {
         const submission = await createPingContractAndApproveExternal(
             wg,
             dappPage
         )
-        await setMockBlockdaemonTransactionState(
+        await setMockFireblocksTransactionState(
             submission.externalTxId,
             'failed'
         )
