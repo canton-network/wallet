@@ -4,15 +4,14 @@
 import { useCallback, useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useInstruments } from '@hooks/useInstruments'
-import { listHoldings } from '../services/portfolio-service-implementation'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedHolding,
 } from '../utils/aggregate-holdings'
 import { useAccounts } from './useAccounts'
-import { queryKeys } from './query-keys'
-import { useConnection } from '../contexts/ConnectionContext'
+import { holdingsQueryOptions } from './query-options'
+import { useWalletSdk } from './useWalletSdk'
 
 export interface PortfolioAssetWalletBalanceView {
     id: string
@@ -39,17 +38,16 @@ export interface PortfolioAssetsResult {
 export const useAllAccountAssets = (): PortfolioAssetsResult => {
     const accounts = useAccounts()
     const registryInstruments = useInstruments()
-    const { status } = useConnection()
-    const isConnected = status?.connection?.isConnected ?? false
+    const {
+        sdk,
+        isLoading: isWalletSdkLoading,
+        error: walletSdkError,
+    } = useWalletSdk()
 
     const holdingsQueries = useQueries({
-        queries: accounts.map((account) => ({
-            queryKey: queryKeys.walletConnection.holdings.forParty(
-                account.partyId
-            ),
-            queryFn: () => listHoldings({ party: account.partyId }),
-            enabled: isConnected,
-        })),
+        queries: accounts.map((account) =>
+            holdingsQueryOptions({ partyId: account.partyId, sdk })
+        ),
     })
 
     const holdings = useMemo(
@@ -93,12 +91,16 @@ export const useAllAccountAssets = (): PortfolioAssetsResult => {
         void Promise.all(holdingsQueries.map((query) => query.refetch()))
     }, [holdingsQueries])
 
-    const error = holdingsQueries.find((query) => query.error)?.error
+    const queryError = holdingsQueries.find((query) => query.error)?.error
+    const error = walletSdkError ? new Error(walletSdkError) : queryError
 
     return {
         assets,
-        isLoading: holdingsQueries.some((query) => query.isLoading),
-        isError: holdingsQueries.some((query) => query.isError),
+        isLoading:
+            isWalletSdkLoading ||
+            holdingsQueries.some((query) => query.isLoading),
+        isError:
+            !!walletSdkError || holdingsQueries.some((query) => query.isError),
         error: error instanceof Error ? error : null,
         refetch,
     }

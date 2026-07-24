@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import type {
-    Holding,
-    PrettyContract,
-    TransferInstructionView,
-} from '@canton-network/core-tx-parser'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type {
     AllocationInstructionView,
     AllocationRequestView,
@@ -19,30 +15,6 @@ import type {
 // hopefully help us when we port the codebase to use web components instead
 // of react.
 export interface PortfolioService {
-    // Holdings
-    listHoldings: ({ party }: { party: string }) => Promise<Holding[]>
-
-    // Transfers
-    createTransfer: (_: {
-        registryUrls: ReadonlyMap<PartyId, string>
-        sender: PartyId
-        receiver: PartyId
-        instrumentId: { admin: PartyId; id: string }
-        amount: string
-        expiry: Date
-        memo?: string
-    }) => Promise<void>
-    exerciseTransfer: (_: {
-        registryUrls: ReadonlyMap<PartyId, string>
-        party: PartyId
-        contractId: string
-        instrumentId: { admin: string; id: string }
-        instructionChoice: 'Accept' | 'Reject' | 'Withdraw'
-    }) => Promise<void>
-    listPendingTransfers: (_: {
-        party: PartyId
-    }) => Promise<PrettyContract<TransferInstructionView>[]>
-
     // Allocations
     listAllocationRequests: (_: {
         party: PartyId
