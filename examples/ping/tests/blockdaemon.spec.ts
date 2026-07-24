@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, WalletGateway } from '@canton-network/core-wallet-test-utils'
+import {
+    test,
+    expect,
+    WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
@@ -82,11 +86,21 @@ test.describe('Blockdaemon external signing', () => {
     })
 
     test('executes a successfully signed transaction', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
-        await setMockBlockdaemonTransactionState(submission.externalTxId, 'signed')
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
+        await setMockBlockdaemonTransactionState(
+            submission.externalTxId,
+            'signed'
+        )
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'signed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'signed'
+        )
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -101,24 +115,38 @@ test.describe('Blockdaemon external signing', () => {
     })
 
     test('fails when Blockdaemon rejects signing', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
         await setMockBlockdaemonTransactionState(
             submission.externalTxId,
             'rejected'
         )
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'failed'
+        )
     })
 
     test('fails when Blockdaemon fails signing', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
         await setMockBlockdaemonTransactionState(
             submission.externalTxId,
             'failed'
         )
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'failed'
+        )
     })
 })

@@ -19,8 +19,7 @@ import {
     toMockEndpoint,
 } from './external-signing-test-helpers.js'
 
-const fireblocksApiPath =
-    process.env.FIREBLOCKS_API_PATH
+const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
 
 async function setMockFireblocksTransactionState(
     txId: string,
@@ -82,12 +81,26 @@ test.describe('Fireblocks external signing', () => {
     })
 
     test('executes a successfully signed transaction', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
-        await setMockFireblocksTransactionState(submission.externalTxId, 'signed')
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
+        await setMockFireblocksTransactionState(
+            submission.externalTxId,
+            'signed'
+        )
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'signed')
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'executed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'signed'
+        )
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'executed'
+        )
     })
 
     test('rejects a transaction in the wallet UI', async () => {
@@ -97,24 +110,38 @@ test.describe('Fireblocks external signing', () => {
     })
 
     test('fails when Fireblocks rejects signing', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
         await setMockFireblocksTransactionState(
             submission.externalTxId,
             'rejected'
         )
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'failed'
+        )
     })
 
     test('fails when Fireblocks fails signing', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
         await setMockFireblocksTransactionState(
             submission.externalTxId,
             'failed'
         )
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'failed'
+        )
     })
 })

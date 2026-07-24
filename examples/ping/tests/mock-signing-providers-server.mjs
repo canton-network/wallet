@@ -39,24 +39,17 @@ function createHealthRoutes() {
 }
 
 async function startBlockdaemonMockServer() {
-    const blockdaemon = parseProviderUrl(
-        'BLOCKDAEMON_API_URL'
-    )
+    const blockdaemon = parseProviderUrl('BLOCKDAEMON_API_URL')
 
     const server = await startSigningProviderMockServer({
         host: blockdaemon.hostname,
         port: blockdaemon.port,
         logger: (message) =>
             console.log(`[signing-mocks:blockdaemon] ${message}`),
-        routes: [
-            ...createHealthRoutes(),
-            ...createBlockdaemonMockProvider(),
-        ],
+        routes: [...createHealthRoutes(), ...createBlockdaemonMockProvider()],
     })
 
-    console.log(
-        `[signing-mocks] blockdaemon listening on ${server.baseUrl}`
-    )
+    console.log(`[signing-mocks] blockdaemon listening on ${server.baseUrl}`)
     return server
 }
 
@@ -75,19 +68,14 @@ async function startDfnsMockServer() {
 }
 
 async function startFireblocksMockServer() {
-    const fireblocks = parseProviderUrl(
-        'FIREBLOCKS_API_PATH'
-    )
+    const fireblocks = parseProviderUrl('FIREBLOCKS_API_PATH')
 
     const server = await startSigningProviderMockServer({
         host: fireblocks.hostname,
         port: fireblocks.port,
         logger: (message) =>
             console.log(`[signing-mocks:fireblocks] ${message}`),
-        routes: [
-            ...createHealthRoutes(),
-            ...createFireblocksMockProvider(),
-        ],
+        routes: [...createHealthRoutes(), ...createFireblocksMockProvider()],
     })
 
     console.log(`[signing-mocks] fireblocks listening on ${server.baseUrl}`)

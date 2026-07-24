@@ -11,13 +11,14 @@ const dfnsApiUrl = process.env.DFNS_BASE_URL
 const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
 
 const webServers = []
-const isLocalhost = (url: URL) => ['localhost', '127.0.0.1'].includes(url.hostname)
+const isLocalhost = (url: URL) =>
+    ['localhost', '127.0.0.1'].includes(url.hostname)
 
 // If localhost is set as external signing provider url, then start a mock api for tests
 if (blockdaemonApiUrl) {
     const url = new URL(blockdaemonApiUrl)
     if (isLocalhost(url)) {
-    const healthUrl = `${url.origin}/_healthz`
+        const healthUrl = `${url.origin}/_healthz`
         webServers.push({
             command:
                 'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
@@ -131,5 +132,5 @@ export default defineConfig({
         // },
     ],
 
-    webServer: webServers
+    webServer: webServers,
 })

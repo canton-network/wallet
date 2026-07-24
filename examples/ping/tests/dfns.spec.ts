@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, WalletGateway } from '@canton-network/core-wallet-test-utils'
+import {
+    test,
+    expect,
+    WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
@@ -67,12 +71,23 @@ test.describe('Dfns external signing', () => {
     })
 
     test('executes a successfully signed transaction', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
         await setMockDfnsTransactionState(submission.externalTxId, 'Signed')
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'signed')
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'executed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'signed'
+        )
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'executed'
+        )
     })
 
     test('rejects a transaction in the wallet UI', async () => {
@@ -82,18 +97,32 @@ test.describe('Dfns external signing', () => {
     })
 
     test('fails when Dfns rejects signing', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
         await setMockDfnsTransactionState(submission.externalTxId, 'Rejected')
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'failed'
+        )
     })
 
     test('fails when Dfns fails signing', async () => {
-        const submission = await createPingContractAndApproveExternal(wg, dappPage)
+        const submission = await createPingContractAndApproveExternal(
+            wg,
+            dappPage
+        )
         await setMockDfnsTransactionState(submission.externalTxId, 'Failed')
         await wg.executeSignedTransaction({ waitForClose: false })
 
-        await expectTxStatusInDappEvents(dappPage, submission.commandId, 'failed')
+        await expectTxStatusInDappEvents(
+            dappPage,
+            submission.commandId,
+            'failed'
+        )
     })
 })
