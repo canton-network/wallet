@@ -8,6 +8,10 @@
         "build": "tsc -b && vite build",
         "e2e": "nx playwright:e2e --ui",
         "e2e2": "nx playwright:e2e",
+        "mock:signing-providers": "node tests/mock-signing-providers-server.ts all",
+        "mock:signing-providers:blockdaemon": "node tests/mock-signing-providers-server.ts blockdaemon",
+        "mock:signing-providers:dfns": "node tests/mock-signing-providers-server.ts dfns",
+        "mock:signing-providers:fireblocks": "node tests/mock-signing-providers-server.ts fireblocks",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -27,6 +31,7 @@
         "@types/react": "^19.2.17",
         "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^5.2.0",
+        "dotenv": "^17.4.2",
         "eslint": "^10.6.0",
         "eslint-plugin-react-hooks": "^7.1.1",
         "eslint-plugin-react-refresh": "^0.5.3",

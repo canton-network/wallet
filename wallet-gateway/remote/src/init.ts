@@ -295,6 +295,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         [SigningProvider.FIREBLOCKS]: new FireblocksSigningProvider({
             defaultKeyInfo: keyInfo,
             userApiKeys,
+            apiPath: Env.FIREBLOCKS_API_PATH('https://api.fireblocks.io/v1'),
         }),
         [SigningProvider.BLOCKDAEMON]: new BlockdaemonSigningProvider({
             baseUrl: Env.BLOCKDAEMON_API_URL(
