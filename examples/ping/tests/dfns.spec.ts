@@ -19,48 +19,31 @@ import {
     isLocalhost,
 } from './external-signing-test-helpers.js'
 
-const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
+const dfnsApiUrl = process.env.DFNS_BASE_URL
 
-async function setMockBlockdaemonTransactionState(
-    txId: string,
-    status: 'signed' | 'rejected' | 'failed'
+async function setMockDfnsTransactionState(
+    signatureId: string,
+    status: 'Signed' | 'Rejected' | 'Failed'
 ): Promise<void> {
-    const isMockedApi =
-        blockdaemonApiUrl && isLocalhost(new URL(blockdaemonApiUrl))
+    const isMockedApi = dfnsApiUrl && isLocalhost(new URL(dfnsApiUrl))
     if (!isMockedApi) {
         return
     }
-    const promoteResponse = await fetch(
-        toMockEndpoint(blockdaemonApiUrl, '/_admin/setTransactionState'),
+    const setResponse = await fetch(
+        toMockEndpoint(dfnsApiUrl, '/_admin/setTransactionState'),
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                txId,
-                status,
-            }),
+            body: JSON.stringify({ signatureId, status }),
         }
     )
-    expect(promoteResponse.ok).toBeTruthy()
+    expect(setResponse.ok).toBeTruthy()
 
-    const txResponse = await fetch(
-        toMockEndpoint(blockdaemonApiUrl, '/getTransaction'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ txId }),
-        }
-    )
-    expect(txResponse.ok).toBeTruthy()
-    const tx = (await txResponse.json()) as {
-        txId: string
-        status: string
-    }
-    expect(tx.txId).toBe(txId)
-    expect(tx.status).toBe(status)
+    const updated = (await setResponse.json()) as { status: string }
+    expect(updated.status).toBe(status)
 }
 
-test.describe('Blockdaemon external signing', () => {
+test.describe('Dfns external signing', () => {
     test.describe.configure({ mode: 'serial' })
 
     let dappPage: Page
@@ -72,13 +55,13 @@ test.describe('Blockdaemon external signing', () => {
         wg = createPingDappWalletGateway(dappPage)
         await connectPingDapp(wg, dappPage)
 
-        const partyHint = `blockdaemon${Date.now()}`
+        const partyHint = `dfns${Date.now()}`
         const { partyId, externalTxId } = await initializeExternalSigningParty({
             wg,
             partyHint,
-            signingProvider: 'blockdaemon',
+            signingProvider: 'dfns',
         })
-        await setMockBlockdaemonTransactionState(externalTxId, 'signed')
+        await setMockDfnsTransactionState(externalTxId, 'Signed')
         await allocateExternalSigningParty({
             wg,
             dappPage,
@@ -96,10 +79,7 @@ test.describe('Blockdaemon external signing', () => {
             wg,
             dappPage
         )
-        await setMockBlockdaemonTransactionState(
-            submission.externalTxId,
-            'signed'
-        )
+        await setMockDfnsTransactionState(submission.externalTxId, 'Signed')
         await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
@@ -120,15 +100,12 @@ test.describe('Blockdaemon external signing', () => {
         })
     })
 
-    test('fails when Blockdaemon rejects signing', async () => {
+    test('fails when Dfns rejects signing', async () => {
         const submission = await createPingContractAndApproveExternal(
             wg,
             dappPage
         )
-        await setMockBlockdaemonTransactionState(
-            submission.externalTxId,
-            'rejected'
-        )
+        await setMockDfnsTransactionState(submission.externalTxId, 'Rejected')
         await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
@@ -138,15 +115,12 @@ test.describe('Blockdaemon external signing', () => {
         )
     })
 
-    test('fails when Blockdaemon fails signing', async () => {
+    test('fails when Dfns fails signing', async () => {
         const submission = await createPingContractAndApproveExternal(
             wg,
             dappPage
         )
-        await setMockBlockdaemonTransactionState(
-            submission.externalTxId,
-            'failed'
-        )
+        await setMockDfnsTransactionState(submission.externalTxId, 'Failed')
         await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(

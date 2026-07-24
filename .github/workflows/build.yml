@@ -101,30 +101,6 @@ jobs:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
-    clear-blockdaemon-policies:
-        if: github.event.pull_request.head.repo.fork == false
-        runs-on: ubuntu-latest
-        steps:
-            - name: Clear Blockdaemon policies
-              run: |
-
-                  BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}"
-                  BLOCKDAEMON_POLICY_BASE_URL="${BLOCKDAEMON_API_URL%/api/cwp/canton}"
-
-                  # this clear policies, with each deployment blockdaemon renables them
-                  curl -s -X PUT "$BLOCKDAEMON_POLICY_BASE_URL/api/v2/policies/12" \
-                    -H "authorization: Bearer ${{ vars.BLOCKDAEMON_API_KEY }}" \
-                    -H "content-type: application/json" \
-                    -H "x-api-version: 2.0" \
-                    -d '{"entries":[],"skipConfirmations":true}'
-
-                  # this clear policies, with each deployment blockdaemon renables them
-                  curl -s -X PUT "$BLOCKDAEMON_POLICY_BASE_URL/api/v2/policies/29" \
-                    -H "authorization: Bearer ${{ vars.BLOCKDAEMON_API_KEY }}" \
-                    -H "content-type: application/json" \
-                    -H "x-api-version: 2.0" \
-                    -d '{"entries":[],"skipConfirmations":true}'
-
     build-docs:
         runs-on: ubuntu-latest
         needs: build
@@ -335,13 +311,27 @@ jobs:
                     export BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}"
                     export BLOCKDAEMON_API_KEY="${{ vars.BLOCKDAEMON_API_KEY }}"
                     export BLOCKDAEMON_API_EMAIL="${{ vars.BLOCKDAEMON_API_EMAIL }}"
+                    export FIREBLOCKS_API_PATH="${{ vars.FIREBLOCKS_API_PATH }}"
+                    export FIREBLOCKS_API_KEY="${{ vars.FIREBLOCKS_API_KEY }}"
+                    export FIREBLOCKS_SECRET="${{ vars.FIREBLOCKS_SECRET }}"
+                    export DFNS_BASE_URL="${{ vars.DFNS_BASE_URL }}"
+                    export DFNS_ORG_ID="${{ vars.DFNS_ORG_ID }}"
+                    export DFNS_CRED_ID="${{ vars.DFNS_CRED_ID }}"
+                    export DFNS_PRIVATE_KEY="${{ vars.DFNS_PRIVATE_KEY }}"
+                    export DFNS_AUTH_TOKEN="${{ vars.DFNS_AUTH_TOKEN }}"
                   fi
                   yarn pm2 start ecosystem.ci.config.js --env development
 
             - uses: ./.github/actions/setup_playwright
 
             - name: Run example e2e
-              run: yarn nx playwright:e2e @canton-network/example-ping
+              run: |
+                  if [ "$CI_SECRET_DEPENDENCY" = "true" ]; then
+                    export BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}"
+                    export FIREBLOCKS_API_PATH="${{ vars.FIREBLOCKS_API_PATH }}"
+                    export DFNS_BASE_URL="${{ vars.DFNS_BASE_URL }}"
+                  fi
+                  yarn nx playwright:e2e @canton-network/example-ping
 
             - name: Collect remote PM2 logs
               if: ${{ !cancelled() }}
