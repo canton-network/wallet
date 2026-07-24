@@ -1,19 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
 import CloseIcon from '@mui/icons-material/Close'
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import {
     Box,
     CircularProgress,
     Dialog,
-    FormControl,
-    FormHelperText,
     IconButton,
     InputAdornment,
-    MenuItem,
-    Select,
     TextField,
     Typography,
     type SxProps,
@@ -22,34 +16,17 @@ import {
 import { useForm, type AnyFieldApi } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { type InstrumentId } from '@canton-network/core-token-standard'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { PillButton } from '@components/ui/PillButton'
 import { useConnection } from '@contexts/ConnectionContext'
-import { usePortfolio } from '@contexts/PortfolioContext'
-import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
 import { usePrimaryAccount } from '@hooks/useAccounts'
-import { useInstruments } from '@hooks/useInstruments'
-import { useRegistryUrls } from '@hooks/useRegistryUrls'
+import { useWalletSdk } from '@hooks/useWalletSdk'
+import { submitViaProvider } from '@lib/submit'
 
 interface DevNetTapDialogProps {
     open: boolean
     onClose: () => void
 }
-
-interface TapInstrumentOption {
-    instrumentId: InstrumentId
-    name: string
-    symbol: string
-}
-
-const instrumentValidator = z
-    .object({
-        admin: z.string(),
-        id: z.string(),
-    })
-    .nullable()
-    .refine((value) => value !== null, 'Select an instrument')
 
 const amountValidator = z
     .string()
@@ -59,46 +36,14 @@ const amountValidator = z
         return Number(value) > 0
     }, 'Amount must be a positive number')
 
-const instrumentKey = (instrumentId: InstrumentId) =>
-    `${instrumentId.admin}::${instrumentId.id}`
-
-const findInstrumentByKey = (
-    instruments: TapInstrumentOption[],
-    key: string
-): TapInstrumentOption | undefined =>
-    instruments.find(
-        (instrument) => instrumentKey(instrument.instrumentId) === key
-    )
-
 const defaultValues = {
-    instrumentId: null as InstrumentId | null,
     amount: '100',
 }
 
 export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
     const sessionToken = useConnection().status?.session?.accessToken
     const primaryParty = usePrimaryAccount()?.partyId
-    const { tap } = usePortfolio()
-    const {
-        amulet: { validatorUrl },
-    } = usePortfolioConfig()
-    const registryUrls = useRegistryUrls()
-    const instruments = useInstruments()
-
-    const availableInstruments = useMemo(() => {
-        const result: TapInstrumentOption[] = []
-        for (const [admin, adminInstruments] of instruments) {
-            for (const instrument of adminInstruments) {
-                result.push({
-                    instrumentId: { admin, id: instrument.id },
-                    name: instrument.name ?? instrument.symbol,
-                    symbol: instrument.symbol,
-                })
-            }
-        }
-
-        return result.sort((left, right) => left.name.localeCompare(right.name))
-    }, [instruments])
+    const { sdk } = useWalletSdk()
 
     const form = useForm({
         defaultValues,
@@ -111,20 +56,16 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                 toast.error('Primary wallet is unavailable')
                 return
             }
-            if (!formData.instrumentId) {
-                toast.error('Select an instrument')
+            if (!sdk) {
+                toast.error('Wallet SDK is unavailable')
                 return
             }
 
             try {
-                await tap({
-                    registryUrls,
-                    party: primaryParty,
-                    sessionToken,
-                    validatorUrl,
-                    instrumentId: formData.instrumentId,
-                    amount: Number(formData.amount),
-                })
+                await submitViaProvider(
+                    await sdk.amulet.tap(primaryParty, formData.amount),
+                    primaryParty
+                )
                 toast.success('Tap successful')
             } catch (error) {
                 toast.error(
@@ -134,7 +75,7 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
         },
     })
 
-    const disabled = !sessionToken || !primaryParty
+    const disabled = !sessionToken || !primaryParty || !sdk
 
     const handleClose = () => {
         if (!form.state.isSubmitting) {
@@ -215,146 +156,17 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                         )}
                     </FieldBlock>
 
-                    <form.Field
-                        name="instrumentId"
-                        validators={{
-                            onChange: instrumentValidator,
-                            onSubmit: instrumentValidator,
-                        }}
-                    >
-                        {(field) => {
-                            const selectedKey = field.state.value
-                                ? instrumentKey(field.state.value)
-                                : ''
-                            const selectDisabled =
-                                disabled || availableInstruments.length === 0
-
-                            return (
-                                <FieldBlock label="Select instrument">
-                                    <FormControl
-                                        fullWidth
-                                        error={hasFieldError(field)}
-                                        disabled={selectDisabled}
-                                    >
-                                        <Select
-                                            displayEmpty
-                                            value={selectedKey}
-                                            inputProps={{
-                                                'aria-label':
-                                                    'Select instrument',
-                                            }}
-                                            onChange={(event) => {
-                                                const selected =
-                                                    findInstrumentByKey(
-                                                        availableInstruments,
-                                                        event.target.value
-                                                    )
-                                                field.handleChange(
-                                                    selected?.instrumentId ??
-                                                        null
-                                                )
-                                            }}
-                                            onBlur={field.handleBlur}
-                                            IconComponent={
-                                                KeyboardArrowDownIcon
-                                            }
-                                            renderValue={(key) => {
-                                                if (!key) {
-                                                    return (
-                                                        <Typography
-                                                            sx={{
-                                                                color: 'text.disabled',
-                                                            }}
-                                                        >
-                                                            {availableInstruments.length >
-                                                            0
-                                                                ? 'Select an instrument'
-                                                                : 'No instruments available'}
-                                                        </Typography>
-                                                    )
-                                                }
-
-                                                const selected =
-                                                    findInstrumentByKey(
-                                                        availableInstruments,
-                                                        key
-                                                    )
-                                                return selected?.name ?? key
-                                            }}
-                                            MenuProps={{
-                                                slotProps: {
-                                                    paper: {
-                                                        sx: {
-                                                            bgcolor:
-                                                                'background.paper',
-                                                            color: 'text.primary',
-                                                            backgroundImage:
-                                                                'none',
-                                                        },
-                                                    },
-                                                },
-                                            }}
-                                            sx={selectSx}
-                                        >
-                                            {availableInstruments.map(
-                                                (instrument) => {
-                                                    const key = instrumentKey(
-                                                        instrument.instrumentId
-                                                    )
-                                                    return (
-                                                        <MenuItem
-                                                            key={key}
-                                                            value={key}
-                                                        >
-                                                            <Box
-                                                                sx={{
-                                                                    minWidth: 0,
-                                                                }}
-                                                            >
-                                                                <Typography>
-                                                                    {
-                                                                        instrument.name
-                                                                    }
-                                                                </Typography>
-                                                                <Typography
-                                                                    variant="caption"
-                                                                    color="text.secondary"
-                                                                    sx={{
-                                                                        display:
-                                                                            'block',
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        instrument.symbol
-                                                                    }
-                                                                </Typography>
-                                                            </Box>
-                                                        </MenuItem>
-                                                    )
-                                                }
-                                            )}
-                                        </Select>
-                                        <FormHelperText
-                                            sx={{
-                                                ml: 0,
-                                                mt: 1,
-                                                color: hasFieldError(field)
-                                                    ? 'error.main'
-                                                    : 'text.secondary',
-                                            }}
-                                        >
-                                            {hasFieldError(field)
-                                                ? getFieldError(field)
-                                                : availableInstruments.length ===
-                                                    0
-                                                  ? 'Add a registry with instruments before tapping.'
-                                                  : ''}
-                                        </FormHelperText>
-                                    </FormControl>
-                                </FieldBlock>
-                            )
-                        }}
-                    </form.Field>
+                    <FieldBlock label="Instrument">
+                        <TextField
+                            value="Amulet"
+                            disabled
+                            fullWidth
+                            slotProps={{
+                                htmlInput: { 'aria-label': 'Instrument' },
+                            }}
+                            sx={textFieldSx}
+                        />
+                    </FieldBlock>
 
                     <form.Field
                         name="amount"
@@ -386,31 +198,9 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                         },
                                         input: {
                                             endAdornment: (
-                                                <form.Subscribe
-                                                    selector={(state) =>
-                                                        state.values
-                                                            .instrumentId
-                                                    }
-                                                >
-                                                    {(instrumentId) => {
-                                                        const selected =
-                                                            instrumentId
-                                                                ? findInstrumentByKey(
-                                                                      availableInstruments,
-                                                                      instrumentKey(
-                                                                          instrumentId
-                                                                      )
-                                                                  )
-                                                                : undefined
-                                                        return selected ? (
-                                                            <InputAdornment position="end">
-                                                                {
-                                                                    selected.symbol
-                                                                }
-                                                            </InputAdornment>
-                                                        ) : null
-                                                    }}
-                                                </form.Subscribe>
+                                                <InputAdornment position="end">
+                                                    Amulet
+                                                </InputAdornment>
                                             ),
                                         },
                                     }}
@@ -431,10 +221,7 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                                 type="submit"
                                 fullWidth
                                 disabled={
-                                    !canSubmit ||
-                                    isSubmitting ||
-                                    disabled ||
-                                    availableInstruments.length === 0
+                                    !canSubmit || isSubmitting || disabled
                                 }
                                 sx={{ mt: 0.5, minHeight: 48 }}
                             >
@@ -488,21 +275,6 @@ const controlBaseSx: SxProps<Theme> = {
     }),
     '&.Mui-disabled': {
         bgcolor: 'action.disabledBackground',
-    },
-}
-
-const selectSx: SxProps<Theme> = {
-    ...controlBaseSx,
-    '& .MuiSelect-select': {
-        display: 'flex',
-        alignItems: 'center',
-        minHeight: 'auto',
-        px: 2.5,
-        py: 1.25,
-    },
-    '& .MuiSelect-icon': {
-        color: 'text.primary',
-        right: 20,
     },
 }
 

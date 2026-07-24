@@ -4,7 +4,6 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query'
 import * as dappSdk from '@canton-network/dapp-sdk'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
-import { usePortfolio } from '../contexts/PortfolioContext'
 import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
 import { queryKeys } from './query-keys'
 import { useWalletSdk, type WalletSdk } from './useWalletSdk'
@@ -149,16 +148,29 @@ export const useAllocationsQueryOptions = (party: string | undefined) => {
     })
 }
 
-export const useIsDevNetQueryOptions = (sessionToken: string | undefined) => {
-    const { isDevNet } = usePortfolio()
+export const useIsDevNetQueryOptions = () => {
+    const { sdk } = useWalletSdk()
     const {
         token: { validatorUrl },
     } = usePortfolioConfig()
     return queryOptions({
-        queryKey: queryKeys.isDevNet.all,
-        queryFn: async () =>
-            sessionToken ? isDevNet({ sessionToken, validatorUrl }) : false,
-        enabled: !!sessionToken,
+        queryKey: queryKeys.isDevNet.forValidator(validatorUrl),
+        queryFn: async () => {
+            if (!sdk) {
+                throw new Error('Wallet SDK is not available')
+            }
+
+            const url = new URL(validatorUrl)
+            if (url.protocol === 'http:') {
+                logger.warn(
+                    { validatorUrl: url.toString() },
+                    'Using a non-TLS validator endpoint. This is acceptable only in trusted environments. Set validatorUrl in portfolio config to an HTTPS endpoint if the validator API is reachable over an untrusted network.'
+                )
+            }
+
+            return await sdk.amulet.isDevNet()
+        },
+        enabled: !!sdk,
         staleTime: Infinity, // Network doesn't change, so cache forever
     })
 }

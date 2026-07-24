@@ -24,7 +24,7 @@ import {
     SDKInterface,
     TokenConfig,
 } from './types/index.js'
-import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
+import { ScanClient } from '@canton-network/core-splice-client'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
@@ -59,17 +59,10 @@ const createNamespace: {
             false
         )
 
-        const amuletService = config.validatorUrl
-            ? new AmuletService(
-                  tokenStandardService,
-                  new ScanProxyClient(
-                      new ParsedURL(ctx, config.validatorUrl),
-                      ctx.logger,
-                      auth
-                  ),
-                  scanClient
-              )
-            : new AmuletService(tokenStandardService, scanClient)
+        const amuletService = new AmuletService(
+            tokenStandardService,
+            scanClient
+        )
 
         return new AmuletNamespace({
             commonCtx: ctx,
