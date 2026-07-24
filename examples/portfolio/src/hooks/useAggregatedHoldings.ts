@@ -2,32 +2,37 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useQuery } from '@tanstack/react-query'
-import { listHoldings } from '../services/portfolio-service-implementation'
 import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
 } from '../utils/aggregate-holdings'
-import { queryKeys } from './query-keys'
-import { useConnection } from '../contexts/ConnectionContext'
+import { holdingsQueryOptions } from './query-options'
+import { useWalletSdk } from './useWalletSdk'
 
 export const useAggregatedHoldings = (partyId: string | undefined) => {
     const instruments = useInstruments()
-    const { status } = useConnection()
+    const {
+        sdk,
+        isLoading: isWalletSdkLoading,
+        error: walletSdkError,
+    } = useWalletSdk()
 
     const holdingsQuery = useQuery({
-        queryKey: queryKeys.walletConnection.holdings.forParty(partyId),
-        queryFn: () => listHoldings({ party: partyId as string }),
-        enabled: !!status?.connection?.isConnected && !!partyId,
+        ...holdingsQueryOptions({ partyId, sdk }),
         select: (holdings) =>
             enrichWithInstrumentInfo(aggregateHoldings(holdings), instruments),
     })
 
+    const error = walletSdkError
+        ? new Error(walletSdkError)
+        : holdingsQuery.error
+
     return {
         instruments: holdingsQuery.data ?? [],
-        isLoading: holdingsQuery.isLoading,
-        isError: holdingsQuery.isError,
-        error: holdingsQuery.error,
+        isLoading: isWalletSdkLoading || holdingsQuery.isLoading,
+        isError: !!walletSdkError || holdingsQuery.isError,
+        error,
         refetch: holdingsQuery.refetch,
     }
 }
