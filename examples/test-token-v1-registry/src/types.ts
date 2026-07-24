@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Handler } from 'openapi-backend'
+
 /**
  * An arbitrary structure identifying a common interface for all method handlers.
  */
@@ -9,18 +11,16 @@ export type APIHandlerResponse<Payload = unknown> = {
     payload: Payload
 }
 
-type ExtractOperationPayload<OperationReturn> =
-    Awaited<OperationReturn> extends { _t?: infer ResponseBody }
-        ? NonNullable<ResponseBody>
-        : Awaited<OperationReturn>
-
-/**
- * Generic type that is used for each API handler. Uses generated interfaces to ensure I/O strutures requirements are met.
- */
-export type APIOperationHandler<OperationHandler> = OperationHandler extends (
-    ...args: infer Args
-) => infer OperationReturn
-    ? (
-          ...params: Args
-      ) => Promise<APIHandlerResponse<ExtractOperationPayload<OperationReturn>>>
-    : never
+export type APIHandler<Operation> = (...params: Parameters<Handler>) => Promise<
+    Operation extends {
+        responses: {
+            [K in number]: {
+                content: {
+                    'application/json': infer Payload
+                }
+            }
+        }
+    }
+        ? APIHandlerResponse<Payload>
+        : never
+>

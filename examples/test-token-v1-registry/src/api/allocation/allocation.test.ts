@@ -5,12 +5,9 @@ import { describe, expect, it } from 'vitest'
 import { getAllocationTransferContext } from './getAllocationTransferContext'
 import { getAllocationCancelContext } from './getAllocationCancelContext'
 import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
-import { Operations } from '../../openapi-ts/allocation-v1'
+import { Handler } from 'openapi-backend'
 
-const ctx = {} as Operations[
-    | 'getAllocationTransferContext'
-    | 'getAllocationCancelContext'
-    | 'getAllocationWithdrawContext']['context']
+const ctx = {} as Parameters<Handler>[0]
 
 describe('Allocation', () => {
     it('should return correct allocation transfer context', async () => {

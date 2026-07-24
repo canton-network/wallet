@@ -17,7 +17,6 @@
         }
     },
     "scripts": {
-        "generate:types": "tsx ./src/scripts/generateTypes.ts",
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "NODE_ENV=development tsx --watch src/index.ts",
         "clean": "tsc -b --clean; rm -rf dist",
@@ -39,6 +38,7 @@
     },
     "dependencies": {
         "@canton-network/core-test-token": "workspace:^",
+        "@canton-network/core-token-standard": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
         "koa": "^3.2.1",

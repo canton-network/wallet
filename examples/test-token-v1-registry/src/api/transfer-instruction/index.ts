@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { OpenAPIBackend } from 'openapi-backend'
+import { Handler, OpenAPIBackend } from 'openapi-backend'
 import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
 import { getTransferFactory } from './getTransferFactory'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
+import { OffLedger } from '@canton-network/core-token-standard'
 
 export const transferInstructionAPI = new OpenAPIBackend({
     definition: availableOpenAPIPaths['transfer-instruction-v1.yaml'],
@@ -16,7 +17,10 @@ export const transferInstructionAPI = new OpenAPIBackend({
         getTransferInstructionAcceptContext,
         getTransferInstructionRejectContext,
         getTransferInstructionWithdrawContext,
-    },
+    } satisfies Record<
+        keyof OffLedger.TransferInstructionV1.operations,
+        Handler
+    >,
 })
 
 await transferInstructionAPI.init()

@@ -5,11 +5,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getRegistryInfo } from './getRegistryInfo'
 import { getInstrument } from './getInstrument'
 import { listInstruments } from './listInstruments'
-import { Operations } from '../../openapi-ts/token-metadata-v1'
 import { instruments, supportedApis } from './common'
+import { Handler } from 'openapi-backend'
 
-const emptyCtx = {} as Operations[
-    'getRegistryInfo' | 'listInstruments']['context']
+const emptyCtx = {} as Parameters<Handler>[0]
 
 vi.mock('../../common/admin', () => ({
     admin: {
@@ -50,7 +49,7 @@ describe('Metadata', () => {
                     instrumentId: 'id',
                 },
             },
-        } as Operations['getInstrument']['context'])
+        } as Parameters<Handler>[0])
 
         expect(result.status).toBe(404)
     })
@@ -62,7 +61,7 @@ describe('Metadata', () => {
                     instrumentId: instruments[0].id,
                 },
             },
-        } as Operations['getInstrument']['context'])
+        } as Parameters<Handler>[0])
 
         expect(result).toStrictEqual({
             payload: instruments[0],

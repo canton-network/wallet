@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { OffLedger } from '@canton-network/core-token-standard'
+import { APIHandler } from '../../types'
 import { emptyChoiceContext } from '../common'
-import { TransferInstructionAPIHandler } from './common'
 
 /**
  * @returns Empty choice context payload for the transfer withdraw operation.
  */
-export const getTransferInstructionWithdrawContext: TransferInstructionAPIHandler<
-    'getTransferInstructionWithdrawContext'
+export const getTransferInstructionWithdrawContext: APIHandler<
+    OffLedger.TransferInstructionV1.paths['/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/withdraw']['post']
 > = async () => {
     return {
         payload: emptyChoiceContext,

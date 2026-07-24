@@ -2,17 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { Operations } from '../../openapi-ts/transfer-instruction-v1'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
 import { emptyChoiceContext } from '../common'
 import { mock } from '../../__test__/mocks'
+import { Handler } from 'openapi-backend'
 
-const emptyCtx = {} as Operations[
-    | 'getTransferInstructionAcceptContext'
-    | 'getTransferInstructionRejectContext'
-    | 'getTransferInstructionWithdrawContext']['context']
+const emptyCtx = {} as Parameters<Handler>[0]
 
 vi.mock('../../common/sdk', () => {
     return {
@@ -70,7 +67,7 @@ describe('Transfer Instruction', () => {
                     },
                 },
             },
-        } as Operations['getTransferFactory']['context']
+        } as Parameters<Handler>[0]
 
         const incorrectCtxChoiceArguments = {
             request: {
@@ -78,7 +75,7 @@ describe('Transfer Instruction', () => {
                     choiceArguments: {},
                 },
             },
-        } as Operations['getTransferFactory']['context']
+        } as Parameters<Handler>[0]
 
         it('should fail if provided request body is invalid', async () => {
             const result = await getTransferFactory(incorrectCtxChoiceArguments)

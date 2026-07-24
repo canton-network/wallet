@@ -3,11 +3,11 @@
 
 import { TestTokenV1, command } from '@canton-network/core-test-token'
 import sdk from '../../common/sdk'
-import { TransferInstructionAPIHandler } from './common'
 import { operator } from '../../common/operator'
-import { GetFactoryRequest } from '../../openapi-ts/transfer-instruction-v1'
 import z from 'zod'
 import { emptyChoiceContext } from '../common'
+import { APIHandler } from '../../types'
+import { OffLedger } from '@canton-network/core-token-standard'
 
 export const GetTransferFactoryChoiceArguments = z.object({
     sender: z.string(),
@@ -24,11 +24,12 @@ export const GetTransferFactoryChoiceArguments = z.object({
  * @throws {500} when instantiating new allocation factory contract has failed.
  * @returns Factory identifier, resolved transfer kind, and choice context on success.
  */
-export const getTransferFactory: TransferInstructionAPIHandler<
-    'getTransferFactory'
+export const getTransferFactory: APIHandler<
+    OffLedger.TransferInstructionV1.paths['/registry/transfer-instruction/v1/transfer-factory']['post']
 > = async (ctx) => {
     // get choice arguments and invalidate them
-    const { choiceArguments } = ctx.request.body as GetFactoryRequest
+    const { choiceArguments } = ctx.request
+        .body as OffLedger.TransferInstructionV1.components['schemas']['GetFactoryRequest']
 
     const parsedChoiceArguments =
         GetTransferFactoryChoiceArguments.safeParse(choiceArguments)

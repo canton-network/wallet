@@ -17,17 +17,7 @@ export const availableOpenAPIs = [
     'transfer-instruction-v1.yaml',
 ] as const
 
-export const availableOpenAPIPaths = Object.fromEntries(
-    availableOpenAPIs.map((apiFileName) => [
-        apiFileName,
-        getOpenAPIPath(apiFileName),
-    ])
-) as Record<
-    (typeof availableOpenAPIs)[number],
-    ReturnType<typeof getOpenAPIPath>
->
-
-export function getOpenAPIPath(
+function getOpenAPIPath(
     specName: (typeof availableOpenAPIs)[number],
     network: Network = 'devnet'
 ) {
@@ -38,3 +28,13 @@ export function getOpenAPIPath(
         `../../../../api-specs/splice/${spliceVersion}/${specName}`
     )
 }
+
+export const availableOpenAPIPaths = Object.fromEntries(
+    availableOpenAPIs.map((apiFileName) => [
+        apiFileName,
+        getOpenAPIPath(apiFileName),
+    ])
+) as Record<
+    (typeof availableOpenAPIs)[number],
+    ReturnType<typeof getOpenAPIPath>
+>

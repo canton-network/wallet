@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
-import { Operations } from '../../openapi-ts/allocation-instruction-v1'
 import { mock } from '../../__test__/mocks'
 import { emptyChoiceContext } from '../common'
+import { Handler } from 'openapi-backend'
 
 vi.mock('../../common/sdk', () => {
     return {
@@ -32,7 +32,7 @@ const correctChoiceArguments = {
             },
         },
     },
-} as Operations['getAllocationFactory']['context']
+} as Parameters<Handler>[0]
 
 const incorrectChoiceArguments = {
     request: {
@@ -40,7 +40,7 @@ const incorrectChoiceArguments = {
             choiceArguments: {},
         },
     },
-} as Operations['getAllocationFactory']['context']
+} as Parameters<Handler>[0]
 
 describe('Allocation Instruction', () => {
     beforeEach(() => {
