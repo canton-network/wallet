@@ -4,6 +4,8 @@
 export class Env {
     static FIREBLOCKS_API_KEY = () => Env.get('FIREBLOCKS_API_KEY')
     static FIREBLOCKS_SECRET = () => Env.get('FIREBLOCKS_SECRET')
+    static FIREBLOCKS_API_PATH = (fallback: string) =>
+        Env.get('FIREBLOCKS_API_PATH', { fallback })
     static BLOCKDAEMON_API_URL = (fallback: string) =>
         Env.get('BLOCKDAEMON_API_URL', { fallback })
     static BLOCKDAEMON_API_KEY = (fallback: string) =>
