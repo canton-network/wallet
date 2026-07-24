@@ -73,7 +73,7 @@ export class LoginCallback extends LitElement {
                     new Date(payload.exp * 1000).toISOString()
                 )
 
-                stateManager.accessToken.set(tokenResponse.access_token)
+                await stateManager.accessToken.set(tokenResponse.access_token)
 
                 addUserSession(
                     tokenResponse.access_token,

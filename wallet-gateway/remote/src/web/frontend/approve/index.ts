@@ -64,7 +64,7 @@ export class ApproveUi extends BaseElement {
 
     private async updateState() {
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get()
         )
 
         const result = await userClient.request({
@@ -113,7 +113,7 @@ export class ApproveUi extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'deleteTransaction',
@@ -143,7 +143,7 @@ export class ApproveUi extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const result: SignResult = await userClient.request({
                 method: 'sign',

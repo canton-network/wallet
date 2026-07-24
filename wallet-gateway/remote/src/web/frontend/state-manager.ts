@@ -8,7 +8,7 @@ import {
     decryptString,
 } from './access-token-utils.js'
 
-class StateManager {
+export class StateManager {
     static localStorageKey(item: string): string {
         return `com.splice.wallet.${item}`
     }
@@ -41,16 +41,16 @@ class StateManager {
     }
 
     private accessTokenCache: string | undefined
-    private accessTokenLoaded = false
 
-    accessToken2 = {
+    accessToken = {
         get: async (): Promise<string | undefined> => {
-            if (this.accessToken) return this.accessTokenCache
+            if (this.accessTokenCache !== undefined) {
+                return this.accessTokenCache
+            }
             const stored = localStorage.getItem(
                 StateManager.localStorageKey('accessToken')
             )
             if (!stored) {
-                this.accessTokenLoaded = true
                 return undefined
             }
             try {
@@ -62,25 +62,20 @@ class StateManager {
                 console.warn(error)
                 this.accessTokenCache = undefined
             }
-            this.accessTokenLoaded = true
             return this.accessTokenCache
         },
         set: async (token: string) => {
             const encryptedToken = await encryptString(token)
-            this.accessTokenCache = encryptedToken
-            this.accessTokenLoaded = true
+            localStorage.setItem(
+                StateManager.localStorageKey('accessToken'),
+                encryptedToken
+            )
+            this.accessTokenCache = token
         },
         clear: async () => {
             localStorage.removeItem(StateManager.localStorageKey('accessToken'))
             this.accessTokenCache = undefined
-            this.accessTokenLoaded = false
         },
-    }
-
-    accessToken = {
-        get: () => this.getWithStorage('accessToken'),
-        set: (token: string) => this.setWithStorage('accessToken', token),
-        clear: () => this.clearWithStorage('accessToken'),
     }
 
     networkId = {
@@ -103,15 +98,15 @@ class StateManager {
         clear: () => this.clearWithStorage('intendedPage'),
     }
 
-    clearAuthState(): void {
-        this.accessToken.clear()
+    async clearAuthState(): Promise<void> {
+        await this.accessToken.clear()
         this.networkId.clear()
         this.expirationDate.clear()
         this.intendedPage.clear()
     }
 
     async revokeAccessToken(): Promise<void> {
-        await this.accessToken2.clear()
+        await this.accessToken.clear()
         await destroyTokenKey()
     }
 }

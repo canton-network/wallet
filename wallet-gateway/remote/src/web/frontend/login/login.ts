@@ -65,7 +65,7 @@ export class LoginUI extends BaseElement {
 
     private async loadNetworks() {
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get()
         )
         const response = await userClient.request({ method: 'listNetworks' })
         return response.networks
@@ -73,7 +73,7 @@ export class LoginUI extends BaseElement {
 
     private async loadIdps() {
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get()
         )
         const response = await userClient.request({ method: 'listIdps' })
         return response.idps
@@ -181,7 +181,7 @@ export class LoginUI extends BaseElement {
 
     protected async selfSign(networkId: string, clientId: string) {
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get()
         )
         const { accessToken } = await userClient.request({
             method: 'selfSignedAccessToken',
@@ -192,7 +192,7 @@ export class LoginUI extends BaseElement {
         stateManager.expirationDate.set(
             new Date(payload.exp * 1000).toISOString()
         )
-        stateManager.accessToken.set(accessToken)
+        await stateManager.accessToken.set(accessToken)
 
         await addUserSession(accessToken, networkId)
     }

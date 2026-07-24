@@ -151,7 +151,7 @@ export class UserUiActivities extends BaseElement {
         this.loading = true
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
 
             const currentCursor = this.pageCursors[this.currentPage - 1]
