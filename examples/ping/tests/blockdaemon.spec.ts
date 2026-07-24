@@ -25,7 +25,8 @@ async function setMockBlockdaemonTransactionState(
     txId: string,
     status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
-    const isMockedApi = blockdaemonApiUrl && isLocalhost(new URL(blockdaemonApiUrl))
+    const isMockedApi =
+        blockdaemonApiUrl && isLocalhost(new URL(blockdaemonApiUrl))
     if (!isMockedApi) {
         return
     }

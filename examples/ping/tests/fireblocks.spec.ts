@@ -16,7 +16,8 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-    toMockEndpoint, isLocalhost,
+    toMockEndpoint,
+    isLocalhost,
 } from './external-signing-test-helpers.js'
 
 const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
@@ -25,7 +26,8 @@ async function setMockFireblocksTransactionState(
     txId: string,
     status: 'signed' | 'rejected' | 'failed'
 ): Promise<void> {
-    const isMockedApi = fireblocksApiPath && isLocalhost(new URL(fireblocksApiPath))
+    const isMockedApi =
+        fireblocksApiPath && isLocalhost(new URL(fireblocksApiPath))
     if (!isMockedApi) {
         return
     }
