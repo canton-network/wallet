@@ -213,7 +213,10 @@ export class WgWalletCard extends BaseElement {
         )
 
         return html`
-            <div class="meta">
+            <div
+                class="meta"
+                data-test-external-tx-id=${this.wallet.externalTxId || ''}
+            >
                 <div
                     class=${
                         this.wallet.hint
