@@ -112,6 +112,7 @@ test.describe('Blockdaemon external signing', () => {
             submission.commandId,
             'executed'
         )
+        await wg.expectActivityWithStatus(submission.commandId, 'executed')
     })
 
     test('rejects a transaction in the wallet UI', async () => {
@@ -136,6 +137,7 @@ test.describe('Blockdaemon external signing', () => {
             submission.commandId,
             'failed'
         )
+        await wg.expectActivityWithStatus(submission.commandId, 'failed')
     })
 
     test('fails when Blockdaemon fails signing', async () => {
@@ -154,5 +156,6 @@ test.describe('Blockdaemon external signing', () => {
             submission.commandId,
             'failed'
         )
+        await wg.expectActivityWithStatus(submission.commandId, 'failed')
     })
 })

@@ -107,6 +107,7 @@ test.describe('Fireblocks external signing', () => {
             submission.commandId,
             'executed'
         )
+        await wg.expectActivityWithStatus(submission.commandId, 'executed')
     })
 
     test('rejects a transaction in the wallet UI', async () => {
@@ -131,6 +132,7 @@ test.describe('Fireblocks external signing', () => {
             submission.commandId,
             'failed'
         )
+        await wg.expectActivityWithStatus(submission.commandId, 'failed')
     })
 
     test('fails when Fireblocks fails signing', async () => {
@@ -149,5 +151,6 @@ test.describe('Fireblocks external signing', () => {
             submission.commandId,
             'failed'
         )
+        await wg.expectActivityWithStatus(submission.commandId, 'failed')
     })
 })

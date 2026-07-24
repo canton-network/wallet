@@ -24,6 +24,9 @@ export interface IdpFormInput {
     configUrl: string
 }
 
+export type ActivityStatus =
+    'pending' | 'signed' | 'executed' | 'failed' | 'rejected'
+
 export class WalletGateway {
     private readonly dappPage: Page
     private readonly connectButton: (dappPage: Page) => Locator
@@ -779,5 +782,71 @@ export class WalletGateway {
         await expect(
             popup.getByRole('heading', { name: 'Identity Providers' })
         ).toBeVisible({ timeout: 15000 })
+    }
+
+    async expectActivityWithStatus(
+        commandId: string,
+        status: ActivityStatus
+    ): Promise<void> {
+        if (!(await this.isPopupOpen())) {
+            await this.openPopup()
+        }
+        await this.gotoActivitiesPage()
+        const card = await this.findActivityCard(commandId)
+        await expect(card.locator('.status-badge')).toHaveText(status, {
+            timeout: 15000,
+        })
+    }
+
+    async gotoActivitiesPage(): Promise<void> {
+        const popup = await this.popup()
+        await popup.locator('button[aria-haspopup="menu"]').click()
+        await popup
+            .getByRole('button', { name: 'Activities', exact: true })
+            .click()
+        await this.waitForActivitiesPageReady()
+    }
+
+    private async findActivityCard(commandId: string): Promise<Locator> {
+        const popup = await this.popup()
+        await this.waitForActivitiesPageReady()
+
+        const paginationStatus = popup.locator('wg-pagination .pagination span')
+
+        for (let guard = 0; guard < 25; guard++) {
+            const card = popup.getByRole('button', {
+                name: `Open activity ${commandId}`,
+            })
+            if ((await card.count()) > 0) {
+                await expect(card.first()).toBeVisible({ timeout: 5000 })
+                return card.first()
+            }
+
+            const nextButton = popup.getByRole('button', { name: 'Next page' })
+            const hasNext =
+                (await nextButton.count()) > 0 &&
+                (await nextButton.isEnabled().catch(() => false))
+            if (!hasNext) {
+                break
+            }
+
+            const before = (await paginationStatus.textContent()) ?? ''
+            await nextButton.click()
+            await expect(paginationStatus).not.toHaveText(before, {
+                timeout: 5000,
+            })
+        }
+
+        throw new Error(
+            `Activity card for command id "${commandId}" not found in Activities`
+        )
+    }
+
+    private async waitForActivitiesPageReady(): Promise<void> {
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Activities' })
+        ).toBeVisible({ timeout: 15000 })
+        await expect(popup.getByText('Loading activities...')).not.toBeVisible()
     }
 }
