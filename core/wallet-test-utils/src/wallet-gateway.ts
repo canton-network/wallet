@@ -17,6 +17,13 @@ export interface NetworkFormInput {
     }
 }
 
+export interface IdpFormInput {
+    id: string
+    type: 'oauth' | 'self_signed'
+    issuer: string
+    configUrl: string
+}
+
 export class WalletGateway {
     private readonly dappPage: Page
     private readonly connectButton: (dappPage: Page) => Locator
@@ -638,6 +645,139 @@ export class WalletGateway {
         const popup = await this.popup()
         await expect(
             popup.getByRole('heading', { name: 'Networks' })
+        ).toBeVisible({ timeout: 15000 })
+    }
+
+    async gotoIdentityProvidersPage(): Promise<void> {
+        const popup = await this.popup()
+        await popup.locator('button[aria-haspopup="menu"]').click()
+        await popup
+            .getByRole('button', { name: 'Identity Providers', exact: true })
+            .click()
+        await this.waitForIdentityProvidersPageReady()
+    }
+
+    async hasNewIdpButton(): Promise<boolean> {
+        const popup = await this.popup()
+        return (
+            (await popup
+                .getByRole('button', { name: 'New', exact: true })
+                .count()) > 0
+        )
+    }
+
+    async addIdp(idp: IdpFormInput): Promise<void> {
+        await this.gotoIdentityProvidersPage()
+        const popup = await this.popup()
+
+        const newButton = popup.getByRole('button', {
+            name: 'New',
+            exact: true,
+        })
+        await expect(newButton).toBeVisible({ timeout: 15000 })
+        await newButton.click()
+
+        await expect(
+            popup.getByRole('heading', {
+                name: 'Add a new identity provider',
+            })
+        ).toBeVisible({ timeout: 15000 })
+
+        await this.fillIdpForm(idp)
+
+        await popup.getByRole('button', { name: 'Add', exact: true }).click()
+        await this.waitForIdentityProvidersPageReady()
+    }
+
+    async updateIdpIssuer(idpId: string, issuer: string): Promise<void> {
+        await this.openIdpReview(idpId)
+        const popup = await this.popup()
+
+        await popup.locator('#idp-issuer').fill(issuer)
+        await popup.getByRole('button', { name: 'Update', exact: true }).click()
+        await this.waitForIdentityProvidersPageReady()
+    }
+
+    async findIdpCard(idpId: string): Promise<Locator> {
+        const popup = await this.popup()
+        await this.waitForIdentityProvidersPageReady()
+
+        const paginationStatus = popup.locator('wg-pagination .pagination span')
+
+        for (let guard = 0; guard < 25; guard++) {
+            const card = popup
+                .locator('idp-card')
+                .filter({ hasText: idpId })
+                .first()
+            if ((await card.count()) > 0) {
+                await expect(card).toBeVisible({ timeout: 5000 })
+                return card
+            }
+
+            const nextButton = popup.getByRole('button', { name: 'Next page' })
+            const hasNext =
+                (await nextButton.count()) > 0 &&
+                (await nextButton.isEnabled().catch(() => false))
+            if (!hasNext) {
+                break
+            }
+
+            const before = (await paginationStatus.textContent()) ?? ''
+            await nextButton.click()
+            await expect(paginationStatus).not.toHaveText(before, {
+                timeout: 5000,
+            })
+        }
+
+        throw new Error(
+            `Identity provider card for "${idpId}" not found in the list`
+        )
+    }
+
+    async expectFirstIdpNotEditable(): Promise<void> {
+        const popup = await this.popup()
+        await this.waitForIdentityProvidersPageReady()
+
+        const firstCard = popup.locator('idp-card').first()
+        await expect(firstCard).toBeVisible({ timeout: 15000 })
+        await firstCard.click()
+
+        await expect(popup).toHaveURL(/\/identity-providers\/?$/, {
+            timeout: 15000,
+        })
+        await expect(
+            popup.getByRole('heading', { name: 'Review Identity Provider' })
+        ).toHaveCount(0)
+    }
+
+    private async openIdpReview(idpId: string): Promise<void> {
+        const card = await this.findIdpCard(idpId)
+        await card.click()
+
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Review Identity Provider' })
+        ).toBeVisible({ timeout: 15000 })
+    }
+
+    private async fillIdpForm(idp: IdpFormInput): Promise<void> {
+        const popup = await this.popup()
+
+        await popup.locator('#idp-id').fill(idp.id)
+        await popup.locator('#idp-type').selectOption(idp.type)
+        await popup.locator('#idp-issuer').fill(idp.issuer)
+        if (idp.type === 'oauth') {
+            if (!idp.configUrl) {
+                throw new Error('configUrl is required for oauth IDPs')
+            }
+            await popup.locator('#idp-config-url').fill(idp.configUrl)
+        }
+    }
+
+    private async waitForIdentityProvidersPageReady(): Promise<void> {
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Identity Providers' })
         ).toBeVisible({ timeout: 15000 })
     }
 }

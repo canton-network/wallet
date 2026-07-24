@@ -89,3 +89,49 @@ test.describe('Wallet Gateway settings - networks', () => {
         await wg.expectFirstNetworkNotEditable()
     })
 })
+
+test.describe('Wallet Gateway settings - identity providers', () => {
+    test('admin can add and edit an identity provider', async ({
+        page: dappPage,
+    }: {
+        page: Page
+    }) => {
+        const wg = createWalletGateway(dappPage)
+        await connect(wg, dappPage, adminNetwork)
+
+        const suffix = Date.now()
+        const idpId = `e2e-idp-${suffix}`
+        const issuer = `http://127.0.0.1:8889/e2e-${suffix}`
+
+        await wg.addIdp({
+            id: idpId,
+            type: 'oauth',
+            issuer,
+            configUrl: 'http://127.0.0.1:8889/.well-known/openid-configuration',
+        })
+
+        const card = await wg.findIdpCard(idpId)
+        await expect(card).toContainText(issuer)
+
+        const editedIssuer = `${issuer}/edited`
+        await wg.updateIdpIssuer(idpId, editedIssuer)
+
+        const editedCard = await wg.findIdpCard(idpId)
+        await expect(editedCard).toContainText(editedIssuer)
+    })
+
+    test('non-admin cannot add or edit identity providers', async ({
+        page: dappPage,
+    }: {
+        page: Page
+    }) => {
+        const wg = createWalletGateway(dappPage)
+        await connect(wg, dappPage, nonAdminNetwork)
+
+        await wg.gotoIdentityProvidersPage()
+
+        expect(await wg.hasNewIdpButton()).toBe(false)
+
+        await wg.expectFirstIdpNotEditable()
+    })
+})
