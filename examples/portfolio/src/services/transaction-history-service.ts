@@ -3,7 +3,7 @@
 
 import { type Logger } from 'pino'
 import { PartyId } from '@canton-network/core-types'
-import { type Types } from '@canton-network/core-ledger-client'
+import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 import {
     TransactionParser,
@@ -12,10 +12,10 @@ import {
 import { type Transaction } from '@canton-network/core-tx-parser'
 import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 
-type FiltersByParty = Types['Map_Filters']
+type FiltersByParty = LedgerCommonSchemas['Map_Filters']
 
 type Update = Ops.PostV2UpdatesFlats['ledgerApi']['result'][number]
-type JsTransaction = Types['JsTransaction']
+type JsTransaction = LedgerCommonSchemas['JsTransaction']
 
 const updateOffset = (update: Update): number => {
     const kind = update.update
