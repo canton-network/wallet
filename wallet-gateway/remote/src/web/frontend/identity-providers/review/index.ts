@@ -62,7 +62,7 @@ export class UserUiReviewIdp extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const result = await userClient.request({ method: 'listIdps' })
 
@@ -91,7 +91,7 @@ export class UserUiReviewIdp extends BaseElement {
     private async onSave(e: IdpFormSaveEvent) {
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'addIdp',
@@ -109,7 +109,7 @@ export class UserUiReviewIdp extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'removeIdp',
