@@ -59,6 +59,9 @@ const createNamespace: {
             false
         )
 
+        // Keep validator-proxy behavior for existing Amulet configurations
+        // that provide validatorUrl. Configurations without it use Scan
+        // directly.
         const amuletService = config.validatorUrl
             ? new AmuletService(
                   tokenStandardService,
