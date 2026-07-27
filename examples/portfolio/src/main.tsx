@@ -10,7 +10,6 @@ import ReactDOM from 'react-dom/client'
 
 import { loadPortfolioConfig } from '@config/portfolio-config'
 import { ConnectionProvider } from '@contexts/ConnectionProvider'
-import { PortfolioProvider } from '@contexts/PortfolioProvider'
 import { PortfolioConfigProvider } from '@contexts/PortfolioConfigProvider'
 import { AppThemeProvider } from '@contexts/theme-provider'
 import { Toaster } from 'sonner'
@@ -59,13 +58,11 @@ const renderApp = async (root: ReactDOM.Root) => {
                     <LocalizationProvider dateAdapter={AdapterDateFns}>
                         <QueryClientProvider client={queryClient}>
                             <ConnectionProvider>
-                                <PortfolioProvider>
-                                    <RouterProvider
-                                        router={router}
-                                        context={{ queryClient }}
-                                    />
-                                    <Toaster richColors />
-                                </PortfolioProvider>
+                                <RouterProvider
+                                    router={router}
+                                    context={{ queryClient }}
+                                />
+                                <Toaster richColors />
                             </ConnectionProvider>
                         </QueryClientProvider>
                     </LocalizationProvider>
