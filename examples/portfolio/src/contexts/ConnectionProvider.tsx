@@ -6,7 +6,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
 import { queryKeys } from '../hooks/query-keys'
-import { clear as clearResolvedServices } from '../services/resolve'
 import { ConnectionContext } from './ConnectionContext'
 
 const wcProjectId = import.meta.env.VITE_WC_PROJECT_ID as string
@@ -38,7 +37,6 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         (status: sdk.dappAPI.StatusEvent) => {
             const nextToken = status.session?.accessToken
             if (nextToken && nextToken !== currentSessionToken.current) {
-                clearResolvedServices()
                 currentSessionToken.current = nextToken
                 setSessionTokenVersion((version) => version + 1)
             }
@@ -50,7 +48,6 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         (status: sdk.dappAPI.StatusEvent, connectionBoundary: boolean) => {
             if (connectionBoundary) {
                 clearWalletConnectionQueries()
-                clearResolvedServices()
                 currentSessionToken.current = undefined
                 setAccounts([])
             }
@@ -67,7 +64,6 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             .then((status) => publishConnectedStatus(status, true))
             .catch((err: unknown) => {
                 clearWalletConnectionQueries()
-                clearResolvedServices()
                 currentSessionToken.current = undefined
                 setConnectionStatus(undefined)
                 setError(err instanceof Error ? err.message : String(err))
@@ -79,7 +75,6 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const doDisconnect = useCallback(() => {
         clearWalletConnectionQueries()
-        clearResolvedServices()
         currentSessionToken.current = undefined
         setConnectionStatus(undefined)
         setAccounts([])
