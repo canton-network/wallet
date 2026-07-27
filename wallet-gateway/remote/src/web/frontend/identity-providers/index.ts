@@ -75,7 +75,7 @@ export class UserUiIdentityProviders extends BaseElement {
     private async loadData() {
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const [idpsResult, userResult] = await Promise.all([
                 userClient.request({ method: 'listIdps' }),

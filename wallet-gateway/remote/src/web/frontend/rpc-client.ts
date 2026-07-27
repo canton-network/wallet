@@ -73,12 +73,12 @@ const handleAutoLogout = async (): Promise<void> => {
     isLoggingOut = true
 
     try {
-        const accessToken = stateManager.accessToken.get()
+        const accessToken = await stateManager.accessToken.get()
         if (accessToken) {
             await attemptRemoveSession(accessToken)
         }
     } finally {
-        stateManager.clearAuthState()
+        await stateManager.clearAuthState()
         isLoggingOut = false
 
         if (getCurrentRoute(window.location.pathname) !== LOGIN_PAGE_REDIRECT) {

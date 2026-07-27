@@ -79,7 +79,7 @@ export class UserUiNetworks extends BaseElement {
     private async loadData() {
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const [networksResult, sessionsResult, userResult] =
                 await Promise.all([

@@ -75,7 +75,7 @@ export class UserUiApiKeys extends BaseElement {
     private async loadData() {
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const apiKeys = await userClient.request({ method: 'listApiKeys' })
             this.apiKeys = apiKeys.apiKeys
@@ -100,7 +100,7 @@ export class UserUiApiKeys extends BaseElement {
     private async _revokeApiKey(apiKeyEvent: ApiKeyCardRevokeEvent) {
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
 
             await userClient.request({
