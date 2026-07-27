@@ -93,11 +93,7 @@ export const tap = async (
         dialog.getByRole('heading', { name: 'DevNet tap' })
     ).toBeVisible()
 
-    await dialog.getByRole('combobox', { name: 'Select instrument' }).click()
-    await expect(page.getByRole('option', { name: /AMT/ })).toBeVisible({
-        timeout: 10000,
-    })
-    await page.getByRole('option', { name: /AMT/ }).click()
+    await expect(dialog.getByLabel('Instrument')).toHaveValue('Amulet')
 
     const amountInput = dialog.getByRole('spinbutton', { name: 'Amount' })
     await amountInput.clear()
