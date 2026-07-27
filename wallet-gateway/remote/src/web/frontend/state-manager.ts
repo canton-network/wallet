@@ -156,6 +156,11 @@ export class StateManager {
         await this.accessToken.clear(origin)
         await destroyTokenKey()
     }
+
+    async revokeAccessToken(): Promise<void> {
+        await this.accessToken.clear()
+        await destroyTokenKey()
+    }
 }
 
 export const stateManager = new StateManager()
