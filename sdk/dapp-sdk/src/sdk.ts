@@ -1,15 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/**
- * DappSDK ties together DiscoveryClient + DappClient and serves as the
- * primary SDK entrypoint for dApp developers.
- *
- * A default singleton instance is exported at the bottom of this file, and
- * module-level functions delegate to that singleton for backward compatibility
- * (e.g. `sdk.connect()`, `sdk.status()`).
- */
-
 import {
     DiscoveryClient,
     type ProviderAdapter,
@@ -54,11 +45,28 @@ import defaultExtensionsList from './wallets.json'
 import { CANTON_LOGO_PNG } from './assets'
 import { requestAnnouncedProviders } from './announce-discovery'
 
+/**
+ * Options for `DappSDK.init` / the module-level {@link init}.
+ *
+ * @group Configuration
+ */
 export interface DappSDKConnectOptions<
     TDefaultAdapter extends ProviderAdapter = ProviderAdapter,
 > {
+    /**
+     * Replaces the default list of remote wallets.
+     * Pass `[]` to register none.
+     */
     defaultAdapters?: TDefaultAdapter[]
+    /**
+     * Extra adapters to register alongside the defaults
+     * (or alongside `defaultAdapters` when that is set).
+     */
     additionalAdapters?: ProviderAdapter[] | undefined
+    /**
+     * When `true` (default), suggested browser-extension wallets are shown
+     * in the wallet picker.
+     */
     enableSuggestedWallets?: boolean
 }
 
@@ -79,6 +87,16 @@ function normalizeConnectOptions(
     }
 }
 
+/**
+ * DappSDK ties together DiscoveryClient + DappClient and serves as the
+ * primary SDK entrypoint for dApp developers.
+ *
+ * A default singleton instance is exported as {@link sdk}, and module-level
+ * functions delegate to that singleton for convenience
+ * (e.g. `connect()`, `status()`).
+ *
+ * @group SDK
+ */
 export class DappSDK {
     private readonly RECENT_GATEWAYS_KEY = 'splice_wallet_picker_recent'
     private readonly walletPicker: WalletPickerFn
@@ -276,10 +294,12 @@ export class DappSDK {
     }
 
     /**
-     * Returns the raw connected provider instance (if any).
+     * Returns the raw CIP-103 provider for the active discovery session, or `null`
+     * if not connected.
      *
-     * This is useful for advanced integrations that need to call methods that
-     * are not wrapped by the higher-level SDK helpers.
+     * Use it for direct `provider.request(...)` calls or provider-level events.
+     *
+     * @group Provider access
      */
     getConnectedProvider(): Provider<DappRpcTypes> | null {
         const session = this.discovery?.getActiveSession()
@@ -288,27 +308,14 @@ export class DappSDK {
     }
 
     /**
-     * Cold-start the SDK: create (or update) the discovery client, register adapters,
-     * and attempt to restore a persisted wallet session without opening the picker.
+     * Registers wallet adapters and silently restores a previous session **without**
+     * opening the wallet picker.
      *
-     * Call early on app mount with your adapter configuration. For the exported
-     * {@link sdk} singleton, the **first** `init()` call (with or without options)
-     * determines how {@link ensureDiscovery} builds the initial adapter list; pass
-     * `options` on that first call when you need custom gateways or extra adapters.
+     * Call once, early in the app lifecycle. Concurrent callers share the same
+     * in-flight promise.
      *
-     * Adapter selection when discovery is first created (see {@link getInitAdapters}):
-     * - If `options` is passed on this call, use those adapters (default gateways apply when
-     *   `defaultAdapters` is omitted).
-     * - Else if {@link configuredAdapters} was set by an earlier `init(options)`, use it.
-     * - Else use the last remote gateway URL from app-local hints (if any), otherwise
-     *   fall back to default gateways (`gateways.json`).
-     *
-     * Session restore itself is always performed by {@link DiscoveryClient} via
-     * `restorePersistedSessionIfNeeded()`; the SDK only ensures a compatible adapter set
-     * is registered first.
-     *
-     * Safe to call from multiple places: concurrent callers share the same in-flight
-     * promise; discovery creation itself still happens at most once per SDK instance.
+     * @param options - Adapter and wallet-picker configuration.
+     * @group Lifecycle
      */
     async init(options?: DappSDKConnectOptions): Promise<void> {
         // Register adapters and store them in the SDK instance.
@@ -343,8 +350,22 @@ export class DappSDK {
         await this.initPromise
     }
 
+    /**
+     * Opens the wallet picker and establishes a connection, running the
+     * authentication flow if needed.
+     *
+     * Prefer calling `DappSDK.init` with adapters at startup. Passing
+     * `options` here remains supported for older call sites; it is equivalent
+     * to `init(options)` then `connect()`.
+     *
+     * @returns Whether the connection succeeded, plus network connectivity hints.
+     * @group Lifecycle
+     */
     async connect(): Promise<ConnectResult>
-    /** @deprecated Pass options to `init()` instead. */
+    /**
+     * @deprecated Pass options to `DappSDK.init` instead.
+     * @group Lifecycle
+     */
     async connect(options: DappSDKConnectOptions): Promise<ConnectResult>
     async connect(options?: DappSDKConnectOptions): Promise<ConnectResult> {
         // Prefer init({ ... }) once at startup. Passing options here remains supported
@@ -476,6 +497,11 @@ export class DappSDK {
         })
     }
 
+    /**
+     * Ends the session between the dApp and the wallet.
+     *
+     * @group Lifecycle
+     */
     async disconnect(): Promise<null> {
         // This may result in double call to dapp-api with method `disconnect` and double event `statusChanged`
         if (this.client) {
@@ -492,6 +518,12 @@ export class DappSDK {
         return null
     }
 
+    /**
+     * Returns whether the user is connected **without** triggering the login flow.
+     * Safe to call on page load.
+     *
+     * @group Status
+     */
     async isConnected(): Promise<ConnectResult> {
         if (this.client) {
             return this.client.isConnected()
@@ -504,62 +536,139 @@ export class DappSDK {
         }
     }
 
+    /**
+     * Returns network- and session-related information for the current connection.
+     *
+     * Restores a persisted session on cold start when possible.
+     *
+     * @group Status
+     */
     async status(): Promise<StatusEvent> {
         // Same cold-start as connect: restore session (if any) so requireClient() works.
         await this.init()
         return this.requireClient().status()
     }
 
+    /**
+     * Returns all parties the user has access to.
+     *
+     * @group Accounts
+     */
     async listAccounts(): Promise<ListAccountsResult> {
         return this.requireClient().listAccounts()
     }
 
+    /**
+     * Prepares, requests signature for, and executes a Daml transaction.
+     * Completes when the request is accepted by the wallet (not when the
+     * ledger finishes executing). Prefer `DappSDK.prepareExecuteAndWait`
+     * when you need the execution result.
+     *
+     * @param params - The Daml commands (and optional metadata) to execute.
+     * @group Signing & transactions
+     */
     async prepareExecute(params: PrepareExecuteParams): Promise<null> {
         return this.requireClient().prepareExecute(params)
     }
 
+    /**
+     * Like `DappSDK.prepareExecute`, but waits until the transaction is
+     * executed (or fails) and returns the result.
+     *
+     * @param params - The Daml commands (and optional metadata) to execute.
+     * @group Signing & transactions
+     */
     async prepareExecuteAndWait(
         params: PrepareExecuteParams
     ): Promise<PrepareExecuteAndWaitResult> {
         return this.requireClient().prepareExecuteAndWait(params)
     }
 
+    /**
+     * Signs an arbitrary message with the connected wallet.
+     *
+     * @param params - The message (and optional party) to sign.
+     * @group Signing & transactions
+     */
     async signMessage(params: SignMessageParams): Promise<SignMessageResult> {
         return this.requireClient().signMessage(params)
     }
 
+    /**
+     * Proxies an authenticated request to the Canton JSON Ledger API.
+     *
+     * @param params - HTTP method, Ledger API path, and optional body/query.
+     * @group Signing & transactions
+     */
     async ledgerApi(params: LedgerApiParams): Promise<LedgerApiResult> {
         return this.requireClient().ledgerApi(params)
     }
 
+    /**
+     * Opens the connected wallet's user UI (for example the gateway user portal).
+     *
+     * @group Lifecycle
+     */
     async open(): Promise<void> {
         return this.requireClient().open()
     }
 
+    /**
+     * Subscribes to connection status / session changes.
+     *
+     * @group Events
+     */
     async onStatusChanged(listener: EventListener<StatusEvent>): Promise<void> {
         this.requireClient().onStatusChanged(listener)
     }
 
+    /**
+     * Subscribes to account list changes (added, removed, or primary changed).
+     *
+     * @group Events
+     */
     async onAccountsChanged(
         listener: EventListener<AccountsChangedEvent>
     ): Promise<void> {
         this.requireClient().onAccountsChanged(listener)
     }
 
+    /**
+     * Subscribes to successful connection events.
+     *
+     * @group Events
+     */
     async onConnected(listener: EventListener<StatusEvent>): Promise<void> {
         this.requireClient().onConnected(listener)
     }
 
+    /**
+     * Subscribes to transaction lifecycle updates for submissions started via
+     * `DappSDK.prepareExecute`.
+     *
+     * @group Events
+     */
     async onTxChanged(listener: EventListener<TxChangedEvent>): Promise<void> {
         this.requireClient().onTxChanged(listener)
     }
 
+    /**
+     * Subscribes to message-signature lifecycle updates for
+     * `DappSDK.signMessage`.
+     *
+     * @group Events
+     */
     async onMessageSignature(
         listener: EventListener<MessageSignatureEvent>
     ): Promise<void> {
         this.requireClient().onMessageSignature(listener)
     }
 
+    /**
+     * Removes a listener previously registered with `DappSDK.onStatusChanged`.
+     *
+     * @group Events
+     */
     async removeOnStatusChanged(
         listener: EventListener<StatusEvent>
     ): Promise<void> {
@@ -567,6 +676,11 @@ export class DappSDK {
         this.client.removeOnStatusChanged(listener)
     }
 
+    /**
+     * Removes a listener previously registered with `DappSDK.onAccountsChanged`.
+     *
+     * @group Events
+     */
     async removeOnAccountsChanged(
         listener: EventListener<AccountsChangedEvent>
     ): Promise<void> {
@@ -574,6 +688,11 @@ export class DappSDK {
         this.client.removeOnAccountsChanged(listener)
     }
 
+    /**
+     * Removes a listener previously registered with `DappSDK.onConnected`.
+     *
+     * @group Events
+     */
     async removeOnConnected(
         listener: EventListener<StatusEvent>
     ): Promise<void> {
@@ -581,6 +700,11 @@ export class DappSDK {
         this.client.removeOnConnected(listener)
     }
 
+    /**
+     * Removes a listener previously registered with `DappSDK.onTxChanged`.
+     *
+     * @group Events
+     */
     async removeOnTxChanged(
         listener: EventListener<TxChangedEvent>
     ): Promise<void> {
@@ -588,6 +712,11 @@ export class DappSDK {
         this.client.removeOnTxChanged(listener)
     }
 
+    /**
+     * Removes a listener previously registered with `DappSDK.onMessageSignature`.
+     *
+     * @group Events
+     */
     async removeOnMessageSignature(
         listener: EventListener<MessageSignatureEvent>
     ): Promise<void> {
@@ -596,14 +725,22 @@ export class DappSDK {
     }
 }
 
+/** Default singleton `DappSDK` used by the module-level helpers below. */
 export const sdk = new DappSDK()
 
 /**
- * Opens the wallet picker and connects. Prefer {@link init} with adapters at startup;
- * `options` here is a legacy convenience that forwards to {@link DappSDK.init}.
+ * Opens the wallet picker and connects.
+ *
+ * Prefer {@link init} with adapters at startup; `options` here is a legacy
+ * convenience that forwards to `DappSDK.init`.
+ *
+ * @group Lifecycle
  */
 export function connect(): Promise<ConnectResult>
-/** @deprecated Pass options to `init()` instead. */
+/**
+ * @deprecated Pass options to {@link init} instead.
+ * @group Lifecycle
+ */
 export function connect(options: DappSDKConnectOptions): Promise<ConnectResult>
 export function connect(
     options?: DappSDKConnectOptions
@@ -616,69 +753,186 @@ export function connect(
     return sdk.connect()
 }
 
+/**
+ * Registers wallet adapters and silently restores a previous session **without**
+ * opening the wallet picker. Delegates to `DappSDK.init`.
+ *
+ * @param options - Adapter and wallet-picker configuration.
+ * @group Lifecycle
+ */
 export const init = (options?: DappSDKConnectOptions): Promise<void> =>
     sdk.init(options)
 
+/**
+ * Ends the session between the dApp and the wallet. Delegates to `DappSDK.disconnect`.
+ *
+ * @group Lifecycle
+ */
 export const disconnect = (): Promise<null> => sdk.disconnect()
 
+/**
+ * Returns whether the user is connected **without** triggering the login flow.
+ * Delegates to `DappSDK.isConnected`.
+ *
+ * @group Status
+ */
 export const isConnected = (): Promise<ConnectResult> => sdk.isConnected()
 
+/**
+ * Returns network- and session-related information for the current connection.
+ * Delegates to `DappSDK.status`.
+ *
+ * @group Status
+ */
 export const status = (): Promise<StatusEvent> => sdk.status()
 
+/**
+ * Returns all parties the user has access to. Delegates to `DappSDK.listAccounts`.
+ *
+ * @group Accounts
+ */
 export const listAccounts = (): Promise<ListAccountsResult> =>
     sdk.listAccounts()
 
+/**
+ * Prepares, requests signature for, and executes a Daml transaction.
+ * Delegates to `DappSDK.prepareExecute`.
+ *
+ * @param params - The Daml commands (and optional metadata) to execute.
+ * @group Signing & transactions
+ */
 export const prepareExecute = (params: PrepareExecuteParams): Promise<null> =>
     sdk.prepareExecute(params)
 
+/**
+ * Like {@link prepareExecute}, but waits for execution and returns the result.
+ * Delegates to `DappSDK.prepareExecuteAndWait`.
+ *
+ * @param params - The Daml commands (and optional metadata) to execute.
+ * @group Signing & transactions
+ */
 export const prepareExecuteAndWait = (
     params: PrepareExecuteParams
 ): Promise<PrepareExecuteAndWaitResult> => sdk.prepareExecuteAndWait(params)
 
+/**
+ * Proxies an authenticated request to the Canton JSON Ledger API.
+ * Delegates to `DappSDK.ledgerApi`.
+ *
+ * @param params - HTTP method, Ledger API path, and optional body/query.
+ * @group Signing & transactions
+ */
 export const ledgerApi = (params: LedgerApiParams): Promise<LedgerApiResult> =>
     sdk.ledgerApi(params)
 
+/**
+ * Opens the connected wallet's user UI. Delegates to `DappSDK.open`.
+ *
+ * @group Lifecycle
+ */
 export const open = (): Promise<void> => sdk.open()
 
+/**
+ * Returns the raw CIP-103 provider for the active session, or `null`.
+ * Delegates to `DappSDK.getConnectedProvider`.
+ *
+ * @group Provider access
+ */
 export const getConnectedProvider = (): ReturnType<
     DappSDK['getConnectedProvider']
 > => sdk.getConnectedProvider()
 
+/**
+ * Subscribes to connection status / session changes.
+ * Delegates to `DappSDK.onStatusChanged`.
+ *
+ * @group Events
+ */
 export const onStatusChanged = (
     listener: EventListener<StatusEvent>
 ): Promise<void> => sdk.onStatusChanged(listener)
 
+/**
+ * Subscribes to account list changes.
+ * Delegates to `DappSDK.onAccountsChanged`.
+ *
+ * @group Events
+ */
 export const onAccountsChanged = (
     listener: EventListener<AccountsChangedEvent>
 ): Promise<void> => sdk.onAccountsChanged(listener)
 
+/**
+ * Subscribes to successful connection events.
+ * Delegates to `DappSDK.onConnected`.
+ *
+ * @group Events
+ */
 export const onConnected = (
     listener: EventListener<StatusEvent>
 ): Promise<void> => sdk.onConnected(listener)
 
+/**
+ * Subscribes to transaction lifecycle updates.
+ * Delegates to `DappSDK.onTxChanged`.
+ *
+ * @group Events
+ */
 export const onTxChanged = (
     listener: EventListener<TxChangedEvent>
 ): Promise<void> => sdk.onTxChanged(listener)
 
+/**
+ * Subscribes to message-signature lifecycle updates.
+ * Delegates to `DappSDK.onMessageSignature`.
+ *
+ * @group Events
+ */
 export const onMessageSignature = (
     listener: EventListener<MessageSignatureEvent>
 ): Promise<void> => sdk.onMessageSignature(listener)
+
+/**
+ * Removes a listener registered with {@link onStatusChanged}.
+ *
+ * @group Events
+ */
 export const removeOnStatusChanged = (
     listener: EventListener<StatusEvent>
 ): Promise<void> => sdk.removeOnStatusChanged(listener)
 
+/**
+ * Removes a listener registered with {@link onAccountsChanged}.
+ *
+ * @group Events
+ */
 export const removeOnAccountsChanged = (
     listener: EventListener<AccountsChangedEvent>
 ): Promise<void> => sdk.removeOnAccountsChanged(listener)
 
+/**
+ * Removes a listener registered with {@link onConnected}.
+ *
+ * @group Events
+ */
 export const removeOnConnected = (
     listener: EventListener<StatusEvent>
 ): Promise<void> => sdk.removeOnConnected(listener)
 
+/**
+ * Removes a listener registered with {@link onTxChanged}.
+ *
+ * @group Events
+ */
 export const removeOnTxChanged = (
     listener: EventListener<TxChangedEvent>
 ): Promise<void> => sdk.removeOnTxChanged(listener)
 
+/**
+ * Removes a listener registered with {@link onMessageSignature}.
+ *
+ * @group Events
+ */
 export const removeOnMessageSignature = (
     listener: EventListener<MessageSignatureEvent>
 ): Promise<void> => sdk.removeOnMessageSignature(listener)

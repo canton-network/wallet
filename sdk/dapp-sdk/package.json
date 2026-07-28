@@ -19,6 +19,7 @@
     "scripts": {
         "build": "tsup --onSuccess \"tsc\"",
         "dev": "tsup --watch --onSuccess \"tsc\"",
+        "docs": "typedoc --tsconfig tsconfig.docs.json",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "test": "vitest run --project browser-unit --project browser-integration",
@@ -58,6 +59,9 @@
         "playwright": "^1.61.1",
         "qrcode": "^1.5.4",
         "tsup": "^8.5.1",
+        "typedoc": "^0.28.20",
+        "typedoc-plugin-frontmatter": "^1.3.0",
+        "typedoc-plugin-markdown": "^4.9.0",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },

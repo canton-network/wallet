@@ -68,3 +68,4 @@ export {
     removeOnConnected,
     removeOnTxChanged,
 } from './sdk'
+export type { DappSDKConnectOptions } from './sdk'

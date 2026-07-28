@@ -2070,6 +2070,9 @@ __metadata:
     playwright: "npm:^1.61.1"
     qrcode: "npm:^1.5.4"
     tsup: "npm:^8.5.1"
+    typedoc: "npm:^0.28.20"
+    typedoc-plugin-frontmatter: "npm:^1.3.0"
+    typedoc-plugin-markdown: "npm:^4.9.0"
     typescript: "npm:^5.9.3"
     uuid: "npm:^14.0.1"
     vitest: "npm:^4.1.10"
@@ -19639,7 +19642,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typedoc@npm:^0.28.20":
+"typedoc-plugin-frontmatter@npm:*, typedoc-plugin-frontmatter@npm:^1.3.0":
+  version: 1.3.1
+  resolution: "typedoc-plugin-frontmatter@npm:1.3.1"
+  dependencies:
+    yaml: "npm:^2.8.1"
+  peerDependencies:
+    typedoc-plugin-markdown: ">=4.9.0"
+  checksum: 10c0/8bdda87c7a89b2a9dfdd3925c4b1a633c92696ca3fa110d96870a9d9bc2433afbe6d48e2b1b899bad4c7ae00970a8af1543d58e3e122db6d61055d1a2aff7dab
+  languageName: node
+  linkType: hard
+
+"typedoc-plugin-markdown@npm:*, typedoc-plugin-markdown@npm:^4.9.0":
+  version: 4.12.0
+  resolution: "typedoc-plugin-markdown@npm:4.12.0"
+  peerDependencies:
+    typedoc: 0.28.x
+  checksum: 10c0/2977f5c3d98f778e02952ab2e6d47d0ec5245a84f459dc6727d34698e78d1837211a01ce568529671681d4f67117476a45caba33097de5f88d2feeb0d443507d
+  languageName: node
+  linkType: hard
+
+"typedoc@npm:*, typedoc@npm:^0.28.20":
   version: 0.28.20
   resolution: "typedoc@npm:0.28.20"
   dependencies:
@@ -20766,7 +20789,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:2.9.0, yaml@npm:^2.2.2, yaml@npm:^2.9.0":
+"yaml@npm:2.9.0, yaml@npm:^2.2.2, yaml@npm:^2.8.1, yaml@npm:^2.9.0":
   version: 2.9.0
   resolution: "yaml@npm:2.9.0"
   bin:
