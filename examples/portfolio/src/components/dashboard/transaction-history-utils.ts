@@ -151,7 +151,8 @@ function getTransactionType(
         return mintAmount?.greaterThan(0) ? 'Rewards collected' : 'Merge/Split'
     }
     if (event.label.type === 'Mint') {
-        return event.label.reason?.toLowerCase() === 'tapped devnet faucet'
+        const reason = event.label.reason?.toLowerCase()
+        return reason?.includes('tapped') && reason.includes('faucet')
             ? 'DevNet tap'
             : 'Mint'
     }

@@ -24,7 +24,9 @@ test('wallet detail page - holdings and transaction history', async ({
     await gotoDashboard(dappPage)
 
     // Verify the Wallets section is visible
-    await expect(dappPage.getByText('Wallets')).toBeVisible({ timeout: 10000 })
+    await expect(
+        dappPage.getByRole('heading', { name: 'Wallets', exact: true })
+    ).toBeVisible({ timeout: 10000 })
 
     await dappPage.getByTestId(`wallet-preview-${alice}`).click()
 
