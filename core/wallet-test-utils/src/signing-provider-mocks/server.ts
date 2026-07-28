@@ -3,6 +3,15 @@
 
 import * as http from 'node:http'
 
+type BodyChunk = Buffer | string | Uint8Array
+
+interface BodyReadableRequest {
+    method?: string | undefined
+    on(event: 'data', listener: (chunk: BodyChunk) => void): this
+    on(event: 'end', listener: () => void): this
+    on(event: 'error', listener: (error: Error) => void): this
+}
+
 export interface MockHttpResponse {
     status?: number
     body?: unknown
@@ -47,7 +56,7 @@ export interface SigningProviderMockServer {
     close(): Promise<void>
 }
 
-function readRawBody(req: http.IncomingMessage): Promise<string> {
+function readRawBody(req: BodyReadableRequest): Promise<string> {
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = []
         req.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
@@ -58,7 +67,7 @@ function readRawBody(req: http.IncomingMessage): Promise<string> {
     })
 }
 
-async function parseRequestBody(req: http.IncomingMessage): Promise<unknown> {
+async function parseRequestBody(req: BodyReadableRequest): Promise<unknown> {
     if ((req.method ?? 'GET').toUpperCase() !== 'POST') {
         return {}
     }
