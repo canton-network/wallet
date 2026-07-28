@@ -6,8 +6,5 @@ import { base } from '../../tsdown.base.ts'
 
 export default defineConfig({
     ...base,
-    format: ['esm'],
-    platform: 'node',
     entry: ['src/index.ts'],
-    target: 'es2022',
 })
