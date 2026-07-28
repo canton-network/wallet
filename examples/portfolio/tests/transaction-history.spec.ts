@@ -197,7 +197,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
     // Alice: tap, outgoing direct transfer, and both offer lifecycle rows.
     await gotoWalletHistory(dappPage, alice, aliceHint)
     await expectTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+1000',
     })
     await expectTransactionRow(dappPage, {
@@ -232,13 +232,13 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
         counterpartyHint: bobHint,
     })
     await expectNoTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+1000',
     })
 
     await historyTabs.getByRole('tab', { name: 'Received' }).click()
     await expectTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+1000',
     })
     await expectNoTransactionRow(dappPage, {
@@ -254,7 +254,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
         dappPage.getByRole('button', { name: 'Transfer' })
     ).toBeDisabled()
     await expectTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+500',
     })
     await expectTransactionRow(dappPage, {
