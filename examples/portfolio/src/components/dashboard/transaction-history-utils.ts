@@ -145,7 +145,21 @@ function getTransactionType(
 
     if (event.label.type === 'TransferOut') return 'Transfer sent ↗'
     if (event.label.type === 'TransferIn') return 'Transfer received ↘'
-    if (event.label.type === 'MergeSplit') return 'Merge/Split'
+    if (event.label.type === 'MergeSplit') {
+        // Reward collection uses the merge operation but mints new value.
+        const mintAmount = toDecimalOrNull(event.label.mintAmount)
+        return mintAmount?.greaterThan(0) ? 'Rewards collected' : 'Merge/Split'
+    }
+    if (event.label.type === 'Mint') {
+        return event.label.reason?.toLowerCase() === 'tapped devnet faucet'
+            ? 'DevNet tap'
+            : 'Mint'
+    }
+    if (event.label.type === 'Burn') {
+        return event.label.reason?.toLowerCase() === 'traffic purchase'
+            ? 'Traffic purchase'
+            : 'Burn'
+    }
     if (event.label.type === 'ExpireDust') return 'Dust expired'
 
     if (direction === 'received') return 'Received ↘'
