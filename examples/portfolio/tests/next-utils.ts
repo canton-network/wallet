@@ -103,10 +103,7 @@ export const tap = async (
         dialog.getByRole('button', { name: 'Tap', exact: true }).click()
     )
 
-    await expect(dialog.getByLabel('Close DevNet tap dialog')).toBeEnabled({
-        timeout: 15000,
-    })
-    await dialog.getByLabel('Close DevNet tap dialog').click()
+    await expect(dialog).not.toBeVisible({ timeout: 15000 })
 
     await gotoDashboard(page)
 }
