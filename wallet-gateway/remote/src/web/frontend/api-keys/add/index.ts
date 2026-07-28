@@ -77,7 +77,7 @@ export class UserUiAddApiKey extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const generated = await userClient.request({
                 method: 'generateApiKey',

@@ -259,8 +259,8 @@ test('tap via settings page', async ({ page: dappPage }) => {
     await wg.setPrimaryWallet(alice)
 
     await setupRegistry(dappPage)
-    await tap(dappPage, wg, '5000')
+    await tap(dappPage, wg, '5000.123456789')
 
     // The wallet is freshly created, so its balance equals the tapped amount.
-    await expectWalletBalance(dappPage, alice, '5000')
+    await expectWalletBalance(dappPage, alice, '5000.123456789')
 })

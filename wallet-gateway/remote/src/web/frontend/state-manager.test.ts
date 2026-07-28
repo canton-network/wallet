@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { stateManager } from './state-manager.js'
+import { StateManager, stateManager } from './state-manager.js'
 
 const STORAGE_KEYS = [
     'com.splice.wallet.accessToken',
@@ -11,46 +11,51 @@ const STORAGE_KEYS = [
     'com.splice.wallet.intendedPage',
 ] as const
 
-describe('stateManager', () => {
-    beforeEach(() => {
-        stateManager.clearAuthState()
+describe('stateManager', async () => {
+    beforeEach(async () => {
+        await stateManager.clearAuthState()
     })
 
-    afterEach(() => {
-        stateManager.clearAuthState()
+    afterEach(async () => {
+        await stateManager.clearAuthState()
     })
 
-    it('stores and reads accessToken in memory and localStorage', () => {
-        stateManager.accessToken.set('token-abc')
+    it('stores and reads accessToken in memory and localStorage', async () => {
+        await stateManager.accessToken.set('token-abc')
 
-        expect(stateManager.accessToken.get()).toBe('token-abc')
-        expect(localStorage.getItem('com.splice.wallet.accessToken')).toBe(
-            'token-abc'
-        )
+        expect(await stateManager.accessToken.get()).toBe('token-abc')
+        const stored = localStorage.getItem('com.splice.wallet.accessToken')
+        expect(stored).not.toBeNull()
+
+        expect(stored).not.toBe('token-abc')
+        const parsed = JSON.parse(stored as string)
+        expect(parsed).toHaveProperty('ciphertext')
+        expect(parsed).toHaveProperty('iv')
     })
 
-    it('prefers in-memory accessToken over a stale localStorage value', () => {
-        stateManager.accessToken.set('memory-token')
+    it('prefers in-memory accessToken over a stale localStorage value', async () => {
+        await stateManager.accessToken.set('memory-token')
         localStorage.setItem('com.splice.wallet.accessToken', 'storage-token')
 
-        expect(stateManager.accessToken.get()).toBe('memory-token')
+        expect(await stateManager.accessToken.get()).toBe('memory-token')
     })
 
-    it('loads accessToken from localStorage when not yet in memory', () => {
-        localStorage.setItem('com.splice.wallet.accessToken', 'stored-token')
+    it('loads accessToken from localStorage when not yet in memory', async () => {
+        await stateManager.accessToken.set('stored-token')
+        const newInstance = new StateManager()
 
-        expect(stateManager.accessToken.get()).toBe('stored-token')
+        expect(await newInstance.accessToken.get()).toBe('stored-token')
     })
 
-    it('clears accessToken from memory and localStorage', () => {
-        stateManager.accessToken.set('token-abc')
-        stateManager.accessToken.clear()
+    it('clears accessToken from memory and localStorage', async () => {
+        await stateManager.accessToken.set('token-abc')
+        await stateManager.accessToken.clear()
 
-        expect(stateManager.accessToken.get()).toBeUndefined()
+        expect(await stateManager.accessToken.get()).toBeUndefined()
         expect(localStorage.getItem('com.splice.wallet.accessToken')).toBeNull()
     })
 
-    it('stores networkId and expirationDate', () => {
+    it('stores networkId and expirationDate', async () => {
         stateManager.networkId.set('net-1')
         stateManager.expirationDate.set('2026-01-01T00:00:00.000Z')
 
@@ -63,7 +68,7 @@ describe('stateManager', () => {
         )
     })
 
-    it('stores and clears intendedPage', () => {
+    it('stores and clears intendedPage', async () => {
         stateManager.intendedPage.set('/activities')
 
         expect(stateManager.intendedPage.get()).toBe('/activities')
@@ -73,15 +78,15 @@ describe('stateManager', () => {
         expect(stateManager.intendedPage.get()).toBeUndefined()
     })
 
-    it('clearAuthState removes all auth-related values', () => {
-        stateManager.accessToken.set('token')
+    it('clearAuthState removes all auth-related values', async () => {
+        await stateManager.accessToken.set('token')
         stateManager.networkId.set('net-1')
         stateManager.expirationDate.set('2026-01-01T00:00:00.000Z')
         stateManager.intendedPage.set('/parties')
 
-        stateManager.clearAuthState()
+        await stateManager.clearAuthState()
 
-        expect(stateManager.accessToken.get()).toBeUndefined()
+        expect(await stateManager.accessToken.get()).toBeUndefined()
         expect(stateManager.networkId.get()).toBeUndefined()
         expect(stateManager.expirationDate.get()).toBeUndefined()
         expect(stateManager.intendedPage.get()).toBeUndefined()

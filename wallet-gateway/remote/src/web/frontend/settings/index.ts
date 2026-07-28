@@ -50,7 +50,9 @@ export class UserUiSettings extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        this.client = await createUserClient(stateManager.accessToken.get())
+        this.client = await createUserClient(
+            await stateManager.accessToken.get()
+        )
         this.listNetworks()
         this.listSessions()
         this.listIdps()
@@ -68,7 +70,7 @@ export class UserUiSettings extends BaseElement {
     private async checkAdmin() {
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const response = await userClient.request({ method: 'getUser' })
             this.userId = response.userId
@@ -80,7 +82,7 @@ export class UserUiSettings extends BaseElement {
 
     private async listNetworks() {
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get()
         )
         const response = await userClient.request({ method: 'listNetworks' })
         this.networks = response.networks
@@ -88,7 +90,7 @@ export class UserUiSettings extends BaseElement {
 
     private async listSessions() {
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get()
         )
         const response = await userClient.request({ method: 'listSessions' })
         this.sessions = response.sessions
@@ -96,7 +98,7 @@ export class UserUiSettings extends BaseElement {
 
     private async listIdps() {
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get()
         )
         const response = await userClient.request({ method: 'listIdps' })
         this.idps = response.idps
@@ -109,7 +111,7 @@ export class UserUiSettings extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'addNetwork',
@@ -139,7 +141,7 @@ export class UserUiSettings extends BaseElement {
         if (!confirm(`Delete network "${e.network.name}"?`)) return
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'removeNetwork',
@@ -157,7 +159,7 @@ export class UserUiSettings extends BaseElement {
         console.log(ev)
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'addIdp',
@@ -175,7 +177,7 @@ export class UserUiSettings extends BaseElement {
         console.log(ev)
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'removeIdp',
