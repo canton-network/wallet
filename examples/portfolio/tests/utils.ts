@@ -37,8 +37,8 @@ const navigateToDashboard = async (page: Page): Promise<void> => {
 
 /**
  * TAP via the settings page
- * Navigates to /settings, selects the AMT instrument, fills the amount,
- * submits, then returns to the dashboard.
+ * Navigates to /settings, fills the amulet amount, submits, then returns to
+ * the dashboard.
  */
 export const tap = async (
     page: Page,
@@ -54,12 +54,7 @@ export const tap = async (
         has: page.getByRole('button', { name: 'TAP' }),
     })
 
-    // Select the AMT instrument (wait for instruments to load from registry)
-    await tapForm.getByRole('combobox', { name: 'Instrument' }).click()
-    await expect(page.getByRole('option', { name: /AMT/ })).toBeVisible({
-        timeout: 10000,
-    })
-    await page.getByRole('option', { name: /AMT/ }).click()
+    await expect(tapForm.getByLabel('Instrument')).toHaveValue('Amulet')
 
     await tapForm.getByLabel('Amount').clear()
     await tapForm.getByLabel('Amount').fill(amount)

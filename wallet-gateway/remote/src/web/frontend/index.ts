@@ -46,7 +46,7 @@ export class UserApp extends LitElement {
     private async handleLogout() {
         clearTokenExpirationTimeout()
 
-        const accessToken = stateManager.accessToken.get()
+        const accessToken = await stateManager.accessToken.get()
 
         if (!accessToken) {
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
@@ -62,7 +62,7 @@ export class UserApp extends LitElement {
             console.debug('Failed to remove session during logout: ', error)
         }
 
-        stateManager.clearAuthState()
+        await stateManager.clearAuthState()
 
         if (window.opener && !window.opener.closed) {
             window.opener.postMessage(
@@ -152,7 +152,7 @@ export class UserUIAuthRedirect extends LitElement {
     private async handleAuthRedirect(): Promise<void> {
         const currentRoute = getCurrentRoute(window.location.pathname)
         const isLoginPage = currentRoute === LOGIN_PAGE_REDIRECT
-        const accessToken = stateManager.accessToken.get()
+        const accessToken = await stateManager.accessToken.get()
 
         if (!accessToken) {
             this.handleUnauthenticated(isLoginPage)
@@ -185,9 +185,9 @@ export class UserUIAuthRedirect extends LitElement {
         return undefined
     }
 
-    private clearAuthStateAndPreserveIntendedPage(): void {
+    private async clearAuthStateAndPreserveIntendedPage(): Promise<void> {
         const intendedPage = this.getIntendedPageFromCurrentPath()
-        stateManager.clearAuthState()
+        await stateManager.clearAuthState()
         if (intendedPage) {
             stateManager.intendedPage.set(intendedPage)
         }
@@ -206,7 +206,7 @@ export class UserUIAuthRedirect extends LitElement {
     private async handleExpiredToken(isLoginPage: boolean): Promise<void> {
         clearTokenExpirationTimeout()
 
-        const accessToken = stateManager.accessToken.get()
+        const accessToken = await stateManager.accessToken.get()
         if (accessToken) {
             // Attempt to remove session even if token is expired
             await attemptRemoveSession(accessToken)
@@ -216,7 +216,7 @@ export class UserUIAuthRedirect extends LitElement {
             this.clearAuthStateAndPreserveIntendedPage()
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
         } else {
-            stateManager.clearAuthState()
+            await stateManager.clearAuthState()
         }
     }
 
@@ -230,7 +230,7 @@ export class UserUIAuthRedirect extends LitElement {
             shareConnection(accessToken, sessionId)
         } else {
             await attemptRemoveSession(accessToken)
-            stateManager.clearAuthState()
+            await stateManager.clearAuthState()
         }
     }
 

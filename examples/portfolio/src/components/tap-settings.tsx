@@ -1,81 +1,35 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
-import {
-    Box,
-    Typography,
-    Button,
-    TextField,
-    Paper,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    FormHelperText,
-} from '@mui/material'
+import { Box, Typography, Button, TextField, Paper } from '@mui/material'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { usePortfolio } from '../contexts/PortfolioContext'
-import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
 import { useConnection } from '../contexts/ConnectionContext'
-import { useRegistryUrls } from '@hooks/useRegistryUrls'
 import { usePrimaryAccount } from '@hooks/useAccounts'
-import { useInstruments } from '@hooks/useInstruments'
-import type { InstrumentId } from '@canton-network/core-token-standard'
-
-const instrumentValidator = z
-    .object({
-        admin: z.string(),
-        id: z.string(),
-    })
-    .nullable()
-    .refine((val) => val !== null, 'Please select an instrument')
+import { useWalletSdk } from '@hooks/useWalletSdk'
+import { submitViaProvider } from '@lib/submit'
 
 export const TapSettings: React.FC = () => {
     const sessionToken = useConnection().status?.session?.accessToken
     const primaryParty = usePrimaryAccount()?.partyId
-    const { tap } = usePortfolio()
-    const {
-        amulet: { validatorUrl },
-    } = usePortfolioConfig()
-    const registryUrls = useRegistryUrls()
-    const instruments = useInstruments()
-
-    const availableInstruments = useMemo(() => {
-        const result: Array<{ instrumentId: InstrumentId; symbol: string }> = []
-        for (const [admin, adminInstruments] of instruments) {
-            for (const instrument of adminInstruments) {
-                result.push({
-                    instrumentId: { admin, id: instrument.id },
-                    symbol: instrument.symbol,
-                })
-            }
-        }
-        return result.sort((a, b) => a.symbol.localeCompare(b.symbol))
-    }, [instruments])
+    const { sdk } = useWalletSdk()
 
     const form = useForm({
         defaultValues: {
-            instrumentId: null as InstrumentId | null,
             amount: '10000',
         },
 
         onSubmit: async ({ value: formData }) => {
-            if (!sessionToken || !primaryParty || !formData.instrumentId) {
+            if (!sessionToken || !primaryParty || !sdk) {
                 return
             }
 
             try {
-                await tap({
-                    registryUrls,
-                    party: primaryParty,
-                    sessionToken,
-                    validatorUrl,
-                    instrumentId: formData.instrumentId,
-                    amount: Number(formData.amount),
-                })
+                await submitViaProvider(
+                    await sdk.amulet.tap(primaryParty, formData.amount),
+                    primaryParty
+                )
                 toast.success('Tap successful')
             } catch (error) {
                 toast.error(
@@ -110,74 +64,7 @@ export const TapSettings: React.FC = () => {
                 }}
             >
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <form.Field
-                        name="instrumentId"
-                        validators={{
-                            onChange: instrumentValidator,
-                        }}
-                    >
-                        {(field) => {
-                            const selectedKey = field.state.value
-                                ? `${field.state.value.admin}::${field.state.value.id}`
-                                : ''
-
-                            return (
-                                <FormControl
-                                    fullWidth
-                                    error={
-                                        field.state.meta.isTouched &&
-                                        field.state.meta.errors.length > 0
-                                    }
-                                >
-                                    <InputLabel id="tap-instrument-label">
-                                        Instrument
-                                    </InputLabel>
-                                    <Select
-                                        labelId="tap-instrument-label"
-                                        value={selectedKey}
-                                        onChange={(e) => {
-                                            const key = e.target.value
-                                            if (!key) {
-                                                field.handleChange(null)
-                                                return
-                                            }
-                                            const selected =
-                                                availableInstruments.find(
-                                                    (i) =>
-                                                        `${i.instrumentId.admin}::${i.instrumentId.id}` ===
-                                                        key
-                                                )
-                                            field.handleChange(
-                                                selected?.instrumentId ?? null
-                                            )
-                                        }}
-                                        label="Instrument"
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select an instrument...</em>
-                                        </MenuItem>
-                                        {availableInstruments.map((inst) => {
-                                            const key = `${inst.instrumentId.admin}::${inst.instrumentId.id}`
-                                            return (
-                                                <MenuItem key={key} value={key}>
-                                                    {inst.symbol}
-                                                </MenuItem>
-                                            )
-                                        })}
-                                    </Select>
-                                    {field.state.meta.isTouched &&
-                                        field.state.meta.errors.length > 0 && (
-                                            <FormHelperText>
-                                                {
-                                                    field.state.meta.errors[0]
-                                                        ?.message
-                                                }
-                                            </FormHelperText>
-                                        )}
-                                </FormControl>
-                            )
-                        }}
-                    </form.Field>
+                    <TextField label="Instrument" value="Amulet" disabled />
 
                     <form.Field
                         name="amount"
@@ -218,7 +105,10 @@ export const TapSettings: React.FC = () => {
                             <Button
                                 type="submit"
                                 disabled={
-                                    !canSubmit || !sessionToken || !primaryParty
+                                    !canSubmit ||
+                                    !sessionToken ||
+                                    !primaryParty ||
+                                    !sdk
                                 }
                                 variant="contained"
                                 sx={{ width: 200 }}

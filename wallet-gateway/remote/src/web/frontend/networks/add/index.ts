@@ -54,7 +54,7 @@ export class UserUiAddNetwork extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'addNetwork',

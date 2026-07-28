@@ -1,17 +1,63 @@
-# provider-ledger
+# @canton-network/core-provider-ledger
 
-This package provides a SpliceProvider (see https://github.com/canton-network/wallet/tree/main/core/splice-provider) implementation intended for direct Ledger usage. It is suitable for both NodeJS and browser environments, but if you are building a Canton dApp, then you likely want to use the [`dapp-sdk`](https://www.npmjs.com/package/@canton-network/dapp-sdk) instead, which gives a `DappProvider`.
+**Provider** for direct Canton JSON Ledger API access. Implements
+[`@canton-network/core-splice-provider`](../splice-provider) with a single RPC-style method,
+`ledgerApi`, backed by `@canton-network/core-ledger-client` over HTTP.
 
-This provider only supports a single method, `ledgerApi`, which proxies request through to an underlying Ledger JSON-API client. Due to the nature of the Canton Ledger JSON-API, the only supported transport is HTTP.
+Works in Node.js and the browser. Typical use cases:
 
-## usage
+- Pass an instance into
+  [`@canton-network/wallet-sdk`](https://www.npmjs.com/package/@canton-network/wallet-sdk)
+  via `SDK.create({ ledgerProvider })` (or let the SDK construct one from
+  `ledgerClientUrl` + auth).
+- Call `ledgerApi` directly from tooling, scripts, or services that already have ledger
+  credentials.
+
+If you are building a Canton **dApp** that talks to a wallet, prefer
+[`@canton-network/dapp-sdk`](https://www.npmjs.com/package/@canton-network/dapp-sdk)
+(and [`@canton-network/core-provider-dapp`](../provider-dapp)) instead.
+
+Published on [npm](https://www.npmjs.com/package/@canton-network/core-provider-ledger) under
+Apache-2.0.
+
+## Install
+
+```bash
+npm install @canton-network/core-provider-ledger
+```
+
+## Overview
+
+```mermaid
+flowchart LR
+    App["App / Wallet SDK"] --> LP["LedgerProvider"]
+    LP -->|"ledgerApi"| HTTP["HTTP"]
+    HTTP --> LAPI["JSON Ledger API"]
+```
+
+- **Method:** `ledgerApi` only — params encode `resource`, `requestMethod`, and optional
+  `body` / `path` / `query`
+- **Transport:** HTTP (required by the Canton JSON Ledger API)
+- **Auth:** any `AccessTokenProvider` from `@canton-network/core-wallet-auth` (static token,
+  client credentials, self-signed, …)
+
+## Usage
 
 ```ts
 import { LedgerProvider } from '@canton-network/core-provider-ledger'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+
+const accessTokenProvider: AccessTokenProvider = {
+    getAccessToken: async () => 'jwt...',
+    getAuthContext: async () => ({
+        userId: 'alice',
+        accessToken: 'jwt...',
+    }),
+}
 
 const provider = new LedgerProvider({
     baseUrl: 'https://ledger-api.example.com',
-    accessToken: 'jwt...',
+    accessTokenProvider,
 })
 
 const version = await provider.request({
@@ -23,14 +69,12 @@ const version = await provider.request({
 })
 ```
 
-## types
+## Types
 
 Due to some type inference limitations, the return type of request collapses to `unknown`. In order to aid the compiler, you can supply an optional type argument corresponding to the operation you are using on the ledgerApi. Afterwards, the response is cleanly typed:
 
 ```ts
 import { LedgerProvider, Ops } from '@canton-network/core-provider-ledger'
-
-// ...
 
 const party = await provider.request<Ops.PostV2Parties>({
     method: 'ledgerApi',
@@ -46,9 +90,12 @@ const party = await provider.request<Ops.PostV2Parties>({
 console.log(party.partyDetails?.party)
 ```
 
-## data
+Operation types are generated from the Ledger OpenAPI into a provider-oriented union (see
+the typing notes in [`core/splice-provider`](../splice-provider/README.md#openapi-ledger-api)).
 
-There are various ways to pass data into the request, depending on the operation. Let type inference guide you, but know there are three possibilities:
+## Request data
+
+Depending on the operation, supply one or more of:
 
 ```ts
 
@@ -71,4 +118,14 @@ provider.request({
 })
 ```
 
-Any particular operation may require just one, none, or multiple client data inputs.
+Let the operation type guide which fields are required.
+
+## Related
+
+| Package                                                      | Role                                         |
+| ------------------------------------------------------------ | -------------------------------------------- |
+| [`@canton-network/core-splice-provider`](../splice-provider) | Provider interface and `AbstractProvider`    |
+| [`@canton-network/core-provider-dapp`](../provider-dapp)     | CIP-103 Sync / Async wallet providers        |
+| [`@canton-network/core-ledger-client`](../ledger-client)     | Underlying JSON LAPI client                  |
+| [`@canton-network/core-wallet-auth`](../wallet-auth)         | `AccessTokenProvider` implementations        |
+| [`@canton-network/wallet-sdk`](../../sdk/wallet-sdk)         | Higher-level wallet tooling on ledger access |

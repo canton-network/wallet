@@ -14,11 +14,11 @@ import {
     type Theme,
 } from '@mui/material'
 import { useForm, type AnyFieldApi } from '@tanstack/react-form'
-import { HttpUrl } from '@canton-network/core-types'
 import { toast } from 'sonner'
 import { PillButton } from '@components/ui/PillButton'
 import { registryFormSchema, type RegistryFormData } from '@lib/schemas'
 import { useRegistryMutations } from '@hooks/useRegistryUrls'
+import { isInsecureRegistryUrl } from '@utils/registry'
 
 interface AddRegistryDialogProps {
     open: boolean
@@ -29,13 +29,6 @@ const INSECURE_REGISTRY_URL_WARNING =
     'Registry responses can be spoofed by network attackers. Use HTTPS.'
 const INSECURE_REGISTRY_URL_ADDED_WARNING =
     'Registry added, but responses can be spoofed by network attackers. Use HTTPS.'
-
-const registryUrlSchema = HttpUrl
-
-const isInsecureRegistryUrl = (value: string) => {
-    const result = registryUrlSchema.safeParse(value)
-    return result.success && new URL(result.data).protocol === 'http:'
-}
 
 const defaultValues: RegistryFormData = {
     partyId: '',

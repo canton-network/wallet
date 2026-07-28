@@ -197,6 +197,23 @@ export interface paths {
         patch?: never
         trace?: never
     }
+    '/v0/lsu': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** @description Retrieve information on the next logical synchronizer upgrade (LSU) */
+        get: operations['getLsu']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
     '/v0/active-synchronizer-serial': {
         parameters: {
             query?: never
@@ -592,10 +609,33 @@ export interface paths {
         get?: never
         put?: never
         /**
-         * @description Returns the summary of active amulet contracts for a given migration id and record time, for the given parties.
+         * @deprecated
+         * @description Deprecated. Please use /v1/holdings/summary instead. Returns the summary of active amulet contracts for a given migration id and record time, for the given parties.
          *     This is an aggregate of `/v0/holdings/state` by owner party ID with better performance than client-side computation.
          */
         post: operations['getHoldingsSummaryAt']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
+    '/v1/holdings/summary': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /**
+         * @description Returns the summary of active amulet contracts for a given migration id and record time, for the given parties.
+         *     This is an aggregate of `/v0/holdings/state` by owner party ID with better performance than client-side computation.
+         *     Unlike /v0/holdings/summary, this version does not include holding fee fields
+         *     as they do not express a meaningful aggregate value.
+         */
+        post: operations['getHoldingsSummaryAtV1']
         delete?: never
         options?: never
         head?: never
@@ -798,26 +838,6 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/top-validators-by-validator-faucets': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @description Get a list of top validators by number of rounds in which they collected
-         *     faucets, and basis statistics on their round collection history
-         */
-        get: operations['getTopValidatorsByValidatorFaucets']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
     '/v0/transfer-preapprovals/by-party/{party}': {
         parameters: {
             query?: never
@@ -881,6 +901,23 @@ export interface paths {
          *     and the new migration ID.
          */
         get: operations['getMigrationSchedule']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
+    '/v0/migrations/last': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** @description Returns the last migration id that was configured for the synchronizer upgrades. */
+        get: operations['getMigrationId']
         put?: never
         post?: never
         delete?: never
@@ -1022,6 +1059,22 @@ export interface paths {
         patch?: never
         trace?: never
     }
+    '/v0/admin/sv/previous-sv-reward-weight': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        post: operations['getPreviousSvRewardWeight']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
     '/v0/backfilling/migration-info': {
         parameters: {
             query?: never
@@ -1096,66 +1149,6 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/aggregated-rounds': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description **Deprecated**. Retrieve the current earliest and latest rounds aggregated for this Scan.
-         */
-        get: operations['getAggregatedRounds']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/round-totals': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description **Deprecated**. List Amulet statistics for up to 200 closed rounds.
-         */
-        post: operations['listRoundTotals']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/round-party-totals': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description **Deprecated**. Retrieve per-party Amulet statistics for up to 50 closed rounds.
-         */
-        post: operations['listRoundPartyTotals']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
     '/v0/amulet-config-for-round': {
         parameters: {
             query?: never
@@ -1170,130 +1163,6 @@ export interface paths {
         get: operations['getAmuletConfigForRound']
         put?: never
         post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/round-of-latest-data': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description **Deprecated**. Get the latest round number for which aggregated data is available and
-         *     the ledger effective time at which the round was closed.
-         */
-        get: operations['getRoundOfLatestData']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/rewards-collected': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description **Deprecated**. Get the total rewards collected ever
-         */
-        get: operations['getRewardsCollected']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/top-providers-by-app-rewards': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description **Deprecated**. Get a list of top-earning app providers, and the total earned app
-         *     rewards for each
-         */
-        get: operations['getTopProvidersByAppRewards']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/top-validators-by-validator-rewards': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description **Deprecated**. Get a list of top-earning validators, and the total earned validator
-         *     rewards for each
-         */
-        get: operations['getTopValidatorsByValidatorRewards']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/top-validators-by-purchased-traffic': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description **Deprecated**. Get a list of validators and their domain fees spends, sorted by the
-         *     amount of extra traffic purchased
-         */
-        get: operations['getTopValidatorsByPurchasedTraffic']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/activities': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description **Deprecated**. Lists activities in descending order, paged, optionally starting after a provided event id.
-         */
-        post: operations['listActivity']
         delete?: never
         options?: never
         head?: never
@@ -1457,7 +1326,7 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/reward-accounting-process/rounds/earliest-available': {
+    '/v0/internal/reward-accounting-process/rounds/earliest-available': {
         parameters: {
             query?: never
             header?: never
@@ -1478,7 +1347,7 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/reward-accounting-process/rounds/{round_number}/activity-totals': {
+    '/v0/internal/reward-accounting-process/rounds/{round_number}/activity-totals': {
         parameters: {
             query?: never
             header?: never
@@ -1499,7 +1368,7 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/reward-accounting-process/rounds/{round_number}/root-hash': {
+    '/v0/internal/reward-accounting-process/rounds/{round_number}/root-hash': {
         parameters: {
             query?: never
             header?: never
@@ -1519,7 +1388,7 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/reward-accounting-process/rounds/{round_number}/batches/{batch_hash}': {
+    '/v0/internal/reward-accounting-process/rounds/{round_number}/batches/{batch_hash}': {
         parameters: {
             query?: never
             header?: never
@@ -1695,15 +1564,6 @@ export interface components {
             amount: string
             rate: string
         }
-        GetRoundOfLatestDataResponse: {
-            /** Format: int64 */
-            round: number
-            /** Format: date-time */
-            effectiveAt: string
-        }
-        GetRewardsCollectedResponse: {
-            amount: string
-        }
         GetValidatorTrafficBalanceResponse: {
             /** Format: double */
             remainingBalance: number
@@ -1712,26 +1572,6 @@ export interface components {
         }
         CheckAndUpdateValidatorTrafficBalanceResponse: {
             approved: boolean
-        }
-        GetTopProvidersByAppRewardsResponse: {
-            providersAndRewards: components['schemas']['PartyAndRewards'][]
-        }
-        GetTopValidatorsByValidatorRewardsResponse: {
-            validatorsAndRewards: components['schemas']['PartyAndRewards'][]
-        }
-        PartyAndRewards: {
-            provider: string
-            rewards: string
-        }
-        GetTopValidatorsByValidatorFaucetsResponse: {
-            /**
-             * @description Up to `limit` validators, sorted greatest number of rounds
-             *     collected first
-             */
-            validatorsByReceivedFaucets: components['schemas']['ValidatorReceivedFaucets'][]
-        }
-        GetTopValidatorsByPurchasedTrafficResponse: {
-            validatorsByPurchasedTraffic: components['schemas']['ValidatorPurchasedTraffic'][]
         }
         ValidatorPurchasedTraffic: {
             validator: string
@@ -1802,6 +1642,24 @@ export interface components {
              */
             upgradeTime: string
             currentPhysicalSynchronizerId: string
+            successorPhysicalSynchronizerId: string
+        }
+        GetLsuResponse: {
+            /** @description Info on the next LSU */
+            lsu?: components['schemas']['Lsu']
+        }
+        Lsu: {
+            /**
+             * Format: date-time
+             * @description The time when topology freeze starts
+             */
+            topologyFreezeTime: string
+            /**
+             * Format: date-time
+             * @description The time at which to upgrade
+             */
+            upgradeTime: string
+            /** @description The successor physical synchronizer ID */
             successorPhysicalSynchronizerId: string
         }
         GetActivePhysicalSynchronizerSerialResponse: {
@@ -2361,6 +2219,30 @@ export interface components {
              */
             as_of_round?: number
         }
+        HoldingsSummaryRequestV1: {
+            /**
+             * Format: int64
+             * @description The migration id for which to return the summary.
+             */
+            migration_id: number
+            /**
+             * Format: date-time
+             * @description The timestamp at which the contract set was active.
+             *     This needs to be an exact timestamp, i.e.,
+             *     needs to correspond to a timestamp reported by `/v0/state/acs/snapshot-timestamp` if `record_time_match` is set to `exact` (which is the default).
+             *     If `record_time_match` is set to `at_or_before`, this can be any timestamp, and the most recent snapshot at or before the given `record_time` will be returned.
+             */
+            record_time: string
+            /**
+             * @description How to match the record_time. "exact" requires the record_time to match exactly.
+             *     "at_or_before" finds the most recent snapshot at or before the given record_time.
+             * @default exact
+             * @enum {string}
+             */
+            record_time_match: 'exact' | 'at_or_before'
+            /** @description The owners for which to compute the summary. */
+            owner_party_ids: string[]
+        }
         ForceAcsSnapshotResponse: {
             /**
              * Format: date-time
@@ -2471,59 +2353,35 @@ export interface components {
             /** @description Same as `total_unlocked_coin` - `accumulated_holding_fees_unlocked`. */
             total_available_coin: string
         }
-        ListActivityRequest: {
-            /**
-             * @description Minimal event_id for returned activities.
-             *     Note that all activities carry some monotonically-increasing event_id. begin_after_id sets the minimum value for event_id's for the query.
-             */
-            begin_after_id?: string
-            /**
-             * Format: int64
-             * @description The maximum number of activity items returned for this request.
-             */
-            page_size: number
-        }
-        ListActivityResponse: {
-            activities: components['schemas']['ListActivityResponseItem'][]
-        }
-        ListActivityResponseItem: {
-            /**
-             * @description Describes the type of activity that occurred.
-             *     Determines if the data for the activity should be read
-             *     from the `transfer`, `mint`, or `tap` property.
-             * @enum {string}
-             */
-            activity_type:
-                | 'transfer'
-                | 'mint'
-                | 'devnet_tap'
-                | 'abort_transfer_instruction'
-            /** @description The event id. */
-            event_id: string
-            /**
-             * @description The ledger offset of the event.
-             *     Note that this field may not be the same across nodes, and therefore should not be compared between SVs.
-             */
-            offset?: string
+        HoldingsSummaryResponseV1: {
             /**
              * Format: date-time
-             * @description The effective date of the event.
+             * @description The same `record_time` as in the request.
              */
-            date: string
-            /** @description The id of the domain through which this transaction was sequenced. */
-            domain_id: string
+            record_time: string
             /**
              * Format: int64
-             * @description The round for which this transaction was registered.
+             * @description The same `migration_id` as in the request.
              */
-            round?: number
-            /** @description A (batch) transfer from sender to receivers. */
-            transfer?: components['schemas']['Transfer']
-            /** @description The DSO mints amulet for the cases where the DSO rules allow for that. */
-            mint?: components['schemas']['AmuletAmount']
-            /** @description A tap creates a Amulet, only used for development purposes, and enabled only on DevNet. */
-            tap?: components['schemas']['AmuletAmount']
-            abort_transfer_instruction?: components['schemas']['AbortTransferInstruction']
+            migration_id: number
+            summaries: components['schemas']['HoldingsSummaryV1'][]
+        }
+        /** @description Aggregate Amulet totals for a particular owner party ID. */
+        HoldingsSummaryV1: {
+            /** @description Owner party ID of the amulet. Guaranteed to be unique among `summaries`. */
+            party_id: string
+            /**
+             * @description Sum of unlocked amulet initial amounts, not counting holding
+             *     fees deducted since.
+             */
+            total_unlocked_coin: string
+            /**
+             * @description Sum of locked amulet initial amounts, not
+             *     counting holding fees deducted since.
+             */
+            total_locked_coin: string
+            /** @description `total_unlocked_coin` + `total_locked_coin`. */
+            total_coin_holdings: string
         }
         /** @description A transfer between one sender and possibly many receivers */
         Transfer: {
@@ -2711,69 +2569,13 @@ export interface components {
              */
             expires_at?: string
         }
-        GetAggregatedRoundsResponse: {
-            /** Format: int64 */
-            start: number
-            /** Format: int64 */
-            end: number
-        }
-        ListRoundTotalsRequest: {
-            /** Format: int64 */
-            start_round: number
-            /** Format: int64 */
-            end_round: number
-        }
-        ListRoundPartyTotalsRequest: {
-            /** Format: int64 */
-            start_round: number
-            /** Format: int64 */
-            end_round: number
-        }
-        ListRoundTotalsResponse: {
-            entries: components['schemas']['RoundTotals'][]
-        }
-        ListRoundPartyTotalsResponse: {
-            entries: components['schemas']['RoundPartyTotals'][]
-        }
-        RoundPartyTotals: {
-            /** Format: int64 */
-            closed_round: number
-            party: string
-            app_rewards: string
-            validator_rewards: string
-            /** Format: int64 */
-            traffic_purchased: number
-            traffic_purchased_cc_spent: string
-            /** Format: int64 */
-            traffic_num_purchases: number
-            cumulative_app_rewards: string
-            cumulative_validator_rewards: string
-            cumulative_change_to_initial_amount_as_of_round_zero: string
-            cumulative_change_to_holding_fees_rate: string
-            /** Format: int64 */
-            cumulative_traffic_purchased: number
-            cumulative_traffic_purchased_cc_spent: string
-            /** Format: int64 */
-            cumulative_traffic_num_purchases: number
-        }
-        RoundTotals: {
-            /** Format: int64 */
-            closed_round: number
-            /** Format: date-time */
-            closed_round_effective_at: string
-            app_rewards: string
-            validator_rewards: string
-            change_to_initial_amount_as_of_round_zero: string
-            change_to_holding_fees_rate: string
-            cumulative_app_rewards: string
-            cumulative_validator_rewards: string
-            cumulative_change_to_initial_amount_as_of_round_zero: string
-            cumulative_change_to_holding_fees_rate: string
-            total_amulet_balance: string
-        }
         MigrationSchedule: {
             /** Format: date-time */
             time: string
+            /** Format: int64 */
+            migration_id: number
+        }
+        GetMigrationIdResponse: {
             /** Format: int64 */
             migration_id: number
         }
@@ -2991,22 +2793,14 @@ export interface components {
          *     If an event pertains to a transaction that is partially private, it may also bear verdict information for the private portions.
          *     When both fields are present, the transaction and verdict have the same `update_id` and `record_time`.
          *
-         *     **Experimental**: for networks where the SVs enable activity record
-         *     computation, a traffic summary and app activity record are present when
+         *     For networks where the SVs enable activity record computation,
+         *     a traffic summary and app activity record are present when
          *     a verdict is present.
-         *
-         *     This support is experimental while the preview phase of CIP-104 is running.
          */
         EventHistoryItem: {
             update?: components['schemas']['UpdateHistoryItemV2']
             verdict?: components['schemas']['EventHistoryVerdict']
-            /**
-             * @description **EXPERIMENTAL**: This property is experimental and subject to change. Data may be incomplete or missing.
-             *
-             *     This is our current best guess for how the summaries are served, but there remains a chance that the API needs to be adjusted.
-             */
             traffic_summary?: components['schemas']['EventHistoryTrafficSummary']
-            /** @description **EXPERIMENTAL**: This property is experimental and subject to change. Data may be incomplete or missing. */
             app_activity_records?: components['schemas']['EventHistoryAppActivityRecords']
         }
         EventHistoryVerdict: {
@@ -3157,7 +2951,16 @@ export interface components {
             /** Format: int64 */
             earliest_round: number
         }
-        GetRewardAccountingActivityTotalsResponse: {
+        GetRewardAccountingActivityTotalsResponse:
+            | components['schemas']['RewardAccountingActivityTotalsOk']
+            | components['schemas']['RewardAccountingActivityTotalsUndetermined']
+            | components['schemas']['RewardAccountingActivityTotalsCannotProvide']
+        RewardAccountingActivityTotalsOk: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: 'Ok'
             /** Format: int64 */
             round_number: number
             /** Format: int64 */
@@ -3166,12 +2969,57 @@ export interface components {
             active_parties_count: number
             /** Format: int64 */
             activity_records_count: number
+            /** @description The total of all minting allowances granted to app providers in this round. */
+            total_app_reward_minting_allowance: string
+            /** @description Total amount of minting allowances that fell below the configured app reward threshold and was thus burned. */
+            total_app_reward_thresholded: string
+            /** @description Total amount of app rewards which could not be attributed to app providers in this round because of limit on app rewards per activity (aka the app rewards cap). */
+            total_app_reward_unclaimed: string
+            /** Format: int64 */
+            rewarded_app_provider_parties_count: number
         }
-        GetRewardAccountingRootHashResponse: {
+        RewardAccountingActivityTotalsUndetermined: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: 'Undetermined'
+        }
+        RewardAccountingActivityTotalsCannotProvide: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: 'CannotProvide'
+        }
+        GetRewardAccountingRootHashResponse:
+            | components['schemas']['RewardAccountingRootHashOk']
+            | components['schemas']['RewardAccountingRootHashUndetermined']
+            | components['schemas']['RewardAccountingRootHashCannotProvide']
+        RewardAccountingRootHashOk: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: 'Ok'
             /** Format: int64 */
             round_number: number
             /** @description Hex-encoded root hash */
             root_hash: string
+        }
+        RewardAccountingRootHashUndetermined: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: 'Undetermined'
+        }
+        RewardAccountingRootHashCannotProvide: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: 'CannotProvide'
         }
         GetRewardAccountingBatchResponse:
             | components['schemas']['RewardAccountingBatchOfBatches']
@@ -3356,9 +3204,31 @@ export interface components {
             effectiveFrom?: string
             effectiveTo?: string
             limit: number
+            /**
+             * @description Cursor for pagination. When requesting the next page of results, pass the `next_page_token` from the previous response.
+             *     Results are ordered by effective date (the accepted vote's effectiveAt, or the result's completedAt otherwise), descending.
+             */
+            pageToken?: number
         }
         ListDsoRulesVoteResultsResponse: {
             dso_rules_vote_results: Record<string, never>[]
+            /**
+             * @description Cursor for the next page of results. Pass this as `pageToken` in the request.
+             *     If absent or `null`, there are no more pages.
+             */
+            next_page_token?: number
+        }
+        PreviousSvRewardWeightRequest: {
+            svParty: string
+            /** @description Only consider reward weight changes that took effect strictly before this time. */
+            effectiveBefore?: string
+        }
+        PreviousSvRewardWeightResponse: {
+            /**
+             * @description The SV's reward weight set by the most recent accepted `UpdateSvRewardWeight` proposal
+             *     before `effectiveBefore`, or absent if there is no such proposal.
+             */
+            rewardWeight?: string
         }
         FeatureSupportResponse: {
             dummy?: boolean
@@ -3648,6 +3518,26 @@ export interface operations {
                 }
                 content: {
                     'application/json': components['schemas']['GetRollForwardLsuResponse']
+                }
+            }
+        }
+    }
+    getLsu: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['GetLsuResponse']
                 }
             }
         }
@@ -4145,6 +4035,33 @@ export interface operations {
             500: components['responses']['500']
         }
     }
+    getHoldingsSummaryAtV1: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['HoldingsSummaryRequestV1']
+            }
+        }
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['HoldingsSummaryResponseV1']
+                }
+            }
+            400: components['responses']['400']
+            404: components['responses']['404']
+            500: components['responses']['500']
+        }
+    }
     listAnsEntries: {
         parameters: {
             query: {
@@ -4402,34 +4319,6 @@ export interface operations {
             }
         }
     }
-    getTopValidatorsByValidatorFaucets: {
-        parameters: {
-            query: {
-                /**
-                 * @description Maximum number of validator records that may be returned in the
-                 *     response
-                 */
-                limit: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetTopValidatorsByValidatorFaucetsResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-        }
-    }
     lookupTransferPreapprovalByParty: {
         parameters: {
             query?: never
@@ -4526,6 +4415,26 @@ export interface operations {
                     [name: string]: unknown
                 }
                 content?: never
+            }
+        }
+    }
+    getMigrationId: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['GetMigrationIdResponse']
+                }
             }
         }
     }
@@ -4715,6 +4624,30 @@ export interface operations {
             }
         }
     }
+    getPreviousSvRewardWeight: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['PreviousSvRewardWeightRequest']
+            }
+        }
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['PreviousSvRewardWeightResponse']
+                }
+            }
+        }
+    }
     getMigrationInfo: {
         parameters: {
             query?: never
@@ -4809,81 +4742,6 @@ export interface operations {
             }
         }
     }
-    getAggregatedRounds: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetAggregatedRoundsResponse']
-                }
-            }
-            404: components['responses']['404']
-        }
-    }
-    listRoundTotals: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['ListRoundTotalsRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['ListRoundTotalsResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-            500: components['responses']['500']
-        }
-    }
-    listRoundPartyTotals: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['ListRoundPartyTotalsRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['ListRoundPartyTotalsResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-            500: components['responses']['500']
-        }
-    }
     getAmuletConfigForRound: {
         parameters: {
             query: {
@@ -4905,151 +4763,6 @@ export interface operations {
                 }
             }
             404: components['responses']['404']
-        }
-    }
-    getRoundOfLatestData: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetRoundOfLatestDataResponse']
-                }
-            }
-            404: components['responses']['404']
-        }
-    }
-    getRewardsCollected: {
-        parameters: {
-            query?: {
-                round?: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetRewardsCollectedResponse']
-                }
-            }
-            404: components['responses']['404']
-        }
-    }
-    getTopProvidersByAppRewards: {
-        parameters: {
-            query: {
-                round: number
-                limit: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetTopProvidersByAppRewardsResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-        }
-    }
-    getTopValidatorsByValidatorRewards: {
-        parameters: {
-            query: {
-                round: number
-                limit: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetTopValidatorsByValidatorRewardsResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-        }
-    }
-    getTopValidatorsByPurchasedTraffic: {
-        parameters: {
-            query: {
-                round: number
-                limit: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetTopValidatorsByPurchasedTrafficResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-        }
-    }
-    listActivity: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['ListActivityRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['ListActivityResponse']
-                }
-            }
-            404: components['responses']['404']
-            500: components['responses']['500']
         }
     }
     listTransactionHistory: {
@@ -5298,7 +5011,6 @@ export interface operations {
                     'application/json': components['schemas']['GetRewardAccountingActivityTotalsResponse']
                 }
             }
-            404: components['responses']['404']
         }
     }
     getRewardAccountingRootHash: {
@@ -5321,7 +5033,6 @@ export interface operations {
                     'application/json': components['schemas']['GetRewardAccountingRootHashResponse']
                 }
             }
-            404: components['responses']['404']
         }
     }
     getRewardAccountingBatch: {

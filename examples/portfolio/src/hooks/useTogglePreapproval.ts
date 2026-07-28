@@ -2,17 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { v4 } from 'uuid'
 import { toast } from 'sonner'
-import * as dappSdk from '@canton-network/dapp-sdk'
-import type { LedgerTypes } from '@canton-network/wallet-sdk'
+import type { PreparedCommand } from '@canton-network/wallet-sdk'
 import { utilityOperatorQueryOptions } from './query-options'
 import { queryKeys } from './query-keys'
-import type { useWalletSdk } from './useWalletSdk'
+import type { WalletSdk } from './useWalletSdk'
 import { WalletSDKUtilitiesPluginName } from '@lib/utilities-wallet-sdk-plugin'
+import { submitViaProvider } from '@lib/submit'
 import type { PreapprovalRow } from '../types/preapprovals'
-
-type WalletSdk = ReturnType<typeof useWalletSdk>['sdk'] | undefined
 
 type TogglePreapprovalInput = {
     row: PreapprovalRow
@@ -48,25 +45,17 @@ export function useTogglePreapproval({
                         }
                     )
 
-                    await submitPreapprovalCommand({
-                        command,
-                        disclosedContracts: [],
-                        receiver: primaryParty,
-                    })
+                    await submitPreapprovalCommand([command, []], primaryParty)
                     await sdk.amulet.preapproval.fetchStatus(primaryParty)
                     return
                 }
 
-                const [command, disclosedContracts] =
+                const preparedCommand =
                     await sdk.amulet.preapproval.command.cancel({
                         parties: { receiver: primaryParty },
                     })
 
-                await submitPreapprovalCommand({
-                    command,
-                    disclosedContracts,
-                    receiver: primaryParty,
-                })
+                await submitPreapprovalCommand(preparedCommand, primaryParty)
                 await sdk.amulet.preapproval.fetchStatus(primaryParty, {
                     cancelled: true,
                 })
@@ -88,7 +77,7 @@ export function useTogglePreapproval({
             }
 
             if (enabled) {
-                const [command, disclosedContracts] = sdk[
+                const preparedCommand = sdk[
                     WalletSDKUtilitiesPluginName
                 ].preapprovalTransfer.create({
                     receiver: primaryParty,
@@ -97,34 +86,26 @@ export function useTogglePreapproval({
                     instrumentAllowances: [{ id: row.instrument.id }],
                 })
 
-                await submitPreapprovalCommand({
-                    command,
-                    disclosedContracts,
-                    receiver: primaryParty,
-                })
+                await submitPreapprovalCommand(preparedCommand, primaryParty)
                 await sdk[
                     WalletSDKUtilitiesPluginName
                 ].preapprovalTransfer.fetchStatus(args)
                 return
             }
 
-            const [command, disclosedContracts] =
+            const preparedCommand =
                 await sdk[
                     WalletSDKUtilitiesPluginName
                 ].preapprovalTransfer.cancel(args)
 
-            await submitPreapprovalCommand({
-                command,
-                disclosedContracts,
-                receiver: primaryParty,
-            })
+            await submitPreapprovalCommand(preparedCommand, primaryParty)
             await sdk[
                 WalletSDKUtilitiesPluginName
             ].preapprovalTransfer.fetchStatus(args, { cancelled: true })
         },
         onSuccess: async (_data, variables) => {
             await queryClient.invalidateQueries({
-                queryKey: queryKeys.preapprovals.status({
+                queryKey: queryKeys.walletConnection.preapprovals.status({
                     party: primaryParty,
                     kind: variables.row.kind,
                     registryPartyId: variables.row.registryPartyId,
@@ -147,33 +128,11 @@ export function useTogglePreapproval({
     })
 }
 
-type SubmitPreapprovalCommandArgs = {
-    command: LedgerTypes['Command'] | null
-    disclosedContracts?: readonly LedgerTypes['DisclosedContract'][]
+async function submitPreapprovalCommand(
+    [command, disclosedContracts]:
+        PreparedCommand | readonly [null, readonly []],
     receiver: string
-}
-
-async function submitPreapprovalCommand({
-    command,
-    disclosedContracts = [],
-    receiver,
-}: SubmitPreapprovalCommandArgs) {
-    if (!command) {
-        return
-    }
-
-    const provider = dappSdk.getConnectedProvider()
-    if (!provider) {
-        throw new Error('Dapp provider is not available')
-    }
-
-    await provider.request({
-        method: 'prepareExecuteAndWait',
-        params: {
-            commands: [command],
-            commandId: v4(),
-            actAs: [receiver],
-            disclosedContracts: [...disclosedContracts],
-        },
-    })
+) {
+    if (!command) return
+    await submitViaProvider([command, [...disclosedContracts]], receiver)
 }

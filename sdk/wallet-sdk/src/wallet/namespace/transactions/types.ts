@@ -1,8 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { RawCommandMap, WrappedCommand } from '../ledger/index.js'
+import type {
+    LedgerCommonSchemas,
+    RawCommandMap,
+    WrappedCommand,
+} from '@canton-network/core-ledger-client-types'
 
 export type PreparedCommand<
     K extends keyof RawCommandMap | (keyof RawCommandMap)[] = [

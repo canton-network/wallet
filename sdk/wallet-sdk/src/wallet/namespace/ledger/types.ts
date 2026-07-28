@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type {
+    LedgerCommonSchemas,
+    WrappedCommand,
+} from '@canton-network/core-ledger-client-types'
 import { AcsOptions } from '@canton-network/core-acs-reader'
 
 export type PrepareOptions = {
@@ -17,17 +20,6 @@ export type ExecuteOptions = {
     submissionId?: string
     partyId: PartyId
 }
-
-export type RawCommandMap = {
-    ExerciseCommand: LedgerCommonSchemas['ExerciseCommand']
-    CreateCommand: LedgerCommonSchemas['CreateCommand']
-    CreateAndExerciseCommand: LedgerCommonSchemas['CreateAndExerciseCommand']
-}
-export type WrappedCommand<
-    K extends keyof RawCommandMap = keyof RawCommandMap,
-> = {
-    [P in K]: { [Q in P]: RawCommandMap[P] }
-}[K]
 
 export type AcsRequestOptions = Omit<AcsOptions, 'offset'> & {
     offset?: number

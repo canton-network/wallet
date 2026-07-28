@@ -126,7 +126,7 @@ export class UserUiSignMessage extends BaseElement {
                 return
             }
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             const result = await userClient.request({
                 method: 'getMessageToSign',
@@ -149,7 +149,7 @@ export class UserUiSignMessage extends BaseElement {
         this.isDeleting = true
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'deleteMessageToSign',
@@ -168,7 +168,7 @@ export class UserUiSignMessage extends BaseElement {
         this.isApproving = true
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get()
             )
             await userClient.request({
                 method: 'signMessage',
