@@ -183,7 +183,7 @@ function RouteComponent() {
                         ))}
                     </Box>
 
-                    <Box sx={{ display: 'grid', gap: 1.5, pb: 4 }}>
+                    <Box sx={{ display: 'grid', gap: 1.5 }}>
                         <PillButton type="button" fullWidth onClick={open}>
                             Wallet Gateway
                         </PillButton>
