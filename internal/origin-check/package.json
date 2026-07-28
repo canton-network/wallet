@@ -3,6 +3,21 @@
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
     "packageManager": "yarn@4.16.0",
     "dependencies": {
+        "tsdown": "^0.22.14",
         "zod": "^4.4.3"
+    },
+    "scripts": {
+        "test": "vitest run --project node --project browser",
+        "test:coverage": "vitest run --project node --project browser --coverage",
+        "build": "tsdown --onSuccess \"tsc\"",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\""
+    },
+    "devDependencies": {
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
+        "vite": "^8.1.5",
+        "vite-plugin-dts": "^5.0.3",
+        "vitest": "^4.1.10"
     }
 }
