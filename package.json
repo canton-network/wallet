@@ -54,6 +54,7 @@
     "workspaces": [
         "api-specs",
         "core/**",
+        "internal/**",
         "docs/wallet-integration-guide/examples",
         "examples/*",
         "example-scripts",
