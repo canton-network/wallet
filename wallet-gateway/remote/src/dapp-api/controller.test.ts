@@ -320,7 +320,7 @@ describe('dappController', () => {
 
             await controller.disconnect()
 
-            await expect(store.getSession()).resolves.toBeUndefined()
+            await expect(store.listSessions()).resolves.toHaveLength(0)
             expect(emitSpy).toHaveBeenCalledWith(
                 'statusChanged',
                 expect.objectContaining({

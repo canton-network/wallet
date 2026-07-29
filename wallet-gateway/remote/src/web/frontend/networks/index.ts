@@ -21,6 +21,7 @@ import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
+import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-networks')
 export class UserUiNetworks extends BaseElement {
@@ -78,8 +79,9 @@ export class UserUiNetworks extends BaseElement {
 
     private async loadData() {
         try {
+            const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(origin)
             )
             const [networksResult, sessionsResult, userResult] =
                 await Promise.all([

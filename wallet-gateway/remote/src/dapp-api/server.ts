@@ -13,6 +13,7 @@ import { Server } from 'http'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo, ServerConfig } from '../config/Config.js'
 import { DappControllerDeps } from './controller.js'
+import crypto from 'crypto'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)
@@ -48,6 +49,18 @@ export const dapp = (
 
         const newStore = store.withAuthContext(context)
         const session = await newStore.getSession(context.accessToken)
+
+        logger.debug(
+            {
+                sessionId: session?.id,
+                hash: crypto
+                    .createHash('sha256')
+                    .update(context.accessToken)
+                    .digest('hex'),
+            },
+            'EEEEE Retrieved session for SSE connection'
+        )
+
         const sessionId = session?.id
 
         if (!sessionId) {

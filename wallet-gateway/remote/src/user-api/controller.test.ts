@@ -1009,7 +1009,7 @@ describe('userController', () => {
 
             await controller.removeSession()
 
-            await expect(store.getSession()).resolves.toBeUndefined()
+            await expect(store.listSessions()).resolves.toHaveLength(0)
             expect(emitSpy).toHaveBeenCalledWith(
                 'statusChanged',
                 expect.objectContaining({
@@ -1054,7 +1054,9 @@ describe('userController', () => {
                     },
                 })
             )
-            await expect(store.getSession()).resolves.toMatchObject({
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toMatchObject({
                 network: 'network1',
             })
         })

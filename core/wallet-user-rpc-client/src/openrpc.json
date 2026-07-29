@@ -1398,6 +1398,11 @@
                         "type": "string",
                         "description": "The unique identifier of the session."
                     },
+                    "origin": {
+                        "title": "origin",
+                        "type": "string",
+                        "description": "The origin belonging to the session."
+                    },
                     "network": {
                         "$ref": "#/components/schemas/Network"
                     },

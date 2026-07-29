@@ -17,6 +17,7 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
+import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-review-network')
 export class UserUiReviewNetwork extends BaseElement {
@@ -61,8 +62,9 @@ export class UserUiReviewNetwork extends BaseElement {
         }
 
         try {
+            const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({
                 method: 'getNetwork',
@@ -85,8 +87,9 @@ export class UserUiReviewNetwork extends BaseElement {
         const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
+            const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'addNetwork',
@@ -117,8 +120,9 @@ export class UserUiReviewNetwork extends BaseElement {
         if (!confirm(`Delete network "${e.network.name}"?`)) return
 
         try {
+            const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'removeNetwork',

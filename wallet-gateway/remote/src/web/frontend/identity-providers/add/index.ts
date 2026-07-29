@@ -14,6 +14,7 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
+import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-add-idp')
 export class UserUiAddIdp extends BaseElement {
@@ -50,8 +51,9 @@ export class UserUiAddIdp extends BaseElement {
         this.loading = true
 
         try {
+            const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'addIdp',

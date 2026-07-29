@@ -156,6 +156,12 @@ export interface Store {
      */
     getSession(accessToken: string): Promise<Session | undefined>
 
+    /**
+     * listSessions retrieves all active sessions for the authenticated user.
+     * @returns A Promise that resolves to an array of Session objects representing the active sessions.
+     */
+    listSessions(): Promise<Array<Session>>
+
     setSession(session: Session): Promise<void>
 
     /**

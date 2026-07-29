@@ -20,6 +20,7 @@ import { showToast } from '../../utils.js'
 import '../../index'
 import { WALLET_CREATION_STATUS_CODE } from '../index'
 import { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
+import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {
@@ -59,15 +60,16 @@ export class UserUiAddParty extends BaseElement {
     }
 
     private async loadContext() {
+        const origin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            stateManager.accessToken.get(origin)
         )
         const sessions = await userClient
             .request({ method: 'listSessions' })
             .catch(() => ({ sessions: [] }))
         const currentSession = sessions?.sessions?.[0]
         const networkId =
-            currentSession?.network?.id || stateManager.networkId.get()
+            currentSession?.network?.id || stateManager.networkId.get(origin)
         this.networkIds = networkId ? [networkId] : []
     }
 
@@ -87,7 +89,7 @@ export class UserUiAddParty extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({
                 method: 'listSigningProviderVaults',
@@ -116,8 +118,9 @@ export class UserUiAddParty extends BaseElement {
         this.submitting = true
 
         try {
+            const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({
                 method: 'createWallet',

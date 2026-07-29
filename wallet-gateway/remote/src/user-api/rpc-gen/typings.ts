@@ -387,6 +387,7 @@ export type UserLevelRight = any
  */
 export interface Session {
     id: Id
+    origin?: Origin
     network: Network
     idp: Idp
     accessToken: AccessToken
@@ -611,6 +612,7 @@ export interface ExecuteResult {
  */
 export interface AddSessionResult {
     id: Id
+    origin?: Origin
     network: Network
     idp: Idp
     accessToken: AccessToken

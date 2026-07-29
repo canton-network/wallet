@@ -18,6 +18,7 @@ import { stateManager } from '../state-manager'
 import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
 import { setLocationHref } from '../navigation.js'
+import { detectCurrentOrigin } from '../listeners.js'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -64,16 +65,18 @@ export class LoginUI extends BaseElement {
     accessor connectingMessage = 'Connecting...'
 
     private async loadNetworks() {
+        const origin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            stateManager.accessToken.get(origin)
         )
         const response = await userClient.request({ method: 'listNetworks' })
         return response.networks
     }
 
     private async loadIdps() {
+        const origin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            stateManager.accessToken.get(origin)
         )
         const response = await userClient.request({ method: 'listIdps' })
         return response.idps
@@ -104,7 +107,8 @@ export class LoginUI extends BaseElement {
 
         this.connecting = true
         this.connectingMessage = `Connecting to ${selectedNetwork.name}...`
-        stateManager.networkId.set(selectedNetwork.id)
+        const origin = await detectCurrentOrigin()
+        stateManager.networkId.set(selectedNetwork.id, origin)
 
         try {
             if (selectedIdp.type === 'self_signed') {
@@ -180,8 +184,9 @@ export class LoginUI extends BaseElement {
     }
 
     protected async selfSign(networkId: string, clientId: string) {
+        const origin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            stateManager.accessToken.get(origin)
         )
         const { accessToken } = await userClient.request({
             method: 'selfSignedAccessToken',
@@ -190,9 +195,10 @@ export class LoginUI extends BaseElement {
 
         const payload = JSON.parse(atob(accessToken.split('.')[1]))
         stateManager.expirationDate.set(
-            new Date(payload.exp * 1000).toISOString()
+            new Date(payload.exp * 1000).toISOString(),
+            origin
         )
-        stateManager.accessToken.set(accessToken)
+        stateManager.accessToken.set(accessToken, origin)
 
         await addUserSession(accessToken, networkId)
     }

@@ -711,14 +711,19 @@ export const userController = (
             params: AddSessionParams
         ): Promise<AddSessionResult> {
             try {
-                const newSessionId = v4()
+                const connectedContext = assertConnected(authContext)
+                const { userId, accessToken } = connectedContext
+
+                const newSessionId = crypto
+                    .createHash('sha256')
+                    .update(accessToken)
+                    .digest('hex')
+
                 logger.info(
                     `Adding session with ID ${newSessionId} for network ${params.networkId}`
                 )
                 const network = await store.getNetwork(params.networkId)
                 const idp = await store.getIdp(network.identityProviderId)
-                const connectedContext = assertConnected(authContext)
-                const { userId, accessToken } = connectedContext
 
                 assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
@@ -839,6 +844,8 @@ export const userController = (
             const session = await store.getSession(
                 authContext?.accessToken || ''
             )
+            // const allSessions = await store.listSessions()
+
             if (!session) {
                 return { sessions: [] }
             }
@@ -855,10 +862,12 @@ export const userController = (
             const idp = await store.getIdp(network.identityProviderId)
             const status = await networkStatus(ledgerClient)
             const rights = await store.getUserRights(network.id)
+
             return {
                 sessions: [
                     {
                         id: session.id,
+                        origin: session.origin,
                         network: {
                             ...network,
                             ledgerApi: network.ledgerApi.baseUrl,
