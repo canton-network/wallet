@@ -16582,6 +16582,8 @@ __metadata:
     "@vitest/browser-playwright": "npm:^4.1.10"
     "@vitest/coverage-v8": "npm:^4.1.10"
     tsdown: "npm:^0.22.14"
+    tsx: "npm:^4.23.1"
+    typescript: "npm:^5.7.2"
     vite: "npm:^8.1.5"
     vite-plugin-dts: "npm:^5.0.3"
     vitest: "npm:^4.1.10"
