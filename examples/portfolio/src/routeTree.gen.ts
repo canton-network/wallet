@@ -9,26 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as NextRouteRouteImport } from './routes/next/route'
 import { Route as LegacyRouteRouteImport } from './routes/_legacy/route'
+import { Route as NextRouteRouteImport } from './routes/next/route'
 import { Route as LegacyIndexRouteImport } from './routes/_legacy/index'
-import { Route as NextDashboardRouteImport } from './routes/next/dashboard'
-import { Route as NextConnectRouteImport } from './routes/next/connect'
 import { Route as LegacySettingsRouteImport } from './routes/_legacy/settings'
-import { Route as NextDashboardIndexRouteImport } from './routes/next/dashboard/index'
-import { Route as NextDashboardSettingsRouteImport } from './routes/next/dashboard/settings'
-import { Route as NextDashboardOffersRouteImport } from './routes/next/dashboard/offers'
-import { Route as NextDashboardFaqRouteImport } from './routes/next/dashboard/faq'
+import { Route as NextConnectRouteImport } from './routes/next/connect'
+import { Route as NextDashboardRouteImport } from './routes/next/dashboard'
 import { Route as LegacyWalletWalletIdRouteImport } from './routes/_legacy/wallet.$walletId'
+import { Route as NextDashboardIndexRouteImport } from './routes/next/dashboard/index'
+import { Route as NextDashboardFaqRouteImport } from './routes/next/dashboard/faq'
+import { Route as NextDashboardOffersRouteImport } from './routes/next/dashboard/offers'
+import { Route as NextDashboardSettingsRouteImport } from './routes/next/dashboard/settings'
 import { Route as NextDashboardWalletWalletIdRouteImport } from './routes/next/dashboard/wallet.$walletId'
 
+const LegacyRouteRoute = LegacyRouteRouteImport.update({
+  id: '/_legacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NextRouteRoute = NextRouteRouteImport.update({
   id: '/next',
   path: '/next',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegacyRouteRoute = LegacyRouteRouteImport.update({
-  id: '/_legacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegacyIndexRoute = LegacyIndexRouteImport.update({
@@ -36,19 +36,24 @@ const LegacyIndexRoute = LegacyIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LegacyRouteRoute,
 } as any)
-const NextDashboardRoute = NextDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => NextRouteRoute,
+const LegacySettingsRoute = LegacySettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => LegacyRouteRoute,
 } as any)
 const NextConnectRoute = NextConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
   getParentRoute: () => NextRouteRoute,
 } as any)
-const LegacySettingsRoute = LegacySettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const NextDashboardRoute = NextDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => NextRouteRoute,
+} as any)
+const LegacyWalletWalletIdRoute = LegacyWalletWalletIdRouteImport.update({
+  id: '/wallet/$walletId',
+  path: '/wallet/$walletId',
   getParentRoute: () => LegacyRouteRoute,
 } as any)
 const NextDashboardIndexRoute = NextDashboardIndexRouteImport.update({
@@ -56,9 +61,9 @@ const NextDashboardIndexRoute = NextDashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => NextDashboardRoute,
 } as any)
-const NextDashboardSettingsRoute = NextDashboardSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const NextDashboardFaqRoute = NextDashboardFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => NextDashboardRoute,
 } as any)
 const NextDashboardOffersRoute = NextDashboardOffersRouteImport.update({
@@ -66,15 +71,10 @@ const NextDashboardOffersRoute = NextDashboardOffersRouteImport.update({
   path: '/offers',
   getParentRoute: () => NextDashboardRoute,
 } as any)
-const NextDashboardFaqRoute = NextDashboardFaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
+const NextDashboardSettingsRoute = NextDashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => NextDashboardRoute,
-} as any)
-const LegacyWalletWalletIdRoute = LegacyWalletWalletIdRouteImport.update({
-  id: '/wallet/$walletId',
-  path: '/wallet/$walletId',
-  getParentRoute: () => LegacyRouteRoute,
 } as any)
 const NextDashboardWalletWalletIdRoute =
   NextDashboardWalletWalletIdRouteImport.update({
@@ -172,18 +172,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/next': {
-      id: '/next'
-      path: '/next'
-      fullPath: '/next'
-      preLoaderRoute: typeof NextRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_legacy': {
       id: '/_legacy'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof LegacyRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/next': {
+      id: '/next'
+      path: '/next'
+      fullPath: '/next'
+      preLoaderRoute: typeof NextRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_legacy/': {
@@ -193,12 +193,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegacyIndexRouteImport
       parentRoute: typeof LegacyRouteRoute
     }
-    '/next/dashboard': {
-      id: '/next/dashboard'
-      path: '/dashboard'
-      fullPath: '/next/dashboard'
-      preLoaderRoute: typeof NextDashboardRouteImport
-      parentRoute: typeof NextRouteRoute
+    '/_legacy/settings': {
+      id: '/_legacy/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof LegacySettingsRouteImport
+      parentRoute: typeof LegacyRouteRoute
     }
     '/next/connect': {
       id: '/next/connect'
@@ -207,11 +207,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NextConnectRouteImport
       parentRoute: typeof NextRouteRoute
     }
-    '/_legacy/settings': {
-      id: '/_legacy/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof LegacySettingsRouteImport
+    '/next/dashboard': {
+      id: '/next/dashboard'
+      path: '/dashboard'
+      fullPath: '/next/dashboard'
+      preLoaderRoute: typeof NextDashboardRouteImport
+      parentRoute: typeof NextRouteRoute
+    }
+    '/_legacy/wallet/$walletId': {
+      id: '/_legacy/wallet/$walletId'
+      path: '/wallet/$walletId'
+      fullPath: '/wallet/$walletId'
+      preLoaderRoute: typeof LegacyWalletWalletIdRouteImport
       parentRoute: typeof LegacyRouteRoute
     }
     '/next/dashboard/': {
@@ -221,11 +228,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NextDashboardIndexRouteImport
       parentRoute: typeof NextDashboardRoute
     }
-    '/next/dashboard/settings': {
-      id: '/next/dashboard/settings'
-      path: '/settings'
-      fullPath: '/next/dashboard/settings'
-      preLoaderRoute: typeof NextDashboardSettingsRouteImport
+    '/next/dashboard/faq': {
+      id: '/next/dashboard/faq'
+      path: '/faq'
+      fullPath: '/next/dashboard/faq'
+      preLoaderRoute: typeof NextDashboardFaqRouteImport
       parentRoute: typeof NextDashboardRoute
     }
     '/next/dashboard/offers': {
@@ -235,19 +242,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NextDashboardOffersRouteImport
       parentRoute: typeof NextDashboardRoute
     }
-    '/next/dashboard/faq': {
-      id: '/next/dashboard/faq'
-      path: '/faq'
-      fullPath: '/next/dashboard/faq'
-      preLoaderRoute: typeof NextDashboardFaqRouteImport
+    '/next/dashboard/settings': {
+      id: '/next/dashboard/settings'
+      path: '/settings'
+      fullPath: '/next/dashboard/settings'
+      preLoaderRoute: typeof NextDashboardSettingsRouteImport
       parentRoute: typeof NextDashboardRoute
-    }
-    '/_legacy/wallet/$walletId': {
-      id: '/_legacy/wallet/$walletId'
-      path: '/wallet/$walletId'
-      fullPath: '/wallet/$walletId'
-      preLoaderRoute: typeof LegacyWalletWalletIdRouteImport
-      parentRoute: typeof LegacyRouteRoute
     }
     '/next/dashboard/wallet/$walletId': {
       id: '/next/dashboard/wallet/$walletId'
