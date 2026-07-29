@@ -67,6 +67,8 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
                     primaryParty
                 )
                 toast.success('Tap successful')
+                form.reset()
+                onClose()
             } catch (error) {
                 toast.error(
                     `Tap failed: ${error instanceof Error ? error.message : 'Unknown error'}`
