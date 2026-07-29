@@ -539,37 +539,12 @@ export class WalletGateway {
     }
 
     async findNetworkCard(networkId: string): Promise<Locator> {
-        const popup = await this.popup()
         await this.waitForNetworksPageReady()
-
-        const paginationStatus = popup.locator('wg-pagination .pagination span')
-
-        for (let guard = 0; guard < 25; guard++) {
-            const card = popup
-                .locator('network-card')
-                .filter({ hasText: networkId })
-                .first()
-            if ((await card.count()) > 0) {
-                await expect(card).toBeVisible({ timeout: 5000 })
-                return card
-            }
-
-            const nextButton = popup.getByRole('button', { name: 'Next page' })
-            const hasNext =
-                (await nextButton.count()) > 0 &&
-                (await nextButton.isEnabled().catch(() => false))
-            if (!hasNext) {
-                break
-            }
-
-            const before = (await paginationStatus.textContent()) ?? ''
-            await nextButton.click()
-            await expect(paginationStatus).not.toHaveText(before, {
-                timeout: 5000,
-            })
-        }
-
-        throw new Error(`Network card for "${networkId}" not found in the list`)
+        return this.findInPaginatedList(
+            `Network card for "${networkId}"`,
+            (popup) =>
+                popup.locator('network-card').filter({ hasText: networkId })
+        )
     }
 
     async expectFirstNetworkNotEditable(): Promise<void> {
@@ -581,7 +556,7 @@ export class WalletGateway {
 
         // Nothing changes
         await expect(popup).toHaveURL('http://localhost:3030/networks/', {
-            timeout: 15_0000,
+            timeout: 15000,
         })
     }
 
@@ -644,11 +619,57 @@ export class WalletGateway {
         await input.fill(value)
     }
 
+    // Traverse pagination looking for a specific card defined by buildItemLocator
+    // Wait for page to be ready (with first page loaded) before calling it
+    private async findInPaginatedList(
+        itemDescription: string,
+        buildItemLocator: (popup: Page) => Locator,
+        options?: { afterPageChange?: () => Promise<void> }
+    ): Promise<Locator> {
+        const popup = await this.popup()
+        const pagination = popup.locator('wg-pagination').first()
+
+        for (let guard = 0; guard < 25; guard++) {
+            const item = buildItemLocator(popup).first()
+            if ((await item.count()) > 0) {
+                await expect(item).toBeVisible({ timeout: 5000 })
+                return item
+            }
+
+            if ((await pagination.count()) === 0) {
+                break
+            }
+
+            const nextButton = pagination.getByRole('button', {
+                name: 'Next page',
+            })
+            if (!(await nextButton.isEnabled())) {
+                break
+            }
+
+            const rangeLabel = pagination.locator('.pagination span')
+            const before = (await rangeLabel.textContent()) ?? ''
+            await nextButton.click()
+            await expect(rangeLabel).not.toHaveText(before, {
+                timeout: 10000,
+            })
+            if (options?.afterPageChange) {
+                await options.afterPageChange()
+            }
+        }
+
+        throw new Error(`${itemDescription} not found in the list`)
+    }
+
     private async waitForNetworksPageReady(): Promise<void> {
         const popup = await this.popup()
         await expect(
             popup.getByRole('heading', { name: 'Networks' })
         ).toBeVisible({ timeout: 15000 })
+
+        await expect(popup.locator('network-card').first()).toBeVisible({
+            timeout: 15000,
+        })
     }
 
     async gotoIdentityProvidersPage(): Promise<void> {
@@ -702,38 +723,10 @@ export class WalletGateway {
     }
 
     async findIdpCard(idpId: string): Promise<Locator> {
-        const popup = await this.popup()
         await this.waitForIdentityProvidersPageReady()
-
-        const paginationStatus = popup.locator('wg-pagination .pagination span')
-
-        for (let guard = 0; guard < 25; guard++) {
-            const card = popup
-                .locator('idp-card')
-                .filter({ hasText: idpId })
-                .first()
-            if ((await card.count()) > 0) {
-                await expect(card).toBeVisible({ timeout: 5000 })
-                return card
-            }
-
-            const nextButton = popup.getByRole('button', { name: 'Next page' })
-            const hasNext =
-                (await nextButton.count()) > 0 &&
-                (await nextButton.isEnabled().catch(() => false))
-            if (!hasNext) {
-                break
-            }
-
-            const before = (await paginationStatus.textContent()) ?? ''
-            await nextButton.click()
-            await expect(paginationStatus).not.toHaveText(before, {
-                timeout: 5000,
-            })
-        }
-
-        throw new Error(
-            `Identity provider card for "${idpId}" not found in the list`
+        return this.findInPaginatedList(
+            `Identity provider card for "${idpId}"`,
+            (popup) => popup.locator('idp-card').filter({ hasText: idpId })
         )
     }
 
@@ -782,6 +775,9 @@ export class WalletGateway {
         await expect(
             popup.getByRole('heading', { name: 'Identity Providers' })
         ).toBeVisible({ timeout: 15000 })
+        await expect(popup.locator('idp-card').first()).toBeVisible({
+            timeout: 15000,
+        })
     }
 
     async expectActivityWithStatus(
@@ -808,37 +804,21 @@ export class WalletGateway {
     }
 
     private async findActivityCard(commandId: string): Promise<Locator> {
-        const popup = await this.popup()
         await this.waitForActivitiesPageReady()
-
-        const paginationStatus = popup.locator('wg-pagination .pagination span')
-
-        for (let guard = 0; guard < 25; guard++) {
-            const card = popup.getByRole('button', {
-                name: `Open activity ${commandId}`,
-            })
-            if ((await card.count()) > 0) {
-                await expect(card.first()).toBeVisible({ timeout: 5000 })
-                return card.first()
+        const popup = await this.popup()
+        return this.findInPaginatedList(
+            `Activity card for command id "${commandId}"`,
+            (page) =>
+                page.getByRole('button', {
+                    name: `Open activity ${commandId}`,
+                }),
+            {
+                afterPageChange: async () => {
+                    await expect(
+                        popup.getByText('Loading activities...')
+                    ).not.toBeVisible()
+                },
             }
-
-            const nextButton = popup.getByRole('button', { name: 'Next page' })
-            const hasNext =
-                (await nextButton.count()) > 0 &&
-                (await nextButton.isEnabled().catch(() => false))
-            if (!hasNext) {
-                break
-            }
-
-            const before = (await paginationStatus.textContent()) ?? ''
-            await nextButton.click()
-            await expect(paginationStatus).not.toHaveText(before, {
-                timeout: 5000,
-            })
-        }
-
-        throw new Error(
-            `Activity card for command id "${commandId}" not found in Activities`
         )
     }
 
