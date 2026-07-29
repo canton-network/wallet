@@ -38,6 +38,7 @@ export function createConfig({ rootDir }) {
                 'damljs/**',
                 'docs/wallet-integration-guide/examples/**',
                 'examples/ping/playwright-report/**',
+                'examples/test-token-v1-registry/src/openapi-ts/**',
                 'core/rpc-generator/templates/client/typescript/src/index.ts',
             ],
         },
