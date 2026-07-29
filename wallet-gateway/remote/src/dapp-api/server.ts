@@ -78,7 +78,9 @@ export const dapp = (
         res.setHeader('X-Accel-Buffering', 'no')
         res.flushHeaders?.()
 
-        const notifier = notificationService.getNotifier(context.userId)
+        // TODO: use separate notifiers per event type i.e.
+        // onAccountsChanged should use a user-level notifier, statusChanged should use session-level notifier
+        const notifier = notificationService.getNotifier(sessionId)
 
         const onAccountsChanged = (...event: unknown[]) => {
             writeSSE(res, 'accountsChanged', event)

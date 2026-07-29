@@ -55,7 +55,7 @@
         "@vitest/coverage-v8": "^4.1.10",
         "@walletconnect/sign-client": "^2.23.10",
         "@walletconnect/types": "^2.23.10",
-        "playwright": "^1.61.1",
+        "playwright": "^1.62.0",
         "qrcode": "^1.5.4",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",

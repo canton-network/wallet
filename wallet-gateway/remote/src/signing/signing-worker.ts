@@ -185,7 +185,9 @@ export class SigningWorker {
             return
         }
 
-        const notifier = this.options.notificationService.getNotifier(userId)
+        const session = await this.options.store.getSession(userId)
+        const sessionId = session!.id
+        const notifier = this.options.notificationService.getNotifier(sessionId)
         const transactionLogger = this.options.logger.child({
             component: 'TransactionService',
         })

@@ -22,6 +22,7 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { Transaction } from '@canton-network/core-wallet-user-rpc-client'
+import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-activities')
 export class UserUiActivities extends BaseElement {
@@ -147,8 +148,9 @@ export class UserUiActivities extends BaseElement {
     private async updateTransactions() {
         this.loading = true
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'listTransactions',

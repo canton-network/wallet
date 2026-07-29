@@ -90,8 +90,11 @@ export const dappController = (
                     logger
                 ),
             })
+            const session = await store.getSession(context.accessToken)
+            const sessionId = session!.id
+
             const status = await networkStatus(ledgerClient)
-            const notifier = notificationService.getNotifier(context.userId)
+            const notifier = notificationService.getNotifier(sessionId)
             const provider = {
                 id: kernelInfo.id,
                 version: 'TODO',
@@ -124,10 +127,12 @@ export const dappController = (
             return connection
         },
         disconnect: async () => {
-            if (!context) {
+            const session = await store.getSession(context!.accessToken)
+            const sessionId = session?.id
+            if (!context || !sessionId) {
                 return null
             } else {
-                const notifier = notificationService.getNotifier(context.userId)
+                const notifier = notificationService.getNotifier(sessionId)
                 await store.removeSession(context.accessToken)
                 notifier.emit('statusChanged', {
                     provider: {
@@ -270,7 +275,10 @@ export const dappController = (
                 accessTokenProvider,
             })
 
-            const notifier = notificationService.getNotifier(gatewayUserId)
+            // TODO: consider service accounts / api keys
+            const session = await store.getSession(context.accessToken)
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
 
             const commandId = params.commandId || v4()
             const transactionId = v4()
@@ -475,7 +483,9 @@ export const dappController = (
                 throw new Error('No primary wallet found')
             }
 
-            const notifier = notificationService.getNotifier(context.userId)
+            const session = await store.getSession(context.accessToken)
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
             const messageId = v4()
             await store.setMessageRaw({
                 id: messageId,

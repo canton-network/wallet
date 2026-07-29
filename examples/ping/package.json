@@ -22,7 +22,7 @@
         "@canton-network/core-tx-visualizer": "workspace:^",
         "@canton-network/core-wallet-test-utils": "workspace:^",
         "@canton-network/core-wallet-ui-components": "workspace:^",
-        "@playwright/test": "^1.61.1",
+        "@playwright/test": "^1.62.0",
         "@types/node": "^25.9.4",
         "@types/react": "^19.2.17",
         "@types/react-dom": "^19.2.3",

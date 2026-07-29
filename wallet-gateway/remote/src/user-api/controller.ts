@@ -247,9 +247,9 @@ export const userController = (
                 throw new Error('No admin auth configured')
             }
 
-            const notifier = notificationService.getNotifier(
-                connectedContext.userId
-            )
+            const session = await store.getSession(connectedContext.accessToken)
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
 
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
@@ -313,7 +313,6 @@ export const userController = (
             params: AllocatePartyForWalletParams
         ) => {
             const connectedContext = assertConnected(authContext)
-            const userId = connectedContext.userId
 
             const network = await store.getCurrentNetwork()
             if (!network) {
@@ -392,18 +391,22 @@ export const userController = (
                     w.networkId === network.id
             )!
 
-            const notifier = notificationService.getNotifier(userId)
+            const session = await store.getSession(connectedContext.accessToken)
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
             notifier?.emit('accountsChanged', wallets)
             return { wallet }
         },
         setPrimaryWallet: async (params: SetPrimaryWalletParams) => {
             await store.setPrimaryWallet(params.partyId)
-            const notifier = authContext?.userId
-                ? notificationService.getNotifier(authContext.userId)
-                : undefined
+            const session = await store.getSession(
+                authContext?.accessToken || 'blahblahblah'
+            )
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
 
             const wallets = await store.getWallets()
-            notifier?.emit('accountsChanged', wallets)
+            notifier.emit('accountsChanged', wallets)
             return null
         },
         removeWallet: async (params: { partyId: string }) => {
@@ -429,7 +432,9 @@ export const userController = (
 
             const connectedContext = assertConnected(authContext)
             const userId = connectedContext.userId
-            const notifier = notificationService.getNotifier(userId)
+            const session = await store.getSession(connectedContext.accessToken)
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
 
             const transactionService = new TransactionService(
                 store,
@@ -478,7 +483,11 @@ export const userController = (
                 )
             }
 
-            const notifier = notificationService.getNotifier(userId)
+            const session = await store.getSession(
+                assertConnected(authContext).accessToken
+            )
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
 
             const emitFailedAndPersist = async (
                 details: string
@@ -664,9 +673,9 @@ export const userController = (
                 throw new Error('No network session found')
             }
 
-            const notifier = notificationService.getNotifier(
-                connectedContext.userId
-            )
+            const session = await store.getSession(connectedContext.accessToken)
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
@@ -733,7 +742,12 @@ export const userController = (
                     network: params.networkId,
                     accessToken: connectedContext.accessToken || '',
                 })
-                const notifier = notificationService.getNotifier(userId)
+
+                const session = await store.getSession(
+                    connectedContext.accessToken
+                )
+                const sessionId = session!.id
+                const notifier = notificationService.getNotifier(sessionId)
 
                 const ledgerClient = new LedgerClient({
                     baseUrl: new URL(network.ledgerApi.baseUrl),
@@ -820,7 +834,9 @@ export const userController = (
             logger.info({ authContext }, 'Removing session')
             const { accessToken, userId } = assertConnected(authContext)
 
-            const notifier = notificationService.getNotifier(userId)
+            const session = await store.getSession(accessToken)
+            const sessionId = session!.id
+            const notifier = notificationService.getNotifier(sessionId)
             await store.removeSession(accessToken)
 
             notifier.emit('statusChanged', {
@@ -933,9 +949,13 @@ export const userController = (
             ) {
                 return result
             }
-            const notifier = notificationService.getNotifier(userId)
+
+            const session = await store.getSession(authContext!.accessToken)
+            const sessionId = session!.id
+
+            const notifier = notificationService.getNotifier(sessionId)
             const wallets = await store.getWallets()
-            notifier?.emit('accountsChanged', wallets)
+            notifier.emit('accountsChanged', wallets)
             return result
         },
         isWalletSyncNeeded: async (): Promise<IsWalletSyncNeededResult> => {
