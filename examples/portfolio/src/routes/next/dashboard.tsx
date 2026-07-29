@@ -8,6 +8,7 @@ import {
     Box,
     Divider,
     Drawer,
+    Tooltip,
     Typography,
     type SxProps,
     type Theme,
@@ -177,13 +178,14 @@ function RouteComponent() {
                                         <PrimaryBadge />
                                     ) : undefined
                                 }
+                                tooltip={wallet.hint}
                             >
                                 {wallet.hint}
                             </SidebarLink>
                         ))}
                     </Box>
 
-                    <Box sx={{ display: 'grid', gap: 1.5, pb: 4 }}>
+                    <Box sx={{ display: 'grid', gap: 1.5 }}>
                         <PillButton type="button" fullWidth onClick={open}>
                             Wallet Gateway
                         </PillButton>
@@ -232,6 +234,7 @@ type SidebarLinkProps = {
     icon: ReactNode
     children: ReactNode
     endAdornment?: ReactNode
+    tooltip?: string
 } & LinkComponentProps<'a', RegisteredRouter>
 
 function SidebarLink({
@@ -239,40 +242,44 @@ function SidebarLink({
     icon,
     children,
     endAdornment,
+    tooltip,
     ...linkProps
 }: SidebarLinkProps) {
     return (
-        <Link
-            {...linkProps}
-            aria-current={active ? 'page' : undefined}
-            style={{ color: 'inherit', textDecoration: 'none' }}
-        >
-            <Box sx={sidebarLinkSx(active, Boolean(endAdornment))}>
-                <Box
-                    aria-hidden="true"
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'text.secondary',
-                    }}
-                >
-                    {icon}
+        <Tooltip title={tooltip ?? ''} placement="right" arrow>
+            <Link
+                {...linkProps}
+                aria-current={active ? 'page' : undefined}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+            >
+                <Box sx={sidebarLinkSx(active, Boolean(endAdornment))}>
+                    <Box
+                        aria-hidden="true"
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'text.secondary',
+                        }}
+                    >
+                        {icon}
+                    </Box>
+                    <Typography
+                        component="span"
+                        variant="body2"
+                        sx={{
+                            width: '100%',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        {children}
+                    </Typography>
+                    {endAdornment}
                 </Box>
-                <Typography
-                    component="span"
-                    variant="body2"
-                    sx={{
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    {children}
-                </Typography>
-                {endAdornment}
-            </Box>
-        </Link>
+            </Link>
+        </Tooltip>
     )
 }
 
@@ -282,7 +289,7 @@ const sidebarLinkSx = (
 ): SxProps<Theme> => ({
     display: 'grid',
     gridTemplateColumns: hasEndAdornment
-        ? '18px minmax(0, max-content) auto'
+        ? '18px minmax(0, 1fr) auto'
         : '18px minmax(0, 1fr)',
     justifyItems: 'start',
     alignItems: 'center',
