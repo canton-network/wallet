@@ -289,7 +289,7 @@ const sidebarLinkSx = (
 ): SxProps<Theme> => ({
     display: 'grid',
     gridTemplateColumns: hasEndAdornment
-        ? '18px minmax(0, max-content) auto'
+        ? '18px minmax(0, 1fr) auto'
         : '18px minmax(0, 1fr)',
     justifyItems: 'start',
     alignItems: 'center',
