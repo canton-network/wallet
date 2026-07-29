@@ -30,6 +30,10 @@ const mockNetworkStatus = vi.hoisted(() =>
         isConnected: true,
         reason: undefined,
         cantonVersion: '3.4',
+    } as {
+        isConnected: boolean
+        reason?: string
+        cantonVersion?: string
     })
 )
 
@@ -1052,6 +1056,60 @@ describe('userController', () => {
                     },
                 })
             )
+            await expect(store.getSession()).resolves.toMatchObject({
+                network: 'network1',
+            })
+        })
+
+        it('addSession keeps the session when the ledger is disconnected', async () => {
+            mockNetworkStatus.mockResolvedValueOnce({
+                isConnected: false,
+                reason: 'Ledger unreachable: fetch failed',
+            })
+            const authWithValidClaims = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithValidClaims, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithValidClaims
+            )
+
+            const result = await controller.addSession({
+                networkId: 'network1',
+            })
+
+            expect(result.status).toBe('disconnected')
+            expect(result.reason).toBe('Ledger unreachable: fetch failed')
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
+            await expect(store.getSession()).resolves.toMatchObject({
+                network: 'network1',
+            })
+        })
+
+        it('addSession keeps the session when initial wallet sync fails', async () => {
+            walletSyncMocks.syncWallets.mockRejectedValueOnce(
+                new Error('Wallet sync failed')
+            )
+            const authWithValidClaims = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithValidClaims, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithValidClaims
+            )
+
+            const result = await controller.addSession({
+                networkId: 'network1',
+            })
+
+            expect(result.status).toBe('connected')
+            expect(walletSyncMocks.syncWallets).toHaveBeenCalledOnce()
             await expect(store.getSession()).resolves.toMatchObject({
                 network: 'network1',
             })
