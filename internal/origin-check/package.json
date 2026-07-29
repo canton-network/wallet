@@ -4,6 +4,7 @@
     "packageManager": "yarn@4.16.0",
     "dependencies": {
         "tsdown": "^0.22.14",
+        "tsx": "^4.23.1",
         "zod": "^4.4.3"
     },
     "scripts": {
@@ -16,6 +17,7 @@
     "devDependencies": {
         "@vitest/browser-playwright": "^4.1.10",
         "@vitest/coverage-v8": "^4.1.10",
+        "typescript": "^5.7.2",
         "vite": "^8.1.5",
         "vite-plugin-dts": "^5.0.3",
         "vitest": "^4.1.10"

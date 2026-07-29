@@ -8,18 +8,6 @@ abstract class OriginManager {
     protected abstract readonly messageToReceive: OriginHandshakeMessage
     protected abstract readonly listenerCallback: (event: MessageEvent) => void
 
-    protected listener = (event: MessageEvent) => {
-        const parsedData = OriginHandshake.safeParse(event.data)
-        if (
-            !parsedData.success ||
-            event.origin !== parsedData.data.origin ||
-            parsedData.data.message !== this.messageToReceive
-        )
-            return
-        this.allowedOrigins.add(event.origin)
-        this.listenerCallback(event)
-    }
-
     constructor() {
         window.addEventListener('message', this.listener)
     }
@@ -29,6 +17,18 @@ abstract class OriginManager {
             OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
             ? OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
             : OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+    }
+
+    private listener = (event: MessageEvent) => {
+        const parsedData = OriginHandshake.safeParse(event.data)
+        if (
+            !parsedData.success ||
+            event.origin !== parsedData.data.origin ||
+            parsedData.data.message !== this.messageToReceive
+        )
+            return
+        this.allowedOrigins.add(event.origin)
+        this.listenerCallback(event)
     }
 
     protected broadcast(options: {
