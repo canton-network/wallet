@@ -76,6 +76,13 @@ export class AmuletNamespace {
     }
 
     /**
+     * Returns whether the configured Amulet network is a development network.
+     */
+    async isDevNet(): Promise<boolean> {
+        return await this.sdkContext.amuletService.isDevNet()
+    }
+
+    /**
      * Creates and submits a tap command for a specified amount for an internal party
      * This is useful for tests and can only be used locally or against devnet
      * @param amount The amount to be tapped.
