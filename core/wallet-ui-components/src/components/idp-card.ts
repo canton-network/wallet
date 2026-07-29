@@ -47,7 +47,11 @@ export class IdpCard extends BaseElement {
                 gap: var(--wg-space-3);
             }
 
-            .idp-card:hover {
+            .idp-card.readonly {
+                cursor: initial;
+            }
+
+            .idp-card:not(.readonly):hover {
                 border-color: var(--wg-accent);
                 box-shadow: var(--wg-shadow-md);
             }
@@ -111,7 +115,7 @@ export class IdpCard extends BaseElement {
     ]
 
     private _onClick() {
-        if (this.idp) {
+        if (this.idp && !this.readonly) {
             this.dispatchEvent(new IdpCardReviewEvent(this.idp))
         }
     }
