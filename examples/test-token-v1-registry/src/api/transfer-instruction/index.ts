@@ -1,26 +1,65 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Handler, OpenAPIBackend } from 'openapi-backend'
-import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
-import { getTransferFactory } from './getTransferFactory'
+import { Router } from 'express'
+import {
+    getTransferFactory,
+    getTransferFactoryChoiceArgumentsSchema,
+} from './getTransferFactory'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
 import { OffLedger } from '@canton-network/core-token-standard'
+import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
+import z, { ZodType } from 'zod'
+import { choiceContextRequestSchema } from '../common'
 
-export const transferInstructionAPI = new OpenAPIBackend({
-    definition: availableOpenAPIPaths['transfer-instruction-v1.yaml'],
-    quick: true,
-    handlers: {
-        getTransferFactory,
-        getTransferInstructionAcceptContext,
-        getTransferInstructionRejectContext,
-        getTransferInstructionWithdrawContext,
-    } satisfies Record<
-        keyof OffLedger.TransferInstructionV1.operations,
-        Handler
-    >,
+const pathSchema = z.object({
+    transferInstructionId: z.string(),
 })
 
-await transferInstructionAPI.init()
+const transferInstructionAPIRouter = Router()
+
+const openAPIRouter =
+    createExpressOpenApiRouter<OffLedger.TransferInstructionV1.paths>(
+        transferInstructionAPIRouter
+    )
+
+openAPIRouter.post('/registry/transfer-instruction/v1/transfer-factory', {
+    bodySchema: z.object({
+        choiceArguments: getTransferFactoryChoiceArgumentsSchema,
+        excludeDebugFields: z.boolean(),
+    }) as unknown as ZodType<
+        OffLedger.TransferInstructionV1.operations['getTransferFactory']['requestBody']['content']['application/json']
+    >,
+    handler: getTransferFactory,
+})
+
+openAPIRouter.post(
+    '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/accept',
+    {
+        bodySchema: choiceContextRequestSchema,
+        pathSchema,
+        handler: getTransferInstructionAcceptContext,
+    }
+)
+
+openAPIRouter.post(
+    '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/reject',
+    {
+        handler: getTransferInstructionRejectContext,
+        bodySchema: choiceContextRequestSchema,
+        pathSchema,
+    }
+)
+
+openAPIRouter.post(
+    '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/withdraw',
+    {
+        handler: getTransferInstructionWithdrawContext,
+        bodySchema: choiceContextRequestSchema,
+        pathSchema,
+    }
+)
+
+export default transferInstructionAPIRouter
