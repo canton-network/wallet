@@ -3,6 +3,30 @@
 
 import { expect, Locator, Page } from '@playwright/test'
 
+export interface NetworkFormInput {
+    id: string
+    name: string
+    description: string
+    identityProviderId: string
+    ledgerApi: string
+    synchronizerId: string
+    auth: {
+        clientId: string
+        audience: string
+        scope: string
+    }
+}
+
+export interface IdpFormInput {
+    id: string
+    type: 'oauth' | 'self_signed'
+    issuer: string
+    configUrl: string
+}
+
+export type ActivityStatus =
+    'pending' | 'signed' | 'executed' | 'failed' | 'rejected'
+
 /**
  * Encapsulates all wallet gateway UI interactions for a given Page.
  * Can be used with any Page — a popup window, a full page, or an embedded view.
@@ -28,7 +52,12 @@ export class WalletGatewayPage {
 
     async createWalletIfNotExists(args: {
         partyHint: string
-        signingProvider: 'participant' | 'wallet-kernel' | 'blockdaemon'
+        signingProvider:
+            | 'participant'
+            | 'wallet-kernel'
+            | 'blockdaemon'
+            | 'dfns'
+            | 'fireblocks'
         primary?: boolean
     }): Promise<string> {
         await this.gotoPartiesPage()

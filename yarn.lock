@@ -2580,7 +2580,7 @@ __metadata:
   dependencies:
     "@canton-network/core-types": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
-    "@playwright/test": "npm:^1.61.0"
+    "@playwright/test": "npm:^1.61.1"
     "@vitest/coverage-v8": "npm:^4.1.10"
     pino: "npm:^10.3.1"
     tsdown: "npm:^0.22.9"
@@ -7461,17 +7461,6 @@ __metadata:
   version: 0.11.0
   resolution: "@pkgjs/parseargs@npm:0.11.0"
   checksum: 10c0/5bd7576bb1b38a47a7fc7b51ac9f38748e772beebc56200450c4a817d712232b8f1d3ef70532c80840243c657d491cf6a6be1e3a214cff907645819fdc34aadd
-  languageName: node
-  linkType: hard
-
-"@playwright/test@npm:^1.61.0":
-  version: 1.62.0
-  resolution: "@playwright/test@npm:1.62.0"
-  dependencies:
-    playwright: "npm:1.62.0"
-  bin:
-    playwright: cli.js
-  checksum: 10c0/1132666c5cc4955fb043d41447475b4947e6571bd390e1b7c9fdcc9381cb58563fa7f86509a4a61e572e9b0f7ff2d9d9027eb9ee8b1f24bea7423b52b4308436
   languageName: node
   linkType: hard
 

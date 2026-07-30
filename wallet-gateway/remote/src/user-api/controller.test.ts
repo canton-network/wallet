@@ -1083,12 +1083,15 @@ describe('userController', () => {
 
             const result = await controller.addSession({
                 networkId: 'network1',
+                origin: 'dapp-1',
             })
 
             expect(result.status).toBe('disconnected')
             expect(result.reason).toBe('Ledger unreachable: fetch failed')
             expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
-            await expect(store.getSession()).resolves.toMatchObject({
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toMatchObject({
                 network: 'network1',
             })
         })
@@ -1110,11 +1113,14 @@ describe('userController', () => {
 
             const result = await controller.addSession({
                 networkId: 'network1',
+                origin: 'dapp-1',
             })
 
             expect(result.status).toBe('connected')
             expect(walletSyncMocks.syncWallets).toHaveBeenCalledOnce()
-            await expect(store.getSession()).resolves.toMatchObject({
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toMatchObject({
                 network: 'network1',
             })
         })
