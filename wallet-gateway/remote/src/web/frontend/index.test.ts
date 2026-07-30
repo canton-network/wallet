@@ -129,12 +129,21 @@ function setValidAuth(expiresInMs = 60 * 60 * 1000) {
     authState.expirationDate = new Date(Date.now() + expiresInMs).toISOString()
 }
 
-function mockSessionList(sessionId = 'session-1') {
+function mockSessionList(
+    sessionId = 'session-1',
+    status: 'connected' | 'disconnected' = 'connected'
+) {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listSessions') {
             return {
                 sessions: sessionId
-                    ? [{ id: sessionId, network: { id: 'network1' } }]
+                    ? [
+                          {
+                              id: sessionId,
+                              network: { id: 'network1' },
+                              status,
+                          },
+                      ]
                     : [],
             }
         }
@@ -254,7 +263,14 @@ describe('UserApp', () => {
         document.body.innerHTML = ''
     })
 
-    it('renders layout with the connected network name', () => {
+    it('renders layout with the connected network name', async () => {
+        await waitUntil(() => {
+            const layout = el.shadowRoot?.querySelector(
+                'app-layout'
+            ) as HTMLElement & { networkConnected: boolean }
+            return layout?.networkConnected === true
+        })
+
         const layout = el.shadowRoot?.querySelector(
             'app-layout'
         ) as HTMLElement & {
@@ -263,6 +279,27 @@ describe('UserApp', () => {
         }
         expect(layout.networkName).toBe('network1')
         expect(layout.networkConnected).toBe(true)
+    })
+
+    it('shows disconnected when listSessions reports disconnected', async () => {
+        mockSessionList('session-1', 'disconnected')
+        el = await fixture<UserApp>(componentFixture)
+
+        await waitUntil(() =>
+            mockRequest.mock.calls.some(
+                (call) => call[0]?.method === 'listSessions'
+            )
+        )
+        await el.updateComplete
+
+        const layout = el.shadowRoot?.querySelector(
+            'app-layout'
+        ) as HTMLElement & {
+            networkName: string
+            networkConnected: boolean
+        }
+        expect(layout.networkName).toBe('network1')
+        expect(layout.networkConnected).toBe(false)
     })
 
     it('redirects to login on logout when there is no access token', async () => {
