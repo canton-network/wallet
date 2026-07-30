@@ -64,7 +64,7 @@ export class UserUiReviewIdp extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({ method: 'listIdps' })
 
@@ -94,7 +94,7 @@ export class UserUiReviewIdp extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'addIdp',
@@ -113,7 +113,7 @@ export class UserUiReviewIdp extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'removeIdp',

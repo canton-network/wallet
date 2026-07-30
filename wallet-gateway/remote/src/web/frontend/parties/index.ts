@@ -165,9 +165,8 @@ export class UserUiParties extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        const origin = await detectCurrentOrigin()
         this.client = await createUserClient(
-            stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(origin)
         )
         this.showCreationToastIfNeeded()
         this.updateWallets()
@@ -210,7 +209,7 @@ export class UserUiParties extends BaseElement {
     private async updateWallets() {
         const origin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(origin)
         )
 
         const sessions = await userClient
@@ -234,7 +233,7 @@ export class UserUiParties extends BaseElement {
     private async _onSetPrimary(e: WalletSetPrimaryEvent) {
         const origin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(origin)
         )
         await userClient.request({
             method: 'setPrimaryWallet',
@@ -251,7 +250,7 @@ export class UserUiParties extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({
                 method: 'allocatePartyForWallet',

@@ -62,7 +62,7 @@ export class UserUiAddParty extends BaseElement {
     private async loadContext() {
         const origin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(origin)
         )
         const sessions = await userClient
             .request({ method: 'listSessions' })
@@ -89,7 +89,7 @@ export class UserUiAddParty extends BaseElement {
 
         try {
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({
                 method: 'listSigningProviderVaults',
@@ -120,7 +120,7 @@ export class UserUiAddParty extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({
                 method: 'createWallet',

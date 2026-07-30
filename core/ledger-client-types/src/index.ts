@@ -78,3 +78,15 @@ export const LedgerPostRoutes = new Set<string>([
     ...postPaths_v3_4,
     ...postPaths_v3_5,
 ])
+
+export type RawCommandMap = {
+    ExerciseCommand: LedgerCommonSchemas['ExerciseCommand']
+    CreateCommand: LedgerCommonSchemas['CreateCommand']
+    CreateAndExerciseCommand: LedgerCommonSchemas['CreateAndExerciseCommand']
+}
+
+export type WrappedCommand<
+    K extends keyof RawCommandMap = keyof RawCommandMap,
+> = {
+    [P in K]: { [Q in P]: RawCommandMap[P] }
+}[K]

@@ -28,6 +28,7 @@ test('registry management', async ({ page: dappPage }) => {
     await expect(
         dappPage.getByRole('cell', {
             name: 'http://scan.localhost:4000',
+            exact: true,
         })
     ).toBeVisible()
 

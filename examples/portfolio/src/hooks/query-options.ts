@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { queryOptions, type QueryClient } from '@tanstack/react-query'
-import { usePortfolio } from '../contexts/PortfolioContext'
+import * as dappSdk from '@canton-network/dapp-sdk'
+import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
 import { queryKeys } from './query-keys'
-import type { useWalletSdk } from './useWalletSdk'
+import { useWalletSdk, type WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
-
-type WalletSdk = ReturnType<typeof useWalletSdk>['sdk'] | undefined
+import { logger } from '@lib/logger'
+import { TransactionHistoryService } from '@services/transaction-history-service'
+import { toUniquePortfolioHoldings } from '@utils/holdings'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -52,46 +54,123 @@ export const utilityOperatorQueryOptions = ({
         staleTime: Infinity,
     })
 
+export const transactionHistoryServiceQueryOptions = (partyId: string) =>
+    queryOptions({
+        queryKey:
+            queryKeys.walletConnection.transactionHistoryService.forParty(
+                partyId
+            ),
+        queryFn: () => {
+            const provider = dappSdk.getConnectedProvider()
+            if (!provider) {
+                throw new Error('Dapp provider is not available')
+            }
+
+            return new TransactionHistoryService({
+                logger,
+                provider: provider as unknown as LedgerProvider,
+                party: partyId,
+            })
+        },
+        staleTime: Infinity,
+        gcTime: Infinity,
+    })
+
+export const holdingsQueryOptions = ({
+    partyId,
+    sdk,
+}: {
+    partyId: string | undefined
+    sdk: WalletSdk
+}) =>
+    queryOptions({
+        queryKey: queryKeys.walletConnection.holdings.forParty(partyId),
+        enabled: !!partyId && !!sdk,
+        queryFn: async () => {
+            if (!partyId || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+
+            const contracts = await sdk.token.utxos.list({
+                partyId,
+                includeLocked: true,
+            })
+
+            return toUniquePortfolioHoldings(contracts)
+        },
+    })
+
 export const usePendingTransfersQueryOptions = (party: string | undefined) => {
-    const { listPendingTransfers } = usePortfolio()
+    const { sdk } = useWalletSdk()
+
     return queryOptions({
-        retry: 10,
-        queryKey: queryKeys.listPendingTransfers.forParty(party),
-        queryFn: async () =>
-            party ? listPendingTransfers({ party: party! }) : [],
+        queryKey: queryKeys.walletConnection.pendingTransfers.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+
+            return await sdk.token.transfer.pending(party)
+        },
     })
 }
 
 export const useAllocationRequestsQueryOptions = (
     party: string | undefined
 ) => {
-    const { listAllocationRequests } = usePortfolio()
+    const { sdk } = useWalletSdk()
+
     return queryOptions({
-        queryKey: queryKeys.listAllocationRequests.forParty(party),
-        queryFn: () => listAllocationRequests({ party: party! }),
-        enabled: !!party,
+        queryKey: queryKeys.walletConnection.allocationRequests.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return await sdk.token.allocation.request.pending(party)
+        },
     })
 }
 
 export const useAllocationsQueryOptions = (party: string | undefined) => {
-    const { listAllocations } = usePortfolio()
+    const { sdk } = useWalletSdk()
+
     return queryOptions({
-        queryKey: queryKeys.listAllocations.forParty(party),
-        queryFn: () => listAllocations({ party: party! }),
-        enabled: !!party,
+        queryKey: queryKeys.walletConnection.allocations.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return await sdk.token.allocation.pending(party)
+        },
     })
 }
 
-export const useIsDevNetQueryOptions = (sessionToken: string | undefined) => {
-    const { isDevNet } = usePortfolio()
+export const useIsDevNetQueryOptions = () => {
+    const { sdk } = useWalletSdk()
     const {
-        token: { validatorUrl },
+        amulet: { validatorUrl },
     } = usePortfolioConfig()
     return queryOptions({
-        queryKey: queryKeys.isDevNet.all,
-        queryFn: async () =>
-            sessionToken ? isDevNet({ sessionToken, validatorUrl }) : false,
-        enabled: !!sessionToken,
+        queryKey: queryKeys.isDevNet.forValidator(validatorUrl),
+        queryFn: async () => {
+            if (!sdk) {
+                throw new Error('Wallet SDK is not available')
+            }
+
+            const url = new URL(validatorUrl)
+            if (url.protocol === 'http:') {
+                logger.warn(
+                    { validatorUrl: url.toString() },
+                    'Using a non-TLS validator endpoint. This is acceptable only in trusted environments. Set validatorUrl in portfolio config to an HTTPS endpoint if the validator API is reachable over an untrusted network.'
+                )
+            }
+
+            return await sdk.amulet.isDevNet()
+        },
+        enabled: !!sdk,
         staleTime: Infinity, // Network doesn't change, so cache forever
     })
 }
@@ -108,7 +187,7 @@ export const preapprovalStatusQueryOptions = ({
     queryClient: QueryClient
 }) =>
     queryOptions({
-        queryKey: queryKeys.preapprovals.status({
+        queryKey: queryKeys.walletConnection.preapprovals.status({
             party,
             kind: row.kind,
             registryPartyId: row.registryPartyId,

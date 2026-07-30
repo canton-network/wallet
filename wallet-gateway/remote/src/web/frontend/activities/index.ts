@@ -39,6 +39,11 @@ export class UserUiActivities extends BaseElement {
     @state()
     accessor currentPage = 1
 
+    @state()
+    accessor totalTransactionCount = 0
+
+    private pageCursors: (string | undefined)[] = [undefined]
+
     private readonly pageSize = 4
 
     static styles = [
@@ -68,11 +73,6 @@ export class UserUiActivities extends BaseElement {
         `,
     ]
 
-    private get pagedTransactions() {
-        const start = (this.currentPage - 1) * this.pageSize
-        return this.transactions.slice(start, start + this.pageSize)
-    }
-
     protected render() {
         return html`
             <div class="page-header">
@@ -87,7 +87,7 @@ export class UserUiActivities extends BaseElement {
                     : this.transactions.length
                       ? html`
                             <div class="activity-list">
-                                ${this.pagedTransactions.map(
+                                ${this.transactions.map(
                                     (tx) => html`
                                         <wg-transaction-card
                                             .transactionId=${tx.id}
@@ -110,11 +110,11 @@ export class UserUiActivities extends BaseElement {
                             </div>
 
                             ${
-                                this.transactions.length > this.pageSize
+                                this.totalTransactionCount > this.pageSize
                                     ? html`
                                           <div class="pagination-wrap">
                                               <wg-pagination
-                                                  .total=${this.transactions.length}
+                                                  .total=${this.totalTransactionCount}
                                                   .pageSize=${this.pageSize}
                                                   .page=${this.currentPage}
                                                   @page-change=${this._onPageChange}
@@ -142,7 +142,10 @@ export class UserUiActivities extends BaseElement {
     }
 
     private _onPageChange(e: PageChangeEvent) {
-        this.currentPage = e.page
+        const targetPage = e.detail.page
+        if (targetPage === this.currentPage || targetPage < 1) return
+        this.currentPage = targetPage
+        this.updateTransactions()
     }
 
     private async updateTransactions() {
@@ -150,12 +153,28 @@ export class UserUiActivities extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
+
+            const currentCursor = this.pageCursors[this.currentPage - 1]
+
             const result = await userClient.request({
                 method: 'listTransactions',
+                params: {
+                    limit: this.pageSize,
+                    ...(currentCursor !== undefined
+                        ? { cursor: currentCursor }
+                        : {}),
+                },
             })
             this.transactions = result.transactions || []
+
+            this.totalTransactionCount = result.count ?? 0
+
+            if (result.nextCursor) {
+                this.pageCursors[this.currentPage] = result.nextCursor
+            }
+
             this.parsedTransactions = new Map(
                 this.transactions.map((tx) => {
                     try {
@@ -169,14 +188,6 @@ export class UserUiActivities extends BaseElement {
                     }
                 })
             )
-
-            const maxPage = Math.max(
-                1,
-                Math.ceil(this.transactions.length / this.pageSize)
-            )
-            if (this.currentPage > maxPage) {
-                this.currentPage = maxPage
-            }
         } catch (error) {
             handleErrorToast(error)
         } finally {

@@ -1,87 +1,117 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+const walletConnection = ['walletConnection'] as const
+
 export const queryKeys = {
-    getTransactionHistory: {
-        all: ['getTransactionHistory'],
-        forParty: (party: string | undefined) => [
-            'getTransactionHistory',
-            party,
-        ],
-    },
+    walletConnection: {
+        all: walletConnection,
 
-    listPendingTransfers: {
-        all: ['listPendingTransfers'],
-        forParty: (party: string | undefined) => [
-            'listPendingTransfers',
-            party,
-        ],
-    },
+        walletSdk: {
+            all: [...walletConnection, 'walletSdk'] as const,
+            forConfig: ({
+                tokenVersion,
+                registryUrls,
+            }: {
+                tokenVersion: number
+                registryUrls: readonly string[]
+            }) =>
+                [
+                    ...walletConnection,
+                    'walletSdk',
+                    tokenVersion,
+                    registryUrls,
+                ] as const,
+        },
 
-    listHoldings: {
-        all: ['holdings'],
-        forParty: (party: string | undefined) => ['holdings', party],
-    },
+        holdings: {
+            all: [...walletConnection, 'holdings'] as const,
+            forParty: (party: string | undefined) =>
+                [...walletConnection, 'holdings', party] as const,
+        },
 
-    listAllocationRequests: {
-        all: ['listAllocationRequests'],
-        forParty: (party: string | undefined) => [
-            'listAllocationRequests',
-            party,
-        ],
-    },
+        pendingTransfers: {
+            all: [...walletConnection, 'pendingTransfers'] as const,
+            forParty: (party: string | undefined) =>
+                [...walletConnection, 'pendingTransfers', party] as const,
+        },
 
-    listAllocations: {
-        all: ['listAllocations'],
-        forParty: (party: string | undefined) => ['listAllocations', party],
+        allocations: {
+            all: [...walletConnection, 'allocations'] as const,
+            forParty: (party: string | undefined) =>
+                [...walletConnection, 'allocations', party] as const,
+        },
+
+        allocationRequests: {
+            all: [...walletConnection, 'allocationRequests'] as const,
+            forParty: (party: string | undefined) =>
+                [...walletConnection, 'allocationRequests', party] as const,
+        },
+
+        transactionHistory: {
+            all: [...walletConnection, 'transactionHistory'] as const,
+            forParty: (party: string | undefined) =>
+                [...walletConnection, 'transactionHistory', party] as const,
+        },
+
+        transactionHistoryService: {
+            all: [...walletConnection, 'transactionHistoryService'] as const,
+            forParty: (party: string) =>
+                [
+                    ...walletConnection,
+                    'transactionHistoryService',
+                    party,
+                ] as const,
+        },
+
+        preapprovals: {
+            all: [...walletConnection, 'preapprovals'] as const,
+            status: ({
+                party,
+                kind,
+                registryPartyId,
+                instrumentId,
+            }: {
+                party: string | undefined
+                kind: string
+                registryPartyId: string
+                instrumentId: string
+            }) =>
+                [
+                    ...walletConnection,
+                    'preapprovals',
+                    'status',
+                    party,
+                    kind,
+                    registryPartyId,
+                    instrumentId,
+                ] as const,
+        },
     },
 
     isDevNet: {
-        all: ['isDevNet'],
-    },
-
-    walletSdk: {
-        all: ['walletSdk'],
-        forConnection: (sessionToken: string | undefined) => [
-            'walletSdk',
-            sessionToken,
-        ],
+        forValidator: (validatorUrl: string) =>
+            ['isDevNet', validatorUrl] as const,
     },
 
     instruments: {
-        all: ['instruments'],
-        forRegistry: (party: string, url: string) => [
-            'instruments',
-            party,
-            url,
-        ],
+        all: ['instruments'] as const,
+        forRegistry: (party: string, url: string) =>
+            ['instruments', party, url] as const,
     },
 
     registries: {
-        all: ['registries'],
+        all: ['registries'] as const,
+    },
+
+    registryInfo: {
+        all: ['registryInfo'] as const,
+        forRegistry: (url: string) => ['registryInfo', url] as const,
     },
 
     utilityOperators: {
-        all: ['utilityOperators'],
-        forRegistry: (registryPartyId: string, registryUrl: string) => [
-            'utilityOperators',
-            registryPartyId,
-            registryUrl,
-        ],
-    },
-
-    preapprovals: {
-        all: ['preapprovals'],
-        status: ({
-            party,
-            kind,
-            registryPartyId,
-            instrumentId,
-        }: {
-            party: string | undefined
-            kind: string
-            registryPartyId: string
-            instrumentId: string
-        }) => ['preapprovals', party, kind, registryPartyId, instrumentId],
+        all: ['utilityOperators'] as const,
+        forRegistry: (registryPartyId: string, registryUrl: string) =>
+            ['utilityOperators', registryPartyId, registryUrl] as const,
     },
 }

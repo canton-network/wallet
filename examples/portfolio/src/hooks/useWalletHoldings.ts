@@ -4,14 +4,14 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Holding } from '@canton-network/core-tx-parser'
-import { listHoldings } from '../services/portfolio-service-implementation'
 import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedHolding,
 } from '../utils/aggregate-holdings'
-import { queryKeys } from './query-keys'
+import { holdingsQueryOptions } from './query-options'
+import { useWalletSdk } from './useWalletSdk'
 
 export interface WalletHoldingsResult {
     instruments: AggregatedHolding[]
@@ -26,12 +26,12 @@ export const useWalletHoldings = (
     partyId: string | undefined
 ): WalletHoldingsResult => {
     const registryInstruments = useInstruments()
-
-    const holdingsQuery = useQuery({
-        queryKey: queryKeys.listHoldings.forParty(partyId),
-        queryFn: () => listHoldings({ party: partyId as string }),
-        enabled: !!partyId,
-    })
+    const {
+        sdk,
+        isLoading: isWalletSdkLoading,
+        error: walletSdkError,
+    } = useWalletSdk()
+    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, sdk }))
 
     const aggregatedInstruments = useMemo(() => {
         if (!holdingsQuery.data) return []
@@ -41,12 +41,16 @@ export const useWalletHoldings = (
         )
     }, [holdingsQuery.data, registryInstruments])
 
+    const error = walletSdkError
+        ? new Error(walletSdkError)
+        : holdingsQuery.error
+
     return {
         instruments: aggregatedInstruments,
         holdings: holdingsQuery.data ?? [],
-        isLoading: holdingsQuery.isLoading,
-        isError: holdingsQuery.isError,
-        error: holdingsQuery.error,
+        isLoading: isWalletSdkLoading || holdingsQuery.isLoading,
+        isError: !!walletSdkError || holdingsQuery.isError,
+        error,
         refetch: holdingsQuery.refetch,
     }
 }

@@ -8,6 +8,7 @@ import {
     Box,
     Divider,
     Drawer,
+    Tooltip,
     Typography,
     type SxProps,
     type Theme,
@@ -23,9 +24,11 @@ import {
 } from '@tanstack/react-router'
 import type { RegisteredRouter } from '@tanstack/router-core'
 import { PrimaryBadge } from '@components/dashboard/primary-badge'
+import { CountBadge } from '@components/ui/count-badge'
 import { PillButton } from '@components/ui/PillButton'
 import { useConnection } from '@contexts/ConnectionContext'
 import { useAccounts } from '@hooks/useAccounts'
+import { useOffers } from '@hooks/useOffers'
 
 const SIDEBAR_WIDTH = (theme: Theme) =>
     `clamp(${theme.spacing(25)}, 18vw, ${theme.spacing(35)})`
@@ -39,6 +42,15 @@ function RouteComponent() {
     const { initialized, status, open, disconnect } = useConnection()
     const pathname = useLocation({ select: (location) => location.pathname })
     const matchRoute = useMatchRoute()
+    const offers = useOffers()
+    const activeOfferCount = useMemo(
+        () =>
+            offers.isLoading || offers.isError
+                ? 0
+                : offers.all.filter((offer) => offer.status !== 'Expired')
+                      .length,
+        [offers.all, offers.isLoading, offers.isError]
+    )
     const wallets = useMemo(
         () =>
             accounts.slice().sort(
@@ -119,6 +131,14 @@ function RouteComponent() {
                             to="/next/dashboard/offers"
                             active={pathname === '/next/dashboard/offers'}
                             icon={<NotificationsNoneIcon fontSize="small" />}
+                            endAdornment={
+                                activeOfferCount > 0 ? (
+                                    <CountBadge
+                                        count={activeOfferCount}
+                                        aria-label={`${activeOfferCount} pending ${activeOfferCount === 1 ? 'offer' : 'offers'}`}
+                                    />
+                                ) : undefined
+                            }
                         >
                             Offers
                         </SidebarLink>
@@ -158,13 +178,14 @@ function RouteComponent() {
                                         <PrimaryBadge />
                                     ) : undefined
                                 }
+                                tooltip={wallet.hint}
                             >
                                 {wallet.hint}
                             </SidebarLink>
                         ))}
                     </Box>
 
-                    <Box sx={{ display: 'grid', gap: 1.5, pb: 4 }}>
+                    <Box sx={{ display: 'grid', gap: 1.5 }}>
                         <PillButton type="button" fullWidth onClick={open}>
                             Wallet Gateway
                         </PillButton>
@@ -213,6 +234,7 @@ type SidebarLinkProps = {
     icon: ReactNode
     children: ReactNode
     endAdornment?: ReactNode
+    tooltip?: string
 } & LinkComponentProps<'a', RegisteredRouter>
 
 function SidebarLink({
@@ -220,40 +242,44 @@ function SidebarLink({
     icon,
     children,
     endAdornment,
+    tooltip,
     ...linkProps
 }: SidebarLinkProps) {
     return (
-        <Link
-            {...linkProps}
-            aria-current={active ? 'page' : undefined}
-            style={{ color: 'inherit', textDecoration: 'none' }}
-        >
-            <Box sx={sidebarLinkSx(active, Boolean(endAdornment))}>
-                <Box
-                    aria-hidden="true"
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'text.secondary',
-                    }}
-                >
-                    {icon}
+        <Tooltip title={tooltip ?? ''} placement="right" arrow>
+            <Link
+                {...linkProps}
+                aria-current={active ? 'page' : undefined}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+            >
+                <Box sx={sidebarLinkSx(active, Boolean(endAdornment))}>
+                    <Box
+                        aria-hidden="true"
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'text.secondary',
+                        }}
+                    >
+                        {icon}
+                    </Box>
+                    <Typography
+                        component="span"
+                        variant="body2"
+                        sx={{
+                            width: '100%',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        {children}
+                    </Typography>
+                    {endAdornment}
                 </Box>
-                <Typography
-                    component="span"
-                    variant="body2"
-                    sx={{
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    {children}
-                </Typography>
-                {endAdornment}
-            </Box>
-        </Link>
+            </Link>
+        </Tooltip>
     )
 }
 
@@ -265,6 +291,7 @@ const sidebarLinkSx = (
     gridTemplateColumns: hasEndAdornment
         ? '18px minmax(0, 1fr) auto'
         : '18px minmax(0, 1fr)',
+    justifyItems: 'start',
     alignItems: 'center',
     gap: 1,
     minHeight: 34,

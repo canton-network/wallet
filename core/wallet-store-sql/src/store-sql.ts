@@ -26,6 +26,7 @@ import {
     TransactionStatusUpdate,
     UserLevelRight,
     ApiKey,
+    ListTransactionsOptions,
 } from '@canton-network/core-wallet-store'
 import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
@@ -49,6 +50,7 @@ import {
     toSession,
 } from './schema.js'
 import pg from 'pg'
+import { sql } from 'kysely'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -752,17 +754,37 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('networkId', '=', network.id),
                 ])
             )
-            .orderBy('createdAt', 'desc')
-            .orderBy('id', 'desc')
+            .orderBy(sql`${sql.ref('createdAt')} desc nulls last`)
             .executeTakeFirst()
 
         return transaction ? toTransaction(transaction) : undefined
     }
 
-    async listTransactions(): Promise<Array<Transaction>> {
+    async transactionsCount(): Promise<number> {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
-        const transactions = await this.db
+
+        const result = await this.db
+            .selectFrom('transactions')
+            .where((eb) =>
+                eb.and([
+                    eb('userId', '=', userId),
+                    eb('networkId', '=', network.id),
+                ])
+            )
+            .select((eb) => eb.fn.count<number>('id').as('count'))
+            .executeTakeFirstOrThrow()
+
+        return Number(result.count)
+    }
+
+    async listTransactions(options?: ListTransactionsOptions) {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const { cursor, limit } = options ?? {}
+        const lim = limit ? Math.min(limit, 100) : 100
+
+        let query = this.db
             .selectFrom('transactions')
             .selectAll()
             .where((eb) =>
@@ -771,9 +793,72 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('networkId', '=', network.id),
                 ])
             )
-            .orderBy('createdAt', 'desc')
-            .execute()
-        return transactions.map((table) => toTransaction(table))
+            .orderBy(sql`${sql.ref('createdAt')} desc nulls last`)
+            .orderBy('id', 'desc')
+            .limit(lim + 1)
+
+        if (cursor) {
+            const split = cursor.split('::')
+            const dateString = split[0] === 'null' ? null : split[0]
+            const cursorId = split[1]
+
+            query = query.where((eb) => {
+                if (dateString === null) {
+                    return eb.and([
+                        eb('createdAt', 'is', null),
+                        eb('id', '<', cursorId),
+                    ])
+                }
+
+                return eb.or([
+                    eb('createdAt', '<', dateString),
+                    eb.and([
+                        eb('createdAt', '=', dateString),
+                        eb('id', '<', split[1]),
+                    ]),
+                    eb('createdAt', 'is', null),
+                ])
+            })
+        }
+
+        const rows = await query.execute()
+        const txs = rows.map((r) => toTransaction(r))
+
+        const hasNextPage = txs.length > lim
+        if (hasNextPage) {
+            txs.pop()
+        }
+
+        if (txs.length === 0) {
+            return {
+                transactions: [],
+                nextCursor: null,
+            }
+        }
+
+        const lastTx = txs[txs.length - 1]
+        if (lastTx === undefined) {
+            return {
+                transactions: txs,
+                nextCursor: null,
+            }
+        }
+
+        //handle case for if timestamp is null
+        if (lastTx.createdAt) {
+            const d = new Date(lastTx.createdAt).toISOString()
+            const nextCursor = hasNextPage ? `${d}::${lastTx.id}` : null
+            return {
+                transactions: txs,
+                nextCursor: nextCursor,
+            }
+        } else {
+            const nextCursor = hasNextPage ? `null::${lastTx.id}` : null
+            return {
+                transactions: txs,
+                nextCursor: nextCursor,
+            }
+        }
     }
 
     async removeTransaction(transactionId: string): Promise<void> {

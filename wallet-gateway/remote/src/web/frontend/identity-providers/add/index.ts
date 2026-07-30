@@ -53,7 +53,7 @@ export class UserUiAddIdp extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'addIdp',

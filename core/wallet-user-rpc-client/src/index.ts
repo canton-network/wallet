@@ -189,6 +189,24 @@ export type SignedBy = string
 export type Origin = string
 /**
  *
+ * Limit of transactions to return.
+ *
+ */
+export type Limit = number
+/**
+ *
+ * Cursor for next page of results.
+ *
+ */
+export type CursorAsString = string
+/**
+ *
+ * Cursor for next page of results.
+ *
+ */
+export type Cursor = CursorAsString
+/**
+ *
  * Authentication method configured for this network
  *
  */
@@ -436,6 +454,18 @@ export interface Transaction {
 export type Transactions = Transaction[]
 /**
  *
+ * Cursor for next page of results.
+ *
+ */
+export type NextCursor = string
+/**
+ *
+ * Number of total transactions for the user.
+ *
+ */
+export type Count = number
+/**
+ *
  * The unique identifier of the current user.
  *
  */
@@ -532,6 +562,10 @@ export interface AddSessionParams {
 }
 export interface GetTransactionParams {
     transactionId: TransactionId
+}
+export interface ListTransactionsParams {
+    limit?: Limit
+    cursor?: Cursor
 }
 export interface DeleteTransactionParams {
     transactionId: TransactionId
@@ -638,6 +672,8 @@ export interface GetTransactionResult {
 }
 export interface ListTransactionsResult {
     transactions: Transactions
+    nextCursor?: NextCursor
+    count: Count
 }
 export interface GetUserResult {
     userId: UserIdentifier
@@ -702,7 +738,9 @@ export type ListSessions = () => Promise<ListSessionsResult>
 export type GetTransaction = (
     params: GetTransactionParams
 ) => Promise<GetTransactionResult>
-export type ListTransactions = () => Promise<ListTransactionsResult>
+export type ListTransactions = (
+    params: ListTransactionsParams
+) => Promise<ListTransactionsResult>
 export type DeleteTransaction = (
     params: DeleteTransactionParams
 ) => Promise<Null>

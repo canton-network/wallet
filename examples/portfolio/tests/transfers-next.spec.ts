@@ -5,6 +5,7 @@ import { test, expect, Page } from '@playwright/test'
 import { WalletGateway } from '@canton-network/core-wallet-test-utils'
 import {
     createWalletGateway,
+    expectOffersBadgeCount,
     expectTransferOfferGone,
     expectWalletBalance,
     expectWalletHasNoAssets,
@@ -68,6 +69,10 @@ test.describe('dashboard transfer flow', () => {
 
         const message = 'accept transfer test ' + Date.now()
         await gotoDashboard(dappPage)
+
+        // No offers yet, so the sidebar badge is hidden.
+        await expectOffersBadgeCount(dappPage, 0)
+
         await openTransferDialog(dappPage)
         await fillAndSubmitTransfer(dappPage, wg, {
             amount: '321',
@@ -75,9 +80,15 @@ test.describe('dashboard transfer flow', () => {
             message,
         })
 
+        // Alice's outgoing offer is counted on the sidebar badge.
+        await expectOffersBadgeCount(dappPage, 1)
+
         // Switch to bob to see the pending transfer as receiver.
         await switchWallet(dappPage, wg, bob)
         await gotoDashboard(dappPage)
+
+        // Bob's incoming offer is counted on the sidebar badge.
+        await expectOffersBadgeCount(dappPage, 1)
 
         const dialog = await openTransferOfferDialog(dappPage, {
             amount: '321',
@@ -90,6 +101,9 @@ test.describe('dashboard transfer flow', () => {
 
         // Verify bob received the transferred amount.
         await expectWalletBalance(dappPage, bob, '321')
+
+        // The accepted offer no longer counts towards the badge.
+        await expectOffersBadgeCount(dappPage, 0)
 
         // Verify alice's balance decreased.
         await switchWallet(dappPage, wg, alice)

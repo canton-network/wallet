@@ -64,7 +64,7 @@ export class UserUiReviewNetwork extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             const result = await userClient.request({
                 method: 'getNetwork',
@@ -89,7 +89,7 @@ export class UserUiReviewNetwork extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'addNetwork',
@@ -122,7 +122,7 @@ export class UserUiReviewNetwork extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             await userClient.request({
                 method: 'removeNetwork',

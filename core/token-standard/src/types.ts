@@ -23,13 +23,11 @@ export type {
 
 export type {
     Transfer,
-    TransferInstruction,
     TransferInstructionView,
     TransferInstruction_Accept,
     TransferInstruction_Reject,
     TransferInstruction_Withdraw,
     TransferInstruction_Update,
-    TransferFactory,
     TransferFactoryView,
     TransferFactory_PublicFetch,
     TransferFactory_Transfer,
@@ -38,6 +36,12 @@ export type {
     TransferInstructionStatus,
     TransferFactoryInterface,
     TransferInstructionInterface,
+} from '@daml.js/token-standard-models-1.0.0/lib/Splice/Api/Token/TransferInstructionV1/module.js'
+
+// Export companion objects as values (needed for accessing choice names at runtime)
+export {
+    TransferInstruction,
+    TransferFactory,
 } from '@daml.js/token-standard-models-1.0.0/lib/Splice/Api/Token/TransferInstructionV1/module.js'
 
 export type {
@@ -49,10 +53,14 @@ export type {
     AllocationInstructionView,
     AllocationInstructionResult,
     AllocationInstructionResult_Output,
-    AllocationFactory,
     AllocationFactoryInterface,
-    AllocationInstruction,
     AllocationInstructionInterface,
+} from '@daml.js/token-standard-models-1.0.0/lib/Splice/Api/Token/AllocationInstructionV1/module.js'
+
+// Export companion objects as values (needed for accessing choice names at runtime)
+export {
+    AllocationFactory,
+    AllocationInstruction,
 } from '@daml.js/token-standard-models-1.0.0/lib/Splice/Api/Token/AllocationInstructionV1/module.js'
 
 export type {
@@ -69,7 +77,6 @@ export type {
     SettlementInfo,
     Reference,
     AllocationView,
-    Allocation,
     AllocationInterface,
     Allocation_Withdraw,
     Allocation_Cancel,
@@ -78,6 +85,9 @@ export type {
     Allocation_CancelResult,
     Allocation_ExecuteTransferResult,
 } from '@daml.js/token-standard-models-1.0.0/lib/Splice/Api/Token/AllocationV1/module.js'
+
+// Export companion object as value (needed for accessing choice names at runtime)
+export { Allocation } from '@daml.js/token-standard-models-1.0.0/lib/Splice/Api/Token/AllocationV1/module.js'
 
 export type {
     ExtraArgs,

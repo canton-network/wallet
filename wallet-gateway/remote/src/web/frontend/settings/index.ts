@@ -52,9 +52,8 @@ export class UserUiSettings extends BaseElement {
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
         const currentOrigin = await detectCurrentOrigin()
-        this.client = await createUserClient(
-            stateManager.accessToken.get(currentOrigin)
-        )
+        const accessToken = await stateManager.accessToken.get(currentOrigin)
+        this.client = await createUserClient(accessToken)
         this.listNetworks()
         this.listSessions()
         this.listIdps()
@@ -73,7 +72,7 @@ export class UserUiSettings extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const response = await userClient.request({ method: 'getUser' })
             this.userId = response.userId
@@ -86,7 +85,7 @@ export class UserUiSettings extends BaseElement {
     private async listNetworks() {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get(currentOrigin)
+            await stateManager.accessToken.get(currentOrigin)
         )
         const response = await userClient.request({ method: 'listNetworks' })
         this.networks = response.networks
@@ -95,7 +94,7 @@ export class UserUiSettings extends BaseElement {
     private async listSessions() {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get(currentOrigin)
+            await stateManager.accessToken.get(currentOrigin)
         )
         const response = await userClient.request({ method: 'listSessions' })
         this.sessions = response.sessions
@@ -104,7 +103,7 @@ export class UserUiSettings extends BaseElement {
     private async listIdps() {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get(currentOrigin)
+            await stateManager.accessToken.get(currentOrigin)
         )
         const response = await userClient.request({ method: 'listIdps' })
         this.idps = response.idps
@@ -116,8 +115,9 @@ export class UserUiSettings extends BaseElement {
         const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(await detectCurrentOrigin())
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'addNetwork',
@@ -148,7 +148,7 @@ export class UserUiSettings extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'removeNetwork',
@@ -167,7 +167,7 @@ export class UserUiSettings extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'addIdp',
@@ -186,7 +186,7 @@ export class UserUiSettings extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'removeIdp',

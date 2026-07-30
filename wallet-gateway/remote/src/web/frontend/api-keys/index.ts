@@ -77,7 +77,7 @@ export class UserUiApiKeys extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             const apiKeys = await userClient.request({ method: 'listApiKeys' })
             this.apiKeys = apiKeys.apiKeys
@@ -103,7 +103,7 @@ export class UserUiApiKeys extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
 
             await userClient.request({

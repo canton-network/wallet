@@ -128,7 +128,7 @@ export class UserUiSignMessage extends BaseElement {
             }
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'getMessageToSign',
@@ -152,7 +152,7 @@ export class UserUiSignMessage extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'deleteMessageToSign',
@@ -172,7 +172,7 @@ export class UserUiSignMessage extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(currentOrigin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'signMessage',

@@ -81,7 +81,7 @@ export class UserUiNetworks extends BaseElement {
         try {
             const origin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(origin)
             )
             const [networksResult, sessionsResult, userResult] =
                 await Promise.all([

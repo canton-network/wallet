@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMemo, useState, type ReactNode } from 'react'
-import { Alert, Box, Chip, Typography } from '@mui/material'
+import { Alert, Box, Typography } from '@mui/material'
 import { ActionRequiredDialog } from '@components/dashboard/action-required-dialog'
 import { ActionRequiredRowSkeleton } from '@components/dashboard/action-required-row-skeleton'
 import { OfferRow } from '@components/offers/offer-row'
+import { CountBadge } from '@components/ui/count-badge'
 import type { OfferItem } from '@hooks/useOffers'
 
 interface ActionRequiredSectionProps {
@@ -103,17 +104,9 @@ function SectionShell({ totalCount, children }: SectionShellProps) {
                     <Typography variant="h5" component="h2">
                         Action Required
                     </Typography>
-                    <Chip
-                        label={totalCount}
-                        size="small"
-                        sx={{
-                            height: 24,
-                            minWidth: 24,
-                            bgcolor: (theme) => theme.portfolio.nav.soft,
-                            color: 'common.black',
-                            fontWeight: 600,
-                            '& .MuiChip-label': { px: 0.75 },
-                        }}
+                    <CountBadge
+                        count={totalCount}
+                        aria-label={`${totalCount} ${totalCount === 1 ? 'offer' : 'offers'} requiring action`}
                     />
                 </Box>
                 <Typography variant="body1" color="text.primary">

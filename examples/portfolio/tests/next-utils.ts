@@ -93,11 +93,7 @@ export const tap = async (
         dialog.getByRole('heading', { name: 'DevNet tap' })
     ).toBeVisible()
 
-    await dialog.getByRole('combobox', { name: 'Select instrument' }).click()
-    await expect(page.getByRole('option', { name: /AMT/ })).toBeVisible({
-        timeout: 10000,
-    })
-    await page.getByRole('option', { name: /AMT/ }).click()
+    await expect(dialog.getByLabel('Instrument')).toHaveValue('Amulet')
 
     const amountInput = dialog.getByRole('spinbutton', { name: 'Amount' })
     await amountInput.clear()
@@ -107,10 +103,7 @@ export const tap = async (
         dialog.getByRole('button', { name: 'Tap', exact: true }).click()
     )
 
-    await expect(dialog.getByLabel('Close DevNet tap dialog')).toBeEnabled({
-        timeout: 15000,
-    })
-    await dialog.getByLabel('Close DevNet tap dialog').click()
+    await expect(dialog).not.toBeVisible({ timeout: 15000 })
 
     await gotoDashboard(page)
 }
@@ -205,6 +198,24 @@ export const expectTransferOfferGone = async (
               .filter({ hasText: new RegExp(escapeRegExp(opts.amount)) })
 
     await expect(offerRow).not.toBeVisible({ timeout: 15000 })
+}
+
+/**
+ * Assert the sidebar Offers badge shows the expected count of
+ * non-expired offers. Use 0 to assert the badge is hidden.
+ */
+export const expectOffersBadgeCount = async (
+    page: Page,
+    count: number
+): Promise<void> => {
+    const badge = page.getByLabel(/^\d+ pending offers?$/)
+
+    if (count === 0) {
+        await expect(badge).not.toBeVisible({ timeout: 15000 })
+        return
+    }
+
+    await expect(badge).toHaveText(String(count), { timeout: 15000 })
 }
 
 export const switchWallet = async (

@@ -76,7 +76,10 @@ export class LoginCallback extends LitElement {
                     origin
                 )
 
-                stateManager.accessToken.set(tokenResponse.access_token, origin)
+                await stateManager.accessToken.set(
+                    tokenResponse.access_token,
+                    origin
+                )
 
                 addUserSession(
                     tokenResponse.access_token,
