@@ -58,6 +58,7 @@ export class WalletGatewayPage {
             | 'blockdaemon'
             | 'dfns'
             | 'fireblocks'
+        vaultName?: string
         primary?: boolean
     }): Promise<string> {
         await this.gotoPartiesPage()
@@ -97,6 +98,11 @@ export class WalletGatewayPage {
         await this.page
             .getByLabel('Signing Provider')
             .selectOption(args.signingProvider)
+        if (args.vaultName) {
+            await this.page
+                .getByLabel('Vault name')
+                .selectOption(args.vaultName)
+        }
         if (args.primary) {
             await this.page
                 .getByRole('checkbox', { name: 'Set as primary wallet' })
@@ -129,6 +135,27 @@ export class WalletGatewayPage {
         }
 
         return partyId
+    }
+
+    async getWalletExternalTxId(partyId: string): Promise<string> {
+        await this.gotoPartiesPage()
+        const walletCard = this.page
+            .locator(`wg-wallet-card[party-id="${partyId}"]`)
+            .first()
+        await expect(walletCard).toBeVisible({ timeout: 15000 })
+        const metaDiv = walletCard.locator('.meta').first()
+        await expect(metaDiv).toHaveAttribute(
+            'data-test-external-tx-id',
+            /.+/,
+            { timeout: 15000 }
+        )
+        const externalTxId = await metaDiv.getAttribute(
+            'data-test-external-tx-id'
+        )
+        if (!externalTxId) {
+            throw new Error(`No externalTxId found for party ${partyId}`)
+        }
+        return externalTxId
     }
 
     async approveTransaction(
@@ -340,6 +367,11 @@ export class WalletGateway {
     }): Promise<string> {
         const page = await this.getPage()
         return page.createWalletIfNotExists(args)
+    }
+
+    async getWalletExternalTxId(partyId: string): Promise<string> {
+        const page = await this.getPage()
+        return page.getWalletExternalTxId(partyId)
     }
 
     async approveTransaction(

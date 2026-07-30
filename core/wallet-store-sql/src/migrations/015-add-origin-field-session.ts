@@ -46,5 +46,12 @@ export async function up(db: Kysely<DB>): Promise<void> {
 }
 
 export async function down(db: Kysely<DB>): Promise<void> {
+    await sql`DROP INDEX IF EXISTS sessions_one_session_per_origin_user`.execute(
+        db
+    )
+    await sql`DROP INDEX IF EXISTS sessions_unique_access_token_per_network`.execute(
+        db
+    )
+
     await db.schema.alterTable('sessions').dropColumn('origin').execute()
 }
