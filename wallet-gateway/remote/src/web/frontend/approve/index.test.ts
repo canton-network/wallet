@@ -38,6 +38,7 @@ vi.mock('../rpc-client.js', () => ({
 vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
+        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 vi.mock('../utils.js', () => ({ showToast }))

@@ -100,6 +100,7 @@ vi.mock('./state-manager.js', () => ({
             authState.expirationDate = undefined
             authState.intendedPage = undefined
         },
+        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 

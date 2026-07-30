@@ -110,6 +110,7 @@ function createWorker(
 ) {
     const scopedStore = {
         setSession: vi.fn().mockResolvedValue(undefined),
+        getSession: vi.fn().mockResolvedValue({ id: 'session-1' }),
         getPrimaryWallet: vi.fn().mockResolvedValue(wallet),
         getAllWallets: vi.fn().mockResolvedValue([wallet, aliceWallet]),
         getTransaction: vi.fn().mockResolvedValue(pendingTransaction),

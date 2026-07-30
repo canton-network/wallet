@@ -64,12 +64,12 @@ export class StateManager {
         this.state.delete(key)
     }
 
-    private accessTokenCache: string | undefined
+    private accessTokenCache: Map<string, string> = new Map()
 
     accessToken = {
         get: async (origin: string): Promise<string | undefined> => {
-            if (this.accessTokenCache !== undefined) {
-                return this.accessTokenCache
+            if (this.accessTokenCache.has(origin)) {
+                return this.accessTokenCache.get(origin)
             }
             const stored = localStorage.getItem(
                 StateManager.localStorageKey('accessToken', origin)
@@ -78,15 +78,15 @@ export class StateManager {
                 return undefined
             }
             try {
-                this.accessTokenCache = await decryptString(stored)
+                this.accessTokenCache.set(origin, await decryptString(stored))
             } catch (error) {
                 localStorage.removeItem(
                     StateManager.localStorageKey('accessToken', origin)
                 )
                 console.warn(error)
-                this.accessTokenCache = undefined
+                this.accessTokenCache.delete(origin)
             }
-            return this.accessTokenCache
+            return this.accessTokenCache.get(origin)
         },
         set: async (token: string, origin: string) => {
             const encryptedToken = await encryptString(token)
@@ -94,13 +94,13 @@ export class StateManager {
                 StateManager.localStorageKey('accessToken', origin),
                 encryptedToken
             )
-            this.accessTokenCache = token
+            this.accessTokenCache.set(origin, token)
         },
         clear: async (origin: string) => {
             localStorage.removeItem(
                 StateManager.localStorageKey('accessToken', origin)
             )
-            this.accessTokenCache = undefined
+            this.accessTokenCache.delete(origin)
         },
     }
 

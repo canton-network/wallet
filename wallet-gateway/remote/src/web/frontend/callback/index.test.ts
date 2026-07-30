@@ -28,6 +28,7 @@ vi.mock('../state-manager.js', () => ({
         accessToken: { set: mockAccessTokenSet },
         expirationDate: { set: mockExpirationDateSet },
         networkId: { get: mockNetworkIdGet },
+        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 

@@ -56,6 +56,13 @@ const transactionServiceMocks = vi.hoisted(() => ({
     execute: vi.fn(),
 }))
 
+const mockV4 = vi.hoisted(() => vi.fn(() => crypto.randomUUID()))
+
+vi.mock('uuid', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('uuid')>()
+    return { ...actual, v4: mockV4 }
+})
+
 vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     const actual =
         await importOriginal<
@@ -156,7 +163,7 @@ const session: Session = {
     id: 'session-1',
     origin: 'dapp-1',
     network: 'network1',
-    accessToken: 'session-token',
+    accessToken: 'access-token-1',
 }
 
 const pendingTransaction: Transaction = {
@@ -505,7 +512,7 @@ describe('userController', () => {
         it('sets the primary wallet and emits accountsChanged', async () => {
             const store = await createStore(logger, auth)
             const setPrimarySpy = vi.spyOn(store, 'setPrimaryWallet')
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -658,7 +665,7 @@ describe('userController', () => {
                     controller: vi.fn(() => ({ signMessage: mockSignMessage })),
                 },
             }
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -696,7 +703,7 @@ describe('userController', () => {
                 signingProviderId: SigningProvider.FIREBLOCKS,
             })
             await store.setMessageRaw(pendingMessage)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1002,7 +1009,7 @@ describe('userController', () => {
 
         it('removeSession clears the session and emits statusChanged', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1027,20 +1034,22 @@ describe('userController', () => {
         })
 
         it('addSession creates a session and emits connected', async () => {
+            const newSessionId = '00000000-0000-0000-0000-000000000001'
+            mockV4.mockReturnValueOnce(newSessionId)
+
             const authWithValidClaims = createAuthWithAddSessionClaims()
             const store = await createStore(logger, authWithValidClaims, {
                 withWallet: false,
             })
-            const notifier = notificationService.getNotifier(
-                authWithValidClaims.userId
-            )
-            const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
                 notificationService,
                 logger,
                 authWithValidClaims
             )
+
+            const notifier = notificationService.getNotifier(newSessionId)
+            const emitSpy = vi.spyOn(notifier, 'emit')
 
             const result = await controller.addSession({
                 origin: 'dapp-1',
@@ -1343,7 +1352,7 @@ describe('userController', () => {
                 primary: false,
             }
             walletAllocationMocks.createWallet.mockResolvedValue(newWallet)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1430,7 +1439,7 @@ describe('userController', () => {
         it('allocates a party for an existing wallet', async () => {
             const authWithEmail = { ...auth, email: 'user@example.com' }
             const store = await createStore(logger, authWithEmail)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1497,7 +1506,7 @@ describe('userController', () => {
     describe('syncWallets', () => {
         it('syncs wallets and returns the result without emitting when nothing changed', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const emptyResult = { added: [], updated: [], disabled: [] }
             walletSyncMocks.syncWallets.mockResolvedValue(emptyResult)
@@ -1559,7 +1568,7 @@ describe('userController', () => {
 
         it('emits accountsChanged when wallets are added and disabled during sync', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const addedWallet: Wallet = {
                 ...primaryWallet,
@@ -1596,7 +1605,7 @@ describe('userController', () => {
 
         it('does not emit accountsChanged when only wallets are added', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             walletSyncMocks.syncWallets.mockResolvedValue({
                 added: [{ ...primaryWallet, partyId: 'party::added' }],
