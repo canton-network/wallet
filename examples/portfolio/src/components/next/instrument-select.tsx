@@ -46,16 +46,15 @@ export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
         (): SelectableInstrument[] =>
             aggregatedHoldings.flatMap((holding) => {
                 const instrument = holding.instrument
-                if (!instrument) return []
                 if (new Decimal(holding.availableAmount).lte(0)) return []
 
                 return [
                     {
                         instrumentId: holding.instrumentId,
-                        symbol: instrument.symbol,
-                        name: instrument.name,
+                        symbol: instrument?.symbol ?? holding.instrumentId.id,
+                        name: instrument?.name ?? holding.instrumentId.id,
                         availableAmount: holding.availableAmount,
-                        decimals: instrument.decimals,
+                        decimals: instrument?.decimals,
                     },
                 ]
             }),
