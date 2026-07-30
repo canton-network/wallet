@@ -26,12 +26,13 @@ import {
     ListTransactionsOptions,
 } from '@canton-network/core-wallet-store'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
+import { AccessToken } from '@canton-network/core-types'
 
 interface UserStorage {
     wallets: Array<Wallet>
     transactions: Map<string, Transaction>
     messageRaws: Map<string, MessageRaw>
-    sessions: Map<string, Session>
+    sessions: Map<AccessToken, Session>
     apiKeys: Map<string, ApiKey>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
@@ -79,7 +80,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             wallets: [],
             transactions: new Map<string, Transaction>(),
             messageRaws: new Map<string, MessageRaw>(),
-            sessions: new Map<string, Session>(),
+            sessions: new Map<AccessToken, Session>(),
             apiKeys: new Map<string, ApiKey>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
@@ -240,7 +241,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     // Session methods
-    async getSession(accessToken: string): Promise<Session | undefined> {
+    async getSession(accessToken: AccessToken): Promise<Session | undefined> {
         return this.getStorage().sessions.get(accessToken)
     }
 
@@ -254,7 +255,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.updateStorage(storage)
     }
 
-    async removeSession(accessToken: string): Promise<void> {
+    async removeSession(accessToken: AccessToken): Promise<void> {
         const storage = this.getStorage()
         storage.sessions.delete(accessToken)
         this.updateStorage(storage)

@@ -10,7 +10,7 @@ import {
 import { Logger } from 'pino'
 import { Store } from '@canton-network/core-wallet-store'
 import crypto from 'crypto'
-// import { v4 } from 'uuid'
+import { v4 } from 'uuid'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 
@@ -69,15 +69,15 @@ export function apiKeyAuth(
             // temporary auth context to access the store with the API key user
             const authStore = store.withAuthContext({
                 userId: matchingKey.userId,
-                accessToken: 'unused',
+                accessToken: hashedApiKey,
             })
 
             // automatically initiate a session for the API key user
             await authStore.setSession({
-                id: crypto.createHash('sha256').update(apiKey).digest('hex'),
+                id: v4(),
                 origin: req.ip || 'unknown', // use the requestor's IP address as the origin for the session
                 network: matchingKey.networkId,
-                accessToken: 'unused',
+                accessToken: hashedApiKey,
             })
 
             const network = await authStore.getNetwork(matchingKey.networkId)

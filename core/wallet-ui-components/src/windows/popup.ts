@@ -85,8 +85,6 @@ class PopupInstance {
                     return
                 if (childOrigin !== event.origin) return
 
-                console.log('Received acknowledgment from child window:', event)
-
                 clearInterval(originPoller)
                 window.removeEventListener('message', handleMessage)
             }
@@ -94,7 +92,6 @@ class PopupInstance {
             window.addEventListener('message', handleMessage)
 
             const originPoller = setInterval(() => {
-                console.log('posting message!', { message, childOrigin })
                 win.postMessage(message, childOrigin)
             }, 500)
 

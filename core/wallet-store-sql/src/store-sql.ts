@@ -51,6 +51,7 @@ import {
 } from './schema.js'
 import pg from 'pg'
 import { sql } from 'kysely'
+import { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -373,7 +374,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     // Session methods
-    async getSession(accessToken: string): Promise<Session | undefined> {
+    async getSession(accessToken: AccessToken): Promise<Session | undefined> {
         const userId = this.assertConnected()
         const row = await this.db
             .selectFrom('sessions')
@@ -532,7 +533,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const token = this.authContext?.accessToken
+        const token = this.authContext?.accessToken as AccessToken
 
         if (!token) {
             throw new Error('No access token found in auth context')

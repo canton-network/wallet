@@ -393,16 +393,17 @@ export const userController = (
             )!
 
             const session = await store.getSession(connectedContext.accessToken)
-            const sessionId = session!.id
+            const sessionId = session!.id // middleware enforces active session
             const notifier = notificationService.getNotifier(sessionId)
             notifier?.emit('accountsChanged', wallets)
             return { wallet }
         },
         setPrimaryWallet: async (params: SetPrimaryWalletParams) => {
             await store.setPrimaryWallet(params.partyId)
-            const session = await store.getSession(
-                authContext?.accessToken || 'blahblahblah'
-            )
+
+            const token = authContext!.accessToken
+            const session = await store.getSession(token)
+
             const sessionId = session!.id
             const notifier = notificationService.getNotifier(sessionId)
 
@@ -724,10 +725,7 @@ export const userController = (
                 const connectedContext = assertConnected(authContext)
                 const { userId, accessToken } = connectedContext
 
-                const newSessionId = crypto
-                    .createHash('sha256')
-                    .update(accessToken)
-                    .digest('hex')
+                const newSessionId = v4()
 
                 logger.info(
                     `Adding session with ID ${newSessionId} for network ${params.networkId}`
@@ -852,7 +850,7 @@ export const userController = (
         },
         removeSession: async (): Promise<Null> => {
             logger.info({ authContext }, 'Removing session')
-            const { accessToken, userId } = assertConnected(authContext)
+            const { accessToken } = assertConnected(authContext)
 
             const session = await store.getSession(accessToken)
             const sessionId = session!.id
@@ -875,12 +873,10 @@ export const userController = (
 
             return null
         },
+        // TODO: follow up with store.listSessions to display all sessions in the UI
         listSessions: async (): Promise<ListSessionsResult> => {
-            // todo: can we call assertConnected here?
-            const session = await store.getSession(
-                authContext?.accessToken || ''
-            )
-            // const allSessions = await store.listSessions()
+            const token = authContext!.accessToken
+            const session = await store.getSession(token)
 
             if (!session) {
                 return { sessions: [] }

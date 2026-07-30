@@ -8,6 +8,14 @@ import { z } from 'zod'
  */
 export type Logger = Pick<Console, 'debug' | 'info' | 'warn' | 'error'>
 
+// This creates a "branded type" since AccessToken is an alias for string,
+// but we don't want it to be interchangeable with a regular string.
+// declare const AccessTokenBrand: unique symbol
+// export type AccessToken = string & {
+//     readonly [AccessTokenBrand]: typeof AccessTokenBrand
+// }
+export type AccessToken = string
+
 export const PARTY_ID_EXAMPLE = 'party-hint::fingerprint'
 export const PARTY_ID_ERROR_MESSAGE = `Must be in the form ${PARTY_ID_EXAMPLE}`
 export const PARTY_ID_PATTERN = /^[a-zA-Z0-9:_-]*::[a-z0-9]*/

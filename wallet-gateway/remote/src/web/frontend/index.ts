@@ -207,41 +207,6 @@ export class UserUIAuthRedirect extends LitElement {
         }
     }
 
-    // private handleSessionOrigin(isLoginPage: boolean): void {
-    //     let origin = null
-
-    //     // first, determine whether UI is open from a popup, or directly in browser
-    //     if (!window.opener) {
-    //         origin = window.location.origin
-    //     } else {
-    //         // get the origin passed to us from dapp window
-    //         origin = stateManager.sessionOrigin.get()
-    //     }
-
-    //     if (!origin) {
-    //         this.clearAuthStateAndPreserveIntendedPage()
-
-    //         if (!isLoginPage) {
-    //             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
-    //         }
-    //         return
-    //     }
-
-    //     stateManager.sessionOrigin.set(origin)
-
-    //     // if (origin !== stateManager.sessionOrigin.get()) {
-    //     //     if (!isLoginPage) {
-    //     //         const intendedPage = this.getIntendedPageFromCurrentPath()
-    //     //         if (intendedPage) {
-    //     //             stateManager.intendedPage.set(intendedPage)
-    //     //         }
-    //     //         setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
-    //     //     }
-    //     // } else {
-    //     //     stateManager.sessionOrigin.set(origin)
-    //     // }
-    // }
-
     private handleUnauthenticated(isLoginPage: boolean, origin: string): void {
         if (!isLoginPage) {
             const intendedPage = this.getIntendedPageFromCurrentPath()
@@ -277,7 +242,7 @@ export class UserUIAuthRedirect extends LitElement {
         const origin = await detectCurrentOrigin()
         if (sessionId) {
             this.setTokenExpirationTimeout(origin)
-            redirectToIntendedOrDefault()
+            await redirectToIntendedOrDefault()
             shareConnection(accessToken, sessionId)
         } else {
             await attemptRemoveSession(accessToken)
@@ -308,7 +273,7 @@ export class UserUIAuthRedirect extends LitElement {
 
         // Redirect to default page if on root path
         if ((getCurrentRoute(window.location.pathname) || '/') === '/') {
-            redirectToIntendedOrDefault()
+            await redirectToIntendedOrDefault()
         }
     }
 
