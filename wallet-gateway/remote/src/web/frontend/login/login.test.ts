@@ -206,7 +206,10 @@ describe('LoginUI', () => {
             'net-1',
             expect.any(String)
         )
-        expect(mockAccessTokenSet).toHaveBeenCalledWith(defaultAccessToken)
+        expect(mockAccessTokenSet).toHaveBeenCalledWith(
+            defaultAccessToken,
+            expect.any(String)
+        )
         expect(mockExpirationDateSet).toHaveBeenCalled()
         expect(mockAddUserSession).toHaveBeenCalledWith(
             defaultAccessToken,

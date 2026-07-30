@@ -193,7 +193,10 @@ describe('LoginCallback', () => {
 
         await waitUntil(() => mockAccessTokenSet.mock.calls.length > 0)
 
-        expect(mockAccessTokenSet).toHaveBeenCalledWith(accessToken)
+        expect(mockAccessTokenSet).toHaveBeenCalledWith(
+            accessToken,
+            expect.any(String)
+        )
         expect(mockExpirationDateSet).toHaveBeenCalled()
         expect(mockAddUserSession).toHaveBeenCalledWith(accessToken, 'net-1')
         expect(sessionStorage.getItem('oauth-pkce-state-123')).toBeNull()
