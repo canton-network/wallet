@@ -310,7 +310,7 @@ describe('WalletSyncService - multi-network features', () => {
             id: `sess-${networkId}`,
             origin: 'dapp-1',
             network: networkId,
-            accessToken: 'token',
+            accessToken: 'test-access-token',
         })
     }
 

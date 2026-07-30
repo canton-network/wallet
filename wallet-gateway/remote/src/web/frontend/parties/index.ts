@@ -165,8 +165,9 @@ export class UserUiParties extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
+        const currentOrigin = await detectCurrentOrigin()
         this.client = await createUserClient(
-            await stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(currentOrigin)
         )
         this.showCreationToastIfNeeded()
         this.updateWallets()
@@ -207,9 +208,9 @@ export class UserUiParties extends BaseElement {
     }
 
     private async updateWallets() {
-        const origin = await detectCurrentOrigin()
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(currentOrigin)
         )
 
         const sessions = await userClient
@@ -217,7 +218,8 @@ export class UserUiParties extends BaseElement {
             .catch(() => ({ sessions: [] }))
         const currentSession = sessions?.sessions?.[0]
         const networkId =
-            currentSession?.network?.id || stateManager.networkId.get(origin)
+            currentSession?.network?.id ||
+            stateManager.networkId.get(currentOrigin)
 
         const filter = networkId ? { networkIds: [networkId] } : undefined
         userClient
@@ -231,9 +233,9 @@ export class UserUiParties extends BaseElement {
     }
 
     private async _onSetPrimary(e: WalletSetPrimaryEvent) {
-        const origin = await detectCurrentOrigin()
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(currentOrigin)
         )
         await userClient.request({
             method: 'setPrimaryWallet',
@@ -248,9 +250,9 @@ export class UserUiParties extends BaseElement {
         this.loading = true
         const wallet = e.wallet
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'allocatePartyForWallet',

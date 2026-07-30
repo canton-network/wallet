@@ -60,16 +60,17 @@ export class UserUiAddParty extends BaseElement {
     }
 
     private async loadContext() {
-        const origin = await detectCurrentOrigin()
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(currentOrigin)
         )
         const sessions = await userClient
             .request({ method: 'listSessions' })
             .catch(() => ({ sessions: [] }))
         const currentSession = sessions?.sessions?.[0]
         const networkId =
-            currentSession?.network?.id || stateManager.networkId.get(origin)
+            currentSession?.network?.id ||
+            stateManager.networkId.get(currentOrigin)
         this.networkIds = networkId ? [networkId] : []
     }
 
@@ -87,9 +88,10 @@ export class UserUiAddParty extends BaseElement {
 
         this.vaultsLoading = true
 
+        const currentOrigin = await detectCurrentOrigin()
         try {
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'listSigningProviderVaults',
@@ -118,9 +120,9 @@ export class UserUiAddParty extends BaseElement {
         this.submitting = true
 
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'createWallet',

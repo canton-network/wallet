@@ -65,7 +65,7 @@ export class LoginCallback extends LitElement {
             })
 
             const tokenResponse = await res.json()
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
 
             if (tokenResponse.access_token) {
                 const payload = JSON.parse(
@@ -73,17 +73,17 @@ export class LoginCallback extends LitElement {
                 )
                 stateManager.expirationDate.set(
                     new Date(payload.exp * 1000).toISOString(),
-                    origin
+                    currentOrigin
                 )
 
                 await stateManager.accessToken.set(
                     tokenResponse.access_token,
-                    origin
+                    currentOrigin
                 )
 
                 addUserSession(
                     tokenResponse.access_token,
-                    stateManager.networkId.get(origin) || ''
+                    stateManager.networkId.get(currentOrigin) || ''
                 )
                     .then(() => {
                         redirectToIntendedOrDefault()

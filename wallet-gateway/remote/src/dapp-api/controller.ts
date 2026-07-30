@@ -127,12 +127,13 @@ export const dappController = (
             return connection
         },
         disconnect: async () => {
-            const session = await store.getSession(context!.accessToken)
-            const sessionId = session?.id
-            if (!context || !sessionId) {
+            if (!context) return null
+
+            const session = await store.getSession(context.accessToken)
+            if (!session?.id) {
                 return null
             } else {
-                const notifier = notificationService.getNotifier(sessionId)
+                const notifier = notificationService.getNotifier(session.id)
                 await store.removeSession(context.accessToken)
                 notifier.emit('statusChanged', {
                     provider: {

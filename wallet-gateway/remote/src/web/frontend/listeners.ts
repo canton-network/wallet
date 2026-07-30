@@ -30,10 +30,10 @@ export async function detectCurrentOrigin(): Promise<string> {
     return new Promise((resolve) => {
         // wait for stateManager.currentOrigin.get to be defined
         const interval = setInterval(() => {
-            const origin = stateManager.currentOrigin.get()
-            if (origin) {
+            const currentOrigin = stateManager.currentOrigin.get()
+            if (currentOrigin) {
                 clearInterval(interval)
-                resolve(origin)
+                resolve(currentOrigin)
             }
         }, 100)
     })

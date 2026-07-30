@@ -54,9 +54,9 @@ export class UserUiAddNetwork extends BaseElement {
         const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'addNetwork',

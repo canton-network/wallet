@@ -202,7 +202,10 @@ describe('LoginUI', () => {
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
         )
 
-        expect(mockNetworkIdSet).toHaveBeenCalledWith('net-1')
+        expect(mockNetworkIdSet).toHaveBeenCalledWith(
+            'net-1',
+            expect.any(String)
+        )
         expect(mockAccessTokenSet).toHaveBeenCalledWith(defaultAccessToken)
         expect(mockExpirationDateSet).toHaveBeenCalled()
         expect(mockAddUserSession).toHaveBeenCalledWith(
@@ -360,7 +363,10 @@ describe('LoginUI', () => {
 
         expect(el.shadowRoot?.querySelector('wg-loading-state')).not.toBeNull()
         expect(el.connectingMessage).toBe('Redirecting to OAuth Network...')
-        expect(mockNetworkIdSet).toHaveBeenCalledWith('net-oauth')
+        expect(mockNetworkIdSet).toHaveBeenCalledWith(
+            'net-oauth',
+            expect.any(String)
+        )
         expect(vi.mocked(fetch)).toHaveBeenCalledWith(oauthConfigUrl)
 
         const storedKeys = Object.keys(sessionStorage).filter((key) =>

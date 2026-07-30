@@ -64,9 +64,9 @@ export class ApproveUi extends BaseElement {
     }
 
     private async updateState() {
-        const origin = await detectCurrentOrigin()
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(origin)
+            await stateManager.accessToken.get(currentOrigin)
         )
 
         const result = await userClient.request({
@@ -114,9 +114,9 @@ export class ApproveUi extends BaseElement {
         this.isDeleting = true
 
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'deleteTransaction',
@@ -145,9 +145,9 @@ export class ApproveUi extends BaseElement {
         this.isApproving = true
 
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result: SignResult = await userClient.request({
                 method: 'sign',

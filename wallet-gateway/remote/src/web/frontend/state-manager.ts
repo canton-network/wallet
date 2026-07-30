@@ -64,6 +64,7 @@ export class StateManager {
         this.state.delete(key)
     }
 
+    // cache access tokens per origin
     private accessTokenCache: Map<string, string> = new Map()
 
     accessToken = {

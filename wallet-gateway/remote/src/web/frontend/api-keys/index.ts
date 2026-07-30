@@ -75,9 +75,9 @@ export class UserUiApiKeys extends BaseElement {
 
     private async loadData() {
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const apiKeys = await userClient.request({ method: 'listApiKeys' })
             this.apiKeys = apiKeys.apiKeys
@@ -101,9 +101,9 @@ export class UserUiApiKeys extends BaseElement {
     // TODO: https://github.com/canton-network/wallet/issues/2043
     private async _revokeApiKey(apiKeyEvent: ApiKeyCardRevokeEvent) {
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
 
             await userClient.request({

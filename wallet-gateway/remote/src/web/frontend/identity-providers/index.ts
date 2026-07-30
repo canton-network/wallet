@@ -75,9 +75,9 @@ export class UserUiIdentityProviders extends BaseElement {
 
     private async loadData() {
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const [idpsResult, userResult] = await Promise.all([
                 userClient.request({ method: 'listIdps' }),

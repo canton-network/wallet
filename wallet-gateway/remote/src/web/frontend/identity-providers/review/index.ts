@@ -62,9 +62,9 @@ export class UserUiReviewIdp extends BaseElement {
         }
 
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({ method: 'listIdps' })
 
@@ -92,9 +92,9 @@ export class UserUiReviewIdp extends BaseElement {
 
     private async onSave(e: IdpFormSaveEvent) {
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'addIdp',
@@ -111,9 +111,9 @@ export class UserUiReviewIdp extends BaseElement {
         if (!confirm(`Delete identity provider "${e.idp.id}"?`)) return
 
         try {
-            const origin = await detectCurrentOrigin()
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(origin)
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'removeIdp',

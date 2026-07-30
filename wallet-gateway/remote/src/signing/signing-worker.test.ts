@@ -121,6 +121,7 @@ function createWorker(
             .mockResolvedValue([pendingTransaction]),
         getIdp: vi.fn().mockResolvedValue(idp),
         getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
+        getSession: vi.fn().mockResolvedValue({ id: 'session-1' }),
         withAuthContext: vi.fn().mockReturnValue(scopedStore),
         ...storeOverrides,
     }
