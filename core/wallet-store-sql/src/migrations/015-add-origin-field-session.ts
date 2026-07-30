@@ -29,19 +29,19 @@ export async function up(db: Kysely<DB>): Promise<void> {
             .addColumn('id', 'text', (col) => col.primaryKey())
             .addColumn('access_token', 'text', (col) => col.notNull())
             .addColumn('user_id', 'text', (col) => col.notNull())
-            .addColumn('network_id', 'text', (col) => col.notNull())
+            .addColumn('network', 'text', (col) => col.notNull())
             .addColumn('origin', 'text', (col) => col.notNull())
             .execute()
     }
 
     await sql`
             CREATE UNIQUE INDEX IF NOT EXISTS sessions_one_session_per_origin_user
-            ON sessions(network_id, user_id, origin)
+            ON sessions(network, user_id, origin)
         `.execute(db)
 
     await sql`
             CREATE UNIQUE INDEX IF NOT EXISTS sessions_unique_access_token_per_network
-            ON sessions(network_id, access_token)
+            ON sessions(network, access_token)
         `.execute(db)
 }
 

@@ -14,6 +14,7 @@
         "011-add-transaction-id-primary-key": "8cf57d47b2d3e0a3cd1e76fb6dda00d5eeb44741b8eb22e3419f20f9de069c20",
         "012-add-messages-to-sign": "513ae59fb4eb1a69f44ed8a481dce46576ae8899c6e5c2c933579b5fdda09145",
         "013-add-api-key": "12e4769e2f979af37b8c8fef2bcfad0227e38eb19dfcec9daf848647043b9a4e",
-        "014-add-service-account-column": "c0ded6e7f8dfc190871e33773c9783abcabd2c6ff9b8dcd9e547f9a0fd3389e2"
+        "014-add-service-account-column": "c0ded6e7f8dfc190871e33773c9783abcabd2c6ff9b8dcd9e547f9a0fd3389e2",
+        "015-add-origin-field-session": "7dd0c1e6c10d81f3fcd3c831e6889bf465037edd9e78f37e90d52653fb2bf75f"
     }
 }

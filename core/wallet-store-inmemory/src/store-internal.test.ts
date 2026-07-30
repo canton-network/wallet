@@ -131,8 +131,9 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.addIdp(idp)
             await store.addNetwork(network)
@@ -191,8 +192,9 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.addIdp(idp)
             await store.addNetwork(network1)
@@ -308,8 +310,9 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const session: Session = {
                 id: 'sess-123',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.addIdp(idp)
             await store.addNetwork(network)
@@ -325,14 +328,15 @@ implementations.forEach(([name, StoreImpl]) => {
         test('should set and get session', async () => {
             const session: Session = {
                 id: 'sess-123',
+                origin: 'dapp-1',
                 network: 'net',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
-            const result = await store.getSession()
+            const result = await store.getSession('test-access-token')
             expect(result).toEqual(session)
-            await store.removeSession()
-            const removed = await store.getSession()
+            await store.removeSession('test-access-token')
+            const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
         })
 
@@ -422,8 +426,9 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.addIdp(idp)
             await store.addNetwork(network1)
@@ -552,7 +557,8 @@ implementations.forEach(([name, StoreImpl]) => {
             const session1: Session = {
                 id: 'sess-1',
                 network: 'network1',
-                accessToken: 'token',
+                origin: 'dapp-1',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session1)
             await store.addWallet(wallet1)
@@ -564,8 +570,9 @@ implementations.forEach(([name, StoreImpl]) => {
 
             const session2: Session = {
                 id: 'sess-2',
+                origin: 'dapp-1',
                 network: 'network2',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session2)
             await store.addWallet(wallet3)
@@ -609,8 +616,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Set session for network1
             const session1: Session = {
                 id: 'sess-1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session1)
             await store.addWallet(wallet1)
@@ -618,8 +626,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Switch to network2 and add same party
             const session2: Session = {
                 id: 'sess-2',
+                origin: 'dapp-1',
                 network: 'network2',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session2)
             await store.addWallet(wallet2) // Should not throw, should create new entry
@@ -705,8 +714,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(baseNetwork())
             await store.setSession({
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
             const wallet = baseWallet('party1')
             await store.addWallet(wallet)
@@ -725,8 +735,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(baseNetwork())
             await store.setSession({
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.setUserRights('network1', [
@@ -824,8 +835,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(baseNetwork())
             await store.setSession({
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             const keys = await store.listApiKeys()
@@ -856,8 +868,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(baseNetwork())
             await store.setSession({
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network2',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             const apiKey: ApiKey = {
@@ -876,7 +889,7 @@ implementations.forEach(([name, StoreImpl]) => {
 
             const newstore = (store as StoreInternal).withAuthContext({
                 userId: 'other-user-id',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             expect(
