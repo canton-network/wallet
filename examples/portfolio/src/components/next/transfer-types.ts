@@ -8,7 +8,7 @@ export interface SelectableInstrument {
     symbol: string
     name: string
     availableAmount: string
-    decimals: number
+    decimals: number | undefined
 }
 
 export interface TransferFormData {
