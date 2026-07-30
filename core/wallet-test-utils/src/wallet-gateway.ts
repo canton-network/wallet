@@ -98,11 +98,20 @@ export class WalletGatewayPage {
         await this.page
             .getByLabel('Signing Provider')
             .selectOption(args.signingProvider)
-        if (args.vaultName) {
-            await this.page
-                .getByLabel('Vault name')
-                .selectOption(args.vaultName)
+
+        if (args.signingProvider === 'fireblocks') {
+            if (!args.vaultName) {
+                throw new Error(
+                    'vaultName is required when signingProvider is fireblocks'
+                )
+            }
+            const vaultSelect = this.page.getByLabel('Vault name')
+            await expect(
+                vaultSelect.getByRole('option', { name: args.vaultName })
+            ).toBeAttached({ timeout: 15000 })
+            await vaultSelect.selectOption({ label: args.vaultName })
         }
+
         if (args.primary) {
             await this.page
                 .getByRole('checkbox', { name: 'Set as primary wallet' })
