@@ -7,7 +7,7 @@ import { DevNetTapSection } from '@components/settings/devnet-tap-section'
 import { PreapprovalsSection } from '@components/settings/preapprovals-section'
 import { RegistriesSection } from '@components/settings/registries-section'
 
-export const Route = createFileRoute('/next/dashboard/settings')({
+export const Route = createFileRoute('/dashboard/settings')({
     component: RouteComponent,
 })
 

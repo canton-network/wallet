@@ -7,7 +7,7 @@ import { OfferTabs } from '@components/offers/offer-tabs'
 import { OfferToolbar } from '@components/offers/offer-toolbar'
 import { useOffers, type OfferCategory } from '@hooks/useOffers'
 
-export const Route = createFileRoute('/next/dashboard/offers')({
+export const Route = createFileRoute('/dashboard/offers')({
     component: RouteComponent,
 })
 
