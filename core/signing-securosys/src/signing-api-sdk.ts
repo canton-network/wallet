@@ -182,7 +182,9 @@ export function normalizePublicKey(publicKey: string): string {
     }
     if (
         bytes.length === ED25519_SPKI_PREFIX.length + 32 &&
-        bytes.subarray(0, ED25519_SPKI_PREFIX.length).equals(ED25519_SPKI_PREFIX)
+        bytes
+            .subarray(0, ED25519_SPKI_PREFIX.length)
+            .equals(ED25519_SPKI_PREFIX)
     ) {
         return bytes.subarray(ED25519_SPKI_PREFIX.length).toString('base64')
     }
@@ -242,7 +244,10 @@ function readDerIntegerPairSignature(bytes: Buffer): Buffer | undefined {
     }
 
     const sequenceLength = readDerLength(bytes, 1)
-    if (!sequenceLength || sequenceLength.offset + sequenceLength.length !== bytes.length) {
+    if (
+        !sequenceLength ||
+        sequenceLength.offset + sequenceLength.length !== bytes.length
+    ) {
         return undefined
     }
 
@@ -305,7 +310,11 @@ function readDerLength(
     }
 
     const lengthBytes = first & 0x7f
-    if (lengthBytes === 0 || lengthBytes > 4 || offset + lengthBytes >= bytes.length) {
+    if (
+        lengthBytes === 0 ||
+        lengthBytes > 4 ||
+        offset + lengthBytes >= bytes.length
+    ) {
         return undefined
     }
 
@@ -359,6 +368,7 @@ export class SigningAPIClient {
     private keyPassword: string | undefined
     private signatureAlgorithm: TsbSignatureAlgorithm
     private transactionCache = new Map<string, Transaction>()
+    private keyCache = new Map<string, Key>()
 
     constructor(configOrBaseUrl: SecurosysTSBClientConfig | string) {
         const config =
@@ -472,14 +482,33 @@ export class SigningAPIClient {
 
     private keyFromAttributes(attributes: TsbKeyAttributes): Key {
         if (!attributes.publicKey) {
-            throw new Error(`TSB key '${attributes.label}' does not expose a public key`)
+            throw new Error(
+                `TSB key '${attributes.label}' does not expose a public key`
+            )
         }
 
-        return {
+        return this.cacheKey({
             id: attributes.label,
             name: attributes.label,
             publicKey: normalizePublicKey(attributes.publicKey),
+        })
+    }
+
+    private cacheKey(key: Key): Key {
+        const normalized = {
+            ...key,
+            publicKey: normalizePublicKey(key.publicKey),
         }
+        this.keyCache.set(normalized.publicKey, normalized)
+        this.keyCache.set(key.publicKey, normalized)
+        return normalized
+    }
+
+    private cachedKeyByPublicKey(publicKey: string): Key | undefined {
+        return (
+            this.keyCache.get(publicKey) ??
+            this.keyCache.get(normalizePublicKey(publicKey))
+        )
     }
 
     private transactionFromStatus(
@@ -530,11 +559,11 @@ export class SigningAPIClient {
         keyIdentifier: KeyIdentifier
     ): Promise<Key> {
         if (keyIdentifier.id && keyIdentifier.publicKey) {
-            return {
+            return this.cacheKey({
                 id: keyIdentifier.id,
                 name: keyIdentifier.id,
                 publicKey: normalizePublicKey(keyIdentifier.publicKey),
-            }
+            })
         }
 
         if (keyIdentifier.id) {
@@ -543,19 +572,46 @@ export class SigningAPIClient {
         }
 
         if (keyIdentifier.publicKey) {
-            const keys = await this.getKeys()
-            const key = keys.find((candidate) =>
-                publicKeysEqual(candidate.publicKey, keyIdentifier.publicKey!)
-            )
-            if (key) {
-                return key
+            const cached = this.cachedKeyByPublicKey(keyIdentifier.publicKey)
+            if (cached) {
+                return cached
             }
+
+            const labels = await this.get<string[]>('/v1/key', 'key-management')
+            let skippedKeys = 0
+            for (const label of labels) {
+                try {
+                    const attributes = await this.getKeyAttributes(label)
+                    const key = this.keyFromAttributes(attributes.json)
+                    if (
+                        publicKeysEqual(key.publicKey, keyIdentifier.publicKey)
+                    ) {
+                        return key
+                    }
+                } catch (error) {
+                    if (isSkippableKeyAttributesError(error)) {
+                        skippedKeys += 1
+                        continue
+                    }
+                    throw error
+                }
+            }
+
+            throw new Error(
+                `Unable to resolve TSB signing key from publicKey${
+                    skippedKeys > 0
+                        ? `; skipped ${skippedKeys} TSB key(s) whose attributes are not available`
+                        : ''
+                }`
+            )
         }
 
         throw new Error('Unable to resolve TSB signing key from keyIdentifier')
     }
 
-    private async getExistingTransactions(txIds: string[]): Promise<Transaction[]> {
+    private async getExistingTransactions(
+        txIds: string[]
+    ): Promise<Transaction[]> {
         const results = await Promise.allSettled(
             txIds.map((txId) => this.getTransaction({ txId }))
         )
@@ -605,11 +661,10 @@ export class SigningAPIClient {
             merkleRootData: params.merkleRootData,
         })
 
-        const response = await this.post<TsbSignedSignRequest, TsbSignRequestResponse>(
-            '/v1/sign',
-            'key-operation',
-            { signRequest }
-        )
+        const response = await this.post<
+            TsbSignedSignRequest,
+            TsbSignRequestResponse
+        >('/v1/sign', 'key-operation', { signRequest })
 
         const transaction: Transaction = {
             txId: response.signRequestId,
@@ -677,12 +732,22 @@ export class SigningAPIClient {
     public async getKeys(): Promise<Key[]> {
         const labels = await this.get<string[]>('/v1/key', 'key-management')
 
-        return Promise.all(
+        const results = await Promise.allSettled(
             labels.map(async (label) => {
                 const attributes = await this.getKeyAttributes(label)
                 return this.keyFromAttributes(attributes.json)
             })
         )
+
+        return results.flatMap((result) => {
+            if (result.status === 'fulfilled') {
+                return [result.value]
+            }
+            if (isSkippableKeyAttributesError(result.reason)) {
+                return []
+            }
+            throw result.reason
+        })
     }
 
     public async createKey(params: CreateKeyParams): Promise<Key> {
@@ -695,11 +760,10 @@ export class SigningAPIClient {
             policy: WALLET_EMPTY_SKA_POLICY,
         }) as TsbCreateKeyRequest
 
-        const attributes = await this.post<TsbCreateKeyRequest, TsbSignedKeyAttributes>(
-            '/v1/key',
-            'key-management',
-            request
-        )
+        const attributes = await this.post<
+            TsbCreateKeyRequest,
+            TsbSignedKeyAttributes
+        >('/v1/key', 'key-management', request)
 
         return this.keyFromAttributes(attributes.json)
     }
@@ -707,7 +771,10 @@ export class SigningAPIClient {
     public async getKeyAttributes(
         label: string
     ): Promise<TsbSignedKeyAttributes> {
-        return this.post<{ label: string; password?: string }, TsbSignedKeyAttributes>(
+        return this.post<
+            { label: string; password?: string },
+            TsbSignedKeyAttributes
+        >(
             '/v1/key/attributes',
             'key-management',
             compact({
@@ -718,7 +785,10 @@ export class SigningAPIClient {
     }
 
     public async cancelTransaction(txId: string): Promise<void> {
-        await this.delete(`/v1/request/${encodeURIComponent(txId)}`, 'key-operation')
+        await this.delete(
+            `/v1/request/${encodeURIComponent(txId)}`,
+            'key-operation'
+        )
         const cached = this.transactionCache.get(txId)
         if (cached) {
             this.transactionCache.set(txId, {
@@ -811,9 +881,31 @@ function createMtlsDispatcher(
 }
 
 function publicKeysEqual(left: string, right: string): boolean {
-    return left === right || normalizePublicKey(left) === normalizePublicKey(right)
+    return (
+        left === right || normalizePublicKey(left) === normalizePublicKey(right)
+    )
 }
 
 function isNotFoundError(error: unknown): boolean {
     return error instanceof Error && error.message.includes('(404)')
+}
+
+function isSkippableKeyAttributesError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+        return false
+    }
+
+    if (error.message.includes('does not expose a public key')) {
+        return true
+    }
+
+    if (!error.message.includes('/v1/key/attributes failed')) {
+        return false
+    }
+
+    return (
+        error.message.includes('(404)') ||
+        error.message.includes('KEY_FUNCTION_NOT_PERMITTED') ||
+        error.message.includes('res.error.key.not.existent')
+    )
 }

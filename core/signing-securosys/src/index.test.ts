@@ -3,9 +3,7 @@
 
 import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
 import type { Key, Transaction } from '@canton-network/core-signing-lib'
-import SecurosysSigningDriver, {
-    SECUROSYS_SIGNING_PROVIDER,
-} from './index.js'
+import SecurosysSigningDriver, { SECUROSYS_SIGNING_PROVIDER } from './index.js'
 import { SigningAPIClient } from './signing-api-sdk.js'
 
 describe('SecurosysSigningDriver constructor', () => {
@@ -215,6 +213,19 @@ describe('SecurosysSigningDriver', () => {
         })
     })
 
+    it('getTransactions returns fetch_error when the client throws', async () => {
+        mockClient.getTransactions.mockRejectedValue(new Error('TSB down'))
+
+        const result = await driver
+            .controller(userId)
+            .getTransactions({ txIds: ['req-1'] })
+
+        expect(result).toEqual({
+            error: 'fetch_error',
+            error_description: 'TSB down',
+        })
+    })
+
     it('getKeys attaches the Wallet Gateway user identifier', async () => {
         mockClient.getKeys.mockResolvedValue([
             {
@@ -238,6 +249,17 @@ describe('SecurosysSigningDriver', () => {
         })
     })
 
+    it('getKeys returns fetch_error when the client throws', async () => {
+        mockClient.getKeys.mockRejectedValue(new Error('TSB down'))
+
+        const result = await driver.controller(userId).getKeys()
+
+        expect(result).toEqual({
+            error: 'fetch_error',
+            error_description: 'TSB down',
+        })
+    })
+
     it('createKey forwards user-scoped params to the client', async () => {
         mockClient.createKey.mockResolvedValue({
             id: 'new-key',
@@ -257,6 +279,19 @@ describe('SecurosysSigningDriver', () => {
             id: 'new-key',
             name: 'new-key',
             publicKey: 'public-key',
+        })
+    })
+
+    it('createKey returns create_key_error when the client throws', async () => {
+        mockClient.createKey.mockRejectedValue(new Error('TSB down'))
+
+        const result = await driver
+            .controller(userId)
+            .createKey({ name: 'new-key' })
+
+        expect(result).toEqual({
+            error: 'create_key_error',
+            error_description: 'TSB down',
         })
     })
 
@@ -325,5 +360,11 @@ describe('SecurosysSigningDriver', () => {
             KeyPassword: '***HIDDEN***',
         })
         expect(result).not.toHaveProperty('CreateKeyRequest')
+    })
+
+    it('subscribeTransactions is a no-op', async () => {
+        await expect(
+            driver.controller(userId).subscribeTransactions({} as never)
+        ).resolves.toEqual({})
     })
 })

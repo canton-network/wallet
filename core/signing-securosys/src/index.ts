@@ -44,9 +44,7 @@ export interface SecurosysConfig extends SecurosysTSBClientConfig {}
 
 export const SECUROSYS_SIGNING_PROVIDER = 'securosys' as SigningProvider
 
-export default class SecurosysSigningDriver
-    implements SigningDriverInterface
-{
+export default class SecurosysSigningDriver implements SigningDriverInterface {
     private client: SigningAPIClient
 
     constructor(config: SecurosysConfig) {
@@ -224,14 +222,17 @@ export default class SecurosysSigningDriver
             ): Promise<SetConfigurationResult> => {
                 const config = this.client.setConfiguration({
                     BaseURL: params['BaseURL'] as string,
-                    KeyManagementApiKey: params['KeyManagementApiKey'] as string,
+                    KeyManagementApiKey: params[
+                        'KeyManagementApiKey'
+                    ] as string,
                     KeyOperationApiKey: params['KeyOperationApiKey'] as string,
                     BearerToken: params['BearerToken'] as string,
                     MtlsP12Path: params['MtlsP12Path'] as string,
                     MtlsP12Password: params['MtlsP12Password'] as string,
                     KeyPassword: params['KeyPassword'] as string,
-                    SignatureAlgorithm:
-                        params['SignatureAlgorithm'] as TsbSignatureAlgorithm,
+                    SignatureAlgorithm: params[
+                        'SignatureAlgorithm'
+                    ] as TsbSignatureAlgorithm,
                 })
                 return maskConfiguration(config)
             },

@@ -42,16 +42,16 @@ The TSB endpoints used by the driver are:
 
 ## Configuration
 
-| Property | Description |
-| :-- | :-- |
-| `baseUrl` | Base URL of the TSB service. |
-| `keyManagementApiKey` | `X-API-KEY` value for `/v1/key` endpoints. |
-| `keyOperationApiKey` | `X-API-KEY` value for signing/request-status endpoints. |
-| `bearerToken` | Optional bearer access token for access-token mode. |
-| `mtlsP12Path` | Optional path to a PKCS#12/P12 client certificate used when TSB requires mTLS. |
-| `mtlsP12Password` | Optional password for the PKCS#12/P12 client certificate. |
-| `keyPassword` | Optional TSB key password used for key attributes and signing. |
-| `signatureAlgorithm` | TSB signature algorithm. Defaults to `EDDSA`; current Wallet Gateway/Canton signing expects Ed25519-compatible signatures. |
+| Property              | Description                                                                                                                |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| `baseUrl`             | Base URL of the TSB service.                                                                                               |
+| `keyManagementApiKey` | `X-API-KEY` value for `/v1/key` endpoints.                                                                                 |
+| `keyOperationApiKey`  | `X-API-KEY` value for signing/request-status endpoints.                                                                    |
+| `bearerToken`         | Optional bearer access token for access-token mode.                                                                        |
+| `mtlsP12Path`         | Optional path to a PKCS#12/P12 client certificate used when TSB requires mTLS.                                             |
+| `mtlsP12Password`     | Optional password for the PKCS#12/P12 client certificate.                                                                  |
+| `keyPassword`         | Optional TSB key password used for key attributes and signing.                                                             |
+| `signatureAlgorithm`  | TSB signature algorithm. Defaults to `EDDSA`; current Wallet Gateway/Canton signing expects Ed25519-compatible signatures. |
 
 When these values are changed through the Wallet Gateway configuration RPC, use
 the existing PascalCase convention: `MtlsP12Path` and `MtlsP12Password`.
@@ -60,28 +60,28 @@ the existing PascalCase convention: `MtlsP12Path` and `MtlsP12Password`.
 The remote Wallet Gateway reads the same values from these environment
 variables:
 
-| Environment variable | Driver property |
-| :-- | :-- |
-| `SECUROSYS_TSB_BASE_URL` | `baseUrl` |
+| Environment variable                   | Driver property       |
+| :------------------------------------- | :-------------------- |
+| `SECUROSYS_TSB_BASE_URL`               | `baseUrl`             |
 | `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` | `keyManagementApiKey` |
-| `SECUROSYS_TSB_KEY_OPERATION_API_KEY` | `keyOperationApiKey` |
-| `SECUROSYS_TSB_BEARER_TOKEN` | `bearerToken` |
-| `SECUROSYS_TSB_MTLS_P12_PATH` | `mtlsP12Path` |
-| `SECUROSYS_TSB_MTLS_P12_PASSWORD` | `mtlsP12Password` |
-| `SECUROSYS_TSB_KEY_PASSWORD` | `keyPassword` |
-| `SECUROSYS_TSB_SIGNATURE_ALGORITHM` | `signatureAlgorithm` |
+| `SECUROSYS_TSB_KEY_OPERATION_API_KEY`  | `keyOperationApiKey`  |
+| `SECUROSYS_TSB_BEARER_TOKEN`           | `bearerToken`         |
+| `SECUROSYS_TSB_MTLS_P12_PATH`          | `mtlsP12Path`         |
+| `SECUROSYS_TSB_MTLS_P12_PASSWORD`      | `mtlsP12Password`     |
+| `SECUROSYS_TSB_KEY_PASSWORD`           | `keyPassword`         |
+| `SECUROSYS_TSB_SIGNATURE_ALGORITHM`    | `signatureAlgorithm`  |
 
 Every key created by this driver is sent to TSB with the same empty SKA policy:
 
 ```json
 {
-  "ruleUse": null,
-  "ruleBlock": null,
-  "ruleUnblock": null,
-  "ruleModify": null,
-  "keyStatus": {
-    "blocked": false
-  }
+    "ruleUse": null,
+    "ruleBlock": null,
+    "ruleUnblock": null,
+    "ruleModify": null,
+    "keyStatus": {
+        "blocked": false
+    }
 }
 ```
 
