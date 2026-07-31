@@ -26,19 +26,24 @@ export class StateManager {
 
     private state: Map<string, string> = new Map()
 
+    private cacheKey(key: string, origin: string): string {
+        return StateManager.localStorageKey(key, origin)
+    }
+
     private getWithStorage(
         key: string,
         origin: string,
         storage: Storage = localStorage
     ): string | undefined {
-        if (this.state.has(key)) {
-            return this.state.get(key)
+        const cacheKey = this.cacheKey(key, origin)
+        if (this.state.has(cacheKey)) {
+            return this.state.get(cacheKey)
         }
 
-        const value = storage.getItem(StateManager.localStorageKey(key, origin))
+        const value = storage.getItem(cacheKey)
 
         if (value) {
-            this.state.set(key, value)
+            this.state.set(cacheKey, value)
             return value
         }
 
@@ -51,8 +56,9 @@ export class StateManager {
         origin: string,
         storage: Storage = localStorage
     ) {
-        storage.setItem(StateManager.localStorageKey(key, origin), value)
-        this.state.set(key, value)
+        const cacheKey = this.cacheKey(key, origin)
+        storage.setItem(cacheKey, value)
+        this.state.set(cacheKey, value)
     }
 
     private clearWithStorage(
@@ -60,8 +66,9 @@ export class StateManager {
         origin: string,
         storage: Storage = localStorage
     ) {
-        storage.removeItem(StateManager.localStorageKey(key, origin))
-        this.state.delete(key)
+        const cacheKey = this.cacheKey(key, origin)
+        storage.removeItem(cacheKey)
+        this.state.delete(cacheKey)
     }
 
     // cache access tokens per origin

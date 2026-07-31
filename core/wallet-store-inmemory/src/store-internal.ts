@@ -250,7 +250,17 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async setSession(session: Session): Promise<void> {
+        if (!session.origin) {
+            throw new Error('Session origin is required')
+        }
+
         const storage = this.getStorage()
+        // Match SQL store: at most one session per origin.
+        for (const [token, existing] of storage.sessions) {
+            if (existing.origin === session.origin) {
+                storage.sessions.delete(token)
+            }
+        }
         storage.sessions.set(session.accessToken, session)
         this.updateStorage(storage)
     }

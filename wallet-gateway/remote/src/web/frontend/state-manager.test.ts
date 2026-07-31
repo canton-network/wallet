@@ -114,4 +114,25 @@ describe('stateManager', async () => {
         const reloaded = new StateManager()
         expect(reloaded.currentOrigin.get()).toBe('https://dapp.example')
     })
+
+    it('keeps in-memory values isolated per origin', async () => {
+        const otherOrigin = 'https://other.example'
+        await stateManager.clearAuthState(otherOrigin)
+
+        stateManager.networkId.set('net-a', origin)
+        stateManager.networkId.set('net-b', otherOrigin)
+        stateManager.sessionId.set('sess-a', origin)
+        stateManager.sessionId.set('sess-b', otherOrigin)
+
+        expect(stateManager.networkId.get(origin)).toBe('net-a')
+        expect(stateManager.networkId.get(otherOrigin)).toBe('net-b')
+        expect(stateManager.sessionId.get(origin)).toBe('sess-a')
+        expect(stateManager.sessionId.get(otherOrigin)).toBe('sess-b')
+
+        stateManager.networkId.clear(origin)
+        expect(stateManager.networkId.get(origin)).toBeUndefined()
+        expect(stateManager.networkId.get(otherOrigin)).toBe('net-b')
+
+        await stateManager.clearAuthState(otherOrigin)
+    })
 })

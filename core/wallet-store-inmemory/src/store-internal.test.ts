@@ -340,6 +340,48 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(removed).toBeUndefined()
         })
 
+        test('setSession replaces any existing session for the same origin', async () => {
+            await store.setSession({
+                id: 'sess-old',
+                origin: 'dapp-1',
+                network: 'net',
+                accessToken: 'old-token',
+            })
+            await store.setSession({
+                id: 'sess-other',
+                origin: 'dapp-2',
+                network: 'net',
+                accessToken: 'other-token',
+            })
+            await store.setSession({
+                id: 'sess-new',
+                origin: 'dapp-1',
+                network: 'net',
+                accessToken: 'new-token',
+            })
+
+            expect(await store.getSession('old-token')).toBeUndefined()
+            expect(await store.getSession('new-token')).toMatchObject({
+                id: 'sess-new',
+                origin: 'dapp-1',
+            })
+            expect(await store.getSession('other-token')).toMatchObject({
+                id: 'sess-other',
+                origin: 'dapp-2',
+            })
+            expect(await store.listSessions()).toHaveLength(2)
+        })
+
+        test('setSession requires an origin', async () => {
+            await expect(
+                store.setSession({
+                    id: 'sess-missing-origin',
+                    network: 'net',
+                    accessToken: 'token',
+                } as Session)
+            ).rejects.toThrow('Session origin is required')
+        })
+
         test('should add, list, get, update, and remove networks', async () => {
             const idp: Idp = {
                 id: 'idp1',
