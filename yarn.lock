@@ -1485,6 +1485,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@canton-network/core-origin-check@workspace:core/origin-check":
+  version: 0.0.0-use.local
+  resolution: "@canton-network/core-origin-check@workspace:core/origin-check"
+  dependencies:
+    "@vitest/browser-playwright": "npm:^4.1.10"
+    "@vitest/coverage-v8": "npm:^4.1.10"
+    tsdown: "npm:^0.22.14"
+    tsx: "npm:^4.23.1"
+    typescript: "npm:^5.7.2"
+    vite: "npm:^8.1.5"
+    vite-plugin-dts: "npm:^5.0.3"
+    vitest: "npm:^4.1.10"
+    zod: "npm:^4.4.3"
+  languageName: unknown
+  linkType: soft
+
 "@canton-network/core-provider-dapp@workspace:^, @canton-network/core-provider-dapp@workspace:core/provider-dapp":
   version: 0.0.0-use.local
   resolution: "@canton-network/core-provider-dapp@workspace:core/provider-dapp"
@@ -16059,22 +16075,6 @@ __metadata:
   checksum: 10c0/30d5f3218eb75b0a2028c5fb9aa88e83e38a2f1745ab56839abb06c3ba31bae35f768f4e72c4f9e04e2a66be6a898e9312e8cf85c9333e1e3613eabb8c7cdf57
   languageName: node
   linkType: hard
-
-"origin-check@workspace:internal/origin-check":
-  version: 0.0.0-use.local
-  resolution: "origin-check@workspace:internal/origin-check"
-  dependencies:
-    "@vitest/browser-playwright": "npm:^4.1.10"
-    "@vitest/coverage-v8": "npm:^4.1.10"
-    tsdown: "npm:^0.22.14"
-    tsx: "npm:^4.23.1"
-    typescript: "npm:^5.7.2"
-    vite: "npm:^8.1.5"
-    vite-plugin-dts: "npm:^5.0.3"
-    vitest: "npm:^4.1.10"
-    zod: "npm:^4.4.3"
-  languageName: unknown
-  linkType: soft
 
 "os-shim@npm:^0.1.2":
   version: 0.1.3
