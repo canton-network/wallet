@@ -94,16 +94,32 @@ export default defineConfig({
         video: process.env.CI ? 'on-first-retry' : 'on',
     },
 
-    /* Configure projects for major browsers */
+    /* Configure projects for major browsers.
+     * Multisession runs last via project dependencies so it does not
+     * interfere with (or get interfered by) other e2e specs. */
     projects: [
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
+            testIgnore: ['**/multisession.spec.ts'],
+        },
+        {
+            name: 'chromium-multisession',
+            use: { ...devices['Desktop Chrome'] },
+            testMatch: ['**/multisession.spec.ts'],
+            dependencies: ['chromium'],
         },
 
         {
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
+            testIgnore: ['**/multisession.spec.ts'],
+        },
+        {
+            name: 'firefox-multisession',
+            use: { ...devices['Desktop Firefox'] },
+            testMatch: ['**/multisession.spec.ts'],
+            dependencies: ['firefox'],
         },
 
         // {
