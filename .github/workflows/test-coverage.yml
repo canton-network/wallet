@@ -1,0 +1,130 @@
+name: Test Coverage Main
+run-name: ${{ github.actor }} is generating test report
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+# Repository vars (e.g. BLOCKDAEMON_*) are not available to workflows from fork PRs.
+env:
+    CI_SECRET_DEPENDENCY: ${{ github.event.pull_request.head.repo.fork == false }}
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    version-config:
+        runs-on: ubuntu-latest
+        outputs:
+            daml_release_version: ${{ steps.version.outputs.daml_release_version }}
+            devnet_canton_version: ${{ steps.version.outputs.devnet_canton_version }}
+            mainnet_canton_version: ${{ steps.version.outputs.mainnet_canton_version }}
+            devnet_splice_version: ${{ steps.version.outputs.devnet_splice_version }}
+            mainnet_splice_version: ${{ steps.version.outputs.mainnet_splice_version }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+
+            - name: Resolve version config outputs
+              id: version
+              shell: bash
+              run: |
+                  CONFIG=$(cat scripts/src/lib/version-config.json)
+                  echo "daml_release_version=$(echo "$CONFIG" | jq -r '.DAML_RELEASE_VERSION' | tr -d '\r\n')" >> "$GITHUB_OUTPUT"
+                  echo "devnet_canton_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.devnet.canton.version')" >> "$GITHUB_OUTPUT"
+                  echo "mainnet_canton_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.canton.version')" >> "$GITHUB_OUTPUT"
+                  echo "devnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.devnet.splice.version')" >> "$GITHUB_OUTPUT"
+                  echo "mainnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.splice.version')" >> "$GITHUB_OUTPUT"
+
+    build:
+        runs-on: ubuntu-latest
+        needs: version-config
+        steps:
+            - name: Checkout
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+
+            - uses: ./.github/actions/setup_yarn/initial
+              with:
+                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+                  save_cache: 'true'
+
+            - name: Build project
+              run: yarn build:all
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              with:
+                  name: build-dist-${{ github.run_id }}
+                  path: |
+                      .yarn/cache/
+                      .yarn/unplugged/
+                      .yarn/install-state.gz
+                      .pnp.cjs
+                      .pnp.loader.mjs
+                      core/**/dist/
+                      sdk/**/dist/
+                      wallet-gateway/**/dist/
+                      damljs
+                      .nx/cache
+                      .nx/workspace-data
+                  if-no-files-found: error
+                  retention-days: 1
+
+    hydrate-canton-caches:
+        name: hydrate-canton-caches (${{ matrix.network }}, ${{ matrix.instance }})
+        runs-on: ubuntu-latest
+        needs: [version-config, build]
+        strategy:
+            fail-fast: false
+            matrix:
+                network: [devnet, mainnet]
+                instance: [canton, localnet]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+
+            - uses: ./.github/actions/setup_yarn/artifacts
+              with:
+                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+
+            - uses: ./.github/actions/setup_canton/initial
+              if: matrix.instance == 'canton'
+              with:
+                  network: ${{ matrix.network }}
+                  canton_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_canton_version || needs.version-config.outputs.mainnet_canton_version }}
+
+            - uses: ./.github/actions/setup_localnet/initial
+              if: matrix.instance == 'localnet'
+              with:
+                  network: ${{ matrix.network }}
+                  splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+
+    test-unit:
+        runs-on: ubuntu-latest
+        needs: [version-config, build]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              with:
+                  fetch-depth: 0
+
+            - uses: ./.github/actions/setup_yarn/artifacts
+              with:
+                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+
+            - uses: ./.github/actions/setup_playwright
+
+            - name: Run all unit tests
+              run: |
+                  yarn nx run-many -t test:coverage \
+                    --parallel
+
+            - name: Coverage summary
+              run: |
+                  echo "::group::Unit test coverage summary"
+                  yarn script:coverage:report
+                  echo "::endgroup::"
