@@ -12,5 +12,4 @@ export type OriginHandshakeMessage = z.infer<typeof OriginHandshakeMessage>
 export const OriginHandshake = z.object({
     message: OriginHandshakeMessage,
     origin: z.string(),
-    close: z.boolean().default(false),
 })

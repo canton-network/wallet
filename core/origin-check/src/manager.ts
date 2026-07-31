@@ -31,7 +31,7 @@ abstract class OriginManager {
         this.listenerCallback(event)
     }
 
-    protected broadcast(options: {
+    protected handshake(options: {
         window?: Window
         origin: Location['origin']
     }) {
@@ -51,6 +51,23 @@ abstract class OriginManager {
     public removeListener() {
         window.removeEventListener('message', this.listener)
     }
+
+    protected postMessageFactory(
+        message: unknown,
+        options: {
+            origin: Location['origin']
+            window: Window
+        }
+    ) {
+        if (!this.assert(options.origin)) return
+
+        options.window.postMessage(message, options.origin)
+    }
+
+    public abstract postMessage: (
+        message: unknown,
+        origin: Location['origin']
+    ) => void
 }
 
 export class ParentWindowOriginManager extends OriginManager {
@@ -70,22 +87,34 @@ export class ParentWindowOriginManager extends OriginManager {
 
     public poll(origin: Location['origin']) {
         const intervalID = setInterval(() => {
-            this.broadcast({
+            this.handshake({
                 origin,
             })
         }, 500)
         this.intervalMap.set(origin, intervalID)
     }
+
+    public postMessage = (message: unknown, origin: Location['origin']) =>
+        this.postMessageFactory(message, {
+            window,
+            origin,
+        })
 }
 
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
         OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
     protected readonly listenerCallback = (event: MessageEvent) => {
-        this.broadcast({
+        this.handshake({
             window: window.opener,
             origin: event.origin,
         })
         this.removeListener()
     }
+
+    public postMessage = (message: unknown, origin: Location['origin']) =>
+        this.postMessageFactory(message, {
+            window: window.opener,
+            origin,
+        })
 }

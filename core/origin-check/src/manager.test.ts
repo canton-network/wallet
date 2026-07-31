@@ -102,6 +102,40 @@ describe('manager', () => {
         it("should return false when asking for origin where a handshake wasn't established with", () => {
             expect(parentWindowManager.assert(falseOrigin)).toBe(false)
         })
+
+        it('should send postMessage when origin is allowed', () => {
+            const testMessage = { test: 'data' }
+
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        message:
+                            OriginHandshakeMessage.enum
+                                .SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
+
+            vi.clearAllMocks()
+            postMessageSpy = vi.spyOn(window, 'postMessage')
+
+            parentWindowManager.postMessage(testMessage, exampleOrigin)
+
+            expect(postMessageSpy).toHaveBeenCalledExactlyOnceWith(
+                testMessage,
+                exampleOrigin
+            )
+        })
+
+        it('should not send postMessage when origin is not allowed', () => {
+            const testMessage = { test: 'data' }
+
+            parentWindowManager.postMessage(testMessage, falseOrigin)
+
+            expect(postMessageSpy).not.toHaveBeenCalled()
+        })
     })
 
     describe('ChildWindowOriginManager', () => {
@@ -153,6 +187,39 @@ describe('manager', () => {
                 },
                 exampleOrigin
             )
+        })
+
+        it('should send postMessage when origin is allowed', () => {
+            const testMessage = { test: 'data' }
+
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        message:
+                            OriginHandshakeMessage.enum
+                                .SPLICE_WALLET_BROADCAST_ORIGIN,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
+
+            vi.clearAllMocks()
+
+            childWindowManager.postMessage(testMessage, exampleOrigin)
+
+            expect(openerPostMessageSpy).toHaveBeenCalledExactlyOnceWith(
+                testMessage,
+                exampleOrigin
+            )
+        })
+
+        it('should not send postMessage when origin is not allowed', () => {
+            const testMessage = { test: 'data' }
+
+            childWindowManager.postMessage(testMessage, falseOrigin)
+
+            expect(openerPostMessageSpy).not.toHaveBeenCalled()
         })
     })
 })
