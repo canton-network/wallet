@@ -276,7 +276,6 @@ export const dappController = (
                 accessTokenProvider,
             })
 
-            // TODO: consider service accounts / api keys
             const session = await store.getSession(context.accessToken)
             const sessionId = session!.id
             const notifier = notificationService.getNotifier(sessionId)
