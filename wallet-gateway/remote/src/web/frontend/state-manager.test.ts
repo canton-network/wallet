@@ -103,4 +103,15 @@ describe('stateManager', async () => {
             expect(localStorage.getItem(key)).toBeNull()
         }
     })
+
+    it('stores currentOrigin in localStorage', () => {
+        stateManager.currentOrigin.clear()
+        const key = StateManager.localStorageKey('origin', 'current')
+
+        stateManager.currentOrigin.set('https://dapp.example')
+        expect(localStorage.getItem(key)).toBe('https://dapp.example')
+
+        const reloaded = new StateManager()
+        expect(reloaded.currentOrigin.get()).toBe('https://dapp.example')
+    })
 })

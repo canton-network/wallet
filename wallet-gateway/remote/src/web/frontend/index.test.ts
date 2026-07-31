@@ -350,8 +350,13 @@ describe('UserUIAuthRedirect', () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         setLocationHref.mockReset()
+        mockAttemptRemoveSession.mockReset()
+        mockAttemptRemoveSession.mockResolvedValue(undefined)
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         authState.intendedPage = undefined
+        const { stateManager } = await import('./state-manager.js')
+        vi.mocked(stateManager.sessionId.get).mockReset()
+        vi.mocked(stateManager.sessionId.set).mockReset()
         vi.stubGlobal('opener', null)
     })
 
@@ -403,7 +408,7 @@ describe('UserUIAuthRedirect', () => {
         )
     })
 
-    it('clears auth when login page has a token but no session', async () => {
+    it('clears local auth when login page has a token but no session', async () => {
         setValidAuth()
         mockSessionList('')
         setPath('/login')
@@ -411,11 +416,50 @@ describe('UserUIAuthRedirect', () => {
         await fixture<UserUIAuthRedirect>(
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
-        await waitUntil(() => mockAttemptRemoveSession.mock.calls.length > 0)
+        await waitUntil(() => authState.accessToken === undefined)
 
-        expect(mockAttemptRemoveSession).toHaveBeenCalled()
+        expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
         expect(authState.accessToken).toBeUndefined()
         expect(setLocationHref).not.toHaveBeenCalled()
+    })
+
+    it('soft-logs out protected pages when listSessions returns no session', async () => {
+        setValidAuth()
+        mockSessionList('')
+        setPath('/settings')
+
+        await fixture<UserUIAuthRedirect>(
+            html`<user-ui-auth-redirect></user-ui-auth-redirect>`
+        )
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
+        expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
+        expect(authState.accessToken).toBeUndefined()
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining(LOGIN_PAGE_REDIRECT)
+        )
+    })
+
+    it('uses a cached session id when listSessions fails', async () => {
+        setValidAuth()
+        const { stateManager } = await import('./state-manager.js')
+        vi.mocked(stateManager.sessionId.get).mockReturnValue('cached-session')
+        mockRequest.mockImplementation(async () => {
+            throw new Error('listSessions unavailable')
+        })
+        setPath('/settings')
+
+        await fixture<UserUIAuthRedirect>(
+            html`<user-ui-auth-redirect></user-ui-auth-redirect>`
+        )
+
+        await waitUntil(
+            () => vi.mocked(stateManager.sessionId.get).mock.calls.length > 0
+        )
+        expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
+        expect(mockCreateUserClient).not.toHaveBeenCalled()
+        expect(setLocationHref).not.toHaveBeenCalled()
+        expect(authState.accessToken).toBe('access-token')
     })
 
     it('redirects expired tokens on protected pages to login', async () => {

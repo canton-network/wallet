@@ -131,10 +131,12 @@ export class StateManager {
     }
 
     currentOrigin = {
-        get: () => this.getWithStorage('origin', 'current', sessionStorage),
+        // Persist across MPA navigations in the popup (the parent only
+        // broadcasts origin once).
+        get: () => this.getWithStorage('origin', 'current', localStorage),
         set: (origin: string) =>
-            this.setWithStorage('origin', origin, 'current', sessionStorage),
-        clear: () => this.clearWithStorage('origin', 'current', sessionStorage),
+            this.setWithStorage('origin', origin, 'current', localStorage),
+        clear: () => this.clearWithStorage('origin', 'current', localStorage),
     }
 
     sessionId = {

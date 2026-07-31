@@ -130,14 +130,30 @@ const clearTokenExpirationTimeout = (): void => {
     }
 }
 
-const getSessionId = async (token: string): Promise<string | undefined> => {
-    const userClient = await createUserClient(token)
-    const sessions = await userClient
-        .request({ method: 'listSessions' })
-        .catch(() => {
-            return null
-        })
-    return sessions?.sessions?.[0]?.id ?? undefined
+const getSessionId = async (
+    token: string,
+    origin: string
+): Promise<string | undefined> => {
+    const cached = stateManager.sessionId.get(origin)
+    if (cached) {
+        return cached
+    }
+
+    try {
+        const userClient = await createUserClient(token)
+        const sessions = await userClient.request({ method: 'listSessions' })
+        const sessionId = sessions?.sessions?.[0]?.id
+        if (sessionId) {
+            stateManager.sessionId.set(sessionId, origin)
+        }
+        return sessionId ?? undefined
+    } catch (error) {
+        console.debug(
+            'Failed to list sessions while resolving session id',
+            error
+        )
+        return undefined
+    }
 }
 
 export const shareConnection = (token: string, sessionId: string) => {
@@ -241,14 +257,16 @@ export class UserUIAuthRedirect extends LitElement {
     private async handleAuthenticatedOnLoginPage(
         accessToken: string
     ): Promise<void> {
-        const sessionId = await getSessionId(accessToken)
         const currentOrigin = await detectCurrentOrigin()
+        const sessionId = await getSessionId(accessToken, currentOrigin)
         if (sessionId) {
             this.setTokenExpirationTimeout(currentOrigin)
             await redirectToIntendedOrDefault()
             shareConnection(accessToken, sessionId)
         } else {
-            await attemptRemoveSession(accessToken)
+            // Stale local token / unknown session — clear local auth only.
+            // Do not call removeSession: listSessions can fail transiently and
+            // would otherwise destroy a still-valid server session.
             await stateManager.clearAuthState(currentOrigin)
         }
     }
@@ -262,9 +280,11 @@ export class UserUIAuthRedirect extends LitElement {
             throw new Error('missing networkId in state manager')
         }
 
-        const sessionId = await getSessionId(accessToken)
+        const sessionId = await getSessionId(accessToken, currentOrigin)
         if (!sessionId) {
-            await attemptRemoveSession(accessToken)
+            // Soft logout on MPA navigations: never removeSession here.
+            // A failed/empty listSessions must not close the dApp popup or
+            // wipe a valid multi-session entry.
             await this.clearAuthStateAndPreserveIntendedPage()
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
             return
