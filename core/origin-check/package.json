@@ -1,5 +1,5 @@
 {
-    "name": "origin-check",
+    "name": "@canton-network/core-origin-check",
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
     "packageManager": "yarn@4.16.0",
     "dependencies": {
