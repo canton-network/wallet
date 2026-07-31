@@ -2,11 +2,8 @@ name: CI on PRs
 run-name: ${{ github.actor }} is perfoming a Pull Request
 
 on:
-    push:
-        branches: [main]
     pull_request:
         types: [opened, reopened, synchronize, edited]
-    workflow_dispatch:
 
 # Repository vars (e.g. BLOCKDAEMON_*) are not available to workflows from fork PRs.
 env:
