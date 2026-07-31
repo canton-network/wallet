@@ -14,7 +14,7 @@ import {
     switchWallet,
     tap,
     togglePreapproval,
-} from './next-utils'
+} from './utils'
 import { fundValidatorOperator } from './fund-validator'
 
 const AMULET_INSTRUMENT = 'Amulet (AMT)'

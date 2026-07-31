@@ -14,7 +14,7 @@ import {
     switchWallet,
     tap,
     togglePreapproval,
-} from './next-utils'
+} from './utils'
 
 const BASE_URL = 'http://localhost:8081'
 const AMULET_INSTRUMENT = 'Amulet (AMT)'
@@ -45,7 +45,7 @@ const gotoWalletHistory = async (
     walletHint: string
 ): Promise<void> => {
     await page.goto(
-        `${BASE_URL}/next/dashboard/wallet/${encodeURIComponent(walletId)}`
+        `${BASE_URL}/dashboard/wallet/${encodeURIComponent(walletId)}`
     )
 
     const main = page.locator('main')
