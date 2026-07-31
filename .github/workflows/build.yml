@@ -2,6 +2,8 @@ name: CI on PRs
 run-name: ${{ github.actor }} is perfoming a Pull Request
 
 on:
+    push:
+        branches: [main]
     pull_request:
         types: [opened, reopened, synchronize, edited]
 
