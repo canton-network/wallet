@@ -453,13 +453,27 @@ describe('UserUIAuthRedirect', () => {
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
 
-        await waitUntil(
-            () => vi.mocked(stateManager.sessionId.get).mock.calls.length > 0
-        )
+        await waitUntil(() => mockCreateUserClient.mock.calls.length > 0)
         expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
-        expect(mockCreateUserClient).not.toHaveBeenCalled()
         expect(setLocationHref).not.toHaveBeenCalled()
         expect(authState.accessToken).toBe('access-token')
+    })
+
+    it('clears a stale cached session id when listSessions returns empty', async () => {
+        setValidAuth()
+        const { stateManager } = await import('./state-manager.js')
+        vi.mocked(stateManager.sessionId.get).mockReturnValue('stale-session')
+        mockSessionList('')
+        setPath('/login')
+
+        await fixture<UserUIAuthRedirect>(
+            html`<user-ui-auth-redirect></user-ui-auth-redirect>`
+        )
+        await waitUntil(() => authState.accessToken === undefined)
+
+        expect(stateManager.sessionId.clear).toHaveBeenCalled()
+        expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
+        expect(setLocationHref).not.toHaveBeenCalled()
     })
 
     it('redirects expired tokens on protected pages to login', async () => {

@@ -135,9 +135,6 @@ const getSessionId = async (
     origin: string
 ): Promise<string | undefined> => {
     const cached = stateManager.sessionId.get(origin)
-    if (cached) {
-        return cached
-    }
 
     try {
         const userClient = await createUserClient(token)
@@ -145,14 +142,19 @@ const getSessionId = async (
         const sessionId = sessions?.sessions?.[0]?.id
         if (sessionId) {
             stateManager.sessionId.set(sessionId, origin)
+            return sessionId
         }
-        return sessionId ?? undefined
+        // Server has no session (e.g. after dApp disconnect) — drop stale cache.
+        stateManager.sessionId.clear(origin)
+        return undefined
     } catch (error) {
         console.debug(
             'Failed to list sessions while resolving session id',
             error
         )
-        return undefined
+        // Transient failure (e.g. during MPA reload): keep the cached id so we
+        // soft-stay logged in instead of calling removeSession / closing popup.
+        return cached
     }
 }
 
