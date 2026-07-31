@@ -121,7 +121,6 @@ const useConnectedProviderSubscriptions = ({
             })
 
         const messageListener = async (event: sdk.dappAPI.TxChangedEvent) => {
-            console.log('incoming event', event)
             if (event.status === 'executed') {
                 await queryClient.invalidateQueries({
                     queryKey: queryKeys.walletConnection.pendingTransfers.all,

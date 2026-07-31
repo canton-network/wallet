@@ -9,309 +9,209 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LegacyRouteRouteImport } from './routes/_legacy/route'
-import { Route as NextRouteRouteImport } from './routes/next/route'
-import { Route as LegacyIndexRouteImport } from './routes/_legacy/index'
-import { Route as LegacySettingsRouteImport } from './routes/_legacy/settings'
-import { Route as NextConnectRouteImport } from './routes/next/connect'
-import { Route as NextDashboardRouteImport } from './routes/next/dashboard'
-import { Route as LegacyWalletWalletIdRouteImport } from './routes/_legacy/wallet.$walletId'
-import { Route as NextDashboardIndexRouteImport } from './routes/next/dashboard/index'
-import { Route as NextDashboardFaqRouteImport } from './routes/next/dashboard/faq'
-import { Route as NextDashboardOffersRouteImport } from './routes/next/dashboard/offers'
-import { Route as NextDashboardSettingsRouteImport } from './routes/next/dashboard/settings'
-import { Route as NextDashboardWalletWalletIdRouteImport } from './routes/next/dashboard/wallet.$walletId'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardFaqRouteImport } from './routes/dashboard/faq'
+import { Route as DashboardOffersRouteImport } from './routes/dashboard/offers'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard/settings'
+import { Route as DashboardWalletWalletIdRouteImport } from './routes/dashboard/wallet.$walletId'
 
-const LegacyRouteRoute = LegacyRouteRouteImport.update({
-  id: '/_legacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NextRouteRoute = NextRouteRouteImport.update({
-  id: '/next',
-  path: '/next',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegacyIndexRoute = LegacyIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => LegacyRouteRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const LegacySettingsRoute = LegacySettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => LegacyRouteRoute,
-} as any)
-const NextConnectRoute = NextConnectRouteImport.update({
+const ConnectRoute = ConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
-  getParentRoute: () => NextRouteRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const NextDashboardRoute = NextDashboardRouteImport.update({
+const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => NextRouteRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const LegacyWalletWalletIdRoute = LegacyWalletWalletIdRouteImport.update({
-  id: '/wallet/$walletId',
-  path: '/wallet/$walletId',
-  getParentRoute: () => LegacyRouteRoute,
-} as any)
-const NextDashboardIndexRoute = NextDashboardIndexRouteImport.update({
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => NextDashboardRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
-const NextDashboardFaqRoute = NextDashboardFaqRouteImport.update({
+const DashboardFaqRoute = DashboardFaqRouteImport.update({
   id: '/faq',
   path: '/faq',
-  getParentRoute: () => NextDashboardRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
-const NextDashboardOffersRoute = NextDashboardOffersRouteImport.update({
+const DashboardOffersRoute = DashboardOffersRouteImport.update({
   id: '/offers',
   path: '/offers',
-  getParentRoute: () => NextDashboardRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
-const NextDashboardSettingsRoute = NextDashboardSettingsRouteImport.update({
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => NextDashboardRoute,
+  getParentRoute: () => DashboardRoute,
 } as any)
-const NextDashboardWalletWalletIdRoute =
-  NextDashboardWalletWalletIdRouteImport.update({
-    id: '/wallet/$walletId',
-    path: '/wallet/$walletId',
-    getParentRoute: () => NextDashboardRoute,
-  } as any)
+const DashboardWalletWalletIdRoute = DashboardWalletWalletIdRouteImport.update({
+  id: '/wallet/$walletId',
+  path: '/wallet/$walletId',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof LegacyIndexRoute
-  '/next': typeof NextRouteRouteWithChildren
-  '/settings': typeof LegacySettingsRoute
-  '/next/connect': typeof NextConnectRoute
-  '/next/dashboard': typeof NextDashboardRouteWithChildren
-  '/wallet/$walletId': typeof LegacyWalletWalletIdRoute
-  '/next/dashboard/faq': typeof NextDashboardFaqRoute
-  '/next/dashboard/offers': typeof NextDashboardOffersRoute
-  '/next/dashboard/settings': typeof NextDashboardSettingsRoute
-  '/next/dashboard/': typeof NextDashboardIndexRoute
-  '/next/dashboard/wallet/$walletId': typeof NextDashboardWalletWalletIdRoute
+  '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/faq': typeof DashboardFaqRoute
+  '/dashboard/offers': typeof DashboardOffersRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/wallet/$walletId': typeof DashboardWalletWalletIdRoute
 }
 export interface FileRoutesByTo {
-  '/next': typeof NextRouteRouteWithChildren
-  '/settings': typeof LegacySettingsRoute
-  '/next/connect': typeof NextConnectRoute
-  '/': typeof LegacyIndexRoute
-  '/wallet/$walletId': typeof LegacyWalletWalletIdRoute
-  '/next/dashboard/faq': typeof NextDashboardFaqRoute
-  '/next/dashboard/offers': typeof NextDashboardOffersRoute
-  '/next/dashboard/settings': typeof NextDashboardSettingsRoute
-  '/next/dashboard': typeof NextDashboardIndexRoute
-  '/next/dashboard/wallet/$walletId': typeof NextDashboardWalletWalletIdRoute
+  '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
+  '/dashboard/faq': typeof DashboardFaqRoute
+  '/dashboard/offers': typeof DashboardOffersRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/wallet/$walletId': typeof DashboardWalletWalletIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_legacy': typeof LegacyRouteRouteWithChildren
-  '/next': typeof NextRouteRouteWithChildren
-  '/_legacy/settings': typeof LegacySettingsRoute
-  '/next/connect': typeof NextConnectRoute
-  '/next/dashboard': typeof NextDashboardRouteWithChildren
-  '/_legacy/': typeof LegacyIndexRoute
-  '/_legacy/wallet/$walletId': typeof LegacyWalletWalletIdRoute
-  '/next/dashboard/faq': typeof NextDashboardFaqRoute
-  '/next/dashboard/offers': typeof NextDashboardOffersRoute
-  '/next/dashboard/settings': typeof NextDashboardSettingsRoute
-  '/next/dashboard/': typeof NextDashboardIndexRoute
-  '/next/dashboard/wallet/$walletId': typeof NextDashboardWalletWalletIdRoute
+  '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/faq': typeof DashboardFaqRoute
+  '/dashboard/offers': typeof DashboardOffersRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/wallet/$walletId': typeof DashboardWalletWalletIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/next'
-    | '/settings'
-    | '/next/connect'
-    | '/next/dashboard'
-    | '/wallet/$walletId'
-    | '/next/dashboard/faq'
-    | '/next/dashboard/offers'
-    | '/next/dashboard/settings'
-    | '/next/dashboard/'
-    | '/next/dashboard/wallet/$walletId'
+    | '/connect'
+    | '/dashboard'
+    | '/dashboard/faq'
+    | '/dashboard/offers'
+    | '/dashboard/settings'
+    | '/dashboard/'
+    | '/dashboard/wallet/$walletId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/next'
-    | '/settings'
-    | '/next/connect'
     | '/'
-    | '/wallet/$walletId'
-    | '/next/dashboard/faq'
-    | '/next/dashboard/offers'
-    | '/next/dashboard/settings'
-    | '/next/dashboard'
-    | '/next/dashboard/wallet/$walletId'
+    | '/connect'
+    | '/dashboard/faq'
+    | '/dashboard/offers'
+    | '/dashboard/settings'
+    | '/dashboard'
+    | '/dashboard/wallet/$walletId'
   id:
     | '__root__'
-    | '/_legacy'
-    | '/next'
-    | '/_legacy/settings'
-    | '/next/connect'
-    | '/next/dashboard'
-    | '/_legacy/'
-    | '/_legacy/wallet/$walletId'
-    | '/next/dashboard/faq'
-    | '/next/dashboard/offers'
-    | '/next/dashboard/settings'
-    | '/next/dashboard/'
-    | '/next/dashboard/wallet/$walletId'
+    | '/'
+    | '/connect'
+    | '/dashboard'
+    | '/dashboard/faq'
+    | '/dashboard/offers'
+    | '/dashboard/settings'
+    | '/dashboard/'
+    | '/dashboard/wallet/$walletId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  LegacyRouteRoute: typeof LegacyRouteRouteWithChildren
-  NextRouteRoute: typeof NextRouteRouteWithChildren
+  IndexRoute: typeof IndexRoute
+  ConnectRoute: typeof ConnectRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_legacy': {
-      id: '/_legacy'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof LegacyRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/next': {
-      id: '/next'
-      path: '/next'
-      fullPath: '/next'
-      preLoaderRoute: typeof NextRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_legacy/': {
-      id: '/_legacy/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof LegacyIndexRouteImport
-      parentRoute: typeof LegacyRouteRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_legacy/settings': {
-      id: '/_legacy/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof LegacySettingsRouteImport
-      parentRoute: typeof LegacyRouteRoute
-    }
-    '/next/connect': {
-      id: '/next/connect'
+    '/connect': {
+      id: '/connect'
       path: '/connect'
-      fullPath: '/next/connect'
-      preLoaderRoute: typeof NextConnectRouteImport
-      parentRoute: typeof NextRouteRoute
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/next/dashboard': {
-      id: '/next/dashboard'
+    '/dashboard': {
+      id: '/dashboard'
       path: '/dashboard'
-      fullPath: '/next/dashboard'
-      preLoaderRoute: typeof NextDashboardRouteImport
-      parentRoute: typeof NextRouteRoute
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_legacy/wallet/$walletId': {
-      id: '/_legacy/wallet/$walletId'
-      path: '/wallet/$walletId'
-      fullPath: '/wallet/$walletId'
-      preLoaderRoute: typeof LegacyWalletWalletIdRouteImport
-      parentRoute: typeof LegacyRouteRoute
-    }
-    '/next/dashboard/': {
-      id: '/next/dashboard/'
+    '/dashboard/': {
+      id: '/dashboard/'
       path: '/'
-      fullPath: '/next/dashboard/'
-      preLoaderRoute: typeof NextDashboardIndexRouteImport
-      parentRoute: typeof NextDashboardRoute
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
     }
-    '/next/dashboard/faq': {
-      id: '/next/dashboard/faq'
+    '/dashboard/faq': {
+      id: '/dashboard/faq'
       path: '/faq'
-      fullPath: '/next/dashboard/faq'
-      preLoaderRoute: typeof NextDashboardFaqRouteImport
-      parentRoute: typeof NextDashboardRoute
+      fullPath: '/dashboard/faq'
+      preLoaderRoute: typeof DashboardFaqRouteImport
+      parentRoute: typeof DashboardRoute
     }
-    '/next/dashboard/offers': {
-      id: '/next/dashboard/offers'
+    '/dashboard/offers': {
+      id: '/dashboard/offers'
       path: '/offers'
-      fullPath: '/next/dashboard/offers'
-      preLoaderRoute: typeof NextDashboardOffersRouteImport
-      parentRoute: typeof NextDashboardRoute
+      fullPath: '/dashboard/offers'
+      preLoaderRoute: typeof DashboardOffersRouteImport
+      parentRoute: typeof DashboardRoute
     }
-    '/next/dashboard/settings': {
-      id: '/next/dashboard/settings'
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
       path: '/settings'
-      fullPath: '/next/dashboard/settings'
-      preLoaderRoute: typeof NextDashboardSettingsRouteImport
-      parentRoute: typeof NextDashboardRoute
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
     }
-    '/next/dashboard/wallet/$walletId': {
-      id: '/next/dashboard/wallet/$walletId'
+    '/dashboard/wallet/$walletId': {
+      id: '/dashboard/wallet/$walletId'
       path: '/wallet/$walletId'
-      fullPath: '/next/dashboard/wallet/$walletId'
-      preLoaderRoute: typeof NextDashboardWalletWalletIdRouteImport
-      parentRoute: typeof NextDashboardRoute
+      fullPath: '/dashboard/wallet/$walletId'
+      preLoaderRoute: typeof DashboardWalletWalletIdRouteImport
+      parentRoute: typeof DashboardRoute
     }
   }
 }
 
-interface LegacyRouteRouteChildren {
-  LegacySettingsRoute: typeof LegacySettingsRoute
-  LegacyIndexRoute: typeof LegacyIndexRoute
-  LegacyWalletWalletIdRoute: typeof LegacyWalletWalletIdRoute
+interface DashboardRouteChildren {
+  DashboardFaqRoute: typeof DashboardFaqRoute
+  DashboardOffersRoute: typeof DashboardOffersRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardWalletWalletIdRoute: typeof DashboardWalletWalletIdRoute
 }
 
-const LegacyRouteRouteChildren: LegacyRouteRouteChildren = {
-  LegacySettingsRoute: LegacySettingsRoute,
-  LegacyIndexRoute: LegacyIndexRoute,
-  LegacyWalletWalletIdRoute: LegacyWalletWalletIdRoute,
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardFaqRoute: DashboardFaqRoute,
+  DashboardOffersRoute: DashboardOffersRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardWalletWalletIdRoute: DashboardWalletWalletIdRoute,
 }
 
-const LegacyRouteRouteWithChildren = LegacyRouteRoute._addFileChildren(
-  LegacyRouteRouteChildren,
-)
-
-interface NextDashboardRouteChildren {
-  NextDashboardFaqRoute: typeof NextDashboardFaqRoute
-  NextDashboardOffersRoute: typeof NextDashboardOffersRoute
-  NextDashboardSettingsRoute: typeof NextDashboardSettingsRoute
-  NextDashboardIndexRoute: typeof NextDashboardIndexRoute
-  NextDashboardWalletWalletIdRoute: typeof NextDashboardWalletWalletIdRoute
-}
-
-const NextDashboardRouteChildren: NextDashboardRouteChildren = {
-  NextDashboardFaqRoute: NextDashboardFaqRoute,
-  NextDashboardOffersRoute: NextDashboardOffersRoute,
-  NextDashboardSettingsRoute: NextDashboardSettingsRoute,
-  NextDashboardIndexRoute: NextDashboardIndexRoute,
-  NextDashboardWalletWalletIdRoute: NextDashboardWalletWalletIdRoute,
-}
-
-const NextDashboardRouteWithChildren = NextDashboardRoute._addFileChildren(
-  NextDashboardRouteChildren,
-)
-
-interface NextRouteRouteChildren {
-  NextConnectRoute: typeof NextConnectRoute
-  NextDashboardRoute: typeof NextDashboardRouteWithChildren
-}
-
-const NextRouteRouteChildren: NextRouteRouteChildren = {
-  NextConnectRoute: NextConnectRoute,
-  NextDashboardRoute: NextDashboardRouteWithChildren,
-}
-
-const NextRouteRouteWithChildren = NextRouteRoute._addFileChildren(
-  NextRouteRouteChildren,
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  LegacyRouteRoute: LegacyRouteRouteWithChildren,
-  NextRouteRoute: NextRouteRouteWithChildren,
+  IndexRoute: IndexRoute,
+  ConnectRoute: ConnectRoute,
+  DashboardRoute: DashboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

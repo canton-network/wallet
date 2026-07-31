@@ -4,13 +4,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { PrimaryBadge } from '@components/dashboard/primary-badge'
 import { TransactionHistory } from '@components/dashboard/transaction-history'
 import { WalletAssetsContent } from '@components/dashboard/wallet-assets-content'
-import { TransferDialog } from '@components/next/transfer-dialog'
+import { TransferDialog } from '@components/transfer-dialog'
 import { PillButton } from '@components/ui/PillButton'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { useAccounts } from '@hooks/useAccounts'
 import { useWalletHoldings } from '@hooks/useWalletHoldings'
 
-export const Route = createFileRoute('/next/dashboard/wallet/$walletId')({
+export const Route = createFileRoute('/dashboard/wallet/$walletId')({
     component: RouteComponent,
 })
 
