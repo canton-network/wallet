@@ -1,11 +1,11 @@
-# @canton-network/core-origin-check
+# @canton-network/core-origin-manager
 
 This package provides a secure cross-window communication mechanism for verifying the origin of messages in a browser environment. It implements a handshake protocol to validate and track allowed origins before permitting inter-window communication.
 
 ## Installation
 
 ```sh
-yarn add @canton-network/core-origin-check
+yarn add @canton-network/core-origin-manager
 ```
 
 ## Overview

@@ -85,12 +85,12 @@ export class ParentWindowOriginManager extends OriginManager {
         ReturnType<typeof setInterval>
     >()
 
-    public poll(origin: Location['origin']) {
+    public poll(origin: Location['origin'], intervalMs = 500) {
         const intervalID = setInterval(() => {
             this.handshake({
                 origin,
             })
-        }, 500)
+        }, intervalMs)
         this.intervalMap.set(origin, intervalID)
     }
 
