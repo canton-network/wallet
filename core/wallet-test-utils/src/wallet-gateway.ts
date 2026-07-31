@@ -131,19 +131,23 @@ export class WalletGatewayPage {
             throw new Error(`did not find partyID for ${args.partyHint}`)
         }
 
-        if (args.signingProvider == 'blockdaemon') {
-            const allocateButton = newWallet.getByRole('button', {
-                name: 'Allocate party',
-                exact: true,
-            })
-
-            if (await allocateButton.isVisible().catch(() => false)) {
-                await allocateButton.click()
-                await expect(allocateButton).not.toBeVisible({ timeout: 15000 })
-            }
-        }
-
         return partyId
+    }
+
+    async allocateWalletParty(partyId: string): Promise<void> {
+        await this.gotoPartiesPage()
+        const walletCard = this.page
+            .locator(`wg-wallet-card[party-id="${partyId}"]`)
+            .first()
+        await expect(walletCard).toBeVisible({ timeout: 15000 })
+        const allocateButton = walletCard.getByRole('button', {
+            name: 'Allocate party',
+            exact: true,
+        })
+        if (await allocateButton.isVisible().catch(() => false)) {
+            await allocateButton.click()
+            await expect(allocateButton).not.toBeVisible({ timeout: 30000 })
+        }
     }
 
     async getWalletExternalTxId(partyId: string): Promise<string> {
@@ -264,20 +268,23 @@ export class WalletGatewayPage {
     }
 
     private async gotoPartiesPage(): Promise<void> {
-        await this.page.locator('button[aria-haspopup="menu"]').click()
-        await this.page
-            .getByRole('button', { name: 'Parties', exact: true })
-            .click()
+        if (!this.page.url().includes('/parties')) {
+            await this.page.locator('button[aria-haspopup="menu"]').click()
+            await this.page
+                .getByRole('button', { name: 'Parties', exact: true })
+                .click()
+            await this.page.waitForURL(/\/parties/, { timeout: 15000 })
+        }
         await this.waitForPartiesPageReady()
     }
 
     private async waitForPartiesPageReady(): Promise<void> {
+        await expect(this.page.getByText('Loading parties...')).not.toBeVisible(
+            { timeout: 30000 }
+        )
         await expect(
             this.page.getByRole('button', { name: 'New' })
         ).toBeVisible({ timeout: 15000 })
-        await expect(
-            this.page.getByText('Loading parties...')
-        ).not.toBeVisible()
     }
 }
 
@@ -361,6 +368,11 @@ export class WalletGateway {
     async setPrimaryWallet(partyId: string): Promise<void> {
         const page = await this.getPage()
         return page.setPrimaryWallet(partyId)
+    }
+
+    async allocateWalletParty(partyId: string): Promise<void> {
+        const page = await this.getPage()
+        return page.allocateWalletParty(partyId)
     }
 
     async createWalletIfNotExists(args: {
@@ -576,23 +588,6 @@ export class WalletGateway {
                 throw e
             }
         }
-    }
-
-    private async gotoPartiesPage(): Promise<void> {
-        const popup = await this.popup()
-        await popup.locator('button[aria-haspopup="menu"]').click()
-        await popup
-            .getByRole('button', { name: 'Parties', exact: true })
-            .click()
-        await this.waitForPartiesPageReady()
-    }
-
-    private async waitForPartiesPageReady(): Promise<void> {
-        const popup = await this.popup()
-        await expect(popup.getByRole('button', { name: 'New' })).toBeVisible({
-            timeout: 15000,
-        })
-        await expect(popup.getByText('Loading parties...')).not.toBeVisible()
     }
 
     async gotoNetworksPage(): Promise<void> {

@@ -73,9 +73,10 @@ export function apiKeyAuth(
             })
 
             // automatically initiate a session for the API key user
+            const sessionId = v4()
             await authStore.setSession({
-                id: v4(),
-                origin: req.ip || 'unknown', // use the requestor's IP address as the origin for the session
+                id: sessionId,
+                origin: `apikey:${matchingKey.id}`,
                 network: matchingKey.networkId,
                 accessToken: hashedApiKey,
             })
@@ -130,6 +131,14 @@ export function apiKeyAuth(
                 accessToken: serviceAccountCtx.accessToken,
                 email: matchingKey.email || undefined,
             }
+
+            // we need to override the session now, so that the accessToken matches what the controller expects (accessToken == serviceAccount token)
+            await authStore.setSession({
+                id: sessionId,
+                origin: `apikey:${matchingKey.id}`,
+                network: matchingKey.networkId,
+                accessToken: serviceAccountCtx.accessToken,
+            })
 
             req.authContext = context
             return next()

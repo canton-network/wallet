@@ -71,7 +71,10 @@ export const dappController = (
 
     return buildController({
         connect: async () => {
-            if (!context || !(await store.getSession(context.accessToken))) {
+            const session =
+                context && (await store.getSession(context.accessToken))
+
+            if (!context || !session) {
                 return {
                     isConnected: false,
                     isNetworkConnected: false,
@@ -80,7 +83,6 @@ export const dappController = (
                 } satisfies ConnectResult
             }
 
-            // const session = await store.getSession()
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
@@ -90,11 +92,9 @@ export const dappController = (
                     logger
                 ),
             })
-            const session = await store.getSession(context.accessToken)
-            const sessionId = session!.id
 
             const status = await networkStatus(ledgerClient)
-            const notifier = notificationService.getNotifier(sessionId)
+            const notifier = notificationService.getNotifier(session.id)
             const provider = {
                 id: kernelInfo.id,
                 version: 'TODO',
