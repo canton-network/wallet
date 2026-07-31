@@ -33,7 +33,7 @@ import { useOffers } from '@hooks/useOffers'
 const SIDEBAR_WIDTH = (theme: Theme) =>
     `clamp(${theme.spacing(25)}, 18vw, ${theme.spacing(35)})`
 
-export const Route = createFileRoute('/next/dashboard')({
+export const Route = createFileRoute('/dashboard')({
     component: RouteComponent,
 })
 
@@ -67,7 +67,7 @@ function RouteComponent() {
     }
 
     if (!status?.connection?.isConnected) {
-        return <Navigate to="/next/connect" replace />
+        return <Navigate to="/connect" replace />
     }
 
     return (
@@ -117,10 +117,10 @@ function RouteComponent() {
 
                     <Box sx={{ display: 'grid', gap: 0.5 }}>
                         <SidebarLink
-                            to="/next/dashboard"
+                            to="/dashboard"
                             active={Boolean(
                                 matchRoute({
-                                    to: '/next/dashboard',
+                                    to: '/dashboard',
                                 })
                             )}
                             icon={<DashboardIcon fontSize="small" />}
@@ -128,8 +128,8 @@ function RouteComponent() {
                             Dashboard
                         </SidebarLink>
                         <SidebarLink
-                            to="/next/dashboard/offers"
-                            active={pathname === '/next/dashboard/offers'}
+                            to="/dashboard/offers"
+                            active={pathname === '/dashboard/offers'}
                             icon={<NotificationsNoneIcon fontSize="small" />}
                             endAdornment={
                                 activeOfferCount > 0 ? (
@@ -162,11 +162,11 @@ function RouteComponent() {
                         {wallets.map((wallet) => (
                             <SidebarLink
                                 key={wallet.partyId}
-                                to="/next/dashboard/wallet/$walletId"
+                                to="/dashboard/wallet/$walletId"
                                 params={{ walletId: wallet.partyId }}
                                 active={Boolean(
                                     matchRoute({
-                                        to: '/next/dashboard/wallet/$walletId',
+                                        to: '/dashboard/wallet/$walletId',
                                         params: { walletId: wallet.partyId },
                                     })
                                 )}
@@ -198,15 +198,15 @@ function RouteComponent() {
                             Disconnect
                         </PillButton>
                         <SidebarLink
-                            to="/next/dashboard/settings"
-                            active={pathname === '/next/dashboard/settings'}
+                            to="/dashboard/settings"
+                            active={pathname === '/dashboard/settings'}
                             icon={<SettingsIcon fontSize="small" />}
                         >
                             Settings
                         </SidebarLink>
                         <SidebarLink
-                            to="/next/dashboard/faq"
-                            active={pathname === '/next/dashboard/faq'}
+                            to="/dashboard/faq"
+                            active={pathname === '/dashboard/faq'}
                             icon={<HelpOutlineOutlinedIcon fontSize="small" />}
                         >
                             FAQ

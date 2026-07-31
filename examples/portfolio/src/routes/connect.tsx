@@ -3,7 +3,7 @@ import { createFileRoute, Navigate } from '@tanstack/react-router'
 import { PillButton } from '@components/ui/PillButton'
 import { useConnection } from '@contexts/ConnectionContext'
 
-export const Route = createFileRoute('/next/connect')({
+export const Route = createFileRoute('/connect')({
     component: RouteComponent,
 })
 
@@ -11,7 +11,7 @@ function RouteComponent() {
     const { connect, status } = useConnection()
 
     if (status?.connection?.isConnected) {
-        return <Navigate to="/next/dashboard" />
+        return <Navigate to="/dashboard" />
     }
 
     return (

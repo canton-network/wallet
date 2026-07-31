@@ -32,7 +32,7 @@ const FAQ_ITEMS = [
     },
 ] as const
 
-export const Route = createFileRoute('/next/dashboard/faq')({
+export const Route = createFileRoute('/dashboard/faq')({
     component: RouteComponent,
 })
 
