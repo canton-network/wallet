@@ -14,20 +14,26 @@ import {
 import { ParentWindowOriginManager, ChildWindowOriginManager } from './manager'
 import { OriginHandshakeMessage } from './types'
 
-const exampleOrigin = 'http://example.com'
-const falseOrigin = 'http://false.origin.com'
+const { postMessage, exampleOrigin, falseOrigin } = vi.hoisted(() => {
+    const exampleOrigin = 'http://example.com'
+    const falseOrigin = 'http://false.origin.com'
 
-const { openerPostMessageSpy } = vi.hoisted(() => {
     // Mock window.opener with a postMessage method
-    const mockOpener = { postMessage: vi.fn() }
+    const postMessage = vi.fn()
+    const windowOpener = {
+        postMessage,
+        origin: exampleOrigin,
+    }
     Object.defineProperty(window, 'opener', {
-        value: mockOpener,
+        value: windowOpener,
         writable: true,
         configurable: true,
     })
 
     return {
-        openerPostMessageSpy: mockOpener.postMessage as Mock,
+        postMessage,
+        exampleOrigin,
+        falseOrigin,
     }
 })
 
@@ -178,7 +184,7 @@ describe('manager', () => {
                 })
             )
 
-            expect(openerPostMessageSpy).toHaveBeenCalledExactlyOnceWith(
+            expect(postMessage).toHaveBeenCalledExactlyOnceWith(
                 {
                     message:
                         OriginHandshakeMessage.enum
@@ -206,9 +212,9 @@ describe('manager', () => {
 
             vi.clearAllMocks()
 
-            childWindowManager.postMessage(testMessage, exampleOrigin)
+            childWindowManager.postMessage(testMessage)
 
-            expect(openerPostMessageSpy).toHaveBeenCalledExactlyOnceWith(
+            expect(postMessage).toHaveBeenCalledExactlyOnceWith(
                 testMessage,
                 exampleOrigin
             )
@@ -217,9 +223,9 @@ describe('manager', () => {
         it('should not send postMessage when origin is not allowed', () => {
             const testMessage = { test: 'data' }
 
-            childWindowManager.postMessage(testMessage, falseOrigin)
+            childWindowManager.postMessage(testMessage)
 
-            expect(openerPostMessageSpy).not.toHaveBeenCalled()
+            expect(postMessage).not.toHaveBeenCalled()
         })
     })
 })
