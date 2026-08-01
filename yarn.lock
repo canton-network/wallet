@@ -1485,9 +1485,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@canton-network/core-origin-check@workspace:core/origin-check":
+"@canton-network/core-origin-manager@workspace:^, @canton-network/core-origin-manager@workspace:core/origin-manager":
   version: 0.0.0-use.local
-  resolution: "@canton-network/core-origin-check@workspace:core/origin-check"
+  resolution: "@canton-network/core-origin-manager@workspace:core/origin-manager"
   dependencies:
     "@vitest/browser-playwright": "npm:^4.1.10"
     "@vitest/coverage-v8": "npm:^4.1.10"
@@ -1506,6 +1506,7 @@ __metadata:
   resolution: "@canton-network/core-provider-dapp@workspace:core/provider-dapp"
   dependencies:
     "@canton-network/core-ledger-client-types": "workspace:^"
+    "@canton-network/core-origin-manager": "workspace:^"
     "@canton-network/core-rpc-transport": "workspace:^"
     "@canton-network/core-splice-provider": "workspace:^"
     "@canton-network/core-types": "workspace:^"
@@ -1572,6 +1573,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@canton-network/core-rpc-transport@workspace:core/rpc-transport"
   dependencies:
+    "@canton-network/core-origin-manager": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@vitest/browser-playwright": "npm:^4.1.10"
     "@vitest/coverage-v8": "npm:^4.1.10"

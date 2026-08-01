@@ -12,6 +12,9 @@ abstract class OriginManager {
         window.addEventListener('message', this.listener)
     }
 
+    /**
+     * Returns the complementary handshake message to send.
+     */
     protected get messageToSend() {
         return this.messageToReceive ===
             OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
@@ -19,6 +22,9 @@ abstract class OriginManager {
             : OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
     }
 
+    /**
+     * Validates and processes incoming handshake messages.
+     */
     private listener = (event: MessageEvent) => {
         const parsedData = OriginHandshake.safeParse(event.data)
         if (
@@ -31,6 +37,9 @@ abstract class OriginManager {
         this.listenerCallback(event)
     }
 
+    /**
+     * Sends a handshake message to the target window and origin.
+     */
     protected handshake(options: {
         window?: Window
         origin: Location['origin']
@@ -44,14 +53,23 @@ abstract class OriginManager {
         )
     }
 
+    /**
+     * Returns true when the origin has completed handshake validation.
+     */
     public assert(origin: Location['origin']) {
         return this.allowedOrigins.has(origin)
     }
 
+    /**
+     * Unregisters the handshake message listener.
+     */
     public removeListener() {
         window.removeEventListener('message', this.listener)
     }
 
+    /**
+     * Posts a message only when the target origin is trusted.
+     */
     protected postMessageFactory(
         message: unknown,
         options: {
@@ -64,6 +82,9 @@ abstract class OriginManager {
         options.window.postMessage(message, options.origin)
     }
 
+    /**
+     * Sends an arbitrary message to a previously trusted origin.
+     */
     public abstract postMessage: (
         message: unknown,
         origin: Location['origin']
@@ -73,6 +94,9 @@ abstract class OriginManager {
 export class ParentWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
         OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+    /**
+     * Stops polling once an ACK is received for a tracked origin.
+     */
     protected readonly listenerCallback = (event: MessageEvent) => {
         const associatedIntervalID = this.intervalMap.get(event.origin)
         if (associatedIntervalID) {
@@ -85,6 +109,9 @@ export class ParentWindowOriginManager extends OriginManager {
         ReturnType<typeof setInterval>
     >()
 
+    /**
+     * Starts periodically broadcasting handshake messages to the child origin.
+     */
     public poll(origin: Location['origin'], intervalMs = 500) {
         const intervalID = setInterval(() => {
             this.handshake({
@@ -94,6 +121,9 @@ export class ParentWindowOriginManager extends OriginManager {
         this.intervalMap.set(origin, intervalID)
     }
 
+    /**
+     * Sends a message from the parent window to a trusted origin.
+     */
     public postMessage = (message: unknown, origin: Location['origin']) =>
         this.postMessageFactory(message, {
             window,
@@ -104,6 +134,9 @@ export class ParentWindowOriginManager extends OriginManager {
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
         OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+    /**
+     * Replies to parent handshake messages and then removes the listener.
+     */
     protected readonly listenerCallback = (event: MessageEvent) => {
         this.handshake({
             window: window.opener,
@@ -112,9 +145,12 @@ export class ChildWindowOriginManager extends OriginManager {
         this.removeListener()
     }
 
-    public postMessage = (message: unknown, origin: Location['origin']) =>
+    /**
+     * Sends a message from the child window to a trusted parent origin.
+     */
+    public postMessage = (message: unknown) =>
         this.postMessageFactory(message, {
             window: window.opener,
-            origin,
+            origin: window.opener.origin,
         })
 }
