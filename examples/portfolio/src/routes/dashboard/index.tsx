@@ -4,11 +4,11 @@ import { Box, Typography } from '@mui/material'
 import { createFileRoute } from '@tanstack/react-router'
 import { AllAssetsContent } from '@components/dashboard/all-assets-content'
 import { ActionRequiredSection } from '@components/dashboard/action-required-section'
-import { TransferDialog } from '@components/next/transfer-dialog'
+import { TransferDialog } from '@components/transfer-dialog'
 import { useActionRequiredItems } from '@hooks/useActionRequiredItems'
 import { useAllAccountAssets } from '@hooks/useAllAccountAssets'
 
-export const Route = createFileRoute('/next/dashboard/')({
+export const Route = createFileRoute('/dashboard/')({
     component: RouteComponent,
 })
 
