@@ -74,7 +74,6 @@ export class WindowTransport implements RpcTransport {
         if (!this.notificationListener) {
             this.notificationListener = (event: MessageEvent) => {
                 if (
-                    event.origin !== window.location.origin ||
                     !isSpliceMessageEvent(event) ||
                     event.data.type !== WalletEvent.SPLICE_WALLET_REQUEST
                 ) {
@@ -132,7 +131,6 @@ export class WindowTransport implements RpcTransport {
         return new Promise<SuccessResponse>((resolve, reject) => {
             const listener = (event: MessageEvent) => {
                 if (
-                    event.origin !== window.location.origin ||
                     !isSpliceMessageEvent(event) ||
                     event.data.type !== WalletEvent.SPLICE_WALLET_RESPONSE ||
                     event.data.response.id !== message.request.id

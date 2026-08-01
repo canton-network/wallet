@@ -123,10 +123,7 @@ export class RemoteAdapter implements ProviderAdapter {
         })
 
         window.addEventListener('message', (event: MessageEvent) => {
-            if (
-                event.origin === window.location.origin &&
-                event.data?.type === WalletEvent.SPLICE_WALLET_LOGOUT
-            ) {
+            if (event.data?.type === WalletEvent.SPLICE_WALLET_LOGOUT) {
                 clearAllLocalState({ closePopup: true })
                 provider.emit<StatusEvent>('statusChanged', {
                     provider: {

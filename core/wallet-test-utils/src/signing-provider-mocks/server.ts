@@ -214,7 +214,7 @@ export async function startSigningProviderMockServer(
 
         let body: unknown
         try {
-            body = await parseRequestBody(req as http.IncomingMessage)
+            body = await parseRequestBody(req)
         } catch (error) {
             sendJson(res, {
                 status: 400,
