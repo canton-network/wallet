@@ -105,6 +105,8 @@ test('dApp: execute externally signed tx', async ({
                     /"payload": \{[\s\S]*"updateId": "[^"]+"[\s\S]*"completionOffset": \d+/,
             })
     ).toHaveCount(1)
+
+    await wg.expectActivityWithStatus(commandId.commandId, 'executed')
 })
 
 test('connection status handling edge cases', async ({ page: dappPage }) => {
