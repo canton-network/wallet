@@ -127,11 +127,7 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
 
         // Listen for the auth success event sent from the WK UI popup to the SDK running in the parent window.
         window.addEventListener('message', async (event) => {
-            if (
-                event.origin !== window.location.origin ||
-                !isSpliceMessageEvent(event)
-            )
-                return
+            if (!isSpliceMessageEvent(event)) return
 
             if (
                 event.data.type === WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS

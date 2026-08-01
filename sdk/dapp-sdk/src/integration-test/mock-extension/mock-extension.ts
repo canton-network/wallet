@@ -157,11 +157,7 @@ export function startMockExtension(
     }
 
     const messageHandler = (event: MessageEvent): void => {
-        if (
-            event.origin !== window.location.origin ||
-            !isSpliceMessageEvent(event)
-        )
-            return
+        if (!isSpliceMessageEvent(event)) return
         const data = event.data
 
         // Extension-Wallet readiness handshake

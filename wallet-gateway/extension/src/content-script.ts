@@ -34,7 +34,6 @@ window.addEventListener(CANTON_REQUEST_PROVIDER_EVENT, () => {
 // proxy them to the extension background script,
 // and send the response back to the dapp
 window.addEventListener('message', async (event: SpliceMessageEvent) => {
-    if (event.origin !== window.location.origin) return
     console.log('Content script received message:', event.data)
 
     const { data: msg, success } = SpliceMessage.safeParse(event.data)
