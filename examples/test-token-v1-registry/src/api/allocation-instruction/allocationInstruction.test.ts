@@ -92,7 +92,6 @@ describe('Allocation Instruction', () => {
 
     it('should successfully create factory contract', async () => {
         const request = {} as RequestType<typeof getAllocationFactory>
-
         mock.sdk.ledger.acsReader.readJsContracts
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([

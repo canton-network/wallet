@@ -27,6 +27,25 @@ export default defineConfig({
                     include: ['src/**/*.test.ts'],
                 },
             }),
+<<<<<<< HEAD
+=======
+            defineProject({
+                test: {
+                    name: 'browser',
+                    include: ['src/**/*.test.ts'],
+                    browser: {
+                        enabled: true,
+                        provider: playwright({
+                            trace: 'off',
+                            screenshot: 'off',
+                            video: 'off',
+                        }),
+                        instances: [{ browser: 'chromium' }],
+                        headless: true,
+                    },
+                },
+            }),
+>>>>>>> 8659d761 (feat(example-test-token-v1-registry): switch from koa to express (#2212))
         ],
     },
 })
