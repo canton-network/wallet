@@ -970,16 +970,11 @@ export const userController = (
                 return result
             }
 
-            const session = await store.getSession(authContext!.accessToken)
-            if (!session) {
-                throw new Error('No active session found')
-            }
-            const notifier = notificationService.getNotifier(session.id)
-
             const wallets = await store.getWallets()
             notificationService
-                .getNotifier(authContext!.userId)
+                .getNotifier(userId)
                 .emit('accountsChanged', wallets)
+
             return result
         },
         isWalletSyncNeeded: async (): Promise<IsWalletSyncNeededResult> => {
