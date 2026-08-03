@@ -143,10 +143,23 @@ export function runDamlCodegen(options: {
     outputDir?: string
 }): void {
     const { darFileName, workingDir, outputDir = '.' } = options
+    const darCandidates = [
+        path.join(workingDir, darFileName),
+        path.join(workingDir, '.daml', 'dist', darFileName),
+    ]
+    const darPath = darCandidates.find((candidate) => fs.existsSync(candidate))
+
+    if (!darPath) {
+        throw new Error(
+            `DAR file not found after build. Checked: ${darCandidates.join(', ')}`
+        )
+    }
+
+    const darPathForCodegen = path.relative(workingDir, darPath)
     console.log(info('Running "dpm codegen-js"...'))
     try {
         console.log(info(`dpm codegen-js`))
-        execSync(`dpm codegen-js ${darFileName} -o ${outputDir}`, {
+        execSync(`dpm codegen-js ${darPathForCodegen} -o ${outputDir}`, {
             cwd: workingDir,
             stdio: 'inherit',
         })
