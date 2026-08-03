@@ -4,8 +4,8 @@
 import { PartyId } from '@canton-network/core-types'
 import { AssetBody } from '../../asset/index.js'
 import {
-    allocationInstructionRegistryTypes,
     AllocationSpecification,
+    OffLedger,
 } from '@canton-network/core-token-standard'
 
 export type AllocationInstructionCreateParams = {
@@ -15,14 +15,14 @@ export type AllocationInstructionCreateParams = {
     requestedAt?: string
     prefetchedRegistryChoiceContext?: {
         factoryId: string
-        choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
+        choiceContext: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     }
 }
 
 export type AllocationParams = {
     allocationCid: string
     asset: AssetBody
-    prefetchedRegistryChoiceContext?: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
+    prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
 }
 
 export type AllocationContextParams = {
