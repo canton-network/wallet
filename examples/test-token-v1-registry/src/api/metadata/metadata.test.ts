@@ -6,9 +6,10 @@ import { getRegistryInfo } from './getRegistryInfo'
 import { getInstrument } from './getInstrument'
 import { listInstruments } from './listInstruments'
 import { instruments, supportedApis } from './common'
-import { Handler } from 'openapi-backend'
+import { expressContext, RequestType } from '../../__test__/mocks'
+import { APIError } from '../common'
 
-const emptyCtx = {} as Parameters<Handler>[0]
+const { req, res, next } = expressContext
 
 vi.mock('../../common/operator', () => ({
     operator: {
@@ -21,50 +22,46 @@ describe('Metadata', () => {
         vi.clearAllMocks()
     })
 
-    it('should get registry info', async () => {
-        const result = await getRegistryInfo(emptyCtx)
+    it('should get registry info', () => {
+        getRegistryInfo({} as RequestType<typeof getRegistryInfo>, res, next)
 
-        expect(result).toStrictEqual({
-            payload: {
-                adminId: 'admin',
-                supportedApis,
-            },
+        expect(res.json).toHaveBeenCalledWith({
+            adminId: 'admin',
+            supportedApis,
         })
     })
 
-    it('should list instruments', async () => {
-        const result = await listInstruments(emptyCtx)
+    it('should list instruments', () => {
+        listInstruments({} as RequestType<typeof listInstruments>, res, next)
 
-        expect(result).toStrictEqual({
-            payload: {
-                instruments,
-            },
+        expect(res.json).toHaveBeenCalledWith({
+            instruments,
         })
     })
 
-    it('should return error when trying to get non-existing instrument', async () => {
-        const result = await getInstrument({
-            request: {
-                params: {
-                    instrumentId: 'id',
-                },
-            },
-        } as Parameters<Handler>[0])
-
-        expect(result.status).toBe(404)
+    it('should return error when trying to get non-existing instrument', () => {
+        req.params = {
+            instrumentId: 'id',
+        }
+        expect(() =>
+            getInstrument(
+                req as unknown as RequestType<typeof getInstrument>,
+                res,
+                next
+            )
+        ).toThrow(new APIError(404, 'Instrument not found'))
     })
 
-    it('should get existing instrument', async () => {
-        const result = await getInstrument({
-            request: {
-                params: {
-                    instrumentId: instruments[0].id,
-                },
-            },
-        } as Parameters<Handler>[0])
+    it('should get existing instrument', () => {
+        req.params = {
+            instrumentId: instruments[0].id,
+        }
+        getInstrument(
+            req as unknown as RequestType<typeof getInstrument>,
+            res,
+            next
+        )
 
-        expect(result).toStrictEqual({
-            payload: instruments[0],
-        })
+        expect(res.json).toHaveBeenCalledWith(instruments[0])
     })
 })
