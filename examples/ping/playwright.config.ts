@@ -101,32 +101,16 @@ export default defineConfig({
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
-            testIgnore: ['**/multisession.spec.ts'],
         },
-        {
-            name: 'chromium-multisession',
-            use: { ...devices['Desktop Chrome'] },
-            testMatch: ['**/multisession.spec.ts'],
-            dependencies: ['chromium'],
-        },
-
         {
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
-            testIgnore: ['**/multisession.spec.ts'],
-        },
-        {
-            name: 'firefox-multisession',
-            use: { ...devices['Desktop Firefox'] },
-            testMatch: ['**/multisession.spec.ts'],
-            dependencies: ['firefox'],
         },
 
         // {
         //     name: 'webkit',
         //     use: { ...devices['Desktop Safari'] },
         // },
-
         /* Test against mobile viewports. */
         // {
         //   name: 'Mobile Chrome',
@@ -136,7 +120,6 @@ export default defineConfig({
         //   name: 'Mobile Safari',
         //   use: { ...devices['iPhone 12'] },
         // },
-
         /* Test against branded browsers. */
         // {
         //   name: 'Microsoft Edge',
