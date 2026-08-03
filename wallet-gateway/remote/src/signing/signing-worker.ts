@@ -185,7 +185,7 @@ export class SigningWorker {
             return
         }
 
-        const session = await this.options.store.getSession(
+        const session = await store.getSession(
             runContext.authContext.accessToken
         )
 
@@ -198,7 +198,7 @@ export class SigningWorker {
         }
 
         const notifier = this.options.notificationService.getNotifier(
-            session.id
+            runContext.authContext.userId
         )
 
         const transactionLogger = this.options.logger.child({

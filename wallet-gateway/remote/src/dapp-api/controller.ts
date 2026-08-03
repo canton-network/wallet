@@ -276,9 +276,7 @@ export const dappController = (
                 accessTokenProvider,
             })
 
-            const session = await store.getSession(context.accessToken)
-            const sessionId = session!.id
-            const notifier = notificationService.getNotifier(sessionId)
+            const notifier = notificationService.getNotifier(context.userId)
 
             const commandId = params.commandId || v4()
             const transactionId = v4()

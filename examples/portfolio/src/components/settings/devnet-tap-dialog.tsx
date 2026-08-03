@@ -77,6 +77,11 @@ export function DevNetTapDialog({ open, onClose }: DevNetTapDialogProps) {
         },
     })
 
+    console.log('HEEEYYYYYYYYYYYYY YOOUUU GUYS', {
+        sessionToken,
+        primaryParty,
+        sdk,
+    })
     const disabled = !sessionToken || !primaryParty || !sdk
 
     const handleClose = () => {

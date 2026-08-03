@@ -66,9 +66,12 @@ export const dapp = (
         res.setHeader('X-Accel-Buffering', 'no')
         res.flushHeaders?.()
 
-        // TODO: use separate notifiers per event type i.e.
-        // onAccountsChanged should use a user-level notifier, statusChanged should use session-level notifier
-        const notifier = notificationService.getNotifier(sessionId)
+        // Events scoped to the user (e.g. wallet/account changes) are broadcast
+        // across all of that user's sessions; events scoped to a session (e.g.
+        // transaction progress, connection status) are delivered only to the
+        // session that originated them.
+        const sessionNotifier = notificationService.getNotifier(sessionId)
+        const userNotifier = notificationService.getNotifier(context.userId)
 
         const onAccountsChanged = (...event: unknown[]) => {
             writeSSE(res, 'accountsChanged', event)
@@ -96,21 +99,24 @@ export const dapp = (
             res.end()
         }
 
-        notifier.on('accountsChanged', onAccountsChanged)
-        notifier.on('connected', onConnected)
-        notifier.on('statusChanged', onStatusChanged)
-        notifier.on('txChanged', onTxChanged)
-        notifier.on('messageSignature', onMessageSignature)
-        notifier.on('logout', onLogout)
+        userNotifier.on('accountsChanged', onAccountsChanged)
+        sessionNotifier.on('connected', onConnected)
+        sessionNotifier.on('statusChanged', onStatusChanged)
+        userNotifier.on('txChanged', onTxChanged)
+        sessionNotifier.on('messageSignature', onMessageSignature)
+        sessionNotifier.on('logout', onLogout)
 
         const cleanup = () => {
             logger.debug('SSE client disconnected')
-            notifier.removeListener('accountsChanged', onAccountsChanged)
-            notifier.removeListener('connected', onConnected)
-            notifier.removeListener('statusChanged', onStatusChanged)
-            notifier.removeListener('txChanged', onTxChanged)
-            notifier.removeListener('messageSignature', onMessageSignature)
-            notifier.removeListener('logout', onLogout)
+            userNotifier.removeListener('accountsChanged', onAccountsChanged)
+            sessionNotifier.removeListener('connected', onConnected)
+            sessionNotifier.removeListener('statusChanged', onStatusChanged)
+            userNotifier.removeListener('txChanged', onTxChanged)
+            sessionNotifier.removeListener(
+                'messageSignature',
+                onMessageSignature
+            )
+            sessionNotifier.removeListener('logout', onLogout)
         }
 
         req.on('close', cleanup)
