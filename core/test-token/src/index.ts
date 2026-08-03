@@ -3,3 +3,4 @@
 
 export * from './token'
 export * from './commands'
+export * from './utils'
