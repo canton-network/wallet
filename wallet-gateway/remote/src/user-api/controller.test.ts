@@ -512,7 +512,7 @@ describe('userController', () => {
         it('sets the primary wallet and emits accountsChanged', async () => {
             const store = await createStore(logger, auth)
             const setPrimarySpy = vi.spyOn(store, 'setPrimaryWallet')
-            const notifier = notificationService.getNotifier('session-1')
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1352,7 +1352,7 @@ describe('userController', () => {
                 primary: false,
             }
             walletAllocationMocks.createWallet.mockResolvedValue(newWallet)
-            const notifier = notificationService.getNotifier('session-1')
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1439,7 +1439,7 @@ describe('userController', () => {
         it('allocates a party for an existing wallet', async () => {
             const authWithEmail = { ...auth, email: 'user@example.com' }
             const store = await createStore(logger, authWithEmail)
-            const notifier = notificationService.getNotifier('session-1')
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1568,7 +1568,7 @@ describe('userController', () => {
 
         it('emits accountsChanged when wallets are added and disabled during sync', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier('session-1')
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const addedWallet: Wallet = {
                 ...primaryWallet,

@@ -600,7 +600,7 @@ describe('dappController', () => {
             })
             const store = await createStore(logger, auth)
             const setTransactionSpy = vi.spyOn(store, 'setTransaction')
-            const notifier = notificationService.getNotifier('session-1')
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
