@@ -11,8 +11,8 @@ export default defineConfig({
             exclude: [
                 'src/index.ts',
                 'src/router.ts',
-                'src/**/openapi-ts/**',
                 'src/scripts/**',
+                'src/api/*/index.ts',
                 'src/common/vetDaml.ts', // for dev-mode only
             ],
             provider: 'v8',
@@ -38,7 +38,6 @@ export default defineConfig({
                 test: {
                     name: 'browser',
                     include: ['src/**/*.test.ts'],
-                    exclude: ['src/common/getOpenApiPath.test.ts'],
                     browser: {
                         enabled: true,
                         provider: playwright({

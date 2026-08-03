@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
-import { mock } from '../../__test__/mocks'
-import { emptyChoiceContext } from '../common'
-import { Handler } from 'openapi-backend'
+import { expressContext, mock, RequestType } from '../../__test__/mocks'
+import { APIError, emptyChoiceContext } from '../common'
+
+const { res, next } = expressContext
 
 vi.mock('../../common/sdk', () => {
     return {
@@ -12,8 +13,8 @@ vi.mock('../../common/sdk', () => {
     }
 })
 
-vi.mock('../../common/admin', () => ({
-    admin: {
+vi.mock('../../common/operator', () => ({
+    operator: {
         party: 'party',
         keys: {
             privateKey: 'privateKey',
@@ -23,41 +24,35 @@ vi.mock('../../common/admin', () => ({
 
 const { getAllocationFactory } = await import('./getAllocationFactory')
 
-const choiceArguments = {
-    request: {
-        body: {
-            choiceArguments: {},
-        },
-    },
-} as Parameters<Handler>[0]
-
 describe('Allocation Instruction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })
 
     it('should successfully return factory contract from acs reader', async () => {
+        const request = {} as RequestType<typeof getAllocationFactory>
+
         mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
             {
                 contractId: 'cid',
             },
         ])
 
-        const result = await getAllocationFactory(choiceArguments)
+        await getAllocationFactory(request, res, next)
 
         expect(mock.sdk.ledger.acsReader.readJsContracts).toHaveBeenCalledOnce()
-        expect(result).toStrictEqual({
-            payload: {
-                factoryId: 'cid',
-                choiceContext: emptyChoiceContext,
-            },
+        expect(res.json).toHaveBeenCalledWith({
+            factoryId: 'cid',
+            choiceContext: emptyChoiceContext,
         })
     })
 
     it('should return error in case contract creation fails', async () => {
+        const request = {} as RequestType<typeof getAllocationFactory>
+
         mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValue([])
 
-        const result = await getAllocationFactory(choiceArguments)
+        await getAllocationFactory(request, res, next)
 
         expect(mock.sdk.ledger.acsReader.readJsContracts).toHaveBeenCalledTimes(
             2
@@ -65,11 +60,15 @@ describe('Allocation Instruction', () => {
         expect(mock.prepare).toHaveBeenCalledOnce()
         expect(mock.sign).toHaveBeenCalledOnce()
         expect(mock.execute).toHaveBeenCalledOnce()
-
-        expect(result.status).toBe(500)
+        expect(next).toHaveBeenCalledWith(expect.any(APIError))
+        expect(next).toHaveBeenCalledWith(
+            expect.objectContaining({ status: 500 })
+        )
     })
 
     it('should successfully create factory contract', async () => {
+        const request = {} as RequestType<typeof getAllocationFactory>
+
         mock.sdk.ledger.acsReader.readJsContracts
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([
@@ -78,13 +77,11 @@ describe('Allocation Instruction', () => {
                 },
             ])
 
-        const result = await getAllocationFactory(choiceArguments)
+        await getAllocationFactory(request, res, next)
 
-        expect(result).toStrictEqual({
-            payload: {
-                factoryId: 'cid',
-                choiceContext: emptyChoiceContext,
-            },
+        expect(res.json).toHaveBeenCalledWith({
+            factoryId: 'cid',
+            choiceContext: emptyChoiceContext,
         })
     })
 })

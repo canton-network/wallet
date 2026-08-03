@@ -5,11 +5,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
-import { emptyChoiceContext } from '../common'
-import { mock } from '../../__test__/mocks'
-import { Handler } from 'openapi-backend'
+import { APIError, emptyChoiceContext } from '../common'
+import { expressContext, mock, RequestType } from '../../__test__/mocks'
 
-const emptyCtx = {} as Parameters<Handler>[0]
+const { res, next } = expressContext
 
 vi.mock('../../common/sdk', () => {
     return {
@@ -17,8 +16,8 @@ vi.mock('../../common/sdk', () => {
     }
 })
 
-vi.mock('../../common/admin', () => ({
-    admin: {
+vi.mock('../../common/operator', () => ({
+    operator: {
         party: 'party',
         keys: {
             privateKey: 'privateKey',
@@ -33,81 +32,92 @@ describe('Transfer Instruction', () => {
         vi.clearAllMocks()
     })
 
-    it('should get accept choice context', async () => {
-        const result = await getTransferInstructionAcceptContext(emptyCtx)
+    it('should get accept choice context', () => {
+        getTransferInstructionAcceptContext(
+            {} as RequestType<typeof getTransferInstructionAcceptContext>,
+            res,
+            next
+        )
 
-        expect(result).toStrictEqual({
-            payload: emptyChoiceContext,
-        })
+        expect(res.json).toHaveBeenCalledWith(emptyChoiceContext)
     })
 
-    it('should get reject choice context', async () => {
-        const result = await getTransferInstructionRejectContext(emptyCtx)
+    it('should get reject choice context', () => {
+        getTransferInstructionRejectContext(
+            {} as RequestType<typeof getTransferInstructionRejectContext>,
+            res,
+            next
+        )
 
-        expect(result).toStrictEqual({
-            payload: emptyChoiceContext,
-        })
+        expect(res.json).toHaveBeenCalledWith(emptyChoiceContext)
     })
 
-    it('should get withdraw choice context', async () => {
-        const result = await getTransferInstructionWithdrawContext(emptyCtx)
+    it('should get withdraw choice context', () => {
+        getTransferInstructionWithdrawContext(
+            {} as RequestType<typeof getTransferInstructionWithdrawContext>,
+            res,
+            next
+        )
 
-        expect(result).toStrictEqual({
-            payload: emptyChoiceContext,
-        })
+        expect(res.json).toHaveBeenCalledWith(emptyChoiceContext)
     })
 
     describe('transfer factory', () => {
-        const correctCtxChoiceArguments = {
-            request: {
+        const getTransferFactoryRequest = (choiceArguments: {
+            sender?: string
+            receiver?: string
+            transferKind?: 'self' | 'offer' | 'direct'
+        }) =>
+            ({
                 body: {
-                    choiceArguments: {
-                        sender: 's',
-                        receiver: 'r',
-                    },
+                    choiceArguments,
+                    excludeDebugFields: false,
                 },
-            },
-        } as Parameters<Handler>[0]
-
-        const incorrectCtxChoiceArguments = {
-            request: {
-                body: {
-                    choiceArguments: {},
-                },
-            },
-        } as Parameters<Handler>[0]
+            }) as unknown as RequestType<typeof getTransferFactory>
 
         it('should fail if provided request body is invalid', async () => {
-            const result = await getTransferFactory(incorrectCtxChoiceArguments)
+            const invalidRequest = getTransferFactoryRequest({})
 
-            expect(result.status).toBe(400)
+            await getTransferFactory(invalidRequest, res, next)
+
+            expect(next).toHaveBeenCalledWith(expect.any(APIError))
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({ status: 400 })
+            )
+            expect(res.json).not.toHaveBeenCalled()
         })
 
         it('should successfully return factory contract from acs reader', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
             mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
                 {
                     contractId: 'cid',
                 },
             ])
 
-            const result = await getTransferFactory(correctCtxChoiceArguments)
+            await getTransferFactory(request, res, next)
 
             expect(
                 mock.sdk.ledger.acsReader.readJsContracts
             ).toHaveBeenCalledOnce()
-            expect(result).toStrictEqual({
-                payload: {
-                    factoryId: 'cid',
-                    transferKind: 'offer',
-                    choiceContext: emptyChoiceContext,
-                },
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'offer',
+                choiceContext: emptyChoiceContext,
             })
         })
 
         it('should return error in case contract creation fails', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
             mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValue([])
 
-            const result = await getTransferFactory(correctCtxChoiceArguments)
+            await getTransferFactory(request, res, next)
 
             expect(
                 mock.sdk.ledger.acsReader.readJsContracts
@@ -115,11 +125,16 @@ describe('Transfer Instruction', () => {
             expect(mock.prepare).toHaveBeenCalledOnce()
             expect(mock.sign).toHaveBeenCalledOnce()
             expect(mock.execute).toHaveBeenCalledOnce()
-
-            expect(result.status).toBe(500)
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({ status: 500 })
+            )
         })
 
         it('should successfully create factory contract', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
             mock.sdk.ledger.acsReader.readJsContracts
                 .mockResolvedValueOnce([])
                 .mockResolvedValueOnce([
@@ -128,35 +143,35 @@ describe('Transfer Instruction', () => {
                     },
                 ])
 
-            const result = await getTransferFactory(correctCtxChoiceArguments)
+            await getTransferFactory(request, res, next)
 
-            expect(result).toStrictEqual({
-                payload: {
-                    factoryId: 'cid',
-                    transferKind: 'offer',
-                    choiceContext: emptyChoiceContext,
-                },
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'offer',
+                choiceContext: emptyChoiceContext,
             })
         })
 
         it('should change transfer kind if sender and receiver is equal', async () => {
-            const ctxChoiceArguments = { ...correctCtxChoiceArguments }
-            ctxChoiceArguments.request.body.choiceArguments.receiver = 's'
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 's',
+            })
             mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
                 {
                     contractId: 'cid',
                 },
             ])
 
-            const acsCacheResult = await getTransferFactory(ctxChoiceArguments)
+            await getTransferFactory(request, res, next)
 
-            expect(acsCacheResult).toStrictEqual({
-                payload: {
-                    factoryId: 'cid',
-                    transferKind: 'self',
-                    choiceContext: emptyChoiceContext,
-                },
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'self',
+                choiceContext: emptyChoiceContext,
             })
+
+            vi.clearAllMocks()
 
             mock.sdk.ledger.acsReader.readJsContracts
                 .mockResolvedValueOnce([])
@@ -166,21 +181,21 @@ describe('Transfer Instruction', () => {
                     },
                 ])
 
-            const result = await getTransferFactory(ctxChoiceArguments)
+            await getTransferFactory(request, res, next)
 
-            expect(result).toStrictEqual({
-                payload: {
-                    factoryId: 'cid',
-                    transferKind: 'self',
-                    choiceContext: emptyChoiceContext,
-                },
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'self',
+                choiceContext: emptyChoiceContext,
             })
         })
 
         it('should set transfer kind overwrite', async () => {
-            const ctxChoiceArguments = { ...correctCtxChoiceArguments }
-            ctxChoiceArguments.request.body.choiceArguments.transferKind =
-                'direct'
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+                transferKind: 'direct',
+            })
 
             mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
                 {
@@ -188,15 +203,15 @@ describe('Transfer Instruction', () => {
                 },
             ])
 
-            const acsCacheResult = await getTransferFactory(ctxChoiceArguments)
+            await getTransferFactory(request, res, next)
 
-            expect(acsCacheResult).toStrictEqual({
-                payload: {
-                    factoryId: 'cid',
-                    transferKind: 'direct',
-                    choiceContext: emptyChoiceContext,
-                },
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'direct',
+                choiceContext: emptyChoiceContext,
             })
+
+            vi.clearAllMocks()
 
             mock.sdk.ledger.acsReader.readJsContracts
                 .mockResolvedValueOnce([])
@@ -206,14 +221,12 @@ describe('Transfer Instruction', () => {
                     },
                 ])
 
-            const result = await getTransferFactory(ctxChoiceArguments)
+            await getTransferFactory(request, res, next)
 
-            expect(result).toStrictEqual({
-                payload: {
-                    factoryId: 'cid',
-                    transferKind: 'direct',
-                    choiceContext: emptyChoiceContext,
-                },
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'direct',
+                choiceContext: emptyChoiceContext,
             })
         })
     })
