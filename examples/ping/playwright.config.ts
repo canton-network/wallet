@@ -64,16 +64,25 @@ if (fireblocksApiPath) {
     }
 }
 
+const externalSigningProviderTests = [
+    '**/blockdaemon.spec.ts',
+    '**/dfns.spec.ts',
+    '**/fireblocks.spec.ts',
+]
+
+// Fork PR workflows set CI_SECRET_DEPENDENCY to "false" (repo vars unavailable).
+// When unset (local dev), external signing e2e tests still run against mocks in .env.
+const includeCiSecretDependency = process.env.CI_SECRET_DEPENDENCY !== 'false'
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
     timeout: 120 * 1000,
     testDir: './tests',
-    // globalSetup: './tests/global-setup.ts',
-    // testIgnore: false && includeCiSecretDependency
-    //     ? undefined
-    //     : ['**/blockdaemon.spec.ts'],
+    testIgnore: includeCiSecretDependency
+        ? undefined
+        : externalSigningProviderTests,
     /* Run tests in files in parallel */
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
