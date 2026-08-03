@@ -7,6 +7,7 @@ import { base } from '../../tsdown.base.ts'
 export default defineConfig({
     ...base,
     entry: ['src/index.ts'],
+    platform: 'node',
     outputOptions: {
         exports: 'named',
     },
