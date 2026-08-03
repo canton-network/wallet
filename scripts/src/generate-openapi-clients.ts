@@ -14,11 +14,11 @@ import {
     getNetworkArg,
     pruneVersionedFiles,
     SPLICE_SPEC_PATH,
-    success,
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
     warn,
+    success,
 } from './lib/utils.js'
 import * as fs from 'fs'
 import generateSchema, { astToString } from 'openapi-typescript'
@@ -26,7 +26,6 @@ import * as path from 'path'
 import crypto from 'crypto'
 import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.js'
 import { load as loadYaml } from 'js-yaml'
-import { generateRegistryServerStub } from './lib/generate-registry-server.js'
 
 /**
  * OpenAPI specification details.
@@ -255,10 +254,7 @@ async function main(network: Network = 'devnet') {
             SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
         ).map(generateOpenApiClient)
     ).then(async () => {
-        // Generate the Express server stub for the token-standard registry APIs
-        // from the same specs the clients above were generated from.
         pruneStaleLedgerClients()
-        await generateRegistryServerStub(network)
 
         console.log(
             success('Generated fresh TypeScript clients for all OpenAPI specs')
