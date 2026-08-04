@@ -2270,9 +2270,6 @@ importers:
             diff:
                 specifier: ^8.0.4
                 version: 8.0.4
-            esbuild:
-                specifier: latest
-                version: 0.28.1
             js-yaml:
                 specifier: ^4.3.0
                 version: 4.3.1

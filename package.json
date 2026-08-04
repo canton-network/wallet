@@ -17,7 +17,7 @@
         "generate:grpc": "tsx ./scripts/src/generate-protobufs.ts",
         "generate:tokenstandard": "tsx ./scripts/src/generate-token-standard.ts",
         "generate:test-token": "tsx ./scripts/src/generate-test-token.ts",
-        "generate:all": "pnpm generate:dapp && pnpm generate:dapp-remote && pnpm generate:user && pnpm generate:signing && pnpm generate:tokenstandard && pnpm generate:test-token && pnpm run prettier . --write > /dev/null 2>&1",
+        "generate:all": "pnpm generate:dapp && pnpm generate:dapp-remote && pnpm generate:user && pnpm generate:signing && pnpm generate:tokenstandard && pnpm generate:test-token && pnpm exec prettier . --write > /dev/null 2>&1",
         "lint": "nx run-many -t lint --parallel",
         "build:all": "nx run-many -t build --parallel",
         "build:all:serial": "nx run-many -t build --parallel=1",

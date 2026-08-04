@@ -178,7 +178,7 @@ async function main() {
             process.exit(1)
         }
     }
-    spawnSync('pnpm run prettier . --check')
+    spawnSync('pnpm exec prettier . --check')
     console.log(success('Upgrade completed successfully.'))
 }
 
