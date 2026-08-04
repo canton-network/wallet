@@ -398,8 +398,8 @@ export const userController = (
         },
         setPrimaryWallet: async (params: SetPrimaryWalletParams) => {
             await store.setPrimaryWallet(params.partyId)
-
             const wallets = await store.getWallets()
+
             notificationService
                 .getNotifier(authContext!.userId)
                 .emit('accountsChanged', wallets)
