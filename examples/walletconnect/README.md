@@ -9,7 +9,7 @@ This example is a small **Vite + React** app that runs a **WalletConnect v2 Wall
 
 ## Prerequisites
 
-- **Node/Yarn**: use the repo’s normal toolchain (workspace/Yarn).
+- **Node/pnpm**: use the repo’s normal toolchain (workspace/pnpm).
 - **WalletConnect Cloud project**: you need a `VITE_WC_PROJECT_ID`.
 
 ## Configure
@@ -26,13 +26,13 @@ VITE_WC_PROJECT_ID=...
 From the repo root:
 
 ```bash
-yarn workspace @canton-network/example-walletconnect dev
+pnpm --filter @canton-network/example-walletconnect dev
 ```
 
 Or from this folder:
 
 ```bash
-yarn dev
+pnpm dev
 ```
 
 Then open the URL printed by Vite (usually `http://localhost:5173`).

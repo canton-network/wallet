@@ -46,7 +46,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/initial
+            - uses: ./.github/actions/setup_pnpm/initial
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
                   save_cache: 'true'
@@ -81,7 +81,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -146,7 +146,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -182,7 +182,7 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -211,7 +211,7 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
 
             - name: Check migration lock files
               run: |
@@ -231,7 +231,7 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
 
             - name: Run affected migration tests
               run: |
@@ -253,7 +253,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -376,7 +376,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -437,7 +437,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -487,7 +487,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -555,7 +555,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 

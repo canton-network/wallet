@@ -19,7 +19,6 @@ allowBuilds:
     protobufjs: true
     spawn-sync: true
     ssh2: true
-    yarn: true
 overrides:
     playwright: '1.58.2'
     jose: '^5.10.0'

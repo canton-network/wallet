@@ -25,6 +25,7 @@ function checkPackageJson(packageJsonPath: string): number {
 
     // Ignore paths containing .vite or root directory
     if (
+        folderPath.includes('node_modules') ||
         folderPath.includes('.vite') ||
         folderPath.includes('.canton') ||
         folderPath.includes('.cache') ||
@@ -146,7 +147,7 @@ function main(): void {
     let errorCount = 0
     traverseDirectory(rootDir, (filePath) => {
         if (
-            ['.canton', '.splice', '.nx'].some((dirName) =>
+            ['.canton', '.splice', '.nx', 'node_modules'].some((dirName) =>
                 filePath.includes(dirName)
             )
         ) {

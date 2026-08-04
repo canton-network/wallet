@@ -22,21 +22,21 @@ A feature-rich dApp showcasing a wallet portfolio built with the [`@canton-netwo
 First, install and build dependencies from the repository root:
 
 ```bash
-yarn install
-yarn build:all
+pnpm install
+pnpm build:all
 ```
 
 Then start the dev server from this directory:
 
 ```bash
 cd examples/portfolio
-yarn dev
+pnpm dev
 ```
 
 Or from the repository root:
 
 ```bash
-yarn workspace @canton-network/example-portfolio dev
+pnpm --filter @canton-network/example-portfolio dev
 ```
 
 The app will be available at [http://localhost:8081](http://localhost:8081).
@@ -71,8 +71,8 @@ For static or Docker deployments, replace or mount `/config.json`.
 Alternatively, start all services (Wallet Gateway + example dApps) together from the repository root:
 
 ```bash
-yarn start:all     # starts all services via pm2
-yarn stop:all      # stops all services
+pnpm start:all     # starts all services via pm2
+pnpm stop:all      # stops all services
 ```
 
 ## Further Reading
