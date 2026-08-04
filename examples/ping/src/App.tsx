@@ -11,7 +11,7 @@ import { LedgerSubmission } from './components/LedgerSubmission'
 import { Accounts } from './components/Accounts'
 import { PostEvents } from './components/PostEvents'
 import { WindowMessages } from './components/WindowMessages'
-import DiscoveryModal from './components/DiscoveryModal'
+import { DiscoveryModal } from './components/DiscoveryModal'
 import { useStatus } from './hooks/useStatus'
 import Holdings from './components/Holdings'
 

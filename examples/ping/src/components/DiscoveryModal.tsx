@@ -28,7 +28,7 @@ interface DiscoveryModalProps {
     onClose: () => void
 }
 
-export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
+export function DiscoveryModal({
     isOpen,
     mode,
     entries,
@@ -41,7 +41,7 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
     onSelect,
     onBack,
     onClose,
-}) => {
+}: DiscoveryModalProps) {
     const [customUrl, setCustomUrl] = useState('')
     const [copied, setCopied] = useState(false)
     const [showGatewayInput, setShowGatewayInput] = useState(false)
@@ -584,5 +584,3 @@ export const DiscoveryModal: React.FC<DiscoveryModalProps> = ({
         </div>
     )
 }
-
-export default DiscoveryModal
