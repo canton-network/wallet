@@ -107,8 +107,9 @@ const auth: AuthContext = {
 
 const session: Session = {
     id: 'session-1',
+    origin: 'dapp-1',
     network: 'network1',
-    accessToken: 'session-token',
+    accessToken: 'access-token-1',
 }
 
 const primaryWallet: Wallet = {
@@ -229,7 +230,7 @@ describe('dappController', () => {
 
         it('connects and emits statusChanged and connected', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -308,7 +309,7 @@ describe('dappController', () => {
 
         it('removes the session and emits statusChanged', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -319,7 +320,7 @@ describe('dappController', () => {
 
             await controller.disconnect()
 
-            await expect(store.getSession()).resolves.toBeUndefined()
+            await expect(store.listSessions()).resolves.toHaveLength(0)
             expect(emitSpy).toHaveBeenCalledWith(
                 'statusChanged',
                 expect.objectContaining({
@@ -599,7 +600,7 @@ describe('dappController', () => {
             })
             const store = await createStore(logger, auth)
             const setTransactionSpy = vi.spyOn(store, 'setTransaction')
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -738,7 +739,7 @@ describe('dappController', () => {
             mockUuidV4.mockReturnValueOnce('message-id')
             const store = await createStore(logger, auth)
             const setMessageSpy = vi.spyOn(store, 'setMessageRaw')
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,

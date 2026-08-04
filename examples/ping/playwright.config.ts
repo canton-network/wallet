@@ -103,13 +103,14 @@ export default defineConfig({
         video: process.env.CI ? 'on-first-retry' : 'on',
     },
 
-    /* Configure projects for major browsers */
+    /* Configure projects for major browsers.
+     * Multisession runs last via project dependencies so it does not
+     * interfere with (or get interfered by) other e2e specs. */
     projects: [
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
         },
-
         {
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
@@ -119,7 +120,6 @@ export default defineConfig({
         //     name: 'webkit',
         //     use: { ...devices['Desktop Safari'] },
         // },
-
         /* Test against mobile viewports. */
         // {
         //   name: 'Mobile Chrome',
@@ -129,7 +129,6 @@ export default defineConfig({
         //   name: 'Mobile Safari',
         //   use: { ...devices['iPhone 12'] },
         // },
-
         /* Test against branded browsers. */
         // {
         //   name: 'Microsoft Edge',

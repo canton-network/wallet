@@ -38,7 +38,9 @@ export function sessionHandler(
             next()
         } else {
             logger.debug('Checking for active session for ' + context?.userId)
-            const session = await store.withAuthContext(context).getSession()
+            const session = await store
+                .withAuthContext(context)
+                .getSession(context?.accessToken || '')
             if (!session) {
                 logger.debug('No active session found for ' + context?.userId)
                 res.status(401).json({ error: 'No active session found' })

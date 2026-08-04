@@ -51,6 +51,7 @@ import {
 } from './schema.js'
 import pg from 'pg'
 import { sql } from 'kysely'
+import { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -373,37 +374,70 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     // Session methods
-    async getSession(): Promise<Session | undefined> {
+    async getSession(accessToken: AccessToken): Promise<Session | undefined> {
         const userId = this.assertConnected()
         const row = await this.db
             .selectFrom('sessions')
             .selectAll()
-            .where('userId', '=', userId)
+            .where((eb) =>
+                eb.and([
+                    eb('userId', '=', userId),
+                    eb('accessToken', '=', accessToken),
+                ])
+            )
             .executeTakeFirst()
         return row ? toSession(row) : undefined
     }
 
+    async listSessions(): Promise<Array<Session>> {
+        const userId = this.assertConnected()
+        const rows = await this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('userId', '=', userId)
+            .execute()
+
+        return rows.map((row) => toSession(row))
+    }
+
     async setSession(session: Session): Promise<void> {
         const userId = this.assertConnected()
+
+        if (!session.origin) {
+            throw new Error('Session origin is required')
+        }
+
         await this.db.transaction().execute(async (trx) => {
             const deleted = await trx
                 .deleteFrom('sessions')
-                .where('userId', '=', userId)
+                .where((eb) =>
+                    eb.and([
+                        eb('userId', '=', userId),
+                        eb('origin', '=', session.origin),
+                    ])
+                )
                 .execute()
             this.logger.debug(deleted, 'Deleted old session')
+
             const inserted = await trx
                 .insertInto('sessions')
                 .values({ ...session, userId })
                 .execute()
+
             this.logger.debug(inserted, 'Inserted new session')
         })
     }
 
-    async removeSession(): Promise<void> {
+    async removeSession(accessToken: string): Promise<void> {
         const userId = this.assertConnected()
         await this.db
             .deleteFrom('sessions')
-            .where('userId', '=', userId)
+            .where((eb) =>
+                eb.and([
+                    eb('userId', '=', userId),
+                    eb('accessToken', '=', accessToken),
+                ])
+            )
             .execute()
     }
 
@@ -499,7 +533,13 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const session = await this.getSession()
+        const token = this.authContext?.accessToken as AccessToken
+
+        if (!token) {
+            throw new Error('No access token found in auth context')
+        }
+
+        const session = await this.getSession(token)
         if (!session) {
             throw new Error('No session found')
         }
