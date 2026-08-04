@@ -52,18 +52,13 @@ jobs:
                   save_cache: 'true'
 
             - name: Build project
-              run: yarn build:all
+              run: pnpm build:all
 
             - name: Upload build artifacts
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: build-dist-${{ github.run_id }}
                   path: |
-                      .yarn/cache/
-                      .yarn/unplugged/
-                      .yarn/install-state.gz
-                      .pnp.cjs
-                      .pnp.loader.mjs
                       core/**/dist/
                       sdk/**/dist/
                       wallet-gateway/**/dist/
@@ -156,27 +151,27 @@ jobs:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Validate current PR title with commitlint
-              run: echo "$TITLE" | yarn commitlint --verbose
+              run: echo "$TITLE" | pnpm commitlint --verbose
               env:
                   TITLE: ${{ github.event.pull_request.title }}
 
             - name: check package.json names
-              run: yarn script:cleancoding
+              run: pnpm script:cleancoding
 
             - name: run typechecking
-              run: yarn nx run-many -t typecheck --parallel
+              run: pnpm nx run-many -t typecheck --parallel
 
             - name: check open-rpc specs titles
-              run: yarn script:openrpc:titles
+              run: pnpm script:openrpc:titles
 
             - name: prettier code
-              run: yarn run prettier . --check
+              run: pnpm prettier . --check
 
             - name: eslint code
-              run: yarn nx run-many -t lint --parallel
+              run: pnpm nx run-many -t lint --parallel
 
             - name: check wg schema docs
-              run: yarn docs:update-wg-config
+              run: pnpm docs:update-wg-config
 
     test-unit:
         runs-on: ubuntu-latest
@@ -195,13 +190,13 @@ jobs:
 
             - name: Run all unit tests
               run: |
-                  yarn nx run-many -t test:coverage \
+                  pnpm nx run-many -t test:coverage \
                     --parallel
 
             - name: Coverage summary
               run: |
                   echo "::group::Unit test coverage summary"
-                  yarn script:coverage:report
+                  pnpm script:coverage:report
                   echo "::endgroup::"
 
     check-migration-lock:
@@ -220,7 +215,7 @@ jobs:
 
             - name: Check migration lock files
               run: |
-                  yarn nx affected -t migrations:check-lock \
+                  pnpm nx affected -t migrations:check-lock \
                     --base=origin/${{ github.base_ref }} \
                     --head=HEAD \
                     --parallel
@@ -240,7 +235,7 @@ jobs:
 
             - name: Run affected migration tests
               run: |
-                  yarn nx affected -t test:migrations \
+                  pnpm nx affected -t test:migrations \
                     --base=origin/${{ github.base_ref }} \
                     --head=HEAD \
                     --parallel=1
@@ -321,7 +316,7 @@ jobs:
                     export DFNS_PRIVATE_KEY="${{ vars.DFNS_PRIVATE_KEY }}"
                     export DFNS_AUTH_TOKEN="${{ vars.DFNS_AUTH_TOKEN }}"
                   fi
-                  yarn pm2 start ecosystem.ci.config.js --env development
+                  pnpm pm2 start ecosystem.ci.config.js --env development
 
             - uses: ./.github/actions/setup_playwright
 
@@ -332,11 +327,11 @@ jobs:
                     export FIREBLOCKS_API_PATH="${{ vars.FIREBLOCKS_API_PATH }}"
                     export DFNS_BASE_URL="${{ vars.DFNS_BASE_URL }}"
                   fi
-                  yarn nx playwright:e2e @canton-network/example-ping
+                  pnpm nx playwright:e2e @canton-network/example-ping
 
             - name: Collect remote PM2 logs
               if: ${{ !cancelled() }}
-              run: yarn pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
+              run: pnpm pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
@@ -391,16 +386,16 @@ jobs:
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
             - name: Start remote WK
-              run: yarn pm2 start ecosystem.ci.config.js --env development
+              run: pnpm pm2 start ecosystem.ci.config.js --env development
 
             - uses: ./.github/actions/setup_playwright
 
             - name: Run example e2e
-              run: yarn nx playwright:e2e @canton-network/example-portfolio
+              run: pnpm nx playwright:e2e @canton-network/example-portfolio
 
             - name: Collect remote PM2 logs
               if: ${{ !cancelled() }}
-              run: yarn pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
+              run: pnpm pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
@@ -454,13 +449,13 @@ jobs:
             - uses: ./.github/actions/check_resources
 
             - name: Test example snippets (${{ matrix.network }})
-              run: yarn nx snippets docs-wallet-integration-guide-examples
+              run: pnpm nx snippets docs-wallet-integration-guide-examples
 
             - uses: ./.github/actions/check_resources
 
             - name: Stop Localnet (${{ matrix.network }})
               if: always()
-              run: yarn stop:localnet -- --network=${{ matrix.network }}
+              run: pnpm stop:localnet -- --network=${{ matrix.network }}
 
             - name: Save container logs
               if: failure()
@@ -506,13 +501,13 @@ jobs:
             - name: Test example scripts (${{ matrix.network }})
               env:
                   MAX_IO_LISTENERS: '50'
-              run: yarn script:test:examples
+              run: pnpm script:test:examples
 
             - uses: ./.github/actions/check_resources
 
             - name: Stop Localnet (${{ matrix.network }})
               if: always()
-              run: yarn stop:localnet -- --network=${{ matrix.network }}
+              run: pnpm stop:localnet -- --network=${{ matrix.network }}
 
             - name: Save container logs
               if: failure()
@@ -565,4 +560,4 @@ jobs:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Validate SDK package install
-              run: yarn script:validate:package
+              run: pnpm script:validate:package

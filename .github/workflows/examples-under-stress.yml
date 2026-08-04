@@ -85,13 +85,13 @@ jobs:
                   TRANSFERS_PER_PARTY: ${{ github.event.inputs.transfers_per_party || '5' }}
                   BACKGROUND_STRESS_LOG_LEVEL: ${{ github.event.inputs.stress_log_level || 'silent' }}
                   SCRIPT_NAME: ${{ github.event.inputs.script_name || '' }}
-              run: yarn script:test:examples-stress
+              run: pnpm script:test:examples-stress
 
             - uses: ./.github/actions/check_resources
 
             - name: Stop localnet (${{ github.event.inputs.network || 'devnet' }})
               if: always()
-              run: yarn stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
+              run: pnpm stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
 
             - name: Save container logs (on failure)
               if: failure()
