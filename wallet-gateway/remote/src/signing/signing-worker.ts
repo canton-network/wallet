@@ -185,7 +185,22 @@ export class SigningWorker {
             return
         }
 
-        const notifier = this.options.notificationService.getNotifier(userId)
+        const session = await store.getSession(
+            runContext.authContext.accessToken
+        )
+
+        if (!session) {
+            logger.error(
+                { userId, networkId, transactionId: transaction.id },
+                'Signing worker tick failed: session not found'
+            )
+            return
+        }
+
+        const notifier = this.options.notificationService.getNotifier(
+            session.id
+        )
+
         const transactionLogger = this.options.logger.child({
             component: 'TransactionService',
         })

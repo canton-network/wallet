@@ -69,14 +69,16 @@ export function apiKeyAuth(
             // temporary auth context to access the store with the API key user
             const authStore = store.withAuthContext({
                 userId: matchingKey.userId,
-                accessToken: 'unused',
+                accessToken: hashedApiKey,
             })
 
             // automatically initiate a session for the API key user
+            const sessionId = v4()
             await authStore.setSession({
-                id: v4(),
+                id: sessionId,
+                origin: `apikey:${matchingKey.id}`,
                 network: matchingKey.networkId,
-                accessToken: 'unused',
+                accessToken: hashedApiKey,
             })
 
             const network = await authStore.getNetwork(matchingKey.networkId)
@@ -129,6 +131,14 @@ export function apiKeyAuth(
                 accessToken: serviceAccountCtx.accessToken,
                 email: matchingKey.email || undefined,
             }
+
+            // we need to override the session now, so that the accessToken matches what the controller expects (accessToken == serviceAccount token)
+            await authStore.setSession({
+                id: sessionId,
+                origin: `apikey:${matchingKey.id}`,
+                network: matchingKey.networkId,
+                accessToken: serviceAccountCtx.accessToken,
+            })
 
             req.authContext = context
             return next()
