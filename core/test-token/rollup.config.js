@@ -141,7 +141,7 @@ const codeCjs = {
 const codeBrowser = {
     input: 'src/index.ts',
     output: {
-        file: 'dist/index.js',
+        file: 'dist/index.browser.js',
         format: 'es',
         sourcemap: true,
     },
