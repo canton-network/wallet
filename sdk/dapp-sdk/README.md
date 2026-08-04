@@ -218,6 +218,27 @@ Full documentation, including detailed usage guides, API reference, and configur
 - [API Specifications (OpenRPC)](https://github.com/canton-network/wallet/tree/main/api-specs)
 - [Example dApps](https://github.com/canton-network/wallet/tree/main/examples)
 
+### Generating SDK method reference docs
+
+From this package (or via `yarn workspace @canton-network/dapp-sdk …` from the repo root), TypeDoc can regenerate the public method reference:
+
+```shell
+# Markdown for Mintlify (writes docs/dapp-sdk/reference/sdk-methods.md)
+yarn docs
+
+# From the repo root: regenerate all SDK reference docs, Prettier-normalize,
+# and fail if any checked-in file had drifted (also run in CI)
+yarn docs:update-sdk-reference
+
+# Standalone HTML (default output: ./typedoc-html)
+yarn docs:html
+
+# HTML to a custom directory
+yarn docs:html --out /path/to/output
+```
+
+`yarn docs` uses `tsconfig.docs.json` (markdown + frontmatter plugins). `yarn docs:html` uses `tsconfig.docs.html.json` (default HTML theme; pass `--out` to override the output directory).
+
 ## License
 
 [Apache-2.0](https://github.com/canton-network/wallet/blob/main/LICENSE)

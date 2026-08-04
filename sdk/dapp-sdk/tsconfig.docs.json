@@ -1,0 +1,60 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "./src"
+    },
+    "files": ["src/sdk-methods.docs.ts"],
+    "exclude": [
+        "**/*.test.*",
+        "**/*.spec.*",
+        "**/__tests__/**",
+        "**/*.config.*",
+        "tsup.config.ts",
+        "node_modules",
+        "docs",
+        "dist"
+    ],
+    "typedocOptions": {
+        "entryPoints": ["src/sdk-methods.docs.ts"],
+        "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-frontmatter"],
+        "out": "../../docs/dapp-sdk/reference",
+        "readme": "none",
+        "name": "SDK Methods",
+        "excludeExternals": true,
+        "excludePrivate": true,
+        "excludeProtected": true,
+        "excludeInternal": true,
+        "hideGenerator": true,
+        "githubPages": false,
+        "disableSources": true,
+        "categorizeByGroup": true,
+        "defaultCategory": "Other",
+        "categoryOrder": [
+            "Lifecycle",
+            "Status",
+            "Accounts",
+            "Signing & transactions",
+            "Provider access",
+            "Events",
+            "Configuration",
+            "*"
+        ],
+        "router": "module",
+        "entryFileName": "sdk-methods",
+        "cleanOutputDir": false,
+        "hidePageHeader": true,
+        "hideBreadcrumbs": true,
+        "useCodeBlocks": true,
+        "parametersFormat": "table",
+        "typeDeclarationFormat": "table",
+        "indexFormat": "table",
+        "frontmatterGlobals": {
+            "title": "SDK Methods",
+            "description": "Reference for the high-level dApp SDK methods."
+        },
+        "yamlStringifyOptions": {
+            "defaultStringType": "QUOTE_SINGLE",
+            "defaultKeyType": "PLAIN"
+        }
+    }
+}

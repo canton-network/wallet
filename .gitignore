@@ -42,6 +42,9 @@ coverage/
 __screenshots__/
 .vitest-attachments/
 
+# typedoc HTML output
+**/typedoc-html/
+
 
 **/target/
 

@@ -16,5 +16,6 @@
             ]
         }
     },
-    "include": ["src", "src/gateways.json"]
+    "include": ["src", "src/gateways.json"],
+    "exclude": ["**/*.docs.ts", "**/*.test.*", "**/*.spec.*"]
 }
