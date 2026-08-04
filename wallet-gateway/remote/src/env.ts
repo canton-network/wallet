@@ -12,8 +12,7 @@ export class Env {
         Env.get('BLOCKDAEMON_API_KEY', { fallback })
     static BLOCKDAEMON_CAIP2 = (fallback: string) =>
         Env.get('BLOCKDAEMON_CAIP2', { fallback })
-    static SECUROSYS_TSB_BASE_URL = () =>
-        Env.get('SECUROSYS_TSB_BASE_URL')
+    static SECUROSYS_TSB_BASE_URL = () => Env.get('SECUROSYS_TSB_BASE_URL')
     static SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY = () =>
         Env.get('SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY')
     static SECUROSYS_TSB_KEY_OPERATION_API_KEY = () =>
