@@ -111,9 +111,13 @@ export class WalletGateway {
         const setPrimaryButton = wallet.getByRole('button', {
             name: 'Set as primary',
         })
+
         if (await setPrimaryButton.isVisible().catch(() => false)) {
             await setPrimaryButton.click()
         }
+
+        // now, wait until the party shows up as PRIMARY
+        await expect(wallet.getByText('PRIMARY', { exact: true })).toBeVisible()
     }
 
     async createWalletIfNotExists(args: {

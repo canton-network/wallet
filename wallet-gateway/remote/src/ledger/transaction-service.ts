@@ -234,7 +234,7 @@ export class TransactionService {
         return this.execute(
             userId,
             wallet,
-            transaction,
+            { ...transaction, status: 'signed' as const },
             executeParams,
             ledgerClient,
             network

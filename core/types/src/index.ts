@@ -8,6 +8,14 @@ import { z } from 'zod'
  */
 export type Logger = Pick<Console, 'debug' | 'info' | 'warn' | 'error'>
 
+// This creates a "branded type" since AccessToken is an alias for string,
+// but we don't want it to be interchangeable with a regular string.
+// declare const AccessTokenBrand: unique symbol
+// export type AccessToken = string & {
+//     readonly [AccessTokenBrand]: typeof AccessTokenBrand
+// }
+export type AccessToken = string
+
 export const PARTY_ID_EXAMPLE = 'party-hint::fingerprint'
 export const PARTY_ID_ERROR_MESSAGE = `Must be in the form ${PARTY_ID_EXAMPLE}`
 export const PARTY_ID_PATTERN = /^[a-zA-Z0-9:_-]*::[a-z0-9]*/
@@ -91,6 +99,9 @@ export enum WalletEvent {
     // Auth events
     SPLICE_WALLET_IDP_AUTH_SUCCESS = 'SPLICE_WALLET_IDP_AUTH_SUCCESS',
     SPLICE_WALLET_LOGOUT = 'SPLICE_WALLET_LOGOUT',
+    // Other
+    SPLICE_WALLET_BROADCAST_ORIGIN = 'SPLICE_WALLET_BROADCAST_ORIGIN', // Used by the dApp (parent) to broadcast its origin down to the wallet (child) for cross-origin communication
+    SPLICE_WALLET_BROADCAST_ORIGIN_ACK = 'SPLICE_WALLET_BROADCAST_ORIGIN_ACK', // Used by the wallet (child) to acknowledge receipt of the dApp's origin for cross-origin communication
 }
 
 export type SpliceMessageEvent = MessageEvent<SpliceMessage>
@@ -122,13 +133,20 @@ export const SpliceMessage = z.discriminatedUnion('type', [
     }),
     z.object({
         type: z.literal(WalletEvent.SPLICE_WALLET_EXT_OPEN),
-        url: z.string().url(),
+        url: z.url(),
         target: SpliceTarget.optional(),
     }),
     z.object({
         type: z.literal(WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS),
         token: z.string(),
         sessionId: z.string(),
+    }),
+    z.object({
+        type: z.literal(WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN),
+        origin: z.url(),
+    }),
+    z.object({
+        type: z.literal(WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK),
     }),
 ])
 export type SpliceMessage = z.infer<typeof SpliceMessage>
