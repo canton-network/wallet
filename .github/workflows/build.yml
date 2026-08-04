@@ -178,6 +178,9 @@ jobs:
             - name: check wg schema docs
               run: yarn docs:update-wg-config
 
+            - name: check SDK reference docs
+              run: yarn docs:update-sdk-reference
+
     test-unit:
         runs-on: ubuntu-latest
         needs: [version-config, build]

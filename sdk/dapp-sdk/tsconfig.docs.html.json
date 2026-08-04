@@ -1,0 +1,43 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "./src"
+    },
+    "files": ["src/sdk-methods.docs.ts"],
+    "exclude": [
+        "**/*.test.*",
+        "**/*.spec.*",
+        "**/__tests__/**",
+        "**/*.config.*",
+        "tsup.config.ts",
+        "node_modules",
+        "docs",
+        "dist"
+    ],
+    "typedocOptions": {
+        "entryPoints": ["src/sdk-methods.docs.ts"],
+        "plugin": [],
+        "out": "typedoc-html",
+        "cleanOutputDir": true,
+        "readme": "none",
+        "name": "SDK Methods",
+        "excludeExternals": true,
+        "excludePrivate": true,
+        "excludeProtected": true,
+        "excludeInternal": true,
+        "hideGenerator": true,
+        "disableSources": true,
+        "categorizeByGroup": true,
+        "defaultCategory": "Other",
+        "categoryOrder": [
+            "Lifecycle",
+            "Status",
+            "Accounts",
+            "Signing & transactions",
+            "Provider access",
+            "Events",
+            "Configuration",
+            "*"
+        ]
+    }
+}

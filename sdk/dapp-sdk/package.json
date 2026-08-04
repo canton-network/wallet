@@ -20,6 +20,7 @@
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
         "docs": "typedoc --tsconfig tsconfig.docs.json",
+        "docs:html": "typedoc --tsconfig tsconfig.docs.html.json",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "test": "vitest run --project browser-unit --project browser-integration",
