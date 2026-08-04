@@ -575,7 +575,9 @@ export function DiscoveryModal({
                                     />
                                     <circle cx="15" cy="13" r="1.1" fill="currentColor" />
                                 </svg>
-                                Need a wallet?
+                                <span className="discovery-modal-no-wallet-label">
+                                    Need a wallet?
+                                </span>
                             </a>
                         </div>
                     )}

@@ -197,10 +197,22 @@
     align-items: center;
     gap: 7px;
     font-size: 14px;
+    line-height: 1;
     font-weight: 500;
     color: var(--text-muted);
     text-decoration: none;
     transition: color 0.15s ease;
+}
+
+.discovery-modal-no-wallet svg {
+    display: block;
+    flex-shrink: 0;
+}
+
+.discovery-modal-no-wallet-label {
+    display: block;
+    /* Optical centering: cap-height text sits high next to the icon. */
+    transform: translateY(1px);
 }
 
 .discovery-modal-no-wallet:hover {
@@ -515,14 +527,43 @@
     justify-content: center;
 }
 
+/* Animated angle drives the highlight around the ring so the rounded-square
+   shape stays fixed (only the gradient travels), mirroring the logo shape. */
+@property --spinner-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
 .connecting-spinner-ring::before {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 50%;
-    border: 3px solid var(--accent-soft);
-    border-top-color: var(--accent);
-    animation: walletconnect-spin 0.9s linear infinite;
+    /* Concentric with the 72px logo (22.5% radius) plus the 10px gap. */
+    border-radius: 26px;
+    padding: 3px;
+    background: conic-gradient(
+        from var(--spinner-angle),
+        var(--accent) 0deg,
+        var(--accent-soft) 70deg,
+        var(--accent-soft) 360deg
+    );
+    /* Show only the border frame: outer shape minus the padded inner area. */
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: spinner-angle 0.9s linear infinite;
+}
+
+@keyframes spinner-angle {
+    to {
+        --spinner-angle: 360deg;
+    }
 }
 
 .connecting-avatar {
