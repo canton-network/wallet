@@ -1,0 +1,705 @@
+/* Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+.discovery-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(71, 88, 107, 0.24);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.discovery-modal-content {
+    --accent: #000;
+    --accent-soft: rgba(0, 0, 0, 0.06);
+    --border: #ececf3;
+    --text: #373737;
+    --text-muted: #6b7280;
+
+    position: relative;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow:
+        0 20px 50px -12px rgba(15, 23, 42, 0.3),
+        0 4px 12px -4px rgba(15, 23, 42, 0.12);
+    width: var(--modal-width, min(92vw, 360px));
+    height: var(--modal-height, auto);
+    overflow: hidden;
+    animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Transition is only enabled after the first measure so the modal does not
+   animate in from a zero/auto size when it first appears. */
+.discovery-modal-content.is-measured {
+    transition:
+        width 200ms cubic-bezier(0.4, 0, 0.2, 1),
+        height 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width, height;
+}
+
+.discovery-modal-inner {
+    width: min(92vw, 360px);
+    max-height: min(86vh, 640px);
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(16px) scale(0.98);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.discovery-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 24px 16px 16px;
+}
+
+/* Reset the example's global button styles inside the modal */
+.discovery-modal-content button {
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.discovery-modal-content button:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.discovery-modal-heading {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.discovery-modal-back {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #999999;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.discovery-modal-back svg {
+    display: block;
+}
+
+.discovery-modal-back:hover {
+    background: #ebebf0;
+    color: var(--text);
+}
+
+.discovery-modal-back:active {
+    transform: scale(0.92);
+}
+
+.discovery-modal-back:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.discovery-modal-heading h2 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 32px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+.discovery-modal-close {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #999999;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.discovery-modal-close svg {
+    display: block;
+}
+
+.discovery-modal-close:hover {
+    background: #ebebf0;
+    color: var(--text);
+}
+
+.discovery-modal-close:active {
+    transform: scale(0.92);
+}
+
+.discovery-modal-close:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.discovery-modal-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 16px 20px;
+}
+
+.discovery-modal-footer {
+    border-top: 1px solid var(--border);
+    padding: 14px 16px 16px;
+    background: #ffffff;
+    text-align: center;
+}
+
+.discovery-modal-no-wallet {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.discovery-modal-no-wallet:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.custom-url-label {
+    display: block;
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+    text-align: left;
+}
+
+.custom-url-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+.custom-url-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: var(--text);
+    background: #ffffff;
+}
+
+.custom-url-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+}
+
+.custom-url-button {
+    height: 40px;
+    border: 1px solid #111111;
+    border-radius: 10px;
+    padding: 0 14px;
+    background: #111111;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.custom-url-button:hover {
+    background: #000000;
+}
+
+.custom-url-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.gateway-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 4px 4px;
+}
+
+.gateway-help {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-align: left;
+}
+
+.gateway-connect-button {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #111111;
+    border-radius: 12px;
+    padding: 0 14px;
+    background: #111111;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.gateway-connect-button:hover {
+    background: #000000;
+}
+
+.gateway-connect-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.wallet-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wallet-picker-item {
+    display: flex;
+    align-items: stretch;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.1s ease;
+}
+
+.wallet-picker-item-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.wallet-picker-item:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.25);
+}
+
+.wallet-picker-item:hover .wallet-chevron {
+    color: var(--accent);
+    transform: translateX(2px);
+}
+
+.wallet-picker-item:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.wallet-picker-item:active {
+    transform: scale(0.985);
+}
+
+.wallet-picker-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin: 0 8px 0 0;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.wallet-picker-remove:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.wallet-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 22.5%;
+    flex-shrink: 0;
+    background: #f4f4f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.wallet-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wallet-icon-fallback {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.wallet-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.wallet-info h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wallet-info p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wallet-chevron {
+    flex-shrink: 0;
+    color: #999999;
+    transition:
+        color 0.15s ease,
+        transform 0.15s ease;
+}
+
+/* Empty state */
+.wallet-picker-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+    gap: 6px;
+}
+
+.wallet-picker-empty-icon {
+    font-size: 32px;
+    margin-bottom: 6px;
+    opacity: 0.7;
+}
+
+.wallet-picker-empty p {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.wallet-picker-empty span {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.walletconnect-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px 20px 8px;
+    gap: 8px;
+}
+
+/* Cross-fade the swapped views (list / loading / QR) */
+.discovery-modal-view {
+    animation: viewFade 0.25s ease;
+}
+
+@keyframes viewFade {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading screen shown while a wallet connects */
+.connecting-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 18px;
+    padding: 28px 16px 16px;
+}
+
+.connecting-spinner-ring {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.connecting-spinner-ring::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid var(--accent-soft);
+    border-top-color: var(--accent);
+    animation: walletconnect-spin 0.9s linear infinite;
+}
+
+.connecting-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 22.5%;
+    overflow: hidden;
+    background: #f4f4f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.connecting-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.connecting-avatar-fallback {
+    font-size: 28px;
+    font-weight: 650;
+    color: var(--accent);
+}
+
+.walletconnect-qr {
+    width: 220px;
+    height: 220px;
+    border-radius: 16px;
+    display: block;
+    margin: 0 auto 8px;
+    padding: 12px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px -12px rgba(15, 23, 42, 0.25);
+}
+
+.walletconnect-qr-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafc;
+}
+
+.walletconnect-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.walletconnect-uri {
+    display: block;
+    word-break: break-all;
+    font-size: 11px;
+    background: #111111;
+    color: #f5f5f5;
+    padding: 12px;
+    border-radius: 6px;
+    margin: 0;
+    max-height: 120px;
+    overflow: auto;
+    user-select: all;
+    cursor: pointer;
+}
+
+.walletconnect-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0 2px;
+}
+
+.walletconnect-copy-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #f4f4f7;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.1s ease;
+}
+
+.walletconnect-copy-button svg {
+    display: block;
+}
+
+.walletconnect-copy-button:hover:not(:disabled) {
+    background: #ebebf0;
+    border-color: #dcdce4;
+}
+
+.walletconnect-copy-button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.walletconnect-copy-button:disabled {
+    opacity: 0.5;
+    cursor: progress;
+}
+
+.walletconnect-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: walletconnect-spin 0.8s linear infinite;
+}
+
+.walletconnect-help {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+@keyframes walletconnect-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Scrollbar styling */
+.discovery-modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: #d4d4dc transparent;
+}
+
+.discovery-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.discovery-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.discovery-modal-body::-webkit-scrollbar-thumb {
+    background: #d4d4dc;
+    border-radius: 4px;
+    border: 2px solid #ffffff;
+}
+
+.discovery-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #b8b8c4;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .discovery-modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .discovery-modal-content {
+        width: var(--modal-width, 100vw);
+        max-height: 88vh;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .discovery-modal-inner {
+        width: 100vw;
+        max-height: 88vh;
+    }
+
+    .custom-url-row {
+        grid-template-columns: 1fr;
+    }
+}

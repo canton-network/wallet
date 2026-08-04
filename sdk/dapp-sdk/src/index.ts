@@ -49,6 +49,7 @@ export {
     DappSDK,
     sdk as dappSDK,
     init,
+    setWalletPicker,
     connect,
     disconnect,
     isConnected,

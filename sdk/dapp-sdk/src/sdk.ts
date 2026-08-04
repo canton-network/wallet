@@ -81,7 +81,7 @@ function normalizeConnectOptions(
 
 export class DappSDK {
     private readonly RECENT_GATEWAYS_KEY = 'splice_wallet_picker_recent'
-    private readonly walletPicker: WalletPickerFn
+    private walletPicker: WalletPickerFn
     private discovery: DiscoveryClient | null = null
     private client: DappClient | null = null
     private initPromise: Promise<unknown> | null = null
@@ -91,6 +91,16 @@ export class DappSDK {
     constructor(options?: { walletPicker?: WalletPickerFn | undefined }) {
         this.walletPicker =
             options?.walletPicker ?? (pickWallet as WalletPickerFn)
+    }
+
+    /**
+     * Override the wallet picker used when connecting. Must be called before
+     * {@link DappSDK.init}/{@link DappSDK.connect} so the picker is captured by
+     * the underlying DiscoveryClient. Passing `undefined` restores the default
+     * popup picker.
+     */
+    setWalletPicker(picker: WalletPickerFn | undefined): void {
+        this.walletPicker = picker ?? (pickWallet as WalletPickerFn)
     }
 
     private async registerAdapters(
@@ -618,6 +628,9 @@ export function connect(
 
 export const init = (options?: DappSDKConnectOptions): Promise<void> =>
     sdk.init(options)
+
+export const setWalletPicker = (picker: WalletPickerFn | undefined): void =>
+    sdk.setWalletPicker(picker)
 
 export const disconnect = (): Promise<null> => sdk.disconnect()
 

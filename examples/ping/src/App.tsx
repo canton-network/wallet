@@ -3,6 +3,7 @@ import './App.css'
 import * as sdk from '@canton-network/dapp-sdk'
 import { useAccounts } from './hooks/useAccounts'
 import { useConnect } from './hooks/useConnect'
+import { useDiscoveryModal } from './hooks/useDiscoveryModal'
 import { Status } from './components/Status'
 import { ErrorContext } from './ErrorContext'
 import { LedgerQuery } from './components/LedgerQuery'
@@ -10,6 +11,7 @@ import { LedgerSubmission } from './components/LedgerSubmission'
 import { Accounts } from './components/Accounts'
 import { PostEvents } from './components/PostEvents'
 import { WindowMessages } from './components/WindowMessages'
+import DiscoveryModal from './components/DiscoveryModal'
 import { useStatus } from './hooks/useStatus'
 import Holdings from './components/Holdings'
 
@@ -18,7 +20,38 @@ function App() {
     const [loading, setLoading] = useState(false)
     const [activeTab, setActiveTab] = useState<string>('accounts')
 
-    const { connect, disconnect, connectResult } = useConnect()
+    const {
+        pickerState,
+        walletPickerFn,
+        onWalletConnectUri,
+        onWalletSelected,
+        backToList,
+        closeModal,
+        onModalClose,
+    } = useDiscoveryModal()
+
+    const { connect, disconnect, connectResult } = useConnect(
+        walletPickerFn,
+        onWalletConnectUri
+    )
+
+    // Close the picker automatically once a wallet is connected.
+    useEffect(() => {
+        if (connectResult?.isConnected && pickerState.isOpen) {
+            closeModal()
+        }
+    }, [connectResult?.isConnected, pickerState.isOpen, closeModal])
+
+    // From the loading screen, return to the wallet list. The current attempt is
+    // aborted and the picker is restarted so a new wallet can be chosen.
+    const handleModalBack = () => {
+        backToList()
+        disconnect()
+            .catch(() => {})
+            .finally(() => {
+                connect().catch(() => {})
+            })
+    }
 
     const { status, statusEvent } = useStatus()
 
@@ -42,6 +75,19 @@ function App() {
     return (
         <div>
             <h1>Example dApp</h1>
+            <DiscoveryModal
+                isOpen={pickerState.isOpen}
+                mode={pickerState.mode}
+                entries={pickerState.entries}
+                selectedEntryId={pickerState.selectedEntryId}
+                selectedEntryName={pickerState.selectedEntryName}
+                selectedEntryIcon={pickerState.selectedEntryIcon}
+                walletConnectUri={pickerState.walletConnectUri}
+                walletConnectQrDataUrl={pickerState.walletConnectQrDataUrl}
+                onSelect={onWalletSelected}
+                onBack={handleModalBack}
+                onClose={onModalClose}
+            />
             <div className="card">
                 <div
                     style={{
