@@ -15,6 +15,7 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
+import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-add-network')
 export class UserUiAddNetwork extends BaseElement {
@@ -53,8 +54,9 @@ export class UserUiAddNetwork extends BaseElement {
         const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get()
+                await stateManager.accessToken.get(currentOrigin)
             )
             await userClient.request({
                 method: 'addNetwork',

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export { OTCTrade } from './otc-trade.js'
-export { WalletGateway } from './wallet-gateway.js'
+export * from './wallet-gateway.js'
+export * from './wallet-gateway-2.js'
 export { test, expect } from './fixtures.js'
 export * from './signing-provider-mocks/index.js'

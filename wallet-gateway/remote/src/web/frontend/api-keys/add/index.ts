@@ -16,6 +16,7 @@ import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import { GeneratedApiKey } from '@canton-network/core-wallet-user-rpc-client'
+import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-add-api-key')
 export class UserUiAddApiKey extends BaseElement {
@@ -76,8 +77,9 @@ export class UserUiAddApiKey extends BaseElement {
         this.loading = true
 
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get()
+                await stateManager.accessToken.get(currentOrigin)
             )
             const generated = await userClient.request({
                 method: 'generateApiKey',

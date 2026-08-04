@@ -26,12 +26,13 @@ import {
     ListTransactionsOptions,
 } from '@canton-network/core-wallet-store'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
+import { AccessToken } from '@canton-network/core-types'
 
 interface UserStorage {
     wallets: Array<Wallet>
     transactions: Map<string, Transaction>
     messageRaws: Map<string, MessageRaw>
-    session: Session | undefined
+    sessions: Map<AccessToken, Session>
     apiKeys: Map<string, ApiKey>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
@@ -79,7 +80,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             wallets: [],
             transactions: new Map<string, Transaction>(),
             messageRaws: new Map<string, MessageRaw>(),
-            session: undefined,
+            sessions: new Map<AccessToken, Session>(),
             apiKeys: new Map<string, ApiKey>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
@@ -240,19 +241,23 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     // Session methods
-    async getSession(): Promise<Session | undefined> {
-        return this.getStorage().session
+    async getSession(accessToken: AccessToken): Promise<Session | undefined> {
+        return this.getStorage().sessions.get(accessToken)
+    }
+
+    async listSessions(): Promise<Array<Session>> {
+        return Array.from(this.getStorage().sessions.values())
     }
 
     async setSession(session: Session): Promise<void> {
         const storage = this.getStorage()
-        storage.session = session
+        storage.sessions.set(session.accessToken, session)
         this.updateStorage(storage)
     }
 
-    async removeSession(): Promise<void> {
+    async removeSession(accessToken: AccessToken): Promise<void> {
         const storage = this.getStorage()
-        storage.session = undefined
+        storage.sessions.delete(accessToken)
         this.updateStorage(storage)
     }
 
@@ -309,7 +314,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const session = this.getStorage().session
+        const accessToken = this.authContext?.accessToken
+        if (!accessToken) {
+            throw new Error('No access token found in auth context')
+        }
+
+        const session = this.getStorage().sessions.get(accessToken)
         if (!session) {
             throw new Error('No session found')
         }

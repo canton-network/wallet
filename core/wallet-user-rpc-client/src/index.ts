@@ -183,6 +183,12 @@ export type Signature = string
 export type SignedBy = string
 /**
  *
+ * The origin (dApp URL) that initiated this transaction request.
+ *
+ */
+export type Origin = string
+/**
+ *
  * Limit of transactions to return.
  *
  */
@@ -370,12 +376,6 @@ export type Status = string
 export type Message = string
 /**
  *
- * The origin (dApp URL) that initiated this transaction request.
- *
- */
-export type Origin = string
-/**
- *
  * The timestamp when the API key was created.
  *
  */
@@ -406,6 +406,7 @@ export type UserLevelRight = any
  */
 export interface Session {
     id: Id
+    origin?: Origin
     network: Network
     idp: Idp
     accessToken: AccessToken
@@ -556,6 +557,7 @@ export interface ExecuteParams {
     signedBy: SignedBy
 }
 export interface AddSessionParams {
+    origin: Origin
     networkId: NetworkId
 }
 export interface GetTransactionParams {
@@ -645,6 +647,7 @@ export interface ExecuteResult {
  */
 export interface AddSessionResult {
     id: Id
+    origin?: Origin
     network: Network
     idp: Idp
     accessToken: AccessToken
