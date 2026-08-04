@@ -255,7 +255,7 @@ export function DiscoveryModal({
         mode === 'connecting'
             ? 'Connecting...'
             : showGatewayInput
-              ? 'Wallet Gateway'
+              ? 'Remote Wallet'
               : 'Connect Wallet'
 
     return (
@@ -410,14 +410,14 @@ export function DiscoveryModal({
                             ) : showGatewayInput ? (
                                 <div className="gateway-view">
                                     <p className="gateway-help">
-                                        Enter the URL of your Wallet Gateway to
+                                        Enter the URL of your Remote Wallet to
                                         connect.
                                     </p>
                                     <input
                                         id="wallet-custom-url"
                                         className="custom-url-input"
                                         type="url"
-                                        aria-label="Wallet Gateway URL"
+                                        aria-label="Remote Wallet URL"
                                         placeholder="https://wallet.example.com"
                                         value={customUrl}
                                         onChange={(e) =>
@@ -469,11 +469,11 @@ export function DiscoveryModal({
                                                         src={
                                                             WALLET_GATEWAY_ICON
                                                         }
-                                                        alt="Wallet Gateway"
+                                                        alt="Remote Wallet"
                                                     />
                                                 </span>
                                                 <div className="wallet-info">
-                                                    <h3>Wallet Gateway</h3>
+                                                    <h3>Remote Wallet</h3>
                                                 </div>
                                             </button>
                                         </div>
