@@ -198,7 +198,7 @@ export class SigningWorker {
         }
 
         const notifier = this.options.notificationService.getNotifier(
-            runContext.authContext.userId
+            session.id
         )
 
         const transactionLogger = this.options.logger.child({

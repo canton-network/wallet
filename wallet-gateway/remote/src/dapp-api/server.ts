@@ -102,7 +102,7 @@ export const dapp = (
         userNotifier.on('accountsChanged', onAccountsChanged)
         sessionNotifier.on('connected', onConnected)
         sessionNotifier.on('statusChanged', onStatusChanged)
-        userNotifier.on('txChanged', onTxChanged)
+        sessionNotifier.on('txChanged', onTxChanged)
         sessionNotifier.on('messageSignature', onMessageSignature)
         sessionNotifier.on('logout', onLogout)
 
@@ -111,7 +111,7 @@ export const dapp = (
             userNotifier.removeListener('accountsChanged', onAccountsChanged)
             sessionNotifier.removeListener('connected', onConnected)
             sessionNotifier.removeListener('statusChanged', onStatusChanged)
-            userNotifier.removeListener('txChanged', onTxChanged)
+            sessionNotifier.removeListener('txChanged', onTxChanged)
             sessionNotifier.removeListener(
                 'messageSignature',
                 onMessageSignature

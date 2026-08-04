@@ -429,13 +429,11 @@ export const userController = (
 
             const connectedContext = assertConnected(authContext)
 
-            // const session = await store.getSession(connectedContext.accessToken)
-            // if (!session) {
-            //     throw new Error('No active session found')
-            // }
-            const notifier = notificationService.getNotifier(
-                connectedContext.userId
-            )
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
 
             const transactionService = new TransactionService(
                 store,
@@ -676,13 +674,11 @@ export const userController = (
                 throw new Error('No network session found')
             }
 
-            // const session = await store.getSession(connectedContext.accessToken)
-            // if (!session) {
-            //     throw new Error('No active session found')
-            // }
-            const notifier = notificationService.getNotifier(
-                connectedContext.userId
-            )
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
