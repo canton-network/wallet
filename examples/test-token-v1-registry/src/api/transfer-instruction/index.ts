@@ -18,7 +18,7 @@ const pathSchema = z.object({
     transferInstructionId: z.string(),
 })
 
-const transferInstructionAPIRouter = Router()
+const transferInstructionAPIRouter: Router = Router()
 
 const openAPIRouter =
     createExpressOpenApiRouter<OffLedger.TransferInstructionV1.paths>(

@@ -58,7 +58,7 @@ if (update) {
 const lock = readLock()
 if (!lock) {
     console.error(
-        `migrations.lock.json not found at ${lockPath}. Run "yarn migrations:update-lock" to create it.`
+        `migrations.lock.json not found at ${lockPath}. Run "pnpm migrations:update-lock" to create it.`
     )
     process.exit(1)
 }
@@ -85,7 +85,7 @@ for (const name of Object.keys(lock.migrations)) {
 if (errors.length > 0) {
     console.error('Migration lock check failed:\n' + errors.join('\n'))
     console.info(
-        'Migrations are immutable once committed. If you added a new one, or consciously want to edit existing one run yarn migrations:update-lock and commit the updated migrations.lock.json.'
+        'Migrations are immutable once committed. If you added a new one, or consciously want to edit existing one run pnpm migrations:update-lock and commit the updated migrations.lock.json.'
     )
     process.exit(1)
 }

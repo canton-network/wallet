@@ -45,7 +45,7 @@ const scripts = getScriptsRecursive(dir)
 
 async function executeScript(name: string) {
     console.log(success(`\n=== Executing script: ${name} ===`))
-    await cmd('yarn', ['tsx', path.join(dir, name)]).then(() => {
+    await cmd('pnpm', ['tsx', path.join(dir, name)]).then(() => {
         console.log(success(`Script ${name} executed successfully`))
     })
     console.log(success(`=== Finished script: ${name} ===\n`))
@@ -57,7 +57,7 @@ async function cmd(bin: string, args: string[]): Promise<string> {
     })
 
     // spawn pino-pretty, capturing its output instead of streaming directly
-    const pretty = child_process.spawn('yarn', ['pino-pretty'], {
+    const pretty = child_process.spawn('pnpm', ['pino-pretty'], {
         stdio: ['pipe', 'pipe', 'pipe'],
     })
 

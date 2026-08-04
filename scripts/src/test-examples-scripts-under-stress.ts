@@ -103,7 +103,7 @@ if (scriptNameFilter) {
 
 async function executeScript(name: string) {
     console.log(success(`\n=== Executing script: ${name} ===`))
-    await cmd('yarn', ['tsx', path.join(dir, name)]).then(() => {
+    await cmd('pnpm', ['tsx', path.join(dir, name)]).then(() => {
         console.log(success(`Script ${name} executed successfully`))
     })
     console.log(success(`=== Finished script: ${name} ===\n`))
@@ -115,7 +115,7 @@ async function cmd(bin: string, args: string[]): Promise<void> {
     })
 
     // spawn pino-pretty
-    const pretty = child_process.spawn('yarn', ['pino-pretty'], {
+    const pretty = child_process.spawn('pnpm', ['pino-pretty'], {
         stdio: ['pipe', process.stdout, process.stderr],
     })
 
@@ -153,7 +153,7 @@ BACKGROUND_STRESS_LOG_LEVEL: ${BACKGROUND_STRESS_LOG_LEVEL}`
         )
     )
 
-    const child = child_process.spawn('yarn', ['tsx', target], {
+    const child = child_process.spawn('pnpm', ['tsx', target], {
         stdio: ['ignore', 'pipe', 'pipe'],
         env: {
             ...process.env,

@@ -14,7 +14,7 @@ const pathSchema = z.object({
     allocationId: z.string(),
 })
 
-const allocationAPIRouter = Router()
+const allocationAPIRouter: Router = Router()
 
 const openAPIRouter =
     createExpressOpenApiRouter<OffLedger.AllocationV1.paths>(

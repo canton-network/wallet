@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'tsdown'
-import { base } from '../../tsdown.base.ts'
+import { base } from '../../tsdown.base.mts'
 
 export default defineConfig({
     ...base,

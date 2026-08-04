@@ -18,10 +18,10 @@
         }
     },
     "scripts": {
-        "build": "yarn generate:test-token && yarn clean && rollup -c && yarn clean:types-tmp",
+        "build": "pnpm clean && rollup -c && pnpm clean:types-tmp",
         "dev": "rollup -c -w",
         "clean:types-tmp": "rm -rf dist/types",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --out \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
     "dependencies": {

@@ -152,7 +152,7 @@ const hooks: IHooks = {
                 }
                 // else - fallback to repository field in template
                 const updatedPkg = JSON.stringify(updatedPkgObj)
-                execSync(`yarn prettier --write ${dest}/src/**/*`)
+                execSync(`pnpm prettier --write ${dest}/src/**/*`)
                 return await writeFile(packagePath, updatedPkg)
             }
             if (component.language === 'rust') {
