@@ -2448,19 +2448,18 @@ __metadata:
     "@canton-network/core-token-standard": "workspace:^"
     "@canton-network/core-types": "workspace:^"
     "@canton-network/wallet-sdk": "workspace:^"
-    "@types/koa": "npm:^3"
-    "@types/koa-bodyparser": "npm:^4"
+    "@types/express": "npm:^5.0.6"
     "@types/lodash": "npm:^4.17.24"
     "@types/node": "npm:^25.9.3"
     "@vitest/browser-playwright": "npm:^4.1.8"
     "@vitest/coverage-v8": "npm:^4.1.8"
-    koa: "npm:^3.2.1"
-    koa-bodyparser: "npm:^4.4.1"
-    openapi-backend: "npm:^5.18.0"
+    express: "npm:^5.2.1"
+    openapi-ts-router: "npm:^0.4.1"
+    openapi-typescript-helpers: "npm:^0.1.0"
     openapicmd: "npm:^2.9.2"
     playwright: "npm:^1.60.0"
     tsdown: "npm:^0.22.12"
-    tsx: "npm:^4.23.0"
+    tsx: "npm:^4.23.1"
     typescript: "npm:^5.9.3"
     vitest: "npm:^4.1.8"
     zod: "npm:^4.4.3"
@@ -8906,15 +8905,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/accepts@npm:*":
-  version: 1.3.7
-  resolution: "@types/accepts@npm:1.3.7"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10c0/7b21efc78b98ed57063ac31588f871f11501c080cd1201ca3743cf02ee0aee74bdb5a634183bc0987dc8dc582b26316789fd203650319ccc89a66cf88311d64f
-  languageName: node
-  linkType: hard
-
 "@types/argparse@npm:1.0.38":
   version: 1.0.38
   resolution: "@types/argparse@npm:1.0.38"
@@ -9035,29 +9025,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/content-disposition@npm:*":
-  version: 0.5.9
-  resolution: "@types/content-disposition@npm:0.5.9"
-  checksum: 10c0/9fd520dae1a9c7b85909e59f548f905a670a6e2f83642f9734d1b05126f64ac8c8e2c282a663edf27d58bc34fbbacf46a4d4a95d3802b42106174a19a68175c8
-  languageName: node
-  linkType: hard
-
 "@types/cookiejar@npm:^2.1.5":
   version: 2.1.5
   resolution: "@types/cookiejar@npm:2.1.5"
   checksum: 10c0/af38c3d84aebb3ccc6e46fb6afeeaac80fb26e63a487dd4db5a8b87e6ad3d4b845ba1116b2ae90d6f886290a36200fa433d8b1f6fe19c47da6b81872ce9a2764
-  languageName: node
-  linkType: hard
-
-"@types/cookies@npm:*":
-  version: 0.9.2
-  resolution: "@types/cookies@npm:0.9.2"
-  dependencies:
-    "@types/connect": "npm:*"
-    "@types/express": "npm:*"
-    "@types/keygrip": "npm:*"
-    "@types/node": "npm:*"
-  checksum: 10c0/75f00c83d50998b610d4fe2ddb2544fde7eb6dc683f5e68831a4ecb458b465260b8e2df4e369880a67c5b946558322c4627403781eb076ff72ca16c7ab8c47dd
   languageName: node
   linkType: hard
 
@@ -9142,7 +9113,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:*, @types/express@npm:^5.0.6":
+"@types/express@npm:^5.0.6":
   version: 5.0.6
   resolution: "@types/express@npm:5.0.6"
   dependencies:
@@ -9181,14 +9152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/http-assert@npm:*":
-  version: 1.5.6
-  resolution: "@types/http-assert@npm:1.5.6"
-  checksum: 10c0/62d536440a5e09f4b7968112f4b235212407937033de800993f95b6f140181b4b2ad6075b73094e7ca0ccf7d9c80d68b93ca53fb1af196cc6d0257f3a4c3d5ba
-  languageName: node
-  linkType: hard
-
-"@types/http-errors@npm:*, @types/http-errors@npm:^2":
+"@types/http-errors@npm:*":
   version: 2.0.5
   resolution: "@types/http-errors@npm:2.0.5"
   checksum: 10c0/00f8140fbc504f47356512bd88e1910c2f07e04233d99c88c854b3600ce0523c8cd0ba7d1897667243282eb44c59abb9245959e2428b9de004f93937f52f7c15
@@ -9257,47 +9221,6 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10c0/b12d068b021e4078f6ac4441353965769be87acf15326173e2aea9f3bf8ead41bd0ad29421df5bbeb0123ec3fc02eb0a734481d52903704a1454a1845896b9eb
-  languageName: node
-  linkType: hard
-
-"@types/keygrip@npm:*":
-  version: 1.0.6
-  resolution: "@types/keygrip@npm:1.0.6"
-  checksum: 10c0/1045a79913259f539ac1d04384ea8f61cf29f1d299040eb4b67d92304ec3bcea59b7e4b83cf95a73aa251ff62e55924e380d0c563a21fe8f6e91de20cc610386
-  languageName: node
-  linkType: hard
-
-"@types/koa-bodyparser@npm:^4":
-  version: 4.3.13
-  resolution: "@types/koa-bodyparser@npm:4.3.13"
-  dependencies:
-    "@types/koa": "npm:*"
-  checksum: 10c0/b29f9b3a6a03050f51b087ab8eeb15b0fc0322c374a23e8ab3005a0fd1cc7dba129a472ce42eebda739e604409eb15304be639c3adaf0a57b2b0b3c4407a3151
-  languageName: node
-  linkType: hard
-
-"@types/koa-compose@npm:*":
-  version: 3.2.9
-  resolution: "@types/koa-compose@npm:3.2.9"
-  dependencies:
-    "@types/koa": "npm:*"
-  checksum: 10c0/d89993ffadac74488cdb2ab0fc519ec43eab5e3e7b8baa37cb7fc5043c86d812c24a179efae1324d5e80c2f7b7ddfbc944df7052cab6ff98daf1df4a084ac348
-  languageName: node
-  linkType: hard
-
-"@types/koa@npm:*, @types/koa@npm:^3":
-  version: 3.0.3
-  resolution: "@types/koa@npm:3.0.3"
-  dependencies:
-    "@types/accepts": "npm:*"
-    "@types/content-disposition": "npm:*"
-    "@types/cookies": "npm:*"
-    "@types/http-assert": "npm:*"
-    "@types/http-errors": "npm:^2"
-    "@types/keygrip": "npm:*"
-    "@types/koa-compose": "npm:*"
-    "@types/node": "npm:*"
-  checksum: 10c0/f5bb89fe7b35611ef0e96888ad15727b0b7e9153145f88100a2c9ef43f70e5fcc4ae496cc975efabb1f945dce8b1b2f33bcd6d752ad34e6a3a2ba7e523ee9596
   languageName: node
   linkType: hard
 
@@ -10543,7 +10466,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"accepts@npm:^1.3.5, accepts@npm:^1.3.8":
+"accepts@npm:^1.3.5":
   version: 1.3.8
   resolution: "accepts@npm:1.3.8"
   dependencies:
@@ -12677,13 +12600,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"content-disposition@npm:~1.0.1":
-  version: 1.0.1
-  resolution: "content-disposition@npm:1.0.1"
-  checksum: 10c0/bd7ff1fe8d2542d3a2b9a29428cc3591f6ac27bb5595bba2c69664408a68f9538b14cbd92479796ea835b317a09a527c8c7209c4200381dedb0c34d3b658849e
-  languageName: node
-  linkType: hard
-
 "content-type@npm:^1.0.4, content-type@npm:^1.0.5, content-type@npm:~1.0.5":
   version: 1.0.5
   resolution: "content-type@npm:1.0.5"
@@ -12784,7 +12700,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookies@npm:~0.9.0, cookies@npm:~0.9.1":
+"cookies@npm:~0.9.0":
   version: 0.9.1
   resolution: "cookies@npm:0.9.1"
   dependencies:
@@ -13308,7 +13224,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"destroy@npm:1.2.0, destroy@npm:^1.0.4, destroy@npm:^1.2.0, destroy@npm:~1.2.0":
+"destroy@npm:1.2.0, destroy@npm:^1.0.4, destroy@npm:~1.2.0":
   version: 1.2.0
   resolution: "destroy@npm:1.2.0"
   checksum: 10c0/bd7633942f57418f5a3b80d5cb53898127bcf53e24cdf5d5f4396be471417671f0fee48a4ebe9a1e9defbde2a31280011af58a57e090ff822f589b443ed4e643
@@ -15533,7 +15449,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-assert@npm:^1.3.0, http-assert@npm:^1.5.0":
+"http-assert@npm:^1.3.0":
   version: 1.5.0
   resolution: "http-assert@npm:1.5.0"
   dependencies:
@@ -17330,7 +17246,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"koa-bodyparser@npm:^4.3.0, koa-bodyparser@npm:^4.4.1":
+"koa-bodyparser@npm:^4.3.0":
   version: 4.4.1
   resolution: "koa-bodyparser@npm:4.4.1"
   dependencies:
@@ -17442,32 +17358,6 @@ __metadata:
     type-is: "npm:^1.6.16"
     vary: "npm:^1.1.2"
   checksum: 10c0/bf21ffcf409bf847dca3f60349fc64a3b33e725e0ced3f405192a22fa51b4211cac29748f51df9674df82ca87691b3bdda64bbf80755ba6cdc6b2f35e878b0f5
-  languageName: node
-  linkType: hard
-
-"koa@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "koa@npm:3.2.1"
-  dependencies:
-    accepts: "npm:^1.3.8"
-    content-disposition: "npm:~1.0.1"
-    content-type: "npm:^1.0.5"
-    cookies: "npm:~0.9.1"
-    delegates: "npm:^1.0.0"
-    destroy: "npm:^1.2.0"
-    encodeurl: "npm:^2.0.0"
-    escape-html: "npm:^1.0.3"
-    fresh: "npm:~0.5.2"
-    http-assert: "npm:^1.5.0"
-    http-errors: "npm:^2.0.0"
-    koa-compose: "npm:^4.1.0"
-    mime-types: "npm:^3.0.1"
-    on-finished: "npm:^2.4.1"
-    parseurl: "npm:^1.3.3"
-    statuses: "npm:^2.0.1"
-    type-is: "npm:^2.0.1"
-    vary: "npm:^1.1.2"
-  checksum: 10c0/84352ef0ec0f54898f119ac589c7d96442ac21f494f3e1abca55d19c0cd51177f43b75440092d74730261d4d91270b5ba0396156e04b21132ab2251f8b4d2cde
   languageName: node
   linkType: hard
 
@@ -18230,7 +18120,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime-types@npm:^3.0.0, mime-types@npm:^3.0.1, mime-types@npm:^3.0.2":
+"mime-types@npm:^3.0.0, mime-types@npm:^3.0.2":
   version: 3.0.2
   resolution: "mime-types@npm:3.0.2"
   dependencies:
@@ -19553,7 +19443,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openapi-backend@npm:^5.10.6, openapi-backend@npm:^5.18.0":
+"openapi-backend@npm:^5.10.6":
   version: 5.18.0
   resolution: "openapi-backend@npm:5.18.0"
   dependencies:
@@ -19612,6 +19502,27 @@ __metadata:
     lodash.merge: "npm:^4.6.1"
     openapi-types: "npm:^12.1.3"
   checksum: 10c0/701c2f3d911fb7f69760642169defe7ab114a337a23063caeb36a1dda4362b742be526feb4c5cd0ff645836c2d32aca9d5e6fdf6a1b49af3f2ac89ecbfb1a64b
+  languageName: node
+  linkType: hard
+
+"openapi-ts-router@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "openapi-ts-router@npm:0.4.1"
+  dependencies:
+    "@standard-schema/spec": "npm:^1.1.0"
+    openapi-typescript-helpers: "npm:^0.1.0"
+  peerDependencies:
+    "@types/express": ^5.0.6
+    express: ^5.2.1
+    hono: ^4.12.21
+  peerDependenciesMeta:
+    "@types/express":
+      optional: true
+    express:
+      optional: true
+    hono:
+      optional: true
+  checksum: 10c0/e9b95aead63370b1b9faf7d759365b5c3bd39545c7e15c3fe338732d5e84a5fec5396b33bf33f0c90cb60a176c22f4da77db09460c6ec4673660e163308798a4
   languageName: node
   linkType: hard
 
@@ -23491,7 +23402,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsx@npm:^4.23.0":
+"tsx@npm:^4.23.0, tsx@npm:^4.23.1":
   version: 4.23.1
   resolution: "tsx@npm:4.23.1"
   dependencies:

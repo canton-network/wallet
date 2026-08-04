@@ -1,21 +1,32 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Handler, OpenAPIBackend } from 'openapi-backend'
-import { availableOpenAPIPaths } from '../../common/getOpenApiPath'
 import { getRegistryInfo } from './getRegistryInfo'
 import { listInstruments } from './listInstruments'
 import { getInstrument } from './getInstrument'
 import { OffLedger } from '@canton-network/core-token-standard'
+import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
+import { Router } from 'express'
+import z from 'zod'
 
-export const metatadaAPI = new OpenAPIBackend({
-    definition: availableOpenAPIPaths['token-metadata-v1.yaml'],
-    quick: true,
-    handlers: {
-        getRegistryInfo,
-        listInstruments,
-        getInstrument,
-    } satisfies Record<keyof OffLedger.MetadataV1.operations, Handler>,
+const metadataAPIRouter = Router()
+
+const openAPIRouter =
+    createExpressOpenApiRouter<OffLedger.MetadataV1.paths>(metadataAPIRouter)
+
+openAPIRouter.get('/registry/metadata/v1/info', {
+    handler: getRegistryInfo,
 })
 
-await metatadaAPI.init()
+openAPIRouter.get('/registry/metadata/v1/instruments', {
+    handler: listInstruments,
+})
+
+openAPIRouter.get('/registry/metadata/v1/instruments/{instrumentId}', {
+    pathSchema: z.object({
+        instrumentId: z.string(),
+    }),
+    handler: getInstrument,
+})
+
+export default metadataAPIRouter

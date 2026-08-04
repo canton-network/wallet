@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { OffLedger } from '@canton-network/core-token-standard'
-import { APIHandler } from '../../types'
 import { instruments } from './common'
+import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 
 /**
  * @returns API payload containing the full in-memory list of instrument metadata.
  */
-export const listInstruments: APIHandler<
+export const listInstruments: TExpressOpenApiRequestHandler<
     OffLedger.MetadataV1.paths['/registry/metadata/v1/instruments']['get']
-> = async () => {
-    return {
-        payload: {
-            instruments,
-        },
-    }
+> = (_req, res) => {
+    res.json({ instruments })
 }
