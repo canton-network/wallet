@@ -20,7 +20,7 @@ async function main() {
     const existing = await readFile(SCHEMA_PATH, { encoding: 'utf-8' })
 
     const { stdout } = await ex(
-        `pnpm --filter @canton-network/wallet-gateway-remote run tsx ./src/index.ts --config-schema`
+        `pnpm --filter @canton-network/wallet-gateway-remote exec tsx ./src/index.ts --config-schema`
     )
 
     if (stdout) {
