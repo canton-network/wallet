@@ -44,6 +44,7 @@ import {
     RemoveApiKeyParams,
     ListSigningProviderVaultsResult,
     ListSigningProviderVaultsParams,
+    ListTransactionsParams,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -759,35 +760,54 @@ export const userController = (
                 notifier.emit('statusChanged', statusEvent)
                 notifier.emit('connected', statusEvent)
 
-                //we only want to automatically perform a sync if it is the first time a session is created
+                // Only bootstrap wallets the first time a session is created.
+                // Session creation must remain successful when the ledger or
+                // wallet synchronization is unavailable.
                 const wallets = await store.getWallets()
-                if (wallets.length == 0) {
-                    if (!network.adminAuth) {
-                        throw new Error('No admin auth configured')
-                    }
-
-                    const adminAccessTokenProvider =
-                        AuthTokenProvider.fromGatewayConfig(
-                            idp,
-                            network.adminAuth,
-                            logger
+                if (wallets.length === 0) {
+                    if (!status.isConnected) {
+                        logger.warn(
+                            {
+                                networkId: network.id,
+                                reason: status.reason,
+                            },
+                            'Skipping initial wallet sync because the ledger is unavailable'
                         )
-                    const partyAllocator = new PartyAllocationService({
-                        synchronizerId: network.synchronizerId,
-                        accessTokenProvider: adminAccessTokenProvider,
-                        httpLedgerUrl: network.ledgerApi.baseUrl,
-                        logger,
-                    })
+                    } else {
+                        try {
+                            if (!network.adminAuth) {
+                                throw new Error('No admin auth configured')
+                            }
 
-                    const service = new WalletSyncService(
-                        store,
-                        ledgerClient,
-                        connectedContext,
-                        logger,
-                        drivers,
-                        partyAllocator
-                    )
-                    await service.syncWallets()
+                            const adminAccessTokenProvider =
+                                AuthTokenProvider.fromGatewayConfig(
+                                    idp,
+                                    network.adminAuth,
+                                    logger
+                                )
+                            const partyAllocator = new PartyAllocationService({
+                                synchronizerId: network.synchronizerId,
+                                accessTokenProvider: adminAccessTokenProvider,
+                                httpLedgerUrl: network.ledgerApi.baseUrl,
+                                logger,
+                            })
+
+                            const service = new WalletSyncService(
+                                store,
+                                ledgerClient,
+                                connectedContext,
+                                logger,
+                                drivers,
+                                partyAllocator
+                            )
+                            await service.syncWallets()
+                        } catch (error) {
+                            logger.warn(
+                                { err: error, networkId: network.id },
+                                'Initial wallet sync failed; keeping session active'
+                            )
+                        }
+                    }
                 }
 
                 const rights = await store.getUserRights(network.id)
@@ -1002,8 +1022,12 @@ export const userController = (
                 }),
             }
         },
-        listTransactions: async function (): Promise<ListTransactionsResult> {
-            const transactions = await store.listTransactions()
+        listTransactions: async function (
+            params?: ListTransactionsParams
+        ): Promise<ListTransactionsResult> {
+            const txCount = await store.transactionsCount()
+            const page = await store.listTransactions(params)
+            const transactions = page.transactions
             const txs = transactions.map((transaction) => ({
                 id: transaction.id,
                 commandId: transaction.commandId,
@@ -1026,7 +1050,16 @@ export const userController = (
                     externalTxId: transaction.externalTxId,
                 }),
             }))
-            return { transactions: txs }
+
+            if (page.nextCursor === null) {
+                return { transactions: txs, count: txCount }
+            } else {
+                return {
+                    transactions: txs,
+                    nextCursor: page.nextCursor,
+                    count: txCount,
+                }
+            }
         },
         deleteTransaction: async (
             params: DeleteTransactionParams

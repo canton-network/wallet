@@ -16,8 +16,8 @@
         }
     },
     "scripts": {
-        "build": "tsup --onSuccess \"tsc\"",
-        "dev": "tsup --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "tsdown --watch --onSuccess \"tsc\"",
         "clean": "tsc -b --clean && rm -rf ./dist",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
         "test": "vitest run --project node",
@@ -36,7 +36,7 @@
         "@types/lodash": "^4.17.24",
         "@types/node": "^25.9.4",
         "@vitest/coverage-v8": "^4.1.10",
-        "tsup": "^8.5.1",
+        "tsdown": "^0.22.9",
         "tweetnacl": "^1.0.3",
         "tweetnacl-util": "^0.15.1",
         "typescript": "^5.9.3",

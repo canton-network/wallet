@@ -1,0 +1,233 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
+import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
+import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
+import { APIError, emptyChoiceContext } from '../common'
+import { expressContext, mock, RequestType } from '../../__test__/mocks'
+
+const { res, next } = expressContext
+
+vi.mock('../../common/sdk', () => {
+    return {
+        default: mock.sdk,
+    }
+})
+
+vi.mock('../../common/operator', () => ({
+    operator: {
+        party: 'party',
+        keys: {
+            privateKey: 'privateKey',
+        },
+    },
+}))
+
+const { getTransferFactory } = await import('./getTransferFactory')
+
+describe('Transfer Instruction', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('should get accept choice context', () => {
+        getTransferInstructionAcceptContext(
+            {} as RequestType<typeof getTransferInstructionAcceptContext>,
+            res,
+            next
+        )
+
+        expect(res.json).toHaveBeenCalledWith(emptyChoiceContext)
+    })
+
+    it('should get reject choice context', () => {
+        getTransferInstructionRejectContext(
+            {} as RequestType<typeof getTransferInstructionRejectContext>,
+            res,
+            next
+        )
+
+        expect(res.json).toHaveBeenCalledWith(emptyChoiceContext)
+    })
+
+    it('should get withdraw choice context', () => {
+        getTransferInstructionWithdrawContext(
+            {} as RequestType<typeof getTransferInstructionWithdrawContext>,
+            res,
+            next
+        )
+
+        expect(res.json).toHaveBeenCalledWith(emptyChoiceContext)
+    })
+
+    describe('transfer factory', () => {
+        const getTransferFactoryRequest = (choiceArguments: {
+            sender?: string
+            receiver?: string
+            transferKind?: 'self' | 'offer' | 'direct'
+        }) =>
+            ({
+                body: {
+                    choiceArguments,
+                    excludeDebugFields: false,
+                },
+            }) as unknown as RequestType<typeof getTransferFactory>
+
+        it('should fail if provided request body is invalid', async () => {
+            const invalidRequest = getTransferFactoryRequest({})
+
+            await getTransferFactory(invalidRequest, res, next)
+
+            expect(next).toHaveBeenCalledWith(expect.any(APIError))
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({ status: 400 })
+            )
+            expect(res.json).not.toHaveBeenCalled()
+        })
+
+        it('should successfully return factory contract from acs reader', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
+            mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
+                {
+                    contractId: 'cid',
+                },
+            ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(
+                mock.sdk.ledger.acsReader.readJsContracts
+            ).toHaveBeenCalledOnce()
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'offer',
+                choiceContext: emptyChoiceContext,
+            })
+        })
+
+        it('should return error in case contract creation fails', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
+            mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValue([])
+
+            await getTransferFactory(request, res, next)
+
+            expect(
+                mock.sdk.ledger.acsReader.readJsContracts
+            ).toHaveBeenCalledTimes(2)
+            expect(mock.prepare).toHaveBeenCalledOnce()
+            expect(mock.sign).toHaveBeenCalledOnce()
+            expect(mock.execute).toHaveBeenCalledOnce()
+            expect(next).toHaveBeenCalledWith(
+                expect.objectContaining({ status: 500 })
+            )
+        })
+
+        it('should successfully create factory contract', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
+            mock.sdk.ledger.acsReader.readJsContracts
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([
+                    {
+                        contractId: 'cid',
+                    },
+                ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'offer',
+                choiceContext: emptyChoiceContext,
+            })
+        })
+
+        it('should change transfer kind if sender and receiver is equal', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 's',
+            })
+            mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
+                {
+                    contractId: 'cid',
+                },
+            ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'self',
+                choiceContext: emptyChoiceContext,
+            })
+
+            vi.clearAllMocks()
+
+            mock.sdk.ledger.acsReader.readJsContracts
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([
+                    {
+                        contractId: 'cid',
+                    },
+                ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'self',
+                choiceContext: emptyChoiceContext,
+            })
+        })
+
+        it('should set transfer kind overwrite', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+                transferKind: 'direct',
+            })
+
+            mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
+                {
+                    contractId: 'cid',
+                },
+            ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'direct',
+                choiceContext: emptyChoiceContext,
+            })
+
+            vi.clearAllMocks()
+
+            mock.sdk.ledger.acsReader.readJsContracts
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([
+                    {
+                        contractId: 'cid',
+                    },
+                ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid',
+                transferKind: 'direct',
+                choiceContext: emptyChoiceContext,
+            })
+        })
+    })
+})

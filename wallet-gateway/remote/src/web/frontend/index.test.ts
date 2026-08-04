@@ -59,12 +59,12 @@ vi.mock('./rpc-client.js', () => ({
 vi.mock('./state-manager.js', () => ({
     stateManager: {
         accessToken: {
-            get: () => authState.accessToken,
-            set: (value: string) => {
-                authState.accessToken = value
+            get: async () => await Promise.resolve(authState.accessToken),
+            set: async (value: string) => {
+                authState.accessToken = await Promise.resolve(value)
             },
-            clear: () => {
-                authState.accessToken = undefined
+            clear: async () => {
+                authState.accessToken = await Promise.resolve(undefined)
             },
         },
         networkId: {
@@ -390,6 +390,8 @@ describe('UserUIAuthRedirect', () => {
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
 
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(DEFAULT_PAGE_REDIRECT)
         )
@@ -435,6 +437,7 @@ describe('UserUIAuthRedirect', () => {
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
 
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(DEFAULT_PAGE_REDIRECT)
         )

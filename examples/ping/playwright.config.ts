@@ -2,16 +2,77 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig, devices } from '@playwright/test'
+import { config as loadEnv } from 'dotenv'
 
-const includeCiSecretDependency = process.env.CI_SECRET_DEPENDENCY === 'true'
+loadEnv({ quiet: true, path: ['.env', '.env.local'] })
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
+const dfnsApiUrl = process.env.DFNS_BASE_URL
+const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
+
+const webServers = []
+const isLocalhost = (url: URL) =>
+    ['localhost', '127.0.0.1'].includes(url.hostname)
+
+// If localhost is set as external signing provider url, then start a mock api for tests
+if (blockdaemonApiUrl) {
+    const url = new URL(blockdaemonApiUrl)
+    if (isLocalhost(url)) {
+        const healthUrl = `${url.origin}/_healthz`
+        webServers.push({
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+            url: healthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        })
+    }
+}
+
+if (dfnsApiUrl) {
+    const dfnsHealthUrl = `${new URL(dfnsApiUrl).origin}/_healthz`
+    const url = new URL(dfnsHealthUrl)
+    if (isLocalhost(url)) {
+        const healthUrl = `${url.origin}/_healthz`
+        webServers.push({
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:dfns',
+            url: healthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        })
+    }
+}
+
+if (fireblocksApiPath) {
+    const url = new URL(fireblocksApiPath)
+    if (isLocalhost(url)) {
+        const healthUrl = `${url.origin}/_healthz`
+        webServers.push({
+            command:
+                'yarn workspace @canton-network/example-ping mock:signing-providers:fireblocks',
+            url: healthUrl,
+            reuseExistingServer: !process.env.CI,
+            timeout: 30 * 1000,
+            stdout: 'pipe',
+            stderr: 'pipe',
+        })
+    }
+}
+
+const externalSigningProviderTests = [
+    '**/blockdaemon.spec.ts',
+    '**/dfns.spec.ts',
+    '**/fireblocks.spec.ts',
+]
+
+// Fork PR workflows set CI_SECRET_DEPENDENCY to "false" (repo vars unavailable).
+// When unset (local dev), external signing e2e tests still run against mocks in .env.
+const includeCiSecretDependency = process.env.CI_SECRET_DEPENDENCY !== 'false'
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -21,7 +82,7 @@ export default defineConfig({
     testDir: './tests',
     testIgnore: includeCiSecretDependency
         ? undefined
-        : ['**/blockdaemon.spec.ts'],
+        : externalSigningProviderTests,
     /* Run tests in files in parallel */
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -80,10 +141,5 @@ export default defineConfig({
         // },
     ],
 
-    /* Run your local dev server before starting the tests */
-    // webServer: {
-    //   command: 'npm run start',
-    //   url: 'http://localhost:3030',
-    //   reuseExistingServer: !process.env.CI,
-    // },
+    webServer: webServers,
 })

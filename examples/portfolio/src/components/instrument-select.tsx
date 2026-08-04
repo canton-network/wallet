@@ -2,35 +2,31 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMemo } from 'react'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import {
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    FormHelperText,
     Box,
+    FormControl,
+    FormHelperText,
+    MenuItem,
+    Select,
     Typography,
 } from '@mui/material'
-import { useAggregatedHoldings } from '../hooks/useAggregatedHoldings'
-import type { InstrumentId } from '@canton-network/core-token-standard'
 import Decimal from 'decimal.js'
+import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
+import type { InstrumentId } from '@canton-network/core-token-standard'
+import type { SelectableInstrument } from './transfer-types'
 
-interface SelectableInstrument {
-    instrumentId: InstrumentId
-    symbol: string
-    name: string
-    availableAmount: string
-    decimals: number
-}
-
-export interface InstrumentSelectProps {
+interface InstrumentSelectProps {
     partyId: string | undefined
     value: InstrumentId | null
-    onChange: (instrument: InstrumentId | null) => void
+    onChange: (instrument: SelectableInstrument | null) => void
     disabled?: boolean
     error?: boolean
     helperText?: string
 }
+
+const instrumentKey = (instrumentId: InstrumentId) =>
+    `${instrumentId.admin}::${instrumentId.id}`
 
 export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
     partyId,
@@ -40,55 +36,138 @@ export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
     error = false,
     helperText,
 }) => {
-    const { instruments: aggregatedHoldings } = useAggregatedHoldings(partyId)
+    const {
+        instruments: aggregatedHoldings,
+        isLoading,
+        isError,
+    } = useAggregatedHoldings(partyId)
 
     const selectableInstruments = useMemo(
         (): SelectableInstrument[] =>
             aggregatedHoldings.flatMap((holding) => {
                 const instrument = holding.instrument
-                if (!instrument) return []
                 if (new Decimal(holding.availableAmount).lte(0)) return []
 
                 return [
                     {
                         instrumentId: holding.instrumentId,
-                        symbol: instrument.symbol,
-                        name: instrument.name,
+                        symbol: instrument?.symbol ?? holding.instrumentId.id,
+                        name: instrument?.name ?? holding.instrumentId.id,
                         availableAmount: holding.availableAmount,
-                        decimals: instrument.decimals,
+                        decimals: instrument?.decimals,
                     },
                 ]
             }),
         [aggregatedHoldings]
     )
 
-    const selectedKey = value ? `${value.admin}::${value.id}` : ''
+    const selectedInstrument = useMemo(() => {
+        if (!value) return null
+        return (
+            selectableInstruments.find(
+                (instrument) =>
+                    instrumentKey(instrument.instrumentId) ===
+                    instrumentKey(value)
+            ) ?? null
+        )
+    }, [selectableInstruments, value])
+
+    const selectedKey = value ? instrumentKey(value) : ''
+    const emptyMessage = isLoading
+        ? 'Loading assets...'
+        : isError
+          ? 'Could not load assets'
+          : 'No transferable balances available'
+    const selectDisabled =
+        disabled || isLoading || isError || selectableInstruments.length === 0
 
     const handleChange = (key: string) => {
         if (!key) {
             onChange(null)
             return
         }
+
         const selected = selectableInstruments.find(
-            (i) => `${i.instrumentId.admin}::${i.instrumentId.id}` === key
+            (instrument) => instrumentKey(instrument.instrumentId) === key
         )
-        onChange(selected?.instrumentId ?? null)
+        onChange(selected ?? null)
     }
 
     return (
-        <FormControl fullWidth error={error} disabled={disabled}>
-            <InputLabel id="instrument-select-label">Instrument</InputLabel>
+        <FormControl fullWidth error={error} disabled={selectDisabled}>
             <Select
-                labelId="instrument-select-label"
+                displayEmpty
                 value={selectedKey}
-                onChange={(e) => handleChange(e.target.value)}
-                label="Instrument"
+                inputProps={{
+                    'aria-label': 'Select asset',
+                }}
+                onChange={(event) => handleChange(event.target.value)}
+                IconComponent={KeyboardArrowDownIcon}
+                renderValue={(key) => {
+                    if (!key) {
+                        return (
+                            <Typography sx={{ color: 'text.disabled' }}>
+                                {selectableInstruments.length > 0
+                                    ? 'Select an asset'
+                                    : emptyMessage}
+                            </Typography>
+                        )
+                    }
+
+                    return (
+                        <Typography sx={{ color: 'text.primary' }}>
+                            {selectedInstrument?.name ??
+                                selectedInstrument?.symbol ??
+                                'Selected asset'}
+                        </Typography>
+                    )
+                }}
+                MenuProps={{
+                    slotProps: {
+                        paper: {
+                            sx: {
+                                bgcolor: 'background.paper',
+                                color: 'text.primary',
+                                backgroundImage: 'none',
+                            },
+                        },
+                    },
+                }}
+                sx={{
+                    minHeight: 48,
+                    bgcolor: (theme) => theme.portfolio.surface.required,
+                    color: 'text.primary',
+                    borderRadius: 1,
+                    '& .MuiSelect-select': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        minHeight: 'auto',
+                        px: 2.5,
+                        py: 1.25,
+                    },
+                    '& fieldset': { border: 'none' },
+                    '&:hover fieldset': { border: 'none' },
+                    '&.Mui-focused fieldset': (theme) => ({
+                        border: `1px solid ${theme.palette.secondary.main}`,
+                    }),
+                    '& .MuiSelect-icon': {
+                        color: 'text.primary',
+                        right: (theme) => theme.spacing(2.5),
+                    },
+                    '&.Mui-disabled': {
+                        bgcolor: 'action.disabledBackground',
+                    },
+                }}
             >
                 <MenuItem value="">
-                    <em>Select an instrument...</em>
+                    <em>
+                        {selectableInstruments.length > 0
+                            ? 'Select an asset'
+                            : emptyMessage}
+                    </em>
                 </MenuItem>
                 {selectableInstruments.map((instrument) => {
-                    const key = `${instrument.instrumentId.admin}::${instrument.instrumentId.id}`
+                    const key = instrumentKey(instrument.instrumentId)
                     return (
                         <MenuItem key={key} value={key}>
                             <Box
@@ -99,16 +178,36 @@ export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
                                     gap: 2,
                                 }}
                             >
-                                <Typography>{instrument.symbol}</Typography>
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Typography>{instrument.name}</Typography>
+                                    <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                        sx={{ display: 'block' }}
+                                    >
+                                        {instrument.symbol}
+                                    </Typography>
+                                </Box>
                                 <Typography color="text.secondary">
-                                    Available: {instrument.availableAmount}
+                                    {instrument.availableAmount}{' '}
+                                    {instrument.symbol}
                                 </Typography>
                             </Box>
                         </MenuItem>
                     )
                 })}
             </Select>
-            {helperText && <FormHelperText>{helperText}</FormHelperText>}
+            {helperText && (
+                <FormHelperText
+                    sx={{
+                        ml: 0,
+                        mt: 1,
+                        color: error ? 'error.main' : 'text.secondary',
+                    }}
+                >
+                    {helperText}
+                </FormHelperText>
+            )}
         </FormControl>
     )
 }
