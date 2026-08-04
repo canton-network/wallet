@@ -19,7 +19,7 @@
         "build": "tsdown --onSuccess \"tsc --emitDeclarationOnly --declarationMap && pnpm run docs\"",
         "docs": "typedoc --tsconfig tsconfig.docs.json",
         "dev": "tsdown --watch --onSuccess \"tsc --emitDeclarationOnly --declarationMap && pnpm run docs\"",
-        "flatpack": "pnpm pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist"
     },
     "files": ["dist/**"],

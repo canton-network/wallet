@@ -53,17 +53,6 @@
         "full:down": "pnpm stop:localnet && pnpm pm2 kill && pnpm full:rebuild",
         "full:up": "pnpm start:localnet && pnpm start:all"
     },
-    "workspaces": [
-        "api-specs",
-        "core/**",
-        "docs/wallet-integration-guide/examples",
-        "examples/*",
-        "example-scripts",
-        "sdk/**",
-        "scripts",
-        "mock-oauth2",
-        "wallet-gateway/**"
-    ],
     "devDependencies": {
         "@canton-network/core-eslint-config": "workspace:^",
         "@commitlint/config-conventional": "^20.5.3",

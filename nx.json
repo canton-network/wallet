@@ -53,11 +53,7 @@
             "dependsOn": ["build", "^flatpack"]
         },
         "build": {
-            "dependsOn": [
-                "^generate:test-token",
-                "generate:test-token",
-                "^build"
-            ],
+            "dependsOn": ["^build"],
             "outputs": ["{projectRoot}/dist"],
             "cache": true
         },
