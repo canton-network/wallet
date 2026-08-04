@@ -276,7 +276,11 @@ export const dappController = (
                 accessTokenProvider,
             })
 
-            const notifier = notificationService.getNotifier(context.userId)
+            const session = await store.getSession(context.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
 
             const commandId = params.commandId || v4()
             const transactionId = v4()
