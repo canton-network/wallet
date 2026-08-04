@@ -25,7 +25,7 @@
         "test:all": "nx run-many -t test --parallel",
         "test-coverage:all": "nx run-many -t test:coverage --parallel",
         "script:coverage:report": "tsx ./scripts/src/coverage-report.ts",
-        "postinstall": "husky && pnpm generate:tokenstandard",
+        "postinstall": "husky",
         "docs:update-wg-config": "tsx ./scripts/src/docs-update-wg-config.ts",
         "script:cleancoding": "tsx ./scripts/src/clean-coding.ts",
         "script:install:dpm": "tsx --eval \"import { installDPM } from './scripts/src/install-dpm.ts'; installDPM()\"",

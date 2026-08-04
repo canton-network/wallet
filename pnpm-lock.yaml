@@ -1538,6 +1538,9 @@ importers:
 
     core/wallet-store-inmemory:
         dependencies:
+            '@canton-network/core-types':
+                specifier: workspace:^
+                version: link:../types
             '@canton-network/core-wallet-auth':
                 specifier: workspace:^
                 version: link:../wallet-auth
@@ -1578,6 +1581,9 @@ importers:
             '@canton-network/core-rpc-errors':
                 specifier: workspace:^
                 version: link:../rpc-errors
+            '@canton-network/core-types':
+                specifier: workspace:^
+                version: link:../types
             '@canton-network/core-wallet-auth':
                 specifier: workspace:^
                 version: link:../wallet-auth
