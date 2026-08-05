@@ -194,10 +194,24 @@ export class AppHeader extends BaseElement {
 
             .menu-url {
                 display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.25rem;
+                padding: 0.5rem 0.6rem;
+                min-width: 0;
+            }
+
+            .menu-url-label {
+                font-size: 12px;
+                color: var(--wg-text-secondary);
+                opacity: 0.8;
+            }
+
+            .menu-url-row {
+                display: flex;
                 align-items: center;
                 justify-content: space-between;
                 gap: var(--wg-space-3);
-                padding: 0.5rem 0.6rem;
                 min-width: 0;
             }
 
@@ -333,11 +347,14 @@ export class AppHeader extends BaseElement {
                         <div class="menu-divider"></div>
 
                         <div class="menu-url" title=${this.gatewayUrl}>
-                            <span class="url-text">${this.gatewayUrl}</span>
-                            <wg-copy-button
-                                .value=${this.gatewayUrl}
-                                label="Copy gateway URL"
-                            ></wg-copy-button>
+                            <span class="menu-url-label">Dapp Connect URL</span>
+                            <div class="menu-url-row">
+                                <span class="url-text">${this.gatewayUrl}</span>
+                                <wg-copy-button
+                                    .value=${this.gatewayUrl}
+                                    label="Copy gateway URL"
+                                ></wg-copy-button>
+                            </div>
                         </div>
 
                         <div class="menu-divider"></div>
