@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { ThemeContext } from '../contexts/theme-context'
 import { darkTheme, lightTheme } from '../lib/theme'
@@ -11,12 +11,12 @@ export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({
         return savedTheme ? savedTheme === 'dark' : true
     })
 
+    useEffect(() => {
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light')
+    }, [isDarkMode])
+
     const toggleTheme = () => {
-        setIsDarkMode((prev) => {
-            const newMode = !prev
-            localStorage.setItem('theme', newMode ? 'dark' : 'light')
-            return newMode
-        })
+        setIsDarkMode((prev) => !prev)
     }
 
     const theme = isDarkMode ? darkTheme : lightTheme
