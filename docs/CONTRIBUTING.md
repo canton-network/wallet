@@ -7,7 +7,7 @@
 ### Prerequisites
 
 - Node.js 24+ (see `.nvmrc` for exact version)
-- pnpm 4 (via Corepack)
+- pnpm (via Corepack)
 - Java (for Canton) - [sdkman](https://sdkman.io/install) is recommended for version management
 
 An unofficial, community-contributed [nix shell](./development/shell.nix) is available as well to provide these system dependencies.

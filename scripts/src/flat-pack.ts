@@ -9,7 +9,7 @@ const command = new Command()
     .argument('<pkgDir>')
     .argument('[outDir]')
     .action((pkgDir, outDir) => {
-        const flatPack = new FlatPack(pkgDir, 'npm', outDir)
+        const flatPack = new FlatPack(pkgDir, outDir)
         const out = flatPack.pack()
         console.log('completed flat pack to: ' + out)
     })
