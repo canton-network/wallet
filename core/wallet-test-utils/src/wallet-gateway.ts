@@ -3,6 +3,30 @@
 
 import { expect, Locator, Page } from '@playwright/test'
 
+export interface NetworkFormInput {
+    id: string
+    name: string
+    description: string
+    identityProviderId: string
+    ledgerApi: string
+    synchronizerId: string
+    auth: {
+        clientId: string
+        audience: string
+        scope: string
+    }
+}
+
+export interface IdpFormInput {
+    id: string
+    type: 'oauth' | 'self_signed'
+    issuer: string
+    configUrl: string
+}
+
+export type ActivityStatus =
+    'pending' | 'signed' | 'executed' | 'failed' | 'rejected'
+
 export class WalletGateway {
     private readonly dappPage: Page
     private readonly connectButton: (dappPage: Page) => Locator
@@ -29,7 +53,7 @@ export class WalletGateway {
     }
 
     async connect(args: {
-        network: 'LocalNet' | 'Local (OAuth IDP)'
+        network: string
         customURL?: string
     }): Promise<void> {
         const connectButton = this.connectButton(this.dappPage)
@@ -87,9 +111,13 @@ export class WalletGateway {
         const setPrimaryButton = wallet.getByRole('button', {
             name: 'Set as primary',
         })
+
         if (await setPrimaryButton.isVisible().catch(() => false)) {
             await setPrimaryButton.click()
         }
+
+        // now, wait until the party shows up as PRIMARY
+        await expect(wallet.getByText('PRIMARY', { exact: true })).toBeVisible()
     }
 
     async createWalletIfNotExists(args: {
@@ -309,7 +337,7 @@ export class WalletGateway {
     }
 
     async reconnect(args: {
-        network: 'LocalNet' | 'Local (OAuth IDP)'
+        network: string
         customURL?: string
     }): Promise<void> {
         const connectButton = this.connectButton(this.dappPage)
@@ -464,5 +492,345 @@ export class WalletGateway {
             timeout: 15000,
         })
         await expect(popup.getByText('Loading parties...')).not.toBeVisible()
+    }
+
+    async gotoNetworksPage(): Promise<void> {
+        const popup = await this.popup()
+        await popup.locator('button[aria-haspopup="menu"]').click()
+        await popup
+            .getByRole('button', { name: 'Networks', exact: true })
+            .click()
+        await this.waitForNetworksPageReady()
+    }
+
+    async hasNewNetworkButton(): Promise<boolean> {
+        const popup = await this.popup()
+        return (
+            (await popup
+                .getByRole('button', { name: 'New', exact: true })
+                .count()) > 0
+        )
+    }
+
+    async addNetwork(network: NetworkFormInput): Promise<void> {
+        await this.gotoNetworksPage()
+        const popup = await this.popup()
+
+        const newButton = popup.getByRole('button', {
+            name: 'New',
+            exact: true,
+        })
+        await expect(newButton).toBeVisible({ timeout: 15000 })
+        await newButton.click()
+
+        await expect(
+            popup.getByRole('heading', { name: 'Add a new network' })
+        ).toBeVisible({ timeout: 15000 })
+
+        await this.fillNetworkForm(network)
+
+        await popup.locator('[data-test-id="add-network-button"]').click()
+        await this.waitForNetworksPageReady()
+    }
+
+    async updateNetworkName(networkId: string, newName: string): Promise<void> {
+        await this.openNetworkReview(networkId)
+        const popup = await this.popup()
+
+        await this.fillNetworkFormField('Name', newName)
+        await popup.locator('[data-test-id="update-network-button"]').click()
+        await this.waitForNetworksPageReady()
+    }
+
+    async findNetworkCard(networkId: string): Promise<Locator> {
+        await this.waitForNetworksPageReady()
+        return this.findInPaginatedList(
+            `Network card for "${networkId}"`,
+            (popup) =>
+                popup.locator('network-card').filter({ hasText: networkId })
+        )
+    }
+
+    async expectFirstNetworkNotEditable(): Promise<void> {
+        const popup = await this.popup()
+        await this.waitForNetworksPageReady()
+
+        const firstCard = popup.locator('network-card').first()
+        await expect(firstCard).toBeVisible({ timeout: 15000 })
+
+        // Nothing changes
+        await expect(popup).toHaveURL('http://localhost:3030/networks/', {
+            timeout: 15000,
+        })
+    }
+
+    private async openNetworkReview(networkId: string): Promise<void> {
+        const card = await this.findNetworkCard(networkId)
+        await card.click()
+
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Review network' })
+        ).toBeVisible({ timeout: 15000 })
+    }
+
+    private async fillNetworkForm(network: NetworkFormInput): Promise<void> {
+        const popup = await this.popup()
+
+        await this.fillNetworkFormField('Network Id', network.id)
+        await this.fillNetworkFormField('Name', network.name)
+        await this.fillNetworkFormField('Description', network.description)
+        await this.fillNetworkFormField(
+            'Synchronizer Id',
+            network.synchronizerId
+        )
+        await this.fillNetworkFormField(
+            'Identity Provider Id',
+            network.identityProviderId
+        )
+        await this.fillNetworkFormField(
+            'Ledger API Base Url',
+            network.ledgerApi
+        )
+
+        await popup
+            .locator('[data-test-id="auth-editor-client-id-input"]')
+            .first()
+            .fill(network.auth.clientId)
+        await popup
+            .locator('[data-test-id="auth-editor-audience-input"]')
+            .first()
+            .fill(network.auth.audience)
+        await popup
+            .locator('[data-test-id="auth-editor-scope-input"]')
+            .first()
+            .fill(network.auth.scope)
+    }
+
+    private async fillNetworkFormField(
+        label: string,
+        value: string
+    ): Promise<void> {
+        const popup = await this.popup()
+        // The form labels aren't associated with their inputs via `for`, so
+        // locate the input via the field group that contains the label text.
+        const input = popup
+            .locator(
+                `network-form .field-group:has(> label:has-text("${label}")) input`
+            )
+            .first()
+        await expect(input).toBeVisible({ timeout: 15000 })
+        await input.fill(value)
+    }
+
+    // Traverse pagination looking for a specific card defined by buildItemLocator
+    // Wait for page to be ready (with first page loaded) before calling it
+    private async findInPaginatedList(
+        itemDescription: string,
+        buildItemLocator: (popup: Page) => Locator,
+        options?: { afterPageChange?: () => Promise<void> }
+    ): Promise<Locator> {
+        const popup = await this.popup()
+        const pagination = popup.locator('wg-pagination').first()
+
+        for (let guard = 0; guard < 25; guard++) {
+            const item = buildItemLocator(popup).first()
+            if ((await item.count()) > 0) {
+                await expect(item).toBeVisible({ timeout: 5000 })
+                return item
+            }
+
+            if ((await pagination.count()) === 0) {
+                break
+            }
+
+            const nextButton = pagination.getByRole('button', {
+                name: 'Next page',
+            })
+            if (!(await nextButton.isEnabled())) {
+                break
+            }
+
+            const rangeLabel = pagination.locator('.pagination span')
+            const before = (await rangeLabel.textContent()) ?? ''
+            await nextButton.click()
+            await expect(rangeLabel).not.toHaveText(before, {
+                timeout: 10000,
+            })
+            if (options?.afterPageChange) {
+                await options.afterPageChange()
+            }
+        }
+
+        throw new Error(`${itemDescription} not found in the list`)
+    }
+
+    private async waitForNetworksPageReady(): Promise<void> {
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Networks' })
+        ).toBeVisible({ timeout: 15000 })
+
+        await expect(popup.locator('network-card').first()).toBeVisible({
+            timeout: 15000,
+        })
+    }
+
+    async gotoIdentityProvidersPage(): Promise<void> {
+        const popup = await this.popup()
+        await popup.locator('button[aria-haspopup="menu"]').click()
+        await popup
+            .getByRole('button', { name: 'Identity Providers', exact: true })
+            .click()
+        await this.waitForIdentityProvidersPageReady()
+    }
+
+    async hasNewIdpButton(): Promise<boolean> {
+        const popup = await this.popup()
+        return (
+            (await popup
+                .getByRole('button', { name: 'New', exact: true })
+                .count()) > 0
+        )
+    }
+
+    async addIdp(idp: IdpFormInput): Promise<void> {
+        await this.gotoIdentityProvidersPage()
+        const popup = await this.popup()
+
+        const newButton = popup.getByRole('button', {
+            name: 'New',
+            exact: true,
+        })
+        await expect(newButton).toBeVisible({ timeout: 15000 })
+        await newButton.click()
+
+        await expect(
+            popup.getByRole('heading', {
+                name: 'Add a new identity provider',
+            })
+        ).toBeVisible({ timeout: 15000 })
+
+        await this.fillIdpForm(idp)
+
+        await popup.getByRole('button', { name: 'Add', exact: true }).click()
+        await this.waitForIdentityProvidersPageReady()
+    }
+
+    async updateIdpIssuer(idpId: string, issuer: string): Promise<void> {
+        await this.openIdpReview(idpId)
+        const popup = await this.popup()
+
+        await popup.locator('#idp-issuer').fill(issuer)
+        await popup.getByRole('button', { name: 'Update', exact: true }).click()
+        await this.waitForIdentityProvidersPageReady()
+    }
+
+    async findIdpCard(idpId: string): Promise<Locator> {
+        await this.waitForIdentityProvidersPageReady()
+        return this.findInPaginatedList(
+            `Identity provider card for "${idpId}"`,
+            (popup) => popup.locator('idp-card').filter({ hasText: idpId })
+        )
+    }
+
+    async expectFirstIdpNotEditable(): Promise<void> {
+        const popup = await this.popup()
+        await this.waitForIdentityProvidersPageReady()
+
+        const firstCard = popup.locator('idp-card').first()
+        await expect(firstCard).toBeVisible({ timeout: 15000 })
+        await firstCard.click()
+
+        await expect(popup).toHaveURL(/\/identity-providers\/?$/, {
+            timeout: 15000,
+        })
+        await expect(
+            popup.getByRole('heading', { name: 'Review Identity Provider' })
+        ).toHaveCount(0)
+    }
+
+    private async openIdpReview(idpId: string): Promise<void> {
+        const card = await this.findIdpCard(idpId)
+        await card.click()
+
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Review Identity Provider' })
+        ).toBeVisible({ timeout: 15000 })
+    }
+
+    private async fillIdpForm(idp: IdpFormInput): Promise<void> {
+        const popup = await this.popup()
+
+        await popup.locator('#idp-id').fill(idp.id)
+        await popup.locator('#idp-type').selectOption(idp.type)
+        await popup.locator('#idp-issuer').fill(idp.issuer)
+        if (idp.type === 'oauth') {
+            if (!idp.configUrl) {
+                throw new Error('configUrl is required for oauth IDPs')
+            }
+            await popup.locator('#idp-config-url').fill(idp.configUrl)
+        }
+    }
+
+    private async waitForIdentityProvidersPageReady(): Promise<void> {
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Identity Providers' })
+        ).toBeVisible({ timeout: 15000 })
+        await expect(popup.locator('idp-card').first()).toBeVisible({
+            timeout: 15000,
+        })
+    }
+
+    async expectActivityWithStatus(
+        commandId: string,
+        status: ActivityStatus
+    ): Promise<void> {
+        if (!(await this.isPopupOpen())) {
+            await this.openPopup()
+        }
+        await this.gotoActivitiesPage()
+        const card = await this.findActivityCard(commandId)
+        await expect(card.locator('.status-badge')).toHaveText(status, {
+            timeout: 15000,
+        })
+    }
+
+    async gotoActivitiesPage(): Promise<void> {
+        const popup = await this.popup()
+        await popup.locator('button[aria-haspopup="menu"]').click()
+        await popup
+            .getByRole('button', { name: 'Activities', exact: true })
+            .click()
+        await this.waitForActivitiesPageReady()
+    }
+
+    private async findActivityCard(commandId: string): Promise<Locator> {
+        await this.waitForActivitiesPageReady()
+        const popup = await this.popup()
+        return this.findInPaginatedList(
+            `Activity card for command id "${commandId}"`,
+            (page) =>
+                page.getByRole('button', {
+                    name: `Open activity ${commandId}`,
+                }),
+            {
+                afterPageChange: async () => {
+                    await expect(
+                        popup.getByText('Loading activities...')
+                    ).not.toBeVisible()
+                },
+            }
+        )
+    }
+
+    private async waitForActivitiesPageReady(): Promise<void> {
+        const popup = await this.popup()
+        await expect(
+            popup.getByRole('heading', { name: 'Activities' })
+        ).toBeVisible({ timeout: 15000 })
+        await expect(popup.getByText('Loading activities...')).not.toBeVisible()
     }
 }

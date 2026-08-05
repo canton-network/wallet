@@ -96,6 +96,13 @@ describe('AmuletNamespace', () => {
         ;(amuletNamespace as any).ledger = { internal: { submit: mockSubmit } }
     })
 
+    it('should report whether the network is DevNet', async () => {
+        vi.mocked(mockAmuletService.isDevNet).mockResolvedValue(true)
+
+        await expect(amuletNamespace.isDevNet()).resolves.toBe(true)
+        expect(mockAmuletService.isDevNet).toHaveBeenCalledOnce()
+    })
+
     describe('Tap amulet', () => {
         const testParty =
             'v1-01-alice::1220a07b16cc2186d42c97242642a9db79eda4bea472963ecd42a3e057924576f573' as any

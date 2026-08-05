@@ -30,6 +30,10 @@ const mockNetworkStatus = vi.hoisted(() =>
         isConnected: true,
         reason: undefined,
         cantonVersion: '3.4',
+    } as {
+        isConnected: boolean
+        reason?: string
+        cantonVersion?: string
     })
 )
 
@@ -51,6 +55,13 @@ const transactionServiceMocks = vi.hoisted(() => ({
     sign: vi.fn(),
     execute: vi.fn(),
 }))
+
+const mockV4 = vi.hoisted(() => vi.fn(() => crypto.randomUUID()))
+
+vi.mock('uuid', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('uuid')>()
+    return { ...actual, v4: mockV4 }
+})
 
 vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     const actual =
@@ -150,8 +161,9 @@ const adminAuth: AuthContext = {
 
 const session: Session = {
     id: 'session-1',
+    origin: 'dapp-1',
     network: 'network1',
-    accessToken: 'session-token',
+    accessToken: 'access-token-1',
 }
 
 const pendingTransaction: Transaction = {
@@ -500,7 +512,7 @@ describe('userController', () => {
         it('sets the primary wallet and emits accountsChanged', async () => {
             const store = await createStore(logger, auth)
             const setPrimarySpy = vi.spyOn(store, 'setPrimaryWallet')
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -653,7 +665,7 @@ describe('userController', () => {
                     controller: vi.fn(() => ({ signMessage: mockSignMessage })),
                 },
             }
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -691,7 +703,7 @@ describe('userController', () => {
                 signingProviderId: SigningProvider.FIREBLOCKS,
             })
             await store.setMessageRaw(pendingMessage)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -997,7 +1009,7 @@ describe('userController', () => {
 
         it('removeSession clears the session and emits statusChanged', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1008,7 +1020,7 @@ describe('userController', () => {
 
             await controller.removeSession()
 
-            await expect(store.getSession()).resolves.toBeUndefined()
+            await expect(store.listSessions()).resolves.toHaveLength(0)
             expect(emitSpy).toHaveBeenCalledWith(
                 'statusChanged',
                 expect.objectContaining({
@@ -1022,14 +1034,13 @@ describe('userController', () => {
         })
 
         it('addSession creates a session and emits connected', async () => {
+            const newSessionId = '00000000-0000-0000-0000-000000000001'
+            mockV4.mockReturnValueOnce(newSessionId)
+
             const authWithValidClaims = createAuthWithAddSessionClaims()
             const store = await createStore(logger, authWithValidClaims, {
                 withWallet: false,
             })
-            const notifier = notificationService.getNotifier(
-                authWithValidClaims.userId
-            )
-            const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
                 notificationService,
@@ -1037,7 +1048,11 @@ describe('userController', () => {
                 authWithValidClaims
             )
 
+            const notifier = notificationService.getNotifier(newSessionId)
+            const emitSpy = vi.spyOn(notifier, 'emit')
+
             const result = await controller.addSession({
+                origin: 'dapp-1',
                 networkId: 'network1',
             })
 
@@ -1052,7 +1067,69 @@ describe('userController', () => {
                     },
                 })
             )
-            await expect(store.getSession()).resolves.toMatchObject({
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toMatchObject({
+                network: 'network1',
+            })
+        })
+
+        it('addSession keeps the session when the ledger is disconnected', async () => {
+            mockNetworkStatus.mockResolvedValueOnce({
+                isConnected: false,
+                reason: 'Ledger unreachable: fetch failed',
+            })
+            const authWithValidClaims = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithValidClaims, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithValidClaims
+            )
+
+            const result = await controller.addSession({
+                networkId: 'network1',
+                origin: 'dapp-1',
+            })
+
+            expect(result.status).toBe('disconnected')
+            expect(result.reason).toBe('Ledger unreachable: fetch failed')
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toMatchObject({
+                network: 'network1',
+            })
+        })
+
+        it('addSession keeps the session when initial wallet sync fails', async () => {
+            walletSyncMocks.syncWallets.mockRejectedValueOnce(
+                new Error('Wallet sync failed')
+            )
+            const authWithValidClaims = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithValidClaims, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithValidClaims
+            )
+
+            const result = await controller.addSession({
+                networkId: 'network1',
+                origin: 'dapp-1',
+            })
+
+            expect(result.status).toBe('connected')
+            expect(walletSyncMocks.syncWallets).toHaveBeenCalledOnce()
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toMatchObject({
                 network: 'network1',
             })
         })
@@ -1079,7 +1156,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1098,7 +1178,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).resolves.toMatchObject({
                 network: expect.objectContaining({ id: 'network1' }),
                 status: 'connected',
@@ -1121,7 +1204,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1141,7 +1227,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1160,7 +1249,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1179,7 +1271,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
 
@@ -1198,7 +1293,10 @@ describe('userController', () => {
             )
 
             await expect(
-                controller.addSession({ networkId: 'network1' })
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
             ).rejects.toThrow('Failed to add session')
         })
     })
@@ -1254,7 +1352,7 @@ describe('userController', () => {
                 primary: false,
             }
             walletAllocationMocks.createWallet.mockResolvedValue(newWallet)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1341,7 +1439,7 @@ describe('userController', () => {
         it('allocates a party for an existing wallet', async () => {
             const authWithEmail = { ...auth, email: 'user@example.com' }
             const store = await createStore(logger, authWithEmail)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -1408,7 +1506,7 @@ describe('userController', () => {
     describe('syncWallets', () => {
         it('syncs wallets and returns the result without emitting when nothing changed', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const emptyResult = { added: [], updated: [], disabled: [] }
             walletSyncMocks.syncWallets.mockResolvedValue(emptyResult)
@@ -1470,7 +1568,7 @@ describe('userController', () => {
 
         it('emits accountsChanged when wallets are added and disabled during sync', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const addedWallet: Wallet = {
                 ...primaryWallet,
@@ -1507,7 +1605,7 @@ describe('userController', () => {
 
         it('does not emit accountsChanged when only wallets are added', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             walletSyncMocks.syncWallets.mockResolvedValue({
                 added: [{ ...primaryWallet, partyId: 'party::added' }],

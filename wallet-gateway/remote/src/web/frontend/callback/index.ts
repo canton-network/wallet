@@ -9,6 +9,7 @@ import {
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
+import { detectCurrentOrigin } from '../listeners'
 
 @customElement('login-callback')
 export class LoginCallback extends LitElement {
@@ -64,20 +65,25 @@ export class LoginCallback extends LitElement {
             })
 
             const tokenResponse = await res.json()
+            const currentOrigin = await detectCurrentOrigin()
 
             if (tokenResponse.access_token) {
                 const payload = JSON.parse(
                     atob(tokenResponse.access_token.split('.')[1])
                 )
                 stateManager.expirationDate.set(
-                    new Date(payload.exp * 1000).toISOString()
+                    new Date(payload.exp * 1000).toISOString(),
+                    currentOrigin
                 )
 
-                stateManager.accessToken.set(tokenResponse.access_token)
+                await stateManager.accessToken.set(
+                    tokenResponse.access_token,
+                    currentOrigin
+                )
 
                 addUserSession(
                     tokenResponse.access_token,
-                    stateManager.networkId.get() || ''
+                    stateManager.networkId.get(currentOrigin) || ''
                 )
                     .then(() => {
                         redirectToIntendedOrDefault()

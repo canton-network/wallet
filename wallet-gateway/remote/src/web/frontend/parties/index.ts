@@ -20,6 +20,7 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils'
+import { detectCurrentOrigin } from '../listeners.js'
 
 export enum WALLET_CREATION_STATUS_CODE {
     WALLET_ALLOCATED = '1',
@@ -164,7 +165,10 @@ export class UserUiParties extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        this.client = await createUserClient(stateManager.accessToken.get())
+        const currentOrigin = await detectCurrentOrigin()
+        this.client = await createUserClient(
+            await stateManager.accessToken.get(currentOrigin)
+        )
         this.showCreationToastIfNeeded()
         this.updateWallets()
     }
@@ -204,8 +208,9 @@ export class UserUiParties extends BaseElement {
     }
 
     private async updateWallets() {
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get(currentOrigin)
         )
 
         const sessions = await userClient
@@ -213,7 +218,8 @@ export class UserUiParties extends BaseElement {
             .catch(() => ({ sessions: [] }))
         const currentSession = sessions?.sessions?.[0]
         const networkId =
-            currentSession?.network?.id || stateManager.networkId.get()
+            currentSession?.network?.id ||
+            stateManager.networkId.get(currentOrigin)
 
         const filter = networkId ? { networkIds: [networkId] } : undefined
         userClient
@@ -227,8 +233,9 @@ export class UserUiParties extends BaseElement {
     }
 
     private async _onSetPrimary(e: WalletSetPrimaryEvent) {
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            stateManager.accessToken.get()
+            await stateManager.accessToken.get(currentOrigin)
         )
         await userClient.request({
             method: 'setPrimaryWallet',
@@ -243,8 +250,9 @@ export class UserUiParties extends BaseElement {
         this.loading = true
         const wallet = e.wallet
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                stateManager.accessToken.get()
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'allocatePartyForWallet',

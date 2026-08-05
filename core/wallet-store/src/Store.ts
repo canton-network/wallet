@@ -74,6 +74,7 @@ export interface Wallet {
 
 export interface Session {
     id: string
+    origin: string
     network: string
     accessToken: string
     userId?: string
@@ -153,9 +154,27 @@ export interface Store {
     ): Promise<void>
 
     // Session methods
-    getSession(): Promise<Session | undefined>
+    /**
+     * getSession is keyed by the accessToken, which is unique per session. It retrieves the session associated with the provided accessToken.
+     * @param accessToken The access token associated with the session to retrieve.
+     * @returns A Promise that resolves to the Session object if found, or undefined if no session exists for the given accessToken.
+     */
+    getSession(accessToken: string): Promise<Session | undefined>
+
+    /**
+     * listSessions retrieves all active sessions for the authenticated user.
+     * @returns A Promise that resolves to an array of Session objects representing the active sessions.
+     */
+    listSessions(): Promise<Array<Session>>
+
     setSession(session: Session): Promise<void>
-    removeSession(): Promise<void>
+
+    /**
+     * removeSession is keyed by the accessToken, which is unique per session. It removes the session associated with the provided accessToken.
+     * @param accessToken The access token associated with the session to remove.
+     * @returns A Promise that resolves when the session has been removed.
+     */
+    removeSession(accessToken: string): Promise<void>
 
     // IDP methods
     getIdp(idpId: string): Promise<Idp>

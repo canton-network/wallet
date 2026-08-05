@@ -59,12 +59,12 @@ vi.mock('./rpc-client.js', () => ({
 vi.mock('./state-manager.js', () => ({
     stateManager: {
         accessToken: {
-            get: () => authState.accessToken,
-            set: (value: string) => {
-                authState.accessToken = value
+            get: async () => await Promise.resolve(authState.accessToken),
+            set: async (value: string) => {
+                authState.accessToken = await Promise.resolve(value)
             },
-            clear: () => {
-                authState.accessToken = undefined
+            clear: async () => {
+                authState.accessToken = await Promise.resolve(undefined)
             },
         },
         networkId: {
@@ -100,6 +100,12 @@ vi.mock('./state-manager.js', () => ({
             authState.expirationDate = undefined
             authState.intendedPage = undefined
         },
+        currentOrigin: {
+            get: vi.fn().mockReturnValue('http://localhost'),
+            set: vi.fn(),
+            clear: vi.fn(),
+        },
+        sessionId: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 
@@ -148,17 +154,17 @@ describe('redirectToIntendedOrDefault', () => {
         authState.intendedPage = undefined
     })
 
-    it('redirects to the intended page when set', () => {
+    it('redirects to the intended page when set', async () => {
         authState.intendedPage = '/activities'
-        redirectToIntendedOrDefault()
+        await redirectToIntendedOrDefault()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining('/activities')
         )
         expect(authState.intendedPage).toBeUndefined()
     })
 
-    it('redirects to the default page when no intended page is stored', () => {
-        redirectToIntendedOrDefault()
+    it('redirects to the default page when no intended page is stored', async () => {
+        await redirectToIntendedOrDefault()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(DEFAULT_PAGE_REDIRECT)
         )
@@ -212,7 +218,7 @@ describe('addUserSession', () => {
     it('creates a session and shares the connection with the opener', async () => {
         mockRequest.mockImplementation(async ({ method, params }) => {
             if (method === 'addSession') {
-                expect(params).toEqual({ networkId: 'network1' })
+                expect(params).toMatchObject({ networkId: 'network1' })
                 return { id: 'session-new' }
             }
             return undefined
@@ -390,6 +396,8 @@ describe('UserUIAuthRedirect', () => {
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
 
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(DEFAULT_PAGE_REDIRECT)
         )
@@ -418,7 +426,7 @@ describe('UserUIAuthRedirect', () => {
         await fixture<UserUIAuthRedirect>(
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
-        await waitUntil(() => mockAttemptRemoveSession.mock.calls.length > 0)
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
         expect(mockAttemptRemoveSession).toHaveBeenCalled()
         expect(setLocationHref).toHaveBeenCalledWith(
@@ -435,6 +443,7 @@ describe('UserUIAuthRedirect', () => {
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
 
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(DEFAULT_PAGE_REDIRECT)
         )

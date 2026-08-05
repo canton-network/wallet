@@ -90,7 +90,8 @@ export const queryKeys = {
     },
 
     isDevNet: {
-        all: ['isDevNet'] as const,
+        forValidator: (validatorUrl: string) =>
+            ['isDevNet', validatorUrl] as const,
     },
 
     instruments: {

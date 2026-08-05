@@ -11,89 +11,112 @@ export const createWalletGateway = (dappPage: Page): WalletGateway =>
         dappPage,
         openButton: (page) =>
             page.getByRole('button', {
-                name: 'Gateway',
+                name: 'Wallet Gateway',
             }),
         connectButton: (page) =>
             page.getByRole('button', {
-                name: 'Connect',
+                name: 'Connect Wallet',
             }),
     })
 
-export const setupRegistry = async (page: Page): Promise<void> => {
-    await page.goto(`${BASE_URL}/settings`)
-    await page.getByLabel('Party ID').fill(' ')
-    await page.getByLabel('Registry URL').fill('http://scan.localhost:4000')
-    await page.getByRole('button', { name: 'Add' }).click()
-    // Wait for registry to be added (table row appears with DSO party ID)
-    await expect(page.getByRole('cell', { name: /^DSO::/ })).toBeVisible()
+export const gotoConnect = async (page: Page): Promise<void> => {
+    await page.goto(`${BASE_URL}/connect`)
+    await expect(page).toHaveTitle(/dApp Portfolio/)
+    await expect(
+        page.getByRole('button', { name: 'Connect Wallet' })
+    ).toBeVisible({ timeout: 10000 })
 }
 
-const navigateToDashboard = async (page: Page): Promise<void> => {
-    await page.getByRole('link', { name: 'Splice Portfolio' }).click()
+export const gotoDashboard = async (page: Page): Promise<void> => {
+    await page.goto(`${BASE_URL}/dashboard`)
+    await expect(page).toHaveTitle(/dApp Portfolio/)
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
         timeout: 10000,
     })
 }
 
+export const gotoOffers = async (page: Page): Promise<void> => {
+    await page.goto(`${BASE_URL}/dashboard/offers`)
+    await expect(page).toHaveTitle(/dApp Portfolio/)
+    await expect(page.getByRole('heading', { name: 'Offers' })).toBeVisible({
+        timeout: 10000,
+    })
+}
+
+export const setupRegistry = async (page: Page): Promise<void> => {
+    await page.goto(`${BASE_URL}/dashboard/settings`)
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible({
+        timeout: 10000,
+    })
+
+    const registriesSection = page.locator(
+        'section[aria-labelledby="registries-heading"]'
+    )
+    await registriesSection.getByRole('button', { name: 'Add' }).click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(
+        dialog.getByRole('heading', { name: 'Add Registry' })
+    ).toBeVisible()
+    await dialog
+        .getByRole('textbox', { name: 'Registry URL' })
+        .fill('http://scan.localhost:4000')
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click()
+
+    await expect(dialog).not.toBeVisible({ timeout: 10000 })
+    await expect(
+        registriesSection.getByText('http://scan.localhost:4000')
+    ).toBeVisible({ timeout: 10000 })
+}
+
 /**
- * TAP via the settings page
- * Navigates to /settings, selects the AMT instrument, fills the amount,
- * submits, then returns to the dashboard.
+ * TAP via the dashboard settings page, then return to the dashboard.
  */
 export const tap = async (
     page: Page,
     wg: WalletGateway,
     amount: string
 ): Promise<void> => {
-    await page.goto(`${BASE_URL}/settings`)
+    await page.goto(`${BASE_URL}/dashboard/settings`)
 
-    // Wait for the DevNet Tap section to be visible
-    await expect(page.getByText('DevNet Tap')).toBeVisible({ timeout: 20000 })
-
-    const tapForm = page.locator('form').filter({
-        has: page.getByRole('button', { name: 'TAP' }),
+    const devNetSection = page.locator(
+        'section[aria-labelledby="devnet-heading"]'
+    )
+    await expect(devNetSection.getByText('DevNet Tap')).toBeVisible({
+        timeout: 20000,
     })
 
-    // Select the AMT instrument (wait for instruments to load from registry)
-    await tapForm.getByRole('combobox', { name: 'Instrument' }).click()
-    await expect(page.getByRole('option', { name: /AMT/ })).toBeVisible({
-        timeout: 10000,
-    })
-    await page.getByRole('option', { name: /AMT/ }).click()
+    await devNetSection.getByRole('button', { name: 'Tap' }).click()
 
-    await tapForm.getByLabel('Amount').clear()
-    await tapForm.getByLabel('Amount').fill(amount)
+    const dialog = page.getByRole('dialog')
+    await expect(
+        dialog.getByRole('heading', { name: 'DevNet tap' })
+    ).toBeVisible()
 
-    // Wait for TAP button to be enabled before clicking
-    await expect(tapForm.getByRole('button', { name: 'TAP' })).toBeEnabled({
-        timeout: 5000,
-    })
+    await expect(dialog.getByLabel('Instrument')).toHaveValue('Amulet')
+
+    const amountInput = dialog.getByRole('spinbutton', { name: 'Amount' })
+    await amountInput.clear()
+    await amountInput.fill(amount)
 
     await wg.approveTransaction(() =>
-        tapForm.getByRole('button', { name: 'TAP' }).click()
+        dialog.getByRole('button', { name: 'Tap', exact: true }).click()
     )
 
-    await navigateToDashboard(page)
+    await expect(dialog).not.toBeVisible({ timeout: 15000 })
+
+    await gotoDashboard(page)
 }
 
 export const openTransferDialog = async (page: Page): Promise<void> => {
-    await page
-        .locator('button')
-        .filter({ has: page.locator('[data-testid="MoreVertIcon"]') })
-        .click()
-    await page.getByRole('menuitem', { name: 'Make Transfer' }).click()
+    await page.getByRole('button', { name: 'Transfer' }).click()
     await expect(
-        page.locator('h2').filter({ hasText: 'Make Transfer' })
+        page.getByRole('heading', { name: 'Make a transfer' })
     ).toBeVisible()
 }
 
-export const gotoDashboard = async (page: Page): Promise<void> => {
-    await page.goto(`${BASE_URL}/`)
-    await expect(page).toHaveTitle(/dApp Portfolio/)
-}
-
 /**
- * Fill and submit the Make Transfer dialog.
+ * Fill and submit the dashboard Make Transfer dialog.
  * Assumes the dialog is already open.
  */
 export const fillAndSubmitTransfer = async (
@@ -101,27 +124,108 @@ export const fillAndSubmitTransfer = async (
     wg: WalletGateway,
     opts: { amount: string; recipient: string; message: string }
 ): Promise<void> => {
-    await page.getByRole('combobox', { name: 'Instrument' }).click()
+    const dialog = page.getByRole('dialog')
+
+    await dialog
+        .getByRole('textbox', { name: 'Recipient Address' })
+        .fill(opts.recipient)
+    await dialog.getByRole('combobox', { name: 'Select asset' }).click()
     await page.getByRole('option', { name: /AMT/ }).click()
-    await page.getByLabel('Amount').fill(opts.amount)
-    await page.getByLabel('Recipient').fill(opts.recipient)
-    await page.getByLabel('Message (optional)').fill(opts.message)
+    await dialog.getByRole('spinbutton', { name: 'Amount' }).fill(opts.amount)
+    await dialog
+        .getByRole('textbox', { name: 'Description' })
+        .fill(opts.message)
 
     await wg.approveTransaction(() =>
-        page.getByRole('button', { name: 'Transfer', exact: true }).click()
+        dialog.getByRole('button', { name: 'Make Transfer' }).click()
     )
+
+    await expect(
+        dialog.getByRole('heading', { name: 'Transfer Summary' })
+    ).toBeVisible({ timeout: 15000 })
+    await expect(
+        dialog.getByText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+    ).toHaveCount(2)
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click()
+    await expect(dialog).not.toBeVisible({ timeout: 10000 })
+}
+
+export const openTransferOfferDialog = async (
+    page: Page,
+    opts: { amount: string; message?: string }
+) => {
+    const offerRow = opts.message
+        ? page.getByRole('button', {
+              name: new RegExp(
+                  `Open Transfer Offer.*${escapeRegExp(opts.message)}`
+              ),
+          })
+        : page
+              .getByRole('button', { name: 'Open Transfer Offer' })
+              .filter({ hasText: new RegExp(escapeRegExp(opts.amount)) })
+              .first()
+
+    await expect(offerRow).toBeVisible({ timeout: 15000 })
+    await offerRow.click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(
+        dialog.getByRole('heading', { name: 'Transfer Offer' })
+    ).toBeVisible()
+    await expect(
+        dialog.getByText(new RegExp(`[+-]${escapeRegExp(opts.amount)}\\b`))
+    ).toBeVisible({ timeout: 15000 })
+
+    if (opts.message) {
+        await expect(dialog.getByText(opts.message)).toBeVisible()
+    }
+
+    return dialog
+}
+
+export const expectTransferOfferGone = async (
+    page: Page,
+    opts: { amount: string; message?: string }
+): Promise<void> => {
+    const offerRow = opts.message
+        ? page.getByRole('button', {
+              name: new RegExp(
+                  `Open Transfer Offer.*${escapeRegExp(opts.message)}`
+              ),
+          })
+        : page
+              .getByRole('button', { name: 'Open Transfer Offer' })
+              .filter({ hasText: new RegExp(escapeRegExp(opts.amount)) })
+
+    await expect(offerRow).not.toBeVisible({ timeout: 15000 })
 }
 
 /**
- * Switch primary wallet via the Gateway panel.
+ * Assert the sidebar Offers badge shows the expected count of
+ * non-expired offers. Use 0 to assert the badge is hidden.
  */
+export const expectOffersBadgeCount = async (
+    page: Page,
+    count: number
+): Promise<void> => {
+    const badge = page.getByLabel(/^\d+ pending offers?$/)
+
+    if (count === 0) {
+        await expect(badge).not.toBeVisible({ timeout: 15000 })
+        return
+    }
+
+    await expect(badge).toHaveText(String(count), { timeout: 15000 })
+}
+
 export const switchWallet = async (
     page: Page,
     wg: WalletGateway,
     partyId: string
 ): Promise<void> => {
-    const openButton = page.getByRole('button', { name: 'Gateway' })
-    await expect(openButton).toBeVisible()
+    await expect(
+        page.getByRole('button', { name: 'Wallet Gateway' })
+    ).toBeVisible()
 
     if (!(await wg.isPopupOpen())) {
         await wg.openPopup()
@@ -130,8 +234,89 @@ export const switchWallet = async (
     await wg.setPrimaryWallet(partyId)
 }
 
+export const expectWalletBalance = async (
+    page: Page,
+    walletId: string,
+    amount: string
+): Promise<void> => {
+    await page.goto(
+        `${BASE_URL}/dashboard/wallet/${encodeURIComponent(walletId)}`
+    )
+    await expect(page.getByRole('heading', { name: 'Assets' })).toBeVisible({
+        timeout: 10000,
+    })
+    await expect(
+        page.getByLabel(
+            new RegExp(`Total balance: ${escapeRegExp(amount)} AMT`)
+        )
+    ).toBeVisible({ timeout: 15000 })
+}
+
+export const expectWalletHasNoAssets = async (
+    page: Page,
+    walletId: string
+): Promise<void> => {
+    await page.goto(
+        `${BASE_URL}/dashboard/wallet/${encodeURIComponent(walletId)}`
+    )
+    await expect(page.getByRole('heading', { name: 'Assets' })).toBeVisible({
+        timeout: 10000,
+    })
+    await expect(
+        page.getByText('This wallet is not holding any assets')
+    ).toBeVisible({ timeout: 15000 })
+}
+
 /**
- * Tap funds and create an allocation via the Action Required dialog.
+ * Toggle a preapproval switch on the dashboard settings page.
+ * Waits for the status query to resolve, approves the ledger transaction,
+ * and waits for the switch to reflect the new state.
+ */
+export const togglePreapproval = async (
+    page: Page,
+    wg: WalletGateway,
+    opts: { instrument: string; enabled: boolean }
+): Promise<void> => {
+    await page.goto(`${BASE_URL}/dashboard/settings`)
+
+    const preapprovalsSection = page.locator(
+        'section[aria-labelledby="preapprovals-heading"]'
+    )
+    await expect(
+        preapprovalsSection.getByRole('heading', {
+            name: 'Pre-approved Assets',
+        })
+    ).toBeVisible({ timeout: 10000 })
+
+    // The switch label flips between Enable/Disable based on current state.
+    const action = opts.enabled ? 'Enable' : 'Disable'
+    const toggle = preapprovalsSection.getByLabel(
+        `${action} preapproval for ${opts.instrument}`
+    )
+
+    // Disabled until the status query resolves.
+    await expect(toggle).toBeEnabled({ timeout: 30000 })
+
+    await wg.approveTransaction(() => toggle.click())
+
+    // After the toggle, the switch label flips to the opposite action.
+    // Enabling an amulet preapproval waits for the validator automation to
+    // accept the preapproval proposal, which can take a while on LocalNet.
+    const oppositeAction = opts.enabled ? 'Disable' : 'Enable'
+    await expect(
+        preapprovalsSection.getByLabel(
+            `${oppositeAction} preapproval for ${opts.instrument}`
+        )
+    ).toBeEnabled({ timeout: 90000 })
+    await expect(
+        preapprovalsSection.getByText(opts.enabled ? 'Enabled' : 'Disabled', {
+            exact: true,
+        })
+    ).toBeVisible()
+}
+
+/**
+ * Tap funds and create allocation(s) via the Action Required dialog.
  */
 export const tapAndCreateAllocation = async (
     page: Page,
@@ -141,31 +326,38 @@ export const tapAndCreateAllocation = async (
 ): Promise<void> => {
     await tap(page, wg, amount)
 
-    // Wait for allocation request to appear in Action Required
-    await expect(page.getByText('Action Required')).toBeVisible({
-        timeout: 10000,
-    })
     await expect(
-        page.getByText('Allocation', { exact: true }).first()
+        page.getByRole('heading', { name: 'Action Required' })
+    ).toBeVisible({ timeout: 10000 })
+
+    const allocationRequest = page
+        .getByRole('button', { name: 'Open Allocation Request' })
+        .first()
+    await expect(allocationRequest).toBeVisible({ timeout: 15000 })
+    await allocationRequest.click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(
+        dialog.getByRole('heading', { name: 'Allocation Request' })
     ).toBeVisible()
 
-    // Open allocation dialog
-    await page.getByText('Allocation', { exact: true }).first().click()
-
-    const createAllocationButtons = page.getByRole('button', {
-        name: 'Create Allocation',
+    const allocateButtons = dialog.getByRole('button', { name: 'Allocate' })
+    await expect(allocateButtons).toHaveCount(allocationsToCreate, {
+        timeout: 15000,
     })
-    await expect(createAllocationButtons).toHaveCount(allocationsToCreate)
 
     for (let i = 0; i < allocationsToCreate; i++) {
-        await wg.approveTransaction(() =>
-            createAllocationButtons.first().click()
-        )
-        await expect(createAllocationButtons).toHaveCount(
-            allocationsToCreate - i - 1,
-            { timeout: 10000 }
-        )
+        await wg.approveTransaction(() => allocateButtons.first().click())
+        await expect(allocateButtons).toHaveCount(allocationsToCreate - i - 1, {
+            timeout: 15000,
+        })
     }
 
-    await page.getByRole('button', { name: 'Close' }).click()
+    if (await dialog.isVisible()) {
+        await dialog.getByLabel('Close allocation request dialog').click()
+        await expect(dialog).not.toBeVisible({ timeout: 10000 })
+    }
 }
+
+const escapeRegExp = (value: string) =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

@@ -11,10 +11,7 @@ import {
 } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { normalizeSx } from '@components/ui/utils'
-import {
-    formatDistanceToNow,
-    formatIsoDateTimeString,
-} from '@utils/date-format'
+import { formatDateTimeString, formatDistanceToNow } from '@utils/date-format'
 
 interface OfferRowShellProps extends Omit<BoxProps, 'sx'> {
     children: ReactNode
@@ -112,7 +109,7 @@ export function OfferExpirationBlock({
         <Box sx={{ minWidth: 0 }}>
             <OfferFieldLabel>{label}</OfferFieldLabel>
             <Typography variant="body1" color="text.secondary">
-                {formatIsoDateTimeString(expiration)}
+                {formatDateTimeString(expiration)}
             </Typography>{' '}
             <Typography variant="body1">
                 ({formatDistanceToNow(expiration)})

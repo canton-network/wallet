@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
 import { queryKeys } from '../hooks/query-keys'
-import { clear as clearResolvedServices } from '../services/resolve'
 import { ConnectionContext } from './ConnectionContext'
 
 const wcProjectId = import.meta.env.VITE_WC_PROJECT_ID as string
@@ -15,82 +14,20 @@ const wcAdapter = wcProjectId
     : undefined
 const additionalAdapters = wcAdapter ? [wcAdapter] : []
 
-export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
-    children,
+type PublishConnectedStatus = (
+    status: sdk.dappAPI.StatusEvent,
+    connectionBoundary: boolean
+) => void
+
+const useConnectionInitialization = ({
+    publishConnectedStatus,
+    setError,
+    setInitialized,
+}: {
+    publishConnectedStatus: PublishConnectedStatus
+    setError: (error: string | undefined) => void
+    setInitialized: (initialized: boolean) => void
 }) => {
-    const queryClient = useQueryClient()
-    const [initialized, setInitialized] = useState(false)
-    const [connectionStatus, setConnectionStatus] = useState<
-        sdk.dappAPI.StatusEvent | undefined
-    >()
-    const [accounts, setAccounts] = useState<sdk.dappAPI.Wallet[]>([])
-    const [error, setError] = useState<string | undefined>()
-    const [sessionTokenVersion, setSessionTokenVersion] = useState(0)
-    const currentSessionToken = useRef<string | undefined>(undefined)
-
-    const clearWalletConnectionQueries = useCallback(() => {
-        queryClient.removeQueries({
-            queryKey: queryKeys.walletConnection.all,
-        })
-    }, [queryClient])
-
-    const updateSessionToken = useCallback(
-        (status: sdk.dappAPI.StatusEvent) => {
-            const nextToken = status.session?.accessToken
-            if (nextToken && nextToken !== currentSessionToken.current) {
-                clearResolvedServices()
-                currentSessionToken.current = nextToken
-                setSessionTokenVersion((version) => version + 1)
-            }
-        },
-        []
-    )
-
-    const publishConnectedStatus = useCallback(
-        (status: sdk.dappAPI.StatusEvent, connectionBoundary: boolean) => {
-            if (connectionBoundary) {
-                clearWalletConnectionQueries()
-                clearResolvedServices()
-                currentSessionToken.current = undefined
-                setAccounts([])
-            }
-            updateSessionToken(status)
-            setConnectionStatus(status)
-            setError(undefined)
-        },
-        [clearWalletConnectionQueries, updateSessionToken]
-    )
-
-    const connect = useCallback(() => {
-        sdk.connect()
-            .then(() => sdk.status())
-            .then((status) => publishConnectedStatus(status, true))
-            .catch((err: unknown) => {
-                clearWalletConnectionQueries()
-                clearResolvedServices()
-                currentSessionToken.current = undefined
-                setConnectionStatus(undefined)
-                setError(err instanceof Error ? err.message : String(err))
-                setAccounts([])
-            })
-    }, [clearWalletConnectionQueries, publishConnectedStatus])
-
-    const open = useCallback(() => sdk.open(), [])
-
-    const doDisconnect = useCallback(() => {
-        clearWalletConnectionQueries()
-        clearResolvedServices()
-        currentSessionToken.current = undefined
-        setConnectionStatus(undefined)
-        setAccounts([])
-        setError(undefined)
-        sdk.disconnect().catch(() => {})
-    }, [clearWalletConnectionQueries])
-
-    const disconnect = useCallback(() => {
-        doDisconnect()
-    }, [doDisconnect])
-
     useEffect(() => {
         let active = true
 
@@ -122,11 +59,20 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         return () => {
             active = false
         }
-    }, [publishConnectedStatus])
+    }, [publishConnectedStatus, setError, setInitialized])
+}
 
-    // Listen for status changes when connected (re-registers after each connect/disconnect)
+const useStatusChangeSubscription = ({
+    isConnected,
+    doDisconnect,
+    publishConnectedStatus,
+}: {
+    isConnected: boolean | undefined
+    doDisconnect: () => void
+    publishConnectedStatus: PublishConnectedStatus
+}) => {
     useEffect(() => {
-        if (!connectionStatus?.connection?.isConnected) return
+        if (!isConnected) return
 
         const onStatusChanged = (status: sdk.dappAPI.StatusEvent) => {
             if (!status.connection?.isConnected) {
@@ -141,16 +87,24 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         return () => {
             void sdk.removeOnStatusChanged(onStatusChanged)
         }
-    }, [
-        connectionStatus?.connection?.isConnected,
-        doDisconnect,
-        publishConnectedStatus,
-    ])
+    }, [isConnected, doDisconnect, publishConnectedStatus])
+}
 
-    // Request accounts and listen for provider events only while connected.
+const useConnectedProviderSubscriptions = ({
+    isConnected,
+    queryClient,
+    setAccounts,
+    setError,
+}: {
+    isConnected: boolean | undefined
+    queryClient: QueryClient
+    setAccounts: (accounts: sdk.dappAPI.Wallet[]) => void
+    setError: (error: string | undefined) => void
+}) => {
     useEffect(() => {
         const provider = sdk.getConnectedProvider()
-        if (!provider || !connectionStatus?.connection?.isConnected) return
+        if (!provider || !isConnected) return
+
         provider
             .request({
                 method: 'listAccounts',
@@ -167,10 +121,12 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             })
 
         const messageListener = async (event: sdk.dappAPI.TxChangedEvent) => {
-            console.log('incoming event', event)
             if (event.status === 'executed') {
                 await queryClient.invalidateQueries({
                     queryKey: queryKeys.walletConnection.pendingTransfers.all,
+                })
+                await queryClient.invalidateQueries({
+                    queryKey: queryKeys.walletConnection.holdings.all,
                 })
                 await queryClient.invalidateQueries({
                     queryKey: queryKeys.walletConnection.transactionHistory.all,
@@ -184,11 +140,104 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             'accountsChanged',
             onAccountsChanged
         )
+
         return () => {
             provider.removeListener('txChanged', messageListener)
             provider.removeListener('accountsChanged', onAccountsChanged)
         }
-    }, [connectionStatus?.connection?.isConnected, queryClient])
+    }, [isConnected, queryClient, setAccounts, setError])
+}
+
+export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
+    children,
+}) => {
+    const queryClient = useQueryClient()
+    const [initialized, setInitialized] = useState(false)
+    const [connectionStatus, setConnectionStatus] = useState<
+        sdk.dappAPI.StatusEvent | undefined
+    >()
+    const [accounts, setAccounts] = useState<sdk.dappAPI.Wallet[]>([])
+    const [error, setError] = useState<string | undefined>()
+    const [sessionTokenVersion, setSessionTokenVersion] = useState(0)
+    const currentSessionToken = useRef<string | undefined>(undefined)
+
+    const clearWalletConnectionQueries = useCallback(() => {
+        queryClient.removeQueries({
+            queryKey: queryKeys.walletConnection.all,
+        })
+    }, [queryClient])
+
+    const updateSessionToken = useCallback(
+        (status: sdk.dappAPI.StatusEvent) => {
+            const nextToken = status.session?.accessToken
+            if (nextToken && nextToken !== currentSessionToken.current) {
+                currentSessionToken.current = nextToken
+                setSessionTokenVersion((version) => version + 1)
+            }
+        },
+        []
+    )
+
+    const publishConnectedStatus = useCallback(
+        (status: sdk.dappAPI.StatusEvent, connectionBoundary: boolean) => {
+            if (connectionBoundary) {
+                clearWalletConnectionQueries()
+                currentSessionToken.current = undefined
+                setAccounts([])
+            }
+            updateSessionToken(status)
+            setConnectionStatus(status)
+            setError(undefined)
+        },
+        [clearWalletConnectionQueries, updateSessionToken]
+    )
+
+    const connect = useCallback(() => {
+        sdk.connect()
+            .then(() => sdk.status())
+            .then((status) => publishConnectedStatus(status, true))
+            .catch((err: unknown) => {
+                clearWalletConnectionQueries()
+                currentSessionToken.current = undefined
+                setConnectionStatus(undefined)
+                setError(err instanceof Error ? err.message : String(err))
+                setAccounts([])
+            })
+    }, [clearWalletConnectionQueries, publishConnectedStatus])
+
+    const open = useCallback(() => sdk.open(), [])
+
+    const doDisconnect = useCallback(() => {
+        clearWalletConnectionQueries()
+        currentSessionToken.current = undefined
+        setConnectionStatus(undefined)
+        setAccounts([])
+        setError(undefined)
+        sdk.disconnect().catch(() => {})
+    }, [clearWalletConnectionQueries])
+
+    const disconnect = useCallback(() => {
+        doDisconnect()
+    }, [doDisconnect])
+
+    const isConnected = connectionStatus?.connection?.isConnected
+
+    useConnectionInitialization({
+        publishConnectedStatus,
+        setError,
+        setInitialized,
+    })
+    useStatusChangeSubscription({
+        isConnected,
+        doDisconnect,
+        publishConnectedStatus,
+    })
+    useConnectedProviderSubscriptions({
+        isConnected,
+        queryClient,
+        setAccounts,
+        setError,
+    })
 
     return (
         <ConnectionContext.Provider

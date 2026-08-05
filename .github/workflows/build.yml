@@ -4,6 +4,7 @@ run-name: ${{ github.actor }} is perfoming a Pull Request
 on:
     pull_request:
         types: [opened, reopened, synchronize, edited]
+
 # Repository vars (e.g. BLOCKDAEMON_*) are not available to workflows from fork PRs.
 env:
     CI_SECRET_DEPENDENCY: ${{ github.event.pull_request.head.repo.fork == false }}
