@@ -8,7 +8,12 @@ import '@canton-network/core-provider-dapp'
 export { CANTON_LOGO_PNG, WALLET_GATEWAY_ICON } from './assets'
 
 // ── Default wallet picker (in-page modal) ──
-export { setWalletPickerModalWalletConnectUri } from '@canton-network/core-wallet-ui-components'
+export {
+    pickWallet,
+    setWalletPickerModalTheme,
+    setWalletPickerModalWalletConnectUri,
+} from '@canton-network/core-wallet-ui-components'
+export type { WalletPickerModalTheme } from '@canton-network/core-wallet-ui-components'
 
 // ── Client API (primary) ──
 export { DappClient } from './client'

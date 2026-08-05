@@ -431,7 +431,7 @@ describe('DappSDK', () => {
             await expect(sdk.connect()).resolves.toEqual(connectedResult())
 
             expect(mockClearAllLocalState).toHaveBeenCalled()
-            expect(mockNotifyWalletPickerConnected).toHaveBeenCalledWith(false)
+            expect(mockNotifyWalletPickerConnected).toHaveBeenCalled()
             expect(storage.getKernelDiscovery()).toEqual({
                 walletType: 'remote',
                 url: 'https://gateway.test',

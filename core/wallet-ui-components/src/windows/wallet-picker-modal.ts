@@ -118,6 +118,7 @@ class WalletPickerModalController {
 
         this.host = document.createElement('div')
         this.host.setAttribute('data-swk-wallet-picker-modal', '')
+        this.applyTheme(modalTheme)
         this.shadow = this.host.attachShadow({ mode: 'open' })
 
         const style = document.createElement('style')
@@ -174,6 +175,15 @@ class WalletPickerModalController {
 
     isActive(): boolean {
         return !this.destroyed
+    }
+
+    /** Forces the color scheme on the host element (`'auto'` clears the override). */
+    applyTheme(theme: WalletPickerModalTheme): void {
+        if (theme === 'auto') {
+            this.host.removeAttribute('data-swk-theme')
+        } else {
+            this.host.setAttribute('data-swk-theme', theme)
+        }
     }
 
     destroy(): void {
@@ -415,7 +425,9 @@ class WalletPickerModalController {
         const heading = el('div', '', { class: 'discovery-modal-heading' })
         const title =
             this.state === 'connecting'
-                ? 'Connecting...'
+                ? this.isWalletConnect()
+                    ? 'Scan with your phone'
+                    : 'Connecting...'
                 : this.state === 'gateway'
                   ? 'Remote Wallet'
                   : 'Connect Wallet'
@@ -728,11 +740,6 @@ class WalletPickerModalController {
         const container = el('div', '', { class: 'walletconnect-view' })
 
         if (this.isWalletConnect()) {
-            container.appendChild(
-                el('h3', 'Scan with your wallet', {
-                    class: 'walletconnect-title',
-                })
-            )
             if (this.wcQrDataUrl) {
                 container.appendChild(
                     el('img', '', {
@@ -751,9 +758,11 @@ class WalletPickerModalController {
                 container.appendChild(placeholder)
             }
 
-            container.appendChild(
-                el('div', '', { class: 'walletconnect-divider' })
+            const divider = el('div', '', { class: 'walletconnect-divider' })
+            divider.appendChild(
+                el('span', 'Or', { class: 'walletconnect-divider-label' })
             )
+            container.appendChild(divider)
 
             const copyBtn = el(
                 'button',
@@ -892,32 +901,21 @@ export function setWalletPickerModalWalletConnectUri(
     active?.setWalletConnectUri(uri, qrDataUrl)
 }
 
-const MODAL_CSS = `
-:host {
-    all: initial;
+/** Forces the modal color scheme, or `'auto'` to follow `prefers-color-scheme`. */
+export type WalletPickerModalTheme = 'light' | 'dark' | 'auto'
+
+let modalTheme: WalletPickerModalTheme = 'auto'
+
+/**
+ * Sets the color scheme used by the in-page modal picker. Applies immediately
+ * to an open modal and to any opened later. `'auto'` follows the OS setting.
+ */
+export function setWalletPickerModalTheme(theme: WalletPickerModalTheme): void {
+    modalTheme = theme
+    active?.applyTheme(theme)
 }
 
-.discovery-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(71, 88, 107, 0.24);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    z-index: 2147483000;
-    animation: swkFadeIn 0.2s ease-out;
-    font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
-        sans-serif;
-}
-
-@keyframes swkFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.discovery-modal-content {
+const LIGHT_TOKENS = `
     --accent: #111111;
     --accent-hover: #000000;
     --accent-contrast: #ffffff;
@@ -937,11 +935,67 @@ const MODAL_CSS = `
     --danger-text: #b91c1c;
     --danger-soft: rgba(220, 38, 38, 0.08);
     --danger-soft-hover: rgba(220, 38, 38, 0.1);
+    --backdrop: rgba(71, 88, 107, 0.24);
     --fade-shadow: rgba(15, 23, 42, 0.18);
     --shadow-modal:
         0 12px 32px -18px rgba(15, 23, 42, 0.12),
         0 2px 8px -6px rgba(15, 23, 42, 0.06);
+`
 
+const DARK_TOKENS = `
+    --accent: #f4f4f6;
+    --accent-hover: #e2e2e6;
+    --accent-contrast: #16171b;
+    --accent-soft: rgba(255, 255, 255, 0.08);
+    --border: #2b2d34;
+    --border-hover: #3b3e47;
+    --surface: #17181c;
+    --surface-2: #202228;
+    --surface-hover: #2a2c33;
+    --text: #e7e7ea;
+    --text-muted: #9aa0aa;
+    --icon-muted: #8a8f99;
+    --scrollbar: #3b3e47;
+    --success: #6ac394;
+    --success-soft: rgba(106, 195, 148, 0.16);
+    --danger: #f26d6d;
+    --danger-text: #f4a3a3;
+    --danger-soft: rgba(242, 109, 109, 0.12);
+    --danger-soft-hover: rgba(242, 109, 109, 0.16);
+    --backdrop: rgba(0, 0, 0, 0.5);
+    --fade-shadow: rgba(0, 0, 0, 0.5);
+    --shadow-modal:
+        0 12px 32px -18px rgba(0, 0, 0, 0.4),
+        0 2px 8px -6px rgba(0, 0, 0, 0.24);
+`
+
+const MODAL_CSS = `
+:host {
+    all: initial;
+}
+
+.discovery-modal-backdrop {
+${LIGHT_TOKENS}
+    position: fixed;
+    inset: 0;
+    background: var(--backdrop);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 2147483000;
+    animation: swkFadeIn 0.2s ease-out;
+    font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+        sans-serif;
+}
+
+@keyframes swkFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.discovery-modal-content {
     position: relative;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -1459,10 +1513,24 @@ const MODAL_CSS = `
 }
 
 .walletconnect-divider {
+    position: relative;
     width: 100%;
     height: 1px;
     background: var(--border);
-    margin: 8px 0 2px;
+    margin: 16px 0 12px;
+}
+
+.walletconnect-divider-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0 10px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
 }
 
 .walletconnect-copy-button {
@@ -1521,34 +1589,17 @@ const MODAL_CSS = `
 
 @media (prefers-color-scheme: dark) {
     .discovery-modal-backdrop {
-        background: rgba(0, 0, 0, 0.5);
+${DARK_TOKENS}
     }
+}
 
-    .discovery-modal-content {
-        --accent: #f4f4f6;
-        --accent-hover: #e2e2e6;
-        --accent-contrast: #16171b;
-        --accent-soft: rgba(255, 255, 255, 0.08);
-        --border: #2b2d34;
-        --border-hover: #3b3e47;
-        --surface: #17181c;
-        --surface-2: #202228;
-        --surface-hover: #2a2c33;
-        --text: #e7e7ea;
-        --text-muted: #9aa0aa;
-        --icon-muted: #8a8f99;
-        --scrollbar: #3b3e47;
-        --success: #6ac394;
-        --success-soft: rgba(106, 195, 148, 0.16);
-        --danger: #f26d6d;
-        --danger-text: #f4a3a3;
-        --danger-soft: rgba(242, 109, 109, 0.12);
-        --danger-soft-hover: rgba(242, 109, 109, 0.16);
-        --fade-shadow: rgba(0, 0, 0, 0.5);
-        --shadow-modal:
-            0 12px 32px -18px rgba(0, 0, 0, 0.4),
-            0 2px 8px -6px rgba(0, 0, 0, 0.24);
-    }
+/* Explicit theme override (wins over the OS setting via prefers-color-scheme). */
+:host([data-swk-theme='dark']) .discovery-modal-backdrop {
+${DARK_TOKENS}
+}
+
+:host([data-swk-theme='light']) .discovery-modal-backdrop {
+${LIGHT_TOKENS}
 }
 
 @media (max-width: 600px) {

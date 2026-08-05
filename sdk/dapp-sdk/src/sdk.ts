@@ -17,11 +17,15 @@ import {
     type WalletPickerFn,
 } from '@canton-network/core-wallet-discovery'
 import {
+    notifyWalletPickerConnected,
+    notifyWalletPickerError,
     notifyWalletPickerModalConnected,
     notifyWalletPickerModalError,
+    pickWallet,
     pickWalletModal,
     waitForWalletPickerModalBack,
     waitForWalletPickerModalRetrySelection,
+    waitForWalletPickerRetrySelection,
 } from '@canton-network/core-wallet-ui-components'
 import type {
     EventListener,
@@ -83,6 +87,7 @@ function normalizeConnectOptions(
 export class DappSDK {
     private readonly RECENT_GATEWAYS_KEY = 'splice_wallet_picker_recent'
     private walletPicker: WalletPickerFn
+    private pickerKind: 'modal' | 'popup' = 'modal'
     private discovery: DiscoveryClient | null = null
     private client: DappClient | null = null
     private initPromise: Promise<unknown> | null = null
@@ -92,6 +97,7 @@ export class DappSDK {
     constructor(options?: { walletPicker?: WalletPickerFn | undefined }) {
         this.walletPicker =
             options?.walletPicker ?? (pickWalletModal as WalletPickerFn)
+        this.pickerKind = this.resolvePickerKind(this.walletPicker)
     }
 
     /**
@@ -102,6 +108,35 @@ export class DappSDK {
      */
     setWalletPicker(picker: WalletPickerFn | undefined): void {
         this.walletPicker = picker ?? (pickWalletModal as WalletPickerFn)
+        this.pickerKind = this.resolvePickerKind(this.walletPicker)
+    }
+
+    /** The bundled popup picker drives a separate window; everything else
+     * (default modal, custom) is treated as the in-page modal flow. */
+    private resolvePickerKind(picker: WalletPickerFn): 'modal' | 'popup' {
+        return (picker as unknown) === pickWallet ? 'popup' : 'modal'
+    }
+
+    private notifyPickerConnected(reuseGlobalWalletPopup?: boolean): void {
+        if (this.pickerKind === 'popup') {
+            notifyWalletPickerConnected(reuseGlobalWalletPopup)
+        } else {
+            notifyWalletPickerModalConnected()
+        }
+    }
+
+    private notifyPickerError(message: string): void {
+        if (this.pickerKind === 'popup') {
+            notifyWalletPickerError(message)
+        } else {
+            notifyWalletPickerModalError(message)
+        }
+    }
+
+    private waitForPickerRetry() {
+        return this.pickerKind === 'popup'
+            ? waitForWalletPickerRetrySelection()
+            : waitForWalletPickerModalRetrySelection()
     }
 
     private async registerAdapters(
@@ -443,7 +478,7 @@ export class DappSDK {
 
                         try {
                             const retrySelection =
-                                await waitForWalletPickerModalRetrySelection()
+                                await this.waitForPickerRetry()
                             connectionAttempts.dispatchEvent(
                                 new CustomEvent<WalletPickerEntry>('attempt', {
                                     detail: retrySelection,
@@ -489,18 +524,17 @@ export class DappSDK {
                         }
                     }
 
-                    notifyWalletPickerModalConnected()
+                    this.notifyPickerConnected(info.reuseGlobalWalletPopup)
                     cleanup()
                     resolve(s.connection)
                 } catch (error) {
                     const message = this.formatConnectionErrorMessage(error)
-                    notifyWalletPickerModalError(message)
+                    this.notifyPickerError(message)
 
                     this.client = null
 
                     try {
-                        const retrySelection =
-                            await waitForWalletPickerModalRetrySelection()
+                        const retrySelection = await this.waitForPickerRetry()
                         connectionAttempts.dispatchEvent(
                             new CustomEvent<WalletPickerEntry>('attempt', {
                                 detail: retrySelection,
