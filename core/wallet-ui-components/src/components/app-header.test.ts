@@ -5,7 +5,9 @@ import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import './app-header.js'
+import './copy-button.js'
 import { LogoutEvent } from './app-header.js'
+import { WgCopyButton } from './copy-button.js'
 
 describe('app-header', () => {
     afterEach(() => {
@@ -61,5 +63,29 @@ describe('app-header', () => {
                 .shadowRoot!.querySelector<HTMLElement>('.dropdown')!
                 .classList.contains('open')
         ).toBe(false)
+    })
+
+    it('renders the gateway URL with a copy button', async () => {
+        const el = await fixture(
+            html`<app-header
+                .gatewayUrl=${'http://example.com/v0/dapp/hello/imcool'}
+            ></app-header>`
+        )
+
+        el.shadowRoot!.querySelector<HTMLButtonElement>(
+            '.page-trigger'
+        )!.click()
+        await elementUpdated(el)
+
+        const urlRow = el.shadowRoot!.querySelector<HTMLElement>('.menu-url')!
+        expect(urlRow.querySelector('.url-text')!.textContent).toBe(
+            'http://example.com/v0/dapp/hello/imcool'
+        )
+
+        const copyButton = urlRow.querySelector<WgCopyButton>('wg-copy-button')!
+        expect(copyButton).not.toBeNull()
+        expect(copyButton!.value).toBe(
+            'http://example.com/v0/dapp/hello/imcool'
+        )
     })
 })

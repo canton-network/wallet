@@ -19,6 +19,8 @@ export class AppHeader extends BaseElement {
     @property({ type: String }) iconSrc: string = 'images/icon.png'
     @property({ type: String }) networkName: string = 'No network connected'
     @property({ type: Boolean }) networkConnected = false
+    @property({ type: String }) gatewayUrl: string =
+        'http://www.katiepang.wallet-gateyway.com/v0/dapp/hello/imcool'
 
     @state() private menuOpen = false
     @state() private darkMode = localStorage.getItem('theme') === 'dark'
@@ -189,6 +191,23 @@ export class AppHeader extends BaseElement {
                 background: var(--wg-border);
                 margin: var(--wg-space-2) 0;
             }
+
+            .menu-url {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: var(--wg-space-3);
+                padding: 0.5rem 0.6rem;
+                min-width: 0;
+            }
+
+            .menu-url .url-text {
+                font-size: var(--wg-font-size-sm);
+                color: var(--wg-text-secondary);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         `,
     ]
 
@@ -310,6 +329,16 @@ export class AppHeader extends BaseElement {
                         >
                             <span>Identity Providers</span>
                         </button>
+
+                        <div class="menu-divider"></div>
+
+                        <div class="menu-url" title=${this.gatewayUrl}>
+                            <span class="url-text">${this.gatewayUrl}</span>
+                            <wg-copy-button
+                                .value=${this.gatewayUrl}
+                                label="Copy gateway URL"
+                            ></wg-copy-button>
+                        </div>
 
                         <div class="menu-divider"></div>
 
