@@ -14,10 +14,7 @@ import { CopyableIdentifier } from '@components/copyable-identifier'
 import { PillButton } from '@components/ui/PillButton'
 import type { TransferActionItem } from '@components/types'
 import { getCounterparty, isReceiver } from '@components/utils'
-import {
-    formatDistanceToNow,
-    formatIsoDateTimeString,
-} from '@utils/date-format'
+import { formatDateTimeString, formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
 
 interface TransferOfferActionDialogContentProps {
@@ -94,7 +91,7 @@ export function TransferOfferActionDialogContent({
                 <DetailRow label="Expiration">
                     <Box sx={{ textAlign: 'right' }}>
                         <Typography variant="body1">
-                            {formatIsoDateTimeString(item.expiry)}
+                            {formatDateTimeString(item.expiry)}
                         </Typography>
                         <Typography variant="body1">
                             {formatDistanceToNow(item.expiry)}
