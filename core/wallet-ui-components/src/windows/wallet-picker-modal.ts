@@ -523,7 +523,27 @@ class WalletPickerModalController {
         // rather than scrolling with the content.
         const scroll = el('div', '', { class: 'wallet-picker-scroll' })
         scroll.appendChild(container)
-        scroll.appendChild(el('div', '', { class: 'wallet-picker-fade' }))
+        const fadeTop = el('div', '', {
+            class: 'wallet-picker-fade wallet-picker-fade-top',
+        })
+        const fade = el('div', '', { class: 'wallet-picker-fade' })
+        scroll.append(fadeTop, fade)
+
+        // Show a fade at the top once scrolled down (content above) and at the
+        // bottom while there's more to scroll to; hide each at its edge.
+        const updateFade = () => {
+            const scrollable =
+                container.scrollHeight - container.clientHeight > 1
+            const atTop = container.scrollTop <= 1
+            const atBottom =
+                container.scrollTop + container.clientHeight >=
+                container.scrollHeight - 1
+            fadeTop.classList.toggle('is-hidden', !scrollable || atTop)
+            fade.classList.toggle('is-hidden', !scrollable || atBottom)
+        }
+        container.addEventListener('scroll', updateFade, { passive: true })
+        requestAnimationFrame(updateFade)
+
         return scroll
     }
 
@@ -954,7 +974,7 @@ const MODAL_CSS = `
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 24px 16px 16px;
+    padding: 24px 20px 16px;
 }
 
 .discovery-modal-heading {
@@ -1011,7 +1031,7 @@ const MODAL_CSS = `
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 4px 16px 20px;
+    padding: 4px 20px 15px;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar) transparent;
 }
@@ -1088,6 +1108,18 @@ const MODAL_CSS = `
        stays clipped within this overlay so it never creeps onto the row above. */
     box-shadow: inset 0 -10px 10px -9px var(--fade-shadow);
     transition: opacity 300ms;
+}
+
+/* Mirror of the bottom fade, anchored to the top edge (content scrolled above). */
+.wallet-picker-fade-top {
+    top: 0;
+    bottom: auto;
+    box-shadow: inset 0 10px 10px -9px var(--fade-shadow);
+}
+
+/* Hidden once the list fits or is scrolled to the bottom (no more content). */
+.wallet-picker-fade.is-hidden {
+    opacity: 0;
 }
 
 .wallet-picker-item {
@@ -1288,8 +1320,7 @@ const MODAL_CSS = `
 }
 
 .discovery-modal-footer {
-    border-top: 1px solid var(--border);
-    padding: 14px 16px 16px;
+    padding: 10px 20px 16px;
     background: var(--surface);
     text-align: center;
 }
