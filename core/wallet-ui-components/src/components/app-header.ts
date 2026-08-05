@@ -25,6 +25,7 @@ export class AppHeader extends BaseElement {
     @property({ type: String }) iconSrc: string = 'images/icon.png'
     @property({ type: String }) networkName: string = 'No network connected'
     @property({ type: Boolean }) networkConnected = false
+    @property({ type: String }) dappApiUrl: string = ''
 
     @state() private menuOpen = false
     @state() private darkMode = localStorage.getItem('theme') === 'dark'
@@ -335,6 +336,12 @@ export class AppHeader extends BaseElement {
                         <button
                             type="button"
                             class="menu-item menu-item-with-icon"
+                            title=${this.dappApiUrl || 'Copy dApp API URL'}
+                            aria-label=${
+                                this.dappApiUrl
+                                    ? `Copy dApp API URL: ${this.dappApiUrl}`
+                                    : 'Copy dApp API URL'
+                            }
                             @click=${this.copyDappApiUrl}
                         >
                             <span>Dapp API URL</span>

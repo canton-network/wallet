@@ -90,4 +90,25 @@ describe('app-header', () => {
                 .classList.contains('open')
         ).toBe(false)
     })
+
+    it('shows the dApp API URL on hover via title', async () => {
+        const dappApiUrl = 'http://localhost:3030/api/v0/dapp'
+        const el = await fixture(
+            html`<app-header .dappApiUrl=${dappApiUrl}></app-header>`
+        )
+
+        el.shadowRoot!.querySelector<HTMLButtonElement>(
+            '.page-trigger'
+        )!.click()
+        await elementUpdated(el)
+
+        const copyButton = Array.from(
+            el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.menu-item')
+        ).find((button) => button.textContent?.includes('Dapp API URL'))!
+
+        expect(copyButton.title).toBe(dappApiUrl)
+        expect(copyButton.getAttribute('aria-label')).toBe(
+            `Copy dApp API URL: ${dappApiUrl}`
+        )
+    })
 })
