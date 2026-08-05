@@ -62,6 +62,7 @@ const {
     mockNotifyWalletPickerConnected,
     mockNotifyWalletPickerError,
     mockWaitForWalletPickerRetrySelection,
+    mockWaitForWalletPickerModalBack,
     mockClearAllLocalState,
     remoteAdapterInstances,
     RemoteAdapterMock,
@@ -132,6 +133,9 @@ const {
         mockNotifyWalletPickerConnected: vi.fn(),
         mockNotifyWalletPickerError: vi.fn(),
         mockWaitForWalletPickerRetrySelection: vi.fn(),
+        mockWaitForWalletPickerModalBack: vi.fn(
+            () => new Promise<void>(() => {})
+        ),
         mockClearAllLocalState: vi.fn(),
         remoteAdapterInstances,
         RemoteAdapterMock,
@@ -158,10 +162,11 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
         >()
     return {
         ...actual,
-        notifyWalletPickerConnected: mockNotifyWalletPickerConnected,
-        notifyWalletPickerError: mockNotifyWalletPickerError,
-        waitForWalletPickerRetrySelection:
+        notifyWalletPickerModalConnected: mockNotifyWalletPickerConnected,
+        notifyWalletPickerModalError: mockNotifyWalletPickerError,
+        waitForWalletPickerModalRetrySelection:
             mockWaitForWalletPickerRetrySelection,
+        waitForWalletPickerModalBack: mockWaitForWalletPickerModalBack,
     }
 })
 

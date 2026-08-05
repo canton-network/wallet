@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useEffect, useMemo, useState } from 'react'
-import type {
-    WalletPickerEntry,
-    WalletPickerResult,
-} from '@canton-network/core-types'
 import * as sdk from '@canton-network/dapp-sdk'
-import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
+import {
+    WalletConnectAdapter,
+    setWalletPickerModalWalletConnectUri,
+} from '@canton-network/dapp-sdk'
 import { handleErrorToast } from '@canton-network/core-wallet-ui-components'
 
 const wcProjectId = import.meta.env.VITE_WC_PROJECT_ID as string
@@ -16,13 +15,12 @@ const wcChainId =
 /**
  * React hook that manages the connection to the wallet gateway.
  * Uses the dapp-sdk to connect and disconnect, and updates the connection status.
+ *
+ * The wallet picker UI is provided by the SDK's built-in in-page modal, so this
+ * hook only needs to register adapters and forward the WalletConnect pairing URI
+ * to the modal.
  */
-export function useConnect(
-    walletPickerFn?: (
-        entries: WalletPickerEntry[]
-    ) => Promise<WalletPickerResult>,
-    onWalletConnectUri?: (uri: string, qrDataUrl?: string) => void
-): {
+export function useConnect(): {
     connect: () => Promise<void>
     disconnect: () => Promise<void>
     connectResult?: sdk.dappAPI.ConnectResult
@@ -37,7 +35,7 @@ export function useConnect(
             ? WalletConnectAdapter.create({
                   projectId: wcProjectId,
                   chainId: wcChainId,
-                  onUri: onWalletConnectUri,
+                  onUri: setWalletPickerModalWalletConnectUri,
                   openPopupForUri: false,
                   signInWithCanton: {
                       domain: 'http://localhost:3000',
@@ -77,25 +75,6 @@ export function useConnect(
     }
 
     useEffect(() => {
-        // Inject the custom wallet picker into the shared SDK singleton so the
-        // whole app (accounts, status, ledger queries) shares one connection.
-        // The picker is wrapped so that, as soon as the wallet list is shown,
-        // we eagerly establish the WalletConnect pairing and emit the QR. By
-        // the time the user clicks WalletConnect the QR is already ready,
-        // avoiding the loading state.
-        const picker = walletPickerFn
-            ? (entries: WalletPickerEntry[]) => {
-                  wcAdapter?.prepareUri().catch((err) => {
-                      console.warn(
-                          '[use-connect] Failed to pre-generate WalletConnect URI:',
-                          err
-                      )
-                  })
-                  return walletPickerFn(entries)
-              }
-            : undefined
-        sdk.setWalletPicker(picker)
-
         // No bundled default gateways: the picker only lists gateways the user
         // has actually connected to (persisted recents) plus WalletConnect.
         sdk.init({ defaultAdapters: [], additionalAdapters })
@@ -104,7 +83,7 @@ export function useConnect(
             .catch(() => {
                 setConnectResult(undefined)
             })
-    }, [walletPickerFn, wcAdapter, additionalAdapters])
+    }, [additionalAdapters])
 
     useEffect(() => {
         if (connectResult?.isConnected) {

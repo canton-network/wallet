@@ -17,10 +17,11 @@ import {
     type WalletPickerFn,
 } from '@canton-network/core-wallet-discovery'
 import {
-    notifyWalletPickerConnected,
-    notifyWalletPickerError,
-    pickWallet,
-    waitForWalletPickerRetrySelection,
+    notifyWalletPickerModalConnected,
+    notifyWalletPickerModalError,
+    pickWalletModal,
+    waitForWalletPickerModalBack,
+    waitForWalletPickerModalRetrySelection,
 } from '@canton-network/core-wallet-ui-components'
 import type {
     EventListener,
@@ -90,17 +91,17 @@ export class DappSDK {
 
     constructor(options?: { walletPicker?: WalletPickerFn | undefined }) {
         this.walletPicker =
-            options?.walletPicker ?? (pickWallet as WalletPickerFn)
+            options?.walletPicker ?? (pickWalletModal as WalletPickerFn)
     }
 
     /**
      * Override the wallet picker used when connecting. Must be called before
      * {@link DappSDK.init}/{@link DappSDK.connect} so the picker is captured by
      * the underlying DiscoveryClient. Passing `undefined` restores the default
-     * popup picker.
+     * modal picker.
      */
     setWalletPicker(picker: WalletPickerFn | undefined): void {
-        this.walletPicker = picker ?? (pickWallet as WalletPickerFn)
+        this.walletPicker = picker ?? (pickWalletModal as WalletPickerFn)
     }
 
     private async registerAdapters(
@@ -418,7 +419,42 @@ export class DappSDK {
                 try {
                     // creates provider based on the adapter
                     // provider stores (and reads from storage) the session token and the access token
-                    await discovery.connect(targetId)
+                    // Race the connection against a "back" click in the picker
+                    // so the user can abort a slow attempt and pick again.
+                    const connectPromise = discovery.connect(targetId)
+                    connectPromise.catch(() => {
+                        // Swallow late rejections if the user already went back.
+                    })
+                    const outcome = await Promise.race([
+                        connectPromise.then(() => 'connected' as const),
+                        waitForWalletPickerModalBack().then(
+                            () => 'back' as const
+                        ),
+                    ])
+
+                    if (outcome === 'back') {
+                        // Abort the in-flight attempt and re-await a selection.
+                        try {
+                            await discovery.disconnect()
+                        } catch {
+                            // best-effort teardown of any partial session
+                        }
+                        this.client = null
+
+                        try {
+                            const retrySelection =
+                                await waitForWalletPickerModalRetrySelection()
+                            connectionAttempts.dispatchEvent(
+                                new CustomEvent<WalletPickerEntry>('attempt', {
+                                    detail: retrySelection,
+                                })
+                            )
+                        } catch (retryError) {
+                            cleanup()
+                            reject(retryError)
+                        }
+                        return
+                    }
 
                     const session = discovery.getActiveSession()
                     if (!session) {
@@ -453,18 +489,18 @@ export class DappSDK {
                         }
                     }
 
-                    notifyWalletPickerConnected(info.reuseGlobalWalletPopup)
+                    notifyWalletPickerModalConnected()
                     cleanup()
                     resolve(s.connection)
                 } catch (error) {
                     const message = this.formatConnectionErrorMessage(error)
-                    notifyWalletPickerError(message)
+                    notifyWalletPickerModalError(message)
 
                     this.client = null
 
                     try {
                         const retrySelection =
-                            await waitForWalletPickerRetrySelection()
+                            await waitForWalletPickerModalRetrySelection()
                         connectionAttempts.dispatchEvent(
                             new CustomEvent<WalletPickerEntry>('attempt', {
                                 detail: retrySelection,
