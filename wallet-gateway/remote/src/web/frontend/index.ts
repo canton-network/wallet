@@ -24,6 +24,7 @@ import {
 } from '@canton-network/core-wallet-ui-components'
 import './listeners'
 import { detectCurrentOrigin } from './listeners'
+import { fetchDappApiUrl, showToast } from './utils'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `
@@ -88,6 +89,21 @@ export class UserApp extends LitElement {
         }
     }
 
+    private async handleCopyDappApiUrl(): Promise<void> {
+        try {
+            const dappApiUrl = await fetchDappApiUrl()
+            await navigator.clipboard.writeText(dappApiUrl)
+            showToast('Copied', 'Dapp API URL copied to clipboard.', 'success')
+        } catch (error) {
+            console.debug('Failed to copy dApp API URL: ', error)
+            showToast(
+                'Copy failed',
+                'Could not copy the Dapp API URL.',
+                'error'
+            )
+        }
+    }
+
     protected render() {
         const networkId = stateManager.networkId.get(this.currentOrigin || '')
         const networkName = networkId || 'No network connected'
@@ -99,6 +115,7 @@ export class UserApp extends LitElement {
                 .networkName=${networkName}
                 .networkConnected=${networkConnected}
                 @logout=${this.handleLogout}
+                @copy-dapp-api-url=${this.handleCopyDappApiUrl}
             >
                 <user-ui-auth-redirect></user-ui-auth-redirect>
                 <slot></slot>

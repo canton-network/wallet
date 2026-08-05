@@ -6,6 +6,7 @@ import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { WalletEvent } from '@canton-network/core-types'
 import {
+    CopyDappApiUrlEvent,
     LogoutEvent,
     type AllowedRoute,
 } from '@canton-network/core-wallet-ui-components'
@@ -29,12 +30,18 @@ const {
     setLocationHref,
     getCurrentRoute,
     isAllowedRoute,
+    showToast,
+    fetchDappApiUrl,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     mockAttemptRemoveSession: vi.fn().mockResolvedValue(undefined),
     setLocationHref: vi.fn(),
     getCurrentRoute: vi.fn(),
     isAllowedRoute: vi.fn(),
+    showToast: vi.fn(),
+    fetchDappApiUrl: vi
+        .fn()
+        .mockResolvedValue('http://localhost:3030/api/v0/dapp'),
 }))
 
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
@@ -56,6 +63,7 @@ vi.mock('./rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
     attemptRemoveSession: mockAttemptRemoveSession,
 }))
+vi.mock('./utils.js', () => ({ showToast, fetchDappApiUrl }))
 vi.mock('./state-manager.js', () => ({
     stateManager: {
         accessToken: {
@@ -240,6 +248,9 @@ describe('UserApp', () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         setLocationHref.mockReset()
+        showToast.mockReset()
+        fetchDappApiUrl.mockReset()
+        fetchDappApiUrl.mockResolvedValue('http://localhost:3030/api/v0/dapp')
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         setValidAuth()
         mockSessionList()
@@ -263,6 +274,30 @@ describe('UserApp', () => {
         }
         expect(layout.networkName).toBe('network1')
         expect(layout.networkConnected).toBe(true)
+    })
+
+    it('copies the dApp API URL to the clipboard', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined)
+        vi.stubGlobal('navigator', {
+            ...navigator,
+            clipboard: { writeText },
+        })
+
+        el.shadowRoot
+            ?.querySelector('app-layout')
+            ?.dispatchEvent(new CopyDappApiUrlEvent())
+
+        await waitUntil(() => writeText.mock.calls.length > 0)
+
+        expect(fetchDappApiUrl).toHaveBeenCalled()
+        expect(writeText).toHaveBeenCalledWith(
+            'http://localhost:3030/api/v0/dapp'
+        )
+        expect(showToast).toHaveBeenCalledWith(
+            'Copied',
+            'Dapp API URL copied to clipboard.',
+            'success'
+        )
     })
 
     it('redirects to login on logout when there is no access token', async () => {
