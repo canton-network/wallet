@@ -369,6 +369,7 @@ export class SigningAPIClient {
     private signatureAlgorithm: TsbSignatureAlgorithm
     private transactionCache = new Map<string, Transaction>()
     private keyCache = new Map<string, Key>()
+    private keyIdCache = new Map<string, Key>()
 
     constructor(configOrBaseUrl: SecurosysTSBClientConfig | string) {
         const config =
@@ -487,11 +488,11 @@ export class SigningAPIClient {
             )
         }
 
-        return this.cacheKey({
+        return {
             id: attributes.label,
             name: attributes.label,
             publicKey: normalizePublicKey(attributes.publicKey),
-        })
+        }
     }
 
     private cacheKey(key: Key): Key {
@@ -501,7 +502,13 @@ export class SigningAPIClient {
         }
         this.keyCache.set(normalized.publicKey, normalized)
         this.keyCache.set(key.publicKey, normalized)
+        this.keyIdCache.set(normalized.id, normalized)
+        this.keyIdCache.set(normalized.name, normalized)
         return normalized
+    }
+
+    private cachedKeyById(id: string): Key | undefined {
+        return this.keyIdCache.get(id)
     }
 
     private cachedKeyByPublicKey(publicKey: string): Key | undefined {
@@ -509,6 +516,46 @@ export class SigningAPIClient {
             this.keyCache.get(publicKey) ??
             this.keyCache.get(normalizePublicKey(publicKey))
         )
+    }
+
+    private cachedKeyForIdentifier(
+        keyIdentifier: KeyIdentifier
+    ): Key | undefined {
+        const byId = keyIdentifier.id
+            ? this.cachedKeyById(keyIdentifier.id)
+            : undefined
+        if (byId && keyMatchesIdentifier(byId, keyIdentifier)) {
+            return byId
+        }
+
+        const byPublicKey = keyIdentifier.publicKey
+            ? this.cachedKeyByPublicKey(keyIdentifier.publicKey)
+            : undefined
+        if (byPublicKey && keyMatchesIdentifier(byPublicKey, keyIdentifier)) {
+            return byPublicKey
+        }
+
+        return undefined
+    }
+
+    private assertKeyMatchesIdentifier(
+        key: Key,
+        keyIdentifier: KeyIdentifier
+    ): void {
+        if (keyIdentifier.id && !keyMatchesId(key, keyIdentifier.id)) {
+            throw new Error(
+                `TSB key attributes label '${key.id}' does not match requested key id '${keyIdentifier.id}'`
+            )
+        }
+
+        if (
+            keyIdentifier.publicKey &&
+            !publicKeysEqual(key.publicKey, keyIdentifier.publicKey)
+        ) {
+            throw new Error(
+                `TSB key '${key.id}' public key does not match the provided keyIdentifier publicKey`
+            )
+        }
     }
 
     private transactionFromStatus(
@@ -541,13 +588,15 @@ export class SigningAPIClient {
             signature,
             publicKey: cached?.publicKey,
             metadata: {
-                tsbStatus: response.status,
-                executionTime: response.executionTime,
-                approvedBy: response.approvedBy,
-                notYetApprovedBy: response.notYetApprovedBy,
-                rejectedBy: response.rejectedBy,
-                inputOfflineHsm: response.inputOfflineHsm,
-                ...(cached?.metadata ?? {}),
+                ...(cachedMetadata ?? {}),
+                ...compact({
+                    tsbStatus: response.status,
+                    executionTime: response.executionTime,
+                    approvedBy: response.approvedBy,
+                    notYetApprovedBy: response.notYetApprovedBy,
+                    rejectedBy: response.rejectedBy,
+                    inputOfflineHsm: response.inputOfflineHsm,
+                }),
             },
         })
 
@@ -558,31 +607,27 @@ export class SigningAPIClient {
     private async resolveKeyIdentifier(
         keyIdentifier: KeyIdentifier
     ): Promise<Key> {
-        if (keyIdentifier.id && keyIdentifier.publicKey) {
-            return this.cacheKey({
-                id: keyIdentifier.id,
-                name: keyIdentifier.id,
-                publicKey: normalizePublicKey(keyIdentifier.publicKey),
-            })
+        const cached = this.cachedKeyForIdentifier(keyIdentifier)
+        if (cached) {
+            return cached
         }
 
         if (keyIdentifier.id) {
             const attributes = await this.getKeyAttributes(keyIdentifier.id)
-            return this.keyFromAttributes(attributes.json)
+            const key = this.keyFromAttributes(attributes.json)
+            this.assertKeyMatchesIdentifier(key, keyIdentifier)
+            return this.cacheKey(key)
         }
 
         if (keyIdentifier.publicKey) {
-            const cached = this.cachedKeyByPublicKey(keyIdentifier.publicKey)
-            if (cached) {
-                return cached
-            }
-
             const labels = await this.get<string[]>('/v1/key', 'key-management')
             let skippedKeys = 0
             for (const label of labels) {
                 try {
                     const attributes = await this.getKeyAttributes(label)
-                    const key = this.keyFromAttributes(attributes.json)
+                    const key = this.cacheKey(
+                        this.keyFromAttributes(attributes.json)
+                    )
                     if (
                         publicKeysEqual(key.publicKey, keyIdentifier.publicKey)
                     ) {
@@ -735,7 +780,7 @@ export class SigningAPIClient {
         const results = await Promise.allSettled(
             labels.map(async (label) => {
                 const attributes = await this.getKeyAttributes(label)
-                return this.keyFromAttributes(attributes.json)
+                return this.cacheKey(this.keyFromAttributes(attributes.json))
             })
         )
 
@@ -765,7 +810,7 @@ export class SigningAPIClient {
             TsbSignedKeyAttributes
         >('/v1/key', 'key-management', request)
 
-        return this.keyFromAttributes(attributes.json)
+        return this.cacheKey(this.keyFromAttributes(attributes.json))
     }
 
     public async getKeyAttributes(
@@ -886,6 +931,21 @@ function publicKeysEqual(left: string, right: string): boolean {
     )
 }
 
+function keyMatchesId(key: Key, id: string): boolean {
+    return key.id === id || key.name === id
+}
+
+function keyMatchesIdentifier(key: Key, keyIdentifier: KeyIdentifier): boolean {
+    if (keyIdentifier.id && !keyMatchesId(key, keyIdentifier.id)) {
+        return false
+    }
+
+    return (
+        !keyIdentifier.publicKey ||
+        publicKeysEqual(key.publicKey, keyIdentifier.publicKey)
+    )
+}
+
 function isNotFoundError(error: unknown): boolean {
     return error instanceof Error && error.message.includes('(404)')
 }
@@ -906,6 +966,7 @@ function isSkippableKeyAttributesError(error: unknown): boolean {
     return (
         error.message.includes('(404)') ||
         error.message.includes('KEY_FUNCTION_NOT_PERMITTED') ||
-        error.message.includes('res.error.key.not.existent')
+        error.message.includes('res.error.key.not.existent') ||
+        error.message.includes('res.error.key.password.mismatch')
     )
 }

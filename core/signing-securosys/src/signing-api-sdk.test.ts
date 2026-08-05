@@ -381,15 +381,22 @@ describe('SigningAPIClient', () => {
         expect(body.signRequest.signKeyName).toBe('new-wallet-key')
     })
 
-    it('signTransaction does not fetch key attributes when key id and public key are supplied', async () => {
+    it('signTransaction validates supplied key id and public key before caching', async () => {
         const client = new SigningAPIClient({
             baseUrl: 'http://tsb.example',
             keyPassword: 'secret',
         })
         const publicKey = Buffer.alloc(32, 2).toString('base64')
-        fetchMock.mockResolvedValueOnce(
-            jsonResponse({ signRequestId: 'req-1' })
-        )
+        fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'wallet-key',
+                        publicKey,
+                    },
+                })
+            )
+            .mockResolvedValueOnce(jsonResponse({ signRequestId: 'req-1' }))
 
         const result = await client.signTransaction({
             tx: 'tx-bytes',
@@ -397,7 +404,13 @@ describe('SigningAPIClient', () => {
             keyIdentifier: { id: 'wallet-key', publicKey },
         })
 
-        expect(callsFor('/v1/key/attributes')).toHaveLength(0)
+        expect(callsFor('/v1/key/attributes')).toHaveLength(1)
+        expect(
+            JSON.parse(initFor('/v1/key/attributes').body as string)
+        ).toEqual({
+            label: 'wallet-key',
+            password: 'secret',
+        })
         expect(result).toMatchObject({
             txId: 'req-1',
             status: 'pending',
@@ -408,6 +421,70 @@ describe('SigningAPIClient', () => {
             signKeyName: 'wallet-key',
             keyPassword: 'secret',
         })
+    })
+
+    it('signTransaction uses a matching cached key without fetching key attributes', async () => {
+        const client = new SigningAPIClient('http://tsb.example')
+        const publicKey = Buffer.alloc(32, 3).toString('base64')
+        fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'wallet-key',
+                        publicKey,
+                    },
+                })
+            )
+            .mockResolvedValueOnce(jsonResponse({ signRequestId: 'req-1' }))
+
+        const key = await client.createKey({ name: 'wallet-key' })
+        await client.signTransaction({
+            tx: 'tx-bytes',
+            txHash: 'hash-base64',
+            keyIdentifier: { id: key.id, publicKey: key.publicKey },
+        })
+
+        expect(callsFor('/v1/key/attributes')).toHaveLength(0)
+        const body = JSON.parse(initFor('/v1/sign').body as string)
+        expect(body.signRequest.signKeyName).toBe('wallet-key')
+    })
+
+    it('rejects supplied key id and public key pairs that TSB does not confirm', async () => {
+        const client = new SigningAPIClient('http://tsb.example')
+        const actualPublicKey = Buffer.alloc(32, 4).toString('base64')
+        const suppliedPublicKey = Buffer.alloc(32, 5).toString('base64')
+        fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'wallet-key',
+                        publicKey: actualPublicKey,
+                    },
+                })
+            )
+            .mockResolvedValueOnce(jsonResponse([]))
+
+        await expect(
+            client.signTransaction({
+                tx: 'tx-bytes',
+                txHash: 'hash-base64',
+                keyIdentifier: {
+                    id: 'wallet-key',
+                    publicKey: suppliedPublicKey,
+                },
+            })
+        ).rejects.toThrow(
+            "TSB key 'wallet-key' public key does not match the provided keyIdentifier publicKey"
+        )
+
+        await expect(
+            client.signTransaction({
+                tx: 'tx-bytes',
+                txHash: 'hash-base64',
+                keyIdentifier: { publicKey: actualPublicKey },
+            })
+        ).rejects.toThrow('Unable to resolve TSB signing key from publicKey')
+        expect(callsFor('/v1/sign')).toHaveLength(0)
     })
 
     it('signTransaction rejects when no TSB key matches the public key', async () => {
@@ -528,6 +605,56 @@ describe('SigningAPIClient', () => {
         })
     })
 
+    it('keeps TSB response metadata ahead of cached transaction metadata', async () => {
+        const client = new SigningAPIClient('http://tsb.example')
+        const publicKey = Buffer.alloc(32, 12).toString('base64')
+        const signature = Buffer.alloc(64, 12).toString('base64')
+        fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'wallet-key',
+                        publicKey,
+                    },
+                })
+            )
+            .mockResolvedValueOnce(jsonResponse({ signRequestId: 'req-1' }))
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    id: 'req-1',
+                    status: 'PENDING',
+                    approvedBy: ['old-reviewer'],
+                })
+            )
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    id: 'req-1',
+                    status: 'EXECUTED',
+                    executionTime: '2026-06-22T12:00:00',
+                    approvedBy: ['new-reviewer'],
+                    result: signature,
+                })
+            )
+
+        await client.signTransaction({
+            tx: 'tx-bytes',
+            txHash: 'hash-base64',
+            keyIdentifier: { id: 'wallet-key', publicKey },
+        })
+        await client.getTransaction({ txId: 'req-1' })
+
+        const result = await client.getTransaction({ txId: 'req-1' })
+
+        expect(result.metadata).toEqual({
+            keyIdentifier: { id: 'wallet-key', publicKey },
+            signatureAlgorithm: 'EDDSA',
+            signatureType: 'RAW',
+            tsbStatus: 'EXECUTED',
+            approvedBy: ['new-reviewer'],
+            executionTime: '2026-06-22T12:00:00',
+        })
+    })
+
     it('rejects executed EdDSA transactions with incompatible TSB signature bytes', async () => {
         const client = new SigningAPIClient('http://tsb.example')
         fetchMock.mockResolvedValueOnce(
@@ -567,6 +694,14 @@ describe('SigningAPIClient', () => {
         const publicKey = Buffer.alloc(32, 6).toString('base64')
         const signature = Buffer.alloc(64, 6).toString('base64')
         fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'wallet-key',
+                        publicKey,
+                    },
+                })
+            )
             .mockResolvedValueOnce(jsonResponse({ signRequestId: 'req-1' }))
             .mockResolvedValueOnce(
                 jsonResponse({
@@ -774,6 +909,14 @@ describe('SigningAPIClient', () => {
         const client = new SigningAPIClient('http://tsb.example')
         const publicKey = Buffer.alloc(32, 10).toString('base64')
         fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'wallet-key',
+                        publicKey,
+                    },
+                })
+            )
             .mockResolvedValueOnce(jsonResponse({ signRequestId: 'req-1' }))
             .mockResolvedValueOnce(new Response(null, { status: 204 }))
             .mockResolvedValueOnce(
