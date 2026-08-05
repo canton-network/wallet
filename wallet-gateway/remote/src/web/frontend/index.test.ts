@@ -265,15 +265,28 @@ describe('UserApp', () => {
         document.body.innerHTML = ''
     })
 
-    it('renders layout with the connected network name', () => {
+    it('renders layout with the connected network name', async () => {
+        await waitUntil(
+            () =>
+                (
+                    el.shadowRoot?.querySelector(
+                        'app-layout'
+                    ) as HTMLElement & {
+                        dappApiUrl: string
+                    }
+                )?.dappApiUrl === 'http://localhost:3030/api/v0/dapp'
+        )
+
         const layout = el.shadowRoot?.querySelector(
             'app-layout'
         ) as HTMLElement & {
             networkName: string
             networkConnected: boolean
+            dappApiUrl: string
         }
         expect(layout.networkName).toBe('network1')
         expect(layout.networkConnected).toBe(true)
+        expect(layout.dappApiUrl).toBe('http://localhost:3030/api/v0/dapp')
     })
 
     it('copies the dApp API URL to the clipboard', async () => {

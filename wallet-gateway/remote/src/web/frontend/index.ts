@@ -48,10 +48,12 @@ export const redirectToIntendedOrDefault = async (): Promise<void> => {
 @customElement('user-app')
 export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
+    @state() accessor dappApiUrl: string = ''
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
         this.currentOrigin = await detectCurrentOrigin()
+        this.dappApiUrl = await fetchDappApiUrl()
     }
 
     private async handleLogout() {
@@ -114,6 +116,7 @@ export class UserApp extends LitElement {
                 iconSrc=${toRelPath('/icon.png')}
                 .networkName=${networkName}
                 .networkConnected=${networkConnected}
+                .dappApiUrl=${this.dappApiUrl}
                 @logout=${this.handleLogout}
                 @copy-dapp-api-url=${this.handleCopyDappApiUrl}
             >
