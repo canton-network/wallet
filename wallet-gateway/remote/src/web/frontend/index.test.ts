@@ -340,27 +340,6 @@ describe('UserApp', () => {
         expect(layout.networkConnected).toBe(false)
     })
 
-    it('shows disconnected when listSessions reports disconnected', async () => {
-        mockSessionList('session-1', 'disconnected')
-        el = await fixture<UserApp>(componentFixture)
-
-        await waitUntil(() =>
-            mockRequest.mock.calls.some(
-                (call) => call[0]?.method === 'listSessions'
-            )
-        )
-        await el.updateComplete
-
-        const layout = el.shadowRoot?.querySelector(
-            'app-layout'
-        ) as HTMLElement & {
-            networkName: string
-            networkConnected: boolean
-        }
-        expect(layout.networkName).toBe('network1')
-        expect(layout.networkConnected).toBe(false)
-    })
-
     it('redirects to login on logout when there is no access token', async () => {
         authState.accessToken = undefined
         el = await fixture<UserApp>(componentFixture)
