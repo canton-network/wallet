@@ -24,6 +24,7 @@ import {
 } from '@canton-network/core-wallet-ui-components'
 import './listeners'
 import { detectCurrentOrigin } from './listeners'
+import { fetchDappApiUrl, showToast } from './utils'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `
@@ -48,6 +49,7 @@ export const redirectToIntendedOrDefault = async (): Promise<void> => {
 export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
     @state() private accessor networkConnected = false
+    @state() accessor dappApiUrl: string = ''
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
@@ -71,6 +73,7 @@ export class UserApp extends LitElement {
         } catch {
             this.networkConnected = false
         }
+        this.dappApiUrl = await fetchDappApiUrl()
     }
 
     private async handleLogout() {
@@ -108,6 +111,21 @@ export class UserApp extends LitElement {
         }
     }
 
+    private async handleCopyDappApiUrl(): Promise<void> {
+        try {
+            const dappApiUrl = await fetchDappApiUrl()
+            await navigator.clipboard.writeText(dappApiUrl)
+            showToast('Copied', 'Dapp API URL copied to clipboard.', 'success')
+        } catch (error) {
+            console.debug('Failed to copy dApp API URL: ', error)
+            showToast(
+                'Copy failed',
+                'Could not copy the Dapp API URL.',
+                'error'
+            )
+        }
+    }
+
     protected render() {
         const networkId = stateManager.networkId.get(this.currentOrigin || '')
         const networkName = networkId || 'No network connected'
@@ -117,7 +135,9 @@ export class UserApp extends LitElement {
                 iconSrc=${toRelPath('/icon.png')}
                 .networkName=${networkName}
                 .networkConnected=${this.networkConnected}
+                .dappApiUrl=${this.dappApiUrl}
                 @logout=${this.handleLogout}
+                @copy-dapp-api-url=${this.handleCopyDappApiUrl}
             >
                 <user-ui-auth-redirect></user-ui-auth-redirect>
                 <slot></slot>
