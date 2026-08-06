@@ -247,7 +247,11 @@ export class AppHeader extends BaseElement {
                     <img src=${cantonLogo} alt="Canton logo" />
                 </button>
 
-                <div class="network-pill" title=${this.networkName}>
+                <div
+                    class="network-pill"
+                    title=${this.networkName}
+                    data-testid="network-status-${this.networkConnected ? 'connected' : 'disconnected'}"
+                >
                     <span
                         class="status-dot ${
                             this.networkConnected ? 'online' : 'offline'

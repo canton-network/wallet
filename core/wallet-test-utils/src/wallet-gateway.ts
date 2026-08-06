@@ -113,6 +113,9 @@ export class WalletGateway {
         })
         await confirmConnectButton.click()
         await expect(confirmConnectButton).not.toBeVisible()
+        await expect(
+            popup.getByTestId('network-status-connected')
+        ).toBeVisible()
     }
 
     async openPopup(): Promise<void> {
