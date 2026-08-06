@@ -7,7 +7,6 @@ import {
     test,
     expect,
     WalletGateway,
-    WalletGatewayPage,
 } from '@canton-network/core-wallet-test-utils'
 import { BrowserContext, Page } from '@playwright/test'
 
@@ -41,7 +40,10 @@ test('logout from direct WG tab does not close the dApp popup session', async ({
     // 2. Open the WG directly in a second tab and log in (session B).
     const directPage = await context.newPage()
     await directPage.goto(`http://localhost:${dappApiPort}/`)
-    const wgSessionB = new WalletGatewayPage(directPage)
+    const wgSessionB = new WalletGateway({
+        isPopup: false,
+        page: directPage,
+    })
     await wgSessionB.login('Local (OAuth IDP)')
 
     // 3. Logout from session B.

@@ -27,17 +27,36 @@ export interface IdpFormInput {
 export type ActivityStatus =
     'pending' | 'signed' | 'executed' | 'failed' | 'rejected'
 
+// isPopup: true - WG opened in popup by dApp
+// isPopup: false - WG opened in separate tab
+export type WalletGatewayArgs =
+    | {
+          isPopup?: true
+          dappPage: Page
+          connectButton: (dappPage: Page) => Locator
+          openButton: (dappPage: Page) => Locator
+      }
+    | {
+          isPopup: false
+          page: Page
+      }
+
 export class WalletGateway {
-    private readonly dappPage: Page
-    private readonly connectButton: (dappPage: Page) => Locator
-    private readonly openButton: (dappPage: Page) => Locator
+    private readonly isPopup: boolean
+    private readonly dappPage: Page | undefined
+    private readonly connectButton: ((dappPage: Page) => Locator) | undefined
+    private readonly openButton: ((dappPage: Page) => Locator) | undefined
+    private readonly directPage: Page | undefined
     private _popup: Page | undefined
 
-    constructor(args: {
-        dappPage: Page
-        connectButton: (dappPage: Page) => Locator
-        openButton: (dappPage: Page) => Locator
-    }) {
+    constructor(args: WalletGatewayArgs) {
+        this.isPopup = args.isPopup !== false
+
+        if (args.isPopup === false) {
+            this.directPage = args.page
+            return
+        }
+
         this.dappPage = args.dappPage
         this.connectButton = args.connectButton
         this.openButton = args.openButton
@@ -52,14 +71,34 @@ export class WalletGateway {
         })
     }
 
+    // Only for WG in popup, not for a WG as separate page outside of dapp.
+    // TODO can I get rid of dapp dependency from this package, and have clicks to buttons handled by dapp tests?
+    private requireDapp(): {
+        dappPage: Page
+        connectButton: (dappPage: Page) => Locator
+        openButton: (dappPage: Page) => Locator
+    } {
+        if (!this.dappPage || !this.connectButton || !this.openButton) {
+            throw new Error(
+                'this WalletGateway was opened directly in a tab, so it has no dApp to drive'
+            )
+        }
+        return {
+            dappPage: this.dappPage,
+            connectButton: this.connectButton,
+            openButton: this.openButton,
+        }
+    }
+
     async connect(args: {
         network: string
         customURL?: string
     }): Promise<void> {
-        const connectButton = this.connectButton(this.dappPage)
+        const dapp = this.requireDapp()
+        const connectButton = dapp.connectButton(dapp.dappPage)
         await expect(connectButton).toBeVisible()
 
-        const discoverPopupPromise = this.dappPage.waitForEvent('popup')
+        const discoverPopupPromise = dapp.dappPage.waitForEvent('popup')
         await connectButton.click()
         const pickerPopup = await discoverPopupPromise
 
@@ -77,19 +116,23 @@ export class WalletGateway {
     }
 
     async openPopup(): Promise<void> {
-        const discoverPopupPromise = this.dappPage.waitForEvent('popup')
-        const openButton = this.openButton(this.dappPage)
+        const dapp = this.requireDapp()
+        const discoverPopupPromise = dapp.dappPage.waitForEvent('popup')
+        const openButton = dapp.openButton(dapp.dappPage)
         await expect(openButton).toBeVisible()
         await openButton.click()
         await discoverPopupPromise
     }
 
-    private async popup(): Promise<Page> {
-        // NOTE(jaspervdj): Yes, having `(await this.popup())....` everywhere
+    private async page(): Promise<Page> {
+        // NOTE(jaspervdj): Yes, having `(await this.page())....` everywhere
         // is a bit ugly, but unfortunately the popup can be closed at any time
         // (in particular, a few seconds after approving a transaction), so
-        // having popup async allows us to work around that (even if the popup
-        // behaviour would change).
+        // having it async allows us to work around that (even if the popup
+        // behaviour would change). A directly opened tab is simply always
+        // there.
+
+        if (this.directPage) return this.directPage
 
         for (let i = 0; i < 10 && !this._popup; i++) {
             await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -103,7 +146,7 @@ export class WalletGateway {
     async setPrimaryWallet(partyId: string): Promise<void> {
         await this.gotoPartiesPage()
 
-        const wallet = (await this.popup())
+        const wallet = (await this.page())
             .locator(`wg-wallet-card[party-id="${partyId}"]`)
             .first()
         await expect(wallet).toBeVisible({ timeout: 15000 })
@@ -134,7 +177,7 @@ export class WalletGateway {
         await this.gotoPartiesPage()
 
         const pattern = new RegExp(`${args.partyHint}::[0-9a-f]+`)
-        const wallets = (await this.popup()).locator(
+        const wallets = (await this.page()).locator(
             `wg-wallet-card[party-id*="${args.partyHint}"]`
         )
         const walletsCount = await wallets.count()
@@ -158,19 +201,19 @@ export class WalletGateway {
             return partyId
         }
 
-        await (await this.popup()).getByRole('button', { name: 'New' }).click()
+        await (await this.page()).getByRole('button', { name: 'New' }).click()
         await expect(
-            (await this.popup()).getByRole('heading', {
+            (await this.page()).getByRole('heading', {
                 name: 'Create a new party',
             })
         ).toBeVisible({ timeout: 15000 })
         await (
-            await this.popup()
+            await this.page()
         )
             .getByLabel('Party ID Hint')
             .fill(args.partyHint)
         await (
-            await this.popup()
+            await this.page()
         )
             .getByLabel('Signing Provider')
             .selectOption(args.signingProvider)
@@ -180,7 +223,7 @@ export class WalletGateway {
                     'vaultName is required when signingProvider is fireblocks'
                 )
             }
-            const vaultSelect = (await this.popup()).getByLabel('Vault name')
+            const vaultSelect = (await this.page()).getByLabel('Vault name')
             await expect(
                 vaultSelect.getByRole('option', { name: args.vaultName })
             ).toBeAttached({ timeout: 15000 })
@@ -188,20 +231,20 @@ export class WalletGateway {
         }
         if (args.primary) {
             await (
-                await this.popup()
+                await this.page()
             )
                 .getByRole('checkbox', { name: 'Set as primary wallet' })
                 .check()
         }
         await (
-            await this.popup()
+            await this.page()
         )
             .getByRole('button', { name: 'Create' })
             .click()
 
         await this.waitForPartiesPageReady()
 
-        const newWallet = (await this.popup())
+        const newWallet = (await this.page())
             .locator(`wg-wallet-card[party-id*="${args.partyHint}"]`)
             .first()
         await expect(newWallet).toBeVisible({ timeout: 15000 })
@@ -216,7 +259,7 @@ export class WalletGateway {
 
     async allocateWalletParty(partyId: string): Promise<void> {
         await this.gotoPartiesPage()
-        const walletCard = (await this.popup())
+        const walletCard = (await this.page())
             .locator(`wg-wallet-card[party-id="${partyId}"]`)
             .first()
         await expect(walletCard).toBeVisible({ timeout: 15000 })
@@ -232,7 +275,7 @@ export class WalletGateway {
 
     async getWalletExternalTxId(partyId: string): Promise<string> {
         await this.gotoPartiesPage()
-        const walletCard = (await this.popup())
+        const walletCard = (await this.page())
             .locator(`wg-wallet-card[party-id="${partyId}"]`)
             .first()
         await expect(walletCard).toBeVisible({ timeout: 15000 })
@@ -262,7 +305,7 @@ export class WalletGateway {
         // forward-proof, since we may change how the popup behaves.
         await start()
 
-        const popupPage = await this.popup()
+        const popupPage = await this.page()
         await expect(
             await popupPage.getByRole('button', { name: 'Approve' })
         ).toBeVisible({ timeout: 15000 })
@@ -297,7 +340,7 @@ export class WalletGateway {
     }> {
         await start()
 
-        const popupPage = await this.popup()
+        const popupPage = await this.page()
         await expect(
             await popupPage.getByRole('button', { name: 'Reject' })
         ).toBeVisible({ timeout: 15000 })
@@ -324,7 +367,7 @@ export class WalletGateway {
     async executeSignedTransaction(opts?: {
         waitForClose?: boolean
     }): Promise<void> {
-        const popupPage = await this.popup()
+        const popupPage = await this.page()
         const approveButton = await popupPage.getByRole('button', {
             name: 'Approve',
         })
@@ -340,24 +383,8 @@ export class WalletGateway {
         network: string
         customURL?: string
     }): Promise<void> {
-        const connectButton = this.connectButton(this.dappPage)
-        await expect(connectButton).toBeVisible()
-
-        const discoverPopupPromise = this.dappPage.waitForEvent('popup')
-        await connectButton.click()
-        const pickerPopup = await discoverPopupPromise
-
-        await this.selectFromWalletPicker(pickerPopup, args.customURL)
-
-        const popup = await this.waitForConnectFormPopup(pickerPopup)
-        const selectNetwork = popup.getByLabel('Select a network')
-        await expect(selectNetwork).toBeVisible({ timeout: 15000 })
-        await selectNetwork.selectOption({ label: args.network })
-        const confirmConnectButton = popup.getByRole('button', {
-            name: 'Connect',
-        })
-        await confirmConnectButton.click()
-        await expect(confirmConnectButton).not.toBeVisible()
+        // TODO this actually was the same as connect. Maybe just keep one? Unless it makes sense to add some additional assertions.
+        await this.connect(args)
     }
 
     private async selectFromWalletPicker(
@@ -412,7 +439,7 @@ export class WalletGateway {
             await new Promise((resolve) => setTimeout(resolve, 250))
         }
 
-        const popup = await this.dappPage.waitForEvent('popup', {
+        const popup = await this.requireDapp().dappPage.waitForEvent('popup', {
             timeout: 5000,
         })
         if (await hasConnectForm(popup)) {
@@ -421,23 +448,51 @@ export class WalletGateway {
         throw new Error('wallet connect form popup did not appear')
     }
 
+    // Logs in to a gateway that was opened directly, without a dApp.
+    async login(network: string): Promise<void> {
+        const page = await this.page()
+        const selectNetwork = page.getByLabel('Select a network')
+        await expect(selectNetwork).toBeVisible({ timeout: 15000 })
+        await selectNetwork.selectOption({ label: network })
+        await page.getByRole('button', { name: 'Connect' }).click()
+        // Wait for the OAuth redirect chain to complete and land on the parties page.
+        await page.waitForURL(/\/parties/, { timeout: 30000 })
+    }
+
+    async logout(): Promise<void> {
+        const page = await this.page()
+        await page.locator('button[aria-haspopup="menu"]').click()
+        await page.getByRole('button', { name: 'Logout' }).click()
+        // Popup windows close on logout; directly opened tabs redirect to
+        // /login. Promise.any so that whichever does not apply timing out is
+        // not itself a failure, and neither is left as an unhandled rejection.
+        try {
+            await Promise.any([
+                page.waitForEvent('close', { timeout: 5000 }),
+                page.waitForURL(/\/login/, { timeout: 5000 }),
+            ])
+        } catch (e: unknown) {
+            throw new Error(
+                'logout did not take effect - the gateway neither closed nor returned to /login',
+                { cause: e }
+            )
+        }
+    }
+
     async logoutFromPopup(): Promise<void> {
-        const popup = await this.popup()
-        await popup.locator('button[aria-haspopup="menu"]').click()
-        await popup.getByRole('button', { name: 'Logout' }).click()
-        await popup.waitForEvent('close', { timeout: 5000 })
+        await this.logout()
         this._popup = undefined
     }
 
     async closePopup(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await popup.close()
         this._popup = undefined
     }
 
     async isPopupOpen(): Promise<boolean> {
         try {
-            const popup = await this.popup()
+            const popup = await this.page()
             return popup && !popup.isClosed()
         } catch {
             return false
@@ -452,7 +507,7 @@ export class WalletGateway {
     }
 
     async waitForPopupUrl(expectedUrl: string | RegExp): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
 
         return popup.waitForURL(expectedUrl, { timeout: 5000 })
     }
@@ -478,7 +533,7 @@ export class WalletGateway {
     }
 
     private async gotoPartiesPage(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await popup.locator('button[aria-haspopup="menu"]').click()
         await popup
             .getByRole('button', { name: 'Parties', exact: true })
@@ -487,7 +542,7 @@ export class WalletGateway {
     }
 
     private async waitForPartiesPageReady(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await expect(popup.getByRole('button', { name: 'New' })).toBeVisible({
             timeout: 15000,
         })
@@ -495,7 +550,7 @@ export class WalletGateway {
     }
 
     async gotoNetworksPage(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await popup.locator('button[aria-haspopup="menu"]').click()
         await popup
             .getByRole('button', { name: 'Networks', exact: true })
@@ -504,7 +559,7 @@ export class WalletGateway {
     }
 
     async hasNewNetworkButton(): Promise<boolean> {
-        const popup = await this.popup()
+        const popup = await this.page()
         return (
             (await popup
                 .getByRole('button', { name: 'New', exact: true })
@@ -514,7 +569,7 @@ export class WalletGateway {
 
     async addNetwork(network: NetworkFormInput): Promise<void> {
         await this.gotoNetworksPage()
-        const popup = await this.popup()
+        const popup = await this.page()
 
         const newButton = popup.getByRole('button', {
             name: 'New',
@@ -535,7 +590,7 @@ export class WalletGateway {
 
     async updateNetworkName(networkId: string, newName: string): Promise<void> {
         await this.openNetworkReview(networkId)
-        const popup = await this.popup()
+        const popup = await this.page()
 
         await this.fillNetworkFormField('Name', newName)
         await popup.locator('[data-test-id="update-network-button"]').click()
@@ -552,7 +607,7 @@ export class WalletGateway {
     }
 
     async expectFirstNetworkNotEditable(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await this.waitForNetworksPageReady()
 
         const firstCard = popup.locator('network-card').first()
@@ -568,14 +623,14 @@ export class WalletGateway {
         const card = await this.findNetworkCard(networkId)
         await card.click()
 
-        const popup = await this.popup()
+        const popup = await this.page()
         await expect(
             popup.getByRole('heading', { name: 'Review network' })
         ).toBeVisible({ timeout: 15000 })
     }
 
     private async fillNetworkForm(network: NetworkFormInput): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
 
         await this.fillNetworkFormField('Network Id', network.id)
         await this.fillNetworkFormField('Name', network.name)
@@ -611,7 +666,7 @@ export class WalletGateway {
         label: string,
         value: string
     ): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         // The form labels aren't associated with their inputs via `for`, so
         // locate the input via the field group that contains the label text.
         const input = popup
@@ -630,7 +685,7 @@ export class WalletGateway {
         buildItemLocator: (popup: Page) => Locator,
         options?: { afterPageChange?: () => Promise<void> }
     ): Promise<Locator> {
-        const popup = await this.popup()
+        const popup = await this.page()
         const pagination = popup.locator('wg-pagination').first()
 
         for (let guard = 0; guard < 25; guard++) {
@@ -666,7 +721,7 @@ export class WalletGateway {
     }
 
     private async waitForNetworksPageReady(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await expect(
             popup.getByRole('heading', { name: 'Networks' })
         ).toBeVisible({ timeout: 15000 })
@@ -677,7 +732,7 @@ export class WalletGateway {
     }
 
     async gotoIdentityProvidersPage(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await popup.locator('button[aria-haspopup="menu"]').click()
         await popup
             .getByRole('button', { name: 'Identity Providers', exact: true })
@@ -686,7 +741,7 @@ export class WalletGateway {
     }
 
     async hasNewIdpButton(): Promise<boolean> {
-        const popup = await this.popup()
+        const popup = await this.page()
         return (
             (await popup
                 .getByRole('button', { name: 'New', exact: true })
@@ -696,7 +751,7 @@ export class WalletGateway {
 
     async addIdp(idp: IdpFormInput): Promise<void> {
         await this.gotoIdentityProvidersPage()
-        const popup = await this.popup()
+        const popup = await this.page()
 
         const newButton = popup.getByRole('button', {
             name: 'New',
@@ -719,7 +774,7 @@ export class WalletGateway {
 
     async updateIdpIssuer(idpId: string, issuer: string): Promise<void> {
         await this.openIdpReview(idpId)
-        const popup = await this.popup()
+        const popup = await this.page()
 
         await popup.locator('#idp-issuer').fill(issuer)
         await popup.getByRole('button', { name: 'Update', exact: true }).click()
@@ -735,7 +790,7 @@ export class WalletGateway {
     }
 
     async expectFirstIdpNotEditable(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await this.waitForIdentityProvidersPageReady()
 
         const firstCard = popup.locator('idp-card').first()
@@ -754,14 +809,14 @@ export class WalletGateway {
         const card = await this.findIdpCard(idpId)
         await card.click()
 
-        const popup = await this.popup()
+        const popup = await this.page()
         await expect(
             popup.getByRole('heading', { name: 'Review Identity Provider' })
         ).toBeVisible({ timeout: 15000 })
     }
 
     private async fillIdpForm(idp: IdpFormInput): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
 
         await popup.locator('#idp-id').fill(idp.id)
         await popup.locator('#idp-type').selectOption(idp.type)
@@ -775,7 +830,7 @@ export class WalletGateway {
     }
 
     private async waitForIdentityProvidersPageReady(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await expect(
             popup.getByRole('heading', { name: 'Identity Providers' })
         ).toBeVisible({ timeout: 15000 })
@@ -788,7 +843,9 @@ export class WalletGateway {
         commandId: string,
         status: ActivityStatus
     ): Promise<void> {
-        if (!(await this.isPopupOpen())) {
+        // A popup closes itself after the approval it was opened for, so it has
+        // to be brought back before its activity list can be read.
+        if (this.isPopup && !(await this.isPopupOpen())) {
             await this.openPopup()
         }
         await this.gotoActivitiesPage()
@@ -799,7 +856,7 @@ export class WalletGateway {
     }
 
     async gotoActivitiesPage(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await popup.locator('button[aria-haspopup="menu"]').click()
         await popup
             .getByRole('button', { name: 'Activities', exact: true })
@@ -809,7 +866,7 @@ export class WalletGateway {
 
     private async findActivityCard(commandId: string): Promise<Locator> {
         await this.waitForActivitiesPageReady()
-        const popup = await this.popup()
+        const popup = await this.page()
         return this.findInPaginatedList(
             `Activity card for command id "${commandId}"`,
             (page) =>
@@ -827,7 +884,7 @@ export class WalletGateway {
     }
 
     private async waitForActivitiesPageReady(): Promise<void> {
-        const popup = await this.popup()
+        const popup = await this.page()
         await expect(
             popup.getByRole('heading', { name: 'Activities' })
         ).toBeVisible({ timeout: 15000 })
