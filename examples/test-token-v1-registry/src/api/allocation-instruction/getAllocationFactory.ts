@@ -4,20 +4,19 @@
 import sdk from '../../common/sdk'
 import { operator } from '../../common/operator'
 import { command, TestTokenV1 } from '@canton-network/core-test-token'
-import { emptyChoiceContext } from '../common'
-import { APIHandler } from '../../types'
+import { APIError, emptyChoiceContext } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
+import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 
 /**
  * Resolves or creates an allocation factory for initiating allocation workflows.
  *
- * @throws {400} When provided body request is invalid.
  * @throws {500} when instantiating new allocation factory contract has failed.
  * @returns Factory identifier with choice context on success.
  */
-export const getAllocationFactory: APIHandler<
+export const getAllocationFactory: TExpressOpenApiRequestHandler<
     OffLedger.AllocationInstructionV1.paths['/registry/allocation-instruction/v1/allocation-factory']['post']
-> = async () => {
+> = async (_req, res, next) => {
     // fetch factory contract (if existing)...
     const fetchedFactory = (
         await sdk.ledger.acsReader.readJsContracts({
@@ -28,12 +27,11 @@ export const getAllocationFactory: APIHandler<
     )[0]
 
     if (fetchedFactory) {
-        return {
-            payload: {
-                factoryId: fetchedFactory.contractId,
-                choiceContext: emptyChoiceContext,
-            },
-        }
+        res.json({
+            factoryId: fetchedFactory.contractId,
+            choiceContext: emptyChoiceContext,
+        })
+        return
     }
 
     // ...and create one otherwise
@@ -58,18 +56,17 @@ export const getAllocationFactory: APIHandler<
     )[0]
 
     if (!factoryContract) {
-        return {
-            status: 500,
-            payload: {
-                error: `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`,
-            },
-        }
+        next(
+            new APIError(
+                500,
+                `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`
+            )
+        )
+        return
     }
 
-    return {
-        payload: {
-            factoryId: factoryContract.contractId,
-            choiceContext: emptyChoiceContext,
-        },
-    }
+    res.json({
+        factoryId: factoryContract.contractId,
+        choiceContext: emptyChoiceContext,
+    })
 }

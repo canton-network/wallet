@@ -14,7 +14,7 @@ import {
     switchWallet,
     tap,
     togglePreapproval,
-} from './next-utils'
+} from './utils'
 
 const BASE_URL = 'http://localhost:8081'
 const AMULET_INSTRUMENT = 'Amulet (AMT)'
@@ -45,7 +45,7 @@ const gotoWalletHistory = async (
     walletHint: string
 ): Promise<void> => {
     await page.goto(
-        `${BASE_URL}/next/dashboard/wallet/${encodeURIComponent(walletId)}`
+        `${BASE_URL}/dashboard/wallet/${encodeURIComponent(walletId)}`
     )
 
     const main = page.locator('main')
@@ -197,7 +197,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
     // Alice: tap, outgoing direct transfer, and both offer lifecycle rows.
     await gotoWalletHistory(dappPage, alice, aliceHint)
     await expectTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+1000',
     })
     await expectTransactionRow(dappPage, {
@@ -232,13 +232,13 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
         counterpartyHint: bobHint,
     })
     await expectNoTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+1000',
     })
 
     await historyTabs.getByRole('tab', { name: 'Received' }).click()
     await expectTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+1000',
     })
     await expectNoTransactionRow(dappPage, {
@@ -254,7 +254,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
         dappPage.getByRole('button', { name: 'Transfer' })
     ).toBeDisabled()
     await expectTransactionRow(dappPage, {
-        activity: 'Received ↘',
+        activity: 'DevNet tap',
         amount: '+500',
     })
     await expectTransactionRow(dappPage, {

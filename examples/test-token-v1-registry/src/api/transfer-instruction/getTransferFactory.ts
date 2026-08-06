@@ -5,11 +5,11 @@ import { TestTokenV1, command } from '@canton-network/core-test-token'
 import sdk from '../../common/sdk'
 import { operator } from '../../common/operator'
 import z from 'zod'
-import { emptyChoiceContext } from '../common'
-import { APIHandler } from '../../types'
+import { APIError, emptyChoiceContext } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
+import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 
-export const GetTransferFactoryChoiceArguments = z.object({
+export const getTransferFactoryChoiceArgumentsSchema = z.object({
     sender: z.string(),
     receiver: z.string(),
     transferKind: z.optional(
@@ -24,25 +24,23 @@ export const GetTransferFactoryChoiceArguments = z.object({
  * @throws {500} when instantiating new allocation factory contract has failed.
  * @returns Factory identifier, resolved transfer kind, and choice context on success.
  */
-export const getTransferFactory: APIHandler<
+export const getTransferFactory: TExpressOpenApiRequestHandler<
     OffLedger.TransferInstructionV1.paths['/registry/transfer-instruction/v1/transfer-factory']['post']
-> = async (ctx) => {
+> = async (req, res, next) => {
     // get choice arguments and invalidate them
-    const { choiceArguments } = ctx.request
-        .body as OffLedger.TransferInstructionV1.components['schemas']['GetFactoryRequest']
+    const { choiceArguments } = req.body
 
     const parsedChoiceArguments =
-        GetTransferFactoryChoiceArguments.safeParse(choiceArguments)
+        getTransferFactoryChoiceArgumentsSchema.safeParse(choiceArguments)
 
     if (!parsedChoiceArguments.success) {
-        return {
-            status: 400,
-            payload: {
-                error: JSON.stringify(
-                    JSON.parse(parsedChoiceArguments.error.message)
-                ),
-            },
-        }
+        next(
+            new APIError(
+                400,
+                JSON.stringify(JSON.parse(parsedChoiceArguments.error.message))
+            )
+        )
+        return
     }
 
     const isToSelf =
@@ -62,13 +60,12 @@ export const getTransferFactory: APIHandler<
     )[0]
 
     if (fetchedFactory) {
-        return {
-            payload: {
-                factoryId: fetchedFactory.contractId,
-                transferKind,
-                choiceContext: emptyChoiceContext,
-            },
-        }
+        res.json({
+            factoryId: fetchedFactory.contractId,
+            transferKind,
+            choiceContext: emptyChoiceContext,
+        })
+        return
     }
 
     // ...and create one otherwise
@@ -93,19 +90,18 @@ export const getTransferFactory: APIHandler<
     )[0]
 
     if (!factoryContract) {
-        return {
-            status: 500,
-            payload: {
-                error: `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`,
-            },
-        }
+        next(
+            new APIError(
+                500,
+                `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`
+            )
+        )
+        return
     }
 
-    return {
-        payload: {
-            factoryId: factoryContract.contractId,
-            transferKind,
-            choiceContext: emptyChoiceContext,
-        },
-    }
+    res.json({
+        factoryId: factoryContract.contractId,
+        transferKind,
+        choiceContext: emptyChoiceContext,
+    })
 }

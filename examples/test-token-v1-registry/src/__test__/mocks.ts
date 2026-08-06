@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { NextFunction, Request, Response } from 'express'
+import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { vi } from 'vitest'
 
 const execute = vi.fn().mockResolvedValue({
@@ -35,6 +37,21 @@ const sdk = {
     },
 }
 
+const req = {
+    params: {},
+    query: {},
+    body: undefined,
+    headers: {},
+} as unknown as Request
+const res = {
+    json: vi.fn(),
+    status: vi.fn().mockReturnThis(),
+    send: vi.fn().mockReturnThis(),
+} as unknown as Response
+const next = vi.fn() as unknown as NextFunction
+
+export const expressContext = { req, res, next }
+
 export const mock = {
     sdk,
     prepare,
@@ -42,3 +59,7 @@ export const mock = {
     execute,
     create,
 }
+
+export type RequestType<
+    APIHandler extends TExpressOpenApiRequestHandler<unknown>,
+> = Parameters<APIHandler>[0]

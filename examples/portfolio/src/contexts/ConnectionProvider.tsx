@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
 import { queryKeys } from '../hooks/query-keys'
@@ -13,6 +13,140 @@ const wcAdapter = wcProjectId
     ? WalletConnectAdapter.create({ projectId: wcProjectId })
     : undefined
 const additionalAdapters = wcAdapter ? [wcAdapter] : []
+
+type PublishConnectedStatus = (
+    status: sdk.dappAPI.StatusEvent,
+    connectionBoundary: boolean
+) => void
+
+const useConnectionInitialization = ({
+    publishConnectedStatus,
+    setError,
+    setInitialized,
+}: {
+    publishConnectedStatus: PublishConnectedStatus
+    setError: (error: string | undefined) => void
+    setInitialized: (initialized: boolean) => void
+}) => {
+    useEffect(() => {
+        let active = true
+
+        sdk.init({ additionalAdapters })
+            .then(() => sdk.status())
+            .then((status) => {
+                if (active) {
+                    publishConnectedStatus(status, true)
+                }
+            })
+            .catch((reason) => {
+                const message =
+                    reason instanceof Error ? reason.message : String(reason)
+
+                if (message.includes('Not connected')) {
+                    return
+                }
+
+                if (active) {
+                    setError(`failed to get status: ${message}`)
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setInitialized(true)
+                }
+            })
+
+        return () => {
+            active = false
+        }
+    }, [publishConnectedStatus, setError, setInitialized])
+}
+
+const useStatusChangeSubscription = ({
+    isConnected,
+    doDisconnect,
+    publishConnectedStatus,
+}: {
+    isConnected: boolean | undefined
+    doDisconnect: () => void
+    publishConnectedStatus: PublishConnectedStatus
+}) => {
+    useEffect(() => {
+        if (!isConnected) return
+
+        const onStatusChanged = (status: sdk.dappAPI.StatusEvent) => {
+            if (!status.connection?.isConnected) {
+                doDisconnect()
+                return
+            }
+            publishConnectedStatus(status, false)
+        }
+
+        sdk.onStatusChanged(onStatusChanged)
+
+        return () => {
+            void sdk.removeOnStatusChanged(onStatusChanged)
+        }
+    }, [isConnected, doDisconnect, publishConnectedStatus])
+}
+
+const useConnectedProviderSubscriptions = ({
+    isConnected,
+    queryClient,
+    setAccounts,
+    setError,
+}: {
+    isConnected: boolean | undefined
+    queryClient: QueryClient
+    setAccounts: (accounts: sdk.dappAPI.Wallet[]) => void
+    setError: (error: string | undefined) => void
+}) => {
+    useEffect(() => {
+        const provider = sdk.getConnectedProvider()
+        if (!provider || !isConnected) return
+
+        provider
+            .request({
+                method: 'listAccounts',
+            })
+            .then((wallets) => {
+                const requestedAccounts =
+                    wallets as sdk.dappAPI.ListAccountsResult
+                setAccounts(requestedAccounts)
+            })
+            .catch((err) => {
+                console.error('Error requesting wallets:', err)
+                const msg = err instanceof Error ? err.message : String(err)
+                setError(msg)
+            })
+
+        const messageListener = async (event: sdk.dappAPI.TxChangedEvent) => {
+            if (event.status === 'executed') {
+                await queryClient.invalidateQueries({
+                    queryKey: queryKeys.walletConnection.pendingTransfers.all,
+                })
+                await queryClient.invalidateQueries({
+                    queryKey: queryKeys.walletConnection.holdings.all,
+                })
+                await queryClient.invalidateQueries({
+                    queryKey: queryKeys.walletConnection.transactionHistory.all,
+                })
+            }
+        }
+        const onAccountsChanged = (wallets: sdk.dappAPI.AccountsChangedEvent) =>
+            setAccounts(wallets)
+        provider.on<sdk.dappAPI.TxChangedEvent>('txChanged', messageListener)
+        provider.on<sdk.dappAPI.AccountsChangedEvent>(
+            'accountsChanged',
+            onAccountsChanged
+        )
+
+        return () => {
+            provider.removeListener('txChanged', messageListener)
+            provider.removeListener('accountsChanged', onAccountsChanged)
+        }
+    }, [isConnected, queryClient, setAccounts, setError])
+}
 
 export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
@@ -86,104 +220,24 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         doDisconnect()
     }, [doDisconnect])
 
-    useEffect(() => {
-        let active = true
+    const isConnected = connectionStatus?.connection?.isConnected
 
-        sdk.init({ additionalAdapters })
-            .then(() => sdk.status())
-            .then((status) => {
-                if (active) {
-                    publishConnectedStatus(status, true)
-                }
-            })
-            .catch((reason) => {
-                const message =
-                    reason instanceof Error ? reason.message : String(reason)
-
-                if (message.includes('Not connected')) {
-                    return
-                }
-
-                if (active) {
-                    setError(`failed to get status: ${message}`)
-                }
-            })
-            .finally(() => {
-                if (active) {
-                    setInitialized(true)
-                }
-            })
-
-        return () => {
-            active = false
-        }
-    }, [publishConnectedStatus])
-
-    // Listen for status changes when connected (re-registers after each connect/disconnect)
-    useEffect(() => {
-        if (!connectionStatus?.connection?.isConnected) return
-
-        const onStatusChanged = (status: sdk.dappAPI.StatusEvent) => {
-            if (!status.connection?.isConnected) {
-                doDisconnect()
-                return
-            }
-            publishConnectedStatus(status, false)
-        }
-
-        sdk.onStatusChanged(onStatusChanged)
-
-        return () => {
-            void sdk.removeOnStatusChanged(onStatusChanged)
-        }
-    }, [
-        connectionStatus?.connection?.isConnected,
+    useConnectionInitialization({
+        publishConnectedStatus,
+        setError,
+        setInitialized,
+    })
+    useStatusChangeSubscription({
+        isConnected,
         doDisconnect,
         publishConnectedStatus,
-    ])
-
-    // Request accounts and listen for provider events only while connected.
-    useEffect(() => {
-        const provider = sdk.getConnectedProvider()
-        if (!provider || !connectionStatus?.connection?.isConnected) return
-        provider
-            .request({
-                method: 'listAccounts',
-            })
-            .then((wallets) => {
-                const requestedAccounts =
-                    wallets as sdk.dappAPI.ListAccountsResult
-                setAccounts(requestedAccounts)
-            })
-            .catch((err) => {
-                console.error('Error requesting wallets:', err)
-                const msg = err instanceof Error ? err.message : String(err)
-                setError(msg)
-            })
-
-        const messageListener = async (event: sdk.dappAPI.TxChangedEvent) => {
-            console.log('incoming event', event)
-            if (event.status === 'executed') {
-                await queryClient.invalidateQueries({
-                    queryKey: queryKeys.walletConnection.pendingTransfers.all,
-                })
-                await queryClient.invalidateQueries({
-                    queryKey: queryKeys.walletConnection.transactionHistory.all,
-                })
-            }
-        }
-        const onAccountsChanged = (wallets: sdk.dappAPI.AccountsChangedEvent) =>
-            setAccounts(wallets)
-        provider.on<sdk.dappAPI.TxChangedEvent>('txChanged', messageListener)
-        provider.on<sdk.dappAPI.AccountsChangedEvent>(
-            'accountsChanged',
-            onAccountsChanged
-        )
-        return () => {
-            provider.removeListener('txChanged', messageListener)
-            provider.removeListener('accountsChanged', onAccountsChanged)
-        }
-    }, [connectionStatus?.connection?.isConnected, queryClient])
+    })
+    useConnectedProviderSubscriptions({
+        isConnected,
+        queryClient,
+        setAccounts,
+        setError,
+    })
 
     return (
         <ConnectionContext.Provider

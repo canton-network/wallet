@@ -32,6 +32,7 @@ vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         networkId: { get: () => 'network1' },
+        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 vi.mock('../utils.js', () => ({ showToast }))

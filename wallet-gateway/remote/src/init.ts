@@ -404,7 +404,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     )
 
     // register web handler
-    web(app, server, userApiUrl)
+    web(app, server, userApiUrl, dappApiUrl)
     isReady = true
 
     logger.info(
