@@ -8,10 +8,15 @@ import { fileURLToPath } from 'url'
 import ViteExpress from 'vite-express'
 import { GATEWAY_VERSION } from '../version.js'
 
-export const web = (app: express.Express, server: Server, userPath: string) => {
-    // Expose userPath via well-known configuration endpoint
+export const web = (
+    app: express.Express,
+    server: Server,
+    userPath: string,
+    dappApiUrl: string
+) => {
+    // Expose API URLs via well-known configuration endpoint
     app.get('/.well-known/wallet-gateway-config', (_req, res) => {
-        res.json({ userPath })
+        res.json({ userPath, dappApiUrl })
     })
     if (process.env.NODE_ENV === 'development') {
         // Enable live reloading and Vite dev server for frontend in development
