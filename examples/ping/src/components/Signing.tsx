@@ -23,14 +23,15 @@ export function Signing(props: { connectResult?: sdk.dappAPI.ConnectResult }) {
             .signMessage({ message })
             .then((response) => {
                 setResult(response)
-                setLoading(false)
             })
             .catch((err) => {
                 console.error('Error signing message:', err)
-                setLoading(false)
                 setErrorMsg(
                     err instanceof Error ? err.message : JSON.stringify(err)
                 )
+            })
+            .finally(() => {
+                setLoading(false)
             })
     }
 
