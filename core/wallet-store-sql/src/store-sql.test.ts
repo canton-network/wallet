@@ -656,8 +656,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -697,8 +698,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -737,8 +739,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
