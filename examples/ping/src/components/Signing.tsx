@@ -49,9 +49,11 @@ export function Signing(props: { connectResult?: sdk.dappAPI.ConnectResult }) {
                 >
                     <input
                         type="text"
+                        aria-label="Message to sign"
                         placeholder="Message to sign"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
+                        disabled={loading}
                         style={{ flex: 1, maxWidth: '400px' }}
                     />
                     <button
