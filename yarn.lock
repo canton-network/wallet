@@ -2188,7 +2188,6 @@ __metadata:
     "@inquirer/prompts": "npm:^8.5.2"
     "@mui/icons-material": "npm:^9.2.0"
     "@mui/material": "npm:^9.2.0"
-    "@mui/system": "npm:^9.2.0"
     "@mui/x-date-pickers": "npm:^9.8.0"
     "@playwright/test": "npm:^1.61.1"
     "@tanstack/devtools-vite": "npm:^0.6.1"
