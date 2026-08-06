@@ -14,12 +14,13 @@ import {
     AllocationFactory_Allocate,
     AllocationSpecification,
     Transfer,
+    transferInstructionRegistryTypes,
+    allocationInstructionRegistryTypes,
     ExtraArgs,
     Metadata,
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
     Holding,
     Beneficiaries,
-    OffLedger,
 } from '@canton-network/core-token-standard'
 import {
     EventFilterBySetup,
@@ -505,7 +506,7 @@ class AllocationService {
         choiceArgs: AllocationFactory_Allocate,
         excludeDebugFields: boolean = true
     ): Promise<
-        OffLedger.AllocationInstructionV1.components['schemas']['FactoryWithChoiceContext']
+        allocationInstructionRegistryTypes['schemas']['FactoryWithChoiceContext']
     > {
         return this.core
             .getTokenStandardClient(registryUrl)
@@ -518,7 +519,7 @@ class AllocationService {
     async createAllocationInstructionFromContext(
         factoryId: string,
         choiceArgs: AllocationFactory_Allocate,
-        choiceContext: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         choiceArgs.extraArgs.context = {
             ...choiceContext.choiceContextData,
@@ -541,7 +542,7 @@ class AllocationService {
         requestedAt?: string,
         prefetchedRegistryChoiceContext?: {
             factoryId: string
-            choiceContext: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+            choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
         }
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const choiceArgs = await this.buildAllocationFactoryChoiceArgs(
@@ -578,7 +579,7 @@ class AllocationService {
             | 'Allocation_ExecuteTransfer'
             | 'Allocation_Withdraw'
             | 'Allocation_Cancel',
-        choiceContext: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): [ExerciseCommand, DisclosedContract[]] {
         const exercise: ExerciseCommand = {
             templateId,
@@ -613,7 +614,7 @@ class AllocationService {
 
     createExecuteTransferAllocationFromContext(
         allocationCid: string,
-        choiceContext: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): [ExerciseCommand, DisclosedContract[]] {
         return this.buildAllocationExerciseWithContext(
             ALLOCATION_INTERFACE_ID,
@@ -626,7 +627,7 @@ class AllocationService {
     async createExecuteTransferAllocation(
         allocationCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
             return this.createExecuteTransferAllocationFromContext(
@@ -647,9 +648,7 @@ class AllocationService {
     async fetchWithdrawAllocationChoiceContext(
         allocationCid: string,
         registryUrl: string
-    ): Promise<
-        OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
-    > {
+    ): Promise<allocationInstructionRegistryTypes['schemas']['ChoiceContext']> {
         return this.core.getTokenStandardClient(registryUrl).post(
             '/registry/allocations/v1/{allocationId}/choice-contexts/withdraw',
             {
@@ -661,7 +660,7 @@ class AllocationService {
 
     createWithdrawAllocationFromContext(
         allocationCid: string,
-        choiceContext: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): [ExerciseCommand, DisclosedContract[]] {
         return this.buildAllocationExerciseWithContext(
             ALLOCATION_INTERFACE_ID,
@@ -674,7 +673,7 @@ class AllocationService {
     async createWithdrawAllocation(
         allocationCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
             return this.createWithdrawAllocationFromContext(
@@ -695,9 +694,7 @@ class AllocationService {
     async fetchCancelAllocationChoiceContext(
         allocationCid: string,
         registryUrl: string
-    ): Promise<
-        OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
-    > {
+    ): Promise<allocationInstructionRegistryTypes['schemas']['ChoiceContext']> {
         return this.core.getTokenStandardClient(registryUrl).post(
             '/registry/allocations/v1/{allocationId}/choice-contexts/cancel',
             {
@@ -709,7 +706,7 @@ class AllocationService {
 
     createCancelAllocationFromContext(
         allocationCid: string,
-        choiceContext: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): [ExerciseCommand, DisclosedContract[]] {
         return this.buildAllocationExerciseWithContext(
             ALLOCATION_INTERFACE_ID,
@@ -722,7 +719,7 @@ class AllocationService {
     async createCancelAllocation(
         allocationCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
             return this.createCancelAllocationFromContext(
@@ -878,7 +875,7 @@ class TransferService {
         choiceArgs: CreateTransferChoiceArgs,
         excludeDebugFields: boolean = true
     ): Promise<
-        OffLedger.TransferInstructionV1.components['schemas']['TransferFactoryWithChoiceContext']
+        transferInstructionRegistryTypes['schemas']['TransferFactoryWithChoiceContext']
     > {
         return await this.core
             .getTokenStandardClient(registryUrl)
@@ -891,7 +888,7 @@ class TransferService {
     async createTransferFromContext(
         factoryId: string,
         choiceArgs: CreateTransferChoiceArgs,
-        choiceContext: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
+        choiceContext: transferInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         this.logger.debug('Creating transfer from pre-fetched context...')
         choiceArgs.extraArgs.context = {
@@ -921,7 +918,7 @@ class TransferService {
         meta?: Metadata,
         prefetchedRegistryChoiceContext?: {
             factoryId: string
-            choiceContext: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
+            choiceContext: transferInstructionRegistryTypes['schemas']['ChoiceContext']
         },
         continueUntilCompletion?: boolean
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
@@ -1129,7 +1126,7 @@ class TransferService {
     async createAcceptTransferInstruction(
         transferInstructionCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
             return this.createAcceptTransferInstructionFromContext(
@@ -1210,7 +1207,7 @@ class TransferService {
     async createRejectTransferInstruction(
         transferInstructionCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
             return this.createRejectTransferInstructionFromContext(
@@ -1292,7 +1289,7 @@ class TransferService {
     async createWithdrawTransferInstruction(
         transferInstructionCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
             return this.createWithdrawTransferInstructionFromContext(
@@ -1320,7 +1317,7 @@ class TransferService {
         transferInstructionCid: string,
         registryUrl: string,
         instructionChoice: 'Accept' | 'Reject' | 'Withdraw',
-        prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         switch (instructionChoice) {
             case 'Accept':
