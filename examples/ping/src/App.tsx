@@ -242,8 +242,7 @@ function App() {
                     </div>
                     <div
                         style={{
-                            display:
-                                activeTab === 'signing' ? 'block' : 'none',
+                            display: activeTab === 'signing' ? 'block' : 'none',
                         }}
                     >
                         <Signing connectResult={connectResult} />
