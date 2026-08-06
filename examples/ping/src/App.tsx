@@ -10,6 +10,7 @@ import { LedgerSubmission } from './components/LedgerSubmission'
 import { Accounts } from './components/Accounts'
 import { PostEvents } from './components/PostEvents'
 import { WindowMessages } from './components/WindowMessages'
+import { Signing } from './components/Signing'
 import { useStatus } from './hooks/useStatus'
 import Holdings from './components/Holdings'
 
@@ -167,6 +168,14 @@ function App() {
                             Ledger Submission
                         </button>
                     )}
+                    {connectResult?.isConnected && (
+                        <button
+                            className={activeTab === 'signing' ? 'active' : ''}
+                            onClick={() => setActiveTab('signing')}
+                        >
+                            Signing
+                        </button>
+                    )}
                 </div>
 
                 <div className="tab-content">
@@ -230,6 +239,14 @@ function App() {
                             primaryParty={primaryParty}
                             ledgerApiVersion={ledgerApiVersion}
                         />
+                    </div>
+                    <div
+                        style={{
+                            display:
+                                activeTab === 'signing' ? 'block' : 'none',
+                        }}
+                    >
+                        <Signing connectResult={connectResult} />
                     </div>
                 </div>
             </div>
