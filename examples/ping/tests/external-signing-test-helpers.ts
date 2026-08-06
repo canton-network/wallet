@@ -48,7 +48,7 @@ export async function connectPingDapp(
     })
 
     await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(dappPage.getByText(/.*gateway: remote-da*/)).toBeVisible({
+    await expect(dappPage.getByText(/.*gateway: remote-da.*/)).toBeVisible({
         timeout: 15000,
     })
 }
