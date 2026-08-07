@@ -52,6 +52,7 @@ function App() {
                 >
                     {connectResult?.isConnected ? (
                         <button
+                            data-testid="disconnect-wallet"
                             disabled={loading}
                             onClick={() => {
                                 setLoading(true)
@@ -64,6 +65,7 @@ function App() {
                         </button>
                     ) : (
                         <button
+                            data-testid="connect-wallet"
                             disabled={loading}
                             onClick={() => {
                                 console.log('Connecting to Wallet...')
@@ -89,6 +91,7 @@ function App() {
                         </button>
                     )}
                     <button
+                        data-testid="open-wallet"
                         disabled={!connectResult?.isConnected || loading}
                         onClick={() => {
                             console.log('Opening to Wallet...')

@@ -7,6 +7,11 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
+import {
+    expectDappConnected,
+    expectDappDisconnected,
+} from './ping-test-helpers.js'
+
 const dappApiPort = 3030
 
 test('wallet picker: handling error cases', async ({
@@ -30,29 +35,20 @@ test('wallet picker: handling error cases', async ({
     // Expect a title "to contain" a substring.
     await expect(dappPage).toHaveTitle(/Example dApp/)
 
-    const connectButton = dappPage.getByRole('button', {
-        name: 'connect to Wallet',
-    })
-    const disconnectButton = dappPage.getByRole('button', {
-        name: 'disconnect',
-    })
+    const connectButton = dappPage.getByTestId('connect-wallet')
 
     // 1. Connect via custom wallet API URL and verify connected status.
     await wg.connect({
         customURL: `http://localhost:${dappApiPort}/api/v0/dapp`,
         network: 'Local (OAuth IDP)',
     })
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, 'remote-da')
 
     // 2. Logout from the popup and verify disconnected status.
     await wg.logoutFromPopup()
-    await expect(connectButton).toBeVisible()
-    await expect(disconnectButton).not.toBeVisible()
+    await expectDappDisconnected(dappPage)
 
     // 3. Enter an invalid URL, recover via "Try Again", and connect injected.
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
     await expect(connectButton).toBeEnabled()
     const discoverPopupPromise = dappPage.waitForEvent('popup')
     await connectButton.click()
@@ -70,9 +66,15 @@ test('wallet picker: handling error cases', async ({
         })
     ).toBeVisible()
     await pickerPopup.getByRole('button', { name: 'Try Again' }).click()
+
+    await expect(
+        pickerPopup.getByRole('textbox', { name: 'Wallet API URL' }),
+        'Try Again should return to the wallet picker list'
+    ).toBeVisible()
     await expect(
         pickerPopup.getByRole('button', {
             name: 'Connect to thisisnotarealurl',
-        })
+        }),
+        'the entry that failed to connect should not be offered again'
     ).toHaveCount(0)
 })

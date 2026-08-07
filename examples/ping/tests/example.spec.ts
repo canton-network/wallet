@@ -7,7 +7,14 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
+import {
+    expectDappConnected,
+    expectDappDisconnected,
+} from './ping-test-helpers.js'
+
+// TODO maybe consts should go to shared file?
 const dappApiPort = 3030
+const gatewayName = 'remote-da'
 
 test('dApp: execute externally signed tx', async ({
     page: dappPage,
@@ -37,13 +44,7 @@ test('dApp: execute externally signed tx', async ({
     })
     console.log('connected...')
 
-    // TODO do we even have this in ping dapp?
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-
-    await expect(
-        dappPage.getByTestId('connected-gateway'),
-        'the dApp should report the gateway it is connected to'
-    ).toHaveText('remote-da')
+    await expectDappConnected(dappPage, gatewayName)
 
     const party1 = `test-${Date.now()}`
     const party2 = `test-${Date.now() + 1}`
@@ -127,59 +128,42 @@ test('connection status handling edge cases', async ({ page: dappPage }) => {
 
     await expect(dappPage).toHaveTitle(/Example dApp/)
 
-    const connectButton = dappPage.getByRole('button', {
-        name: 'connect to Wallet',
-    })
-    const disconnectButton = dappPage.getByRole('button', {
-        name: 'disconnect',
-    })
+    const disconnectButton = dappPage.getByTestId('disconnect-wallet')
 
     // 1. Connect to a gateway -- ensure status is updated
-    await expect(connectButton).toBeVisible()
+    await expectDappDisconnected(dappPage)
     await wg.connect({
         customURL: `http://localhost:${dappApiPort}/api/v0/dapp`,
         network: 'Local (OAuth IDP)',
     })
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
 
     // 2. Hit disconnect button -- ensure status is updated
-    await expect(disconnectButton).toBeVisible()
     await disconnectButton.click()
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(connectButton).toBeVisible()
-    await expect(disconnectButton).not.toBeVisible()
+    await expectDappDisconnected(dappPage)
 
     // 3. Reconnect
     await wg.reconnect({
         customURL: `http://localhost:${dappApiPort}/api/v0/dapp`,
         network: 'Local (OAuth IDP)',
     })
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
 
     // 4. Hit logout button inside popup
     await wg.logoutFromPopup()
-    await expect(connectButton).toBeVisible()
-    await expect(disconnectButton).not.toBeVisible()
+    await expectDappDisconnected(dappPage)
 
     // 5. Reconnect
     await wg.reconnect({
         customURL: `http://localhost:${dappApiPort}/api/v0/dapp`,
         network: 'Local (OAuth IDP)',
     })
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
 
     // 6. Refresh page -- ensure still connected & popup is closed
     await dappPage.reload()
     await expect(dappPage).toHaveTitle(/Example dApp/)
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
     // Verify popup is closed
     const isPopupOpen = await wg.isPopupOpen()
     expect(isPopupOpen).toBe(false)
@@ -189,20 +173,15 @@ test('connection status handling edge cases', async ({ page: dappPage }) => {
     const popupOpenAfterOpen = await wg.isPopupOpen()
     expect(popupOpenAfterOpen).toBe(true)
     // Verify still connected
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
 
     // 8. Close popup -- ensure still connected
     await wg.closePopup()
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
 
     // 9. Disconnect while popup closed -- ensure disconnected
-    await expect(disconnectButton).toBeVisible()
     await disconnectButton.click()
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(connectButton).toBeVisible()
-    await expect(disconnectButton).not.toBeVisible()
+    await expectDappDisconnected(dappPage)
 })
 
 test('popup opens with correct userUrl after reconnect', async ({
@@ -223,37 +202,23 @@ test('popup opens with correct userUrl after reconnect', async ({
 
     await expect(dappPage).toHaveTitle(/Example dApp/)
 
-    const connectButton = dappPage.getByRole('button', {
-        name: 'connect to Wallet',
-    })
-    const disconnectButton = dappPage.getByRole('button', {
-        name: 'disconnect',
-    })
-
     // 1. Login
     await wg.connect({
         customURL: `http://localhost:${dappApiPort}/api/v0/dapp`,
         network: 'Local (OAuth IDP)',
     })
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
 
     // 2. Disconnect
-    await expect(disconnectButton).toBeVisible()
-    await disconnectButton.click()
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(connectButton).toBeVisible()
-    await expect(disconnectButton).not.toBeVisible()
+    await dappPage.getByTestId('disconnect-wallet').click()
+    await expectDappDisconnected(dappPage)
 
     // 3. Login again
     await wg.reconnect({
         customURL: `http://localhost:${dappApiPort}/api/v0/dapp`,
         network: 'Local (OAuth IDP)',
     })
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(disconnectButton).toBeVisible()
-    await expect(connectButton).not.toBeVisible()
+    await expectDappConnected(dappPage, gatewayName)
 
     // 4. Open wallet and verify it opens with proper userUrl (not dApp URL)
     await wg.closePopup()

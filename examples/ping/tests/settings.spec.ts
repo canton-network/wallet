@@ -7,6 +7,7 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
+import { expectDappConnected } from './ping-test-helpers.js'
 
 const dappApiPort = 3030
 const dappUrl = 'http://localhost:8080/'
@@ -26,6 +27,7 @@ function createWalletGateway(dappPage: Page): WalletGateway {
     })
 }
 
+// TODO should this be a shared function for all ping tests?
 async function connect(
     wg: WalletGateway,
     dappPage: Page,
@@ -34,7 +36,7 @@ async function connect(
     await dappPage.goto(dappUrl)
     await expect(dappPage).toHaveTitle(/Example dApp/)
     await wg.connect({ customURL: dappCustomUrl, network })
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
+    await expectDappConnected(dappPage, 'remote-da')
 }
 
 test.describe('Wallet Gateway settings - networks', () => {

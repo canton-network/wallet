@@ -3,6 +3,7 @@
 
 import { expect, WalletGateway } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
+import { expectDappConnected } from './ping-test-helpers.js'
 
 export const isLocalhost = (url: URL) =>
     ['localhost', '127.0.0.1'].includes(url.hostname)
@@ -35,6 +36,7 @@ export function createPingDappWalletGateway(dappPage: Page): WalletGateway {
     })
 }
 
+// TODO this should move out to ping-test-helpers
 export async function connectPingDapp(
     wg: WalletGateway,
     dappPage: Page
@@ -47,13 +49,7 @@ export async function connectPingDapp(
         network: 'Local (OAuth IDP)',
     })
 
-    // TODO does this loading even render in ping?
-    await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-
-    await expect(
-        dappPage.getByTestId('connected-gateway'),
-        'the dApp should report the gateway it is connected to'
-    ).toHaveText('remote-da')
+    await expectDappConnected(dappPage, 'remote-da')
 }
 
 export async function initializeExternalSigningParty(args: {
