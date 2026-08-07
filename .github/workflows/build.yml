@@ -65,6 +65,7 @@ jobs:
                       damljs
                       .nx/cache
                       .nx/workspace-data
+                      !**/node_modules/**
                   if-no-files-found: error
                   retention-days: 1
 
