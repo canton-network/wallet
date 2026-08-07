@@ -29,7 +29,9 @@ export class NetworkTable extends BaseElement {
                         return html`
                             <network-card
                                 .network=${net}
-                                .activeSession=${!!session}
+                                .activeSession=${
+                                    session?.status === 'connected'
+                                }
                                 .accessToken=${session?.accessToken ?? ''}
                                 .readonly=${this.readonly}
                             ></network-card>

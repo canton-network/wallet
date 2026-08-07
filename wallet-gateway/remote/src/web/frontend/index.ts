@@ -48,11 +48,31 @@ export const redirectToIntendedOrDefault = async (): Promise<void> => {
 @customElement('user-app')
 export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
+    @state() private accessor networkConnected = false
     @state() accessor dappApiUrl: string = ''
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
         this.currentOrigin = await detectCurrentOrigin()
+        void this.refreshNetworkConnected()
+    }
+
+    private async refreshNetworkConnected(): Promise<void> {
+        const currentOrigin =
+            this.currentOrigin ?? (await detectCurrentOrigin())
+        const accessToken = await stateManager.accessToken.get(currentOrigin)
+        if (!accessToken) {
+            this.networkConnected = false
+            return
+        }
+
+        try {
+            const userClient = await createUserClient(accessToken)
+            const result = await userClient.request({ method: 'listSessions' })
+            this.networkConnected = result.sessions?.[0]?.status === 'connected'
+        } catch {
+            this.networkConnected = false
+        }
         this.dappApiUrl = await fetchDappApiUrl()
     }
 
@@ -109,13 +129,12 @@ export class UserApp extends LitElement {
     protected render() {
         const networkId = stateManager.networkId.get(this.currentOrigin || '')
         const networkName = networkId || 'No network connected'
-        const networkConnected = Boolean(networkId)
 
         return html`
             <app-layout
                 iconSrc=${toRelPath('/icon.png')}
                 .networkName=${networkName}
-                .networkConnected=${networkConnected}
+                .networkConnected=${this.networkConnected}
                 .dappApiUrl=${this.dappApiUrl}
                 @logout=${this.handleLogout}
                 @copy-dapp-api-url=${this.handleCopyDappApiUrl}

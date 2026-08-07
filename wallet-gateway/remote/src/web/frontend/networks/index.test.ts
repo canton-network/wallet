@@ -41,7 +41,10 @@ import { UserUiNetworks } from './index.js'
 function getNetworkCards(el: UserUiNetworks) {
     return Array.from(
         el.shadowRoot?.querySelectorAll('network-card') ?? []
-    ) as unknown as Array<{ network: { id: string } }>
+    ) as unknown as Array<{
+        network: { id: string }
+        activeSession: boolean
+    }>
 }
 
 function makeNetworks(count: number) {
@@ -110,6 +113,37 @@ describe('UserUiNetworks', () => {
         await waitUntil(() => getNetworkCards(el).length === 1)
 
         expect(el.shadowRoot?.querySelector('.btn-add')).toBeNull()
+    })
+
+    it('marks a network connected only when session status is connected', async () => {
+        const network = makePublicNetwork({ id: 'net-1' })
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'listNetworks') {
+                return { networks: [network] }
+            }
+            if (method === 'listSessions') {
+                return {
+                    sessions: [
+                        {
+                            id: 'sess-1',
+                            network: { id: 'net-1' },
+                            status: 'disconnected',
+                            accessToken: 'token',
+                        },
+                    ],
+                }
+            }
+            if (method === 'getUser') {
+                return { userId: 'user-1', isAdmin: false }
+            }
+            return undefined
+        })
+
+        el = await fixture<UserUiNetworks>(componentFixture)
+
+        await waitUntil(() => getNetworkCards(el).length === 1)
+
+        expect(getNetworkCards(el)[0]?.activeSession).toBe(false)
     })
 
     it('paginates networks on the first page', async () => {
