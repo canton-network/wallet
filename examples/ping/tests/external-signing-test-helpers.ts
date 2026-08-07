@@ -4,7 +4,7 @@
 // Helpers for altering external signing providers' mock APIs state,
 // as would happen for example when user approves tx signing on a phone app.
 
-import { expect } from '@canton-network/core-wallet-test-utils'
+import { expect, test } from '@canton-network/core-wallet-test-utils'
 
 export type ExternalSigningProvider = 'blockdaemon' | 'dfns' | 'fireblocks'
 
@@ -26,6 +26,27 @@ function mockApiUrl(configuredUrl: string | undefined): string | undefined {
     return configuredUrl
 }
 
+async function postToMock(
+    apiUrl: string,
+    path: string,
+    body: unknown
+): Promise<Response> {
+    const url = toMockEndpoint(apiUrl, path)
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+
+    // Reading the body is only safe once, so only spend it on the failure message.
+    const detail = response.ok ? '' : `, body: ${await response.text()}`
+    expect(response.status, `the mock should accept POST ${url}${detail}`).toBe(
+        200
+    )
+
+    return response
+}
+
 export async function setMockBlockdaemonTransactionState(
     txId: string,
     status: 'signed' | 'rejected' | 'failed'
@@ -35,28 +56,23 @@ export async function setMockBlockdaemonTransactionState(
         return
     }
 
-    const promoteResponse = await fetch(
-        toMockEndpoint(apiUrl, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ txId, status }),
-        }
-    )
-    expect(promoteResponse.ok).toBeTruthy()
+    await test.step(`tell the Blockdaemon mock to mark ${txId} as ${status}`, async () => {
+        await postToMock(apiUrl, '/_admin/setTransactionState', {
+            txId,
+            status,
+        })
 
-    const txResponse = await fetch(toMockEndpoint(apiUrl, '/getTransaction'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ txId }),
+        const txResponse = await postToMock(apiUrl, '/getTransaction', { txId })
+        const tx = (await txResponse.json()) as {
+            txId: string
+            status: string
+        }
+
+        expect(
+            tx,
+            `the Blockdaemon mock should report ${txId} as ${status}`
+        ).toMatchObject({ txId, status })
     })
-    expect(txResponse.ok).toBeTruthy()
-    const tx = (await txResponse.json()) as {
-        txId: string
-        status: string
-    }
-    expect(tx.txId).toBe(txId)
-    expect(tx.status).toBe(status)
 }
 
 export async function setMockDfnsTransactionState(
@@ -68,18 +84,19 @@ export async function setMockDfnsTransactionState(
         return
     }
 
-    const setResponse = await fetch(
-        toMockEndpoint(apiUrl, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ signatureId, status }),
-        }
-    )
-    expect(setResponse.ok).toBeTruthy()
+    await test.step(`tell the Dfns mock to mark ${signatureId} as ${status}`, async () => {
+        const setResponse = await postToMock(
+            apiUrl,
+            '/_admin/setTransactionState',
+            { signatureId, status }
+        )
 
-    const updated = (await setResponse.json()) as { status: string }
-    expect(updated.status).toBe(status)
+        const updated = (await setResponse.json()) as { status: string }
+        expect(
+            updated.status,
+            `the Dfns mock should report ${signatureId} as ${status}`
+        ).toBe(status)
+    })
 }
 
 export async function setMockFireblocksTransactionState(
@@ -91,25 +108,27 @@ export async function setMockFireblocksTransactionState(
         return
     }
 
-    const setResponse = await fetch(
-        toMockEndpoint(apiUrl, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ txId, status }),
-        }
-    )
-    expect(setResponse.ok).toBeTruthy()
-
-    const updated = (await setResponse.json()) as {
-        signedMessages?: unknown[]
-        status?: string
-    }
-    if (status === 'signed') {
-        expect(updated.signedMessages?.length).toBeGreaterThan(0)
-    } else {
-        expect(updated.status).toBe(
-            status === 'rejected' ? 'REJECTED' : 'FAILED'
+    await test.step(`tell the Fireblocks mock to mark ${txId} as ${status}`, async () => {
+        const setResponse = await postToMock(
+            apiUrl,
+            '/_admin/setTransactionState',
+            { txId, status }
         )
-    }
+
+        const updated = (await setResponse.json()) as {
+            signedMessages?: unknown[]
+            status?: string
+        }
+        if (status === 'signed') {
+            expect(
+                updated.signedMessages ?? [],
+                `the Fireblocks mock should return a signature for ${txId}`
+            ).not.toHaveLength(0)
+        } else {
+            expect(
+                updated.status,
+                `the Fireblocks mock should report ${txId} as ${status}`
+            ).toBe(status === 'rejected' ? 'REJECTED' : 'FAILED')
+        }
+    })
 }

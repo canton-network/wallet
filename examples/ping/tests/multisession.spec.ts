@@ -9,8 +9,13 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import { BrowserContext, Page } from '@playwright/test'
-
-const dappApiPort = 3030
+import {
+    connectWalletGateway,
+    createPingDappWalletGateway,
+    DAPP_API_PORT,
+    DAPP_URL,
+    DEFAULT_NETWORK,
+} from './ping-test-helpers.js'
 
 // A popup session opened through a dApp and a direct WG tab should be
 // independent: logging out of the direct tab must not close the popup.
@@ -21,36 +26,41 @@ test('logout from direct WG tab does not close the dApp popup session', async ({
     page: Page
     context: BrowserContext
 }) => {
-    const wgSessionA = new WalletGateway({
-        dappPage,
-        openButton: (page) => page.getByRole('button', { name: 'open Wallet' }),
-        connectButton: (page) =>
-            page.getByRole('button', { name: 'connect to Wallet' }),
-    })
-    await dappPage.goto('http://localhost:8080/')
-    await expect(dappPage).toHaveTitle(/Example dApp/)
+    const wgSessionA = createPingDappWalletGateway(dappPage)
 
-    // 1. Connect to the WG through the dApp — this opens a popup (session A).
-    await wgSessionA.connect({
-        customURL: `http://localhost:${dappApiPort}/api/v0/dapp`,
-        network: 'Local (OAuth IDP)',
-    })
-    expect(await wgSessionA.isPopupOpen()).toBe(true)
+    await test.step('session A: connect through the dApp, opening a popup', async () => {
+        await dappPage.goto(DAPP_URL)
+        await expect(dappPage).toHaveTitle(/Example dApp/)
 
-    // 2. Open the WG directly in a second tab and log in (session B).
+        await connectWalletGateway(wgSessionA, dappPage)
+
+        expect(
+            await wgSessionA.isPopupOpen(),
+            'connecting through the dApp should leave its wallet popup open'
+        ).toBe(true)
+    })
+
     const directPage = await context.newPage()
-    await directPage.goto(`http://localhost:${dappApiPort}/`)
     const wgSessionB = new WalletGateway({
         isPopup: false,
         page: directPage,
     })
-    await wgSessionB.login('Local (OAuth IDP)')
 
-    // 3. Logout from session B.
-    //    The direct tab should redirect to /login, not close.
-    //    The popup from session A should remain open.
-    await wgSessionB.logout()
+    await test.step('session B: open the wallet gateway directly and log in', async () => {
+        await directPage.goto(`http://localhost:${DAPP_API_PORT}/`)
+        await wgSessionB.login(DEFAULT_NETWORK)
+    })
 
-    expect(await wgSessionA.isPopupOpen()).toBe(true)
-    await expect(directPage).toHaveURL(/\/login/)
+    await test.step('logging out of session B leaves session A untouched', async () => {
+        await wgSessionB.logout()
+
+        await expect(
+            directPage,
+            'a directly opened gateway tab should return to /login rather than close'
+        ).toHaveURL(/\/login/)
+        expect(
+            await wgSessionA.isPopupOpen(),
+            'logging out of the direct tab should not close the dApp\'s popup session'
+        ).toBe(true)
+    })
 })
