@@ -3,7 +3,6 @@
 
 import {
     test,
-    expect,
     WalletGateway,
     MOCK_FIREBLOCKS_VAULT_NAME,
 } from '@canton-network/core-wallet-test-utils'
@@ -16,43 +15,8 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-    toMockEndpoint,
-    isLocalhost,
-} from './external-signing-test-helpers.js'
-
-const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
-
-async function setMockFireblocksTransactionState(
-    txId: string,
-    status: 'signed' | 'rejected' | 'failed'
-): Promise<void> {
-    const isMockedApi =
-        fireblocksApiPath && isLocalhost(new URL(fireblocksApiPath))
-    if (!isMockedApi) {
-        return
-    }
-    const setResponse = await fetch(
-        toMockEndpoint(fireblocksApiPath, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ txId, status }),
-        }
-    )
-    expect(setResponse.ok).toBeTruthy()
-
-    const updated = (await setResponse.json()) as {
-        signedMessages?: unknown[]
-        status?: string
-    }
-    if (status === 'signed') {
-        expect(updated.signedMessages?.length).toBeGreaterThan(0)
-    } else {
-        expect(updated.status).toBe(
-            status === 'rejected' ? 'REJECTED' : 'FAILED'
-        )
-    }
-}
+} from './ping-test-helpers.js'
+import { setMockFireblocksTransactionState } from './external-signing-test-helpers.js'
 
 test.describe('Fireblocks external signing', () => {
     test.describe.configure({ mode: 'serial' })

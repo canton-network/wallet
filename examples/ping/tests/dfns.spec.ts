@@ -1,11 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    test,
-    expect,
-    WalletGateway,
-} from '@canton-network/core-wallet-test-utils'
+import { test, WalletGateway } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
@@ -15,33 +11,8 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-    toMockEndpoint,
-    isLocalhost,
-} from './external-signing-test-helpers.js'
-
-const dfnsApiUrl = process.env.DFNS_BASE_URL
-
-async function setMockDfnsTransactionState(
-    signatureId: string,
-    status: 'Signed' | 'Rejected' | 'Failed'
-): Promise<void> {
-    const isMockedApi = dfnsApiUrl && isLocalhost(new URL(dfnsApiUrl))
-    if (!isMockedApi) {
-        return
-    }
-    const setResponse = await fetch(
-        toMockEndpoint(dfnsApiUrl, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ signatureId, status }),
-        }
-    )
-    expect(setResponse.ok).toBeTruthy()
-
-    const updated = (await setResponse.json()) as { status: string }
-    expect(updated.status).toBe(status)
-}
+} from './ping-test-helpers.js'
+import { setMockDfnsTransactionState } from './external-signing-test-helpers.js'
 
 test.describe('Dfns external signing', () => {
     test.describe.configure({ mode: 'serial' })
