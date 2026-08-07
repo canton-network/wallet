@@ -8,7 +8,11 @@ export const operator = {
     keys: sdk.keys.generate(),
 }
 
-export const initOperatorParty = async () => {
+export const initOperatorParty = async (admin?: typeof operator) => {
+    if (admin) {
+        Object.assign(operator, admin)
+        return
+    }
     const createdParty = await sdk.party.external
         .create(operator.keys.publicKey, {
             partyHint: 'operator',
