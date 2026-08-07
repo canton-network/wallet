@@ -4,12 +4,15 @@
 import { describe, vi, it, expect, beforeEach } from 'vitest'
 import { expressContext, mock, RequestType } from '../../__test__/mocks'
 import { APIError, emptyChoiceContext } from '../common'
+import { getAllocationFactory } from './getAllocationFactory'
 
 const { res, next } = expressContext
 
-vi.mock('../../common/sdk', () => {
+vi.mock('../../common/sdk', async () => {
+    const { mock: importedMock } = await import('../../__test__/mocks')
+
     return {
-        default: mock.sdk,
+        default: importedMock.sdk,
     }
 })
 
@@ -21,8 +24,6 @@ vi.mock('../../common/operator', () => ({
         },
     },
 }))
-
-const { getAllocationFactory } = await import('./getAllocationFactory')
 
 describe('Allocation Instruction', () => {
     beforeEach(() => {

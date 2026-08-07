@@ -70,6 +70,24 @@ The JSON-RPC API specs from `api-specs/` are generated into strongly-typed metho
 - `BLOCKDAEMON_API_URL` - The base URL for the Blockdaemon API
 - `BLOCKDAEMON_API_KEY` - Your Blockdaemon API key
 
+## Securosys
+
+The Securosys TSB signing driver is registered at startup as `securosys` when
+`SECUROSYS_TSB_BASE_URL` is set. Set these environment variables before starting
+the Gateway:
+
+- `SECUROSYS_TSB_BASE_URL` — TSB base URL
+- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` — `X-API-KEY` optional for key-management endpoints
+- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` — `X-API-KEY` optional for signing/request endpoints
+- `SECUROSYS_TSB_BEARER_TOKEN` — optional bearer token for access-token mode
+- `SECUROSYS_TSB_MTLS_P12_PATH` — optional client PKCS#12/P12 file for mTLS
+- `SECUROSYS_TSB_MTLS_P12_PASSWORD` — optional PKCS#12/P12 password
+- `SECUROSYS_TSB_KEY_PASSWORD` — optional TSB key password
+- `SECUROSYS_TSB_SIGNATURE_ALGORITHM` — TSB signature algorithm, defaults to `EDDSA`
+
+See [`@canton-network/core-signing-securosys`](../../core/signing-securosys/README.md)
+for key creation, public-key, and signature format details.
+
 ## Postgres connection
 
 To create a Postgres database you need to:

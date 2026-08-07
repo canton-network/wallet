@@ -5,14 +5,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
+import { getTransferFactory } from './getTransferFactory'
 import { APIError, emptyChoiceContext } from '../common'
 import { expressContext, mock, RequestType } from '../../__test__/mocks'
 
 const { res, next } = expressContext
 
-vi.mock('../../common/sdk', () => {
+vi.mock('../../common/sdk', async () => {
+    const { mock: importedMock } = await import('../../__test__/mocks')
+
     return {
-        default: mock.sdk,
+        default: importedMock.sdk,
     }
 })
 
@@ -24,8 +27,6 @@ vi.mock('../../common/operator', () => ({
         },
     },
 }))
-
-const { getTransferFactory } = await import('./getTransferFactory')
 
 describe('Transfer Instruction', () => {
     beforeEach(() => {

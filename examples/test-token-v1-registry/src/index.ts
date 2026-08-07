@@ -7,17 +7,18 @@ import { APIError } from './api/common'
 import metadataAPIRouter from './api/metadata/index.js'
 import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
 import { initOperatorParty } from './common/operator'
-import vetDaml from './common/vetDaml'
 import express, { ErrorRequestHandler, Request, Response } from 'express'
+import { vetDaml } from '@canton-network/core-test-token'
+import sdk from './common/sdk'
 
 const app = express()
 
 await initOperatorParty()
 
 /**
- * @customize see {@link ./common/vetDaml.ts}
+ * @customize The registry shouldn't be responsible for vetting daml files. We're doing this for development purposes only. Feel free to remove this when constructing your own token.
  */
-if (process.env.NODE_ENV === 'development') await vetDaml()
+if (process.env.NODE_ENV === 'development') await vetDaml(sdk)
 
 const errorMiddleware: ErrorRequestHandler = (
     error: Error,

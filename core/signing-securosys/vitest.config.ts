@@ -7,19 +7,12 @@ export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: [
-                'src/index.ts',
-                'src/router.ts',
-                'src/scripts/**',
-                'src/api/*/index.ts',
-                'src/common/vetDaml.ts', // for dev-mode only
-            ],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
                 lines: 80,
                 functions: 80,
-                branches: 70,
+                branches: 80,
                 statements: 80,
             },
         },

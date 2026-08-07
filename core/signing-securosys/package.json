@@ -1,8 +1,8 @@
 {
-    "name": "@canton-network/core-splice-client",
-    "version": "1.9.0",
+    "name": "@canton-network/core-signing-securosys",
+    "version": "0.1.0",
     "type": "module",
-    "description": "Typescript Client for the multiple Canton Network APIs",
+    "description": "Wallet Gateway signing driver for Securosys TSB",
     "license": "Apache-2.0",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
@@ -17,23 +17,18 @@
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
-        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run --project node --project browser",
-        "test:coverage": "vitest run --project node --project browser --coverage"
+        "clean": "rm -rf ./dist ./coverage",
+        "test": "vitest run --project node",
+        "test:coverage": "vitest run --project node --coverage"
     },
     "dependencies": {
-        "@canton-network/core-types": "workspace:^",
+        "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
-        "openapi-fetch": "^0.17.0",
-        "uuid": "^14.0.1",
-        "zod": "^4.4.3"
+        "undici": "^7.24.5"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.10",
+        "@types/node": "^25.9.4",
         "@vitest/coverage-v8": "^4.1.10",
-        "playwright": "^1.61.1",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
@@ -47,9 +42,9 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/splice-client"
+        "directory": "core/signing-securosys"
     },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/splice-client#readme",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-securosys#readme",
     "bugs": {
         "url": "https://github.com/canton-network/wallet/issues"
     }
