@@ -158,7 +158,9 @@ export class UserUiNetworks extends BaseElement {
                                   return html`
                                       <network-card
                                           .network=${network}
-                                          .activeSession=${!!session}
+                                          .activeSession=${
+                                              session?.status === 'connected'
+                                          }
                                           .accessToken=${session?.accessToken ?? ''}
                                           .readonly=${!this.isAdmin}
                                           @network-review=${this._onReview}
