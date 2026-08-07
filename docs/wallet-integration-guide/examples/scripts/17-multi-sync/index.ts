@@ -48,21 +48,12 @@ const {
 // The registry creates the TestToken `TokenRules` on both synchronizers as part
 // of initialization, then serves the four Token Standard registry APIs for them.
 await startRegistry({
-    admin: tokenAdmin.partyId,
+    operator: {
+        party: tokenAdmin.partyId,
+        keys: tokenAdmin.keyPair,
+    },
     port: TEST_TOKEN_REGISTRY_PORT,
 })
-
-// const registry = await startTestTokenRegistry({
-//     admin: tokenAdmin.partyId,
-//     port: TEST_TOKEN_REGISTRY_PORT,
-//     ledgerUrl: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-//     synchronizerIds: [setup.globalSynchronizerId, setup.appSynchronizerId],
-//     transferSynchronizerId: setup.appSynchronizerId,
-//     allocationSynchronizerId: setup.globalSynchronizerId,
-//     createTokenRules: (synchronizerId) =>
-//         createTokenRules(setup, synchronizerId),
-//     logger,
-// })
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)

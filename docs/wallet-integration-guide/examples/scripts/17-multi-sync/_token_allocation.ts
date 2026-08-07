@@ -47,7 +47,7 @@ export async function allocateTokenForBob(
             },
             asset: {
                 id: TestToken.DAR.TestTokenID,
-                displayName: 'TestToken',
+                displayName: TestToken.DAR.TestTokenID,
                 symbol: 'TT',
                 registryUrl: testTokenRegistryUrl,
                 admin: tokenAdmin.partyId,
