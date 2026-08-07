@@ -19,6 +19,7 @@ import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocat
 import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.js'
 import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.js'
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
+import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
 
 export interface WalletAllocator {
     createWallet(
@@ -42,6 +43,7 @@ export class WalletAllocationService {
     private readonly fireblocksAllocator?: FireblocksWalletAllocator
     private readonly blockdaemonAllocator?: BlockdaemonWalletAllocator
     private readonly dfnsAllocator?: DfnsWalletAllocator
+    private readonly securosysAllocator?: SecurosysWalletAllocator
 
     constructor(
         store: Store,
@@ -94,6 +96,16 @@ export class WalletAllocationService {
                 logger,
                 partyAllocator,
                 dfnsDriver
+            )
+        }
+
+        const securosysDriver = signingDrivers[SigningProvider.SECUROSYS]
+        if (securosysDriver) {
+            this.securosysAllocator = new SecurosysWalletAllocator(
+                store,
+                logger,
+                partyAllocator,
+                securosysDriver
             )
         }
     }
@@ -166,6 +178,16 @@ export class WalletAllocationService {
                     partyHint,
                     primary
                 )
+            case SigningProvider.SECUROSYS:
+                if (!this.securosysAllocator) {
+                    throw new Error('Securosys signing driver not available')
+                }
+                return this.securosysAllocator.createWallet(
+                    authContext.userId,
+                    authContext.email,
+                    partyHint,
+                    primary
+                )
             default:
                 throw new Error(
                     `Unsupported signing provider: ${signingProviderId}`
@@ -224,6 +246,15 @@ export class WalletAllocationService {
                     throw new Error('Dfns signing driver not available')
                 }
                 return this.dfnsAllocator.allocateParty(
+                    authContext.userId,
+                    authContext.email,
+                    existingWallet
+                )
+            case SigningProvider.SECUROSYS:
+                if (!this.securosysAllocator) {
+                    throw new Error('Securosys signing driver not available')
+                }
+                return this.securosysAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
                     existingWallet
