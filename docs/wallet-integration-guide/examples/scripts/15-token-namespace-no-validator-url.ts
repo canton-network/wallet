@@ -156,3 +156,6 @@ if (receiverAmuletUtxos.length === 0) {
 }
 
 logger.info('Two step transfer process completed successfully')
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

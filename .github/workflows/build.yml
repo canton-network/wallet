@@ -454,12 +454,8 @@ jobs:
 
             - uses: ./.github/actions/check_resources
 
-            - name: Stop Localnet (${{ matrix.network }})
-              if: always()
-              run: pnpm stop:localnet -- --network=${{ matrix.network }}
-
             - name: Save container logs
-              if: always()
+              if: failure()
               run: |
                   #!/usr/bin/env bash
                   set -euo pipefail
@@ -468,8 +464,12 @@ jobs:
                     docker logs "$c" &> "logs/$c.log" || true
                   done
 
-            - name: Upload logs as artifacts
+            - name: Stop Localnet (${{ matrix.network }})
               if: always()
+              run: pnpm stop:localnet -- --network=${{ matrix.network }}
+
+            - name: Upload logs as artifacts
+              if: failure()
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: docker-logs-snippets-${{ matrix.network }}
@@ -513,10 +513,6 @@ jobs:
 
             - uses: ./.github/actions/check_resources
 
-            - name: Stop Localnet (${{ matrix.network }})
-              if: always()
-              run: pnpm stop:localnet -- --network=${{ matrix.network }}
-
             - name: Save container logs
               if: failure()
               run: |
@@ -526,6 +522,10 @@ jobs:
                   for c in $(docker ps -a --format '{{.Names}}'); do
                     docker logs "$c" &> "logs/$c.log" || true
                   done
+
+            - name: Stop Localnet (${{ matrix.network }})
+              if: always()
+              run: pnpm stop:localnet -- --network=${{ matrix.network }}
 
             - name: Upload logs as artifacts
               if: failure()

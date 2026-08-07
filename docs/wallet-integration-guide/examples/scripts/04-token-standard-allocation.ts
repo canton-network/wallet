@@ -425,3 +425,6 @@ await sdk.token.utxos
 await sdk.token.holdings({ partyId: recipient.partyId }).then((allHoldings) => {
     logger.info(allHoldings, 'List holding transactions (Bob)')
 })
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)
