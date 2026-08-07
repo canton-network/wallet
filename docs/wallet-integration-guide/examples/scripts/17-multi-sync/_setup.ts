@@ -1,9 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import path from 'path'
-import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
 import type { Logger } from 'pino'
 import {
     localNetStaticConfig,
@@ -12,7 +9,6 @@ import {
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
-import { readTestTokenV1Dar } from '@canton-network/core-test-token/setup'
 import {
     AMULET_NAMESPACE_CONFIG,
     ASSET_CONFIG,
@@ -22,6 +18,7 @@ import {
 } from '../utils/index.js'
 import type { KnownSynchronizers } from '../utils/index.js'
 import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
+import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
 
 // Token namespace config that also points the SDK at the local TestToken
 // registry (in addition to the Amulet scan-proxy registry). This lets the
@@ -42,9 +39,6 @@ export type PartyInfo = Omit<
     topologyTransactions?: string[] | undefined
     keyPair: KeyPair
 }
-
-const LOCALNET_PATH = '../../../../../.localnet'
-const TRADING_APP_DAR_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
 
 export interface MultiSyncSetup {
     // One SDK instance per party. Alice, TradingApp + Charlie are hosted on the
@@ -151,26 +145,20 @@ export async function setupMultiSyncTrade(
         appSynchronizerId,
     }
 
-    const here = path.dirname(fileURLToPath(import.meta.url))
-    const [testTokenV1Dar, tradingAppDar] = await Promise.all([
-        readTestTokenV1Dar(),
-        fs.readFile(path.join(here, LOCALNET_PATH, TRADING_APP_DAR_LOCALNET)),
-    ])
-
+    // Vetting is per (participant, synchronizer). aliceSdk represents the
+    // app-user participant and bobSdk the app-provider participant, so
+    // vetting through one SDK per participant covers every party hosted there.
     await Promise.all([
-        // Vetting is per (participant, synchronizer). aliceSdk represents the
-        // app-user participant and bobSdk the app-provider participant, so
-        // vetting through one SDK per participant covers every party hosted there.
-        ...[testTokenV1Dar, tradingAppDar].flatMap((dar) =>
-            [aliceSdk, bobSdk].flatMap((sdk) =>
-                [globalSynchronizerId, appSynchronizerId].map((sid) =>
-                    sdk.ledger.dar.uploadAndVet(dar, sid)
-                )
-            )
+        ...[aliceSdk, bobSdk].flatMap((sdk) =>
+            [globalSynchronizerId, appSynchronizerId].map(async (sid) => {
+                await TestToken.utils.vetDar(sdk, sid)
+                await OTCTrade.utils.vetDar(sdk, sid)
+            })
         ),
-        ...[testTokenV1Dar, tradingAppDar].map((dar) =>
-            svSdk.ledger.dar.uploadAndVet(dar, globalSynchronizerId)
-        ),
+        async () => {
+            await TestToken.utils.vetDar(svSdk, globalSynchronizerId)
+            await OTCTrade.utils.vetDar(svSdk, globalSynchronizerId)
+        },
     ])
     logger.info(
         'DARs vetted: app-user participant node + app-provider participant node have TestTokenV1 + trading-app on both synchronizers; sv has both on global only'

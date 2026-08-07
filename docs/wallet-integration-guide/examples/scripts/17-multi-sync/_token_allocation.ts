@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
-import * as SpliceTestTokenV1 from '@canton-network/core-test-token'
 import type { MultiSyncSetup } from './_setup.js'
-
-const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
+import { TestToken } from '@canton-network/core-splice-codegen'
 
 export async function allocateTokenForBob(
     setup: MultiSyncSetup,
@@ -15,8 +13,9 @@ export async function allocateTokenForBob(
 
     // Resolve the TestToken registry URL from the SDK's configured registries
     // (`token.find`) rather than passing it in through the setup object.
-    const { registryUrl: testTokenRegistryUrl } =
-        await bobSdk.token.find('TestToken')
+    const { registryUrl: testTokenRegistryUrl } = await bobSdk.token.find(
+        TestToken.DAR.TestTokenID
+    )
 
     const pendingRequests = await bobSdk.token.allocation.request.pending(
         bob.partyId
@@ -28,7 +27,7 @@ export async function allocateTokenForBob(
     if (!legId) throw new Error('No transfer leg found for Bob')
 
     const tokenHoldings = await bobSdk.ledger.acsReader.raw.readJsContracts({
-        templateIds: [TestTokenV1.Token.templateId],
+        templateIds: [TestToken.DAR.TestTokenV1.Token.templateId],
         parties: [bob.partyId],
         filterByParty: true,
     })
@@ -47,7 +46,7 @@ export async function allocateTokenForBob(
                 transferLeg: requestView.transferLegs[legId],
             },
             asset: {
-                id: 'TestToken',
+                id: TestToken.DAR.TestTokenID,
                 displayName: 'TestToken',
                 symbol: 'TT',
                 registryUrl: testTokenRegistryUrl,
@@ -59,7 +58,7 @@ export async function allocateTokenForBob(
 
     const appTokenRules = (
         await tokenAdminSdk.ledger.acsReader.raw.readJsContracts({
-            templateIds: [TestTokenV1.TokenRules.templateId],
+            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         })
