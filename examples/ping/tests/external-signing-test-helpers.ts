@@ -47,10 +47,13 @@ export async function connectPingDapp(
         network: 'Local (OAuth IDP)',
     })
 
+    // TODO does this loading even render in ping?
     await expect(dappPage.getByText('Loading...')).toHaveCount(0)
-    await expect(dappPage.getByText(/.*gateway: remote-da.*/)).toBeVisible({
-        timeout: 15000,
-    })
+
+    await expect(
+        dappPage.getByTestId('connected-gateway'),
+        'the dApp should report the gateway it is connected to'
+    ).toHaveText('remote-da')
 }
 
 export async function initializeExternalSigningParty(args: {

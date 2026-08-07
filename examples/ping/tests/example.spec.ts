@@ -40,11 +40,10 @@ test('dApp: execute externally signed tx', async ({
     // TODO do we even have this in ping dapp?
     await expect(dappPage.getByText('Loading...')).toHaveCount(0)
 
-    // TODO let's make it not regex
     await expect(
-        dappPage.getByText(/.*gateway: remote-da.*/),
+        dappPage.getByTestId('connected-gateway'),
         'the dApp should report the gateway it is connected to'
-    ).toBeVisible({ timeout: 15000 })
+    ).toHaveText('remote-da')
 
     const party1 = `test-${Date.now()}`
     const party2 = `test-${Date.now() + 1}`

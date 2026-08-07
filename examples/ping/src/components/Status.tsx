@@ -12,7 +12,7 @@ export function Status(props: {
             <br />
             {props.status && (
                 <div>
-                    <b>gateway:</b> <i>{props.status.provider?.id ?? '—'}</i>
+                    <b>gateway:</b> <i data-testid="connected-gateway">{props.status.provider?.id ?? '—'}</i>
                     {props.status.network && (
                         <span>
                             <br />
