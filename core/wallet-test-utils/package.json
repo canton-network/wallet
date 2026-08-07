@@ -18,7 +18,7 @@
     "dependencies": {
         "@canton-network/core-types": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
-        "@playwright/test": "^1.61.1",
+        "@playwright/test": "^1.62.1",
         "pino": "^10.3.1",
         "tweetnacl": "^1.0.3",
         "tweetnacl-util": "^0.15.1",
@@ -26,7 +26,7 @@
     },
     "devDependencies": {
         "@vitest/coverage-v8": "^4.1.10",
-        "tsdown": "^0.22.9",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },

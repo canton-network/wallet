@@ -25,13 +25,13 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@swc/core": "^1.15.43",
-        "@types/node": "^25.9.4",
+        "@swc/core": "^1.15.47",
+        "@types/node": "^25.9.5",
         "@vitest/browser-playwright": "^4.1.10",
         "@vitest/coverage-v8": "^4.1.10",
         "esbuild-plugin-replace": "^1.4.0",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
+        "playwright": "^1.62.1",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },

@@ -8,6 +8,7 @@ packages:
     - 'scripts'
     - 'mock-oauth2'
     - 'wallet-gateway/**'
+minimumReleaseAge: 1440 # 1 day
 allowBuilds:
     '@scarf/scarf': true
     '@swc/core': true

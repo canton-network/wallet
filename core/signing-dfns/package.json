@@ -26,17 +26,17 @@
     "dependencies": {
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
-        "@dfns/sdk": "^0.8.24",
-        "@dfns/sdk-keysigner": "^0.8.24",
+        "@dfns/sdk": "^0.8.28",
+        "@dfns/sdk-keysigner": "^0.8.28",
         "lodash": "^4.18.1",
         "pino": "^10.3.1",
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@types/lodash": "^4.17.24",
-        "@types/node": "^25.9.4",
+        "@types/lodash": "^4.17.25",
+        "@types/node": "^25.9.5",
         "@vitest/coverage-v8": "^4.1.10",
-        "tsdown": "^0.22.9",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },
