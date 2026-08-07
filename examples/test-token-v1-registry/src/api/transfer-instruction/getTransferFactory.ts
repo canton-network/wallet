@@ -8,13 +8,14 @@ import z from 'zod'
 import { APIError, emptyChoiceContext } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+import { synchronizerId } from '../../common/synchronizer'
 
 export const getTransferFactoryChoiceArgumentsSchema = z.object({
     sender: z.string(),
     receiver: z.string(),
-    transferKind: z.optional(
-        z.union([z.literal('self'), z.literal('offer'), z.literal('direct')])
-    ),
+    transferKind: z
+        .union([z.literal('self'), z.literal('offer'), z.literal('direct')])
+        .optional(),
 })
 
 /**
@@ -51,17 +52,31 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
         parsedChoiceArguments.data.transferKind ?? (isToSelf ? 'self' : 'offer')
 
     // fetch the factory contract (if existing)...
-    const fetchedFactory = (
-        await sdk.ledger.acsReader.readJsContracts({
-            filterByParty: true,
-            parties: [operator.party],
-            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
-        })
-    )[0]
+    const fetchedFactories = await sdk.ledger.acsReader.readJsContracts({
+        filterByParty: true,
+        parties: [operator.party],
+        templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
+    })
 
-    if (fetchedFactory) {
+    // multi-sync mode
+    if (synchronizerId.transferInstruction) {
+        const syncFactory = fetchedFactories.find(
+            (factory) =>
+                factory.synchronizerId === synchronizerId.transferInstruction
+        )
+        if (syncFactory) {
+            res.json({
+                factoryId: syncFactory.contractId,
+                transferKind,
+                choiceContext: emptyChoiceContext,
+            })
+            return
+        }
+    }
+
+    if (fetchedFactories[0]) {
         res.json({
-            factoryId: fetchedFactory.contractId,
+            factoryId: fetchedFactories[0].contractId,
             transferKind,
             choiceContext: emptyChoiceContext,
         })
@@ -75,6 +90,9 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
             commands: TestToken.commands.create.rules({
                 admin: operator.party,
             }),
+            ...(synchronizerId.transferInstruction
+                ? { synchronizerId: synchronizerId.transferInstruction }
+                : {}),
         })
         .sign(operator.keys.privateKey)
         .execute({

@@ -7,6 +7,7 @@ import { TestToken } from '@canton-network/core-splice-codegen'
 import { APIError, emptyChoiceContext } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+import { synchronizerId } from '../../common/synchronizer'
 
 /**
  * Resolves or creates an allocation factory for initiating allocation workflows.
@@ -18,17 +19,30 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
     OffLedger.AllocationInstructionV1.paths['/registry/allocation-instruction/v1/allocation-factory']['post']
 > = async (_req, res, next) => {
     // fetch factory contract (if existing)...
-    const fetchedFactory = (
-        await sdk.ledger.acsReader.readJsContracts({
-            filterByParty: true,
-            parties: [operator.party],
-            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
-        })
-    )[0]
+    const fetchedFactories = await sdk.ledger.acsReader.readJsContracts({
+        filterByParty: true,
+        parties: [operator.party],
+        templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
+    })
 
-    if (fetchedFactory) {
+    // multi-sync mode
+    if (synchronizerId.allocationInstruction) {
+        const syncFactory = fetchedFactories.find(
+            (factory) =>
+                factory.synchronizerId === synchronizerId.allocationInstruction
+        )
+        if (syncFactory) {
+            res.json({
+                factoryId: syncFactory.contractId,
+                choiceContext: emptyChoiceContext,
+            })
+            return
+        }
+    }
+
+    if (fetchedFactories[0]) {
         res.json({
-            factoryId: fetchedFactory.contractId,
+            factoryId: fetchedFactories[0].contractId,
             choiceContext: emptyChoiceContext,
         })
         return
@@ -41,6 +55,9 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
             commands: TestToken.commands.create.rules({
                 admin: operator.party,
             }),
+            ...(synchronizerId.allocationInstruction
+                ? { synchronizerId: synchronizerId.allocationInstruction }
+                : {}),
         })
         .sign(operator.keys.privateKey)
         .execute({
