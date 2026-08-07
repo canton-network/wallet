@@ -512,7 +512,7 @@ describe('TransactionService', () => {
                     tx: pendingTransaction.preparedTransaction,
                     txHash: pendingTransaction.preparedTransactionHash,
                     keyIdentifier: {
-                        id: wallet.hint,
+                        id: wallet.publicKey,
                         publicKey: wallet.publicKey,
                     },
                 })

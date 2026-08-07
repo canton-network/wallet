@@ -34,6 +34,7 @@ import {
     AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
+import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -731,7 +732,7 @@ export class TransactionService {
                     tx: tx.preparedTransaction,
                     txHash: tx.preparedTransactionHash,
                     keyIdentifier: {
-                        id: wallet.hint,
+                        id: keyLabelFromPublicKey(wallet.publicKey),
                         publicKey: wallet.publicKey,
                     },
                 })

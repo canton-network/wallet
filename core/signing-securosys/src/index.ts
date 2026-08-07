@@ -30,6 +30,7 @@ import {
 } from './signing-api-sdk.js'
 
 export {
+    keyLabelFromPublicKey,
     mapTsbStatus,
     normalizePublicKey,
     normalizeSignature,

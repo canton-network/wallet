@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import type {
     CreateKeyParams,
@@ -88,6 +89,34 @@ export interface TsbSignedKeyAttributes {
     json: TsbKeyAttributes
     xmlSignature?: string
     attestationKeyName?: string
+}
+
+export interface TsbModifyKeyAttributes {
+    newLabel?: string
+    newPassword?: string
+    customerNote?: string
+    startDate?: string
+    endDate?: string
+    encrypt?: boolean
+    decrypt?: boolean
+    verify?: boolean
+    sign?: boolean
+    wrap?: boolean
+    unwrap?: boolean
+    derive?: boolean
+    extractable?: boolean
+    modifiable?: boolean
+    destroyable?: boolean
+    sensitive?: boolean
+    copyable?: boolean
+    [key: string]: unknown
+}
+
+export interface TsbModifyKeyRequest {
+    label: string
+    password?: string
+    modifyAttributes: TsbModifyKeyAttributes
+    [key: string]: unknown
 }
 
 export interface TsbSignRequest {
@@ -190,6 +219,13 @@ export function normalizePublicKey(publicKey: string): string {
     }
 
     return publicKey
+}
+
+export function keyLabelFromPublicKey(publicKey: string): string {
+    return normalizePublicKey(publicKey)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
 }
 
 export function normalizeSignature(
@@ -415,7 +451,7 @@ export class SigningAPIClient {
     }
 
     private async request<O>(
-        method: 'GET' | 'POST' | 'DELETE',
+        method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
         endpoint: string,
         role: ApiRole,
         body?: object
@@ -475,6 +511,14 @@ export class SigningAPIClient {
         body: I
     ): Promise<O> {
         return this.request<O>('POST', endpoint, role, body)
+    }
+
+    private patch<I extends object, O>(
+        endpoint: string,
+        role: ApiRole,
+        body: I
+    ): Promise<O> {
+        return this.request<O>('PATCH', endpoint, role, body)
     }
 
     private delete<O>(endpoint: string, role: ApiRole): Promise<O> {
@@ -796,9 +840,11 @@ export class SigningAPIClient {
     }
 
     public async createKey(params: CreateKeyParams): Promise<Key> {
+        const temporaryLabel = `wallet-${randomUUID()}`
+        const keyPassword = params.keyPassword ?? this.keyPassword
         const request = compact({
-            label: params.name,
-            password: params.keyPassword ?? this.keyPassword,
+            label: temporaryLabel,
+            password: keyPassword,
             algorithm: WALLET_KEY_ALGORITHM,
             curveOid: WALLET_KEY_CURVE_OID,
             attributes: WALLET_CREATE_KEY_ATTRIBUTES,
@@ -810,7 +856,29 @@ export class SigningAPIClient {
             TsbSignedKeyAttributes
         >('/v1/key', 'key-management', request)
 
-        return this.cacheKey(this.keyFromAttributes(attributes.json))
+        const createdKey = this.keyFromAttributes(attributes.json)
+        const finalLabel = keyLabelFromPublicKey(createdKey.publicKey)
+        const renamedAttributes = await this.patch<
+            TsbModifyKeyRequest,
+            TsbSignedKeyAttributes
+        >(
+            '/v1/key/changeAttributes',
+            'key-management',
+            compact({
+                label: createdKey.id,
+                password: keyPassword,
+                modifyAttributes: {
+                    newLabel: finalLabel,
+                },
+            })
+        )
+        const renamedKey = this.keyFromAttributes(renamedAttributes.json)
+        this.assertKeyMatchesIdentifier(renamedKey, {
+            id: finalLabel,
+            publicKey: createdKey.publicKey,
+        })
+
+        return this.cacheKey(renamedKey)
     }
 
     public async getKeyAttributes(

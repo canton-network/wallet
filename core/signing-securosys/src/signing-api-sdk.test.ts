@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+    keyLabelFromPublicKey,
     mapTsbStatus,
     normalizePublicKey,
     normalizeSignature,
@@ -63,6 +64,10 @@ describe('SigningAPIClient', () => {
     it('keeps unknown public key encodings unchanged', () => {
         const publicKey = Buffer.alloc(33, 1).toString('base64')
         expect(normalizePublicKey(publicKey)).toBe(publicKey)
+    })
+
+    it('derives label-safe TSB key labels from public keys', () => {
+        expect(keyLabelFromPublicKey('abc+/=')).toBe('abc-_')
     })
 
     it('keeps raw Ed25519 signatures in wallet format', () => {
@@ -215,26 +220,38 @@ describe('SigningAPIClient', () => {
             Buffer.from('302a300506032b6570032100', 'hex'),
             raw,
         ])
-        fetchMock.mockResolvedValueOnce(
-            jsonResponse({
-                json: {
-                    label: 'new-key',
-                    publicKey: der.toString('base64'),
-                },
-            })
-        )
+        const finalLabel = keyLabelFromPublicKey(raw.toString('base64'))
+        fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'temporary-key',
+                        publicKey: der.toString('base64'),
+                    },
+                })
+            )
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: finalLabel,
+                        publicKey: der.toString('base64'),
+                    },
+                })
+            )
 
         const result = await client.createKey({ name: 'new-key' })
 
         expect(result).toEqual({
-            id: 'new-key',
-            name: 'new-key',
+            id: finalLabel,
+            name: finalLabel,
             publicKey: raw.toString('base64'),
         })
 
         const body = JSON.parse(initFor('/v1/key').body as string)
         expect(body).toEqual({
-            label: 'new-key',
+            label: expect.stringMatching(
+                /^wallet-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+            ),
             password: 'secret',
             algorithm: 'ED',
             curveOid: '1.3.101.112',
@@ -257,18 +274,39 @@ describe('SigningAPIClient', () => {
                 },
             },
         })
+        expect(
+            JSON.parse(initFor('/v1/key/changeAttributes').body as string)
+        ).toEqual({
+            label: 'temporary-key',
+            password: 'secret',
+            modifyAttributes: {
+                newLabel: finalLabel,
+            },
+        })
+        expect(initFor('/v1/key/changeAttributes').method).toBe('PATCH')
     })
 
     it('ignores caller-provided key request shape when creating keys', async () => {
         const client = new SigningAPIClient('http://tsb.example')
-        fetchMock.mockResolvedValueOnce(
-            jsonResponse({
-                json: {
-                    label: 'ska-key',
-                    publicKey: Buffer.alloc(32, 8).toString('base64'),
-                },
-            })
-        )
+        const publicKey = Buffer.alloc(32, 8).toString('base64')
+        const finalLabel = keyLabelFromPublicKey(publicKey)
+        fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: 'temporary-key',
+                        publicKey,
+                    },
+                })
+            )
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: finalLabel,
+                        publicKey,
+                    },
+                })
+            )
 
         await client.createKey({
             name: 'ska-key',
@@ -281,7 +319,7 @@ describe('SigningAPIClient', () => {
 
         const body = JSON.parse(initFor('/v1/key').body as string)
         expect(body).toMatchObject({
-            label: 'ska-key',
+            label: expect.stringMatching(/^wallet-/),
             algorithm: 'ED',
             curveOid: '1.3.101.112',
             attributes: {
@@ -305,6 +343,10 @@ describe('SigningAPIClient', () => {
         })
         expect(body).not.toHaveProperty('id')
         expect(body).not.toHaveProperty('algorithmOid')
+        const changeBody = JSON.parse(
+            initFor('/v1/key/changeAttributes').body as string
+        )
+        expect(changeBody.modifyAttributes).toEqual({ newLabel: finalLabel })
     })
 
     it('signTransaction creates an async TSB sign request by key id', async () => {
@@ -354,11 +396,20 @@ describe('SigningAPIClient', () => {
     it('signTransaction uses the cached key after createKey returns a public key', async () => {
         const client = new SigningAPIClient('http://tsb.example')
         const publicKey = Buffer.alloc(32, 6).toString('base64')
+        const finalLabel = keyLabelFromPublicKey(publicKey)
         fetchMock
             .mockResolvedValueOnce(
                 jsonResponse({
                     json: {
-                        label: 'new-wallet-key',
+                        label: 'temporary-key',
+                        publicKey,
+                    },
+                })
+            )
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: finalLabel,
                         publicKey,
                     },
                 })
@@ -378,7 +429,7 @@ describe('SigningAPIClient', () => {
         expect(callsFor('/v1/key/attributes')).toHaveLength(0)
 
         const body = JSON.parse(initFor('/v1/sign').body as string)
-        expect(body.signRequest.signKeyName).toBe('new-wallet-key')
+        expect(body.signRequest.signKeyName).toBe(finalLabel)
     })
 
     it('signTransaction validates supplied key id and public key before caching', async () => {
@@ -426,11 +477,20 @@ describe('SigningAPIClient', () => {
     it('signTransaction uses a matching cached key without fetching key attributes', async () => {
         const client = new SigningAPIClient('http://tsb.example')
         const publicKey = Buffer.alloc(32, 3).toString('base64')
+        const finalLabel = keyLabelFromPublicKey(publicKey)
         fetchMock
             .mockResolvedValueOnce(
                 jsonResponse({
                     json: {
-                        label: 'wallet-key',
+                        label: 'temporary-key',
+                        publicKey,
+                    },
+                })
+            )
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: {
+                        label: finalLabel,
                         publicKey,
                     },
                 })
@@ -446,7 +506,7 @@ describe('SigningAPIClient', () => {
 
         expect(callsFor('/v1/key/attributes')).toHaveLength(0)
         const body = JSON.parse(initFor('/v1/sign').body as string)
-        expect(body.signRequest.signKeyName).toBe('wallet-key')
+        expect(body.signRequest.signKeyName).toBe(finalLabel)
     })
 
     it('rejects supplied key id and public key pairs that TSB does not confirm', async () => {

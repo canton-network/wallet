@@ -4,7 +4,8 @@ Signing driver for integrating the Canton Wallet Gateway with Securosys TSB.
 
 ## Features
 
-- `createKey` creates a TSB SKA key with a hardcoded empty policy.
+- `createKey` creates a TSB SKA key with a hardcoded empty policy, then
+  renames it to a label derived from the public key.
 - `getKeys` enumerates TSB keys and returns Wallet Gateway-compatible public
   keys.
 - `signTransaction` creates a TSB sign request and returns the TSB request ID as
@@ -35,6 +36,7 @@ The TSB endpoints used by the driver are:
 - `GET /v1/key`
 - `POST /v1/key`
 - `POST /v1/key/attributes`
+- `PATCH /v1/key/changeAttributes`
 - `POST /v1/sign`
 - `GET /v1/request/{id}`
 - `POST /v1/filteredRequests`
@@ -71,7 +73,14 @@ variables:
 | `SECUROSYS_TSB_KEY_PASSWORD`           | `keyPassword`         |
 | `SECUROSYS_TSB_SIGNATURE_ALGORITHM`    | `signatureAlgorithm`  |
 
-Every key created by this driver is sent to TSB with the same empty SKA policy:
+Every key created by this driver is first sent to TSB with a temporary
+`wallet-{uuid}` label. After TSB returns the public key, the driver renames the
+key through `PATCH /v1/key/changeAttributes` to a deterministic label derived
+from the normalized public key. The label uses base64url form so it is safe for
+TSB key-name handling and avoids collisions between users or networks that reuse
+the same party hint.
+
+Every key is created with the same empty SKA policy:
 
 ```json
 {
