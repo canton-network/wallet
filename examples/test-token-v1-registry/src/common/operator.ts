@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
 import sdk from './sdk'
 
 export const operator = {
@@ -21,6 +20,5 @@ export const initOperatorParty = async (admin?: typeof operator) => {
         .sign(operator.keys.privateKey)
         .execute()
 
-        operator.party = createdParty.partyId
-    }
+    operator.party = createdParty.partyId
 }

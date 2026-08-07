@@ -5,41 +5,7 @@ import type { Logger } from 'pino'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
-
-const OTC_TRADE_TEMPLATE_ID =
-    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade'
-
-function buildSettleOtcTradeCommand(params: {
-    tradeCid: string
-    allocationsWithContext: Record<string, unknown>
-}) {
-    return {
-        ExerciseCommand: {
-            templateId: OTC_TRADE_TEMPLATE_ID,
-            contractId: params.tradeCid,
-            choice: 'OTCTrade_Settle',
-            choiceArgument: {
-                allocationsWithContext: params.allocationsWithContext,
-            },
-        },
-    }
-}
-
-function buildCancelOtcTradeCommand(params: {
-    tradeCid: string
-    allocationsWithContext: Record<string, unknown>
-}) {
-    return {
-        ExerciseCommand: {
-            templateId: OTC_TRADE_TEMPLATE_ID,
-            contractId: params.tradeCid,
-            choice: 'OTCTrade_Cancel',
-            choiceArgument: {
-                allocationsWithContext: params.allocationsWithContext,
-            },
-        },
-    }
-}
+import { OTCTrade } from '@canton-network/core-splice-codegen'
 
 export interface SettleParams {
     otcTradeCid: string
@@ -141,9 +107,11 @@ async function cancelAllocationsOnFailure(
         .prepare({
             partyId: tradingApp.partyId,
             commands: [
-                buildCancelOtcTradeCommand({
-                    tradeCid: otcTradeCid,
-                    allocationsWithContext,
+                OTCTrade.commands.exercise.otcTrade.cancel({
+                    contractId: otcTradeCid,
+                    choiceArgument: {
+                        allocationsWithContext,
+                    },
                 }),
             ],
             disclosedContracts,
@@ -234,9 +202,11 @@ export async function settleOtcTrade(
             .prepare({
                 partyId: tradingApp.partyId,
                 commands: [
-                    buildSettleOtcTradeCommand({
-                        tradeCid: otcTradeCid,
-                        allocationsWithContext,
+                    OTCTrade.commands.exercise.otcTrade.settle({
+                        contractId: otcTradeCid,
+                        choiceArgument: {
+                            allocationsWithContext,
+                        },
                     }),
                 ],
                 disclosedContracts,
