@@ -68,7 +68,7 @@ jobs:
 
             - name: Stop localnet (${{ github.event.inputs.network || 'devnet' }})
               if: always()
-              run: pnpm stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
+              run: pnpm run stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
 
             - name: Save container logs (on failure)
               if: failure()

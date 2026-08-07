@@ -31,4 +31,4 @@ runs:
 
         - name: Start Localnet
           shell: bash
-          run: pnpm start:localnet -- --network=${{ inputs.network }}
+          run: pnpm run start:localnet -- --network=${{ inputs.network }}

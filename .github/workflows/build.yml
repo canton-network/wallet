@@ -466,7 +466,7 @@ jobs:
 
             - name: Stop Localnet (${{ matrix.network }})
               if: always()
-              run: pnpm stop:localnet -- --network=${{ matrix.network }}
+              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
             - name: Upload logs as artifacts
               if: failure()
@@ -525,7 +525,7 @@ jobs:
 
             - name: Stop Localnet (${{ matrix.network }})
               if: always()
-              run: pnpm stop:localnet -- --network=${{ matrix.network }}
+              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
             - name: Upload logs as artifacts
               if: failure()
