@@ -25,7 +25,7 @@ yarn workspace docs-wallet-integration-guide-examples run-17
 yarn stop:localnet
 ```
 
-# Example details
+## Example details
 
 The goal here is to show an exchange operation with a custom token (`TestToken`) that supports running workflows on both a private synchronizer and the global synchronizer.
 A private synchronizer helps avoid some of the traffic costs of using the global synchronizer, but still enables parties to do transactions on the global network,
@@ -89,6 +89,12 @@ Vetting matrix (which DAR is vetted where):
 
 DARs referenced above:
 
-- **TestTokenV1** = `splice-tddest-token-v1-1.0.0.dar` (built locally from `damljs/splice-test-token-v1`)
+- **TestTokenV1** = `splice-test-token-v1-1.0.0.dar` (built locally from `damljs/splice-test-token-v1`)
 - **trading-app** = `splice-token-test-trading-app-1.0.0.dar` (from the localnet bundle)
 - **Amulet\*** = `splice-amulet` — pre-vetted on the **global** synchronizer by localnet, **not** by this example.
+
+## Notes
+
+- The TestToken registry used here is `@canton-network/example-test-token-v1-registry`.
+- SDK helpers in this flow resolve the TestToken registry via metadata (`token.find`) rather than passing registry URLs through setup objects.
+- OTCTrade and TestToken command/template references are taken from `@canton-network/core-splice-codegen` rather than hard-coded template ID strings.
