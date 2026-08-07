@@ -558,7 +558,7 @@ jobs:
 
             - name: Rebuild DAML-dependent packages
               run: |
-                  pnpm run --filter @canton-network/core-test-token build
+                  pnpm run --filter @canton-network/core-splice-codegen build
 
             - uses: ./.github/actions/check_resources
 

@@ -1,6 +1,5 @@
 import pino from 'pino'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
-import { startTestTokenRegistry } from '@canton-network/core-test-token/registry'
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
 import {
@@ -9,11 +8,15 @@ import {
     TRADE_TOKEN_AMOUNT,
 } from './_constants.js'
 import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
-import { createTokenRules, mintAndTransferTokenToBob } from './_token_setup.js'
+import { mintAndTransferTokenToBob } from './_token_setup.js'
 import { allocateTokenForBob } from './_token_allocation.js'
 import { aliceTransferToCharlie } from './_token_transfer.js'
 import { createAndInitiateOtcTrade } from './_trade_propose.js'
 import { settleOtcTrade } from './_trade_settle.js'
+import {
+    startRegistry,
+    stopRegistry,
+} from '@canton-network/example-test-token-v1-registry'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
 // app-user participant hosts Alice + TradingApp, app-provider hosts Bob (+ TokenAdmin); both
@@ -44,17 +47,22 @@ const {
 // ── Start the TestToken registry (CIP-56 off-ledger APIs) ───────────────────
 // The registry creates the TestToken `TokenRules` on both synchronizers as part
 // of initialization, then serves the four Token Standard registry APIs for them.
-const registry = await startTestTokenRegistry({
+await startRegistry({
     admin: tokenAdmin.partyId,
     port: TEST_TOKEN_REGISTRY_PORT,
-    ledgerUrl: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-    synchronizerIds: [setup.globalSynchronizerId, setup.appSynchronizerId],
-    transferSynchronizerId: setup.appSynchronizerId,
-    allocationSynchronizerId: setup.globalSynchronizerId,
-    createTokenRules: (synchronizerId) =>
-        createTokenRules(setup, synchronizerId),
-    logger,
 })
+
+// const registry = await startTestTokenRegistry({
+//     admin: tokenAdmin.partyId,
+//     port: TEST_TOKEN_REGISTRY_PORT,
+//     ledgerUrl: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
+//     synchronizerIds: [setup.globalSynchronizerId, setup.appSynchronizerId],
+//     transferSynchronizerId: setup.appSynchronizerId,
+//     allocationSynchronizerId: setup.globalSynchronizerId,
+//     createTokenRules: (synchronizerId) =>
+//         createTokenRules(setup, synchronizerId),
+//     logger,
+// })
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)
@@ -176,7 +184,7 @@ try {
         { sdk: tokenAdminSdk, parties: [tokenAdmin.partyId] },
         { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
     ])
-    await registry.stop()
+    stopRegistry()
     process.exit(1)
 }
 logger.info('Contracts after settlement:')
@@ -198,4 +206,4 @@ await logAllContracts(logger, synchronizers, [
     { sdk: charlieSdk, parties: [charlie.partyId] },
 ])
 
-await registry.stop()
+stopRegistry()

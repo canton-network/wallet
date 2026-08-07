@@ -25,6 +25,7 @@ export const startRegistry = async (
             transferInstruction: string
             allocationInstruction: string
         }
+        port: number
     }>
 ) => {
     const app = express()
@@ -54,6 +55,8 @@ export const startRegistry = async (
         res.status(500).send({ error: error.message })
     }
 
+    const port = options?.port ?? 5634
+
     server = app
         .use(express.json())
         .use(metadataAPIRouter)
@@ -61,8 +64,8 @@ export const startRegistry = async (
         .use(allocationAPIRouter)
         .use(allocationInstructionAPIRouter)
         .use(errorMiddleware)
-        .listen(5634, () =>
-            console.info('api listening on http://localhost:5634')
+        .listen(port, () =>
+            console.info(`api listening on http://localhost:${port}`)
         )
 }
 
