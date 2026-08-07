@@ -3,7 +3,7 @@
 
 import sdk from '../../common/sdk'
 import { operator } from '../../common/operator'
-import { command, TestTokenV1 } from '@canton-network/core-test-token'
+import { TestToken } from '@canton-network/core-splice-codegen'
 import { APIError, emptyChoiceContext } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
@@ -22,7 +22,7 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
             parties: [operator.party],
-            templateIds: [TestTokenV1.TokenRules.templateId],
+            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
     )[0]
 
@@ -38,7 +38,9 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
     const executionResult = await sdk.ledger
         .prepare({
             partyId: operator.party,
-            commands: command.create.rules({ admin: operator.party }),
+            commands: TestToken.commands.create.rules({
+                admin: operator.party,
+            }),
         })
         .sign(operator.keys.privateKey)
         .execute({
@@ -51,7 +53,7 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
             filterByParty: true,
             parties: [operator.party],
             offset: executionResult.completionOffset,
-            templateIds: [TestTokenV1.TokenRules.templateId],
+            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
     )[0]
 
