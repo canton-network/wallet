@@ -498,9 +498,16 @@ jobs:
 
             - uses: ./.github/actions/check_resources
 
-            - name: Test example scripts (${{ matrix.network }})
+            - name: Test example scripts [1-8] (${{ matrix.network }})
               env:
                   MAX_IO_LISTENERS: '50'
+                  RANGE: '1-8'
+              run: pnpm script:test:examples
+
+            - name: Test example scripts [9-16] (${{ matrix.network }})
+              env:
+                  MAX_IO_LISTENERS: '50'
+                  RANGE: '9-16'
               run: pnpm script:test:examples
 
             - uses: ./.github/actions/check_resources
