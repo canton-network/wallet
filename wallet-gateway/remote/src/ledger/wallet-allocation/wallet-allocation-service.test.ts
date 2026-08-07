@@ -209,6 +209,55 @@ function createDfnsDriver(options: {
     } as unknown as SigningDriverInterface
 }
 
+function createSecurosysDriver(options: {
+    createKeyResult?:
+        | { id: string; publicKey: string }
+        | { error: string; error_description: string }
+    signTransactionResult?: { status: string; txId: string }
+    getTransactionResult?: {
+        txId: string
+        status: string
+        signature?: string
+        metadata?: unknown
+    }
+}): SigningDriverInterface {
+    const createKeyResult = options.createKeyResult ?? {
+        id: 'key-1',
+        publicKey: 'securosys-pk',
+    }
+    const signTransactionResult = options.signTransactionResult ?? {
+        status: 'pending',
+        txId: 'tx-1',
+    }
+    const getTransactionResult =
+        options.getTransactionResult ?? signTransactionResult
+    return {
+        controller: vi.fn().mockReturnValue({
+            createKey: vi
+                .fn<
+                    () => Promise<
+                        | { id: string; publicKey: string }
+                        | { error: string; error_description: string }
+                    >
+                >()
+                .mockResolvedValue(createKeyResult),
+            signTransaction: vi
+                .fn<() => Promise<{ status: string; txId: string }>>()
+                .mockResolvedValue(signTransactionResult),
+            getTransaction: vi
+                .fn<
+                    () => Promise<{
+                        txId: string
+                        status: string
+                        signature?: string
+                        metadata?: unknown
+                    }>
+                >()
+                .mockResolvedValue(getTransactionResult),
+        }),
+    } as unknown as SigningDriverInterface
+}
+
 describe('WalletAllocationService', () => {
     let mockLogger: Logger
     let mockStore: {
@@ -1502,5 +1551,109 @@ describe('WalletAllocationService', () => {
                 })
             }
         )
+    })
+
+    describe('Securosys', () => {
+        it('throws when Securosys signing driver not available', async () => {
+            const serviceWithoutSecurosys = createService({})
+
+            await expect(
+                serviceWithoutSecurosys.createWallet(
+                    authContext,
+                    'alice',
+                    false,
+                    SigningProvider.SECUROSYS
+                )
+            ).rejects.toThrow('Securosys signing driver not available')
+        })
+
+        it('createWallet returns initialized when signTransaction returns pending', async () => {
+            const driver = createSecurosysDriver({
+                createKeyResult: {
+                    id: 'alice-key',
+                    publicKey: 'securosys-pk',
+                },
+                signTransactionResult: {
+                    status: 'pending',
+                    txId: 'tsb-request-1',
+                },
+            })
+            const serviceWithSecurosys = createService({
+                [SigningProvider.SECUROSYS]: driver,
+            })
+
+            const result = await serviceWithSecurosys.createWallet(
+                authContext,
+                'alice',
+                false,
+                SigningProvider.SECUROSYS
+            )
+
+            const controller = vi.mocked(driver.controller).mock.results[0]
+                ?.value as {
+                createKey: Mock
+                signTransaction: Mock
+            }
+            expect(controller.createKey).toHaveBeenCalledWith({
+                name: 'alice',
+            })
+            expect(controller.signTransaction).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    txHash: 'hash',
+                    keyIdentifier: {
+                        id: 'alice-key',
+                        publicKey: 'securosys-pk',
+                    },
+                })
+            )
+            expect(result.status).toBe('initialized')
+            expect(result.reason).toBe(
+                WALLET_DISABLED_REASON.TOPOLOGY_TRANSACTION_PENDING
+            )
+            expect(result.signingProviderId).toBe(SigningProvider.SECUROSYS)
+            expect(result.externalTxId).toBe('tsb-request-1')
+            expect(mockStore.addWallet).toHaveBeenCalled()
+        })
+
+        it('allocateParty updates wallet to allocated when transaction is signed', async () => {
+            const serviceWithSecurosys = createService({
+                [SigningProvider.SECUROSYS]: createSecurosysDriver({
+                    getTransactionResult: {
+                        txId: 'tsb-request-1',
+                        status: 'signed',
+                        signature: 'sig-base64',
+                    },
+                }),
+            })
+            mockPartyAllocator.allocatePartyWithExistingWallet.mockResolvedValue(
+                'alice::namespace'
+            )
+
+            await serviceWithSecurosys.allocateParty(
+                authContext,
+                createWallet('alice::fingerprint', {
+                    signingProviderId: SigningProvider.SECUROSYS,
+                    namespace: 'fingerprint',
+                    topologyTransactions: 'tx1',
+                    externalTxId: 'tsb-request-1',
+                }),
+                SigningProvider.SECUROSYS
+            )
+
+            expect(
+                mockPartyAllocator.allocatePartyWithExistingWallet
+            ).toHaveBeenCalledWith(
+                'fingerprint',
+                ['tx1'],
+                'sig-base64',
+                authContext.userId
+            )
+            expect(mockStore.updateWallet).toHaveBeenCalledWith({
+                networkId: 'network1',
+                partyId: 'alice::namespace',
+                status: 'allocated',
+                reason: '',
+            })
+        })
     })
 })

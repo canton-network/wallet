@@ -484,6 +484,51 @@ describe('TransactionService', () => {
             })
         })
 
+        describe('securosys', () => {
+            it('starts signing and persists the TSB request id when signing is pending', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'pending',
+                    txId: 'tsb-request-1',
+                })
+                const store = createStore()
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.SECUROSYS]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    walletWithProvider(SigningProvider.SECUROSYS),
+                    signParams
+                )
+
+                expect(signTransaction).toHaveBeenCalledWith({
+                    tx: pendingTransaction.preparedTransaction,
+                    txHash: pendingTransaction.preparedTransactionHash,
+                    keyIdentifier: {
+                        id: wallet.publicKey,
+                        publicKey: wallet.publicKey,
+                    },
+                })
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    'pending',
+                    { externalTxId: 'tsb-request-1' }
+                )
+                expect(result).toEqual({
+                    status: 'pending',
+                    externalTxId: 'tsb-request-1',
+                    partyId: wallet.partyId,
+                })
+            })
+        })
+
         it.each([
             {
                 name: 'participant',
@@ -508,6 +553,11 @@ describe('TransactionService', () => {
             {
                 name: 'dfns',
                 provider: SigningProvider.DFNS,
+                auth: authContext,
+            },
+            {
+                name: 'securosys',
+                provider: SigningProvider.SECUROSYS,
                 auth: authContext,
             },
         ])(
@@ -615,6 +665,7 @@ describe('TransactionService', () => {
                 SigningProvider.BLOCKDAEMON,
                 SigningProvider.FIREBLOCKS,
                 SigningProvider.DFNS,
+                SigningProvider.SECUROSYS,
             ])(
                 'executes with the provided signature for %s',
                 async (signingProviderId) => {
