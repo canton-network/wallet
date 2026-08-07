@@ -616,10 +616,21 @@ export class WalletGateway {
         const firstCard = popup.locator('network-card').first()
         await expect(firstCard).toBeVisible({ timeout: 15000 })
 
-        // Nothing changes
-        await expect(popup).toHaveURL('http://localhost:3030/networks/', {
-            timeout: 15000,
-        })
+        await expect(
+            firstCard.locator('.net-card.readonly'),
+            'a non-admin should see the network card rendered read-only'
+        ).toBeVisible({ timeout: 15000 })
+
+        await firstCard.click()
+
+        await expect(
+            popup.getByRole('heading', { name: 'Review network' }),
+            'clicking a read-only network card should not open the review form'
+        ).toHaveCount(0)
+        await expect(
+            popup.getByRole('heading', { name: 'Networks' }),
+            'the networks list should still be shown after clicking a read-only card'
+        ).toBeVisible()
     }
 
     private async openNetworkReview(networkId: string): Promise<void> {
@@ -798,14 +809,22 @@ export class WalletGateway {
 
         const firstCard = popup.locator('idp-card').first()
         await expect(firstCard).toBeVisible({ timeout: 15000 })
+
+        await expect(
+            firstCard.locator('.idp-card.readonly'),
+            'a non-admin should see the identity provider card rendered read-only'
+        ).toBeVisible({ timeout: 15000 })
+
         await firstCard.click()
 
-        await expect(popup).toHaveURL(/\/identity-providers\/?$/, {
-            timeout: 15000,
-        })
         await expect(
-            popup.getByRole('heading', { name: 'Review Identity Provider' })
+            popup.getByRole('heading', { name: 'Review Identity Provider' }),
+            'clicking a read-only identity provider card should not open the review form'
         ).toHaveCount(0)
+        await expect(
+            popup.getByRole('heading', { name: 'Identity Providers' }),
+            'the identity provider list should still be shown after clicking a read-only card'
+        ).toBeVisible()
     }
 
     private async openIdpReview(idpId: string): Promise<void> {
