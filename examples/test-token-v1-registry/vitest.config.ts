@@ -12,7 +12,6 @@ export default defineConfig({
                 'src/router.ts',
                 'src/scripts/**',
                 'src/api/*/index.ts',
-                'src/common/vetDaml.ts', // for dev-mode only
             ],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],

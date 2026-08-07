@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TestTokenV1, command } from '@canton-network/core-test-token'
+import { TestToken } from '@canton-network/core-splice-codegen'
 import sdk from '../../common/sdk'
 import { operator } from '../../common/operator'
 import z from 'zod'
@@ -55,7 +55,7 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
             parties: [operator.party],
-            templateIds: [TestTokenV1.TokenRules.templateId],
+            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
     )[0]
 
@@ -72,7 +72,9 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
     const executionResult = await sdk.ledger
         .prepare({
             partyId: operator.party,
-            commands: command.create.rules({ admin: operator.party }),
+            commands: TestToken.commands.create.rules({
+                admin: operator.party,
+            }),
         })
         .sign(operator.keys.privateKey)
         .execute({
@@ -85,7 +87,7 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
             filterByParty: true,
             parties: [operator.party],
             offset: executionResult.completionOffset,
-            templateIds: [TestTokenV1.TokenRules.templateId],
+            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
     )[0]
 
