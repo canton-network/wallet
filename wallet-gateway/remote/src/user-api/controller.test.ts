@@ -989,7 +989,9 @@ describe('userController', () => {
                 store,
                 notificationService,
                 logger,
-                auth
+                auth,
+                {},
+                adminUserId
             )
 
             const result = await controller.listSessions()
@@ -998,13 +1000,52 @@ describe('userController', () => {
             expect(result.sessions[0]).toMatchObject({
                 id: 'session-1',
                 status: 'connected',
+                accessToken: 'access-token-1',
                 network: expect.objectContaining({
                     id: 'network1',
                     ledgerApi: 'http://ledger.test',
+                    auth: expect.objectContaining({
+                        method: 'authorization_code',
+                        clientId: 'cid',
+                    }),
                 }),
                 idp,
             })
+            expect(result.sessions[0].network).not.toHaveProperty('adminAuth')
+            expect(result.sessions[0].network).not.toHaveProperty(
+                'serviceAccountAuth'
+            )
             expect(mockNetworkStatus).toHaveBeenCalled()
+        })
+
+        it('includes adminAuth in listSessions for the admin user', async () => {
+            const store = await createStore(logger, adminAuth, {
+                withSession: false,
+            })
+            await store.setSession({
+                ...session,
+                accessToken: adminAuth.accessToken,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId
+            )
+
+            const result = await controller.listSessions()
+
+            expect(result.sessions).toHaveLength(1)
+            expect(result.sessions[0].network).toMatchObject({
+                id: 'network1',
+                adminAuth: expect.objectContaining({
+                    method: 'client_credentials',
+                    clientId: 'admin-cid',
+                    clientSecret: 'admin-secret',
+                }),
+            })
         })
 
         it('removeSession clears the session and emits statusChanged', async () => {
@@ -1177,15 +1218,21 @@ describe('userController', () => {
                 authWithScopeOnly
             )
 
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).resolves.toMatchObject({
-                network: expect.objectContaining({ id: 'network1' }),
+            const result = await controller.addSession({
+                origin: 'dapp-1',
+                networkId: 'network1',
+            })
+            expect(result).toMatchObject({
+                network: expect.objectContaining({
+                    id: 'network1',
+                    auth: expect.objectContaining({
+                        method: 'authorization_code',
+                    }),
+                }),
                 status: 'connected',
             })
+            expect(result.network).not.toHaveProperty('adminAuth')
+            expect(result.network).not.toHaveProperty('serviceAccountAuth')
         })
 
         it('addSession rejects when only scope is present and mismatches', async () => {
