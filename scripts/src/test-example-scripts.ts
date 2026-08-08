@@ -41,16 +41,7 @@ function getScriptsRecursive(currentDir: string): string[] {
 //upload dars before any other script
 await executeScript('utils/upload-dars.ts')
 
-const RANGE = process.env.RANGE?.split('-').map((n) => parseInt(n, 10))
-
-const scripts: string[] = []
-
-if (RANGE && RANGE.length === 2) {
-    const allScripts = getScriptsRecursive(dir)
-    scripts.push(...allScripts.slice(RANGE[0] - 1, RANGE[1]))
-} else {
-    scripts.push(...getScriptsRecursive(dir))
-}
+const scripts = getScriptsRecursive(dir)
 
 async function executeScript(name: string) {
     console.log(success(`\n=== Executing script: ${name} ===`))
