@@ -61,3 +61,6 @@ logger.info(
 
 if (base64 !== preparedTapCommandResponse.preparedTransactionHash)
     throw Error('Incorrect hash calculated')
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

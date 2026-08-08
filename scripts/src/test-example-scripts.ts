@@ -52,16 +52,17 @@ async function executeScript(name: string) {
 }
 
 async function cmd(bin: string, args: string[]): Promise<string> {
-    const child = child_process.spawn(bin, args, {
+    // 1. Force pnpm to look in node_modules/.bin using 'exec'
+    const childArgs =
+        bin === 'pnpm' && args[0] !== 'exec' ? ['exec', ...args] : args
+    const child = child_process.spawn(bin, childArgs, {
         stdio: ['ignore', 'pipe', 'pipe'],
     })
 
-    // spawn pino-pretty, capturing its output instead of streaming directly
-    const pretty = child_process.spawn('pnpm', ['pino-pretty'], {
+    const pretty = child_process.spawn('pnpm', ['exec', 'pino-pretty'], {
         stdio: ['pipe', 'pipe', 'pipe'],
     })
 
-    // pipe logs: child.stdout → pino-pretty.stdin
     child.stdout.pipe(pretty.stdin)
 
     let logs = ''
@@ -75,24 +76,59 @@ async function cmd(bin: string, args: string[]): Promise<string> {
         logs += data.toString()
     })
 
-    // wait for child to exit, then signal pino-pretty that there's no more input
-    const childCode = await new Promise<number>((resolve) => {
-        child.on('close', (code) => resolve(code ?? 1))
-    })
-    pretty.stdin.end()
+    return new Promise((resolve, reject) => {
+        // 3. Add a hard timeout (e.g., 2 minutes) to prevent infinite CI stalls
+        const timeout = setTimeout(
+            () => {
+                child.kill('SIGKILL')
+                pretty.kill('SIGKILL')
+                reject(
+                    Object.assign(
+                        new Error(
+                            `TIMEOUT after 10 minutes: ${bin} ${childArgs.join(' ')}`
+                        ),
+                        { logs }
+                    )
+                )
+            },
+            1000 * 60 * 10
+        ) // 10 minutes
 
-    // wait for pino-pretty to flush before reading logs
-    await new Promise<void>((resolve) => {
-        pretty.on('close', resolve)
-    })
+        // 2. Await BOTH processes concurrently. If pretty crashes, child.stdout.pipe
+        // handles the broken pipe gracefully now that we aren't sequentially blocked.
+        Promise.all([
+            new Promise<number>((res) =>
+                child.on('close', (code) => res(code ?? 1))
+            ),
+            new Promise<number>((res) =>
+                pretty.on('close', (code) => res(code ?? 1))
+            ),
+        ]).then(([childCode, prettyCode]) => {
+            clearTimeout(timeout)
 
-    if (childCode !== 0) {
-        throw Object.assign(
-            new Error(`Command failed: ${bin} ${args.join(' ')}`),
-            { logs }
-        )
-    }
-    return logs
+            if (childCode !== 0) {
+                reject(
+                    Object.assign(
+                        new Error(
+                            `Command failed (code ${childCode}): ${bin} ${childArgs.join(' ')}`
+                        ),
+                        { logs }
+                    )
+                )
+            } else if (prettyCode !== 0) {
+                reject(
+                    Object.assign(
+                        new Error(
+                            `Pretty failed (code ${prettyCode}): ${bin} ${childArgs.join(' ')}`
+                        ),
+                        { logs }
+                    )
+                )
+            } else {
+                resolve(logs)
+            }
+        })
+    })
 }
 
 const BATCH_SIZE = 5

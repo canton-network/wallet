@@ -89,10 +89,6 @@ jobs:
 
             - uses: ./.github/actions/check_resources
 
-            - name: Stop localnet (${{ github.event.inputs.network || 'devnet' }})
-              if: always()
-              run: pnpm stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
-
             - name: Save container logs (on failure)
               if: failure()
               run: |
@@ -101,6 +97,10 @@ jobs:
                   for c in $(docker ps -a --format '{{.Names}}'); do
                     docker logs "$c" &> "logs/$c.log" || true
                   done
+
+            - name: Stop localnet (${{ github.event.inputs.network || 'devnet' }})
+              if: always()
+              run: pnpm run stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
 
             - name: Upload logs as artifacts
               if: failure()

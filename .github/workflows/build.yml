@@ -65,6 +65,7 @@ jobs:
                       damljs
                       .nx/cache
                       .nx/workspace-data
+                      !**/node_modules/**
                   if-no-files-found: error
                   retention-days: 1
 
@@ -453,10 +454,6 @@ jobs:
 
             - uses: ./.github/actions/check_resources
 
-            - name: Stop Localnet (${{ matrix.network }})
-              if: always()
-              run: pnpm stop:localnet -- --network=${{ matrix.network }}
-
             - name: Save container logs
               if: failure()
               run: |
@@ -466,6 +463,10 @@ jobs:
                   for c in $(docker ps -a --format '{{.Names}}'); do
                     docker logs "$c" &> "logs/$c.log" || true
                   done
+
+            - name: Stop Localnet (${{ matrix.network }})
+              if: always()
+              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
             - name: Upload logs as artifacts
               if: failure()
@@ -505,10 +506,6 @@ jobs:
 
             - uses: ./.github/actions/check_resources
 
-            - name: Stop Localnet (${{ matrix.network }})
-              if: always()
-              run: pnpm stop:localnet -- --network=${{ matrix.network }}
-
             - name: Save container logs
               if: failure()
               run: |
@@ -518,6 +515,10 @@ jobs:
                   for c in $(docker ps -a --format '{{.Names}}'); do
                     docker logs "$c" &> "logs/$c.log" || true
                   done
+
+            - name: Stop Localnet (${{ matrix.network }})
+              if: always()
+              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
             - name: Upload logs as artifacts
               if: failure()

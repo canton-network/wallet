@@ -332,3 +332,6 @@ if (!featuredAppRights) {
         'Featured app rights for validator operator party'
     )
 }
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

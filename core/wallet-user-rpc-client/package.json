@@ -47,7 +47,8 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git"
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-user-rpc-client"
     },
     "homepage": "https://github.com/canton-network/wallet",
     "bugs": {
