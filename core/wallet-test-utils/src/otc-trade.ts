@@ -87,7 +87,7 @@ export class OTCTrade {
 
         const amuletAsset = await this.sdk.asset.find(
             'Amulet',
-            localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+            new URL(localNetStaticConfig.LOCALNET_REGISTRY_API_URL)
         )
 
         // Define what holdings each party will trade
