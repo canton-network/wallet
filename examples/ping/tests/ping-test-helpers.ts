@@ -106,7 +106,8 @@ export async function expectDappConnected(
                 disconnectVisible,
                 'a connected dApp should have disconnect button'
             ).toBe(true)
-        }).toPass({
+        },
+            'dapp connected indicators from connectResult and statusEvent are all visible at the same time',).toPass({
             timeout: 10_000,
         })
     })
