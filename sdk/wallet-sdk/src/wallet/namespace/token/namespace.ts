@@ -79,7 +79,10 @@ export class TokenNamespace {
      * disambiguate when the same instrument id is served by more than one
      * registry.
      */
-    async find(instrumentId: string, registryUrl?: URL): Promise<AssetBody> {
+    async find(
+        instrumentId: string,
+        registryUrl?: ParsedURL
+    ): Promise<AssetBody> {
         return findAsset(
             await this.assets(),
             instrumentId,
