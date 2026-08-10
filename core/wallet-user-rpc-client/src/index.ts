@@ -67,7 +67,7 @@ export interface Auth {
 export type LedgerApi = string
 /**
  *
- * Structure representing the Networks
+ * Connected network metadata. Privileged credentials (adminAuth, serviceAccountAuth) are included only for the admin user.
  *
  */
 export interface Network {

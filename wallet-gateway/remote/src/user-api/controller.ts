@@ -90,6 +90,11 @@ export const userController = (
         userUrl: `${userUrl}/login/`,
     }
 
+    function isAdmin(): boolean {
+        const userId = authContext?.userId
+        return !!adminUserId && !!userId && userId === adminUserId
+    }
+
     function assertAdmin(): void {
         const userId = assertConnected(authContext).userId
         if (!adminUserId || userId !== adminUserId) {
@@ -99,12 +104,25 @@ export const userController = (
         }
     }
 
+    /**
+     * Session responses always include user auth for the UI.
+     * Privileged credentials are included only for the admin user.
+     */
+    function toSessionNetwork(network: Network): ApiNetwork {
+        const dto = toNetworkDto(network)
+        if (isAdmin()) {
+            return dto
+        }
+        const { adminAuth: _adminAuth, serviceAccountAuth: _sa, ...rest } = dto
+        return rest
+    }
+
     return buildController({
         getUser: async (): Promise<GetUserResult> => {
             const userId = assertConnected(authContext).userId
             return {
                 userId,
-                isAdmin: !!adminUserId && userId === adminUserId,
+                isAdmin: isAdmin(),
             }
         },
         addNetwork: async (params: AddNetworkParams) => {
@@ -829,10 +847,7 @@ export const userController = (
                 return {
                     id: newSessionId,
                     accessToken,
-                    network: {
-                        ...network,
-                        ledgerApi: network.ledgerApi.baseUrl,
-                    },
+                    network: toSessionNetwork(network),
                     idp,
                     status: status.isConnected ? 'connected' : 'disconnected',
                     reason: status.reason ? status.reason : 'OK',
@@ -900,10 +915,7 @@ export const userController = (
                     {
                         id: session.id,
                         origin: session.origin,
-                        network: {
-                            ...network,
-                            ledgerApi: network.ledgerApi.baseUrl,
-                        },
+                        network: toSessionNetwork(network),
                         idp: idp,
                         accessToken: authContext!.accessToken,
                         status: status.isConnected
