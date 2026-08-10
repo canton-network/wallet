@@ -3,7 +3,7 @@
 
 import type { Logger } from 'pino'
 import * as SpliceTestTokenV1 from '@canton-network/core-test-token'
-import type { Splice as SpliceTestTokenTypes } from '@canton-network/core-test-token'
+import type { Token } from '@canton-network/core-test-token'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_TOKEN_AMOUNT } from './_constants.js'
 
@@ -143,7 +143,7 @@ export async function bobSelfTransferToApp(
 
         const holdingAmount = (
             token as unknown as {
-                createArgument: SpliceTestTokenTypes.Testing.Tokens.TestTokenV1.Token
+                createArgument: Token
             }
         ).createArgument.holding.amount
         if (!holdingAmount)

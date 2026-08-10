@@ -39,6 +39,8 @@ export function createMetadataHandlers(
         symbol: 'TT',
         decimals: 10,
         supportedApis: SUPPORTED_APIS,
+        paused: false,
+        showAccountInputFields: false,
     }
 
     return {
