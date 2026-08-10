@@ -5,7 +5,7 @@ import { css, html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { toRelPath } from '../routing'
-import { menuIcon } from '../icons'
+import { menuIcon, clipboardIcon } from '../icons'
 import cantonLogo from '../../images/logos/canton-logo.png'
 
 export class LogoutEvent extends Event {
@@ -14,11 +14,18 @@ export class LogoutEvent extends Event {
     }
 }
 
+export class CopyDappApiUrlEvent extends Event {
+    constructor() {
+        super('copy-dapp-api-url', { bubbles: true, composed: true })
+    }
+}
+
 @customElement('app-header')
 export class AppHeader extends BaseElement {
     @property({ type: String }) iconSrc: string = 'images/icon.png'
     @property({ type: String }) networkName: string = 'No network connected'
     @property({ type: Boolean }) networkConnected = false
+    @property({ type: String }) dappApiUrl: string = ''
 
     @state() private menuOpen = false
     @state() private darkMode = localStorage.getItem('theme') === 'dark'
@@ -180,6 +187,17 @@ export class AppHeader extends BaseElement {
                 gap: var(--wg-space-3);
             }
 
+            .menu-item-with-icon {
+                justify-content: space-between;
+                gap: var(--wg-space-2);
+            }
+
+            .menu-item-icon {
+                display: inline-flex;
+                align-items: center;
+                flex-shrink: 0;
+            }
+
             .menu-item:hover {
                 background: rgba(var(--wg-accent-rgb), 0.1);
             }
@@ -233,6 +251,11 @@ export class AppHeader extends BaseElement {
     private logout() {
         this.menuOpen = false
         this.dispatchEvent(new LogoutEvent())
+    }
+
+    private copyDappApiUrl() {
+        this.menuOpen = false
+        this.dispatchEvent(new CopyDappApiUrlEvent())
     }
 
     render() {
@@ -313,6 +336,22 @@ export class AppHeader extends BaseElement {
                                 this.navigateTo('/identity-providers/')}
                         >
                             <span>Identity Providers</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="menu-item menu-item-with-icon"
+                            title=${this.dappApiUrl || 'Copy dApp API URL'}
+                            aria-label=${
+                                this.dappApiUrl
+                                    ? `Copy dApp API URL: ${this.dappApiUrl}`
+                                    : 'Copy dApp API URL'
+                            }
+                            @click=${this.copyDappApiUrl}
+                        >
+                            <span>Dapp API URL</span>
+                            <span class="menu-item-icon" aria-hidden="true"
+                                >${clipboardIcon}</span
+                            >
                         </button>
 
                         <div class="menu-divider"></div>

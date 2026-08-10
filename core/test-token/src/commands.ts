@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TestTokenV1 } from './token'
+import { TestTokenID, TestTokenV1, type Token } from './token'
 import {
     Allocation,
     AllocationFactory,
@@ -52,6 +52,20 @@ export const command = {
         rules: generateCommand.create<{ admin: PartyId }>(
             TestTokenV1.TokenRules.templateId
         ),
+        token: (params: {
+            owner: PartyId
+            admin: PartyId
+            amount: string
+        }): WrappedCommand<'CreateCommand'> =>
+            generateCommand.create<Token>(TestTokenV1.Token.templateId)({
+                holding: {
+                    owner: params.owner,
+                    instrumentId: { admin: params.admin, id: TestTokenID },
+                    amount: params.amount,
+                    lock: null,
+                    meta: { values: {} },
+                },
+            }),
     },
 
     exercise: {

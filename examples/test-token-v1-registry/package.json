@@ -21,17 +21,14 @@
         "dev": "NODE_ENV=development tsx --watch src/index.ts",
         "clean": "tsc -b --clean; rm -rf dist",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
-        "test": "vitest run --project node --project browser",
-        "test:coverage": "vitest run --project node --project browser --coverage"
+        "test": "vitest run --project node",
+        "test:coverage": "vitest run --project node --coverage"
     },
     "devDependencies": {
         "@types/express": "^5.0.6",
         "@types/lodash": "^4.17.24",
         "@types/node": "^25.9.3",
-        "@vitest/browser-playwright": "^4.1.8",
         "@vitest/coverage-v8": "^4.1.8",
-        "openapicmd": "^2.9.2",
-        "playwright": "^1.60.0",
         "tsx": "^4.23.1",
         "typescript": "^5.9.3",
         "vitest": "^4.1.8"

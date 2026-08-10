@@ -74,6 +74,13 @@ const expiryValidator = z
         (value) => value === null || !Number.isNaN(value.getTime()),
         'Expiration date must be valid'
     )
+    .refine(
+        (value) =>
+            value === null ||
+            Number.isNaN(value.getTime()) ||
+            value.getTime() > Date.now(),
+        'Expiration date must be in the future'
+    )
 
 export const TransferForm: React.FC<TransferFormProps> = ({
     initialValues,
@@ -277,6 +284,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                         <FieldBlock label="Expiration date">
                             <DateTimePicker
                                 ampm={false}
+                                disablePast
                                 value={field.state.value}
                                 onChange={(date) => field.handleChange(date)}
                                 disabled={disabled}

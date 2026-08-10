@@ -1,0 +1,51 @@
+{
+    "name": "@canton-network/core-signing-securosys",
+    "version": "0.2.0",
+    "type": "module",
+    "description": "Wallet Gateway signing driver for Securosys TSB",
+    "license": "Apache-2.0",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc\"",
+        "clean": "rm -rf ./dist ./coverage",
+        "test": "vitest run --project node",
+        "test:coverage": "vitest run --project node --coverage"
+    },
+    "dependencies": {
+        "@canton-network/core-signing-lib": "workspace:^",
+        "@canton-network/core-wallet-auth": "workspace:^",
+        "undici": "^7.24.5"
+    },
+    "devDependencies": {
+        "@types/node": "^25.9.4",
+        "@vitest/coverage-v8": "^4.1.10",
+        "tsdown": "^0.22.9",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.10"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/signing-securosys"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-securosys#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
