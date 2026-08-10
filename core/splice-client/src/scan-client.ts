@@ -5,6 +5,7 @@ import { components, paths } from './generated-clients/scan'
 import createClient, { Client } from 'openapi-fetch'
 import { Logger } from '@canton-network/core-types'
 import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { fetchScanApiUrl } from './scan-api-fetch.js'
 
 export type ScanTypes = components['schemas']
 
@@ -86,7 +87,7 @@ export class ScanClient {
                 const accessToken =
                     await this.accessTokenProvider.getAccessToken()
 
-                return fetch(url, {
+                return fetchScanApiUrl(url, {
                     ...options,
                     headers: {
                         ...(options.headers || {}),

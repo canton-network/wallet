@@ -140,6 +140,19 @@ export abstract class AmuletServiceBase {
         ]
     }
 
+    async cancelFeaturedAppRight(
+        contractId: string,
+        templateId: string
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const exercise: ExerciseCommand = {
+            templateId,
+            contractId,
+            choice: 'FeaturedAppRight_Cancel',
+            choiceArgument: {},
+        }
+        return [exercise, []]
+    }
+
     async cancelTransferPreapproval(
         contractId: string,
         templateId: string,

@@ -72,6 +72,12 @@ export class AmuletService {
         return this.serviceImpl.selfGrantFeatureAppRight(...args)
     }
 
+    async cancelFeaturedAppRight(
+        ...args: Parameters<AmuletServiceBase['cancelFeaturedAppRight']>
+    ) {
+        return this.serviceImpl.cancelFeaturedAppRight(...args)
+    }
+
     async isDevNet(...args: Parameters<AmuletServiceBase['isDevNet']>) {
         return this.serviceImpl.isDevNet(...args)
     }

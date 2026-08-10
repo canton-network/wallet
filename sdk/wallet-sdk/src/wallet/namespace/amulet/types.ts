@@ -24,6 +24,7 @@ export interface FeaturedAppService {
     grant: (
         options?: GrantFeaturedAppRightsOptions
     ) => Promise<FeaturedAppRight | undefined>
+    revoke: (options?: RevokeFeaturedAppRightsOptions) => Promise<boolean>
 }
 
 export type FeaturedAppRight = {
@@ -41,6 +42,13 @@ export type LookupFeaturedAppRightsOptions = {
 }
 
 export type GrantFeaturedAppRightsOptions = {
+    synchronizerId?: string
+    maxRetries?: number
+    delayMs?: number
+    validatorParty?: PartyId
+}
+
+export type RevokeFeaturedAppRightsOptions = {
     synchronizerId?: string
     maxRetries?: number
     delayMs?: number
