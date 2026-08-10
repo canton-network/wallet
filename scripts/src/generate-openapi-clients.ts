@@ -6,14 +6,18 @@ import {
     downloadToFile,
     ensureDir,
     getRepoRoot,
+    getSupportedCantonVersions,
     info,
+    LEDGER_CLIENTS_PATH,
     Network,
     getNetworkArg,
+    pruneVersionedFiles,
     SPLICE_SPEC_PATH,
     success,
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
+    warn,
 } from './lib/utils.js'
 import * as fs from 'fs'
 import generateSchema, { astToString } from 'openapi-typescript'
@@ -199,20 +203,50 @@ const getSpecs = (
     },
 ]
 
+/**
+ * Delete the generated ledger clients whose Canton version is no longer supported.
+ *
+ * The version is part of the filename, so a bump writes a new set of files next to the old one
+ * instead of replacing it. Deleting the old set breaks the imports in ledger-client-types, and that
+ * is the point: the compile error is what tells you to repoint them.
+ *
+ * The kept set spans every network. This run only generated the one given by --network, so keeping
+ * just that version would delete the other network's client.
+ */
+function pruneStaleLedgerClients(): void {
+    const removed = pruneVersionedFiles(
+        LEDGER_CLIENTS_PATH,
+        /^openapi-(\d+\.\d+\.\d+)(?:-[a-z-]+)?\.ts$/,
+        getSupportedCantonVersions()
+    )
+
+    if (removed.length === 0) return
+
+    console.log(
+        warn(
+            `Removed ${removed.length} stale OpenAPI client(s):\n  ${removed.join('\n  ')}\n` +
+                'Repoint the imports of core/ledger-client-types/src/index.ts at the current versions.'
+        )
+    )
+}
+
 async function main(network: Network = 'devnet') {
     const updateHash = hasFlag('updateHash')
 
     await fetchSpliceSpecs(updateHash, network)
-    Promise.all(
+    // Awaited, not chained, so the prune runs only once every file is written.
+    await Promise.all(
         getSpecs(
             SUPPORTED_VERSIONS[network].splice.version,
             SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
         ).map(generateOpenApiClient)
-    ).then(() => {
-        console.log(
-            success('Generated fresh TypeScript clients for all OpenAPI specs')
-        )
-    })
+    )
+
+    pruneStaleLedgerClients()
+
+    console.log(
+        success('Generated fresh TypeScript clients for all OpenAPI specs')
+    )
 }
 
 main(getNetworkArg())
