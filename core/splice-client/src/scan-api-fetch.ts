@@ -89,6 +89,15 @@ function mergeRequestInit(
     }
 }
 
+/**
+ * Node-only transport for `scan.localhost`.
+ *
+ * Flow:
+ * 1. Parse the target URL (scheme, port, path, query).
+ * 2. Open `node:http(s)` to `127.0.0.1` on that port (avoids IPv6 `::1`).
+ * 3. Set `Host` to the original host so localnet nginx matches the vhost.
+ * 4. Stream the response body into a Fetch `Response`.
+ */
 async function fetchViaNodeHttp(
     targetUrl: string,
     init?: RequestInit
