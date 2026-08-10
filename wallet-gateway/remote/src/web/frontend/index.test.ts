@@ -265,6 +265,32 @@ describe('UserApp', () => {
         expect(layout.networkConnected).toBe(true)
     })
 
+    it('keeps the page hidden until the session behind it is verified', async () => {
+        let resolveSessions
+        const pendingSessions = new Promise<{ sessions: unknown[] }>(
+            (resolve) => {
+                resolveSessions = resolve
+            }
+        )
+        mockRequest.mockImplementation(async ({ method }) =>
+            method === 'listSessions' ? pendingSessions : undefined
+        )
+
+        el = await fixture<UserApp>(componentFixture)
+
+        expect(el.shadowRoot?.querySelector('slot')).toBeNull()
+        expect(el.shadowRoot?.querySelector('.loading')?.textContent).toContain(
+            'Loading...'
+        )
+
+        resolveSessions!({
+            sessions: [{ id: 'session-1', network: { id: 'network1' } }],
+        })
+
+        await waitUntil(() => el.shadowRoot?.querySelector('slot') !== null)
+        expect(el.shadowRoot?.querySelector('.loading')).toBeNull()
+    })
+
     it('redirects to login on logout when there is no access token', async () => {
         authState.accessToken = undefined
         el = await fixture<UserApp>(componentFixture)
