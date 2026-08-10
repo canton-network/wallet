@@ -3,6 +3,7 @@
 
 import { Splice, packageId } from '@daml.js/splice-test-token-v1-1.0.0'
 export { Splice, packageId }
+export type { Token } from '@daml.js/splice-test-token-v1-1.0.0/lib/Splice/Testing/Tokens/TestTokenV1'
 
 const T = Splice.Testing.Tokens.TestTokenV1
 
