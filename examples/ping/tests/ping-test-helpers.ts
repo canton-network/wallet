@@ -7,13 +7,13 @@ import {
     expect,
     test,
     WalletGateway,
+    type ExternalSigningProvider,
 } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
-import type { ExternalSigningProvider } from './external-signing-test-helpers.js'
 
 export const DAPP_API_PORT = 3030
 export const DAPP_URL = 'http://localhost:8080/'
-export const DAPP_CUSTOM_URL = `http://localhost:${DAPP_API_PORT}/api/v0/dapp`
+const DAPP_API_URL = `http://localhost:${DAPP_API_PORT}/api/v0/dapp`
 export const GATEWAY_NAME = 'remote-da'
 // Network whose user `operator` is the configured gateway admin.
 export const DEFAULT_NETWORK = 'Local (OAuth IDP)'
@@ -54,7 +54,7 @@ export async function connectWalletGateway(
     dappPage: Page,
     network: string = DEFAULT_NETWORK
 ): Promise<void> {
-    await wg.connect({ customURL: DAPP_CUSTOM_URL, network })
+    await wg.connect({ customURL: DAPP_API_URL, network })
     await expectDappConnected(dappPage, GATEWAY_NAME)
 }
 
@@ -167,7 +167,7 @@ export async function initializeExternalSigningParty(args: {
             partyHint: args.partyHint,
             signingProvider: args.signingProvider,
             ...(args.vaultName !== undefined && { vaultName: args.vaultName }),
-            primary: true,
+            primary: false,
         })
 
         const externalTxId = await args.wg.getWalletExternalTxId(partyId)

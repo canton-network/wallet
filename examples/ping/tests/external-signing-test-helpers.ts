@@ -6,7 +6,7 @@
 
 import { expect, test } from '@canton-network/core-wallet-test-utils'
 
-export type ExternalSigningProvider = 'blockdaemon' | 'dfns' | 'fireblocks'
+export { MOCK_FIREBLOCKS_VAULT_NAME } from '@canton-network/core-wallet-test-utils'
 
 const isLocalhost = (url: URL) =>
     ['localhost', '127.0.0.1'].includes(url.hostname)

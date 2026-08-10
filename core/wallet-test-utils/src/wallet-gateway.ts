@@ -27,6 +27,14 @@ export interface IdpFormInput {
 export type ActivityStatus =
     'pending' | 'signed' | 'executed' | 'failed' | 'rejected'
 
+export type SigningProviderName =
+    'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' | 'fireblocks'
+
+export type ExternalSigningProvider = Extract<
+    SigningProviderName,
+    'blockdaemon' | 'dfns' | 'fireblocks'
+>
+
 // isPopup: true - WG opened in popup by dApp
 // isPopup: false - WG opened in separate tab
 export type WalletGatewayArgs =
@@ -193,12 +201,7 @@ export class WalletGateway {
 
     async createWalletIfNotExists(args: {
         partyHint: string
-        signingProvider:
-            | 'participant'
-            | 'wallet-kernel'
-            | 'blockdaemon'
-            | 'dfns'
-            | 'fireblocks'
+        signingProvider: SigningProviderName
         vaultName?: string
         primary?: boolean
     }): Promise<string> {
@@ -210,6 +213,8 @@ export class WalletGateway {
                 `wg-wallet-card[party-id*="${args.partyHint}"]`
             )
             const walletsCount = await wallets.count()
+
+            // Exists path
             if (walletsCount > 0) {
                 const partyId = await wallets.first().getAttribute('party-id')
                 if (partyId === null || !pattern.test(partyId)) {
@@ -219,17 +224,13 @@ export class WalletGateway {
                 }
 
                 if (args.primary) {
-                    const setPrimaryButton = wallets
-                        .first()
-                        .getByRole('button', { name: 'Set as primary' })
-                    if (await setPrimaryButton.isVisible().catch(() => false)) {
-                        await setPrimaryButton.click()
-                    }
+                    await this.setPrimaryWallet(partyId)
                 }
 
                 return partyId
             }
 
+            // Not exists path
             await (
                 await this.page()
             )
@@ -290,6 +291,10 @@ export class WalletGateway {
             const partyId = await newWallet.getAttribute('party-id')
             if (partyId === null || !pattern.test(partyId)) {
                 throw new Error(`did not find partyID for ${args.partyHint}`)
+            }
+
+            if (args.primary) {
+                await this.setPrimaryWallet(partyId)
             }
 
             return partyId
@@ -453,7 +458,7 @@ export class WalletGateway {
             })
             await expect(
                 approveButton,
-                'the wallet should show reject button for the submitted transaction'
+                'the wallet should show approve button for the submitted transaction'
             ).toBeVisible({ timeout: 15000 })
             await approveButton.click()
 
@@ -574,19 +579,8 @@ export class WalletGateway {
     }
 
     async isPopupOpen(): Promise<boolean> {
-        try {
-            const popup = await this.page()
-            return popup && !popup.isClosed()
-        } catch {
-            return false
-        }
-    }
-
-    async waitForPopupClosed(): Promise<void> {
-        if (this._popup) {
-            await this._popup.waitForEvent('close', { timeout: 5000 })
-            this._popup = undefined
-        }
+        const popup = this.directPage ?? this._popup
+        return popup !== undefined && !popup.isClosed()
     }
 
     async waitForPopupUrl(expectedUrl: string | RegExp): Promise<void> {
