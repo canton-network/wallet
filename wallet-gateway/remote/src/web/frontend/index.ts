@@ -242,6 +242,7 @@ export class UserUIAuthRedirect extends LitElement {
             // Without a verdict there is no safe page to show, so treat any
             // unexpected failure as a reason to start over at the login page.
             console.error('Failed to verify the session: ', error)
+            await this.clearAuthStateAndPreserveIntendedPage()
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
         } finally {
             this.dispatchEvent(new AuthSettledEvent(verdict))
