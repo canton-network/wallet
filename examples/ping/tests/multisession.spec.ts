@@ -60,7 +60,7 @@ test('logout from direct WG tab does not close the dApp popup session', async ({
         ).toHaveURL(/\/login/)
         expect(
             await wgSessionA.isPopupOpen(),
-            'logging out of the direct tab should not close the dApp\'s popup session'
+            "logging out of the direct tab should not close the dApp's popup session"
         ).toBe(true)
     })
 })
