@@ -1014,12 +1014,7 @@ export class WalletGateway {
         status: ActivityStatus
     ): Promise<void> {
         await test.step(`wallet gateway: activity for ${commandId} is ${status}`, async () => {
-            // A popup closes itself after the approval it was opened for, so it has
-            // to be brought back before its activity list can be read.
-            if (this.isPopup && !(await this.isPopupOpen())) {
-                await this.openPopup()
-            }
-            await this.gotoActivitiesPage()
+            await this.reopenActivitiesPage()
             const card = await this.findActivityCard(commandId)
             await expect(
                 card.locator('.status-badge'),
@@ -1028,6 +1023,31 @@ export class WalletGateway {
                 timeout: 15000,
             })
         })
+    }
+
+    // Rejecting deletes the transaction, so the effect to look for is the
+    // activity being gone. Activities are listed newest first and this one was
+    // created moments ago, so the first page is where it would be had it stayed.
+    async expectActivityRemoved(commandId: string): Promise<void> {
+        await test.step(`wallet gateway: activity for ${commandId} is gone`, async () => {
+            await this.reopenActivitiesPage()
+            const popup = await this.page()
+            await expect(
+                popup.getByRole('button', {
+                    name: `Open activity ${commandId}`,
+                }),
+                `rejecting ${commandId} should have removed it from the activity list`
+            ).toHaveCount(0)
+        })
+    }
+
+    // A popup closes itself after the approval it was opened for, so it has to
+    // be brought back before its activity list can be read.
+    private async reopenActivitiesPage(): Promise<void> {
+        if (this.isPopup && !(await this.isPopupOpen())) {
+            await this.openPopup()
+        }
+        await this.gotoActivitiesPage()
     }
 
     async gotoActivitiesPage(): Promise<void> {

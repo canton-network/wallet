@@ -1,11 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    test,
-    WalletGateway,
-    MOCK_FIREBLOCKS_VAULT_NAME,
-} from '@canton-network/core-wallet-test-utils'
+import { test, WalletGateway } from '@canton-network/core-wallet-test-utils'
 import { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
@@ -16,7 +12,10 @@ import {
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
 } from './ping-test-helpers.js'
-import { setMockFireblocksTransactionState } from './external-signing-test-helpers.js'
+import {
+    MOCK_FIREBLOCKS_VAULT_NAME,
+    setMockFireblocksTransactionState,
+} from './external-signing-test-helpers.js'
 
 test.describe('Fireblocks external signing', () => {
     test.describe.configure({ mode: 'serial' })
@@ -75,9 +74,11 @@ test.describe('Fireblocks external signing', () => {
     })
 
     test('rejects a transaction in the wallet UI', async () => {
-        await wg.rejectTransaction(() => clickCreatePingContract(dappPage), {
-            waitForClose: true,
-        })
+        const { commandId } = await wg.rejectTransaction(
+            () => clickCreatePingContract(dappPage),
+            { waitForClose: true }
+        )
+        await wg.expectActivityRemoved(commandId)
     })
 
     test('fails when Fireblocks rejects signing', async () => {

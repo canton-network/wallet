@@ -70,9 +70,12 @@ test.describe('Blockdaemon external signing', () => {
     })
 
     test('rejects a transaction in the wallet UI', async () => {
-        await wg.rejectTransaction(() => clickCreatePingContract(dappPage), {
-            waitForClose: true,
-        })
+        const { commandId } = await wg.rejectTransaction(
+            () => clickCreatePingContract(dappPage),
+            { waitForClose: true }
+        )
+
+        await wg.expectActivityRemoved(commandId)
     })
 
     test('fails when Blockdaemon rejects signing', async () => {
