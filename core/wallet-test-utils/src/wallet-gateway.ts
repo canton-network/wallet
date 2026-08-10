@@ -85,7 +85,6 @@ export class WalletGateway {
     }
 
     // Only for WG in popup, not for a WG as separate page outside of dapp.
-    // TODO can I get rid of dapp dependency from this package, and have clicks to buttons handled by dapp tests?
     private requireDapp(): {
         dappPage: Page
         connectButton: (dappPage: Page) => Locator
