@@ -7,12 +7,7 @@ export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: [
-                'src/index.ts',
-                'src/router.ts',
-                'src/scripts/**',
-                'src/api/*/index.ts',
-            ],
+            exclude: ['src/api/**/index.ts', 'src/common/sdk.ts'],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
