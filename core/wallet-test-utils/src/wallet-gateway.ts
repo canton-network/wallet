@@ -27,6 +27,11 @@ export interface IdpFormInput {
 export type ActivityStatus =
     'pending' | 'signed' | 'executed' | 'failed' | 'rejected'
 
+// Limit on how many pages to go through when looking for a tx / network / idp.
+// Way smaller number would be needed for CI, as db is reset after each full run,
+// but on local it accumulates quickly.
+const MAX_PAGES_TO_SEARCH = 50
+
 export type SigningProviderName =
     'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' | 'fireblocks'
 
@@ -803,8 +808,15 @@ export class WalletGateway {
     ): Promise<Locator> {
         const popup = await this.page()
         const pagination = popup.locator('wg-pagination').first()
+        const rangeLabel = pagination.locator('.pagination span')
+        const nextButton = pagination.getByRole('button', {
+            name: 'Next page',
+        })
 
-        for (let guard = 0; guard < 25; guard++) {
+        let pagesSearched = 0
+        while (pagesSearched < MAX_PAGES_TO_SEARCH) {
+            pagesSearched++
+
             const item = buildItemLocator(popup).first()
             if ((await item.count()) > 0) {
                 await expect(
@@ -817,15 +829,10 @@ export class WalletGateway {
             if ((await pagination.count()) === 0) {
                 break
             }
-
-            const nextButton = pagination.getByRole('button', {
-                name: 'Next page',
-            })
             if (!(await nextButton.isEnabled())) {
                 break
             }
 
-            const rangeLabel = pagination.locator('.pagination span')
             const before = (await rangeLabel.textContent()) ?? ''
             await nextButton.click()
             await expect(
@@ -839,7 +846,12 @@ export class WalletGateway {
             }
         }
 
-        throw new Error(`${itemDescription} not found in the list`)
+        const shown = (await rangeLabel.textContent().catch(() => null)) ?? ''
+        throw new Error(
+            pagesSearched < MAX_PAGES_TO_SEARCH
+                ? `${itemDescription} not found in any of the ${pagesSearched} page(s) of the list (last page showed "${shown}")`
+                : `${itemDescription} not found in the first ${pagesSearched} pages of the list (last page showed "${shown}"). Increase MAX_PAGES_TO_SEARCH if you need to traverse more pages.`
+        )
     }
 
     private async waitForNetworksPageReady(): Promise<void> {
