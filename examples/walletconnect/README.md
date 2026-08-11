@@ -14,7 +14,7 @@ This example is a small **Vite + React** app that runs a **WalletConnect v2 Wall
 
 ## Configure
 
-Create or edit `examples/wallet-connect-server/.env`:
+Create or edit `examples/walletconnect/.env`:
 
 ```bash
 # WalletConnect Cloud project ID (get one at https://dashboard.walletconnect.com/)
@@ -35,18 +35,8 @@ Or from this folder:
 yarn dev
 ```
 
-Then open the URL printed by Vite (usually `http://localhost:5173`).
+Then open [http://localhost:8082](http://localhost:8082).
 
 ## Using it with other examples
 
 - Pair a dApp (for example `examples/ping/`) with this wallet by using the WalletConnect flow (QR / pairing URI), then approve proposals/requests in this UI.
-
-## Notes on the folder name
-
-`wallet-connect-server` is reasonable, but a slightly more explicit name would be one of:
-
-- `walletconnect-walletkit-wallet`
-- `walletconnect-wallet`
-- `walletconnect-wallet-ui`
-
-If you want, I can rename the folder and update workspace references.
