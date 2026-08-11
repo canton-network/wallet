@@ -441,11 +441,19 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         config.server.admin
     )
 
-    // register web handler
-    web(app, server, userApiUrl, dappApiUrl)
+    const { userPath, dappPath } = config.server
+    const isApiPath = (path: string) =>
+        path === userPath ||
+        path === dappPath ||
+        path.startsWith(`${userPath}/`) ||
+        path.startsWith(`${dappPath}/`)
 
-    // TODO maybe this should be put to middleswares bag narrowed by api prefix?
-    app.use(errorHandler(logger.child({ component: 'ErrorHandler' })))
+    // register web handler
+    web(app, server, userApiUrl, dappApiUrl, isApiPath)
+
+    app.use(
+        errorHandler(logger.child({ component: 'ErrorHandler' }), isApiPath)
+    )
 
     isReady = true
 

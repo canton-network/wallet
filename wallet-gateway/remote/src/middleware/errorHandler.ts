@@ -11,7 +11,10 @@ import {
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 
 // Catches unhandled errors and prevents internal details like stack trace from reaching end user
-export function errorHandler(logger: Logger) {
+export function errorHandler(
+    logger: Logger,
+    isApiPath: (path: string) => boolean
+) {
     return (
         err: unknown,
         req: Request,
@@ -28,7 +31,7 @@ export function errorHandler(logger: Logger) {
 
         // jsonRpcHandler already maps controllers errors via handleRpcError.
         // This only runs for errors that escape earlier middlewares (e.g. auth/session checks).
-        if (req.path.startsWith('/api')) {
+        if (isApiPath(req.path)) {
             const id = req.body?.id ?? null
 
             if (err instanceof JsonRpcError) {
