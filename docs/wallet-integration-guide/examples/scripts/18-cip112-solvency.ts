@@ -50,11 +50,17 @@ const sdk = await SDK.create({
 async function executePrepared(
     partyId: string,
     privateKey: string,
-    prepared: Awaited<ReturnType<typeof sdk.token.transfer.create>>
+    prepared: readonly [unknown, unknown]
 ) {
     const [commands, disclosedContracts] = prepared
     return sdk.ledger
-        .prepare({ partyId, commands, disclosedContracts })
+        .prepare({
+            partyId,
+            commands,
+            ...(Array.isArray(disclosedContracts)
+                ? { disclosedContracts }
+                : {}),
+        })
         .sign(privateKey)
         .execute({ partyId })
 }

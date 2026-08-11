@@ -13,7 +13,9 @@
  */
 import {
     ALLOCATION_INTERFACE_ID_V2,
+    AllocationViewV2,
     basicAccount,
+    FinalizedAllocation,
 } from '@canton-network/core-token-standard'
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
@@ -101,10 +103,16 @@ async function executePrepared(
 ) {
     const [commands, disclosedContracts] = prepared as [
         Parameters<typeof sdk.ledger.prepare>[0]['commands'],
-        Parameters<typeof sdk.ledger.prepare>[0]['disclosedContracts'],
+        NonNullable<
+            Parameters<typeof sdk.ledger.prepare>[0]['disclosedContracts']
+        >,
     ]
     return sdk.ledger
-        .prepare({ partyId, commands, disclosedContracts })
+        .prepare({
+            partyId,
+            commands,
+            ...(disclosedContracts ? { disclosedContracts } : {}),
+        })
         .sign(privateKey)
         .execute({ partyId })
 }
@@ -228,7 +236,7 @@ async function findAllocationCid(
     offset: number
 ): Promise<string> {
     const allocations =
-        (await sdk.token.allocation.pending(
+        (await sdk.token.allocation.pending<AllocationViewV2>(
             partyId,
             ALLOCATION_INTERFACE_ID_V2
         )) || []
@@ -269,12 +277,14 @@ const settlePrepared = await sdk.token.allocation.settleBatch({
     transferLegs,
     allocations: [
         {
-            allocationCid: aliceAllocationCid,
+            allocationCid:
+                aliceAllocationCid as FinalizedAllocation['allocationCid'],
             extraTransferLegSides: [],
             nextIterationFunding: null,
         },
         {
-            allocationCid: bobAllocationCid,
+            allocationCid:
+                bobAllocationCid as FinalizedAllocation['allocationCid'],
             extraTransferLegSides: [],
             nextIterationFunding: null,
         },
