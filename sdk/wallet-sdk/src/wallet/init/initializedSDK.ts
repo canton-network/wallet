@@ -131,6 +131,7 @@ const createNamespace: {
                     config.registries.map((registry) => registry.toString())
                 )
             ),
+            commonCtx: ctx,
         })
     },
     events: async (ctx: SDKContext, config: EventsConfig) => {

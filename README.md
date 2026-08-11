@@ -1,4 +1,4 @@
-# Wallet Gateway
+# Wallet
 
 A TypeScript framework for building wallet integrations on the [Canton Network](https://www.canton.network/). It provides the **Wallet Gateway** (server and browser extension), the **dApp SDK**, the **Wallet SDK**, and a set of shared core modules.
 
@@ -78,6 +78,7 @@ Shared libraries used by the Wallet Gateway, SDKs, and signing providers:
 | `core-signing-participant`    | [`core/signing-participant`](core/signing-participant)       | Canton participant-managed signing driver                               |
 | `core-signing-fireblocks`     | [`core/signing-fireblocks`](core/signing-fireblocks)         | Fireblocks signing driver integration                                   |
 | `core-signing-blockdaemon`    | [`core/signing-blockdaemon`](core/signing-blockdaemon)       | Blockdaemon signing driver integration                                  |
+| `core-signing-securosys`      | [`core/signing-securosys`](core/signing-securosys)           | Securosys TSB signing driver integration                                |
 | **RPC & Transport**           |                                                              |                                                                         |
 | `core-types`                  | [`core/types`](core/types)                                   | Shared types and transport-agnostic parsers                             |
 | `core-rpc-transport`          | [`core/rpc-transport`](core/rpc-transport)                   | RPC transport implementations                                           |

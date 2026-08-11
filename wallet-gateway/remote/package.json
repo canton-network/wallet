@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "description": "A server-side Wallet Gateway implementation over HTTP",
     "main": "dist/index.js",
     "bin": {
@@ -47,6 +47,7 @@
         "@canton-network/core-signing-internal": "workspace:^",
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-signing-participant": "workspace:^",
+        "@canton-network/core-signing-securosys": "workspace:^",
         "@canton-network/core-signing-store-sql": "workspace:^",
         "@canton-network/core-tx-visualizer": "workspace:^",
         "@canton-network/core-types": "workspace:^",
