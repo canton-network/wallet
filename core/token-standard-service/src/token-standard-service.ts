@@ -810,9 +810,9 @@ class AllocationService {
                         sender: authorizerOwner,
                         instrumentAdmin: expectedAdmin,
                         instrumentId: transferLeg?.instrumentId,
-                        amount: transferLeg?.amount
-                            ? new Decimal(transferLeg.amount)
-                            : undefined,
+                        ...(transferLeg?.amount
+                            ? { amount: new Decimal(transferLeg.amount) }
+                            : {}),
                     })
         const choiceArgs: AllocationFactory_AllocateV2 = {
             settlement,
