@@ -181,7 +181,6 @@ const getSpecs = (
         input: `api-specs/splice/${spliceVersion}/validator-internal.yaml`,
         output: 'core/splice-client/src/generated-clients/validator-internal.ts',
     },
-    // Token standards (CIP-0056 V1 + CIP-0112 V2)
     {
         input: `api-specs/splice/${spliceVersion}/allocation-instruction-v1.yaml`,
         output: 'core/token-standard/src/generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.ts',

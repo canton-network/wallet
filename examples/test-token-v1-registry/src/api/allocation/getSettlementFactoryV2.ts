@@ -39,11 +39,6 @@ function toDisclosed(contract: {
     }
 }
 
-/**
- * CIP-0112 settlement factory — same TestTokenV2 TokenRules contract implements SettlementFactory.
- * Discloses TokenRules plus allocation contracts (and locked holdings) from choiceArguments
- * so the executor can submit SettleBatch.
- */
 export const getSettlementFactoryV2: TExpressOpenApiRequestHandler<
     OffLedger.AllocationV2.paths['/registry/allocation/v2/settlement-factory']['post']
 > = async (req, res, next) => {

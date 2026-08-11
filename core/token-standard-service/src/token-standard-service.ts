@@ -111,7 +111,6 @@ type CreateTransferChoiceArgsV2 = {
     extraArgs: ExtraArgs
 }
 
-/** Normalize V1/V2 holding views to the V1-shaped HoldingView used by UTXO selection. */
 function asHoldingView(view: HoldingView | HoldingViewV2): HoldingView {
     if ('owner' in view && typeof view.owner === 'string') {
         return view as HoldingView

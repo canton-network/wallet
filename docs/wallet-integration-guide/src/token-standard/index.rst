@@ -29,10 +29,8 @@ OffLedger as well (forced ``apiVersion: 'v2'`` still fails loudly).
 
 Force a major version when needed::
 
-    // TokenConfig default
     token: { ..., apiVersion: 'auto' }
 
-    // Per transfer
     await sdk.token.transfer.create({
         ...,
         apiVersion: 'v1', // or 'v2' | 'auto'

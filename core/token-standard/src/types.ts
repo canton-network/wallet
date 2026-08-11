@@ -105,7 +105,6 @@ export type Beneficiaries = {
     weight: number
 }
 
-// CIP-0112 (V2) companions and types — aliased to avoid colliding with V1 exports
 export const TransferInstructionV2 = Splice.Api.Token.TransferInstructionV2
 export const AllocationInstructionV2 = Splice.Api.Token.AllocationInstructionV2
 export const AllocationRequestV2 = Splice.Api.Token.AllocationRequestV2

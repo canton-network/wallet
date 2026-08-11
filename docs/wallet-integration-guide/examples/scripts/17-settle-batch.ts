@@ -1,16 +1,4 @@
-/**
- * CIP-0112 SettleBatch e2e against the example test-token registry.
- *
- * Flow: OfferMint → accept offer → AllocationFactory_Allocate (V2) →
- * SettlementFactory_SettleBatch.
- *
- * Requires: localnet + test-token registry on :5634.
- * Skips cleanly when the registry is unreachable so `script:test:examples`
- * stays green without the registry process.
- *
- * AllocationRequest.accept is covered by SDK unit tests; creating an
- * AllocationRequest still needs the trading-app OTC path (`04`).
- */
+/** CIP-0112 SettleBatch e2e (soft-skips if the test-token registry is down). */
 import {
     ALLOCATION_INTERFACE_ID_V2,
     AllocationViewV2,

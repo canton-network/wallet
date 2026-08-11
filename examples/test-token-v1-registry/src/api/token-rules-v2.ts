@@ -8,7 +8,6 @@ import { APIError, emptyChoiceContext } from './common'
 
 const TOKEN_RULES_CONTEXT_KEY = 'testTokenV2/tokenRules'
 
-/** Resolve or create the CIP-0112 TestTokenV2 TokenRules factory (transfer/allocation/settlement). */
 export async function resolveOrCreateTokenRulesV2(): Promise<string> {
     const contract = await fetchOrCreateTokenRulesContract()
     return contract.contractId
@@ -62,10 +61,6 @@ async function fetchOrCreateTokenRulesContract() {
     }
 }
 
-/**
- * Choice context that discloses TokenRules and wires `testTokenV2/tokenRules`
- * for TestTokenV2 Accept / Allocate / SettleBatch choices.
- */
 export async function buildTokenRulesV2ChoiceContext() {
     const contract = await fetchOrCreateTokenRulesContract()
     if (!contract.createdEventBlob || !contract.synchronizerId) {

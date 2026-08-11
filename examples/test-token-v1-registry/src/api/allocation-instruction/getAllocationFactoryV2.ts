@@ -9,9 +9,6 @@ import {
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 
-/**
- * CIP-0112 allocation factory — TestTokenV2 TokenRules implements AllocationFactory V2.
- */
 export const getAllocationFactoryV2: TExpressOpenApiRequestHandler<
     OffLedger.AllocationInstructionV2.paths['/registry/allocation-instruction/v2/allocation-factory']['post']
 > = async (_req, res, next) => {

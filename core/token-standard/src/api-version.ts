@@ -44,7 +44,6 @@ export function resolveTokenApiVersion(
         return 'v1'
     }
 
-    // auto
     if (advertisedV2) return 'v2'
     return 'v1'
 }

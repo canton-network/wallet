@@ -1,10 +1,4 @@
-/**
- * CIP-0112 paused-instrument guard against the example test-token registry.
- *
- * Requires: localnet + `yarn workspace @canton-network/example-test-token-v1-registry dev`
- * (http://localhost:5634). Skips cleanly when the registry is unreachable so
- * `yarn script:test:examples` stays green without the registry process.
- */
+/** CIP-0112 paused-instrument guard (soft-skips if the test-token registry is down). */
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import {

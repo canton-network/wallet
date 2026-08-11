@@ -11,7 +11,6 @@ export const supportedApisV1: OffLedger.MetadataV1.components['schemas']['Suppor
         'splice-api-token-allocation-instruction-v1': 1,
     }
 
-/** CIP-0112 dual-version advertisement for instruments that support V1 + V2. */
 export const supportedApisDual: OffLedger.MetadataV1.components['schemas']['SupportedApis'] =
     {
         ...supportedApisV1,

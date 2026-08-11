@@ -5,21 +5,53 @@ import * as path from 'path'
 import { getRepoRoot, info, warn } from './lib/utils.js'
 import { installDPM } from './install-dpm.js'
 import { runDamlCodegen } from './lib/daml-codegen.js'
-import { existsSync, rmSync } from 'fs'
+import {
+    existsSync,
+    rmSync,
+    readdirSync,
+    readFileSync,
+    writeFileSync,
+} from 'fs'
 import { execSync } from 'child_process'
 
 const repoRoot = getRepoRoot()
 const darFileName = 'splice-test-token-v2-1.0.0.dar'
 const outputDir = path.join(repoRoot, 'damljs/test-token-v2')
-const mainGeneratedPackageDir = path.join(
-    outputDir,
-    'splice-test-token-v2-1.0.0'
-)
+const v1Dir = path.join(repoRoot, 'damljs/test-token-v1')
+const mainPackageName = 'splice-test-token-v2-1.0.0'
+const mainGeneratedPackageDir = path.join(outputDir, mainPackageName)
 
-/**
- * Installs DPM, ensures localnet DAR artifacts exist, and runs DAML codegen
- * for the CIP-0112 test-token V2 package into damljs/test-token-v2.
- */
+function pruneDuplicatePackages(): void {
+    if (!existsSync(outputDir) || !existsSync(v1Dir)) return
+
+    for (const name of readdirSync(outputDir)) {
+        if (name === mainPackageName) continue
+        if (!existsSync(path.join(v1Dir, name))) continue
+        rmSync(path.join(outputDir, name), { recursive: true, force: true })
+    }
+
+    const pkgJsonPath = path.join(mainGeneratedPackageDir, 'package.json')
+    if (!existsSync(pkgJsonPath)) return
+
+    const pkg = JSON.parse(readFileSync(pkgJsonPath, 'utf8')) as {
+        dependencies?: Record<string, string>
+    }
+    if (!pkg.dependencies) return
+
+    let changed = false
+    for (const [dep, spec] of Object.entries(pkg.dependencies)) {
+        if (!spec.startsWith('file:../')) continue
+        const sibling = spec.slice('file:../'.length)
+        if (sibling === mainPackageName) continue
+        if (!existsSync(path.join(v1Dir, sibling))) continue
+        pkg.dependencies[dep] = `file:../../test-token-v1/${sibling}`
+        changed = true
+    }
+    if (changed) {
+        writeFileSync(pkgJsonPath, `${JSON.stringify(pkg, null, 2)}\n`)
+    }
+}
+
 async function main() {
     const isCi = process.env.CI === 'true'
     const forceCodegen = process.env.FORCE_TEST_TOKEN_CODEGEN === 'true'
@@ -30,11 +62,7 @@ async function main() {
                 `CI detected and generated test-token-v2 artifacts already exist at ${outputDir}. Skipping DPM install and codegen.`
             )
         )
-        console.log(
-            info(
-                'Set FORCE_TEST_TOKEN_CODEGEN=true to force regeneration in CI.'
-            )
-        )
+        pruneDuplicatePackages()
         return
     }
 
@@ -72,6 +100,8 @@ async function main() {
         darFileName,
         outputDir,
     })
+
+    pruneDuplicatePackages()
 }
 
 main()

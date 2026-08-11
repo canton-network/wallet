@@ -29,9 +29,6 @@ export const getTransferFactoryV2ChoiceArgumentsSchema = z.object({
     ),
 })
 
-/**
- * Resolves or creates a CIP-0112 transfer factory (TestTokenV2 TokenRules).
- */
 export const getTransferFactoryV2: TExpressOpenApiRequestHandler<
     OffLedger.TransferInstructionV2.paths['/registry/transfer-instruction/v2/transfer-factory']['post']
 > = async (req, res, next) => {

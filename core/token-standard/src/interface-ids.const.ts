@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// CIP-0056 (V1)
 export const ALLOCATION_FACTORY_INTERFACE_ID =
     '#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationFactory'
 export const ALLOCATION_INSTRUCTION_INTERFACE_ID =
@@ -19,7 +18,6 @@ export const TRANSFER_FACTORY_INTERFACE_ID =
 export const TRANSFER_INSTRUCTION_INTERFACE_ID =
     '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction'
 
-// CIP-0112 (V2)
 export const ALLOCATION_FACTORY_INTERFACE_ID_V2 =
     '#splice-api-token-allocation-instruction-v2:Splice.Api.Token.AllocationInstructionV2:AllocationFactory'
 export const ALLOCATION_INSTRUCTION_INTERFACE_ID_V2 =

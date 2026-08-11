@@ -601,11 +601,6 @@ export class TransactionParser {
         ) {
             return this.buildMergeSplit(exercisedEvent, tokenStandardChoice)
         }
-        // Reuse transfer builder semantics via children holdings for this party.
-        if (accountOwner && accountOwner !== this.partyId) {
-            // Still collect children so holdings deltas for this party can appear
-            // when they are the otherside of a leg.
-        }
         const children = await this.getChildren(exercisedEvent)
         const meta = mergeMetas(
             exercisedEvent,

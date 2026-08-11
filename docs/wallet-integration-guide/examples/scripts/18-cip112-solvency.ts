@@ -1,11 +1,4 @@
-/**
- * CIP-0112 localnet solvency checks against Amulet.
- *
- * Covers: metadata dual APIs, apiVersion auto/v1 (and forced-v2 expectation),
- * two-step accept, reject, withdraw, and holdings history.
- *
- * SettleBatch / paused custom instruments need the test-token registry — not covered here.
- */
+/** CIP-0112 Amulet solvency checks (auto/v1 routing, two-step transfer). */
 import {
     instrumentSupportsV2,
     isMissingOffLedgerEndpoint,
@@ -129,7 +122,6 @@ await sdk.ledger
     .execute({ partyId: sender.partyId })
 
 if (v2Advertised) {
-    // Forced V2: OffLedger factory may still be missing on scan-proxy (0.6.12).
     try {
         await sdk.token.transfer.create({
             sender: sender.partyId,
@@ -165,7 +157,6 @@ async function createTransfer(amount: string, apiVersion: 'v1' | 'auto') {
     return waitForNewPending(receiver.partyId, known)
 }
 
-// Forced V1 still works against a dual-advertised or V1-only instrument.
 const pendingV1Cid = await createTransfer('100', 'v1')
 await executePrepared(
     receiver.partyId,
@@ -180,7 +171,6 @@ await executePrepared(
 await waitUntilPendingGone(receiver.partyId, pendingV1Cid)
 logger.info('Forced apiVersion=v1 two-step accept succeeded')
 
-// auto: prefer V2 metadata, fall back to V1 OffLedger when V2 factory is 404.
 const pendingAutoCid = await createTransfer('200', 'auto')
 await executePrepared(
     receiver.partyId,
