@@ -6,8 +6,9 @@ import {
     allocationInstructionRegistryTypes,
     AllocationSpecification,
     AllocationSpecificationV2,
+    FinalizedAllocation,
+    SettlementFactory_SettleBatch,
     SettlementInfoV2,
-    TokenApiVersionPreference,
 } from '@canton-network/core-token-standard'
 import { PartyId } from '@canton-network/core-types'
 
@@ -29,7 +30,6 @@ export type AllocationInstructionCreateParamsV2 = {
     actors: PartyId[]
     inputUtxos?: string[]
     requestedAt?: string
-    apiVersion?: TokenApiVersionPreference
     prefetchedRegistryChoiceContext?: {
         factoryId: string
         choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
@@ -50,8 +50,8 @@ export type AllocationContextParams = {
 export type SettleBatchParams = {
     registryUrl: URL | string
     settlement: SettlementInfoV2
-    transferLegs: import('@canton-network/core-token-standard').SettlementFactory_SettleBatch['transferLegs']
-    allocations: import('@canton-network/core-token-standard').FinalizedAllocation[]
+    transferLegs: SettlementFactory_SettleBatch['transferLegs']
+    allocations: FinalizedAllocation[]
     actors: PartyId[]
     prefetchedRegistryChoiceContext?: {
         factoryId: string

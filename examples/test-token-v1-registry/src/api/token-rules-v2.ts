@@ -14,46 +14,52 @@ export async function resolveOrCreateTokenRulesV2(): Promise<string> {
     return contract.contractId
 }
 
-async function fetchOrCreateTokenRulesContract() {
-    const fetchedFactory = (
+async function readTokenRulesContract(offset?: number) {
+    return (
         await sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
             parties: [operator.party],
+            ...(offset !== undefined ? { offset } : {}),
             templateIds: [TestTokenV2.TokenRules.templateId],
         })
     )[0]
+}
+
+async function fetchOrCreateTokenRulesContract() {
+    const fetchedFactory = await readTokenRulesContract()
 
     if (fetchedFactory) {
         return fetchedFactory
     }
 
-    const executionResult = await sdk.ledger
-        .prepare({
-            partyId: operator.party,
-            commands: commandV2.create.rules({ admin: operator.party }),
-        })
-        .sign(operator.keys.privateKey)
-        .execute({
-            partyId: operator.party,
-        })
+    try {
+        const executionResult = await sdk.ledger
+            .prepare({
+                partyId: operator.party,
+                commands: commandV2.create.rules({ admin: operator.party }),
+            })
+            .sign(operator.keys.privateKey)
+            .execute({
+                partyId: operator.party,
+            })
 
-    const factoryContract = (
-        await sdk.ledger.acsReader.readJsContracts({
-            filterByParty: true,
-            parties: [operator.party],
-            offset: executionResult.completionOffset,
-            templateIds: [TestTokenV2.TokenRules.templateId],
-        })
-    )[0]
-
-    if (!factoryContract) {
-        throw new APIError(
-            500,
-            `Error instantiating TestTokenV2 TokenRules (completionOffset=${executionResult.completionOffset})`
+        const factoryContract = await readTokenRulesContract(
+            executionResult.completionOffset
         )
-    }
 
-    return factoryContract
+        if (!factoryContract) {
+            throw new APIError(
+                500,
+                `Error instantiating TestTokenV2 TokenRules (completionOffset=${executionResult.completionOffset})`
+            )
+        }
+
+        return factoryContract
+    } catch (e) {
+        const existing = await readTokenRulesContract()
+        if (existing) return existing
+        throw e instanceof APIError ? e : new APIError(500, String(e))
+    }
 }
 
 /**

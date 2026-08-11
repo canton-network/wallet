@@ -95,7 +95,30 @@ describe('token transfer namespace', () => {
         await transfer.accept(defualtTransferAllocationParams)
         expect(spy).toHaveBeenCalledExactlyOnceWith(
             defualtTransferAllocationParams.transferInstructionCid,
-            parsedRegistryUrl.href
+            parsedRegistryUrl.href,
+            undefined,
+            'auto',
+            undefined,
+            undefined
+        )
+    })
+
+    it('should forward apiVersion and actors on accept', async () => {
+        const spy = mockTokenStandard.transfer.createAcceptTransferInstruction
+        spy.mockResolvedValue(mockCreateCommandResponse)
+        await transfer.accept({
+            ...defualtTransferAllocationParams,
+            apiVersion: 'v2',
+            actors: ['alice::abc'],
+            supportedApis: { 'splice-api-token-holding-v2': '1.0.0' },
+        })
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            defualtTransferAllocationParams.transferInstructionCid,
+            parsedRegistryUrl.href,
+            undefined,
+            'v2',
+            ['alice::abc'],
+            { 'splice-api-token-holding-v2': '1.0.0' }
         )
     })
 
@@ -105,7 +128,29 @@ describe('token transfer namespace', () => {
         await transfer.withdraw(defualtTransferAllocationParams)
         expect(spy).toHaveBeenCalledExactlyOnceWith(
             defualtTransferAllocationParams.transferInstructionCid,
-            parsedRegistryUrl.href
+            parsedRegistryUrl.href,
+            undefined,
+            'auto',
+            undefined,
+            undefined
+        )
+    })
+
+    it('should forward apiVersion and actors on withdraw', async () => {
+        const spy = mockTokenStandard.transfer.createWithdrawTransferInstruction
+        spy.mockResolvedValue(mockCreateCommandResponse)
+        await transfer.withdraw({
+            ...defualtTransferAllocationParams,
+            apiVersion: 'v2',
+            actors: ['alice::abc'],
+        })
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            defualtTransferAllocationParams.transferInstructionCid,
+            parsedRegistryUrl.href,
+            undefined,
+            'v2',
+            ['alice::abc'],
+            undefined
         )
     })
 
@@ -115,7 +160,29 @@ describe('token transfer namespace', () => {
         await transfer.reject(defualtTransferAllocationParams)
         expect(spy).toHaveBeenCalledExactlyOnceWith(
             defualtTransferAllocationParams.transferInstructionCid,
-            parsedRegistryUrl.href
+            parsedRegistryUrl.href,
+            undefined,
+            'auto',
+            undefined,
+            undefined
+        )
+    })
+
+    it('should forward apiVersion and actors on reject', async () => {
+        const spy = mockTokenStandard.transfer.createRejectTransferInstruction
+        spy.mockResolvedValue(mockCreateCommandResponse)
+        await transfer.reject({
+            ...defualtTransferAllocationParams,
+            apiVersion: 'v2',
+            actors: ['alice::abc'],
+        })
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            defualtTransferAllocationParams.transferInstructionCid,
+            parsedRegistryUrl.href,
+            undefined,
+            'v2',
+            ['alice::abc'],
+            undefined
         )
     })
 

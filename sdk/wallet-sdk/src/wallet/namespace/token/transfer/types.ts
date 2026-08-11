@@ -29,4 +29,5 @@ export type TransferAllocationChoiceParams = {
     registryUrl: URLInput
     apiVersion?: TokenApiVersionPreference
     actors?: PartyId[]
+    supportedApis?: Record<string, string>
 }

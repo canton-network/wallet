@@ -54,3 +54,11 @@ export const ASSET_CONFIG: AssetConfig = {
     registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
 }
+
+export const TEST_TOKEN_REGISTRY = new URL('http://localhost:5634')
+
+export const TEST_TOKEN_REGISTRY_CONFIG: TokenConfig = {
+    registries: [TEST_TOKEN_REGISTRY],
+    auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+    apiVersion: 'auto',
+}

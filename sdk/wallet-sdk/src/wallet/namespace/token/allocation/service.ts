@@ -6,11 +6,13 @@ import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
     ALLOCATION_INTERFACE_ID,
+    ALLOCATION_INTERFACE_ID_V2,
     ALLOCATION_REQUEST_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
     AllocationInstructionView,
     AllocationRequestView,
     AllocationView,
+    assertInstrumentNotPaused,
 } from '@canton-network/core-token-standard'
 import { PrettyContract } from '@canton-network/core-tx-parser'
 import { PreparedCommand } from '../../transactions/types.js'
@@ -33,12 +35,24 @@ export class AllocationNamespace {
 
     async pending<T = AllocationView>(
         partyId: PartyId,
-        interfaceId = ALLOCATION_INTERFACE_ID
+        interfaceId?: string
     ): Promise<PrettyContract<T>[]> {
-        return await this.sdkContext.tokenStandardService.listContractsByInterface<T>(
-            interfaceId,
-            partyId
-        )
+        if (interfaceId !== undefined) {
+            return await this.sdkContext.tokenStandardService.listContractsByInterface<T>(
+                interfaceId,
+                partyId
+            )
+        }
+        const [v1, v2] = await Promise.all([
+            this.pending<T>(partyId, ALLOCATION_INTERFACE_ID),
+            this.pending<T>(partyId, ALLOCATION_INTERFACE_ID_V2),
+        ])
+        const seen = new Set<string>()
+        return [...v1, ...v2].filter((c) => {
+            if (seen.has(c.contractId)) return false
+            seen.add(c.contractId)
+            return true
+        })
     }
 
     /**
@@ -159,6 +173,15 @@ export class AllocationNamespace {
                 | AllocationInstructionCreateParams
                 | AllocationInstructionCreateParamsV2
         ): Promise<PreparedCommand> => {
+            assertInstrumentNotPaused({
+                id: params.asset.id,
+                ...(params.asset.paused !== undefined
+                    ? { paused: params.asset.paused }
+                    : {}),
+                ...(params.asset.pauseInfo
+                    ? { pauseInfo: params.asset.pauseInfo }
+                    : {}),
+            })
             try {
                 if ('settlement' in params && 'allocation' in params) {
                     const [exercise, disclosed] =

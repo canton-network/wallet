@@ -33,8 +33,8 @@ describe('Transfer Instruction', () => {
         vi.clearAllMocks()
     })
 
-    it('should get accept choice context', () => {
-        getTransferInstructionAcceptContext(
+    it('should get accept choice context', async () => {
+        await getTransferInstructionAcceptContext(
             {} as RequestType<typeof getTransferInstructionAcceptContext>,
             res,
             next

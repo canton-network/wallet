@@ -24,8 +24,13 @@ function toDisclosed(contract: {
     contractId: string
     createdEventBlob?: string
     synchronizerId?: string
-}): Disclosed | null {
-    if (!contract.createdEventBlob || !contract.synchronizerId) return null
+}): Disclosed {
+    if (!contract.createdEventBlob || !contract.synchronizerId) {
+        throw new APIError(
+            500,
+            `Cannot disclose contract ${contract.contractId}: missing createdEventBlob or synchronizerId`
+        )
+    }
     return {
         templateId: contract.templateId,
         contractId: contract.contractId,
@@ -73,12 +78,13 @@ export const getSettlementFactoryV2: TExpressOpenApiRequestHandler<
                 ],
             })
 
+            const foundAllocationCids = new Set<string>()
             const lockedHoldingCids = new Set<string>()
             for (const alloc of allocations) {
                 if (!allocationCids.includes(alloc.contractId)) continue
+                foundAllocationCids.add(alloc.contractId)
                 const disclosed = toDisclosed(alloc)
-                if (disclosed)
-                    disclosedByCid.set(disclosed.contractId, disclosed)
+                disclosedByCid.set(disclosed.contractId, disclosed)
 
                 const args =
                     (
@@ -115,9 +121,18 @@ export const getSettlementFactoryV2: TExpressOpenApiRequestHandler<
                 for (const holding of holdings) {
                     if (!lockedHoldingCids.has(holding.contractId)) continue
                     const disclosed = toDisclosed(holding)
-                    if (disclosed)
-                        disclosedByCid.set(disclosed.contractId, disclosed)
+                    disclosedByCid.set(disclosed.contractId, disclosed)
                 }
+            }
+
+            const missing = allocationCids.filter(
+                (cid) => !foundAllocationCids.has(cid)
+            )
+            if (missing.length > 0) {
+                throw new APIError(
+                    500,
+                    `Requested allocationCids missing from ACS: ${missing.join(', ')}`
+                )
             }
         }
 

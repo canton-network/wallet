@@ -11,6 +11,7 @@ import {
     getNetworkArg,
     SPLICE_SPEC_PATH,
     success,
+    warn,
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
@@ -215,12 +216,23 @@ async function main(network: Network = 'devnet') {
     const updateHash = hasFlag('updateHash')
 
     await fetchSpliceSpecs(updateHash, network)
-    Promise.all(
-        getSpecs(
-            SUPPORTED_VERSIONS[network].splice.version,
-            SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
-        ).map(generateOpenApiClient)
-    ).then(() => {
+    const specs = getSpecs(
+        SUPPORTED_VERSIONS[network].splice.version,
+        SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
+    ).filter((spec) => {
+        if (spec.input instanceof URL) return true
+        const filePath = path.join(root, spec.input.toString())
+        if (!fs.existsSync(filePath)) {
+            console.log(
+                warn(
+                    `Skipping missing OpenAPI spec (leaving existing client in place): ${spec.input}`
+                )
+            )
+            return false
+        }
+        return true
+    })
+    Promise.all(specs.map(generateOpenApiClient)).then(() => {
         console.log(
             success('Generated fresh TypeScript clients for all OpenAPI specs')
         )

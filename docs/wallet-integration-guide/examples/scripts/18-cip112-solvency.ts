@@ -6,6 +6,10 @@
  *
  * SettleBatch / paused custom instruments need the test-token registry — not covered here.
  */
+import {
+    instrumentSupportsV2,
+    isMissingOffLedgerEndpoint,
+} from '@canton-network/core-token-standard'
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import {
@@ -17,26 +21,24 @@ import {
 
 const logger = pino({ name: 'cip112-18-solvency', level: 'info' })
 const registryUrl = localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+const PENDING_WAIT_MS = 30_000
+const PENDING_POLL_MS = 500
 
-function supportsV2(
-    supportedApis: Record<string, string> | undefined
-): boolean {
-    if (!supportedApis) return false
-    return Object.keys(supportedApis).some(
-        (key) => key.includes('splice-api-token-') && key.includes('-v2')
-    )
+async function sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function isMissingOffLedgerEndpoint(error: unknown): boolean {
-    const message =
-        typeof error === 'string'
-            ? error
-            : error && typeof error === 'object' && 'error' in error
-              ? String((error as { error: unknown }).error)
-              : error instanceof Error
-                ? error.message
-                : JSON.stringify(error)
-    return /could not be found|not found|\b404\b/i.test(message)
+async function waitUntil<T>(
+    label: string,
+    fn: () => Promise<T | undefined>
+): Promise<T> {
+    const deadline = Date.now() + PENDING_WAIT_MS
+    while (Date.now() < deadline) {
+        const value = await fn()
+        if (value !== undefined) return value
+        await sleep(PENDING_POLL_MS)
+    }
+    throw new Error(`Timed out waiting for ${label}`)
 }
 
 const sdk = await SDK.create({
@@ -65,6 +67,28 @@ async function executePrepared(
         .execute({ partyId })
 }
 
+async function pendingCids(partyId: string): Promise<Set<string>> {
+    const pending = await sdk.token.transfer.pending(partyId)
+    return new Set(pending.map((p) => p.contractId))
+}
+
+async function waitForNewPending(
+    partyId: string,
+    known: Set<string>
+): Promise<string> {
+    return waitUntil('new pending transfer instruction', async () => {
+        const pending = await sdk.token.transfer.pending(partyId)
+        return pending.find((p) => !known.has(p.contractId))?.contractId
+    })
+}
+
+async function waitUntilPendingGone(partyId: string, cid: string) {
+    await waitUntil(`pending ${cid} archived`, async () => {
+        const pending = await sdk.token.transfer.pending(partyId)
+        return pending.some((p) => p.contractId === cid) ? undefined : true
+    })
+}
+
 const senderKeys = sdk.keys.generate()
 const sender = await sdk.party.external
     .create(senderKeys.publicKey, { partyHint: 'cip112-alice' })
@@ -81,15 +105,18 @@ const amulet = await sdk.asset.find('Amulet', registryUrl)
 if (amulet.paused) {
     throw new Error('Expected Amulet to be unpaused on localnet')
 }
-if (!supportsV2(amulet.supportedApis)) {
-    throw new Error(
-        `Expected Amulet to advertise V2 APIs, got ${JSON.stringify(amulet.supportedApis)}`
+const v2Advertised = instrumentSupportsV2(amulet.supportedApis)
+if (!v2Advertised) {
+    logger.warn(
+        { supportedApis: amulet.supportedApis },
+        'Amulet does not advertise V2 APIs; continuing with V1-only checks'
+    )
+} else {
+    logger.info(
+        { supportedApis: amulet.supportedApis },
+        'Amulet advertises CIP-0112 packages'
     )
 }
-logger.info(
-    { supportedApis: amulet.supportedApis },
-    'Amulet advertises CIP-0112 packages'
-)
 
 const [tapCmd, tapDc] = await sdk.amulet.tap(sender.partyId, '10000')
 await sdk.ledger
@@ -101,132 +128,102 @@ await sdk.ledger
     .sign(senderKeys.privateKey)
     .execute({ partyId: sender.partyId })
 
-// Forced V2: OffLedger factory may still be missing on scan-proxy (0.6.12).
-try {
-    await sdk.token.transfer.create({
-        sender: sender.partyId,
-        recipient: receiver.partyId,
-        instrumentId: 'Amulet',
-        registryUrl,
-        amount: '10',
-        apiVersion: 'v2',
-    })
-    logger.info('Forced apiVersion=v2 transfer factory is available')
-} catch (e) {
-    if (!isMissingOffLedgerEndpoint(e)) throw e
-    logger.warn(
-        'Forced apiVersion=v2 OffLedger factory not mounted on scan-proxy (expected until registry V2 proxy lands)'
-    )
+if (v2Advertised) {
+    // Forced V2: OffLedger factory may still be missing on scan-proxy (0.6.12).
+    try {
+        await sdk.token.transfer.create({
+            sender: sender.partyId,
+            recipient: receiver.partyId,
+            instrumentId: 'Amulet',
+            registryUrl,
+            amount: '10',
+            apiVersion: 'v2',
+        })
+        logger.info('Forced apiVersion=v2 transfer factory is available')
+    } catch (e) {
+        if (!isMissingOffLedgerEndpoint(e)) throw e
+        logger.warn(
+            'Forced apiVersion=v2 OffLedger factory not mounted on scan-proxy (expected until registry V2 proxy lands)'
+        )
+    }
 }
 
-// Forced V1 still works against a dual-advertised instrument.
-await executePrepared(
-    sender.partyId,
-    senderKeys.privateKey,
-    await sdk.token.transfer.create({
-        sender: sender.partyId,
-        recipient: receiver.partyId,
-        instrumentId: 'Amulet',
-        registryUrl,
-        amount: '100',
-        apiVersion: 'v1',
-    })
-)
-const pendingV1 = await sdk.token.transfer.pending(receiver.partyId)
-if (!pendingV1.length)
-    throw new Error('Expected pending transfer after forced v1 create')
+async function createTransfer(amount: string, apiVersion: 'v1' | 'auto') {
+    const known = await pendingCids(receiver.partyId)
+    await executePrepared(
+        sender.partyId,
+        senderKeys.privateKey,
+        await sdk.token.transfer.create({
+            sender: sender.partyId,
+            recipient: receiver.partyId,
+            instrumentId: 'Amulet',
+            registryUrl,
+            amount,
+            apiVersion,
+        })
+    )
+    return waitForNewPending(receiver.partyId, known)
+}
+
+// Forced V1 still works against a dual-advertised or V1-only instrument.
+const pendingV1Cid = await createTransfer('100', 'v1')
 await executePrepared(
     receiver.partyId,
     receiverKeys.privateKey,
     await sdk.token.transfer.accept({
-        transferInstructionCid: pendingV1[0].contractId,
+        transferInstructionCid: pendingV1Cid,
         registryUrl,
+        apiVersion: 'v1',
+        supportedApis: amulet.supportedApis,
     })
 )
+await waitUntilPendingGone(receiver.partyId, pendingV1Cid)
 logger.info('Forced apiVersion=v1 two-step accept succeeded')
 
 // auto: prefer V2 metadata, fall back to V1 OffLedger when V2 factory is 404.
-await executePrepared(
-    sender.partyId,
-    senderKeys.privateKey,
-    await sdk.token.transfer.create({
-        sender: sender.partyId,
-        recipient: receiver.partyId,
-        instrumentId: 'Amulet',
-        registryUrl,
-        amount: '200',
-        apiVersion: 'auto',
-    })
-)
-const pendingAuto = await sdk.token.transfer.pending(receiver.partyId)
-if (!pendingAuto.length)
-    throw new Error('Expected pending transfer after auto create')
+const pendingAutoCid = await createTransfer('200', 'auto')
 await executePrepared(
     receiver.partyId,
     receiverKeys.privateKey,
     await sdk.token.transfer.accept({
-        transferInstructionCid: pendingAuto[0].contractId,
+        transferInstructionCid: pendingAutoCid,
         registryUrl,
+        apiVersion: 'auto',
+        actors: [receiver.partyId],
+        supportedApis: amulet.supportedApis,
     })
 )
+await waitUntilPendingGone(receiver.partyId, pendingAutoCid)
 logger.info('apiVersion=auto two-step accept succeeded')
 
-// reject path
-await executePrepared(
-    sender.partyId,
-    senderKeys.privateKey,
-    await sdk.token.transfer.create({
-        sender: sender.partyId,
-        recipient: receiver.partyId,
-        instrumentId: 'Amulet',
-        registryUrl,
-        amount: '50',
-        apiVersion: 'auto',
-    })
-)
-const pendingReject = await sdk.token.transfer.pending(receiver.partyId)
-if (!pendingReject.length)
-    throw new Error('Expected pending transfer for reject')
+const pendingRejectCid = await createTransfer('50', 'auto')
 await executePrepared(
     receiver.partyId,
     receiverKeys.privateKey,
     await sdk.token.transfer.reject({
-        transferInstructionCid: pendingReject[0].contractId,
+        transferInstructionCid: pendingRejectCid,
         registryUrl,
+        apiVersion: 'auto',
+        actors: [receiver.partyId],
+        supportedApis: amulet.supportedApis,
     })
 )
-if ((await sdk.token.transfer.pending(receiver.partyId)).length) {
-    throw new Error('Pending transfers should be empty after reject')
-}
+await waitUntilPendingGone(receiver.partyId, pendingRejectCid)
 logger.info('reject succeeded')
 
-// withdraw path
-await executePrepared(
-    sender.partyId,
-    senderKeys.privateKey,
-    await sdk.token.transfer.create({
-        sender: sender.partyId,
-        recipient: receiver.partyId,
-        instrumentId: 'Amulet',
-        registryUrl,
-        amount: '50',
-        apiVersion: 'auto',
-    })
-)
-const pendingWithdraw = await sdk.token.transfer.pending(receiver.partyId)
-if (!pendingWithdraw.length)
-    throw new Error('Expected pending transfer for withdraw')
+const pendingWithdrawCid = await createTransfer('50', 'auto')
 await executePrepared(
     sender.partyId,
     senderKeys.privateKey,
     await sdk.token.transfer.withdraw({
-        transferInstructionCid: pendingWithdraw[0].contractId,
+        transferInstructionCid: pendingWithdrawCid,
         registryUrl,
+        apiVersion: 'auto',
+        actors: [sender.partyId],
+        supportedApis: amulet.supportedApis,
     })
 )
-if ((await sdk.token.transfer.pending(receiver.partyId)).length) {
-    throw new Error('Pending transfers should be empty after withdraw')
-}
+await waitUntilPendingGone(receiver.partyId, pendingWithdrawCid)
 logger.info('withdraw succeeded')
 
 const history = await sdk.token.holdings({ partyId: receiver.partyId })

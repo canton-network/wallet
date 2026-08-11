@@ -9,11 +9,12 @@ import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import {
     AMULET_NAMESPACE_CONFIG,
+    TEST_TOKEN_REGISTRY,
+    TEST_TOKEN_REGISTRY_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
 } from './utils/index.js'
 
 const logger = pino({ name: 'cip112-19-paused', level: 'info' })
-const TEST_TOKEN_REGISTRY = new URL('http://localhost:5634')
 const PAUSED_INSTRUMENT_ID = 'test-token-paused'
 
 async function registryReachable(): Promise<boolean> {
@@ -29,7 +30,7 @@ async function registryReachable(): Promise<boolean> {
 
 if (!(await registryReachable())) {
     logger.warn(
-        'test-token registry not reachable on :5634 — skipping paused-instrument check'
+        'SKIP: test-token registry not running on :5634 — paused-instrument check not executed'
     )
     process.exit(0)
 }
@@ -37,14 +38,10 @@ if (!(await registryReachable())) {
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-    token: {
-        registries: [TEST_TOKEN_REGISTRY],
-        auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
-        apiVersion: 'auto',
-    },
+    token: TEST_TOKEN_REGISTRY_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
     asset: {
-        registries: [TEST_TOKEN_REGISTRY],
+        registries: TEST_TOKEN_REGISTRY_CONFIG.registries,
         auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     },
 })

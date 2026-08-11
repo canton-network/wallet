@@ -28,6 +28,22 @@ describe('resolveTokenApiVersion', () => {
         expect(resolveTokenApiVersion('v1', dual)).toBe('v1')
     })
 
+    it('falls back to v1 when auto and supportedApis is undefined', () => {
+        expect(resolveTokenApiVersion('auto', undefined)).toBe('v1')
+    })
+
+    it('does not throw for forced v2 when supportedApis is empty', () => {
+        expect(resolveTokenApiVersion('v2', {})).toBe('v2')
+    })
+
+    it('selects v2 when auto and only v2 is advertised', () => {
+        expect(
+            resolveTokenApiVersion('auto', {
+                'splice-api-token-holding-v2': '1.0.0',
+            })
+        ).toBe('v2')
+    })
+
     it('rejects forced v2 when not advertised', () => {
         expect(() => resolveTokenApiVersion('v2', v1Only)).toThrow(
             /Forced apiVersion=v2/
@@ -56,5 +72,8 @@ describe('resolveTokenApiVersion', () => {
             })
         ).toBe(true)
         expect(isMissingOffLedgerEndpoint(new Error('boom'))).toBe(false)
+        expect(
+            isMissingOffLedgerEndpoint(new Error('instrument not found'))
+        ).toBe(false)
     })
 })

@@ -43,11 +43,17 @@ export class TransferNamespace {
     async accept(
         params: TransferAllocationChoiceParams
     ): Promise<PreparedCommand> {
+        const apiVersion =
+            params.apiVersion ?? this.sdkContext.apiVersion ?? 'auto'
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createAcceptTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
+                    .href,
+                undefined,
+                apiVersion,
+                params.actors,
+                params.supportedApis
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -55,11 +61,17 @@ export class TransferNamespace {
     async withdraw(
         params: TransferAllocationChoiceParams
     ): Promise<PreparedCommand> {
+        const apiVersion =
+            params.apiVersion ?? this.sdkContext.apiVersion ?? 'auto'
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createWithdrawTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
+                    .href,
+                undefined,
+                apiVersion,
+                params.actors,
+                params.supportedApis
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -67,11 +79,17 @@ export class TransferNamespace {
     async reject(
         params: TransferAllocationChoiceParams
     ): Promise<PreparedCommand> {
+        const apiVersion =
+            params.apiVersion ?? this.sdkContext.apiVersion ?? 'auto'
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createRejectTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
+                    .href,
+                undefined,
+                apiVersion,
+                params.actors,
+                params.supportedApis
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }

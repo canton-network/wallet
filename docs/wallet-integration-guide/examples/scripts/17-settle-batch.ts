@@ -17,20 +17,63 @@ import {
     basicAccount,
     FinalizedAllocation,
 } from '@canton-network/core-token-standard'
+import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import {
     AMULET_NAMESPACE_CONFIG,
+    TEST_TOKEN_REGISTRY,
+    TEST_TOKEN_REGISTRY_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v2-17-settle-batch', level: 'info' })
-const TEST_TOKEN_REGISTRY = new URL('http://localhost:5634')
+const authTokenProvider = new AuthTokenProvider(
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+    logger
+)
 const INSTRUMENT_ID = 'test-token-v2'
 const HOLDING_TEMPLATE_ID =
     '#splice-test-token-v2:Splice.Testing.Tokens.TestTokenV2.Holding:Token'
 const ALLOCATION_TEMPLATE_ID =
     '#splice-test-token-v2:Splice.Testing.Tokens.TestTokenV2.Allocation:TokenAllocationV2'
+const ACS_WAIT_MS = 30_000
+const ACS_POLL_MS = 500
+
+type TransferSide = 'SenderSide' | 'ReceiverSide'
+
+async function sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function waitUntil<T>(
+    label: string,
+    fn: () => Promise<T | undefined>
+): Promise<T> {
+    const deadline = Date.now() + ACS_WAIT_MS
+    while (Date.now() < deadline) {
+        const value = await fn()
+        if (value !== undefined) return value
+        await sleep(ACS_POLL_MS)
+    }
+    throw new Error(`Timed out waiting for ${label}`)
+}
+
+function allocationMatches(
+    view:
+        | {
+              settlement?: { id?: string }
+              allocation?: { transferLegSides?: Array<{ side?: string }> }
+          }
+        | undefined,
+    settlementId: string,
+    side: TransferSide
+): boolean {
+    if (view?.settlement?.id !== settlementId) return false
+    return (view.allocation?.transferLegSides ?? []).some(
+        (s) => s.side === side
+    )
+}
 
 async function registryReachable(): Promise<boolean> {
     try {
@@ -47,11 +90,15 @@ async function offerMint(
     receiver: string,
     amount: string
 ): Promise<{ offerCid: string }> {
+    const token = await authTokenProvider.getAccessToken()
     const res = await fetch(
         new URL('/admin/v2/offer-mint', TEST_TOKEN_REGISTRY),
         {
             method: 'POST',
-            headers: { 'content-type': 'application/json' },
+            headers: {
+                'content-type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({
                 receiver,
                 amount,
@@ -67,7 +114,7 @@ async function offerMint(
 
 if (!(await registryReachable())) {
     logger.warn(
-        'test-token registry not reachable on :5634 — skipping SettleBatch e2e'
+        'SKIP: test-token registry not running on :5634 — SettleBatch e2e not executed'
     )
     process.exit(0)
 }
@@ -75,14 +122,10 @@ if (!(await registryReachable())) {
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-    token: {
-        registries: [TEST_TOKEN_REGISTRY],
-        auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
-        apiVersion: 'v2',
-    },
+    token: TEST_TOKEN_REGISTRY_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
     asset: {
-        registries: [TEST_TOKEN_REGISTRY],
+        registries: TEST_TOKEN_REGISTRY_CONFIG.registries,
         auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     },
 })
@@ -132,18 +175,29 @@ logger.info({ offerCid }, 'OfferMint created')
 const acceptPrepared = await sdk.token.transfer.accept({
     transferInstructionCid: offerCid,
     registryUrl: TEST_TOKEN_REGISTRY,
+    apiVersion: 'v2',
+    actors: [alice.partyId],
+    supportedApis: asset.supportedApis,
 })
-await executePrepared(alice.partyId, alice.keys.privateKey, acceptPrepared)
+const mintResult = await executePrepared(
+    alice.partyId,
+    alice.keys.privateKey,
+    acceptPrepared
+)
 logger.info('Alice accepted mint offer')
 
-const aliceHoldingsBefore = await sdk.ledger.acsReader.readJsContracts({
-    filterByParty: true,
-    parties: [alice.partyId],
-    templateIds: [HOLDING_TEMPLATE_ID],
-})
-if (aliceHoldingsBefore.length === 0) {
-    throw new Error('Expected Alice holdings after mint accept')
-}
+const aliceHoldingsBefore = await waitUntil(
+    'Alice holdings after mint accept',
+    async () => {
+        const holdings = await sdk.ledger.acsReader.readJsContracts({
+            filterByParty: true,
+            parties: [alice.partyId],
+            templateIds: [HOLDING_TEMPLATE_ID],
+            offset: mintResult.completionOffset,
+        })
+        return holdings.length > 0 ? holdings : undefined
+    }
+)
 
 const settlement = {
     executors: [executor.partyId],
@@ -233,38 +287,51 @@ logger.info(
 
 async function findAllocationCid(
     partyId: string,
-    offset: number
+    offset: number,
+    side: TransferSide
 ): Promise<string> {
-    const allocations =
-        (await sdk.token.allocation.pending<AllocationViewV2>(
-            partyId,
-            ALLOCATION_INTERFACE_ID_V2
-        )) || []
-    const match = allocations.find(
-        (a) => a.interfaceViewValue?.settlement?.id === settlement.id
-    )?.contractId
-    if (match) return match
+    return waitUntil(`V2 Allocation (${side}) for ${partyId}`, async () => {
+        const allocations =
+            (await sdk.token.allocation.pending<AllocationViewV2>(
+                partyId,
+                ALLOCATION_INTERFACE_ID_V2
+            )) || []
+        const match = allocations.find((a) =>
+            allocationMatches(a.interfaceViewValue, settlement.id, side)
+        )?.contractId
+        if (match) return match
 
-    const byTemplate = await sdk.ledger.acsReader.readJsContracts({
-        filterByParty: true,
-        parties: [partyId],
-        templateIds: [ALLOCATION_TEMPLATE_ID],
-        offset,
+        const byTemplate = await sdk.ledger.acsReader.readJsContracts({
+            filterByParty: true,
+            parties: [partyId],
+            templateIds: [ALLOCATION_TEMPLATE_ID],
+            offset,
+        })
+        return byTemplate.find((c) => {
+            const payload =
+                'createArgument' in c
+                    ? c.createArgument
+                    : 'createArguments' in c
+                      ? c.createArguments
+                      : undefined
+            return allocationMatches(
+                payload as Parameters<typeof allocationMatches>[0],
+                settlement.id,
+                side
+            )
+        })?.contractId
     })
-    const cid = byTemplate[byTemplate.length - 1]?.contractId
-    if (!cid) {
-        throw new Error(`V2 Allocation not found for ${partyId}`)
-    }
-    return cid
 }
 
 const aliceAllocationCid = await findAllocationCid(
     alice.partyId,
-    allocateAliceResult.completionOffset
+    allocateAliceResult.completionOffset,
+    'SenderSide'
 )
 const bobAllocationCid = await findAllocationCid(
     bob.partyId,
-    allocateBobResult.completionOffset
+    allocateBobResult.completionOffset,
+    'ReceiverSide'
 )
 logger.info(
     { aliceAllocationCid, bobAllocationCid },
@@ -291,24 +358,29 @@ const settlePrepared = await sdk.token.allocation.settleBatch({
     ],
     actors: [executor.partyId],
 })
-await executePrepared(
+const settleResult = await executePrepared(
     executor.partyId,
     executor.keys.privateKey,
     settlePrepared
 )
 logger.info('SettlementFactory_SettleBatch executed')
 
-const bobHoldings = await sdk.ledger.acsReader.readJsContracts({
-    filterByParty: true,
-    parties: [bob.partyId],
-    templateIds: [HOLDING_TEMPLATE_ID],
-})
-if (bobHoldings.length === 0) {
-    throw new Error('Expected Bob holdings after SettleBatch')
-}
+const bobHoldings = await waitUntil(
+    'Bob holdings after SettleBatch',
+    async () => {
+        const holdings = await sdk.ledger.acsReader.readJsContracts({
+            filterByParty: true,
+            parties: [bob.partyId],
+            templateIds: [HOLDING_TEMPLATE_ID],
+            offset: settleResult.completionOffset,
+        })
+        return holdings.length > 0 ? holdings : undefined
+    }
+)
 
 logger.info(
     {
+        aliceHoldingCount: aliceHoldingsBefore.length,
         bobHoldingCount: bobHoldings.length,
         bobHoldingCid: bobHoldings[0]?.contractId,
     },

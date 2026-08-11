@@ -5,7 +5,7 @@ import * as path from 'path'
 import { getRepoRoot, info, warn } from './lib/utils.js'
 import { installDPM } from './install-dpm.js'
 import { runDamlCodegen } from './lib/daml-codegen.js'
-import { existsSync } from 'fs'
+import { existsSync, rmSync } from 'fs'
 import { execSync } from 'child_process'
 
 const repoRoot = getRepoRoot()
@@ -61,6 +61,10 @@ async function main() {
         throw new Error(
             `Missing ${darFileName} under ${darsDir}. Run yarn script:fetch:localnet.`
         )
+    }
+
+    if (existsSync(outputDir)) {
+        rmSync(outputDir, { recursive: true, force: true })
     }
 
     await runDamlCodegen({

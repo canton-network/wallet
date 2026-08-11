@@ -26,7 +26,6 @@ export function resolveTokenApiVersion(
     supportedApis: Record<string, string> | undefined
 ): TokenApiVersion {
     const advertisedV2 = instrumentSupportsV2(supportedApis)
-    const advertisedV1 = instrumentSupportsV1(supportedApis)
 
     if (preference === 'v2') {
         if (
@@ -42,10 +41,6 @@ export function resolveTokenApiVersion(
     }
 
     if (preference === 'v1') {
-        if (!advertisedV1 && advertisedV2) {
-            // Still allow forced V1 against dual-version instruments that omit explicit v1 keys
-            // only when nothing is advertised; otherwise require V1 advertisement when present.
-        }
         return 'v1'
     }
 
@@ -113,9 +108,5 @@ export function isMissingOffLedgerEndpoint(error: unknown): boolean {
                 ? error.message
                 : JSON.stringify(error)
 
-    return (
-        /could not be found/i.test(message) ||
-        /\b404\b/.test(message) ||
-        /not found/i.test(message)
-    )
+    return /could not be found/i.test(message) || /\b404\b/.test(message)
 }

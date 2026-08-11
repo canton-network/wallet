@@ -11,6 +11,8 @@ import {
     AllocationInstructionCreateParams,
 } from './types'
 import {
+    ALLOCATION_INTERFACE_ID,
+    ALLOCATION_INTERFACE_ID_V2,
     ALLOCATION_REQUEST_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard'
@@ -81,6 +83,35 @@ describe('allocation namespace namespace', () => {
         allocation = new AllocationNamespace(config)
     })
 
+    it('should list pending allocations for V1 and V2 when interfaceId is omitted', async () => {
+        const spy = mockTokenStandard.listContractsByInterface
+        spy.mockResolvedValue([
+            {
+                contractId: 'cid',
+                interfaceViewValue: '',
+                activeContract: 'contract',
+                fetchedAtOffset: 10,
+            },
+        ])
+        await allocation.pending('alice::abc')
+        expect(spy).toHaveBeenCalledWith(ALLOCATION_INTERFACE_ID, 'alice::abc')
+        expect(spy).toHaveBeenCalledWith(
+            ALLOCATION_INTERFACE_ID_V2,
+            'alice::abc'
+        )
+        expect(spy).toHaveBeenCalledTimes(2)
+    })
+
+    it('should list pending allocations for a single interface when interfaceId is explicit', async () => {
+        const spy = mockTokenStandard.listContractsByInterface
+        spy.mockResolvedValue([])
+        await allocation.pending('alice::abc', ALLOCATION_INTERFACE_ID)
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            ALLOCATION_INTERFACE_ID,
+            'alice::abc'
+        )
+    })
+
     it('should create allocation execute transfer', async () => {
         const spy = mockTokenStandard.allocation.createExecuteTransferAllocation
         spy.mockResolvedValue(mockServiceResponse)
@@ -142,6 +173,37 @@ describe('allocation namespace namespace', () => {
             },
             ['mock-contract'],
         ])
+    })
+
+    it('should settle a batch of V2 allocations', async () => {
+        const spy = mockTokenStandard.allocation.createSettleBatch
+        spy.mockResolvedValue(mockServiceResponse)
+        const settlement = {
+            executors: ['alice::abc'],
+            id: 's1',
+            cid: null,
+            meta: { values: {} },
+        }
+        const transferLegs = { leg1: { sender: 'alice::abc' } }
+        const allocations = [{ allocationCid: 'alloc-1' }]
+        const actors = ['alice::abc']
+
+        await allocation.settleBatch({
+            registryUrl: 'http://registry.com',
+            settlement: settlement as any,
+            transferLegs: transferLegs as any,
+            allocations: allocations as any,
+            actors,
+        })
+
+        expect(spy).toHaveBeenCalledExactlyOnceWith(
+            'http://registry.com/',
+            settlement,
+            transferLegs,
+            allocations,
+            actors,
+            undefined
+        )
     })
 
     describe('allocation instruction', () => {
@@ -284,8 +346,6 @@ describe('allocation namespace namespace', () => {
                 settlement,
                 allocations: [],
                 expectedAdmin: 'adminParty:123',
-                inputUtxos: undefined,
-                requestedAt: undefined,
             })
             expect(result[0]).toHaveLength(2)
         })

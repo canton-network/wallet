@@ -14,6 +14,7 @@ import {
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
     SETTLEMENT_FACTORY_INTERFACE_ID,
     HoldingView,
     HoldingViewV2,
@@ -36,6 +37,7 @@ import {
     Beneficiaries,
     basicAccount,
     Account,
+    TokenApiVersion,
     TokenApiVersionPreference,
     resolveTokenApiVersion,
     isMissingOffLedgerEndpoint,
@@ -798,13 +800,20 @@ class AllocationService {
                 'V2 allocation requires authorizer account owner or actors'
             )
         }
+        const transferLeg = allocation.transferLegSides[0]
         const inputHoldingCids =
             inputUtxos !== undefined
                 ? inputUtxos
-                : await this.core.getInputHoldingsCids({
-                      sender: authorizerOwner,
-                      instrumentAdmin: expectedAdmin,
-                  })
+                : transferLeg?.side === 'ReceiverSide'
+                  ? []
+                  : await this.core.getInputHoldingsCids({
+                        sender: authorizerOwner,
+                        instrumentAdmin: expectedAdmin,
+                        instrumentId: transferLeg?.instrumentId,
+                        amount: transferLeg?.amount
+                            ? new Decimal(transferLeg.amount)
+                            : undefined,
+                    })
         const choiceArgs: AllocationFactory_AllocateV2 = {
             settlement,
             allocation,
@@ -1431,14 +1440,19 @@ class TransferService {
 
     async fetchAcceptTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: string,
+        apiVersion: TokenApiVersion = 'v1'
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
     }> {
         const client = this.core.getTokenStandardClient(registryUrl)
+        const path =
+            apiVersion === 'v2'
+                ? '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept'
+                : '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/accept'
         const choiceContext = await client.post(
-            '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/accept',
+            path,
             {
                 excludeDebugFields: true,
             },
@@ -1459,31 +1473,39 @@ class TransferService {
         choiceContext: {
             choiceContextData: unknown
             disclosedContracts: DisclosedContract[]
-        }
+        },
+        apiVersion: TokenApiVersion = 'v1',
+        actors?: PartyId[]
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         try {
+            const extraArgs = {
+                extraArgs: {
+                    context: {
+                        ...(typeof choiceContext.choiceContextData ===
+                            'object' && choiceContext.choiceContextData !== null
+                            ? choiceContext.choiceContextData
+                            : {}),
+                        values:
+                            (
+                                choiceContext.choiceContextData as {
+                                    values?: Record<string, unknown>
+                                } | null
+                            )?.values ?? {},
+                    },
+                    meta: { values: {} },
+                },
+            }
             const exercise: ExerciseCommand = {
-                templateId: TRANSFER_INSTRUCTION_INTERFACE_ID,
+                templateId:
+                    apiVersion === 'v2'
+                        ? TRANSFER_INSTRUCTION_INTERFACE_ID_V2
+                        : TRANSFER_INSTRUCTION_INTERFACE_ID,
                 contractId: transferInstructionCid,
                 choice: 'TransferInstruction_Accept',
-                choiceArgument: {
-                    extraArgs: {
-                        context: {
-                            ...(typeof choiceContext.choiceContextData ===
-                                'object' &&
-                            choiceContext.choiceContextData !== null
-                                ? choiceContext.choiceContextData
-                                : {}),
-                            values:
-                                (
-                                    choiceContext.choiceContextData as {
-                                        values?: Record<string, unknown>
-                                    } | null
-                                )?.values ?? {},
-                        },
-                        meta: { values: {} },
-                    },
-                },
+                choiceArgument:
+                    apiVersion === 'v2'
+                        ? { actors: actors ?? [], ...extraArgs }
+                        : extraArgs,
             }
             return [exercise, choiceContext.disclosedContracts]
         } catch (e) {
@@ -1606,8 +1628,54 @@ class TransferService {
     async createAcceptTransferInstruction(
         transferInstructionCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext'],
+        apiVersion: TokenApiVersionPreference = 'auto',
+        actors?: PartyId[],
+        supportedApis?: Record<string, string>
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const version = resolveTokenApiVersion(apiVersion, supportedApis)
+        if (version === 'v2') {
+            try {
+                if (prefetchedRegistryChoiceContext) {
+                    return this.createAcceptTransferInstructionFromContext(
+                        transferInstructionCid,
+                        {
+                            choiceContextData:
+                                prefetchedRegistryChoiceContext.choiceContextData,
+                            disclosedContracts:
+                                prefetchedRegistryChoiceContext.disclosedContracts,
+                        },
+                        'v2',
+                        actors
+                    )
+                }
+                const choiceContext =
+                    await this.fetchAcceptTransferInstructionChoiceContext(
+                        transferInstructionCid,
+                        registryUrl,
+                        'v2'
+                    )
+                return this.createAcceptTransferInstructionFromContext(
+                    transferInstructionCid,
+                    choiceContext,
+                    'v2',
+                    actors
+                )
+            } catch (e) {
+                if (
+                    apiVersion === 'auto' &&
+                    !prefetchedRegistryChoiceContext &&
+                    isMissingOffLedgerEndpoint(e)
+                ) {
+                    this.logger.warn(
+                        'V2 accept transfer instruction context unavailable; falling back to V1 for apiVersion=auto',
+                        e
+                    )
+                } else {
+                    throw e
+                }
+            }
+        }
         if (prefetchedRegistryChoiceContext) {
             return this.createAcceptTransferInstructionFromContext(
                 transferInstructionCid,
@@ -1632,14 +1700,19 @@ class TransferService {
 
     async fetchRejectTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: string,
+        apiVersion: TokenApiVersion = 'v1'
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
     }> {
         const client = this.core.getTokenStandardClient(registryUrl)
+        const path =
+            apiVersion === 'v2'
+                ? '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/reject'
+                : '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/reject'
         const choiceContext = await client.post(
-            '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/reject',
+            path,
             {
                 excludeDebugFields: true,
             },
@@ -1660,19 +1733,28 @@ class TransferService {
         choiceContext: {
             choiceContextData: unknown
             disclosedContracts: DisclosedContract[]
-        }
+        },
+        apiVersion: TokenApiVersion = 'v1',
+        actors?: PartyId[]
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         try {
+            const extraArgs = {
+                extraArgs: {
+                    context: choiceContext.choiceContextData,
+                    meta: { values: {} },
+                },
+            }
             const exercise: ExerciseCommand = {
-                templateId: TRANSFER_INSTRUCTION_INTERFACE_ID,
+                templateId:
+                    apiVersion === 'v2'
+                        ? TRANSFER_INSTRUCTION_INTERFACE_ID_V2
+                        : TRANSFER_INSTRUCTION_INTERFACE_ID,
                 contractId: transferInstructionCid,
                 choice: 'TransferInstruction_Reject',
-                choiceArgument: {
-                    extraArgs: {
-                        context: choiceContext.choiceContextData,
-                        meta: { values: {} },
-                    },
-                },
+                choiceArgument:
+                    apiVersion === 'v2'
+                        ? { actors: actors ?? [], ...extraArgs }
+                        : extraArgs,
             }
             return [exercise, choiceContext.disclosedContracts]
         } catch (e) {
@@ -1687,8 +1769,54 @@ class TransferService {
     async createRejectTransferInstruction(
         transferInstructionCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext'],
+        apiVersion: TokenApiVersionPreference = 'auto',
+        actors?: PartyId[],
+        supportedApis?: Record<string, string>
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const version = resolveTokenApiVersion(apiVersion, supportedApis)
+        if (version === 'v2') {
+            try {
+                if (prefetchedRegistryChoiceContext) {
+                    return this.createRejectTransferInstructionFromContext(
+                        transferInstructionCid,
+                        {
+                            choiceContextData:
+                                prefetchedRegistryChoiceContext.choiceContextData,
+                            disclosedContracts:
+                                prefetchedRegistryChoiceContext.disclosedContracts,
+                        },
+                        'v2',
+                        actors
+                    )
+                }
+                const choiceContext =
+                    await this.fetchRejectTransferInstructionChoiceContext(
+                        transferInstructionCid,
+                        registryUrl,
+                        'v2'
+                    )
+                return this.createRejectTransferInstructionFromContext(
+                    transferInstructionCid,
+                    choiceContext,
+                    'v2',
+                    actors
+                )
+            } catch (e) {
+                if (
+                    apiVersion === 'auto' &&
+                    !prefetchedRegistryChoiceContext &&
+                    isMissingOffLedgerEndpoint(e)
+                ) {
+                    this.logger.warn(
+                        'V2 reject transfer instruction context unavailable; falling back to V1 for apiVersion=auto',
+                        e
+                    )
+                } else {
+                    throw e
+                }
+            }
+        }
         if (prefetchedRegistryChoiceContext) {
             return this.createRejectTransferInstructionFromContext(
                 transferInstructionCid,
@@ -1713,15 +1841,19 @@ class TransferService {
 
     async fetchWithdrawTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: string,
+        apiVersion: TokenApiVersion = 'v1'
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
     }> {
         const client = this.core.getTokenStandardClient(registryUrl)
-
+        const path =
+            apiVersion === 'v2'
+                ? '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/withdraw'
+                : '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/withdraw'
         const choiceContext = await client.post(
-            '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/withdraw',
+            path,
             {
                 excludeDebugFields: true,
             },
@@ -1742,19 +1874,28 @@ class TransferService {
         choiceContext: {
             choiceContextData: unknown
             disclosedContracts: DisclosedContract[]
-        }
+        },
+        apiVersion: TokenApiVersion = 'v1',
+        actors?: PartyId[]
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         try {
+            const extraArgs = {
+                extraArgs: {
+                    context: choiceContext.choiceContextData,
+                    meta: { values: {} },
+                },
+            }
             const exercise: ExerciseCommand = {
-                templateId: TRANSFER_INSTRUCTION_INTERFACE_ID,
+                templateId:
+                    apiVersion === 'v2'
+                        ? TRANSFER_INSTRUCTION_INTERFACE_ID_V2
+                        : TRANSFER_INSTRUCTION_INTERFACE_ID,
                 contractId: transferInstructionCid,
                 choice: 'TransferInstruction_Withdraw',
-                choiceArgument: {
-                    extraArgs: {
-                        context: choiceContext.choiceContextData,
-                        meta: { values: {} },
-                    },
-                },
+                choiceArgument:
+                    apiVersion === 'v2'
+                        ? { actors: actors ?? [], ...extraArgs }
+                        : extraArgs,
             }
             return [exercise, choiceContext.disclosedContracts]
         } catch (e) {
@@ -1769,8 +1910,54 @@ class TransferService {
     async createWithdrawTransferInstruction(
         transferInstructionCid: string,
         registryUrl: string,
-        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext']
+        prefetchedRegistryChoiceContext?: transferInstructionRegistryTypes['schemas']['ChoiceContext'],
+        apiVersion: TokenApiVersionPreference = 'auto',
+        actors?: PartyId[],
+        supportedApis?: Record<string, string>
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const version = resolveTokenApiVersion(apiVersion, supportedApis)
+        if (version === 'v2') {
+            try {
+                if (prefetchedRegistryChoiceContext) {
+                    return this.createWithdrawTransferInstructionFromContext(
+                        transferInstructionCid,
+                        {
+                            choiceContextData:
+                                prefetchedRegistryChoiceContext.choiceContextData,
+                            disclosedContracts:
+                                prefetchedRegistryChoiceContext.disclosedContracts,
+                        },
+                        'v2',
+                        actors
+                    )
+                }
+                const choiceContext =
+                    await this.fetchWithdrawTransferInstructionChoiceContext(
+                        transferInstructionCid,
+                        registryUrl,
+                        'v2'
+                    )
+                return this.createWithdrawTransferInstructionFromContext(
+                    transferInstructionCid,
+                    choiceContext,
+                    'v2',
+                    actors
+                )
+            } catch (e) {
+                if (
+                    apiVersion === 'auto' &&
+                    !prefetchedRegistryChoiceContext &&
+                    isMissingOffLedgerEndpoint(e)
+                ) {
+                    this.logger.warn(
+                        'V2 withdraw transfer instruction context unavailable; falling back to V1 for apiVersion=auto',
+                        e
+                    )
+                } else {
+                    throw e
+                }
+            }
+        }
         if (prefetchedRegistryChoiceContext) {
             return this.createWithdrawTransferInstructionFromContext(
                 transferInstructionCid,

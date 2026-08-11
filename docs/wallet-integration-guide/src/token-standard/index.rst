@@ -38,6 +38,8 @@ Force a major version when needed::
         apiVersion: 'v1', // or 'v2' | 'auto'
     })
 
+``sdk.token.transfer.accept``, ``reject``, and ``withdraw`` take the same optional ``apiVersion`` and ``actors`` fields.
+
 V2 transfers use ``Account`` values; Party ids are accepted and converted with
 ``basicAccount(party)`` (empty account id, no provider).
 
