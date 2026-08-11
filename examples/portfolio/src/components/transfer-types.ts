@@ -9,6 +9,8 @@ export interface SelectableInstrument {
     name: string
     availableAmount: string
     decimals: number | undefined
+    paused?: boolean
+    pauseInfo?: { reason?: string; until?: string }
 }
 
 export interface TransferFormData {

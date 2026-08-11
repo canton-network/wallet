@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getRegistryInfo } from './getRegistryInfo'
 import { getInstrument } from './getInstrument'
 import { listInstruments } from './listInstruments'
-import { instruments, supportedApis } from './common'
+import { instruments, supportedApisDual } from './common'
 import { expressContext, RequestType } from '../../__test__/mocks'
 import { APIError } from '../common'
 
@@ -27,7 +27,7 @@ describe('Metadata', () => {
 
         expect(res.json).toHaveBeenCalledWith({
             adminId: 'admin',
-            supportedApis,
+            supportedApis: supportedApisDual,
         })
     })
 

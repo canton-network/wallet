@@ -1,12 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AllKnownMetaKeys, matchInterfaceIds } from './constants.js'
+import {
+    AllKnownMetaKeys,
+    matchInterfaceIds,
+    isHoldingInterfaceId,
+} from './constants.js'
 
 import { Holding, TransferInstructionView } from './types.js'
 import {
-    HOLDING_INTERFACE_ID,
+    HOLDING_INTERFACE_ID_V2,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+    CIP112_MINT_ACCOUNT_ID,
+    CIP112_BURN_ACCOUNT_ID,
 } from '@canton-network/core-token-standard'
 
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
@@ -36,32 +43,84 @@ export type KnownInterfaceView =
     | { type: 'Holding'; viewValue: Holding }
     | { type: 'TransferInstruction'; viewValue: TransferInstructionView }
 
+function normalizeHoldingView(viewValue: unknown): Holding {
+    const raw = viewValue as Record<string, unknown>
+    if (raw && typeof raw === 'object' && 'account' in raw) {
+        const account = raw.account as {
+            owner?: string | null
+            id?: string
+        }
+        return {
+            contractId: '',
+            owner: account?.owner ?? '',
+            instrumentId: raw.instrumentId as Holding['instrumentId'],
+            amount: String(raw.amount ?? '0'),
+            lock: (raw.lock as Holding['lock']) ?? null,
+            meta: raw.meta,
+        }
+    }
+    return viewValue as Holding
+}
+
+function normalizeTransferInstructionView(
+    viewValue: unknown
+): TransferInstructionView {
+    const raw = viewValue as Record<string, unknown>
+    if (raw && typeof raw === 'object' && raw.transfer) {
+        const transfer = raw.transfer as Record<string, unknown>
+        if (transfer.sender && typeof transfer.sender === 'object') {
+            const sender = transfer.sender as { owner?: string | null }
+            const receiver = transfer.receiver as { owner?: string | null }
+            return {
+                ...raw,
+                transfer: {
+                    ...transfer,
+                    sender: sender.owner ?? '',
+                    receiver: receiver.owner ?? '',
+                },
+            } as unknown as TransferInstructionView
+        }
+    }
+    return viewValue as TransferInstructionView
+}
+
 export function getKnownInterfaceView(
     createdEvent: CreatedEvent
 ): KnownInterfaceView | null {
     const interfaceView = getInterfaceView(createdEvent)
     if (!interfaceView || !interfaceView.interfaceId) {
         return null
-    } else if (
-        matchInterfaceIds(HOLDING_INTERFACE_ID, interfaceView.interfaceId)
-    ) {
+    } else if (isHoldingInterfaceId(interfaceView.interfaceId)) {
+        const normalized = normalizeHoldingView(interfaceView.viewValue)
         return {
             type: 'Holding',
-            viewValue: interfaceView.viewValue as Holding,
+            viewValue: normalized,
         }
     } else if (
         matchInterfaceIds(
             TRANSFER_INSTRUCTION_INTERFACE_ID,
             interfaceView.interfaceId
+        ) ||
+        matchInterfaceIds(
+            TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+            interfaceView.interfaceId
         )
     ) {
         return {
             type: 'TransferInstruction',
-            viewValue: interfaceView.viewValue as TransferInstructionView,
+            viewValue: normalizeTransferInstructionView(
+                interfaceView.viewValue
+            ),
         }
     } else {
         return null
     }
+}
+
+export {
+    CIP112_MINT_ACCOUNT_ID,
+    CIP112_BURN_ACCOUNT_ID,
+    HOLDING_INTERFACE_ID_V2,
 }
 
 // TODO (#563): handle allocations in such a way that any callers have to handle them too

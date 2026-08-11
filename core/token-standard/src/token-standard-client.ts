@@ -5,20 +5,29 @@ import createClient, { Client } from 'openapi-fetch'
 import { Logger } from '@canton-network/core-types'
 
 import { paths as allocationPaths } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
+import { paths as allocationPathsV2 } from './generated-clients/splice-api-token-allocation-v2/allocation-v2.js'
 import { paths as allocationInstructionPaths } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
+import { paths as allocationInstructionPathsV2 } from './generated-clients/splice-api-token-allocation-instruction-v2/allocation-instruction-v2.js'
 import { paths as metadataPaths } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
 import { paths as transferInstructionPaths } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
+import { paths as transferInstructionPathsV2 } from './generated-clients/splice-api-token-transfer-instruction-v2/transfer-instruction-v2.js'
 import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export { components as allocationRegistryTypes } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
+export { components as allocationRegistryTypesV2 } from './generated-clients/splice-api-token-allocation-v2/allocation-v2.js'
 export { components as metadataRegistryTypes } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
 export { components as transferInstructionRegistryTypes } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
+export { components as transferInstructionRegistryTypesV2 } from './generated-clients/splice-api-token-transfer-instruction-v2/transfer-instruction-v2.js'
 export { components as allocationInstructionRegistryTypes } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
+export { components as allocationInstructionRegistryTypesV2 } from './generated-clients/splice-api-token-allocation-instruction-v2/allocation-instruction-v2.js'
 
 type paths = allocationPaths &
+    allocationPathsV2 &
     metadataPaths &
     transferInstructionPaths &
-    allocationInstructionPaths
+    transferInstructionPathsV2 &
+    allocationInstructionPaths &
+    allocationInstructionPathsV2
 
 // A conditional type that filters the set of OpenAPI path names to those that actually have a defined POST operation.
 // Any path without a POST is excluded via the `never` branch of the conditional

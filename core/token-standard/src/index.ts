@@ -3,6 +3,7 @@
 
 export * from './token-standard-client.js'
 export * from './interface-ids.const.js'
+export * from './api-version.js'
 export * from './types'
 export * as OffLedger from './generated-clients/index.js'
 

@@ -180,7 +180,7 @@ const getSpecs = (
         input: `api-specs/splice/${spliceVersion}/validator-internal.yaml`,
         output: 'core/splice-client/src/generated-clients/validator-internal.ts',
     },
-    // Token standards
+    // Token standards (CIP-0056 V1 + CIP-0112 V2)
     {
         input: `api-specs/splice/${spliceVersion}/allocation-instruction-v1.yaml`,
         output: 'core/token-standard/src/generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.ts',
@@ -196,6 +196,18 @@ const getSpecs = (
     {
         input: `api-specs/splice/${spliceVersion}/transfer-instruction-v1.yaml`,
         output: 'core/token-standard/src/generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-instruction-v2.yaml`,
+        output: 'core/token-standard/src/generated-clients/splice-api-token-allocation-instruction-v2/allocation-instruction-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-v2.yaml`,
+        output: 'core/token-standard/src/generated-clients/splice-api-token-allocation-v2/allocation-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/transfer-instruction-v2.yaml`,
+        output: 'core/token-standard/src/generated-clients/splice-api-token-transfer-instruction-v2/transfer-instruction-v2.ts',
     },
 ]
 

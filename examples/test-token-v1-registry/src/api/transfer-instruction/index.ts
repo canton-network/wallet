@@ -9,6 +9,13 @@ import {
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
+import {
+    getTransferFactoryV2,
+    getTransferFactoryV2ChoiceArgumentsSchema,
+} from './getTransferFactoryV2.js'
+import { getTransferInstructionAcceptContextV2 } from './getTransferInstructionAcceptContextV2.js'
+import { getTransferInstructionRejectContextV2 } from './getTransferInstructionRejectContextV2.js'
+import { getTransferInstructionWithdrawContextV2 } from './getTransferInstructionWithdrawContextV2.js'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
 import z, { ZodType } from 'zod'
@@ -22,6 +29,11 @@ const transferInstructionAPIRouter = Router()
 
 const openAPIRouter =
     createExpressOpenApiRouter<OffLedger.TransferInstructionV1.paths>(
+        transferInstructionAPIRouter
+    )
+
+const openAPIRouterV2 =
+    createExpressOpenApiRouter<OffLedger.TransferInstructionV2.paths>(
         transferInstructionAPIRouter
     )
 
@@ -57,6 +69,43 @@ openAPIRouter.post(
     '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/withdraw',
     {
         handler: getTransferInstructionWithdrawContext,
+        bodySchema: choiceContextRequestSchema,
+        pathSchema,
+    }
+)
+
+openAPIRouterV2.post('/registry/transfer-instruction/v2/transfer-factory', {
+    bodySchema: z.object({
+        choiceArguments: getTransferFactoryV2ChoiceArgumentsSchema,
+        excludeDebugFields: z.boolean(),
+    }) as unknown as ZodType<
+        OffLedger.TransferInstructionV2.operations['getTransferFactory']['requestBody']['content']['application/json']
+    >,
+    handler: getTransferFactoryV2,
+})
+
+openAPIRouterV2.post(
+    '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept',
+    {
+        bodySchema: choiceContextRequestSchema,
+        pathSchema,
+        handler: getTransferInstructionAcceptContextV2,
+    }
+)
+
+openAPIRouterV2.post(
+    '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/reject',
+    {
+        handler: getTransferInstructionRejectContextV2,
+        bodySchema: choiceContextRequestSchema,
+        pathSchema,
+    }
+)
+
+openAPIRouterV2.post(
+    '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/withdraw',
+    {
+        handler: getTransferInstructionWithdrawContextV2,
         bodySchema: choiceContextRequestSchema,
         pathSchema,
     }

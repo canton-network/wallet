@@ -29,6 +29,7 @@ export const TOKEN_NAMESPACE_CONFIG: TokenConfig = {
     validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
     registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+    apiVersion: 'auto',
 }
 
 export const TOKEN_NAMESPACE_CONFIG_SIMPLE: TokenConfig = {

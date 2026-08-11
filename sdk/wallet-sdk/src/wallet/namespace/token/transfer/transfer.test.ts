@@ -7,7 +7,10 @@ import { TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
 import { TransferNamespace } from './service'
 import { ProxyDelegationCommandArgs } from './proxyDelegation'
-import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
+import {
+    TRANSFER_INSTRUCTION_INTERFACE_ID,
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+} from '@canton-network/core-token-standard'
 import { TransferAllocationChoiceParams, TransferParams } from './types'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const { ctx, mockLogger } = mock
@@ -75,10 +78,15 @@ describe('token transfer namespace', () => {
         ])
 
         await transfer.pending('alice::abc')
-        expect(spy).toHaveBeenCalledExactlyOnceWith(
+        expect(spy).toHaveBeenCalledWith(
             TRANSFER_INSTRUCTION_INTERFACE_ID,
             'alice::abc'
         )
+        expect(spy).toHaveBeenCalledWith(
+            TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+            'alice::abc'
+        )
+        expect(spy).toHaveBeenCalledTimes(2)
     })
 
     it('should create accept transfer instruction', async () => {
@@ -149,6 +157,11 @@ describe('token transfer namespace', () => {
             parsedRegistryUrl.href,
             undefined,
             undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            'auto',
             undefined,
             undefined
         )

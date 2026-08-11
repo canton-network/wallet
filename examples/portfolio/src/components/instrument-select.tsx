@@ -55,6 +55,10 @@ export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
                         name: instrument?.name ?? holding.instrumentId.id,
                         availableAmount: holding.availableAmount,
                         decimals: instrument?.decimals,
+                        paused: instrument?.paused,
+                        ...(instrument?.pauseInfo
+                            ? { pauseInfo: instrument.pauseInfo }
+                            : {}),
                     },
                 ]
             }),
@@ -186,6 +190,7 @@ export const InstrumentSelect: React.FC<InstrumentSelectProps> = ({
                                         sx={{ display: 'block' }}
                                     >
                                         {instrument.symbol}
+                                        {instrument.paused ? ' · paused' : ''}
                                     </Typography>
                                 </Box>
                                 <Typography color="text.secondary">

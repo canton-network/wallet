@@ -15,6 +15,8 @@ export type TokenConfig = {
     validatorUrl?: URLInput
     auth: TokenProviderConfig
     registries: URLInput[]
+    /** Default token-standard API major version preference. Default: 'auto'. */
+    apiVersion?: import('@canton-network/core-token-standard').TokenApiVersionPreference
 }
 
 export type AssetConfig = {

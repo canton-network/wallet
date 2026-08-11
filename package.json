@@ -17,7 +17,8 @@
         "generate:grpc": "tsx ./scripts/src/generate-protobufs.ts",
         "generate:tokenstandard": "tsx ./scripts/src/generate-token-standard.ts",
         "generate:test-token": "tsx ./scripts/src/generate-test-token.ts",
-        "generate:all": "yarn generate:dapp && yarn generate:dapp-remote && yarn generate:user && yarn generate:signing && yarn generate:tokenstandard && yarn generate:test-token && yarn run prettier . --write > /dev/null 2>&1",
+        "generate:test-token-v2": "tsx ./scripts/src/generate-test-token-v2.ts",
+        "generate:all": "yarn generate:dapp && yarn generate:dapp-remote && yarn generate:user && yarn generate:signing && yarn generate:tokenstandard && yarn generate:test-token && yarn generate:test-token-v2 && yarn run prettier . --write > /dev/null 2>&1",
         "lint": "nx run-many -t lint --parallel",
         "build:all": "nx run-many -t build --parallel",
         "build:all:serial": "nx run-many -t build --parallel=1",
@@ -108,8 +109,8 @@
         "vite": "^7.3.6"
     },
     "lint-staged": {
-        "*": "yarn prettier --config .prettierrc --write --ignore-unknown",
-        "*.{ts,tsx,js,jsx,mjs,cjs}": "yarn eslint --fix"
+        "*": "yarn prettier --config .prettierrc --write --ignore-unknown --ignore-path .prettierignore --no-error-on-unmatched-pattern",
+        "*.{ts,tsx,js,jsx,mjs,cjs}": "yarn eslint --fix --no-warn-ignored"
     },
     "packageManager": "yarn@4.16.0",
     "dependencies": {

@@ -4,16 +4,29 @@
 import {
     TokenStandardClient,
     TRANSFER_FACTORY_INTERFACE_ID,
+    TRANSFER_FACTORY_INTERFACE_ID_V2,
     HOLDING_INTERFACE_ID,
+    HOLDING_INTERFACE_ID_V2,
     ALLOCATION_FACTORY_INTERFACE_ID,
+    ALLOCATION_FACTORY_INTERFACE_ID_V2,
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
+    ALLOCATION_REQUEST_INTERFACE_ID_V2,
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
+    SETTLEMENT_FACTORY_INTERFACE_ID,
     HoldingView,
+    HoldingViewV2,
     AllocationFactory_Allocate,
+    AllocationFactory_AllocateV2,
     AllocationSpecification,
+    AllocationSpecificationV2,
+    SettlementInfoV2,
     Transfer,
+    TransferV2,
+    TransferFactory_TransferV2,
+    FinalizedAllocation,
+    SettlementFactory_SettleBatch,
     transferInstructionRegistryTypes,
     allocationInstructionRegistryTypes,
     ExtraArgs,
@@ -21,6 +34,11 @@ import {
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
     Holding,
     Beneficiaries,
+    basicAccount,
+    Account,
+    TokenApiVersionPreference,
+    resolveTokenApiVersion,
+    isMissingOffLedgerEndpoint,
 } from '@canton-network/core-token-standard'
 import {
     EventFilterBySetup,
@@ -85,6 +103,27 @@ type CreateTransferChoiceArgs = {
     extraArgs: ExtraArgs
 }
 
+type CreateTransferChoiceArgsV2 = {
+    transfer: TransferV2
+    actors: string[]
+    extraArgs: ExtraArgs
+}
+
+/** Normalize V1/V2 holding views to the V1-shaped HoldingView used by UTXO selection. */
+function asHoldingView(view: HoldingView | HoldingViewV2): HoldingView {
+    if ('owner' in view && typeof view.owner === 'string') {
+        return view as HoldingView
+    }
+    const v2 = view as HoldingViewV2
+    return {
+        owner: (v2.account.owner ?? '') as HoldingView['owner'],
+        instrumentId: v2.instrumentId as HoldingView['instrumentId'],
+        amount: v2.amount,
+        lock: v2.lock as HoldingView['lock'],
+        meta: v2.meta,
+    }
+}
+
 export class CoreService {
     constructor(
         private ledgerProvider: AbstractLedgerProvider,
@@ -114,13 +153,33 @@ export class CoreService {
         if (options.inputUtxos && options.inputUtxos.length > 0) {
             return options.inputUtxos
         }
-        const senderHoldings = await this.listContractsByInterface<HoldingView>(
-            HOLDING_INTERFACE_ID,
-            sender,
-            undefined,
-            undefined,
-            options.continueUntilCompletion
-        )
+        const [v1Holdings, v2Holdings] = await Promise.all([
+            this.listContractsByInterface<HoldingView>(
+                HOLDING_INTERFACE_ID,
+                sender,
+                undefined,
+                undefined,
+                options.continueUntilCompletion
+            ).catch(() => [] as PrettyContract<HoldingView>[]),
+            this.listContractsByInterface<HoldingViewV2>(
+                HOLDING_INTERFACE_ID_V2,
+                sender,
+                undefined,
+                undefined,
+                options.continueUntilCompletion
+            ).catch(() => [] as PrettyContract<HoldingViewV2>[]),
+        ])
+
+        const seen = new Set<string>()
+        const senderHoldings: PrettyContract<HoldingView>[] = []
+        for (const h of [...v1Holdings, ...v2Holdings]) {
+            if (seen.has(h.contractId)) continue
+            seen.add(h.contractId)
+            senderHoldings.push({
+                ...h,
+                interfaceViewValue: asHoldingView(h.interfaceViewValue),
+            })
+        }
         if (senderHoldings.length === 0) {
             throw new Error(
                 "Sender has no holdings, so transfer can't be executed."
@@ -645,6 +704,164 @@ class AllocationService {
         )
     }
 
+    async fetchSettlementFactoryChoiceContext(
+        registryUrl: string,
+        choiceArgs: SettlementFactory_SettleBatch,
+        excludeDebugFields: boolean = true
+    ): Promise<
+        allocationInstructionRegistryTypes['schemas']['FactoryWithChoiceContext']
+    > {
+        return this.core
+            .getTokenStandardClient(registryUrl)
+            .post('/registry/allocation/v2/settlement-factory', {
+                choiceArguments: choiceArgs as unknown as Record<string, never>,
+                excludeDebugFields,
+            })
+    }
+
+    createSettleBatchFromContext(
+        factoryId: string,
+        choiceArgs: SettlementFactory_SettleBatch,
+        choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
+    ): [ExerciseCommand, DisclosedContract[]] {
+        choiceArgs.extraArgs.context = {
+            ...choiceContext.choiceContextData,
+            values: choiceContext.choiceContextData?.values ?? {},
+        }
+        const exercise: ExerciseCommand = {
+            templateId: SETTLEMENT_FACTORY_INTERFACE_ID,
+            contractId: factoryId,
+            choice: 'SettlementFactory_SettleBatch',
+            choiceArgument: choiceArgs,
+        }
+        return [exercise, choiceContext.disclosedContracts]
+    }
+
+    async createSettleBatch(
+        registryUrl: string,
+        settlement: SettlementInfoV2,
+        transferLegs: SettlementFactory_SettleBatch['transferLegs'],
+        allocations: FinalizedAllocation[],
+        actors: PartyId[],
+        prefetchedRegistryChoiceContext?: {
+            factoryId: string
+            choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
+        },
+        extraArgs: ExtraArgs = {
+            context: { values: {} },
+            meta: { values: {} },
+        }
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const choiceArgs: SettlementFactory_SettleBatch = {
+            settlement,
+            transferLegs,
+            allocations,
+            actors: actors as string[],
+            extraArgs,
+        }
+        if (prefetchedRegistryChoiceContext) {
+            return this.createSettleBatchFromContext(
+                prefetchedRegistryChoiceContext.factoryId,
+                choiceArgs,
+                prefetchedRegistryChoiceContext.choiceContext
+            )
+        }
+        const { factoryId, choiceContext } =
+            await this.fetchSettlementFactoryChoiceContext(
+                registryUrl,
+                choiceArgs
+            )
+        return this.createSettleBatchFromContext(
+            factoryId,
+            choiceArgs,
+            choiceContext
+        )
+    }
+
+    async createAllocationInstructionV2(
+        allocation: AllocationSpecificationV2,
+        settlement: SettlementInfoV2,
+        expectedAdmin: PartyId,
+        registryUrl: string,
+        actors: PartyId[],
+        inputUtxos?: string[],
+        requestedAt?: string,
+        prefetchedRegistryChoiceContext?: {
+            factoryId: string
+            choiceContext: allocationInstructionRegistryTypes['schemas']['ChoiceContext']
+        }
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const authorizerOwner =
+            (allocation.authorizer.owner as PartyId | null) ?? actors[0]
+        if (!authorizerOwner) {
+            throw new Error(
+                'V2 allocation requires authorizer account owner or actors'
+            )
+        }
+        const inputHoldingCids =
+            inputUtxos !== undefined
+                ? inputUtxos
+                : await this.core.getInputHoldingsCids({
+                      sender: authorizerOwner,
+                      instrumentAdmin: expectedAdmin,
+                  })
+        const choiceArgs: AllocationFactory_AllocateV2 = {
+            settlement,
+            allocation,
+            requestedAt:
+                requestedAt ??
+                new Date(Date.now() - REQUESTED_AT_SKEW_MS).toISOString(),
+            inputHoldingCids:
+                inputHoldingCids as unknown as AllocationFactory_AllocateV2['inputHoldingCids'],
+            actors: actors as string[],
+            extraArgs: {
+                context: { values: {} },
+                meta: { values: {} },
+            },
+        }
+
+        if (prefetchedRegistryChoiceContext) {
+            choiceArgs.extraArgs.context = {
+                ...prefetchedRegistryChoiceContext.choiceContext
+                    .choiceContextData,
+                values:
+                    prefetchedRegistryChoiceContext.choiceContext
+                        .choiceContextData?.values ?? {},
+            }
+            return [
+                {
+                    templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                    contractId: prefetchedRegistryChoiceContext.factoryId,
+                    choice: 'AllocationFactory_Allocate',
+                    choiceArgument: choiceArgs,
+                },
+                prefetchedRegistryChoiceContext.choiceContext
+                    .disclosedContracts,
+            ]
+        }
+
+        const { factoryId, choiceContext } = await this.core
+            .getTokenStandardClient(registryUrl)
+            .post('/registry/allocation-instruction/v2/allocation-factory', {
+                choiceArguments: choiceArgs as unknown as Record<string, never>,
+                excludeDebugFields: true,
+            })
+
+        choiceArgs.extraArgs.context = {
+            ...choiceContext.choiceContextData,
+            values: choiceContext.choiceContextData?.values ?? {},
+        }
+        return [
+            {
+                templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                contractId: factoryId,
+                choice: 'AllocationFactory_Allocate',
+                choiceArgument: choiceArgs,
+            },
+            choiceContext.disclosedContracts,
+        ]
+    }
+
     async fetchWithdrawAllocationChoiceContext(
         allocationCid: string,
         registryUrl: string
@@ -810,6 +1027,104 @@ class AllocationService {
         }
         return [exercise, []]
     }
+
+    async createAcceptAllocationRequest(
+        allocationRequestCid: string,
+        actors: PartyId[]
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const exercise: ExerciseCommand = {
+            templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+            contractId: allocationRequestCid,
+            choice: 'AllocationRequest_Accept',
+            choiceArgument: {
+                actors: actors as string[],
+                extraArgs: {
+                    context: { values: {} },
+                    meta: { values: {} },
+                },
+            },
+        }
+        return [exercise, []]
+    }
+
+    async createRejectAllocationRequestV2(
+        allocationRequestCid: string,
+        actors: PartyId[]
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const exercise: ExerciseCommand = {
+            templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+            contractId: allocationRequestCid,
+            choice: 'AllocationRequest_Reject',
+            choiceArgument: {
+                actors: actors as string[],
+                extraArgs: {
+                    context: { values: {} },
+                    meta: { values: {} },
+                },
+            },
+        }
+        return [exercise, []]
+    }
+
+    async createWithdrawAllocationRequestV2(
+        allocationRequestCid: string,
+        actors: PartyId[]
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const exercise: ExerciseCommand = {
+            templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+            contractId: allocationRequestCid,
+            choice: 'AllocationRequest_Withdraw',
+            choiceArgument: {
+                actors: actors as string[],
+                extraArgs: {
+                    context: { values: {} },
+                    meta: { values: {} },
+                },
+            },
+        }
+        return [exercise, []]
+    }
+
+    /**
+     * CIP-0112: one AllocationFactory_Allocate per specification, then
+     * AllocationRequest_Accept in the same prepared command set.
+     */
+    async acceptAllocationRequestMultiSpec(params: {
+        allocationRequestCid: string
+        actors: PartyId[]
+        registryUrl: string
+        settlement: SettlementInfoV2
+        allocations: AllocationSpecificationV2[]
+        expectedAdmin: PartyId
+        inputUtxos?: string[]
+        requestedAt?: string
+    }): Promise<[ExerciseCommand[], DisclosedContract[]]> {
+        const commands: ExerciseCommand[] = []
+        const disclosed: DisclosedContract[] = []
+
+        for (const allocation of params.allocations) {
+            const [cmd, dc] = await this.createAllocationInstructionV2(
+                allocation,
+                params.settlement,
+                params.expectedAdmin,
+                params.registryUrl,
+                params.actors,
+                params.inputUtxos,
+                params.requestedAt
+            )
+            commands.push(cmd)
+            disclosed.push(...dc)
+        }
+
+        const [acceptCmd, acceptDc] = await this.createAcceptAllocationRequest(
+            params.allocationRequestCid,
+            params.actors
+        )
+        commands.push(acceptCmd)
+        disclosed.push(...acceptDc)
+
+        return [commands, disclosed]
+    }
 }
 
 class TransferService {
@@ -904,6 +1219,103 @@ class TransferService {
         return [exercise, choiceContext.disclosedContracts]
     }
 
+    public async buildTransferChoiceArgsV2(
+        sender: PartyId | Account,
+        receiver: PartyId | Account,
+        amount: string,
+        instrumentAdmin: PartyId,
+        instrumentId: string,
+        actors: PartyId[],
+        inputUtxos?: string[],
+        memo?: string,
+        expiryDate?: Date,
+        meta?: Metadata,
+        continueUntilCompletion?: boolean
+    ): Promise<CreateTransferChoiceArgsV2> {
+        const senderAccount =
+            typeof sender === 'string' ? basicAccount(sender) : sender
+        const receiverAccount =
+            typeof receiver === 'string' ? basicAccount(receiver) : receiver
+        const ownerForSelection =
+            (senderAccount.owner as PartyId | null) ?? actors[0]
+        if (!ownerForSelection) {
+            throw new Error(
+                'V2 transfer requires a sender account owner or actors for UTXO selection'
+            )
+        }
+        const inputHoldingCids: string[] = await this.core.getInputHoldingsCids(
+            {
+                sender: ownerForSelection,
+                instrumentAdmin,
+                instrumentId,
+                inputUtxos: inputUtxos ?? [],
+                amount: new Decimal(amount),
+                continueUntilCompletion: continueUntilCompletion ?? false,
+            }
+        )
+
+        return {
+            transfer: {
+                sender: senderAccount,
+                receiver: receiverAccount,
+                amount,
+                instrumentId: { admin: instrumentAdmin, id: instrumentId },
+                requestedAt: new Date(
+                    Date.now() - REQUESTED_AT_SKEW_MS
+                ).toISOString(),
+                executeBefore: (
+                    expiryDate ?? new Date(Date.now() + 24 * 60 * 60 * 1000)
+                ).toISOString(),
+                inputHoldingCids:
+                    inputHoldingCids as unknown as TransferV2['inputHoldingCids'],
+                meta: {
+                    values: {
+                        [TokenStandardService.MEMO_KEY]: memo || '',
+                        ...meta?.values,
+                    },
+                },
+            },
+            actors: actors as string[],
+            extraArgs: {
+                context: { values: {} },
+                meta: { values: {} },
+            },
+        }
+    }
+
+    async fetchTransferFactoryChoiceContextV2(
+        registryUrl: string,
+        choiceArgs: CreateTransferChoiceArgsV2,
+        excludeDebugFields: boolean = true
+    ): Promise<
+        transferInstructionRegistryTypes['schemas']['TransferFactoryWithChoiceContext']
+    > {
+        return await this.core
+            .getTokenStandardClient(registryUrl)
+            .post('/registry/transfer-instruction/v2/transfer-factory', {
+                choiceArguments: choiceArgs as unknown as Record<string, never>,
+                excludeDebugFields,
+            })
+    }
+
+    async createTransferFromContextV2(
+        factoryId: string,
+        choiceArgs: CreateTransferChoiceArgsV2,
+        choiceContext: transferInstructionRegistryTypes['schemas']['ChoiceContext']
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        choiceArgs.extraArgs.context = {
+            ...choiceContext.choiceContextData,
+            values: choiceContext.choiceContextData?.values ?? {},
+        }
+        const exercise: ExerciseCommand = {
+            templateId: TRANSFER_FACTORY_INTERFACE_ID_V2,
+            contractId: factoryId,
+            choice: 'TransferFactory_Transfer',
+            choiceArgument: choiceArgs satisfies TransferFactory_TransferV2,
+        }
+        return [exercise, choiceContext.disclosedContracts]
+    }
+
     // TODO: use named parameters
     async createTransfer(
         sender: PartyId,
@@ -920,9 +1332,65 @@ class TransferService {
             factoryId: string
             choiceContext: transferInstructionRegistryTypes['schemas']['ChoiceContext']
         },
-        continueUntilCompletion?: boolean
+        continueUntilCompletion?: boolean,
+        apiVersion: TokenApiVersionPreference = 'auto',
+        actors?: PartyId[],
+        supportedApis?: Record<string, string>
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         try {
+            const version = resolveTokenApiVersion(apiVersion, supportedApis)
+            if (version === 'v2') {
+                try {
+                    const choiceArgs = await this.buildTransferChoiceArgsV2(
+                        sender,
+                        receiver,
+                        amount,
+                        instrumentAdmin,
+                        instrumentId,
+                        actors ?? [sender],
+                        inputUtxos,
+                        memo,
+                        expiryDate,
+                        meta,
+                        continueUntilCompletion
+                    )
+
+                    if (prefetchedRegistryChoiceContext) {
+                        return this.createTransferFromContextV2(
+                            prefetchedRegistryChoiceContext.factoryId,
+                            choiceArgs,
+                            prefetchedRegistryChoiceContext.choiceContext
+                        )
+                    }
+
+                    const { factoryId, choiceContext } =
+                        await this.fetchTransferFactoryChoiceContextV2(
+                            registryUrl,
+                            choiceArgs
+                        )
+
+                    return this.createTransferFromContextV2(
+                        factoryId,
+                        choiceArgs,
+                        choiceContext
+                    )
+                } catch (e) {
+                    // Metadata may advertise V2 before scan-proxy mounts OffLedger V2 routes.
+                    if (
+                        apiVersion === 'auto' &&
+                        !prefetchedRegistryChoiceContext &&
+                        isMissingOffLedgerEndpoint(e)
+                    ) {
+                        this.logger.warn(
+                            'V2 transfer factory unavailable; falling back to V1 for apiVersion=auto',
+                            e
+                        )
+                    } else {
+                        throw e
+                    }
+                }
+            }
+
             const choiceArgs = await this.buildTransferChoiceArgs(
                 sender,
                 receiver,
@@ -1000,7 +1468,19 @@ class TransferService {
                 choice: 'TransferInstruction_Accept',
                 choiceArgument: {
                     extraArgs: {
-                        context: choiceContext.choiceContextData,
+                        context: {
+                            ...(typeof choiceContext.choiceContextData ===
+                                'object' &&
+                            choiceContext.choiceContextData !== null
+                                ? choiceContext.choiceContextData
+                                : {}),
+                            values:
+                                (
+                                    choiceContext.choiceContextData as {
+                                        values?: Record<string, unknown>
+                                    } | null
+                                )?.values ?? {},
+                        },
                         meta: { values: {} },
                     },
                 },
@@ -1429,6 +1909,25 @@ export class TokenStandardService {
             symbol: instrument.symbol,
             registryUrl,
             admin: instrumentAdmin,
+            supportedApis: Object.fromEntries(
+                Object.entries(instrument.supportedApis ?? {}).map(([k, v]) => [
+                    k,
+                    String(v),
+                ])
+            ),
+            paused: instrument.paused ?? false,
+            ...(instrument.pauseInfo
+                ? { pauseInfo: instrument.pauseInfo }
+                : {}),
+            ...(instrument.showAccountInputFields !== undefined
+                ? { showAccountInputFields: instrument.showAccountInputFields }
+                : {}),
+            ...(instrument.accountInputFieldsToShow !== undefined
+                ? {
+                      accountInputFieldsToShow:
+                          instrument.accountInputFieldsToShow,
+                  }
+                : {}),
         }))
     }
 
@@ -1439,6 +1938,11 @@ export class TokenStandardService {
             symbol: string
             registryUrl: string
             admin: PartyId
+            supportedApis?: Record<string, string>
+            paused?: boolean
+            pauseInfo?: { reason?: string; until?: string }
+            showAccountInputFields?: boolean
+            accountInputFieldsToShow?: unknown
         }[] = []
         for (const registryUrl of registryUrls) {
             const instruments = await this.instrumentsToAsset(registryUrl)

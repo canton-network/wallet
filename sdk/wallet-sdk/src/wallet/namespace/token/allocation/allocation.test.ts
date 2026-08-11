@@ -10,7 +10,10 @@ import {
     AllocationContextParams,
     AllocationInstructionCreateParams,
 } from './types'
-import { ALLOCATION_REQUEST_INTERFACE_ID } from '@canton-network/core-token-standard'
+import {
+    ALLOCATION_REQUEST_INTERFACE_ID,
+    ALLOCATION_REQUEST_INTERFACE_ID_V2,
+} from '@canton-network/core-token-standard'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const { ctx, mockLogger } = mock
@@ -22,9 +25,15 @@ const mockTokenStandard = {
         createWithdrawAllocation: vi.fn(),
         createCancelAllocation: vi.fn(),
         createAllocationInstruction: vi.fn(),
+        createAllocationInstructionV2: vi.fn(),
         createWithdrawAllocationInstruction: vi.fn(),
         createRejectAllocationRequest: vi.fn(),
+        createRejectAllocationRequestV2: vi.fn(),
         createWithdrawAllocationRequest: vi.fn(),
+        createWithdrawAllocationRequestV2: vi.fn(),
+        createAcceptAllocationRequest: vi.fn(),
+        acceptAllocationRequestMultiSpec: vi.fn(),
+        createSettleBatch: vi.fn(),
         fetchExecuteTransferChoiceContext: vi.fn(),
         fetchWithdrawAllocationChoiceContext: vi.fn(),
         fetchCancelAllocationChoiceContext: vi.fn(),
@@ -234,10 +243,62 @@ describe('allocation namespace namespace', () => {
             spy.mockResolvedValue(pendingResponse)
             await allocation.request.pending('alice::abc')
 
-            expect(spy).toHaveBeenCalledExactlyOnceWith(
+            expect(spy).toHaveBeenCalledWith(
                 ALLOCATION_REQUEST_INTERFACE_ID,
                 'alice::abc'
             )
+            expect(spy).toHaveBeenCalledWith(
+                ALLOCATION_REQUEST_INTERFACE_ID_V2,
+                'alice::abc'
+            )
+            expect(spy).toHaveBeenCalledTimes(2)
+        })
+
+        it('should accept multi-spec allocation request', async () => {
+            const spy =
+                mockTokenStandard.allocation.acceptAllocationRequestMultiSpec
+            spy.mockResolvedValue([
+                [{ choice: 'Allocate' }, { choice: 'Accept' }],
+                [],
+            ])
+
+            const settlement = {
+                executors: ['alice::abc'],
+                id: 's1',
+                cid: null,
+                meta: { values: {} },
+            }
+            const result = await allocation.request.accept({
+                allocationRequestCid: 'req-cid',
+                actors: ['alice::abc'],
+                registryUrl: 'http://registry.com',
+                settlement,
+                allocations: [],
+                expectedAdmin: 'adminParty:123',
+            })
+
+            expect(spy).toHaveBeenCalledExactlyOnceWith({
+                allocationRequestCid: 'req-cid',
+                actors: ['alice::abc'],
+                registryUrl: 'http://registry.com/',
+                settlement,
+                allocations: [],
+                expectedAdmin: 'adminParty:123',
+                inputUtxos: undefined,
+                requestedAt: undefined,
+            })
+            expect(result[0]).toHaveLength(2)
+        })
+
+        it('should reject via V2 when actors is an array', async () => {
+            const spy =
+                mockTokenStandard.allocation.createRejectAllocationRequestV2
+            spy.mockResolvedValue(mockServiceResponse)
+            await allocation.request.reject({
+                allocationRequestCid: 'cid',
+                actors: ['alice::abc'],
+            })
+            expect(spy).toHaveBeenCalledExactlyOnceWith('cid', ['alice::abc'])
         })
     })
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { operator } from '../../common/operator'
-import { supportedApis } from './common'
+import { supportedApisDual } from './common'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 
@@ -14,6 +14,6 @@ export const getRegistryInfo: TExpressOpenApiRequestHandler<
 > = (_req, res) => {
     res.json({
         adminId: operator.party,
-        supportedApis,
+        supportedApis: supportedApisDual,
     })
 }

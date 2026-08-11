@@ -10,9 +10,69 @@
 Token Standard
 ==============
 
-The Wallet SDK support performing basic token standard operations, these are exposed through the `sdk.tokenStandard` a complete
-overview of the underlying integration can be found `here <https://docs.sync.global/app_dev/token_standard/index.html#>` and the CIP
-is defined `here <https://github.com/global-synchronizer-foundation/cips/blob/main/cip-0056/cip-0056.md>`.
+The Wallet SDK supports Canton Network Token Standard operations via ``sdk.token``.
+These cover both **CIP-0056 (V1)** and **CIP-0112 (V2)**.
+
+- CIP-0056: https://github.com/canton-foundation/cips/blob/main/cip-0056/cip-0056.md
+- CIP-0112: https://github.com/canton-foundation/cips/blob/main/cip-0112/cip-0112.md
+- Splice docs: https://docs.sync.global/app_dev/token_standard/index.html
+
+
+CIP-0112 API version selection
+------------------------------
+
+By default the SDK uses ``apiVersion: 'auto'``: prefer V2 OffLedger paths and
+V2 factory choices when the instrument advertises V2 packages in metadata
+``supportedApis``, otherwise fall back to V1. If metadata advertises V2 but the
+registry/scan-proxy returns 404 for the V2 factory, ``auto`` falls back to V1
+OffLedger as well (forced ``apiVersion: 'v2'`` still fails loudly).
+
+Force a major version when needed::
+
+    // TokenConfig default
+    token: { ..., apiVersion: 'auto' }
+
+    // Per transfer
+    await sdk.token.transfer.create({
+        ...,
+        apiVersion: 'v1', // or 'v2' | 'auto'
+    })
+
+V2 transfers use ``Account`` values; Party ids are accepted and converted with
+``basicAccount(party)`` (empty account id, no provider).
+
+Paused instruments and account input fields
+-------------------------------------------
+
+Instrument metadata may include ``paused`` / ``pauseInfo``. The SDK refuses to
+create transfers against paused instruments.
+
+``showAccountInputFields`` and ``accountInputFieldsToShow`` tell wallets whether
+to collect non-basic account provider / id fields.
+
+
+Batch settlement (SettleBatch)
+------------------------------
+
+CIP-0112 replaces V1 ``Allocation_ExecuteTransfer`` with
+``SettlementFactory_SettleBatch``. Use::
+
+    await sdk.token.allocation.settleBatch({
+        registryUrl,
+        settlement,
+        transferLegs,
+        allocations,
+        actors: [executorParty],
+    })
+
+``sdk.token.allocation.request.accept`` builds one ``AllocationFactory_Allocate``
+per specification, then ``AllocationRequest_Accept``, ideally in the same
+transaction (CIP-0112 Accept is a signal only).
+
+See ``examples/scripts/17-settle-batch.ts`` for mint → allocate V2 → SettleBatch
+e2e (against the example test-token registry; soft-skips if ``:5634`` is down)
+and ``19-cip112-paused-registry.ts`` for the paused-instrument guard.
+AllocationRequest creation still uses the trading-app OTC path in ``04``.
 
 
 How do i quickly perform a transfer between two parties?

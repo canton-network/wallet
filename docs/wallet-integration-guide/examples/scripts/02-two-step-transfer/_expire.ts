@@ -19,6 +19,7 @@ export default async (args: TransferTestScriptParameters) => {
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
             expirationDate,
             amount: '2000',
+            apiVersion: 'auto',
         })
 
     logger.info('Transfer command created, ready for signing and execution')

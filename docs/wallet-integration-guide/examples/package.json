@@ -27,6 +27,9 @@
         "run-14": "tsx ./scripts/14-offline-signing.ts | pino-pretty",
         "run-15": "tsx ./scripts/15-token-namespace-no-validator-url.ts | pino-pretty",
         "run-16": "tsx ./scripts/16-amulet-namespace-no-validator-url.ts | pino-pretty",
+        "run-17": "tsx ./scripts/17-settle-batch.ts | pino-pretty",
+        "run-18": "tsx ./scripts/18-cip112-solvency.ts | pino-pretty",
+        "run-19": "tsx ./scripts/19-cip112-paused-registry.ts | pino-pretty",
         "stress-run-01": "tsx ./scripts/stress/01-merge-utxos.ts | pino-pretty",
         "stress-run-02": "tsx ./scripts/stress/02-merge-utxos-delegate.ts | pino-pretty",
         "stress-run-03": "tsx ./scripts/stress/03-acs-cache.ts | pino-pretty"
@@ -45,6 +48,7 @@
         "@canton-network/core-ledger-client-types": "workspace:^",
         "@canton-network/core-ledger-proto": "workspace:^",
         "@canton-network/core-signing-lib": "workspace:^",
+        "@canton-network/core-token-standard": "workspace:^",
         "@canton-network/core-tx-parser": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",

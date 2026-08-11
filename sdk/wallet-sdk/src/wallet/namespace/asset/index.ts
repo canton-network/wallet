@@ -13,6 +13,11 @@ export type AssetBody = {
     symbol: string
     registryUrl: URL
     admin: PartyId
+    supportedApis?: Record<string, string>
+    paused?: boolean
+    pauseInfo?: { reason?: string; until?: string }
+    showAccountInputFields?: boolean
+    accountInputFieldsToShow?: unknown
 }
 
 export type AssetContext = {

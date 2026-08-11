@@ -13,3 +13,10 @@ export type TokenAllocation = Splice.Testing.Tokens.TestTokenV1.TokenAllocation
 export type TokenRules = Splice.Testing.Tokens.TestTokenV1.TokenRules
 export type TokenTransferOffer =
     Splice.Testing.Tokens.TestTokenV1.TokenTransferOffer
+
+export {
+    TestTokenV2,
+    TestTokenV2ID,
+    packageIdV2,
+    type TokenRulesV2,
+} from './token-v2.js'

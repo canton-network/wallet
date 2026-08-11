@@ -15,6 +15,7 @@ export type TokenNamespaceConfig = {
     registryUrls: ParsedURL[]
     validatorParty?: PartyId
     commonCtx: SDKContext
+    apiVersion?: import('@canton-network/core-token-standard').TokenApiVersionPreference
 }
 
 export class TokenNamespace {

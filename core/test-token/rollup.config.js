@@ -11,13 +11,20 @@ import fs from 'node:fs'
 import path from 'node:path'
 import dts from 'rollup-plugin-dts'
 
-const TEST_TOKEN_BASE = path.resolve(
+const TEST_TOKEN_V1_BASE = path.resolve(
     import.meta.dirname,
     '../../damljs/test-token-v1'
+)
+const TEST_TOKEN_V2_BASE = path.resolve(
+    import.meta.dirname,
+    '../../damljs/test-token-v2'
 )
 
 function buildDamlJsPackagesMap(baseDir) {
     const packages = {}
+    if (!fs.existsSync(baseDir)) {
+        return packages
+    }
     const entries = fs.readdirSync(baseDir, { withFileTypes: true })
 
     for (const entry of entries) {
@@ -47,13 +54,22 @@ function buildDamlJsPackagesMap(baseDir) {
     return packages
 }
 
-const DAML_JS_PACKAGES = buildDamlJsPackagesMap(TEST_TOKEN_BASE)
-const TEST_TOKEN_COMPAT_ALIAS = '@daml.js/test-token-v1'
-const TEST_TOKEN_CANONICAL_NAME = '@daml.js/splice-test-token-v1-1.0.0'
+const DAML_JS_PACKAGES = {
+    ...buildDamlJsPackagesMap(TEST_TOKEN_V1_BASE),
+    ...buildDamlJsPackagesMap(TEST_TOKEN_V2_BASE),
+}
+const TEST_TOKEN_V1_COMPAT_ALIAS = '@daml.js/test-token-v1'
+const TEST_TOKEN_V1_CANONICAL_NAME = '@daml.js/splice-test-token-v1-1.0.0'
+const TEST_TOKEN_V2_COMPAT_ALIAS = '@daml.js/test-token-v2'
+const TEST_TOKEN_V2_CANONICAL_NAME = '@daml.js/splice-test-token-v2-1.0.0'
 
-if (DAML_JS_PACKAGES[TEST_TOKEN_CANONICAL_NAME]) {
-    DAML_JS_PACKAGES[TEST_TOKEN_COMPAT_ALIAS] =
-        DAML_JS_PACKAGES[TEST_TOKEN_CANONICAL_NAME]
+if (DAML_JS_PACKAGES[TEST_TOKEN_V1_CANONICAL_NAME]) {
+    DAML_JS_PACKAGES[TEST_TOKEN_V1_COMPAT_ALIAS] =
+        DAML_JS_PACKAGES[TEST_TOKEN_V1_CANONICAL_NAME]
+}
+if (DAML_JS_PACKAGES[TEST_TOKEN_V2_CANONICAL_NAME]) {
+    DAML_JS_PACKAGES[TEST_TOKEN_V2_COMPAT_ALIAS] =
+        DAML_JS_PACKAGES[TEST_TOKEN_V2_CANONICAL_NAME]
 }
 
 function buildPathsMap(packageDirs) {

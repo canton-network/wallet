@@ -18,7 +18,7 @@
         }
     },
     "scripts": {
-        "build": "yarn generate:test-token && yarn clean && rollup -c && yarn clean:types-tmp",
+        "build": "yarn generate:test-token && yarn generate:test-token-v2 && yarn clean && rollup -c && yarn clean:types-tmp",
         "dev": "rollup -c -w",
         "clean:types-tmp": "rm -rf dist/types",
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
