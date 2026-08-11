@@ -23,7 +23,17 @@ export const TEST_TOKEN_V1_DAR_PATH = path.resolve(
     '../../../../damljs/splice-test-token-v1/.daml/dist/splice-test-token-v1-1.0.0.dar'
 )
 
+/** Fallback path to the DAR from the fetched localnet bundle. */
+export const TEST_TOKEN_V1_DAR_LOCALNET_PATH = path.resolve(
+    HERE,
+    '../../../../.localnet/dars/splice-test-token-v1-1.0.0.dar'
+)
+
 /** Reads the compiled `splice-test-token-v1` DAR and returns its bytes. */
-export function readTestTokenV1Dar(): Promise<Buffer> {
-    return readFile(TEST_TOKEN_V1_DAR_PATH)
+export async function readTestTokenV1Dar(): Promise<Buffer> {
+    try {
+        return await readFile(TEST_TOKEN_V1_DAR_PATH)
+    } catch {
+        return readFile(TEST_TOKEN_V1_DAR_LOCALNET_PATH)
+    }
 }
