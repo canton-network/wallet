@@ -1,4 +1,4 @@
-# Wallet Gateway
+# Wallet
 
 A TypeScript framework for building wallet integrations on the [Canton Network](https://www.canton.network/). It provides the **Wallet Gateway** (server and browser extension), the **dApp SDK**, the **Wallet SDK**, and a set of shared core modules.
 

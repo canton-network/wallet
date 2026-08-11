@@ -1435,7 +1435,8 @@
                         "description": "The origin belonging to the session."
                     },
                     "network": {
-                        "$ref": "#/components/schemas/Network"
+                        "$ref": "#/components/schemas/Network",
+                        "description": "Connected network metadata. Privileged credentials (adminAuth, serviceAccountAuth) are included only for the admin user."
                     },
                     "idp": {
                         "$ref": "#/components/schemas/Idp"

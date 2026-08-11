@@ -13,8 +13,9 @@ const LOCALNET_TOKEN_STANDARD_URL = new URL('http://localhost:5003')
 
 //scan proxy exposes the registry endpoints as well
 const LOCALNET_REGISTRY_API_URL = new URL(
-    LOCALNET_APP_VALIDATOR_URL.href + '/v0/scan-proxy'
+    LOCALNET_APP_VALIDATOR_URL + '/v0/scan-proxy'
 )
+
 const LOCALNET_USER_ID = 'ledger-api-user'
 
 export const localNetStaticConfig = {
