@@ -50,6 +50,7 @@ import { Env } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { securityHeaders } from './middleware/securityHeaders.js'
+import { errorHandler } from './middleware/errorHandler.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -442,6 +443,10 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     // register web handler
     web(app, server, userApiUrl, dappApiUrl)
+
+    // TODO maybe this should be put to middleswares bag narrowed by api prefix?
+    app.use(errorHandler(logger.child({ component: 'ErrorHandler' })))
+
     isReady = true
 
     logger.info(
