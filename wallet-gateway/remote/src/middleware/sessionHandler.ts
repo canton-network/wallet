@@ -3,6 +3,8 @@
 
 import type { Request, Response, NextFunction } from 'express'
 import { AuthAware } from '@canton-network/core-wallet-auth'
+import { providerErrors } from '@canton-network/core-rpc-errors'
+import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import { Logger } from 'pino'
 import { Store } from '@canton-network/core-wallet-store'
 
@@ -26,8 +28,10 @@ export function sessionHandler(
             logger.debug(
                 `Skipping authentication for ${req.method} request to ${req.baseUrl}`
             )
-            next()
-        } else if (
+            return next()
+        }
+
+        if (
             allowedMethods &&
             (allowedMethods.includes(req.body.method) ||
                 allowedMethods.includes('*'))
@@ -35,18 +39,37 @@ export function sessionHandler(
             logger.debug(
                 `Allowing unauthenticated access to ${req.baseUrl} for method ${req.body.method}`
             )
-            next()
-        } else {
-            logger.debug('Checking for active session for ' + context?.userId)
-            const session = await store
-                .withAuthContext(context)
-                .getSession(context?.accessToken || '')
-            if (!session) {
-                logger.debug('No active session found for ' + context?.userId)
-                res.status(401).json({ error: 'No active session found' })
-            } else {
-                next()
-            }
+            return next()
         }
+
+        const reqId = req.body?.id ?? null
+
+        if (!context?.accessToken) {
+            logger.debug('No access token provided for protected method')
+            return res.status(401).json(
+                jsonRpcResponse(reqId, {
+                    error: providerErrors.unauthorized({
+                        message: 'No active session found',
+                    }),
+                })
+            )
+        }
+
+        logger.debug('Checking for active session for ' + context.userId)
+        const session = await store
+            .withAuthContext(context)
+            .getSession(context.accessToken)
+        if (!session) {
+            logger.debug('No active session found for ' + context.userId)
+            return res.status(401).json(
+                jsonRpcResponse(reqId, {
+                    error: providerErrors.unauthorized({
+                        message: 'No active session found',
+                    }),
+                })
+            )
+        }
+
+        next()
     }
 }
