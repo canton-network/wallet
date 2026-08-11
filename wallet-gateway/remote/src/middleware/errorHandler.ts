@@ -36,7 +36,9 @@ export function errorHandler(
 
             if (err instanceof JsonRpcError) {
                 res.status(toHttpErrorCode(err.code)).json(
-                    jsonRpcResponse(id, { error: err })
+                    jsonRpcResponse(id, {
+                        error: { code: err.code, message: err.message },
+                    })
                 )
                 return
             }
@@ -44,7 +46,7 @@ export function errorHandler(
             res.status(500).json(
                 jsonRpcResponse(id, {
                     error: {
-                        ...rpcErrors.internal(),
+                        code: rpcErrors.internal().code,
                         message: 'Something went wrong',
                     },
                 })

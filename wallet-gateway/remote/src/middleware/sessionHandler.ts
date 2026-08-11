@@ -48,9 +48,10 @@ export function sessionHandler(
             logger.debug('No access token provided for protected method')
             return res.status(401).json(
                 jsonRpcResponse(reqId, {
-                    error: providerErrors.unauthorized({
+                    error: {
+                        code: providerErrors.unauthorized().code,
                         message: 'No active session found',
-                    }),
+                    },
                 })
             )
         }
@@ -63,9 +64,10 @@ export function sessionHandler(
             logger.debug('No active session found for ' + context.userId)
             return res.status(401).json(
                 jsonRpcResponse(reqId, {
-                    error: providerErrors.unauthorized({
+                    error: {
+                        code: providerErrors.unauthorized().code,
                         message: 'No active session found',
-                    }),
+                    },
                 })
             )
         }
