@@ -30,6 +30,7 @@ import BlockdaemonSigningProvider, {
 import SecurosysSigningProvider, {
     type TsbSignatureAlgorithm,
 } from '@canton-network/core-signing-securosys'
+import TaurusProtectSigningProvider from '@canton-network/core-signing-taurus-protect'
 import { jwtAuthService } from './auth/jwt-auth-service.js'
 import express from 'express'
 import { CliOptions } from './index.js'
@@ -361,6 +362,21 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     } else {
         logger.warn(
             'Dfns env vars not fully set — Dfns signing provider will be unavailable'
+        )
+    }
+
+    if (
+        Env.TAURUS_PROTECT_GATEWAY_URL() &&
+        Env.TAURUS_PROTECT_GATEWAY_TOKEN()
+    ) {
+        drivers[SigningProvider.TAURUS_PROTECT] =
+            new TaurusProtectSigningProvider({
+                baseUrl: Env.TAURUS_PROTECT_GATEWAY_URL()!,
+                token: Env.TAURUS_PROTECT_GATEWAY_TOKEN()!,
+            })
+    } else {
+        logger.warn(
+            'Taurus-PROTECT env vars not fully set — Taurus-PROTECT signing provider will be unavailable'
         )
     }
 

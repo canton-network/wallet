@@ -10,6 +10,7 @@ export enum SigningProvider {
     BLOCKDAEMON = 'blockdaemon',
     DFNS = 'dfns',
     SECUROSYS = 'securosys',
+    TAURUS_PROTECT = 'taurus-protect',
 }
 
 // Generic signing driver configuration schema

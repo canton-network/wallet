@@ -717,6 +717,42 @@ describe('WalletSyncService - multi-network features', () => {
             expect(syncNeeded).toBe(false)
         })
 
+        it('isWalletSyncNeeded should return false when a taurus-protect wallet has no party', async () => {
+            const network1 = createNetwork('network1')
+            await store.addNetwork(network1)
+            await setSession('network1')
+            const taurusWallet = createWallet('party1::namespace', 'network1')
+            taurusWallet.signingProviderId = SigningProvider.TAURUS_PROTECT
+            await store.addWallet(taurusWallet)
+            await store.addWallet(
+                createWallet(
+                    'party2::namespace',
+                    'network1',
+                    undefined,
+                    'allocated'
+                )
+            )
+
+            mockLedgerGet.mockResolvedValueOnce({
+                rights: [
+                    {
+                        kind: {
+                            CanActAs: {
+                                value: {
+                                    party: 'party2::namespace',
+                                },
+                            },
+                        },
+                    },
+                ],
+            })
+
+            const syncNeeded = await service.isWalletSyncNeeded()
+
+            // Hosted remotely: absence from local rights must not latch sync-needed.
+            expect(syncNeeded).toBe(false)
+        })
+
         it('syncWallets marks allocated wallet as initialized when party not on ledger', async () => {
             const network1 = createNetwork('network1')
             await store.addNetwork(network1)
@@ -903,6 +939,46 @@ describe('WalletSyncService - multi-network features', () => {
             expect(result.disabled.length).toBe(1)
             expect(result.added[0].partyId).toBe('party2::namespace')
             expect(result.disabled[0].partyId).toBe('party1::namespace')
+        })
+
+        it('syncWallets leaves taurus-protect wallet allocated when party not on ledger', async () => {
+            const network1 = createNetwork('network1')
+            await store.addNetwork(network1)
+            await setSession('network1')
+            const taurusWallet = createWallet('party1::namespace', 'network1')
+            taurusWallet.signingProviderId = SigningProvider.TAURUS_PROTECT
+            await store.addWallet(taurusWallet)
+
+            mockLedgerGet
+                .mockResolvedValueOnce({
+                    participantId: 'participant1::namespace',
+                })
+                .mockResolvedValueOnce({
+                    rights: [
+                        {
+                            kind: {
+                                CanActAs: {
+                                    value: { party: 'party2::namespace' },
+                                },
+                            },
+                        },
+                    ],
+                })
+
+            const updateWalletSpy = vi.spyOn(store, 'updateWallet')
+
+            const result = await service.syncWallets()
+
+            expect(updateWalletSpy).not.toHaveBeenCalled()
+            const wallets = await store.getWallets()
+            const party1Wallet = wallets.find(
+                (w) => w.partyId === 'party1::namespace'
+            )
+            expect(party1Wallet?.status).toBe('allocated')
+            expect(party1Wallet?.disabled).toBe(false)
+            expect(result.added.length).toBe(1)
+            expect(result.updated.length).toBe(0)
+            expect(result.disabled.length).toBe(0)
         })
 
         it('syncWallets reports proper changes while adding a wallet when there are disabled wallets', async () => {

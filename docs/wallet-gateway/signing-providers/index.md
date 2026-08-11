@@ -40,7 +40,7 @@ This provider is always available and requires no additional configuration. You 
 **Security Considerations:**
 
 > [!IMPORTANT]
-> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon, Securosys) when the User API is exposed in production.
+> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon, Securosys, Taurus-PROTECT) when the User API is exposed in production.
 
 **How it Works:**
 
@@ -136,6 +136,32 @@ Set the following environment variables:
 - Environments already using Securosys TSB / CloudHSM
 - High-security production environments
 
+## Taurus-PROTECT
+
+Taurus-PROTECT provides custody-grade key management and governance for Canton parties. Unlike the sign-only providers, it is a **submit** provider: its Canton gateway prepares, signs (ECDSA P-256) and submits each CIP-103 command against its own validator under Taurus governance, while the Wallet Gateway forwards commands and tracks their status. Parties are provisioned in Taurus-PROTECT and imported by the Wallet Gateway rather than allocated.
+
+**Setup:**
+
+See the [Taurus-PROTECT signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-taurus-protect) for driver details, the submission model, status mapping, and known gateway limitations.
+
+**Configuration:**
+
+Set the following environment variables:
+
+- `TAURUS_PROTECT_GATEWAY_URL` - Base URL of the Taurus-PROTECT Canton gateway JSON-RPC endpoint
+- `TAURUS_PROTECT_GATEWAY_TOKEN` - Bearer api-key for that gateway
+
+**Use Cases:**
+
+- Enterprise deployments where parties are custodied in Taurus-PROTECT
+- Governance-controlled signing with approval workflows
+- High-security production environments
+
+**Security Considerations:**
+
+> [!IMPORTANT]
+> The driver is single-tenant by design: one machine bearer token serves every Wallet Gateway user, so any authenticated user can list and import every party in the Taurus-PROTECT tenant, and submissions are not attributed to individual Wallet Gateway users. Deploy only where all Wallet Gateway users are equally trusted with every party in the tenant.
+
 ## Selecting a Provider
 
 When creating a new party through the User API or web UI, you can select which signing provider to use. The choice depends on your security requirements, infrastructure setup, and compliance needs.
@@ -143,7 +169,7 @@ When creating a new party through the User API or web UI, you can select which s
 **Recommendations:**
 
 - **Development/Testing**: Use Wallet Gateway (internal) or Participant-based signing
-- **Production (User API accessible)**: Use Fireblocks, Dfns, Blockdaemon, or Securosys
+- **Production (User API accessible)**: Use Fireblocks, Dfns, Blockdaemon, Securosys, or Taurus-PROTECT
 - **Production (operator-controlled, User API restricted)**: Participant-based signing may be appropriate when wallet creation is limited to trusted operators
 
 The signing provider is selected per-party, so you can have different parties using different providers within the same Gateway instance.
@@ -158,6 +184,7 @@ Each provider handles key management differently:
 - **Blockdaemon**: Keys are managed by Blockdaemon's infrastructure
 - **Dfns**: Keys are managed by Dfns' secure infrastructure
 - **Securosys**: Keys are managed by Securosys TSB (HSM-backed)
+- **Taurus-PROTECT**: Keys are managed by Taurus-PROTECT; parties are hosted there and the platform signs and submits on their behalf
 
 When migrating between providers, keys cannot be directly transferred. You'll need to:
 

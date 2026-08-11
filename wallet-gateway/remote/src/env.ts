@@ -33,6 +33,10 @@ export class Env {
     static DFNS_CRED_ID = () => Env.get('DFNS_CRED_ID')
     static DFNS_PRIVATE_KEY = () => Env.get('DFNS_PRIVATE_KEY')
     static DFNS_AUTH_TOKEN = () => Env.get('DFNS_AUTH_TOKEN')
+    static TAURUS_PROTECT_GATEWAY_URL = () =>
+        Env.get('TAURUS_PROTECT_GATEWAY_URL')
+    static TAURUS_PROTECT_GATEWAY_TOKEN = () =>
+        Env.get('TAURUS_PROTECT_GATEWAY_TOKEN')
 
     static get(
         key: string,

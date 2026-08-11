@@ -49,6 +49,7 @@
         "@canton-network/core-signing-participant": "workspace:^",
         "@canton-network/core-signing-securosys": "workspace:^",
         "@canton-network/core-signing-store-sql": "workspace:^",
+        "@canton-network/core-signing-taurus-protect": "workspace:^",
         "@canton-network/core-tx-visualizer": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",

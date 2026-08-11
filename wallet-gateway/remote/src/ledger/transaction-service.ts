@@ -108,6 +108,13 @@ export class TransactionService {
                     signParams
                 )
             }
+            case SigningProvider.TAURUS_PROTECT: {
+                return this.signWithTaurusProtect(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
             default:
                 throw new Error(
                     `Unsupported signing provider: ${wallet.signingProviderId}`
@@ -180,6 +187,9 @@ export class TransactionService {
                     transaction,
                     ledgerClient
                 )
+            }
+            case SigningProvider.TAURUS_PROTECT: {
+                return this.executeWithSubmitProvider(userId, transaction)
             }
             default:
                 throw new Error(
@@ -809,6 +819,139 @@ export class TransactionService {
         }
     }
 
+    /** Gateway signs and submits the CIP-103 command; forward on first call, re-poll after, terminal only once `executed` carries the updateId. */
+    private async signWithTaurusProtect(
+        userId: UserId,
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResult> {
+        const signingProvider =
+            this.signingDrivers[SigningProvider.TAURUS_PROTECT]
+        if (!signingProvider) {
+            throw new Error('Taurus-PROTECT signing driver not available')
+        }
+        const driver = signingProvider.controller(userId)
+
+        const tx = await this.loadPreparedTransactionForSigning(
+            signParams.transactionId
+        )
+
+        let signingResult: Exclude<
+            GetTransactionResult | SignTransactionResult,
+            SigningError
+        >
+        let requestId: string
+        if (tx.externalTxId) {
+            // Already submitted — re-poll (requestId lets the RPC fallback work after restart).
+            signingResult = await driver
+                .getTransaction({
+                    txId: tx.commandId,
+                    requestId: tx.externalTxId,
+                })
+                .then(handleSigningError)
+            requestId = tx.externalTxId
+        } else {
+            // Only what the gateway consumes; disclosedContracts, readAs and
+            // packageIdSelectionPreference are inert there and already ride
+            // inside the prepared transaction.
+            const payload = (tx.payload ?? {}) as PrepareParams
+            const command = JSON.stringify({
+                commands: payload.commands,
+                actAs: payload.actAs?.length ? payload.actAs : [wallet.partyId],
+                commandId: tx.commandId,
+                preparedTransaction: tx.preparedTransaction,
+            })
+            signingResult = await driver
+                .signTransaction({
+                    tx: command,
+                    txHash: tx.preparedTransactionHash,
+                    keyIdentifier: {
+                        id: wallet.partyId,
+                        publicKey: wallet.publicKey,
+                    },
+                })
+                .then(handleSigningError)
+            // txId is the commandId here; persisting it would strand the row.
+            const returned = signingResult.metadata?.requestId as
+                string | undefined
+            if (!returned) {
+                throw new Error(
+                    'Taurus-PROTECT gateway accepted the command without returning a requestId'
+                )
+            }
+            requestId = returned
+        }
+
+        const gatewayStatus =
+            (signingResult.metadata?.gatewayStatus as string | undefined) ??
+            signingResult.status
+        // Only a real ledger updateId; the requestId is not one, and the
+        // gateway can report `executed` before the updateId is observable.
+        const updateId = signingResult.metadata?.updateId as string | undefined
+        const now = new Date()
+
+        logDynamically(this.logger, 'Taurus-PROTECT signing result', {
+            info: { transactionId: tx.id, status: gatewayStatus },
+            debug: { signingResult, tx },
+        })
+
+        if (gatewayStatus === 'executed' && updateId) {
+            const signedTx: Transaction = {
+                id: tx.id,
+                commandId: tx.commandId,
+                status: 'signed',
+                preparedTransaction: tx.preparedTransaction,
+                preparedTransactionHash: tx.preparedTransactionHash,
+                origin: tx?.origin ?? null,
+                ...(tx?.createdAt && { createdAt: tx.createdAt }),
+                signedAt: now,
+                externalTxId: requestId,
+            }
+            await this.store.setTransactionSigned(tx.id, now, requestId)
+            this.notifier.emit('txChanged', signedTx)
+
+            return {
+                status: 'signed',
+                signature: updateId,
+                signedBy: wallet.namespace,
+                partyId: wallet.partyId,
+                externalTxId: requestId,
+            }
+        }
+
+        // pending / signed (in-flight under governance), executed before the
+        // updateId is observable, or failed.
+        const status: 'pending' | 'failed' =
+            gatewayStatus === 'failed' ? 'failed' : 'pending'
+        const pendingTx: Transaction = {
+            id: tx.id,
+            commandId: tx.commandId,
+            status,
+            preparedTransaction: tx.preparedTransaction,
+            preparedTransactionHash: tx.preparedTransactionHash,
+            origin: tx?.origin ?? null,
+            ...(tx?.createdAt && { createdAt: tx.createdAt }),
+            externalTxId: requestId,
+        }
+        await this.store.setTransactionStatus(tx.id, status, {
+            externalTxId: requestId,
+        })
+        this.notifier.emit('txChanged', pendingTx)
+
+        if (status === 'failed') {
+            return {
+                status: 'failed',
+                partyId: wallet.partyId,
+                externalTxId: requestId,
+            }
+        }
+        return {
+            status: 'pending',
+            partyId: wallet.partyId,
+            externalTxId: requestId,
+        }
+    }
+
     private async executeWithParticipant(
         userId: UserId,
         executeParams: ExecuteParams,
@@ -925,5 +1068,93 @@ export class TransactionService {
         this.notifier.emit('txChanged', executedTx)
 
         return result
+    }
+
+    /**
+     * Reconcile the stored tx against the provider's status; the provider
+     * already submitted, so this never posts to the ledger. Callers poll
+     * repeatedly: the row stays 'signed' and pollable until `executed`
+     * carries the updateId, then persists terminal.
+     */
+    private async executeWithSubmitProvider(
+        userId: UserId,
+        transaction: Transaction
+    ): Promise<ExecuteResult> {
+        const signingProvider =
+            this.signingDrivers[SigningProvider.TAURUS_PROTECT]
+        if (!signingProvider) {
+            throw new Error('Taurus-PROTECT signing driver not available')
+        }
+        const driver = signingProvider.controller(userId)
+
+        const result = await driver
+            .getTransaction({
+                txId: transaction.commandId,
+                ...(transaction.externalTxId && {
+                    requestId: transaction.externalTxId,
+                }),
+            })
+            .then(handleSigningError)
+
+        const gatewayStatus =
+            (result.metadata?.gatewayStatus as string | undefined) ??
+            result.status
+        // Only a real ledger id: callers resolve this against the ledger.
+        const updateId = result.metadata?.updateId as string | undefined
+        const contractId = result.metadata?.contractId as string | undefined
+
+        const status =
+            gatewayStatus === 'executed' && updateId
+                ? 'executed'
+                : gatewayStatus === 'failed'
+                  ? 'failed'
+                  : 'pending'
+
+        logDynamically(this.logger, 'Taurus-PROTECT execution result', {
+            info: { transactionId: transaction.id, status },
+            debug: { result, transaction, userId },
+        })
+
+        // Leave the row 'signed': demoting it fails the guard on the next
+        // poll, and `executed` without the updateId is not yet complete.
+        if (status === 'pending') {
+            return { status }
+        }
+
+        // The gateway never reports a real offset, hence 0; omitted on
+        // failure so the stored payload survives.
+        const resultPayload =
+            status === 'executed'
+                ? { updateId, completionOffset: 0 }
+                : undefined
+        const reconciledTx: Transaction = {
+            id: transaction.id,
+            commandId: transaction.commandId,
+            status,
+            preparedTransaction: transaction.preparedTransaction,
+            preparedTransactionHash: transaction.preparedTransactionHash,
+            // TxChangedExecutedEvent requires payload.
+            ...(resultPayload && { payload: resultPayload }),
+            origin: transaction.origin ?? null,
+            ...(transaction.createdAt && { createdAt: transaction.createdAt }),
+            ...(transaction.signedAt && { signedAt: transaction.signedAt }),
+            ...(transaction.externalTxId && {
+                externalTxId: transaction.externalTxId,
+            }),
+        }
+        // Persisted so a history reload needn't re-poll the gateway.
+        await this.store.setTransactionStatus(transaction.id, status, {
+            ...(resultPayload && { payload: resultPayload }),
+            ...(transaction.externalTxId && {
+                externalTxId: transaction.externalTxId,
+            }),
+        })
+        this.notifier.emit('txChanged', reconciledTx)
+
+        return {
+            status,
+            ...(updateId && { updateId }),
+            ...(contractId && { contractId }),
+        }
     }
 }

@@ -63,6 +63,20 @@ const executedTransaction: Transaction = {
     status: 'executed',
 }
 
+const taurusCommands = [{ CreateCommand: { templateId: 'pkg:Mod:Ent' } }]
+
+// Taurus-PROTECT forwards the stored payload as a CIP-103 command, so it needs one.
+const taurusPendingTransaction: Transaction = {
+    ...pendingTransaction,
+    payload: { commands: taurusCommands },
+}
+
+// Same row after the gateway accepted the submission and handed back a requestId.
+const taurusInFlightTransaction: Transaction = {
+    ...taurusPendingTransaction,
+    externalTxId: 'tp-request-1',
+}
+
 const signParams = {
     transactionId: pendingTransaction.id,
     partyId: wallet.partyId,
@@ -93,6 +107,8 @@ const network: Network = {
 function walletWithProvider(signingProviderId: SigningProvider): Wallet {
     return { ...wallet, signingProviderId }
 }
+
+const taurusWallet = walletWithProvider(SigningProvider.TAURUS_PROTECT)
 
 function createDriver(options: {
     signTransaction?: ReturnType<typeof vi.fn>
@@ -529,6 +545,238 @@ describe('TransactionService', () => {
             })
         })
 
+        describe('taurus-protect', () => {
+            it('forwards the CIP-103 command and persists pending on first submission', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    txId: taurusPendingTransaction.commandId,
+                    status: 'pending',
+                    metadata: {
+                        gatewayStatus: 'pending',
+                        requestId: 'tp-request-1',
+                    },
+                })
+                const getTransaction = vi.fn()
+                const store = createStore(taurusPendingTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            signTransaction,
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    taurusWallet,
+                    signParams
+                )
+
+                expect(getTransaction).not.toHaveBeenCalled()
+                const [signArgs] = signTransaction.mock.calls[0]
+                expect(JSON.parse(signArgs.tx)).toEqual({
+                    commands: taurusCommands,
+                    actAs: [wallet.partyId],
+                    commandId: taurusPendingTransaction.commandId,
+                    preparedTransaction:
+                        taurusPendingTransaction.preparedTransaction,
+                })
+                expect(signArgs.keyIdentifier).toEqual({
+                    id: wallet.partyId,
+                    publicKey: wallet.publicKey,
+                })
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    taurusPendingTransaction.id,
+                    'pending',
+                    { externalTxId: 'tp-request-1' }
+                )
+                expect(result).toEqual({
+                    status: 'pending',
+                    partyId: wallet.partyId,
+                    externalTxId: 'tp-request-1',
+                })
+            })
+
+            it('re-polls instead of resubmitting once an externalTxId is stored', async () => {
+                const signTransaction = vi.fn()
+                const getTransaction = vi.fn().mockResolvedValue({
+                    txId: taurusPendingTransaction.commandId,
+                    status: 'pending',
+                    metadata: { gatewayStatus: 'pending' },
+                })
+                const store = createStore(taurusInFlightTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            signTransaction,
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    taurusWallet,
+                    signParams
+                )
+
+                expect(signTransaction).not.toHaveBeenCalled()
+                expect(getTransaction).toHaveBeenCalledWith({
+                    txId: taurusPendingTransaction.commandId,
+                    requestId: 'tp-request-1',
+                })
+                expect(result).toEqual({
+                    status: 'pending',
+                    partyId: wallet.partyId,
+                    externalTxId: 'tp-request-1',
+                })
+            })
+
+            it('marks the transaction signed once the gateway reports executed', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    txId: taurusPendingTransaction.commandId,
+                    status: 'signed',
+                    metadata: {
+                        gatewayStatus: 'executed',
+                        updateId: 'tp-update-1',
+                    },
+                })
+                const store = createStore(taurusInFlightTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    taurusWallet,
+                    signParams
+                )
+
+                expect(store.setTransactionSigned).toHaveBeenCalledWith(
+                    taurusPendingTransaction.id,
+                    expect.any(Date),
+                    'tp-request-1'
+                )
+                // The gateway submits, so the ledger updateId stands in for the signature.
+                expect(result).toEqual({
+                    status: 'signed',
+                    signature: 'tp-update-1',
+                    signedBy: wallet.namespace,
+                    partyId: wallet.partyId,
+                    externalTxId: 'tp-request-1',
+                })
+            })
+
+            it('keeps the transaction pending when the gateway reports executed before the updateId', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    txId: taurusPendingTransaction.commandId,
+                    status: 'signed',
+                    metadata: { gatewayStatus: 'executed' },
+                })
+                const store = createStore(taurusInFlightTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    taurusWallet,
+                    signParams
+                )
+
+                expect(store.setTransactionSigned).not.toHaveBeenCalled()
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    taurusPendingTransaction.id,
+                    'pending',
+                    { externalTxId: 'tp-request-1' }
+                )
+                expect(emit).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.objectContaining({
+                        id: taurusPendingTransaction.id,
+                        status: 'pending',
+                    })
+                )
+                expect(result).toEqual({
+                    status: 'pending',
+                    partyId: wallet.partyId,
+                    externalTxId: 'tp-request-1',
+                })
+            })
+
+            it('marks the transaction failed when the gateway reports failed', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    txId: taurusPendingTransaction.commandId,
+                    status: 'failed',
+                    metadata: { gatewayStatus: 'failed' },
+                })
+                const store = createStore(taurusInFlightTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    taurusWallet,
+                    signParams
+                )
+
+                expect(store.setTransactionSigned).not.toHaveBeenCalled()
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    taurusPendingTransaction.id,
+                    'failed',
+                    { externalTxId: 'tp-request-1' }
+                )
+                expect(result).toEqual({
+                    status: 'failed',
+                    partyId: wallet.partyId,
+                    externalTxId: 'tp-request-1',
+                })
+            })
+
+            it('throws when the Taurus-PROTECT driver is not registered', async () => {
+                const service = createService(
+                    createStore(taurusPendingTransaction),
+                    {},
+                    notifier,
+                    logger
+                )
+
+                await expect(
+                    service.sign(authContext, taurusWallet, signParams)
+                ).rejects.toThrow(
+                    `No driver found for ${SigningProvider.TAURUS_PROTECT}`
+                )
+            })
+        })
+
         it.each([
             {
                 name: 'participant',
@@ -558,6 +806,11 @@ describe('TransactionService', () => {
             {
                 name: 'securosys',
                 provider: SigningProvider.SECUROSYS,
+                auth: authContext,
+            },
+            {
+                name: 'taurus-protect',
+                provider: SigningProvider.TAURUS_PROTECT,
                 auth: authContext,
             },
         ])(
@@ -715,6 +968,220 @@ describe('TransactionService', () => {
                     expect(result).toEqual({ updateId: 'external-update-1' })
                 }
             )
+        })
+
+        describe('taurus-protect', () => {
+            it('reconciles the gateway status without posting to the ledger', async () => {
+                const signedTaurusTransaction = {
+                    ...taurusInFlightTransaction,
+                    status: 'signed' as const,
+                }
+                const getTransaction = vi.fn().mockResolvedValue({
+                    txId: signedTaurusTransaction.commandId,
+                    status: 'signed',
+                    metadata: {
+                        gatewayStatus: 'executed',
+                        updateId: 'tp-update-1',
+                        contractId: 'tp-contract-1',
+                    },
+                })
+                const store = createStore(signedTaurusTransaction)
+                const postWithRetry = vi.fn()
+                const ledgerClient = {
+                    postWithRetry,
+                } as unknown as LedgerClient
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.execute(
+                    authContext.userId,
+                    taurusWallet,
+                    signedTaurusTransaction,
+                    executeParams,
+                    ledgerClient,
+                    network
+                )
+
+                // The gateway already submitted — executing must never re-post the command.
+                expect(postWithRetry).not.toHaveBeenCalled()
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    signedTaurusTransaction.id,
+                    'executed',
+                    {
+                        payload: {
+                            updateId: 'tp-update-1',
+                            completionOffset: 0,
+                        },
+                        externalTxId: 'tp-request-1',
+                    }
+                )
+                expect(emit).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.objectContaining({
+                        id: signedTaurusTransaction.id,
+                        status: 'executed',
+                    })
+                )
+                expect(result).toEqual({
+                    status: 'executed',
+                    updateId: 'tp-update-1',
+                    contractId: 'tp-contract-1',
+                })
+            })
+
+            it('leaves the signed row untouched while the gateway is still processing', async () => {
+                const signedTaurusTransaction = {
+                    ...taurusInFlightTransaction,
+                    status: 'signed' as const,
+                }
+                const getTransaction = vi.fn().mockResolvedValue({
+                    txId: signedTaurusTransaction.commandId,
+                    status: 'pending',
+                    metadata: { gatewayStatus: 'pending' },
+                })
+                const store = createStore(signedTaurusTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.execute(
+                    authContext.userId,
+                    taurusWallet,
+                    signedTaurusTransaction,
+                    executeParams
+                )
+
+                // Demoting 'signed' would fail the guard on the next execute poll.
+                expect(store.setTransactionStatus).not.toHaveBeenCalled()
+                // The requestId is not an updateId, so none is reported.
+                expect(result).toEqual({ status: 'pending' })
+            })
+
+            it('re-polls to completion after an executed status with no updateId yet', async () => {
+                const signedTaurusTransaction = {
+                    ...taurusInFlightTransaction,
+                    status: 'signed' as const,
+                }
+                const getTransaction = vi
+                    .fn()
+                    .mockResolvedValueOnce({
+                        txId: signedTaurusTransaction.commandId,
+                        status: 'signed',
+                        metadata: {
+                            gatewayStatus: 'executed',
+                            contractId: 'c1',
+                        },
+                    })
+                    .mockResolvedValueOnce({
+                        txId: signedTaurusTransaction.commandId,
+                        status: 'signed',
+                        metadata: {
+                            gatewayStatus: 'executed',
+                            contractId: 'c1',
+                            updateId: 'u1',
+                        },
+                    })
+                const store = createStore(signedTaurusTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const first = await service.execute(
+                    authContext.userId,
+                    taurusWallet,
+                    signedTaurusTransaction,
+                    executeParams
+                )
+                // Not complete yet: the row must stay 'signed' and pollable.
+                expect(first).toEqual({ status: 'pending' })
+                expect(store.setTransactionStatus).not.toHaveBeenCalled()
+                expect(emit).not.toHaveBeenCalled()
+
+                const second = await service.execute(
+                    authContext.userId,
+                    taurusWallet,
+                    signedTaurusTransaction,
+                    executeParams
+                )
+                expect(second).toEqual({
+                    status: 'executed',
+                    updateId: 'u1',
+                    contractId: 'c1',
+                })
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    signedTaurusTransaction.id,
+                    'executed',
+                    {
+                        payload: { updateId: 'u1', completionOffset: 0 },
+                        externalTxId: 'tp-request-1',
+                    }
+                )
+            })
+
+            it('emits an executed txChanged carrying a payload', async () => {
+                const signedTaurusTransaction = {
+                    ...taurusInFlightTransaction,
+                    status: 'signed' as const,
+                }
+                const getTransaction = vi.fn().mockResolvedValue({
+                    txId: signedTaurusTransaction.commandId,
+                    status: 'signed',
+                    metadata: {
+                        gatewayStatus: 'executed',
+                        updateId: 'u1',
+                        contractId: 'c1',
+                    },
+                })
+                const store = createStore(signedTaurusTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.TAURUS_PROTECT]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                await service.execute(
+                    authContext.userId,
+                    taurusWallet,
+                    signedTaurusTransaction,
+                    executeParams
+                )
+
+                // TxChangedExecutedEvent requires payload.
+                expect(notifier.emit).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.objectContaining({
+                        status: 'executed',
+                        payload: { updateId: 'u1', completionOffset: 0 },
+                    })
+                )
+            })
         })
     })
 

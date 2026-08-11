@@ -20,6 +20,7 @@ import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet
 import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.js'
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
 import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
+import { TaurusProtectWalletAllocator } from './signing-providers/taurus-protect-wallet-allocator.js'
 
 export interface WalletAllocator {
     createWallet(
@@ -44,6 +45,7 @@ export class WalletAllocationService {
     private readonly blockdaemonAllocator?: BlockdaemonWalletAllocator
     private readonly dfnsAllocator?: DfnsWalletAllocator
     private readonly securosysAllocator?: SecurosysWalletAllocator
+    private readonly taurusProtectAllocator?: TaurusProtectWalletAllocator
 
     constructor(
         store: Store,
@@ -106,6 +108,16 @@ export class WalletAllocationService {
                 logger,
                 partyAllocator,
                 securosysDriver
+            )
+        }
+
+        const taurusProtectDriver =
+            signingDrivers[SigningProvider.TAURUS_PROTECT]
+        if (taurusProtectDriver) {
+            this.taurusProtectAllocator = new TaurusProtectWalletAllocator(
+                store,
+                logger,
+                taurusProtectDriver
             )
         }
     }
@@ -188,6 +200,20 @@ export class WalletAllocationService {
                     partyHint,
                     primary
                 )
+            case SigningProvider.TAURUS_PROTECT:
+                if (!this.taurusProtectAllocator) {
+                    throw new Error(
+                        'Taurus-PROTECT signing driver not available'
+                    )
+                }
+                // vaultName is optional here: the M2M path has no picker and selects by partyHint.
+                return this.taurusProtectAllocator.createWallet(
+                    authContext.userId,
+                    authContext.email,
+                    partyHint,
+                    primary,
+                    vaultName
+                )
             default:
                 throw new Error(
                     `Unsupported signing provider: ${signingProviderId}`
@@ -259,6 +285,17 @@ export class WalletAllocationService {
                     authContext.email,
                     existingWallet
                 )
+            case SigningProvider.TAURUS_PROTECT:
+                if (!this.taurusProtectAllocator) {
+                    throw new Error(
+                        'Taurus-PROTECT signing driver not available'
+                    )
+                }
+                return this.taurusProtectAllocator.allocateParty(
+                    authContext.userId,
+                    authContext.email,
+                    existingWallet
+                )
             default:
                 throw new Error(
                     `Unsupported signing provider: ${signingProviderId}`
@@ -276,6 +313,13 @@ export class WalletAllocationService {
                     throw new Error('Fireblocks signing driver not available')
                 }
                 return this.fireblocksAllocator.getVaults(authContext.userId)
+            case SigningProvider.TAURUS_PROTECT:
+                if (!this.taurusProtectAllocator) {
+                    throw new Error(
+                        'Taurus-PROTECT signing driver not available'
+                    )
+                }
+                return this.taurusProtectAllocator.getVaults(authContext.userId)
             default:
                 throw new Error(
                     `Signing provider ${signingProviderId} does not support listing vaults`

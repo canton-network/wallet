@@ -258,6 +258,42 @@ function createSecurosysDriver(options: {
     } as unknown as SigningDriverInterface
 }
 
+function createTaurusProtectDriver(options: {
+    getKeysResult?:
+        | {
+              keys: Array<{
+                  id: string
+                  name: string
+                  publicKey: string
+              }>
+          }
+        | { error: string; error_description: string }
+}): SigningDriverInterface {
+    const getKeysResult = options.getKeysResult ?? {
+        keys: [
+            { id: 'alice::tp-namespace', name: 'alice', publicKey: 'tp-pk' },
+        ],
+    }
+    return {
+        controller: vi.fn().mockReturnValue({
+            getKeys: vi
+                .fn<
+                    () => Promise<
+                        | {
+                              keys: Array<{
+                                  id: string
+                                  name: string
+                                  publicKey: string
+                              }>
+                          }
+                        | { error: string; error_description: string }
+                    >
+                >()
+                .mockResolvedValue(getKeysResult),
+        }),
+    } as unknown as SigningDriverInterface
+}
+
 describe('WalletAllocationService', () => {
     let mockLogger: Logger
     let mockStore: {
@@ -1653,6 +1689,243 @@ describe('WalletAllocationService', () => {
                 partyId: 'alice::namespace',
                 status: 'allocated',
                 reason: '',
+            })
+        })
+    })
+
+    describe('Taurus-PROTECT', () => {
+        it('throws when Taurus-PROTECT signing driver not available', async () => {
+            const serviceWithoutTaurus = createService({})
+
+            await expect(
+                serviceWithoutTaurus.createWallet(
+                    authContext,
+                    'alice',
+                    false,
+                    SigningProvider.TAURUS_PROTECT
+                )
+            ).rejects.toThrow('Taurus-PROTECT signing driver not available')
+        })
+
+        it('createWallet imports the party matching the hint', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({
+                    getKeysResult: {
+                        keys: [
+                            {
+                                id: 'alice::tp-namespace',
+                                name: 'alice',
+                                publicKey: 'tp-pk-a',
+                            },
+                            {
+                                id: 'bob::tp-namespace',
+                                name: 'bob',
+                                publicKey: 'tp-pk-b',
+                            },
+                        ],
+                    },
+                }),
+            })
+
+            const result = await serviceWithTaurus.createWallet(
+                authContext,
+                'bob',
+                false,
+                SigningProvider.TAURUS_PROTECT
+            )
+
+            // Externally hosted: allocated straight away, no topology transaction.
+            expect(result.status).toBe('allocated')
+            expect(result.partyId).toBe('bob::tp-namespace')
+            expect(result.namespace).toBe('tp-namespace')
+            expect(result.publicKey).toBe('tp-pk-b')
+            expect(result.topologyTransactions).toBe('')
+            expect(mockStore.addWallet).toHaveBeenCalled()
+        })
+
+        it('createWallet selects by vaultName over partyHint', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({
+                    getKeysResult: {
+                        keys: [
+                            {
+                                id: 'alice::tp-namespace',
+                                name: 'alice',
+                                publicKey: 'tp-pk-a',
+                            },
+                            {
+                                id: 'bob::tp-namespace',
+                                name: 'bob',
+                                publicKey: 'tp-pk-b',
+                            },
+                        ],
+                    },
+                }),
+            })
+
+            const result = await serviceWithTaurus.createWallet(
+                authContext,
+                'alice',
+                false,
+                SigningProvider.TAURUS_PROTECT,
+                'bob'
+            )
+
+            expect(result.partyId).toBe('bob::tp-namespace')
+            // hint is still what the wallet records, vaultName only drives selection
+            expect(result.hint).toBe('alice')
+        })
+
+        it('createWallet throws rather than bind the sole party to a hint it does not match', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({
+                    getKeysResult: {
+                        keys: [
+                            {
+                                id: 'alice::tp-namespace',
+                                name: 'some-other-prefix',
+                                publicKey: 'tp-pk-a',
+                            },
+                        ],
+                    },
+                }),
+            })
+
+            await expect(
+                serviceWithTaurus.createWallet(
+                    authContext,
+                    'alice',
+                    false,
+                    SigningProvider.TAURUS_PROTECT
+                )
+            ).rejects.toThrow(/No Taurus-PROTECT party found for hint "alice"/)
+        })
+
+        it('createWallet throws when two parties share the selected prefix', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({
+                    getKeysResult: {
+                        keys: [
+                            {
+                                id: 'alice::ns-a',
+                                name: 'alice',
+                                publicKey: 'tp-pk-a',
+                            },
+                            {
+                                id: 'alice::ns-b',
+                                name: 'alice',
+                                publicKey: 'tp-pk-b',
+                            },
+                        ],
+                    },
+                }),
+            })
+
+            await expect(
+                serviceWithTaurus.createWallet(
+                    authContext,
+                    'alice',
+                    false,
+                    SigningProvider.TAURUS_PROTECT
+                )
+            ).rejects.toThrow(/Ambiguous.*alice::ns-a, alice::ns-b/)
+        })
+
+        it('createWallet throws when an explicit vaultName matches nothing', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({
+                    getKeysResult: {
+                        keys: [
+                            {
+                                id: 'alice::tp-namespace',
+                                name: 'alice',
+                                publicKey: 'tp-pk-a',
+                            },
+                        ],
+                    },
+                }),
+            })
+
+            await expect(
+                serviceWithTaurus.createWallet(
+                    authContext,
+                    'alice',
+                    false,
+                    SigningProvider.TAURUS_PROTECT,
+                    'missing-party'
+                )
+            ).rejects.toThrow(
+                'No Taurus-PROTECT party found for vault "missing-party"'
+            )
+        })
+
+        it('createWallet surfaces a driver error when listing parties fails', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({
+                    getKeysResult: {
+                        error: 'fetch_error',
+                        error_description: 'gateway unreachable',
+                    },
+                }),
+            })
+
+            await expect(
+                serviceWithTaurus.createWallet(
+                    authContext,
+                    'alice',
+                    false,
+                    SigningProvider.TAURUS_PROTECT
+                )
+            ).rejects.toThrow(
+                'Failed to list Taurus-PROTECT parties: gateway unreachable'
+            )
+        })
+
+        it('getVaults returns the provisioned party names', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({
+                    getKeysResult: {
+                        keys: [
+                            {
+                                id: 'alice::tp-namespace',
+                                name: 'alice',
+                                publicKey: 'tp-pk-a',
+                            },
+                            {
+                                id: 'bob::tp-namespace',
+                                name: 'bob',
+                                publicKey: 'tp-pk-b',
+                            },
+                        ],
+                    },
+                }),
+            })
+
+            const result = await serviceWithTaurus.getVaults(
+                authContext,
+                SigningProvider.TAURUS_PROTECT
+            )
+
+            expect(result).toEqual({ vaults: ['alice', 'bob'] })
+        })
+
+        it('allocateParty confirms the externally hosted wallet', async () => {
+            const serviceWithTaurus = createService({
+                [SigningProvider.TAURUS_PROTECT]: createTaurusProtectDriver({}),
+            })
+
+            await serviceWithTaurus.allocateParty(
+                authContext,
+                createWallet('alice::tp-namespace', {
+                    signingProviderId: SigningProvider.TAURUS_PROTECT,
+                }),
+                SigningProvider.TAURUS_PROTECT
+            )
+
+            expect(mockStore.updateWallet).toHaveBeenCalledWith({
+                partyId: 'alice::tp-namespace',
+                networkId: 'network1',
+                status: 'allocated',
             })
         })
     })

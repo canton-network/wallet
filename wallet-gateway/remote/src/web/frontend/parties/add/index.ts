@@ -24,7 +24,10 @@ import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {
-    private static readonly vaultSigningProviders = [SigningProvider.FIREBLOCKS]
+    private static readonly vaultSigningProviders = [
+        SigningProvider.FIREBLOCKS,
+        SigningProvider.TAURUS_PROTECT,
+    ]
 
     @state() accessor signingProviders: string[] =
         Object.values(SigningProvider)

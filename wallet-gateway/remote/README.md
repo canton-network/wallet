@@ -88,6 +88,17 @@ the Gateway:
 See [`@canton-network/core-signing-securosys`](../../core/signing-securosys/README.md)
 for key creation, public-key, and signature format details.
 
+## Taurus-PROTECT
+
+The Taurus-PROTECT signing driver is registered at startup as `taurus-protect` when
+both of these environment variables are set before starting the Gateway:
+
+- `TAURUS_PROTECT_GATEWAY_URL` — Base URL of the Taurus-PROTECT Canton gateway JSON-RPC endpoint
+- `TAURUS_PROTECT_GATEWAY_TOKEN` — Bearer api-key for that gateway
+
+See [`@canton-network/core-signing-taurus-protect`](../../core/signing-taurus-protect/README.md)
+for the submission model, status mapping, and tenancy caveats.
+
 ## Postgres connection
 
 To create a Postgres database you need to:

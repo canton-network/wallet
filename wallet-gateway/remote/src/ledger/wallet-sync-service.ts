@@ -281,6 +281,10 @@ export class WalletSyncService {
             const hasWalletsWithoutParty = enabledWallets.some(
                 (wallet) =>
                     wallet.status === 'allocated' &&
+                    // Hosted remotely: absence from local rights says nothing
+                    // and would latch sync-needed forever.
+                    wallet.signingProviderId !==
+                        SigningProvider.TAURUS_PROTECT &&
                     !partiesWithRights.includes(wallet.partyId)
             )
 
@@ -332,6 +336,11 @@ export class WalletSyncService {
 
         for (const wallet of walletsWithoutParty) {
             if (wallet.status !== 'allocated' || wallet.disabled) continue
+            // Hosted and submitted for remotely: absence from local rights
+            // says nothing, and demoting fights createWallet every tick.
+            if (wallet.signingProviderId === SigningProvider.TAURUS_PROTECT) {
+                continue
+            }
 
             try {
                 if (wallet.signingProviderId === SigningProvider.PARTICIPANT) {
