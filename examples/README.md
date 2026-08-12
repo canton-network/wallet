@@ -29,8 +29,8 @@ Wallet Gateway and is not reserved by an example.
 Install and build dependencies from the repository root:
 
 ```bash
-yarn install
-yarn build:all
+pnpm install
+pnpm build:all
 ```
 
 See each example's README for its configuration and run commands.
