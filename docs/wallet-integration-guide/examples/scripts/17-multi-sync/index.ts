@@ -11,10 +11,7 @@ import {
 import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
 import { createTokenRules, mintAndTransferTokenToBob } from './_token_setup.js'
 import { allocateTokenForBob } from './_token_allocation.js'
-import {
-    aliceTransferToCharlie,
-    bobSelfTransferToApp,
-} from './_token_transfer.js'
+import { aliceTransferToCharlie } from './_token_transfer.js'
 import { createAndInitiateOtcTrade } from './_trade_propose.js'
 import { settleOtcTrade } from './_trade_settle.js'
 
@@ -120,6 +117,12 @@ await logAllContracts(logger, synchronizers, [
     { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────────────
+console.log(
+    'connectedSynchronizers',
+    await bobSdk.ledger.connectedSynchronizers({
+        party: bob.partyId,
+    })
+)
 const allocationsBob = await bobSdk.token.allocation.pending(bob.partyId)
 const testTokenAllocation = allocationsBob.find(
     (a) => a.interfaceViewValue.allocation.transferLegId === legIdBob
