@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MergeUtxosParams, ListHoldingsParams } from './types.js'
-import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
+import {
+    HOLDING_INTERFACE_ID,
+    HOLDING_INTERFACE_ID_V2,
+} from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
 import { findAsset, LedgerTypes, TokenNamespaceConfig } from '../../../sdk.js'
@@ -138,14 +141,28 @@ export class UtxoNamespace {
             offset,
             continueUntilCompletion,
         } = params
-        const utxos =
-            await this.sdkContext.tokenStandardService.listContractsByInterface<Holding>(
+        const [v1, v2] = await Promise.all([
+            this.sdkContext.tokenStandardService.listContractsByInterface<Holding>(
                 HOLDING_INTERFACE_ID,
                 partyId,
                 limit,
                 offset,
                 continueUntilCompletion
-            )
+            ),
+            this.sdkContext.tokenStandardService.listContractsByInterface<Holding>(
+                HOLDING_INTERFACE_ID_V2,
+                partyId,
+                limit,
+                offset,
+                continueUntilCompletion
+            ),
+        ])
+        const seen = new Set<string>()
+        const utxos = [...v1, ...v2].filter((c) => {
+            if (seen.has(c.contractId)) return false
+            seen.add(c.contractId)
+            return true
+        })
 
         const currentTime = new Date()
 

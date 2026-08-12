@@ -11,6 +11,7 @@ export default async (args: TransferTestScriptParameters) => {
             instrumentId: 'Amulet',
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
             amount: '2000',
+            apiVersion: 'auto',
         })
 
     logger.info('Transfer command created, ready for signing and execution')

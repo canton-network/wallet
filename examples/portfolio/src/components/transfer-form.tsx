@@ -105,6 +105,10 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                 return
             }
 
+            if (selectedInstrument?.paused) {
+                return
+            }
+
             const instrumentId = formData.instrumentId
             const expiry = formData.expiry
 
@@ -137,6 +141,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
     })
 
     const mutationError = createTransferMutation.error
+    const instrumentPaused = Boolean(selectedInstrument?.paused)
     const disabled = createTransferMutation.isPending
 
     const handleInstrumentChange = (
@@ -189,6 +194,19 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                         {mutationError instanceof Error
                             ? mutationError.message
                             : 'Unknown error'}
+                    </Alert>
+                )}
+
+                {instrumentPaused && (
+                    <Alert severity="warning">
+                        This instrument is paused
+                        {selectedInstrument?.pauseInfo?.reason
+                            ? `: ${selectedInstrument.pauseInfo.reason}`
+                            : ''}
+                        {selectedInstrument?.pauseInfo?.until
+                            ? ` (until ${selectedInstrument.pauseInfo.until})`
+                            : ''}
+                        . Transfers are disabled until it is resumed.
                     </Alert>
                 )}
 
@@ -366,11 +384,12 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                 !canSubmit ||
                                 isSubmitting ||
                                 disabled ||
+                                instrumentPaused ||
                                 !primaryParty
                             }
                             sx={{ mt: 0.5, minHeight: 48 }}
                         >
-                            {disabled ? (
+                            {createTransferMutation.isPending ? (
                                 <CircularProgress size={24} color="inherit" />
                             ) : (
                                 'Make Transfer'

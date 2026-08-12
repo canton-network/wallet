@@ -29,6 +29,7 @@ export const TOKEN_NAMESPACE_CONFIG: TokenConfig = {
     validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
     registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+    apiVersion: 'auto',
 }
 
 export const TOKEN_NAMESPACE_CONFIG_SIMPLE: TokenConfig = {
@@ -52,4 +53,12 @@ export const AMULET_NAMESPACE_CONFIG_SIMPLE: AmuletConfig = {
 export const ASSET_CONFIG: AssetConfig = {
     registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+}
+
+export const TEST_TOKEN_REGISTRY = new URL('http://localhost:5634')
+
+export const TEST_TOKEN_REGISTRY_CONFIG: TokenConfig = {
+    registries: [TEST_TOKEN_REGISTRY],
+    auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
+    apiVersion: 'auto',
 }

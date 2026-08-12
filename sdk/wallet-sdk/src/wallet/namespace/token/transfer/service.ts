@@ -4,7 +4,9 @@
 import { TokenNamespaceConfig } from '../namespace.js'
 import { PartyId } from '@canton-network/core-types'
 import {
+    assertInstrumentNotPaused,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
     TransferInstructionView,
 } from '@canton-network/core-token-standard'
 import { TransferAllocationChoiceParams, TransferParams } from './types.js'
@@ -20,20 +22,38 @@ export class TransferNamespace {
     }
 
     async pending(partyId: PartyId) {
-        return await this.sdkContext.tokenStandardService.listContractsByInterface<TransferInstructionView>(
-            TRANSFER_INSTRUCTION_INTERFACE_ID,
-            partyId
-        )
+        const [v1, v2] = await Promise.all([
+            this.sdkContext.tokenStandardService.listContractsByInterface<TransferInstructionView>(
+                TRANSFER_INSTRUCTION_INTERFACE_ID,
+                partyId
+            ),
+            this.sdkContext.tokenStandardService.listContractsByInterface<TransferInstructionView>(
+                TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+                partyId
+            ),
+        ])
+        const seen = new Set<string>()
+        return [...v1, ...v2].filter((c) => {
+            if (seen.has(c.contractId)) return false
+            seen.add(c.contractId)
+            return true
+        })
     }
 
     async accept(
         params: TransferAllocationChoiceParams
     ): Promise<PreparedCommand> {
+        const apiVersion =
+            params.apiVersion ?? this.sdkContext.apiVersion ?? 'auto'
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createAcceptTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
+                    .href,
+                undefined,
+                apiVersion,
+                params.actors,
+                params.supportedApis
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -41,11 +61,17 @@ export class TransferNamespace {
     async withdraw(
         params: TransferAllocationChoiceParams
     ): Promise<PreparedCommand> {
+        const apiVersion =
+            params.apiVersion ?? this.sdkContext.apiVersion ?? 'auto'
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createWithdrawTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
+                    .href,
+                undefined,
+                apiVersion,
+                params.actors,
+                params.supportedApis
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -53,11 +79,17 @@ export class TransferNamespace {
     async reject(
         params: TransferAllocationChoiceParams
     ): Promise<PreparedCommand> {
+        const apiVersion =
+            params.apiVersion ?? this.sdkContext.apiVersion ?? 'auto'
         const [ExerciseCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createRejectTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
+                    .href,
+                undefined,
+                apiVersion,
+                params.actors,
+                params.supportedApis
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -84,6 +116,15 @@ export class TransferNamespace {
             )
         }
 
+        assertInstrumentNotPaused({
+            id: asset.id,
+            ...(asset.paused !== undefined ? { paused: asset.paused } : {}),
+            ...(asset.pauseInfo ? { pauseInfo: asset.pauseInfo } : {}),
+        })
+
+        const apiVersion =
+            params.apiVersion ?? this.sdkContext.apiVersion ?? 'auto'
+
         const [transferCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createTransfer(
                 params.sender,
@@ -95,7 +136,12 @@ export class TransferNamespace {
                 params.inputUtxos,
                 params.memo,
                 params.expirationDate,
-                params.meta
+                params.meta,
+                undefined,
+                undefined,
+                apiVersion,
+                params.actors,
+                asset.supportedApis
             )
 
         return [{ ExerciseCommand: transferCommand }, disclosedContracts]

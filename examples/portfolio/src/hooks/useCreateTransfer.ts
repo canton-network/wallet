@@ -4,6 +4,7 @@
 import { PartyId } from '@canton-network/core-types'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { submitViaProvider } from '@lib/submit'
+import { useInstruments } from './useInstruments'
 import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from './query-keys'
 import { useWalletSdk } from './useWalletSdk'
@@ -21,6 +22,7 @@ export const useCreateTransfer = () => {
     const { sdk } = useWalletSdk()
     const registryUrls = useRegistryUrls()
     const { reachableRegistryUrls } = useReachableRegistryUrls()
+    const instruments = useInstruments()
     const queryClient = useQueryClient()
 
     return useMutation({
@@ -45,6 +47,10 @@ export const useCreateTransfer = () => {
                 )
             }
 
+            const instrument = instruments
+                .get(args.instrumentId.admin)
+                ?.find((item) => item.id === args.instrumentId.id)
+
             const preparedCommand = await sdk.token.transfer.create({
                 sender: args.sender,
                 recipient: args.receiver,
@@ -53,6 +59,9 @@ export const useCreateTransfer = () => {
                 registryUrl: new URL(registryUrl),
                 expirationDate: args.expiry,
                 memo: args.memo,
+                apiVersion: 'auto',
+                actors: [args.sender],
+                supportedApis: instrument?.supportedApis,
             })
 
             await submitViaProvider(preparedCommand, args.sender)

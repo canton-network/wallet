@@ -8,6 +8,9 @@
         "paths": {
             "@daml.js/test-token-v1": [
                 "../../damljs/test-token-v1/splice-test-token-v1-1.0.0/lib/index.d.ts"
+            ],
+            "@daml.js/test-token-v2": [
+                "../../damljs/test-token-v2/splice-test-token-v2-1.0.0/lib/index.d.ts"
             ]
         }
     },

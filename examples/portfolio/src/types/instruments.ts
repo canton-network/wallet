@@ -28,6 +28,20 @@ export const toPortfolioInstrument = ({
     name: instrument.name,
     symbol: instrument.symbol,
     decimals: instrument.decimals,
+    supportedApis: Object.fromEntries(
+        Object.entries(instrument.supportedApis ?? {}).map(([k, v]) => [
+            k,
+            String(v),
+        ])
+    ),
+    paused: instrument.paused ?? false,
+    ...(instrument.pauseInfo ? { pauseInfo: instrument.pauseInfo } : {}),
+    ...(instrument.showAccountInputFields !== undefined
+        ? { showAccountInputFields: instrument.showAccountInputFields }
+        : {}),
+    ...(instrument.accountInputFieldsToShow !== undefined
+        ? { accountInputFieldsToShow: instrument.accountInputFieldsToShow }
+        : {}),
 })
 
 export type Instruments = ReadonlyMap<PartyId, PortfolioInstrument[]>

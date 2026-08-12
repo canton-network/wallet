@@ -5,6 +5,7 @@ import { AllocationNamespace } from './allocation/index.js'
 import { UtxoNamespace } from './utxos/index.js'
 import { TransferNamespace } from './transfer/index.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { TokenApiVersionPreference } from '@canton-network/core-token-standard'
 import { PartyId } from '@canton-network/core-types'
 import { PrettyTransactions } from '@canton-network/core-tx-parser'
 import type { SDKContext } from '../../init/types/context.js'
@@ -15,6 +16,7 @@ export type TokenNamespaceConfig = {
     registryUrls: ParsedURL[]
     validatorParty?: PartyId
     commonCtx: SDKContext
+    apiVersion?: TokenApiVersionPreference
 }
 
 export class TokenNamespace {

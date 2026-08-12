@@ -6,7 +6,10 @@ import * as mock from '../../../__test__/mocks'
 import { TokenNamespace, TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
 import { UtxoNamespace } from './service'
-import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
+import {
+    HOLDING_INTERFACE_ID,
+    HOLDING_INTERFACE_ID_V2,
+} from '@canton-network/core-token-standard'
 import { v4 } from 'uuid'
 import { MergeDelegationNamespace } from './mergeDelegation'
 
@@ -97,13 +100,21 @@ describe('utxos namespace', () => {
         await utxos.list({
             partyId: 'alice::abc',
         })
-        expect(spy).toHaveBeenCalledExactlyOnceWith(
+        expect(spy).toHaveBeenCalledWith(
             HOLDING_INTERFACE_ID,
             'alice::abc',
             undefined,
             undefined,
             undefined
         )
+        expect(spy).toHaveBeenCalledWith(
+            HOLDING_INTERFACE_ID_V2,
+            'alice::abc',
+            undefined,
+            undefined,
+            undefined
+        )
+        expect(spy).toHaveBeenCalledTimes(2)
     })
 
     it('merge utxos', async () => {

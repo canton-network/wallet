@@ -410,6 +410,45 @@ describe('AllocationService', () => {
         })
     })
 
+    it('selects V2 allocation holdings by instrument id and amount', async () => {
+        const { service } = makeService()
+        const getInputHoldingsCids = vi
+            .spyOn(service.core, 'getInputHoldingsCids')
+            .mockResolvedValue(['cid1'])
+        const ctx = makeChoiceContext()
+
+        await service.allocation.createAllocationInstructionV2(
+            {
+                authorizer: { owner: senderParty },
+                transferLegSides: [
+                    {
+                        amount: '10.0',
+                        instrumentId: instrumentId,
+                    },
+                ],
+            } as any,
+            { id: 'settlement-1' } as any,
+            instrumentAdmin,
+            registryUrl,
+            [senderParty],
+            undefined,
+            undefined,
+            { factoryId: 'factory-id', choiceContext: ctx as any }
+        )
+
+        expect(getInputHoldingsCids).toHaveBeenCalledWith(
+            expect.objectContaining({
+                sender: senderParty,
+                instrumentAdmin,
+                instrumentId,
+            })
+        )
+        expect(getInputHoldingsCids.mock.calls[0][0].inputUtxos).toBeUndefined()
+        expect(getInputHoldingsCids.mock.calls[0][0].amount?.toString()).toBe(
+            '10'
+        )
+    })
+
     describe('createAllocationInstructionFromContext', () => {
         const instrumentAdmin =
             'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
@@ -691,6 +730,113 @@ describe('TransferService', () => {
         expect(exerciseWithdraw.choice).toBe('TransferInstruction_Withdraw')
     })
 
+    const v2Apis = { 'splice-api-token-holding-v2': '1.0.0' }
+
+    it.each([
+        [
+            'accept',
+            'createAcceptTransferInstruction',
+            'TransferInstruction_Accept',
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept',
+        ],
+        [
+            'reject',
+            'createRejectTransferInstruction',
+            'TransferInstruction_Reject',
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/reject',
+        ],
+        [
+            'withdraw',
+            'createWithdrawTransferInstruction',
+            'TransferInstruction_Withdraw',
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/withdraw',
+        ],
+    ] as const)(
+        'uses V2 %s path, template, and actors',
+        async (_label, method, expectedChoice, expectedPath) => {
+            const { service, tokenClient } = makeService()
+            tokenClient.post.mockResolvedValue(makeChoiceContext())
+            const [exercise] = await service.transfer[method](
+                'cid',
+                registryUrl,
+                undefined,
+                'auto',
+                [senderParty],
+                v2Apis
+            )
+
+            expect(tokenClient.post).toHaveBeenCalledWith(
+                expectedPath,
+                { excludeDebugFields: true },
+                { path: { transferInstructionId: 'cid' } }
+            )
+            expect(exercise.choice).toBe(expectedChoice)
+            expect(exercise.templateId).toContain('TransferInstructionV2')
+            expect(exercise.choiceArgument).toEqual(
+                expect.objectContaining({
+                    actors: [senderParty],
+                    extraArgs: expect.objectContaining({
+                        meta: { values: {} },
+                    }),
+                })
+            )
+        }
+    )
+
+    it('uses prefetched V2 accept context without a registry call', async () => {
+        const { service, tokenClient } = makeService()
+        const ctx = makeChoiceContext()
+        const [exercise] =
+            await service.transfer.createAcceptTransferInstruction(
+                'cid',
+                registryUrl,
+                ctx as any,
+                'v2',
+                [senderParty],
+                v2Apis
+            )
+
+        expect(tokenClient.post).not.toHaveBeenCalled()
+        expect(exercise.templateId).toContain('TransferInstructionV2')
+        expect(exercise.choiceArgument).toEqual(
+            expect.objectContaining({ actors: [senderParty] })
+        )
+    })
+
+    it('falls back to V1 accept when auto and the V2 endpoint is missing', async () => {
+        const { service, tokenClient } = makeService()
+        tokenClient.post
+            .mockRejectedValueOnce({
+                error: 'The requested resource could not be found: http://splice/v2/accept',
+            })
+            .mockResolvedValueOnce(makeChoiceContext())
+
+        const [exercise] =
+            await service.transfer.createAcceptTransferInstruction(
+                'cid',
+                registryUrl,
+                undefined,
+                'auto',
+                [senderParty],
+                v2Apis
+            )
+
+        expect(tokenClient.post).toHaveBeenNthCalledWith(
+            1,
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept',
+            { excludeDebugFields: true },
+            { path: { transferInstructionId: 'cid' } }
+        )
+        expect(tokenClient.post).toHaveBeenNthCalledWith(
+            2,
+            '/registry/transfer-instruction/v1/{transferInstructionId}/choice-contexts/accept',
+            { excludeDebugFields: true },
+            { path: { transferInstructionId: 'cid' } }
+        )
+        expect(exercise.templateId).toContain('TransferInstructionV1')
+        expect(exercise.choiceArgument).not.toHaveProperty('actors')
+    })
+
     it.each([
         ['Accept', 'TransferInstruction_Accept'],
         ['Reject', 'TransferInstruction_Reject'],
@@ -863,14 +1009,32 @@ describe('Token standard service', () => {
                 admin: 'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
                 displayName: 'TestTokenExt',
                 id: 'TestTokenExt',
+                paused: false,
                 registryUrl: 'https://fake/registry',
+                supportedApis: {
+                    'splice-api-token-allocation-instruction-v1': '1',
+                    'splice-api-token-allocation-request-v1': '1',
+                    'splice-api-token-allocation-v1': '1',
+                    'splice-api-token-holding-v1': '1',
+                    'splice-api-token-metadata-v1': '1',
+                    'splice-api-token-transfer-instruction-v1': '1',
+                },
                 symbol: 'TestTokenExt',
             },
             {
                 admin: 'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
                 displayName: 'TestToken',
                 id: 'TestToken',
+                paused: false,
                 registryUrl: 'https://fake/registry',
+                supportedApis: {
+                    'splice-api-token-allocation-instruction-v1': '1',
+                    'splice-api-token-allocation-request-v1': '1',
+                    'splice-api-token-allocation-v1': '1',
+                    'splice-api-token-holding-v1': '1',
+                    'splice-api-token-metadata-v1': '1',
+                    'splice-api-token-transfer-instruction-v1': '1',
+                },
                 symbol: 'TestToken',
             },
         ])
@@ -951,14 +1115,18 @@ describe('Token standard service', () => {
                 admin: 'admin-id',
                 displayName: 'First Token',
                 id: 'first-token',
+                paused: false,
                 registryUrl,
+                supportedApis: {},
                 symbol: 'FIRST',
             },
             {
                 admin: 'admin-id',
                 displayName: 'Second Token',
                 id: 'second-token',
+                paused: false,
                 registryUrl,
+                supportedApis: {},
                 symbol: 'SECOND',
             },
         ])
@@ -1210,21 +1378,48 @@ describe('Token standard service', () => {
                 admin: 'admin-a',
                 displayName: 'USDCx',
                 id: 'USDCx',
+                paused: false,
                 registryUrl: 'http://registry1.com',
+                supportedApis: {
+                    'splice-api-token-allocation-instruction-v1': '1',
+                    'splice-api-token-allocation-request-v1': '1',
+                    'splice-api-token-allocation-v1': '1',
+                    'splice-api-token-holding-v1': '1',
+                    'splice-api-token-metadata-v1': '1',
+                    'splice-api-token-transfer-instruction-v1': '1',
+                },
                 symbol: 'USDCx',
             },
             {
                 admin: 'admin-b',
                 displayName: 'TestTokenExt',
                 id: 'TestTokenExt',
+                paused: false,
                 registryUrl: 'http://registry2.com',
+                supportedApis: {
+                    'splice-api-token-allocation-instruction-v1': '1',
+                    'splice-api-token-allocation-request-v1': '1',
+                    'splice-api-token-allocation-v1': '1',
+                    'splice-api-token-holding-v1': '1',
+                    'splice-api-token-metadata-v1': '1',
+                    'splice-api-token-transfer-instruction-v1': '1',
+                },
                 symbol: 'TestTokenExt',
             },
             {
                 admin: 'admin-b',
                 displayName: 'TestToken',
                 id: 'TestToken',
+                paused: false,
                 registryUrl: 'http://registry2.com',
+                supportedApis: {
+                    'splice-api-token-allocation-instruction-v1': '1',
+                    'splice-api-token-allocation-request-v1': '1',
+                    'splice-api-token-allocation-v1': '1',
+                    'splice-api-token-holding-v1': '1',
+                    'splice-api-token-metadata-v1': '1',
+                    'splice-api-token-transfer-instruction-v1': '1',
+                },
                 symbol: 'TestToken',
             },
         ])
@@ -1247,132 +1442,27 @@ describe('Token standard service', () => {
             (c: any) => c[0].params
         )
 
-        expect(providerCalls).toEqual([
-            {
-                resource: '/v2/state/latest-pruned-offsets',
-                requestMethod: 'get',
-            },
-            { resource: '/v2/state/ledger-end', requestMethod: 'get' },
-            {
-                resource: '/v2/updates/flats',
-                requestMethod: 'post',
-                query: {},
-                body: {
-                    updateFormat: {
-                        includeTransactions: {
-                            eventFormat: {
-                                filtersByParty: {
-                                    'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5':
-                                        {
-                                            cumulative: [
-                                                {
-                                                    identifierFilter: {
-                                                        InterfaceFilter: {
-                                                            value: {
-                                                                interfaceId:
-                                                                    '#splice-api-token-holding-v1:Splice.Api.Token.HoldingV1:Holding',
-                                                                includeInterfaceView: true,
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    identifierFilter: {
-                                                        InterfaceFilter: {
-                                                            value: {
-                                                                interfaceId:
-                                                                    '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferFactory',
-                                                                includeInterfaceView: true,
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    identifierFilter: {
-                                                        InterfaceFilter: {
-                                                            value: {
-                                                                interfaceId:
-                                                                    '#splice-api-token-transfer-instruction-v1:Splice.Api.Token.TransferInstructionV1:TransferInstruction',
-                                                                includeInterfaceView: true,
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    identifierFilter: {
-                                                        InterfaceFilter: {
-                                                            value: {
-                                                                interfaceId:
-                                                                    '#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationFactory',
-                                                                includeInterfaceView: true,
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    identifierFilter: {
-                                                        InterfaceFilter: {
-                                                            value: {
-                                                                interfaceId:
-                                                                    '#splice-api-token-allocation-instruction-v1:Splice.Api.Token.AllocationInstructionV1:AllocationInstruction',
-                                                                includeInterfaceView: true,
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    identifierFilter: {
-                                                        InterfaceFilter: {
-                                                            value: {
-                                                                interfaceId:
-                                                                    '#splice-api-token-allocation-v1:Splice.Api.Token.AllocationV1:Allocation',
-                                                                includeInterfaceView: true,
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    identifierFilter: {
-                                                        InterfaceFilter: {
-                                                            value: {
-                                                                interfaceId:
-                                                                    '#splice-api-token-allocation-request-v1:Splice.Api.Token.AllocationRequestV1:AllocationRequest',
-                                                                includeInterfaceView: true,
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                {
-                                                    identifierFilter: {
-                                                        WildcardFilter: {
-                                                            value: {
-                                                                includeCreatedEventBlob: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                            ],
-                                        },
-                                },
-                                verbose: false,
-                            },
-                            transactionShape:
-                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
-                        },
-                    },
-                    beginExclusive: 5,
-                    endInclusive: 100,
-                    verbose: false,
-                },
-            },
-        ])
+        expect(providerCalls[0]).toEqual({
+            resource: '/v2/state/latest-pruned-offsets',
+            requestMethod: 'get',
+        })
+        expect(providerCalls[1]).toEqual({
+            resource: '/v2/state/ledger-end',
+            requestMethod: 'get',
+        })
+        expect(providerCalls[2].resource).toBe('/v2/updates/flats')
+        const filters = JSON.stringify(providerCalls[2].body)
+        expect(filters).toContain(
+            'splice-api-token-holding-v1:Splice.Api.Token.HoldingV1:Holding'
+        )
+        expect(filters).toContain(
+            'splice-api-token-holding-v2:Splice.Api.Token.HoldingV2:Holding'
+        )
+        expect(filters).toContain(
+            'splice-api-token-transfer-instruction-v2:Splice.Api.Token.TransferInstructionV2:TransferInstruction'
+        )
+        expect(providerCalls[2].body.beginExclusive).toBe(5)
+        expect(providerCalls[2].body.endInclusive).toBe(100)
     })
 
     it('transaction by id', async () => {

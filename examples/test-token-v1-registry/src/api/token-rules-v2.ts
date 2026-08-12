@@ -1,0 +1,93 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { TestTokenV2, commandV2 } from '@canton-network/core-test-token'
+import sdk from '../common/sdk'
+import { operator } from '../common/operator'
+import { APIError, emptyChoiceContext } from './common'
+
+const TOKEN_RULES_CONTEXT_KEY = 'testTokenV2/tokenRules'
+
+export async function resolveOrCreateTokenRulesV2(): Promise<string> {
+    const contract = await fetchOrCreateTokenRulesContract()
+    return contract.contractId
+}
+
+async function readTokenRulesContract(offset?: number) {
+    return (
+        await sdk.ledger.acsReader.readJsContracts({
+            filterByParty: true,
+            parties: [operator.party],
+            ...(offset !== undefined ? { offset } : {}),
+            templateIds: [TestTokenV2.TokenRules.templateId],
+        })
+    )[0]
+}
+
+async function fetchOrCreateTokenRulesContract() {
+    const fetchedFactory = await readTokenRulesContract()
+
+    if (fetchedFactory) {
+        return fetchedFactory
+    }
+
+    try {
+        const executionResult = await sdk.ledger
+            .prepare({
+                partyId: operator.party,
+                commands: commandV2.create.rules({ admin: operator.party }),
+            })
+            .sign(operator.keys.privateKey)
+            .execute({
+                partyId: operator.party,
+            })
+
+        const factoryContract = await readTokenRulesContract(
+            executionResult.completionOffset
+        )
+
+        if (!factoryContract) {
+            throw new APIError(
+                500,
+                `Error instantiating TestTokenV2 TokenRules (completionOffset=${executionResult.completionOffset})`
+            )
+        }
+
+        return factoryContract
+    } catch (e) {
+        const existing = await readTokenRulesContract()
+        if (existing) return existing
+        throw e instanceof APIError ? e : new APIError(500, String(e))
+    }
+}
+
+export async function buildTokenRulesV2ChoiceContext() {
+    const contract = await fetchOrCreateTokenRulesContract()
+    if (!contract.createdEventBlob || !contract.synchronizerId) {
+        throw new APIError(
+            500,
+            'TokenRules missing createdEventBlob or synchronizerId for disclosure'
+        )
+    }
+
+    return {
+        choiceContextData: {
+            values: {
+                [TOKEN_RULES_CONTEXT_KEY]: {
+                    tag: 'AV_ContractId',
+                    value: contract.contractId,
+                },
+            },
+        },
+        disclosedContracts: [
+            {
+                templateId: contract.templateId,
+                contractId: contract.contractId,
+                createdEventBlob: contract.createdEventBlob,
+                synchronizerId: contract.synchronizerId,
+            },
+        ],
+    }
+}
+
+export { emptyChoiceContext }

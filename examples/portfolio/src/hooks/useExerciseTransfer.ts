@@ -5,6 +5,7 @@ import { PartyId } from '@canton-network/core-types'
 import type { PreparedCommand } from '@canton-network/wallet-sdk'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { submitViaProvider } from '@lib/submit'
+import { useInstruments } from './useInstruments'
 import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from './query-keys'
 import { useWalletSdk } from './useWalletSdk'
@@ -13,6 +14,7 @@ export const useExerciseTransfer = () => {
     const { sdk } = useWalletSdk()
     const registryUrls = useRegistryUrls()
     const { reachableRegistryUrls } = useReachableRegistryUrls()
+    const instruments = useInstruments()
     const queryClient = useQueryClient()
 
     return useMutation({
@@ -42,9 +44,16 @@ export const useExerciseTransfer = () => {
                 )
             }
 
+            const instrument = instruments
+                .get(args.instrumentId.admin)
+                ?.find((item) => item.id === args.instrumentId.id)
+
             const choiceArgs = {
                 transferInstructionCid: args.contractId,
                 registryUrl: new URL(registryUrl),
+                apiVersion: 'auto' as const,
+                actors: [args.party],
+                supportedApis: instrument?.supportedApis,
             }
             let preparedCommand: PreparedCommand
 

@@ -11,6 +11,7 @@ import {
     getNetworkArg,
     SPLICE_SPEC_PATH,
     success,
+    warn,
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
@@ -180,7 +181,6 @@ const getSpecs = (
         input: `api-specs/splice/${spliceVersion}/validator-internal.yaml`,
         output: 'core/splice-client/src/generated-clients/validator-internal.ts',
     },
-    // Token standards
     {
         input: `api-specs/splice/${spliceVersion}/allocation-instruction-v1.yaml`,
         output: 'core/token-standard/src/generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.ts',
@@ -197,18 +197,41 @@ const getSpecs = (
         input: `api-specs/splice/${spliceVersion}/transfer-instruction-v1.yaml`,
         output: 'core/token-standard/src/generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.ts',
     },
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-instruction-v2.yaml`,
+        output: 'core/token-standard/src/generated-clients/splice-api-token-allocation-instruction-v2/allocation-instruction-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-v2.yaml`,
+        output: 'core/token-standard/src/generated-clients/splice-api-token-allocation-v2/allocation-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/transfer-instruction-v2.yaml`,
+        output: 'core/token-standard/src/generated-clients/splice-api-token-transfer-instruction-v2/transfer-instruction-v2.ts',
+    },
 ]
 
 async function main(network: Network = 'devnet') {
     const updateHash = hasFlag('updateHash')
 
     await fetchSpliceSpecs(updateHash, network)
-    Promise.all(
-        getSpecs(
-            SUPPORTED_VERSIONS[network].splice.version,
-            SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
-        ).map(generateOpenApiClient)
-    ).then(() => {
+    const specs = getSpecs(
+        SUPPORTED_VERSIONS[network].splice.version,
+        SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
+    ).filter((spec) => {
+        if (spec.input instanceof URL) return true
+        const filePath = path.join(root, spec.input.toString())
+        if (!fs.existsSync(filePath)) {
+            console.log(
+                warn(
+                    `Skipping missing OpenAPI spec (leaving existing client in place): ${spec.input}`
+                )
+            )
+            return false
+        }
+        return true
+    })
+    Promise.all(specs.map(generateOpenApiClient)).then(() => {
         console.log(
             success('Generated fresh TypeScript clients for all OpenAPI specs')
         )

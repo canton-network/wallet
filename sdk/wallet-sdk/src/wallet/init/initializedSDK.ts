@@ -107,6 +107,7 @@ const createNamespace: {
             tokenStandardService,
             registryUrls,
             commonCtx: ctx,
+            apiVersion: config.apiVersion ?? 'auto',
             ...(validatorParty && { validatorParty }),
         })
     },

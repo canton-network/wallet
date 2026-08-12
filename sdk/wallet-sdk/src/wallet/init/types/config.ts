@@ -3,6 +3,7 @@
 
 import { URLInput } from '../../namespace/utils/url.js'
 import { TokenProviderConfig } from '@canton-network/core-wallet-auth'
+import type { TokenApiVersionPreference } from '@canton-network/core-token-standard'
 
 export type AmuletConfig = {
     validatorUrl?: URLInput
@@ -15,6 +16,8 @@ export type TokenConfig = {
     validatorUrl?: URLInput
     auth: TokenProviderConfig
     registries: URLInput[]
+    /** Default token-standard API major version preference. Default: 'auto'. */
+    apiVersion?: TokenApiVersionPreference
 }
 
 export type AssetConfig = {

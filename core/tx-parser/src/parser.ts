@@ -13,7 +13,7 @@ import {
 } from './utils.js'
 import {
     BurnedMetaKey,
-    matchInterfaceIds,
+    isHoldingInterfaceId,
     ReasonMetaKey,
     SenderMetaKey,
     TxKindMetaKey,
@@ -41,7 +41,11 @@ import BigNumber from 'bignumber.js'
 import { PartyId } from '@canton-network/core-types'
 import {
     HOLDING_INTERFACE_ID,
+    HOLDING_INTERFACE_ID_V2,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+    CIP112_MINT_ACCOUNT_ID,
+    CIP112_BURN_ACCOUNT_ID,
 } from '@canton-network/core-token-standard'
 
 import {
@@ -56,6 +60,15 @@ type Event = LedgerCommonSchemas['Event']
 type JsTransaction = LedgerCommonSchemas['JsTransaction']
 type JsGetEventsByContractIdResponse =
     LedgerCommonSchemas['JsGetEventsByContractIdResponse']
+
+function partyFromAccountOrParty(value: unknown): string | undefined {
+    if (typeof value === 'string') return value
+    if (value && typeof value === 'object' && 'owner' in value) {
+        const owner = (value as { owner?: string | null }).owner
+        return owner ?? undefined
+    }
+    return undefined
+}
 
 function currentStatusFromChoiceOrResult(
     choice?: string | undefined,
@@ -450,7 +463,15 @@ export class TransactionParser {
             case 'TransferFactory_Transfer':
             case 'AllocationFactory_Allocate':
             case 'Allocation_ExecuteTransfer':
+            case 'SettlementFactory_SettleBatch':
+            case 'Allocation_Settle':
                 result = await this.buildTransfer(exercise, tokenStandardChoice)
+                break
+            case 'EventLog_HoldingsChange':
+                result = await this.buildFromEventLogHoldingsChange(
+                    exercise,
+                    tokenStandardChoice
+                )
                 break
             case 'Allocation_Withdraw':
             case 'Allocation_Cancel':
@@ -557,6 +578,147 @@ export class TransactionParser {
         }
     }
 
+    private async buildFromEventLogHoldingsChange(
+        exercisedEvent: ExercisedEvent,
+        tokenStandardChoice: TokenStandardChoice | null
+    ): Promise<ParsedKnownExercisedEvent | null> {
+        const arg = exercisedEvent.choiceArgument as {
+            account?: { owner?: string | null; id?: string }
+            transferLegSides?: Array<{
+                side: { tag?: string } | string
+                otherside?: { owner?: string | null; id?: string }
+                amount?: string
+                instrumentId?: string
+                meta?: { values?: Record<string, string> }
+            }>
+            extraArgs?: { meta?: { values?: Record<string, string> } }
+        }
+        const accountOwner = arg.account?.owner ?? undefined
+        const accountId = arg.account?.id ?? ''
+        if (
+            accountId === CIP112_MINT_ACCOUNT_ID ||
+            accountId === CIP112_BURN_ACCOUNT_ID
+        ) {
+            return this.buildMergeSplit(exercisedEvent, tokenStandardChoice)
+        }
+        const children = await this.getChildren(exercisedEvent)
+        const meta = mergeMetas(
+            exercisedEvent,
+            arg.extraArgs?.meta
+                ? { values: arg.extraArgs.meta.values ?? {} }
+                : undefined
+        )
+        const reason = getMetaKeyValue(ReasonMetaKey, meta)
+        const amountChanges = computeAmountChanges(children, meta, this.partyId)
+
+        const legs = arg.transferLegSides ?? []
+        if (legs.length === 0) {
+            return {
+                label: {
+                    ...amountChanges,
+                    type: 'MergeSplit',
+                    tokenStandardChoice,
+                    reason,
+                    meta,
+                },
+                transferInstruction: null,
+                children,
+            }
+        }
+
+        const sender =
+            accountOwner || getMetaKeyValue(SenderMetaKey, meta) || this.partyId
+        const receiverAmounts = new Map<string, BigNumber>()
+        for (const leg of legs) {
+            const sideTag =
+                typeof leg.side === 'string'
+                    ? leg.side
+                    : (leg.side as { tag?: string })?.tag
+            const otherOwner = leg.otherside?.owner
+            if (!otherOwner || !leg.amount) continue
+            if (sideTag === 'SenderSide' || sideTag === 'Sender') {
+                if (sender === this.partyId || accountOwner === this.partyId) {
+                    receiverAmounts.set(
+                        otherOwner,
+                        (
+                            receiverAmounts.get(otherOwner) || BigNumber('0')
+                        ).plus(BigNumber(leg.amount))
+                    )
+                }
+            }
+        }
+
+        let label: Label
+        if (receiverAmounts.size === 0) {
+            if (accountOwner === this.partyId) {
+                const incoming = legs.some((leg) => {
+                    const sideTag =
+                        typeof leg.side === 'string'
+                            ? leg.side
+                            : (leg.side as { tag?: string })?.tag
+                    return sideTag === 'ReceiverSide' || sideTag === 'Receiver'
+                })
+                label = incoming
+                    ? {
+                          ...amountChanges,
+                          type: 'TransferIn',
+                          tokenStandardChoice,
+                          sender:
+                              legs.find((l) => l.otherside?.owner)?.otherside
+                                  ?.owner ||
+                              sender ||
+                              'unknown',
+                          reason,
+                          meta,
+                      }
+                    : {
+                          ...amountChanges,
+                          type: 'MergeSplit',
+                          tokenStandardChoice,
+                          reason,
+                          meta,
+                      }
+            } else {
+                label = {
+                    ...amountChanges,
+                    type: 'MergeSplit',
+                    tokenStandardChoice,
+                    reason,
+                    meta,
+                }
+            }
+        } else if (sender === this.partyId || accountOwner === this.partyId) {
+            label = {
+                ...amountChanges,
+                type: 'TransferOut',
+                tokenStandardChoice,
+                receiverAmounts: [...receiverAmounts.entries()].map(
+                    ([receiver, amount]) => ({
+                        receiver,
+                        amount: amount.toString(),
+                    })
+                ),
+                reason,
+                meta,
+            }
+        } else {
+            label = {
+                ...amountChanges,
+                type: 'TransferIn',
+                tokenStandardChoice,
+                sender,
+                reason,
+                meta,
+            }
+        }
+
+        return {
+            label,
+            transferInstruction: null,
+            children,
+        }
+    }
+
     private async buildTransfer(
         exercisedEvent: ExercisedEvent,
         tokenStandardChoice: TokenStandardChoice | null,
@@ -582,7 +744,7 @@ export class TransactionParser {
         const sender: string =
             transferInstructions?.transfer?.sender ||
             getMetaKeyValue(SenderMetaKey, meta) ||
-            rawTransferArg?.sender
+            partyFromAccountOrParty(rawTransferArg?.sender)
         if (!sender) {
             console.error(
                 `Malformed transfer didn't contain sender. Will instead attempt to parse the children.
@@ -827,14 +989,21 @@ export class TransactionParser {
 
         if (
             exercisedEvent.consuming &&
-            hasInterface(HOLDING_INTERFACE_ID, exercisedEvent)
+            (hasInterface(HOLDING_INTERFACE_ID, exercisedEvent) ||
+                hasInterface(HOLDING_INTERFACE_ID_V2, exercisedEvent))
         ) {
             const selfEvent = await this.getEventsForArchive(exercisedEvent)
             if (selfEvent) {
-                const holdingView = ensureInterfaceViewIsPresent(
-                    selfEvent.created.createdEvent,
-                    HOLDING_INTERFACE_ID
-                ).viewValue as Holding
+                const known = getKnownInterfaceView(
+                    selfEvent.created.createdEvent
+                )
+                const holdingView =
+                    known?.type === 'Holding'
+                        ? known.viewValue
+                        : (ensureInterfaceViewIsPresent(
+                              selfEvent.created.createdEvent,
+                              HOLDING_INTERFACE_ID
+                          ).viewValue as Holding)
                 mutatingResult.archives.push({
                     amount: holdingView.amount,
                     instrumentId: holdingView.instrumentId,
@@ -856,12 +1025,13 @@ export class TransactionParser {
                 if (
                     interfaceView &&
                     interfaceView.interfaceId &&
-                    matchInterfaceIds(
-                        HOLDING_INTERFACE_ID,
-                        interfaceView.interfaceId
-                    )
+                    isHoldingInterfaceId(interfaceView.interfaceId)
                 ) {
-                    const holdingView = interfaceView.viewValue as Holding
+                    const known = getKnownInterfaceView(createdEvent)
+                    const holdingView =
+                        known?.type === 'Holding'
+                            ? known.viewValue
+                            : (interfaceView.viewValue as Holding)
                     mutatingResult.creates.push({
                         amount: holdingView.amount,
                         instrumentId: holdingView.instrumentId,
@@ -873,19 +1043,30 @@ export class TransactionParser {
                 }
             } else if (
                 (archivedEvent &&
-                    hasInterface(HOLDING_INTERFACE_ID, archivedEvent)) ||
+                    (hasInterface(HOLDING_INTERFACE_ID, archivedEvent) ||
+                        hasInterface(
+                            HOLDING_INTERFACE_ID_V2,
+                            archivedEvent
+                        ))) ||
                 (exercisedEvent &&
                     exercisedEvent.consuming &&
-                    hasInterface(HOLDING_INTERFACE_ID, exercisedEvent))
+                    (hasInterface(HOLDING_INTERFACE_ID, exercisedEvent) ||
+                        hasInterface(HOLDING_INTERFACE_ID_V2, exercisedEvent)))
             ) {
                 const contractEvents = await this.getEventsForArchive(
                     archivedEvent || exercisedEvent!
                 )
                 if (contractEvents) {
-                    const holdingView = ensureInterfaceViewIsPresent(
-                        contractEvents.created?.createdEvent,
-                        HOLDING_INTERFACE_ID
-                    ).viewValue as Holding
+                    const known = getKnownInterfaceView(
+                        contractEvents.created?.createdEvent
+                    )
+                    const holdingView =
+                        known?.type === 'Holding'
+                            ? known.viewValue
+                            : (ensureInterfaceViewIsPresent(
+                                  contractEvents.created?.createdEvent,
+                                  HOLDING_INTERFACE_ID
+                              ).viewValue as Holding)
                     mutatingResult.archives.push({
                         amount: holdingView.amount,
                         instrumentId: holdingView.instrumentId,
@@ -930,7 +1111,9 @@ export class TransactionParser {
                 eventFormat: EventFilterBySetup({
                     interfaceIds: [
                         HOLDING_INTERFACE_ID,
+                        HOLDING_INTERFACE_ID_V2,
                         TRANSFER_INSTRUCTION_INTERFACE_ID,
+                        TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
                     ],
                     isMasterUser: this.isMasterUser,
                     partyId: this.partyId,

@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import { Metadata } from '@canton-network/core-token-standard'
+import {
+    Metadata,
+    TokenApiVersionPreference,
+} from '@canton-network/core-token-standard'
 import { URLInput } from '../../utils/url'
 
 export type TransferParams = {
@@ -15,9 +18,16 @@ export type TransferParams = {
     expirationDate?: Date
     meta?: Metadata
     memo?: string
+    /** Prefer V2 when advertised unless forced. Default: config or 'auto'. */
+    apiVersion?: TokenApiVersionPreference
+    /** Controllers for V2 choices; defaults to [sender]. */
+    actors?: PartyId[]
 }
 
 export type TransferAllocationChoiceParams = {
     transferInstructionCid: string
     registryUrl: URLInput
+    apiVersion?: TokenApiVersionPreference
+    actors?: PartyId[]
+    supportedApis?: Record<string, string>
 }

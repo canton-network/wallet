@@ -22,6 +22,8 @@ export interface AggregatedHolding {
         name: string
         symbol: string
         decimals: number
+        paused?: boolean
+        pauseInfo?: { reason?: string; until?: string }
     }
 }
 
@@ -109,6 +111,10 @@ export function enrichWithInstrumentInfo(
                       name: instrumentInfo.name,
                       symbol: instrumentInfo.symbol,
                       decimals: instrumentInfo.decimals,
+                      paused: instrumentInfo.paused,
+                      ...(instrumentInfo.pauseInfo
+                          ? { pauseInfo: instrumentInfo.pauseInfo }
+                          : {}),
                   }
                 : undefined,
         }

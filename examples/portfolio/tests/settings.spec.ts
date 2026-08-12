@@ -242,6 +242,8 @@ test('instrument mapping preserves registry and SDK fields', () => {
         name: 'Amulet',
         symbol: 'AMT',
         decimals: 10,
+        supportedApis: {},
+        paused: false,
     })
 })
 
