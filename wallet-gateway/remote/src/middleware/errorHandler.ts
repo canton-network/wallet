@@ -24,6 +24,7 @@ export function errorHandler(
         // Full error with stack goes to logs only.
         logger.error({ err }, 'Unhandled request error')
 
+        // If the response has already started, we can't safely send an error response.
         if (res.headersSent) {
             next(err)
             return

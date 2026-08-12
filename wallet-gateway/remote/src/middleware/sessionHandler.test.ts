@@ -7,6 +7,7 @@ import type { AuthAware, AuthContext } from '@canton-network/core-wallet-auth'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { sessionHandler } from './sessionHandler.js'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import { Store } from '@canton-network/core-wallet-store'
 
 describe('sessionHandler', () => {
@@ -42,7 +43,7 @@ describe('sessionHandler', () => {
         partial: Partial<Request> & {
             method?: string
             baseUrl?: string
-            body?: { method?: string }
+            body?: { method?: string; id?: number }
             authContext?: AuthContext
         }
     ): Request {
@@ -127,8 +128,47 @@ describe('sessionHandler', () => {
         expect(next).not.toHaveBeenCalled()
         expect(status).toHaveBeenCalledWith(401)
         expect(json).toHaveBeenCalledWith({
-            error: 'No active session found',
+            jsonrpc: '2.0',
+            id: null,
+            error: {
+                code: providerErrors.unauthorized().code,
+                message: 'No active session found',
+            },
         })
+    })
+
+    it('returns 401 without calling getSession when no access token is present', async () => {
+        const req = makeReq({
+            body: { method: 'listWallets' },
+            authContext: undefined,
+        })
+        const res = makeRes()
+        const middleware = sessionHandler(store, allowedPaths, logger)
+
+        await middleware(req, res, next)
+
+        expect(getSession).not.toHaveBeenCalled()
+        expect(next).not.toHaveBeenCalled()
+        expect(status).toHaveBeenCalledWith(401)
+        expect(json).toHaveBeenCalledWith({
+            jsonrpc: '2.0',
+            id: null,
+            error: {
+                code: providerErrors.unauthorized().code,
+                message: 'No active session found',
+            },
+        })
+    })
+
+    it('keeps the JSON-RPC request id in the 401 response', async () => {
+        getSession.mockResolvedValue(undefined)
+        const req = makeReq({ body: { method: 'listWallets', id: 42 } })
+        const res = makeRes()
+        const middleware = sessionHandler(store, allowedPaths, logger)
+
+        await middleware(req, res, next)
+
+        expect(json).toHaveBeenCalledWith(expect.objectContaining({ id: 42 }))
     })
 
     it('requires a session when the path is not in the allow list config', async () => {
