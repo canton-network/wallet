@@ -18,6 +18,12 @@ const GENERATED_COMPOSE_OVERRIDE = path.join(
 
 const CANTON_MAX_COMMANDS_IN_FLIGHT = 256
 
+// Custom multi-sync bootstrap script
+const CUSTOM_APP_SYNCHRONIZER_SC = path.join(
+    rootDir,
+    'canton/multi-sync/app-synchronizer.sc'
+)
+
 function ensureComposeOverride() {
     fs.mkdirSync(path.dirname(GENERATED_COMPOSE_OVERRIDE), { recursive: true })
     fs.writeFileSync(
@@ -30,6 +36,19 @@ function ensureComposeOverride() {
             `        canton.participants.app-provider.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
             `        canton.participants.app-user.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
             `        canton.participants.sv.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
+            // Required so participants accept the alpha EnableMultiSynchronizer
+            // topology feature flag used for cross-synchronizer reassignment.
+            '      ADDITIONAL_CONFIG_ALPHA_VERSION_SUPPORT: |-',
+            '        canton.parameters.alpha-version-support = yes',
+            '        canton.participants.app-provider.parameters.alpha-version-support = yes',
+            '        canton.participants.app-user.parameters.alpha-version-support = yes',
+            ...(multiSync
+                ? [
+                      '  multi-sync-startup:',
+                      '    volumes:',
+                      `      - ${CUSTOM_APP_SYNCHRONIZER_SC}:/app/app-synchronizer.sc`,
+                  ]
+                : []),
             '',
         ].join('\n'),
         'utf8'
