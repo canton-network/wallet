@@ -25,7 +25,6 @@ interface JsonRpcHttpOptions<T> {
  * Handles JSON-RPC errors and maps them to HTTP responses.
  * @param error The error that occurred.
  * @param id The JSON-RPC request ID.
- * @param logger The logger instance.
  * @param method The name of the JSON-RPC method being called.
  * @returns A tuple containing the HTTP status code and the JSON-RPC response.
  */
