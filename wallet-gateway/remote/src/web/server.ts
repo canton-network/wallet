@@ -17,7 +17,7 @@ export const web = (
 ) => {
     // Expose API URLs via well-known configuration endpoint
     app.get('/.well-known/wallet-gateway-config', (_req, res) => {
-        res.json({ userPath: userApiUrl, dappApiUrl })
+        res.json({ userApiUrl, dappApiUrl })
     })
     if (process.env.NODE_ENV === 'development') {
         // Enable live reloading and Vite dev server for frontend in development
