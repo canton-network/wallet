@@ -769,10 +769,14 @@ describe('userController', () => {
             expect(result.transactions[0]?.id).toBe('tx-1')
         })
 
-        it('deletes a pending transaction', async () => {
+        it('deletes a pending transaction and emits a failed event', async () => {
             const store = await createStore(logger, auth)
             await store.setTransaction(transaction)
             const removeSpy = vi.spyOn(store, 'removeTransaction')
+            const emitSpy = vi.spyOn(
+                notificationService.getNotifier(session.id),
+                'emit'
+            )
             const controller = createController(
                 store,
                 notificationService,
@@ -783,6 +787,14 @@ describe('userController', () => {
             await controller.deleteTransaction({ transactionId: 'tx-1' })
 
             expect(removeSpy).toHaveBeenCalledWith('tx-1')
+            expect(emitSpy).toHaveBeenCalledOnce()
+            expect(emitSpy).toHaveBeenCalledWith('txChanged', {
+                status: 'failed',
+                commandId: transaction.commandId,
+            })
+            expect(removeSpy.mock.invocationCallOrder[0]).toBeLessThan(
+                emitSpy.mock.invocationCallOrder[0]!
+            )
         })
 
         it('rejects delete when the transaction is not pending', async () => {
