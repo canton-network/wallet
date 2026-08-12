@@ -30,26 +30,24 @@ utils.retry_until_true {
     `app-user`.synchronizers.active("app-synchronizer")
 }
 
-// Enable the multi-synchronizer topology feature flag so contracts can be
-// reassigned across the app- and global synchronizers (required for DvP flows).
-// The global synchronizer is set up by the main bootstrap; wait until both
-// participants are connected to it before reading its id (ordering vs. this
-// script can vary, e.g. it is slower in CI).
-utils.retry_until_true {
-  `app-provider`.synchronizers.list_connected().exists(_.synchronizerId != appSynchronizerId) &&
-    `app-user`.synchronizers.list_connected().exists(_.synchronizerId != appSynchronizerId)
-}
+// Enable the multi-synchronizer topology feature flag on every synchronizer each
+// participant is connected to (required for cross-synchronizer reassignment /
+// DvP flows). Wait until each participant is connected to a synchronizer other
+// than the freshly-created app-synchronizer (i.e. the global synchronizer, whose
+// onboarding can lag behind this script, especially in CI) so none are missed.
+val multiSyncParticipants = Seq(`app-provider`, `app-user`)
 
-val globalSynchronizerId = `app-provider`.synchronizers.list_connected()
-  .map(_.synchronizerId)
-  .filter(_ != appSynchronizerId)
-  .head
+utils.retry_until_true {
+  multiSyncParticipants.forall(
+    _.synchronizers.list_connected().exists(_.synchronizerId != appSynchronizerId)
+  )
+}
 
 val multiSyncFeatureFlag =
   Seq(SynchronizerTrustCertificate.ParticipantTopologyFeatureFlag.EnableMultiSynchronizer)
-Seq(appSynchronizerId, globalSynchronizerId).foreach { sid =>
-  `app-provider`.topology.synchronizer_trust_certificates
-    .propose(`app-provider`, sid, featureFlags = multiSyncFeatureFlag)
-  `app-user`.topology.synchronizer_trust_certificates
-    .propose(`app-user`, sid, featureFlags = multiSyncFeatureFlag)
+multiSyncParticipants.foreach { participant =>
+  participant.synchronizers.list_connected().map(_.synchronizerId).distinct.foreach { sid =>
+    participant.topology.synchronizer_trust_certificates
+      .propose(participant, sid, featureFlags = multiSyncFeatureFlag)
+  }
 }
