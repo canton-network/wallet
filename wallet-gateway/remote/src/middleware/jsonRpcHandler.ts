@@ -42,12 +42,15 @@ export const handleRpcError = (
         error: {
             ...rpcErrors.internal(),
             message: genericMessage,
-            data: error,
         },
     }
 
     if (error instanceof JsonRpcError) {
-        response.error = error
+        response.error = {
+            code: error.code,
+            message: error.message,
+            data: error.data,
+        }
         const httpCode = toHttpErrorCode(error.code)
         return [httpCode, jsonRpcResponse(id, response)]
     }
