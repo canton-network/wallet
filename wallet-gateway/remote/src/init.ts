@@ -376,9 +376,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         ],
     }
 
-    app.use(
-        '/api/*splat',
-        express.json(),
+    const apiMiddleware = [
         preAuthRateLimit,
         apiKeyAuth(
             store,
@@ -391,8 +389,11 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             store,
             allowedPaths,
             logger.child({ component: 'SessionHandler' })
-        )
-    )
+        ),
+    ]
+
+    app.use(config.server.userPath, ...apiMiddleware)
+    app.use(config.server.dappPath, ...apiMiddleware)
 
     logger.info({ ...config.server, port }, 'Server configuration')
 
