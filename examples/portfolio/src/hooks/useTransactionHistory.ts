@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
 import {
     useInfiniteQuery,
     useQueryClient,
@@ -10,7 +9,6 @@ import {
 } from '@tanstack/react-query'
 import { type Transaction } from '@canton-network/core-tx-parser'
 import { useConnection } from '../contexts/ConnectionContext'
-import { usePrimaryAccount } from '../hooks/useAccounts'
 import type { TransactionHistoryResponse } from '../services/transaction-history-service'
 import { queryKeys } from './query-keys'
 import { transactionHistoryServiceQueryOptions } from './query-options'
@@ -45,14 +43,6 @@ export const useTransactionHistoryForParty = (
     })
 }
 
-export const useTransactionHistory = (): UseInfiniteQueryResult<
-    InfiniteData<TransactionHistoryResponse>,
-    Error
-> => {
-    const primaryParty = usePrimaryAccount()?.partyId
-    return useTransactionHistoryForParty(primaryParty)
-}
-
 /** Deduplicate transactions.  We don't have stable pagination, this concerns
  *  in particular the the first page, for which the cursor doesn't have any
  *  offset or limit info. */
@@ -74,17 +64,4 @@ export const deduplicateTransactionHistory = (
     }
 
     return transactions
-}
-
-export const useDeduplicatedTransactionHistoryForParty = (
-    partyId: string | undefined
-): Transaction[] => {
-    const { data } = useTransactionHistoryForParty(partyId)
-
-    return useMemo(() => deduplicateTransactionHistory(data), [data])
-}
-
-export const useDeduplicatedTransactionHistory = (): Transaction[] => {
-    const primaryParty = usePrimaryAccount()?.partyId
-    return useDeduplicatedTransactionHistoryForParty(primaryParty)
 }

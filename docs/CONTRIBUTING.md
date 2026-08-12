@@ -147,10 +147,11 @@ pnpm script:fetch:canton --network=mainnet  # Fetch mainnet Canton version (defa
 If you've cloned this repository when it was set up to use `yarn`, finalize the switch to `pnpm`:
 
 1. Pull latest main into your fork / branch
-2. Delete any residual `yarn` directories: `rm -rf .pnp.cjs .pnp.loader.mjs .yarn`
-3. Run `corepack enable pnpm` to install pnpm
-4. Run `pnpm install`
-5. Done! For 99% of cases, you can now use `pnpm` as a direct replacement for `yarn`, i.e.:
+2. Stop all running services: `yarn pm2 kill` (and `yarn stop:localnet`, if applicable)
+3. Delete any residual `yarn` directories: `rm -rf .pnp.cjs .pnp.loader.mjs .yarn`
+4. Run `corepack enable pnpm` to install pnpm
+5. Run `pnpm install`
+6. Done! For 99% of cases, you can now use `pnpm` as a direct replacement for `yarn`, i.e.:
     - `yarn build:all` --> `pnpm build:all`
     - `yarn start:all` --> `pnpm start:all`
     - `yarn pm2 list` --> `pnpm pm2 list`

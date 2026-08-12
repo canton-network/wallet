@@ -221,24 +221,39 @@ export class TransactionHistoryService {
 
             unapplied.sort((e1, e2) => e1.offset - e2.offset)
 
+            const parseResults = await Promise.all(
+                unapplied.map(async (jsTransaction) => {
+                    const parser = new TransactionParser(
+                        this.provider,
+                        jsTransaction,
+                        this.party,
+                        false // isMasterUser
+                    )
+                    try {
+                        return {
+                            success: true as const,
+                            transaction: await parser.parseTransaction(),
+                        }
+                    } catch (error) {
+                        return { success: false as const, error, jsTransaction }
+                    }
+                })
+            )
+
             const newUnprocessed: JsTransaction[] = []
-            for (const jsTransaction of unapplied) {
-                const parser = new TransactionParser(
-                    this.provider,
-                    jsTransaction,
-                    this.party,
-                    false // isMasterUser
-                )
-                try {
-                    const transaction = await parser.parseTransaction()
-                    this.transactions.push(transaction)
-                } catch (error) {
+            for (const result of parseResults) {
+                if (result.success) {
+                    this.transactions.push(result.transaction)
+                } else {
                     // TODO: we should probably only add the transaction to
                     // unprocessed if we get the error
                     // CONTRACT_EVENTS_NOT_FOUND, in other cases retrying
                     // probably won't help.
-                    this.logger.info({ error }, 'parsing transaction failed')
-                    newUnprocessed.push(jsTransaction)
+                    this.logger.info(
+                        { error: result.error },
+                        'parsing transaction failed'
+                    )
+                    newUnprocessed.push(result.jsTransaction)
                 }
             }
 

@@ -40,7 +40,7 @@ This provider is always available and requires no additional configuration. You 
 **Security Considerations:**
 
 > [!IMPORTANT]
-> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon) when the User API is exposed in production.
+> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon, Securosys) when the User API is exposed in production.
 
 **How it Works:**
 
@@ -109,6 +109,33 @@ Set the following environment variables:
 - Multi-party approval workflows
 - High-security production environments
 
+## Securosys
+
+Securosys provides HSM-backed key management and signing through the Securosys TSB (Transaction Security Broker).
+
+**Setup:**
+
+See the [Securosys signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-securosys) for driver details, local deployment, and authentication modes (API keys, bearer token, and/or mTLS).
+
+**Configuration:**
+
+Set the following environment variables:
+
+- `SECUROSYS_TSB_BASE_URL` - Base URL of the TSB service
+- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - API key for TSB key-management endpoints
+- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - API key for TSB signing and request-status endpoints
+- `SECUROSYS_TSB_BEARER_TOKEN` - Optional bearer access token (access-token auth mode)
+- `SECUROSYS_TSB_MTLS_P12_PATH` - Optional path to a PKCS#12/P12 client certificate when TSB requires mTLS
+- `SECUROSYS_TSB_MTLS_P12_PASSWORD` - Optional password for the PKCS#12/P12 client certificate
+- `SECUROSYS_TSB_KEY_PASSWORD` - Optional TSB key password used for key attributes and signing
+- `SECUROSYS_TSB_SIGNATURE_ALGORITHM` - Optional TSB signature algorithm (defaults to `EDDSA`)
+
+**Use Cases:**
+
+- Enterprise deployments requiring HSM-backed key storage
+- Environments already using Securosys TSB / CloudHSM
+- High-security production environments
+
 ## Selecting a Provider
 
 When creating a new party through the User API or web UI, you can select which signing provider to use. The choice depends on your security requirements, infrastructure setup, and compliance needs.
@@ -116,7 +143,7 @@ When creating a new party through the User API or web UI, you can select which s
 **Recommendations:**
 
 - **Development/Testing**: Use Wallet Gateway (internal) or Participant-based signing
-- **Production (User API accessible)**: Use Fireblocks, Dfns, or Blockdaemon
+- **Production (User API accessible)**: Use Fireblocks, Dfns, Blockdaemon, or Securosys
 - **Production (operator-controlled, User API restricted)**: Participant-based signing may be appropriate when wallet creation is limited to trusted operators
 
 The signing provider is selected per-party, so you can have different parties using different providers within the same Gateway instance.
@@ -130,6 +157,7 @@ Each provider handles key management differently:
 - **Fireblocks**: Keys are stored in Fireblocks' secure infrastructure (HSM-backed)
 - **Blockdaemon**: Keys are managed by Blockdaemon's infrastructure
 - **Dfns**: Keys are managed by Dfns' secure infrastructure
+- **Securosys**: Keys are managed by Securosys TSB (HSM-backed)
 
 When migrating between providers, keys cannot be directly transferred. You'll need to:
 

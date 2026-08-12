@@ -1,4 +1,4 @@
-# Wallet Gateway
+# Wallet
 
 A TypeScript framework for building wallet integrations on the [Canton Network](https://www.canton.network/). It provides the **Wallet Gateway** (server and browser extension), the **dApp SDK**, the **Wallet SDK**, and a set of shared core modules.
 
@@ -99,10 +99,13 @@ Shared libraries used by the Wallet Gateway, SDKs, and signing providers:
 
 ### Examples
 
-| Path                                       | Description                                                       |
-| ------------------------------------------ | ----------------------------------------------------------------- |
-| [`examples/ping`](examples/ping)           | Minimal dApp demonstrating connect, prepare, and execute flows    |
-| [`examples/portfolio`](examples/portfolio) | Portfolio dApp showcasing account listing and transaction history |
+| Path                                               | Description                                                             |
+| -------------------------------------------------- | ----------------------------------------------------------------------- |
+| [`examples`](examples)                             | Overview of all examples and their reserved development ports           |
+| [`examples/automation`](examples/automation)       | Python service-account automation using the Wallet Gateway JSON-RPC API |
+| [`examples/ping`](examples/ping)                   | Minimal dApp demonstrating connect, prepare, and execute flows          |
+| [`examples/portfolio`](examples/portfolio)         | Portfolio dApp showcasing account listing and transaction history       |
+| [`examples/walletconnect`](examples/walletconnect) | Wallet-side WalletConnect v2 implementation using Reown WalletKit       |
 
 ### Documentation
 
