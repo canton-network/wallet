@@ -50,7 +50,7 @@ jobs:
               with:
                   ref: ${{ github.event.inputs.ref || github.ref }}
 
-            - uses: ./.github/actions/setup_yarn/initial
+            - uses: ./.github/actions/setup_pnpm/initial
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -62,13 +62,13 @@ jobs:
             - uses: ./.github/actions/check_resources
 
             - name: Run stress scripts sequentially
-              run: yarn script:test:stress-scripts
+              run: pnpm script:test:stress-scripts
 
             - uses: ./.github/actions/check_resources
 
             - name: Stop localnet (${{ github.event.inputs.network || 'devnet' }})
               if: always()
-              run: yarn stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
+              run: pnpm run stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
 
             - name: Save container logs (on failure)
               if: failure()

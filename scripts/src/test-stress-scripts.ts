@@ -49,7 +49,7 @@ const scripts = getScriptsRecursive(dir)
 
 async function executeScript(name: string) {
     console.log(success(`\n=== Executing stress script: ${name} ===`))
-    await cmd(`yarn tsx ${path.join(dir, name)}`).then(() => {
+    await cmd(`pnpm tsx ${path.join(dir, name)}`).then(() => {
         console.log(success(`Stress script ${name} executed successfully`))
     })
     console.log(success(`=== Finished stress script: ${name} ===\n`))
@@ -63,7 +63,7 @@ async function cmd(command: string): Promise<void> {
     })
 
     // spawn pino-pretty
-    const pretty = child_process.spawn('yarn', ['pino-pretty'], {
+    const pretty = child_process.spawn('pnpm', ['pino-pretty'], {
         stdio: ['pipe', process.stdout, process.stderr],
         shell: true,
     })

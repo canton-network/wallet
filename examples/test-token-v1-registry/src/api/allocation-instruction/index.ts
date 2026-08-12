@@ -7,7 +7,7 @@ import { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
 import z from 'zod'
 
-const allocationInstructionAPIRouter = Router()
+const allocationInstructionAPIRouter: Router = Router()
 
 const openAPIRouter =
     createExpressOpenApiRouter<OffLedger.AllocationInstructionV1.paths>(
