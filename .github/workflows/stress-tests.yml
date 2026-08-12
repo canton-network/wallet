@@ -79,8 +79,17 @@ jobs:
                     docker logs "$c" &> "logs/$c.log" || true
                   done
 
-            - name: Upload logs as artifacts
+            - name: Scan container logs for secrets
+              id: scan_docker_logs
               if: failure()
+              uses: ./.github/actions/scan_logs_for_secrets
+              with:
+                  path: logs/
+
+            # Only published once the scan came back clean, otherwise the leaked
+            # value would be downloadable despite the job having failed.
+            - name: Upload logs as artifacts
+              if: ${{ failure() && steps.scan_docker_logs.outcome == 'success' }}
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: docker-logs-${{ github.event.inputs.network || 'devnet' }}

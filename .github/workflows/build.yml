@@ -334,6 +334,13 @@ jobs:
               if: ${{ !cancelled() }}
               run: pnpm pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
+            - name: Scan remote PM2 logs for secrets
+              id: scan_ping_gateway_log
+              if: ${{ !cancelled() }}
+              uses: ./.github/actions/scan_logs_for_secrets
+              with:
+                  path: wallet-gateway-remote.log
+
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
               with:
@@ -341,8 +348,10 @@ jobs:
                   path: examples/ping/playwright-report/
                   retention-days: 5
 
+            # Only published once the scan came back clean, otherwise the leaked
+            # value would be downloadable despite the job having failed.
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-              if: ${{ !cancelled() }}
+              if: ${{ !cancelled() && steps.scan_ping_gateway_log.outcome == 'success' }}
               with:
                   name: ping-wallet-gateway-remote-log-${{ matrix.network }}-${{ matrix.db }}
                   path: wallet-gateway-remote.log
@@ -398,6 +407,13 @@ jobs:
               if: ${{ !cancelled() }}
               run: pnpm pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
+            - name: Scan remote PM2 logs for secrets
+              id: scan_portfolio_gateway_log
+              if: ${{ !cancelled() }}
+              uses: ./.github/actions/scan_logs_for_secrets
+              with:
+                  path: wallet-gateway-remote.log
+
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
               with:
@@ -405,8 +421,10 @@ jobs:
                   path: examples/portfolio/playwright-report/
                   retention-days: 5
 
+            # Only published once the scan came back clean, otherwise the leaked
+            # value would be downloadable despite the job having failed.
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-              if: ${{ !cancelled() }}
+              if: ${{ !cancelled() && steps.scan_portfolio_gateway_log.outcome == 'success' }}
               with:
                   name: portfolio-wallet-gateway-remote-log-${{ matrix.network }}
                   path: wallet-gateway-remote.log
@@ -468,8 +486,17 @@ jobs:
               if: always()
               run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
-            - name: Upload logs as artifacts
+            - name: Scan container logs for secrets
+              id: scan_snippets_docker_logs
               if: failure()
+              uses: ./.github/actions/scan_logs_for_secrets
+              with:
+                  path: logs/
+
+            # Only published once the scan came back clean, otherwise the leaked
+            # value would be downloadable despite the job having failed.
+            - name: Upload logs as artifacts
+              if: ${{ failure() && steps.scan_snippets_docker_logs.outcome == 'success' }}
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: docker-logs-snippets-${{ matrix.network }}
@@ -520,8 +547,17 @@ jobs:
               if: always()
               run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
-            - name: Upload logs as artifacts
+            - name: Scan container logs for secrets
+              id: scan_scripts_docker_logs
               if: failure()
+              uses: ./.github/actions/scan_logs_for_secrets
+              with:
+                  path: logs/
+
+            # Only published once the scan came back clean, otherwise the leaked
+            # value would be downloadable despite the job having failed.
+            - name: Upload logs as artifacts
+              if: ${{ failure() && steps.scan_scripts_docker_logs.outcome == 'success' }}
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: docker-logs-scripts-${{ matrix.network }}
