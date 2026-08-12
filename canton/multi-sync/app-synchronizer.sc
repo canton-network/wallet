@@ -32,11 +32,18 @@ utils.retry_until_true {
 
 // Enable the multi-synchronizer topology feature flag so contracts can be
 // reassigned across the app- and global synchronizers (required for DvP flows).
+// The global synchronizer is set up by the main bootstrap; wait until both
+// participants are connected to it before reading its id (ordering vs. this
+// script can vary, e.g. it is slower in CI).
+utils.retry_until_true {
+  `app-provider`.synchronizers.list_connected().exists(_.synchronizerId != appSynchronizerId) &&
+    `app-user`.synchronizers.list_connected().exists(_.synchronizerId != appSynchronizerId)
+}
+
 val globalSynchronizerId = `app-provider`.synchronizers.list_connected()
   .map(_.synchronizerId)
   .filter(_ != appSynchronizerId)
-  .headOption
-  .getOrElse(sys.error("global synchronizer not connected on app-provider"))
+  .head
 
 val multiSyncFeatureFlag =
   Seq(SynchronizerTrustCertificate.ParticipantTopologyFeatureFlag.EnableMultiSynchronizer)
