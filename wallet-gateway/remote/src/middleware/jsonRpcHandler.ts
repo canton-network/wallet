@@ -166,8 +166,9 @@ export const jsonRpcHandler =
                             method
                         )
 
+                        // Full error with callstack in logs, sanitized version in response
                         logger.error(
-                            { response },
+                            { err: error, response },
                             'RPC response: error with response'
                         )
                         res.status(status).json(response)
