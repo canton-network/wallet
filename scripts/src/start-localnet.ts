@@ -36,12 +36,6 @@ function ensureComposeOverride() {
             `        canton.participants.app-provider.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
             `        canton.participants.app-user.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
             `        canton.participants.sv.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
-            // Required so participants accept the alpha EnableMultiSynchronizer
-            // topology feature flag used for cross-synchronizer reassignment.
-            '      ADDITIONAL_CONFIG_ALPHA_VERSION_SUPPORT: |-',
-            '        canton.parameters.alpha-version-support = yes',
-            '        canton.participants.app-provider.parameters.alpha-version-support = yes',
-            '        canton.participants.app-user.parameters.alpha-version-support = yes',
             ...(multiSync
                 ? [
                       '  multi-sync-startup:',

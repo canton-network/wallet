@@ -6,10 +6,11 @@
 // survives a `yarn script:fetch:localnet` (the .localnet bundle is gitignored).
 //
 // In addition to bootstrapping the private app-synchronizer and connecting the
-// app-provider and app-user participants, this enables the alpha
+// app-provider and app-user participants, this enables the
 // EnableMultiSynchronizer topology feature flag on both participants for the
-// app- and global synchronizers. Without it, cross-synchronizer reassignment
-// (e.g. the DvP settlement in example 17 / run-17) fails with
+// app- and global synchronizers. Protocol version 35 (the latest stable PV in
+// Canton 3.5.8) enforces this flag for cross-synchronizer reassignment; without
+// it the DvP settlement in example 17 / run-17 fails with
 // "Multi-synchronizer feature flag is not enabled for synchronizer ...".
 
 val appSynchronizerId = bootstrap.synchronizer(
