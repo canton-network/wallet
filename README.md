@@ -121,35 +121,41 @@ Shared libraries used by the Wallet Gateway, SDKs, and signing providers:
 ### Prerequisites
 
 - Node.js 20+
-- Yarn 4 (Corepack)
+- pnpm v11 (Corepack)
 - A running Canton participant node (or use the included local setup)
 
 ### Quick Start
 
 ```bash
 # Install dependencies
-yarn install
+pnpm install
 
 # Build everything
-yarn build:all
+pnpm build:all
 
 # Start all services (Wallet Gateway, mock OAuth, Example dApps, etc.)
-yarn start:all
+pnpm start:all
 
 # Start a local Canton Participant Node
-yarn start:canton
+pnpm start:canton
 ```
 
 Active processes can be monitored with:
 
 ```bash
-yarn pm2 list
+pnpm pm2 list
 ```
 
 To stop everything:
 
 ```bash
-yarn stop:all
+pnpm stop:all
+```
+
+alternatively, completely stop the pm2 server:
+
+```bash
+pnpm pm2 kill
 ```
 
 ### Running the Browser Extension

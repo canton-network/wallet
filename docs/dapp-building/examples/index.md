@@ -9,8 +9,8 @@ A minimal example dApp that imports the dApp SDK and communicates with a Wallet 
 **Running:**
 
 ```bash
-yarn install
-yarn dev
+pnpm install
+pnpm dev
 ```
 
 [Source code](https://github.com/canton-network/wallet/tree/main/examples/ping)
@@ -24,9 +24,9 @@ A more complete example dApp that showcases a minimal but functional portfolio a
 Because this example has a number of dependencies, it is recommended to use the scripts in the root repository for development:
 
 ```bash
-yarn build:all
-yarn start:all   # this service lives at http://localhost:8081
-yarn stop:all
+pnpm build:all
+pnpm start:all   # this service lives at http://localhost:8081
+pnpm stop:all
 ```
 
 [Source code](https://github.com/canton-network/wallet/tree/main/examples/portfolio)

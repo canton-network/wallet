@@ -56,9 +56,9 @@ const hooks: openrpcgen.components.IHooks = {
                     force: true,
                 })
             }
-            execSync(`yarn eslint --fix ${dest}`)
+            execSync(`pnpm eslint --fix ${dest}`)
             execSync(
-                `yarn prettier --write --no-error-on-unmatched-pattern ${dest}/**/*`
+                `pnpm prettier --write --no-error-on-unmatched-pattern ${dest}/**/*`
             )
         },
     ],

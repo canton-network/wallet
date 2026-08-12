@@ -21,7 +21,7 @@ $ npm install @canton-network/wallet-sdk
 or
 
 ```shell
-$ yarn add @canton-network/wallet-sdk
+$ pnpm add @canton-network/wallet-sdk
 ```
 
 ## Getting Started

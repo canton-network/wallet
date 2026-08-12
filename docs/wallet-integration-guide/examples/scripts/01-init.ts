@@ -162,3 +162,6 @@ if (senderAmuletUtxos.length === 0) {
 }
 
 logger.info('Tap command for Amulet for Sender submitted and UTXO received')
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

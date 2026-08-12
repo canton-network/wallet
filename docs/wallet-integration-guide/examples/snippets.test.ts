@@ -21,7 +21,7 @@ describe('testing doc snippets', () => {
                 expect(fn).toBeDefined()
 
                 const result = await fn()
-                // Run `yarn snippets-update` to update snapshots for new changes
+                // Run `pnpm snippets-update` to update snapshots for new changes
                 expect(result).toMatchSnapshot()
             },
             120_000

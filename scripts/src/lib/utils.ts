@@ -397,7 +397,7 @@ async function readNxGraphFromFile(
     projectName: string,
     filePath: string
 ): Promise<NxGraph> {
-    await ex(`yarn nx graph --focus=${projectName} --file=${filePath}`, {
+    await ex(`pnpm nx graph --focus=${projectName} --file=${filePath}`, {
         cwd: repoRoot,
     })
     const raw = fs.readFileSync(filePath, 'utf8')
@@ -412,7 +412,7 @@ async function readNxGraphFromFile(
 export async function getAllNxDependencies(
     projectName: string
 ): Promise<string[]> {
-    const projects: string[] = await ex(`yarn nx show projects --json`, {
+    const projects: string[] = await ex(`pnpm nx show projects --json`, {
         cwd: repoRoot,
     }).then(({ stdout }) => JSON.parse(stdout))
 

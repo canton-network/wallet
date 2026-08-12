@@ -23,9 +23,9 @@ function checkPackageJson(packageJsonPath: string): number {
     const packageType = packageJson.type
     const relativePath = path.relative(rootPath, packageJsonPath)
 
-    // Ignore paths containing .yarn or .vite or root directory
+    // Ignore paths containing .vite or root directory
     if (
-        folderPath.includes('.yarn') ||
+        folderPath.includes('node_modules') ||
         folderPath.includes('.vite') ||
         folderPath.includes('.canton') ||
         folderPath.includes('.cache') ||
@@ -147,7 +147,7 @@ function main(): void {
     let errorCount = 0
     traverseDirectory(rootDir, (filePath) => {
         if (
-            ['.canton', '.yarn', '.splice', '.nx'].some((dirName) =>
+            ['.canton', '.splice', '.nx', 'node_modules'].some((dirName) =>
                 filePath.includes(dirName)
             )
         ) {
