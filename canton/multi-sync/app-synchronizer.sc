@@ -5,6 +5,7 @@
 // /app/app-synchronizer.sc by scripts/src/start-localnet.ts so the change
 // survives a `yarn script:fetch:localnet` (the .localnet bundle is gitignored).
 //
+// TODO(#2283): this is a temporary workaround until we have a proper multi-synchronizer bootstrap script in the Canton repo
 // In addition to bootstrapping the private app-synchronizer and connecting the
 // app-provider and app-user participants, this enables the
 // EnableMultiSynchronizer topology feature flag on both participants for the
