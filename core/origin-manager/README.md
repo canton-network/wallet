@@ -5,7 +5,7 @@ This package provides a secure cross-window communication mechanism for verifyin
 ## Installation
 
 ```sh
-yarn add @canton-network/core-origin-manager
+pnpm add @canton-network/core-origin-manager
 ```
 
 ## Overview
@@ -36,15 +36,15 @@ Abstract base class that manages origin validation through a message-based hands
 
 Extends `OriginManager` for use in parent windows. Features:
 
-- `poll(origin)`: Initiates polling to establish connection with a child window
-- `postMessage(message, origin)`: Send a message to the child window (only succeeds if handshake completed)
+- `postMessage(message, origin)`: Send a message to the child window (only succeeds if handshake completed). Initiates polling to establish connection with a child window for the first time.
 - Automatically clears polling intervals upon successful handshake
 
 ### [ChildWindowOriginManager](./src/manager.ts)
 
 Extends `OriginManager` for use in child windows. Features:
 
-- `postMessage(message, origin)`: Send a message to the parent window (only succeeds if handshake completed)
+- Constructor accepts an optional `parentWindow` parameter (defaults to `window.opener`)
+- `postMessage(message)`: Send a message to the parent window (only succeeds if handshake completed and parentWindow exists)
 - Automatic handshake acknowledgment when receiving origin broadcasts
 - Cleans up listeners after successful handshake
 
@@ -58,12 +58,10 @@ import { ParentWindowOriginManager } from '@canton-network/core-origin-check'
 // Create a manager instance
 const originManager = new ParentWindowOriginManager()
 
-// Start polling for a specific origin
-const childOrigin = 'https://child.example.com'
-originManager.poll(childOrigin)
-
 // Send a message using the safe postMessage method
-// This will only succeed if the handshake is complete
+// This will initiate polling if connection is not established,
+// and send the message once the handshake is complete
+const childOrigin = 'https://child.example.com'
 originManager.postMessage({ type: 'greeting', data: 'hello' }, childOrigin)
 
 // Or manually check before sending
@@ -77,22 +75,16 @@ if (originManager.assert(childOrigin)) {
 ```typescript
 import { ChildWindowOriginManager } from '@canton-network/core-origin-check'
 
-// Create a manager instance
+// Create a manager instance with optional parent window parameter
 const originManager = new ChildWindowOriginManager()
+// or specify a parent window explicitly:
+// const originManager = new ChildWindowOriginManager(parentWindow)
 
 // The handshake is automatic; once complete, listener is removed
 
 // Send a message using the safe postMessage method
-// This will only succeed if the handshake is complete
-const parentOrigin = window.opener?.location.origin
-if (parentOrigin) {
-    originManager.postMessage({ type: 'response', data: 'world' }, parentOrigin)
-}
-
-// Or manually check before sending
-if (parentOrigin && originManager.assert(parentOrigin)) {
-    window.opener?.postMessage(data, parentOrigin)
-}
+// This will only succeed if the handshake is complete and parent window exists
+originManager.postMessage({ type: 'response', data: 'world' })
 ```
 
 ## Security Considerations
