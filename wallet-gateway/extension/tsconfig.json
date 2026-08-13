@@ -1,12 +1,7 @@
 {
-    "extends": "../../tsconfig.web.json",
+    "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
-        "rootDir": ".",
-        "outDir": "./dist",
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "useDefineForClassFields": false,
-        "noEmit": true
-    },
-    "include": ["src", "esbuild.mts"]
+        "allowImportingTsExtensions": true,
+        "jsx": "react-jsx"
+    }
 }
