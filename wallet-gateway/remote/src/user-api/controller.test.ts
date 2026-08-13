@@ -950,8 +950,20 @@ describe('userController', () => {
             iat: 1_800_000_000,
         }
 
+        interface JwtClaims {
+            iss: string
+            aud: string
+            sub: string
+            scope?: string
+            scp?: string[]
+            exp: number
+            iat: number
+            azp?: string
+            'client-id'?: string
+        }
+
         const createAuthWithAddSessionClaims = (
-            claimsOverride: Partial<typeof validAddSessionClaims> = {}
+            claimsOverride: Partial<JwtClaims> = {}
         ): AuthContext => ({
             ...auth,
             accessToken: createJwt({
@@ -1325,9 +1337,53 @@ describe('userController', () => {
             ).rejects.toThrow('Failed to add session')
         })
 
-        it('addSession rejects token with subject mismatch', async () => {
+        it('addSession rejects token with client-id claim and auth.clientId mismatch', async () => {
             const authWithInvalidSubject = createAuthWithAddSessionClaims({
-                sub: 'wrong-client-id',
+                azp: 'wrong-client-id',
+            })
+            const store = await createStore(logger, authWithInvalidSubject, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidSubject
+            )
+
+            await expect(
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession rejects token with azp claim and auth.clientId mismatch', async () => {
+            const authWithInvalidSubject = createAuthWithAddSessionClaims({
+                azp: 'wrong-client-id',
+            })
+            const store = await createStore(logger, authWithInvalidSubject, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidSubject
+            )
+
+            await expect(
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it("addSession passes when token doesn't token have azp and client-id claims", async () => {
+            const authWithInvalidSubject = createAuthWithAddSessionClaims({
+                azp: 'wrong-client-id',
             })
             const store = await createStore(logger, authWithInvalidSubject, {
                 withWallet: false,
