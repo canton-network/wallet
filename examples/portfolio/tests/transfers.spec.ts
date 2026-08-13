@@ -58,6 +58,48 @@ const setupTransferTest = async (page: Page): Promise<TransferTestContext> => {
 }
 
 test.describe('dashboard transfer flow', () => {
+    test('rejected approval returns the transfer form to a recoverable state', async ({
+        page: dappPage,
+    }) => {
+        const { wg, bob } = await setupTransferTest(dappPage)
+
+        await tap(dappPage, wg, '200')
+        await openTransferDialog(dappPage)
+
+        const dialog = dappPage.getByRole('dialog')
+        await dialog
+            .getByRole('textbox', { name: 'Recipient Address' })
+            .fill(bob)
+        await dialog.getByRole('combobox', { name: 'Select asset' }).click()
+        await dappPage.getByRole('option', { name: /AMT/ }).click()
+        await dialog.getByRole('spinbutton', { name: 'Amount' }).fill('25')
+        await dialog
+            .getByRole('textbox', { name: 'Description' })
+            .fill(`rejected approval test ${Date.now()}`)
+
+        const submitButton = dialog.getByRole('button', {
+            name: 'Make Transfer',
+        })
+        await wg.rejectTransaction(() => submitButton.click())
+
+        await expect(dialog.getByRole('alert')).toContainText(
+            'Transfer failed: The transaction was not completed. You can try again.',
+            { timeout: 15000 }
+        )
+        await expect(
+            dialog.getByRole('heading', { name: 'Transfer Summary' })
+        ).not.toBeVisible()
+        await expect(
+            dialog.getByRole('button', { name: 'Close transfer dialog' })
+        ).toBeEnabled()
+        await expect(submitButton).toBeEnabled()
+
+        await wg.approveTransaction(() => submitButton.click())
+        await expect(
+            dialog.getByRole('heading', { name: 'Transfer Summary' })
+        ).toBeVisible({ timeout: 15000 })
+    })
+
     test('two step transfer - accept', async ({ page: dappPage }) => {
         const { wg, alice, bob } = await setupTransferTest(dappPage)
 
