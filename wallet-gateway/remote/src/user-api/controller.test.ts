@@ -1382,9 +1382,7 @@ describe('userController', () => {
         })
 
         it("addSession passes when token doesn't token have azp and client-id claims", async () => {
-            const authWithInvalidSubject = createAuthWithAddSessionClaims({
-                azp: 'wrong-client-id',
-            })
+            const authWithInvalidSubject = createAuthWithAddSessionClaims()
             const store = await createStore(logger, authWithInvalidSubject, {
                 withWallet: false,
             })
@@ -1395,12 +1393,19 @@ describe('userController', () => {
                 authWithInvalidSubject
             )
 
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
+            const result = await controller.addSession({
+                origin: 'dapp-1',
+                networkId: 'network1',
+            })
+            expect(result).toMatchObject({
+                network: expect.objectContaining({
+                    id: 'network1',
+                    auth: expect.objectContaining({
+                        method: 'authorization_code',
+                    }),
+                }),
+                status: 'connected',
+            })
         })
     })
 
