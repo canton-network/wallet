@@ -959,7 +959,7 @@ describe('userController', () => {
             exp: number
             iat: number
             azp?: string
-            'client-id'?: string
+            client_id?: string
         }
 
         const createAuthWithAddSessionClaims = (
@@ -1337,9 +1337,9 @@ describe('userController', () => {
             ).rejects.toThrow('Failed to add session')
         })
 
-        it('addSession rejects token with client-id claim and auth.clientId mismatch', async () => {
+        it('addSession rejects token with client_id claim and auth.clientId mismatch', async () => {
             const authWithInvalidSubject = createAuthWithAddSessionClaims({
-                azp: 'wrong-client-id',
+                client_id: 'wrong-client-id',
             })
             const store = await createStore(logger, authWithInvalidSubject, {
                 withWallet: false,
