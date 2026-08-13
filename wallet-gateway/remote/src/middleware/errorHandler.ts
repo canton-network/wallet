@@ -10,6 +10,19 @@ import {
 } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 
+const isPayloadTooLargeError = (err: unknown): boolean => {
+    if (typeof err !== 'object' || err === null) {
+        return false
+    }
+
+    const { status, statusCode } = err as {
+        status?: unknown
+        statusCode?: unknown
+    }
+
+    return status === 413 || statusCode === 413
+}
+
 // Catches unhandled errors and prevents internal details like stack trace from reaching end user
 export function errorHandler(
     logger: Logger,
@@ -27,6 +40,11 @@ export function errorHandler(
         // If the response has already started, we can't safely send an error response.
         if (res.headersSent) {
             next(err)
+            return
+        }
+
+        if (isPayloadTooLargeError(err)) {
+            res.status(413).json({ error: 'Payload Too Large' })
             return
         }
 

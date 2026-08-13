@@ -78,6 +78,38 @@ describe('errorHandler', () => {
         expect(body).not.toContain('at ') // stack trace
     })
 
+    it('keeps the 413 from express.json() for err.status', () => {
+        const err = Object.assign(new Error('request too large'), {
+            status: 413,
+        })
+
+        errorHandler(logger, isApiPath)(err, makeReq(), makeRes(), next)
+
+        expect(status).toHaveBeenCalledWith(413)
+        expect(json).toHaveBeenCalledWith({ error: 'Payload Too Large' })
+    })
+
+    it('keeps the 413 from express.json() for err.statusCode', () => {
+        const err = Object.assign(new Error('request too large'), {
+            statusCode: 413,
+        })
+
+        errorHandler(logger, isApiPath)(err, makeReq(), makeRes(), next)
+
+        expect(status).toHaveBeenCalledWith(413)
+        expect(json).toHaveBeenCalledWith({ error: 'Payload Too Large' })
+    })
+
+    it('leaves an error without a 413 status as a generic 500', () => {
+        const err = Object.assign(new Error('not a 413 error'), {
+            status: 404,
+        })
+
+        errorHandler(logger, isApiPath)(err, makeReq(), makeRes(), next)
+
+        expect(status).toHaveBeenCalledWith(500)
+    })
+
     it('returns a generic error body for non-API paths', () => {
         const req = makeReq({ path: '/login' })
 
