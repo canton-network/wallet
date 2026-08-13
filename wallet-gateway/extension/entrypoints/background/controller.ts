@@ -4,9 +4,8 @@
 // Disabled unused vars rule to allow for future implementations
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import Browser from 'webextension-polyfill'
 import buildController from './rpc-gen'
-import {
+import type {
     LedgerApiParams,
     Network,
     PrepareExecuteParams,
@@ -15,7 +14,7 @@ import {
     Wallet,
 } from './rpc-gen/typings.js'
 
-import { Store } from '@canton-network/core-wallet-store'
+import { type Store } from '@canton-network/core-wallet-store'
 
 // TODO: Make store required
 export const dappController = (store?: Store) =>
