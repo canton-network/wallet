@@ -15,13 +15,19 @@ export const submitViaProvider = async (
         throw new Error('Dapp provider is not available')
     }
 
-    await provider.request({
-        method: 'prepareExecuteAndWait',
-        params: {
-            commands: [command],
-            commandId: v4(),
-            actAs: [actAs],
-            disclosedContracts,
-        },
-    })
+    try {
+        await provider.request({
+            method: 'prepareExecuteAndWait',
+            params: {
+                commands: [command],
+                commandId: v4(),
+                actAs: [actAs],
+                disclosedContracts,
+            },
+        })
+    } catch (cause) {
+        throw cause instanceof Error
+            ? cause
+            : new Error('The transaction was not completed. You can try again.')
+    }
 }
