@@ -31,8 +31,8 @@
     "devDependencies": {
         "@vitest/browser-playwright": "^4.1.10",
         "@vitest/coverage-v8": "^4.1.10",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
+        "playwright": "^1.62.1",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },

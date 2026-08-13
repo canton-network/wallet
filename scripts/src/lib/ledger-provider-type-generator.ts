@@ -319,7 +319,7 @@ async function loadOpenApiSpec(input: string) {
         treeShake: false,
     })
 
-    return dereference(data)
+    return dereference(data as OpenAPI.Document)
 }
 
 export async function generateLedgerProviderTypes(

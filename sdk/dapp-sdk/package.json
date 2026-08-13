@@ -49,15 +49,15 @@
         }
     },
     "devDependencies": {
-        "@types/node": "^25.9.4",
+        "@types/node": "^25.9.5",
         "@types/qrcode": "^1.5.6",
         "@vitest/browser-playwright": "^4.1.10",
         "@vitest/coverage-v8": "^4.1.10",
         "@walletconnect/sign-client": "^2.23.10",
         "@walletconnect/types": "^2.23.10",
-        "playwright": "^1.61.1",
+        "playwright": "^1.62.1",
         "qrcode": "^1.5.4",
-        "tsdown": "^0.22.9",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
         "vitest": "^4.1.10"
     },
