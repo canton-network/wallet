@@ -7,7 +7,7 @@
 ### Prerequisites
 
 - Node.js 24+ (see `.nvmrc` for exact version)
-- Yarn 4 (via Corepack)
+- pnpm (via Corepack)
 - Java (for Canton) - [sdkman](https://sdkman.io/install) is recommended for version management
 
 An unofficial, community-contributed [nix shell](./development/shell.nix) is available as well to provide these system dependencies.
@@ -20,11 +20,11 @@ An unofficial, community-contributed [nix shell](./development/shell.nix) is ava
     ```
 2. Restart your terminal
 3. Run `nvm install` to install the Node.js version from `.nvmrc`
-4. Run `corepack enable` to enable Yarn
-5. Run `yarn install` to install dependencies
-6. Run `yarn postinstall` to set up auto sign-off hooks
+4. Run `corepack enable` to enable pnpm
+5. Run `pnpm install` to install dependencies
+6. Run `pnpm postinstall` to set up auto sign-off hooks
 
-In order for Husky to have access to Yarn (as part of our pre-commit), you might need to add an init file for certain IDEs.
+In order for Husky to have access to pnpm (as part of our pre-commit), you might need to add an init file for certain IDEs.
 
 Create the file `~/.config/husky/init.sh` with the following content:
 
@@ -59,28 +59,28 @@ Major version bumps are triggered by adding an exclamation after the scope (`fea
 Build all packages:
 
 ```bash
-yarn build:all
+pnpm build:all
 ```
 
-This uses `nx` to build all workspaces in parallel. After the initial build, you can selectively build each package by navigating into the corresponding directory and running `yarn build`.
+This uses `nx` to build all workspaces in parallel. After the initial build, you can selectively build each package by navigating into the corresponding directory and running `pnpm build`.
 
 Other useful commands:
 
 ```bash
-yarn clean:all     # Clean all build artifacts and reset nx cache
-yarn test:all      # Run tests across all packages
-yarn full:rebuild  # Clean, regenerate, and rebuild everything
-yarn full:up       # Start localnet and all dev servers
-yarn full:down     # Stop everything and rebuild
+pnpm clean:all     # Clean all build artifacts and reset nx cache
+pnpm test:all      # Run tests across all packages
+pnpm full:rebuild  # Clean, regenerate, and rebuild everything
+pnpm full:up       # Start localnet and all dev servers
+pnpm full:down     # Stop everything and rebuild
 ```
 
 ### API Generation
 
-Run `yarn generate:<api>` from the root to regenerate RPC clients/servers. For example:
+Run `pnpm generate:<api>` from the root to regenerate RPC clients/servers. For example:
 
 ```bash
-yarn generate:dapp  # Regenerate dApp API client
-yarn generate:all   # Regenerate all API specs
+pnpm generate:dapp  # Regenerate dApp API client
+pnpm generate:all   # Regenerate all API specs
 ```
 
 ### Live Reloading
@@ -88,20 +88,20 @@ yarn generate:all   # Regenerate all API specs
 To support fast iteration loops, most workspaces have `dev` scripts that watch their source directories for changes and rebuild. Start all dev servers with:
 
 ```bash
-yarn start:all
+pnpm start:all
 ```
 
-This uses `pm2` to run each dev server in parallel. See the `pm2` [cheatsheet](https://pm2.keymetrics.io/docs/usage/quick-start/#cheatsheet) for more commands (preface them with `yarn pm2` when invoking).
+This uses `pm2` to run each dev server in parallel. See the `pm2` [cheatsheet](https://pm2.keymetrics.io/docs/usage/quick-start/#cheatsheet) for more commands (preface them with `pnpm pm2` when invoking).
 
 ```bash
-yarn pm2 list   # Show running processes
-yarn pm2 logs   # View logs
-yarn stop:all   # Stop all services
+pnpm pm2 list   # Show running processes
+pnpm pm2 logs   # View logs
+pnpm stop:all   # Stop all services
 ```
 
-> Note: Codegenned artifacts are not automatically watched. Use `yarn generate:all` if updating the API specs.
+> Note: Codegenned artifacts are not automatically watched. Use `pnpm generate:all` if updating the API specs.
 
-After running `yarn start:all`, you'll have services exposed on the following ports:
+After running `pnpm start:all`, you'll have services exposed on the following ports:
 
 | Service             | URL            |
 | ------------------- | -------------- |
@@ -114,9 +114,9 @@ After running `yarn start:all`, you'll have services exposed on the following po
 To run a local Splice network (includes Canton + Splice services):
 
 ```bash
-yarn script:fetch:localnet     # Download localnet artifacts
-yarn start:localnet            # Start the local network
-yarn stop:localnet             # Stop the local network
+pnpm script:fetch:localnet     # Download localnet artifacts
+pnpm start:localnet            # Start the local network
+pnpm stop:localnet             # Stop the local network
 ```
 
 ### Canton (Standalone)
@@ -124,13 +124,13 @@ yarn stop:localnet             # Stop the local network
 If you need to run Canton without the full Splice network (localnet already includes Canton):
 
 1. Ensure you have Java installed - [sdkman](https://sdkman.io/install) is recommended for version management
-2. Run `yarn script:fetch:canton` to download Canton to `.canton/`
-3. Run `yarn start:canton` to start a participant & synchronizer
+2. Run `pnpm script:fetch:canton` to download Canton to `.canton/`
+3. Run `pnpm start:canton` to start a participant & synchronizer
 
 ```bash
-yarn start:canton              # Start Canton (mainnet config)
-yarn start:canton:tls          # Start Canton with TLS enabled
-yarn start:canton:console      # Start Canton with interactive console
+pnpm start:canton              # Start Canton (mainnet config)
+pnpm start:canton:tls          # Start Canton with TLS enabled
+pnpm start:canton:console      # Start Canton with interactive console
 ```
 
 ### Network Selection
@@ -138,6 +138,21 @@ yarn start:canton:console      # Start Canton with interactive console
 Many scripts support a `--network` flag to target different environments:
 
 ```bash
-yarn script:fetch:canton --network=devnet   # Fetch devnet Canton version
-yarn script:fetch:canton --network=mainnet  # Fetch mainnet Canton version (default)
+pnpm script:fetch:canton --network=devnet   # Fetch devnet Canton version
+pnpm script:fetch:canton --network=mainnet  # Fetch mainnet Canton version (default)
 ```
+
+## Migrating from `yarn`
+
+If you've cloned this repository when it was set up to use `yarn`, finalize the switch to `pnpm`:
+
+1. Pull latest main into your fork / branch
+2. Stop all running services: `yarn pm2 kill` (and `yarn stop:localnet`, if applicable)
+3. Delete any residual `yarn` directories: `rm -rf .pnp.cjs .pnp.loader.mjs .yarn`
+4. Run `corepack enable pnpm` to install pnpm
+5. Run `pnpm install`
+6. Done! For 99% of cases, you can now use `pnpm` as a direct replacement for `yarn`, i.e.:
+    - `yarn build:all` --> `pnpm build:all`
+    - `yarn start:all` --> `pnpm start:all`
+    - `yarn pm2 list` --> `pnpm pm2 list`
+    - ... etc

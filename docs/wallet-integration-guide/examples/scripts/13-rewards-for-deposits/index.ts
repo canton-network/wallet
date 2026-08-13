@@ -191,3 +191,6 @@ await _withdraw({
 for (const callback of [_reject, _accept]) {
     await callback(await setupIteration())
 }
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

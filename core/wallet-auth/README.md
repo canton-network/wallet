@@ -14,7 +14,7 @@ npm install @canton-network/core-wallet-auth --save
 or
 
 ```sh
-yarn add @canton-network/core-wallet-auth
+pnpm add @canton-network/core-wallet-auth
 ```
 
 ## Interfaces

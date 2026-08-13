@@ -20,21 +20,21 @@ A minimal dApp demonstrating the core [`@canton-network/dapp-sdk`](https://www.n
 First, install and build dependencies from the repository root:
 
 ```bash
-yarn install
-yarn build:all
+pnpm install
+pnpm build:all
 ```
 
 Then start the dev server from this directory:
 
 ```bash
 cd examples/ping
-yarn dev
+pnpm dev
 ```
 
 Or from the repository root:
 
 ```bash
-yarn workspace @canton-network/example-ping dev
+pnpm --filter @canton-network/example-ping dev
 ```
 
 The app will be available at [http://localhost:8080](http://localhost:8080).
@@ -42,8 +42,8 @@ The app will be available at [http://localhost:8080](http://localhost:8080).
 Alternatively, start all services (Wallet Gateway + example dApps) together from the repository root:
 
 ```bash
-yarn start:all     # starts everything via pm2
-yarn stop:all      # stops everything
+pnpm start:all     # starts everything via pm2
+pnpm stop:all      # stops everything
 ```
 
 ## Further Reading

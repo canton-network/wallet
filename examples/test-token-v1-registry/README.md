@@ -52,7 +52,7 @@ flowchart LR
 ### Prerequisites
 
 - Node.js 20+
-- Yarn 4.x
+- pnpm 11.x
 - dependencies installed at repository root
 - local Canton/localnet setup if you want full end-to-end behavior
 
@@ -61,19 +61,19 @@ flowchart LR
 From repository root:
 
 ```bash
-yarn install
+pnpm install
 ```
 
 Build only this example:
 
 ```bash
-yarn workspace @canton-network/example-test-token-v1-registry build
+pnpm --filter @canton-network/example-test-token-v1-registry build
 ```
 
 Run in development mode:
 
 ```bash
-yarn workspace @canton-network/example-test-token-v1-registry dev
+pnpm --filter @canton-network/example-test-token-v1-registry dev
 ```
 
 The API listens on `http://localhost:5634`.
@@ -113,13 +113,13 @@ examples/test-token-v1-registry/
 Run tests:
 
 ```bash
-yarn workspace @canton-network/example-test-token-v1-registry test
+pnpm --filter @canton-network/example-test-token-v1-registry test
 ```
 
 Run tests with coverage:
 
 ```bash
-yarn workspace @canton-network/example-test-token-v1-registry test:coverage
+pnpm --filter @canton-network/example-test-token-v1-registry test:coverage
 ```
 
 Notes:
@@ -158,7 +158,7 @@ Development loop:
 2. If API specs change, regenerate types:
 
     ```bash
-    yarn workspace @canton-network/example-test-token-v1-registry generate:types
+    pnpm --filter @canton-network/example-test-token-v1-registry generate:types
     ```
 
 3. Run tests and coverage.

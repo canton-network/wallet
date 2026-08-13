@@ -58,7 +58,7 @@
         "eslint": "^10.6.0",
         "eslint-plugin-react-hooks": "^7.1.1",
         "eslint-plugin-react-refresh": "^0.5.3",
-        "nx": "^22.7.6",
+        "nx": "^22.7.7",
         "tsx": "^4.23.0",
         "typescript": "~5.9.3",
         "vite": "^7.3.6",
