@@ -2,10 +2,6 @@
 
 TypeScript wrapper package for the Test Token DAML codegen.
 
-## Requirements
-
-This package requires a localnet instance that relies on Splice v0.6.12 or higher. Please ensure you have the latest localnet fetched.
-
 ## Exports
 
 From [src/index.ts](src/index.ts):
