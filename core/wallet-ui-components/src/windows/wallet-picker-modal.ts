@@ -475,26 +475,32 @@ class WalletPickerModalController {
             )
         }
 
-        // Order the flat list: installed extensions, then WalletConnect, then
-        // remote wallets, then everything else (not-yet-installed wallets).
+        // Order the flat list: saved remote connections first, then installed
+        // extensions, then WalletConnect, then other remote wallets, then
+        // everything else (not-yet-installed wallets).
         const detected = this.getAllEntries()
         const isWc = (e: WalletPickerEntry) => e.providerId === 'walletconnect'
 
+        const recent = detected.filter((d) => d.isRecent)
         const installed = detected.filter(
-            (d) => d.entry.type === 'browser' && !isWc(d.entry)
+            (d) => !d.isRecent && d.entry.type === 'browser' && !isWc(d.entry)
         )
-        const walletConnect = detected.filter((d) => isWc(d.entry))
+        const walletConnect = detected.filter(
+            (d) => !d.isRecent && isWc(d.entry)
+        )
         const remote = detected.filter(
-            (d) => d.entry.type === 'remote' && !isWc(d.entry)
+            (d) => !d.isRecent && d.entry.type === 'remote' && !isWc(d.entry)
         )
         const rest = detected.filter(
             (d) =>
+                !recent.includes(d) &&
                 !installed.includes(d) &&
                 !walletConnect.includes(d) &&
                 !remote.includes(d)
         )
 
         for (const { entry, isRecent } of [
+            ...recent,
             ...installed,
             ...walletConnect,
             ...remote,
@@ -574,6 +580,11 @@ class WalletPickerModalController {
         if (entry.icon) {
             icon.appendChild(
                 el('img', '', { src: entry.icon, alt: entry.name })
+            )
+        } else if (entry.type === 'remote') {
+            // Remote wallets (e.g. saved gateways) default to the Canton logo.
+            icon.appendChild(
+                el('img', '', { src: cantonLogo, alt: entry.name })
             )
         } else {
             const fallback = el('span', entry.name.charAt(0).toUpperCase(), {
@@ -676,7 +687,7 @@ class WalletPickerModalController {
     private renderGateway(): HTMLElement {
         const container = el('div', '', { class: 'gateway-view' })
         container.appendChild(
-            el('p', 'Enter the URL of your Remote Wallet to connect.', {
+            el('p', 'Enter the URL of your Remote Wallet.', {
                 class: 'gateway-help',
             })
         )
@@ -1085,7 +1096,7 @@ ${LIGHT_TOKENS}
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 4px 20px 15px;
+    padding: 4px 20px 10px;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar) transparent;
 }
@@ -1291,18 +1302,14 @@ ${LIGHT_TOKENS}
     background: var(--success-soft);
 }
 
-/* Sized identically to the Installed badge; its label is only revealed when
-   the row is hovered. The whole row (button) is the clickable install target. */
+/* Plain text label revealed on row hover; the whole row is the install target. */
 .wallet-get-badge {
     flex-shrink: 0;
     margin-left: auto;
     font-size: 12px;
     font-weight: 600;
     line-height: 1;
-    padding: 3px 8px;
-    border-radius: 999px;
     color: var(--text-muted);
-    background: var(--surface-2);
     white-space: nowrap;
     opacity: 0;
     transition: opacity 0.15s ease;
