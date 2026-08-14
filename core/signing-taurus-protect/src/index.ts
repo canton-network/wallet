@@ -23,7 +23,6 @@ import {
     type Transaction,
 } from '@canton-network/core-signing-lib'
 import { AuthContext } from '@canton-network/core-wallet-auth'
-import _ from 'lodash'
 import { z } from 'zod'
 import {
     GatewayClient,
@@ -288,7 +287,10 @@ export default class TaurusProtectSigningDriver implements SigningDriverInterfac
                     baseUrl: validated.data.baseUrl,
                     token: validated.data.token,
                 }
-                if (!_.isEqual(newConfig, this.config)) {
+                if (
+                    newConfig.baseUrl !== this.config.baseUrl ||
+                    newConfig.token !== this.config.token
+                ) {
                     this.config = newConfig
                     this.client = new GatewayClient(this.config)
                 }

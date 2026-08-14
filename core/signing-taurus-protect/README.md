@@ -22,7 +22,7 @@ the gateway, which the current API does not offer.
 This package is part of the Wallet Gateway monorepo and is typically installed as a workspace dependency.
 
 ```bash
-yarn add @canton-network/core-signing-taurus-protect
+pnpm add @canton-network/core-signing-taurus-protect
 ```
 
 ## Usage
@@ -95,7 +95,7 @@ Example usage:
 ```bash
 TAURUS_PROTECT_GATEWAY_URL="<taurus-canton-gateway-url>" \
 TAURUS_PROTECT_GATEWAY_TOKEN="<gateway-api-key>" \
-yarn start
+pnpm start
 ```
 
 ## Known gateway limitations

@@ -1034,6 +1034,34 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
+  core/signing-taurus-protect:
+    dependencies:
+      '@canton-network/core-signing-lib':
+        specifier: workspace:^
+        version: link:../signing-lib
+      '@canton-network/core-wallet-auth':
+        specifier: workspace:^
+        version: link:../wallet-auth
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.4
+        version: 25.9.4
+      '@vitest/coverage-v8':
+        specifier: ^4.1.10
+        version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
+      tsdown:
+        specifier: ^0.22.9
+        version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.5)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
+
   core/splice-client:
     dependencies:
       '@canton-network/core-types':
@@ -2582,6 +2610,9 @@ importers:
       '@canton-network/core-signing-store-sql':
         specifier: workspace:^
         version: link:../../core/signing-store-sql
+      '@canton-network/core-signing-taurus-protect':
+        specifier: workspace:^
+        version: link:../../core/signing-taurus-protect
       '@canton-network/core-tx-visualizer':
         specifier: workspace:^
         version: link:../../core/tx-visualizer
