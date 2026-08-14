@@ -12,6 +12,42 @@ pnpm add @canton-network/core-origin-manager
 
 The origin-check package provides origin validation for secure cross-window communication in browser applications. It uses a bidirectional handshake protocol to establish trust between parent and child windows before allowing message passing.
 
+## Handshake flow
+
+1. Parent starts polling a known child origin with `SPLICE_WALLET_BROADCAST_ORIGIN`.
+2. Child validates the message, allowlists the parent, replies with `SPLICE_WALLET_BROADCAST_ORIGIN_ACK` via `window.opener`, then stops listening.
+3. Parent allowlists the child and stops polling.
+4. Both sides only send application messages to origins that completed the handshake.
+
+```mermaid
+sequenceDiagram
+    participant Parent as Parent window<br/>(ParentWindowOriginManager)
+    participant Child as Child popup<br/>(ChildWindowOriginManager)
+
+    Note over Parent,Child: Setup
+    Parent->>Parent: addEventListener("message")
+    Child->>Child: addEventListener("message")
+    Parent->>Parent: poll(childOrigin) every 500ms
+
+    Note over Parent,Child: Handshake
+    loop Until ACK received
+        Parent->>Child: postMessage({ message: SPLICE_WALLET_BROADCAST_ORIGIN, origin: parentOrigin }, childOrigin)
+    end
+
+    Child->>Child: Zod-parse + check event.origin matches payload.origin
+    Child->>Child: allowedOrigins.add(parentOrigin)
+    Child->>Parent: opener.postMessage({ message: SPLICE_WALLET_BROADCAST_ORIGIN_ACK, origin: childOrigin }, parentOrigin)
+    Child->>Child: removeListener()
+
+    Parent->>Parent: Zod-parse + check event.origin matches payload.origin
+    Parent->>Parent: allowedOrigins.add(childOrigin)
+    Parent->>Parent: clearInterval(poll)
+
+    Note over Parent,Child: After handshake
+    Parent->>Child: postMessage(appData, childOrigin)<br/>only if assert(childOrigin)
+    Child->>Parent: opener.postMessage(appData, parentOrigin)<br/>only if assert(parentOrigin)
+```
+
 ## Key Components
 
 ### [OriginHandshake](./src/types.ts)

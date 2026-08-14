@@ -108,7 +108,6 @@ export class ParentWindowOriginManager extends OriginManager {
             this.intervalMap.delete(event.origin)
         }
     }
-
     private intervalMap = new Map<
         Location['origin'],
         ReturnType<typeof setInterval>
