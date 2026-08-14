@@ -122,8 +122,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet)
@@ -187,8 +188,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network2)
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet1)
@@ -246,8 +248,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Set session so getCurrentNetwork() works
             const session: Session = {
                 id: 'sess-123',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet1)
@@ -278,8 +281,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-rights',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
             await store.addWallet(wallet)
 
@@ -300,17 +304,18 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             const session: Session = {
                 id: 'sess-123',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
-            const result = await store.getSession()
+            const result = await store.getSession('test-access-token')
             expect(result).toEqual({
                 ...session,
                 userId: authContextMock.userId,
             })
-            await store.removeSession()
-            const removed = await store.getSession()
+            await store.removeSession('test-access-token')
+            const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
         })
 
@@ -390,8 +395,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network2)
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet1)
@@ -476,8 +482,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Set session for network1
             const session1: Session = {
                 id: 'sess-1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session1)
             await store.addWallet(wallet1)
@@ -490,8 +497,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Switch to network2
             const session2: Session = {
                 id: 'sess-2',
+                origin: 'dapp-1',
                 network: 'network2',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session2)
             await store.addWallet(wallet3)
@@ -555,8 +563,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Set session for network1
             const session1: Session = {
                 id: 'sess-1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session1)
             await store.addWallet(wallet1)
@@ -564,8 +573,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Switch to network2 and add same party
             const session2: Session = {
                 id: 'sess-2',
+                origin: 'dapp-1',
                 network: 'network2',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session2)
             await store.addWallet(wallet2) // Should not throw, should create new entry
@@ -593,8 +603,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             const initial: Transaction = {
@@ -645,8 +656,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -686,8 +698,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -726,8 +739,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -749,8 +763,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-cascade-wallet',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.addWallet({
@@ -786,8 +801,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-cascade-network',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.addWallet({
@@ -862,8 +878,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-user-rights',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.setUserRights('network1', [
@@ -883,8 +900,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-messages',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             const message: MessageRaw = {
@@ -919,8 +937,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-msg-mismatch',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await expect(
@@ -943,8 +962,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-lookup',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.setTransaction({
@@ -989,8 +1009,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-missing-updates',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await expect(

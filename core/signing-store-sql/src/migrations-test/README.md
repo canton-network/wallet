@@ -20,6 +20,6 @@ spins up postgres with testcontainers
 `/migrations.lock.json`
 contains hashes of all migration files. intention is to prevent accidental modifications of existing migrations.
 
-`yarn migrations:check-lock` recomputes hashes from migration files and compares them against lock file
+`pnpm migrations:check-lock` recomputes hashes from migration files and compares them against lock file
 
-`yarn migrations:update-lock` recomputes hashes and updates lock file. use it after adding a new migration, or in case of intentionally editing old migration (i.e. when adding a comment), altering logic in old migrations should be avoided
+`pnpm migrations:update-lock` recomputes hashes and updates lock file. use it after adding a new migration, or in case of intentionally editing old migration (i.e. when adding a comment), altering logic in old migrations should be avoided

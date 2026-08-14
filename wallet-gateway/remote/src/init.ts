@@ -27,6 +27,9 @@ import FireblocksSigningProvider from '@canton-network/core-signing-fireblocks'
 import BlockdaemonSigningProvider, {
     CantonCaip2,
 } from '@canton-network/core-signing-blockdaemon'
+import SecurosysSigningProvider, {
+    type TsbSignatureAlgorithm,
+} from '@canton-network/core-signing-securosys'
 import { jwtAuthService } from './auth/jwt-auth-service.js'
 import express from 'express'
 import { CliOptions } from './index.js'
@@ -286,6 +289,15 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const keyInfo = { apiKey, apiSecret }
     const userApiKeys = new Map([['user', keyInfo]])
+    const securosysKeyManagementApiKey =
+        Env.SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY()
+    const securosysKeyOperationApiKey =
+        Env.SECUROSYS_TSB_KEY_OPERATION_API_KEY()
+    const securosysBearerToken = Env.SECUROSYS_TSB_BEARER_TOKEN()
+    const securosysMtlsP12Path = Env.SECUROSYS_TSB_MTLS_P12_PATH()
+    const securosysMtlsP12Password = Env.SECUROSYS_TSB_MTLS_P12_PASSWORD()
+    const securosysKeyPassword = Env.SECUROSYS_TSB_KEY_PASSWORD()
+    const securosysBaseUrl = Env.SECUROSYS_TSB_BASE_URL()
 
     const drivers: SigningDrivers = {
         [SigningProvider.PARTICIPANT]: new ParticipantSigningDriver(),
@@ -304,6 +316,31 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             apiKey: Env.BLOCKDAEMON_API_KEY(''),
             caip2: Env.BLOCKDAEMON_CAIP2('canton:testnet') as CantonCaip2,
         }),
+    }
+
+    if (securosysBaseUrl) {
+        drivers[SigningProvider.SECUROSYS] = new SecurosysSigningProvider({
+            baseUrl: securosysBaseUrl,
+            ...(securosysKeyManagementApiKey && {
+                keyManagementApiKey: securosysKeyManagementApiKey,
+            }),
+            ...(securosysKeyOperationApiKey && {
+                keyOperationApiKey: securosysKeyOperationApiKey,
+            }),
+            ...(securosysBearerToken && { bearerToken: securosysBearerToken }),
+            ...(securosysMtlsP12Path && { mtlsP12Path: securosysMtlsP12Path }),
+            ...(securosysMtlsP12Password && {
+                mtlsP12Password: securosysMtlsP12Password,
+            }),
+            ...(securosysKeyPassword && { keyPassword: securosysKeyPassword }),
+            signatureAlgorithm: Env.SECUROSYS_TSB_SIGNATURE_ALGORITHM(
+                'EDDSA'
+            ) as TsbSignatureAlgorithm,
+        })
+    } else {
+        logger.warn(
+            'Securosys TSB base URL not set — Securosys signing provider will be unavailable'
+        )
     }
 
     if (
@@ -404,7 +441,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     )
 
     // register web handler
-    web(app, server, userApiUrl)
+    web(app, server, userApiUrl, dappApiUrl)
     isReady = true
 
     logger.info(

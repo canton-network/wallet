@@ -797,13 +797,18 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
+                            "origin": {
+                                "title": "origin",
+                                "type": "string",
+                                "description": "origin of the dApp establishing a session"
+                            },
                             "networkId": {
                                 "title": "networkId",
                                 "type": "string",
                                 "description": "Network Id"
                             }
                         },
-                        "required": ["networkId"]
+                        "required": ["networkId", "origin"]
                     }
                 }
             ],
@@ -1424,8 +1429,14 @@
                         "type": "string",
                         "description": "The unique identifier of the session."
                     },
+                    "origin": {
+                        "title": "origin",
+                        "type": "string",
+                        "description": "The origin belonging to the session."
+                    },
                     "network": {
-                        "$ref": "#/components/schemas/Network"
+                        "$ref": "#/components/schemas/Network",
+                        "description": "Connected network metadata. Privileged credentials (adminAuth, serviceAccountAuth) are included only for the admin user."
                     },
                     "idp": {
                         "$ref": "#/components/schemas/Idp"

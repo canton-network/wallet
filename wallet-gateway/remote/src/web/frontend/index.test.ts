@@ -6,6 +6,7 @@ import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { WalletEvent } from '@canton-network/core-types'
 import {
+    CopyDappApiUrlEvent,
     LogoutEvent,
     type AllowedRoute,
 } from '@canton-network/core-wallet-ui-components'
@@ -29,12 +30,18 @@ const {
     setLocationHref,
     getCurrentRoute,
     isAllowedRoute,
+    showToast,
+    fetchDappApiUrl,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     mockAttemptRemoveSession: vi.fn().mockResolvedValue(undefined),
     setLocationHref: vi.fn(),
     getCurrentRoute: vi.fn(),
     isAllowedRoute: vi.fn(),
+    showToast: vi.fn(),
+    fetchDappApiUrl: vi
+        .fn()
+        .mockResolvedValue('http://localhost:3030/api/v0/dapp'),
 }))
 
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
@@ -56,6 +63,7 @@ vi.mock('./rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
     attemptRemoveSession: mockAttemptRemoveSession,
 }))
+vi.mock('./utils.js', () => ({ showToast, fetchDappApiUrl }))
 vi.mock('./state-manager.js', () => ({
     stateManager: {
         accessToken: {
@@ -100,6 +108,12 @@ vi.mock('./state-manager.js', () => ({
             authState.expirationDate = undefined
             authState.intendedPage = undefined
         },
+        currentOrigin: {
+            get: vi.fn().mockReturnValue('http://localhost'),
+            set: vi.fn(),
+            clear: vi.fn(),
+        },
+        sessionId: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 
@@ -123,12 +137,21 @@ function setValidAuth(expiresInMs = 60 * 60 * 1000) {
     authState.expirationDate = new Date(Date.now() + expiresInMs).toISOString()
 }
 
-function mockSessionList(sessionId = 'session-1') {
+function mockSessionList(
+    sessionId = 'session-1',
+    status: 'connected' | 'disconnected' = 'connected'
+) {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listSessions') {
             return {
                 sessions: sessionId
-                    ? [{ id: sessionId, network: { id: 'network1' } }]
+                    ? [
+                          {
+                              id: sessionId,
+                              network: { id: 'network1' },
+                              status,
+                          },
+                      ]
                     : [],
             }
         }
@@ -148,17 +171,17 @@ describe('redirectToIntendedOrDefault', () => {
         authState.intendedPage = undefined
     })
 
-    it('redirects to the intended page when set', () => {
+    it('redirects to the intended page when set', async () => {
         authState.intendedPage = '/activities'
-        redirectToIntendedOrDefault()
+        await redirectToIntendedOrDefault()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining('/activities')
         )
         expect(authState.intendedPage).toBeUndefined()
     })
 
-    it('redirects to the default page when no intended page is stored', () => {
-        redirectToIntendedOrDefault()
+    it('redirects to the default page when no intended page is stored', async () => {
+        await redirectToIntendedOrDefault()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(DEFAULT_PAGE_REDIRECT)
         )
@@ -212,7 +235,7 @@ describe('addUserSession', () => {
     it('creates a session and shares the connection with the opener', async () => {
         mockRequest.mockImplementation(async ({ method, params }) => {
             if (method === 'addSession') {
-                expect(params).toEqual({ networkId: 'network1' })
+                expect(params).toMatchObject({ networkId: 'network1' })
                 return { id: 'session-new' }
             }
             return undefined
@@ -234,6 +257,9 @@ describe('UserApp', () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         setLocationHref.mockReset()
+        showToast.mockReset()
+        fetchDappApiUrl.mockReset()
+        fetchDappApiUrl.mockResolvedValue('http://localhost:3030/api/v0/dapp')
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         setValidAuth()
         mockSessionList()
@@ -248,15 +274,70 @@ describe('UserApp', () => {
         document.body.innerHTML = ''
     })
 
-    it('renders layout with the connected network name', () => {
+    it('renders layout with the connected network name', async () => {
+        await waitUntil(() => {
+            const layout = el.shadowRoot?.querySelector(
+                'app-layout'
+            ) as HTMLElement & { networkConnected: boolean }
+            return layout?.networkConnected === true
+        })
+
         const layout = el.shadowRoot?.querySelector(
             'app-layout'
         ) as HTMLElement & {
             networkName: string
             networkConnected: boolean
+            dappApiUrl: string
         }
         expect(layout.networkName).toBe('network1')
         expect(layout.networkConnected).toBe(true)
+        expect(layout.dappApiUrl).toBe('http://localhost:3030/api/v0/dapp')
+    })
+
+    it('copies the dApp API URL to the clipboard', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined)
+        vi.stubGlobal('navigator', {
+            ...navigator,
+            clipboard: { writeText },
+        })
+
+        el.shadowRoot
+            ?.querySelector('app-layout')
+            ?.dispatchEvent(new CopyDappApiUrlEvent())
+
+        await waitUntil(() => writeText.mock.calls.length > 0)
+
+        expect(fetchDappApiUrl).toHaveBeenCalled()
+        expect(writeText).toHaveBeenCalledWith(
+            'http://localhost:3030/api/v0/dapp'
+        )
+        expect(showToast).toHaveBeenCalledWith(
+            'Copied',
+            'Dapp API URL copied to clipboard.',
+            'success'
+        )
+    })
+
+    it('shows disconnected when listSessions reports disconnected', async () => {
+        mockSessionList('session-1', 'disconnected')
+        el = await fixture<UserApp>(componentFixture)
+
+        await waitUntil(() =>
+            mockRequest.mock.calls.some(
+                (call) => call[0]?.method === 'listSessions'
+            )
+        )
+        await el.updateComplete
+
+        const layout = el.shadowRoot?.querySelector(
+            'app-layout'
+        ) as HTMLElement & {
+            networkName: string
+            networkConnected: boolean
+            dappApiUrl: string
+        }
+        expect(layout.networkName).toBe('network1')
+        expect(layout.networkConnected).toBe(false)
     })
 
     it('redirects to login on logout when there is no access token', async () => {
@@ -420,7 +501,7 @@ describe('UserUIAuthRedirect', () => {
         await fixture<UserUIAuthRedirect>(
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
-        await waitUntil(() => mockAttemptRemoveSession.mock.calls.length > 0)
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
         expect(mockAttemptRemoveSession).toHaveBeenCalled()
         expect(setLocationHref).toHaveBeenCalledWith(

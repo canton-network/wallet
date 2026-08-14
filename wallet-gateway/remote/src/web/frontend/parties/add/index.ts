@@ -20,6 +20,7 @@ import { showToast } from '../../utils.js'
 import '../../index'
 import { WALLET_CREATION_STATUS_CODE } from '../index'
 import { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
+import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {
@@ -59,15 +60,17 @@ export class UserUiAddParty extends BaseElement {
     }
 
     private async loadContext() {
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get()
+            await stateManager.accessToken.get(currentOrigin)
         )
         const sessions = await userClient
             .request({ method: 'listSessions' })
             .catch(() => ({ sessions: [] }))
         const currentSession = sessions?.sessions?.[0]
         const networkId =
-            currentSession?.network?.id || stateManager.networkId.get()
+            currentSession?.network?.id ||
+            stateManager.networkId.get(currentOrigin)
         this.networkIds = networkId ? [networkId] : []
     }
 
@@ -85,9 +88,10 @@ export class UserUiAddParty extends BaseElement {
 
         this.vaultsLoading = true
 
+        const currentOrigin = await detectCurrentOrigin()
         try {
             const userClient = await createUserClient(
-                await stateManager.accessToken.get()
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'listSigningProviderVaults',
@@ -116,8 +120,9 @@ export class UserUiAddParty extends BaseElement {
         this.submitting = true
 
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get()
+                await stateManager.accessToken.get(currentOrigin)
             )
             const result = await userClient.request({
                 method: 'createWallet',

@@ -1,0 +1,47 @@
+name: Setup pnpm (Initial Build)
+description: 'Setup pnpm for initial build jobs without relying on build artifacts'
+inputs:
+    daml_release_version:
+        description: 'Resolved DAML release version from workflow metadata job'
+        required: true
+    save_cache:
+        description: 'Whether to save the DPM cache on a cache miss'
+        required: false
+        default: 'false'
+runs:
+    using: composite
+    steps:
+        - name: Install pnpm and Node.js
+          uses: pnpm/setup@c9883cc79df532ad1a7b81bf9ab944ceb090d65c # v2.0.0
+          with:
+              runtime: node@24
+              cache: true
+
+        - name: Restore DPM cache
+          id: dpm_cache
+          uses: actions/cache/restore@v5
+          with:
+              path: |
+                  ~/.dpm
+              key: dpm-${{ runner.os }}-${{ inputs.daml_release_version }}
+
+        - name: Add DPM to PATH
+          shell: bash
+          run: echo "$HOME/.dpm/bin" >> "$GITHUB_PATH"
+
+        - name: reduce DPM size
+          if: ${{ steps.dpm_cache.outputs.cache-hit != 'true' }}
+          shell: bash
+          #the OCI is only used for multiple version support and can safely be deleted to save ~ 1.3 gb.
+          run: rm -rf ~/.dpm/cache/oci-layout
+
+        - name: generate all
+          shell: bash
+          run: pnpm run generate:all
+
+        - name: Save DPM cache
+          uses: ./.github/actions/save_cache_if_absent
+          with:
+              path: |
+                  ~/.dpm
+              key: ${{ steps.dpm_cache.outputs.cache-primary-key }}

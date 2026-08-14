@@ -18,6 +18,7 @@ import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
+import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-identity-providers')
 export class UserUiIdentityProviders extends BaseElement {
@@ -74,8 +75,9 @@ export class UserUiIdentityProviders extends BaseElement {
 
     private async loadData() {
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get()
+                await stateManager.accessToken.get(currentOrigin)
             )
             const [idpsResult, userResult] = await Promise.all([
                 userClient.request({ method: 'listIdps' }),

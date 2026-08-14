@@ -21,7 +21,7 @@ if (blockdaemonApiUrl) {
         const healthUrl = `${url.origin}/_healthz`
         webServers.push({
             command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:blockdaemon',
+                'pnpm --filter @canton-network/example-ping mock:signing-providers:blockdaemon',
             url: healthUrl,
             reuseExistingServer: !process.env.CI,
             timeout: 30 * 1000,
@@ -38,7 +38,7 @@ if (dfnsApiUrl) {
         const healthUrl = `${url.origin}/_healthz`
         webServers.push({
             command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:dfns',
+                'pnpm --filter @canton-network/example-ping mock:signing-providers:dfns',
             url: healthUrl,
             reuseExistingServer: !process.env.CI,
             timeout: 30 * 1000,
@@ -54,7 +54,7 @@ if (fireblocksApiPath) {
         const healthUrl = `${url.origin}/_healthz`
         webServers.push({
             command:
-                'yarn workspace @canton-network/example-ping mock:signing-providers:fireblocks',
+                'pnpm --filter @canton-network/example-ping mock:signing-providers:fireblocks',
             url: healthUrl,
             reuseExistingServer: !process.env.CI,
             timeout: 30 * 1000,
@@ -64,16 +64,25 @@ if (fireblocksApiPath) {
     }
 }
 
+const externalSigningProviderTests = [
+    '**/blockdaemon.spec.ts',
+    '**/dfns.spec.ts',
+    '**/fireblocks.spec.ts',
+]
+
+// Fork PR workflows set CI_SECRET_DEPENDENCY to "false" (repo vars unavailable).
+// When unset (local dev), external signing e2e tests still run against mocks in .env.
+const includeCiSecretDependency = process.env.CI_SECRET_DEPENDENCY !== 'false'
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
     timeout: 120 * 1000,
     testDir: './tests',
-    // globalSetup: './tests/global-setup.ts',
-    // testIgnore: false && includeCiSecretDependency
-    //     ? undefined
-    //     : ['**/blockdaemon.spec.ts'],
+    testIgnore: includeCiSecretDependency
+        ? undefined
+        : externalSigningProviderTests,
     /* Run tests in files in parallel */
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -94,13 +103,14 @@ export default defineConfig({
         video: process.env.CI ? 'on-first-retry' : 'on',
     },
 
-    /* Configure projects for major browsers */
+    /* Configure projects for major browsers.
+     * Multisession runs last via project dependencies so it does not
+     * interfere with (or get interfered by) other e2e specs. */
     projects: [
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
         },
-
         {
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
@@ -110,7 +120,6 @@ export default defineConfig({
         //     name: 'webkit',
         //     use: { ...devices['Desktop Safari'] },
         // },
-
         /* Test against mobile viewports. */
         // {
         //   name: 'Mobile Chrome',
@@ -120,7 +129,6 @@ export default defineConfig({
         //   name: 'Mobile Safari',
         //   use: { ...devices['iPhone 12'] },
         // },
-
         /* Test against branded browsers. */
         // {
         //   name: 'Microsoft Edge',

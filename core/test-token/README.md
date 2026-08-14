@@ -19,7 +19,7 @@ From [src/index.ts](src/index.ts):
 From the repo root:
 
 ```sh
-yarn workspace @canton-network/core-test-token build
+pnpm --filter @canton-network/core-test-token build
 ```
 
 The build produces:
@@ -37,7 +37,7 @@ This package depends on generated DAML JS artifacts under
 To refresh those artifacts, run:
 
 ```sh
-yarn script:generate:test-token
+pnpm script:generate:test-token
 ```
 
 Then rebuild this package.

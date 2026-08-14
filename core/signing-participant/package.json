@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-participant",
-    "version": "1.8.0",
+    "version": "1.10.0",
     "type": "module",
     "description": "Wallet Gateway driver for Canton participant internal parties",
     "license": "Apache-2.0",
@@ -19,7 +19,7 @@
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
         "clean": "tsc -b --clean && rm -rf ./dist",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "test": "vitest run --project node --project browser",
         "test:coverage": "vitest run --project node --coverage"
     },

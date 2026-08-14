@@ -74,18 +74,14 @@ describe('manager', () => {
             expect(removeEventSpy).toHaveBeenCalledOnce()
         })
 
-        it('should poll message until response is received', () => {
-            parentWindowManager.poll(exampleOrigin)
+        it('should poll message when calling postMessage for the first time', () => {
+            parentWindowManager.postMessage('some message', exampleOrigin)
 
-            expect(postMessageSpy).not.toHaveBeenCalled()
-
-            vi.advanceTimersToNextTimer()
-
-            expect(postMessageSpy).toHaveBeenCalledOnce()
+            expect(eventListenerSpy).toHaveBeenCalledTimes(2)
 
             vi.advanceTimersToNextTimer()
 
-            expect(postMessageSpy).toHaveBeenCalledTimes(2)
+            expect(postMessageSpy).toHaveBeenCalledTimes(1)
 
             window.dispatchEvent(
                 new MessageEvent('message', {
@@ -100,7 +96,11 @@ describe('manager', () => {
             )
 
             vi.advanceTimersToNextTimer()
-            expect(postMessageSpy).toHaveBeenCalledTimes(2)
+            expect(postMessageSpy).toHaveBeenNthCalledWith(
+                2,
+                'some message',
+                exampleOrigin
+            )
 
             expect(parentWindowManager.assert(exampleOrigin)).toBe(true)
         })
@@ -226,6 +226,31 @@ describe('manager', () => {
             childWindowManager.postMessage(testMessage)
 
             expect(postMessage).not.toHaveBeenCalled()
+        })
+
+        it('should use provided parent window', () => {
+            const parentWindow = {
+                postMessage: vi.fn(),
+                origin: exampleOrigin,
+            } as unknown as Window
+            const childWindowOriginManagerWithParentWindow =
+                new ChildWindowOriginManager(parentWindow)
+
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        message:
+                            OriginHandshakeMessage.enum
+                                .SPLICE_WALLET_BROADCAST_ORIGIN,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
+
+            childWindowOriginManagerWithParentWindow.postMessage('some message')
+
+            expect(parentWindow.postMessage).toHaveBeenCalled()
         })
     })
 })

@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-rpc-errors",
-    "version": "1.7.0",
+    "version": "1.9.0",
     "type": "module",
     "description": "Wrapper for JSON-RPC error objects",
     "author": "Alex Matson <alex.matson@digitalasset.com>",
@@ -25,7 +25,7 @@
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "test": "vitest run --project node --passWithNoTests",
         "test:coverage": "vitest run --project node --coverage --passWithNoTests"

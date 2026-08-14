@@ -102,7 +102,7 @@ async function main() {
     } else {
         console.error(
             error(
-                `Canton binary not found at ${CANTON_BIN}. Please run 'yarn script:fetch:canton' to download it.`
+                `Canton binary not found at ${CANTON_BIN}. Please run 'pnpm script:fetch:canton' to download it.`
             )
         )
         process.exit(1)

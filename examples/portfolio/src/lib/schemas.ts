@@ -28,30 +28,22 @@ export const optionalPartyIdInputSchema = z
         PARTY_ID_ERROR_MESSAGE
     )
 
-export const registryConfigSchema = z
-    .object({
-        name: optionalStringSchema(),
-        partyId: optionalPartyIdSchema,
-        url: HttpUrl,
-    })
-    .strict()
+export const registryConfigSchema = z.strictObject({
+    name: optionalStringSchema(),
+    partyId: optionalPartyIdSchema,
+    url: HttpUrl,
+})
 
-export const portfolioConfigSchema = z
-    .object({
-        amulet: z
-            .object({
-                validatorUrl: HttpUrl,
-                registry: HttpUrl,
-            })
-            .strict(),
-        token: z
-            .object({
-                validatorUrl: HttpUrl,
-                registries: z.array(registryConfigSchema),
-            })
-            .strict(),
-    })
-    .strict()
+export const portfolioConfigSchema = z.strictObject({
+    amulet: z.strictObject({
+        validatorUrl: HttpUrl,
+        registry: HttpUrl,
+    }),
+    token: z.strictObject({
+        validatorUrl: HttpUrl,
+        registries: z.array(registryConfigSchema),
+    }),
+})
 
 export const registryFormSchema = z.object({
     partyId: optionalPartyIdInputSchema,

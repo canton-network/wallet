@@ -1,6 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    isSpliceMessageEvent,
+    SpliceMessage,
+    WalletEvent,
+} from '@canton-network/core-types'
+
 interface PopupOptions {
     title?: string
     target?: string
@@ -57,7 +63,53 @@ class PopupInstance {
             urlOrComponent instanceof URL
         ) {
             const win = PopupInstance.getInstance()
-            win.location.href = urlOrComponent.toString()
+            const url = urlOrComponent.toString()
+            const childOrigin = new URL(url).origin
+            win.location.href = url
+
+            const message: SpliceMessage = {
+                type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                origin: window.location.origin,
+            }
+
+            const MAX_TIMEOUT = 10000 // 10 seconds
+            let isConnected = false
+
+            const originPoller = setInterval(() => {
+                win.postMessage(message, childOrigin)
+            }, 500)
+
+            // Set the timeout and save its ID
+            const timeoutId = setTimeout(() => {
+                clearInterval(originPoller)
+                if (!isConnected) {
+                    console.error(
+                        'Connection timed out waiting for child window.'
+                    )
+                }
+            }, MAX_TIMEOUT)
+
+            // due to the asynchronicity when sending the postMessage immediately after redirecting,
+            // there is a chance that the child window has not yet loaded,
+            // and does not an event listener established yet. Therefore,
+            // we repeatedly poll until the child window sends back an acknowledgment message.
+            const handleMessage = (event: MessageEvent) => {
+                if (!isSpliceMessageEvent(event)) return
+                if (
+                    event.data.type !==
+                    WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+                )
+                    return
+                if (childOrigin !== event.origin) return
+
+                isConnected = true
+                clearInterval(originPoller)
+                clearTimeout(timeoutId)
+                window.removeEventListener('message', handleMessage)
+            }
+
+            window.addEventListener('message', handleMessage)
+
             win.focus()
             return win
         } else {

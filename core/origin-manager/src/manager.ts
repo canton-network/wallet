@@ -6,7 +6,7 @@ import { OriginHandshake, OriginHandshakeMessage } from './types'
 abstract class OriginManager {
     protected allowedOrigins: Set<Location['origin']> = new Set()
     protected abstract readonly messageToReceive: OriginHandshakeMessage
-    protected abstract readonly listenerCallback: (event: MessageEvent) => void
+    protected abstract readonly handshakeCallback: (event: MessageEvent) => void
 
     constructor() {
         window.addEventListener('message', this.listener)
@@ -23,19 +23,27 @@ abstract class OriginManager {
     }
 
     /**
+     * Creates a listener function that validates incoming handshake messages before invoking the callback.
+     */
+    protected listenerFactory =
+        (callback: (event: MessageEvent) => void) => (event: MessageEvent) => {
+            const parsedData = OriginHandshake.safeParse(event.data)
+            if (
+                !parsedData.success ||
+                event.origin !== parsedData.data.origin ||
+                parsedData.data.message !== this.messageToReceive
+            )
+                return
+            callback(event)
+        }
+
+    /**
      * Validates and processes incoming handshake messages.
      */
-    private listener = (event: MessageEvent) => {
-        const parsedData = OriginHandshake.safeParse(event.data)
-        if (
-            !parsedData.success ||
-            event.origin !== parsedData.data.origin ||
-            parsedData.data.message !== this.messageToReceive
-        )
-            return
+    private listener = this.listenerFactory((event) => {
         this.allowedOrigins.add(event.origin)
-        this.listenerCallback(event)
-    }
+        this.handshakeCallback(event)
+    })
 
     /**
      * Sends a handshake message to the target window and origin.
@@ -70,17 +78,13 @@ abstract class OriginManager {
     /**
      * Posts a message only when the target origin is trusted.
      */
-    protected postMessageFactory(
-        message: unknown,
-        options: {
-            origin: Location['origin']
-            window: Window
-        }
-    ) {
-        if (!this.assert(options.origin)) return
+    protected postMessageFactory =
+        (options: { origin: Location['origin']; window: Window }) =>
+        (message: unknown) => {
+            if (!this.assert(options.origin)) return
 
-        options.window.postMessage(message, options.origin)
-    }
+            options.window.postMessage(message, options.origin)
+        }
 
     /**
      * Sends an arbitrary message to a previously trusted origin.
@@ -97,7 +101,7 @@ export class ParentWindowOriginManager extends OriginManager {
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
-    protected readonly listenerCallback = (event: MessageEvent) => {
+    protected readonly handshakeCallback = (event: MessageEvent) => {
         const associatedIntervalID = this.intervalMap.get(event.origin)
         if (associatedIntervalID) {
             clearInterval(associatedIntervalID)
@@ -112,45 +116,63 @@ export class ParentWindowOriginManager extends OriginManager {
     /**
      * Starts periodically broadcasting handshake messages to the child origin.
      */
-    public poll(origin: Location['origin'], intervalMs = 500) {
+    private poll(origin: Location['origin']) {
         const intervalID = setInterval(() => {
             this.handshake({
                 origin,
             })
-        }, intervalMs)
+        }, 500)
         this.intervalMap.set(origin, intervalID)
     }
 
     /**
-     * Sends a message from the parent window to a trusted origin.
+     * Sends a message from the parent window to a trusted origin. If the connection hasn't been established yet, poll for handshake and postMessage upon success.
      */
-    public postMessage = (message: unknown, origin: Location['origin']) =>
-        this.postMessageFactory(message, {
+    public postMessage = (message: unknown, origin: Location['origin']) => {
+        const postMessageFunction = this.postMessageFactory({
             window,
             origin,
         })
+        if (this.assert(origin)) {
+            postMessageFunction(message)
+            return
+        }
+        const eventListener = this.listenerFactory(() => {
+            postMessageFunction(message)
+            window.removeEventListener('message', eventListener)
+        })
+        window.addEventListener('message', eventListener)
+        this.poll(origin)
+    }
 }
 
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
         OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+
+    constructor(private readonly parentWindow: Window = window.opener) {
+        super()
+    }
+
     /**
      * Replies to parent handshake messages and then removes the listener.
      */
-    protected readonly listenerCallback = (event: MessageEvent) => {
+    protected readonly handshakeCallback = (event: MessageEvent) => {
         this.handshake({
-            window: window.opener,
+            window: this.parentWindow,
             origin: event.origin,
         })
         this.removeListener()
     }
 
     /**
-     * Sends a message from the child window to a trusted parent origin.
+     * Sends a message to the parent window if it exists.
      */
-    public postMessage = (message: unknown) =>
-        this.postMessageFactory(message, {
-            window: window.opener,
-            origin: window.opener.origin,
-        })
+    public readonly postMessage = (message: unknown) => {
+        if (!this.parentWindow) return
+        this.postMessageFactory({
+            window: this.parentWindow,
+            origin: this.parentWindow.origin,
+        })(message)
+    }
 }

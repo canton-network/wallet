@@ -1,4 +1,4 @@
-# Wallet Gateway
+# Wallet
 
 A TypeScript framework for building wallet integrations on the [Canton Network](https://www.canton.network/). It provides the **Wallet Gateway** (server and browser extension), the **dApp SDK**, the **Wallet SDK**, and a set of shared core modules.
 
@@ -78,6 +78,7 @@ Shared libraries used by the Wallet Gateway, SDKs, and signing providers:
 | `core-signing-participant`    | [`core/signing-participant`](core/signing-participant)       | Canton participant-managed signing driver                               |
 | `core-signing-fireblocks`     | [`core/signing-fireblocks`](core/signing-fireblocks)         | Fireblocks signing driver integration                                   |
 | `core-signing-blockdaemon`    | [`core/signing-blockdaemon`](core/signing-blockdaemon)       | Blockdaemon signing driver integration                                  |
+| `core-signing-securosys`      | [`core/signing-securosys`](core/signing-securosys)           | Securosys TSB signing driver integration                                |
 | **RPC & Transport**           |                                                              |                                                                         |
 | `core-types`                  | [`core/types`](core/types)                                   | Shared types and transport-agnostic parsers                             |
 | `core-rpc-transport`          | [`core/rpc-transport`](core/rpc-transport)                   | RPC transport implementations                                           |
@@ -98,10 +99,13 @@ Shared libraries used by the Wallet Gateway, SDKs, and signing providers:
 
 ### Examples
 
-| Path                                       | Description                                                       |
-| ------------------------------------------ | ----------------------------------------------------------------- |
-| [`examples/ping`](examples/ping)           | Minimal dApp demonstrating connect, prepare, and execute flows    |
-| [`examples/portfolio`](examples/portfolio) | Portfolio dApp showcasing account listing and transaction history |
+| Path                                               | Description                                                             |
+| -------------------------------------------------- | ----------------------------------------------------------------------- |
+| [`examples`](examples)                             | Overview of all examples and their reserved development ports           |
+| [`examples/automation`](examples/automation)       | Python service-account automation using the Wallet Gateway JSON-RPC API |
+| [`examples/ping`](examples/ping)                   | Minimal dApp demonstrating connect, prepare, and execute flows          |
+| [`examples/portfolio`](examples/portfolio)         | Portfolio dApp showcasing account listing and transaction history       |
+| [`examples/walletconnect`](examples/walletconnect) | Wallet-side WalletConnect v2 implementation using Reown WalletKit       |
 
 ### Documentation
 
@@ -117,35 +121,41 @@ Shared libraries used by the Wallet Gateway, SDKs, and signing providers:
 ### Prerequisites
 
 - Node.js 20+
-- Yarn 4 (Corepack)
+- pnpm v11 (Corepack)
 - A running Canton participant node (or use the included local setup)
 
 ### Quick Start
 
 ```bash
 # Install dependencies
-yarn install
+pnpm install
 
 # Build everything
-yarn build:all
+pnpm build:all
 
 # Start all services (Wallet Gateway, mock OAuth, Example dApps, etc.)
-yarn start:all
+pnpm start:all
 
 # Start a local Canton Participant Node
-yarn start:canton
+pnpm start:canton
 ```
 
 Active processes can be monitored with:
 
 ```bash
-yarn pm2 list
+pnpm pm2 list
 ```
 
 To stop everything:
 
 ```bash
-yarn stop:all
+pnpm stop:all
+```
+
+alternatively, completely stop the pm2 server:
+
+```bash
+pnpm pm2 kill
 ```
 
 ### Running the Browser Extension

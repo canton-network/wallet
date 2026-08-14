@@ -67,7 +67,10 @@ import { logDynamically, networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
 import { TransactionService } from '../ledger/transaction-service.js'
 import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
-import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
+import type {
+    MessageSignatureEvent,
+    TxChangedFailedEvent,
+} from '../dapp-api/rpc-gen/typings.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
@@ -90,6 +93,11 @@ export const userController = (
         userUrl: `${userUrl}/login/`,
     }
 
+    function isAdmin(): boolean {
+        const userId = authContext?.userId
+        return !!adminUserId && !!userId && userId === adminUserId
+    }
+
     function assertAdmin(): void {
         const userId = assertConnected(authContext).userId
         if (!adminUserId || userId !== adminUserId) {
@@ -99,12 +107,25 @@ export const userController = (
         }
     }
 
+    /**
+     * Session responses always include user auth for the UI.
+     * Privileged credentials are included only for the admin user.
+     */
+    function toSessionNetwork(network: Network): ApiNetwork {
+        const dto = toNetworkDto(network)
+        if (isAdmin()) {
+            return dto
+        }
+        const { adminAuth: _adminAuth, serviceAccountAuth: _sa, ...rest } = dto
+        return rest
+    }
+
     return buildController({
         getUser: async (): Promise<GetUserResult> => {
             const userId = assertConnected(authContext).userId
             return {
                 userId,
-                isAdmin: !!adminUserId && userId === adminUserId,
+                isAdmin: isAdmin(),
             }
         },
         addNetwork: async (params: AddNetworkParams) => {
@@ -248,10 +269,6 @@ export const userController = (
                 throw new Error('No admin auth configured')
             }
 
-            const notifier = notificationService.getNotifier(
-                connectedContext.userId
-            )
-
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -306,7 +323,9 @@ export const userController = (
 
             // Notify about the change and return the new wallet
             const wallets = await store.getWallets()
-            notifier?.emit('accountsChanged', wallets)
+            notificationService
+                .getNotifier(connectedContext.userId)
+                .emit('accountsChanged', wallets)
 
             return { wallet }
         },
@@ -314,7 +333,6 @@ export const userController = (
             params: AllocatePartyForWalletParams
         ) => {
             const connectedContext = assertConnected(authContext)
-            const userId = connectedContext.userId
 
             const network = await store.getCurrentNetwork()
             if (!network) {
@@ -393,18 +411,20 @@ export const userController = (
                     w.networkId === network.id
             )!
 
-            const notifier = notificationService.getNotifier(userId)
-            notifier?.emit('accountsChanged', wallets)
+            notificationService
+                .getNotifier(connectedContext.userId)
+                .emit('accountsChanged', wallets)
+
             return { wallet }
         },
         setPrimaryWallet: async (params: SetPrimaryWalletParams) => {
             await store.setPrimaryWallet(params.partyId)
-            const notifier = authContext?.userId
-                ? notificationService.getNotifier(authContext.userId)
-                : undefined
-
             const wallets = await store.getWallets()
-            notifier?.emit('accountsChanged', wallets)
+
+            notificationService
+                .getNotifier(authContext!.userId)
+                .emit('accountsChanged', wallets)
+
             return null
         },
         removeWallet: async (params: { partyId: string }) => {
@@ -429,8 +449,12 @@ export const userController = (
             }
 
             const connectedContext = assertConnected(authContext)
-            const userId = connectedContext.userId
-            const notifier = notificationService.getNotifier(userId)
+
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
 
             const transactionService = new TransactionService(
                 store,
@@ -479,7 +503,13 @@ export const userController = (
                 )
             }
 
-            const notifier = notificationService.getNotifier(userId)
+            const session = await store.getSession(
+                assertConnected(authContext).accessToken
+            )
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
 
             const emitFailedAndPersist = async (
                 details: string
@@ -665,9 +695,11 @@ export const userController = (
                 throw new Error('No network session found')
             }
 
-            const notifier = notificationService.getNotifier(
-                connectedContext.userId
-            )
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
@@ -712,23 +744,27 @@ export const userController = (
             params: AddSessionParams
         ): Promise<AddSessionResult> {
             try {
+                const connectedContext = assertConnected(authContext)
+                const { userId, accessToken } = connectedContext
+
                 const newSessionId = v4()
+
                 logger.info(
                     `Adding session with ID ${newSessionId} for network ${params.networkId}`
                 )
                 const network = await store.getNetwork(params.networkId)
                 const idp = await store.getIdp(network.identityProviderId)
-                const connectedContext = assertConnected(authContext)
-                const { userId, accessToken } = connectedContext
 
                 assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
                 await store.setSession({
                     id: newSessionId,
+                    origin: params.origin,
                     network: params.networkId,
                     accessToken: connectedContext.accessToken || '',
                 })
-                const notifier = notificationService.getNotifier(userId)
+
+                const notifier = notificationService.getNotifier(newSessionId)
 
                 const ledgerClient = new LedgerClient({
                     baseUrl: new URL(network.ledgerApi.baseUrl),
@@ -814,10 +850,7 @@ export const userController = (
                 return {
                     id: newSessionId,
                     accessToken,
-                    network: {
-                        ...network,
-                        ledgerApi: network.ledgerApi.baseUrl,
-                    },
+                    network: toSessionNetwork(network),
                     idp,
                     status: status.isConnected ? 'connected' : 'disconnected',
                     reason: status.reason ? status.reason : 'OK',
@@ -832,9 +865,15 @@ export const userController = (
         },
         removeSession: async (): Promise<Null> => {
             logger.info({ authContext }, 'Removing session')
-            const userId = assertConnected(authContext).userId
-            const notifier = notificationService.getNotifier(userId)
-            await store.removeSession()
+            const { accessToken } = assertConnected(authContext)
+
+            const session = await store.getSession(accessToken)
+            if (!session) {
+                return null
+            }
+            const notifier = notificationService.getNotifier(session.id)
+
+            await store.removeSession(accessToken)
 
             notifier.emit('statusChanged', {
                 provider: provider,
@@ -852,8 +891,11 @@ export const userController = (
 
             return null
         },
+        // TODO: follow up with store.listSessions to display all sessions in the UI
         listSessions: async (): Promise<ListSessionsResult> => {
-            const session = await store.getSession()
+            const token = authContext!.accessToken
+            const session = await store.getSession(token)
+
             if (!session) {
                 return { sessions: [] }
             }
@@ -870,14 +912,13 @@ export const userController = (
             const idp = await store.getIdp(network.identityProviderId)
             const status = await networkStatus(ledgerClient)
             const rights = await store.getUserRights(network.id)
+
             return {
                 sessions: [
                     {
                         id: session.id,
-                        network: {
-                            ...network,
-                            ledgerApi: network.ledgerApi.baseUrl,
-                        },
+                        origin: session.origin,
+                        network: toSessionNetwork(network),
                         idp: idp,
                         accessToken: authContext!.accessToken,
                         status: status.isConnected
@@ -939,9 +980,12 @@ export const userController = (
             ) {
                 return result
             }
-            const notifier = notificationService.getNotifier(userId)
+
             const wallets = await store.getWallets()
-            notifier?.emit('accountsChanged', wallets)
+            notificationService
+                .getNotifier(userId)
+                .emit('accountsChanged', wallets)
+
             return result
         },
         isWalletSyncNeeded: async (): Promise<IsWalletSyncNeededResult> => {
@@ -1075,7 +1119,18 @@ export const userController = (
                     `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
                 )
             }
+            const session = await store.getSession(
+                assertConnected(authContext).accessToken
+            )
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
             await store.removeTransaction(transaction.id)
+            notificationService.getNotifier(session.id).emit('txChanged', {
+                status: 'failed',
+                commandId: transaction.commandId,
+            } satisfies TxChangedFailedEvent)
             return null
         },
         generateApiKey: async (

@@ -82,7 +82,8 @@ const getRepositoryDirectory = (destPath: string): string | null => {
             if (fs.existsSync(packageJsonPath)) {
                 const pkgContent = fs.readFileSync(packageJsonPath, 'utf-8')
                 const pkg = JSON.parse(pkgContent)
-                if (pkg.workspaces || pkg.name === 'splice-wallet-kernel') {
+                // find the root package.json
+                if (pkg.name === 'wallet-kernel') {
                     const relativePath = path.relative(currentPath, destPath)
                     return relativePath.replace(/\\/g, '/') // Normalize to forward slashes
                 }
@@ -152,7 +153,7 @@ const hooks: IHooks = {
                 }
                 // else - fallback to repository field in template
                 const updatedPkg = JSON.stringify(updatedPkgObj)
-                execSync(`yarn prettier --write ${dest}/src/**/*`)
+                execSync(`pnpm prettier --write ${dest}/src/**/*`)
                 return await writeFile(packagePath, updatedPkg)
             }
             if (component.language === 'rust') {

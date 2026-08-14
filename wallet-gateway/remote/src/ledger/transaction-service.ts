@@ -34,6 +34,7 @@ import {
     AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
+import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -100,6 +101,13 @@ export class TransactionService {
             case SigningProvider.DFNS: {
                 return this.signWithDfns(authContext.userId, wallet, signParams)
             }
+            case SigningProvider.SECUROSYS: {
+                return this.signWithSecurosys(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
             default:
                 throw new Error(
                     `Unsupported signing provider: ${wallet.signingProviderId}`
@@ -154,7 +162,8 @@ export class TransactionService {
             case SigningProvider.WALLET_KERNEL:
             case SigningProvider.BLOCKDAEMON:
             case SigningProvider.FIREBLOCKS:
-            case SigningProvider.DFNS: {
+            case SigningProvider.DFNS:
+            case SigningProvider.SECUROSYS: {
                 if (!executeParams) {
                     throw new Error(
                         'Execute params are required for external signing'
@@ -234,7 +243,7 @@ export class TransactionService {
         return this.execute(
             userId,
             wallet,
-            transaction,
+            { ...transaction, status: 'signed' as const },
             executeParams,
             ledgerClient,
             network
@@ -682,6 +691,114 @@ export class TransactionService {
             await this.store.setTransactionStatus(tx.id, status, {
                 externalTxId: signingResult.txId,
             })
+            this.notifier.emit('txChanged', pendingTx)
+
+            return {
+                status: signingResult.status,
+                externalTxId: signingResult.txId,
+                partyId: wallet.partyId,
+            }
+        }
+    }
+
+    private async signWithSecurosys(
+        userId: UserId,
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResult> {
+        const signingProvider = this.signingDrivers[SigningProvider.SECUROSYS]
+        if (!signingProvider) {
+            throw new Error('Securosys signing driver not available')
+        }
+        const driver = signingProvider.controller(userId)
+
+        const tx = await this.loadPreparedTransactionForSigning(
+            signParams.transactionId
+        )
+
+        let signingResult: Exclude<
+            GetTransactionResult | SignTransactionResult,
+            SigningError
+        >
+        if (tx.externalTxId) {
+            signingResult = await driver
+                .getTransaction({
+                    txId: tx.externalTxId,
+                })
+                .then(handleSigningError)
+        } else {
+            signingResult = await driver
+                .signTransaction({
+                    tx: tx.preparedTransaction,
+                    txHash: tx.preparedTransactionHash,
+                    keyIdentifier: {
+                        id: keyLabelFromPublicKey(wallet.publicKey),
+                        publicKey: wallet.publicKey,
+                    },
+                })
+                .then(handleSigningError)
+        }
+
+        const now = new Date()
+
+        logDynamically(this.logger, 'Securosys signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
+
+        if (signingResult.status === 'signed') {
+            if (!signingResult.signature) {
+                throw new Error('No signature returned from signing driver')
+            }
+
+            const signedTx: Transaction = {
+                id: tx.id,
+                commandId: tx.commandId,
+                status: signingResult.status,
+                preparedTransaction: tx.preparedTransaction,
+                preparedTransactionHash: tx.preparedTransactionHash,
+                origin: tx?.origin ?? null,
+                ...(tx?.createdAt && {
+                    createdAt: tx.createdAt,
+                }),
+                signedAt: now,
+                externalTxId: signingResult.txId,
+            }
+
+            await this.store.setTransactionSigned(
+                tx.id,
+                now,
+                signingResult.txId
+            )
+            this.notifier.emit('txChanged', signedTx)
+
+            return {
+                status: signingResult.status,
+                signature: signingResult.signature,
+                signedBy: wallet.namespace,
+                partyId: wallet.partyId,
+                externalTxId: signingResult.txId,
+            }
+        } else {
+            const status =
+                signingResult.status === 'pending' ? 'pending' : 'failed'
+            const pendingTx: Transaction = {
+                id: tx.id,
+                commandId: tx.commandId,
+                status,
+                preparedTransaction: tx.preparedTransaction,
+                preparedTransactionHash: tx.preparedTransactionHash,
+                externalTxId: signingResult.txId,
+                origin: tx?.origin ?? null,
+                ...(tx?.createdAt && {
+                    createdAt: tx.createdAt,
+                }),
+            }
+
+            await this.store.setTransactionStatus(tx.id, status, {
+                externalTxId: signingResult.txId,
+            })
+
             this.notifier.emit('txChanged', pendingTx)
 
             return {

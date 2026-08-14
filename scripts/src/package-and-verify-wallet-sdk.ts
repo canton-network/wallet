@@ -19,19 +19,11 @@ async function main() {
 
     // Create a temp dir for both the test and the tgz
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wallet-sdk-test-'))
-    const flatpacker = new FlatPack(sdkDir, 'yarn', tmpDir)
+    const flatpacker = new FlatPack(sdkDir, tmpDir)
 
-    // Prepare a yarn-based project in the tmp dir
+    // Prepare a npm-based project in the tmp dir
     try {
         flatpacker.postInit(() => {
-            // write Yarn config for isolated, node_modules-based test project
-            fs.writeFileSync(
-                path.join(tmpDir, '.yarnrc.yml'),
-                ['nodeLinker: node-modules', 'enableGlobalCache: false'].join(
-                    '\n'
-                ) + '\n'
-            )
-
             // Write test import file
 
             const destTestFile = path.join(tmpDir, 'test-import.ts')
@@ -43,10 +35,10 @@ async function main() {
 
             fs.copyFileSync(sourceTestFile, destTestFile)
 
-            run('yarn add typescript@^5.9.3 tsx', { cwd: tmpDir })
+            run('npm install --save-dev typescript@^5.9.3 tsx', { cwd: tmpDir })
         })
         flatpacker.pack()
-        run('yarn install --no-immutable', { cwd: tmpDir })
+        run('npm install', { cwd: tmpDir })
 
         console.log('Running package tests...')
 
