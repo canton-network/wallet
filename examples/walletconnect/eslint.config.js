@@ -7,6 +7,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
     {
         files: ['**/*.{ts,tsx}'],
+        extends: [config],
         rules: {
             'headers/header-format': 'off',
         },
