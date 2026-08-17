@@ -127,11 +127,6 @@ export type Primary = boolean
  *
  */
 export type PartyHint = string
-/**
- *
- * The signing provider ID the wallet corresponds to.
- *
- */
 export type SigningProviderId = string
 export type VaultName = string
 /**
@@ -494,6 +489,12 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
+ * The IDs of the available signing providers.
+ *
+ */
+export type SigningProviders = SigningProviderId[]
+/**
+ *
  * The list of signing provider's available vault names.
  *
  */
@@ -685,6 +686,9 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
+export interface ListSigningProvidersResult {
+    signingProviders: SigningProviders
+}
 export interface ListSigningProviderVaultsResult {
     vaults: Vaults
 }
@@ -749,6 +753,7 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListSigningProviders = () => Promise<ListSigningProvidersResult>
 export type ListSigningProviderVaults = (
     params: ListSigningProviderVaultsParams
 ) => Promise<ListSigningProviderVaultsResult>

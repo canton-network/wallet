@@ -42,6 +42,7 @@ import {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
+    ListSigningProvidersResult,
     ListSigningProviderVaultsResult,
     ListSigningProviderVaultsParams,
     ListTransactionsParams,
@@ -1187,6 +1188,10 @@ export const userController = (
             await store.removeApiKey(params.id)
             return null
         },
+        listSigningProviders:
+            async (): Promise<ListSigningProvidersResult> => ({
+                signingProviders: Object.keys(drivers),
+            }),
         listSigningProviderVaults: async (
             params: ListSigningProviderVaultsParams
         ): Promise<ListSigningProviderVaultsResult> => {
