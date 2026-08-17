@@ -128,7 +128,10 @@ export class IdpCard extends BaseElement {
         }
 
         return html`
-            <article class="wg-card idp-card" @click=${this._onClick}>
+            <article
+                class="wg-card idp-card${this.readonly ? ' readonly' : ''}"
+                @click=${this._onClick}
+            >
                 <p class="card-title">${this.idp.id}</p>
 
                 <div class="meta">
