@@ -12,18 +12,26 @@ export function jsonRpcHandler() {
     browser.runtime.onMessage.addListener(processRequest)
 }
 
-function processRequest(message: unknown) {
+async function processRequest(message: unknown) {
     const msg = SpliceMessage.parse(message)
 
     if (msg.type === WalletEvent.SPLICE_WALLET_REQUEST) {
         const method = msg.request.method as keyof Methods
         const args = msg.request.params
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fn = (dappController as any)[method] as (
-            params: unknown
-        ) => Promise<unknown>
+        const store = undefined
+        const controller = dappController(store)
+        const fn = controller[method] as (params: unknown) => Promise<unknown>
 
-        fn(args)
+        const resp = await fn(args)
+
+        console.log('received request: ', {
+            method,
+            args,
+            controller,
+            fn,
+            resp,
+        })
+        browser.tabs.postMessage(resp)
     }
 }
