@@ -5,6 +5,7 @@ import config from '@canton-network/core-eslint-config'
 import { defineConfig } from 'eslint/config'
 
 export default defineConfig([
+    { extends: [config] },
     { ignores: ['docs/**'] },
     {
         files: ['**/*.{ts,tsx}'],
