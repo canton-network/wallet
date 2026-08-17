@@ -2,6 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export class Env {
+    private static isTrue(key: string): boolean {
+        return Env.get(key)?.toLowerCase() === 'true'
+    }
+
+    static PARTICIPANT_SIGNING_DISABLED = () =>
+        Env.isTrue('PARTICIPANT_SIGNING_DISABLED')
+    static WALLET_KERNEL_SIGNING_DISABLED = () =>
+        Env.isTrue('WALLET_KERNEL_SIGNING_DISABLED')
+    static FIREBLOCKS_SIGNING_DISABLED = () =>
+        Env.isTrue('FIREBLOCKS_SIGNING_DISABLED')
+    static BLOCKDAEMON_SIGNING_DISABLED = () =>
+        Env.isTrue('BLOCKDAEMON_SIGNING_DISABLED')
+    static DFNS_SIGNING_DISABLED = () => Env.isTrue('DFNS_SIGNING_DISABLED')
+    static SECUROSYS_SIGNING_DISABLED = () =>
+        Env.isTrue('SECUROSYS_SIGNING_DISABLED')
+
     static FIREBLOCKS_API_KEY = () => Env.get('FIREBLOCKS_API_KEY')
     static FIREBLOCKS_SECRET = () => Env.get('FIREBLOCKS_SECRET')
     static FIREBLOCKS_API_PATH = (fallback: string) =>

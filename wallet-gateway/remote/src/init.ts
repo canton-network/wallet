@@ -278,17 +278,13 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const signingStore = await initializeSigningDatabase(config, logger)
     const authService = jwtAuthService(store, logger)
 
-    let apiKey = Env.FIREBLOCKS_API_KEY()
-    let apiSecret = Env.FIREBLOCKS_SECRET()
-
-    if (!apiKey || !apiSecret) {
-        apiKey = 'missing'
-        apiSecret = 'missing'
-        logger.warn('Fireblocks key files are missing')
-    }
-
-    const keyInfo = { apiKey, apiSecret }
-    const userApiKeys = new Map([['user', keyInfo]])
+    // TODO move signing providers part to a separate file.
+    const fireblocksApiKey = Env.FIREBLOCKS_API_KEY()
+    const fireblocksApiSecret = Env.FIREBLOCKS_SECRET()
+    const blockdaemonBaseUrl = Env.BLOCKDAEMON_API_URL(
+        'http://localhost:5080/api/cwp/canton'
+    )
+    const blockdaemonApiKey = Env.BLOCKDAEMON_API_KEY('')
     const securosysKeyManagementApiKey =
         Env.SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY()
     const securosysKeyOperationApiKey =
@@ -298,27 +294,72 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const securosysMtlsP12Password = Env.SECUROSYS_TSB_MTLS_P12_PASSWORD()
     const securosysKeyPassword = Env.SECUROSYS_TSB_KEY_PASSWORD()
     const securosysBaseUrl = Env.SECUROSYS_TSB_BASE_URL()
+    const dfnsOrgId = Env.DFNS_ORG_ID()
+    const dfnsCredId = Env.DFNS_CRED_ID()
+    const dfnsPrivateKey = Env.DFNS_PRIVATE_KEY()
+    const dfnsAuthToken = Env.DFNS_AUTH_TOKEN()
 
-    const drivers: SigningDrivers = {
-        [SigningProvider.PARTICIPANT]: new ParticipantSigningDriver(),
-        [SigningProvider.WALLET_KERNEL]: new InternalSigningDriver(
-            signingStore
-        ),
-        [SigningProvider.FIREBLOCKS]: new FireblocksSigningProvider({
-            defaultKeyInfo: keyInfo,
-            userApiKeys,
-            apiPath: Env.FIREBLOCKS_API_PATH('https://api.fireblocks.io/v1'),
-        }),
-        [SigningProvider.BLOCKDAEMON]: new BlockdaemonSigningProvider({
-            baseUrl: Env.BLOCKDAEMON_API_URL(
-                'http://localhost:5080/api/cwp/canton'
-            ),
-            apiKey: Env.BLOCKDAEMON_API_KEY(''),
-            caip2: Env.BLOCKDAEMON_CAIP2('canton:testnet') as CantonCaip2,
-        }),
+    const drivers: SigningDrivers = {}
+
+    if (Env.PARTICIPANT_SIGNING_DISABLED()) {
+        logger.info(
+            'Participant signing provider is disabled by PARTICIPANT_SIGNING_DISABLED'
+        )
+    } else {
+        drivers[SigningProvider.PARTICIPANT] = new ParticipantSigningDriver()
     }
 
-    if (securosysBaseUrl) {
+    if (Env.WALLET_KERNEL_SIGNING_DISABLED()) {
+        logger.info(
+            'Wallet Kernel signing provider is disabled by WALLET_KERNEL_SIGNING_DISABLED'
+        )
+    } else {
+        drivers[SigningProvider.WALLET_KERNEL] = new InternalSigningDriver(
+            signingStore
+        )
+    }
+
+    if (Env.FIREBLOCKS_SIGNING_DISABLED()) {
+        logger.info(
+            'Fireblocks signing provider is disabled by FIREBLOCKS_SIGNING_DISABLED'
+        )
+    } else if (fireblocksApiKey && fireblocksApiSecret) {
+        const keyInfo = {
+            apiKey: fireblocksApiKey,
+            apiSecret: fireblocksApiSecret,
+        }
+        drivers[SigningProvider.FIREBLOCKS] = new FireblocksSigningProvider({
+            defaultKeyInfo: keyInfo,
+            userApiKeys: new Map([['user', keyInfo]]),
+            apiPath: Env.FIREBLOCKS_API_PATH('https://api.fireblocks.io/v1'),
+        })
+    } else {
+        logger.warn(
+            'Fireblocks env vars not fully set. Fireblocks signing provider will be unavailable'
+        )
+    }
+
+    if (Env.BLOCKDAEMON_SIGNING_DISABLED()) {
+        logger.info(
+            'Blockdaemon signing provider is disabled by BLOCKDAEMON_SIGNING_DISABLED'
+        )
+    } else if (blockdaemonBaseUrl && blockdaemonApiKey) {
+        drivers[SigningProvider.BLOCKDAEMON] = new BlockdaemonSigningProvider({
+            baseUrl: blockdaemonBaseUrl,
+            apiKey: blockdaemonApiKey,
+            caip2: Env.BLOCKDAEMON_CAIP2('canton:testnet') as CantonCaip2,
+        })
+    } else {
+        logger.warn(
+            'Blockdaemon env vars not fully set. Blockdaemon signing provider will be unavailable'
+        )
+    }
+
+    if (Env.SECUROSYS_SIGNING_DISABLED()) {
+        logger.info(
+            'Securosys signing provider is disabled by SECUROSYS_SIGNING_DISABLED'
+        )
+    } else if (securosysBaseUrl) {
         drivers[SigningProvider.SECUROSYS] = new SecurosysSigningProvider({
             baseUrl: securosysBaseUrl,
             ...(securosysKeyManagementApiKey && {
@@ -339,28 +380,27 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         })
     } else {
         logger.warn(
-            'Securosys TSB base URL not set — Securosys signing provider will be unavailable'
+            'Securosys TSB base URL not set. Securosys signing provider will be unavailable'
         )
     }
 
-    if (
-        Env.DFNS_ORG_ID() &&
-        Env.DFNS_CRED_ID() &&
-        Env.DFNS_PRIVATE_KEY() &&
-        Env.DFNS_AUTH_TOKEN()
-    ) {
+    if (Env.DFNS_SIGNING_DISABLED()) {
+        logger.info(
+            'Dfns signing provider is disabled by DFNS_SIGNING_DISABLED'
+        )
+    } else if (dfnsOrgId && dfnsCredId && dfnsPrivateKey && dfnsAuthToken) {
         drivers[SigningProvider.DFNS] = new DfnsSigningProvider({
-            orgId: Env.DFNS_ORG_ID()!,
+            orgId: dfnsOrgId,
             baseUrl: Env.DFNS_BASE_URL('https://api.dfns.io'),
             credentials: {
-                credId: Env.DFNS_CRED_ID()!,
-                privateKey: Env.DFNS_PRIVATE_KEY()!,
-                authToken: Env.DFNS_AUTH_TOKEN()!,
+                credId: dfnsCredId,
+                privateKey: dfnsPrivateKey,
+                authToken: dfnsAuthToken,
             },
         })
     } else {
         logger.warn(
-            'Dfns env vars not fully set — Dfns signing provider will be unavailable'
+            'Dfns env vars not fully set. Dfns signing provider will be unavailable'
         )
     }
 
