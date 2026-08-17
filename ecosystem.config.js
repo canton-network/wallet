@@ -18,11 +18,6 @@ export const apps = [
         env_development: sharedEnvDevelopment,
     },
     {
-        name: 'extension',
-        script: 'pnpm --filter @canton-network/wallet-gateway-extension dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
         name: 'example-ping',
         script: 'pnpm --filter @canton-network/example-ping dev',
         env_development: sharedEnvDevelopment,
