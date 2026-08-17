@@ -4,7 +4,7 @@
 // Disabled unused vars rule to allow for future implementations
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import buildController from './rpc-gen'
+import buildController from './rpc-gen/index.js'
 import type {
     LedgerApiParams,
     Network,
