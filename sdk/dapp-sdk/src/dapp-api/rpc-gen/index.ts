@@ -1,20 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Status } from './typings.js'
-import { Connect } from './typings.js'
-import { Disconnect } from './typings.js'
-import { IsConnected } from './typings.js'
-import { GetActiveNetwork } from './typings.js'
-import { PrepareExecute } from './typings.js'
-import { PrepareExecuteAndWait } from './typings.js'
-import { SignMessage } from './typings.js'
-import { LedgerApi } from './typings.js'
-import { AccountsChanged } from './typings.js'
-import { GetPrimaryAccount } from './typings.js'
-import { ListAccounts } from './typings.js'
-import { TxChanged } from './typings.js'
-import { MessageSignature } from './typings.js'
+import type { Status } from './typings.js'
+import type { Connect } from './typings.js'
+import type { Disconnect } from './typings.js'
+import type { IsConnected } from './typings.js'
+import type { GetActiveNetwork } from './typings.js'
+import type { PrepareExecute } from './typings.js'
+import type { PrepareExecuteAndWait } from './typings.js'
+import type { SignMessage } from './typings.js'
+import type { LedgerApi } from './typings.js'
+import type { AccountsChanged } from './typings.js'
+import type { GetPrimaryAccount } from './typings.js'
+import type { ListAccounts } from './typings.js'
+import type { TxChanged } from './typings.js'
+import type { MessageSignature } from './typings.js'
 
 export type Methods = {
     status: Status
