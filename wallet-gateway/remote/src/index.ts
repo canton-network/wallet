@@ -110,9 +110,12 @@ if (hasDb) {
 }
 
 const hasSigningDb = process.argv.slice(2).includes('signing-db')
+// TODO check if I can get rid db and signing-db arguments.
 if (hasSigningDb) {
     const config = ConfigUtils.loadConfigFile(options.config)
-    signingDb = createSigningCLI(config.signingStore) as Command
+    if (config.signingStore) {
+        signingDb = createSigningCLI(config.signingStore) as Command
+    }
 }
 
 program.addCommand(db.name('db'))
