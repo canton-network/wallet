@@ -969,7 +969,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "additionalProperties": false
         }
     },
-    "required": ["kernel", "server", "store", "signingStore", "bootstrap"],
+    "required": ["kernel", "server", "store", "bootstrap"],
     "additionalProperties": false
 }
 ```

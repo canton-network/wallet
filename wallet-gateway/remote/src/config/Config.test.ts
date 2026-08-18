@@ -3,6 +3,7 @@
 
 import { expect, test } from 'vitest'
 import { ConfigUtils } from './ConfigUtils.js'
+import { configSchema, rawConfigSchema } from './Config.js'
 
 test('config from json file', async () => {
     const resp = ConfigUtils.loadConfigFile('../test/config.json')
@@ -27,4 +28,12 @@ test('config from json file', async () => {
             'devnet_secret_testval'
         )
     }
+})
+
+test('signingStore is optional', () => {
+    const config = { ...ConfigUtils.loadConfigFile('../test/config.json') }
+    delete config.signingStore
+
+    expect(configSchema.parse(config).signingStore).toBeUndefined()
+    expect(rawConfigSchema.parse(config).signingStore).toBeUndefined()
 })
