@@ -20,6 +20,7 @@ import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet
 import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.js'
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
 import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
+import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.js'
 
 export interface WalletAllocator {
     createWallet(
@@ -44,6 +45,7 @@ export class WalletAllocationService {
     private readonly blockdaemonAllocator?: BlockdaemonWalletAllocator
     private readonly dfnsAllocator?: DfnsWalletAllocator
     private readonly securosysAllocator?: SecurosysWalletAllocator
+    private readonly bitgoAllocator?: BitGoWalletAllocator
 
     constructor(
         store: Store,
@@ -106,6 +108,16 @@ export class WalletAllocationService {
                 logger,
                 partyAllocator,
                 securosysDriver
+            )
+        }
+
+        const bitgoDriver = signingDrivers[SigningProvider.BITGO]
+        if (bitgoDriver) {
+            this.bitgoAllocator = new BitGoWalletAllocator(
+                store,
+                logger,
+                partyAllocator,
+                bitgoDriver
             )
         }
     }
@@ -186,6 +198,17 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
+                    primary,
+                    vaultName
+                )
+            case SigningProvider.BITGO:
+                if (!this.bitgoAllocator) {
+                    throw new Error('BitGo signing driver not available')
+                }
+                return this.bitgoAllocator.createWallet(
+                    authContext.userId,
+                    authContext.email,
+                    partyHint,
                     primary
                 )
             default:
@@ -255,6 +278,15 @@ export class WalletAllocationService {
                     throw new Error('Securosys signing driver not available')
                 }
                 return this.securosysAllocator.allocateParty(
+                    authContext.userId,
+                    authContext.email,
+                    existingWallet
+                )
+            case SigningProvider.BITGO:
+                if (!this.bitgoAllocator) {
+                    throw new Error('BitGo signing driver not available')
+                }
+                return this.bitgoAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
                     existingWallet

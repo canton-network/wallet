@@ -41,6 +41,7 @@
         "@canton-network/core-ledger-client": "workspace:^",
         "@canton-network/core-rpc-errors": "workspace:^",
         "@canton-network/core-rpc-transport": "workspace:^",
+        "@canton-network/core-signing-bitgo": "workspace:^",
         "@canton-network/core-signing-blockdaemon": "workspace:^",
         "@canton-network/core-signing-dfns": "workspace:^",
         "@canton-network/core-signing-fireblocks": "workspace:^",
