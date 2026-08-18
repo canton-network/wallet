@@ -25,7 +25,7 @@ export function jsonRpcProxy() {
     const jsonRpcProxy = new ContentMessenger('json-rpc-proxy')
 
     window.addEventListener('message', async (event: SpliceMessageEvent) => {
-        console.log('Content script received message:', event.data)
+        logger.info(`Content script received message: ${event.data}`)
 
         const { data: msg, success } = SpliceMessage.safeParse(event.data)
 
@@ -43,7 +43,11 @@ export function jsonRpcProxy() {
             const msgResponse = await jsonRpcProxy.sendJsonRpc(msg.request)
 
             console.log('Received response from background:', msgResponse)
-            const response = SpliceMessage.parse(msgResponse)
+
+            const response: SpliceMessage = {
+                type: WalletEvent.SPLICE_WALLET_RESPONSE,
+                response: msgResponse,
+            }
 
             window.postMessage(response, '*')
         }

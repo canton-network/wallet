@@ -8,6 +8,7 @@ import type {
 
 // promise-ify an asynchronous callback with a timeout
 async function waitUntilTimeout<T>(
+    name: string,
     cb: (
         resolve: (value: T) => void,
         reject: (reason?: string) => void
@@ -16,7 +17,11 @@ async function waitUntilTimeout<T>(
 ): Promise<T> {
     return new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
-            reject(new Error(`Timed out waiting for callback (${timeout} ms)`))
+            reject(
+                new Error(
+                    `Timed out waiting for callback "${name}" (${timeout} ms)`
+                )
+            )
         }, timeout) // 5 seconds timeout
 
         cb(
@@ -35,11 +40,17 @@ async function waitUntilTimeout<T>(
 }
 
 async function waitForConnection(): Promise<Browser.runtime.Port> {
-    return waitUntilTimeout<Browser.runtime.Port>((resolve) => {
-        browser.runtime.onConnect.addListener((port) => {
-            resolve(port)
-        })
-    })
+    logger.debug('Waiting for connection from content script...')
+    return waitUntilTimeout<Browser.runtime.Port>(
+        'waitForConnection',
+        (resolve) => {
+            logger.debug('Waiting for connection from content script...')
+            browser.runtime.onConnect.addListener((port) => {
+                logger.debug('Connected to content script: ', { port })
+                resolve(port)
+            })
+        }
+    )
 }
 
 /**
@@ -51,34 +62,23 @@ class ExtensionMessenger {
 
     constructor(role: 'content' | 'background', name: string) {
         if (role === 'content') {
-            // connect
             this._port = browser.runtime.connect({ name })
-        } else {
-            waitForConnection().then((port) => {
-                this._port = port
-            })
         }
     }
 
     async port(): Promise<Browser.runtime.Port> {
-        try {
-            return await waitUntilTimeout<Browser.runtime.Port>((resolve) => {
-                // use setInterval to check if the port is connected
-                const interval = setInterval(() => {
-                    if (this._port) {
-                        clearInterval(interval)
-                        resolve(this._port)
-                    }
-                }, 100) // check every 100ms
-            })
-        } catch {
-            throw new Error('Port is not connected')
+        if (this._port) {
+            return this._port
         }
+
+        // wait for connection from content script
+        this._port = await waitForConnection()
+        return this._port
     }
 
     async sendJsonRpc(message: JsonRpcRequest): Promise<JsonRpcResponse> {
         const port = await this.port()
-        return waitUntilTimeout<JsonRpcResponse>((resolve) => {
+        return waitUntilTimeout<JsonRpcResponse>('sendJsonRpc', (resolve) => {
             const listener = (response: JsonRpcResponse) => {
                 if (response.id === message.id) {
                     port.onMessage.removeListener(listener)
@@ -106,10 +106,16 @@ export class BackgroundMessenger extends ExtensionMessenger {
     async onJsonRpcRequest(
         callback: (message: JsonRpcRequest) => Promise<JsonRpcResponse>
     ) {
+        logger.info(
+            'Setting up JSON-RPC request listener in background script...'
+        )
         const port = await this.port()
-        port.onMessage.addListener(async (message: JsonRpcRequest) => {
-            const response = await callback(message)
-            port.postMessage(response)
+        logger.info({ port })
+
+        port.onMessage.addListener((message: JsonRpcRequest) => {
+            callback(message).then((response) => {
+                port.postMessage(response)
+            })
         })
     }
 }
