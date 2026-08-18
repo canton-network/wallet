@@ -9,6 +9,8 @@ interface components {
             >
             multiHashSignatures?: Array<components['schemas']['Signature']>
             identityProviderId?: string
+            waitForAllocation?: boolean
+            userId?: string
         }
         AllocateExternalPartyResponse: { partyId: string }
         AllocatePartyRequest: {
@@ -92,7 +94,7 @@ interface components {
         ConnectedSynchronizer: {
             synchronizerAlias: string
             synchronizerId: string
-            permission:
+            permission?:
                 | 'PARTICIPANT_PERMISSION_UNSPECIFIED'
                 | 'PARTICIPANT_PERMISSION_SUBMISSION'
                 | 'PARTICIPANT_PERMISSION_CONFIRMATION'
@@ -137,6 +139,7 @@ interface components {
             contractId: string
             templateId: string
             contractKey?: unknown
+            contractKeyHash?: string
             createArgument: unknown
             createdEventBlob?: string
             interfaceViews?: Array<components['schemas']['JsInterfaceView']>
@@ -290,11 +293,22 @@ interface components {
             topologyTransactions: Array<string>
             multiHash: string
         }
+        GetActiveContractsPageRequest: {
+            activeAtOffset?: number
+            eventFormat: components['schemas']['EventFormat']
+            maxPageSize?: number
+            pageToken?: string
+        }
         GetActiveContractsRequest: {
             filter?: components['schemas']['TransactionFilter']
             verbose?: boolean
             activeAtOffset: number
-            eventFormat: components['schemas']['EventFormat']
+            eventFormat?: components['schemas']['EventFormat']
+            streamContinuationToken?: string
+        }
+        GetCompletionsRequest: {
+            parties?: Array<string>
+            beginExclusive?: number
         }
         GetConnectedSynchronizersResponse: {
             connectedSynchronizers?: Array<
@@ -364,12 +378,21 @@ interface components {
             offset: number
             updateFormat: components['schemas']['UpdateFormat']
         }
+        GetUpdatesPageRequest: {
+            beginOffsetExclusive?: number
+            endOffsetInclusive?: number
+            maxPageSize?: number
+            updateFormat: components['schemas']['UpdateFormat']
+            descendingOrder?: boolean
+            pageToken?: string
+        }
         GetUpdatesRequest: {
-            beginExclusive?: number
+            beginExclusive: number
             endInclusive?: number
             filter?: components['schemas']['TransactionFilter']
             verbose?: boolean
-            updateFormat: components['schemas']['UpdateFormat']
+            updateFormat?: components['schemas']['UpdateFormat']
+            descendingOrder?: boolean
         }
         GetUserResponse: { user: components['schemas']['User'] }
         GrantUserRightsRequest: {
@@ -379,11 +402,6 @@ interface components {
         }
         GrantUserRightsResponse: {
             newlyGrantedRights?: Array<components['schemas']['Right']>
-        }
-        Identifier: {
-            packageId: string
-            moduleName: string
-            entityName: string
         }
         IdentifierFilter:
             | { Empty: components['schemas']['Empty1'] }
@@ -463,6 +481,7 @@ interface components {
             prefetchContractKeys?: Array<
                 components['schemas']['PrefetchContractKey']
             >
+            tapsMaxPasses?: number
         }
         JsContractEntry:
             | { JsActiveContract: components['schemas']['JsActiveContract'] }
@@ -487,6 +506,7 @@ interface components {
             hashingSchemeVersion:
                 | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
                 | 'HASHING_SCHEME_VERSION_V2'
+                | 'HASHING_SCHEME_VERSION_V3'
             minLedgerTime?: components['schemas']['MinLedgerTime']
             transactionFormat?: components['schemas']['TransactionFormat']
         }
@@ -502,6 +522,7 @@ interface components {
             hashingSchemeVersion:
                 | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
                 | 'HASHING_SCHEME_VERSION_V2'
+                | 'HASHING_SCHEME_VERSION_V3'
             minLedgerTime?: components['schemas']['MinLedgerTime']
         }
         JsExecuteSubmissionRequest: {
@@ -513,11 +534,20 @@ interface components {
             hashingSchemeVersion:
                 | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
                 | 'HASHING_SCHEME_VERSION_V2'
+                | 'HASHING_SCHEME_VERSION_V3'
             minLedgerTime?: components['schemas']['MinLedgerTime']
+        }
+        JsGetActiveContractsPageResponse: {
+            activeContracts: Array<
+                components['schemas']['JsGetActiveContractsResponse']
+            >
+            activeAtOffset: number
+            nextPageToken?: string
         }
         JsGetActiveContractsResponse: {
             workflowId?: string
             contractEntry?: components['schemas']['JsContractEntry']
+            streamContinuationToken?: string
         }
         JsGetEventsByContractIdResponse: {
             created?: components['schemas']['JsCreated']
@@ -531,6 +561,12 @@ interface components {
         }
         JsGetUpdateResponse: { update?: components['schemas']['Update'] }
         JsGetUpdateTreesResponse: { update?: components['schemas']['Update1'] }
+        JsGetUpdatesPageResponse: {
+            updates?: Array<components['schemas']['JsGetUpdateResponse']>
+            lowestPageOffsetExclusive: number
+            highestPageOffsetInclusive: number
+            nextPageToken?: string
+        }
         JsGetUpdatesResponse: { update?: components['schemas']['Update'] }
         JsIncompleteAssigned: {
             assignedEvent: components['schemas']['JsAssignedEvent']
@@ -543,6 +579,7 @@ interface components {
             interfaceId: string
             viewStatus: components['schemas']['JsStatus']
             viewValue?: unknown
+            implementationPackageId?: string
         }
         JsPrepareSubmissionRequest: {
             userId?: string
@@ -562,6 +599,11 @@ interface components {
             >
             maxRecordTime?: string
             estimateTrafficCost?: components['schemas']['CostEstimationHints']
+            tapsMaxPasses?: number
+            hashingSchemeVersion?:
+                | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
+                | 'HASHING_SCHEME_VERSION_V2'
+                | 'HASHING_SCHEME_VERSION_V3'
         }
         JsPrepareSubmissionResponse: {
             preparedTransaction: string
@@ -569,6 +611,7 @@ interface components {
             hashingSchemeVersion:
                 | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
                 | 'HASHING_SCHEME_VERSION_V2'
+                | 'HASHING_SCHEME_VERSION_V3'
             hashingDetails?: string
             costEstimation?: components['schemas']['CostEstimation']
         }
@@ -747,6 +790,18 @@ interface components {
                 | 'PARTICIPANT_PERMISSION_CONFIRMATION'
                 | 'PARTICIPANT_PERMISSION_OBSERVATION'
         }
+        ParticipantAuthorizationOnboarding: {
+            value: components['schemas']['ParticipantAuthorizationOnboarding1']
+        }
+        ParticipantAuthorizationOnboarding1: {
+            partyId: string
+            participantId: string
+            participantPermission:
+                | 'PARTICIPANT_PERMISSION_UNSPECIFIED'
+                | 'PARTICIPANT_PERMISSION_SUBMISSION'
+                | 'PARTICIPANT_PERMISSION_CONFIRMATION'
+                | 'PARTICIPANT_PERMISSION_OBSERVATION'
+        }
         ParticipantAuthorizationRevoked: {
             value: components['schemas']['ParticipantAuthorizationRevoked1']
         }
@@ -765,7 +820,11 @@ interface components {
         PartySignatures: {
             signatures: Array<components['schemas']['SinglePartySignatures']>
         }
-        PrefetchContractKey: { templateId: string; contractKey: unknown }
+        PrefetchContractKey: {
+            templateId: string
+            contractKey: unknown
+            limit?: number
+        }
         Prior: { value: number }
         PriorTopologySerial: { serial?: components['schemas']['Serial'] }
         ProtoAny: {
@@ -843,6 +902,9 @@ interface components {
                   ParticipantAuthorizationChanged: components['schemas']['ParticipantAuthorizationChanged']
               }
             | {
+                  ParticipantAuthorizationOnboarding: components['schemas']['ParticipantAuthorizationOnboarding']
+              }
+            | {
                   ParticipantAuthorizationRevoked: components['schemas']['ParticipantAuthorizationRevoked']
               }
         TopologyFormat: {
@@ -893,7 +955,7 @@ interface components {
         }
         UnknownFieldSet: { fields: components['schemas']['Map_Int_Field'] }
         Unvet: { value: components['schemas']['Unvet1'] }
-        Unvet1: { packages?: Array<components['schemas']['VettedPackagesRef']> }
+        Unvet1: { packages: Array<components['schemas']['VettedPackagesRef']> }
         Update:
             | { OffsetCheckpoint: components['schemas']['OffsetCheckpoint2'] }
             | { Reassignment: components['schemas']['Reassignment'] }
@@ -957,6 +1019,7 @@ interface components {
             isDeactivated?: boolean
             metadata?: components['schemas']['ObjectMeta']
             identityProviderId?: string
+            primaryPartyAuthentication?: boolean
         }
         UserManagementFeature: {
             supported: boolean
@@ -965,7 +1028,7 @@ interface components {
         }
         Vet: { value: components['schemas']['Vet1'] }
         Vet1: {
-            packages?: Array<components['schemas']['VettedPackagesRef']>
+            packages: Array<components['schemas']['VettedPackagesRef']>
             newValidFromInclusive?: string
             newValidUntilExclusive?: string
         }
@@ -1065,6 +1128,21 @@ export type PostV2CommandsCompletions = {
             resource: '/v2/commands/completions'
             requestMethod: 'post'
             body: components['schemas']['CompletionStreamRequest']
+            headers?: Record<string, string>
+            query: {
+                limit?: number
+                stream_idle_timeout_ms?: number
+            }
+        }
+        result: Array<components['schemas']['CompletionStreamResponse']>
+    }
+}
+export type PostV2CommandsCommandCompletions = {
+    ledgerApi: {
+        params: {
+            resource: '/v2/commands/command-completions'
+            requestMethod: 'post'
+            body: components['schemas']['GetCompletionsRequest']
             headers?: Record<string, string>
             query: {
                 limit?: number
@@ -1193,6 +1271,28 @@ export type PostV2PackageVetting = {
         result: components['schemas']['UpdateVettedPackagesResponse']
     }
 }
+export type PostV2PackageVettingList = {
+    ledgerApi: {
+        params: {
+            resource: '/v2/package-vetting/list'
+            requestMethod: 'post'
+            body: components['schemas']['ListVettedPackagesRequest']
+            headers?: Record<string, string>
+        }
+        result: components['schemas']['ListVettedPackagesResponse']
+    }
+}
+export type PostV2PackageVettingUpdate = {
+    ledgerApi: {
+        params: {
+            resource: '/v2/package-vetting/update'
+            requestMethod: 'post'
+            body: components['schemas']['UpdateVettedPackagesRequest']
+            headers?: Record<string, string>
+        }
+        result: components['schemas']['UpdateVettedPackagesResponse']
+    }
+}
 export type GetV2Parties = {
     ledgerApi: {
         params: {
@@ -1294,6 +1394,28 @@ export type PostV2StateActiveContracts = {
             }
         }
         result: Array<components['schemas']['JsGetActiveContractsResponse']>
+    }
+}
+export type GetV2StateActiveContractsPage = {
+    ledgerApi: {
+        params: {
+            resource: '/v2/state/active-contracts-page'
+            requestMethod: 'get'
+            body: components['schemas']['GetActiveContractsPageRequest']
+            headers?: Record<string, string>
+        }
+        result: components['schemas']['JsGetActiveContractsPageResponse']
+    }
+}
+export type PostV2StateActiveContractsPage = {
+    ledgerApi: {
+        params: {
+            resource: '/v2/state/active-contracts-page'
+            requestMethod: 'post'
+            body: components['schemas']['GetActiveContractsPageRequest']
+            headers?: Record<string, string>
+        }
+        result: components['schemas']['JsGetActiveContractsPageResponse']
     }
 }
 export type GetV2StateConnectedSynchronizers = {
@@ -1447,6 +1569,17 @@ export type GetV2UpdatesTransactionTreeByIdUpdateId = {
             }
         }
         result: components['schemas']['JsGetTransactionTreeResponse']
+    }
+}
+export type PostV2UpdatesGetUpdatesPage = {
+    ledgerApi: {
+        params: {
+            resource: '/v2/updates/get-updates-page'
+            requestMethod: 'post'
+            body: components['schemas']['GetUpdatesPageRequest']
+            headers?: Record<string, string>
+        }
+        result: components['schemas']['JsGetUpdatesPageResponse']
     }
 }
 export type GetV2Users = {
@@ -1709,6 +1842,24 @@ export type PostV2InteractiveSubmissionPreferredPackages = {
         result: components['schemas']['GetPreferredPackagesResponse']
     }
 }
+export type GetLivez = {
+    ledgerApi: {
+        params: {
+            resource: '/livez'
+            requestMethod: 'get'
+        }
+        result: unknown
+    }
+}
+export type GetReadyz = {
+    ledgerApi: {
+        params: {
+            resource: '/readyz'
+            requestMethod: 'get'
+        }
+        result: unknown
+    }
+}
 export type PostV2ContractsContractById = {
     ledgerApi: {
         params: {
@@ -1729,6 +1880,7 @@ export type LedgerTypes =
     | PostV2CommandsAsyncSubmit
     | PostV2CommandsAsyncSubmitReassignment
     | PostV2CommandsCompletions
+    | PostV2CommandsCommandCompletions
     | PostV2EventsEventsByContractId
     | GetV2Version
     | PostV2DarsValidate
@@ -1739,6 +1891,8 @@ export type LedgerTypes =
     | GetV2PackagesPackageIdStatus
     | GetV2PackageVetting
     | PostV2PackageVetting
+    | PostV2PackageVettingList
+    | PostV2PackageVettingUpdate
     | GetV2Parties
     | PostV2Parties
     | PostV2PartiesExternalAllocate
@@ -1747,6 +1901,8 @@ export type LedgerTypes =
     | PatchV2PartiesParty
     | PostV2PartiesExternalGenerateTopology
     | PostV2StateActiveContracts
+    | GetV2StateActiveContractsPage
+    | PostV2StateActiveContractsPage
     | GetV2StateConnectedSynchronizers
     | GetV2StateLedgerEnd
     | GetV2StateLatestPrunedOffsets
@@ -1759,6 +1915,7 @@ export type LedgerTypes =
     | PostV2UpdatesTransactionById
     | PostV2UpdatesUpdateById
     | GetV2UpdatesTransactionTreeByIdUpdateId
+    | PostV2UpdatesGetUpdatesPage
     | GetV2Users
     | PostV2Users
     | GetV2UsersUserId
@@ -1780,4 +1937,6 @@ export type LedgerTypes =
     | PostV2InteractiveSubmissionExecuteAndWaitForTransaction
     | GetV2InteractiveSubmissionPreferredPackageVersion
     | PostV2InteractiveSubmissionPreferredPackages
+    | GetLivez
+    | GetReadyz
     | PostV2ContractsContractById
