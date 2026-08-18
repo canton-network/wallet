@@ -1,4 +1,4 @@
-const proc = require('child_process')
+import proc from 'node:child_process'
 
 const scopes = ['release', 'deps', 'deps-dev']
 
@@ -12,7 +12,7 @@ const getScopes = () => {
     return () => [2, 'always', projects.concat(scopes)]
 }
 
-module.exports = {
+export default {
     extends: ['@commitlint/config-conventional'],
     rules: {
         'scope-enum': (ctx) => getScopes()(ctx),

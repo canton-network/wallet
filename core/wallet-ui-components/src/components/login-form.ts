@@ -39,11 +39,13 @@ export class WgLoginForm extends BaseElement {
     /** Available identity providers */
     @property({ type: Array }) idps: Idp[] = []
 
+    /** Locks form until idps and networks are loaded */
+    @property({ type: Boolean }) loading = false
+
     @property({ type: Boolean }) connecting = false
     @property({ type: String }) backHref = '/'
 
     @state() accessor selectedNetwork: PublicNetwork | null = null
-    @state() accessor selectedIdp: Idp | null = null
     @state() accessor message: string | null = null
     @state() accessor messageType: 'error' | 'info' | null = null
 
@@ -139,20 +141,39 @@ export class WgLoginForm extends BaseElement {
     protected updated(changedProperties: PropertyValues<this>) {
         super.updated(changedProperties)
 
-        if (changedProperties.has('networks') && !this.selectedNetwork) {
-            const index = this.networks.findIndex(
-                (network) => network.authMethod !== 'client_credentials'
-            )
-
-            if (index >= 0) {
-                this.selectedNetwork = this.networks[index]
-                this.selectedIdp =
-                    this.idps.find(
-                        (idp) =>
-                            idp.id === this.selectedNetwork?.identityProviderId
-                    ) ?? null
-            }
+        if (
+            changedProperties.has('networks') ||
+            changedProperties.has('idps')
+        ) {
+            this.selectedNetwork = this.reconcileSelectedNetwork()
         }
+    }
+
+    get selectedIdp(): Idp | null {
+        return (
+            this.idps.find(
+                (idp) => idp.id === this.selectedNetwork?.identityProviderId
+            ) ?? null
+        )
+    }
+
+    private isSelectable(network: PublicNetwork): boolean {
+        return network.authMethod !== 'client_credentials'
+    }
+
+    // If no network is selected - select first available
+    // If network selected, validate that it is in currently available networks
+    private reconcileSelectedNetwork(): PublicNetwork | null {
+        const selectedId = this.selectedNetwork?.id
+        const current = this.networks.find(
+            (network) => network.id === selectedId
+        )
+
+        if (current && this.isSelectable(current)) {
+            return current
+        }
+
+        return this.networks.find(this.isSelectable) ?? null
     }
 
     private get selectedNetworkIndex() {
@@ -171,18 +192,9 @@ export class WgLoginForm extends BaseElement {
         const raw = (e.target as HTMLSelectElement).value
         const index = Number.parseInt(raw, 10)
 
-        if (Number.isNaN(index)) {
-            this.selectedNetwork = null
-            this.selectedIdp = null
-            this.message = null
-            return
-        }
-
-        this.selectedNetwork = this.networks[index] ?? null
-        this.selectedIdp =
-            this.idps.find(
-                (idp) => idp.id === this.selectedNetwork?.identityProviderId
-            ) ?? null
+        this.selectedNetwork = Number.isNaN(index)
+            ? null
+            : (this.networks[index] ?? null)
         this.message = null
     }
 
@@ -195,10 +207,7 @@ export class WgLoginForm extends BaseElement {
             return
         }
 
-        const idp = this.idps.find(
-            (candidate) =>
-                candidate.id === this.selectedNetwork?.identityProviderId
-        )
+        const idp = this.selectedIdp
 
         if (!idp) {
             this.messageType = 'error'
@@ -255,7 +264,7 @@ export class WgLoginForm extends BaseElement {
                             class="network-select form-select"
                             .value=${this.selectedNetworkIndex}
                             @change=${this.handleChange}
-                            ?disabled=${this.connecting}
+                            ?disabled=${this.loading || this.connecting}
                         >
                             <option value="">Select network</option>
                             ${this.networks.map(
@@ -308,9 +317,11 @@ export class WgLoginForm extends BaseElement {
                                   class="form-text text-body-secondary mt-2 mb-0"
                               >
                                   ${
-                                      this.selectedNetwork
-                                          ? `Selected: ${this.selectedNetwork.name}`
-                                          : 'Choose a network to continue.'
+                                      this.loading
+                                          ? 'Loading networks...'
+                                          : this.selectedNetwork
+                                            ? `Selected: ${this.selectedNetwork.name}`
+                                            : 'Choose a network to continue.'
                                   }
                               </p>`
                     }
@@ -320,7 +331,11 @@ export class WgLoginForm extends BaseElement {
                     <button
                         class="connect-btn btn btn-primary w-100 rounded-pill"
                         @click=${this.handleConnect}
-                        ?disabled=${this.connecting || !this.selectedNetwork}
+                        ?disabled=${
+                            this.loading ||
+                            this.connecting ||
+                            !this.selectedNetwork
+                        }
                     >
                         ${this.connecting ? 'Connecting…' : 'Connect'}
                     </button>

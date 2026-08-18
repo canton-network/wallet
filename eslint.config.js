@@ -3,14 +3,9 @@
 
 import { defineConfig } from 'eslint/config'
 import config from '@canton-network/core-eslint-config'
-import reactConfig from '@canton-network/core-eslint-config/react'
 
 export default defineConfig([
     {
-        files: ['**/*.{ts,tsx}'],
-        extends: [config, reactConfig],
-        rules: {
-            'headers/header-format': 'off',
-        },
+        extends: [config],
     },
 ])
