@@ -18,7 +18,7 @@ import { Env } from './env.js'
 import type { SigningDrivers } from './signing/signing-drivers.js'
 
 export function registerSigningProviders(
-    signingStore: SigningStoreSql,
+    signingStore: SigningStoreSql | undefined,
     logger: Logger
 ): SigningDrivers {
     const fireblocksApiKey = Env.FIREBLOCKS_API_KEY()
@@ -54,6 +54,10 @@ export function registerSigningProviders(
     if (Env.WALLET_KERNEL_SIGNING_DISABLED()) {
         logger.info(
             'Wallet Kernel signing provider is disabled by WALLET_KERNEL_SIGNING_DISABLED'
+        )
+    } else if (!signingStore) {
+        logger.info(
+            'Wallet Kernel signing provider is unavailable because signingStore is not configured'
         )
     } else {
         drivers[SigningProvider.WALLET_KERNEL] = new InternalSigningDriver(

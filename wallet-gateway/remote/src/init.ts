@@ -159,21 +159,21 @@ async function initializeDatabase(
 }
 
 async function initializeSigningDatabase(
-    config: Config,
+    signingStoreConfig: NonNullable<Config['signingStore']>,
     logger: Logger
 ): Promise<SigningStoreSql> {
     logger.info('Checking for signing database migrations...')
 
     let exists = true
-    if (config.signingStore.connection.type === 'sqlite') {
-        exists = existsSync(config.signingStore.connection.database)
+    if (signingStoreConfig.connection.type === 'sqlite') {
+        exists = existsSync(signingStoreConfig.connection.database)
     }
 
-    if (config.signingStore.connection.type === 'postgres') {
+    if (signingStoreConfig.connection.type === 'postgres') {
         const db = signingConnection({
-            ...config.signingStore,
+            ...signingStoreConfig,
             connection: {
-                ...config.signingStore.connection,
+                ...signingStoreConfig.connection,
                 database: 'postgres',
             },
         })
@@ -181,7 +181,7 @@ async function initializeSigningDatabase(
             .raw<{
                 '?column?': number
             }>(
-                `select 1 from pg_database where datname='${config.signingStore.connection.database}';`
+                `select 1 from pg_database where datname='${signingStoreConfig.connection.database}';`
             )
             .execute(db)
         const databaseExist = result.rows.length > 0
@@ -189,7 +189,7 @@ async function initializeSigningDatabase(
             // Ignore error because postgres does not support `create database if nor exists` clause
             await sql
                 .raw(
-                    `create database ${config.signingStore.connection.database};`
+                    `create database ${signingStoreConfig.connection.database};`
                 )
                 .execute(db)
                 .catch(() => {})
@@ -198,7 +198,7 @@ async function initializeSigningDatabase(
         await db.destroy()
     }
 
-    const db = signingConnection(config.signingStore)
+    const db = signingConnection(signingStoreConfig)
     const umzug = signingMigrator(db)
     const pending = await umzug.pending()
 
@@ -216,7 +216,7 @@ async function initializeSigningDatabase(
     // bootstrap database from config file if it did not exist before
     if (!exists) {
         logger.info('Bootstrapping signing database from config...')
-        await signingBootstrap(db, config.signingStore, logger)
+        await signingBootstrap(db, signingStoreConfig, logger)
     }
 
     return new SigningStoreSql(db, logger)
@@ -263,7 +263,9 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const notificationService = new NotificationService(logger)
 
     const store = await initializeDatabase(config, logger)
-    const signingStore = await initializeSigningDatabase(config, logger)
+    const signingStore = config.signingStore
+        ? await initializeSigningDatabase(config.signingStore, logger)
+        : undefined
     const authService = jwtAuthService(store, logger)
 
     const drivers = registerSigningProviders(signingStore, logger)
