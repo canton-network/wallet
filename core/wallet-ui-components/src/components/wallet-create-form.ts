@@ -32,11 +32,14 @@ export class WgWalletCreateForm extends BaseElement {
     @property({ type: Array }) vaultSigningProviders: string[] = []
     @property({ type: Array }) vaults: string[] = []
     @property({ type: Boolean }) submitting = false
+    @property({ type: Boolean }) signingProvidersLoading = false
     @property({ type: Boolean }) vaultsLoading = false
     @property({ type: String }) submitLabel = 'Add'
     @property({ type: String }) submittingLabel = 'Adding...'
     @property({ type: String }) submittingMessage =
         'Creating party, please wait...'
+    @property({ type: String }) signingProvidersLoadingLabel =
+        'Loading signing providers...'
     @property({ type: String }) vaultsLoadingLabel = 'Loading vaults...'
 
     @query('#party-id-hint') accessor partyHintInput: HTMLInputElement | null =
@@ -210,7 +213,11 @@ export class WgWalletCreateForm extends BaseElement {
     }
 
     private get isLoading(): boolean {
-        return this.submitting || this.isVaultsLoading
+        return (
+            this.submitting ||
+            this.signingProvidersLoading ||
+            this.isVaultsLoading
+        )
     }
 
     reset() {
@@ -256,14 +263,21 @@ export class WgWalletCreateForm extends BaseElement {
                         </label>
                         <div class="select-wrap">
                             <select
-                                ?disabled=${this.submitting}
+                                ?disabled=${
+                                    this.submitting ||
+                                    this.signingProvidersLoading
+                                }
                                 class="form-select field-control"
                                 id="signing-provider-id"
                                 required
                                 @change=${this.onSigningProviderChange}
                             >
                                 <option disabled selected value="">
-                                    Select signing provider
+                                    ${
+                                        this.signingProvidersLoading
+                                            ? this.signingProvidersLoadingLabel
+                                            : 'Select signing provider'
+                                    }
                                 </option>
                                 ${this.signingProviders.map(
                                     (providerId) =>

@@ -26,8 +26,8 @@ import { detectCurrentOrigin } from '../../listeners.js'
 export class UserUiAddParty extends BaseElement {
     private static readonly vaultSigningProviders = [SigningProvider.FIREBLOCKS]
 
-    @state() accessor signingProviders: string[] =
-        Object.values(SigningProvider)
+    @state() accessor signingProviders: string[] = []
+    @state() accessor signingProvidersLoading = true
     @state() accessor networkIds: string[] = []
     @state() accessor submitting = false
     @state() accessor vaults: string[] = []
@@ -64,6 +64,19 @@ export class UserUiAddParty extends BaseElement {
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
+        this.signingProviders = []
+        this.signingProvidersLoading = true
+        try {
+            const result = await userClient.request({
+                method: 'listSigningProviders',
+            })
+            this.signingProviders = result.signingProviders
+        } catch (error) {
+            handleErrorToast(error)
+        } finally {
+            this.signingProvidersLoading = false
+        }
+
         const sessions = await userClient
             .request({ method: 'listSessions' })
             .catch(() => ({ sessions: [] }))
@@ -169,6 +182,7 @@ export class UserUiAddParty extends BaseElement {
             <div class="form-wrap">
                 <wg-wallet-create-form
                     .signingProviders=${this.signingProviders}
+                    ?signingProvidersLoading=${this.signingProvidersLoading}
                     .networkIds=${this.networkIds}
                     .vaultSigningProviders=${UserUiAddParty.vaultSigningProviders}
                     .vaults=${this.vaults}
