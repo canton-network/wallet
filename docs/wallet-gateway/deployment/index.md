@@ -142,17 +142,53 @@ bootstrap:
 
 ### Environment Variables
 
-Aside from the dynamic environment variables supported in config (`networks[].adminAuth.clientSecretEnv`), there are a few static environment variables available to configure external signing providers:
+Aside from the dynamic environment variables supported in config (`networks[].adminAuth.clientSecretEnv`), static environment variables configure signing providers:
 
 **Fireblocks**
 
 - `FIREBLOCKS_API_KEY`: The API key for the Fireblocks integration
 - `FIREBLOCKS_SECRET`: The secret for the Fireblocks integration
+- `FIREBLOCKS_API_PATH`: Optional API URL (defaults to `https://api.fireblocks.io/v1`)
 
 **Blockdaemon**
 
 - `BLOCKDAEMON_API_KEY`: The API key for the Blockdaemon integration
 - `BLOCKDAEMON_API_URL`: The URL for the Blockdaemon API
+- `BLOCKDAEMON_CAIP2`: Optional CAIP-2 network identifier (defaults to `canton:testnet`)
+
+**Dfns**
+
+- `DFNS_ORG_ID`: The Dfns organization ID
+- `DFNS_CRED_ID`: The service account credential ID
+- `DFNS_PRIVATE_KEY`: The service account private key
+- `DFNS_AUTH_TOKEN`: The service account authentication token
+- `DFNS_BASE_URL`: Optional API URL (defaults to `https://api.dfns.io`)
+
+**Securosys**
+
+- `SECUROSYS_TSB_BASE_URL` - Base URL of the TSB service
+- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - API key for TSB key-management endpoints
+- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - API key for TSB signing and request-status endpoints
+- `SECUROSYS_TSB_BEARER_TOKEN` - Optional bearer access token (access-token auth mode)
+- `SECUROSYS_TSB_MTLS_P12_PATH` - Optional path to a PKCS#12/P12 client certificate when TSB requires mTLS
+- `SECUROSYS_TSB_MTLS_P12_PASSWORD` - Optional password for the PKCS#12/P12 client certificate
+- `SECUROSYS_TSB_KEY_PASSWORD` - Optional TSB key password used for key attributes and signing
+- `SECUROSYS_TSB_SIGNATURE_ALGORITHM` - Optional TSB signature algorithm (defaults to `EDDSA`)
+
+External providers are registered only when all of their required
+variables are set.
+
+Every provider supports an explicit opt-out:
+
+- `WALLET_KERNEL_SIGNING_DISABLED`
+- `PARTICIPANT_SIGNING_DISABLED`
+- `FIREBLOCKS_SIGNING_DISABLED`
+- `BLOCKDAEMON_SIGNING_DISABLED`
+- `DFNS_SIGNING_DISABLED`
+- `SECUROSYS_SIGNING_DISABLED`
+
+Set the corresponding variable to `true` to prevent that provider from being
+registered.
 
 See [Signing Providers](../signing-providers/index.md) for more information.
 

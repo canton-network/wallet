@@ -4,13 +4,27 @@ The Wallet Gateway supports multiple signing providers that handle cryptographic
 
 ## Available Providers
 
+Each signing provider can be explicitly disabled by setting its corresponding
+environment variable to `true`:
+
+- `WALLET_KERNEL_SIGNING_DISABLED`
+- `PARTICIPANT_SIGNING_DISABLED`
+- `FIREBLOCKS_SIGNING_DISABLED`
+- `BLOCKDAEMON_SIGNING_DISABLED`
+- `DFNS_SIGNING_DISABLED`
+- `SECUROSYS_SIGNING_DISABLED`
+
+External signing providers are available only when all of their required
+environment variables are set. An opt-out variable takes precedence over the
+provider's other configuration.
+
 ## Wallet Gateway (Internal)
 
 The Wallet Gateway provider stores private keys directly in the signing store database. This is suitable for development and testing but **not recommended for production** use cases where security is critical.
 
 **Configuration:**
 
-This provider is automatically available when a `signingStore` is configured in the Gateway configuration. No additional setup is required.
+This provider is automatically available when a `signingStore` is configured in the Gateway configuration. Set `WALLET_KERNEL_SIGNING_DISABLED=true` to prevent it from being registered.
 
 **Use Cases:**
 
@@ -29,7 +43,7 @@ The Participant signing provider uses Canton's participant node for signing tran
 
 **Configuration:**
 
-This provider is always available and requires no additional configuration. You simply select it when creating a party.
+This provider requires no additional configuration and is available by default. Set `PARTICIPANT_SIGNING_DISABLED=true` to prevent it from being registered.
 
 **Use Cases:**
 
@@ -54,7 +68,7 @@ Fireblocks is a third-party crypto custody service provider that offers enterpri
 
 1. Complete steps 1-3 from the [Fireblocks signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-fireblocks)
 
-2. Supply an environment variable named `FIREBLOCKS_API_KEY` containing your Fireblocks API key (from the `API User (ID)` column in the Fireblocks API users table).
+2. Supply an environment variable named `FIREBLOCKS_API_KEY` containing your Fireblocks API key (from the `API User (ID)` column in the Fireblocks API users table) and `FIREBLOCKS_SECRET` containing the corresponding secret.
 
 **Configuration:**
 
