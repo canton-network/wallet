@@ -1238,14 +1238,6 @@ export const userController = (
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
-            const ledgerClient = new LedgerClient({
-                baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    authContext!.accessToken,
-                    logger
-                ),
-            })
             const idp = await store.getIdp(network.identityProviderId)
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
@@ -1258,15 +1250,15 @@ export const userController = (
                 httpLedgerUrl: network.ledgerApi.baseUrl,
                 logger,
             })
-            const service = new WalletSyncService(
-                store,
-                ledgerClient,
-                authContext!,
-                logger,
-                drivers,
-                partyAllocator
-            )
-            const namespace = service.createKeyNamespace(publicKey)
+            const normalizedKey =
+                partyAllocator.normalizePublicKeyToBase64(publicKey)
+            if (!normalizedKey) {
+                throw new Error(
+                    'provided key cannot be converted to Base64 format'
+                )
+            }
+            const namespace =
+                partyAllocator.createFingerprintFromKey(normalizedKey)
             await store.updateWallet({
                 partyId,
                 signingProviderId,

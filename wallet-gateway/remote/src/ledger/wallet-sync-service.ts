@@ -54,14 +54,6 @@ export class WalletSyncService {
         }
     }
 
-    public createKeyNamespace(key: Wallet['publicKey']) {
-        const normalizedKey =
-            this.partyAllocator.normalizePublicKeyToBase64(key)
-        if (!normalizedKey) return
-
-        return this.partyAllocator.createFingerprintFromKey(normalizedKey)
-    }
-
     private async getParticipantNamespace(): Promise<string> {
         const { participantId } = await this.ledgerClient.getWithRetry(
             '/v2/parties/participant-id',
@@ -138,10 +130,16 @@ export class WalletSyncService {
                     // Try to match namespace with public keys
                     if (result.keys) {
                         for (const key of result.keys) {
-                            const keyNamespace = this.createKeyNamespace(
-                                key.publicKey
-                            )
-                            if (!keyNamespace) continue
+                            const normalizedKey =
+                                this.partyAllocator.normalizePublicKeyToBase64(
+                                    key.publicKey
+                                )
+                            if (!normalizedKey) continue
+
+                            const keyNamespace =
+                                this.partyAllocator.createFingerprintFromKey(
+                                    normalizedKey
+                                )
 
                             if (keyNamespace === partyNamespace) {
                                 this.logger.info(
