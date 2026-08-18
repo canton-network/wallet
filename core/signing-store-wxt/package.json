@@ -1,0 +1,56 @@
+{
+    "name": "@canton-network/core-signing-store-wxt",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "WXT implementation of the Store API",
+    "license": "Apache-2.0",
+    "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage"
+    },
+    "dependencies": {
+        "@canton-network/core-ledger-client": "workspace:^",
+        "@canton-network/core-rpc-errors": "workspace:^",
+        "@canton-network/core-signing-lib": "workspace:^",
+        "@canton-network/core-wallet-auth": "workspace:^",
+        "@wxt-dev/storage": "^1.2.9",
+        "wxt": "^0.21.4"
+    },
+    "devDependencies": {
+        "@swc/core": "^1.15.43",
+        "tsdown": "^0.22.9",
+        "tsx": "^4.23.0",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.10"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/signing-store-sql"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-store-sql#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
