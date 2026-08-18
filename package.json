@@ -1,6 +1,7 @@
 {
     "name": "wallet-kernel",
     "private": true,
+    "type": "module",
     "scripts": {
         "start:all": "pnpm exec pm2 start ecosystem.config.js --env development",
         "start:canton": "tsx ./scripts/src/start-canton.ts",
