@@ -1,17 +1,17 @@
 {
-    "DAML_RELEASE_VERSION": "3.5.2",
+    "DAML_RELEASE_VERSION": "3.5.5",
     "SUPPORTED_VERSIONS": {
         "devnet": {
             "canton": {
-                "version": "3.5.8",
-                "hash": "8146f793d1dc334f1ecfddcef82ed184b15742495e61186d84501acf63a1e0b8"
+                "version": "3.5.14-snapshot.20260815.19176.0.v65fa04f6",
+                "hash": "c900cfbbdaf4214152ee275a25dbc6b45cdc61e46574605202681df6663233f2"
             },
             "splice": {
-                "version": "0.6.12",
+                "version": "0.7.3",
                 "hashes": {
-                    "localnet": "e15e8263156f4f220ce44046332830abf3f83f6f40c68a8152eaae5504ebcd73",
-                    "splice": "731fb559ab23529a671af500ebbac8a312428b27f07ae166db533fb346cca10e",
-                    "spliceSpec": "7911768c48a24c0c40014835af821bbdf63ffca3a5c4c1aba78d1b29362784d5"
+                    "localnet": "4d79e3696e1ac9a399d206ac2b66ff9f96fce4f970b5fd8c9954e3397f71007b",
+                    "splice": "d7d331f527123f9ecd63f32ee0f1f8f58267415c5b127880396c36e66bf6ec90",
+                    "spliceSpec": "1ea190989870f41024c3e05c2267b93ce978e95d44b7d5c3e25b900d1ae8d296"
                 }
             }
         },
@@ -21,11 +21,11 @@
                 "hash": "749351c6172ad56c227d0dad4d465dee836291a05c85b1da4e074100ed37cbaf"
             },
             "splice": {
-                "version": "0.5.17",
+                "version": "0.6.14",
                 "hashes": {
-                    "localnet": "5a69d90da8c70701a6d79979ad57a1133d2c6848605f2dc0e782aa529ab3d04e",
-                    "splice": "35d5fe88e32d8132b635e017df37c3f7d177deb728c16f38fb668a2332ae7e3e",
-                    "spliceSpec": "748d3fa6ba91ad3332e09349a5344dbb36e1b67c239fa3bc2eb3f34e15716443"
+                    "localnet": "ee0813d6ba84f98ed990bdb9e0e8025c8c7976230d34c43a242fbd865a89034d",
+                    "splice": "7dd328227877eb74b0ce74bc08a4e1106bcc7b18ef9574abd4a8102d391c5ea9",
+                    "spliceSpec": "7d48a94149c12ab91fcf4105b4c836b0697dc2b788bd3a4b470903fa2560217b"
                 }
             }
         }
