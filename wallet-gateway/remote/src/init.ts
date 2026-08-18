@@ -359,7 +359,11 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         logger.info(
             'Securosys signing provider is disabled by SECUROSYS_SIGNING_DISABLED'
         )
-    } else if (securosysBaseUrl) {
+    } else if (
+        securosysBaseUrl &&
+        securosysKeyManagementApiKey &&
+        securosysKeyOperationApiKey
+    ) {
         drivers[SigningProvider.SECUROSYS] = new SecurosysSigningProvider({
             baseUrl: securosysBaseUrl,
             ...(securosysKeyManagementApiKey && {
@@ -380,7 +384,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         })
     } else {
         logger.warn(
-            'Securosys TSB base URL not set. Securosys signing provider will be unavailable'
+            'Blockdaemon env vars not fully set. Securosys signing provider will be unavailable'
         )
     }
 
