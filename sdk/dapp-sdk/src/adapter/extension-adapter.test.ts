@@ -12,24 +12,13 @@ import {
 } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
 import type { Provider } from '@canton-network/core-splice-provider'
-import type {
-    RpcTypes as DappRpcTypes,
-    StatusEvent,
-} from '@canton-network/core-wallet-dapp-rpc-client'
+import type { RpcTypes as DappRpcTypes } from '@canton-network/core-wallet-dapp-rpc-client'
 import * as storage from '../storage'
 import { ExtensionAdapter } from './extension-adapter'
 
 type MockProvider = {
     request: Mock<Provider<DappRpcTypes>['request']>
 }
-
-const connectedStatus = (): StatusEvent => ({
-    provider: { id: 'browser:ext:test' },
-    connection: {
-        isConnected: true,
-        isNetworkConnected: true,
-    },
-})
 
 const makeMockProvider = (): MockProvider => ({
     request: vi.fn(),
@@ -125,7 +114,13 @@ describe('ExtensionAdapter', () => {
             providerId: 'browser:ext:test',
         })
         const mockProvider = makeMockProvider()
-        mockProvider.request.mockResolvedValue(connectedStatus())
+        mockProvider.request.mockResolvedValue({
+            provider: { id: 'browser:ext:test' },
+            connection: {
+                isConnected: true,
+                isNetworkConnected: true,
+            },
+        })
         vi.spyOn(adapter, 'provider').mockReturnValue(asProvider(mockProvider))
 
         storage.setKernelDiscovery({
