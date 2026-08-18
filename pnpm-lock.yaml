@@ -2589,7 +2589,7 @@ importers:
         specifier: workspace:^
         version: link:../../core/signing-securosys
       '@canton-network/core-signing-store-sql':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../core/signing-store-sql
       '@canton-network/core-tx-visualizer':
         specifier: workspace:^
@@ -2607,7 +2607,7 @@ importers:
         specifier: workspace:^
         version: link:../../core/wallet-store
       '@canton-network/core-wallet-store-sql':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../core/wallet-store-sql
       '@canton-network/core-wallet-ui-components':
         specifier: workspace:^
