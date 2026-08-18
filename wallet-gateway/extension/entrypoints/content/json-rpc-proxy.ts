@@ -7,6 +7,8 @@ import {
     type SpliceMessageEvent,
 } from '@canton-network/core-types'
 
+import { ContentMessenger } from '@/utils/messages'
+
 /**
  * Proxies JSON-RPC requests, responses, between the dApp page (window message events),
  * and the background script (extension runtime messages)
@@ -19,6 +21,8 @@ export function jsonRpcProxy() {
         if (!runtimeId) return false
         return target === runtimeId
     }
+
+    const jsonRpcProxy = new ContentMessenger('json-rpc-proxy')
 
     window.addEventListener('message', async (event: SpliceMessageEvent) => {
         console.log('Content script received message:', event.data)
@@ -36,7 +40,7 @@ export function jsonRpcProxy() {
 
             // Proxy the message to the extension background script
             // and wait for the response
-            const msgResponse = await browser.runtime.sendMessage(msg)
+            const msgResponse = await jsonRpcProxy.sendJsonRpc(msg.request)
 
             console.log('Received response from background:', msgResponse)
             const response = SpliceMessage.parse(msgResponse)
