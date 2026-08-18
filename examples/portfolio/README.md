@@ -75,6 +75,31 @@ pnpm start:all     # starts all services via pm2
 pnpm stop:all      # stops all services
 ```
 
+## Running with Docker Compose
+
+[`docker-compose.yaml`](docker-compose.yaml) wires together the published Wallet Gateway and Splice Portfolio Docker images against a LocalNet instance, using the config files in [`docker/`](docker/).
+
+First, start LocalNet from the repository root (if it isn't already running):
+
+```bash
+pnpm script:fetch:localnet
+pnpm start:localnet
+```
+
+Then, from this directory:
+
+```bash
+cd examples/portfolio
+docker compose up
+```
+
+- Portfolio UI: [http://localhost:3333](http://localhost:3333)
+- Wallet Gateway: [http://localhost:3030](http://localhost:3030)
+
+Stop everything with `docker compose down` (and `pnpm stop:localnet` from the repository root).
+
+See [Deploying a wallet gateway](../../docs/wallet-gateway/deployment/index.md) for production Docker/Helm deployment guidance.
+
 ## Further Reading
 
 See the [dApp Building Guide](../../docs/dapp-building) for full documentation on the dApp SDK, Wallet Gateway configuration, APIs, and signing providers.

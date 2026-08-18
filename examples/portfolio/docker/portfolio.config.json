@@ -1,0 +1,16 @@
+{
+    "amulet": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registry": "http://scan.localhost:4000/registry/"
+    },
+    "token": {
+        "validatorUrl": "http://localhost:2000/api/validator",
+        "registries": [
+            {
+                "name": "DA Registry",
+                "partyId": "operator::1234567890",
+                "url": "https://apps.da.com/registrar/operator::1234567890/"
+            }
+        ]
+    }
+}

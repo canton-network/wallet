@@ -1,0 +1,42 @@
+# Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Runs a Wallet Gateway + the Splice Portfolio dApp against a LocalNet instance.
+#
+# Prerequisites: start LocalNet first (from the repository root):
+#   pnpm script:fetch:localnet
+#   pnpm start:localnet
+#
+# Then, from this directory:
+#   docker compose up
+#
+# Portfolio UI: http://localhost:3333
+# Wallet Gateway: http://localhost:3030
+#
+# See ../../docs/wallet-gateway/deployment/index.md for production deployment guidance.
+
+services:
+    wallet-gateway:
+        image: ghcr.io/digital-asset/wallet-gateway/docker/wallet-gateway:v1.9.0
+        ports:
+            - '3030:3030'
+        volumes:
+            - ./docker/wallet-gateway.config.json:/app/config.json:ro
+            - wallet-gateway-data:/data
+        extra_hosts:
+            # LocalNet's ledger API is published on the host by `pnpm start:localnet`.
+            # `host.docker.internal` resolves out of the box on Docker Desktop
+            # (Mac/Windows); this entry makes it resolve on Linux too.
+            - 'host.docker.internal:host-gateway'
+
+    portfolio:
+        image: ghcr.io/digital-asset/splice-portfolio/docker/splice-portfolio:v1.9.0
+        ports:
+            - '3333:80'
+        volumes:
+            - ./docker/portfolio.config.json:/usr/share/nginx/html/config.json:ro
+        depends_on:
+            - wallet-gateway
+
+volumes:
+    wallet-gateway-data:

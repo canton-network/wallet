@@ -40,6 +40,10 @@ docker run -p 3030:3030 \
 
 If all went well, the Wallet Gateway login page can be opened in a browser at http://localhost:3030.
 
+### Docker Compose (local development)
+
+For a local setup running the Wallet Gateway alongside the [Splice Portfolio](../../dapp-building/examples/portfolio/index.md) dApp and a LocalNet instance, see the [`docker-compose.yaml` example](https://github.com/canton-network/wallet/blob/main/examples/portfolio/docker-compose.yaml) in `examples/portfolio`.
+
 ## Helm
 
 An official Helm chart is available for Kubernetes deployments. The full values.schema is [here](https://github.com/digital-asset/wallet-gateway/blob/main/charts/wallet-gateway/values.schema.json), but the important thing to note is that the Wallet Gateway is configured through the top-level `config:` key in `values.yaml`.
