@@ -207,6 +207,12 @@ export type CursorAsString = string
 export type Cursor = CursorAsString
 /**
  *
+ * The public key of the party.
+ *
+ */
+export type PublicKey = string
+/**
+ *
  * Authentication method configured for this network
  *
  */
@@ -248,12 +254,6 @@ export type WalletStatus = 'initialized' | 'allocated' | 'removed'
  *
  */
 export type Hint = string
-/**
- *
- * The public key of the party.
- *
- */
-export type PublicKey = string
 /**
  *
  * The namespace of the party.
@@ -579,6 +579,11 @@ export interface RemoveApiKeyParams {
 export interface ListSigningProviderVaultsParams {
     signingProviderId: SigningProviderId
 }
+export interface ChangeSigningProviderParams {
+    signingProviderId: SigningProviderId
+    partyId: PartyId
+    publicKey: PublicKey
+}
 /**
  *
  * Represents a null value, used in responses where no data is returned.
@@ -753,6 +758,9 @@ export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
 export type ListSigningProviderVaults = (
     params: ListSigningProviderVaultsParams
 ) => Promise<ListSigningProviderVaultsResult>
+export type ChangeSigningProvider = (
+    params: ChangeSigningProviderParams
+) => Promise<Null>
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 type Params<T> = T extends (...args: infer A) => any
@@ -921,6 +929,11 @@ export type RpcTypes = {
     listSigningProviderVaults: {
         params: Params<ListSigningProviderVaults>
         result: Result<ListSigningProviderVaults>
+    }
+
+    changeSigningProvider: {
+        params: Params<ChangeSigningProvider>
+        result: Result<ChangeSigningProvider>
     }
 }
 

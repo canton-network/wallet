@@ -39,18 +39,6 @@ export enum UserLevelRight {
     CanExecuteAsAnyParty = 'CanExecuteAsAnyParty',
 }
 
-export interface UpdateWallet {
-    partyId: PartyId
-    networkId?: string
-    status?: WalletStatus
-    externalTxId?: string
-    topologyTransactions?: string
-    disabled?: boolean
-    reason?: string
-    primary?: boolean
-    rights?: PartyLevelRight[]
-}
-
 export type WalletStatus = 'initialized' | 'allocated' | 'removed'
 
 export interface Wallet {
@@ -69,6 +57,27 @@ export interface Wallet {
     rights: PartyLevelRight[]
     // hosted: [network]
 }
+
+export type UpdateWallet =
+    // Required items
+    Pick<Wallet, 'partyId'> &
+        // Optional items
+        Partial<
+            Pick<
+                Wallet,
+                | 'networkId'
+                | 'status'
+                | 'externalTxId'
+                | 'topologyTransactions'
+                | 'disabled'
+                | 'reason'
+                | 'primary'
+                | 'rights'
+                | 'signingProviderId'
+                | 'publicKey'
+                | 'namespace'
+            >
+        >
 
 // Session management
 

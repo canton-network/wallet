@@ -45,6 +45,8 @@ import {
     ListSigningProviderVaultsResult,
     ListSigningProviderVaultsParams,
     ListTransactionsParams,
+    Wallet,
+    ChangeSigningProviderParams,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -1224,6 +1226,54 @@ export const userController = (
                 assertConnected(authContext),
                 params.signingProviderId as SigningProvider
             )
+        },
+        changeSigningProvider: async (
+            params: ChangeSigningProviderParams
+        ): Promise<null> => {
+            const { signingProviderId, partyId, publicKey } = params
+            const network = await store.getCurrentNetwork()
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
+            }
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    authContext!.accessToken,
+                    logger
+                ),
+            })
+            const idp = await store.getIdp(network.identityProviderId)
+            const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                idp,
+                network.adminAuth,
+                logger
+            )
+            const partyAllocator = new PartyAllocationService({
+                synchronizerId: network.synchronizerId,
+                accessTokenProvider: adminTokenProvider,
+                httpLedgerUrl: network.ledgerApi.baseUrl,
+                logger,
+            })
+            const service = new WalletSyncService(
+                store,
+                ledgerClient,
+                authContext!,
+                logger,
+                drivers,
+                partyAllocator
+            )
+            const namespace = service.createKeyNamespace(publicKey)
+            await store.updateWallet({
+                partyId,
+                signingProviderId,
+                publicKey,
+                namespace,
+            })
+            return null
         },
     })
 }

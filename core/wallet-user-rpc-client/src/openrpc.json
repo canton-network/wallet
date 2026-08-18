@@ -1105,6 +1105,48 @@
                     "required": ["vaults"]
                 }
             }
+        },
+        {
+            "name": "changeSigningProvider",
+            "description": "Change signing provider for the specified party",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "changeSigningProviderParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "signingProviderId": {
+                                "title": "signingProviderId",
+                                "type": "string",
+                                "description": "The signing provider ID the party should correspond to."
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "The party ID corresponding to the wallet."
+                            },
+                            "publicKey": {
+                                "title": "publicKey",
+                                "type": "string",
+                                "description": "The key to be used for the party's signing provider"
+                            }
+                        },
+                        "required": [
+                            "signingProviderId",
+                            "partyId",
+                            "publicKey"
+                        ]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/Null"
+                }
+            }
         }
     ],
     "components": {

@@ -41,8 +41,7 @@ export class WalletSyncService {
     ): boolean {
         const leftSet = new Set(left ?? WalletSyncService.EMPTY_RIGHTS)
         const rightSet = new Set(right)
-        if (leftSet.size !== rightSet.size) return false
-        return [...leftSet].every((item) => rightSet.has(item))
+        return !leftSet.difference(rightSet).size
     }
 
     async run(timeoutMs: number): Promise<void> {
@@ -55,6 +54,14 @@ export class WalletSyncService {
         }
     }
 
+    public createKeyNamespace(key: Wallet['publicKey']) {
+        const normalizedKey =
+            this.partyAllocator.normalizePublicKeyToBase64(key)
+        if (!normalizedKey) return
+
+        return this.partyAllocator.createFingerprintFromKey(normalizedKey)
+    }
+
     private async getParticipantNamespace(): Promise<string> {
         const { participantId } = await this.ledgerClient.getWithRetry(
             '/v2/parties/participant-id',
@@ -63,13 +70,11 @@ export class WalletSyncService {
         // Extract the namespace part from participantId
         // Format is hint::namespace
         const [, extractedNamespace] = participantId.split('::')
-        if (extractedNamespace) {
-            return extractedNamespace
-        } else {
+        if (!extractedNamespace)
             throw new Error(
                 `Invalid participantId format: expected "hint::namespace", got "${participantId}"`
             )
-        }
+        return extractedNamespace
     }
 
     // Protected for tests
@@ -133,16 +138,11 @@ export class WalletSyncService {
                     // Try to match namespace with public keys
                     if (result.keys) {
                         for (const key of result.keys) {
-                            const normalizedKey =
-                                this.partyAllocator.normalizePublicKeyToBase64(
-                                    key.publicKey
-                                )
-                            if (!normalizedKey) continue
+                            const keyNamespace = this.createKeyNamespace(
+                                key.publicKey
+                            )
+                            if (!keyNamespace) continue
 
-                            const keyNamespace =
-                                this.partyAllocator.createFingerprintFromKey(
-                                    normalizedKey
-                                )
                             if (keyNamespace === partyNamespace) {
                                 this.logger.info(
                                     {

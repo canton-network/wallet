@@ -33,6 +33,7 @@ import { GenerateApiKey } from './typings.js'
 import { ListApiKeys } from './typings.js'
 import { RemoveApiKey } from './typings.js'
 import { ListSigningProviderVaults } from './typings.js'
+import { ChangeSigningProvider } from './typings.js'
 
 export type Methods = {
     addNetwork: AddNetwork
@@ -67,6 +68,7 @@ export type Methods = {
     listApiKeys: ListApiKeys
     removeApiKey: RemoveApiKey
     listSigningProviderVaults: ListSigningProviderVaults
+    changeSigningProvider: ChangeSigningProvider
 }
 
 function buildController(methods: Methods) {
@@ -103,6 +105,7 @@ function buildController(methods: Methods) {
         listApiKeys: methods.listApiKeys,
         removeApiKey: methods.removeApiKey,
         listSigningProviderVaults: methods.listSigningProviderVaults,
+        changeSigningProvider: methods.changeSigningProvider,
     }
 }
 
