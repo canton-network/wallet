@@ -69,6 +69,7 @@ export function ledgerPrepareParams(
         synchronizerId,
         verboseHashing: false,
         packageIdSelectionPreference: params.packageIdSelectionPreference || [],
+        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
     }
 }
 
