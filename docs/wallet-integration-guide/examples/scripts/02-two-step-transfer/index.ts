@@ -81,3 +81,6 @@ await _reject(transferTestScriptParameters)
 await _withdraw(transferTestScriptParameters)
 
 await _expire(transferTestScriptParameters)
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

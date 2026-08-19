@@ -59,6 +59,9 @@ export class LoginUI extends BaseElement {
     accessor idps: Idp[] = []
 
     @state()
+    accessor loading = true
+
+    @state()
     accessor connecting = false
 
     @state()
@@ -85,10 +88,18 @@ export class LoginUI extends BaseElement {
     async connectedCallback() {
         super.connectedCallback()
         try {
-            this.networks = await this.loadNetworks()
-            this.idps = await this.loadIdps()
+            // Connecting needs both, so fetch them together and publish them update once both are resolved
+
+            const [networks, idps] = await Promise.all([
+                this.loadNetworks(),
+                this.loadIdps(),
+            ])
+            this.networks = networks
+            this.idps = idps
         } catch (e) {
             handleErrorToast(e)
+        } finally {
+            this.loading = false
         }
     }
 
@@ -214,6 +225,7 @@ export class LoginUI extends BaseElement {
             <wg-login-form
                 .networks=${this.networks}
                 .idps=${this.idps}
+                .loading=${this.loading}
                 .connecting=${this.connecting}
                 @login-connect=${this.handleConnect}
             ></wg-login-form>

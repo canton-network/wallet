@@ -60,7 +60,7 @@ function generateProtosWithPlugin() {
     const protoRoots = [ledgerApiRoot, libRoot]
 
     const protocArgs = [
-        '--plugin=protoc-gen-ts_proto=$(yarn bin protoc-gen-ts_proto)',
+        '--plugin=protoc-gen-ts_proto=$(pnpm bin protoc-gen-ts_proto)',
         `--ts_out=${outdir}`,
         '--ts_opt=generate_dependencies',
         ...protoRoots.map((root) => `-I${root}`),

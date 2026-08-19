@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-dfns",
-    "version": "0.11.0",
+    "version": "0.11.1",
     "type": "module",
     "description": "Dfns signing driver for Canton Network Wallet Gateway",
     "license": "Apache-2.0",
@@ -19,7 +19,7 @@
         "build": "tsdown && tsc -p tsconfig.types.json",
         "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.types.json\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "test": "vitest run --project node",
         "test:coverage": "vitest run --project node --coverage"
     },

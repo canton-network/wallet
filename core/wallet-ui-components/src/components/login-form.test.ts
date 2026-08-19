@@ -58,6 +58,102 @@ describe('wg-login-form', () => {
         )
     })
 
+    it('cannot be submitted while networks and idps are still loading', async () => {
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form .loading=${true}></wg-login-form>`
+        )
+
+        const select =
+            el.shadowRoot!.querySelector<HTMLSelectElement>('.network-select')!
+        const connect =
+            el.shadowRoot!.querySelector<HTMLButtonElement>('.connect-btn')!
+
+        expect(select.disabled).toBe(true)
+        expect(connect.disabled).toBe(true)
+
+        el.networks = [makePublicNetwork({ identityProviderId: 'idp-1' })]
+        el.idps = [makeIdp({ id: 'idp-1' })]
+        el.loading = false
+        await elementUpdated(el)
+
+        expect(select.disabled).toBe(false)
+        expect(connect.disabled).toBe(false)
+    })
+
+    it('resolves the identity provider when the idps arrive after the networks', async () => {
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form
+                .networks=${[makePublicNetwork({ identityProviderId: 'idp-1' })]}
+            ></wg-login-form>`
+        )
+
+        expect(el.selectedIdp).toBeNull()
+
+        el.idps = [makeIdp({ id: 'idp-1' })]
+        await elementUpdated(el)
+
+        expect(el.selectedIdp?.id).toBe('idp-1')
+    })
+
+    it('keeps the selected network across a refetch, with refreshed details', async () => {
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form
+                .networks=${[
+                    makePublicNetwork({ id: 'a', name: 'A' }),
+                    makePublicNetwork({ id: 'b', name: 'B' }),
+                ]}
+            ></wg-login-form>`
+        )
+        el.selectedNetwork = el.networks[1]
+
+        el.networks = [
+            makePublicNetwork({ id: 'a', name: 'A' }),
+            makePublicNetwork({ id: 'b', name: 'B renamed' }),
+        ]
+        await elementUpdated(el)
+
+        expect(el.selectedNetwork?.id).toBe('b')
+        expect(el.selectedNetwork?.name).toBe('B renamed')
+    })
+
+    it('falls back to the first usable network when the selected one disappears', async () => {
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form
+                .networks=${[
+                    makePublicNetwork({ id: 'a' }),
+                    makePublicNetwork({ id: 'b' }),
+                ]}
+            ></wg-login-form>`
+        )
+        el.selectedNetwork = el.networks[1]
+
+        el.networks = [makePublicNetwork({ id: 'a' })]
+        await elementUpdated(el)
+
+        expect(el.selectedNetwork?.id).toBe('a')
+    })
+
+    it('selects nothing when no network can be logged into', async () => {
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form
+                .networks=${[makePublicNetwork({ id: 'a' })]}
+            ></wg-login-form>`
+        )
+        expect(el.selectedNetwork?.id).toBe('a')
+
+        el.networks = [
+            makePublicNetwork({ id: 'cc', authMethod: 'client_credentials' }),
+        ]
+        await elementUpdated(el)
+
+        expect(el.selectedNetwork).toBeNull()
+
+        el.networks = []
+        await elementUpdated(el)
+
+        expect(el.selectedNetwork).toBeNull()
+    })
+
     it('emits LoginConnectEvent when configuration is valid', async () => {
         const network = makePublicNetwork({
             identityProviderId: 'idp-1',

@@ -1,0 +1,31 @@
+packages:
+    - 'api-specs'
+    - 'core/**'
+    - 'docs/wallet-integration-guide/examples'
+    - 'examples/**'
+    - 'example-scripts'
+    - 'sdk/**'
+    - 'scripts'
+    - 'mock-oauth2'
+    - 'wallet-gateway/**'
+allowBuilds:
+    '@scarf/scarf': true
+    '@swc/core': true
+    better-sqlite3: true
+    cpu-features: true
+    esbuild: true
+    grpc-tools: true
+    nx: true
+    protobufjs: true
+    spawn-sync: true
+    ssh2: true
+overrides:
+    playwright: '1.58.2'
+    jose: '^5.10.0'
+    node-forge: '^1.3.2'
+    tmp: '^0.2.4'
+    tar-fs: '^2.1.4'
+    glob: '^10.5.0'
+    vite: '^7.2.4'
+    uri-js: 'npm:uri-js-replace@^1.0.1'
+    seroval: '^1.4.2'

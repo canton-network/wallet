@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-store-sql",
-    "version": "1.11.0",
+    "version": "1.11.1",
     "type": "module",
     "description": "SQL implementation of the Store API",
     "license": "Apache-2.0",
@@ -19,7 +19,7 @@
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\" && tsc -b tsconfig.migrations.json",
         "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.types.json  && tsc -b tsconfig.migrations.json\"",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "test": "vitest run --project node",
         "test:coverage": "vitest run --project node --coverage",

@@ -1,12 +1,12 @@
-# Splice Browser Extension Wallet
+# Canton Wallet Browser Extension
 
-The browser extension Wallet Client for Chrome and Firefox. To aim for better cross-browser compatibility, use the [WebExtension browser polyfill](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file). Be aware that some differences between Chrome/Firefox may not be covered.
+The browser extension Wallet for Chrome and Firefox.
 
 # Building
 
-The extension's source code is written in TypeScript and built with `esbuild`, in order to fully bundle the project dependencies (like Lit) into the output JS.
+The extension's source code is written in TypeScript and built with `WXT`.
 
-Run `yarn build` to run the build once, or `yarn dev` to keep esbuild watching for changes. (Note that this runs automatically with `yarn start:all` from the root script).
+Run `pnpm build` to run the build once, or `pnpm dev` to keep WXT watching for changes. (Note that this runs automatically with `pnpm start:all` from the root script).
 
 # Developing
 
@@ -17,7 +17,7 @@ Run `yarn build` to run the build once, or `yarn dev` to keep esbuild watching f
 
 ## Firefox
 
-Run `yarn start` to start an isolated FF instance with the extension loaded. To aid development, follow the debugging workflow:
+Run `pnpm dev:firefox` to start an isolated FF instance with the extension loaded. To aid development, follow the debugging workflow:
 
 1. Navigate to `about:debugging`
 2. Click on "This Firefox"

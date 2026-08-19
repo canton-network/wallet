@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-test-token",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "type": "module",
     "description": "daml codegen js for test-token package",
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
@@ -18,10 +18,10 @@
         }
     },
     "scripts": {
-        "build": "yarn generate:test-token && yarn clean && rollup -c && yarn clean:types-tmp",
+        "build": "pnpm --workspace-root run generate:test-token && pnpm clean && rollup -c && pnpm clean:types-tmp",
         "dev": "rollup -c -w",
         "clean:types-tmp": "rm -rf dist/types",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
     "dependencies": {

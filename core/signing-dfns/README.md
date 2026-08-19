@@ -7,7 +7,7 @@ This package provides a signing driver for integrating the Wallet Gateway with [
 This package is part of the Wallet Gateway monorepo and is typically installed as a workspace dependency.
 
 ```bash
-yarn add @canton-network/core-signing-dfns
+pnpm add @canton-network/core-signing-dfns
 ```
 
 ## Usage
@@ -102,7 +102,7 @@ DFNS_BASE_URL="https://api.dfns.io" \
 DFNS_CRED_ID="your-cred-id" \
 DFNS_PRIVATE_KEY="your-private-key" \
 DFNS_AUTH_TOKEN="your-auth-token" \
-yarn start
+pnpm start
 ```
 
 ## Canton Network Support

@@ -1,7 +1,7 @@
 {
     "name": "@canton-network/core-wallet-test-utils",
     "private": true,
-    "version": "1.10.0",
+    "version": "1.10.1",
     "type": "module",
     "description": "Utilities for writing (E2E) tests for the wallet gateway",
     "main": "dist/index.cjs",
@@ -34,7 +34,7 @@
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "test": "vitest run --project node --passWithNoTests",
         "test:coverage": "vitest run --project node --coverage --passWithNoTests"
     },

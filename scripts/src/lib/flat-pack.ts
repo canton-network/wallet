@@ -27,7 +27,6 @@ export class FlatPack {
 
     constructor(
         private pkgDir: string,
-        private projectType: 'npm' | 'yarn' = 'npm',
         outDir?: string
     ) {
         this.outDir = outDir ?? path.join(os.tmpdir(), 'flat-pack')
@@ -45,38 +44,50 @@ export class FlatPack {
     public pack(): string {
         const mainPkgDir = this.pkgDir
         const mainPkgName = this.readPackageJson(mainPkgDir).name
-        const mainPkgFileName = `${mainPkgName.replaceAll('/', '-')}.tgz`
 
         console.log('Packing for: ' + mainPkgName)
 
         this.init()
 
-        run(`yarn nx --tui=false run ${mainPkgName}:flatpack`, {
+        run(`pnpm nx --tui=false run ${mainPkgName}:flatpack`, {
             cwd: repoRoot,
             env: {
                 ...process.env,
-                FLATPACK_OUTDIR: `${this.vendoredDir}/%s.tgz`,
+                // Pass the directory path. pnpm pack will generate <scope>-<name>-<version>.tgz inside it
+                FLATPACK_OUTDIR: this.vendoredDir,
                 TZ: process.env.TZ ?? '',
             },
         })
 
-        const overrides =
-            this.projectType === 'npm' ? 'overrides' : 'resolutions'
-
         const resolvedDependencies = {} as Record<string, string>
+        let mainPkgFileName = ''
 
-        const dependencies = fs
+        const generatedFiles = fs
             .readdirSync(this.vendoredDir)
             .filter((f) => f.endsWith('.tgz'))
-            .filter((f) => f !== mainPkgFileName)
 
-        for (const file of dependencies) {
-            if (file.endsWith('.tgz')) {
-                const pkgName = file
-                    .split('.tgz')[0]
-                    .replaceAll('@canton-network-', '@canton-network/')
+        // Read the actual package name out of each tarball instead of guessing the filename
+        for (const file of generatedFiles) {
+            const tarballPath = path.join(this.vendoredDir, file)
+
+            // npm/pnpm tarballs always put files inside a root 'package/' directory
+            const pkgJsonStr = execSync(
+                `tar -xzO -f "${tarballPath}" package/package.json`,
+                { encoding: 'utf8' }
+            )
+            const pkgName = JSON.parse(pkgJsonStr).name
+
+            if (pkgName === mainPkgName) {
+                mainPkgFileName = file
+            } else {
                 resolvedDependencies[pkgName] = `file:./.vendored/${file}`
             }
+        }
+
+        if (!mainPkgFileName) {
+            throw new Error(
+                `Could not find the generated tarball for main package: ${mainPkgName}`
+            )
         }
 
         this.writePackageJson((pkgJson) => ({
@@ -85,7 +96,7 @@ export class FlatPack {
                 ...pkgJson.dependencies,
                 [mainPkgName]: `file:./.vendored/${mainPkgFileName}`,
             },
-            [overrides]: resolvedDependencies,
+            overrides: resolvedDependencies,
         }))
 
         return this.outDir
@@ -101,9 +112,6 @@ export class FlatPack {
                     private: true,
                     version: '0.0.0',
                     description: 'Temporary package for flat packing',
-                    ...(this.projectType === 'yarn'
-                        ? { packageManager: 'yarn@4.16.0' }
-                        : {}),
                     dependencies: {},
                 },
                 null,

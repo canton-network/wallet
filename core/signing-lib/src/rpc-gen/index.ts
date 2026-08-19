@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SignTransaction } from './typings.js'
-import { SignMessage } from './typings.js'
-import { GetTransaction } from './typings.js'
-import { GetTransactions } from './typings.js'
-import { GetKeys } from './typings.js'
-import { CreateKey } from './typings.js'
-import { GetConfiguration } from './typings.js'
-import { SetConfiguration } from './typings.js'
-import { SubscribeTransactions } from './typings.js'
+import type { SignTransaction } from './typings.js'
+import type { SignMessage } from './typings.js'
+import type { GetTransaction } from './typings.js'
+import type { GetTransactions } from './typings.js'
+import type { GetKeys } from './typings.js'
+import type { CreateKey } from './typings.js'
+import type { GetConfiguration } from './typings.js'
+import type { SetConfiguration } from './typings.js'
+import type { SubscribeTransactions } from './typings.js'
 
 export type Methods = {
     signTransaction: SignTransaction

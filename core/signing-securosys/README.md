@@ -111,29 +111,30 @@ cd /path/to/wallet
 ```
 
 Use Node.js 20+ for the wallet toolchain.
-Install Yarn 4 and the wallet dependencies:
+Install pnpm v11 and the wallet dependencies:
 
 ```bash
-npm install -g --force @yarnpkg/cli-dist@4.16.0
-yarn install
+# corepack installation is recommended
+corepack enable pnpm
+pnpm install
 ```
 
 Download the Playwright browsers required by the wallet browser tests:
 
 ```bash
-yarn playwright:install
+pnpm playwright:install
 ```
 
 Download the Canton binary used by the local devnet setup:
 
 ```bash
-yarn script:fetch:canton
+pnpm script:fetch:canton
 ```
 
 Start local Canton on the devnet configuration:
 
 ```bash
-yarn start:canton --network=devnet
+pnpm start:canton --network=devnet
 ```
 
 Wait until the Canton bootstrap completes. The command can then be interrupted
@@ -145,7 +146,7 @@ Start the full wallet stack with Securosys mTLS:
 SECUROSYS_TSB_BASE_URL=https://integration-test.cloudshsm.com/ \
 SECUROSYS_TSB_MTLS_P12_PATH=./etc/client_mtls_tsb.p12 \
 SECUROSYS_TSB_MTLS_P12_PASSWORD=pass \
-yarn start:all
+pnpm start:all
 ```
 
 Start the full wallet stack with a TSB bearer token instead:
@@ -153,7 +154,7 @@ Start the full wallet stack with a TSB bearer token instead:
 ```bash
 SECUROSYS_TSB_BASE_URL=https://sbx-rest-api.cloudshsm.com \
 SECUROSYS_TSB_BEARER_TOKEN="<JWT Token>" \
-yarn start:all
+pnpm start:all
 ```
 
 Open the Wallet Gateway UI:
@@ -174,37 +175,37 @@ curl -i http://localhost:3030/readyz
 List all PM2-managed wallet processes:
 
 ```bash
-yarn pm2 list
+pnpm pm2 list
 ```
 
 Inspect the remote Wallet Gateway logs:
 
 ```bash
-yarn pm2 logs remote
+pnpm pm2 logs remote
 ```
 
 Inspect the Canton logs:
 
 ```bash
-yarn pm2 logs canton
+pnpm pm2 logs canton
 ```
 
 Restart only the remote Wallet Gateway backend:
 
 ```bash
-yarn pm2 restart remote
+pnpm pm2 restart remote
 ```
 
 Stop all PM2-managed wallet processes:
 
 ```bash
-yarn stop:all
+pnpm stop:all
 ```
 
 Fully kill the PM2 daemon and all managed processes:
 
 ```bash
-yarn pm2 kill
+pnpm pm2 kill
 ```
 
 ## Build and test
@@ -212,55 +213,55 @@ yarn pm2 kill
 Build only this signing driver:
 
 ```bash
-yarn workspace @canton-network/core-signing-securosys build
+pnpm workspace @canton-network/core-signing-securosys build
 ```
 
 Run only this signing driver's tests:
 
 ```bash
-yarn workspace @canton-network/core-signing-securosys test
+pnpm workspace @canton-network/core-signing-securosys test
 ```
 
 Run this signing driver's tests with coverage:
 
 ```bash
-yarn workspace @canton-network/core-signing-securosys test:coverage
+pnpm workspace @canton-network/core-signing-securosys test:coverage
 ```
 
 Build the remote Wallet Gateway:
 
 ```bash
-yarn workspace @canton-network/wallet-gateway-remote build
+pnpm workspace @canton-network/wallet-gateway-remote build
 ```
 
 Run the remote Wallet Gateway transaction-signing tests:
 
 ```bash
-yarn workspace @canton-network/wallet-gateway-remote test src/ledger/transaction-service.test.ts
+pnpm workspace @canton-network/wallet-gateway-remote test src/ledger/transaction-service.test.ts
 ```
 
 Run the wallet allocation tests:
 
 ```bash
-yarn workspace @canton-network/wallet-gateway-remote test src/ledger/wallet-allocation/wallet-allocation-service.test.ts
+pnpm workspace @canton-network/wallet-gateway-remote test src/ledger/wallet-allocation/wallet-allocation-service.test.ts
 ```
 
 Run the shared signing-library tests:
 
 ```bash
-yarn workspace @canton-network/core-signing-lib test
+pnpm workspace @canton-network/core-signing-lib test
 ```
 
 Build the full wallet monorepo serially:
 
 ```bash
-yarn build:all:serial
+pnpm build:all:serial
 ```
 
 Run the full wallet monorepo test suite:
 
 ```bash
-yarn test:all
+pnpm test:all
 ```
 
 ## References

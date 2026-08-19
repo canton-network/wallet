@@ -245,3 +245,6 @@ const renewedPreapprovalStillActive = preapprovalACS.some(
 if (cancelled === null && !renewedPreapprovalStillActive) {
     logger.info(`Successfully cancelled`)
 }
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

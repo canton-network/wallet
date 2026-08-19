@@ -24,7 +24,7 @@ import generateSchema, { astToString } from 'openapi-typescript'
 import * as path from 'path'
 import crypto from 'crypto'
 import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.js'
-import jsYaml from 'js-yaml'
+import { load as loadYaml } from 'js-yaml'
 
 /**
  * OpenAPI specification details.
@@ -117,8 +117,7 @@ async function generateOpenApiClient(spec: OpenApiSpec) {
         }
 
         if (generatePaths) {
-            const parsedSpec = jsYaml.load(specs) as
-                MinimalParsedSpec | undefined
+            const parsedSpec = loadYaml(specs) as MinimalParsedSpec | undefined
             const apiPaths = parsedSpec?.paths || {}
             const getRoutes = Object.keys(apiPaths).filter(
                 (p) => apiPaths[p] && 'get' in apiPaths[p]

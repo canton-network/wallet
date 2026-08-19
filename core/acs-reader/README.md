@@ -7,7 +7,7 @@ The ACS Reader abstracts the complexity of querying and managing active contract
 ## Installation
 
 ```bash
-yarn add @canton-network/core-acs-reader
+pnpm add @canton-network/core-acs-reader
 ```
 
 ## Quick Start

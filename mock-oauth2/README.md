@@ -32,9 +32,9 @@ The server now enforces PKCE (`S256`) for `authorization_code` requests:
 
 From repository root:
 
-- `yarn workspace @canton-network/mock-oauth2 dev`
-- `yarn workspace @canton-network/mock-oauth2 start`
+- `pnpm --filter @canton-network/mock-oauth2 dev`
+- `pnpm --filter @canton-network/mock-oauth2 start`
 
 Build:
 
-- `yarn workspace @canton-network/mock-oauth2 build`
+- `pnpm --filter @canton-network/mock-oauth2 build`

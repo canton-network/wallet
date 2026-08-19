@@ -1,30 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
-import { createConfig } from '@canton-network/core-eslint-config'
+import config from '@canton-network/core-eslint-config'
+import reactConfig from '@canton-network/core-eslint-config/react'
+import { defineConfig } from 'eslint/config'
 
-const rootDir = join(dirname(fileURLToPath(import.meta.url)), '../..')
-
-export default [
-    ...createConfig({ rootDir }),
+export default defineConfig([
     {
         files: ['**/*.{ts,tsx}'],
-        plugins: {
-            'react-hooks': reactHooks,
-            'react-refresh': reactRefresh,
-        },
-        rules: {
-            'headers/header-format': 'off',
-            ...reactHooks.configs.recommended.rules,
-            'react-refresh/only-export-components': [
-                'warn',
-                { allowConstantExport: true },
-            ],
-        },
+        extends: [config, reactConfig],
     },
     {
         files: ['src/routes/**/*.{ts,tsx}'],
@@ -32,4 +18,4 @@ export default [
             'react-refresh/only-export-components': 'off',
         },
     },
-]
+])
