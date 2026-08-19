@@ -1,31 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-    type Mock,
-} from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
-import type { Provider } from '@canton-network/core-splice-provider'
-import type { RpcTypes as DappRpcTypes } from '@canton-network/core-wallet-dapp-rpc-client'
 import * as storage from '../storage'
+import { makeMockProvider } from '../test-utils'
 import { ExtensionAdapter } from './extension-adapter'
-
-type MockProvider = {
-    request: Mock<Provider<DappRpcTypes>['request']>
-}
-
-const makeMockProvider = (): MockProvider => ({
-    request: vi.fn(),
-})
-
-const asProvider = (mock: MockProvider): Provider<DappRpcTypes> =>
-    mock as unknown as Provider<DappRpcTypes>
 
 describe('ExtensionAdapter', () => {
     beforeEach(() => {
@@ -121,14 +101,14 @@ describe('ExtensionAdapter', () => {
                 isNetworkConnected: true,
             },
         })
-        vi.spyOn(adapter, 'provider').mockReturnValue(asProvider(mockProvider))
+        vi.spyOn(adapter, 'provider').mockReturnValue(mockProvider)
 
         storage.setKernelDiscovery({
             walletType: 'extension',
             providerId: 'browser:ext:test',
         })
 
-        await expect(adapter.restore()).resolves.toBe(asProvider(mockProvider))
+        await expect(adapter.restore()).resolves.toBe(mockProvider)
         expect(mockProvider.request).toHaveBeenCalledWith({ method: 'connect' })
         expect(mockProvider.request).toHaveBeenCalledWith({ method: 'status' })
     })
@@ -143,7 +123,7 @@ describe('ExtensionAdapter', () => {
                 isNetworkConnected: false,
             },
         })
-        vi.spyOn(adapter, 'provider').mockReturnValue(asProvider(mockProvider))
+        vi.spyOn(adapter, 'provider').mockReturnValue(mockProvider)
 
         await expect(adapter.restore()).resolves.toBeNull()
     })
