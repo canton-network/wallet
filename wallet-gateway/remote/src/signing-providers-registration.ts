@@ -130,7 +130,7 @@ export function registerSigningProviders(
         })
     } else {
         logger.warn(
-            'Blockdaemon env vars not fully set. Securosys signing provider will be unavailable'
+            'Securosys env vars not fully set. Securosys signing provider will be unavailable'
         )
     }
 
