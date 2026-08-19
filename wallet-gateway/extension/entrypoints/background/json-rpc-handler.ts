@@ -2,32 +2,36 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { JsonRpcRequest, JsonRpcResponse } from '@canton-network/core-types'
-import { dappController } from './dapp/controller'
-import type { Methods } from './dapp/rpc-gen'
-import type { Store } from '@canton-network/core-wallet-store'
+
+export type AnyController = Record<
+    string,
+    (...args: unknown[]) => Promise<unknown>
+>
+const log = logger.getChild('json-rpc-handler')
 
 /**
  * Take an in-coming JSON-RPC request and route it to the appropriate controller.
  */
-export function jsonRpcHandler(messenger: BackgroundMessenger, store: Store) {
-    messenger.onJsonRpcRequest((request) => processRequest(request, store))
+export function jsonRpcHandler(
+    messenger: BackgroundMessenger,
+    controller: AnyController
+) {
+    messenger.onJsonRpcRequest((request) => processRequest(request, controller))
 }
-
-const log = logger.getChild('json-rpc-handler')
 
 async function processRequest(
     request: JsonRpcRequest,
-    store: Store
+    controller: AnyController
 ): Promise<JsonRpcResponse> {
     log.debug('Received request: {*}', { id: request.id, request })
-    const controller = dappController(store)
 
-    const method = request.method as keyof Methods
-    const args = request.params
+    const { method, params } = request
 
-    const fn = controller[method] as (params: unknown) => Promise<unknown>
-
-    const result = await fn(args)
+    const fn = controller[method]
+    if (fn === undefined) {
+        throw new Error(`Method ${method} does not exist.`)
+    }
+    const result = await fn(params)
 
     log.debug('Sending response: {*}', { id: request.id, result })
 

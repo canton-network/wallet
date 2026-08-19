@@ -22,7 +22,7 @@ export function jsonRpcProxy() {
         return target === runtimeId
     }
 
-    const jsonRpcProxy = new ContentMessenger('json-rpc-proxy')
+    const dappRpc = new ContentMessenger('dapp-rpc-proxy')
 
     window.addEventListener('message', async (event: SpliceMessageEvent) => {
         logger.info(`Content script received message: ${event.data}`)
@@ -40,9 +40,11 @@ export function jsonRpcProxy() {
 
             // Proxy the message to the extension background script
             // and wait for the response
-            const msgResponse = await jsonRpcProxy.sendJsonRpc(msg.request)
+            const msgResponse = await dappRpc.sendJsonRpc(msg.request)
 
-            console.log('Received response from background:', msgResponse)
+            logger.info('Received response from background: {*}', {
+                msgResponse,
+            })
 
             const response: SpliceMessage = {
                 type: WalletEvent.SPLICE_WALLET_RESPONSE,
