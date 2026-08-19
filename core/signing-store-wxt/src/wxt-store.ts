@@ -253,19 +253,54 @@ export class WxtStore implements SigningDriverStore {
     }
     async setSigningKeys(userId: string, keys: SigningKey[]): Promise<void> {
         await Promise.all(
-            keys.map((k) => {
-                this.setSigningKey(userId, k)
+            keys.map(async (key) => {
+                const item = signingKeyItem(key.id)
+                const existing = await item.getValue()
+                const serialized = fromSigningKey(key, userId)
+
+                await Promise.all([
+                    item.setValue({
+                        ...serialized,
+                        createdAt: existing?.createdAt ?? serialized.createdAt,
+                        updatedAt: new Date().toISOString(),
+                    }),
+                    publicKeyIndexItem(key.publicKey).setValue(key.id),
+                    nameIndexItem(key.name).setValue(key.id),
+                ])
             })
         )
+
+        const currentIndex = await signingKeyIndexItem().getValue()
+        const newIds = keys.map((k) => k.id)
+        const mergedIndex = Array.from(new Set([...currentIndex, ...newIds]))
+
+        await signingKeyIndexItem().setValue(mergedIndex)
     }
     async setSigningTransactions(
         userId: string,
         transactions: SigningTransaction[]
     ): Promise<void> {
+        if (!transactions.length) return
+
         await Promise.all(
-            transactions.map((tx) => {
-                this.setSigningTransaction(userId, tx)
+            transactions.map(async (tx) => {
+                const item = signingTransactionItem(tx.id)
+                const existing = await item.getValue()
+
+                const serialized: SigningTransactionRecord =
+                    fromSigningTransaction(tx, this.userId)
+                await item.setValue({
+                    ...serialized,
+                    createdAt:
+                        existing?.createdAt ?? tx.createdAt.toISOString(),
+                })
             })
         )
+
+        const currentIndex = await signingTransactionIndexItem().getValue()
+        const newIds = transactions.map((t) => t.id)
+        const mergedIndex = Array.from(new Set([...currentIndex, ...newIds]))
+
+        await signingTransactionIndexItem().setValue(mergedIndex)
     }
 }

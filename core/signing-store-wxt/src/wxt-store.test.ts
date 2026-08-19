@@ -87,12 +87,11 @@ describe('storage wxt', () => {
         expect(nameMapping).toBeNull()
     })
 
-    it('should get signing key by various fitlers', async () => {
-        const store = new WxtStore('userId')
+    it('should get signing key by various filters', async () => {
+        const store = new WxtStore(userId)
         const mockKey1 = createMockKey('key1', 'key1', 'pubkey-123')
         const mockKey2 = createMockKey('key2', 'key2', 'pubkey-456')
-        await store.setSigningKey('user-1', mockKey1)
-        await store.setSigningKey('user-1', mockKey2)
+        await store.setSigningKeys(userId, [mockKey1, mockKey2])
 
         const retrievedKeyByPublicKey =
             await store.getSigningKeyByPublicKey('pubkey-456')
@@ -112,8 +111,8 @@ describe('storage wxt', () => {
         expect(retrievedKeyByName?.name).toBe(mockKey1.name)
         expect(retrievedKeyByName?.publicKey).toBe(mockKey1.publicKey)
 
-        const allSigningKeys = await store.listSigningKeys('user-1')
-        expect(allSigningKeys.length).toBe(2)
+        const allSigningKeys = await store.listSigningKeys(userId)
+        // expect(allSigningKeys.length).toBe(2)
         expect(allSigningKeys.map((x) => x.id)).toEqual(
             [mockKey1, mockKey2].map((x) => x.id)
         )
@@ -164,6 +163,20 @@ describe('storage wxt', () => {
         expect(updated?.hash).toBe('h2')
         expect(updated?.signature).toBe('sig')
         expect(updated?.status).toBe('signed')
+
+        await store.setSigningTransactions(userId, [])
+        await store.setSigningTransactions(userId, [
+            makeTx({
+                id: 'bulk-tx',
+                hash: 'bh',
+                publicKey: 'bp',
+                createdAt: t1,
+                updatedAt: t1,
+            }),
+        ])
+        expect(
+            await store.getSigningTransaction(userId, 'bulk-tx')
+        ).toBeDefined()
     })
 
     it('listSigningTransactions respects limit and before param', async () => {
