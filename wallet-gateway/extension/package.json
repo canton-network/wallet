@@ -19,6 +19,7 @@
     "dependencies": {
         "@canton-network/core-types": "^1.10.0",
         "@canton-network/core-wallet-store": "^1.11.0",
+        "@canton-network/core-wallet-store-inmemory": "workspace:*",
         "@canton-network/core-wallet-ui-components": "workspace:*",
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",

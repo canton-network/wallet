@@ -1628,9 +1628,9 @@ importers:
       '@canton-network/core-wallet-store':
         specifier: workspace:^
         version: link:../wallet-store
-      pino:
-        specifier: ^10.3.1
-        version: 10.3.1
+      '@logtape/logtape':
+        specifier: ^2.3.1
+        version: 2.3.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -2530,6 +2530,9 @@ importers:
       '@canton-network/core-wallet-store':
         specifier: ^1.11.0
         version: 1.11.0(supports-color@10.2.2)
+      '@canton-network/core-wallet-store-inmemory':
+        specifier: workspace:*
+        version: link:../../core/wallet-store-inmemory
       '@canton-network/core-wallet-ui-components':
         specifier: workspace:*
         version: link:../../core/wallet-ui-components
@@ -2639,6 +2642,12 @@ importers:
       '@commander-js/extra-typings':
         specifier: ^14.0.0
         version: 14.0.0(commander@14.0.3)
+      '@logtape/adaptor-pino':
+        specifier: ^2.3.1
+        version: 2.3.1(@logtape/logtape@2.3.1)(pino@10.3.1)
+      '@logtape/logtape':
+        specifier: ^2.3.1
+        version: 2.3.1
       commander:
         specifier: ^14.0.3
         version: 14.0.3
@@ -4231,6 +4240,12 @@ packages:
 
   '@lit/reactive-element@2.1.2':
     resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
+
+  '@logtape/adaptor-pino@2.3.1':
+    resolution: {integrity: sha512-nx7Zg38yorfwfrVxSAU50tO7IfTkFECzfiaz4strgc6rkWYOJRgahPB5+/qfPAN8PZXh3soqLx7GhOc4i35tbg==}
+    peerDependencies:
+      '@logtape/logtape': ^2.3.1
+      pino: ^9.7.0 || ^10.0.0
 
   '@logtape/logtape@2.3.1':
     resolution: {integrity: sha512-nYLsBWMKk0Llp62U6cDbQxNcEKc0E0s5hWbAxkmUM8ax6VchGkPSjPrVp3ixFQUuvUB9ku7MSgPzFhmVTSh2Jw==}
@@ -13240,6 +13255,11 @@ snapshots:
   '@lit/reactive-element@2.1.2':
     dependencies:
       '@lit-labs/ssr-dom-shim': 1.6.0
+
+  '@logtape/adaptor-pino@2.3.1(@logtape/logtape@2.3.1)(pino@10.3.1)':
+    dependencies:
+      '@logtape/logtape': 2.3.1
+      pino: 10.3.1
 
   '@logtape/logtape@2.3.1': {}
 
