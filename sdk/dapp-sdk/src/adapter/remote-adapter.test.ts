@@ -242,6 +242,7 @@ describe('RemoteAdapter', () => {
             'statusChanged',
             kernelSession()
         )
+        expect(listener).toHaveBeenCalledWith(kernelSession())
     })
 
     it('persists kernel session when statusChanged includes a session', () => {
@@ -285,6 +286,18 @@ describe('RemoteAdapter', () => {
     })
 
     describe('restore', () => {
+        // When another wallet was picked, the adapter must not restore
+        // anything, even with a kernel session stored.
+        it('returns null when the stored discovery is not a remote wallet', async () => {
+            storage.setKernelDiscovery({
+                walletType: 'extension',
+                providerId: 'browser:ext:test',
+            })
+            storage.setKernelSession(kernelSession())
+
+            await expect(adapter.restore()).resolves.toBeNull()
+        })
+
         it('returns null when discovery does not match this gateway', async () => {
             storage.setKernelDiscovery({
                 walletType: 'remote',
