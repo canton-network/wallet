@@ -19,6 +19,7 @@
     "dependencies": {
         "@canton-network/core-types": "^1.10.0",
         "@canton-network/core-wallet-store": "^1.11.0",
+        "@canton-network/core-wallet-store-inmemory": "workspace:*",
         "@logtape/logtape": "^2.3.1",
         "react": "^19.2.4",
         "react-dom": "^19.2.4"

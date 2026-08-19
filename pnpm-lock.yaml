@@ -1628,9 +1628,9 @@ importers:
       '@canton-network/core-wallet-store':
         specifier: workspace:^
         version: link:../wallet-store
-      pino:
-        specifier: ^10.3.1
-        version: 10.3.1
+      '@logtape/logtape':
+        specifier: ^2.3.1
+        version: 2.3.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -2530,6 +2530,9 @@ importers:
       '@canton-network/core-wallet-store':
         specifier: ^1.11.0
         version: 1.11.0(supports-color@10.2.2)
+      '@canton-network/core-wallet-store-inmemory':
+        specifier: workspace:*
+        version: link:../../core/wallet-store-inmemory
       '@logtape/logtape':
         specifier: ^2.3.1
         version: 2.3.1
