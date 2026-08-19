@@ -222,14 +222,26 @@ interface FeaturedAppNamespace {
 export async function fetchAmulet(
     amuletCtx: AmuletNamespaceConfig
 ): Promise<AssetBody> {
-    if (amuletCtx.registry instanceof ParsedURL) {
-        return parseAssets(
-            amuletCtx.commonCtx,
-            await amuletCtx.tokenStandardService.registriesToAssets([
-                amuletCtx.registry.href,
-            ])
-        )[0]
-    } else {
-        return amuletCtx.registry
+    const asset =
+        amuletCtx.registry instanceof ParsedURL
+            ? parseAssets(
+                  amuletCtx.commonCtx,
+                  await amuletCtx.tokenStandardService.registriesToAssets([
+                      amuletCtx.registry.href,
+                  ])
+              )[0]
+            : amuletCtx.registry
+
+    // The type claims `admin` is always present, but it's parsed from an
+    // external registry response with no runtime validation -- a registry
+    // that omits it would otherwise silently produce commands (e.g. transfer
+    // preapprovals) with an undefined expectedDso.
+    if (!asset.admin) {
+        amuletCtx.commonCtx.error.throw({
+            message: `Registry response for asset "${asset.id}" is missing the "admin" (DSO) party.`,
+            type: 'Unexpected',
+        })
     }
+
+    return asset
 }
