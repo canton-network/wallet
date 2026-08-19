@@ -55,8 +55,14 @@ export interface Wallet {
     disabled?: boolean
     reason?: string
     rights: PartyLevelRight[]
+    userId: string
     // hosted: [network]
 }
+
+export type WalletUniqueConstraint = Pick<
+    Wallet,
+    'networkId' | 'partyId' | 'userId'
+>
 
 export type UpdateWallet =
     // Required items
@@ -150,6 +156,7 @@ export interface ApiKey {
 export interface Store {
     // Wallet methods
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
+    getWallet(constraint: WalletUniqueConstraint): Promise<Wallet | null>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>

@@ -301,6 +301,7 @@ describe('WalletSyncService - multi-network features', () => {
         publicKey: 'publicKey',
         namespace: 'namespace',
         networkId,
+        userId: 'user-1',
         disabled,
         rights: [PartyLevelRight.CanActAs],
     })

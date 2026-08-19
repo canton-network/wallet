@@ -13,6 +13,7 @@ import {
     WalletAllocateEvent,
     handleErrorToast,
     toRelPath,
+    WalletCardEditEvent,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'
@@ -21,6 +22,7 @@ import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils'
 import { detectCurrentOrigin } from '../listeners.js'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 
 export enum WALLET_CREATION_STATUS_CODE {
     WALLET_ALLOCATED = '1',
@@ -153,7 +155,9 @@ export class UserUiParties extends BaseElement {
                             <wg-wallet-card
                                 .wallet=${wallet}
                                 verified
+                                .editable=${wallet.signingProviderId !== SigningProvider.PARTICIPANT}
                                 ?loading=${this.loading}
+                                @wallet-edit=${this._onWalletEdit}
                                 @wallet-set-primary=${this._onSetPrimary}
                             ></wg-wallet-card>
                         </div>
@@ -230,6 +234,12 @@ export class UserUiParties extends BaseElement {
             .then((wallets) => {
                 this.wallets = wallets || []
             })
+    }
+
+    private _onWalletEdit(e: WalletCardEditEvent) {
+        setLocationHref(
+            `/parties/edit?partyId=${e.wallet.partyId}&networkId=${e.wallet.networkId}&userId=${e.wallet.userId}`
+        )
     }
 
     private async _onSetPrimary(e: WalletSetPrimaryEvent) {

@@ -7,7 +7,7 @@ import { RpcTransport } from '@canton-network/core-rpc-transport'
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  *
- * Network ID
+ * The network ID the wallet corresponds to.
  *
  */
 export type NetworkId = string
@@ -134,10 +134,10 @@ export type PartyHint = string
  *
  */
 export type SigningProviderId = string
-export type VaultName = string
+export type KeyName = string
 /**
  *
- * The party id of the wallet to be removed.
+ * The party ID corresponding to the wallet.
  *
  */
 export type PartyId = string
@@ -207,6 +207,12 @@ export type CursorAsString = string
 export type Cursor = CursorAsString
 /**
  *
+ * The user ID corresponding to the wallet.
+ *
+ */
+export type UserId = string
+/**
+ *
  * The public key of the party.
  *
  */
@@ -262,7 +268,7 @@ export type Hint = string
 export type Namespace = string
 /**
  *
- * External transaction ID from signing provider.
+ * Unique identifier of the signed transaction given by the Signing Provider. This may not be the same as the internal txId given by the Wallet Gateway.
  *
  */
 export type ExternalTxId = string
@@ -280,17 +286,17 @@ export type TopologyTransactions = string
 export type Disabled = boolean
 /**
  *
- * The reason for the current status.
+ * Reason for the wallet state, e.g., 'no signing provider matched'.
  *
  */
 export type Reason = string
 export type PartyLevelRight = any
 /**
  *
- * The rights of the user for the network.
+ * The rights of the wallet.
  *
  */
-export type Rights = UserLevelRight[]
+export type Rights = PartyLevelRight[]
 /**
  *
  * Structure representing a wallet
@@ -495,10 +501,16 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
- * The list of signing provider's available vault names.
+ * The list of signing provider's available key names.
  *
  */
-export type Vaults = VaultName[]
+export type Keys = KeyName[]
+/**
+ *
+ * Represents a null value, used in responses where no data is returned.
+ *
+ */
+export type Null = null
 export interface AddNetworkParams {
     network: Network
 }
@@ -522,7 +534,7 @@ export interface CreateWalletParams {
     primary?: Primary
     partyHint: PartyHint
     signingProviderId: SigningProviderId
-    vaultName?: VaultName
+    keyName?: KeyName
 }
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
@@ -576,20 +588,19 @@ export interface GenerateApiKeyParams {
 export interface RemoveApiKeyParams {
     id: Id
 }
-export interface ListSigningProviderVaultsParams {
+export interface ListSigningProviderKeysParams {
     signingProviderId: SigningProviderId
+}
+export interface GetWalletParams {
+    userId: UserId
+    partyId: PartyId
+    networkId: NetworkId
 }
 export interface ChangeSigningProviderParams {
     signingProviderId: SigningProviderId
     partyId: PartyId
     publicKey: PublicKey
 }
-/**
- *
- * Represents a null value, used in responses where no data is returned.
- *
- */
-export type Null = null
 export interface ListNetworksResult {
     networks: Networks
 }
@@ -691,9 +702,10 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
-export interface ListSigningProviderVaultsResult {
-    vaults: Vaults
+export interface ListSigningProviderKeysResult {
+    keys: Keys
 }
+export type GetWalletResult = Wallet | Null
 /**
  *
  * Generated! Represents an alias to any of the provided schemas
@@ -755,9 +767,10 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
-export type ListSigningProviderVaults = (
-    params: ListSigningProviderVaultsParams
-) => Promise<ListSigningProviderVaultsResult>
+export type ListSigningProviderKeys = (
+    params: ListSigningProviderKeysParams
+) => Promise<ListSigningProviderKeysResult>
+export type GetWallet = (params: GetWalletParams) => Promise<GetWalletResult>
 export type ChangeSigningProvider = (
     params: ChangeSigningProviderParams
 ) => Promise<Null>
@@ -926,9 +939,14 @@ export type RpcTypes = {
         result: Result<RemoveApiKey>
     }
 
-    listSigningProviderVaults: {
-        params: Params<ListSigningProviderVaults>
-        result: Result<ListSigningProviderVaults>
+    listSigningProviderKeys: {
+        params: Params<ListSigningProviderKeys>
+        result: Result<ListSigningProviderKeys>
+    }
+
+    getWallet: {
+        params: Params<GetWallet>
+        result: Result<GetWallet>
     }
 
     changeSigningProvider: {

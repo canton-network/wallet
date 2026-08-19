@@ -33,6 +33,7 @@ const createWallet = (
     publicKey: 'test-public-key',
     namespace: 'namespace',
     networkId: 'network1',
+    userId: 'user-1',
     disabled: false,
     rights: [],
     ...overrides,
@@ -829,7 +830,7 @@ describe('WalletAllocationService', () => {
                 }),
             })
 
-            const result = await serviceWithFireblocks.getVaults(
+            const result = await serviceWithFireblocks.getKeys(
                 authContext,
                 SigningProvider.FIREBLOCKS
             )
@@ -843,7 +844,7 @@ describe('WalletAllocationService', () => {
             })
 
             await expect(
-                serviceWithFireblocks.getVaults(
+                serviceWithFireblocks.getKeys(
                     authContext,
                     SigningProvider.PARTICIPANT
                 )

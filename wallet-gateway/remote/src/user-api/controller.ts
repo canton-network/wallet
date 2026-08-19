@@ -42,11 +42,12 @@ import {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
-    ListSigningProviderVaultsResult,
-    ListSigningProviderVaultsParams,
     ListTransactionsParams,
-    Wallet,
     ChangeSigningProviderParams,
+    GetWalletParams,
+    GetWalletResult,
+    ListSigningProviderKeysParams,
+    ListSigningProviderKeysResult,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -301,7 +302,7 @@ export const userController = (
                 partyHint,
                 primary ?? false,
                 signingProviderId as SigningProvider,
-                params.vaultName
+                params.keyName
             )
 
             // Sync wallets (TODO: separate rights sync from wallet sync as we only need rights sync here)
@@ -1189,9 +1190,9 @@ export const userController = (
             await store.removeApiKey(params.id)
             return null
         },
-        listSigningProviderVaults: async (
-            params: ListSigningProviderVaultsParams
-        ): Promise<ListSigningProviderVaultsResult> => {
+        listSigningProviderKeys: async (
+            params: ListSigningProviderKeysParams
+        ): Promise<ListSigningProviderKeysResult> => {
             const network = await store.getCurrentNetwork()
             const idp = await store.getIdp(network.identityProviderId)
 
@@ -1217,15 +1218,19 @@ export const userController = (
                 partyAllocator,
                 drivers
             )
-            if (!drivers[params.signingProviderId as SigningProvider]) {
+            const result = await walletAllocationService.getKeys(
+                assertConnected(authContext),
+                params.signingProviderId as SigningProvider
+            )
+            if (
+                !drivers[params.signingProviderId as SigningProvider] ||
+                !result
+            ) {
                 throw new Error(
                     `Signing provider ${params.signingProviderId} not supported`
                 )
             }
-            return walletAllocationService.getVaults(
-                assertConnected(authContext),
-                params.signingProviderId as SigningProvider
-            )
+            return result
         },
         changeSigningProvider: async (
             params: ChangeSigningProviderParams
@@ -1259,6 +1264,7 @@ export const userController = (
             }
             const namespace =
                 partyAllocator.createFingerprintFromKey(normalizedKey)
+
             await store.updateWallet({
                 partyId,
                 signingProviderId,
@@ -1266,6 +1272,11 @@ export const userController = (
                 namespace,
             })
             return null
+        },
+        getWallet: async (
+            constraint: GetWalletParams
+        ): Promise<GetWalletResult> => {
+            return await store.getWallet(constraint)
         },
     })
 }

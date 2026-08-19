@@ -4,6 +4,12 @@
 import { css, html, nothing, TemplateResult } from 'lit'
 import { BaseElement } from '../internal/base-element.js'
 
+export class SigningProviderChangeEvent extends Event {
+    constructor(public signingProviderId: string) {
+        super('signing-provider-change', { bubbles: true, composed: true })
+    }
+}
+
 export abstract class WgWalletForm extends BaseElement {
     protected abstract onSubmit: (event: SubmitEvent) => void | Promise<void>
     protected abstract submitting: boolean
@@ -12,10 +18,6 @@ export abstract class WgWalletForm extends BaseElement {
     protected abstract submittingMessage: string
     protected abstract get formFields(): TemplateResult
     protected abstract get isLoading(): boolean
-
-    private async onSubmitHandler(event: SubmitEvent) {
-        await this.onSubmit(event)
-    }
 
     static styles = [
         BaseElement.styles,
@@ -137,10 +139,7 @@ export abstract class WgWalletForm extends BaseElement {
 
     protected render() {
         return html`
-            <form
-                class="d-flex flex-column h-100"
-                @submit=${this.onSubmitHandler}
-            >
+            <form class="d-flex flex-column h-100" @submit=${this.onSubmit}>
                 <div class="form-fields d-flex flex-column">
                     ${this.formFields}
                 </div>

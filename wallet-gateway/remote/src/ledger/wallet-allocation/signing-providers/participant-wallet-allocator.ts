@@ -7,14 +7,16 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
 import { PartyAllocationService } from '../../party-allocation-service.js'
 import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
-import type { WalletAllocator } from '../wallet-allocation-service.js'
+import { WalletAllocator } from './base.js'
 
-export class ParticipantWalletAllocator implements WalletAllocator {
+export class ParticipantWalletAllocator extends WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
         private partyAllocator: PartyAllocationService
-    ) {}
+    ) {
+        super(null)
+    }
 
     async createWallet(
         userId: UserId,
@@ -30,6 +32,7 @@ export class ParticipantWalletAllocator implements WalletAllocator {
             namespace: party.namespace,
             signingProviderId: SigningProvider.PARTICIPANT,
             networkId: network.id,
+            userId,
             status: 'allocated',
             primary,
             publicKey: party.namespace,

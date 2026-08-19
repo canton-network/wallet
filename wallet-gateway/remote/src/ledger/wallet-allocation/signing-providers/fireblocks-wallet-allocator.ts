@@ -4,48 +4,40 @@
 import { UserId } from '@canton-network/core-wallet-auth'
 import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
 import {
-    Error as SigningError,
     SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
 import { PartyAllocationService } from '../../party-allocation-service.js'
 import {
+    KeyName,
     PartyHint,
     Primary,
-    VaultName,
 } from '../../../user-api/rpc-gen/typings.js'
-import type { WalletAllocator } from '../wallet-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+import { WalletAllocator } from './base.js'
 
-function handleSigningError<T extends object>(result: SigningError | T): T {
-    if ('error' in result) {
-        throw new Error(
-            `Error from signing driver: ${result.error_description}`
-        )
-    }
-    return result
-}
-
-export class FireblocksWalletAllocator implements WalletAllocator {
+export class FireblocksWalletAllocator extends WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
         private partyAllocator: PartyAllocationService,
-        private signingDriver: SigningDriverInterface
-    ) {}
+        protected signingDriver: SigningDriverInterface
+    ) {
+        super(signingDriver)
+    }
 
     async createWallet(
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary = false,
-        vaultName: VaultName
+        keyName: KeyName
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
 
-        const keys = await driver.getKeys().then(handleSigningError)
-        const key = keys?.keys?.find((k) => k.name === vaultName)
+        const keys = await driver.getKeys().then(this.handleSigningError)
+        const key = keys?.keys?.find((k) => k.name === keyName)
         if (!key) throw new Error('Fireblocks key not found')
         const formattedPublicKey = Buffer.from(key.publicKey, 'hex').toString(
             'base64'
@@ -70,7 +62,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                     publicKey: key.publicKey,
                 },
             })
-            .then(handleSigningError)
+            .then(this.handleSigningError)
 
         const network = await this.store.getCurrentNetwork()
         const walletBase: Omit<Wallet, 'status'> = {
@@ -79,6 +71,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
             namespace,
             signingProviderId: SigningProvider.FIREBLOCKS,
             networkId: network.id,
+            userId,
             primary,
             publicKey: key.publicKey,
             externalTxId: txId,
@@ -93,7 +86,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                     userId,
                     txId,
                 })
-                .then(handleSigningError)
+                .then(this.handleSigningError)
             if (!signature) {
                 throw new Error(
                     'Transaction signed but no signature found in result'
@@ -155,7 +148,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 userId,
                 txId: existingWallet.externalTxId,
             })
-            .then(handleSigningError)
+            .then(this.handleSigningError)
 
         let walletUpdate: UpdateWallet = {
             partyId: existingWallet.partyId,
@@ -200,11 +193,5 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         }
 
         return this.store.updateWallet(walletUpdate)
-    }
-
-    async getVaults(userId: UserId): Promise<{ vaults: string[] }> {
-        const driver = this.signingDriver.controller(userId)
-        const keys = await driver.getKeys().then(handleSigningError)
-        return { vaults: keys?.keys?.map((key) => key.name) ?? [] }
     }
 }

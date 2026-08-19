@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
+import { css, html, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.js'
 import { PartyLevelRight, Wallet } from '@canton-network/core-wallet-store'
@@ -10,6 +10,12 @@ import { cardStyles } from '../styles/card.js'
 export class WalletSetPrimaryEvent extends Event {
     constructor(public wallet: Wallet) {
         super('wallet-set-primary', { bubbles: true, composed: true })
+    }
+}
+
+export class WalletCardEditEvent extends Event {
+    constructor(public wallet: Wallet) {
+        super('wallet-edit', { bubbles: true, composed: true })
     }
 }
 
@@ -24,6 +30,7 @@ export class WgWalletCard extends BaseElement {
     @property({ type: Object }) wallet: Wallet | null = null
     @property({ type: Boolean }) verified = false
     @property({ type: Boolean }) loading = false
+    @property({ type: Boolean }) editable = true
 
     static styles = [
         BaseElement.styles,
@@ -188,19 +195,19 @@ export class WgWalletCard extends BaseElement {
     }
 
     private renderStatusBadge() {
-        if (!this.wallet) return null
+        if (!this.wallet) return nothing
 
         const badge = this.wallet.primary
             ? html`<span class="badge badge-primary">PRIMARY</span>`
             : this.wallet.disabled
               ? html`<span class="badge badge-disabled">Disabled</span>`
-              : null
+              : nothing
 
         return badge
     }
 
     private renderMeta() {
-        if (!this.wallet) return null
+        if (!this.wallet) return nothing
 
         const excerptedPartyId =
             this.wallet.partyId.length > 24
@@ -305,16 +312,37 @@ export class WgWalletCard extends BaseElement {
         `
     }
 
+    private renderEditButton() {
+        return this.editable
+            ? html`
+                  <button
+                      type="button"
+                      class="link-action"
+                      ?disabled=${this.loading}
+                      @click=${() =>
+                          this.dispatchEvent(
+                              new WalletCardEditEvent(this.wallet!)
+                          )}
+                  >
+                      Edit
+                  </button>
+              `
+            : nothing
+    }
+
     private renderActions() {
         if (!this.wallet) return null
 
         const badge = this.renderStatusBadge()
+        const editButton = this.renderEditButton()
 
         if (this.verified) {
             if (this.wallet.primary || this.wallet.disabled) {
                 if (!badge) return null
 
-                return html` <div class="card-actions">${badge}</div> `
+                return html`
+                    <div class="card-actions">${badge} ${editButton}</div>
+                `
             }
 
             return html`
@@ -331,6 +359,7 @@ export class WgWalletCard extends BaseElement {
                     >
                         Set as primary
                     </button>
+                    ${editButton}
                 </div>
             `
         }

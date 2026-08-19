@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { html, nothing } from 'lit'
-import { customElement, property, query, state } from 'lit/decorators.js'
+import { customElement, property, state } from 'lit/decorators.js'
 import { chevronDownIcon } from '../icons/index.js'
-import { WgWalletForm } from './wallet-form.js'
+import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
+export { SigningProviderChangeEvent } from './wallet-form.js'
 
 export class WalletCreateEvent extends Event {
     constructor(
@@ -17,36 +18,22 @@ export class WalletCreateEvent extends Event {
     }
 }
 
-export class SigningProviderChangeEvent extends Event {
-    constructor(public signingProviderId: string) {
-        super('signing-provider-change', { bubbles: true, composed: true })
-    }
-}
-
 @customElement('wg-wallet-create-form')
 export class WgWalletCreateForm extends WgWalletForm {
+    protected readonly submitLabel = 'Add'
+    protected readonly submittingLabel = 'Adding...'
+    protected readonly submittingMessage = 'Creating party, please wait...'
+
     @property({ type: Array }) signingProviders: string[] = []
-    @property({ type: Array }) networkIds: string[] = []
-    // Render vaults select for those signing providers
-    @property({ type: Array }) vaultSigningProviders: string[] = []
-    @property({ type: Array }) vaults: string[] = []
+    @property({ type: Array }) keySigningProviders: string[] = []
+    @property({ type: Array }) publicKeys: string[] = []
     @property({ type: Boolean }) submitting = false
-    @property({ type: Boolean }) vaultsLoading = false
-    @property({ type: String }) submitLabel = 'Add'
-    @property({ type: String }) submittingLabel = 'Adding...'
-    @property({ type: String }) submittingMessage =
-        'Creating party, please wait...'
-    @property({ type: String }) vaultsLoadingLabel = 'Loading vaults...'
+    @property({ type: Boolean }) publicKeysLoading = false
 
-    @query('#party-id-hint') accessor partyHintInput: HTMLInputElement | null =
-        null
-    @query('#signing-provider-id')
-    accessor signingProviderSelect: HTMLSelectElement | null = null
-    @query('#primary') accessor primaryCheckbox: HTMLInputElement | null = null
-    @query('#vault-name')
-    accessor vaultSelect: HTMLSelectElement | null = null
-
-    @state() accessor selectedSigningProvider: string | null = null
+    @state() accessor partyHintValue = ''
+    @state() accessor signingProviderValue = ''
+    @state() accessor isPrimaryValue = false
+    @state() accessor publicKeyValue = ''
 
     protected onSubmit = (event: SubmitEvent) => {
         event.preventDefault()
@@ -55,52 +42,47 @@ export class WgWalletCreateForm extends WgWalletForm {
             return
         }
 
-        const partyHint = this.partyHintInput?.value || ''
-        const signingProviderId = this.signingProviderSelect?.value || ''
-        const primary = this.primaryCheckbox?.checked || false
-        const vaultName = this.vaultSelect?.value || undefined
-
         this.dispatchEvent(
             new WalletCreateEvent(
-                partyHint,
-                signingProviderId,
-                primary,
-                vaultName
+                this.partyHintValue,
+                this.signingProviderValue,
+                this.isPrimaryValue,
+                this.publicKeyValue
             )
+        )
+    }
+
+    private get showPublicKeySelect(): boolean {
+        return (
+            !this.signingProviderValue &&
+            this.keySigningProviders.includes(this.signingProviderValue)
         )
     }
 
     private onSigningProviderChange(event: Event) {
         const signingProviderId = (event.target as HTMLSelectElement).value
-        this.selectedSigningProvider = signingProviderId
-        if (this.vaultSelect) {
-            this.vaultSelect.value = ''
-        }
+        this.signingProviderValue = signingProviderId
+        this.publicKeyValue = ''
         this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
     }
 
-    private get showVaultSelect(): boolean {
+    protected get isLoading(): boolean {
         return (
-            this.selectedSigningProvider !== null &&
-            this.vaultSigningProviders.includes(this.selectedSigningProvider)
+            this.submitting ||
+            (this.showPublicKeySelect && this.publicKeysLoading)
         )
     }
 
-    protected get isLoading(): boolean {
-        return this.submitting || (this.showVaultSelect && this.vaultsLoading)
+    private onPartyHintInput = (event: InputEvent) => {
+        this.partyHintValue = (event.target as HTMLInputElement).value
     }
 
-    reset() {
-        if (this.partyHintInput) {
-            this.partyHintInput.value = ''
-        }
-        if (this.primaryCheckbox) {
-            this.primaryCheckbox.checked = false
-        }
-        if (this.vaultSelect) {
-            this.vaultSelect.value = ''
-        }
-        this.selectedSigningProvider = null
+    private onPublicKeyChange = (event: Event) => {
+        this.publicKeyValue = (event.target as HTMLSelectElement).value
+    }
+
+    private onPrimaryChange = (event: Event) => {
+        this.isPrimaryValue = (event.target as HTMLInputElement).checked
     }
 
     protected get formFields() {
@@ -110,6 +92,8 @@ export class WgWalletCreateForm extends WgWalletForm {
                     Party ID Hint <span class="required">*</span>
                 </label>
                 <input
+                    .value=${this.partyHintValue}
+                    @input=${this.onPartyHintInput}
                     ?disabled=${this.submitting}
                     class="form-control field-control"
                     id="party-id-hint"
@@ -128,6 +112,7 @@ export class WgWalletCreateForm extends WgWalletForm {
                 </label>
                 <div class="select-wrap">
                     <select
+                        .value=${this.signingProviderValue}
                         ?disabled=${this.submitting}
                         class="form-select field-control"
                         id="signing-provider-id"
@@ -149,7 +134,7 @@ export class WgWalletCreateForm extends WgWalletForm {
             </div>
 
             ${
-                this.showVaultSelect
+                this.showPublicKeySelect
                     ? html`
                           <div class="field-group d-flex flex-column">
                               <label
@@ -161,6 +146,8 @@ export class WgWalletCreateForm extends WgWalletForm {
                               </label>
                               <div class="select-wrap">
                                   <select
+                                      .value=${this.publicKeyValue}
+                                      @change=${this.onPublicKeyChange}
                                       ?disabled=${this.isLoading}
                                       class="form-select field-control"
                                       id="vault-name"
@@ -169,11 +156,11 @@ export class WgWalletCreateForm extends WgWalletForm {
                                       <option disabled selected value="">
                                           ${
                                               this.isLoading
-                                                  ? this.vaultsLoadingLabel
+                                                  ? 'Loading vaults...'
                                                   : 'Select vault name'
                                           }
                                       </option>
-                                      ${this.vaults.map(
+                                      ${this.publicKeys.map(
                                           (vaultName) =>
                                               html`<option value=${vaultName}>
                                                   ${vaultName}
@@ -193,6 +180,8 @@ export class WgWalletCreateForm extends WgWalletForm {
                 <input
                     id="primary"
                     type="checkbox"
+                    .checked=${this.isPrimaryValue}
+                    @change=${this.onPrimaryChange}
                     class="form-check-input"
                     ?disabled=${this.submitting}
                 />

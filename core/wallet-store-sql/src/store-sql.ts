@@ -27,6 +27,7 @@ import {
     UserLevelRight,
     ApiKey,
     ListTransactionsOptions,
+    WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
 import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
@@ -134,6 +135,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             ...filter,
             networkIds: [network.id],
         })
+    }
+
+    async getWallet(constraint: WalletUniqueConstraint) {
+        const row = await this.db
+            .selectFrom('wallets')
+            .selectAll()
+            .where((eb) => eb.and(constraint))
+            .executeTakeFirst()
+
+        return row ? toWallet(row) : null
     }
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {

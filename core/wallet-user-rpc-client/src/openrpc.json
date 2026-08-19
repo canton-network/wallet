@@ -263,10 +263,10 @@
                                 "type": "string",
                                 "description": "The signing provider ID the wallet corresponds to."
                             },
-                            "vaultName": {
-                                "title": "vaultName",
+                            "keyName": {
+                                "title": "keyName",
                                 "type": "string",
-                                "description": "Name of signing provider's vault to use for getting keys."
+                                "description": "Name of signing provider's key to use for getting keys."
                             }
                         },
                         "required": [
@@ -1065,13 +1065,13 @@
             }
         },
         {
-            "name": "listSigningProviderVaults",
-            "description": "Lists available vaults of a signing provider",
+            "name": "listSigningProviderKeys",
+            "description": "Lists available keys of a signing provider",
             "params": [
                 {
                     "name": "params",
                     "schema": {
-                        "title": "ListSigningProviderVaultsParams",
+                        "title": "ListSigningProviderKeysParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
@@ -1088,21 +1088,67 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "ListSigningProviderVaultsResult",
+                    "title": "ListSigningProviderKeysResult",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "vaults": {
-                            "title": "vaults",
+                        "keys": {
+                            "title": "keys",
                             "type": "array",
                             "items": {
-                                "title": "vaultName",
+                                "title": "keyName",
                                 "type": "string"
                             },
-                            "description": "The list of signing provider's available vault names."
+                            "description": "The list of signing provider's available key names."
                         }
                     },
-                    "required": ["vaults"]
+                    "required": ["keys"]
+                }
+            }
+        },
+        {
+            "name": "getWallet",
+            "description": "Get wallet based on provided constraint key",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GetWalletParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "userId": {
+                                "title": "userId",
+                                "type": "string",
+                                "description": "The user ID corresponding to the wallet."
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "The party ID corresponding to the wallet."
+                            },
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "The network ID corresponding to the wallet."
+                            }
+                        },
+                        "required": ["userId", "partyId", "networkId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetWalletResult",
+                    "oneOf": [
+                        {
+                            "$ref": "#/components/schemas/Wallet"
+                        },
+                        {
+                            "$ref": "#/components/schemas/Null"
+                        }
+                    ]
                 }
             }
         },

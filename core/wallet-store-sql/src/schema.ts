@@ -310,6 +310,7 @@ export const toWallet = (table: WalletTable): Wallet => {
         networkId: table.networkId,
         signingProviderId: table.signingProviderId,
         disabled: table.disabled === 1,
+        userId: table.userId,
         ...(table.externalTxId !== null && {
             externalTxId: table.externalTxId,
         }),
