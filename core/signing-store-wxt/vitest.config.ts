@@ -8,14 +8,7 @@ export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: [
-                'src/migrations/**',
-                'src/migrations-test/**',
-                'src/cli.ts',
-                'src/bootstrap.ts',
-                'src/index.ts',
-                'src/migrator.ts',
-            ],
+            exclude: ['src/index.ts'],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
@@ -30,7 +23,6 @@ export default defineConfig({
                 test: {
                     name: 'extension-tests',
                     include: ['src/**/*.test.ts'],
-                    exclude: ['src/migrations-test/**'],
                 },
                 plugins: [WxtVitest()],
             }),
