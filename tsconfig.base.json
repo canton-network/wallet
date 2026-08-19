@@ -17,6 +17,7 @@
         "${configDir}/build",
         "${configDir}/**/*.spec.ts",
         "${configDir}/**/*.test.ts",
-        "${configDir}/**/__tests__/**"
+        "${configDir}/**/__tests__/**",
+        "${configDir}/**/test-utils.ts"
     ]
 }
