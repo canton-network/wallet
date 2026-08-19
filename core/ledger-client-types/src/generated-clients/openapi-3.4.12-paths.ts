@@ -36,8 +36,6 @@ export const postPaths = [
     '/v2/dars',
     '/v2/packages',
     '/v2/package-vetting',
-    '/v2/package-vetting/list',
-    '/v2/package-vetting/update',
     '/v2/parties',
     '/v2/parties/external/allocate',
     '/v2/parties/external/generate-topology',

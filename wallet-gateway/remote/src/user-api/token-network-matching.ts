@@ -61,10 +61,11 @@ export function assertTokenClaimsMatchNetwork(
         )
     }
 
-    const tokenSubject = tokenClaims.sub
-    if (tokenSubject !== network.auth.clientId) {
+    // check client ID based on `azp` (Authorized Party) claim or `client_id` claim, only if present.
+    const tokenClientId = tokenClaims.azp || tokenClaims.client_id
+    if (tokenClientId && tokenClientId !== network.auth.clientId) {
         throw new Error(
-            `Token sub claim doesn't match network's auth clientId.`
+            `Token client ID doesn't match network's auth clientId.`
         )
     }
 
