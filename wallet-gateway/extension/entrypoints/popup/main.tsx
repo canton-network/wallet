@@ -4,10 +4,25 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import './style.css'
+
+import {
+    createTheme,
+    responsiveFontSizes,
+    ThemeProvider,
+} from '@mui/material/styles'
+
+let theme = createTheme()
+
+// fix the default font sizes for h1-h6, so they take less space in the small popup
+theme = responsiveFontSizes(theme, {
+    factor: 3,
+    variants: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+})
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <App />
+        <ThemeProvider theme={theme}>
+            <App />
+        </ThemeProvider>
     </React.StrictMode>
 )
