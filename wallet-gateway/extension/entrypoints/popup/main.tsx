@@ -4,12 +4,14 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
+import Auth from './Auth.tsx'
 
 import {
     createTheme,
     responsiveFontSizes,
     ThemeProvider,
 } from '@mui/material/styles'
+import { configure } from '@logtape/logtape'
 
 let theme = createTheme()
 
@@ -19,9 +21,12 @@ theme = responsiveFontSizes(theme, {
     variants: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
 })
 
+await configure(configuration)
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ThemeProvider theme={theme}>
+            <Auth />
             <App />
         </ThemeProvider>
     </React.StrictMode>
