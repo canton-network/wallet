@@ -98,7 +98,7 @@ To create a Postgres database you need to:
 $ docker run --network=host --name some-postgres -e POSTGRES_PASSWORD=postgres -d postgres
 ```
 
-2. In the file `splice-wallet-kernel/wallet-gateway/test/config.json`, specify the connection settings for both databases (store and signingStore). The connection should look like this (it is important that `store.connection.database !== signingStore.connection.database !== 'postgres'`):
+2. In the file `wallet/wallet-gateway/test/config.json`, specify the connection settings for both databases - store (required) and signingStore (optional, only for needed for signing provider `wallet-kernel`). The connection should look like this (it is important that `store.connection.database !== signingStore.connection.database !== 'postgres'`):
 
 ```json
 {
