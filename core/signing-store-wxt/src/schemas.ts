@@ -64,28 +64,28 @@ export const fromSigningKey = (
 }
 
 export const toSigningKey = (
-    table: SigningKeyRecord,
+    record: SigningKeyRecord,
     decrypt?: (data: string) => string
 ): SigningKey => {
     return {
-        id: table.id,
-        name: table.name,
-        publicKey: table.publicKey,
-        ...(table.privateKey
+        id: record.id,
+        name: record.name,
+        publicKey: record.publicKey,
+        ...(record.privateKey
             ? {
                   privateKey: decrypt
-                      ? decrypt(table.privateKey)
-                      : table.privateKey,
+                      ? decrypt(record.privateKey)
+                      : record.privateKey,
               }
             : {}),
-        createdAt: new Date(table.createdAt),
-        updatedAt: new Date(table.updatedAt),
-        ...(table.metadata
+        createdAt: new Date(record.createdAt),
+        updatedAt: new Date(record.updatedAt),
+        ...(record.metadata
             ? {
                   metadata:
-                      typeof table.metadata === 'string'
-                          ? JSON.parse(table.metadata)
-                          : table.metadata,
+                      typeof record.metadata === 'string'
+                          ? JSON.parse(record.metadata)
+                          : record.metadata,
               }
             : {}),
     }
@@ -133,25 +133,25 @@ export const fromSigningTransaction = (
 }
 
 export const toSigningTransaction = (
-    table: SigningTransactionRecord
+    record: SigningTransactionRecord
 ): SigningTransaction => {
     return {
-        id: table.id,
-        hash: table.hash,
-        ...(table.signature ? { signature: table.signature } : {}),
-        publicKey: table.publicKey,
-        status: table.status as SigningDriverStatus,
-        ...(table.metadata
+        id: record.id,
+        hash: record.hash,
+        ...(record.signature ? { signature: record.signature } : {}),
+        publicKey: record.publicKey,
+        status: record.status as SigningDriverStatus,
+        ...(record.metadata
             ? {
                   metadata:
-                      typeof table.metadata === 'string'
-                          ? JSON.parse(table.metadata)
-                          : table.metadata,
+                      typeof record.metadata === 'string'
+                          ? JSON.parse(record.metadata)
+                          : record.metadata,
               }
             : {}),
-        createdAt: new Date(table.createdAt),
-        updatedAt: new Date(table.updatedAt),
-        ...(table.signedAt ? { signedAt: new Date(table.signedAt) } : {}),
+        createdAt: new Date(record.createdAt),
+        updatedAt: new Date(record.updatedAt),
+        ...(record.signedAt ? { signedAt: new Date(record.signedAt) } : {}),
     }
 }
 
@@ -191,13 +191,13 @@ export const fromSigningDriverConfig = (
 }
 
 export const toSigningDriverConfig = (
-    table: SigningDriverConfigRecord
+    record: SigningDriverConfigRecord
 ): SigningDriverConfig => {
     return {
-        driverId: table.driverId,
+        driverId: record.driverId,
         config:
-            typeof table.config === 'string'
-                ? JSON.parse(table.config)
-                : table.config,
+            typeof record.config === 'string'
+                ? JSON.parse(record.config)
+                : record.config,
     }
 }
