@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
+    cleanupStaleVersionedFiles,
     getRepoRoot,
     info,
     error,
@@ -306,6 +307,18 @@ async function generateAsyncApiClient(
 async function main(network: Network = 'devnet', root: string = process.cwd()) {
     const cantonVersion =
         SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
+
+    // Remove any versioned output that no longer matches a currently supported
+    // Canton version (across all networks, not just the one being generated for
+    // here) before writing new ones, so version bumps don't leave stale clients
+    // behind (#1380).
+    cleanupStaleVersionedFiles(
+        path.join(root, 'core/ledger-client-types/src/generated-clients'),
+        'asyncapi',
+        Object.values(SUPPORTED_VERSIONS).map(
+            (v) => v.canton.version.split('-')[0]
+        )
+    )
 
     await Promise.all(
         specs(cantonVersion).map((spec) => generateAsyncApiClient(spec, root))

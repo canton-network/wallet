@@ -308,6 +308,28 @@ export function getAllFilesWithExtension(
     return results
 }
 
+// Delete generated files like `<prefix>-<version>.ts`, `<prefix>-<version>-paths.ts`,
+// `<prefix>-<version>-provider-types.ts`, or their `.d.ts`/`.d.ts.map` build artifacts,
+// for any <version> that isn't in currentVersions. Used to stop codegen scripts from
+// piling up stale versioned clients across Canton version bumps (see #1380).
+export function cleanupStaleVersionedFiles(
+    dir: string,
+    prefix: string,
+    currentVersions: string[]
+): void {
+    if (!fs.existsSync(dir)) return
+    const pattern = new RegExp(
+        `^${prefix}-(\\d+\\.\\d+\\.\\d+)(?:-paths|-provider-types)?\\.(?:d\\.ts\\.map|d\\.ts|ts)$`
+    )
+    for (const entry of fs.readdirSync(dir)) {
+        const match = entry.match(pattern)
+        if (match && !currentVersions.includes(match[1])) {
+            console.log(warn(`Removing stale generated file: ${entry}`))
+            fs.unlinkSync(path.join(dir, entry))
+        }
+    }
+}
+
 // Ensure a directory exists
 export async function ensureDir(dir: string) {
     if (!fs.existsSync(dir)) {

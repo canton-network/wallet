@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    cleanupStaleVersionedFiles,
     downloadAndUnpackTarball,
     downloadToFile,
     ensureDir,
@@ -200,6 +201,19 @@ const getSpecs = (
 
 async function main(network: Network = 'devnet') {
     const updateHash = hasFlag('updateHash')
+
+    // The ledger-api spec is the only one whose output filename embeds the Canton
+    // version; the others overwrite a fixed filename in place. Remove any versioned
+    // output that no longer matches a currently supported Canton version (across all
+    // networks, not just the one being generated for here) before writing new ones,
+    // so version bumps don't leave stale clients behind (#1380).
+    cleanupStaleVersionedFiles(
+        path.join(root, 'core/ledger-client-types/src/generated-clients'),
+        'openapi',
+        Object.values(SUPPORTED_VERSIONS).map(
+            (v) => v.canton.version.split('-')[0]
+        )
+    )
 
     await fetchSpliceSpecs(updateHash, network)
     Promise.all(
