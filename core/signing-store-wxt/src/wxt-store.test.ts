@@ -50,11 +50,11 @@ describe('storage wxt', () => {
     const userId = 'user-1'
 
     it('should successfully save and retrieve a signing key', async () => {
-        const store = new WxtStore('userId')
+        const store = new WxtStore(userId)
         const mockKey = createMockKey('key1', 'key1', 'pubkey-123')
-        await store.setSigningKey('user-1', mockKey)
+        await store.setSigningKey(userId, mockKey)
 
-        const retrieved = await store.getSigningKey('user-1', 'key1')
+        const retrieved = await store.getSigningKey(userId, 'key1')
         expect(retrieved).toBeDefined()
         expect(retrieved?.id).toBe(mockKey.id)
         expect(retrieved?.publicKey).toBe(mockKey.publicKey)
@@ -67,13 +67,13 @@ describe('storage wxt', () => {
     })
 
     it('should successfully delete a signing key and clean up indexes', async () => {
-        const store = new WxtStore('userId')
+        const store = new WxtStore(userId)
         const mockKey = createMockKey('key1', 'key1', 'pubkey-123')
-        await store.setSigningKey('user-1', mockKey)
+        await store.setSigningKey(userId, mockKey)
 
-        await store.deleteSigningKey('user-1', 'key1')
+        await store.deleteSigningKey(userId, 'key1')
 
-        const retrieved = await store.getSigningKey('user-1', 'key1')
+        const retrieved = await store.getSigningKey(userId, 'key1')
         expect(retrieved).toBeUndefined()
 
         const index = await signingKeyIndexItem().getValue()
@@ -112,14 +112,14 @@ describe('storage wxt', () => {
         expect(retrievedKeyByName?.publicKey).toBe(mockKey1.publicKey)
 
         const allSigningKeys = await store.listSigningKeys(userId)
-        // expect(allSigningKeys.length).toBe(2)
+        expect(allSigningKeys.length).toBe(2)
         expect(allSigningKeys.map((x) => x.id)).toEqual(
             [mockKey1, mockKey2].map((x) => x.id)
         )
     })
 
     it('sets, gets, and lists transactionss', async () => {
-        const store = new WxtStore('userId')
+        const store = new WxtStore(userId)
         const tx = makeTx({
             id: 'tx-1',
             hash: 'hash-1',
@@ -177,6 +177,26 @@ describe('storage wxt', () => {
         expect(
             await store.getSigningTransaction(userId, 'bulk-tx')
         ).toBeDefined()
+    })
+
+    it('updates signing transaction status', async () => {
+        const store = new WxtStore(userId)
+        const tx = makeTx({
+            id: 'tx-status change',
+            hash: 'h1',
+            publicKey: 'pub',
+        })
+        await store.setSigningTransaction(userId, {
+            ...tx,
+            status: 'pending',
+        })
+
+        const pending = await store.getSigningTransaction(userId, tx.id)
+        expect(pending?.status).toBe('pending')
+
+        await store.updateSigningTransactionStatus(userId, tx.id, 'signed')
+        const signed = await store.getSigningTransaction(userId, tx.id)
+        expect(signed?.status).toBe('signed')
     })
 
     it('listSigningTransactions respects limit and before param', async () => {

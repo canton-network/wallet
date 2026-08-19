@@ -26,6 +26,8 @@ import {
     fromSigningDriverConfig,
 } from './schemas.js'
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 export class WxtStore implements SigningDriverStore {
     constructor(private userId: UserId) {}
 
@@ -128,7 +130,7 @@ export class WxtStore implements SigningDriverStore {
     async listSigningKeys(userId: string): Promise<SigningKey[]> {
         const index = await signingKeyIndexItem().getValue()
         const keys = await Promise.all(
-            index.map((keyId) => this.getSigningKey(userId, keyId))
+            index.map((keyId) => this.getSigningKey(this.userId, keyId))
         )
         return keys.filter((k): k is SigningKey => k != undefined)
     }
@@ -146,7 +148,7 @@ export class WxtStore implements SigningDriverStore {
     ): Promise<void> {
         const item = signingTransactionItem(transaction.id)
         const existing = await item.getValue()
-        const serialized = fromSigningTransaction(transaction, userId)
+        const serialized = fromSigningTransaction(transaction, this.userId)
 
         const writeOperations: Promise<unknown>[] = [
             item.setValue({
@@ -180,7 +182,7 @@ export class WxtStore implements SigningDriverStore {
 
         if (!existing) {
             throw new Error(
-                `No signing tx found for txId: ${txId}, userId: ${userId}`
+                `No signing tx found for txId: ${txId}, userId: ${this.userId}`
             )
         }
 
@@ -199,7 +201,7 @@ export class WxtStore implements SigningDriverStore {
     ): Promise<SigningTransaction[]> {
         const index = await signingTransactionIndexItem().getValue()
         const txs = await Promise.all(
-            index.map((txId) => this.getSigningTransaction(userId, txId))
+            index.map((txId) => this.getSigningTransaction(this.userId, txId))
         )
 
         const validTxs = txs
@@ -256,7 +258,7 @@ export class WxtStore implements SigningDriverStore {
             keys.map(async (key) => {
                 const item = signingKeyItem(key.id)
                 const existing = await item.getValue()
-                const serialized = fromSigningKey(key, userId)
+                const serialized = fromSigningKey(key, this.userId)
 
                 await Promise.all([
                     item.setValue({
