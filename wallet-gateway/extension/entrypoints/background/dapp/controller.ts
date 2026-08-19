@@ -16,31 +16,37 @@ import type {
 
 import { type Store } from '@canton-network/core-wallet-store'
 
-// TODO: Make store required
-export const dappController = (store?: Store) =>
+export const dappController = (store: Store) =>
     buildController({
-        connect: async () =>
-            Promise.resolve({
-                isConnected: true,
-                reason: 'OK',
-                isNetworkConnected: true,
-                networkReason: 'OK',
-            }),
+        connect: async () => ({
+            isConnected: true,
+            reason: 'OK',
+            isNetworkConnected: true,
+            networkReason: 'OK',
+        }),
         disconnect: async () => Promise.resolve(null),
         isConnected: async () => {
-            throw new Error('Function not implemented.')
+            throw new Error('Function isConnected not implemented.')
         },
         ledgerApi: async (params: LedgerApiParams) =>
             Promise.resolve({ response: 'default-response' }),
         prepareExecute: async (params: PrepareExecuteParams) => {
-            throw new Error('Function not implemented.')
+            throw new Error('Function prepareExecute not implemented.')
         },
         prepareExecuteAndWait: async (params: PrepareExecuteParams) => {
-            throw new Error('Function not implemented.')
+            throw new Error('Function prepareExecuteAndWait not implemented.')
         },
-        status: async () => {
-            throw new Error('Function not implemented.')
-        },
+        status: async () => ({
+            provider: {
+                id: 'browser:ext:canton-wallet',
+            },
+            connection: {
+                isConnected: true,
+                reason: 'OK',
+                isNetworkConnected: true,
+                networkReason: 'OK',
+            },
+        }),
         listAccounts: async () => {
             const wallets = await store!.getWallets()
             return wallets
@@ -52,15 +58,15 @@ export const dappController = (store?: Store) =>
             throw new Error('Only for events.')
         },
         getActiveNetwork: function (): Promise<Network> {
-            throw new Error('Function not implemented.')
+            throw new Error('Function getActiveNetwork not implemented.')
         },
         signMessage: function (
             params: SignMessageParams
         ): Promise<SignMessageResult> {
-            throw new Error('Function not implemented.')
+            throw new Error('Function signMessage not implemented.')
         },
         getPrimaryAccount: async function (): Promise<Wallet> {
-            throw new Error('Function not implemented.')
+            throw new Error('Function getPrimaryAccount not implemented.')
         },
         messageSignature: async () => {
             throw new Error('Only for events.')

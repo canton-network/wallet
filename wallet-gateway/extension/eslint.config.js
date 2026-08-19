@@ -9,5 +9,8 @@ export default defineConfig([
         files: ['**/*.{ts,tsx}'],
         extends: [config],
         ignores: ['.output/**', '.wxt/**'],
+        rules: {
+            'no-console': 'error',
+        },
     },
 ])
