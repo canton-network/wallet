@@ -14,7 +14,7 @@ function App() {
             <Typography variant="h1">Parties</Typography>
             <WgWalletsSync
                 client={null}
-                onSyncSuccess={() => console.log('Sync successful!')}
+                onSyncSuccess={() => logger.info('Sync successful!')}
             />
             <Button
                 variant="contained"
