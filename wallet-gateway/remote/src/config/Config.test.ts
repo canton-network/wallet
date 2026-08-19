@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, test } from 'vitest'
+import { serverConfigSchema } from './Config.js'
 import { ConfigUtils } from './ConfigUtils.js'
 
 test('config from json file', async () => {
@@ -27,4 +28,9 @@ test('config from json file', async () => {
             'devnet_secret_testval'
         )
     }
+})
+
+test('server.signingWorker is fully optional and defaults when omitted', () => {
+    const parsed = serverConfigSchema.parse({})
+    expect(parsed.signingWorker.pollInterval).toBe(5000)
 })
