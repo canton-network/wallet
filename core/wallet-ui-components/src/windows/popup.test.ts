@@ -85,4 +85,45 @@ describe('popup', () => {
         expect(openSpy).toHaveBeenCalledTimes(1)
         expect(mockWin.location.href).toBe('https://second.example')
     })
+
+    it('includes a caller-supplied stylesheet in the popup document head', async () => {
+        const mockWin = createMockPopupWindow()
+        vi.spyOn(window, 'open').mockReturnValue(mockWin as unknown as Window)
+
+        class TestPopupElementWithStylesheet extends HTMLElement {
+            static styles = '.test { color: red; }'
+        }
+        customElements.define(
+            'test-popup-element-with-stylesheet',
+            TestPopupElementWithStylesheet
+        )
+
+        popup.open(TestPopupElementWithStylesheet, {
+            stylesheet: ':root { --wg-theme-primary-color: #123456; }',
+        })
+
+        const html = await (await fetch(mockWin.location.href)).text()
+        expect(html).toContain('--wg-theme-primary-color: #123456')
+    })
+
+    it('neutralizes a literal closing style tag in a caller-supplied stylesheet', async () => {
+        const mockWin = createMockPopupWindow()
+        vi.spyOn(window, 'open').mockReturnValue(mockWin as unknown as Window)
+
+        class TestPopupElementWithUnsafeStylesheet extends HTMLElement {
+            static styles = '.test { color: red; }'
+        }
+        customElements.define(
+            'test-popup-element-with-unsafe-stylesheet',
+            TestPopupElementWithUnsafeStylesheet
+        )
+
+        popup.open(TestPopupElementWithUnsafeStylesheet, {
+            stylesheet: '</style><script>window.__pwned = true</script>',
+        })
+
+        const html = await (await fetch(mockWin.location.href)).text()
+        expect(html).not.toContain('</style><script>')
+        expect(html).toContain('&lt;/style')
+    })
 })

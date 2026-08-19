@@ -93,6 +93,26 @@ export const Popup: StoryObj = {
         </button>`,
 }
 
+const CUSTOM_STYLESHEET = `
+    :root {
+        --wg-theme-primary-color: #6366f1;
+        --wg-theme-background-color: #0f172a;
+        --wg-theme-text-color: #f8fafc;
+        --wg-theme-border-color: #334155;
+    }
+`
+
+export const PopupWithCustomStylesheet: StoryObj = {
+    render: () =>
+        html`<button
+            class="btn btn-primary"
+            @click=${() =>
+                pickWallet(MOCK_ENTRIES, { stylesheet: CUSTOM_STYLESHEET })}
+        >
+            Connect Wallet (custom theme)
+        </button>`,
+}
+
 export const Empty: StoryObj = {
     render: () => {
         localStorage.removeItem('splice_wallet_picker_entries')
