@@ -18,6 +18,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { userController } from './controller.js'
+import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -202,7 +203,7 @@ async function createStore(
     const { withSession = true, withWallet = true } = options
     const store = new StoreInternal(
         { idps: [idp], networks: [storeNetwork] },
-        logger,
+        getLogger('mock'),
         context
     )
     if (context && withSession) {
@@ -1677,7 +1678,7 @@ describe('userController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutAdmin] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)
@@ -1811,7 +1812,7 @@ describe('userController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutAdmin] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)

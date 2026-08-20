@@ -20,6 +20,8 @@ import exampleConfig from './example-config.js'
 import { GATEWAY_VERSION } from './version.js'
 import { nestedRedact } from './utils.js'
 
+import { install } from '@logtape/adaptor-pino'
+
 const program = new Command()
     .name('wallet-gateway')
     .version(GATEWAY_VERSION)
@@ -84,6 +86,10 @@ const program = new Command()
                   }
                 : {}),
         })
+
+        // install pino loger for logtape
+        install(logger)
+
         // Initialize the database with the provided config
         initialize(opts, logger)
     })
