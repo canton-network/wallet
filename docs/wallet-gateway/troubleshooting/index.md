@@ -241,12 +241,14 @@ The `auth` client does **not** need a pre-existing wallet or party attached in K
     - Check participant logs for signing errors
 
 3. **Blockdaemon:**
-    - Verify environment variables are set: `BLOCKDAEMON_API_URL` and `BLOCKDAEMON_API_KEY`
+    - Verify `signingProviders.blockdaemon.baseUrl` and `signingProviders.blockdaemon.caip2` in the Gateway config
+    - Verify the `BLOCKDAEMON_API_KEY` environment variable is set
     - Test API connectivity
     - Ensure API key has signing permissions
 
 4. **Dfns:**
-    - Verify environment variables are set: `DFNS_ORG_ID`, `DFNS_BASE_URL`, `DFNS_CRED_ID`, `DFNS_PRIVATE_KEY`, and `DFNS_AUTH_TOKEN`
+    - Verify `signingProviders.dfns.orgId`, `signingProviders.dfns.credId`, and `signingProviders.dfns.baseUrl` in the Gateway config
+    - Verify `DFNS_PRIVATE_KEY` and `DFNS_AUTH_TOKEN` are set
     - Ensure the service account credentials are correct
     - Confirm the service account has wallet creation and signing permissions
 

@@ -4,19 +4,11 @@ The Wallet Gateway supports multiple signing providers that handle cryptographic
 
 ## Available Providers
 
-Each signing provider can be explicitly disabled by setting its corresponding
-environment variable to `true`:
-
-- `WALLET_KERNEL_SIGNING_DISABLED`
-- `PARTICIPANT_SIGNING_DISABLED`
-- `FIREBLOCKS_SIGNING_DISABLED`
-- `BLOCKDAEMON_SIGNING_DISABLED`
-- `DFNS_SIGNING_DISABLED`
-- `SECUROSYS_SIGNING_DISABLED`
-
-External signing providers are available only when all of their required
-environment variables are set. An opt-out variable takes precedence over the
-provider's other configuration.
+Each signing provider has an `enable` property in the root-level `signingProviders` of Wallet Gatetay config.
+configuration block. Providers default to enabled, while external providers are
+available only when their required environment variables and config properties are also set.
+Legacy non-secret environment variables remain supported as deprecated
+fallbacks when the corresponding config value is omitted.
 
 ## Wallet Gateway (Internal)
 
@@ -24,7 +16,7 @@ The Wallet Gateway provider stores private keys directly in the signing store da
 
 **Configuration:**
 
-This provider is automatically available when a `signingStore` is configured in the Gateway configuration. Set `WALLET_KERNEL_SIGNING_DISABLED=true` to prevent it from being registered.
+This provider is automatically available when a `signingStore` is configured. Set `signingProviders.walletKernel.enable` to `false` to prevent it from being registered.
 
 **Use Cases:**
 
@@ -43,7 +35,7 @@ The Participant signing provider uses Canton's participant node for signing tran
 
 **Configuration:**
 
-This provider requires no additional configuration and is available by default. Set `PARTICIPANT_SIGNING_DISABLED=true` to prevent it from being registered.
+This provider requires no additional configuration and is available by default. Set `signingProviders.participant.enable` to `false` to prevent it from being registered.
 
 **Use Cases:**
 
@@ -135,14 +127,11 @@ See the [Securosys signing documentation](https://github.com/canton-network/wall
 
 Set the following environment variables:
 
-- `SECUROSYS_TSB_BASE_URL` - Base URL of the TSB service
 - `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - API key for TSB key-management endpoints
 - `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - API key for TSB signing and request-status endpoints
 - `SECUROSYS_TSB_BEARER_TOKEN` - Optional bearer access token (access-token auth mode)
-- `SECUROSYS_TSB_MTLS_P12_PATH` - Optional path to a PKCS#12/P12 client certificate when TSB requires mTLS
 - `SECUROSYS_TSB_MTLS_P12_PASSWORD` - Optional password for the PKCS#12/P12 client certificate
 - `SECUROSYS_TSB_KEY_PASSWORD` - Optional TSB key password used for key attributes and signing
-- `SECUROSYS_TSB_SIGNATURE_ALGORITHM` - Optional TSB signature algorithm (defaults to `EDDSA`)
 
 **Use Cases:**
 
