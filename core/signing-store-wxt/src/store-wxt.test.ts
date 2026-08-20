@@ -9,11 +9,7 @@ import {
 import { describe, expect, beforeEach, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { WxtStore } from './store-wxt.js'
-import {
-    signingKeyIndexItem,
-    publicKeyIndexItem,
-    nameIndexItem,
-} from './schemas.js'
+import { signingKeyIndexItem } from './schemas.js'
 
 describe('storage wxt', () => {
     beforeEach(() => {
@@ -61,9 +57,6 @@ describe('storage wxt', () => {
 
         const index = await signingKeyIndexItem().getValue()
         expect(index).toContain('key1')
-
-        const mappedId = await publicKeyIndexItem('pubkey-123').getValue()
-        expect(mappedId).toBe('key1')
     })
 
     it('should successfully delete a signing key and clean up indexes', async () => {
@@ -78,13 +71,6 @@ describe('storage wxt', () => {
 
         const index = await signingKeyIndexItem().getValue()
         expect(index).not.toContain('key1')
-
-        const publicKeyMapping =
-            await publicKeyIndexItem('pubkey-123').getValue()
-        expect(publicKeyMapping).toBeNull()
-
-        const nameMapping = await nameIndexItem('Primary Key').getValue()
-        expect(nameMapping).toBeNull()
     })
 
     it('should get signing key by various filters', async () => {

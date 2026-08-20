@@ -31,17 +31,6 @@ export const signingKeyIndexItem = () =>
         fallback: [],
     })
 
-export const publicKeyIndexItem = (publicKey: string) =>
-    storage.defineItem<string | null>(
-        `local:signingKeyByPublicKey:${publicKey}`,
-        { fallback: null }
-    )
-
-export const nameIndexItem = (name: string) =>
-    storage.defineItem<string | null>(`local:signingKeyByName:${name}`, {
-        fallback: null,
-    })
-
 export const fromSigningKey = (
     key: SigningKey,
     userId: UserId,

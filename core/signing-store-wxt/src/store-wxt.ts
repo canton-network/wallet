@@ -12,8 +12,6 @@ import { UserId } from '@canton-network/core-wallet-auth'
 import {
     signingKeyItem,
     toSigningKey,
-    publicKeyIndexItem,
-    nameIndexItem,
     fromSigningKey,
     signingKeyIndexItem,
     signingTransactionItem,
@@ -42,17 +40,19 @@ export class WxtStore implements SigningDriverStore {
     async getSigningKeyByPublicKey(
         publicKey: string
     ): Promise<SigningKey | undefined> {
-        const keyId = await publicKeyIndexItem(publicKey).getValue()
-        if (!keyId) return undefined
-        return this.getSigningKey(this.userId, keyId)
+        const keys = await this.listSigningKeys(this.userId)
+        const signingKey = keys.find((key) => key.publicKey === publicKey)
+        if (!signingKey) return undefined
+        return signingKey
     }
     async getSigningKeyByName(
         userId: string,
         name: string
     ): Promise<SigningKey | undefined> {
-        const keyId = await nameIndexItem(name).getValue()
-        if (!keyId) return undefined
-        return this.getSigningKey(this.userId, keyId)
+        const keys = await this.listSigningKeys(this.userId)
+        const signingKey = keys.find((key) => key.name === name)
+        if (!signingKey) return undefined
+        return signingKey
     }
     async listSigningTransactionsByTxIdsAndPublicKeys(
         txIds: string[],
@@ -60,24 +60,17 @@ export class WxtStore implements SigningDriverStore {
     ): Promise<SigningTransaction[]> {
         if (!txIds.length && !publicKeys.length) return []
 
-        const index = await signingTransactionIndexItem().getValue()
-        const records = await Promise.all(
-            index.map((id) => signingTransactionItem(id).getValue())
-        )
+        const records = await this.listSigningTransactions(this.userId)
 
-        return records
-            .filter((record): record is SigningTransactionRecord => {
-                if (!record) return false
+        return records.filter((record) => {
+            if (!record) return false
 
-                const matchesTxId =
-                    txIds.length > 0 && txIds.includes(record.id)
-                const matchesPublicKey =
-                    publicKeys.length > 0 &&
-                    publicKeys.includes(record.publicKey)
+            const matchesTxId = txIds.length > 0 && txIds.includes(record.id)
+            const matchesPublicKey =
+                publicKeys.length > 0 && publicKeys.includes(record.publicKey)
 
-                return matchesTxId || matchesPublicKey
-            })
-            .map((tx) => toSigningTransaction(tx))
+            return matchesTxId || matchesPublicKey
+        })
     }
 
     async setSigningKey(userId: string, key: SigningKey): Promise<void> {
@@ -101,16 +94,6 @@ export class WxtStore implements SigningDriverStore {
             }
         }
 
-        if (existing && existing.publicKey !== key.publicKey) {
-            writeKey.push(publicKeyIndexItem(existing.publicKey).removeValue())
-        }
-        writeKey.push(publicKeyIndexItem(key.publicKey).setValue(key.id))
-
-        if (existing && existing.name !== key.name) {
-            writeKey.push(nameIndexItem(existing.name).removeValue())
-        }
-        writeKey.push(nameIndexItem(key.name).setValue(key.id))
-
         await Promise.all(writeKey)
     }
     async deleteSigningKey(userId: string, keyId: string): Promise<void> {
@@ -123,8 +106,6 @@ export class WxtStore implements SigningDriverStore {
 
         Promise.all([
             item.removeValue(),
-            nameIndexItem(existing.name).removeValue(),
-            publicKeyIndexItem(existing.publicKey).removeValue(),
             signingKeyIndexItem().setValue(updatedIndex),
         ])
     }
@@ -267,8 +248,6 @@ export class WxtStore implements SigningDriverStore {
                         createdAt: existing?.createdAt ?? serialized.createdAt,
                         updatedAt: new Date().toISOString(),
                     }),
-                    publicKeyIndexItem(key.publicKey).setValue(key.id),
-                    nameIndexItem(key.name).setValue(key.id),
                 ])
             })
         )
