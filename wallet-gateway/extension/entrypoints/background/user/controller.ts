@@ -2,12 +2,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Disabled unused vars rule to allow for future implementations
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import buildController from './rpc-gen/index.js'
-import { type Store } from '@canton-network/core-wallet-store'
+import type { Store, Network } from '@canton-network/core-wallet-store'
+import { PublicNetwork } from './rpc-gen/typings.js'
 
-export const userController = (store: Store) =>
+interface UserControllerParams {
+    store: Store
+}
+
+function toPublicNetwork(network: Network): PublicNetwork {
+    const auth = network.auth
+
+    return {
+        id: network.id,
+        name: network.name,
+        description: network.description,
+        synchronizerId: network.synchronizerId,
+        identityProviderId: network.identityProviderId,
+        ledgerApi: network.ledgerApi.baseUrl,
+        authMethod: auth.method,
+        ...(auth.method !== 'client_credentials' && {
+            clientId: auth.clientId,
+            scope: auth.scope,
+            audience: auth.audience,
+        }),
+    }
+}
+
+export const userController = (getParams: Promise<UserControllerParams>) =>
     buildController({
         addNetwork: async () => {
             throw new Error('Function addNetwork not implemented.')
@@ -16,7 +39,9 @@ export const userController = (store: Store) =>
             throw new Error('Function removeNetwork not implemented.')
         },
         listNetworks: async () => {
-            throw new Error('Function listNetworks not implemented.')
+            const { store } = await getParams
+            const networks = await store.listNetworks()
+            return { networks: networks.map(toPublicNetwork) }
         },
         getNetwork: async () => {
             throw new Error('Function getNetwork not implemented.')
@@ -31,7 +56,8 @@ export const userController = (store: Store) =>
             throw new Error('Function removeIdp not implemented.')
         },
         listIdps: async () => {
-            throw new Error('Function listIdps not implemented.')
+            const { store } = await getParams
+            return { idps: await store.listIdps() }
         },
         createWallet: async () => {
             throw new Error('Function createWallet not implemented.')
