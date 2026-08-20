@@ -75,7 +75,7 @@ async function main() {
         })
     }
 
-    Promise.all(
+    await Promise.all(
         darFileNames.map(async (file) => {
             const options = {
                 workingDir: darsDir,

@@ -17,19 +17,6 @@ pnpm install @canton-network/core-splice-codegen
 
 This package requires a localnet instance that relies on Splice v0.6.12 or higher. Please ensure you have the latest localnet fetched.
 
-## Exports
-
-Top-level exports (from `src/index.ts`):
-
-- `TestToken`
-- `OTCTrade`
-
-Each module has the same shape:
-
-- `DAR`: typed template references, package ID, and selected type exports
-- `commands`: typed create/exercise command builders
-- `utils`: helper utilities (currently `vetDar`)
-
 ## Build
 
 From repository root:
@@ -37,13 +24,6 @@ From repository root:
 ```sh
 pnpm --filter @canton-network/core-splice-codegen build
 ```
-
-Build outputs:
-
-- ESM: `dist/index.js`
-- CJS: `dist/index.cjs`
-- Browser ESM: `dist/index.browser.js`
-- Types: `dist/index.d.ts`
 
 ## Regenerating DAML Codegen Inputs
 
@@ -80,77 +60,6 @@ const settleTrade = OTCTrade.commands.exercise.otcTrade.settle({
     },
 })
 ```
-
-## TestToken Module
-
-`TestToken.DAR` includes:
-
-- `packageId`
-- `TestTokenV1`
-- `TestTokenID`
-- Types: `Token`, `TokenAllocation`, `TokenRules`, `TokenTransferOffer`
-
-`TestToken.commands.create`:
-
-- `transferOffer`
-- `allocation`
-- `rules`
-- `token`
-
-`TestToken.commands.exercise.transferOffer`:
-
-- `accept`
-- `reject`
-- `withdraw`
-- `update`
-
-`TestToken.commands.exercise.allocation`:
-
-- `executeTransfer`
-- `cancel`
-- `withdraw`
-
-`TestToken.commands.exercise.rules.transfer`:
-
-- `transfer`
-- `publicFetch`
-
-`TestToken.commands.exercise.rules.allocation`:
-
-- `allocate`
-- `publicFetch`
-
-`TestToken.utils`:
-
-- `vetDar(sdk, synchronizerId?)`
-
-## OTCTrade Module
-
-`OTCTrade.DAR` includes:
-
-- `packageId`
-- `TradingApp`
-- Types: `OTCTrade`, `OTCTradeProposal`
-
-`OTCTrade.commands.create`:
-
-- `otcTrade`
-- `otcTradeProposal`
-
-`OTCTrade.commands.exercise.otcTrade`:
-
-- `settle`
-- `cancel`
-
-`OTCTrade.commands.exercise.otcTradeProposal`:
-
-- `accept`
-- `reject`
-- `initiateSettlement`
-
-`OTCTrade.utils`:
-
-- `vetDar(sdk, synchronizerId?)`
 
 ## DAR Vetting Utility
 
