@@ -554,11 +554,11 @@ jobs:
                   key: dpm-${{ runner.os }}-${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Generate featured DARs
-              run: yarn script:generate:featured-dars
+              run: pnpm run script:generate:featured-dars
 
             - name: Rebuild DAML-dependent packages
               run: |
-                  yarn workspace @canton-network/core-test-token build
+                  pnpm run --filter @canton-network/core-test-token build
 
             - uses: ./.github/actions/check_resources
 
