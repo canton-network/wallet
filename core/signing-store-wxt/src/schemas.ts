@@ -23,11 +23,8 @@ export interface SigningKeyRecord {
     updatedAt: string
 }
 
-export const signingKeyItem = (keyId: string) =>
-    storage.defineItem<SigningKeyRecord>(`local:signingKeyItem:${keyId}`, {})
-
-export const signingKeyIndexItem = () =>
-    storage.defineItem<string[]>(`local:signingKeyItemIndex`, {
+export const signingKeysItem = () =>
+    storage.defineItem<SigningKeyRecord[]>(`local:signingKeys`, {
         fallback: [],
     })
 

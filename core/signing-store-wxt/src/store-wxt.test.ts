@@ -9,7 +9,7 @@ import {
 import { describe, expect, beforeEach, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { WxtStore } from './store-wxt.js'
-import { signingKeyIndexItem } from './schemas.js'
+import { signingKeysItem } from './schemas.js'
 
 describe('storage wxt', () => {
     beforeEach(() => {
@@ -55,8 +55,11 @@ describe('storage wxt', () => {
         expect(retrieved?.id).toBe(mockKey.id)
         expect(retrieved?.publicKey).toBe(mockKey.publicKey)
 
-        const index = await signingKeyIndexItem().getValue()
-        expect(index).toContain('key1')
+        const index = await signingKeysItem().getValue()
+        const retrievedIndex = index.find((x) => x.id === mockKey.id)
+        expect(retrievedIndex).toBeDefined()
+        expect(retrievedIndex?.id).toBe(mockKey.id)
+        expect(retrievedIndex?.publicKey).toBe(mockKey.publicKey)
     })
 
     it('should successfully delete a signing key and clean up indexes', async () => {
@@ -69,8 +72,9 @@ describe('storage wxt', () => {
         const retrieved = await store.getSigningKey(userId, 'key1')
         expect(retrieved).toBeUndefined()
 
-        const index = await signingKeyIndexItem().getValue()
-        expect(index).not.toContain('key1')
+        const index = await signingKeysItem().getValue()
+        const retrievedIndex = index.find((x) => x.id === mockKey.id)
+        expect(retrievedIndex).toBeUndefined()
     })
 
     it('should get signing key by various filters', async () => {

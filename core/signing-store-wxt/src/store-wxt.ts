@@ -10,10 +10,8 @@ import {
 } from '@canton-network/core-signing-lib'
 import { UserId } from '@canton-network/core-wallet-auth'
 import {
-    signingKeyItem,
     toSigningKey,
     fromSigningKey,
-    signingKeyIndexItem,
     signingTransactionItem,
     toSigningTransaction,
     fromSigningTransaction,
@@ -22,6 +20,8 @@ import {
     signingDriverConfigItem,
     toSigningDriverConfig,
     fromSigningDriverConfig,
+    signingKeysItem,
+    SigningKeyRecord,
 } from './schemas.js'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -34,8 +34,12 @@ export class WxtStore implements SigningDriverStore {
         userId: string,
         keyId: string
     ): Promise<SigningKey | undefined> {
-        const record = await signingKeyItem(keyId).getValue()
-        return record ? toSigningKey(record) : undefined
+        const record = await signingKeysItem().getValue()
+        const signingKey = record
+            ? record.find((r) => r.id === keyId)
+            : undefined
+
+        return signingKey ? toSigningKey(signingKey) : undefined
     }
     async getSigningKeyByPublicKey(
         publicKey: string
@@ -74,47 +78,38 @@ export class WxtStore implements SigningDriverStore {
     }
 
     async setSigningKey(userId: string, key: SigningKey): Promise<void> {
-        const item = signingKeyItem(key.id)
-        const existing = await item.getValue()
+        const item = signingKeysItem()
+        const keys = await item.getValue()
+        const idx = keys?.findIndex((k) => (k.id = key.id))
+        const existing = idx >= 0 ? keys[idx] : undefined
+
         const serialized = fromSigningKey(key, userId)
 
-        const writeKey: Promise<unknown>[] = [
-            item.setValue({
-                ...serialized,
-                createdAt: existing?.createdAt ?? serialized.createdAt,
-                updatedAt: new Date().toISOString(),
-            }),
-        ]
-        if (!existing) {
-            const index = await signingKeyIndexItem().getValue()
-            if (!index.includes(key.id)) {
-                writeKey.push(
-                    signingKeyIndexItem().setValue([...index, key.id])
-                )
-            }
+        const updated: SigningKeyRecord = {
+            ...serialized,
+            createdAt: existing?.createdAt ?? serialized.createdAt,
+            updatedAt: new Date().toISOString(),
         }
 
-        await Promise.all(writeKey)
+        const nextKeys =
+            idx >= 0
+                ? keys.map((key, index) => (index === idx ? updated : key))
+                : [...keys, updated]
+
+        await item.setValue(nextKeys)
     }
     async deleteSigningKey(userId: string, keyId: string): Promise<void> {
-        const item = signingKeyItem(keyId)
-        const existing = await item.getValue()
-        if (!existing) return
+        const item = signingKeysItem()
+        const keys = await item.getValue()
 
-        const index = await signingKeyIndexItem().getValue()
-        const updatedIndex = index.filter((id) => id !== keyId)
-
-        Promise.all([
-            item.removeValue(),
-            signingKeyIndexItem().setValue(updatedIndex),
-        ])
+        const nextKeys = keys.filter((k) => k.id !== keyId)
+        if (nextKeys.length !== keys.length) {
+            await item.setValue(nextKeys)
+        }
     }
     async listSigningKeys(userId: string): Promise<SigningKey[]> {
-        const index = await signingKeyIndexItem().getValue()
-        const keys = await Promise.all(
-            index.map((keyId) => this.getSigningKey(this.userId, keyId))
-        )
-        return keys.filter((k): k is SigningKey => k != undefined)
+        const keys = await signingKeysItem().getValue()
+        return keys.map((x) => toSigningKey(x))
     }
     async getSigningTransaction(
         userId: string,
@@ -236,27 +231,21 @@ export class WxtStore implements SigningDriverStore {
         await item.setValue(serialized)
     }
     async setSigningKeys(userId: string, keys: SigningKey[]): Promise<void> {
-        await Promise.all(
-            keys.map(async (key) => {
-                const item = signingKeyItem(key.id)
-                const existing = await item.getValue()
-                const serialized = fromSigningKey(key, this.userId)
+        const item = signingKeysItem()
+        const existingKeys = await item.getValue()
+        const keyMap = new Map(existingKeys.map((k) => [k.id, k]))
 
-                await Promise.all([
-                    item.setValue({
-                        ...serialized,
-                        createdAt: existing?.createdAt ?? serialized.createdAt,
-                        updatedAt: new Date().toISOString(),
-                    }),
-                ])
+        for (const key of keys) {
+            const existing = keyMap.get(key.id)
+            const serialized = fromSigningKey(key, this.userId)
+            keyMap.set(key.id, {
+                ...serialized,
+                createdAt: existing?.createdAt ?? serialized.createdAt,
+                updatedAt: new Date().toISOString(),
             })
-        )
+        }
 
-        const currentIndex = await signingKeyIndexItem().getValue()
-        const newIds = keys.map((k) => k.id)
-        const mergedIndex = Array.from(new Set([...currentIndex, ...newIds]))
-
-        await signingKeyIndexItem().setValue(mergedIndex)
+        await item.setValue(Array.from(keyMap.values()))
     }
     async setSigningTransactions(
         userId: string,
