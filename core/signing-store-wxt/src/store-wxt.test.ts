@@ -8,7 +8,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import { describe, expect, beforeEach, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { WxtStore } from './wxt-store.js'
+import { WxtStore } from './store-wxt.js'
 import {
     signingKeyIndexItem,
     publicKeyIndexItem,
