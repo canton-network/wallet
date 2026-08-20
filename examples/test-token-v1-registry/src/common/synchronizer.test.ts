@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, afterEach } from 'vitest'
-import { assignSynchronizerIds, synchronizerId } from './synchronizer'
+import {
+    assignSynchronizerIds,
+    synchronizerId,
+    resetSynchronizerIds,
+} from './synchronizer'
 
 describe('synchronizer', () => {
     afterEach(() => {
@@ -11,13 +15,15 @@ describe('synchronizer', () => {
             allocationInstruction: '',
         })
     })
+
     it('should be set to empty strings by default', () => {
         expect(synchronizerId).toStrictEqual({
             transferInstruction: '',
             allocationInstruction: '',
         })
     })
-    it('should properly assign syncrhonizers', () => {
+
+    it('should properly assign synchronizers', () => {
         const expectedResult = {
             transferInstruction: 'transfer-sync-id',
             allocationInstruction: 'allocation-sync-id',
@@ -26,5 +32,20 @@ describe('synchronizer', () => {
         assignSynchronizerIds(expectedResult)
 
         expect(synchronizerId).toStrictEqual(expectedResult)
+    })
+
+    it('should properly reset syncrhonizers', () => {
+        const values = {
+            transferInstruction: 'transfer-sync-id',
+            allocationInstruction: 'allocation-sync-id',
+        }
+
+        assignSynchronizerIds(values)
+        resetSynchronizerIds()
+
+        expect(synchronizerId).toStrictEqual({
+            transferInstruction: '',
+            allocationInstruction: '',
+        })
     })
 })

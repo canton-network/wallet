@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { stopRegistry } from '.'
 
 const mocks = vi.hoisted(() => {
     const use = vi.fn().mockReturnThis()
@@ -82,8 +83,6 @@ describe('entry file', () => {
     })
 
     it("shouldn't do anything", async () => {
-        const { stopRegistry } = await import('.')
-
         stopRegistry()
         expect(mocks.close).not.toHaveBeenCalled()
     })

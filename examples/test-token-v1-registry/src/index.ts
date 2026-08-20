@@ -11,7 +11,10 @@ import express, { ErrorRequestHandler, Request, Response } from 'express'
 import { TestToken } from '@canton-network/core-splice-codegen'
 import sdk from './common/sdk'
 import { Server } from 'http'
-import { assignSynchronizerIds } from './common/synchronizer.js'
+import {
+    assignSynchronizerIds,
+    resetSynchronizerIds,
+} from './common/synchronizer.js'
 
 let server: Server
 
@@ -65,5 +68,6 @@ export const startRegistry = async (
 
 export const stopRegistry = () => {
     if (!server) return
+    resetSynchronizerIds()
     server.close()
 }

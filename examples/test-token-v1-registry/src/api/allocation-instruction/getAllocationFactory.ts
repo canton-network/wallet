@@ -38,9 +38,8 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
             })
             return
         }
-    }
-
-    if (fetchedFactories[0]) {
+        // no multi-sync mode
+    } else if (fetchedFactories[0]) {
         res.json({
             factoryId: fetchedFactories[0].contractId,
             choiceContext: emptyChoiceContext,
