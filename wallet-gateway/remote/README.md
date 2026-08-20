@@ -131,8 +131,8 @@ Create a system user in the Blockdaemon dashboard and save the API key displayed
 
 **Environment variables:**
 
-- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - required `X-API-KEY` for key-management endpoints
-- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - required `X-API-KEY` for signing/request endpoints
+- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - optional `X-API-KEY` for key-management endpoints when using API-key authentication
+- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - optional `X-API-KEY` for signing/request endpoints when using API-key authentication
 - `SECUROSYS_TSB_BEARER_TOKEN` - optional bearer token for access-token mode
 - `SECUROSYS_TSB_MTLS_P12_PASSWORD` - optional PKCS#12/P12 password
 - `SECUROSYS_TSB_KEY_PASSWORD` - optional TSB key password
@@ -153,7 +153,7 @@ To create a Postgres database you need to:
 $ docker run --network=host --name some-postgres -e POSTGRES_PASSWORD=postgres -d postgres
 ```
 
-2. In the file `wallet/wallet-gateway/test/config.json`, specify the connection settings for both databases - store (required) and signingStore (optional, only for needed for signing provider `wallet-kernel`). The connection should look like this (it is important that `store.connection.database !== signingStore.connection.database !== 'postgres'`):
+2. In the file `/wallet-gateway/test/config.json`, specify the connection settings for both databases - store (required) and signingStore (optional, only needed for signing provider `wallet-kernel`). The connection should look like this (it is important that `store.connection.database !== signingStore.connection.database !== 'postgres'`):
 
 ```json
 {
