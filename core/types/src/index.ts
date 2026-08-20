@@ -26,6 +26,12 @@ export const PartyId = z
 
 export type PartyId = z.infer<typeof PartyId>
 
+export const SYNCHRONIZER_ID_EXAMPLE = 'sync::122012312312312312123'
+
+export const SynchronizerId = z.string().includes('::').min(10)
+
+export type SynchronizerId = z.infer<typeof SynchronizerId>
+
 export const HttpUrl = z
     .url({
         message: 'Must be a valid HTTP or HTTPS URL',

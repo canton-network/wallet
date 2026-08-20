@@ -10,7 +10,7 @@ import {
     OnboardingTransactions,
 } from './types.js'
 
-import { PartyId } from '@canton-network/core-types'
+import { PartyId, SynchronizerId } from '@canton-network/core-types'
 import {
     AbstractLedgerProvider,
     LedgerProvider,
@@ -315,7 +315,7 @@ export class SignedPartyCreationService {
 
     private async allocate(
         ledgerProvider: AbstractLedgerProvider,
-        synchronizerId: string,
+        synchronizerId: SynchronizerId,
         onboardingTransactions: OnboardingTransactions,
         multiHashSignatures: MultiHashSignatures
     ): Promise<Ops.PostV2PartiesExternalAllocate['ledgerApi']['result']> {

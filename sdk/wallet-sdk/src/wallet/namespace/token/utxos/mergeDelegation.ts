@@ -8,7 +8,7 @@ import {
     ExerciseCommand,
 } from '@canton-network/core-token-standard-service'
 import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
-import { PartyId } from '@canton-network/core-types'
+import { PartyId, SynchronizerId } from '@canton-network/core-types'
 import { LedgerNamespace } from '../../ledger/index.js'
 import { UtxoNamespace } from './index.js'
 import { resolveProviderParty } from '../utils.js'
@@ -23,7 +23,7 @@ export class MergeDelegationNamespace {
         this.ledger = new LedgerNamespace(ctx.commonCtx)
     }
 
-    async setup(synchronizerId: string = '', validatorParty?: PartyId) {
+    async setup(synchronizerId: SynchronizerId = '', validatorParty?: PartyId) {
         const providerParty = resolveProviderParty(
             this.ctx,
             'setup',

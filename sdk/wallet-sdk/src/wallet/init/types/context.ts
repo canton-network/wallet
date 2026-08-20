@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
+import { SynchronizerId } from '@canton-network/core-types'
 import { SDKLogger } from '../../logger/logger.js'
 import { SDKErrorHandler } from '../../error/handler.js'
 
@@ -10,7 +11,7 @@ export type SDKContext = {
     userId: string
     logger: SDKLogger
     error: SDKErrorHandler
-    defaultSynchronizerId: string
+    defaultSynchronizerId: SynchronizerId
 }
 
 export type OfflineSDKContext = {

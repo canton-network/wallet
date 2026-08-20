@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Ops } from '@canton-network/core-provider-ledger'
+import { SynchronizerId } from '@canton-network/core-types'
 import { TokenProviderConfig } from '@canton-network/core-wallet-auth'
 
 export type CreatePartyOptions = Partial<{
     isAdmin: boolean
     partyHint: string
     confirmingThreshold: number
-    synchronizerId: string
+    synchronizerId: SynchronizerId
     confirmingParticipantEndpoints: ParticipantEndpointConfig[]
     observingParticipantEndpoints: ParticipantEndpointConfig[]
     localParticipantObservationOnly: boolean

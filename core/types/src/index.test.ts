@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { WalletEvent, isSpliceMessage, isSpliceMessageEvent } from './index'
+import {
+    WalletEvent,
+    isSpliceMessage,
+    isSpliceMessageEvent,
+    SynchronizerId,
+    SYNCHRONIZER_ID_EXAMPLE,
+} from './index'
 
 describe('isSpliceMessage', () => {
     it('accepts each splice message variant', () => {
@@ -51,6 +57,24 @@ describe('isSpliceMessage', () => {
                 url: 'not-a-url',
             })
         ).toBe(false)
+    })
+})
+
+describe('SynchronizerId', () => {
+    it('accepts a well-formed synchronizer id', () => {
+        expect(SynchronizerId.safeParse(SYNCHRONIZER_ID_EXAMPLE).success).toBe(
+            true
+        )
+    })
+
+    it('rejects values missing the "::" separator', () => {
+        expect(SynchronizerId.safeParse('not-a-synchronizer-id').success).toBe(
+            false
+        )
+    })
+
+    it('rejects values shorter than 10 characters', () => {
+        expect(SynchronizerId.safeParse('a::b').success).toBe(false)
     })
 })
 
