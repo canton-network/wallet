@@ -1014,6 +1014,57 @@ describe('WalletSyncService - multi-network features', () => {
                 'party2::unknown-namespace-123'
             )
         })
+
+        it('syncWallets re-enables a disabled wallet once its party matches a signing provider again', async () => {
+            const network1 = createNetwork('network1')
+            await store.addNetwork(network1)
+            await setSession('network1')
+            const disabledWallet = createWallet(
+                'party1::namespace',
+                'network1',
+                true
+            )
+            await store.addWallet(disabledWallet)
+
+            mockLedgerGet
+                .mockResolvedValueOnce({
+                    participantId: 'participant1::namespace',
+                })
+                .mockResolvedValueOnce({
+                    rights: [
+                        {
+                            kind: {
+                                CanActAs: {
+                                    value: { party: 'party1::namespace' },
+                                },
+                            },
+                        },
+                    ],
+                })
+
+            const updateWalletSpy = vi.spyOn(store, 'updateWallet')
+            const addWalletSpy = vi.spyOn(store, 'addWallet')
+
+            const result = await service.syncWallets()
+
+            expect(addWalletSpy).not.toHaveBeenCalled()
+            expect(updateWalletSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    partyId: 'party1::namespace',
+                    networkId: 'network1',
+                    disabled: false,
+                })
+            )
+            const wallets = await store.getWallets()
+            const party1Wallet = wallets.find(
+                (w) => w.partyId === 'party1::namespace'
+            )
+            expect(party1Wallet?.disabled).toBe(false)
+            expect(result.added.length).toBe(0)
+            expect(result.updated.length).toBe(1)
+            expect(result.updated[0].partyId).toBe('party1::namespace')
+            expect(result.disabled.length).toBe(0)
+        })
     })
 
     describe('Wallet sync - rights tracking', () => {

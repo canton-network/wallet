@@ -49,6 +49,8 @@ export interface UpdateWallet {
     reason?: string
     primary?: boolean
     rights?: PartyLevelRight[]
+    signingProviderId?: string
+    publicKey?: string
 }
 
 export type WalletStatus = 'initialized' | 'allocated' | 'removed'

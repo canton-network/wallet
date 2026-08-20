@@ -391,14 +391,23 @@ export class WalletSyncService {
         }
     }
 
-    // Creates wallets for parties user has rights to
+    // Creates wallets for parties user has rights to. A party may already
+    // have a wallet row that's disabled (e.g. from a prior sync where its
+    // signing provider didn't match) -- store.addWallet() throws on a
+    // duplicate (partyId, networkId), so those go through updateWallet()
+    // instead, re-resolving the signing provider so the wallet can come
+    // back out of its disabled state.
     private async handlePartiesWithoutWallet(
         newParties: string[],
         networkId: string,
         rightsByParty: Map<string, PartyLevelRight[]>,
-        participantNamespace: string
-    ): Promise<Wallet[]> {
-        return await Promise.all(
+        participantNamespace: string,
+        existingWalletsByParty: Map<string, Wallet>
+    ): Promise<{ added: Wallet[]; reEnabled: Wallet[] }> {
+        const added: Wallet[] = []
+        const reEnabled: Wallet[] = []
+
+        await Promise.all(
             newParties.map(async (partyId) => {
                 const [hint, namespace] = partyId.split('::')
 
@@ -438,10 +447,30 @@ export class WalletSyncService {
                 }
 
                 this.logger.info({ wallet }, 'Wallet sync result')
-                await this.store.addWallet(wallet)
-                return wallet
+
+                const existingWallet = existingWalletsByParty.get(
+                    `${partyId}:${networkId}`
+                )
+
+                if (existingWallet) {
+                    await this.store.updateWallet({
+                        partyId: wallet.partyId,
+                        networkId: wallet.networkId,
+                        signingProviderId: wallet.signingProviderId,
+                        publicKey: wallet.publicKey,
+                        disabled: wallet.disabled,
+                        reason: wallet.reason,
+                        rights: wallet.rights,
+                    })
+                    reEnabled.push(wallet)
+                } else {
+                    await this.store.addWallet(wallet)
+                    added.push(wallet)
+                }
             })
         )
+
+        return { added, reEnabled }
     }
 
     private async handleRightsUpdates(
@@ -488,15 +517,27 @@ export class WalletSyncService {
             const existingAllocatedWallets = existingWallets.filter(
                 (w) => w.status === 'allocated'
             )
-            const existingPartiesOnNetwork = new Set(
-                existingAllocatedWallets.map(
-                    (w) => `${w.partyId}:${w.networkId}`
-                )
+            const existingWalletsByParty = new Map(
+                existingAllocatedWallets.map((w) => [
+                    `${w.partyId}:${w.networkId}`,
+                    w,
+                ])
+            )
+            // Disabled wallets are treated as if they don't exist, so a
+            // party whose wallet got disabled (e.g. no signing provider
+            // matched at the time) is re-checked on every sync instead of
+            // staying disabled forever once its signing provider resolves.
+            const existingEnabledPartiesOnNetwork = new Set(
+                existingAllocatedWallets
+                    .filter((w) => !w.disabled)
+                    .map((w) => `${w.partyId}:${w.networkId}`)
             )
 
             const newParties = partiesWithRights.filter(
                 (party) =>
-                    !existingPartiesOnNetwork.has(`${party}:${network.id}`)
+                    !existingEnabledPartiesOnNetwork.has(
+                        `${party}:${network.id}`
+                    )
                 // todo: filter on idp id
             )
 
@@ -506,8 +547,12 @@ export class WalletSyncService {
                     new Set(partiesWithRights)
                 )
 
+            // Disabled wallets are handled by handlePartiesWithoutWallet below
+            // (which sets fresh rights as part of re-enabling them) -- updating
+            // their rights here too would report the same wallet in both the
+            // "updated" and "disabled" result buckets.
             const rightsUpdatedWallets = await this.handleRightsUpdates(
-                existingAllocatedWallets,
+                existingAllocatedWallets.filter((w) => !w.disabled),
                 rightsByParty
             )
 
@@ -522,11 +567,15 @@ export class WalletSyncService {
                 'Wallets without parties'
             )
 
-            const newParticipantWallets = await this.handlePartiesWithoutWallet(
+            const {
+                added: newParticipantWallets,
+                reEnabled: reEnabledWallets,
+            } = await this.handlePartiesWithoutWallet(
                 newParties,
                 network.id,
                 rightsByParty,
-                participantNamespace
+                participantNamespace,
+                existingWalletsByParty
             )
 
             // Set primary wallet if none exists, or if primary is on an initialized wallet
@@ -549,6 +598,7 @@ export class WalletSyncService {
             const updatedRaw = [
                 ...updatedToInitialized,
                 ...rightsUpdatedWallets,
+                ...reEnabledWallets,
             ]
 
             const added = newWallets.filter((wallet) => !wallet.disabled)

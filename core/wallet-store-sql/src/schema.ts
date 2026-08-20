@@ -68,6 +68,8 @@ interface UpdateWalletProperties {
     status?: string | null
     disabled?: number
     reason?: string | null
+    signingProviderId?: string
+    publicKey?: string
 }
 
 interface UserPartyRightTable {
@@ -276,6 +278,8 @@ export const toWalletUpdateProperties = (
         disabled,
         reason,
         primary,
+        signingProviderId,
+        publicKey,
     } = params
     return {
         ...(status !== undefined && { status }),
@@ -284,6 +288,8 @@ export const toWalletUpdateProperties = (
         ...(primary !== undefined && { primary: primary ? 1 : 0 }),
         ...(disabled !== undefined && { disabled: disabled ? 1 : 0 }),
         ...(reason !== undefined && { reason }),
+        ...(signingProviderId !== undefined && { signingProviderId }),
+        ...(publicKey !== undefined && { publicKey }),
     }
 }
 
