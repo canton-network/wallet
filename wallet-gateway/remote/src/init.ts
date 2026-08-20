@@ -268,7 +268,11 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         : undefined
     const authService = jwtAuthService(store, logger)
 
-    const drivers = registerSigningProviders(signingStore, logger)
+    const drivers = registerSigningProviders(
+        config.providers,
+        signingStore,
+        logger
+    )
 
     const allowedPaths = {
         [config.server.dappPath]: ['*'],

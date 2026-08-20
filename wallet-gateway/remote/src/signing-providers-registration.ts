@@ -14,46 +14,123 @@ import SecurosysSigningProvider, {
 } from '@canton-network/core-signing-securosys'
 import { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import { Logger } from 'pino'
+import type { ProvidersConfig } from './config/Config.js'
 import { Env } from './env.js'
 import type { SigningDrivers } from './signing/signing-drivers.js'
 
 export function registerSigningProviders(
+    providers: ProvidersConfig,
     signingStore: SigningStoreSql | undefined,
     logger: Logger
 ): SigningDrivers {
+    // Sensitive settings, env vars only
     const fireblocksApiKey = Env.FIREBLOCKS_API_KEY()
     const fireblocksApiSecret = Env.FIREBLOCKS_SECRET()
-    const blockdaemonBaseUrl = Env.BLOCKDAEMON_API_URL(
-        'http://localhost:5080/api/cwp/canton'
-    )
-    const blockdaemonApiKey = Env.BLOCKDAEMON_API_KEY('')
+
+    const blockdaemonApiKey = Env.BLOCKDAEMON_API_KEY('') // TODO can I get rid of that fallback?
+
     const securosysKeyManagementApiKey =
         Env.SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY()
     const securosysKeyOperationApiKey =
         Env.SECUROSYS_TSB_KEY_OPERATION_API_KEY()
     const securosysBearerToken = Env.SECUROSYS_TSB_BEARER_TOKEN()
-    const securosysMtlsP12Path = Env.SECUROSYS_TSB_MTLS_P12_PATH()
     const securosysMtlsP12Password = Env.SECUROSYS_TSB_MTLS_P12_PASSWORD()
     const securosysKeyPassword = Env.SECUROSYS_TSB_KEY_PASSWORD()
-    const securosysBaseUrl = Env.SECUROSYS_TSB_BASE_URL()
-    const dfnsOrgId = Env.DFNS_ORG_ID()
-    const dfnsCredId = Env.DFNS_CRED_ID()
+
     const dfnsPrivateKey = Env.DFNS_PRIVATE_KEY()
     const dfnsAuthToken = Env.DFNS_AUTH_TOKEN()
 
+    // Non-sensitive settings, config first, env var if unset, sometimes fallback. If env var is set, show deprecation warning.
+    const fireblocksApiPath =
+        providers.fireblocks.apiPath ??
+        Env.FIREBLOCKS_API_PATH() ??
+        'https://api.fireblocks.io/v1'
+    if (Env.FIREBLOCKS_API_PATH() !== undefined) {
+        logger.warn(
+            'FIREBLOCKS_API_PATH is deprecated. Configure providers.fireblocks.apiPath instead'
+        )
+    }
+
+    const blockdaemonBaseUrl =
+        providers.blockdaemon.baseUrl ??
+        Env.BLOCKDAEMON_API_URL() ??
+        'http://localhost:5080/api/cwp/canton'
+    if (Env.BLOCKDAEMON_API_URL() !== undefined) {
+        logger.warn(
+            'BLOCKDAEMON_API_URL is deprecated. Configure providers.blockdaemon.baseUrl instead'
+        )
+    }
+
+    const blockdaemonCaip2 =
+        providers.blockdaemon.caip2 ??
+        Env.BLOCKDAEMON_CAIP2() ??
+        'canton:testnet'
+    if (Env.BLOCKDAEMON_CAIP2() !== undefined) {
+        logger.warn(
+            'BLOCKDAEMON_CAIP2 is deprecated. Configure providers.blockdaemon.caip2 instead'
+        )
+    }
+
+    const dfnsOrgId = providers.dfns.orgId ?? Env.DFNS_ORG_ID()
+    if (Env.DFNS_ORG_ID() !== undefined) {
+        logger.warn(
+            'DFNS_ORG_ID is deprecated. Configure providers.dfns.orgId instead'
+        )
+    }
+
+    const dfnsBaseUrl =
+        providers.dfns.baseUrl ?? Env.DFNS_BASE_URL() ?? 'https://api.dfns.io'
+    if (Env.DFNS_BASE_URL() !== undefined) {
+        logger.warn(
+            'DFNS_BASE_URL is deprecated. Configure providers.dfns.baseUrl instead'
+        )
+    }
+
+    const dfnsCredId = providers.dfns.credId ?? Env.DFNS_CRED_ID()
+    if (Env.DFNS_CRED_ID() !== undefined) {
+        logger.warn(
+            'DFNS_CRED_ID is deprecated. Configure providers.dfns.credId instead'
+        )
+    }
+
+    const securosysBaseUrl =
+        providers.securosys.baseUrl ?? Env.SECUROSYS_TSB_BASE_URL()
+    if (Env.SECUROSYS_TSB_BASE_URL() !== undefined) {
+        logger.warn(
+            'SECUROSYS_TSB_BASE_URL is deprecated. Configure providers.securosys.baseUrl instead'
+        )
+    }
+    const securosysMtlsP12Path =
+        providers.securosys.mtlsP12Path ?? Env.SECUROSYS_TSB_MTLS_P12_PATH()
+    if (Env.SECUROSYS_TSB_MTLS_P12_PATH() !== undefined) {
+        logger.warn(
+            'SECUROSYS_TSB_MTLS_P12_PATH is deprecated. Configure providers.securosys.mtlsP12Path instead'
+        )
+    }
+    const securosysSignatureAlgorithm =
+        providers.securosys.signatureAlgorithm ??
+        Env.SECUROSYS_TSB_SIGNATURE_ALGORITHM() ??
+        'EDDSA'
+    if (Env.SECUROSYS_TSB_SIGNATURE_ALGORITHM() !== undefined) {
+        logger.warn(
+            'SECUROSYS_TSB_SIGNATURE_ALGORITHM is deprecated. Configure providers.securosys.signatureAlgorithm instead'
+        )
+    }
+
+    // Signing drivers registration. Conditional depending on all required variables/configs being set and `enable` config property not being false (opt-out)
     const drivers: SigningDrivers = {}
 
-    if (Env.PARTICIPANT_SIGNING_DISABLED()) {
+    if (providers.participant.enable === false) {
         logger.info(
-            'Participant signing provider is disabled by PARTICIPANT_SIGNING_DISABLED'
+            'Participant signing provider is disabled by providers.participant.enable'
         )
     } else {
         drivers[SigningProvider.PARTICIPANT] = new ParticipantSigningDriver()
     }
 
-    if (Env.WALLET_KERNEL_SIGNING_DISABLED()) {
+    if (providers.walletKernel.enable === false) {
         logger.info(
-            'Wallet Kernel signing provider is disabled by WALLET_KERNEL_SIGNING_DISABLED'
+            'Wallet Kernel signing provider is disabled by providers.walletKernel.enable'
         )
     } else if (!signingStore) {
         logger.info(
@@ -65,9 +142,9 @@ export function registerSigningProviders(
         )
     }
 
-    if (Env.FIREBLOCKS_SIGNING_DISABLED()) {
+    if (providers.fireblocks.enable === false) {
         logger.info(
-            'Fireblocks signing provider is disabled by FIREBLOCKS_SIGNING_DISABLED'
+            'Fireblocks signing provider is disabled by providers.fireblocks.enable'
         )
     } else if (fireblocksApiKey && fireblocksApiSecret) {
         const keyInfo = {
@@ -77,7 +154,7 @@ export function registerSigningProviders(
         drivers[SigningProvider.FIREBLOCKS] = new FireblocksSigningProvider({
             defaultKeyInfo: keyInfo,
             userApiKeys: new Map([['user', keyInfo]]),
-            apiPath: Env.FIREBLOCKS_API_PATH('https://api.fireblocks.io/v1'),
+            apiPath: fireblocksApiPath,
         })
     } else {
         logger.warn(
@@ -85,15 +162,15 @@ export function registerSigningProviders(
         )
     }
 
-    if (Env.BLOCKDAEMON_SIGNING_DISABLED()) {
+    if (providers.blockdaemon.enable === false) {
         logger.info(
-            'Blockdaemon signing provider is disabled by BLOCKDAEMON_SIGNING_DISABLED'
+            'Blockdaemon signing provider is disabled by providers.blockdaemon.enable'
         )
     } else if (blockdaemonBaseUrl && blockdaemonApiKey) {
         drivers[SigningProvider.BLOCKDAEMON] = new BlockdaemonSigningProvider({
             baseUrl: blockdaemonBaseUrl,
             apiKey: blockdaemonApiKey,
-            caip2: Env.BLOCKDAEMON_CAIP2('canton:testnet') as CantonCaip2,
+            caip2: blockdaemonCaip2 as CantonCaip2,
         })
     } else {
         logger.warn(
@@ -101,9 +178,9 @@ export function registerSigningProviders(
         )
     }
 
-    if (Env.SECUROSYS_SIGNING_DISABLED()) {
+    if (providers.securosys.enable === false) {
         logger.info(
-            'Securosys signing provider is disabled by SECUROSYS_SIGNING_DISABLED'
+            'Securosys signing provider is disabled by providers.securosys.enable'
         )
     } else if (
         securosysBaseUrl &&
@@ -124,9 +201,8 @@ export function registerSigningProviders(
                 mtlsP12Password: securosysMtlsP12Password,
             }),
             ...(securosysKeyPassword && { keyPassword: securosysKeyPassword }),
-            signatureAlgorithm: Env.SECUROSYS_TSB_SIGNATURE_ALGORITHM(
-                'EDDSA'
-            ) as TsbSignatureAlgorithm,
+            signatureAlgorithm:
+                securosysSignatureAlgorithm as TsbSignatureAlgorithm,
         })
     } else {
         logger.warn(
@@ -134,14 +210,14 @@ export function registerSigningProviders(
         )
     }
 
-    if (Env.DFNS_SIGNING_DISABLED()) {
+    if (providers.dfns.enable === false) {
         logger.info(
-            'Dfns signing provider is disabled by DFNS_SIGNING_DISABLED'
+            'Dfns signing provider is disabled by providers.dfns.enable'
         )
     } else if (dfnsOrgId && dfnsCredId && dfnsPrivateKey && dfnsAuthToken) {
         drivers[SigningProvider.DFNS] = new DfnsSigningProvider({
             orgId: dfnsOrgId,
-            baseUrl: Env.DFNS_BASE_URL('https://api.dfns.io'),
+            baseUrl: dfnsBaseUrl,
             credentials: {
                 credId: dfnsCredId,
                 privateKey: dfnsPrivateKey,
