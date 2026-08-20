@@ -302,6 +302,122 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "required": ["connection"],
             "additionalProperties": false
         },
+        "signingProviders": {
+            "type": "object",
+            "properties": {
+                "walletKernel": {
+                    "type": "object",
+                    "properties": {
+                        "enable": {
+                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Wallet Kernel internal signing provider configuration."
+                },
+                "participant": {
+                    "type": "object",
+                    "properties": {
+                        "enable": {
+                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Participant signing provider configuration."
+                },
+                "fireblocks": {
+                    "type": "object",
+                    "properties": {
+                        "enable": {
+                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
+                            "type": "boolean"
+                        },
+                        "apiPath": {
+                            "description": "Fireblocks API URL. Defaults to https://api.fireblocks.io/v1.",
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Fireblocks signing provider configuration."
+                },
+                "blockdaemon": {
+                    "type": "object",
+                    "properties": {
+                        "enable": {
+                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
+                            "type": "boolean"
+                        },
+                        "baseUrl": {
+                            "description": "Blockdaemon API URL. Defaults to http://localhost:5080/api/cwp/canton.",
+                            "type": "string"
+                        },
+                        "caip2": {
+                            "description": "Blockdaemon CAIP-2 network identifier. Defaults to canton:testnet.",
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Blockdaemon signing provider configuration."
+                },
+                "dfns": {
+                    "type": "object",
+                    "properties": {
+                        "enable": {
+                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
+                            "type": "boolean"
+                        },
+                        "orgId": {
+                            "description": "Dfns organization ID.",
+                            "type": "string"
+                        },
+                        "baseUrl": {
+                            "description": "Dfns API URL. Defaults to https://api.dfns.io.",
+                            "type": "string"
+                        },
+                        "credId": {
+                            "description": "Dfns service account credential ID.",
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Dfns signing provider configuration."
+                },
+                "securosys": {
+                    "type": "object",
+                    "properties": {
+                        "enable": {
+                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
+                            "type": "boolean"
+                        },
+                        "baseUrl": {
+                            "description": "Securosys TSB service URL.",
+                            "type": "string"
+                        },
+                        "mtlsP12Path": {
+                            "description": "Path to a PKCS#12 client certificate when TSB requires mTLS.",
+                            "type": "string"
+                        },
+                        "signatureAlgorithm": {
+                            "description": "Securosys TSB signature algorithm. Defaults to EDDSA.",
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Securosys signing provider configuration."
+                }
+            },
+            "required": [
+                "walletKernel",
+                "participant",
+                "fireblocks",
+                "blockdaemon",
+                "dfns",
+                "securosys"
+            ],
+            "additionalProperties": false
+        },
         "bootstrap": {
             "type": "object",
             "properties": {
@@ -969,7 +1085,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "additionalProperties": false
         }
     },
-    "required": ["kernel", "server", "store", "bootstrap"],
+    "required": ["kernel", "server", "store", "signingProviders", "bootstrap"],
     "additionalProperties": false
 }
 ```
