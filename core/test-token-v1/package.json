@@ -29,7 +29,7 @@
         }
     },
     "scripts": {
-        "build": "yarn clean && rollup -c && yarn clean:types-tmp",
+        "build": "pnpm run clean && rollup -c && pnpm run clean:types-tmp",
         "clean:types-tmp": "rm -rf dist/types",
         "clean": "rm -rf dist"
     },
