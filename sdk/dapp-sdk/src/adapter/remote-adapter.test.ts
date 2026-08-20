@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
 import { popup } from '@canton-network/core-wallet-ui-components'
 import type { EventListener } from '@canton-network/core-splice-provider'
@@ -90,6 +90,10 @@ vi.mock('@canton-network/core-wallet-ui-components', () => ({
     },
 }))
 
+// A connected gateway session as reported by the wallet kernel: the payload a
+// dapp gets from `status`/`statusChanged` once the user logged into the
+// gateway at RPC_URL. Always a new copy, to avoid undesired mutations from
+// other tests.
 const kernelSession = (): StatusEvent => ({
     provider: {
         id: 'remote-gateway',
@@ -107,9 +111,15 @@ const kernelSession = (): StatusEvent => ({
 })
 
 describe('RemoteAdapter', () => {
+    // Shared instance built fresh per test. Safe to construct before each
+    // test sets up its own storage state: the constructor only copies config,
+    // storage is read lazily by provider() and restore().
+    let adapter: RemoteAdapter
+
     beforeEach(() => {
         localStorage.clear()
         vi.clearAllMocks()
+        adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         mockController.status.mockResolvedValue(kernelSession())
         mockController.connect.mockResolvedValue(kernelSession().connection)
         mockController.disconnect.mockResolvedValue(null)
@@ -123,16 +133,7 @@ describe('RemoteAdapter', () => {
         mockController.ledgerApi.mockResolvedValue({ ok: true })
     })
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
-
     it('derives providerId from rpcUrl by default', () => {
-        const adapter = new RemoteAdapter({
-            name: 'Gateway',
-            rpcUrl: RPC_URL,
-        })
-
         expect(adapter.providerId).toBe(`remote:${RPC_URL}`)
         expect(adapter.getInfo()).toEqual({
             providerId: `remote:${RPC_URL}`,
@@ -146,15 +147,12 @@ describe('RemoteAdapter', () => {
     })
 
     it('always reports the gateway as available', async () => {
-        await expect(
-            new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL }).detect()
-        ).resolves.toBe(true)
+        await expect(adapter.detect()).resolves.toBe(true)
     })
 
     it('creates a mapped provider backed by DappAsyncProvider', async () => {
         storage.setKernelSession(kernelSession())
 
-        const adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         const provider = adapter.provider()
 
         expect(dappSDKControllerMock).not.toHaveBeenCalled()
@@ -166,7 +164,6 @@ describe('RemoteAdapter', () => {
     })
 
     it('routes RPC calls through dappSDKController', async () => {
-        const adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         const provider = adapter.provider()
 
         mockController.status.mockResolvedValueOnce(kernelSession())
@@ -231,7 +228,6 @@ describe('RemoteAdapter', () => {
     })
 
     it('forwards provider events to the remote provider', () => {
-        const adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         const provider = adapter.provider()
         const listener = vi.fn<EventListener<StatusEvent>>()
 
@@ -246,10 +242,10 @@ describe('RemoteAdapter', () => {
             'statusChanged',
             kernelSession()
         )
+        expect(listener).toHaveBeenCalledWith(kernelSession())
     })
 
     it('persists kernel session when statusChanged includes a session', () => {
-        const adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         adapter.provider()
 
         mockDappAsyncProvider.emitToListeners('statusChanged', kernelSession())
@@ -258,7 +254,6 @@ describe('RemoteAdapter', () => {
     })
 
     it('clears local state when statusChanged reports a disconnect', () => {
-        const adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         adapter.provider()
 
         mockDappAsyncProvider.emitToListeners('statusChanged', {
@@ -273,7 +268,6 @@ describe('RemoteAdapter', () => {
     })
 
     it('clears local state when the wallet gateway logs out', () => {
-        const adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         adapter.provider()
 
         window.dispatchEvent(
@@ -286,12 +280,24 @@ describe('RemoteAdapter', () => {
     })
 
     it('closes the popup on teardown', () => {
-        new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL }).teardown()
+        adapter.teardown()
 
         expect(popup.close).toHaveBeenCalled()
     })
 
     describe('restore', () => {
+        // When another wallet was picked, the adapter must not restore
+        // anything, even with a kernel session stored.
+        it('returns null when the stored discovery is not a remote wallet', async () => {
+            storage.setKernelDiscovery({
+                walletType: 'extension',
+                providerId: 'browser:ext:test',
+            })
+            storage.setKernelSession(kernelSession())
+
+            await expect(adapter.restore()).resolves.toBeNull()
+        })
+
         it('returns null when discovery does not match this gateway', async () => {
             storage.setKernelDiscovery({
                 walletType: 'remote',
@@ -299,10 +305,6 @@ describe('RemoteAdapter', () => {
             })
             storage.setKernelSession(kernelSession())
 
-            const adapter = new RemoteAdapter({
-                name: 'Gateway',
-                rpcUrl: RPC_URL,
-            })
             await expect(adapter.restore()).resolves.toBeNull()
         })
 
@@ -312,10 +314,6 @@ describe('RemoteAdapter', () => {
                 url: RPC_URL,
             })
 
-            const adapter = new RemoteAdapter({
-                name: 'Gateway',
-                rpcUrl: RPC_URL,
-            })
             await expect(adapter.restore()).resolves.toBeNull()
         })
 
@@ -326,10 +324,6 @@ describe('RemoteAdapter', () => {
             })
             storage.setKernelSession(kernelSession())
 
-            const adapter = new RemoteAdapter({
-                name: 'Gateway',
-                rpcUrl: RPC_URL,
-            })
             const restored = await adapter.restore()
 
             expect(restored).not.toBeNull()
