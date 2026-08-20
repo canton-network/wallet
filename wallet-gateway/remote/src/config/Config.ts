@@ -115,7 +115,6 @@ const bootstrapFromEnv = bootstrapConfigSchema.extend({
     ),
 })
 
-// TODO double check if all and only non-sensitive settings are there
 const providerEnableSchema = z.object({
     enable: z.boolean().optional().meta({
         description:

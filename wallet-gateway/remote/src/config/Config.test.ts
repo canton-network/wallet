@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, test } from 'vitest'
+import { z } from 'zod'
 import { ConfigUtils } from './ConfigUtils.js'
 import { configSchema, rawConfigSchema } from './Config.js'
 
@@ -36,4 +37,14 @@ test('signingStore is optional', () => {
 
     expect(configSchema.parse(config).signingStore).toBeUndefined()
     expect(rawConfigSchema.parse(config).signingStore).toBeUndefined()
+})
+
+test('generated input schema keeps defaulted signing provider config optional', () => {
+    const schema = z.toJSONSchema(rawConfigSchema, { io: 'input' })
+    const signingProvidersSchema = schema.properties?.signingProviders as {
+        required?: string[]
+    }
+
+    expect(schema.required).not.toContain('signingProviders')
+    expect(signingProvidersSchema.required).toBeUndefined()
 })
