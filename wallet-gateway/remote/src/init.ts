@@ -269,7 +269,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const authService = jwtAuthService(store, logger)
 
     const drivers = registerSigningProviders(
-        config.providers,
+        config.signingProviders,
         signingStore,
         logger
     )

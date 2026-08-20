@@ -123,7 +123,7 @@ const providerEnableSchema = z.object({
     }),
 })
 
-export const providersConfigSchema = z.object({
+export const signingProvidersConfigSchema = z.object({
     walletKernel: z.preprocess(
         (val) => val ?? {},
         providerEnableSchema.meta({
@@ -209,7 +209,10 @@ export const rawConfigSchema = z.object({
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
-    providers: z.preprocess((val) => val ?? {}, providersConfigSchema),
+    signingProviders: z.preprocess(
+        (val) => val ?? {},
+        signingProvidersConfigSchema
+    ),
     bootstrap: bootstrapFromEnv,
 })
 
@@ -219,12 +222,17 @@ export const configSchema = z.object({
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
-    providers: z.preprocess((val) => val ?? {}, providersConfigSchema),
+    signingProviders: z.preprocess(
+        (val) => val ?? {},
+        signingProvidersConfigSchema
+    ),
     bootstrap: bootstrapConfigSchema,
 })
 
 export type KernelInfo = z.infer<typeof kernelInfoSchema>
 export type ServerConfig = z.infer<typeof serverConfigSchema>
-export type ProvidersConfig = z.infer<typeof providersConfigSchema>
+export type SigningProvidersConfig = z.infer<
+    typeof signingProvidersConfigSchema
+>
 export type RawConfig = z.infer<typeof rawConfigSchema>
 export type Config = z.infer<typeof configSchema>

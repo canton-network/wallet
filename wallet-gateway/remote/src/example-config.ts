@@ -25,6 +25,31 @@ export default {
             pollInterval: 5000,
         },
     },
+    signingProviders: {
+        walletKernel: {
+            enable: true,
+        },
+        participant: {
+            enable: true,
+        },
+        fireblocks: {
+            enable: true,
+            apiPath: 'https://api.fireblocks.io/v1',
+        },
+        blockdaemon: {
+            enable: true,
+            baseUrl: 'http://localhost:5080/api/cwp/canton',
+            caip2: 'canton:testnet',
+        },
+        dfns: {
+            enable: true,
+            baseUrl: 'https://api.dfns.io',
+        },
+        securosys: {
+            enable: true,
+            signatureAlgorithm: 'EDDSA',
+        },
+    },
     signingStore: {
         connection: {
             type: 'sqlite',
