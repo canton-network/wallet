@@ -116,7 +116,7 @@ export class WxtStore implements SigningDriverStore {
     ): Promise<SigningTransaction | undefined> {
         const records = await signingTransactionsItem().getValue()
 
-        const tx = records ? records.find((r) => (r.id = txId)) : undefined
+        const tx = records ? records.find((r) => r.id === txId) : undefined
         return tx ? toSigningTransaction(tx) : undefined
     }
 
@@ -126,7 +126,7 @@ export class WxtStore implements SigningDriverStore {
     ): Promise<void> {
         const item = signingTransactionsItem()
         const txs = await item.getValue()
-        const idx = txs?.findIndex((k) => (k.id = transaction.id))
+        const idx = txs?.findIndex((k) => k.id === transaction.id)
         const existing = idx >= 0 ? txs[idx] : undefined
         const serialized = fromSigningTransaction(transaction, userId)
 
@@ -151,7 +151,7 @@ export class WxtStore implements SigningDriverStore {
     ): Promise<void> {
         const signingTx = signingTransactionsItem()
         const txs = await signingTx.getValue()
-        const idx = txs?.findIndex((tx) => (tx.id = txId))
+        const idx = txs?.findIndex((tx) => tx.id === txId)
         if (idx === -1) {
             throw new Error(
                 `No signing tx found for txId: ${txId}, userId: ${this.userId}`
