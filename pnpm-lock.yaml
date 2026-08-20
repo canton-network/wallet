@@ -2573,6 +2573,9 @@ importers:
       '@canton-network/core-types':
         specifier: workspace:*
         version: link:../../core/types
+      '@canton-network/core-wallet-auth':
+        specifier: workspace:*
+        version: link:../../core/wallet-auth
       '@canton-network/core-wallet-store':
         specifier: workspace:*
         version: link:../../core/wallet-store

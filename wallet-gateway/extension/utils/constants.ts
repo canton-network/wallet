@@ -10,3 +10,7 @@ export const USER_RPC_KEY =
 
 export const DAPP_RPC_KEY =
     'dapp-rpc-service' as ProxyServiceKey<DappRpcMethods>
+
+// TODO: retrieve from oauth flow
+export const HARDCODED_ACCESS_TOKEN = 'hardcoded-access-token'
+export const HARDCODED_USER_ID = 'extension-user-id'
