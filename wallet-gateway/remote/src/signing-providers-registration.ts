@@ -27,7 +27,7 @@ export function registerSigningProviders(
     const fireblocksApiKey = Env.FIREBLOCKS_API_KEY()
     const fireblocksApiSecret = Env.FIREBLOCKS_SECRET()
 
-    const blockdaemonApiKey = Env.BLOCKDAEMON_API_KEY('') // TODO can I get rid of that fallback?
+    const blockdaemonApiKey = Env.BLOCKDAEMON_API_KEY()
 
     const securosysKeyManagementApiKey =
         Env.SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY()
@@ -185,11 +185,7 @@ export function registerSigningProviders(
         logger.info(
             'Securosys signing provider is disabled by signingProviders.securosys.enable'
         )
-    } else if (
-        securosysBaseUrl &&
-        securosysKeyManagementApiKey &&
-        securosysKeyOperationApiKey
-    ) {
+    } else if (securosysBaseUrl) {
         drivers[SigningProvider.SECUROSYS] = new SecurosysSigningProvider({
             baseUrl: securosysBaseUrl,
             ...(securosysKeyManagementApiKey && {
@@ -209,7 +205,7 @@ export function registerSigningProviders(
         })
     } else {
         logger.warn(
-            'Securosys env vars not fully set. Securosys signing provider will be unavailable'
+            'Securosys base URL is not set. Securosys signing provider will be unavailable'
         )
     }
 
