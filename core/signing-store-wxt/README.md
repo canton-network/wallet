@@ -28,6 +28,6 @@ await store.setSigningKey(userId, {
     updatedAt: new Date(),
 })
 
-const key = await store.getSigningKeyByName(userId, 'primary')
+const key = await store.getSigningKeyByName(userId, 'pkey1')
 const allKeys = await store.listSigningKeys(userId)
 ```
