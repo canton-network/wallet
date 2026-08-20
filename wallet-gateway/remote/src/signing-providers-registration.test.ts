@@ -110,6 +110,30 @@ describe('registerSigningProviders', () => {
         })
     })
 
+    test('returns no drivers when every signing provider is disabled', () => {
+        providers.walletKernel.enable = false
+        providers.participant.enable = false
+        providers.fireblocks.enable = false
+        providers.blockdaemon.enable = false
+        providers.dfns.enable = false
+        providers.securosys.enable = false
+
+        expect(
+            registerSigningProviders(providers, signingStore, logger)
+        ).toEqual({})
+    })
+
+    test('registers only participant when signingStore is unavailable and external providers are disabled', () => {
+        providers.fireblocks.enable = false
+        providers.blockdaemon.enable = false
+        providers.dfns.enable = false
+        providers.securosys.enable = false
+
+        const drivers = registerSigningProviders(providers, undefined, logger)
+
+        expect(Object.keys(drivers)).toEqual([SigningProvider.PARTICIPANT])
+    })
+
     describe('Participant', () => {
         test('does not register when disabled', () => {
             providers.participant.enable = false
@@ -299,8 +323,9 @@ describe('registerSigningProviders', () => {
             expect(drivers[SigningProvider.SECUROSYS]).toBeUndefined()
         })
 
-        test('does not register when required environment variables are missing', () => {
-            vi.stubEnv('SECUROSYS_TSB_KEY_OPERATION_API_KEY', '')
+        test('does not register when base URL is missing', () => {
+            providers.securosys.baseUrl = undefined
+            vi.stubEnv('SECUROSYS_TSB_BASE_URL', '')
 
             const drivers = registerSigningProviders(
                 providers,
@@ -311,8 +336,7 @@ describe('registerSigningProviders', () => {
             expect(drivers[SigningProvider.SECUROSYS]).toBeUndefined()
         })
 
-        test('registers when required environment variables are set', () => {
-            providers.securosys.mtlsP12Path = '/secrets/client.p12'
+        test('registers with API-key authentication', () => {
             providers.securosys.signatureAlgorithm = 'EDDSA'
 
             const drivers = registerSigningProviders(
@@ -325,8 +349,51 @@ describe('registerSigningProviders', () => {
             expect(providerConstructors.securosys).toHaveBeenCalledWith(
                 expect.objectContaining({
                     baseUrl: 'https://securosys.example',
-                    mtlsP12Path: '/secrets/client.p12',
+                    keyManagementApiKey: 'management-key',
+                    keyOperationApiKey: 'operation-key',
                     signatureAlgorithm: 'EDDSA',
+                })
+            )
+        })
+
+        test('registers with bearer-token authentication without API keys', () => {
+            vi.stubEnv('SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY', '')
+            vi.stubEnv('SECUROSYS_TSB_KEY_OPERATION_API_KEY', '')
+            vi.stubEnv('SECUROSYS_TSB_BEARER_TOKEN', 'bearer-token')
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
+
+            expect(drivers[SigningProvider.SECUROSYS]).toBeDefined()
+            expect(providerConstructors.securosys).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    baseUrl: 'https://securosys.example',
+                    bearerToken: 'bearer-token',
+                })
+            )
+        })
+
+        test('registers with mTLS authentication without API keys', () => {
+            vi.stubEnv('SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY', '')
+            vi.stubEnv('SECUROSYS_TSB_KEY_OPERATION_API_KEY', '')
+            vi.stubEnv('SECUROSYS_TSB_MTLS_P12_PASSWORD', 'p12-password')
+            providers.securosys.mtlsP12Path = '/secrets/client.p12'
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
+
+            expect(drivers[SigningProvider.SECUROSYS]).toBeDefined()
+            expect(providerConstructors.securosys).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    baseUrl: 'https://securosys.example',
+                    mtlsP12Path: '/secrets/client.p12',
+                    mtlsP12Password: 'p12-password',
                 })
             )
         })

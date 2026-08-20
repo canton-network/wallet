@@ -49,7 +49,12 @@ const program = new Command()
     .action((opts) => {
         if (opts.configSchema) {
             console.log(
-                JSON.stringify(z.toJSONSchema(rawConfigSchema), null, 2)
+                JSON.stringify(
+                    // Describe accepted config input before preprocessors apply defaults.
+                    z.toJSONSchema(rawConfigSchema, { io: 'input' }),
+                    null,
+                    2
+                )
             )
             process.exit(0)
         }
