@@ -29,6 +29,14 @@ Here is a minimalistic configuration example that can be used against a Splice l
         "allowedOrigins": ["http://localhost:8080", "http://localhost:8081"],
         "admin": "operator"
     },
+    "signingProviders": {
+        "walletKernel": {
+            "enable": false
+        },
+        "participant": {
+            "enable": true
+        }
+    },
     "store": {
         "connection": {
             "type": "sqlite",
@@ -98,6 +106,7 @@ The configuration file has the following main sections:
 - **store**: Database connection and persistence settings
 - **bootstrap**: Initial identity providers and network definitions seeded when the database is first created
 - **signingStore**: (optional) Secondary database for key storage when using internal signing
+- **signingProviders**: Signing provider enablement and non-secret connection settings
 
 ## Configuring Kernel Settings
 
@@ -590,6 +599,38 @@ Optional server setting for external custody signers:
 ```
 
 - **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns) when automation signing stays `pending` until custody approves.
+
+## Configuring Signing Providers
+
+The optional root-level `signingProviders` block controls which signing providers
+may be registered and contains their non-secret settings. Each
+provider defaults to `enable: true`.
+
+```json
+{
+    "signingProviders": {
+        "walletKernel": {
+            "enable": false
+        },
+        "participant": {
+            "enable": false
+        },
+        "fireblocks": {
+            "enable": true,
+            "apiPath": "https://api.fireblocks.io/v1"
+        },
+        "blockdaemon": {
+            "enable": true,
+            "baseUrl": "https://api.blockdaemon.com/api/cwp/canton",
+            "caip2": "canton:testnet"
+        }
+    }
+}
+```
+
+External providers still require their secrets as environment variables. See
+[Signing Providers](../signing-providers/index.md) for provider-specific
+requirements.
 
 ## Configuring Signing Store
 
