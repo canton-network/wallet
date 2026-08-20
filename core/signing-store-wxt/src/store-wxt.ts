@@ -44,18 +44,14 @@ export class WxtStore implements SigningDriverStore {
         publicKey: string
     ): Promise<SigningKey | undefined> {
         const keys = await this.listSigningKeys(this.userId)
-        const signingKey = keys.find((key) => key.publicKey === publicKey)
-        if (!signingKey) return undefined
-        return signingKey
+        return keys.find((key) => key.publicKey === publicKey)
     }
     async getSigningKeyByName(
         userId: string,
         name: string
     ): Promise<SigningKey | undefined> {
         const keys = await this.listSigningKeys(this.userId)
-        const signingKey = keys.find((key) => key.name === name)
-        if (!signingKey) return undefined
-        return signingKey
+        return keys.find((key) => key.name === name)
     }
     async listSigningTransactionsByTxIdsAndPublicKeys(
         txIds: string[],
