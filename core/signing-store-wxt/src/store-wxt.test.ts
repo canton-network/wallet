@@ -9,7 +9,7 @@ import {
 import { describe, expect, beforeEach, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { WxtStore } from './store-wxt.js'
-import { signingKeysItem } from './schemas.js'
+import { signingKeysItem } from './items.js'
 
 describe('storage wxt', () => {
     beforeEach(() => {

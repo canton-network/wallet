@@ -14,14 +14,16 @@ import {
     fromSigningKey,
     toSigningTransaction,
     fromSigningTransaction,
-    SigningTransactionRecord,
-    signingTransactionsItem,
-    signingDriverConfigItem,
     toSigningDriverConfig,
     fromSigningDriverConfig,
+} from './schemas.js'
+import {
     signingKeysItem,
     SigningKeyRecord,
-} from './schemas.js'
+    signingTransactionsItem,
+    SigningTransactionRecord,
+    signingDriverConfigItem,
+} from './items.js'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // this is required because the extension is single user, but we need to satisfy the SigningDriverStore interface
