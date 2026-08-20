@@ -5,23 +5,33 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import { Logger } from 'pino'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { signingProvidersConfigSchema } from './config/Config.js'
+import type { SigningProvidersConfig } from './config/Config.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
 
+const providerConstructors = vi.hoisted(() => ({
+    blockdaemon: vi.fn(),
+    dfns: vi.fn(),
+    fireblocks: vi.fn(),
+    securosys: vi.fn(),
+}))
+
 vi.mock('@canton-network/core-signing-blockdaemon', () => ({
-    default: class BlockdaemonSigningProvider {},
+    default: providerConstructors.blockdaemon,
 }))
 vi.mock('@canton-network/core-signing-dfns', () => ({
-    default: class DfnsSigningProvider {},
+    default: providerConstructors.dfns,
 }))
 vi.mock('@canton-network/core-signing-fireblocks', () => ({
-    default: class FireblocksSigningProvider {},
+    default: providerConstructors.fireblocks,
 }))
 vi.mock('@canton-network/core-signing-securosys', () => ({
-    default: class SecurosysSigningProvider {},
+    default: providerConstructors.securosys,
 }))
 
 describe('registerSigningProviders', () => {
     const signingStore = {} as SigningStoreSql
+    let providers: SigningProvidersConfig
     const logger = {
         debug: vi.fn(),
         info: vi.fn(),
@@ -31,27 +41,106 @@ describe('registerSigningProviders', () => {
     } as unknown as Logger
 
     beforeEach(() => {
-        vi.stubEnv('WALLET_KERNEL_SIGNING_DISABLED', 'true')
-        vi.stubEnv('PARTICIPANT_SIGNING_DISABLED', 'true')
-        vi.stubEnv('FIREBLOCKS_SIGNING_DISABLED', 'true')
-        vi.stubEnv('BLOCKDAEMON_SIGNING_DISABLED', 'true')
-        vi.stubEnv('DFNS_SIGNING_DISABLED', 'true')
-        vi.stubEnv('SECUROSYS_SIGNING_DISABLED', 'true')
+        vi.clearAllMocks()
+        providers = signingProvidersConfigSchema.parse({})
     })
 
     afterEach(() => vi.unstubAllEnvs())
 
+    test('uses deprecated non-secret environment variables as fallbacks', () => {
+        vi.stubEnv('FIREBLOCKS_API_KEY', 'fireblocks-key')
+        vi.stubEnv('FIREBLOCKS_SECRET', 'fireblocks-secret')
+        vi.stubEnv('FIREBLOCKS_API_PATH', 'https://fireblocks.env/v1')
+        vi.stubEnv('BLOCKDAEMON_API_KEY', 'blockdaemon-key')
+        vi.stubEnv('BLOCKDAEMON_API_URL', 'https://blockdaemon.env')
+        vi.stubEnv('BLOCKDAEMON_CAIP2', 'canton:mainnet')
+        vi.stubEnv('DFNS_ORG_ID', 'dfns-org')
+        vi.stubEnv('DFNS_BASE_URL', 'https://dfns.env')
+        vi.stubEnv('DFNS_CRED_ID', 'dfns-credential')
+        vi.stubEnv('DFNS_PRIVATE_KEY', 'dfns-private-key')
+        vi.stubEnv('DFNS_AUTH_TOKEN', 'dfns-token')
+        vi.stubEnv('SECUROSYS_TSB_BASE_URL', 'https://securosys.env')
+        vi.stubEnv('SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY', 'management-key')
+        vi.stubEnv('SECUROSYS_TSB_KEY_OPERATION_API_KEY', 'operation-key')
+        vi.stubEnv('SECUROSYS_TSB_MTLS_P12_PATH', '/env/client.p12')
+        vi.stubEnv('SECUROSYS_TSB_SIGNATURE_ALGORITHM', 'SHA256_WITH_ECDSA')
+
+        registerSigningProviders(providers, signingStore, logger)
+
+        expect(providerConstructors.fireblocks).toHaveBeenCalledWith(
+            expect.objectContaining({ apiPath: 'https://fireblocks.env/v1' })
+        )
+        expect(providerConstructors.blockdaemon).toHaveBeenCalledWith({
+            baseUrl: 'https://blockdaemon.env',
+            apiKey: 'blockdaemon-key',
+            caip2: 'canton:mainnet',
+        })
+        expect(providerConstructors.dfns).toHaveBeenCalledWith(
+            expect.objectContaining({
+                orgId: 'dfns-org',
+                baseUrl: 'https://dfns.env',
+                credentials: expect.objectContaining({
+                    credId: 'dfns-credential',
+                }),
+            })
+        )
+        expect(providerConstructors.securosys).toHaveBeenCalledWith(
+            expect.objectContaining({
+                baseUrl: 'https://securosys.env',
+                mtlsP12Path: '/env/client.p12',
+                signatureAlgorithm: 'SHA256_WITH_ECDSA',
+            })
+        )
+
+        const deprecatedVariables = [
+            'FIREBLOCKS_API_PATH',
+            'BLOCKDAEMON_API_URL',
+            'BLOCKDAEMON_CAIP2',
+            'DFNS_ORG_ID',
+            'DFNS_BASE_URL',
+            'DFNS_CRED_ID',
+            'SECUROSYS_TSB_BASE_URL',
+            'SECUROSYS_TSB_MTLS_P12_PATH',
+            'SECUROSYS_TSB_SIGNATURE_ALGORITHM',
+        ]
+        deprecatedVariables.forEach((variable) => {
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.stringContaining(`${variable} is deprecated`)
+            )
+        })
+    })
+
     describe('Participant', () => {
         test('does not register when disabled', () => {
-            const drivers = registerSigningProviders(signingStore, logger)
+            providers.participant.enable = false
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.PARTICIPANT]).toBeUndefined()
         })
 
-        test('registers when enabled', () => {
-            vi.stubEnv('PARTICIPANT_SIGNING_DISABLED', '')
+        test('registers when provider config is omitted', () => {
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            expect(drivers[SigningProvider.PARTICIPANT]).toBeDefined()
+        })
+
+        test('registers when enabled', () => {
+            providers.participant.enable = true
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.PARTICIPANT]).toBeDefined()
         })
@@ -59,23 +148,33 @@ describe('registerSigningProviders', () => {
 
     describe('Wallet Kernel', () => {
         test('does not register when disabled', () => {
-            const drivers = registerSigningProviders(signingStore, logger)
+            providers.walletKernel.enable = false
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.WALLET_KERNEL]).toBeUndefined()
         })
 
         test('does not register when signingStore is unavailable', () => {
-            vi.stubEnv('WALLET_KERNEL_SIGNING_DISABLED', '')
-
-            const drivers = registerSigningProviders(undefined, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                undefined,
+                logger
+            )
 
             expect(drivers[SigningProvider.WALLET_KERNEL]).toBeUndefined()
         })
 
         test('registers when signingStore is available', () => {
-            vi.stubEnv('WALLET_KERNEL_SIGNING_DISABLED', '')
-
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.WALLET_KERNEL]).toBeDefined()
         })
@@ -88,119 +187,202 @@ describe('registerSigningProviders', () => {
         })
 
         test('does not register when disabled', () => {
-            const drivers = registerSigningProviders(signingStore, logger)
+            providers.fireblocks.enable = false
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.FIREBLOCKS]).toBeUndefined()
         })
 
         test('does not register when required environment variables are missing', () => {
-            vi.stubEnv('FIREBLOCKS_SIGNING_DISABLED', '')
             vi.stubEnv('FIREBLOCKS_SECRET', '')
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.FIREBLOCKS]).toBeUndefined()
         })
 
         test('registers when required environment variables are set', () => {
-            vi.stubEnv('FIREBLOCKS_SIGNING_DISABLED', '')
+            providers.fireblocks.apiPath = 'https://fireblocks.example/v1'
+            vi.stubEnv('FIREBLOCKS_API_PATH', 'https://fireblocks.env/v1')
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.FIREBLOCKS]).toBeDefined()
+            expect(providerConstructors.fireblocks).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    apiPath: 'https://fireblocks.example/v1',
+                })
+            )
+            expect(logger.warn).toHaveBeenCalledWith(
+                'FIREBLOCKS_API_PATH is deprecated. Configure signingProviders.fireblocks.apiPath instead'
+            )
         })
     })
 
     describe('Blockdaemon', () => {
         beforeEach(() => {
-            vi.stubEnv('BLOCKDAEMON_API_URL', 'https://blockdaemon.example')
             vi.stubEnv('BLOCKDAEMON_API_KEY', 'api-key')
+            providers.blockdaemon.baseUrl = 'https://blockdaemon.example'
         })
 
         test('does not register when disabled', () => {
-            const drivers = registerSigningProviders(signingStore, logger)
+            providers.blockdaemon.enable = false
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.BLOCKDAEMON]).toBeUndefined()
         })
 
         test('does not register when required environment variables are missing', () => {
-            vi.stubEnv('BLOCKDAEMON_SIGNING_DISABLED', '')
             vi.stubEnv('BLOCKDAEMON_API_KEY', '')
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.BLOCKDAEMON]).toBeUndefined()
         })
 
         test('registers when required environment variables are set', () => {
-            vi.stubEnv('BLOCKDAEMON_SIGNING_DISABLED', '')
+            providers.blockdaemon.caip2 = 'canton:mainnet'
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.BLOCKDAEMON]).toBeDefined()
+            expect(providerConstructors.blockdaemon).toHaveBeenCalledWith({
+                baseUrl: 'https://blockdaemon.example',
+                apiKey: 'api-key',
+                caip2: 'canton:mainnet',
+            })
         })
     })
 
     describe('Securosys', () => {
         beforeEach(() => {
-            vi.stubEnv('SECUROSYS_TSB_BASE_URL', 'https://securosys.example')
+            providers.securosys.baseUrl = 'https://securosys.example'
             vi.stubEnv('SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY', 'management-key')
             vi.stubEnv('SECUROSYS_TSB_KEY_OPERATION_API_KEY', 'operation-key')
         })
 
         test('does not register when disabled', () => {
-            const drivers = registerSigningProviders(signingStore, logger)
+            providers.securosys.enable = false
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.SECUROSYS]).toBeUndefined()
         })
 
         test('does not register when required environment variables are missing', () => {
-            vi.stubEnv('SECUROSYS_SIGNING_DISABLED', '')
             vi.stubEnv('SECUROSYS_TSB_KEY_OPERATION_API_KEY', '')
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.SECUROSYS]).toBeUndefined()
         })
 
         test('registers when required environment variables are set', () => {
-            vi.stubEnv('SECUROSYS_SIGNING_DISABLED', '')
+            providers.securosys.mtlsP12Path = '/secrets/client.p12'
+            providers.securosys.signatureAlgorithm = 'EDDSA'
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.SECUROSYS]).toBeDefined()
+            expect(providerConstructors.securosys).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    baseUrl: 'https://securosys.example',
+                    mtlsP12Path: '/secrets/client.p12',
+                    signatureAlgorithm: 'EDDSA',
+                })
+            )
         })
     })
 
     describe('Dfns', () => {
         beforeEach(() => {
-            vi.stubEnv('DFNS_ORG_ID', 'org-id')
-            vi.stubEnv('DFNS_CRED_ID', 'credential-id')
+            providers.dfns.orgId = 'org-id'
+            providers.dfns.credId = 'credential-id'
             vi.stubEnv('DFNS_PRIVATE_KEY', 'private-key')
             vi.stubEnv('DFNS_AUTH_TOKEN', 'auth-token')
         })
 
         test('does not register when disabled', () => {
-            const drivers = registerSigningProviders(signingStore, logger)
+            providers.dfns.enable = false
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.DFNS]).toBeUndefined()
         })
 
         test('does not register when required environment variables are missing', () => {
-            vi.stubEnv('DFNS_SIGNING_DISABLED', '')
             vi.stubEnv('DFNS_AUTH_TOKEN', '')
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.DFNS]).toBeUndefined()
         })
 
         test('registers when required environment variables are set', () => {
-            vi.stubEnv('DFNS_SIGNING_DISABLED', '')
+            providers.dfns.baseUrl = 'https://dfns.example'
 
-            const drivers = registerSigningProviders(signingStore, logger)
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
 
             expect(drivers[SigningProvider.DFNS]).toBeDefined()
+            expect(providerConstructors.dfns).toHaveBeenCalledWith({
+                orgId: 'org-id',
+                baseUrl: 'https://dfns.example',
+                credentials: {
+                    credId: 'credential-id',
+                    privateKey: 'private-key',
+                    authToken: 'auth-token',
+                },
+            })
         })
     })
 })
