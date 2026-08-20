@@ -3,12 +3,14 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Wallet Gateway Remote</title>
+        <title>Wallet Gateway - Not found</title>
         <script type="module" src="./index.ts"></script>
     </head>
+
     <body>
-        <user-app>
-            <user-ui></user-ui>
-        </user-app>
+        <app-layout iconSrc="./icon.png">
+            <user-ui-auth-redirect></user-ui-auth-redirect>
+            <user-ui-404></user-ui-404>
+        </app-layout>
     </body>
 </html>

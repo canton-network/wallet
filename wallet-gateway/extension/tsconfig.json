@@ -1,7 +1,10 @@
 {
     "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
+        "noImplicitOverride": false,
+        "verbatimModuleSyntax": false,
         "allowImportingTsExtensions": true,
-        "jsx": "react-jsx"
+        "experimentalDecorators": false,
+        "useDefineForClassFields": false
     }
 }
