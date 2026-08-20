@@ -4,24 +4,25 @@
 import { UserId } from '@canton-network/core-wallet-auth'
 import { storage } from '@wxt-dev/storage'
 
-export const signingKeysItem = () =>
-    storage.defineItem<SigningKeyRecord[]>(`local:signingKeys`, {
+const STORAGE_LOCATION = 'local'
+
+export function item<T>(key: string) {
+    return storage.defineItem<T>(`${STORAGE_LOCATION}:${key}`)
+}
+
+export function items<T>(key: string) {
+    return storage.defineItem<T[]>(`${STORAGE_LOCATION}:${key}`, {
         fallback: [],
     })
+}
+
+export const signingKeysItem = () => items<SigningKeyRecord>('signingKeys')
 
 export const signingTransactionsItem = () =>
-    storage.defineItem<SigningTransactionRecord[]>(
-        `local:signingTransactions`,
-        {
-            fallback: [],
-        }
-    )
+    items<SigningTransactionRecord>('signingTransactions')
 
 export const signingDriverConfigItem = (driverId: string) =>
-    storage.defineItem<SigningDriverConfigRecord>(
-        `local:signingDriverConfigItem:${driverId}`,
-        {}
-    )
+    item<SigningDriverConfigRecord>(`signingDriverConfigItem:${driverId}`)
 
 export interface SigningKeyRecord {
     id: string

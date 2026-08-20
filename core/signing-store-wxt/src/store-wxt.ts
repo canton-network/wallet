@@ -104,6 +104,7 @@ export class WxtStore implements SigningDriverStore {
             await item.setValue(nextKeys)
         }
     }
+
     async listSigningKeys(userId: string): Promise<SigningKey[]> {
         const keys = await signingKeysItem().getValue()
         return keys.map((x) => toSigningKey(x))
