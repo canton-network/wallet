@@ -252,6 +252,13 @@ The `auth` client does **not** need a pre-existing wallet or party attached in K
     - Ensure the service account credentials are correct
     - Confirm the service account has wallet creation and signing permissions
 
+5. **Securosys:**
+    - Verify `signingProviders.securosys.baseUrl` in the Gateway config
+    - Verify the selected authentication mode is configured correctly: API keys, bearer token, and/or mTLS
+    - For API-key authentication, verify `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` and `SECUROSYS_TSB_KEY_OPERATION_API_KEY`
+    - For bearer-token authentication, verify `SECUROSYS_TSB_BEARER_TOKEN`
+    - For mTLS, verify `signingProviders.securosys.mtlsP12Path` and `SECUROSYS_TSB_MTLS_P12_PASSWORD`
+
 ## Debugging
 
 ### Enable structured logging

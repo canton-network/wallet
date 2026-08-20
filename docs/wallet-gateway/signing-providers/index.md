@@ -150,8 +150,8 @@ See the [Securosys signing documentation](https://github.com/canton-network/wall
     - `signingProviders.securosys.mtlsP12Path` - optional, falls back to `SECUROSYS_TSB_MTLS_P12_PATH`
     - `signingProviders.securosys.signatureAlgorithm` - optional, falls back to `SECUROSYS_TSB_SIGNATURE_ALGORITHM`, then defaults to `EDDSA`
 - Environment variables:
-    - `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - required API key for TSB key-management endpoints
-    - `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - required API key for TSB signing and request-status endpoints
+    - `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - optional API key for TSB key-management endpoints when using API-key authentication
+    - `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - optional API key for TSB signing and request-status endpoints when using API-key authentication
     - `SECUROSYS_TSB_BEARER_TOKEN` - optional bearer access token (access-token auth mode)
     - `SECUROSYS_TSB_MTLS_P12_PASSWORD` - optional password for the PKCS#12/P12 client certificate
     - `SECUROSYS_TSB_KEY_PASSWORD` - optional TSB key password used for key attributes and signing
