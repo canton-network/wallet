@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { html } from 'lit'
-import { customElement, property, state } from 'lit/decorators.js'
+import { customElement, property } from 'lit/decorators.js'
 import { chevronDownIcon } from '../icons/index.js'
 import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
 
@@ -25,11 +25,10 @@ export class WgWalletEditForm extends WgWalletForm {
     @property({ type: Array }) signingProviders: string[] = []
     @property({ type: Boolean }) submitting = false
     @property({ type: Boolean }) publicKeysLoading = false
+    @property({ type: Array }) publicKeys: string[] = []
     @property() readonly partyId = ''
     @property() accessor selectedSigningProvider = ''
     @property() accessor selectedPublicKey = ''
-
-    @state() accessor publicKeys: string[] = []
 
     protected onSubmit = (event: SubmitEvent) => {
         event.preventDefault()
@@ -56,6 +55,11 @@ export class WgWalletEditForm extends WgWalletForm {
         this.selectedSigningProvider = signingProviderId
         this.selectedPublicKey = ''
         this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
+    }
+
+    private onPublicKeyChange(event: Event) {
+        const publicKey = (event.target as HTMLSelectElement).value
+        this.selectedPublicKey = publicKey
     }
 
     protected get isLoading(): boolean {
@@ -119,6 +123,7 @@ export class WgWalletEditForm extends WgWalletForm {
                 <div class="select-wrap">
                     <select
                         .value=${this.selectedPublicKey}
+                        @change=${this.onPublicKeyChange}
                         ?disabled=${this.submitting}
                         class="form-select field-control"
                         id="signing-provider-id"

@@ -42,6 +42,6 @@ export abstract class WalletAllocator {
         if (!this.signingDriver) return null
         const driver = this.signingDriver.controller(userId)
         const keys = await driver.getKeys().then(this.handleSigningError)
-        return { keys: keys?.keys?.map((key) => key.name) ?? [] }
+        return { keys: keys?.keys?.map((key) => key.publicKey) ?? [] }
     }
 }

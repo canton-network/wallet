@@ -36,7 +36,7 @@ export class WalletAllocationService {
             case SigningProvider.SECUROSYS:
                 return this.securosysAllocator
             case SigningProvider.WALLET_KERNEL:
-                return undefined
+                return this.kernelAllocator
             case SigningProvider.PARTICIPANT:
             default:
                 return this.participantAllocator

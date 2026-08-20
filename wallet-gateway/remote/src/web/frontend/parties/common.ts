@@ -16,11 +16,9 @@ import { setLocationHref } from '../navigation.js'
 import { createUserClient } from '../rpc-client.js'
 import { stateManager } from '../state-manager.js'
 import { showToast } from '../utils.js'
+import { SigningProviderId } from '@canton-network/core-wallet-user-rpc-client'
 
 export abstract class UserUiAddOrEditParty extends BaseElement {
-    protected static readonly vaultSigningProviders = [
-        SigningProvider.FIREBLOCKS,
-    ]
     protected abstract get form(): TemplateResult
     protected abstract pageTitle: string
 
@@ -51,20 +49,9 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         `,
     ]
 
-    protected async onSigningProviderChange(event: SigningProviderChangeEvent) {
-        this.publicKeys = []
-
-        const { signingProviderId } = event
-        if (
-            !UserUiAddOrEditParty.vaultSigningProviders.includes(
-                signingProviderId as SigningProvider
-            )
-        ) {
-            return
-        }
-
-        this.publicKeysLoading = true
-
+    protected async getSigningProviderKeys(
+        signingProviderId: SigningProviderId
+    ) {
         const currentOrigin = await detectCurrentOrigin()
         try {
             const userClient = await createUserClient(
@@ -77,16 +64,28 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
             this.publicKeys = result.keys.sort()
             if (result.keys.length === 0) {
                 showToast(
-                    'No vault accounts found',
-                    'No vault accounts are available for the selected signing provider.',
+                    'No public keys found',
+                    'No public keys are available for the selected signing provider.',
                     'info'
                 )
             }
         } catch (error) {
             handleErrorToast(error)
-        } finally {
-            this.publicKeysLoading = false
         }
+    }
+
+    protected async onSigningProviderChange(event: SigningProviderChangeEvent) {
+        this.publicKeys = []
+
+        const { signingProviderId } = event
+        if (signingProviderId === SigningProvider.PARTICIPANT) {
+            return
+        }
+
+        this.publicKeysLoading = true
+
+        await this.getSigningProviderKeys(signingProviderId)
+        this.publicKeysLoading = false
     }
 
     private navigateBack() {

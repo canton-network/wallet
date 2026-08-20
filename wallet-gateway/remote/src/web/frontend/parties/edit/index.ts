@@ -44,6 +44,7 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         return Boolean(this.userClient)
     }
 
+    // TODO: implement loader
     override async connectedCallback() {
         super.connectedCallback()
         const currentOrigin = await detectCurrentOrigin()
@@ -58,6 +59,7 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         this.wallet = result
         this.selectedSigningProvider = this.wallet.signingProviderId
         this.selectedPublicKey = this.wallet.publicKey
+        await this.getSigningProviderKeys(this.wallet.signingProviderId)
     }
 
     private async onEditParty(event: WalletEditEvent) {
@@ -92,7 +94,6 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         return html`
             <wg-wallet-edit-form
                 .signingProviders=${this.signingProviders}
-                .keySigningProviders=${UserUiAddOrEditParty.vaultSigningProviders}
                 .publicKeys=${this.publicKeys}
                 .selectedSigningProvider=${this.selectedSigningProvider}
                 .partyId=${this.walletConstraint.partyId}

@@ -61,7 +61,6 @@ export class UserUiAddParty extends UserUiAddOrEditParty {
         return html`
             <wg-wallet-create-form
                 .signingProviders=${this.signingProviders}
-                .keySigningProviders=${UserUiAddOrEditParty.vaultSigningProviders}
                 .publicKeys=${this.publicKeys}
                 ?publicKeysLoading=${this.publicKeysLoading}
                 ?submitting=${this.submitting}
