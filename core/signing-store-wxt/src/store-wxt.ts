@@ -12,11 +12,10 @@ import { UserId } from '@canton-network/core-wallet-auth'
 import {
     toSigningKey,
     fromSigningKey,
-    signingTransactionItem,
     toSigningTransaction,
     fromSigningTransaction,
-    signingTransactionIndexItem,
     SigningTransactionRecord,
+    signingTransactionsItem,
     signingDriverConfigItem,
     toSigningDriverConfig,
     fromSigningDriverConfig,
@@ -115,38 +114,34 @@ export class WxtStore implements SigningDriverStore {
         userId: string,
         txId: string
     ): Promise<SigningTransaction | undefined> {
-        const record = await signingTransactionItem(txId).getValue()
-        return record ? toSigningTransaction(record) : undefined
+        const records = await signingTransactionsItem().getValue()
+
+        const tx = records ? records.find((r) => (r.id = txId)) : undefined
+        return tx ? toSigningTransaction(tx) : undefined
     }
 
     async setSigningTransaction(
         userId: string,
         transaction: SigningTransaction
     ): Promise<void> {
-        const item = signingTransactionItem(transaction.id)
-        const existing = await item.getValue()
-        const serialized = fromSigningTransaction(transaction, this.userId)
+        const item = signingTransactionsItem()
+        const txs = await item.getValue()
+        const idx = txs?.findIndex((k) => (k.id = transaction.id))
+        const existing = idx >= 0 ? txs[idx] : undefined
+        const serialized = fromSigningTransaction(transaction, userId)
 
-        const writeOperations: Promise<unknown>[] = [
-            item.setValue({
-                ...serialized,
-                createdAt: existing?.createdAt ?? serialized.createdAt,
-            }),
-        ]
-
-        if (!existing) {
-            const index = await signingTransactionIndexItem().getValue()
-            if (!index.includes(transaction.id)) {
-                writeOperations.push(
-                    signingTransactionIndexItem().setValue([
-                        ...index,
-                        transaction.id,
-                    ])
-                )
-            }
+        const updated: SigningTransactionRecord = {
+            ...serialized,
+            createdAt: existing?.createdAt ?? serialized.createdAt,
+            updatedAt: new Date().toISOString(),
         }
 
-        await Promise.all(writeOperations)
+        const nextKeys =
+            idx >= 0
+                ? txs.map((key, index) => (index === idx ? updated : key))
+                : [...txs, updated]
+
+        await item.setValue(nextKeys)
     }
 
     async updateSigningTransactionStatus(
@@ -154,40 +149,35 @@ export class WxtStore implements SigningDriverStore {
         txId: string,
         status: SigningDriverStatus
     ): Promise<void> {
-        const signingTx = signingTransactionItem(txId)
-        const existing = await signingTx.getValue()
-
-        if (!existing) {
+        const signingTx = signingTransactionsItem()
+        const txs = await signingTx.getValue()
+        const idx = txs?.findIndex((tx) => (tx.id = txId))
+        if (idx === -1) {
             throw new Error(
                 `No signing tx found for txId: ${txId}, userId: ${this.userId}`
             )
         }
 
-        //TODO: maybe also update updatedAt
         const updated: SigningTransactionRecord = {
-            ...existing,
+            ...txs[idx],
             status: status,
+            updatedAt: new Date().toISOString(),
         }
 
-        signingTx.setValue(updated)
+        const nextTxs = txs.map((t, i) => (i === idx ? updated : t))
+        await signingTx.setValue(nextTxs)
     }
     async listSigningTransactions(
         userId: string,
         limit?: number,
         before?: string
     ): Promise<SigningTransaction[]> {
-        const index = await signingTransactionIndexItem().getValue()
-        const txs = await Promise.all(
-            index.map((txId) => this.getSigningTransaction(this.userId, txId))
+        const txs = (await signingTransactionsItem().getValue()).map((x) =>
+            toSigningTransaction(x)
         )
-
-        const validTxs = txs
-            .filter((k): k is SigningTransaction => k != undefined)
-            .sort((a, b) =>
-                a.createdAt
-                    .toISOString()
-                    .localeCompare(b.createdAt.toISOString())
-            )
+        const validTxs = txs.sort((a, b) =>
+            a.createdAt.toISOString().localeCompare(b.createdAt.toISOString())
+        )
 
         let beforeDate: string | undefined = before
 
@@ -251,27 +241,20 @@ export class WxtStore implements SigningDriverStore {
         userId: string,
         transactions: SigningTransaction[]
     ): Promise<void> {
-        if (!transactions.length) return
+        const item = signingTransactionsItem()
+        const existingKeys = await item.getValue()
+        const txMap = new Map(existingKeys.map((tx) => [tx.id, tx]))
 
-        await Promise.all(
-            transactions.map(async (tx) => {
-                const item = signingTransactionItem(tx.id)
-                const existing = await item.getValue()
-
-                const serialized: SigningTransactionRecord =
-                    fromSigningTransaction(tx, this.userId)
-                await item.setValue({
-                    ...serialized,
-                    createdAt:
-                        existing?.createdAt ?? tx.createdAt.toISOString(),
-                })
+        for (const tx of transactions) {
+            const existing = txMap.get(tx.id)
+            const serialized = fromSigningTransaction(tx, this.userId)
+            txMap.set(tx.id, {
+                ...serialized,
+                createdAt: existing?.createdAt ?? serialized.createdAt,
+                updatedAt: new Date().toISOString(),
             })
-        )
+        }
 
-        const currentIndex = await signingTransactionIndexItem().getValue()
-        const newIds = transactions.map((t) => t.id)
-        const mergedIndex = Array.from(new Set([...currentIndex, ...newIds]))
-
-        await signingTransactionIndexItem().setValue(mergedIndex)
+        await item.setValue(Array.from(txMap.values()))
     }
 }

@@ -92,10 +92,12 @@ export interface SigningTransactionRecord {
     signedAt: string | null
 }
 
-export const signingTransactionItem = (txId: string) =>
-    storage.defineItem<SigningTransactionRecord>(
-        `local:signingTransactionitem:${txId}`,
-        {}
+export const signingTransactionsItem = () =>
+    storage.defineItem<SigningTransactionRecord[]>(
+        `local:signingTransactions`,
+        {
+            fallback: [],
+        }
     )
 
 export const fromSigningTransaction = (
@@ -140,17 +142,6 @@ export const toSigningTransaction = (
         ...(record.signedAt ? { signedAt: new Date(record.signedAt) } : {}),
     }
 }
-
-export const signingTransactionIndexItem = () =>
-    storage.defineItem<string[]>(`local:signingTransactionItemIndex`, {
-        fallback: [],
-    })
-
-export const txsByPublicKeysIndexItem = (publicKey: string) =>
-    storage.defineItem<string[]>(
-        `local:signignTransactionByPublicKey:${publicKey}`,
-        { fallback: [] }
-    )
 
 //signing driver schemas
 
