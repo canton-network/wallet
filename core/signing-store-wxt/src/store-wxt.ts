@@ -79,7 +79,7 @@ export class WxtStore implements SigningDriverStore {
     async setSigningKey(userId: string, key: SigningKey): Promise<void> {
         const item = signingKeysItem()
         const keys = await item.getValue()
-        const idx = keys?.findIndex((k) => (k.id = key.id))
+        const idx = keys?.findIndex((k) => k.id === key.id)
         const existing = idx >= 0 ? keys[idx] : undefined
 
         const serialized = fromSigningKey(key, userId)
