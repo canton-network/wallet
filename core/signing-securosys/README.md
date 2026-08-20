@@ -59,19 +59,26 @@ When these values are changed through the Wallet Gateway configuration RPC, use
 the existing PascalCase convention: `MtlsP12Path` and `MtlsP12Password`.
 `MtlsP12Password` is masked in `getConfiguration`.
 
-The remote Wallet Gateway reads the same values from these environment
-variables:
+### Wallet Gateway config
 
-| Environment variable                   | Driver property       |
-| :------------------------------------- | :-------------------- |
-| `SECUROSYS_TSB_BASE_URL`               | `baseUrl`             |
-| `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` | `keyManagementApiKey` |
-| `SECUROSYS_TSB_KEY_OPERATION_API_KEY`  | `keyOperationApiKey`  |
-| `SECUROSYS_TSB_BEARER_TOKEN`           | `bearerToken`         |
-| `SECUROSYS_TSB_MTLS_P12_PATH`          | `mtlsP12Path`         |
-| `SECUROSYS_TSB_MTLS_P12_PASSWORD`      | `mtlsP12Password`     |
-| `SECUROSYS_TSB_KEY_PASSWORD`           | `keyPassword`         |
-| `SECUROSYS_TSB_SIGNATURE_ALGORITHM`    | `signatureAlgorithm`  |
+| Gateway config field                            | Driver property      |
+| :---------------------------------------------- | :------------------- |
+| `signingProviders.securosys.baseUrl`            | `baseUrl`            |
+| `signingProviders.securosys.mtlsP12Path`        | `mtlsP12Path`        |
+| `signingProviders.securosys.signatureAlgorithm` | `signatureAlgorithm` |
+
+### Wallet Gateway environment variables
+
+| Environment variable                   | Driver property       | Usage                                                                   |
+| :------------------------------------- | :-------------------- | :---------------------------------------------------------------------- |
+| `SECUROSYS_TSB_BASE_URL`               | `baseUrl`             | Deprecated fallback for `signingProviders.securosys.baseUrl`            |
+| `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` | `keyManagementApiKey` | API key for `/v1/key` endpoints                                         |
+| `SECUROSYS_TSB_KEY_OPERATION_API_KEY`  | `keyOperationApiKey`  | API key for signing/request-status endpoints                            |
+| `SECUROSYS_TSB_BEARER_TOKEN`           | `bearerToken`         | Optional bearer access token                                            |
+| `SECUROSYS_TSB_MTLS_P12_PATH`          | `mtlsP12Path`         | Deprecated fallback for `signingProviders.securosys.mtlsP12Path`        |
+| `SECUROSYS_TSB_MTLS_P12_PASSWORD`      | `mtlsP12Password`     | Optional PKCS#12/P12 password                                           |
+| `SECUROSYS_TSB_KEY_PASSWORD`           | `keyPassword`         | Optional TSB key password                                               |
+| `SECUROSYS_TSB_SIGNATURE_ALGORITHM`    | `signatureAlgorithm`  | Deprecated fallback for `signingProviders.securosys.signatureAlgorithm` |
 
 Every key created by this driver is first sent to TSB with a temporary
 `wallet-{uuid}` label. After TSB returns the public key, the driver renames the
@@ -140,19 +147,31 @@ pnpm start:canton --network=devnet
 Wait until the Canton bootstrap completes. The command can then be interrupted
 with `Ctrl+C`; the Canton process keeps running under PM2.
 
-Start the full wallet stack with Securosys mTLS:
+Configure `signingProviders.securosys` in `wallet-gateway/test/config.json`, for
+example:
+
+```json
+{
+    "signingProviders": {
+        "securosys": {
+            "baseUrl": "https://integration-test.cloudshsm.com/",
+            "mtlsP12Path": "./etc/client_mtls_tsb.p12"
+        }
+    }
+}
+```
+
+Then start the full wallet stack with the remaining mTLS secret:
 
 ```bash
-SECUROSYS_TSB_BASE_URL=https://integration-test.cloudshsm.com/ \
-SECUROSYS_TSB_MTLS_P12_PATH=./etc/client_mtls_tsb.p12 \
 SECUROSYS_TSB_MTLS_P12_PASSWORD=pass \
 pnpm start:all
 ```
 
-Start the full wallet stack with a TSB bearer token instead:
+For bearer-token authentication, set `signingProviders.securosys.baseUrl` to the
+appropriate endpoint and start with the token:
 
 ```bash
-SECUROSYS_TSB_BASE_URL=https://sbx-rest-api.cloudshsm.com \
 SECUROSYS_TSB_BEARER_TOKEN="<JWT Token>" \
 pnpm start:all
 ```
