@@ -9,3 +9,4 @@ export const NETWORKS_PAGE_REDIRECT = '/networks'
 export const IDENTITY_PROVIDERS_PAGE_REDIRECT = '/identity-providers'
 
 export const TOKEN_EXPIRED_SKEW_MS = 5000
+export const DETECT_CURRENT_ORIGIN_TIMEOUT_MS = 30000

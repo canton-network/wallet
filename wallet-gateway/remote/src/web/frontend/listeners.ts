@@ -3,6 +3,7 @@
 
 import { isSpliceMessageEvent, WalletEvent } from '@canton-network/core-types'
 import { stateManager } from './state-manager'
+import { DETECT_CURRENT_ORIGIN_TIMEOUT_MS } from './constants'
 
 const handleMessage = (event: MessageEvent) => {
     if (!isSpliceMessageEvent(event)) return
@@ -28,14 +29,24 @@ export async function detectCurrentOrigin(): Promise<string> {
         return window.origin
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         // wait for stateManager.currentOrigin.get to be defined
         const interval = setInterval(() => {
             const currentOrigin = stateManager.currentOrigin.get()
             if (currentOrigin) {
                 clearInterval(interval)
+                clearTimeout(timeout)
                 resolve(currentOrigin)
             }
         }, 100)
+
+        const timeout = setTimeout(() => {
+            clearInterval(interval)
+            reject(
+                new Error(
+                    `Timed out after ${DETECT_CURRENT_ORIGIN_TIMEOUT_MS}ms waiting for the origin-broadcast message from the opener window`
+                )
+            )
+        }, DETECT_CURRENT_ORIGIN_TIMEOUT_MS)
     })
 }
