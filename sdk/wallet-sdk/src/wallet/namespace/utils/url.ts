@@ -35,8 +35,21 @@ export function parseAssets(
     ctx: SDKContext,
     assets: Awaited<ReturnType<TokenStandardService['registriesToAssets']>>
 ) {
-    return assets.map((asset) => ({
-        ...asset,
-        registryUrl: new ParsedURL(ctx, asset.registryUrl),
-    }))
+    return assets.map((asset) => {
+        // The type claims `admin` is always present, but it's parsed from an
+        // external registry response with no runtime validation -- a registry
+        // that omits it would otherwise silently produce commands (e.g. transfer
+        // preapprovals) with an undefined expectedDso.
+        if (!asset.admin) {
+            ctx.error.throw({
+                message: `Registry response for asset "${asset.id}" is missing the "admin" (DSO) party.`,
+                type: 'Unexpected',
+            })
+        }
+
+        return {
+            ...asset,
+            registryUrl: new ParsedURL(ctx, asset.registryUrl),
+        }
+    })
 }
