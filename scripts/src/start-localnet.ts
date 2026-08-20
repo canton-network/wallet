@@ -12,16 +12,18 @@ const multiSync = !args.includes('--no-multi-sync')
 const network = getNetworkArg()
 const rootDir = getRepoRoot()
 
-// The EnableMultiSynchronizer topology feature flag only exists in Canton >= 3.5
-// (protocol version 35). On older versions (e.g. mainnet's 3.4.x) the custom
-// bootstrap script that sets it would fail to compile, so there we keep the
-// bundle's default script (the flag is not needed on PV < 35 anyway).
+// The EnableMultiSynchronizer topology feature flag only exists in Canton >= 3.5.12
+// (protocol version 35). On older versions the custom bootstrap script that sets it
+// would fail to compile, so there we keep the bundle's default script (the flag is
+// not needed on PV < 35 anyway).
 const cantonVersion = SUPPORTED_VERSIONS[network].canton.version
-const [cantonMajor, cantonMinor] = cantonVersion
+const [cantonMajor, cantonMinor, cantonPatch] = cantonVersion
     .split('.')
     .map((n) => parseInt(n, 10))
 const cantonSupportsMultiSyncFeatureFlag =
-    cantonMajor > 3 || (cantonMajor === 3 && cantonMinor >= 5)
+    cantonMajor > 3 ||
+    (cantonMajor === 3 && cantonMinor > 5) ||
+    (cantonMajor === 3 && cantonMinor === 5 && (cantonPatch ?? 0) >= 12)
 const LOCALNET_DIR = path.join(rootDir, '.localnet/docker-compose/localnet')
 const GENERATED_COMPOSE_OVERRIDE = path.join(
     rootDir,
