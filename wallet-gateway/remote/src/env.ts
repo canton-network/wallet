@@ -1,14 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO make those fallback callback consistent
 export class Env {
     static FIREBLOCKS_API_KEY = () => Env.get('FIREBLOCKS_API_KEY')
     static FIREBLOCKS_SECRET = () => Env.get('FIREBLOCKS_SECRET')
     static FIREBLOCKS_API_PATH = () => Env.get('FIREBLOCKS_API_PATH')
     static BLOCKDAEMON_API_URL = () => Env.get('BLOCKDAEMON_API_URL')
-    static BLOCKDAEMON_API_KEY = (fallback: string) =>
-        Env.get('BLOCKDAEMON_API_KEY', { fallback })
+    static BLOCKDAEMON_API_KEY = () => Env.get('BLOCKDAEMON_API_KEY')
     static BLOCKDAEMON_CAIP2 = () => Env.get('BLOCKDAEMON_CAIP2')
     static SECUROSYS_TSB_BASE_URL = () => Env.get('SECUROSYS_TSB_BASE_URL')
     static SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY = () =>
