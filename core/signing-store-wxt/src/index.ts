@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export * from './schemas.js'
-export * from './wxt-store.js'
+export * from './store-wxt.js'
