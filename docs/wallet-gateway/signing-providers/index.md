@@ -4,8 +4,8 @@ The Wallet Gateway supports multiple signing providers that handle cryptographic
 
 ## Available Providers
 
-Each signing provider has an `enable` property in the root-level `signingProviders` of Wallet Gatetay config.
-configuration block. Providers default to enabled, while external providers are
+Each signing provider has an `enable` property in the root-level block
+`signingProviders` in Wallet Gateway config . Providers default to enabled, while external providers are
 available only when their required environment variables and config properties are also set.
 Legacy non-secret environment variables remain supported as deprecated
 fallbacks when the corresponding config value is omitted.
@@ -16,7 +16,11 @@ The Wallet Gateway provider stores private keys directly in the signing store da
 
 **Configuration:**
 
-This provider is automatically available when a `signingStore` is configured. Set `signingProviders.walletKernel.enable` to `false` to prevent it from being registered.
+- Gateway config:
+    - `signingProviders.walletKernel.enable` - optional, defaults to `true`
+    - `signingStore` - required, the provider is unavailable when the signing store is omitted
+- Environment variables:
+    - None
 
 **Use Cases:**
 
@@ -35,7 +39,10 @@ The Participant signing provider uses Canton's participant node for signing tran
 
 **Configuration:**
 
-This provider requires no additional configuration and is available by default. Set `signingProviders.participant.enable` to `false` to prevent it from being registered.
+- Gateway config:
+    - `signingProviders.participant.enable` - optional, defaults to `true`
+- Environment variables:
+    - None
 
 **Use Cases:**
 
@@ -60,11 +67,15 @@ Fireblocks is a third-party crypto custody service provider that offers enterpri
 
 1. Complete steps 1-3 from the [Fireblocks signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-fireblocks)
 
-2. Supply an environment variable named `FIREBLOCKS_API_KEY` containing your Fireblocks API key (from the `API User (ID)` column in the Fireblocks API users table) and `FIREBLOCKS_SECRET` containing the corresponding secret.
-
 **Configuration:**
 
-The Fireblocks provider reads configuration from environment variables and key files. No additional Gateway configuration is needed beyond placing the required files.
+- Gateway config:
+    - `signingProviders.fireblocks.enable` - optional, defaults to `true`
+    - `signingProviders.fireblocks.apiPath` - optional, falls back to `FIREBLOCKS_API_PATH`, then defaults to `https://api.fireblocks.io/v1`
+- Environment variables:
+    - `FIREBLOCKS_API_KEY` - required Fireblocks API key from the `API User (ID)` column
+    - `FIREBLOCKS_SECRET` - required corresponding API secret
+    - `FIREBLOCKS_API_PATH` - deprecated optional fallback for `signingProviders.fireblocks.apiPath`
 
 **Use Cases:**
 
@@ -78,10 +89,14 @@ Blockdaemon provides signing services as part of their infrastructure offerings.
 
 **Configuration:**
 
-Set the following environment variables:
-
-- `BLOCKDAEMON_API_URL` - The base URL for the Blockdaemon API
-- `BLOCKDAEMON_API_KEY` - Your Blockdaemon API key
+- Gateway config:
+    - `signingProviders.blockdaemon.enable` - optional, defaults to `true`
+    - `signingProviders.blockdaemon.baseUrl` - optional, falls back to `BLOCKDAEMON_API_URL`, then defaults to `http://localhost:5080/api/cwp/canton`
+    - `signingProviders.blockdaemon.caip2` - optional, falls back to `BLOCKDAEMON_CAIP2`, then defaults to `canton:testnet`
+- Environment variables:
+    - `BLOCKDAEMON_API_KEY` - required API key
+    - `BLOCKDAEMON_API_URL` - deprecated optional fallback for `signingProviders.blockdaemon.baseUrl`
+    - `BLOCKDAEMON_CAIP2` - deprecated optional fallback for `signingProviders.blockdaemon.caip2`
 
 **Use Cases:**
 
@@ -95,13 +110,17 @@ Dfns is a crypto custody platform that provides programmable key management and 
 
 **Configuration:**
 
-Set the following environment variables:
-
-- `DFNS_ORG_ID` - Your Dfns organization ID
-- `DFNS_BASE_URL` - The Dfns API URL (defaults to `https://api.dfns.io`)
-- `DFNS_CRED_ID` - Your service account credential ID
-- `DFNS_PRIVATE_KEY` - Your service account private key (PEM format)
-- `DFNS_AUTH_TOKEN` - Your service account authentication token
+- Gateway config:
+    - `signingProviders.dfns.enable` - optional, defaults to `true`
+    - `signingProviders.dfns.orgId` - required, falls back to `DFNS_ORG_ID`
+    - `signingProviders.dfns.credId` - required, falls back to `DFNS_CRED_ID`
+    - `signingProviders.dfns.baseUrl` - optional, falls back to `DFNS_BASE_URL`, then defaults to `https://api.dfns.io`
+- Environment variables:
+    - `DFNS_PRIVATE_KEY` - required service account private key
+    - `DFNS_AUTH_TOKEN` - required service account authentication token
+    - `DFNS_ORG_ID` - deprecated optional fallback for `signingProviders.dfns.orgId`
+    - `DFNS_CRED_ID` - deprecated optional fallback for `signingProviders.dfns.credId`
+    - `DFNS_BASE_URL` - deprecated optional fallback for `signingProviders.dfns.baseUrl`
 
 **Prerequisites:**
 
@@ -125,13 +144,20 @@ See the [Securosys signing documentation](https://github.com/canton-network/wall
 
 **Configuration:**
 
-Set the following environment variables:
-
-- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - API key for TSB key-management endpoints
-- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - API key for TSB signing and request-status endpoints
-- `SECUROSYS_TSB_BEARER_TOKEN` - Optional bearer access token (access-token auth mode)
-- `SECUROSYS_TSB_MTLS_P12_PASSWORD` - Optional password for the PKCS#12/P12 client certificate
-- `SECUROSYS_TSB_KEY_PASSWORD` - Optional TSB key password used for key attributes and signing
+- Gateway config:
+    - `signingProviders.securosys.enable` - optional, defaults to `true`
+    - `signingProviders.securosys.baseUrl` - required, falls back to `SECUROSYS_TSB_BASE_URL`
+    - `signingProviders.securosys.mtlsP12Path` - optional, falls back to `SECUROSYS_TSB_MTLS_P12_PATH`
+    - `signingProviders.securosys.signatureAlgorithm` - optional, falls back to `SECUROSYS_TSB_SIGNATURE_ALGORITHM`, then defaults to `EDDSA`
+- Environment variables:
+    - `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - required API key for TSB key-management endpoints
+    - `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - required API key for TSB signing and request-status endpoints
+    - `SECUROSYS_TSB_BEARER_TOKEN` - optional bearer access token (access-token auth mode)
+    - `SECUROSYS_TSB_MTLS_P12_PASSWORD` - optional password for the PKCS#12/P12 client certificate
+    - `SECUROSYS_TSB_KEY_PASSWORD` - optional TSB key password used for key attributes and signing
+    - `SECUROSYS_TSB_BASE_URL` - deprecated optional fallback for `signingProviders.securosys.baseUrl`
+    - `SECUROSYS_TSB_MTLS_P12_PATH` - deprecated optional fallback for `signingProviders.securosys.mtlsP12Path`
+    - `SECUROSYS_TSB_SIGNATURE_ALGORITHM` - deprecated optional fallback for `signingProviders.securosys.signatureAlgorithm`
 
 **Use Cases:**
 
