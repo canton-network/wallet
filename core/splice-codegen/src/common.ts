@@ -3,8 +3,8 @@
 
 import { WrappedCommand } from '@canton-network/core-ledger-client-types'
 import { SDKInterface } from '@canton-network/wallet-sdk'
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
+import { readFileSync } from 'fs'
+import path from 'path'
 
 export const vetDarFactory =
     (pathToDar: string, packageId: string) =>
