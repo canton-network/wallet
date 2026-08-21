@@ -32,6 +32,7 @@ import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import { WalletSyncService } from './wallet-sync-service.js'
 import { PartyAllocationService } from './party-allocation-service.js'
+import { getLogger } from '@logtape/logtape'
 
 type AsyncFn = () => Promise<unknown>
 
@@ -322,7 +323,7 @@ describe('WalletSyncService - multi-network features', () => {
                 idps: [],
                 networks: [],
             },
-            mockLogger,
+            getLogger('mock'),
             authContext
         )
 

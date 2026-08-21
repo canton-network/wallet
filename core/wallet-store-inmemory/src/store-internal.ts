@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import { Logger } from '@logtape/logtape'
 import {
     AuthContext,
     UserId,
@@ -59,7 +59,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         authContext?: AuthContext,
         userStorage?: Memory
     ) {
-        this.logger = logger.child({ component: 'StoreInternal' })
+        this.logger = logger.getChild('StoreInternal')
         this.systemStorage = config
         this.authContext = authContext
         this.userStorage = userStorage || new Map()

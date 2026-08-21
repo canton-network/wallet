@@ -4,7 +4,7 @@
 import { OAuth2Server } from 'oauth2-mock-server'
 import basicAuth from 'basic-auth'
 import pino from 'pino'
-import { createHash } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 const logger = pino({ name: 'mock-oauth2-server', level: 'debug' })
 
 const toBase64Url = (input: Buffer | string): string =>
@@ -147,6 +147,9 @@ async function main() {
         token.payload.aud = aud
         token.payload.scope = scope
         token.payload.scp = scope.split(' ')
+
+        // Unique ID per token, so tokens generated in the same second for same network and user differ
+        token.payload.jti = randomUUID()
 
         // Set token expiration to 1 hour from now
         const now = Math.floor(Date.now() / 1000)

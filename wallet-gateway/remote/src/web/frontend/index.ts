@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html, LitElement } from 'lit'
+import { css, html, LitElement } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import { createUserClient, attemptRemoveSession } from './rpc-client'
 import { setLocationHref } from './navigation.js'
@@ -50,6 +50,14 @@ export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
     @state() private accessor networkConnected = false
     @state() accessor dappApiUrl: string = ''
+    @state() accessor showPage = false
+
+    static styles = css`
+        .loading {
+            color: var(--wg-text-secondary);
+            margin-bottom: var(--wg-space-3);
+        }
+    `
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
@@ -74,6 +82,13 @@ export class UserApp extends LitElement {
             this.networkConnected = false
         }
         this.dappApiUrl = await fetchDappApiUrl()
+    }
+
+    // The page stays out of the document until the session behind it is
+    // verified. Showing it earlier lets the user act on a page that is already
+    // on its way to the login page.
+    private handleAuthSettled(e: AuthSettledEvent) {
+        this.showPage = e.detail.verdict === 'show-page'
     }
 
     private async handleLogout() {
@@ -139,8 +154,14 @@ export class UserApp extends LitElement {
                 @logout=${this.handleLogout}
                 @copy-dapp-api-url=${this.handleCopyDappApiUrl}
             >
-                <user-ui-auth-redirect></user-ui-auth-redirect>
-                <slot></slot>
+                <user-ui-auth-redirect
+                    @auth-settled=${this.handleAuthSettled}
+                ></user-ui-auth-redirect>
+                ${
+                    this.showPage
+                        ? html`<slot></slot>`
+                        : html`<p class="loading">Loading...</p>`
+                }
             </app-layout>
         `
     }
@@ -192,6 +213,20 @@ export const shareConnection = (token: string, sessionId: string) => {
     }
 }
 
+// Whether the page the browser loaded is the one the user gets to see, or is
+// about to be replaced by a redirect.
+export type AuthVerdict = 'show-page' | 'redirecting'
+
+export class AuthSettledEvent extends CustomEvent<{ verdict: AuthVerdict }> {
+    constructor(verdict: AuthVerdict) {
+        super('auth-settled', {
+            bubbles: true,
+            composed: true,
+            detail: { verdict },
+        })
+    }
+}
+
 @customElement('user-ui-auth-redirect')
 export class UserUIAuthRedirect extends LitElement {
     connectedCallback(): void {
@@ -200,27 +235,39 @@ export class UserUIAuthRedirect extends LitElement {
     }
 
     private async handleAuthRedirect(): Promise<void> {
+        let verdict: AuthVerdict = 'redirecting'
+        try {
+            verdict = await this.resolveAuthRedirect()
+        } catch (error) {
+            // Without a verdict there is no safe page to show, so treat any
+            // unexpected failure as a reason to start over at the login page.
+            console.error('Failed to verify the session: ', error)
+            await this.clearAuthStateAndPreserveIntendedPage()
+            setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
+        } finally {
+            this.dispatchEvent(new AuthSettledEvent(verdict))
+        }
+    }
+
+    private async resolveAuthRedirect(): Promise<AuthVerdict> {
         const currentRoute = getCurrentRoute(window.location.pathname)
         const isLoginPage = currentRoute === LOGIN_PAGE_REDIRECT
         const currentOrigin = await detectCurrentOrigin()
         const accessToken = await stateManager.accessToken.get(currentOrigin)
 
         if (!accessToken) {
-            this.handleUnauthenticated(isLoginPage, currentOrigin)
-            return
+            return this.handleUnauthenticated(isLoginPage, currentOrigin)
         }
 
         if (this.isTokenExpired(currentOrigin)) {
-            this.handleExpiredToken(isLoginPage)
-            return
+            return this.handleExpiredToken(isLoginPage)
         }
 
         if (isLoginPage) {
-            await this.handleAuthenticatedOnLoginPage(accessToken)
-            return
+            return this.handleAuthenticatedOnLoginPage(accessToken)
         }
 
-        await this.handleAuthenticatedOnLoggedInPage(accessToken)
+        return this.handleAuthenticatedOnLoggedInPage(accessToken)
     }
 
     private getIntendedPageFromCurrentPath(): AllowedRoute | undefined {
@@ -249,17 +296,22 @@ export class UserUIAuthRedirect extends LitElement {
     private handleUnauthenticated(
         isLoginPage: boolean,
         currentOrigin: string
-    ): void {
-        if (!isLoginPage) {
-            const intendedPage = this.getIntendedPageFromCurrentPath()
-            if (intendedPage) {
-                stateManager.intendedPage.set(intendedPage, currentOrigin)
-            }
-            setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
+    ): AuthVerdict {
+        if (isLoginPage) {
+            return 'show-page'
         }
+
+        const intendedPage = this.getIntendedPageFromCurrentPath()
+        if (intendedPage) {
+            stateManager.intendedPage.set(intendedPage, currentOrigin)
+        }
+        setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
+        return 'redirecting'
     }
 
-    private async handleExpiredToken(isLoginPage: boolean): Promise<void> {
+    private async handleExpiredToken(
+        isLoginPage: boolean
+    ): Promise<AuthVerdict> {
         clearTokenExpirationTimeout()
 
         const currentOrigin = await detectCurrentOrigin()
@@ -272,29 +324,33 @@ export class UserUIAuthRedirect extends LitElement {
         if (!isLoginPage) {
             await this.clearAuthStateAndPreserveIntendedPage()
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
-        } else {
-            await stateManager.clearAuthState(currentOrigin)
+            return 'redirecting'
         }
+
+        await stateManager.clearAuthState(currentOrigin)
+        return 'show-page'
     }
 
     private async handleAuthenticatedOnLoginPage(
         accessToken: string
-    ): Promise<void> {
+    ): Promise<AuthVerdict> {
         const sessionId = await getSessionId(accessToken)
         const currentOrigin = await detectCurrentOrigin()
         if (sessionId) {
             this.setTokenExpirationTimeout(currentOrigin)
             await redirectToIntendedOrDefault()
             shareConnection(accessToken, sessionId)
-        } else {
-            await attemptRemoveSession(accessToken)
-            await stateManager.clearAuthState(currentOrigin)
+            return 'redirecting'
         }
+
+        await attemptRemoveSession(accessToken)
+        await stateManager.clearAuthState(currentOrigin)
+        return 'show-page'
     }
 
     private async handleAuthenticatedOnLoggedInPage(
         accessToken: string
-    ): Promise<void> {
+    ): Promise<AuthVerdict> {
         const currentOrigin = await detectCurrentOrigin()
         const networkId = stateManager.networkId.get(currentOrigin)
         if (!networkId) {
@@ -306,7 +362,7 @@ export class UserUIAuthRedirect extends LitElement {
             await attemptRemoveSession(accessToken)
             await this.clearAuthStateAndPreserveIntendedPage()
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
-            return
+            return 'redirecting'
         }
 
         // Token is valid - set up expiration timeout
@@ -316,7 +372,10 @@ export class UserUIAuthRedirect extends LitElement {
         // Redirect to default page if on root path
         if ((getCurrentRoute(window.location.pathname) || '/') === '/') {
             await redirectToIntendedOrDefault()
+            return 'redirecting'
         }
+
+        return 'show-page'
     }
 
     private setTokenExpirationTimeout(origin: string): void {
