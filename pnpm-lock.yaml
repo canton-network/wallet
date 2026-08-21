@@ -41,6 +41,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^20.5.3
         version: 20.5.3
+      '@daml/types':
+        specifier: ^3.5.2
+        version: 3.5.2
       '@eslint/compat':
         specifier: ^2.1.0
         version: 2.1.0(eslint@10.8.0(jiti@2.7.0)(supports-color@10.2.2))
@@ -1123,41 +1126,7 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
-  core/splice-provider:
-    dependencies:
-      '@canton-network/core-rpc-transport':
-        specifier: workspace:^
-        version: link:../rpc-transport
-      '@canton-network/core-types':
-        specifier: workspace:^
-        version: link:../types
-      '@canton-network/core-wallet-dapp-remote-rpc-client':
-        specifier: workspace:^
-        version: link:../wallet-dapp-remote-rpc-client
-      '@canton-network/core-wallet-dapp-rpc-client':
-        specifier: workspace:^
-        version: link:../wallet-dapp-rpc-client
-    devDependencies:
-      '@vitest/browser-playwright':
-        specifier: ^4.1.10
-        version: 4.1.10(playwright@1.58.2)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/coverage-v8':
-        specifier: ^4.1.10
-        version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
-      playwright:
-        specifier: 1.58.2
-        version: 1.58.2
-      tsdown:
-        specifier: ^0.22.9
-        version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.5)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
-
-  core/test-token:
+  core/splice-codegen:
     dependencies:
       '@canton-network/core-ledger-client-types':
         specifier: workspace:^
@@ -1175,7 +1144,7 @@ importers:
         specifier: workspace:^
         version: link:../../sdk/wallet-sdk
       '@daml/types':
-        specifier: ^3.5.1
+        specifier: ^3.5.2
         version: 3.5.2
       '@mojotech/json-type-validation':
         specifier: ^3.1.0
@@ -1226,6 +1195,40 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  core/splice-provider:
+    dependencies:
+      '@canton-network/core-rpc-transport':
+        specifier: workspace:^
+        version: link:../rpc-transport
+      '@canton-network/core-types':
+        specifier: workspace:^
+        version: link:../types
+      '@canton-network/core-wallet-dapp-remote-rpc-client':
+        specifier: workspace:^
+        version: link:../wallet-dapp-remote-rpc-client
+      '@canton-network/core-wallet-dapp-rpc-client':
+        specifier: workspace:^
+        version: link:../wallet-dapp-rpc-client
+    devDependencies:
+      '@vitest/browser-playwright':
+        specifier: ^4.1.10
+        version: 4.1.10(playwright@1.58.2)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.10)
+      '@vitest/coverage-v8':
+        specifier: ^4.1.10
+        version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
+      playwright:
+        specifier: 1.58.2
+        version: 1.58.2
+      tsdown:
+        specifier: ^0.22.9
+        version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.5)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
   core/token-standard:
     dependencies:
@@ -2198,9 +2201,9 @@ importers:
 
   examples/test-token-v1-registry:
     dependencies:
-      '@canton-network/core-test-token':
+      '@canton-network/core-splice-codegen':
         specifier: workspace:^
-        version: link:../../core/test-token
+        version: link:../../core/splice-codegen
       '@canton-network/core-token-standard':
         specifier: workspace:^
         version: link:../../core/token-standard

@@ -13,7 +13,12 @@ import dts from 'rollup-plugin-dts'
 
 const TEST_TOKEN_BASE = path.resolve(
     import.meta.dirname,
-    '../../damljs/test-token-v1'
+    '../../damljs/splice-test-token-v1'
+)
+
+const OTC_TRADE_BASE = path.resolve(
+    import.meta.dirname,
+    '../../damljs/splice-token-test-trading-app'
 )
 
 function buildDamlJsPackagesMap(baseDir) {
@@ -47,13 +52,31 @@ function buildDamlJsPackagesMap(baseDir) {
     return packages
 }
 
-const DAML_JS_PACKAGES = buildDamlJsPackagesMap(TEST_TOKEN_BASE)
 const TEST_TOKEN_COMPAT_ALIAS = '@daml.js/test-token-v1'
 const TEST_TOKEN_CANONICAL_NAME = '@daml.js/splice-test-token-v1-1.0.0'
+const OTC_TRADE_COMPAT_ALIAS = '@daml.js/otc-trade'
+const OTC_TRADE_CANONICAL_NAME = '@daml.js/splice-token-test-trading-app-1.0.0'
 
-if (DAML_JS_PACKAGES[TEST_TOKEN_CANONICAL_NAME]) {
-    DAML_JS_PACKAGES[TEST_TOKEN_COMPAT_ALIAS] =
-        DAML_JS_PACKAGES[TEST_TOKEN_CANONICAL_NAME]
+const DAML_JS_PACKAGES = {
+    testToken: buildDamlJsPackagesMap(TEST_TOKEN_BASE),
+    otcTrade: buildDamlJsPackagesMap(OTC_TRADE_BASE),
+}
+
+// Flatten DAML_JS_PACKAGES into a single map for rollup config
+const allDamlJsPackages = {
+    ...DAML_JS_PACKAGES.testToken,
+    ...DAML_JS_PACKAGES.otcTrade,
+}
+
+// Add compatibility aliases
+if (DAML_JS_PACKAGES.testToken[TEST_TOKEN_CANONICAL_NAME]) {
+    allDamlJsPackages[TEST_TOKEN_COMPAT_ALIAS] =
+        DAML_JS_PACKAGES.testToken[TEST_TOKEN_CANONICAL_NAME]
+}
+
+if (DAML_JS_PACKAGES.otcTrade[OTC_TRADE_CANONICAL_NAME]) {
+    allDamlJsPackages[OTC_TRADE_COMPAT_ALIAS] =
+        DAML_JS_PACKAGES.otcTrade[OTC_TRADE_CANONICAL_NAME]
 }
 
 function buildPathsMap(packageDirs) {
@@ -93,34 +116,50 @@ function buildAliasEntries(packageDirs) {
     return entries
 }
 
-const pathsMap = buildPathsMap(DAML_JS_PACKAGES)
-const damlJsAlias = alias({ entries: buildAliasEntries(DAML_JS_PACKAGES) })
+const pathsMap = buildPathsMap(allDamlJsPackages)
+const damlJsAlias = alias({ entries: buildAliasEntries(allDamlJsPackages) })
 const commonjsPlugin = commonjs({
     transformMixedEsModules: true,
     esmExternals: true,
     requireReturnsDefault: false,
 })
 
+const typescriptPlugin = typescript({
+    compilerOptions: {
+        baseUrl: '.',
+        paths: pathsMap,
+    },
+})
+
 const pkgPath = path.resolve(process.cwd(), 'package.json')
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
 
-// Collect deps + peerDeps (but not devDeps, or excepted ones)
-const exceptions = [
-    '@daml/types',
-    '@daml/ledger',
-    '@mojotech/json-type-validation',
-]
+// Collect deps + peerDeps + transitive deps that should be external
 const external = [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
-].filter((dep) => !exceptions.includes(dep))
+    // Transitive dependencies from damljs packages
+    '@daml/types',
+    '@daml/ledger',
+    '@mojotech/json-type-validation',
+    // Node built-ins
+    'node:fs',
+    'node:url',
+    'node:path',
+]
 
 // bundle ESM
 const codeEsm = {
     input: 'src/index.ts',
     output: { file: 'dist/index.js', format: 'es', sourcemap: true },
     external,
-    plugins: [damlJsAlias, json(), commonjsPlugin, nodeResolve(), typescript()],
+    plugins: [
+        damlJsAlias,
+        json(),
+        commonjsPlugin,
+        nodeResolve(),
+        typescriptPlugin,
+    ],
 }
 
 // bundle CJS
@@ -134,7 +173,13 @@ const codeCjs = {
         exports: 'named',
     },
     external,
-    plugins: [damlJsAlias, json(), commonjsPlugin, nodeResolve(), typescript()],
+    plugins: [
+        damlJsAlias,
+        json(),
+        commonjsPlugin,
+        nodeResolve(),
+        typescriptPlugin,
+    ],
 }
 
 // bundle for browser
@@ -154,7 +199,7 @@ const codeBrowser = {
             browser: true, // Prefer browser entrypoints
             preferBuiltins: false, // Do NOT use Node builtins
         }),
-        typescript(),
+        typescriptPlugin,
     ],
 }
 
@@ -162,9 +207,10 @@ const codeBrowser = {
 const types = {
     input: 'src/index.ts',
     output: { file: 'dist/index.d.ts', format: 'es' },
+    external,
     plugins: [
         dts({
-            respectExternal: false,
+            respectExternal: true,
             compilerOptions: {
                 baseUrl: '.',
                 paths: pathsMap,

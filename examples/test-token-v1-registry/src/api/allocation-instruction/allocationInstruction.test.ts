@@ -25,6 +25,26 @@ vi.mock('../../common/operator', () => ({
     },
 }))
 
+vi.mock('@canton-network/core-splice-codegen', () => ({
+    TestToken: {
+        DAR: {
+            TestTokenV1: {
+                TokenRules: {
+                    templateId: 'TestTokenV1:TokenRules',
+                },
+            },
+        },
+        commands: {
+            create: {
+                rules: (payload: { admin: string }) => ({
+                    templateId: 'TestTokenV1:TokenRules',
+                    payload,
+                }),
+            },
+        },
+    },
+}))
+
 describe('Allocation Instruction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
