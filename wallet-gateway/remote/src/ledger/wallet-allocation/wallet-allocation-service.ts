@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import { AuthContext, UserId } from '@canton-network/core-wallet-auth'
 import { Store, Wallet } from '@canton-network/core-wallet-store'
 import {
+    Keys,
     SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
@@ -16,6 +17,22 @@ import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet
 import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.js'
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
 import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
+
+export interface WalletAllocator {
+    createWallet(
+        userId: UserId,
+        email: string | undefined,
+        partyHint: PartyHint,
+        primary: Primary,
+        vaultName?: KeyName | undefined
+    ): Promise<Wallet>
+    allocateParty(
+        userId: UserId,
+        email: string | undefined,
+        existingWallet: Wallet
+    ): Promise<void>
+    getKeys(userId: UserId): Promise<Keys | null | void>
+}
 
 export class WalletAllocationService {
     private readonly participantAllocator: ParticipantWalletAllocator

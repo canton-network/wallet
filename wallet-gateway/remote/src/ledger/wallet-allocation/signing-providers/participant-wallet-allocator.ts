@@ -7,15 +7,17 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
 import { PartyAllocationService } from '../../party-allocation-service.js'
 import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
-import { WalletAllocator } from './base.js'
+import { WalletAllocator } from '../wallet-allocation-service.js'
 
-export class ParticipantWalletAllocator extends WalletAllocator {
+export class ParticipantWalletAllocator implements WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
         private partyAllocator: PartyAllocationService
-    ) {
-        super(null)
+    ) {}
+
+    async getKeys() {
+        throw new Error('Method not implemented')
     }
 
     async createWallet(

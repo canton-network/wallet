@@ -12,7 +12,7 @@ import { Logger } from 'pino'
 import { PartyAllocationService } from '../../party-allocation-service.js'
 import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-import { WalletAllocator } from './base.js'
+import { WalletAllocator } from '../wallet-allocation-service.js'
 
 function handleSigningError<T extends object>(result: SigningError | T): T {
     if ('error' in result) {
@@ -23,14 +23,27 @@ function handleSigningError<T extends object>(result: SigningError | T): T {
     return result
 }
 
-export class BlockdaemonWalletAllocator extends WalletAllocator {
+export class BlockdaemonWalletAllocator implements WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
         private partyAllocator: PartyAllocationService,
         protected signingDriver: SigningDriverInterface
-    ) {
-        super(signingDriver)
+    ) {}
+
+    private handleSigningError<T extends object>(result: SigningError | T): T {
+        if ('error' in result) {
+            throw new Error(
+                `Error from signing driver: ${result.error_description}`
+            )
+        }
+        return result
+    }
+
+    async getKeys(userId: UserId) {
+        if (!this.signingDriver) return null
+        const driver = this.signingDriver.controller(userId)
+        return await driver.getKeys().then(this.handleSigningError)
     }
 
     async createWallet(
