@@ -1,6 +1,7 @@
 {
     "name": "wallet-kernel",
     "private": true,
+    "type": "module",
     "scripts": {
         "start:all": "pnpm exec pm2 start ecosystem.config.js --env development",
         "start:canton": "tsx ./scripts/src/start-canton.ts",
@@ -16,8 +17,8 @@
         "generate:signing": "pnpm --filter @canton-network/core-rpc-generator build && pnpm exec open-rpc-generator generate -c ./rpc-generator-config-signing.json",
         "generate:grpc": "tsx ./scripts/src/generate-protobufs.ts",
         "generate:tokenstandard": "tsx ./scripts/src/generate-token-standard.ts",
-        "generate:test-token": "tsx ./scripts/src/generate-test-token.ts",
-        "generate:all": "pnpm run generate:dapp && pnpm run generate:dapp-remote && pnpm run generate:user && pnpm run generate:signing && pnpm run generate:tokenstandard && pnpm run generate:test-token && pnpm exec prettier . --write > /dev/null 2>&1",
+        "generate:codegen": "tsx ./scripts/src/generate-daml-codegen.ts",
+        "generate:all": "pnpm run generate:dapp && pnpm run generate:dapp-remote && pnpm run generate:user && pnpm run generate:signing && pnpm run generate:tokenstandard && pnpm run generate:codegen && pnpm exec prettier . --write > /dev/null 2>&1",
         "lint": "nx run-many -t lint --parallel",
         "build:all": "nx run-many -t build --parallel",
         "build:all:serial": "nx run-many -t build --parallel=1",
@@ -55,6 +56,7 @@
     "devDependencies": {
         "@canton-network/core-eslint-config": "workspace:^",
         "@commitlint/config-conventional": "^20.5.3",
+        "@daml/types": "^3.5.2",
         "@eslint/compat": "^2.1.0",
         "@eslint/js": "^10.0.1",
         "@nx/eslint": "22.7.6",
@@ -101,6 +103,9 @@
     },
     "packageManager": "pnpm@11.20.0",
     "dependencies": {
+        "@canton-network/core-ledger-client": "^1.10.0",
+        "@canton-network/core-rpc-errors": "^1.9.0",
+        "@canton-network/core-rpc-transport": "^1.10.0",
         "@nx/js": "22.7.6",
         "nx": "22.7.7"
     },

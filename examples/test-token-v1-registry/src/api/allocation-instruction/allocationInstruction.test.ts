@@ -5,6 +5,7 @@ import { describe, vi, it, expect, beforeEach } from 'vitest'
 import { expressContext, mock, RequestType } from '../../__test__/mocks'
 import { APIError, emptyChoiceContext } from '../common'
 import { getAllocationFactory } from './getAllocationFactory'
+import { synchronizerId } from '../../common/synchronizer'
 
 const { res, next } = expressContext
 
@@ -25,9 +26,31 @@ vi.mock('../../common/operator', () => ({
     },
 }))
 
+vi.mock('@canton-network/core-splice-codegen', () => ({
+    TestToken: {
+        DAR: {
+            TestTokenV1: {
+                TokenRules: {
+                    templateId: 'TestTokenV1:TokenRules',
+                },
+            },
+        },
+        commands: {
+            create: {
+                rules: (payload: { admin: string }) => ({
+                    templateId: 'TestTokenV1:TokenRules',
+                    payload,
+                }),
+            },
+        },
+    },
+}))
+
 describe('Allocation Instruction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        synchronizerId.transferInstruction = ''
+        synchronizerId.allocationInstruction = ''
     })
 
     it('should successfully return factory contract from acs reader', async () => {
@@ -84,5 +107,49 @@ describe('Allocation Instruction', () => {
             factoryId: 'cid',
             choiceContext: emptyChoiceContext,
         })
+    })
+
+    it('should return factory matching allocation synchronizer id', async () => {
+        const request = {} as RequestType<typeof getAllocationFactory>
+
+        synchronizerId.allocationInstruction = 'allocation-sync-id'
+        mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
+            {
+                contractId: 'cid-1',
+                synchronizerId: 'some-other-sync-id',
+            },
+            {
+                contractId: 'cid-2',
+                synchronizerId: 'allocation-sync-id',
+            },
+        ])
+
+        await getAllocationFactory(request, res, next)
+
+        expect(res.json).toHaveBeenCalledWith({
+            factoryId: 'cid-2',
+            choiceContext: emptyChoiceContext,
+        })
+    })
+
+    it('should pass allocation synchronizer id when creating factory contract', async () => {
+        const request = {} as RequestType<typeof getAllocationFactory>
+
+        synchronizerId.allocationInstruction = 'allocation-sync-id'
+        mock.sdk.ledger.acsReader.readJsContracts
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([
+                {
+                    contractId: 'cid',
+                },
+            ])
+
+        await getAllocationFactory(request, res, next)
+
+        expect(mock.prepare).toHaveBeenCalledWith(
+            expect.objectContaining({
+                synchronizerId: 'allocation-sync-id',
+            })
+        )
     })
 })

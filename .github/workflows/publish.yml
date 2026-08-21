@@ -52,12 +52,12 @@ jobs:
                       export NPM_TAG="latest"
                   fi
 
-                  # Use pnpm exec to evaluate each filtered package directory
+                  # pnpm treats unprefixed filters as package names; ./ globs select by directory
                   pnpm -r \
-                    --filter "core/**" \
-                    --filter "sdk/**" \
-                    --filter "wallet-gateway/**" \
-                    --filter "examples/**" \
+                    --filter "./core/**" \
+                    --filter "./sdk/**" \
+                    --filter "./wallet-gateway/**" \
+                    --filter "./examples/**" \
                     exec bash -c '
                       PKG_NAME=$(node -p "require(\"./package.json\").name")
                       PKG_VER=$(node -p "require(\"./package.json\").version")

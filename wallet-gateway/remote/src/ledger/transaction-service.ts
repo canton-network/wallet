@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Logger } from 'pino'
-import { LedgerClient } from '@canton-network/core-ledger-client'
+import { LedgerClient, Types } from '@canton-network/core-ledger-client'
 import {
     Store,
     Transaction,
@@ -875,7 +875,7 @@ export class TransactionService {
             {
                 userId,
                 preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V2',
+                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
                 submissionId: commandId,
                 deduplicationPeriod: {
                     Empty: {},
@@ -896,7 +896,7 @@ export class TransactionService {
                         },
                     ],
                 },
-            }
+            } as Types['JsExecuteSubmissionAndWaitRequest']
         )
 
         logDynamically(this.logger, 'Externally signed execution result', {

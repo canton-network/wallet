@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { getLogger } from '@logtape/logtape'
 import { pino, Logger } from 'pino'
 import { sink } from 'pino-test'
 import { SignJWT } from 'jose'
@@ -62,10 +63,10 @@ describe('jwtAuthService', () => {
     let store: StoreInternal
 
     beforeEach(async () => {
-        mockLogger = pino(sink()) as Logger
+        mockLogger = pino(sink())
         store = new StoreInternal(
             { idps: [], networks: [] },
-            mockLogger,
+            getLogger('mock'),
             authContext
         )
         vi.stubGlobal('fetch', mockFetch)

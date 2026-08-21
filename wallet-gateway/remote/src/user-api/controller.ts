@@ -67,7 +67,10 @@ import { logDynamically, networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
 import { TransactionService } from '../ledger/transaction-service.js'
 import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
-import type { MessageSignatureEvent } from '../dapp-api/rpc-gen/typings.js'
+import type {
+    MessageSignatureEvent,
+    TxChangedFailedEvent,
+} from '../dapp-api/rpc-gen/typings.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
@@ -1116,7 +1119,18 @@ export const userController = (
                     `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
                 )
             }
+            const session = await store.getSession(
+                assertConnected(authContext).accessToken
+            )
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
             await store.removeTransaction(transaction.id)
+            notificationService.getNotifier(session.id).emit('txChanged', {
+                status: 'failed',
+                commandId: transaction.commandId,
+            } satisfies TxChangedFailedEvent)
             return null
         },
         generateApiKey: async (

@@ -72,6 +72,23 @@ class PopupInstance {
                 origin: window.location.origin,
             }
 
+            const MAX_TIMEOUT = 10000 // 10 seconds
+            let isConnected = false
+
+            const originPoller = setInterval(() => {
+                win.postMessage(message, childOrigin)
+            }, 500)
+
+            // Set the timeout and save its ID
+            const timeoutId = setTimeout(() => {
+                clearInterval(originPoller)
+                if (!isConnected) {
+                    console.error(
+                        'Connection timed out waiting for child window.'
+                    )
+                }
+            }, MAX_TIMEOUT)
+
             // due to the asynchronicity when sending the postMessage immediately after redirecting,
             // there is a chance that the child window has not yet loaded,
             // and does not an event listener established yet. Therefore,
@@ -85,15 +102,13 @@ class PopupInstance {
                     return
                 if (childOrigin !== event.origin) return
 
+                isConnected = true
                 clearInterval(originPoller)
+                clearTimeout(timeoutId)
                 window.removeEventListener('message', handleMessage)
             }
 
             window.addEventListener('message', handleMessage)
-
-            const originPoller = setInterval(() => {
-                win.postMessage(message, childOrigin)
-            }, 500)
 
             win.focus()
             return win
