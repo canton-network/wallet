@@ -171,10 +171,10 @@ export class UserUiParties extends BaseElement {
         super.connectedCallback()
         const currentOrigin = await detectCurrentOrigin()
         this.client = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
+            (await stateManager.accessToken.get(currentOrigin)) || undefined
         )
         this.showCreationToastIfNeeded()
-        this.updateWallets()
+        await this.updateWallets()
     }
 
     private showCreationToastIfNeeded() {
@@ -214,7 +214,7 @@ export class UserUiParties extends BaseElement {
     private async updateWallets() {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
+            (await stateManager.accessToken.get(currentOrigin)) || undefined
         )
 
         const sessions = await userClient
@@ -223,10 +223,10 @@ export class UserUiParties extends BaseElement {
         const currentSession = sessions?.sessions?.[0]
         const networkId =
             currentSession?.network?.id ||
-            stateManager.networkId.get(currentOrigin)
+            (await stateManager.networkId.get(currentOrigin))
 
         const filter = networkId ? { networkIds: [networkId] } : undefined
-        userClient
+        await userClient
             .request({
                 method: 'listWallets',
                 params: filter ? { filter } : {},
@@ -234,12 +234,15 @@ export class UserUiParties extends BaseElement {
             .then((wallets) => {
                 this.wallets = wallets || []
             })
+            .catch(() => {
+                this.wallets = []
+            })
     }
 
     private async _onSetPrimary(e: WalletSetPrimaryEvent) {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
+            (await stateManager.accessToken.get(currentOrigin)) || undefined
         )
         await userClient.request({
             method: 'setPrimaryWallet',
@@ -247,7 +250,7 @@ export class UserUiParties extends BaseElement {
                 partyId: e.wallet.partyId,
             },
         })
-        this.updateWallets()
+        await this.updateWallets()
     }
 
     private async _onAllocateParty(e: WalletAllocateEvent) {
@@ -256,7 +259,7 @@ export class UserUiParties extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(currentOrigin)
+                (await stateManager.accessToken.get(currentOrigin)) || undefined
             )
             const result = await userClient.request({
                 method: 'allocatePartyForWallet',
@@ -290,6 +293,6 @@ export class UserUiParties extends BaseElement {
         }
 
         this.loading = false
-        this.updateWallets()
+        await this.updateWallets()
     }
 }

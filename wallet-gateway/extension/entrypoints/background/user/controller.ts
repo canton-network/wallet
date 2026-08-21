@@ -186,7 +186,29 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
             throw new Error('Function removeSession not implemented.')
         },
         listSessions: async () => {
-            throw new Error('Function listSessions not implemented.')
+            const { store } = await getParams
+            const sessions = await store.listSessions()
+
+            return {
+                sessions: await Promise.all(
+                    sessions.map(async (session) => {
+                        const network = await store.getNetwork(session.network)
+                        const idp = await store.getIdp(
+                            network.identityProviderId
+                        )
+
+                        return {
+                            id: session.id,
+                            origin: session.origin,
+                            network: toNetworkDto(network),
+                            idp,
+                            accessToken: HARDCODED_ACCESS_TOKEN,
+                            status: {} as Status,
+                            rights: {} as UserLevelRight,
+                        }
+                    })
+                ),
+            }
         },
         getTransaction: async () => {
             throw new Error('Function getTransaction not implemented.')
