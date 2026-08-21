@@ -8,6 +8,7 @@ import { getTransferInstructionWithdrawContext } from './getTransferInstructionW
 import { getTransferFactory } from './getTransferFactory'
 import { APIError, emptyChoiceContext } from '../common'
 import { expressContext, mock, RequestType } from '../../__test__/mocks'
+import { synchronizerId } from '../../common/synchronizer'
 
 const { res, next } = expressContext
 
@@ -51,6 +52,8 @@ vi.mock('@canton-network/core-splice-codegen', () => ({
 describe('Transfer Instruction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        synchronizerId.transferInstruction = ''
+        synchronizerId.allocationInstruction = ''
     })
 
     it('should get accept choice context', () => {
@@ -249,6 +252,57 @@ describe('Transfer Instruction', () => {
                 transferKind: 'direct',
                 choiceContext: emptyChoiceContext,
             })
+        })
+
+        it('should return factory matching transfer synchronizer id', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
+
+            synchronizerId.transferInstruction = 'transfer-sync-id'
+            mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
+                {
+                    contractId: 'cid-1',
+                    synchronizerId: 'some-other-sync-id',
+                },
+                {
+                    contractId: 'cid-2',
+                    synchronizerId: 'transfer-sync-id',
+                },
+            ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(res.json).toHaveBeenCalledWith({
+                factoryId: 'cid-2',
+                transferKind: 'offer',
+                choiceContext: emptyChoiceContext,
+            })
+        })
+
+        it('should pass transfer synchronizer id when creating factory contract', async () => {
+            const request = getTransferFactoryRequest({
+                sender: 's',
+                receiver: 'r',
+            })
+
+            synchronizerId.transferInstruction = 'transfer-sync-id'
+            mock.sdk.ledger.acsReader.readJsContracts
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([
+                    {
+                        contractId: 'cid',
+                    },
+                ])
+
+            await getTransferFactory(request, res, next)
+
+            expect(mock.prepare).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    synchronizerId: 'transfer-sync-id',
+                })
+            )
         })
     })
 })

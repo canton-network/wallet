@@ -2,29 +2,51 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { stopRegistry } from '.'
 
-const use = vi.fn().mockReturnThis()
-const listen = vi.fn()
-const json = vi.fn()
+const mocks = vi.hoisted(() => {
+    const use = vi.fn().mockReturnThis()
+    const close = vi.fn()
+    const listen = vi.fn().mockReturnValue({
+        close,
+    })
+    const json = vi.fn()
 
-const expressFactory = vi.fn(() => ({
-    use,
-    listen,
-}))
+    const expressFactory = vi.fn(() => ({
+        use,
+        listen,
+    }))
 
-const initOperatorParty = vi.fn()
-const vetDar = vi.fn()
+    const initOperatorParty = vi.fn()
+    const vetDar = vi.fn()
+
+    return {
+        use,
+        close,
+        listen,
+        json,
+        expressFactory,
+        initOperatorParty,
+        vetDar,
+    }
+})
 
 vi.mock('express', () => {
-    const defaultFn = () => expressFactory()
-    defaultFn.json = json
+    const defaultFn = () => mocks.expressFactory()
+    defaultFn.json = mocks.json
     return {
         default: defaultFn,
     }
 })
 
 vi.mock('./common/operator', () => ({
-    initOperatorParty,
+    initOperatorParty: mocks.initOperatorParty,
+    operator: {
+        party: 'operator-party',
+        keys: {
+            privateKey: 'operator-private-key',
+        },
+    },
 }))
 
 vi.mock('./common/sdk', () => ({
@@ -50,7 +72,7 @@ vi.mock('./api/allocation-instruction/index.js', () => ({
 vi.mock('@canton-network/core-splice-codegen', () => ({
     TestToken: {
         utils: {
-            vetDar,
+            vetDar: mocks.vetDar,
         },
     },
 }))
@@ -60,14 +82,33 @@ describe('entry file', () => {
         vi.clearAllMocks()
     })
 
-    it('should initialize the app and start listening', async () => {
-        await import('./index')
+    it("shouldn't do anything", async () => {
+        stopRegistry()
+        expect(mocks.close).not.toHaveBeenCalled()
+    })
 
-        expect(initOperatorParty).toHaveBeenCalledOnce()
-        expect(json).toHaveBeenCalledOnce()
-        expect(use).toHaveBeenCalledTimes(6)
-        expect(listen).toHaveBeenCalledOnce()
-        expect(listen).toHaveBeenCalledWith(5634, expect.any(Function))
-        expect(vetDar).not.toHaveBeenCalled()
+    it('should initialize the app and start listening', async () => {
+        const { startRegistry } = await import('.')
+
+        await startRegistry()
+
+        expect(mocks.initOperatorParty).toHaveBeenCalledOnce()
+        expect(mocks.json).toHaveBeenCalledOnce()
+        expect(mocks.use).toHaveBeenCalledTimes(6)
+        expect(mocks.listen).toHaveBeenCalledOnce()
+        expect(mocks.listen).toHaveBeenCalledWith(5634, expect.any(Function))
+        expect(mocks.vetDar).not.toHaveBeenCalled()
+    })
+
+    it('should properly close the server', async () => {
+        const { startRegistry, stopRegistry } = await import('.')
+
+        await startRegistry()
+
+        expect(mocks.close).not.toHaveBeenCalled()
+
+        stopRegistry()
+
+        expect(mocks.close).toHaveBeenCalledOnce()
     })
 })
