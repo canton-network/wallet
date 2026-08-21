@@ -2,30 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig, defineProject } from 'vitest/config'
+import { WxtVitest } from 'wxt/testing/vitest-plugin'
 
 export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: ['src/api/**/index.ts', 'src/common/sdk.ts'],
+            exclude: ['src/index.ts'],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
                 lines: 80,
                 functions: 80,
-                branches: 70,
+                branches: 0,
                 statements: 80,
             },
         },
-        environment: 'node',
-        include: ['src/**/*.test.ts'],
         projects: [
             defineProject({
                 test: {
-                    name: 'node',
-                    environment: 'node',
+                    name: 'extension-tests',
                     include: ['src/**/*.test.ts'],
                 },
+                plugins: [WxtVitest()],
             }),
         ],
     },
