@@ -138,7 +138,7 @@ const storeNetwork: StoreNetwork = {
     auth: {
         method: 'authorization_code',
         clientId: 'cid',
-        scope: 'scope',
+        scope: 'scope1 scope2',
         audience: 'aud',
     },
     adminAuth: {
@@ -956,9 +956,9 @@ describe('userController', () => {
         const validAddSessionClaims = {
             iss: idp.issuer,
             aud: storeNetwork.auth.audience,
-            sub: storeNetwork.auth.clientId,
-            scope: 'scope',
-            scp: ['scope'],
+            sub: 'sub',
+            scope: 'scope1 scope2',
+            scp: ['scope1', 'scope2'],
             exp: 1_900_000_000,
             iat: 1_800_000_000,
         }
@@ -1206,7 +1206,7 @@ describe('userController', () => {
                 accessToken: createJwt({
                     iss: idp.issuer,
                     aud: storeNetwork.auth.audience,
-                    sub: storeNetwork.auth.clientId,
+                    sub: 'sub',
                     exp: 1_900_000_000,
                     iat: 1_800_000_000,
                 }),
@@ -1229,7 +1229,7 @@ describe('userController', () => {
             ).rejects.toThrow('Failed to add session')
         })
 
-        it('addSession passes when only scope is present and matches', async () => {
+        it('addSession passes when only scope is present and has all requested scopes', async () => {
             const authWithScopeOnly = createAuthWithAddSessionClaims({
                 scp: undefined,
             })
@@ -1260,7 +1260,7 @@ describe('userController', () => {
             expect(result.network).not.toHaveProperty('serviceAccountAuth')
         })
 
-        it('addSession rejects when only scope is present and mismatches', async () => {
+        it('addSession rejects when only scope is present and does not have requested claims', async () => {
             const authWithInvalidScope = createAuthWithAddSessionClaims({
                 scope: 'openid email',
                 scp: undefined,
@@ -1283,10 +1283,10 @@ describe('userController', () => {
             ).rejects.toThrow('Failed to add session')
         })
 
-        it('addSession rejects when both scope and scp are present but one mismatches', async () => {
+        it('addSession passes when scope matches and scp mismatches', async () => {
             const authWithMismatchedScp = createAuthWithAddSessionClaims({
-                scope: 'scope',
-                scp: ['scope openid'],
+                scope: 'scope1 scope2',
+                scp: ['scope3'],
             })
             const store = await createStore(logger, authWithMismatchedScp, {
                 withWallet: false,
@@ -1298,12 +1298,35 @@ describe('userController', () => {
                 authWithMismatchedScp
             )
 
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
+            const result = await controller.addSession({
+                origin: 'dapp-1',
+                networkId: 'network1',
+            })
+
+            expect(result.status).toBe('connected')
+        })
+
+        it('addSession passes when scope is a superset of network auth scope', async () => {
+            const authWithExtraScopes = createAuthWithAddSessionClaims({
+                scope: 'scope1 scope2 openid email',
+                scp: undefined,
+            })
+            const store = await createStore(logger, authWithExtraScopes, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithExtraScopes
+            )
+
+            const result = await controller.addSession({
+                origin: 'dapp-1',
+                networkId: 'network1',
+            })
+
+            expect(result.status).toBe('connected')
         })
 
         it('addSession rejects token with issuer mismatch', async () => {
