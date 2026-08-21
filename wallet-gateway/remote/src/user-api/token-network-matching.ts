@@ -31,15 +31,15 @@ function normalizeScopeClaim(
     return []
 }
 
-function claimContainsRequiredScopes(
+function claimContainsRequestedScopes(
     tokenClaim: unknown,
     networkAuthScopes: string[]
 ): boolean {
     const claimScopes = normalizeScopeClaim(tokenClaim)
-    return (
-        claimScopes.length === networkAuthScopes.length &&
-        networkAuthScopes.every((scope) => claimScopes.includes(scope))
-    )
+    // token claim scopes has same scopes as requested - pass
+    // token claim scopes is superset of requested scopes - pass
+    // token claim doesn't have requested scopes - fail
+    return networkAuthScopes.every((scope) => claimScopes.includes(scope))
 }
 
 export function assertTokenClaimsMatchNetwork(
@@ -69,7 +69,7 @@ export function assertTokenClaimsMatchNetwork(
         )
     }
 
-    const requiredScopes = normalizeScopeClaim(network.auth.scope)
+    const requestedScopes = normalizeScopeClaim(network.auth.scope)
     const hasScopeClaim = tokenClaims.scope !== undefined
     const hasScpClaim = tokenClaims.scp !== undefined
 
@@ -77,17 +77,18 @@ export function assertTokenClaimsMatchNetwork(
         throw new Error(`Token scope and scp claims missing.`)
     }
 
-    if (
-        hasScopeClaim &&
-        !claimContainsRequiredScopes(tokenClaims.scope, requiredScopes)
-    ) {
-        throw new Error(`Token scope claim doesn't match network's auth scope.`)
+    // Prefer scope claim. Test scp instead if scope is not present.
+    if (hasScopeClaim) {
+        if (!claimContainsRequestedScopes(tokenClaims.scope, requestedScopes)) {
+            throw new Error(
+                `Token scope claim doesn't match network's auth scope.`
+            )
+        }
+
+        return
     }
 
-    if (
-        hasScpClaim &&
-        !claimContainsRequiredScopes(tokenClaims.scp, requiredScopes)
-    ) {
+    if (!claimContainsRequestedScopes(tokenClaims.scp, requestedScopes)) {
         throw new Error(`Token scp claim doesn't match network's auth scope.`)
     }
 }
