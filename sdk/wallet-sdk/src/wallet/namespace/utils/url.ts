@@ -3,6 +3,7 @@
 
 import type { SDKContext } from '../../init/types/context.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { AssetBody } from '../asset/index.js'
 
 export type URLInput = URL | string
 
@@ -34,7 +35,7 @@ export class ParsedURL extends URL {
 export function parseAssets(
     ctx: SDKContext,
     assets: Awaited<ReturnType<TokenStandardService['registriesToAssets']>>
-) {
+): AssetBody[] {
     return assets.map((asset) => {
         // The type claims `admin` is always present, but it's parsed from an
         // external registry response with no runtime validation -- a registry
