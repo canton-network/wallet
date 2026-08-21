@@ -16,7 +16,6 @@ import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '@/utils/legacy/state-manager'
 import '@/utils/legacy'
 import { redirectToIntendedOrDefault, addUserSession } from '@/utils/legacy'
-// import { setLocationHref } from '@/utils/legacy/navigation.js'
 import { detectCurrentOrigin } from '@/utils/legacy/listeners.js'
 import { buildAuthorization, fetchToken } from '@/utils/reusable/oauth'
 
@@ -40,7 +39,7 @@ export class LoginUI extends BaseElement {
     private async loadNetworks() {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
+            (await stateManager.accessToken.get(currentOrigin)) || undefined
         )
         const response = await userClient.request({ method: 'listNetworks' })
         return response.networks
@@ -49,7 +48,7 @@ export class LoginUI extends BaseElement {
     private async loadIdps() {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
+            (await stateManager.accessToken.get(currentOrigin)) || undefined
         )
         const response = await userClient.request({ method: 'listIdps' })
         return response.idps
@@ -89,7 +88,7 @@ export class LoginUI extends BaseElement {
         this.connecting = true
         this.connectingMessage = `Connecting to ${selectedNetwork.name}...`
         const currentOrigin = await detectCurrentOrigin()
-        stateManager.networkId.set(selectedNetwork.id, currentOrigin)
+        await stateManager.networkId.set(selectedNetwork.id, currentOrigin)
 
         try {
             if (selectedIdp.type === 'self_signed') {
@@ -127,21 +126,18 @@ export class LoginUI extends BaseElement {
 
                     const claims = JSON.parse(atob(payload))
 
-                    stateManager.expirationDate.set(
+                    await stateManager.expirationDate.set(
                         new Date(claims.exp * 1000).toISOString(),
                         currentOrigin
                     )
 
                     await stateManager.accessToken.set(token, currentOrigin)
+                    const networkId =
+                        await stateManager.networkId.get(currentOrigin)
 
-                    addUserSession(
-                        token,
-                        stateManager.networkId.get(currentOrigin) || ''
-                    )
-                        .then(() => {
-                            redirectToIntendedOrDefault()
-                        })
-                        .catch(handleErrorToast)
+                    await addUserSession(token, networkId || '')
+                    await redirectToIntendedOrDefault()
+                    return
                 }
 
                 await this.showLoginError(
@@ -167,7 +163,7 @@ export class LoginUI extends BaseElement {
     protected async selfSign(networkId: string, clientId: string) {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
+            (await stateManager.accessToken.get(currentOrigin)) || undefined
         )
         const { accessToken } = await userClient.request({
             method: 'selfSignedAccessToken',
@@ -175,7 +171,7 @@ export class LoginUI extends BaseElement {
         })
 
         const payload = JSON.parse(atob(accessToken.split('.')[1]!))
-        stateManager.expirationDate.set(
+        await stateManager.expirationDate.set(
             new Date(payload.exp * 1000).toISOString(),
             currentOrigin
         )

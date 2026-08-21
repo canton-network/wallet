@@ -10,14 +10,20 @@ const handleMessage = (event: MessageEvent) => {
     if (event.data.type !== WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN) return
     if (event.data.origin !== event.origin) return
 
-    stateManager.currentOrigin.set(event.data.origin)
-    window.opener.postMessage(
-        {
-            type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
-        },
-        event.origin
-    )
-    window.removeEventListener('message', handleMessage)
+    stateManager.currentOrigin
+        .set(event.data.origin)
+        .then(() => {
+            window.opener.postMessage(
+                {
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                },
+                event.origin
+            )
+            window.removeEventListener('message', handleMessage)
+        })
+        .catch((error) => {
+            logger.error('Failed to set current origin: {*}', { error })
+        })
 }
 
 window.addEventListener('message', handleMessage)

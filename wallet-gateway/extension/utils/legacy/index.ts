@@ -42,8 +42,8 @@ document.head.appendChild(globalPageResetStyle)
 
 export const redirectToIntendedOrDefault = async (): Promise<void> => {
     const currentOrigin = await detectCurrentOrigin()
-    const intendedPage = stateManager.intendedPage.get(currentOrigin)
-    stateManager.intendedPage.clear(currentOrigin)
+    const intendedPage = await stateManager.intendedPage.get(currentOrigin)
+    await stateManager.intendedPage.clear(currentOrigin)
     const route = intendedPage || DEFAULT_PAGE_REDIRECT
     setLocationHref(toRelHref(route))
 }
@@ -51,9 +51,12 @@ export const redirectToIntendedOrDefault = async (): Promise<void> => {
 @customElement('user-app')
 export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
-    @state() private accessor networkConnected = false
+    @state() accessor networkConnected = false
     @state() accessor dappApiUrl: string = ''
     @state() accessor showPage = false
+
+    // Add a state variable to hold the resolved networkId
+    @state() accessor networkId: string | null = null
 
     static override styles = css`
         .loading {
@@ -71,6 +74,10 @@ export class UserApp extends LitElement {
     private async refreshNetworkConnected(): Promise<void> {
         const currentOrigin =
             this.currentOrigin ?? (await detectCurrentOrigin())
+
+        // Fetch the networkId asynchronously and store it in state
+        this.networkId = await stateManager.networkId.get(currentOrigin)
+
         const accessToken = await stateManager.accessToken.get(currentOrigin)
         if (!accessToken) {
             this.networkConnected = false
@@ -147,8 +154,8 @@ export class UserApp extends LitElement {
     }
 
     protected override render() {
-        const networkId = stateManager.networkId.get(this.currentOrigin || '')
-        const networkName = networkId || 'No network connected'
+        // Read the resolved string directly from state
+        const networkName = this.networkId || 'No network connected'
 
         return html`
             <app-layout
@@ -236,7 +243,9 @@ export class AuthSettledEvent extends CustomEvent<{ verdict: AuthVerdict }> {
 export class UserUIAuthRedirect extends LitElement {
     override connectedCallback(): void {
         super.connectedCallback()
-        this.handleAuthRedirect()
+        this.handleAuthRedirect().catch((error) => {
+            logger.error('Failed to handle auth redirect: {*}', { error })
+        })
     }
 
     private async handleAuthRedirect(): Promise<void> {
@@ -259,12 +268,14 @@ export class UserUIAuthRedirect extends LitElement {
         const isLoginPage = currentRoute === LOGIN_PAGE_REDIRECT
         const currentOrigin = await detectCurrentOrigin()
         const accessToken = await stateManager.accessToken.get(currentOrigin)
+        const expirationDate =
+            await stateManager.expirationDate.get(currentOrigin)
 
         if (!accessToken) {
             return this.handleUnauthenticated(isLoginPage, currentOrigin)
         }
 
-        if (this.isTokenExpired(currentOrigin)) {
+        if (this.isTokenExpired(expirationDate || undefined)) {
             return this.handleExpiredToken(isLoginPage)
         }
 
@@ -294,21 +305,21 @@ export class UserUIAuthRedirect extends LitElement {
 
         await stateManager.clearAuthState(currentOrigin)
         if (intendedPage) {
-            stateManager.intendedPage.set(intendedPage, currentOrigin)
+            await stateManager.intendedPage.set(intendedPage, currentOrigin)
         }
     }
 
-    private handleUnauthenticated(
+    private async handleUnauthenticated(
         isLoginPage: boolean,
         currentOrigin: string
-    ): AuthVerdict {
+    ): Promise<AuthVerdict> {
         if (isLoginPage) {
             return 'show-page'
         }
 
         const intendedPage = this.getIntendedPageFromCurrentPath()
         if (intendedPage) {
-            stateManager.intendedPage.set(intendedPage, currentOrigin)
+            await stateManager.intendedPage.set(intendedPage, currentOrigin)
         }
         setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
         return 'redirecting'
@@ -341,8 +352,12 @@ export class UserUIAuthRedirect extends LitElement {
     ): Promise<AuthVerdict> {
         const sessionId = await getSessionId(accessToken)
         const currentOrigin = await detectCurrentOrigin()
+
+        const expirationDate =
+            await stateManager.expirationDate.get(currentOrigin)
+
         if (sessionId) {
-            this.setTokenExpirationTimeout(currentOrigin)
+            this.setTokenExpirationTimeout(expirationDate || '')
             await redirectToIntendedOrDefault()
             shareConnection(accessToken, sessionId)
             return 'redirecting'
@@ -357,7 +372,7 @@ export class UserUIAuthRedirect extends LitElement {
         accessToken: string
     ): Promise<AuthVerdict> {
         const currentOrigin = await detectCurrentOrigin()
-        const networkId = stateManager.networkId.get(currentOrigin)
+        const networkId = await stateManager.networkId.get(currentOrigin)
         if (!networkId) {
             throw new Error('missing networkId in state manager')
         }
@@ -371,7 +386,9 @@ export class UserUIAuthRedirect extends LitElement {
         }
 
         // Token is valid - set up expiration timeout
-        this.setTokenExpirationTimeout(currentOrigin)
+        const expirationDate =
+            (await stateManager.expirationDate.get(currentOrigin)) || ''
+        this.setTokenExpirationTimeout(expirationDate)
         shareConnection(accessToken, sessionId)
 
         // Redirect to default page if on root path
@@ -383,15 +400,13 @@ export class UserUIAuthRedirect extends LitElement {
         return 'show-page'
     }
 
-    private setTokenExpirationTimeout(origin: string): void {
+    private setTokenExpirationTimeout(expirationDate: string): void {
         clearTokenExpirationTimeout()
 
-        const expirationDate = new Date(
-            stateManager.expirationDate.get(origin) || ''
-        )
+        const expiry = new Date(expirationDate)
         const now = new Date()
         const timeUntilExpiration =
-            expirationDate.getTime() - now.getTime() - TOKEN_EXPIRED_SKEW_MS
+            expiry.getTime() - now.getTime() - TOKEN_EXPIRED_SKEW_MS
 
         if (timeUntilExpiration > 0) {
             tokenExpirationTimeoutId = setTimeout(async () => {
@@ -404,11 +419,9 @@ export class UserUIAuthRedirect extends LitElement {
         }
     }
 
-    private isTokenExpired(origin: string): boolean {
-        const expirationDate = new Date(
-            stateManager.expirationDate.get(origin) || 0
-        )
-        return Number(expirationDate) - TOKEN_EXPIRED_SKEW_MS <= Date.now()
+    private isTokenExpired(expirationDate?: string): boolean {
+        const expiry = new Date(expirationDate || 0)
+        return Number(expiry) - TOKEN_EXPIRED_SKEW_MS <= Date.now()
     }
 }
 
@@ -429,6 +442,6 @@ export const addUserSession = async (token: string, networkId: string) => {
         },
     })
 
-    stateManager.sessionId.set(session.id, currentOrigin)
+    await stateManager.sessionId.set(session.id, currentOrigin)
     shareConnection(token, session.id)
 }

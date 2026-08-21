@@ -1,119 +1,106 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { storage } from 'wxt/utils/storage'
+import { browser } from 'wxt/browser'
 import { type AllowedRoute } from '@canton-network/core-wallet-ui-components'
-import {
-    encryptString,
-    destroyTokenKey,
-    decryptString,
-} from './access-token-utils.js'
+import { destroyTokenKey } from './access-token-utils.js'
 
 const VERSION_PREFIX = 'com.splice.wallet.v1'
 
+// We enforce the return type so TypeScript knows it always starts with local: or session:
+export type WxtStorageKey = `local:${string}` | `session:${string}`
+
 export class StateManager {
-    static localStorageKey(item: string, origin: string): string {
-        return `${VERSION_PREFIX}.${origin}.${item}`
+    static getStorageKey(
+        item: string,
+        origin: string,
+        type: 'local' | 'session' = 'local'
+    ): WxtStorageKey {
+        return `${type}:${VERSION_PREFIX}.${origin}.${item}` as WxtStorageKey
     }
 
     constructor() {
-        // delete any old storage entries not corresponding to the current version
-        for (const key in localStorage) {
-            if (!key.startsWith(VERSION_PREFIX)) {
-                localStorage.removeItem(key)
+        // Run async cleanup in the background
+        void this.cleanupOldVersions()
+    }
+
+    private async cleanupOldVersions() {
+        try {
+            // WXT storage doesn't have getKeys, so we use the native browser API
+            const localData = await browser.storage.local.get(null)
+            const sessionData = await browser.storage.session.get(null)
+
+            const localKeys = Object.keys(localData).map(
+                (k) => `local:${k}` as WxtStorageKey
+            )
+            const sessionKeys = Object.keys(sessionData).map(
+                (k) => `session:${k}` as WxtStorageKey
+            )
+            const allKeys = [...localKeys, ...sessionKeys]
+
+            for (const key of allKeys) {
+                const keyWithoutType = key.replace(/^(local:|session:)/, '')
+                if (!keyWithoutType.startsWith(VERSION_PREFIX)) {
+                    await storage.removeItem(key)
+                }
             }
+        } catch (error) {
+            logger.warn('Failed to cleanup old storage versions: {*}', {
+                error,
+            })
         }
     }
 
-    private state: Map<string, string> = new Map()
-
-    private getWithStorage(
+    private async getWithStorage<T>(
         key: string,
         origin: string,
-        storage: Storage = localStorage
-    ): string | undefined {
-        if (this.state.has(key)) {
-            return this.state.get(key)
-        }
-
-        const value = storage.getItem(StateManager.localStorageKey(key, origin))
-
-        if (value) {
-            this.state.set(key, value)
-            return value
-        }
-
-        return undefined
+        type: 'local' | 'session' = 'local'
+    ): Promise<T | null> {
+        return await storage.getItem<T>(
+            StateManager.getStorageKey(key, origin, type)
+        )
     }
 
-    private setWithStorage(
+    private async setWithStorage<T>(
         key: string,
-        value: string,
+        value: T,
         origin: string,
-        storage: Storage = localStorage
-    ) {
-        storage.setItem(StateManager.localStorageKey(key, origin), value)
-        this.state.set(key, value)
+        type: 'local' | 'session' = 'local'
+    ): Promise<void> {
+        await storage.setItem<T>(
+            StateManager.getStorageKey(key, origin, type),
+            value
+        )
     }
 
-    private clearWithStorage(
+    private async clearWithStorage(
         key: string,
         origin: string,
-        storage: Storage = localStorage
-    ) {
-        storage.removeItem(StateManager.localStorageKey(key, origin))
-        this.state.delete(key)
+        type: 'local' | 'session' = 'local'
+    ): Promise<void> {
+        await storage.removeItem(StateManager.getStorageKey(key, origin, type))
     }
-
-    // cache access tokens per origin
-    private accessTokenCache: Map<string, string> = new Map()
 
     accessToken = {
-        get: async (origin: string): Promise<string | undefined> => {
-            if (this.accessTokenCache.has(origin)) {
-                return this.accessTokenCache.get(origin)
-            }
-            const stored = localStorage.getItem(
-                StateManager.localStorageKey('accessToken', origin)
-            )
-            if (!stored) {
-                return undefined
-            }
-            try {
-                this.accessTokenCache.set(origin, await decryptString(stored))
-            } catch (error) {
-                localStorage.removeItem(
-                    StateManager.localStorageKey('accessToken', origin)
-                )
-                logger.warn({ error })
-                this.accessTokenCache.delete(origin)
-            }
-            return this.accessTokenCache.get(origin)
-        },
-        set: async (token: string, origin: string) => {
-            const encryptedToken = await encryptString(token)
-            localStorage.setItem(
-                StateManager.localStorageKey('accessToken', origin),
-                encryptedToken
-            )
-            this.accessTokenCache.set(origin, token)
-        },
-        clear: async (origin: string) => {
-            localStorage.removeItem(
-                StateManager.localStorageKey('accessToken', origin)
-            )
-            this.accessTokenCache.delete(origin)
-        },
+        get: (origin: string): Promise<string | null> =>
+            this.getWithStorage<string>('accessToken', origin),
+        set: (token: string, origin: string) =>
+            this.setWithStorage('accessToken', token, origin),
+        clear: (origin: string) => this.clearWithStorage('accessToken', origin),
     }
 
     networkId = {
-        get: (origin: string) => this.getWithStorage('networkId', origin),
+        get: (origin: string) =>
+            this.getWithStorage<string>('networkId', origin),
         set: (networkId: string, origin: string) =>
             this.setWithStorage('networkId', networkId, origin),
         clear: (origin: string) => this.clearWithStorage('networkId', origin),
     }
 
     expirationDate = {
-        get: (origin: string) => this.getWithStorage('expirationDate', origin),
+        get: (origin: string) =>
+            this.getWithStorage<string>('expirationDate', origin),
         set: (expirationDate: string, origin: string) =>
             this.setWithStorage('expirationDate', expirationDate, origin),
         clear: (origin: string) =>
@@ -122,8 +109,7 @@ export class StateManager {
 
     intendedPage = {
         get: (origin: string) =>
-            this.getWithStorage('intendedPage', origin) as
-                AllowedRoute | undefined,
+            this.getWithStorage<AllowedRoute>('intendedPage', origin),
         set: (page: AllowedRoute, origin: string) =>
             this.setWithStorage('intendedPage', page, origin),
         clear: (origin: string) =>
@@ -131,14 +117,15 @@ export class StateManager {
     }
 
     currentOrigin = {
-        get: () => this.getWithStorage('origin', 'current', sessionStorage),
+        get: () => this.getWithStorage<string>('origin', 'current', 'session'),
         set: (origin: string) =>
-            this.setWithStorage('origin', origin, 'current', sessionStorage),
-        clear: () => this.clearWithStorage('origin', 'current', sessionStorage),
+            this.setWithStorage('origin', origin, 'current', 'session'),
+        clear: () => this.clearWithStorage('origin', 'current', 'session'),
     }
 
     sessionId = {
-        get: (origin: string) => this.getWithStorage('sessionId', origin),
+        get: (origin: string) =>
+            this.getWithStorage<string>('sessionId', origin),
         set: (sessionId: string, origin: string) =>
             this.setWithStorage('sessionId', sessionId, origin),
         clear: (origin: string) => this.clearWithStorage('sessionId', origin),
@@ -146,10 +133,10 @@ export class StateManager {
 
     async clearAuthState(origin: string): Promise<void> {
         await this.accessToken.clear(origin)
-        this.networkId.clear(origin)
-        this.expirationDate.clear(origin)
-        this.intendedPage.clear(origin)
-        this.sessionId.clear(origin)
+        await this.networkId.clear(origin)
+        await this.expirationDate.clear(origin)
+        await this.intendedPage.clear(origin)
+        await this.sessionId.clear(origin)
     }
 
     async revokeAccessToken(origin: string): Promise<void> {

@@ -3,6 +3,6 @@
 
 import { configure } from '@logtape/logtape'
 
-configure(configuration)
+void configure(configuration)
 
 import '@/utils/legacy'

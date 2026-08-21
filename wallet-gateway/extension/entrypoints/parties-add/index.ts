@@ -55,13 +55,15 @@ export class UserUiAddParty extends BaseElement {
 
     override connectedCallback(): void {
         super.connectedCallback()
-        this.loadContext()
+        this.loadContext().catch((error) => {
+            handleErrorToast(error)
+        })
     }
 
     private async loadContext() {
         const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
+            (await stateManager.accessToken.get(currentOrigin)) || undefined
         )
         const sessions = await userClient
             .request({ method: 'listSessions' })
@@ -69,7 +71,8 @@ export class UserUiAddParty extends BaseElement {
         const currentSession = sessions?.sessions?.[0]
         const networkId =
             currentSession?.network?.id ||
-            stateManager.networkId.get(currentOrigin)
+            (await stateManager.networkId.get(currentOrigin))
+
         this.networkIds = networkId ? [networkId] : []
     }
 
@@ -90,7 +93,7 @@ export class UserUiAddParty extends BaseElement {
         const currentOrigin = await detectCurrentOrigin()
         try {
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(currentOrigin)
+                (await stateManager.accessToken.get(currentOrigin)) || undefined
             )
             const result = await userClient.request({
                 method: 'listSigningProviderVaults',
@@ -121,7 +124,7 @@ export class UserUiAddParty extends BaseElement {
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get(currentOrigin)
+                (await stateManager.accessToken.get(currentOrigin)) || undefined
             )
             const result = await userClient.request({
                 method: 'createWallet',

@@ -9,8 +9,17 @@ export default defineConfig([
         files: ['**/*.{ts,tsx}'],
         extends: [config],
         ignores: ['.output/**', '.wxt/**'],
+        languageOptions: {
+            parserOptions: {
+                // This tells ESLint to automatically find the nearest tsconfig.json
+                // for each linted file
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
         rules: {
             'no-console': 'error',
+            '@typescript-eslint/no-floating-promises': 'error',
         },
     },
 ])
