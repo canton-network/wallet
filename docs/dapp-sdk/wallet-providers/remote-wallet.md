@@ -22,6 +22,58 @@ RPC URL. Share that URL and a display name with integrating dApps. The dApp-side
 registration steps are covered in
 [Wallet discovery](../guides/wallet-discovery.md).
 
+## Establishing a dapp-sdk session
+
+In order to establish a unique session with a dApp by its origin using the `@canton-network/dapp-sdk`, then your Remote Wallet (assuming it has an open browser communication channel with the dApp) must listen for `SPLICE_WALLET_BROADCAST_ORIGIN` message events.
+
+This enables secure future communications over `window.postMessage` (by explicitly setting `origin` to the dApp, preventing other JS scripts from intercepting messages) and also enables the Remote Wallet to manage user sessions keyed by dApp origins.
+
+An example of this is provided below, courtesy of the Wallet Gateway Remote implementation:
+
+```ts
+import { isSpliceMessageEvent, WalletEvent } from '@canton-network/core-types'
+
+const handleMessage = (event: MessageEvent) => {
+    if (!isSpliceMessageEvent(event)) return
+    if (window.opener && event.source !== window.opener) return
+    if (event.data.type !== WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN) return
+    if (event.data.origin !== event.origin) return
+
+    stateManager.currentOrigin.set(event.data.origin)
+    window.opener.postMessage(
+        {
+            type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+        },
+        event.origin
+    )
+    window.removeEventListener('message', handleMessage)
+}
+
+window.addEventListener('message', handleMessage)
+
+export async function detectCurrentOrigin(): Promise<string> {
+    if (!window.opener) {
+        stateManager.currentOrigin.set(window.origin)
+        return window.origin
+    }
+
+    return new Promise((resolve) => {
+        // wait for stateManager.currentOrigin.get to be defined
+        const interval = setInterval(() => {
+            const currentOrigin = stateManager.currentOrigin.get()
+            if (currentOrigin) {
+                clearInterval(interval)
+                resolve(currentOrigin)
+            }
+        }, 100)
+    })
+}
+```
+
+More details about this flow may be found in the repo wiki: https://github.com/canton-network/wallet/wiki/Wallet-Gateway#window-communication
+
+DISCLAIMER: The entire window message protocol (including `SPLICE_WALLET_BROADCAST_ORIGIN_ACK` messages) that is currently used between the dapp-sdk and a Wallet is a W.I.P. and subject to change. A cleaner API & type-safe companion library may be delivered in the future to better facilitate this.
+
 ## Requirements
 
 - Serve the CIP-103 RPC methods and event stream at a stable, public URL.

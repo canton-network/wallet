@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-store-inmemory",
-    "version": "1.12.0",
+    "version": "1.12.1",
     "type": "module",
     "description": "In-memory implementation of the Store API",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
@@ -19,7 +19,7 @@
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
         "@canton-network/core-wallet-store": "workspace:^",
-        "pino": "^10.3.1",
+        "@logtape/logtape": "^2.3.1",
         "zod": "^4.4.3"
     },
     "devDependencies": {

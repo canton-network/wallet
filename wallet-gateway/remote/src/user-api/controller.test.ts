@@ -18,6 +18,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { userController } from './controller.js'
+import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -202,7 +203,7 @@ async function createStore(
     const { withSession = true, withWallet = true } = options
     const store = new StoreInternal(
         { idps: [idp], networks: [storeNetwork] },
-        logger,
+        getLogger('mock'),
         context
     )
     if (context && withSession) {
@@ -769,10 +770,14 @@ describe('userController', () => {
             expect(result.transactions[0]?.id).toBe('tx-1')
         })
 
-        it('deletes a pending transaction', async () => {
+        it('deletes a pending transaction and emits a failed event', async () => {
             const store = await createStore(logger, auth)
             await store.setTransaction(transaction)
             const removeSpy = vi.spyOn(store, 'removeTransaction')
+            const emitSpy = vi.spyOn(
+                notificationService.getNotifier(session.id),
+                'emit'
+            )
             const controller = createController(
                 store,
                 notificationService,
@@ -783,6 +788,14 @@ describe('userController', () => {
             await controller.deleteTransaction({ transactionId: 'tx-1' })
 
             expect(removeSpy).toHaveBeenCalledWith('tx-1')
+            expect(emitSpy).toHaveBeenCalledOnce()
+            expect(emitSpy).toHaveBeenCalledWith('txChanged', {
+                status: 'failed',
+                commandId: transaction.commandId,
+            })
+            expect(removeSpy.mock.invocationCallOrder[0]).toBeLessThan(
+                emitSpy.mock.invocationCallOrder[0]!
+            )
         })
 
         it('rejects delete when the transaction is not pending', async () => {
@@ -950,8 +963,20 @@ describe('userController', () => {
             iat: 1_800_000_000,
         }
 
+        interface JwtClaims {
+            iss: string
+            aud: string
+            sub: string
+            scope?: string
+            scp?: string[]
+            exp: number
+            iat: number
+            azp?: string
+            client_id?: string
+        }
+
         const createAuthWithAddSessionClaims = (
-            claimsOverride: Partial<typeof validAddSessionClaims> = {}
+            claimsOverride: Partial<JwtClaims> = {}
         ): AuthContext => ({
             ...auth,
             accessToken: createJwt({
@@ -1325,9 +1350,9 @@ describe('userController', () => {
             ).rejects.toThrow('Failed to add session')
         })
 
-        it('addSession rejects token with subject mismatch', async () => {
+        it('addSession rejects token with client_id claim and auth.clientId mismatch', async () => {
             const authWithInvalidSubject = createAuthWithAddSessionClaims({
-                sub: 'wrong-client-id',
+                client_id: 'wrong-client-id',
             })
             const store = await createStore(logger, authWithInvalidSubject, {
                 withWallet: false,
@@ -1345,6 +1370,55 @@ describe('userController', () => {
                     networkId: 'network1',
                 })
             ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession rejects token with azp claim and auth.clientId mismatch', async () => {
+            const authWithInvalidSubject = createAuthWithAddSessionClaims({
+                azp: 'wrong-client-id',
+            })
+            const store = await createStore(logger, authWithInvalidSubject, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidSubject
+            )
+
+            await expect(
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it("addSession passes when token doesn't token have azp and client-id claims", async () => {
+            const authWithInvalidSubject = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithInvalidSubject, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidSubject
+            )
+
+            const result = await controller.addSession({
+                origin: 'dapp-1',
+                networkId: 'network1',
+            })
+            expect(result).toMatchObject({
+                network: expect.objectContaining({
+                    id: 'network1',
+                    auth: expect.objectContaining({
+                        method: 'authorization_code',
+                    }),
+                }),
+                status: 'connected',
+            })
         })
     })
 
@@ -1581,7 +1655,7 @@ describe('userController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutAdmin] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)
@@ -1715,7 +1789,7 @@ describe('userController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutAdmin] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)

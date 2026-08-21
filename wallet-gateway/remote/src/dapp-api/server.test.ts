@@ -13,11 +13,12 @@ import { NotificationService } from '../notification/NotificationService.js'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { createServer } from 'http'
+import { getLogger } from '@logtape/logtape'
 
 const configPath = '../test/config.json'
 const config = ConfigUtils.loadConfigFile(configPath)
 
-const store = new StoreInternal(config.bootstrap, pino(sink()))
+const store = new StoreInternal(config.bootstrap, getLogger('mock'))
 
 const notificationService = new NotificationService(pino(sink()))
 
