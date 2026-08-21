@@ -1200,102 +1200,19 @@ describe('userController', () => {
             })
         })
 
-        it('addSession rejects token when both scope and scp are missing', async () => {
-            const authWithoutScopeClaims: AuthContext = {
-                ...auth,
-                accessToken: createJwt({
-                    iss: idp.issuer,
-                    aud: storeNetwork.auth.audience,
-                    sub: 'sub',
-                    exp: 1_900_000_000,
-                    iat: 1_800_000_000,
-                }),
-            }
-            const store = await createStore(logger, authWithoutScopeClaims, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithoutScopeClaims
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession passes when only scope is present and has all requested scopes', async () => {
-            const authWithScopeOnly = createAuthWithAddSessionClaims({
-                scp: undefined,
-            })
-            const store = await createStore(logger, authWithScopeOnly, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithScopeOnly
-            )
-
-            const result = await controller.addSession({
-                origin: 'dapp-1',
-                networkId: 'network1',
-            })
-            expect(result).toMatchObject({
-                network: expect.objectContaining({
-                    id: 'network1',
-                    auth: expect.objectContaining({
-                        method: 'authorization_code',
-                    }),
-                }),
-                status: 'connected',
-            })
-            expect(result.network).not.toHaveProperty('adminAuth')
-            expect(result.network).not.toHaveProperty('serviceAccountAuth')
-        })
-
-        it('addSession rejects when only scope is present and does not have requested claims', async () => {
-            const authWithInvalidScope = createAuthWithAddSessionClaims({
+        it('addSession does not validate scope or scp against network.auth.scope', async () => {
+            const authWithUnrelatedScopes = createAuthWithAddSessionClaims({
                 scope: 'openid email',
-                scp: undefined,
+                scp: ['profile'],
             })
-            const store = await createStore(logger, authWithInvalidScope, {
+            const store = await createStore(logger, authWithUnrelatedScopes, {
                 withWallet: false,
             })
             const controller = createController(
                 store,
                 notificationService,
                 logger,
-                authWithInvalidScope
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession passes when scope matches and scp mismatches', async () => {
-            const authWithMismatchedScp = createAuthWithAddSessionClaims({
-                scope: 'scope1 scope2',
-                scp: ['scope3'],
-            })
-            const store = await createStore(logger, authWithMismatchedScp, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithMismatchedScp
+                authWithUnrelatedScopes
             )
 
             const result = await controller.addSession({
@@ -1304,121 +1221,6 @@ describe('userController', () => {
             })
 
             expect(result.status).toBe('connected')
-        })
-
-        it('addSession passes when scope is a superset of network auth scope', async () => {
-            const authWithExtraScopes = createAuthWithAddSessionClaims({
-                scope: 'scope1 scope2 openid email',
-                scp: undefined,
-            })
-            const store = await createStore(logger, authWithExtraScopes, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithExtraScopes
-            )
-
-            const result = await controller.addSession({
-                origin: 'dapp-1',
-                networkId: 'network1',
-            })
-
-            expect(result.status).toBe('connected')
-        })
-
-        it('addSession passes when only scp is present and has all requested scopes', async () => {
-            const authWithScpOnly = createAuthWithAddSessionClaims({
-                scope: undefined,
-                scp: ['scope1', 'scope2'],
-            })
-            const store = await createStore(logger, authWithScpOnly, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithScpOnly
-            )
-
-            const result = await controller.addSession({
-                origin: 'dapp-1',
-                networkId: 'network1',
-            })
-
-            expect(result.status).toBe('connected')
-        })
-
-        it('addSession passes when only scp is present and is a superset of network auth scope', async () => {
-            const authWithScpSuperset = createAuthWithAddSessionClaims({
-                scope: undefined,
-                scp: ['scope1', 'scope2', 'openid', 'email', 'daml_ledger_api'],
-            })
-            const store = await createStore(logger, authWithScpSuperset, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithScpSuperset
-            )
-
-            const result = await controller.addSession({
-                origin: 'dapp-1',
-                networkId: 'network1',
-            })
-
-            expect(result.status).toBe('connected')
-        })
-
-        it('addSession rejects when only scp is present and does not include all network auth scope values', async () => {
-            const authWithInvalidScp = createAuthWithAddSessionClaims({
-                scope: undefined,
-                scp: ['email', 'profile'],
-            })
-            const store = await createStore(logger, authWithInvalidScp, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithInvalidScp
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession rejects when scope is incomplete even if scp has all requested scopes', async () => {
-            const authWithIncompleteScope = createAuthWithAddSessionClaims({
-                scope: 'scope1',
-                scp: ['scope1', 'scope2'],
-            })
-            const store = await createStore(logger, authWithIncompleteScope, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithIncompleteScope
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
         })
 
         it('addSession rejects token with issuer mismatch', async () => {
