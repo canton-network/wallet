@@ -7,8 +7,9 @@ import {
     isSpliceMessage,
     isSpliceMessageEvent,
     SynchronizerId,
-    SYNCHRONIZER_ID_EXAMPLE,
 } from './index'
+
+const SYNCHRONIZER_ID_EXAMPLE = 'sync::122012312312312312123'
 
 describe('isSpliceMessage', () => {
     it('accepts each splice message variant', () => {
