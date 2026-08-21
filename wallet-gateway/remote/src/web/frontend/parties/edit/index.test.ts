@@ -52,6 +52,7 @@ import { WALLET_STATUS_CODE } from '../index.js'
 
 describe('UserUiEditParty', () => {
     let el: UserUiEditParty
+    let urlSearchParamsGetMock: ReturnType<typeof vi.spyOn>
     const walletConstraint = {
         partyId: 'alice::1220abc',
         networkId: 'network1',
@@ -61,12 +62,14 @@ describe('UserUiEditParty', () => {
     const componentFixture = html`<user-ui-edit-party></user-ui-edit-party>`
 
     beforeEach(async () => {
-        // Set URL parameters
-        window.history.replaceState(
-            {},
-            '',
-            `?partyId=${walletConstraint.partyId}&networkId=${walletConstraint.networkId}&userId=${walletConstraint.userId}`
-        )
+        urlSearchParamsGetMock = vi
+            .spyOn(URLSearchParams.prototype, 'get')
+            .mockImplementation((paramName: string) => {
+                if (paramName === 'partyId') return walletConstraint.partyId
+                if (paramName === 'networkId') return walletConstraint.networkId
+                if (paramName === 'userId') return walletConstraint.userId
+                return null
+            })
 
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
@@ -106,6 +109,7 @@ describe('UserUiEditParty', () => {
     })
 
     afterEach(() => {
+        urlSearchParamsGetMock.mockRestore()
         // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.clearAllMocks()
@@ -229,26 +233,22 @@ describe('UserUiEditParty', () => {
     })
 
     it('throws error when required wallet constraint params are missing', async () => {
-        window.history.replaceState({}, '', '?partyId=alice')
+        urlSearchParamsGetMock.mockImplementation((paramName: string) => {
+            if (paramName === 'partyId') return 'alice'
+            return null
+        })
 
-        expect(async () => {
-            await fixture<UserUiEditParty>(componentFixture)
-        }).rejects.toThrow('wallet constraint params must be provided')
-    })
+        const walletConstraintGetter = Object.getOwnPropertyDescriptor(
+            UserUiEditParty.prototype,
+            'walletConstraint'
+        )?.get
 
-    it('throws error when required wallet constraint params are missing', async () => {
-        // Set URL with missing parameters
-        window.history.replaceState({}, '', '?partyId=alice')
-
-        const testEl = fixture<UserUiEditParty>(componentFixture)
-
-        try {
-            await testEl
-            expect.fail('Should have thrown error')
-        } catch (error) {
-            expect((error as Error).message).toContain(
-                'wallet constraint params must be provided'
-            )
+        if (!walletConstraintGetter) {
+            throw new Error('walletConstraint getter not found')
         }
+
+        expect(() =>
+            walletConstraintGetter.call(new UserUiEditParty())
+        ).toThrow('wallet constraint params must be provided')
     })
 })

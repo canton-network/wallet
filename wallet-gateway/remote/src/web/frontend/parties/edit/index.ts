@@ -23,15 +23,14 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
     @state() accessor userClient!: Awaited<ReturnType<typeof createUserClient>>
     @state() accessor wallet!: Wallet
 
-    @state() accessor selectedSigningProvider = ''
     @state() accessor selectedPublicKey = ''
 
     private readonly allowedSigningProviders = this.signingProviders.filter(
         (providerId) => providerId !== SigningProvider.PARTICIPANT
     )
 
-    protected pageTitle = 'Edit party'
-    protected showToast = true
+    protected readonly pageTitle = 'Edit party'
+    protected readonly showToast = true
 
     private get walletConstraint() {
         const searchParams = new URLSearchParams(window.location.search)

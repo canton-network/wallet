@@ -260,6 +260,8 @@ describe('UserUiAddParty', () => {
         providerSelect!.value = 'fireblocks'
         providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
 
+        await waitUntil(() => mockRequest.mock.calls.length > 0)
+
         resolveKeys({
             keys: [
                 { id: 'key-2', name: 'Vault B', publicKey: 'pk2' },
@@ -302,8 +304,8 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => showToast.mock.calls.length > 0)
 
         expect(showToast).toHaveBeenCalledWith(
-            'No key accounts found',
-            'No key accounts are available for the selected signing provider.',
+            'No public keys found',
+            'No public keys are available for the selected signing provider.',
             'info'
         )
     })

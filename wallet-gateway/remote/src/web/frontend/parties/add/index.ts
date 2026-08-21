@@ -21,6 +21,9 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends UserUiAddOrEditParty {
     protected pageTitle = 'Create a new party'
+    protected get showToast() {
+        return this.selectedSigningProvider === SigningProvider.FIREBLOCKS
+    }
 
     private async onCreateParty(event: WalletCreateEvent) {
         this.submitting = true
@@ -62,7 +65,10 @@ export class UserUiAddParty extends UserUiAddOrEditParty {
             <wg-wallet-create-form
                 .signingProviders=${this.signingProviders}
                 .keySigningProviders=${[SigningProvider.FIREBLOCKS]}
+                .selectedSigningProvider=${this.selectedSigningProvider}
+                .publicKeys=${this.publicKeys}
                 ?submitting=${this.submitting}
+                ?publicKeysLoading=${this.publicKeysLoading}
                 @wallet-create=${this.onCreateParty}
                 @signing-provider-change=${this.onSigningProviderChange}
             ></wg-wallet-create-form>

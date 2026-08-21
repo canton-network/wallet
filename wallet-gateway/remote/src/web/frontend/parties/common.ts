@@ -21,12 +21,13 @@ import { showToast } from '../utils.js'
 export abstract class UserUiAddOrEditParty extends BaseElement {
     protected abstract get form(): TemplateResult
     protected abstract pageTitle: string
-    protected showToast = false
+    protected abstract get showToast(): boolean
 
     protected readonly signingProviders = Object.values(SigningProvider)
     @state() protected accessor submitting = false
     @state() protected accessor publicKeys: KeysList = []
     @state() protected accessor publicKeysLoading = false
+    @state() accessor selectedSigningProvider = ''
 
     static styles = [
         BaseElement.styles,
@@ -85,6 +86,7 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         this.publicKeys = []
 
         const { signingProviderId } = event
+        this.selectedSigningProvider = signingProviderId
         if (signingProviderId === SigningProvider.PARTICIPANT) {
             return
         }

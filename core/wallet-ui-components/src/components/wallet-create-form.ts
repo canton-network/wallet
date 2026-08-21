@@ -32,7 +32,7 @@ export class WgWalletCreateForm extends WgWalletForm {
     @property({ type: Array }) keySigningProviders: string[] = []
 
     @state() accessor partyHint = ''
-    @state() accessor signingProviderValue = ''
+    @property() accessor selectedSigningProvider = ''
     @state() accessor isPrimaryValue = false
     @state() accessor publicKeyValue = ''
 
@@ -51,7 +51,7 @@ export class WgWalletCreateForm extends WgWalletForm {
         this.dispatchEvent(
             new WalletCreateEvent(
                 this.partyHint,
-                this.signingProviderValue,
+                this.selectedSigningProvider,
                 this.isPrimaryValue,
                 keyName
             )
@@ -60,14 +60,14 @@ export class WgWalletCreateForm extends WgWalletForm {
 
     private get showPublicKeySelect(): boolean {
         return (
-            !!this.signingProviderValue &&
-            this.keySigningProviders.includes(this.signingProviderValue)
+            !!this.selectedSigningProvider &&
+            this.keySigningProviders.includes(this.selectedSigningProvider)
         )
     }
 
     private onSigningProviderChange(event: Event) {
         const signingProviderId = (event.target as HTMLSelectElement).value
-        this.signingProviderValue = signingProviderId
+        this.selectedSigningProvider = signingProviderId
         this.publicKeyValue = ''
         this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
     }
@@ -118,7 +118,7 @@ export class WgWalletCreateForm extends WgWalletForm {
                 </label>
                 <div class="select-wrap">
                     <select
-                        .value=${this.signingProviderValue}
+                        .value=${this.selectedSigningProvider}
                         ?disabled=${this.submitting}
                         class="form-select field-control"
                         id="signing-provider-id"
