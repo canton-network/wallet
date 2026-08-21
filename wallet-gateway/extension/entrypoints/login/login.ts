@@ -16,39 +16,9 @@ import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '@/utils/legacy/state-manager'
 import '@/utils/legacy'
 import { redirectToIntendedOrDefault, addUserSession } from '@/utils/legacy'
-import { setLocationHref } from '@/utils/legacy/navigation.js'
+// import { setLocationHref } from '@/utils/legacy/navigation.js'
 import { detectCurrentOrigin } from '@/utils/legacy/listeners.js'
-import { toRelHref } from '@/utils/legacy/routing'
-
-const PKCE_CODE_VERIFIER_LENGTH = 64
-
-const toBase64Url = (bytes: Uint8Array): string => {
-    const binary = String.fromCharCode(...bytes)
-    return btoa(binary)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '')
-}
-
-const createPkcePair = async (): Promise<{
-    verifier: string
-    challenge: string
-}> => {
-    const verifierBytes = crypto.getRandomValues(
-        new Uint8Array(PKCE_CODE_VERIFIER_LENGTH)
-    )
-    const verifier = toBase64Url(verifierBytes)
-
-    const digest = await crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode(verifier)
-    )
-
-    return {
-        verifier,
-        challenge: toBase64Url(new Uint8Array(digest)),
-    }
-}
+import { buildAuthorization, fetchToken } from '@/utils/reusable/oauth'
 
 @customElement('user-ui-login')
 export class LoginUI extends BaseElement {
@@ -130,48 +100,48 @@ export class LoginUI extends BaseElement {
 
             if (selectedIdp.type === 'oauth') {
                 if (selectedNetwork.authMethod === 'authorization_code') {
-                    const redirectUri = new URL(
-                        toRelHref('/callback'),
-                        window.location.origin
-                    ).toString()
+                    const redirectUri = browser.identity.getRedirectURL()
 
-                    const config = await fetch(
-                        selectedIdp.configUrl || ''
-                    ).then((res) => res.json())
-
-                    const statePayload = {
-                        configUrl: selectedIdp.configUrl,
-                        clientId: selectedNetwork.clientId,
-                        audience: selectedNetwork.audience,
-                        stateId: crypto.randomUUID(),
-                    }
-
-                    const { verifier, challenge } = await createPkcePair()
-                    sessionStorage.setItem(
-                        `oauth-pkce-${statePayload.stateId}`,
-                        verifier
-                    )
-
-                    const params = new URLSearchParams({
-                        response_type: 'code',
-                        client_id: selectedNetwork.clientId || '',
-                        redirect_uri: redirectUri,
-                        nonce: crypto.randomUUID(),
-                        scope: selectedNetwork.scope || '',
+                    const authUrl = await buildAuthorization({
+                        configUrl: selectedIdp.configUrl || '',
+                        clientId: selectedNetwork.clientId || '',
                         audience: selectedNetwork.audience || '',
-                        state: btoa(JSON.stringify(statePayload)),
-                        code_challenge: challenge,
-                        code_challenge_method: 'S256',
+                        scope: selectedNetwork.scope || '',
+                        redirectUri,
                     })
 
-                    this.connectingMessage = `Redirecting to ${selectedNetwork.name}...`
+                    logger.info('Launching web auth flow with URL: ' + authUrl)
 
-                    setTimeout(() => {
-                        setLocationHref(
-                            `${config.authorization_endpoint}?${params.toString()}`
-                        )
-                    }, 250)
-                    return
+                    const callbackUri =
+                        await browser.identity.launchWebAuthFlow({
+                            url: authUrl,
+                            interactive: true,
+                        })
+
+                    const token = await fetchToken(callbackUri, redirectUri)
+                    const payload = token.split('.')[1]
+
+                    if (!payload) {
+                        throw new Error('Invalid token received')
+                    }
+
+                    const claims = JSON.parse(atob(payload))
+
+                    stateManager.expirationDate.set(
+                        new Date(claims.exp * 1000).toISOString(),
+                        currentOrigin
+                    )
+
+                    await stateManager.accessToken.set(token, currentOrigin)
+
+                    addUserSession(
+                        token,
+                        stateManager.networkId.get(currentOrigin) || ''
+                    )
+                        .then(() => {
+                            redirectToIntendedOrDefault()
+                        })
+                        .catch(handleErrorToast)
                 }
 
                 await this.showLoginError(

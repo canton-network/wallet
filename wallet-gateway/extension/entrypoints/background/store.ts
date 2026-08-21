@@ -6,6 +6,7 @@ import {
     StoreInternal,
     type StoreInternalConfig,
 } from '@canton-network/core-wallet-store-inmemory'
+import { AuthContext } from '@canton-network/core-wallet-auth'
 
 export function initializeWalletStore(): Store {
     const config: StoreInternalConfig = {
@@ -56,7 +57,12 @@ export function initializeWalletStore(): Store {
         ],
     }
 
-    return new StoreInternal(config, logger)
+    const authContext: AuthContext = {
+        userId: HARDCODED_USER_ID,
+        accessToken: HARDCODED_ACCESS_TOKEN,
+    }
+
+    return new StoreInternal(config, logger, authContext)
 }
 
 export function initializeSigningStore(): Store {

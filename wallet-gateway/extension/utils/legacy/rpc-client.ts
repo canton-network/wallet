@@ -1,58 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { HttpTransport } from '@canton-network/core-rpc-transport'
+import { RpcTransport } from '@canton-network/core-rpc-transport'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
-import { stateManager } from './state-manager'
-import { LOGIN_PAGE_REDIRECT } from './constants'
-import { setLocationHref } from './navigation.js'
-import { getCurrentRoute, toRelHref, toRelPath } from './routing'
-import { detectCurrentOrigin } from './listeners.js'
-
-let isLoggingOut = false
-let userApiPathPromise: Promise<URL> | null = null
-
-// Clears module-level caches between unit tests
-export function resetRpcClientCachesForTests(): void {
-    userApiPathPromise = null
-    isLoggingOut = false
-}
-
-const getUserApiPath = async (): Promise<URL> => {
-    const defaultUserPath = new URL(
-        toRelPath('/api/v0/user'),
-        window.location.origin
-    )
-
-    if (!userApiPathPromise) {
-        userApiPathPromise = fetch(
-            toRelPath('/.well-known/wallet-gateway-config')
-        )
-            .then((response) => response.json())
-            .then((config) =>
-                config?.userPath ? new URL(config.userPath) : defaultUserPath
-            )
-            .catch((error) => {
-                logger.warn(
-                    'Failed to fetch userPath from config, using default {*}',
-                    { error }
-                )
-                return defaultUserPath
-            })
-    }
-    return userApiPathPromise
-}
+import { RequestPayload, ResponsePayload } from '@canton-network/core-types'
+import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
+import { createProxyService } from '@webext-core/proxy-service'
 
 export const attemptRemoveSession = async (
     accessToken: string
 ): Promise<void> => {
     try {
-        const userApiPath = await getUserApiPath()
         // Use HttpTransport directly (not HttpTransportWithAuthInterceptor)
         // to avoid infinite loops if removeSession itself returns 401
-        const userApiClient = new UserApiClient(
-            new HttpTransport(userApiPath, accessToken)
-        )
+        const userApiClient = await createUserClient(accessToken)
         await userApiClient.request({ method: 'removeSession' })
     } catch (error) {
         // If removeSession fails that's okay
@@ -61,44 +22,30 @@ export const attemptRemoveSession = async (
     }
 }
 
-const handleAutoLogout = async (): Promise<void> => {
-    // Prevent multiple simultaneous logout attempts
-    if (isLoggingOut) {
-        return
+class ExtensionTransport implements RpcTransport {
+    private service: UserRpcMethods
+
+    constructor() {
+        this.service = createProxyService(USER_RPC_KEY)
     }
 
-    isLoggingOut = true
-    const currentOrigin = await detectCurrentOrigin()
-
-    try {
-        const accessToken = await stateManager.accessToken.get(currentOrigin)
-        if (accessToken) {
-            await attemptRemoveSession(accessToken)
+    submit(request: RequestPayload): Promise<ResponsePayload> {
+        const { method, params } = request
+        const fn = this.service[method as keyof UserRpcMethods]
+        if (!fn) {
+            throw new Error(`Method ${method} not found in UserRpcMethods`)
         }
-    } finally {
-        await stateManager.clearAuthState(currentOrigin)
-        isLoggingOut = false
 
-        if (getCurrentRoute(window.location.pathname) !== LOGIN_PAGE_REDIRECT) {
-            setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
-        }
-    }
-}
-
-class HttpTransportWithAuthInterceptor extends HttpTransport {
-    protected async handleErrorResponse(response: Response): Promise<never> {
-        if (response.status === 401) {
-            handleAutoLogout()
-        }
-        return super.handleErrorResponse(response)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = fn(params as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return { result } as any
     }
 }
 
 export const createUserClient = async (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     token?: string
 ): Promise<UserApiClient> => {
-    const userApiPath = await getUserApiPath()
-    return new UserApiClient(
-        new HttpTransportWithAuthInterceptor(userApiPath, token)
-    )
+    return new UserApiClient(new ExtensionTransport())
 }

@@ -22,20 +22,24 @@ const handleMessage = (event: MessageEvent) => {
 
 window.addEventListener('message', handleMessage)
 
-export async function detectCurrentOrigin(): Promise<string> {
-    if (!window.opener) {
-        stateManager.currentOrigin.set(window.origin)
-        return window.origin
-    }
+// export async function detectCurrentOrigin(): Promise<string> {
+//     if (!window.opener) {
+//         stateManager.currentOrigin.set(window.origin)
+//         return window.origin
+//     }
 
-    return new Promise((resolve) => {
-        // wait for stateManager.currentOrigin.get to be defined
-        const interval = setInterval(() => {
-            const currentOrigin = stateManager.currentOrigin.get()
-            if (currentOrigin) {
-                clearInterval(interval)
-                resolve(currentOrigin)
-            }
-        }, 100)
-    })
+//     return new Promise((resolve) => {
+//         // wait for stateManager.currentOrigin.get to be defined
+//         const interval = setInterval(() => {
+//             const currentOrigin = stateManager.currentOrigin.get()
+//             if (currentOrigin) {
+//                 clearInterval(interval)
+//                 resolve(currentOrigin)
+//             }
+//         }, 100)
+//     })
+// }
+
+export async function detectCurrentOrigin(): Promise<string> {
+    return 'browserext'
 }
