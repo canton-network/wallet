@@ -5,11 +5,15 @@
 
 import {
     getRepoRoot,
+    getSupportedCantonVersions,
     info,
     error,
+    LEDGER_CLIENTS_PATH,
     Network,
+    pruneVersionedFiles,
     SUPPORTED_VERSIONS,
     getNetworkArg,
+    warn,
 } from './lib/utils.js'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -303,15 +307,38 @@ async function generateAsyncApiClient(
     }
 }
 
+/**
+ * Delete the generated AsyncAPI clients whose Canton version is no longer supported.
+ * Same reasoning as pruneStaleLedgerClients in generate-openapi-clients.ts.
+ */
+function pruneStaleAsyncApiClients(): void {
+    const removed = pruneVersionedFiles(
+        LEDGER_CLIENTS_PATH,
+        /^asyncapi-(\d+\.\d+\.\d+)\.ts$/,
+        getSupportedCantonVersions()
+    )
+
+    if (removed.length === 0) return
+
+    console.log(
+        warn(
+            `Removed ${removed.length} stale AsyncAPI client(s):\n  ${removed.join('\n  ')}\n` +
+                'Repoint the imports of core/ledger-client-types/src/index.ts at the current versions.'
+        )
+    )
+}
+
 async function main(network: Network = 'devnet', root: string = process.cwd()) {
     const cantonVersion =
         SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
 
     await Promise.all(
         specs(cantonVersion).map((spec) => generateAsyncApiClient(spec, root))
-    ).then(() =>
-        console.log('Generated typescript clients for all async api specs')
     )
+
+    pruneStaleAsyncApiClients()
+
+    console.log('Generated typescript clients for all async api specs')
 }
 
 main(getNetworkArg()).catch((error) =>

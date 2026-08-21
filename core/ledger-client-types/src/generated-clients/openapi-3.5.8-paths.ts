@@ -34,6 +34,7 @@ export const postPaths = [
     '/v2/commands/async/submit',
     '/v2/commands/async/submit-reassignment',
     '/v2/commands/completions',
+    '/v2/commands/command-completions',
     '/v2/events/events-by-contract-id',
     '/v2/dars/validate',
     '/v2/dars',
