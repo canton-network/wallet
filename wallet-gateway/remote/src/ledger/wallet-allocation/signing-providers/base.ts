@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    PublicKey,
+    Keys,
     SigningDriverInterface,
     Error as SigningError,
 } from '@canton-network/core-signing-lib'
@@ -38,10 +38,9 @@ export abstract class WalletAllocator {
         return result
     }
 
-    async getKeys(userId: UserId): Promise<{ keys: PublicKey[] } | null> {
+    async getKeys(userId: UserId): Promise<Keys | null> {
         if (!this.signingDriver) return null
         const driver = this.signingDriver.controller(userId)
-        const keys = await driver.getKeys().then(this.handleSigningError)
-        return { keys: keys?.keys?.map((key) => key.publicKey) ?? [] }
+        return await driver.getKeys().then(this.handleSigningError)
     }
 }

@@ -1096,10 +1096,26 @@
                             "title": "keys",
                             "type": "array",
                             "items": {
-                                "title": "keyName",
-                                "type": "string"
+                                "title": "key",
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "title": "id"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "title": "name"
+                                    },
+                                    "publicKey": {
+                                        "type": "string",
+                                        "title": "publicKey"
+                                    }
+                                },
+                                "required": ["id", "name", "publicKey"]
                             },
-                            "description": "The list of signing provider's available key names."
+                            "description": "The list of signing provider's available keys."
                         }
                     },
                     "required": ["keys"]

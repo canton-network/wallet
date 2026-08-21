@@ -24,10 +24,11 @@ import { showToast } from '../utils'
 import { detectCurrentOrigin } from '../listeners.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
-export enum WALLET_CREATION_STATUS_CODE {
+export enum WALLET_STATUS_CODE {
     WALLET_ALLOCATED = '1',
     WALLET_INITIALIZED = '2',
     WALLET_REMOVED = '3',
+    WALLET_EDITED = '4',
 }
 
 @customElement('user-ui-parties')
@@ -181,30 +182,36 @@ export class UserUiParties extends BaseElement {
         const url = new URL(window.location.href)
         const createdParam = url.searchParams.get('createPartyStatus')
 
-        if (createdParam === WALLET_CREATION_STATUS_CODE.WALLET_ALLOCATED) {
-            showToast(
-                'Party created',
-                'Your new party has been created successfully.',
-                'success'
-            )
-        } else if (
-            createdParam === WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED
-        ) {
-            showToast(
-                'Party creation pending',
-                'Complete the signing in your signing provider, then click Allocate to finish.',
-                'info'
-            )
-        } else if (
-            createdParam === WALLET_CREATION_STATUS_CODE.WALLET_REMOVED
-        ) {
-            showToast(
-                'Party creation rejected',
-                'Party creation failed because the signing transaction was unsuccessful.',
-                'error'
-            )
-        } else {
-            return
+        switch (createdParam) {
+            case WALLET_STATUS_CODE.WALLET_ALLOCATED:
+                showToast(
+                    'Party created',
+                    'Your new party has been created successfully.',
+                    'success'
+                )
+                break
+            case WALLET_STATUS_CODE.WALLET_INITIALIZED:
+                showToast(
+                    'Party creation pending',
+                    'Complete the signing in your signing provider, then click Allocate to finish.',
+                    'info'
+                )
+                break
+            case WALLET_STATUS_CODE.WALLET_REMOVED:
+                showToast(
+                    'Party creation rejected',
+                    'Party creation failed because the signing transaction was unsuccessful.',
+                    'error'
+                )
+                break
+            case WALLET_STATUS_CODE.WALLET_EDITED:
+                showToast(
+                    'Party edited',
+                    'Your party has been edited successfully.',
+                    'success'
+                )
+                break
+            default:
         }
 
         url.searchParams.delete('createPartyStatus')

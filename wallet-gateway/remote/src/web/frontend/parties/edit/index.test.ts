@@ -48,7 +48,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 
 import './index.js'
 import { UserUiEditParty } from './index.js'
-import { WALLET_CREATION_STATUS_CODE } from '../index'
+import { WALLET_STATUS_CODE } from '../index.js'
 
 describe('UserUiEditParty', () => {
     let el: UserUiEditParty
@@ -192,7 +192,7 @@ describe('UserUiEditParty', () => {
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(
-                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_ALLOCATED}`
+                `createPartyStatus=${WALLET_STATUS_CODE.WALLET_EDITED}`
             )
         )
     })

@@ -5,14 +5,19 @@ import { html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { chevronDownIcon } from '../icons/index.js'
 import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
+import {
+    KeyName,
+    PartyHint,
+    SigningProviderId,
+} from '@canton-network/core-wallet-user-rpc-client'
 export { SigningProviderChangeEvent } from './wallet-form.js'
 
 export class WalletCreateEvent extends Event {
     constructor(
-        public partyHint: string,
-        public signingProviderId: string,
+        public partyHint: PartyHint,
+        public signingProviderId: SigningProviderId,
         public primary: boolean,
-        public vaultName?: string | undefined
+        public keyName?: KeyName | undefined
     ) {
         super('wallet-create', { bubbles: true, composed: true })
     }
@@ -24,13 +29,9 @@ export class WgWalletCreateForm extends WgWalletForm {
     protected readonly submittingLabel = 'Adding...'
     protected readonly submittingMessage = 'Creating party, please wait...'
 
-    @property({ type: Array }) signingProviders: string[] = []
     @property({ type: Array }) keySigningProviders: string[] = []
-    @property({ type: Array }) publicKeys: string[] = []
-    @property({ type: Boolean }) submitting = false
-    @property({ type: Boolean }) publicKeysLoading = false
 
-    @state() accessor partyHintValue = ''
+    @state() accessor partyHint = ''
     @state() accessor signingProviderValue = ''
     @state() accessor isPrimaryValue = false
     @state() accessor publicKeyValue = ''
@@ -42,19 +43,24 @@ export class WgWalletCreateForm extends WgWalletForm {
             return
         }
 
+        const selectedKey = this.publicKeys.find(
+            (key) => key.id === this.publicKeyValue
+        )
+        const keyName = selectedKey?.name
+
         this.dispatchEvent(
             new WalletCreateEvent(
-                this.partyHintValue,
+                this.partyHint,
                 this.signingProviderValue,
                 this.isPrimaryValue,
-                this.publicKeyValue
+                keyName
             )
         )
     }
 
     private get showPublicKeySelect(): boolean {
         return (
-            !this.signingProviderValue &&
+            !!this.signingProviderValue &&
             this.keySigningProviders.includes(this.signingProviderValue)
         )
     }
@@ -74,7 +80,7 @@ export class WgWalletCreateForm extends WgWalletForm {
     }
 
     private onPartyHintInput = (event: InputEvent) => {
-        this.partyHintValue = (event.target as HTMLInputElement).value
+        this.partyHint = (event.target as HTMLInputElement).value
     }
 
     private onPublicKeyChange = (event: Event) => {
@@ -92,7 +98,7 @@ export class WgWalletCreateForm extends WgWalletForm {
                     Party ID Hint <span class="required">*</span>
                 </label>
                 <input
-                    .value=${this.partyHintValue}
+                    .value=${this.partyHint}
                     @input=${this.onPartyHintInput}
                     ?disabled=${this.submitting}
                     class="form-control field-control"
@@ -161,9 +167,9 @@ export class WgWalletCreateForm extends WgWalletForm {
                                           }
                                       </option>
                                       ${this.publicKeys.map(
-                                          (vaultName) =>
-                                              html`<option value=${vaultName}>
-                                                  ${vaultName}
+                                          (key) =>
+                                              html`<option value=${key.id}>
+                                                  ${key.name}
                                               </option>`
                                       )}
                                   </select>

@@ -1,16 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html } from 'lit'
+import { css, html, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { chevronDownIcon } from '../icons/index.js'
 import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
+import {
+    Key,
+    SigningProviderId,
+} from '@canton-network/core-wallet-user-rpc-client'
+import { PartyId } from '@canton-network/core-types'
 
 export class WalletEditEvent extends Event {
     constructor(
-        public partyId: string,
-        public signingProviderId: string,
-        public publicKey: string
+        public partyId: PartyId,
+        public signingProviderId: SigningProviderId,
+        public publicKey: Key['publicKey']
     ) {
         super('wallet-edit', { bubbles: true, composed: true })
     }
@@ -22,22 +27,28 @@ export class WgWalletEditForm extends WgWalletForm {
     protected readonly submittingLabel = 'Editing...'
     protected readonly submittingMessage = 'Editing party, please wait...'
 
-    @property({ type: Array }) signingProviders: string[] = []
-    @property({ type: Boolean }) submitting = false
-    @property({ type: Boolean }) publicKeysLoading = false
-    @property({ type: Array }) publicKeys: string[] = []
     @property() readonly partyId = ''
+    @property() accessor selectedPublicKeyId = ''
     @property() accessor selectedSigningProvider = ''
-    @property() accessor selectedPublicKey = ''
+
+    static styles = [
+        WgWalletForm.styles,
+        css`
+            .spinner {
+                left: 1em;
+                transform: translateY(-50%);
+            }
+        `,
+    ]
 
     protected onSubmit = (event: SubmitEvent) => {
         event.preventDefault()
 
-        if (
-            this.isLoading ||
-            !this.selectedPublicKey ||
-            !this.selectedSigningProvider
-        ) {
+        const selectedKey = this.publicKeys.find(
+            (key) => this.selectedPublicKeyId === key.id
+        )
+
+        if (this.isLoading || !selectedKey || !this.selectedSigningProvider) {
             return
         }
 
@@ -45,7 +56,7 @@ export class WgWalletEditForm extends WgWalletForm {
             new WalletEditEvent(
                 this.partyId,
                 this.selectedSigningProvider,
-                this.selectedPublicKey
+                selectedKey.publicKey
             )
         )
     }
@@ -53,13 +64,13 @@ export class WgWalletEditForm extends WgWalletForm {
     private onSigningProviderChange(event: Event) {
         const signingProviderId = (event.target as HTMLSelectElement).value
         this.selectedSigningProvider = signingProviderId
-        this.selectedPublicKey = ''
+        this.selectedPublicKeyId = ''
         this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
     }
 
     private onPublicKeyChange(event: Event) {
         const publicKey = (event.target as HTMLSelectElement).value
-        this.selectedPublicKey = publicKey
+        this.selectedPublicKeyId = publicKey
     }
 
     protected get isLoading(): boolean {
@@ -114,28 +125,40 @@ export class WgWalletEditForm extends WgWalletForm {
             </div>
 
             <div class="field-group d-flex flex-column">
-                <label
-                    for="signing-provider-id"
-                    class="form-label field-label mb-0"
-                >
+                <label for="public-key-id" class="form-label field-label mb-0">
                     Public Key <span class="required">*</span>
                 </label>
                 <div class="select-wrap">
                     <select
-                        .value=${this.selectedPublicKey}
+                        .value=${this.selectedPublicKeyId}
                         @change=${this.onPublicKeyChange}
                         ?disabled=${this.submitting}
                         class="form-select field-control"
-                        id="signing-provider-id"
+                        id="public-key-id"
                         required
                     >
                         <option disabled selected value="">
-                            Select public key
+                            ${this.publicKeysLoading ? nothing : 'Select public key'}
                         </option>
                         ${this.publicKeys.map(
-                            (key) => html`<option value=${key}>${key}</option>`
+                            (key) =>
+                                html`<option value=${key.id}>
+                                    ${key.name}
+                                </option>`
                         )}
                     </select>
+                    ${
+                        this.publicKeysLoading
+                            ? html`<div
+                                  class="spinner d-inline position-absolute top-50"
+                              >
+                                  <span
+                                      class="spinner-border spinner-border-sm"
+                                      aria-hidden="true"
+                                  ></span>
+                              </div>`
+                            : nothing
+                    }
                     <span class="select-chevron">${chevronDownIcon}</span>
                 </div>
             </div>

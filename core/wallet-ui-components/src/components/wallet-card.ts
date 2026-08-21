@@ -39,6 +39,7 @@ export class WgWalletCard extends BaseElement {
             .party-card {
                 padding: var(--wg-space-3);
                 gap: var(--wg-space-3);
+                min-height: 13em;
             }
 
             .badge {
@@ -406,7 +407,9 @@ export class WgWalletCard extends BaseElement {
         }
 
         return html`
-            <article class="wg-card party-card">
+            <article
+                class="wg-card party-card d-flex flex-column h-100 justify-content-between"
+            >
                 ${this.renderMeta()} ${this.renderActions()}
             </article>
         `

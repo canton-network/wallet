@@ -3,21 +3,30 @@
 
 import { css, html, nothing, TemplateResult } from 'lit'
 import { BaseElement } from '../internal/base-element.js'
+import {
+    Key,
+    SigningProviderId,
+} from '@canton-network/core-wallet-user-rpc-client'
+import { property } from 'lit/decorators.js'
 
 export class SigningProviderChangeEvent extends Event {
-    constructor(public signingProviderId: string) {
+    constructor(public signingProviderId: SigningProviderId) {
         super('signing-provider-change', { bubbles: true, composed: true })
     }
 }
 
 export abstract class WgWalletForm extends BaseElement {
     protected abstract onSubmit: (event: SubmitEvent) => void | Promise<void>
-    protected abstract submitting: boolean
     protected abstract submittingLabel: string
     protected abstract submitLabel: string
     protected abstract submittingMessage: string
     protected abstract get formFields(): TemplateResult
     protected abstract get isLoading(): boolean
+
+    @property({ type: Array }) signingProviders: string[] = []
+    @property({ type: Boolean }) submitting = false
+    @property({ type: Boolean }) publicKeysLoading = false
+    @property({ type: Array }) publicKeys: Key[] = []
 
     static styles = [
         BaseElement.styles,

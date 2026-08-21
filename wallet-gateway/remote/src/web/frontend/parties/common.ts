@@ -5,27 +5,27 @@ import { css, html, TemplateResult } from 'lit'
 import { state } from 'lit/decorators.js'
 import {
     BaseElement,
-    SigningProviderChangeEvent,
     chevronLeftIcon,
     handleErrorToast,
+    SigningProviderChangeEvent,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import { SigningProvider } from '@canton-network/core-signing-lib'
-import { detectCurrentOrigin } from '../listeners.js'
+import { KeysList, SigningProvider } from '@canton-network/core-signing-lib'
 import { setLocationHref } from '../navigation.js'
+import { SigningProviderId } from '@canton-network/core-wallet-user-rpc-client'
+import { detectCurrentOrigin } from '../listeners.js'
 import { createUserClient } from '../rpc-client.js'
 import { stateManager } from '../state-manager.js'
 import { showToast } from '../utils.js'
-import { SigningProviderId } from '@canton-network/core-wallet-user-rpc-client'
 
 export abstract class UserUiAddOrEditParty extends BaseElement {
     protected abstract get form(): TemplateResult
     protected abstract pageTitle: string
+    protected showToast = false
 
-    @state() protected accessor signingProviders: string[] =
-        Object.values(SigningProvider)
+    protected readonly signingProviders = Object.values(SigningProvider)
     @state() protected accessor submitting = false
-    @state() protected accessor publicKeys: string[] = []
+    @state() protected accessor publicKeys: KeysList = []
     @state() protected accessor publicKeysLoading = false
 
     static styles = [
@@ -49,20 +49,25 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         `,
     ]
 
+    private navigateBack() {
+        setLocationHref(toRelHref('/parties'))
+    }
+
     protected async getSigningProviderKeys(
         signingProviderId: SigningProviderId
     ) {
+        this.publicKeysLoading = true
         const currentOrigin = await detectCurrentOrigin()
         try {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
-            const result = await userClient.request({
+            const { keys } = await userClient.request({
                 method: 'listSigningProviderKeys',
                 params: { signingProviderId },
             })
-            this.publicKeys = result.keys.sort()
-            if (result.keys.length === 0) {
+            this.publicKeys = keys.sort((a, b) => a.name.localeCompare(b.name))
+            if (keys.length === 0 && this.showToast) {
                 showToast(
                     'No public keys found',
                     'No public keys are available for the selected signing provider.',
@@ -71,6 +76,8 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
             }
         } catch (error) {
             handleErrorToast(error)
+        } finally {
+            this.publicKeysLoading = false
         }
     }
 
@@ -82,14 +89,7 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
             return
         }
 
-        this.publicKeysLoading = true
-
         await this.getSigningProviderKeys(signingProviderId)
-        this.publicKeysLoading = false
-    }
-
-    private navigateBack() {
-        setLocationHref(toRelHref('/parties'))
     }
 
     protected render() {

@@ -12,10 +12,11 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
-import { WALLET_CREATION_STATUS_CODE } from '../index'
+import { WALLET_STATUS_CODE } from '../index'
 import { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
 import { detectCurrentOrigin } from '../../listeners.js'
 import { UserUiAddOrEditParty } from '../common.js'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends UserUiAddOrEditParty {
@@ -35,16 +36,15 @@ export class UserUiAddParty extends UserUiAddOrEditParty {
                     primary: event.primary,
                     partyHint: event.partyHint,
                     signingProviderId: event.signingProviderId,
-                    ...(event.vaultName && { vaultName: event.vaultName }),
+                    ...(event.keyName && { keyName: event.keyName }),
                 },
             })
 
-            const statusMap: Record<WalletStatus, WALLET_CREATION_STATUS_CODE> =
-                {
-                    allocated: WALLET_CREATION_STATUS_CODE.WALLET_ALLOCATED,
-                    initialized: WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED,
-                    removed: WALLET_CREATION_STATUS_CODE.WALLET_REMOVED,
-                }
+            const statusMap: Record<WalletStatus, WALLET_STATUS_CODE> = {
+                allocated: WALLET_STATUS_CODE.WALLET_ALLOCATED,
+                initialized: WALLET_STATUS_CODE.WALLET_INITIALIZED,
+                removed: WALLET_STATUS_CODE.WALLET_REMOVED,
+            }
 
             const createPartyStatus = statusMap[result.wallet.status]
 
@@ -61,11 +61,10 @@ export class UserUiAddParty extends UserUiAddOrEditParty {
         return html`
             <wg-wallet-create-form
                 .signingProviders=${this.signingProviders}
-                .publicKeys=${this.publicKeys}
-                ?publicKeysLoading=${this.publicKeysLoading}
+                .keySigningProviders=${[SigningProvider.FIREBLOCKS]}
                 ?submitting=${this.submitting}
-                @signing-provider-change=${this.onSigningProviderChange}
                 @wallet-create=${this.onCreateParty}
+                @signing-provider-change=${this.onSigningProviderChange}
             ></wg-wallet-create-form>
         `
     }

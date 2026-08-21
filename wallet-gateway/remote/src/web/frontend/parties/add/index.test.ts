@@ -51,7 +51,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 
 import './index.js'
 import { UserUiAddParty } from './index.js'
-import { WALLET_CREATION_STATUS_CODE } from '../index'
+import { WALLET_STATUS_CODE } from '../index'
+import { Key } from '@canton-network/core-signing-lib'
 
 describe('UserUiAddParty', () => {
     let el: UserUiAddParty
@@ -77,8 +78,13 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSigningProviderVaults') {
-                return { vaults: ['Vault A', 'Vault B'] }
+            if (method === 'listSigningProviderKeys') {
+                return {
+                    keys: [
+                        { id: 'key-1', name: 'Vault A', publicKey: 'pk1' },
+                        { id: 'key-2', name: 'Vault B', publicKey: 'pk2' },
+                    ],
+                }
             }
             return undefined
         })
@@ -135,7 +141,7 @@ describe('UserUiAddParty', () => {
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(
-                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_ALLOCATED}`
+                `createPartyStatus=${WALLET_STATUS_CODE.WALLET_ALLOCATED}`
             )
         )
         expect(setLocationHref).toHaveBeenCalledWith(
@@ -166,9 +172,7 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
         expect(setLocationHref).toHaveBeenCalledWith(
-            expect.stringContaining(
-                WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED
-            )
+            expect.stringContaining(WALLET_STATUS_CODE.WALLET_INITIALIZED)
         )
     })
 
@@ -221,15 +225,15 @@ describe('UserUiAddParty', () => {
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(
-                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_REMOVED}`
+                `createPartyStatus=${WALLET_STATUS_CODE.WALLET_REMOVED}`
             )
         )
     })
 
-    it('loads vaults when a vault enabled signing provider is selected and sorts alphabetically', async () => {
-        let resolveVaults!: (value: { vaults: string[] }) => void
-        const vaultsDeferred = new Promise<{ vaults: string[] }>((resolve) => {
-            resolveVaults = resolve
+    it('loads keys when a vault enabled signing provider is selected and sorts alphabetically', async () => {
+        let resolveKeys!: (value: { keys: Array<Key> }) => void
+        const keysDeferred = new Promise<{ keys: Array<Key> }>((resolve) => {
+            resolveKeys = resolve
         })
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listSessions') {
@@ -242,8 +246,8 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSigningProviderVaults') {
-                return vaultsDeferred
+            if (method === 'listSigningProviderKeys') {
+                return keysDeferred
             }
             return undefined
         })
@@ -256,17 +260,15 @@ describe('UserUiAddParty', () => {
         providerSelect!.value = 'fireblocks'
         providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
 
-        expect(
-            form?.shadowRoot
-                ?.querySelector<HTMLSelectElement>('#vault-name')
-                ?.querySelector('option')
-                ?.textContent?.trim()
-        ).toBe('Loading vaults...')
-
-        resolveVaults({ vaults: ['Vault B', 'Vault A'] })
+        resolveKeys({
+            keys: [
+                { id: 'key-2', name: 'Vault B', publicKey: 'pk2' },
+                { id: 'key-1', name: 'Vault A', publicKey: 'pk1' },
+            ],
+        })
 
         expect(mockRequest).toHaveBeenCalledWith({
-            method: 'listSigningProviderVaults',
+            method: 'listSigningProviderKeys',
             params: { signingProviderId: 'fireblocks' },
         })
     })
@@ -283,8 +285,8 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSigningProviderVaults') {
-                return { vaults: [] }
+            if (method === 'listSigningProviderKeys') {
+                return { keys: [] }
             }
             return undefined
         })
@@ -300,8 +302,8 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => showToast.mock.calls.length > 0)
 
         expect(showToast).toHaveBeenCalledWith(
-            'No vault accounts found',
-            'No vault accounts are available for the selected signing provider.',
+            'No key accounts found',
+            'No key accounts are available for the selected signing provider.',
             'info'
         )
     })

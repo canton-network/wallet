@@ -10,11 +10,6 @@
  *
  */
 export type NetworkId = string
-/**
- *
- * The name of the API key.
- *
- */
 export type Name = string
 /**
  *
@@ -86,11 +81,6 @@ export interface Network {
  *
  */
 export type NetworkName = string
-/**
- *
- * The unique identifier of the API key.
- *
- */
 export type Id = string
 /**
  *
@@ -133,6 +123,11 @@ export type PartyHint = string
  *
  */
 export type SigningProviderId = string
+/**
+ *
+ * Name of signing provider's key to use for getting keys.
+ *
+ */
 export type KeyName = string
 /**
  *
@@ -498,12 +493,17 @@ export interface ApiKey {
  *
  */
 export type ApiKeys = ApiKey[]
+export interface Key {
+    id: Id
+    name: Name
+    publicKey: PublicKey
+}
 /**
  *
- * The list of signing provider's available key names.
+ * The list of signing provider's available keys.
  *
  */
-export type Keys = KeyName[]
+export type Keys = Key[]
 /**
  *
  * Represents a null value, used in responses where no data is returned.

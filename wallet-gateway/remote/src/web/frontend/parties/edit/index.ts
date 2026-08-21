@@ -12,13 +12,11 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
-import { WALLET_CREATION_STATUS_CODE } from '../index'
-import {
-    Wallet,
-    WalletStatus,
-} from '@canton-network/core-wallet-user-rpc-client'
+import { WALLET_STATUS_CODE } from '../index'
+import { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { detectCurrentOrigin } from '../../listeners.js'
 import { UserUiAddOrEditParty } from '../common.js'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 
 @customElement('user-ui-edit-party')
 export class UserUiEditParty extends UserUiAddOrEditParty {
@@ -28,7 +26,12 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
     @state() accessor selectedSigningProvider = ''
     @state() accessor selectedPublicKey = ''
 
+    private readonly allowedSigningProviders = this.signingProviders.filter(
+        (providerId) => providerId !== SigningProvider.PARTICIPANT
+    )
+
     protected pageTitle = 'Edit party'
+    protected showToast = true
 
     private get walletConstraint() {
         const searchParams = new URLSearchParams(window.location.search)
@@ -44,7 +47,6 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         return Boolean(this.userClient)
     }
 
-    // TODO: implement loader
     override async connectedCallback() {
         super.connectedCallback()
         const currentOrigin = await detectCurrentOrigin()
@@ -72,17 +74,8 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
                 params: event,
             })
 
-            const statusMap: Record<WalletStatus, WALLET_CREATION_STATUS_CODE> =
-                {
-                    allocated: WALLET_CREATION_STATUS_CODE.WALLET_ALLOCATED,
-                    initialized: WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED,
-                    removed: WALLET_CREATION_STATUS_CODE.WALLET_REMOVED,
-                }
-
-            const createPartyStatus = statusMap[this.wallet.status]
-
             setLocationHref(
-                `${toRelPath('/parties/')}?createPartyStatus=${createPartyStatus}`
+                `${toRelPath('/parties/')}?createPartyStatus=${WALLET_STATUS_CODE.WALLET_EDITED}`
             )
         } catch (error) {
             this.submitting = false
@@ -93,10 +86,11 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
     protected get form() {
         return html`
             <wg-wallet-edit-form
-                .signingProviders=${this.signingProviders}
+                .signingProviders=${this.allowedSigningProviders}
                 .publicKeys=${this.publicKeys}
                 .selectedSigningProvider=${this.selectedSigningProvider}
                 .partyId=${this.walletConstraint.partyId}
+                .selectedPublicKeyId=${this.selectedPublicKey}
                 ?publicKeysLoading=${this.publicKeysLoading}
                 ?submitting=${this.submitting}
                 @signing-provider-change=${this.onSigningProviderChange}
