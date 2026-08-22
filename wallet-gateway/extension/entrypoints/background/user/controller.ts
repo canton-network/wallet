@@ -186,7 +186,19 @@ export const userController = (getStore: () => Promise<Store>) =>
             }
         },
         removeSession: async () => {
-            throw new Error('Function removeSession not implemented.')
+            const context = await AuthService.loadAuthContext()
+            if (!context) {
+                return null
+            }
+
+            try {
+                const store = await getStore()
+                await store.removeSession(context.accessToken)
+            } finally {
+                await AuthService.clearAuthContext()
+            }
+
+            return null
         },
         listSessions: async () => {
             const context = await AuthService.loadAuthContext()

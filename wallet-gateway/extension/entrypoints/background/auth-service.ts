@@ -17,11 +17,14 @@ export const AuthService = {
             accessToken: token,
         }
 
-        logger.info('Storing auth context for user {*}', { context })
+        logger.info('Storing auth context', { userId })
 
         await getItem().setValue(context)
     },
     loadAuthContext: async (): Promise<AuthContext | undefined> => {
         return await getItem().getValue()
+    },
+    clearAuthContext: async (): Promise<void> => {
+        await getItem().removeValue()
     },
 }

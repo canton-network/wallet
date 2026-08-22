@@ -34,8 +34,6 @@ export const dappController = (getStore: () => Promise<Store>) =>
             const session =
                 context && (await store.getSession(context.accessToken))
 
-            logger.info('context: {*}', { context, session })
-
             if (!context || !session) {
                 return {
                     isConnected: false,
