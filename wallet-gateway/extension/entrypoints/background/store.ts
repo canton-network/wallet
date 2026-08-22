@@ -6,9 +6,19 @@ import {
     StoreInternal,
     type StoreInternalConfig,
 } from '@canton-network/core-wallet-store-inmemory'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import { AuthService } from './auth-service'
+import { AuthAware } from '@canton-network/core-wallet-auth'
 
-export function initializeWalletStore(): Store {
+export async function loadAuthedStore(
+    store: Store & AuthAware<Store>
+): Promise<Store> {
+    const authContext = await AuthService.loadAuthContext()
+    return store.withAuthContext(authContext)
+}
+
+export async function initializeWalletStore(): Promise<
+    Store & AuthAware<Store>
+> {
     const config: StoreInternalConfig = {
         idps: [
             {
@@ -57,11 +67,7 @@ export function initializeWalletStore(): Store {
         ],
     }
 
-    const authContext: AuthContext = {
-        userId: HARDCODED_USER_ID,
-        accessToken: HARDCODED_ACCESS_TOKEN,
-    }
-
+    const authContext = await AuthService.loadAuthContext()
     return new StoreInternal(config, logger, authContext)
 }
 

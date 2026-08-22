@@ -6,7 +6,8 @@ import { browser } from 'wxt/browser'
 import { type AllowedRoute } from '@canton-network/core-wallet-ui-components'
 import { destroyTokenKey } from './access-token-utils.js'
 
-const VERSION_PREFIX = 'com.splice.wallet.v1'
+const STORAGE_PREFIX = 'com.splice.wallet.'
+const VERSION_PREFIX = `${STORAGE_PREFIX}v1`
 
 // We enforce the return type so TypeScript knows it always starts with local: or session:
 export type WxtStorageKey = `local:${string}` | `session:${string}`
@@ -41,7 +42,10 @@ export class StateManager {
 
             for (const key of allKeys) {
                 const keyWithoutType = key.replace(/^(local:|session:)/, '')
-                if (!keyWithoutType.startsWith(VERSION_PREFIX)) {
+                if (
+                    keyWithoutType.startsWith(STORAGE_PREFIX) &&
+                    !keyWithoutType.startsWith(VERSION_PREFIX)
+                ) {
                     await storage.removeItem(key)
                 }
             }

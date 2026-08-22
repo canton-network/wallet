@@ -11,10 +11,7 @@ import {
     Status,
     UserLevelRight,
 } from './rpc-gen/typings.js'
-
-interface UserControllerParams {
-    store: Store
-}
+import { AuthService } from '../auth-service.js'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     const base = {
@@ -79,7 +76,7 @@ function toPublicNetwork(network: Network): PublicNetwork {
     }
 }
 
-export const userController = (getParams: Promise<UserControllerParams>) =>
+export const userController = (getStore: () => Promise<Store>) =>
     buildController({
         addNetwork: async () => {
             throw new Error('Function addNetwork not implemented.')
@@ -88,7 +85,7 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
             throw new Error('Function removeNetwork not implemented.')
         },
         listNetworks: async () => {
-            const { store } = await getParams
+            const store = await getStore()
             const networks = await store.listNetworks()
             return { networks: networks.map(toPublicNetwork) }
         },
@@ -105,7 +102,7 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
             throw new Error('Function removeIdp not implemented.')
         },
         listIdps: async () => {
-            const { store } = await getParams
+            const store = await getStore()
             return { idps: await store.listIdps() }
         },
         createWallet: async () => {
@@ -123,7 +120,7 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
         listWallets: async (params: {
             filter?: { signingProviderIds?: string[] }
         }) => {
-            const { store } = await getParams
+            const store = await getStore()
             return await store.getWallets(params.filter)
         },
         syncWallets: async () => {
@@ -151,7 +148,13 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
             throw new Error('Function execute not implemented.')
         },
         addSession: async (params: AddSessionParams) => {
-            const { store } = await getParams
+            const context = await AuthService.loadAuthContext()
+            if (!context) {
+                throw new Error(
+                    'No auth context found. User must be authenticated to add a session.'
+                )
+            }
+            const store = await getStore()
             const newSessionId = crypto.randomUUID()
 
             logger.info(
@@ -166,7 +169,7 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
                 id: newSessionId,
                 origin: params.origin,
                 network: params.networkId,
-                accessToken: HARDCODED_ACCESS_TOKEN,
+                accessToken: context.accessToken,
             })
 
             // TODO: fill in
@@ -177,7 +180,7 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
                 id: newSessionId,
                 network: toNetworkDto(network),
                 idp,
-                accessToken: HARDCODED_ACCESS_TOKEN,
+                accessToken: context.accessToken,
                 status,
                 rights,
             }
@@ -186,7 +189,13 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
             throw new Error('Function removeSession not implemented.')
         },
         listSessions: async () => {
-            const { store } = await getParams
+            const context = await AuthService.loadAuthContext()
+            if (!context) {
+                throw new Error(
+                    'No auth context found. User must be authenticated to list sessions.'
+                )
+            }
+            const store = await getStore()
             const sessions = await store.listSessions()
 
             return {
@@ -202,7 +211,7 @@ export const userController = (getParams: Promise<UserControllerParams>) =>
                             origin: session.origin,
                             network: toNetworkDto(network),
                             idp,
-                            accessToken: HARDCODED_ACCESS_TOKEN,
+                            accessToken: context.accessToken,
                             status: {} as Status,
                             rights: {} as UserLevelRight,
                         }

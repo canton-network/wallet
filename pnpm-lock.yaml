@@ -2591,6 +2591,9 @@ importers:
       '@canton-network/core-wallet-user-rpc-client':
         specifier: workspace:*
         version: link:../../core/wallet-user-rpc-client
+      '@logtape/adaptor-pino':
+        specifier: ^2.3.1
+        version: 2.3.1(@logtape/logtape@2.3.1)(pino@10.3.1)
       '@logtape/logtape':
         specifier: ^2.3.1
         version: 2.3.1
@@ -2600,6 +2603,9 @@ importers:
       lit:
         specifier: ^3.3.3
         version: 3.3.3
+      pino:
+        specifier: ^10.3.1
+        version: 10.3.1
     devDependencies:
       '@wxt-dev/module-react':
         specifier: ^1.1.5
@@ -8030,6 +8036,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

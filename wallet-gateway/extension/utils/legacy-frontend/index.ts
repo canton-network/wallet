@@ -6,18 +6,18 @@ import { customElement, state } from 'lit/decorators.js'
 import {
     createUserClient,
     attemptRemoveSession,
-} from '@/utils/legacy/rpc-client'
-import { setLocationHref } from '@/utils/legacy/navigation.js'
+} from '@/utils/legacy-frontend/rpc-client'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
 
 import '@canton-network/core-wallet-ui-components'
-import { stateManager } from '@/utils/legacy/state-manager'
+import { stateManager } from '@/utils/legacy-frontend/state-manager'
 import { WalletEvent } from '@canton-network/core-types'
 import {
     DEFAULT_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
     TOKEN_EXPIRED_SKEW_MS,
-} from '@/utils/legacy/constants'
+} from '@/utils/legacy-frontend/constants'
 import {
     type AllowedRoute,
     getCurrentRoute,
@@ -25,9 +25,10 @@ import {
     toRelHref,
     toRelPath,
 } from './routing'
-import '@/utils/legacy/listeners'
-import { detectCurrentOrigin } from '@/utils/legacy/listeners'
-import { fetchDappApiUrl, showToast } from '@/utils/legacy/utils'
+import '@/utils/legacy-frontend/listeners'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners'
+import { fetchDappApiUrl, showToast } from '@/utils/legacy-frontend/utils'
+import { createProxyService } from '@webext-core/proxy-service'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `
@@ -426,6 +427,9 @@ export class UserUIAuthRedirect extends LitElement {
 }
 
 export const addUserSession = async (token: string, networkId: string) => {
+    const authClient = createProxyService(AUTH_SERVICE_KEY)
+    await authClient.storeAuthContext(token)
+
     const authenticatedUserClient = await createUserClient(token)
 
     const currentOrigin = await detectCurrentOrigin()
