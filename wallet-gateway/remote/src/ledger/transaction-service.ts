@@ -731,7 +731,6 @@ export class TransactionService {
         if (tx.externalTxId) {
             signingResult = await driver
                 .getTransaction({
-                    userId,
                     txId: tx.externalTxId,
                 })
                 .then(handleSigningError)

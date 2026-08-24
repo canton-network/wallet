@@ -198,8 +198,7 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary,
-                    vaultName
+                    primary
                 )
             case SigningProvider.BITGO:
                 if (!this.bitgoAllocator) {
