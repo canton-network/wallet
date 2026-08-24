@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import buildController from './rpc-gen/index.js'
+import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import {
     AddSessionParams,
@@ -76,8 +77,13 @@ function toPublicNetwork(network: Network): PublicNetwork {
     }
 }
 
-export const userController = (getStore: () => Promise<Store>) =>
-    buildController({
+export const userController = (
+    getStore: () => Promise<Store>,
+    signingDriver: SigningDriverInterface
+) => {
+    void signingDriver
+
+    return buildController({
         addNetwork: async () => {
             throw new Error('Function addNetwork not implemented.')
         },
@@ -258,3 +264,4 @@ export const userController = (getStore: () => Promise<Store>) =>
             )
         },
     })
+}

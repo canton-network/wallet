@@ -2567,9 +2567,15 @@ importers:
       '@canton-network/core-rpc-transport':
         specifier: workspace:*
         version: link:../../core/rpc-transport
+      '@canton-network/core-signing-internal':
+        specifier: workspace:*
+        version: link:../../core/signing-internal
       '@canton-network/core-signing-lib':
         specifier: workspace:*
         version: link:../../core/signing-lib
+      '@canton-network/core-signing-store-wxt':
+        specifier: workspace:*
+        version: link:../../core/signing-store-wxt
       '@canton-network/core-tx-visualizer':
         specifier: workspace:*
         version: link:../../core/tx-visualizer
