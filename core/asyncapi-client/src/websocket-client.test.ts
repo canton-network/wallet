@@ -15,9 +15,9 @@ const mockTransactionFilterBySetup = vi.hoisted(() =>
 )
 vi.mock('@canton-network/core-ledger-client-types', () => ({
     asyncApiByVersion: {
-        '3.4': { CHANNELS: MOCK_CHANNELS },
+        '3.5': { CHANNELS: MOCK_CHANNELS },
     },
-    supportedAsyncApiVersions: ['3.4'],
+    supportedAsyncApiVersions: ['3.5'],
     TransactionFilterBySetup: mockTransactionFilterBySetup,
 }))
 
@@ -49,7 +49,7 @@ class MockWebSocket {
 
 let lastWsInstance: MockWebSocket
 
-const makeClient = (version?: '3.4') => {
+const makeClient = (version?: '3.5') => {
     const accessTokenProvider = {
         getAccessToken: vi.fn().mockResolvedValue('test-token'),
         getAuthContext: vi.fn().mockResolvedValue(''),
@@ -99,6 +99,7 @@ describe('Async api service', () => {
     })
     it('should initiailize the client properly for updates', async () => {
         const { client } = makeClient()
+
         const gen = client.generate(`wss://ledger/v2/updates`, {
             beginExclusive: 0,
             filter: {},
