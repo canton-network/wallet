@@ -1,17 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi, type Mock } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
 import { popup } from '@canton-network/core-wallet-ui-components'
-import type { Provider } from '@canton-network/core-splice-provider'
 import type {
     LedgerApiParams,
     PrepareExecuteParams,
-    RpcTypes as DappRpcTypes,
     SignMessageParams,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import { DappClient } from './client'
+import { makeMockProvider } from './test-utils'
 import * as util from './util'
 
 vi.mock('./util', () => ({
@@ -24,23 +23,6 @@ vi.mock('@canton-network/core-wallet-ui-components', () => ({
         close: vi.fn(),
     },
 }))
-
-type MockDappProvider = {
-    request: Mock<Provider<DappRpcTypes>['request']>
-    on: Mock<Provider<DappRpcTypes>['on']>
-    removeListener: Mock<Provider<DappRpcTypes>['removeListener']>
-}
-
-const makeProvider = (): MockDappProvider => ({
-    request: vi.fn(),
-    on: vi.fn(),
-    removeListener: vi.fn(),
-})
-
-// MockDappProvider when calling vitest mocking methods
-// Provider<DappRpcTypes> when passing to source code methods
-const asProvider = (mock: MockDappProvider): Provider<DappRpcTypes> =>
-    mock as unknown as Provider<DappRpcTypes>
 
 const prepareExecuteParams: PrepareExecuteParams = { commands: [] }
 const signMessageParams: SignMessageParams = { message: 'hello' }
@@ -55,14 +37,14 @@ describe('DappClient', () => {
     })
 
     it('exposes the underlying provider', () => {
-        const mock = makeProvider()
-        const client = new DappClient(asProvider(mock))
+        const mock = makeMockProvider()
+        const client = new DappClient(mock)
 
         expect(client.getProvider()).toBe(mock)
     })
 
     it('delegates RPC calls to the provider', async () => {
-        const mock = makeProvider()
+        const mock = makeMockProvider()
         mock.request.mockImplementation(async ({ method }) => {
             switch (method) {
                 case 'connect':
@@ -86,7 +68,7 @@ describe('DappClient', () => {
             }
         })
 
-        const client = new DappClient(asProvider(mock))
+        const client = new DappClient(mock)
 
         await expect(client.connect()).resolves.toEqual({ isConnected: true })
         await expect(client.status()).resolves.toEqual({
@@ -111,8 +93,8 @@ describe('DappClient', () => {
     })
 
     it('registers and removes event listeners on the provider', () => {
-        const mock = makeProvider()
-        const client = new DappClient(asProvider(mock))
+        const mock = makeMockProvider()
+        const client = new DappClient(mock)
         const listener = vi.fn()
 
         client.onStatusChanged(listener)
@@ -150,12 +132,12 @@ describe('DappClient', () => {
     })
 
     it('opens the wallet popup for remote providers', async () => {
-        const mock = makeProvider()
+        const mock = makeMockProvider()
         mock.request.mockResolvedValue({
             provider: { userUrl: 'https://wallet.example.com/user' },
         })
 
-        const client = new DappClient(asProvider(mock))
+        const client = new DappClient(mock)
         await client.open()
 
         expect(popup.open).toHaveBeenCalledWith(
@@ -164,13 +146,13 @@ describe('DappClient', () => {
     })
 
     it('posts an extension open message for browser providers', async () => {
-        const mock = makeProvider()
+        const mock = makeMockProvider()
         mock.request.mockResolvedValue({
             provider: { userUrl: 'https://wallet.example.com/user' },
         })
         const postMessageSpy = vi.spyOn(window, 'postMessage')
 
-        const client = new DappClient(asProvider(mock), {
+        const client = new DappClient(mock, {
             providerType: 'browser',
             target: 'extension-target',
         })
@@ -187,20 +169,20 @@ describe('DappClient', () => {
     })
 
     it('throws when status does not include a user URL', async () => {
-        const mock = makeProvider()
+        const mock = makeMockProvider()
         mock.request.mockResolvedValue({ provider: {} })
 
-        const client = new DappClient(asProvider(mock))
+        const client = new DappClient(mock)
         await expect(client.open()).rejects.toThrow(
             'User URL not found in status'
         )
     })
 
     it('disconnects and clears local state even when the RPC fails', async () => {
-        const mock = makeProvider()
+        const mock = makeMockProvider()
         mock.request.mockRejectedValue(new Error('disconnect failed'))
 
-        const client = new DappClient(asProvider(mock))
+        const client = new DappClient(mock)
         await expect(client.disconnect()).rejects.toThrow('disconnect failed')
 
         expect(util.clearAllLocalState).toHaveBeenCalledWith({

@@ -36,7 +36,7 @@ flowchart LR
   subgraph DEPS[Package dependencies]
     direction TB
     WSDK{{"@canton-network/wallet-sdk"}}
-    CORETEST{{"@canton-network/core-test-token"}}
+    CORETEST{{"@canton-network/core-splice-codegen"}}
     CORESTD{{"@canton-network/core-token-standard"}}
   end
 
@@ -90,7 +90,6 @@ examples/test-token-v1-registry/
     common/
       sdk.ts                          # Wallet SDK bootstrap/auth
       admin.ts                        # admin party initialization
-      vetDaml.ts                      # dev-only DAR vetting helper
       getOpenApiPath.ts               # OpenAPI source path resolution
     api/
       metadata/                       # metadata endpoints + tests

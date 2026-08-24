@@ -41,6 +41,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^20.5.3
         version: 20.5.3
+      '@daml/types':
+        specifier: ^3.5.2
+        version: 3.5.2
       '@eslint/compat':
         specifier: ^2.1.0
         version: 2.1.0(eslint@10.8.0(jiti@2.7.0)(supports-color@10.2.2))
@@ -1080,6 +1083,43 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
+  core/signing-store-wxt:
+    dependencies:
+      '@canton-network/core-ledger-client':
+        specifier: workspace:^
+        version: link:../ledger-client
+      '@canton-network/core-rpc-errors':
+        specifier: workspace:^
+        version: link:../rpc-errors
+      '@canton-network/core-signing-lib':
+        specifier: workspace:^
+        version: link:../signing-lib
+      '@canton-network/core-wallet-auth':
+        specifier: workspace:^
+        version: link:../wallet-auth
+      '@wxt-dev/storage':
+        specifier: ^1.2.9
+        version: 1.2.9
+      wxt:
+        specifier: ^0.21.4
+        version: 0.21.4(esbuild@0.28.1)(eslint@10.8.0(jiti@2.7.0)(supports-color@10.2.2))(oxc-parser@0.127.0)(rolldown@1.2.2)(rollup@4.62.4)(typescript@5.9.3)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(web-ext@10.6.0(express@5.2.1(supports-color@10.2.2))(jiti@2.7.0)(supports-color@10.2.2))
+    devDependencies:
+      '@swc/core':
+        specifier: ^1.15.43
+        version: 1.15.47(@swc/helpers@0.5.23)
+      tsdown:
+        specifier: ^0.22.9
+        version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.5)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.23.0
+        version: 4.23.5
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
+
   core/splice-client:
     dependencies:
       '@canton-network/core-types':
@@ -1117,41 +1157,7 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
-  core/splice-provider:
-    dependencies:
-      '@canton-network/core-rpc-transport':
-        specifier: workspace:^
-        version: link:../rpc-transport
-      '@canton-network/core-types':
-        specifier: workspace:^
-        version: link:../types
-      '@canton-network/core-wallet-dapp-remote-rpc-client':
-        specifier: workspace:^
-        version: link:../wallet-dapp-remote-rpc-client
-      '@canton-network/core-wallet-dapp-rpc-client':
-        specifier: workspace:^
-        version: link:../wallet-dapp-rpc-client
-    devDependencies:
-      '@vitest/browser-playwright':
-        specifier: ^4.1.10
-        version: 4.1.10(playwright@1.58.2)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/coverage-v8':
-        specifier: ^4.1.10
-        version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
-      playwright:
-        specifier: 1.58.2
-        version: 1.58.2
-      tsdown:
-        specifier: ^0.22.9
-        version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.5)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
-
-  core/test-token:
+  core/splice-codegen:
     dependencies:
       '@canton-network/core-ledger-client-types':
         specifier: workspace:^
@@ -1169,7 +1175,7 @@ importers:
         specifier: workspace:^
         version: link:../../sdk/wallet-sdk
       '@daml/types':
-        specifier: ^3.5.1
+        specifier: ^3.5.2
         version: 3.5.2
       '@mojotech/json-type-validation':
         specifier: ^3.1.0
@@ -1220,6 +1226,40 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  core/splice-provider:
+    dependencies:
+      '@canton-network/core-rpc-transport':
+        specifier: workspace:^
+        version: link:../rpc-transport
+      '@canton-network/core-types':
+        specifier: workspace:^
+        version: link:../types
+      '@canton-network/core-wallet-dapp-remote-rpc-client':
+        specifier: workspace:^
+        version: link:../wallet-dapp-remote-rpc-client
+      '@canton-network/core-wallet-dapp-rpc-client':
+        specifier: workspace:^
+        version: link:../wallet-dapp-rpc-client
+    devDependencies:
+      '@vitest/browser-playwright':
+        specifier: ^4.1.10
+        version: 4.1.10(playwright@1.58.2)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.10)
+      '@vitest/coverage-v8':
+        specifier: ^4.1.10
+        version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
+      playwright:
+        specifier: 1.58.2
+        version: 1.58.2
+      tsdown:
+        specifier: ^0.22.9
+        version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.5)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
   core/token-standard:
     dependencies:
@@ -2192,9 +2232,9 @@ importers:
 
   examples/test-token-v1-registry:
     dependencies:
-      '@canton-network/core-test-token':
+      '@canton-network/core-splice-codegen':
         specifier: workspace:^
-        version: link:../../core/test-token
+        version: link:../../core/splice-codegen
       '@canton-network/core-token-standard':
         specifier: workspace:^
         version: link:../../core/token-standard
@@ -2384,7 +2424,7 @@ importers:
         version: 8.0.4
       js-yaml:
         specifier: ^5.2.2
-        version: 5.3.0
+        version: 5.2.2
       openapi-typescript:
         specifier: ^7.13.0
         version: 7.13.0(typescript@5.9.3)
@@ -2555,49 +2595,49 @@ importers:
 
   wallet-gateway/extension:
     dependencies:
+      '@canton-network/core-rpc-transport':
+        specifier: workspace:*
+        version: link:../../core/rpc-transport
+      '@canton-network/core-signing-lib':
+        specifier: workspace:*
+        version: link:../../core/signing-lib
+      '@canton-network/core-tx-visualizer':
+        specifier: workspace:*
+        version: link:../../core/tx-visualizer
       '@canton-network/core-types':
-        specifier: ^1.10.0
-        version: 1.10.0
+        specifier: workspace:*
+        version: link:../../core/types
+      '@canton-network/core-wallet-auth':
+        specifier: workspace:*
+        version: link:../../core/wallet-auth
       '@canton-network/core-wallet-store':
-        specifier: ^1.11.0
-        version: 1.11.0(supports-color@10.2.2)
+        specifier: workspace:*
+        version: link:../../core/wallet-store
       '@canton-network/core-wallet-store-inmemory':
         specifier: workspace:*
         version: link:../../core/wallet-store-inmemory
       '@canton-network/core-wallet-ui-components':
         specifier: workspace:*
         version: link:../../core/wallet-ui-components
-      '@emotion/react':
-        specifier: ^11.14.0
-        version: 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-      '@emotion/styled':
-        specifier: ^11.14.1
-        version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-      '@lit/react':
-        specifier: ^1.0.8
-        version: 1.0.8(@types/react@19.2.18)
+      '@canton-network/core-wallet-user-rpc-client':
+        specifier: workspace:*
+        version: link:../../core/wallet-user-rpc-client
+      '@logtape/adaptor-pino':
+        specifier: ^2.3.1
+        version: 2.3.1(@logtape/logtape@2.3.1)(pino@10.3.1)
       '@logtape/logtape':
         specifier: ^2.3.1
         version: 2.3.1
-      '@mui/icons-material':
-        specifier: ^9.3.1
-        version: 9.3.1(@mui/material@9.3.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@types/react@19.2.18)(react@19.2.8)
-      '@mui/material':
-        specifier: ^9.3.1
-        version: 9.3.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react:
-        specifier: ^19.2.4
-        version: 19.2.8
-      react-dom:
-        specifier: ^19.2.4
-        version: 19.2.8(react@19.2.8)
+      '@webext-core/proxy-service':
+        specifier: ^3.0.2
+        version: 3.0.2(@webext-core/messaging@4.0.0)
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+      pino:
+        specifier: ^10.3.1
+        version: 10.3.1
     devDependencies:
-      '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.18
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.4(@types/react@19.2.18)
       '@wxt-dev/module-react':
         specifier: ^1.1.5
         version: 1.2.2(supports-color@10.2.2)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(wxt@0.21.4(esbuild@0.28.1)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(oxc-parser@0.127.0)(rolldown@1.2.2)(rollup@4.62.4)(typescript@5.9.3)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(web-ext@10.6.0(express@5.2.1(supports-color@10.2.2))(jiti@2.7.0)(supports-color@10.2.2)))
@@ -2647,7 +2687,7 @@ importers:
         specifier: workspace:^
         version: link:../../core/signing-securosys
       '@canton-network/core-signing-store-sql':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../core/signing-store-sql
       '@canton-network/core-tx-visualizer':
         specifier: workspace:^
@@ -2665,7 +2705,7 @@ importers:
         specifier: workspace:^
         version: link:../../core/wallet-store
       '@canton-network/core-wallet-store-sql':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../core/wallet-store-sql
       '@canton-network/core-wallet-ui-components':
         specifier: workspace:^
@@ -2788,6 +2828,9 @@ packages:
     peerDependenciesMeta:
       rollup:
         optional: true
+
+  '@aklinker1/zero-serialize-error@1.0.2':
+    resolution: {integrity: sha512-hGVkgFqb8Zs80JJ7MOSCGQXH2SyWfwnJwOl8Qpp1lUdkp5T7GTf8QrAMib42Hnzx6HtnNYdmNaSSg4MQy+MDRQ==}
 
   '@aklinker1/zero-zip@1.0.1':
     resolution: {integrity: sha512-07a596Bd1QO0bi3tIyt2xruq6vKk7hCUt9enHBwggvipB0iiycoJ9/CqzN6UFawaKbOi6NBfMlUxUXzIOZ7Dsg==}
@@ -3418,9 +3461,6 @@ packages:
 
   '@canton-network/core-wallet-auth@1.10.0':
     resolution: {integrity: sha512-nHalOp7ucrsCdB893GL6iydP4fTDUxaUo0txnDWWRw50c8u3pALetTGD6SG89W/b/U1xsa1uxelGMpLiUSd2Ew==}
-
-  '@canton-network/core-wallet-store@1.11.0':
-    resolution: {integrity: sha512-u2MYN1arEtLw5v7uyh/n9SdaikbyoM3yJbuLjLEd2/pbkW6RKnlVsRGGBDw2nOBWTQwY/kHR9ZHAWwLZLcTT+Q==}
 
   '@cbor-extract/cbor-extract-darwin-arm64@2.2.2':
     resolution: {integrity: sha512-ZKZ/F8US7JR92J4DMct6cLW/Y66o2K576+zjlEN/MevH70bFIsB10wkZEQPLzl2oNh2SMGy55xpJ9JoBRl5DOA==}
@@ -4313,11 +4353,6 @@ packages:
   '@lit-labs/ssr-dom-shim@1.6.0':
     resolution: {integrity: sha512-VHb0ALPMTlgKjM6yIxxoQNnpKyUKLD04VzeQdsiXkMqkvYlAHxq9glGLmgbb889/1GsohSOAjvQYoiBppXFqrQ==}
 
-  '@lit/react@1.0.8':
-    resolution: {integrity: sha512-p2+YcF+JE67SRX3mMlJ1TKCSTsgyOVdAwd/nxp3NuV1+Cb6MWALbN6nT7Ld4tpmYofcE5kcaSY1YBB9erY+6fw==}
-    peerDependencies:
-      '@types/react': 17 || 18 || 19
-
   '@lit/reactive-element@2.1.2':
     resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
 
@@ -4377,9 +4412,6 @@ packages:
   '@mui/core-downloads-tracker@9.2.0':
     resolution: {integrity: sha512-+XMav+ZaXkZKUFUgzjrfMEedfyJKxxviAske2q8N8CWDMeqZdDU2lWMkiUPiB388hGaDqhwvOAwkrsc/pUyp8g==}
 
-  '@mui/core-downloads-tracker@9.3.1':
-    resolution: {integrity: sha512-IAyAFNQbT7hysJ9HXphiOmWJF7G1OglzHanqCgvQgH9LA2ydxtmaTBDbcBqw6euZesyShiwvpvbnYO1GY1AyXQ==}
-
   '@mui/icons-material@7.3.11':
     resolution: {integrity: sha512-+hz5ilwHZ3djd5es3sCErLioqe/NhZcYTsV/TNXZAMdJdb23F4xzJjqnnZdnurc3S1+ietcssRNqieOhPQLZ7Q==}
     engines: {node: '>=14.0.0'}
@@ -4396,17 +4428,6 @@ packages:
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@mui/material': ^9.2.0
-      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
-  '@mui/icons-material@9.3.1':
-    resolution: {integrity: sha512-rZj5ccG7vkpV38o/l4ys+chfE9GFypmvZr9dSNBoYVCNBD9yC6KfKq1TYpEMshWbjic7GKQ8MA1LQlcpGgcq9Q==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@mui/material': ^9.3.1
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
       react: ^17.0.0 || ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -4453,26 +4474,6 @@ packages:
       '@types/react':
         optional: true
 
-  '@mui/material@9.3.1':
-    resolution: {integrity: sha512-NahAEGIXqS1K0bA4th1jeFxBguS59NOcLbMA0vU+fSaPWKjtwGBGGHeTwlc9PSmzMjOZKceeFWESB8fVHr31hA==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@emotion/react': ^11.5.0
-      '@emotion/styled': ^11.3.0
-      '@mui/material-pigment-css': ^9.3.0
-      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@emotion/react':
-        optional: true
-      '@emotion/styled':
-        optional: true
-      '@mui/material-pigment-css':
-        optional: true
-      '@types/react':
-        optional: true
-
   '@mui/private-theming@7.3.11':
     resolution: {integrity: sha512-9B+YKms0fRHbNrqp9tOT/DNbNnU5gyvJ1o3qAGXfq8GmZcbJnE3At9x07Zr/o0pkhzg4aDdwXVqe4+AcgtOCPA==}
     engines: {node: '>=14.0.0'}
@@ -4485,16 +4486,6 @@ packages:
 
   '@mui/private-theming@9.2.0':
     resolution: {integrity: sha512-w9wpyDxGPGnAACPB2hKhCDmILJIAvQxrfjUbIAEa0AznX1rOjaz5N+yB1uuw8ixnJcpEh/tPbD9oEe19wcWPHw==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
-  '@mui/private-theming@9.3.0':
-    resolution: {integrity: sha512-ERvqk5pejf9aRnQcDILSWGtFmsEMiVxlQ4+xsVCjsEvmK0fV9BiVP/cQwAF5dwyDFbve4lTrlcgeFEecVzTNiA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -4518,19 +4509,6 @@ packages:
 
   '@mui/styled-engine@9.1.1':
     resolution: {integrity: sha512-neaYKdJfvEG54q8efHLJR7swpHG/gfSv9xGqW5iTSMsubD7yPCPFrhVBt284j1DOF3uZaaDJSHQL7gz6jGF21Q==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@emotion/react': ^11.4.1
-      '@emotion/styled': ^11.3.0
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@emotion/react':
-        optional: true
-      '@emotion/styled':
-        optional: true
-
-  '@mui/styled-engine@9.3.0':
-    resolution: {integrity: sha512-x9+KYxhjoHYZ4nioxdKnvQWdw0RScbhoZfQ4tv3Db742683U3wlYSp6zV6Us78dMFnKnyTrPTkQKyutp14gnKA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@emotion/react': ^11.4.1
@@ -4574,22 +4552,6 @@ packages:
       '@types/react':
         optional: true
 
-  '@mui/system@9.3.0':
-    resolution: {integrity: sha512-0l4LqHJxZj65xSrioniGsxm7VNoGXonPo203oZjhBUvIDPeBqRTb7Mqc45Qxs6sO6WGR7WE/9cJ6lb4lkvHkjg==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@emotion/react': ^11.5.0
-      '@emotion/styled': ^11.3.0
-      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@emotion/react':
-        optional: true
-      '@emotion/styled':
-        optional: true
-      '@types/react':
-        optional: true
-
   '@mui/types@7.4.12':
     resolution: {integrity: sha512-iKNAF2u9PzSIj40CjvKJWxFXJo122jXVdrmdh0hMYd+FR+NuJMkr/L88XwWLCRiJ5P1j+uyac25+Kp6YC4hu6w==}
     peerDependencies:
@@ -4600,14 +4562,6 @@ packages:
 
   '@mui/types@9.1.1':
     resolution: {integrity: sha512-Zjt7u8wNvDg40rPTGoL+TnfkpuSKjwubsNSFRH1KAVZLcaV4I3AFNHIFbvH7p4F3alEibSbdd90xAgn5Rnfndg==}
-    peerDependencies:
-      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
-  '@mui/types@9.3.0':
-    resolution: {integrity: sha512-2JSxyfpEFWNUB2vKs/T1BvkfyNisMHWph8bLMj8T0uHwmLl/0qfAwQkfwMT6kxLXN9uIum9AEbECXU8er3amIg==}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -4626,16 +4580,6 @@ packages:
 
   '@mui/utils@9.2.0':
     resolution: {integrity: sha512-OsUH5zhlSOM4xmLl53+agug1M1UyWb4zxFxWQCqwKTKUeQPvTENtg3JhrroBD2qpCLKsX5W/DYGERJ4mBUbc8g==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
-  '@mui/utils@9.3.0':
-    resolution: {integrity: sha512-2HZdHwWJ6eB+7lVGSOHsByGw8jeRulT4g0NZ608Wb8Q57DE2jbNqrWPFuJsvkQQiBiTmlpvQL3i+/62zsiPrkw==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -6695,8 +6639,21 @@ packages:
   '@webext-core/match-patterns@2.0.0':
     resolution: {integrity: sha512-EsyMMKfQuSE4rWCjP/TifwvUWlhC/OhiGn5OK3p9F0d57UmtLib0nzguzPKyxM1/kZV7SkE+jYXkE8gsdPRLmw==}
 
-  '@wxt-dev/browser@0.2.6':
-    resolution: {integrity: sha512-rQMn4gr36988e3RYVxsr0Qvy6A/9bIcA0meQvGtfQcEPmRJ73SU3xkHh6eX2yjv/j1QkMLacdzES/jf9xqz5/A==}
+  '@webext-core/messaging@4.0.0':
+    resolution: {integrity: sha512-1GWLsiWeIRJ/LpSlI87jU3e4KCDhyTadQEwyhMlLSwXOt5/ui2xkVcE96/clxjxqp/FcUBA00c5iT5I3crjlTQ==}
+    peerDependencies:
+      '@types/chrome': '*'
+    peerDependenciesMeta:
+      '@types/chrome':
+        optional: true
+
+  '@webext-core/proxy-service@3.0.2':
+    resolution: {integrity: sha512-Cfdxsd+VaFh7ZOvCUzbdqEHIZopRn64BemXcJv3aGQgq98rQ0IVAsLG8M/9yqVcBGtATUvM/Mk2gsVaNcFrZFA==}
+    peerDependencies:
+      '@webext-core/messaging': '>=1.3.1'
+
+  '@wxt-dev/browser@0.2.5':
+    resolution: {integrity: sha512-676RhVsOFNSZnisfeM9U40DdYjZmx5whJuBHJ7v4R2sR6e/SYfuIuzmJf3owr2n82d2vCDwGNbvt4nLU14sGZg==}
 
   '@wxt-dev/module-react@1.2.2':
     resolution: {integrity: sha512-+lRLi1r9dAXpLySWSIWHLJ1h/nFzR20iQnx3RNrKyA6oJg4+ClOluVXozHjfPg9Okfy/umtffiOopGayASrg6w==}
@@ -7981,10 +7938,6 @@ packages:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
-  dotenv@16.6.1:
-    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
-    engines: {node: '>=12'}
-
   dotenv@17.4.2:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
@@ -8106,10 +8059,6 @@ packages:
     resolution: {integrity: sha512-FGgH2h8zKNim9ljj7dankFPcICIK9Cp5bm+c2gQSYePhpaG5+esrLODihIorn+Pe6FGJzWhXQotPv73jTaldXA==}
     engines: {node: '>= 0.4'}
 
-  es-object-atoms@1.1.2:
-    resolution: {integrity: sha512-HWcBoN6NileqtSydK2FqHbS/LoDd2pqrnQHLyJzBj4kOp/ky2MWMN694xOfkK8/SnUsW2DH7EfyVlydKCsm1Zw==}
-    engines: {node: '>= 0.4'}
-
   es-set-tostringtag@2.1.0:
     resolution: {integrity: sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA==}
     engines: {node: '>= 0.4'}
@@ -8214,6 +8163,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -9003,8 +8953,8 @@ packages:
     resolution: {integrity: sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==}
     hasBin: true
 
-  js-yaml@5.3.0:
-    resolution: {integrity: sha512-muutsYr+e2+d3rTgUGslq5rxbBlUy3cJ61IsHag2QNDQV+7zXWjkUpmALIajhrlLlrgRUiymj6U3zUr/TMK84Q==}
+  js-yaml@5.2.2:
+    resolution: {integrity: sha512-dayzUzKkJ1MkuUtZglSebU43utNXH0OWQByK9rKOOuYIO8M5TV1y+n8ALMdG0rdzBnfNkOmZEqrURepb0ejqBw==}
     hasBin: true
 
   jsep@1.4.0:
@@ -9288,8 +9238,8 @@ packages:
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
-  magic-string@1.2.0:
-    resolution: {integrity: sha512-ptco+HFxTLgjafSLim2LojBSwfg5feBjd+SqyiwdGkzC38UPdZy3zgrHMI2CoTf5fJL38tbHMYWVzIH8BxGqJw==}
+  magic-string@1.1.1:
+    resolution: {integrity: sha512-qFemKPzc3ttrYVaMmnSkGtGc5nE6Ncl4bj7c9IE6C9OUIRXjf6PzJ+UZ1xhVIjYc7dolHq3qKzpAJPZUbvNj+A==}
 
   magicast@0.5.4:
     resolution: {integrity: sha512-llBEhWm1SacoRwgHUoQJYtwp4PBLF4faQi5TCpIGyGs9n4y5+juI0tDgyKIfpqxckRHaHzouUEph3THklWh03w==}
@@ -9623,8 +9573,8 @@ packages:
   ofetch@1.5.1:
     resolution: {integrity: sha512-2W4oUZlVaqAPAil6FUg/difl6YhqhUR7x2eZY4bQCko22UXg3hptq9KLQdqFClV+Wu85UX7hNtdGTngi/1BxcA==}
 
-  ohash@2.0.12:
-    resolution: {integrity: sha512-65S/5gk9YSsaRjcyf7Nfa6h/d3E8/1gslpXfI4W7Dxn/oap8IKRuNT5VXkLQ1YFKIEg4apRY4Pj6aiwFzrDdmw==}
+  ohash@2.0.11:
+    resolution: {integrity: sha512-RdR9FQrFwNBNXAr4GixM8YaRZRJ5PUWbKYbE5eOsrwAjJW0q2REGcf79oYPsLyskQCZG1PLN+S/K1V00joZAoQ==}
 
   on-exit-leak-free@2.1.2:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
@@ -11672,6 +11622,8 @@ snapshots:
     optionalDependencies:
       rollup: 4.62.4
 
+  '@aklinker1/zero-serialize-error@1.0.2': {}
+
   '@aklinker1/zero-zip@1.0.1': {}
 
   '@babel/code-frame@7.29.7':
@@ -12532,13 +12484,6 @@ snapshots:
       '@canton-network/core-rpc-errors': 1.9.0(supports-color@10.2.2)
       '@canton-network/core-types': 1.10.0
       jose: 5.10.0
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - supports-color
-
-  '@canton-network/core-wallet-store@1.11.0(supports-color@10.2.2)':
-    dependencies:
-      '@canton-network/core-wallet-auth': 1.10.0(supports-color@10.2.2)
       zod: 4.4.3
     transitivePeerDependencies:
       - supports-color
@@ -13470,10 +13415,6 @@ snapshots:
 
   '@lit-labs/ssr-dom-shim@1.6.0': {}
 
-  '@lit/react@1.0.8(@types/react@19.2.18)':
-    dependencies:
-      '@types/react': 19.2.18
-
   '@lit/reactive-element@2.1.2':
     dependencies:
       '@lit-labs/ssr-dom-shim': 1.6.0
@@ -13570,8 +13511,6 @@ snapshots:
 
   '@mui/core-downloads-tracker@9.2.0': {}
 
-  '@mui/core-downloads-tracker@9.3.1': {}
-
   '@mui/icons-material@7.3.11(@mui/material@7.3.11(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
       '@babel/runtime': 7.29.7
@@ -13584,14 +13523,6 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       '@mui/material': 9.2.0(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react: 19.2.8
-    optionalDependencies:
-      '@types/react': 19.2.18
-
-  '@mui/icons-material@9.3.1(@mui/material@9.3.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@types/react@19.2.18)(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@mui/material': 9.3.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react: 19.2.8
     optionalDependencies:
       '@types/react': 19.2.18
@@ -13638,27 +13569,6 @@ snapshots:
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
       '@types/react': 19.2.18
 
-  '@mui/material@9.3.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@mui/core-downloads-tracker': 9.3.1
-      '@mui/system': 9.3.0(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)
-      '@mui/types': 9.3.0(@types/react@19.2.18)
-      '@mui/utils': 9.3.0(@types/react@19.2.18)(react@19.2.8)
-      '@popperjs/core': 2.11.8
-      '@types/react-transition-group': 4.4.12(@types/react@19.2.18)
-      clsx: 2.1.1
-      csstype: 3.2.3
-      prop-types: 15.8.1
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      react-is: 19.2.8
-      react-transition-group: 4.4.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-    optionalDependencies:
-      '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-      '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-      '@types/react': 19.2.18
-
   '@mui/private-theming@7.3.11(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
       '@babel/runtime': 7.29.7
@@ -13672,15 +13582,6 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       '@mui/utils': 9.2.0(@types/react@19.2.18)(react@19.2.8)
-      prop-types: 15.8.1
-      react: 19.2.8
-    optionalDependencies:
-      '@types/react': 19.2.18
-
-  '@mui/private-theming@9.3.0(@types/react@19.2.18)(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@mui/utils': 9.3.0(@types/react@19.2.18)(react@19.2.8)
       prop-types: 15.8.1
       react: 19.2.8
     optionalDependencies:
@@ -13700,19 +13601,6 @@ snapshots:
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
 
   '@mui/styled-engine@9.1.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@emotion/cache': 11.14.0
-      '@emotion/serialize': 1.3.3
-      '@emotion/sheet': 1.4.0
-      csstype: 3.2.3
-      prop-types: 15.8.1
-      react: 19.2.8
-    optionalDependencies:
-      '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-      '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-
-  '@mui/styled-engine@9.3.0(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@emotion/cache': 11.14.0
@@ -13757,22 +13645,6 @@ snapshots:
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
       '@types/react': 19.2.18
 
-  '@mui/system@9.3.0(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@mui/private-theming': 9.3.0(@types/react@19.2.18)(react@19.2.8)
-      '@mui/styled-engine': 9.3.0(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(react@19.2.8)
-      '@mui/types': 9.3.0(@types/react@19.2.18)
-      '@mui/utils': 9.3.0(@types/react@19.2.18)(react@19.2.8)
-      clsx: 2.1.1
-      csstype: 3.2.3
-      prop-types: 15.8.1
-      react: 19.2.8
-    optionalDependencies:
-      '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-      '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
-      '@types/react': 19.2.18
-
   '@mui/types@7.4.12(@types/react@19.2.18)':
     dependencies:
       '@babel/runtime': 7.29.7
@@ -13780,12 +13652,6 @@ snapshots:
       '@types/react': 19.2.18
 
   '@mui/types@9.1.1(@types/react@19.2.18)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-    optionalDependencies:
-      '@types/react': 19.2.18
-
-  '@mui/types@9.3.0(@types/react@19.2.18)':
     dependencies:
       '@babel/runtime': 7.29.7
     optionalDependencies:
@@ -13807,18 +13673,6 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       '@mui/types': 9.1.1(@types/react@19.2.18)
-      '@types/prop-types': 15.7.15
-      clsx: 2.1.1
-      prop-types: 15.8.1
-      react: 19.2.8
-      react-is: 19.2.8
-    optionalDependencies:
-      '@types/react': 19.2.18
-
-  '@mui/utils@9.3.0(@types/react@19.2.18)(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@mui/types': 9.3.0(@types/react@19.2.18)
       '@types/prop-types': 15.7.15
       clsx: 2.1.1
       prop-types: 15.8.1
@@ -16344,7 +16198,7 @@ snapshots:
 
   '@webext-core/fake-browser@2.0.1':
     dependencies:
-      '@wxt-dev/browser': 0.2.6
+      '@wxt-dev/browser': 0.2.5
       lodash.merge: 4.6.2
 
   '@webext-core/isolated-element@3.0.0':
@@ -16353,7 +16207,15 @@ snapshots:
 
   '@webext-core/match-patterns@2.0.0': {}
 
-  '@wxt-dev/browser@0.2.6':
+  '@webext-core/messaging@4.0.0':
+    dependencies:
+      '@aklinker1/zero-serialize-error': 1.0.2
+
+  '@webext-core/proxy-service@3.0.2(@webext-core/messaging@4.0.0)':
+    dependencies:
+      '@webext-core/messaging': 4.0.0
+
+  '@wxt-dev/browser@0.2.5':
     dependencies:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16
@@ -16368,7 +16230,7 @@ snapshots:
 
   '@wxt-dev/storage@1.2.9':
     dependencies:
-      '@wxt-dev/browser': 0.2.6
+      '@wxt-dev/browser': 0.2.5
       superlock: 1.3.5
 
   '@yarnpkg/lockfile@1.1.0': {}
@@ -17011,7 +16873,7 @@ snapshots:
       exsolve: 1.1.1
       giget: 3.3.1
       jiti: 2.7.0
-      ohash: 2.0.12
+      ohash: 2.0.11
       pathe: 2.0.3
       perfect-debounce: 2.1.0
       pkg-types: 2.3.1
@@ -17618,15 +17480,13 @@ snapshots:
 
   dotenv-expand@12.0.3:
     dependencies:
-      dotenv: 16.6.1
+      dotenv: 16.4.7
 
   dotenv-expand@13.0.0:
     dependencies:
       dotenv: 17.4.2
 
   dotenv@16.4.7: {}
-
-  dotenv@16.6.1: {}
 
   dotenv@17.4.2: {}
 
@@ -17718,10 +17578,6 @@ snapshots:
   es-module-lexer@2.3.1: {}
 
   es-object-atoms@1.1.1:
-    dependencies:
-      es-errors: 1.3.0
-
-  es-object-atoms@1.1.2:
     dependencies:
       es-errors: 1.3.0
 
@@ -18230,7 +18086,7 @@ snapshots:
       call-bind-apply-helpers: 1.0.2
       es-define-property: 1.0.1
       es-errors: 1.3.0
-      es-object-atoms: 1.1.2
+      es-object-atoms: 1.1.1
       function-bind: 1.1.2
       get-proto: 1.0.1
       gopd: 1.2.0
@@ -18243,7 +18099,7 @@ snapshots:
   get-proto@1.0.1:
     dependencies:
       dunder-proto: 1.0.1
-      es-object-atoms: 1.1.2
+      es-object-atoms: 1.1.1
 
   get-tsconfig@5.0.0-beta.5:
     dependencies:
@@ -18683,7 +18539,7 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  js-yaml@5.3.0:
+  js-yaml@5.2.2:
     dependencies:
       argparse: 2.0.1
 
@@ -18979,7 +18835,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  magic-string@1.2.0:
+  magic-string@1.1.1:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
@@ -19738,7 +19594,7 @@ snapshots:
       node-fetch-native: 1.6.7
       ufo: 1.6.4
 
-  ohash@2.0.12: {}
+  ohash@2.0.11: {}
 
   on-exit-leak-free@2.1.2: {}
 
@@ -21414,7 +21270,7 @@ snapshots:
       escape-string-regexp: 5.0.0
       estree-walker: 3.0.3
       local-pkg: 1.2.1
-      magic-string: 1.2.0
+      magic-string: 1.1.1
       mlly: 1.8.2
       pathe: 2.0.3
       picomatch: 4.0.5
@@ -21786,6 +21642,54 @@ snapshots:
       is-wsl: 3.1.1
       powershell-utils: 0.1.0
 
+  wxt@0.21.4(esbuild@0.28.1)(eslint@10.8.0(jiti@2.7.0)(supports-color@10.2.2))(oxc-parser@0.127.0)(rolldown@1.2.2)(rollup@4.62.4)(typescript@5.9.3)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(web-ext@10.6.0(express@5.2.1(supports-color@10.2.2))(jiti@2.7.0)(supports-color@10.2.2)):
+    dependencies:
+      '@1natsu/wait-element': 4.2.0
+      '@aklinker1/rollup-plugin-visualizer': 5.12.0(rollup@4.62.4)
+      '@aklinker1/zero-zip': 1.0.1
+      '@topcli/prompts': 4.0.0
+      '@webext-core/fake-browser': 2.0.1
+      '@webext-core/isolated-element': 3.0.0
+      '@webext-core/match-patterns': 2.0.0
+      '@wxt-dev/browser': 0.2.5
+      '@wxt-dev/storage': 1.2.9
+      c12: 3.3.4(magicast@0.5.4)
+      cac: 7.0.0
+      chokidar: 5.0.0
+      consola: 3.4.2
+      defu: 6.1.7
+      dotenv-expand: 13.0.0
+      filesize: 11.0.22
+      giget: 3.3.1
+      hookable: 6.1.1
+      json5: 2.2.3
+      linkedom: 0.18.13
+      magicast: 0.5.4
+      nypm: 0.6.9
+      picomatch: 4.0.5
+      publish-browser-extension: 6.1.1
+      superlock: 1.3.5
+      tiny-open: 1.3.0
+      tinyexec: 1.3.0
+      tinyglobby: 0.2.17
+      unimport: 6.4.0(esbuild@0.28.1)(oxc-parser@0.127.0)(rolldown@1.2.2)(rollup@4.62.4)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
+      vite: 7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0)
+    optionalDependencies:
+      eslint: 10.8.0(jiti@2.7.0)(supports-color@10.2.2)
+      typescript: 5.9.3
+      web-ext: 10.6.0(express@5.2.1(supports-color@10.2.2))(jiti@2.7.0)(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - '@farmfe/core'
+      - '@rspack/core'
+      - bun-types-no-globals
+      - canvas
+      - esbuild
+      - oxc-parser
+      - rolldown
+      - rollup
+      - unloader
+      - webpack
+
   wxt@0.21.4(esbuild@0.28.1)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(oxc-parser@0.127.0)(rolldown@1.2.2)(rollup@4.62.4)(typescript@5.9.3)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(web-ext@10.6.0(express@5.2.1(supports-color@10.2.2))(jiti@2.7.0)(supports-color@10.2.2)):
     dependencies:
       '@1natsu/wait-element': 4.2.0
@@ -21795,7 +21699,7 @@ snapshots:
       '@webext-core/fake-browser': 2.0.1
       '@webext-core/isolated-element': 3.0.0
       '@webext-core/match-patterns': 2.0.0
-      '@wxt-dev/browser': 0.2.6
+      '@wxt-dev/browser': 0.2.5
       '@wxt-dev/storage': 1.2.9
       c12: 3.3.4(magicast@0.5.4)
       cac: 7.0.0
