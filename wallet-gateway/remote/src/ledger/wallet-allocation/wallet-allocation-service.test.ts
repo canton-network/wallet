@@ -839,17 +839,17 @@ describe('WalletAllocationService', () => {
             expect(result).toEqual({ keys })
         })
 
-        it('returns null when listing vaults for an unsupported signing provider', async () => {
+        it('throws error when listing vaults for an unsupported signing provider', async () => {
             const serviceWithFireblocks = createService({
                 [SigningProvider.FIREBLOCKS]: createFireblocksDriver({}),
             })
 
-            expect(
-                await serviceWithFireblocks.getKeys(
+            await expect(
+                serviceWithFireblocks.getKeys(
                     authContext,
                     SigningProvider.PARTICIPANT
                 )
-            ).toBeNull()
+            ).rejects.toThrow()
         })
 
         it('throws when a signed createWallet has no signature in getTransaction', async () => {

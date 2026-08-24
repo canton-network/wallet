@@ -20,6 +20,7 @@ export function makeWallet(overrides: Partial<Wallet> = {}): Wallet {
         networkId: 'net-1',
         signingProviderId: 'local',
         rights: [],
+        userId: 'user-id',
         ...overrides,
     }
 }
