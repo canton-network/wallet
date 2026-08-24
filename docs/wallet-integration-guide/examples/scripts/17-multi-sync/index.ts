@@ -1,5 +1,4 @@
 import pino from 'pino'
-import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
 import {
