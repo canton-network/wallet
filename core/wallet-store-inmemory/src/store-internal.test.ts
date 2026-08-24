@@ -21,7 +21,7 @@ import {
     AuthorizationCodeAuth,
     Idp,
 } from '@canton-network/core-wallet-auth'
-import { pino, Logger } from 'pino'
+import { getLogger, Logger } from '@logtape/logtape'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',
@@ -103,7 +103,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             store = new StoreImpl(
                 storeConfig,
-                pino({ level: 'silent' }),
+                getLogger('mock'),
                 authContextMock
             )
         })

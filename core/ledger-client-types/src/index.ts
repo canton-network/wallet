@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export * as v3_4 from './generated-clients/openapi-3.4.12.js'
-export * as v3_5 from './generated-clients/openapi-3.5.1.js'
+export * as v3_5 from './generated-clients/openapi-3.5.8.js'
 export * as v3_4_async from './generated-clients/asyncapi-3.4.12.js'
-export * as v3_5_async from './generated-clients/asyncapi-3.5.1.js'
+export * as v3_5_async from './generated-clients/asyncapi-3.5.8.js'
 import * as V3_4_provider from './generated-clients/openapi-3.4.12-provider-types.js'
-import * as V3_5_provider from './generated-clients/openapi-3.5.1-provider-types.js'
+import * as V3_5_provider from './generated-clients/openapi-3.5.8-provider-types.js'
 import * as openapi_v3_4 from './generated-clients/openapi-3.4.12.js'
-import * as openapi_v3_5 from './generated-clients/openapi-3.5.1.js'
+import * as openapi_v3_5 from './generated-clients/openapi-3.5.8.js'
 import * as asyncapi_v3_4 from './generated-clients/asyncapi-3.4.12.js'
-import * as asyncapi_v3_5 from './generated-clients/asyncapi-3.5.1.js'
+import * as asyncapi_v3_5 from './generated-clients/asyncapi-3.5.8.js'
 import {
     getPaths as getPaths_v3_5,
     postPaths as postPaths_v3_5,
-} from './generated-clients/openapi-3.5.1-paths.js'
+} from './generated-clients/openapi-3.5.8-paths.js'
 import {
     getPaths as getPaths_v3_4,
     postPaths as postPaths_v3_4,
@@ -62,10 +62,10 @@ export type AsyncCommonChannels = AsyncChannelsByVersion['3.4'] &
     AsyncChannelsByVersion['3.5']
 
 export type LedgerTypes = V3_4_provider.LedgerTypes | V3_5_provider.LedgerTypes
-export * as Provider from './generated-clients/openapi-3.5.1-provider-types.js'
+export * as Provider from './generated-clients/openapi-3.5.8-provider-types.js'
 export { V3_4_provider as V3_4Provider, V3_5_provider as V3_5Provider }
 
-/**export * as v3_5_paths from './generated-clients/openapi-3.5.1-paths.js'
+/**export * as v3_5_paths from './generated-clients/openapi-3.5.8-paths.js'
 export * as v3_4_paths from './generated-clients/openapi-3.4.12-paths.js'
  */
 
