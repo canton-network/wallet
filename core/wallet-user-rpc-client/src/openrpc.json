@@ -138,9 +138,14 @@
                                 "title": "clientId",
                                 "type": "string",
                                 "description": "Client ID used as the JWT subject"
+                            },
+                            "clientSecret": {
+                                "title": "clientSecret",
+                                "type": "string",
+                                "description": "Client secret that must match the selected network's auth.clientSecret"
                             }
                         },
-                        "required": ["networkId", "clientId"]
+                        "required": ["networkId", "clientId", "clientSecret"]
                     }
                 }
             ],
