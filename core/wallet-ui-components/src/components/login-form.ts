@@ -14,8 +14,8 @@ export class LoginConnectEvent extends Event {
     constructor(
         public selectedNetwork: PublicNetwork,
         public selectedIdp: Idp,
-        public clientId: string,
-        public clientSecret: string
+        public clientId?: string,
+        public clientSecret?: string
     ) {
         super('login-connect', { bubbles: true, composed: true })
     }
@@ -216,29 +216,38 @@ export class WgLoginForm extends BaseElement {
             return
         }
 
-        const clientId =
-            (
-                this.renderRoot.querySelector(
-                    '#client-id'
-                ) as HTMLInputElement | null
-            )?.value || this.selectedNetwork.clientId
+        let clientId: string | undefined
+        let clientSecret: string | undefined
 
-        const clientSecret =
-            (
-                this.renderRoot.querySelector(
-                    '#client-secret'
-                ) as HTMLInputElement | null
-            )?.value ?? ''
+        if (idp.type === 'self_signed') {
+            clientId =
+                (
+                    this.renderRoot.querySelector(
+                        '#client-id'
+                    ) as HTMLInputElement | null
+                )?.value || this.selectedNetwork.clientId
+
+            clientSecret =
+                (
+                    this.renderRoot.querySelector(
+                        '#client-secret'
+                    ) as HTMLInputElement | null
+                )?.value ?? ''
+        }
 
         this.dispatchEvent(
             new LoginConnectEvent(
                 this.selectedNetwork,
                 idp,
-                // TODO Can those 2 be optional?
-                clientId || '',
+                clientId,
                 clientSecret
             )
         )
+    }
+
+    private handleSubmit(e: Event) {
+        e.preventDefault()
+        this.handleConnect()
     }
 
     /** Set a status message on the form (e.g. "Redirecting...") */
@@ -253,10 +262,9 @@ export class WgLoginForm extends BaseElement {
         this.messageType = null
     }
 
-    // TODO wrap it in form, so enter works
     protected render() {
         return html`
-            <main class="screen">
+            <form class="screen" @submit=${this.handleSubmit}>
                 <div class="top-bar">
                     <img class="top-logo" src=${cantonLogo} alt="Canton logo" />
                 </div>
@@ -357,8 +365,8 @@ export class WgLoginForm extends BaseElement {
 
                 <div class="footer">
                     <button
+                        type="submit"
                         class="connect-btn btn btn-primary w-100 rounded-pill"
-                        @click=${this.handleConnect}
                         ?disabled=${
                             this.loading ||
                             this.connecting ||
@@ -368,7 +376,7 @@ export class WgLoginForm extends BaseElement {
                         ${this.connecting ? 'Connecting…' : 'Connect'}
                     </button>
                 </div>
-            </main>
+            </form>
         `
     }
 }

@@ -123,7 +123,11 @@ export class LoginUI extends BaseElement {
 
         try {
             if (selectedIdp.type === 'self_signed') {
-                await this.selfSign(selectedNetwork.id, clientId, clientSecret)
+                await this.selfSign(
+                    selectedNetwork.id,
+                    clientId ?? '',
+                    clientSecret ?? ''
+                )
                 await redirectToIntendedOrDefault()
                 return
             }
