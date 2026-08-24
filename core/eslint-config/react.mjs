@@ -13,6 +13,7 @@ export default [
         rules: {
             'headers/header-format': 'off',
             ...reactHooks.configs.recommended.rules,
+            '@typescript-eslint/no-floating-promises': 'error',
             'react-refresh/only-export-components': [
                 'warn',
                 { allowConstantExport: true },
