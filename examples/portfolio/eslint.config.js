@@ -11,6 +11,7 @@ export default defineConfig([
     {
         files: ['**/*.{ts,tsx}'],
         extends: [config, reactConfig],
+        ignores: ['playwright.config.ts', 'scripts/otc-trade.ts'],
     },
     {
         files: ['src/routes/**/*.{ts,tsx}'],

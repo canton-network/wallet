@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.app.json",
+    "compilerOptions": {
+        "composite": false,
+        "declaration": false,
+        "emitDeclarationOnly": false,
+        "noEmit": true
+    },
+    "include": ["tests"]
+}
