@@ -393,12 +393,7 @@ export class WalletGateway {
             await approveButton.click()
 
             if (opts?.isExternalSigning) {
-                await expect(
-                    popupPage.getByText(
-                        'Complete signing in your external provider'
-                    ),
-                    'approving should show message guiding user to sign in the external signing provider'
-                ).toBeVisible()
+                await this.waitForExternalSigningPromptOrCompletion(popupPage)
             }
 
             if (opts?.waitForClose !== false) {
@@ -599,10 +594,15 @@ export class WalletGateway {
     private async waitForPopupToCloseAfterAction(
         popupPage: Page
     ): Promise<void> {
-        // For dApp-triggered approvals the popup is opened with
-        // `closeafteraction`, so success is signalled by the popup closing.
+        // dApp-triggered approvals often close the popup, but newer flows can
+        // redirect to the activities page instead when the popup cannot close.
         try {
-            await popupPage.waitForEvent('close', { timeout: 30000 })
+            await Promise.any([
+                popupPage.waitForEvent('close', { timeout: 30000 }),
+                popupPage.waitForURL(/\/activities(?:\/|$|\?|#)/, {
+                    timeout: 30000,
+                }),
+            ])
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : String(e)
             if (
@@ -613,6 +613,26 @@ export class WalletGateway {
             ) {
                 throw e
             }
+        }
+    }
+
+    private async waitForExternalSigningPromptOrCompletion(
+        popupPage: Page
+    ): Promise<void> {
+        try {
+            await Promise.any([
+                popupPage.waitForEvent('close', { timeout: 20000 }),
+                popupPage.waitForURL(/\/activities(?:\/|$|\?|#)/, {
+                    timeout: 20000,
+                }),
+                popupPage
+                    .getByText('Complete signing in your external provider')
+                    .waitFor({ state: 'visible', timeout: 20000 }),
+            ])
+        } catch {
+            throw new Error(
+                'approving an external-signing transaction neither showed the pending-signing prompt nor completed via close/redirect'
+            )
         }
     }
 
