@@ -89,7 +89,17 @@ export const dappController = (getStore: () => Promise<Store>) =>
             // notifier.emit('connected', statusEvent)
             return connection
         },
-        disconnect: async () => Promise.resolve(null),
+        disconnect: async () => {
+            const context = await AuthService.loadAuthContext()
+            if (!context) return null
+
+            const store = await getStore()
+            const session = await store.getSession(context.accessToken)
+            if (!session) return null
+
+            await store.removeSession(context.accessToken)
+            return null
+        },
         isConnected: async () => {
             throw new Error('Function isConnected not implemented.')
         },
