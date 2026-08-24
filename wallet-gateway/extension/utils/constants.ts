@@ -4,6 +4,7 @@
 import type { ProxyServiceKey } from '@webext-core/proxy-service'
 import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
 import type { Methods as DappRpcMethods } from '@/entrypoints/background/dapp/rpc-gen/index'
+import type { AuthService } from '@/entrypoints/background/auth-service'
 
 export const USER_RPC_KEY =
     'user-rpc-service' as ProxyServiceKey<UserRpcMethods>
@@ -11,6 +12,6 @@ export const USER_RPC_KEY =
 export const DAPP_RPC_KEY =
     'dapp-rpc-service' as ProxyServiceKey<DappRpcMethods>
 
-// TODO: retrieve from oauth flow
-export const HARDCODED_ACCESS_TOKEN = 'hardcoded-access-token'
-export const HARDCODED_USER_ID = 'extension-user-id'
+export const AUTH_SERVICE_KEY = 'auth-service' as ProxyServiceKey<
+    typeof AuthService
+>

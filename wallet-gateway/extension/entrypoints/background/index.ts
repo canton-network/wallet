@@ -2,32 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { registerService } from '@webext-core/proxy-service'
-import { configure } from '@logtape/logtape'
-import { initializeWalletStore } from './store'
+import { initializeWalletStore, loadAuthedStore } from './store'
 import { dappController } from './dapp/controller'
 import { userController } from './user/controller'
+import { AuthService } from './auth-service'
 
 export default defineBackground(() => {
-    run().catch(() => {
-        logger.error('Error initializing background script')
+    registerService(AUTH_SERVICE_KEY, AuthService)
+
+    run().catch((e: unknown) => {
+        logger.error('Error initializing background script {*}', { error: e })
     })
 })
 
 // defineBackground's main function cannot be async, so wrap here
 async function run() {
-    await configure(configuration)
-
     logger.info(
         'Initializing Canton Wallet browser extension: ' + browser.runtime.id
     )
 
-    const walletStore = initializeWalletStore()
+    const walletStore = await initializeWalletStore()
 
-    const dappControllerInstance = dappController(walletStore)
+    const dappControllerInstance = dappController(() =>
+        loadAuthedStore(walletStore)
+    )
     registerService(DAPP_RPC_KEY, dappControllerInstance)
 
-    const userControllerInstance = userController(
-        Promise.resolve({ store: walletStore })
+    const userControllerInstance = userController(() =>
+        loadAuthedStore(walletStore)
     )
     registerService(USER_RPC_KEY, userControllerInstance)
 }
