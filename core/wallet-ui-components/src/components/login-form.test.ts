@@ -179,5 +179,36 @@ describe('wg-login-form', () => {
         expect(event.selectedNetwork).toBe(network)
         expect(event.selectedIdp).toBe(idp)
         expect(event.clientId).toBe('client-id')
+        expect(event.clientSecret).toBe('')
+    })
+
+    it('emits the entered client secret for self-signed identity providers', async () => {
+        const network = makePublicNetwork({
+            identityProviderId: 'idp-1',
+            clientId: 'client-id',
+        })
+        const idp = makeIdp({ id: 'idp-1', type: 'self_signed' })
+
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form
+                .networks=${[network]}
+                .idps=${[idp]}
+            ></wg-login-form>`
+        )
+
+        const secretInput =
+            el.shadowRoot!.querySelector<HTMLInputElement>('#client-secret')!
+        expect(secretInput.type).toBe('password')
+        secretInput.value = 'network-secret'
+
+        const listener = vi.fn()
+        el.addEventListener('login-connect', listener)
+
+        el.shadowRoot!.querySelector<HTMLButtonElement>('.connect-btn')!.click()
+
+        expect(listener).toHaveBeenCalledOnce()
+        const event = listener.mock.calls[0][0] as LoginConnectEvent
+        expect(event.clientId).toBe('client-id')
+        expect(event.clientSecret).toBe('network-secret')
     })
 })
