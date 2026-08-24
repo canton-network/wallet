@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LitElement, html } from 'lit'
-import { customElement } from 'lit/decorators.js'
+import { customElement, state } from 'lit/decorators.js'
 import { stateManager } from '../state-manager'
 import { addUserSession, redirectToIntendedOrDefault } from '..'
 import {
@@ -10,33 +10,36 @@ import {
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { detectCurrentOrigin } from '../listeners'
+import { LOGIN_PAGE_REDIRECT } from '../constants'
 
 @customElement('login-callback')
 export class LoginCallback extends LitElement {
+    @state() accessor hasError = false
+
     connectedCallback(): void {
         super.connectedCallback()
-        this.handleRedirect()
+        void this.handleRedirect()
     }
 
     async handleRedirect() {
-        const url = new URL(window.location.href)
-        const code = url.searchParams.get('code')
-        const encodedState = url.searchParams.get('state')
+        try {
+            const url = new URL(window.location.href)
+            const code = url.searchParams.get('code')
+            const encodedState = url.searchParams.get('state')
 
-        if (!code && !encodedState) {
-            console.error('missing state and code')
-            return
-        }
+            if (!code || !encodedState) {
+                throw new Error('Missing state or code in OAuth callback')
+            }
 
-        if (code && encodedState) {
             const state = JSON.parse(atob(encodedState))
             const pkceVerifier = sessionStorage.getItem(
                 `oauth-pkce-${state.stateId}`
             )
 
             if (!pkceVerifier) {
-                console.error('missing PKCE verifier for OAuth callback state')
-                return
+                throw new Error(
+                    'Missing PKCE verifier for OAuth callback state'
+                )
             }
 
             sessionStorage.removeItem(`oauth-pkce-${state.stateId}`)
@@ -65,35 +68,45 @@ export class LoginCallback extends LitElement {
             })
 
             const tokenResponse = await res.json()
+            if (!tokenResponse.access_token) {
+                throw new Error('OAuth token response has no access token')
+            }
+
             const currentOrigin = await detectCurrentOrigin()
 
-            if (tokenResponse.access_token) {
-                const payload = JSON.parse(
-                    atob(tokenResponse.access_token.split('.')[1])
-                )
-                stateManager.expirationDate.set(
-                    new Date(payload.exp * 1000).toISOString(),
-                    currentOrigin
-                )
+            const payload = JSON.parse(
+                atob(tokenResponse.access_token.split('.')[1])
+            )
+            stateManager.expirationDate.set(
+                new Date(payload.exp * 1000).toISOString(),
+                currentOrigin
+            )
 
-                await stateManager.accessToken.set(
-                    tokenResponse.access_token,
-                    currentOrigin
-                )
+            await stateManager.accessToken.set(
+                tokenResponse.access_token,
+                currentOrigin
+            )
 
-                addUserSession(
-                    tokenResponse.access_token,
-                    stateManager.networkId.get(currentOrigin) || ''
-                )
-                    .then(() => {
-                        redirectToIntendedOrDefault()
-                    })
-                    .catch(handleErrorToast)
-            }
+            await addUserSession(
+                tokenResponse.access_token,
+                stateManager.networkId.get(currentOrigin) || ''
+            )
+            await redirectToIntendedOrDefault()
+        } catch (error) {
+            this.hasError = true
+            handleErrorToast(error)
         }
     }
 
     render() {
+        if (this.hasError) {
+            return html`<wg-error-page
+                title="Login failed"
+                message="We could not complete your login. Return to network selection and try again."
+                .backHref=${LOGIN_PAGE_REDIRECT}
+            ></wg-error-page>`
+        }
+
         return html`<wg-loading-state
             .text=${'Logging in...'}
         ></wg-loading-state>`
