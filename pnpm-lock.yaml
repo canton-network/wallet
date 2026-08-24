@@ -2595,6 +2595,9 @@ importers:
 
   wallet-gateway/extension:
     dependencies:
+      '@canton-network/core-ledger-client':
+        specifier: workspace:*
+        version: link:../../core/ledger-client
       '@canton-network/core-rpc-transport':
         specifier: workspace:*
         version: link:../../core/rpc-transport

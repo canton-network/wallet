@@ -1,18 +1,28 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { LedgerClient } from '@canton-network/core-ledger-client'
 import buildController from './rpc-gen/index.js'
-import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import {
     AddSessionParams,
+    CreateWalletParams,
     PublicNetwork,
     Network as ApiNetwork,
     Auth,
     Status,
     UserLevelRight,
 } from './rpc-gen/typings.js'
+import {
+    assertConnected,
+    AuthTokenProvider,
+} from '@canton-network/core-wallet-auth'
 import { AuthService } from '../auth-service.js'
+import { createExtensionWallet } from './create-wallet.js'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     const base = {
@@ -81,8 +91,6 @@ export const userController = (
     getStore: () => Promise<Store>,
     signingDriver: SigningDriverInterface
 ) => {
-    void signingDriver
-
     return buildController({
         addNetwork: async () => {
             throw new Error('Function addNetwork not implemented.')
@@ -111,8 +119,48 @@ export const userController = (
             const store = await getStore()
             return { idps: await store.listIdps() }
         },
-        createWallet: async () => {
-            throw new Error('Function createWallet not implemented.')
+        createWallet: async (params: CreateWalletParams) => {
+            const authContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const network = await store.getCurrentNetwork()
+
+            if (
+                params.signingProviderId !== SigningProvider.WALLET_KERNEL ||
+                signingDriver.signingProvider !== SigningProvider.WALLET_KERNEL
+            ) {
+                throw new Error(
+                    `Signing provider ${params.signingProviderId} not supported`
+                )
+            }
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
+            }
+
+            const idp = await store.getIdp(network.identityProviderId)
+            const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                idp,
+                network.adminAuth,
+                pinoLogger
+            )
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger: pinoLogger,
+                accessTokenProvider: adminTokenProvider,
+            })
+            const wallet = await createExtensionWallet({
+                authContext,
+                ledgerClient,
+                networkId: network.id,
+                partyHint: params.partyHint,
+                primary: params.primary ?? false,
+                signingDriver,
+                store,
+                synchronizerId: network.synchronizerId,
+            })
+
+            return { wallet }
         },
         allocatePartyForWallet: async () => {
             throw new Error('Function allocatePartyForWallet not implemented.')
