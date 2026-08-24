@@ -23,8 +23,12 @@ export const apps = [
         env_development: sharedEnvDevelopment,
     },
     {
+        // Serves the production build, not the Vite dev server. In dev the
+        // browser loads hundreds of unbundled modules that Vite transforms on
+        // demand, which slows down every page the e2e tests open (~19% of the
+        // suite). The build comes from the CI build job.
         name: 'example-portfolio',
-        script: 'pnpm --filter @canton-network/example-portfolio dev',
+        script: 'pnpm --filter @canton-network/example-portfolio preview',
         env_development: sharedEnvDevelopment,
     },
 ]
