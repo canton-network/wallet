@@ -39,7 +39,9 @@ const TOPOLOGY_SIGNED_MSG = {
     metadata: { encoding: 'utf8' },
     signablePayload: 'EiAKfHeA63Yjn7upDMhH3DX+nd3UJUX2uC9AoOm+PnUHGQ==',
 }
-const TX_HASH_HEX = Buffer.from(JSON.stringify(TOPOLOGY_SIGNED_MSG)).toString('hex')
+const TX_HASH_HEX = Buffer.from(JSON.stringify(TOPOLOGY_SIGNED_MSG)).toString(
+    'hex'
+)
 
 // Real txHash from a regular Canton transaction signing.
 const TRANSACTION_SIGNED_MSG = {
@@ -78,20 +80,25 @@ const BASE_TX_REQUEST = {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function mockOk(data: unknown): Response {
-    return { ok: true, json: () => Promise.resolve(data) } as unknown as Response
+    return {
+        ok: true,
+        json: () => Promise.resolve(data),
+    } as unknown as Response
 }
 
 function createHandler(opts: { enterpriseId?: string; coin?: string } = {}) {
     return new BitGoHandler({
         accessToken: ACCESS_TOKEN,
         baseUrl: 'https://app.bitgo-test.com',
-        enterpriseId: 'enterpriseId' in opts ? opts.enterpriseId : ENTERPRISE_ID,
+        enterpriseId:
+            'enterpriseId' in opts ? opts.enterpriseId : ENTERPRISE_ID,
         coin: opts.coin ?? 'tcanton',
     })
 }
 
 const keychainMock = () => mockOk({ commonKeychain: COMMON_KEYCHAIN })
-const walletMock = (id = WALLET_ID) => mockOk({ id, label: 'key', keys: [KEYCHAIN_ID] })
+const walletMock = (id = WALLET_ID) =>
+    mockOk({ id, label: 'key', keys: [KEYCHAIN_ID] })
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -113,7 +120,11 @@ describe('BitGoHandler', () => {
         it('returns key with derived Ed25519 publicKey at m/0', async () => {
             fetchMock
                 .mockResolvedValueOnce(
-                    mockOk({ id: WALLET_ID, label: 'my-key', keys: [KEYCHAIN_ID] })
+                    mockOk({
+                        id: WALLET_ID,
+                        label: 'my-key',
+                        keys: [KEYCHAIN_ID],
+                    })
                 )
                 .mockResolvedValueOnce(keychainMock())
 
@@ -128,7 +139,11 @@ describe('BitGoHandler', () => {
         it('sends custodial TSS wallet creation body with coin and enterprise', async () => {
             fetchMock
                 .mockResolvedValueOnce(
-                    mockOk({ id: WALLET_ID, label: 'test', keys: [KEYCHAIN_ID] })
+                    mockOk({
+                        id: WALLET_ID,
+                        label: 'test',
+                        keys: [KEYCHAIN_ID],
+                    })
                 )
                 .mockResolvedValueOnce(keychainMock())
 
@@ -147,7 +162,11 @@ describe('BitGoHandler', () => {
         it('fetches keychain using the first key id from the wallet', async () => {
             fetchMock
                 .mockResolvedValueOnce(
-                    mockOk({ id: WALLET_ID, label: 'test', keys: [KEYCHAIN_ID] })
+                    mockOk({
+                        id: WALLET_ID,
+                        label: 'test',
+                        keys: [KEYCHAIN_ID],
+                    })
                 )
                 .mockResolvedValueOnce(keychainMock())
 
@@ -180,7 +199,11 @@ describe('BitGoHandler', () => {
     describe('signTransaction', () => {
         it('posts to msgrequests and returns txRequestId', async () => {
             fetchMock.mockResolvedValueOnce(
-                mockOk({ txRequestId: TX_REQUEST_ID, walletId: WALLET_ID, state: 'initialized' })
+                mockOk({
+                    txRequestId: TX_REQUEST_ID,
+                    walletId: WALLET_ID,
+                    state: 'initialized',
+                })
             )
 
             const result = await createHandler().signTransaction({
@@ -203,11 +226,21 @@ describe('BitGoHandler', () => {
             const handler = createHandler()
             fetchMock
                 .mockResolvedValueOnce(
-                    mockOk({ txRequestId: TX_REQUEST_ID, walletId: WALLET_ID, state: 'initialized' })
+                    mockOk({
+                        txRequestId: TX_REQUEST_ID,
+                        walletId: WALLET_ID,
+                        state: 'initialized',
+                    })
                 )
                 .mockResolvedValueOnce(
                     mockOk({
-                        txRequests: [{ ...BASE_TX_REQUEST, state: 'pendingDelivery', messages: [] }],
+                        txRequests: [
+                            {
+                                ...BASE_TX_REQUEST,
+                                state: 'pendingDelivery',
+                                messages: [],
+                            },
+                        ],
                     })
                 )
 
@@ -221,19 +254,27 @@ describe('BitGoHandler', () => {
 
             // Should have used wallet-scoped endpoint (txStore path), not enterprise endpoint
             const usedUrls = fetchMock.mock.calls.map(([url]) => url as string)
-            expect(usedUrls[1]).toContain(`/api/v2/wallet/${WALLET_ID}/txrequests`)
+            expect(usedUrls[1]).toContain(
+                `/api/v2/wallet/${WALLET_ID}/txrequests`
+            )
             expect(usedUrls[1]).not.toContain('/enterprise/')
             expect(tx?.txId).toBe(TX_REQUEST_ID)
         })
 
         it('detects topology payload when messageStandardType is omitted (real topology tx)', async () => {
             fetchMock.mockResolvedValueOnce(
-                mockOk({ txRequestId: TX_REQUEST_ID, walletId: WALLET_ID, state: 'initialized' })
+                mockOk({
+                    txRequestId: TX_REQUEST_ID,
+                    walletId: WALLET_ID,
+                    state: 'initialized',
+                })
             )
 
             await createHandler().signTransaction({
                 tx: TOPOLOGY_TX,
-                txHash: Buffer.from(JSON.stringify(TOPOLOGY_SIGNED_MSG)).toString('hex'),
+                txHash: Buffer.from(
+                    JSON.stringify(TOPOLOGY_SIGNED_MSG)
+                ).toString('hex'),
                 walletId: WALLET_ID,
             })
 
@@ -243,25 +284,39 @@ describe('BitGoHandler', () => {
 
         it('detects transaction payload when messageStandardType is omitted (real PreparedTransaction)', async () => {
             fetchMock.mockResolvedValueOnce(
-                mockOk({ txRequestId: TX_REQUEST_ID, walletId: WALLET_ID, state: 'initialized' })
+                mockOk({
+                    txRequestId: TX_REQUEST_ID,
+                    walletId: WALLET_ID,
+                    state: 'initialized',
+                })
             )
 
             await createHandler().signTransaction({
                 tx: TRANSACTION_TX,
-                txHash: Buffer.from(JSON.stringify(TRANSACTION_SIGNED_MSG)).toString('hex'),
+                txHash: Buffer.from(
+                    JSON.stringify(TRANSACTION_SIGNED_MSG)
+                ).toString('hex'),
                 walletId: WALLET_ID,
             })
 
             const body = JSON.parse(fetchMock.mock.calls[0][1].body)
-            expect(body.intent.messageStandardType).toBe('CANTON_SIGN_TRANSACTION')
+            expect(body.intent.messageStandardType).toBe(
+                'CANTON_SIGN_TRANSACTION'
+            )
         })
 
         it('detects transaction payload when tx decodes to a JSON object (not an array)', async () => {
             fetchMock.mockResolvedValueOnce(
-                mockOk({ txRequestId: TX_REQUEST_ID, walletId: WALLET_ID, state: 'initialized' })
+                mockOk({
+                    txRequestId: TX_REQUEST_ID,
+                    walletId: WALLET_ID,
+                    state: 'initialized',
+                })
             )
 
-            const objectTx = Buffer.from(JSON.stringify({ nodes: [] })).toString('base64')
+            const objectTx = Buffer.from(
+                JSON.stringify({ nodes: [] })
+            ).toString('base64')
 
             await createHandler().signTransaction({
                 tx: objectTx,
@@ -270,17 +325,25 @@ describe('BitGoHandler', () => {
             })
 
             const body = JSON.parse(fetchMock.mock.calls[0][1].body)
-            expect(body.intent.messageStandardType).toBe('CANTON_SIGN_TRANSACTION')
+            expect(body.intent.messageStandardType).toBe(
+                'CANTON_SIGN_TRANSACTION'
+            )
         })
 
         it('unwraps a single-item topology JSON array to the raw proto element', async () => {
             fetchMock.mockResolvedValueOnce(
-                mockOk({ txRequestId: TX_REQUEST_ID, walletId: WALLET_ID, state: 'initialized' })
+                mockOk({
+                    txRequestId: TX_REQUEST_ID,
+                    walletId: WALLET_ID,
+                    state: 'initialized',
+                })
             )
 
             await createHandler().signTransaction({
                 tx: TOPOLOGY_TX,
-                txHash: Buffer.from(JSON.stringify(TOPOLOGY_SIGNED_MSG)).toString('hex'),
+                txHash: Buffer.from(
+                    JSON.stringify(TOPOLOGY_SIGNED_MSG)
+                ).toString('hex'),
                 walletId: WALLET_ID,
                 messageStandardType: 'CANTON_SIGN_TOPOLOGY',
             })
@@ -294,12 +357,18 @@ describe('BitGoHandler', () => {
 
         it('leaves raw proto binary tx (CANTON_SIGN_TRANSACTION) unchanged', async () => {
             fetchMock.mockResolvedValueOnce(
-                mockOk({ txRequestId: TX_REQUEST_ID, walletId: WALLET_ID, state: 'initialized' })
+                mockOk({
+                    txRequestId: TX_REQUEST_ID,
+                    walletId: WALLET_ID,
+                    state: 'initialized',
+                })
             )
 
             await createHandler().signTransaction({
                 tx: TRANSACTION_TX,
-                txHash: Buffer.from(JSON.stringify(TRANSACTION_SIGNED_MSG)).toString('hex'),
+                txHash: Buffer.from(
+                    JSON.stringify(TRANSACTION_SIGNED_MSG)
+                ).toString('hex'),
                 walletId: WALLET_ID,
                 messageStandardType: 'CANTON_SIGN_TRANSACTION',
             })
@@ -330,7 +399,9 @@ describe('BitGoHandler', () => {
 
     describe('getTransaction', () => {
         it('uses enterprise fallback when txId is unknown', async () => {
-            fetchMock.mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+            fetchMock.mockResolvedValueOnce(
+                mockOk({ txRequests: [BASE_TX_REQUEST] })
+            )
 
             const tx = await createHandler().getTransaction(TX_REQUEST_ID)
 
@@ -345,23 +416,31 @@ describe('BitGoHandler', () => {
             const handler = createHandler()
             fetchMock
                 // First getTransaction: enterprise lookup
-                .mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+                .mockResolvedValueOnce(
+                    mockOk({ txRequests: [BASE_TX_REQUEST] })
+                )
                 // resolvePublicKey on cache miss: wallet + keychain
                 .mockResolvedValueOnce(walletMock())
                 .mockResolvedValueOnce(keychainMock())
                 // Second getTransaction: wallet-scoped (txStore hit; resolvePublicKey hits cache)
-                .mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+                .mockResolvedValueOnce(
+                    mockOk({ txRequests: [BASE_TX_REQUEST] })
+                )
 
             await handler.getTransaction(TX_REQUEST_ID)
             await handler.getTransaction(TX_REQUEST_ID)
 
             // calls[3] is the wallet-scoped txrequests request
             const secondUrl = fetchMock.mock.calls[3][0] as string
-            expect(secondUrl).toContain(`/api/v2/wallet/${WALLET_ID}/txrequests`)
+            expect(secondUrl).toContain(
+                `/api/v2/wallet/${WALLET_ID}/txrequests`
+            )
         })
 
         it('returns undefined when txId unknown and no enterpriseId configured', async () => {
-            const tx = await createHandler({ enterpriseId: undefined }).getTransaction('unknown')
+            const tx = await createHandler({
+                enterpriseId: undefined,
+            }).getTransaction('unknown')
             expect(tx).toBeUndefined()
             expect(fetchMock).not.toHaveBeenCalled()
         })
@@ -378,7 +457,9 @@ describe('BitGoHandler', () => {
 
     describe('fetchTxRequest', () => {
         it('includes apiVersion=full and latest=true', async () => {
-            fetchMock.mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+            fetchMock.mockResolvedValueOnce(
+                mockOk({ txRequests: [BASE_TX_REQUEST] })
+            )
 
             await createHandler().fetchTxRequest(TX_REQUEST_ID, WALLET_ID)
             const url = fetchMock.mock.calls[0][0] as string
@@ -410,7 +491,11 @@ describe('BitGoHandler', () => {
     // ── state mapping ──────────────────────────────────────────────────────
 
     describe('state mapping', () => {
-        async function withState(txReqState: string, messageState?: string, txHash?: string) {
+        async function withState(
+            txReqState: string,
+            messageState?: string,
+            txHash?: string
+        ) {
             fetchMock.mockResolvedValueOnce(
                 mockOk({
                     txRequests: [
@@ -419,7 +504,12 @@ describe('BitGoHandler', () => {
                             walletId: WALLET_ID,
                             state: txReqState,
                             messages: messageState
-                                ? [{ state: messageState, txHash: txHash ?? '' }]
+                                ? [
+                                      {
+                                          state: messageState,
+                                          txHash: txHash ?? '',
+                                      },
+                                  ]
                                 : [],
                         },
                     ],
@@ -469,7 +559,10 @@ describe('BitGoHandler', () => {
         })
 
         it('intermediate EdDSA message state keeps txRequest pending', async () => {
-            const tx = await withState('pendingDelivery', 'eddsaPendingCommitment')
+            const tx = await withState(
+                'pendingDelivery',
+                'eddsaPendingCommitment'
+            )
             expect(tx?.status).toBe('pending')
         })
     })
@@ -478,10 +571,14 @@ describe('BitGoHandler', () => {
 
     describe('signature and metadata extraction', () => {
         it('extracts base64 signature and Canton fingerprint signedBy', async () => {
-            fetchMock.mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+            fetchMock.mockResolvedValueOnce(
+                mockOk({ txRequests: [BASE_TX_REQUEST] })
+            )
 
             const tx = await createHandler().getTransaction(TX_REQUEST_ID)
-            expect(tx?.signature).toBe(TOPOLOGY_SIGNED_MSG.serializedSignatures[0].signature)
+            expect(tx?.signature).toBe(
+                TOPOLOGY_SIGNED_MSG.serializedSignatures[0].signature
+            )
             expect(tx?.metadata?.signedBy).toBe(TOPOLOGY_SIGNED_MSG.signers[0])
         })
 
@@ -506,7 +603,12 @@ describe('BitGoHandler', () => {
         it('returns failed for terminal txRequest when txHash is empty (avoids infinite polling)', async () => {
             fetchMock.mockResolvedValueOnce(
                 mockOk({
-                    txRequests: [{ ...BASE_TX_REQUEST, messages: [{ state: 'signed', txHash: '' }] }],
+                    txRequests: [
+                        {
+                            ...BASE_TX_REQUEST,
+                            messages: [{ state: 'signed', txHash: '' }],
+                        },
+                    ],
                 })
             )
 
@@ -521,7 +623,9 @@ describe('BitGoHandler', () => {
                     txRequests: [
                         {
                             ...BASE_TX_REQUEST,
-                            messages: [{ state: 'signed', txHash: 'not-valid-hex!' }],
+                            messages: [
+                                { state: 'signed', txHash: 'not-valid-hex!' },
+                            ],
                         },
                     ],
                 })
@@ -541,7 +645,9 @@ describe('BitGoHandler', () => {
                     txRequests: [
                         {
                             ...BASE_TX_REQUEST,
-                            messages: [{ state: 'signed', txHash: emptyPayload }],
+                            messages: [
+                                { state: 'signed', txHash: emptyPayload },
+                            ],
                         },
                     ],
                 })
@@ -559,7 +665,9 @@ describe('BitGoHandler', () => {
     describe('resolvePublicKey', () => {
         it('fetches publicKey from API on cache miss and includes it in the result', async () => {
             fetchMock
-                .mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+                .mockResolvedValueOnce(
+                    mockOk({ txRequests: [BASE_TX_REQUEST] })
+                )
                 .mockResolvedValueOnce(walletMock())
                 .mockResolvedValueOnce(keychainMock())
 
@@ -569,8 +677,12 @@ describe('BitGoHandler', () => {
 
         it('omits publicKey gracefully when wallet has no keychain', async () => {
             fetchMock
-                .mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
-                .mockResolvedValueOnce(mockOk({ id: WALLET_ID, label: 'key', keys: [] }))
+                .mockResolvedValueOnce(
+                    mockOk({ txRequests: [BASE_TX_REQUEST] })
+                )
+                .mockResolvedValueOnce(
+                    mockOk({ id: WALLET_ID, label: 'key', keys: [] })
+                )
 
             const tx = await createHandler().getTransaction(TX_REQUEST_ID)
             expect(tx?.publicKey).toBeUndefined()
@@ -596,8 +708,16 @@ describe('BitGoHandler', () => {
 
             const keys = await createHandler().getKeys()
             expect(keys).toHaveLength(2)
-            expect(keys[0]).toEqual({ id: 'w1', name: 'key-one', publicKey: DERIVED_PUBLIC_KEY })
-            expect(keys[1]).toEqual({ id: 'w2', name: 'key-two', publicKey: DERIVED_PUBLIC_KEY })
+            expect(keys[0]).toEqual({
+                id: 'w1',
+                name: 'key-one',
+                publicKey: DERIVED_PUBLIC_KEY,
+            })
+            expect(keys[1]).toEqual({
+                id: 'w2',
+                name: 'key-two',
+                publicKey: DERIVED_PUBLIC_KEY,
+            })
         })
 
         it('skips wallets without keychains (non-TSS or incomplete)', async () => {
@@ -615,14 +735,20 @@ describe('BitGoHandler', () => {
                 // Page 1: returns one wallet + cursor
                 .mockResolvedValueOnce(
                     mockOk({
-                        wallets: [{ id: 'w1', label: 'key-one', keys: [KEYCHAIN_ID] }],
+                        wallets: [
+                            { id: 'w1', label: 'key-one', keys: [KEYCHAIN_ID] },
+                        ],
                         nextBatchPrevId: 'cursor-abc',
                     })
                 )
                 .mockResolvedValueOnce(keychainMock()) // keychain for w1
                 // Page 2: returns one wallet + no cursor (last page)
                 .mockResolvedValueOnce(
-                    mockOk({ wallets: [{ id: 'w2', label: 'key-two', keys: [KEYCHAIN_ID] }] })
+                    mockOk({
+                        wallets: [
+                            { id: 'w2', label: 'key-two', keys: [KEYCHAIN_ID] },
+                        ],
+                    })
                 )
                 .mockResolvedValueOnce(keychainMock()) // keychain for w2
 
@@ -659,29 +785,45 @@ describe('BitGoHandler', () => {
             await handler.createKey('key')
 
             // Now test getTransactions with the derived publicKey
-            fetchMock.mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+            fetchMock.mockResolvedValueOnce(
+                mockOk({ txRequests: [BASE_TX_REQUEST] })
+            )
 
             const txs: unknown[] = []
-            for await (const tx of handler.getTransactions({ publicKeys: [DERIVED_PUBLIC_KEY] })) {
+            for await (const tx of handler.getTransactions({
+                publicKeys: [DERIVED_PUBLIC_KEY],
+            })) {
                 txs.push(tx)
             }
             expect(txs).toHaveLength(1)
             const lastUrl = fetchMock.mock.calls.at(-1)![0] as string
             expect(lastUrl).toContain(`/api/v2/wallet/${WALLET_ID}/txrequests`)
             // walletId (not the derived publicKey) is used in the URL
-            expect(lastUrl).not.toContain(encodeURIComponent(DERIVED_PUBLIC_KEY))
+            expect(lastUrl).not.toContain(
+                encodeURIComponent(DERIVED_PUBLIC_KEY)
+            )
         })
 
         it('auto-refreshes keyMap via getKeys on publicKey cache miss', async () => {
             fetchMock
                 // getKeys: GET wallets
                 .mockResolvedValueOnce(
-                    mockOk({ wallets: [{ id: WALLET_ID, label: 'key', keys: [KEYCHAIN_ID] }] })
+                    mockOk({
+                        wallets: [
+                            {
+                                id: WALLET_ID,
+                                label: 'key',
+                                keys: [KEYCHAIN_ID],
+                            },
+                        ],
+                    })
                 )
                 // getKeys: GET keychain
                 .mockResolvedValueOnce(keychainMock())
                 // getTransactions: GET txrequests
-                .mockResolvedValueOnce(mockOk({ txRequests: [BASE_TX_REQUEST] }))
+                .mockResolvedValueOnce(
+                    mockOk({ txRequests: [BASE_TX_REQUEST] })
+                )
 
             const txs: unknown[] = []
             for await (const tx of createHandler().getTransactions({
@@ -708,7 +850,9 @@ describe('BitGoHandler', () => {
             fetchMock.mockResolvedValueOnce(mockOk({ txRequests: [] }))
 
             const txs: unknown[] = []
-            for await (const tx of handler.getTransactions({ publicKeys: [DERIVED_PUBLIC_KEY] })) {
+            for await (const tx of handler.getTransactions({
+                publicKeys: [DERIVED_PUBLIC_KEY],
+            })) {
                 txs.push(tx)
             }
             const url = fetchMock.mock.calls.at(-1)![0] as string
@@ -729,13 +873,18 @@ describe('BitGoHandler', () => {
             fetchMock
                 // Page 1: one txRequest + cursor
                 .mockResolvedValueOnce(
-                    mockOk({ txRequests: [BASE_TX_REQUEST], nextBatchPrevId: 'page-cursor' })
+                    mockOk({
+                        txRequests: [BASE_TX_REQUEST],
+                        nextBatchPrevId: 'page-cursor',
+                    })
                 )
                 // Page 2: one more txRequest + no cursor
                 .mockResolvedValueOnce(mockOk({ txRequests: [TX2] }))
 
             const txs: unknown[] = []
-            for await (const tx of handler.getTransactions({ publicKeys: [DERIVED_PUBLIC_KEY] })) {
+            for await (const tx of handler.getTransactions({
+                publicKeys: [DERIVED_PUBLIC_KEY],
+            })) {
                 txs.push(tx)
             }
             expect(txs).toHaveLength(2)
@@ -775,14 +924,20 @@ describe('BitGoHandler', () => {
 
     describe('coin auto-detection', () => {
         it('uses canton for bitgo.com prod URL', async () => {
-            const handler = new BitGoHandler({ accessToken: 'token', baseUrl: 'https://app.bitgo.com' })
+            const handler = new BitGoHandler({
+                accessToken: 'token',
+                baseUrl: 'https://app.bitgo.com',
+            })
             fetchMock.mockResolvedValueOnce(mockOk({ wallets: [] }))
             await handler.getKeys()
             expect(fetchMock.mock.calls[0][0]).toContain('coin=canton')
         })
 
         it('uses tcanton for bitgo-test.com URL', async () => {
-            const handler = new BitGoHandler({ accessToken: 'token', baseUrl: 'https://app.bitgo-test.com' })
+            const handler = new BitGoHandler({
+                accessToken: 'token',
+                baseUrl: 'https://app.bitgo-test.com',
+            })
             fetchMock.mockResolvedValueOnce(mockOk({ wallets: [] }))
             await handler.getKeys()
             expect(fetchMock.mock.calls[0][0]).toContain('coin=tcanton')

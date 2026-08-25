@@ -6,7 +6,11 @@ import type { Key, SigningStatus } from '@canton-network/core-signing-lib'
 // Topology payloads are base64(JSON array). Transaction payloads are raw proto binary.
 function detectPayloadType(txBase64: string): string {
     try {
-        if (Array.isArray(JSON.parse(Buffer.from(txBase64, 'base64').toString('utf8'))))
+        if (
+            Array.isArray(
+                JSON.parse(Buffer.from(txBase64, 'base64').toString('utf8'))
+            )
+        )
             return 'CANTON_SIGN_TOPOLOGY'
     } catch {
         // not JSON — must be proto binary
@@ -97,11 +101,15 @@ export class BitGoHandler {
     private hdTree?: ReturnType<BitGoHandler['initHdTree']>
 
     constructor(config: BitGoConfig) {
-        this.baseUrl = (config.baseUrl ?? 'https://app.bitgo.com').replace(/\/$/, '')
+        this.baseUrl = (config.baseUrl ?? 'https://app.bitgo.com').replace(
+            /\/$/,
+            ''
+        )
         this.accessToken = config.accessToken
         this.enterpriseId = config.enterpriseId
         this.coin =
-            config.coin ?? (this.baseUrl.includes('bitgo-test.com') ? 'tcanton' : 'canton')
+            config.coin ??
+            (this.baseUrl.includes('bitgo-test.com') ? 'tcanton' : 'canton')
     }
 
     private async request<T>(
@@ -130,7 +138,8 @@ export class BitGoHandler {
     private txStoreSet(txId: string, walletId: string): void {
         this.txStore.set(txId, walletId)
         if (this.txStore.size > 10_000) {
-            const oldest = this.txStore.keys().next().value as string | undefined
+            const oldest = this.txStore.keys().next().value as
+                string | undefined
             if (oldest) this.txStore.delete(oldest)
         }
     }
@@ -151,8 +160,12 @@ export class BitGoHandler {
     // commonKeychain: 128 hex chars — 32-byte pubkey (LE) + 32-byte chaincode (BE). Derives m/0.
     private async derivePublicKey(commonKeychain: string): Promise<string> {
         this.hdTree ??= this.initHdTree()
-        const { tree, bigIntFromBufferLE, bigIntFromBufferBE, bigIntToBufferLE } =
-            await this.hdTree
+        const {
+            tree,
+            bigIntFromBufferLE,
+            bigIntFromBufferBE,
+            bigIntToBufferLE,
+        } = await this.hdTree
         const buf = Buffer.from(commonKeychain, 'hex')
         const { pk } = tree.publicDerive(
             {
@@ -169,13 +182,17 @@ export class BitGoHandler {
             throw new Error(
                 'enterpriseId is required to create BitGo custodial wallets (set BITGO_ENTERPRISE_ID).'
             )
-        const wallet = await this.request<BitGoWallet>('POST', `/api/v2/${this.coin}/wallet`, {
-            label: name,
-            coin: this.coin,
-            type: 'custodial',
-            multisigType: 'tss',
-            enterprise: this.enterpriseId,
-        })
+        const wallet = await this.request<BitGoWallet>(
+            'POST',
+            `/api/v2/${this.coin}/wallet`,
+            {
+                label: name,
+                coin: this.coin,
+                type: 'custodial',
+                multisigType: 'tss',
+                enterprise: this.enterpriseId,
+            }
+        )
         if (!wallet.keys[0])
             throw new Error(
                 `Wallet ${wallet.id} has no associated keychain — expected a TSS custodial wallet.`
@@ -197,7 +214,8 @@ export class BitGoHandler {
         /** Optional: caller-provided payload type. Falls back to local JSON-vs-proto detection. */
         messageStandardType?: string
     }): Promise<{ txId: string }> {
-        const messageStandardType = params.messageStandardType ?? detectPayloadType(params.tx)
+        const messageStandardType =
+            params.messageStandardType ?? detectPayloadType(params.tx)
         const response = await this.request<BitGoTxRequest>(
             'POST',
             `/api/v2/wallet/${params.walletId}/msgrequests`,
@@ -219,7 +237,9 @@ export class BitGoHandler {
         const walletId = this.txStore.get(txId)
         if (walletId) return this.fetchTxRequest(txId, walletId)
         if (!this.enterpriseId) return undefined
-        const { txRequests } = await this.request<{ txRequests: BitGoTxRequest[] }>(
+        const { txRequests } = await this.request<{
+            txRequests: BitGoTxRequest[]
+        }>(
             'GET',
             `/api/v2/enterprise/${this.enterpriseId}/txrequests?txRequestIds=${encodeURIComponent(txId)}&apiVersion=full&latest=true`
         )
@@ -229,12 +249,18 @@ export class BitGoHandler {
         return this.formatTxRequest(txId, txReq.walletId, txReq)
     }
 
-    async fetchTxRequest(txId: string, walletId: string): Promise<BitGoTransaction> {
-        const { txRequests } = await this.request<{ txRequests: BitGoTxRequest[] }>(
+    async fetchTxRequest(
+        txId: string,
+        walletId: string
+    ): Promise<BitGoTransaction> {
+        const { txRequests } = await this.request<{
+            txRequests: BitGoTxRequest[]
+        }>(
             'GET',
             `/api/v2/wallet/${walletId}/txrequests?txRequestIds=${encodeURIComponent(txId)}&apiVersion=full&latest=true`
         )
-        if (!txRequests[0]) throw new Error(`txRequest ${txId} not found in wallet ${walletId}`)
+        if (!txRequests[0])
+            throw new Error(`txRequest ${txId} not found in wallet ${walletId}`)
         return this.formatTxRequest(txId, walletId, txRequests[0])
     }
 
@@ -263,7 +289,11 @@ export class BitGoHandler {
                     nextBatchPrevId?: string
                 }>('GET', `/api/v2/wallet/${walletId}/txrequests?${qs}`)
                 for (const txReq of txRequests)
-                    yield await this.formatTxRequest(txReq.txRequestId, walletId, txReq)
+                    yield await this.formatTxRequest(
+                        txReq.txRequestId,
+                        walletId,
+                        txReq
+                    )
                 prevId = nextBatchPrevId
             } while (prevId)
         }
@@ -286,7 +316,9 @@ export class BitGoHandler {
                     'GET',
                     `/api/v2/${this.coin}/key/${w.keys[0]}`
                 )
-                const publicKey = await this.derivePublicKey(keychain.commonKeychain)
+                const publicKey = await this.derivePublicKey(
+                    keychain.commonKeychain
+                )
                 newKeyMap.set(publicKey, w.id)
                 newWalletKeyMap.set(w.id, publicKey)
                 keys.push({ id: w.id, name: w.label, publicKey })
@@ -300,12 +332,18 @@ export class BitGoHandler {
     }
 
     // messages[0].txHash is a hex-encoded JSON blob containing the signature and signer fingerprint.
-    private extractSignedData(txHash: string | undefined): { signature?: string; signedBy?: string } {
+    private extractSignedData(txHash: string | undefined): {
+        signature?: string
+        signedBy?: string
+    } {
         if (!txHash) return {}
         try {
-            const parsed = JSON.parse(Buffer.from(txHash, 'hex').toString('utf8'))
+            const parsed = JSON.parse(
+                Buffer.from(txHash, 'hex').toString('utf8')
+            )
             return {
-                signature: parsed?.serializedSignatures?.[0]?.signature as string | undefined,
+                signature: parsed?.serializedSignatures?.[0]?.signature as
+                    string | undefined,
                 signedBy: parsed?.signers?.[0] as string | undefined,
             }
         } catch {
@@ -314,7 +352,9 @@ export class BitGoHandler {
     }
 
     // Resolves publicKey from cache; fetches from BitGo on miss (e.g. after process restart).
-    private async resolvePublicKey(walletId: string): Promise<string | undefined> {
+    private async resolvePublicKey(
+        walletId: string
+    ): Promise<string | undefined> {
         const cached = this.walletKeyMap.get(walletId)
         if (cached !== undefined) return cached
         try {
@@ -327,7 +367,9 @@ export class BitGoHandler {
                 'GET',
                 `/api/v2/${this.coin}/key/${wallet.keys[0]}`
             )
-            const publicKey = await this.derivePublicKey(keychain.commonKeychain)
+            const publicKey = await this.derivePublicKey(
+                keychain.commonKeychain
+            )
             this.keyMap.set(publicKey, walletId)
             this.walletKeyMap.set(walletId, publicKey)
             return publicKey
@@ -345,11 +387,16 @@ export class BitGoHandler {
         // even if the txRequest is still in 'pendingDelivery'.
         const messageState = txReq.messages?.[0]?.state
         const rawStatus: SigningStatus =
-            messageState === 'signed' ? 'signed' : (BITGO_STATE_TO_CANTON[txReq.state] ?? 'pending')
+            messageState === 'signed'
+                ? 'signed'
+                : (BITGO_STATE_TO_CANTON[txReq.state] ?? 'pending')
         const signedData =
-            rawStatus === 'signed' ? this.extractSignedData(txReq.messages?.[0]?.txHash) : {}
+            rawStatus === 'signed'
+                ? this.extractSignedData(txReq.messages?.[0]?.txHash)
+                : {}
         // Terminal states will never change — fail fast if signature extraction failed.
-        const isTerminal = txReq.state === 'delivered' || txReq.state === 'signed'
+        const isTerminal =
+            txReq.state === 'delivered' || txReq.state === 'signed'
         const status: SigningStatus =
             rawStatus === 'signed' && !signedData.signature
                 ? isTerminal
