@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Idp, Auth } from '@canton-network/core-wallet-auth'
+import { Idp } from '@canton-network/core-wallet-auth'
 import { Network } from '@canton-network/core-wallet-store'
 import { decodeJwt, JWTPayload } from 'jose'
 
@@ -15,31 +15,6 @@ function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
     }
 
     return []
-}
-
-function normalizeScopeClaim(
-    value: JWTPayload['scope'] | JWTPayload['scp'] | Auth['scope']
-): string[] {
-    if (typeof value === 'string') {
-        return value.split(/\s+/)
-    }
-
-    if (Array.isArray(value)) {
-        return value
-    }
-
-    return []
-}
-
-function claimContainsRequiredScopes(
-    tokenClaim: unknown,
-    networkAuthScopes: string[]
-): boolean {
-    const claimScopes = normalizeScopeClaim(tokenClaim)
-    return (
-        claimScopes.length === networkAuthScopes.length &&
-        networkAuthScopes.every((scope) => claimScopes.includes(scope))
-    )
 }
 
 export function assertTokenClaimsMatchNetwork(
@@ -67,27 +42,5 @@ export function assertTokenClaimsMatchNetwork(
         throw new Error(
             `Token client ID doesn't match network's auth clientId.`
         )
-    }
-
-    const requiredScopes = normalizeScopeClaim(network.auth.scope)
-    const hasScopeClaim = tokenClaims.scope !== undefined
-    const hasScpClaim = tokenClaims.scp !== undefined
-
-    if (!hasScopeClaim && !hasScpClaim) {
-        throw new Error(`Token scope and scp claims missing.`)
-    }
-
-    if (
-        hasScopeClaim &&
-        !claimContainsRequiredScopes(tokenClaims.scope, requiredScopes)
-    ) {
-        throw new Error(`Token scope claim doesn't match network's auth scope.`)
-    }
-
-    if (
-        hasScpClaim &&
-        !claimContainsRequiredScopes(tokenClaims.scp, requiredScopes)
-    ) {
-        throw new Error(`Token scp claim doesn't match network's auth scope.`)
     }
 }

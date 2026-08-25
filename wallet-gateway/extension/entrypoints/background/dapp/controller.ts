@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
+import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
 import { AuthService } from '../auth-service.js'
 import buildController from './rpc-gen'
 import type {
@@ -23,7 +24,10 @@ import type { Store } from '@canton-network/core-wallet-store'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { networkStatus } from '@/utils/legacy-backend/utils.js'
 
-export const dappController = (getStore: () => Promise<Store>) =>
+export const dappController = (
+    getStore: () => Promise<Store>,
+    _signingDriver: SigningDriverInterface
+) =>
     buildController({
         connect: async () => {
             logger.info('Dapp connect status: connecting')
