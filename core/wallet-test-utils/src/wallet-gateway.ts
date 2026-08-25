@@ -54,6 +54,11 @@ export type WalletGatewayArgs =
           page: Page
       }
 
+export type LoginCredentials = {
+    clientId?: string
+    clientSecret?: string
+}
+
 export class WalletGateway {
     private readonly isPopup: boolean
     private readonly dappPage: Page | undefined
@@ -105,6 +110,7 @@ export class WalletGateway {
     async connect(args: {
         network: string
         customURL?: string
+        credentials?: LoginCredentials
     }): Promise<void> {
         await test.step(`wallet gateway: connect to ${args.network}`, async () => {
             const dapp = this.requireDapp()
@@ -127,6 +133,7 @@ export class WalletGateway {
                 'the wallet gateway has a network select'
             ).toBeVisible()
             await selectNetwork.selectOption({ label: args.network })
+            await this.fillLoginCredentials(popup, args.credentials)
             const confirmConnectButton = popup.getByRole('button', {
                 name: 'Connect',
             })
@@ -533,8 +540,36 @@ export class WalletGateway {
         throw new Error('wallet connect form popup did not appear')
     }
 
+    private async fillLoginCredentials(
+        page: Page,
+        credentials?: LoginCredentials
+    ): Promise<void> {
+        const clientId = credentials?.clientId
+        if (clientId !== undefined) {
+            const clientIdInput = page.getByLabel('Client ID')
+            await expect(
+                clientIdInput,
+                'Client ID was provided but the login form has no Client ID input'
+            ).toBeVisible()
+            await clientIdInput.fill(clientId)
+        }
+
+        const clientSecret = credentials?.clientSecret
+        if (clientSecret !== undefined) {
+            const clientSecretInput = page.getByLabel('Client Secret')
+            await expect(
+                clientSecretInput,
+                'Client Secret was provided but the login form has no Client Secret input'
+            ).toBeVisible()
+            await clientSecretInput.fill(clientSecret)
+        }
+    }
+
     // Logs in to a gateway that was opened directly, without a dApp.
-    async login(network: string): Promise<void> {
+    async login(
+        network: string,
+        credentials?: LoginCredentials
+    ): Promise<void> {
         await test.step(`wallet gateway: log in to ${network}`, async () => {
             const page = await this.page()
             const selectNetwork = page.getByLabel('Select a network')
@@ -543,6 +578,7 @@ export class WalletGateway {
                 'the wallet gateway has a network select'
             ).toBeVisible()
             await selectNetwork.selectOption({ label: network })
+            await this.fillLoginCredentials(page, credentials)
             await page.getByRole('button', { name: 'Connect' }).click()
             // Wait for the OAuth redirect chain to complete and land on the parties page.
             await page.waitForURL(/\/parties/, { timeout: 30000 })
