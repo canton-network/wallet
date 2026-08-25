@@ -6,6 +6,7 @@ import type { PartyId } from '@canton-network/core-types'
 import { toPortfolioInstrument } from '../src/types/instruments'
 import { normalizeRegistryUrl } from '../src/utils/registry'
 import {
+    connectGateway,
     createWalletGateway,
     expectWalletBalance,
     gotoConnect,
@@ -24,7 +25,7 @@ const connectToSettings = async (page: Page) => {
     const wg = createWalletGateway(page)
 
     await gotoConnect(page)
-    await wg.connect({ network: 'LocalNet' })
+    await connectGateway(wg)
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
         timeout: 15000,
     })
@@ -250,7 +251,7 @@ test('tap via settings page', async ({ page: dappPage }) => {
     const wg = createWalletGateway(dappPage)
 
     await gotoConnect(dappPage)
-    await wg.connect({ network: 'LocalNet' })
+    await connectGateway(wg)
 
     const alice = await wg.createWalletIfNotExists({
         partyHint: `alice-${rnd}`,

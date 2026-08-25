@@ -5,6 +5,7 @@ import { pino } from 'pino'
 import { expect, type Page, test } from '@playwright/test'
 import { OTCTrade } from '@canton-network/core-wallet-test-utils'
 import {
+    connectGateway,
     createWalletGateway,
     gotoConnect,
     setupRegistry,
@@ -69,7 +70,7 @@ const setupOtcTrade = async (page: Page) => {
     const wg = createWalletGateway(page)
 
     await gotoConnect(page)
-    await wg.connect({ network: 'LocalNet' })
+    await connectGateway(wg)
 
     const venueHint = `venue-${rnd}`
     const aliceHint = `alice-${rnd}`

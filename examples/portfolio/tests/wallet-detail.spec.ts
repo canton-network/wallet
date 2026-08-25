@@ -3,6 +3,7 @@
 
 import { test, expect } from '@playwright/test'
 import {
+    connectGateway,
     createWalletGateway,
     gotoConnect,
     gotoDashboard,
@@ -21,7 +22,7 @@ test('wallet detail page - assets and transaction history', async ({
     const wg = createWalletGateway(dappPage)
 
     await gotoConnect(dappPage)
-    await wg.connect({ network: 'LocalNet' })
+    await connectGateway(wg)
 
     const aliceHint = `alice-${rnd}`
     const alice = await wg.createWalletIfNotExists({

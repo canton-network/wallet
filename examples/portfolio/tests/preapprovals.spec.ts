@@ -3,6 +3,7 @@
 
 import { test } from '@playwright/test'
 import {
+    connectGateway,
     createWalletGateway,
     expectTransferOfferGone,
     expectWalletBalance,
@@ -15,32 +16,20 @@ import {
     tap,
     togglePreapproval,
 } from './utils'
-import { fundValidatorOperator } from './fund-validator'
 
 const AMULET_INSTRUMENT = 'Amulet (AMT)'
-
-// Preapproval tests share wallet gateway state (primary wallet) with the backend,
-// so they must run serially to avoid races on which wallet is primary.
-test.describe.configure({ mode: 'serial' })
 
 // Preapproval tests involve multiple ledger transactions (taps + preapproval
 // toggles + transfer), and enabling an amulet preapproval waits for validator
 // automation, so give them much more time than the default 30s.
 test.setTimeout(300_000)
 
-// The validator operator pays the preapproval purchase fee when accepting a
-// preapproval proposal. On a fresh LocalNet (e.g. CI) the operator holds no
-// amulet, so fund it first or proposals are never accepted.
-test.beforeAll(async () => {
-    await fundValidatorOperator()
-})
-
 test('toggle preapproval', async ({ page: dappPage }) => {
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(dappPage)
 
     await gotoConnect(dappPage)
-    await wg.connect({ network: 'LocalNet' })
+    await connectGateway(wg)
 
     const alice = await wg.createWalletIfNotExists({
         partyHint: `alice-${rnd}`,
@@ -69,7 +58,7 @@ test('one step transfer to preapproved receiver', async ({
     const wg = createWalletGateway(dappPage)
 
     await gotoConnect(dappPage)
-    await wg.connect({ network: 'LocalNet' })
+    await connectGateway(wg)
 
     const alice = await wg.createWalletIfNotExists({
         partyHint: `alice-${rnd}`,
