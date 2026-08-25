@@ -3,6 +3,7 @@
 
 import { test } from '@playwright/test'
 import {
+    createGatewayApi,
     connectGateway,
     createWalletGateway,
     expectTransferOfferGone,
@@ -28,14 +29,16 @@ test('toggle preapproval', async ({ page: dappPage }) => {
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(dappPage)
 
-    await gotoConnect(dappPage)
-    await connectGateway(wg)
-
-    const alice = await wg.createWalletIfNotExists({
+    // Scaffolding: this test is about the preapproval toggle, not about setup.
+    const api = await createGatewayApi()
+    await api.createWallet({
         partyHint: `alice-${rnd}`,
         signingProvider: 'participant',
+        primary: true,
     })
-    await wg.setPrimaryWallet(alice)
+
+    await gotoConnect(dappPage)
+    await connectGateway(wg)
 
     await setupRegistry(dappPage)
 
@@ -57,20 +60,22 @@ test('one step transfer to preapproved receiver', async ({
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(dappPage)
 
-    await gotoConnect(dappPage)
-    await connectGateway(wg)
-
-    const alice = await wg.createWalletIfNotExists({
+    // Scaffolding: both wallets come from the wallet's API. Bob is primary
+    // because the test funds and preapproves him first.
+    const api = await createGatewayApi()
+    const alice = await api.createWallet({
         partyHint: `alice-${rnd}`,
         signingProvider: 'participant',
     })
-    const bob = await wg.createWalletIfNotExists({
+    const bob = await api.createWallet({
         partyHint: `bob-${rnd}`,
         signingProvider: 'participant',
+        primary: true,
     })
 
-    // Bob: fund the wallet and enable the amulet preapproval.
-    await wg.setPrimaryWallet(bob)
+    await gotoConnect(dappPage)
+    await connectGateway(wg)
+
     await setupRegistry(dappPage)
     await tap(dappPage, wg, '1000')
     await togglePreapproval(dappPage, wg, {
@@ -79,7 +84,7 @@ test('one step transfer to preapproved receiver', async ({
     })
 
     // Alice: tap and transfer to bob.
-    await switchWallet(dappPage, wg, alice)
+    await switchWallet(api, alice)
     await tap(dappPage, wg, '500')
 
     const message = 'preapproved transfer test ' + Date.now()
@@ -92,7 +97,7 @@ test('one step transfer to preapproved receiver', async ({
 
     // Bob: the transfer completes in one step, so no offer requires action
     // and the amount lands directly in bob's balance without accepting.
-    await switchWallet(dappPage, wg, bob)
+    await switchWallet(api, bob)
     await gotoDashboard(dappPage)
     await expectTransferOfferGone(dappPage, { amount: '100', message })
     await expectWalletBalance(dappPage, bob, '1100')

@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, Page, test } from '@playwright/test'
-import { WalletGateway } from '@canton-network/core-wallet-test-utils'
+import {
+    GatewayUserApi,
+    WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
 
 const BASE_URL = 'http://localhost:8081'
 
@@ -36,7 +39,32 @@ export const gatewayUserForWorker = (index: number): string =>
 const workerClientId = (): string =>
     gatewayUserForWorker(test.info().parallelIndex)
 
-/** Connect the dApp to the gateway as this worker's user. */
+/**
+ * Open a gateway User API session, to set up wallets by calling the wallet
+ * instead of driving its web UI.
+ *
+ * These tests assert on the dApp. Creating wallets is just scaffolding, and
+ * doing it through the wallet UI costs a page load per call.
+ */
+export const createGatewayApi = async (): Promise<GatewayUserApi> => {
+    const api = new GatewayUserApi({
+        baseUrl: GATEWAY_URL,
+        networkId: LOCALNET_NETWORK_ID,
+        clientId: workerClientId(),
+        // Not the dApp origin: sessions are per (user, origin) and a new one
+        // replaces the old, so the dApp's connect would kill this session.
+        origin: `http://portfolio-e2e-setup-w${test.info().parallelIndex}`,
+    })
+    await api.connect()
+    return api
+}
+
+/**
+ * Connect the dApp to the gateway as this worker's user.
+ *
+ * Must use the same client id as `createGatewayApi`. The dApp only sees wallets
+ * belonging to the user it connected as.
+ */
 export const connectGateway = async (wg: WalletGateway): Promise<void> => {
     await wg.connect({ network: 'LocalNet', clientId: workerClientId() })
 }
@@ -253,20 +281,16 @@ export const expectOffersBadgeCount = async (
     await expect(badge).toHaveText(String(count), { timeout: 15000 })
 }
 
+/**
+ * Make `partyId` the primary wallet, by calling the wallet instead of clicking
+ * its UI. The gateway emits `accountsChanged` either way, so the dApp reacts
+ * the same.
+ */
 export const switchWallet = async (
-    page: Page,
-    wg: WalletGateway,
+    api: GatewayUserApi,
     partyId: string
 ): Promise<void> => {
-    await expect(
-        page.getByRole('button', { name: 'Wallet Gateway' })
-    ).toBeVisible()
-
-    if (!(await wg.isPopupOpen())) {
-        await wg.openPopup()
-    }
-
-    await wg.setPrimaryWallet(partyId)
+    await api.setPrimaryWallet(partyId)
 }
 
 export const expectWalletBalance = async (

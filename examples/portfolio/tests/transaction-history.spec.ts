@@ -3,6 +3,7 @@
 
 import { expect, type Locator, type Page, test } from '@playwright/test'
 import {
+    createGatewayApi,
     connectGateway,
     createWalletGateway,
     fillAndSubmitTransfer,
@@ -121,24 +122,26 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
     const bobHint = `b-${rnd}`
     const wg = createWalletGateway(dappPage)
 
-    await gotoConnect(dappPage)
-    await connectGateway(wg)
-
-    const alice = await wg.createWalletIfNotExists({
+    // Scaffolding: both wallets are created through the wallet's API, so the UI
+    // is only driven for what this test asserts (the history entries).
+    const api = await createGatewayApi()
+    const alice = await api.createWallet({
         partyHint: aliceHint,
         signingProvider: 'participant',
+        primary: true,
     })
-    const bob = await wg.createWalletIfNotExists({
+    const bob = await api.createWallet({
         partyHint: bobHint,
         signingProvider: 'participant',
     })
 
-    await wg.setPrimaryWallet(alice)
+    await gotoConnect(dappPage)
+    await connectGateway(wg)
     await setupRegistry(dappPage)
 
     // Both taps should appear as incoming history entries.
     await tap(dappPage, wg, '1000')
-    await switchWallet(dappPage, wg, bob)
+    await switchWallet(api, bob)
     await tap(dappPage, wg, '500')
 
     // Bob's preapproval makes Alice -> Bob a direct, one-step transfer.
@@ -146,7 +149,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
         instrument: AMULET_INSTRUMENT,
         enabled: true,
     })
-    await switchWallet(dappPage, wg, alice)
+    await switchWallet(api, alice)
     await gotoDashboard(dappPage)
     await openTransferDialog(dappPage)
     await fillAndSubmitTransfer(dappPage, wg, {
@@ -156,7 +159,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
     })
 
     // Alice has no preapproval, so Bob -> Alice creates a transfer offer.
-    await switchWallet(dappPage, wg, bob)
+    await switchWallet(api, bob)
     await gotoDashboard(dappPage)
     await openTransferDialog(dappPage)
     const offerMessage = `offer history ${Date.now()}`
@@ -168,7 +171,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
 
     // Load Alice's history before accepting to verify the pending lifecycle
     // entry and exercise transaction-history cache invalidation on acceptance.
-    await switchWallet(dappPage, wg, alice)
+    await switchWallet(api, alice)
     await gotoWalletHistory(dappPage, alice, aliceHint)
     await expectTransactionRow(dappPage, {
         activity: 'Offer received ↘',
