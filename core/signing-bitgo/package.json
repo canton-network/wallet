@@ -1,0 +1,52 @@
+{
+    "name": "@canton-network/core-signing-bitgo",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Wallet Gateway signing driver for BitGo",
+    "license": "Apache-2.0",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc\"",
+        "clean": "rm -rf ./dist",
+        "test": "vitest run --project node",
+        "test:coverage": "vitest run --project node --coverage"
+    },
+    "dependencies": {
+        "@bitgo/sdk-lib-mpc": "^10.15.0",
+        "@canton-network/core-signing-lib": "workspace:^",
+        "@canton-network/core-wallet-auth": "workspace:^",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/node": "^25.9.3",
+        "@vitest/coverage-v8": "^4.1.8",
+        "tsdown": "^0.22.9",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.8"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/signing-bitgo"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-bitgo#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
