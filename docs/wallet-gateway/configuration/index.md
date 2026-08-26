@@ -77,6 +77,9 @@ Here is a minimalistic configuration example that can be used against a Splice l
                 }
             }
         ]
+    },
+    "hashingScheme": {
+        "version": "HASHING_SCHEME_VERSION_V3"
     }
 }
 ```
@@ -620,6 +623,19 @@ If you're using external signing providers (Dfns, Fireblocks, Blockdaemon, Parti
             "type": "sqlite",
             "database": "signingStore.sqlite"
         }
+    }
+}
+```
+
+**Hashing Scheme Version **
+
+The hashing scheme version used to compute the transaction hashes on the ledger. This is defaulted to HASHING_SCHEME_VERSION_V3, but can be downgraded to HASHING_SCHEME_VERSION_V2.
+**Example:**
+
+```json
+{
+    "hashingScheme": {
+        "version": "HASHING_SCHEME_VERSION_V3"
     }
 }
 ```
