@@ -35,6 +35,7 @@ import {
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
+import { Env, HASHING_SCHEME_VERSION } from '../env.js'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -993,7 +994,9 @@ export class TransactionService {
             {
                 userId,
                 preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                hashingSchemeVersion: Env.HASHING_SCHEME_VERSION(
+                    'HASHING_SCHEME_VERSION_V3'
+                ) as HASHING_SCHEME_VERSION,
                 submissionId: commandId,
                 deduplicationPeriod: {
                     Empty: {},

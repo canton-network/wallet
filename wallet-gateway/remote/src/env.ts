@@ -1,6 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+export type HASHING_SCHEME_VERSION =
+    | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
+    | 'HASHING_SCHEME_VERSION_V2'
+    | 'HASHING_SCHEME_VERSION_V3'
+    | undefined
+
 export class Env {
     static FIREBLOCKS_API_KEY = () => Env.get('FIREBLOCKS_API_KEY')
     static FIREBLOCKS_SECRET = () => Env.get('FIREBLOCKS_SECRET')
@@ -38,7 +44,8 @@ export class Env {
         Env.get('BITGO_API_URL', { fallback })
     static BITGO_ENTERPRISE_ID = () => Env.get('BITGO_ENTERPRISE_ID')
     static BITGO_COIN = () => Env.get('BITGO_COIN')
-
+    static HASHING_SCHEME_VERSION = (fallback: HASHING_SCHEME_VERSION) =>
+        Env.get('HASHING_SCHEME_VERSION', { fallback })
     static get(
         key: string,
         options: { required?: boolean; fallback: string }

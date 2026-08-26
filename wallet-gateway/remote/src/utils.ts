@@ -9,6 +9,7 @@ import type {
     PackageIdSelectionPreference,
 } from './dapp-api/rpc-gen/typings.js'
 import { Logger } from 'pino'
+import { Env, HASHING_SCHEME_VERSION } from './env.js'
 
 type NetworkStatus = {
     isConnected: boolean
@@ -69,7 +70,9 @@ export function ledgerPrepareParams(
         synchronizerId,
         verboseHashing: false,
         packageIdSelectionPreference: params.packageIdSelectionPreference || [],
-        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        hashingSchemeVersion: Env.HASHING_SCHEME_VERSION(
+            'HASHING_SCHEME_VERSION_V3'
+        ) as HASHING_SCHEME_VERSION,
     }
 }
 
