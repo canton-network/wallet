@@ -17,7 +17,7 @@ function fillForm(
     el: WgWalletEditForm,
     values: {
         signingProviderId?: string
-        publicKeyId?: string
+        publicKey?: string
     }
 ) {
     if (values.signingProviderId !== undefined) {
@@ -28,10 +28,10 @@ function fillForm(
             '#signing-provider-id'
         )!.dispatchEvent(new Event('change', { bubbles: true }))
     }
-    if (values.publicKeyId !== undefined) {
+    if (values.publicKey !== undefined) {
         el.shadowRoot!.querySelector<HTMLSelectElement>(
             '#public-key-id'
-        )!.value = values.publicKeyId
+        )!.value = values.publicKey
         el.shadowRoot!.querySelector<HTMLSelectElement>(
             '#public-key-id'
         )!.dispatchEvent(new Event('change', { bubbles: true }))
@@ -96,7 +96,7 @@ describe('wg-wallet-edit-form', () => {
 
         fillForm(el, {
             signingProviderId: 'fireblocks',
-            publicKeyId: 'key1',
+            publicKey: 'pk1',
         })
 
         const listener = vi.fn()
@@ -125,7 +125,7 @@ describe('wg-wallet-edit-form', () => {
 
         fillForm(el, {
             signingProviderId: 'fireblocks',
-            publicKeyId: 'key1',
+            publicKey: 'pk1',
         })
 
         const listener = vi.fn()
@@ -227,10 +227,10 @@ describe('wg-wallet-edit-form', () => {
 
         fillForm(el, {
             signingProviderId: 'fireblocks',
-            publicKeyId: 'key1',
+            publicKey: 'pk1',
         })
 
-        expect(el.selectedPublicKeyId).toBe('key1')
+        expect(el.selectedPublicKey).toBe('pk1')
 
         el.shadowRoot!.querySelector<HTMLSelectElement>(
             '#signing-provider-id'
@@ -239,7 +239,7 @@ describe('wg-wallet-edit-form', () => {
             '#signing-provider-id'
         )!.dispatchEvent(new Event('change', { bubbles: true }))
 
-        expect(el.selectedPublicKeyId).toBe('')
+        expect(el.selectedPublicKey).toBe('')
     })
 
     it('renders public key options from props', async () => {
@@ -261,11 +261,45 @@ describe('wg-wallet-edit-form', () => {
 
         const options = Array.from(
             publicKeySelect.querySelectorAll('option')
-        ).map((option) => option.value)
+        ).map((option) => ({
+            value: option.value,
+            label: option.textContent?.trim(),
+        }))
 
-        expect(options).toContain('key1')
-        expect(options).toContain('key2')
-        expect(options).toContain('key3')
+        expect(options).toEqual(
+            expect.arrayContaining([
+                { value: 'pk1', label: 'Key 1 (pk1)' },
+                { value: 'pk2', label: 'Key 2 (pk2)' },
+                { value: 'pk3', label: 'Key 3 (pk3)' },
+            ])
+        )
+    })
+
+    it('selects the initial signing provider and public key options', async () => {
+        const keys = [
+            { id: 'key1', name: 'Key 1', publicKey: 'pk1' },
+            { id: 'key2', name: 'Key 2', publicKey: 'pk2' },
+        ]
+        const el = await fixture<WgWalletEditForm>(
+            html`<wg-wallet-edit-form
+                partyId="alice"
+                .signingProviders=${['fireblocks']}
+                .publicKeys=${keys}
+                .selectedSigningProvider=${'fireblocks'}
+                .selectedPublicKey=${'pk2'}
+            ></wg-wallet-edit-form>`
+        )
+
+        expect(
+            el.shadowRoot!.querySelector<HTMLOptionElement>(
+                '#signing-provider-id option[value="fireblocks"]'
+            )?.selected
+        ).toBe(true)
+        expect(
+            el.shadowRoot!.querySelector<HTMLOptionElement>(
+                '#public-key-id option[value="pk2"]'
+            )?.selected
+        ).toBe(true)
     })
 
     it('does not emit when public key is not selected', async () => {
@@ -301,7 +335,7 @@ describe('wg-wallet-edit-form', () => {
         )
 
         fillForm(el, {
-            publicKeyId: 'key1',
+            publicKey: 'pk1',
         })
 
         const listener = vi.fn()
@@ -328,14 +362,14 @@ describe('wg-wallet-edit-form', () => {
         const publicKeySelect =
             el.shadowRoot!.querySelector<HTMLSelectElement>('#public-key-id')!
 
-        publicKeySelect.value = 'key1'
+        publicKeySelect.value = 'pk1'
         publicKeySelect.dispatchEvent(new Event('change', { bubbles: true }))
 
-        expect(el.selectedPublicKeyId).toBe('key1')
+        expect(el.selectedPublicKey).toBe('pk1')
 
-        publicKeySelect.value = 'key2'
+        publicKeySelect.value = 'pk2'
         publicKeySelect.dispatchEvent(new Event('change', { bubbles: true }))
 
-        expect(el.selectedPublicKeyId).toBe('key2')
+        expect(el.selectedPublicKey).toBe('pk2')
     })
 })

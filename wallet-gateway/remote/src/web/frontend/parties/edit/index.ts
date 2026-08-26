@@ -87,7 +87,7 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
                 .publicKeys=${this.publicKeys}
                 .selectedSigningProvider=${this.selectedSigningProvider}
                 .partyId=${this.partyId}
-                .selectedPublicKeyId=${this.selectedPublicKey}
+                .selectedPublicKey=${this.selectedPublicKey}
                 ?publicKeysLoading=${this.publicKeysLoading}
                 ?submitting=${this.submitting}
                 @signing-provider-change=${this.onSigningProviderChange}
