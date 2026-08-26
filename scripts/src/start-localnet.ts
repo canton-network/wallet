@@ -101,10 +101,16 @@ if (command === 'pull') {
     })
 } else if (command === 'start') {
     try {
-        execFileSync(composeBase[0], [...composeBase.slice(1), 'up', '-d'], {
-            stdio: 'inherit',
-            env,
-        })
+        // Pass `--build` so the locally-built `console`/`multi-sync-startup`
+        // image is rebuilt against the *current* canton:${IMAGE_TAG} base.
+        execFileSync(
+            composeBase[0],
+            [...composeBase.slice(1), 'up', '-d', '--build'],
+            {
+                stdio: 'inherit',
+                env,
+            }
+        )
     } catch (err) {
         // `up -d` hides the logs of a dependency that exits non-zero (e.g. the
         // multi-sync-startup bootstrap console). Surface them so CI failures are
