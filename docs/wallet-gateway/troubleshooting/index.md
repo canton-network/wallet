@@ -289,6 +289,67 @@ https://<your-gateway-host>/api/v0/dapp
 
 Logging into one hosted UI and then another can clear or conflict with cookies when both use the same browser profile. Use **separate browser profiles** (Chrome profiles work well) when testing multiple hosted apps against one Gateway.
 
+## LocalNet: multi-sync bootstrap fails with `EnableMultiSynchronizer is not a member`
+
+**Symptoms:** `pnpm full:up` (or `pnpm start:localnet`) fails and the `multi-sync-startup` container logs show a Canton Scala compilation error:
+
+```text
+multi-sync-startup  | /app/app-synchronizer.sc:48: value EnableMultiSynchronizer is not a member of object
+multi-sync-startup  |   com.digitalasset.canton.topology.transaction.SynchronizerTrustCertificate.ParticipantTopologyFeatureFlag
+multi-sync-startup  | ERROR c.d.canton.ConsoleScriptRunner - Script execution failed: Compilation Failed
+```
+
+A **fresh machine works fine**; only machines that ran an older Splice/Canton version fail.
+
+### 1. What the problem is
+
+The `multi-sync-startup` service (in the LocalNet bundle's `compose.yaml`) is a **locally-built** Docker image
+(`localnet-multi-sync-startup:latest`) built `FROM ghcr.io/.../canton:${IMAGE_TAG}`. `start-localnet.ts` mounts our
+custom `canton/multi-sync/app-synchronizer.sc`, which uses the `EnableMultiSynchronizer` topology feature flag. That flag
+was renamed from `EnableAlphaMultiSynchronizer` in **Canton 3.5.4**.
+
+`docker compose up` (without `--build`) **reuses an existing built image** instead of rebuilding it against the current
+base. `pnpm full:down` runs `docker compose down -v`, which removes containers/volumes but **not locally-built images**.
+So a `localnet-multi-sync-startup:latest` image built during an older run (with Canton < 3.5.4) survives every
+down/up cycle and gets reused — its old Canton can't compile the new bootstrap script. Fresh machines have no such image,
+so Compose builds it correctly.
+
+### 2. How to detect a stale local build
+
+```bash
+# When was the multi-sync image built, and which Canton does it bake in?
+docker image inspect localnet-multi-sync-startup:latest --format 'built: {{.Created}}'
+docker run --rm --entrypoint sh localnet-multi-sync-startup:latest \
+  -c 'ls /app/lib/canton-open-source-*.jar'
+```
+
+If the printed Canton version is **older than 3.5.4** (e.g. `canton-open-source-3.5.1-...`) while
+`scripts/src/lib/version-config.json` pins a newer Canton, the local image is stale.
+
+```bash
+# The Canton version the repo currently expects (devnet):
+node -e "console.log(require('./scripts/src/lib/version-config.json').SUPPORTED_VERSIONS.devnet.canton.version)"
+```
+
+### 3. The fix
+
+Remove the stale locally-built image and start again — Compose will rebuild it from the current base:
+
+```bash
+pnpm stop:localnet
+docker rmi -f localnet-multi-sync-startup:latest
+pnpm full:up
+```
+
+`start-localnet.ts` now runs `docker compose up -d --build`, so the image is rebuilt automatically on every start and this
+should not recur. If you still see the old Canton after a `--build`, the base image itself is cached — refresh it:
+
+```bash
+docker pull ghcr.io/digital-asset/decentralized-canton-sync/docker/canton:$(
+  node -e "console.log(require('./scripts/src/lib/version-config.json').SUPPORTED_VERSIONS.devnet.splice.version)")
+pnpm stop:localnet && docker rmi -f localnet-multi-sync-startup:latest && pnpm full:up
+```
+
 ## Getting help
 
 If issues persist:
