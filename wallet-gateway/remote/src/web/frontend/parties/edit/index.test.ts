@@ -155,7 +155,11 @@ describe('UserUiEditParty', () => {
 
         expect(mockRequest).toHaveBeenCalledWith({
             method: 'changeSigningProvider',
-            params: editEvent,
+            params: {
+                signingProviderId: 'fireblocks',
+                partyId,
+                publicKey: 'new-vault-name',
+            },
         })
     })
 

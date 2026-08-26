@@ -68,7 +68,11 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         try {
             await this.userClient.request({
                 method: 'changeSigningProvider',
-                params: event,
+                params: {
+                    signingProviderId: event.signingProviderId,
+                    partyId: event.partyId,
+                    publicKey: event.publicKey,
+                },
             })
 
             setLocationHref(
