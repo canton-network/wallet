@@ -69,7 +69,7 @@ async function main() {
     const darsDir = path.join(repoRoot, '.localnet/dars')
 
     if (!existsSync(darsDir)) {
-        execSync('yarn script:fetch:localnet', {
+        execSync('pnpm script:fetch:localnet', {
             cwd: repoRoot,
             stdio: 'inherit',
         })
