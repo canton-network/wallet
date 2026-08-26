@@ -8,6 +8,7 @@ import { Env } from '../env.js'
 export class ConfigUtils {
     static loadConfigFile(filePath: string): Config {
         if (existsSync(filePath)) {
+            console.log(filePath)
             const rawConfig = rawConfigSchema.parse(
                 JSON.parse(readFileSync(filePath, 'utf-8'))
             )

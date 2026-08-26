@@ -136,6 +136,7 @@ function createWorker(
                 getNotifier: vi.fn(() => ({ emit: vi.fn() })),
             } as never,
             logger,
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
         }),
         store,
         scopedStore,

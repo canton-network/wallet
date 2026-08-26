@@ -162,6 +162,7 @@ function createController(
         logger,
         requestOrigin,
         deps || { signingDrivers: {} },
+        'HASHING_SCHEME_VERSION_V3',
         context
     )
 }

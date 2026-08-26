@@ -38,7 +38,8 @@ test('call listNetworks rpc', async () => {
             publicUrl,
             notificationService,
             drivers,
-            store
+            store,
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/user')
@@ -81,7 +82,8 @@ test('selfSignedAccessToken rpc', async () => {
             publicUrl,
             notificationService,
             drivers,
-            store
+            store,
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/user')
@@ -123,7 +125,8 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
             publicUrl,
             notificationService,
             {},
-            store
+            store,
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/user')

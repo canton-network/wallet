@@ -420,12 +420,16 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         component: 'SigningWorker',
     })
 
+    const hashingSchemeVersion =
+        config.hashingScheme.version ?? 'HASHING_SCHEME_VERSION_V3'
+
     signingWorker = new SigningWorker({
         intervalMs: config.server.signingWorker.pollInterval,
         signingDrivers: drivers,
         store,
         notificationService,
         logger: signingWorkerLogger,
+        hashingSchemeVersion,
     })
     signingWorker.start()
 
@@ -443,7 +447,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         store,
         {
             signingDrivers: drivers,
-        }
+        },
+        hashingSchemeVersion
     )
 
     // register user API handlers
@@ -456,6 +461,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         notificationService,
         drivers,
         store,
+        hashingSchemeVersion,
         config.server.admin
     )
 
