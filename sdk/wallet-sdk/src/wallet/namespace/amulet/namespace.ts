@@ -222,14 +222,12 @@ interface FeaturedAppNamespace {
 export async function fetchAmulet(
     amuletCtx: AmuletNamespaceConfig
 ): Promise<AssetBody> {
-    if (amuletCtx.registry instanceof ParsedURL) {
-        return parseAssets(
-            amuletCtx.commonCtx,
-            await amuletCtx.tokenStandardService.registriesToAssets([
-                amuletCtx.registry.href,
-            ])
-        )[0]
-    } else {
-        return amuletCtx.registry
-    }
+    return amuletCtx.registry instanceof ParsedURL
+        ? parseAssets(
+              amuletCtx.commonCtx,
+              await amuletCtx.tokenStandardService.registriesToAssets([
+                  amuletCtx.registry.href,
+              ])
+          )[0]
+        : amuletCtx.registry
 }

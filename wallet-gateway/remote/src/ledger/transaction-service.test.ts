@@ -530,6 +530,128 @@ describe('TransactionService', () => {
             })
         })
 
+        describe('bitgo', () => {
+            it('returns the driver signature when signing completes', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    txId: 'bitgo-tx-1',
+                    signature: 'bitgo-signature',
+                })
+                const store = createStore()
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.BITGO]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    walletWithProvider(SigningProvider.BITGO),
+                    signParams
+                )
+
+                expect(result).toEqual({
+                    status: 'signed',
+                    signature: 'bitgo-signature',
+                    signedBy: wallet.namespace,
+                    partyId: wallet.partyId,
+                    externalTxId: 'bitgo-tx-1',
+                })
+            })
+
+            it('returns pending status when signing is in progress', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'pending',
+                    txId: 'bitgo-tx-1',
+                })
+                const store = createStore()
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.BITGO]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    walletWithProvider(SigningProvider.BITGO),
+                    signParams
+                )
+
+                expect(result).toEqual({
+                    status: 'pending',
+                    externalTxId: 'bitgo-tx-1',
+                    partyId: wallet.partyId,
+                })
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    'pending',
+                    { externalTxId: 'bitgo-tx-1' }
+                )
+            })
+
+            it('polls getTransaction when externalTxId is already set', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    txId: 'bitgo-tx-1',
+                    signature: 'bitgo-signature',
+                })
+                const store = createStore({
+                    ...pendingTransaction,
+                    externalTxId: 'bitgo-tx-1',
+                })
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.BITGO]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    walletWithProvider(SigningProvider.BITGO),
+                    signParams
+                )
+
+                expect(getTransaction).toHaveBeenCalledWith(
+                    expect.objectContaining({ txId: 'bitgo-tx-1' })
+                )
+                expect(result).toMatchObject({
+                    status: 'signed',
+                    signature: 'bitgo-signature',
+                })
+            })
+
+            it('throws when BitGo signing driver is not available', async () => {
+                const service = createService(
+                    createStore(),
+                    {},
+                    notifier,
+                    logger
+                )
+                await expect(
+                    service.sign(
+                        authContext,
+                        walletWithProvider(SigningProvider.BITGO),
+                        signParams
+                    )
+                ).rejects.toThrow('No driver found for bitgo')
+            })
+        })
+
         it.each([
             {
                 name: 'participant',
@@ -559,6 +681,11 @@ describe('TransactionService', () => {
             {
                 name: 'securosys',
                 provider: SigningProvider.SECUROSYS,
+                auth: authContext,
+            },
+            {
+                name: 'bitgo',
+                provider: SigningProvider.BITGO,
                 auth: authContext,
             },
         ])(

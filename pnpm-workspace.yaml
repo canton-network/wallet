@@ -12,11 +12,13 @@ allowBuilds:
     '@scarf/scarf': true
     '@swc/core': true
     better-sqlite3: true
+    cbor-extract: true
     cpu-features: true
     esbuild: true
     grpc-tools: true
     nx: true
     protobufjs: true
+    secp256k1: true
     spawn-sync: true
     ssh2: true
 overrides:
