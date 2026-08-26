@@ -3,6 +3,8 @@
 
 import { z } from 'zod'
 
+export { base64ToBytes, fingerprintPublicKey } from './crypto.js'
+
 /**
  * Logger
  */

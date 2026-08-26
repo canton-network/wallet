@@ -9,48 +9,13 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Store, Wallet } from '@canton-network/core-wallet-store'
-
-function base64ToBytes(value: string): Uint8Array {
-    const normalized = value.replace(/\s/g, '')
-    if (
-        normalized.length === 0 ||
-        normalized.length % 4 === 1 ||
-        !/^[A-Za-z0-9+/]*={0,2}$/.test(normalized)
-    ) {
-        throw new Error('Signing driver returned an invalid public key')
-    }
-
-    try {
-        const decoded = globalThis.atob(normalized)
-        return Uint8Array.from(decoded, (character) => character.charCodeAt(0))
-    } catch {
-        throw new Error('Signing driver returned an invalid public key')
-    }
-}
-
-export async function fingerprintPublicKey(publicKey: string): Promise<string> {
-    const hashPurpose = 12
-    const keyBytes = base64ToBytes(publicKey)
-    const hashInput = new Uint8Array(4 + keyBytes.length)
-    new DataView(hashInput.buffer).setUint32(0, hashPurpose)
-    hashInput.set(keyBytes, 4)
-
-    const hash = new Uint8Array(
-        await globalThis.crypto.subtle.digest('SHA-256', hashInput)
-    )
-    const fingerprint = new Uint8Array(2 + hash.length)
-    fingerprint.set([0x12, 0x20])
-    fingerprint.set(hash, 2)
-
-    return Array.from(fingerprint, (byte) =>
-        byte.toString(16).padStart(2, '0')
-    ).join('')
-}
+import { fingerprintPublicKey } from '@canton-network/core-types'
 
 function signingError(operation: string, description: string): Error {
     return new Error(`Signing driver failed to ${operation}: ${description}`)
 }
 
+// TODO: Combine with PartyAllocationService once its external-party allocation logic is extracted
 export async function createExtensionWallet({
     authContext,
     ledgerClient,
