@@ -11,7 +11,10 @@ import type { Store, Network } from '@canton-network/core-wallet-store'
 import {
     AddSessionParams,
     CreateWalletParams,
+    DeleteTransactionParams,
     ExecuteParams,
+    GetTransactionParams,
+    GetTransactionResult,
     PublicNetwork,
     SignParams,
     Network as ApiNetwork,
@@ -388,14 +391,69 @@ export const userController = (
                 ),
             }
         },
-        getTransaction: async () => {
-            throw new Error('Function getTransaction not implemented.')
+        getTransaction: async (
+            params: GetTransactionParams
+        ): Promise<GetTransactionResult> => {
+            const store = await getStore()
+            const transaction = await store.getTransaction(params.transactionId)
+            if (!transaction) {
+                throw new Error(
+                    `Transaction not found with id: ${params.transactionId}`
+                )
+            }
+
+            return {
+                id: transaction.id,
+                commandId: transaction.commandId,
+                status: transaction.status,
+                preparedTransaction: transaction.preparedTransaction,
+                preparedTransactionHash: transaction.preparedTransactionHash,
+                payload: transaction.payload
+                    ? JSON.stringify(transaction.payload)
+                    : '',
+                ...(transaction.origin !== null && {
+                    origin: transaction.origin,
+                }),
+                ...(transaction.createdAt && {
+                    createdAt: transaction.createdAt.toISOString(),
+                }),
+                ...(transaction.signedAt && {
+                    signedAt: transaction.signedAt.toISOString(),
+                }),
+                ...(transaction.externalTxId && {
+                    externalTxId: transaction.externalTxId,
+                }),
+            }
         },
         listTransactions: async () => {
             throw new Error('Function listTransactions not implemented.')
         },
-        deleteTransaction: async () => {
-            throw new Error('Function deleteTransaction not implemented.')
+        deleteTransaction: async (
+            params: DeleteTransactionParams
+        ): Promise<null> => {
+            const connectedContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const transaction = await store.getTransaction(params.transactionId)
+            if (!transaction) {
+                throw new Error(
+                    `Transaction not found with id: ${params.transactionId}`
+                )
+            }
+            if (transaction.status !== 'pending') {
+                throw new Error(
+                    `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
+                )
+            }
+
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
+            await store.removeTransaction(transaction.id)
+            return null
         },
         getUser: async () => {
             throw new Error('Function getUser not implemented.')

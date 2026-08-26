@@ -8,7 +8,11 @@ import {
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
-import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import {
+    PartyLevelRight,
+    type Store,
+    type Wallet,
+} from '@canton-network/core-wallet-store'
 import { fingerprintPublicKey } from '@canton-network/core-types'
 
 function signingError(operation: string, description: string): Error {
@@ -102,7 +106,7 @@ export async function createExtensionWallet({
         publicKey: key.publicKey,
         externalTxId: '',
         topologyTransactions: '',
-        rights: [],
+        rights: [PartyLevelRight.CanActAs],
     }
     await store.addWallet(wallet)
 

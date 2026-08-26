@@ -29,6 +29,7 @@ import {
     ledgerPrepareParams,
     networkStatus,
 } from '@/utils/legacy-backend/utils.js'
+import { enqueueApprovalRequest } from '@/utils/approval-requests.js'
 
 export const dappController = (
     getStore: () => Promise<Store>,
@@ -201,9 +202,11 @@ export const dappController = (
 
             await store.setTransaction(transaction)
 
+            await enqueueApprovalRequest({ transactionId, commandId })
+
             pinoLogger.info(
                 { transactionId, commandId, actAs },
-                'prepareExecute: Prepared transaction'
+                'prepareExecute: Prepared transaction for approval'
             )
 
             return null
