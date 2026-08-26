@@ -32,13 +32,13 @@ describe('LedgerClient', () => {
 
     describe('parseSupportedVersions', () => {
         it('matches, defaults, or throws for version strings', () => {
-            const client = createLedgerClient(undefined, '3.4')
+            const client = createLedgerClient(undefined, '3.5')
 
             expect(() => client.parseSupportedVersions(undefined)).toThrow(
                 'Client version missing from response'
             )
             expect(client.parseSupportedVersions('3.5.1')).toBe('3.5')
-            expect(client.parseSupportedVersions('9.9.9')).toBe('3.4')
+            expect(client.parseSupportedVersions('9.9.9')).toBe('3.5')
             expect(mockLogger.warn).toHaveBeenCalled()
         })
     })
@@ -46,7 +46,7 @@ describe('LedgerClient', () => {
     describe('init', () => {
         it('negotiates version once', async () => {
             fetchMock
-                .mockResolvedValueOnce(versionResponse('3.4.2'))
+                .mockResolvedValueOnce(versionResponse('3.5.14'))
                 .mockResolvedValueOnce(
                     jsonResponse({
                         connectedSynchronizers: [{ synchronizerId: 'sync-1' }],
@@ -57,7 +57,7 @@ describe('LedgerClient', () => {
             await client.init()
             await client.get('/v2/state/connected-synchronizers')
 
-            expect(client.getCurrentClientVersion()).toBe('3.4')
+            expect(client.getCurrentClientVersion()).toBe('3.5')
             expect(fetchMock).toHaveBeenCalledTimes(2)
         })
     })

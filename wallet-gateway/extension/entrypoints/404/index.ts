@@ -5,8 +5,8 @@ import '@canton-network/core-wallet-ui-components'
 import { BaseElement } from '@canton-network/core-wallet-ui-components'
 import { html, css } from 'lit'
 import { customElement } from 'lit/decorators.js'
-import '@/utils/legacy/index'
-import { toRelHref } from '@/utils/legacy/routing'
+import '@/utils/legacy-frontend/index'
+import { toRelHref } from '@/utils/legacy-frontend/routing'
 
 @customElement('user-ui-404')
 export class NotFoundUi extends BaseElement {

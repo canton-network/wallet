@@ -5,8 +5,11 @@ import { storage } from 'wxt/utils/storage'
 import { browser } from 'wxt/browser'
 import { type AllowedRoute } from '@canton-network/core-wallet-ui-components'
 import { destroyTokenKey } from './access-token-utils.js'
+import { createProxyService } from '@webext-core/proxy-service'
+import { AUTH_SERVICE_KEY } from '@/utils/constants'
 
-const VERSION_PREFIX = 'com.splice.wallet.v1'
+const STORAGE_PREFIX = 'com.splice.wallet.'
+const VERSION_PREFIX = `${STORAGE_PREFIX}v1`
 
 // We enforce the return type so TypeScript knows it always starts with local: or session:
 export type WxtStorageKey = `local:${string}` | `session:${string}`
@@ -41,7 +44,10 @@ export class StateManager {
 
             for (const key of allKeys) {
                 const keyWithoutType = key.replace(/^(local:|session:)/, '')
-                if (!keyWithoutType.startsWith(VERSION_PREFIX)) {
+                if (
+                    keyWithoutType.startsWith(STORAGE_PREFIX) &&
+                    !keyWithoutType.startsWith(VERSION_PREFIX)
+                ) {
                     await storage.removeItem(key)
                 }
             }
@@ -132,16 +138,26 @@ export class StateManager {
     }
 
     async clearAuthState(origin: string): Promise<void> {
-        await this.accessToken.clear(origin)
-        await this.networkId.clear(origin)
-        await this.expirationDate.clear(origin)
-        await this.intendedPage.clear(origin)
-        await this.sessionId.clear(origin)
+        try {
+            const authClient = createProxyService(AUTH_SERVICE_KEY)
+            await authClient.clearAuthContext()
+        } finally {
+            await this.accessToken.clear(origin)
+            await this.networkId.clear(origin)
+            await this.expirationDate.clear(origin)
+            await this.intendedPage.clear(origin)
+            await this.sessionId.clear(origin)
+        }
     }
 
     async revokeAccessToken(origin: string): Promise<void> {
-        await this.accessToken.clear(origin)
-        await destroyTokenKey()
+        try {
+            const authClient = createProxyService(AUTH_SERVICE_KEY)
+            await authClient.clearAuthContext()
+        } finally {
+            await this.accessToken.clear(origin)
+            await destroyTokenKey()
+        }
     }
 }
 

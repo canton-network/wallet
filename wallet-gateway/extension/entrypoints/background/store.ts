@@ -1,14 +1,26 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { SigningDriverStore } from '@canton-network/core-signing-lib'
+import { WxtStore } from '@canton-network/core-signing-store-wxt'
 import type { Store } from '@canton-network/core-wallet-store'
 import {
     StoreInternal,
     type StoreInternalConfig,
 } from '@canton-network/core-wallet-store-inmemory'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import { AuthService } from './auth-service'
+import { AuthAware } from '@canton-network/core-wallet-auth'
 
-export function initializeWalletStore(): Store {
+export async function loadAuthedStore(
+    store: Store & AuthAware<Store>
+): Promise<Store> {
+    const authContext = await AuthService.loadAuthContext()
+    return store.withAuthContext(authContext)
+}
+
+export async function initializeWalletStore(): Promise<
+    Store & AuthAware<Store>
+> {
     const config: StoreInternalConfig = {
         idps: [
             {
@@ -57,14 +69,12 @@ export function initializeWalletStore(): Store {
         ],
     }
 
-    const authContext: AuthContext = {
-        userId: HARDCODED_USER_ID,
-        accessToken: HARDCODED_ACCESS_TOKEN,
-    }
-
+    const authContext = await AuthService.loadAuthContext()
     return new StoreInternal(config, logger, authContext)
 }
 
-export function initializeSigningStore(): Store {
-    return undefined as unknown as Store
+export function initializeSigningStore(): SigningDriverStore {
+    // Signing keys are stored for this browser profile and remain available
+    // when the user logs out or signs in again.
+    return new WxtStore('extension-user')
 }

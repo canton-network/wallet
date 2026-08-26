@@ -11,15 +11,15 @@ import {
     handleErrorToast,
 } from '@canton-network/core-wallet-ui-components'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import { createUserClient } from '@/utils/legacy/rpc-client'
-import { setLocationHref } from '@/utils/legacy/navigation.js'
-import { toRelHref, toRelPath } from '@/utils/legacy/routing'
-import { stateManager } from '@/utils/legacy/state-manager'
-import { showToast } from '@/utils/legacy/utils.js'
-import '@/utils/legacy'
+import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
+import { toRelHref, toRelPath } from '@/utils/legacy-frontend/routing'
+import { stateManager } from '@/utils/legacy-frontend/state-manager'
+import { showToast } from '@/utils/legacy-frontend/utils.js'
+import '@/utils/legacy-frontend'
 import { WALLET_CREATION_STATUS_CODE } from '../parties/index'
 import { type WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '@/utils/legacy/listeners.js'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {

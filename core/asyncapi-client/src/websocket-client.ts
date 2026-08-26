@@ -54,7 +54,7 @@ export class WebSocketClient {
     private token: string = ''
     private protocol: string[] = []
     private readonly channelsByVersion: ChannelsMap
-    private version: SupportedVersions = '3.4'
+    private version: SupportedVersions = '3.5'
     private readonly logger: Logger
     private accessTokenProvider: AccessTokenProvider
 
