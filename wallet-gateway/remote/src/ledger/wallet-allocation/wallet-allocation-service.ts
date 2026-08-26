@@ -66,6 +66,8 @@ export class WalletAllocationService {
                 return this.fireblocksAllocator
             case SigningProvider.SECUROSYS:
                 return this.securosysAllocator
+            case SigningProvider.BITGO:
+                return this.bitgoAllocator
             case SigningProvider.WALLET_KERNEL:
                 return this.kernelAllocator
             case SigningProvider.PARTICIPANT:
