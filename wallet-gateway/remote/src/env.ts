@@ -44,8 +44,7 @@ export class Env {
         Env.get('BITGO_API_URL', { fallback })
     static BITGO_ENTERPRISE_ID = () => Env.get('BITGO_ENTERPRISE_ID')
     static BITGO_COIN = () => Env.get('BITGO_COIN')
-    static HASHING_SCHEME_VERSION = (fallback: HASHING_SCHEME_VERSION) =>
-        Env.get('HASHING_SCHEME_VERSION', { fallback })
+
     static get(
         key: string,
         options: { required?: boolean; fallback: string }
