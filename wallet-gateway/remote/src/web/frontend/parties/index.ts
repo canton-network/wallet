@@ -245,7 +245,7 @@ export class UserUiParties extends BaseElement {
 
     private _onWalletEdit(e: WalletCardEditEvent) {
         setLocationHref(
-            `/parties/edit?partyId=${e.wallet.partyId}&networkId=${e.wallet.networkId}&userId=${e.wallet.userId}`
+            `/parties/edit?partyId=${encodeURIComponent(e.wallet.partyId)}`
         )
     }
 
