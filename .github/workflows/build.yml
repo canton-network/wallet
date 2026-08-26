@@ -63,6 +63,7 @@ jobs:
                       sdk/**/dist/
                       wallet-gateway/**/dist/
                       damljs
+                      examples/test-token-v1-registry/dist/
                       .nx/cache
                       .nx/workspace-data
                       !**/node_modules/**
