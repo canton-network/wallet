@@ -428,7 +428,7 @@ export class WalletSyncService {
                     signingProviderId:
                         resolvedSigningProvider.signingProviderId,
                     disabled: !isMatched,
-                    userId: '',
+                    userId: this.authContext.userId,
                     rights:
                         rightsByParty.get(partyId) ??
                         WalletSyncService.EMPTY_RIGHTS,
