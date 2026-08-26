@@ -313,7 +313,8 @@ export const dappController = (
                 actAs,
                 synchronizerId,
                 params,
-                ledgerClient
+                ledgerClient,
+                hashingSchemeVersion
             )
 
             logDynamically(
@@ -543,10 +544,17 @@ async function prepareSubmission(
     partyIds: string[],
     synchronizerId: string,
     params: PrepareExecuteParams,
-    ledgerClient: LedgerClient
+    ledgerClient: LedgerClient,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(userId, partyIds, synchronizerId, params)
+        ledgerPrepareParams(
+            userId,
+            partyIds,
+            synchronizerId,
+            params,
+            hashingSchemeVersion
+        )
     )
 }

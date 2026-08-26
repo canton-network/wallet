@@ -421,7 +421,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     })
 
     const hashingSchemeVersion =
-        config.hashingScheme.version ?? 'HASHING_SCHEME_VERSION_V3'
+        config.hashingScheme?.version ?? 'HASHING_SCHEME_VERSION_V3'
 
     signingWorker = new SigningWorker({
         intervalMs: config.server.signingWorker.pollInterval,

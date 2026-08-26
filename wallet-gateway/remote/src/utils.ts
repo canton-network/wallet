@@ -9,7 +9,7 @@ import type {
     PackageIdSelectionPreference,
 } from './dapp-api/rpc-gen/typings.js'
 import { Logger } from 'pino'
-import { Env, HASHING_SCHEME_VERSION } from './env.js'
+import { HASHING_SCHEME_VERSION } from './env.js'
 
 type NetworkStatus = {
     isConnected: boolean
@@ -47,7 +47,8 @@ export function ledgerPrepareParams(
     userId: string,
     partyIds: string[],
     synchronizerId: string,
-    params: PrepareParams
+    params: PrepareParams,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
 ): Types['JsPrepareSubmissionRequest'] {
     // Map disclosed contracts to ledger api format (which wrongly defines optional fields as mandatory)
     const disclosedContracts =
@@ -70,9 +71,7 @@ export function ledgerPrepareParams(
         synchronizerId,
         verboseHashing: false,
         packageIdSelectionPreference: params.packageIdSelectionPreference || [],
-        hashingSchemeVersion: Env.HASHING_SCHEME_VERSION(
-            'HASHING_SCHEME_VERSION_V3'
-        ) as HASHING_SCHEME_VERSION,
+        hashingSchemeVersion,
     }
 }
 

@@ -946,7 +946,8 @@ export class TransactionService {
             userId,
             [partyId],
             synchronizerId,
-            transaction.payload as PrepareParams
+            transaction.payload as PrepareParams,
+            this.hashingSchemeVersion
         )
         const result = await ledgerClient.postWithRetry(
             '/v2/commands/submit-and-wait',
