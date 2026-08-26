@@ -1124,7 +1124,7 @@
         },
         {
             "name": "getWallet",
-            "description": "Get wallet based on provided constraint key",
+            "description": "Get a wallet by party ID for the connected user on the current network.",
             "params": [
                 {
                     "name": "params",
@@ -1133,23 +1133,13 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "userId": {
-                                "title": "userId",
-                                "type": "string",
-                                "description": "The user ID corresponding to the wallet."
-                            },
                             "partyId": {
                                 "title": "partyId",
                                 "type": "string",
                                 "description": "The party ID corresponding to the wallet."
-                            },
-                            "networkId": {
-                                "title": "networkId",
-                                "type": "string",
-                                "description": "The network ID corresponding to the wallet."
                             }
                         },
-                        "required": ["userId", "partyId", "networkId"]
+                        "required": ["partyId"]
                     }
                 }
             ],

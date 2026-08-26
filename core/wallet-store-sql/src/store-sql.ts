@@ -137,14 +137,35 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         })
     }
 
-    async getWallet(constraint: WalletUniqueConstraint) {
+    async getWallet(partyId: PartyId): Promise<Wallet | null> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const constraint: WalletUniqueConstraint = {
+            partyId,
+            networkId: network.id,
+            userId,
+        }
+
         const row = await this.db
             .selectFrom('wallets')
             .selectAll()
             .where((eb) => eb.and(constraint))
             .executeTakeFirst()
 
-        return row ? toWallet(row) : null
+        if (!row) return null
+
+        const rightRows = await this.db
+            .selectFrom('userPartyRights')
+            .select('right')
+            .where((eb) => eb.and(constraint))
+            .execute()
+
+        return {
+            ...toWallet(row),
+            rights: rightRows
+                .map(({ right }) => fromPartyRight(right))
+                .filter((right) => right !== undefined),
+        }
     }
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {

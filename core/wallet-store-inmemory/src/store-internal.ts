@@ -133,7 +133,14 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         })
     }
 
-    async getWallet(constraint: WalletUniqueConstraint) {
+    async getWallet(partyId: PartyId): Promise<Wallet | null> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const constraint: WalletUniqueConstraint = {
+            partyId,
+            networkId: network.id,
+            userId,
+        }
         return (
             this.getStorage().wallets.find(
                 (wallet) =>
