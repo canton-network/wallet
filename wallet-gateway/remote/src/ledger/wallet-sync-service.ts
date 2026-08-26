@@ -41,7 +41,8 @@ export class WalletSyncService {
     ): boolean {
         const leftSet = new Set(left ?? WalletSyncService.EMPTY_RIGHTS)
         const rightSet = new Set(right)
-        return !leftSet.difference(rightSet).size
+        if (leftSet.size !== rightSet.size) return false
+        return [...leftSet].every((item) => rightSet.has(item))
     }
 
     async run(timeoutMs: number): Promise<void> {
@@ -427,7 +428,7 @@ export class WalletSyncService {
                     signingProviderId:
                         resolvedSigningProvider.signingProviderId,
                     disabled: !isMatched,
-                    userId: '',
+                    userId: this.authContext.userId,
                     rights:
                         rightsByParty.get(partyId) ??
                         WalletSyncService.EMPTY_RIGHTS,

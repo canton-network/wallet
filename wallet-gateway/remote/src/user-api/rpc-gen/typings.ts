@@ -591,9 +591,7 @@ export interface ListSigningProviderKeysParams {
     signingProviderId: SigningProviderId
 }
 export interface GetWalletParams {
-    userId: UserId
     partyId: PartyId
-    networkId: NetworkId
 }
 export interface ChangeSigningProviderParams {
     signingProviderId: SigningProviderId

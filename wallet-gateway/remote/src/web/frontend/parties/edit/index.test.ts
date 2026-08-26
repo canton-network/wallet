@@ -53,11 +53,7 @@ import { WALLET_STATUS_CODE } from '../index.js'
 describe('UserUiEditParty', () => {
     let el: UserUiEditParty
     let urlSearchParamsGetMock: ReturnType<typeof vi.spyOn>
-    const walletConstraint = {
-        partyId: 'alice::1220abc',
-        networkId: 'network1',
-        userId: 'user-1',
-    }
+    const partyId = 'alice::1220abc'
 
     const componentFixture = html`<user-ui-edit-party></user-ui-edit-party>`
 
@@ -65,9 +61,7 @@ describe('UserUiEditParty', () => {
         urlSearchParamsGetMock = vi
             .spyOn(URLSearchParams.prototype, 'get')
             .mockImplementation((paramName: string) => {
-                if (paramName === 'partyId') return walletConstraint.partyId
-                if (paramName === 'networkId') return walletConstraint.networkId
-                if (paramName === 'userId') return walletConstraint.userId
+                if (paramName === 'partyId') return partyId
                 return null
             })
 
@@ -82,8 +76,8 @@ describe('UserUiEditParty', () => {
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'getWallet') {
                 return makeWallet({
-                    partyId: walletConstraint.partyId,
-                    networkId: walletConstraint.networkId,
+                    partyId,
+                    networkId: 'network1',
                     signingProviderId: 'participant',
                     publicKey: 'old-pk',
                 })
@@ -127,10 +121,10 @@ describe('UserUiEditParty', () => {
     it('loads existing wallet on initialization', async () => {
         expect(mockRequest).toHaveBeenCalledWith({
             method: 'getWallet',
-            params: walletConstraint,
+            params: { partyId },
         })
         expect(el.wallet).toBeDefined()
-        expect(el.wallet.partyId).toBe(walletConstraint.partyId)
+        expect(el.wallet.partyId).toBe(partyId)
     })
 
     it('displays existing signing provider and public key', async () => {
@@ -151,7 +145,7 @@ describe('UserUiEditParty', () => {
     it('calls changeSigningProvider when form emits wallet-edit event', async () => {
         const form = el.shadowRoot?.querySelector('wg-wallet-edit-form')
         const editEvent = new WalletEditEvent(
-            walletConstraint.partyId,
+            partyId,
             'fireblocks',
             'new-vault-name'
         )
@@ -161,7 +155,11 @@ describe('UserUiEditParty', () => {
 
         expect(mockRequest).toHaveBeenCalledWith({
             method: 'changeSigningProvider',
-            params: editEvent,
+            params: {
+                signingProviderId: 'fireblocks',
+                partyId,
+                publicKey: 'new-vault-name',
+            },
         })
     })
 
@@ -188,9 +186,7 @@ describe('UserUiEditParty', () => {
         await waitUntil(() => el.wallet !== undefined)
 
         const form = el.shadowRoot?.querySelector('wg-wallet-edit-form')
-        form!.dispatchEvent(
-            new WalletEditEvent(walletConstraint.partyId, 'fireblocks', 'vault')
-        )
+        form!.dispatchEvent(new WalletEditEvent(partyId, 'fireblocks', 'vault'))
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
@@ -223,32 +219,27 @@ describe('UserUiEditParty', () => {
         await waitUntil(() => el.wallet !== undefined)
 
         const form = el.shadowRoot?.querySelector('wg-wallet-edit-form')
-        form!.dispatchEvent(
-            new WalletEditEvent(walletConstraint.partyId, 'fireblocks', 'vault')
-        )
+        form!.dispatchEvent(new WalletEditEvent(partyId, 'fireblocks', 'vault'))
 
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
     })
 
-    it('throws error when required wallet constraint params are missing', async () => {
-        urlSearchParamsGetMock.mockImplementation((paramName: string) => {
-            if (paramName === 'partyId') return 'alice'
-            return null
-        })
+    it('throws error when partyId query param is missing', async () => {
+        urlSearchParamsGetMock.mockImplementation(() => null)
 
-        const walletConstraintGetter = Object.getOwnPropertyDescriptor(
+        const partyIdGetter = Object.getOwnPropertyDescriptor(
             UserUiEditParty.prototype,
-            'walletConstraint'
+            'partyId'
         )?.get
 
-        if (!walletConstraintGetter) {
-            throw new Error('walletConstraint getter not found')
+        if (!partyIdGetter) {
+            throw new Error('partyId getter not found')
         }
 
-        expect(() =>
-            walletConstraintGetter.call(new UserUiEditParty())
-        ).toThrow('wallet constraint params must be provided')
+        expect(() => partyIdGetter.call(new UserUiEditParty())).toThrow(
+            'partyId query param must be provided'
+        )
     })
 })

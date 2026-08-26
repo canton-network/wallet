@@ -1274,9 +1274,9 @@ export const userController = (
             return null
         },
         getWallet: async (
-            constraint: GetWalletParams
+            params: GetWalletParams
         ): Promise<GetWalletResult> => {
-            return await store.getWallet(constraint)
+            return await store.getWallet(params.partyId)
         },
     })
 }

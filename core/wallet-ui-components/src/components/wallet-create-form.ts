@@ -125,12 +125,22 @@ export class WgWalletCreateForm extends WgWalletForm {
                         required
                         @change=${this.onSigningProviderChange}
                     >
-                        <option disabled selected value="">
+                        <option
+                            disabled
+                            .selected=${!this.selectedSigningProvider}
+                            value=""
+                        >
                             Select signing provider
                         </option>
                         ${this.signingProviders.map(
                             (providerId) =>
-                                html`<option value=${providerId}>
+                                html`<option
+                                    value=${providerId}
+                                    .selected=${
+                                        this.selectedSigningProvider ===
+                                        providerId
+                                    }
+                                >
                                     ${providerId}
                                 </option>`
                         )}
@@ -159,7 +169,11 @@ export class WgWalletCreateForm extends WgWalletForm {
                                       id="vault-name"
                                       required
                                   >
-                                      <option disabled selected value="">
+                                      <option
+                                          disabled
+                                          .selected=${!this.publicKeyValue}
+                                          value=""
+                                      >
                                           ${
                                               this.isLoading
                                                   ? 'Loading vaults...'
@@ -168,7 +182,13 @@ export class WgWalletCreateForm extends WgWalletForm {
                                       </option>
                                       ${this.publicKeys.map(
                                           (key) =>
-                                              html`<option value=${key.id}>
+                                              html`<option
+                                                  value=${key.id}
+                                                  .selected=${
+                                                      this.publicKeyValue ===
+                                                      key.id
+                                                  }
+                                              >
                                                   ${key.name}
                                               </option>`
                                       )}

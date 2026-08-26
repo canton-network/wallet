@@ -28,7 +28,7 @@ export class WgWalletEditForm extends WgWalletForm {
     protected readonly submittingMessage = 'Editing party, please wait...'
 
     @property() readonly partyId = ''
-    @property() accessor selectedPublicKeyId = ''
+    @property() accessor selectedPublicKey = ''
     @property() accessor selectedSigningProvider = ''
 
     static styles = [
@@ -44,11 +44,11 @@ export class WgWalletEditForm extends WgWalletForm {
     protected onSubmit = (event: SubmitEvent) => {
         event.preventDefault()
 
-        const selectedKey = this.publicKeys.find(
-            (key) => this.selectedPublicKeyId === key.id
-        )
-
-        if (this.isLoading || !selectedKey || !this.selectedSigningProvider) {
+        if (
+            this.isLoading ||
+            !this.selectedPublicKey ||
+            !this.selectedSigningProvider
+        ) {
             return
         }
 
@@ -56,7 +56,7 @@ export class WgWalletEditForm extends WgWalletForm {
             new WalletEditEvent(
                 this.partyId,
                 this.selectedSigningProvider,
-                selectedKey.publicKey
+                this.selectedPublicKey
             )
         )
     }
@@ -64,13 +64,13 @@ export class WgWalletEditForm extends WgWalletForm {
     private onSigningProviderChange(event: Event) {
         const signingProviderId = (event.target as HTMLSelectElement).value
         this.selectedSigningProvider = signingProviderId
-        this.selectedPublicKeyId = ''
+        this.selectedPublicKey = ''
         this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
     }
 
     private onPublicKeyChange(event: Event) {
         const publicKey = (event.target as HTMLSelectElement).value
-        this.selectedPublicKeyId = publicKey
+        this.selectedPublicKey = publicKey
     }
 
     protected get isLoading(): boolean {
@@ -110,12 +110,22 @@ export class WgWalletEditForm extends WgWalletForm {
                         required
                         @change=${this.onSigningProviderChange}
                     >
-                        <option disabled selected value="">
+                        <option
+                            disabled
+                            .selected=${!this.selectedSigningProvider}
+                            value=""
+                        >
                             Select signing provider
                         </option>
                         ${this.signingProviders.map(
                             (providerId) =>
-                                html`<option value=${providerId}>
+                                html`<option
+                                    value=${providerId}
+                                    .selected=${
+                                        this.selectedSigningProvider ===
+                                        providerId
+                                    }
+                                >
                                     ${providerId}
                                 </option>`
                         )}
@@ -130,20 +140,29 @@ export class WgWalletEditForm extends WgWalletForm {
                 </label>
                 <div class="select-wrap">
                     <select
-                        .value=${this.selectedPublicKeyId}
+                        .value=${this.selectedPublicKey}
                         @change=${this.onPublicKeyChange}
                         ?disabled=${this.submitting}
                         class="form-select field-control"
                         id="public-key-id"
                         required
                     >
-                        <option disabled selected value="">
+                        <option
+                            disabled
+                            .selected=${!this.selectedPublicKey}
+                            value=""
+                        >
                             ${this.publicKeysLoading ? nothing : 'Select public key'}
                         </option>
                         ${this.publicKeys.map(
                             (key) =>
-                                html`<option value=${key.id}>
-                                    ${key.name}
+                                html`<option
+                                    value=${key.publicKey}
+                                    .selected=${
+                                        this.selectedPublicKey === key.publicKey
+                                    }
+                                >
+                                    ${key.name} (${key.publicKey})
                                 </option>`
                         )}
                     </select>

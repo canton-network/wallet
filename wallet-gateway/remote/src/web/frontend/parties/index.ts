@@ -14,6 +14,7 @@ import {
     handleErrorToast,
     toRelPath,
     WalletCardEditEvent,
+    toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'
@@ -245,7 +246,7 @@ export class UserUiParties extends BaseElement {
 
     private _onWalletEdit(e: WalletCardEditEvent) {
         setLocationHref(
-            `/parties/edit?partyId=${e.wallet.partyId}&networkId=${e.wallet.networkId}&userId=${e.wallet.userId}`
+            `${toRelHref('/parties/edit')}?partyId=${encodeURIComponent(e.wallet.partyId)}`
         )
     }
 

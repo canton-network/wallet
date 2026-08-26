@@ -6,12 +6,12 @@ import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
 import {
     SigningDriverInterface,
     SigningProvider,
-    Error as SigningError,
 } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
 import { PartyAllocationService } from '../../party-allocation-service.js'
 import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import { WalletAllocator } from '../wallet-allocation-service.js'
+import { handleSigningProviderError } from '../wallet-allocation-service.js'
 
 export class KernelWalletAllocator implements WalletAllocator {
     constructor(
@@ -21,19 +21,10 @@ export class KernelWalletAllocator implements WalletAllocator {
         protected signingDriver: SigningDriverInterface
     ) {}
 
-    private handleSigningError<T extends object>(result: SigningError | T): T {
-        if ('error' in result) {
-            throw new Error(
-                `Error from signing driver: ${result.error_description}`
-            )
-        }
-        return result
-    }
-
     async getKeys(userId: UserId) {
         if (!this.signingDriver) return null
         const driver = this.signingDriver.controller(userId)
-        return await driver.getKeys().then(this.handleSigningError)
+        return await driver.getKeys().then(handleSigningProviderError)
     }
 
     async createWallet(
@@ -47,7 +38,7 @@ export class KernelWalletAllocator implements WalletAllocator {
             .createKey({
                 name: partyHint,
             })
-            .then(this.handleSigningError)
+            .then(handleSigningProviderError)
 
         const party = await this.partyAllocator.allocateParty(
             userId,
@@ -62,7 +53,7 @@ export class KernelWalletAllocator implements WalletAllocator {
                             publicKey: key.publicKey,
                         },
                     })
-                    .then(this.handleSigningError)
+                    .then(handleSigningProviderError)
 
                 if (!signature) {
                     throw new Error('No signature returned from signing driver')
@@ -104,7 +95,7 @@ export class KernelWalletAllocator implements WalletAllocator {
                     txHash: hash,
                     keyIdentifier: { publicKey: existingWallet.publicKey },
                 })
-                .then(this.handleSigningError)
+                .then(handleSigningProviderError)
 
             if (!result.signature) {
                 throw new Error('No signature returned from signing driver')

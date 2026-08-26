@@ -32,14 +32,12 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
     protected readonly pageTitle = 'Edit party'
     protected readonly showToast = true
 
-    private get walletConstraint() {
-        const searchParams = new URLSearchParams(window.location.search)
-        const partyId = searchParams.get('partyId')
-        const networkId = searchParams.get('networkId')
-        const userId = searchParams.get('userId')
-        if (!partyId || !networkId || !userId)
-            throw new Error('wallet constraint params must be provided')
-        return { partyId, networkId, userId }
+    private get partyId() {
+        const partyId = new URLSearchParams(window.location.search).get(
+            'partyId'
+        )
+        if (!partyId) throw new Error('partyId query param must be provided')
+        return partyId
     }
 
     private get loaded() {
@@ -54,9 +52,9 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         )
         const result = await this.userClient.request({
             method: 'getWallet',
-            params: this.walletConstraint,
+            params: { partyId: this.partyId },
         })
-        if (!result) throw new Error('incorrect wallet constraint key passed')
+        if (!result) throw new Error('wallet not found')
         this.wallet = result
         this.selectedSigningProvider = this.wallet.signingProviderId
         this.selectedPublicKey = this.wallet.publicKey
@@ -70,7 +68,11 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         try {
             await this.userClient.request({
                 method: 'changeSigningProvider',
-                params: event,
+                params: {
+                    signingProviderId: event.signingProviderId,
+                    partyId: event.partyId,
+                    publicKey: event.publicKey,
+                },
             })
 
             setLocationHref(
@@ -88,8 +90,8 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
                 .signingProviders=${this.allowedSigningProviders}
                 .publicKeys=${this.publicKeys}
                 .selectedSigningProvider=${this.selectedSigningProvider}
-                .partyId=${this.walletConstraint.partyId}
-                .selectedPublicKeyId=${this.selectedPublicKey}
+                .partyId=${this.partyId}
+                .selectedPublicKey=${this.selectedPublicKey}
                 ?publicKeysLoading=${this.publicKeysLoading}
                 ?submitting=${this.submitting}
                 @signing-provider-change=${this.onSigningProviderChange}
