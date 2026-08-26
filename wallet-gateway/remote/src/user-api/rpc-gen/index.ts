@@ -1,12 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-    AddNetwork,
-    ChangeSigningProvider,
-    GetWallet,
-    ListSigningProviderKeys,
-} from './typings.js'
+import type { AddNetwork } from './typings.js'
 import type { RemoveNetwork } from './typings.js'
 import type { ListNetworks } from './typings.js'
 import type { GetNetwork } from './typings.js'
@@ -37,6 +32,9 @@ import type { GetUser } from './typings.js'
 import type { GenerateApiKey } from './typings.js'
 import type { ListApiKeys } from './typings.js'
 import type { RemoveApiKey } from './typings.js'
+import type { ListSigningProviderKeys } from './typings.js'
+import type { GetWallet } from './typings.js'
+import type { ChangeSigningProvider } from './typings.js'
 
 export type Methods = {
     addNetwork: AddNetwork
