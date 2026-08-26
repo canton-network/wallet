@@ -41,7 +41,8 @@ export class WalletSyncService {
     ): boolean {
         const leftSet = new Set(left ?? WalletSyncService.EMPTY_RIGHTS)
         const rightSet = new Set(right)
-        return !leftSet.difference(rightSet).size
+        if (leftSet.size !== rightSet.size) return false
+        return [...leftSet].every((item) => rightSet.has(item))
     }
 
     async run(timeoutMs: number): Promise<void> {
