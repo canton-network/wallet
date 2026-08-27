@@ -11,7 +11,9 @@ import type { Store, Network } from '@canton-network/core-wallet-store'
 import {
     AddSessionParams,
     CreateWalletParams,
+    ExecuteParams,
     PublicNetwork,
+    SignParams,
     Network as ApiNetwork,
     Auth,
     Status,
@@ -23,6 +25,7 @@ import {
 } from '@canton-network/core-wallet-auth'
 import { AuthService } from '../auth-service.js'
 import { createExtensionWallet } from './create-wallet.js'
+import { TransactionService } from './transaction-service.js'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     const base = {
@@ -183,8 +186,50 @@ export const userController = (
         isWalletSyncNeeded: async () => {
             throw new Error('Function isWalletSyncNeeded not implemented.')
         },
-        sign: async () => {
-            throw new Error('Function sign not implemented.')
+        sign: async (signParams: SignParams) => {
+            const connectedContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const network = await store.getCurrentNetwork()
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+
+            const wallets = await store.getWallets()
+            const wallet = wallets.find(
+                (candidate) => candidate.partyId === signParams.partyId
+            )
+            if (wallet === undefined) {
+                throw new Error('No primary wallet found')
+            }
+
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
+            const transactionService = new TransactionService(
+                store,
+                pinoLogger,
+                signingDriver
+            )
+
+            pinoLogger.info(
+                { transactionId: signParams.transactionId },
+                'Signing transaction'
+            )
+            const response = await transactionService.sign(
+                connectedContext,
+                wallet,
+                signParams
+            )
+            pinoLogger.info(
+                { transactionId: signParams.transactionId },
+                'Transaction signed'
+            )
+
+            return response
         },
         signMessage: async () => {
             throw new Error('Function signMessage not implemented.')
@@ -198,8 +243,66 @@ export const userController = (
         deleteMessageToSign: async () => {
             throw new Error('Function deleteMessageToSign not implemented.')
         },
-        execute: async () => {
-            throw new Error('Function execute not implemented.')
+        execute: async (executeParams: ExecuteParams) => {
+            const connectedContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const wallets = await store.getWallets()
+            const network = await store.getCurrentNetwork()
+            const transaction = await store.getTransaction(
+                executeParams.transactionId
+            )
+            const wallet = wallets.find(
+                (candidate) => candidate.partyId === executeParams.partyId
+            )
+
+            if (wallet === undefined) {
+                throw new Error('Requested wallet not found for user')
+            }
+            if (transaction === undefined) {
+                throw new Error('No transaction found')
+            }
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger: pinoLogger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    connectedContext.accessToken,
+                    pinoLogger
+                ),
+            })
+            const transactionService = new TransactionService(
+                store,
+                pinoLogger,
+                signingDriver
+            )
+
+            pinoLogger.info(
+                { transactionId: executeParams.transactionId },
+                'Executing transaction'
+            )
+            const response = await transactionService.execute(
+                connectedContext.userId,
+                wallet,
+                transaction,
+                executeParams,
+                ledgerClient
+            )
+            pinoLogger.info(
+                { transactionId: executeParams.transactionId },
+                'Transaction executed'
+            )
+
+            return response
         },
         addSession: async (params: AddSessionParams) => {
             const context = await AuthService.loadAuthContext()
