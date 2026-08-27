@@ -3,11 +3,12 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Canton Wallet</title>
-        <meta name="manifest.type" content="browser_action" />
+        <title>Wallet Gateway Remote</title>
+        <script type="module" src="./index.ts"></script>
     </head>
     <body>
-        <div id="root"></div>
-        <script type="module" src="./main.tsx"></script>
+        <user-app>
+            <user-ui></user-ui>
+        </user-app>
     </body>
 </html>

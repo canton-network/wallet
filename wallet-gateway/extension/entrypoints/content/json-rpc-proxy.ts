@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    JsonRpcRequest,
+    JsonRpcResponse,
     SpliceMessage,
     WalletEvent,
     type SpliceMessageEvent,
 } from '@canton-network/core-types'
 
-import { ContentMessenger } from '@/utils/messages'
+import { createProxyService } from '@webext-core/proxy-service'
+import { Methods } from '../background/dapp/rpc-gen'
 
 /**
  * Proxies JSON-RPC requests, responses, between the dApp page (window message events),
@@ -21,8 +24,6 @@ export function jsonRpcProxy() {
         if (!runtimeId) return false
         return target === runtimeId
     }
-
-    const dappRpc = new ContentMessenger('dapp-rpc-proxy')
 
     window.addEventListener('message', async (event: SpliceMessageEvent) => {
         logger.info(`Content script received message: ${event.data}`)
@@ -40,7 +41,7 @@ export function jsonRpcProxy() {
 
             // Proxy the message to the extension background script
             // and wait for the response
-            const msgResponse = await dappRpc.sendJsonRpc(msg.request)
+            const msgResponse = await processRequest(msg.request)
 
             logger.info('Received response from background: {*}', {
                 msgResponse,
@@ -72,4 +73,30 @@ export function jsonRpcProxy() {
             )
         }
     })
+}
+
+async function processRequest(
+    request: JsonRpcRequest
+): Promise<JsonRpcResponse> {
+    logger.debug('Received request: {*}', { id: request.id, request })
+
+    const { method, params } = request
+
+    const controller = createProxyService(DAPP_RPC_KEY)
+
+    const fn = controller[method as keyof Methods]
+    if (fn === undefined) {
+        throw new Error(`Method ${method} does not exist.`)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await fn(params as any)
+
+    logger.debug('Sending response: {*}', { id: request.id, result })
+
+    return {
+        jsonrpc: '2.0',
+        id: request.id,
+        result,
+    }
 }

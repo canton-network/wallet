@@ -18,6 +18,8 @@ import {
     migrator as signingMigrator,
 } from '@canton-network/core-signing-store-sql'
 import { ConfigUtils } from './config/ConfigUtils.js'
+// import { SigningProvider } from '@canton-network/core-signing-lib'
+// import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import { jwtAuthService } from './auth/jwt-auth-service.js'
 import express from 'express'
 import { CliOptions } from './index.js'
@@ -273,6 +275,25 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         signingStore,
         logger
     )
+
+    // TODO temporary for merging - move it to registerSigningProviders
+    // if (Env.BITGO_ACCESS_TOKEN()) {
+    //     if (!Env.BITGO_ENTERPRISE_ID()) {
+    //         logger.warn(
+    //             'BITGO_ENTERPRISE_ID not set — wallet creation (createKey) will fail and restart-safe transaction lookup will be unavailable'
+    //         )
+    //     }
+    //     drivers[SigningProvider.BITGO] = new BitGoSigningProvider({
+    //         accessToken: Env.BITGO_ACCESS_TOKEN()!,
+    //         baseUrl: Env.BITGO_API_URL('https://app.bitgo.com'),
+    //         enterpriseId: Env.BITGO_ENTERPRISE_ID(),
+    //         coin: Env.BITGO_COIN(),
+    //     })
+    // } else {
+    //     logger.warn(
+    //         'BITGO_ACCESS_TOKEN not set — BitGo signing provider will be unavailable'
+    //     )
+    // }
 
     const allowedPaths = {
         [config.server.dappPath]: ['*'],

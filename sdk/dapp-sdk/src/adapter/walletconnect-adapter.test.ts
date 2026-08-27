@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventListener } from '@canton-network/core-splice-provider'
 import type { StatusEvent } from '@canton-network/core-wallet-dapp-rpc-client'
 import { WALLETCONNECT_ICON } from '../assets'
@@ -10,17 +10,19 @@ import {
     type WalletConnectAdapterConfig,
 } from './walletconnect-adapter'
 
-const mockSession = {
-    topic: 'session-topic',
-    namespaces: {
-        canton: {
-            accounts: ['account'],
-        },
-    },
-}
+const { mockSession, mockSignClient, SignClientInit, sessionEventHandler } =
+    vi.hoisted(() => {
+        // An approved WalletConnect session holding a canton namespace, the
+        // shape restore() looks for among the SignClient's persisted sessions.
+        const mockSession = {
+            topic: 'session-topic',
+            namespaces: {
+                canton: {
+                    accounts: ['account'],
+                },
+            },
+        }
 
-const { mockSignClient, SignClientInit, sessionEventHandler } = vi.hoisted(
-    () => {
         let sessionEventHandler:
             | ((event: {
                   params: { event: { name: string; data: unknown } }
@@ -28,7 +30,10 @@ const { mockSignClient, SignClientInit, sessionEventHandler } = vi.hoisted(
             | undefined
 
         const mockSignClient = {
-            connect: vi.fn(),
+            connect: vi.fn().mockResolvedValue({
+                uri: 'wc:test-uri',
+                approval: vi.fn().mockResolvedValue(mockSession),
+            }),
             request: vi.fn(),
             disconnect: vi.fn(),
             on: vi.fn((event: string, handler: (arg: unknown) => void) => {
@@ -40,12 +45,12 @@ const { mockSignClient, SignClientInit, sessionEventHandler } = vi.hoisted(
         }
 
         return {
+            mockSession,
             mockSignClient,
             SignClientInit: vi.fn().mockResolvedValue(mockSignClient),
             sessionEventHandler: () => sessionEventHandler,
         }
-    }
-)
+    })
 
 vi.mock('@walletconnect/sign-client', () => ({
     default: {
@@ -73,15 +78,6 @@ const makeAdapter = (
 describe('WalletConnectAdapter', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockSignClient.session.getAll.mockReturnValue([])
-        mockSignClient.connect.mockResolvedValue({
-            uri: 'wc:test-uri',
-            approval: vi.fn().mockResolvedValue(mockSession),
-        })
-    })
-
-    afterEach(() => {
-        vi.restoreAllMocks()
     })
 
     it('exposes wallet picker metadata', () => {
@@ -203,7 +199,7 @@ describe('WalletConnectAdapter', () => {
     })
 
     it('restores an existing Canton WalletConnect session', async () => {
-        mockSignClient.session.getAll.mockReturnValue([mockSession])
+        mockSignClient.session.getAll.mockReturnValueOnce([mockSession])
 
         const adapter = makeAdapter()
         const restored = await adapter.restore()
@@ -216,7 +212,7 @@ describe('WalletConnectAdapter', () => {
     })
 
     it('forwards session events to local listeners', async () => {
-        mockSignClient.session.getAll.mockReturnValue([mockSession])
+        mockSignClient.session.getAll.mockReturnValueOnce([mockSession])
         const adapter = makeAdapter()
         const listener = vi.fn()
 
@@ -316,5 +312,8 @@ describe('WalletConnectAdapter', () => {
             expect.any(Object),
             '*'
         )
+
+        // Resets real window.open behavior
+        windowSpy.mockRestore()
     })
 })

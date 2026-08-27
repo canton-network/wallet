@@ -105,6 +105,33 @@ describe('utils package', () => {
         expect(() => parseAssets(ctx, [asset])).toThrow()
     })
 
+    it('throws error for asset missing admin party', () => {
+        const asset = {
+            id: 'test',
+            displayName: 'test',
+            symbol: 'test',
+            registryUrl: 'http://registry.com',
+            admin: undefined as unknown as string,
+        }
+
+        let thrownError
+        try {
+            parseAssets(ctx, [asset])
+        } catch (e) {
+            thrownError = e as SDKError
+        }
+
+        expect(thrownError).toBeDefined()
+        expect(thrownError).toBeInstanceOf(SDKError)
+        if (thrownError) {
+            const err = thrownError as SDKError
+            expect(err.context.type).toBe('Unexpected')
+            expect(err.context.message).toBe(
+                'Registry response for asset "test" is missing the "admin" (DSO) party.'
+            )
+        }
+    })
+
     it('tests ping service', () => {
         const utils = new SDKUtilsNamespace({
             logger: new SDKLogger('console'),
