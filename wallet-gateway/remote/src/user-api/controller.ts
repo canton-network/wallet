@@ -1218,18 +1218,16 @@ export const userController = (
                 partyAllocator,
                 drivers
             )
+            if (!drivers[params.signingProviderId as SigningProvider])
+                throw new Error(
+                    `Signing provider ${params.signingProviderId} not supported`
+                )
             const keys = await walletAllocationService.getKeys(
                 assertConnected(authContext),
                 params.signingProviderId as SigningProvider
             )
-            if (
-                !drivers[params.signingProviderId as SigningProvider] ||
-                !keys
-            ) {
-                throw new Error(
-                    `Signing provider ${params.signingProviderId} not supported`
-                )
-            }
+            if (!keys)
+                throw new Error(`No keys ofr ${params.signingProviderId} found`)
             return keys
         },
         changeSigningProvider: async (
