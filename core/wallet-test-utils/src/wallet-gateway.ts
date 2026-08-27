@@ -105,6 +105,16 @@ export class WalletGateway {
     async connect(args: {
         network: string
         customURL?: string
+        /**
+         * Client id to log in with, instead of the one in the gateway's config
+         * for this network.
+         *
+         * On self-signed networks this becomes the JWT `sub`, which the gateway
+         * uses as the user id. Wallets and the primary wallet are per user, so
+         * passing one value per Playwright worker lets workers share a gateway
+         * without fighting over which wallet is primary.
+         */
+        clientId?: string
     }): Promise<void> {
         await test.step(`wallet gateway: connect to ${args.network}`, async () => {
             const dapp = this.requireDapp()
@@ -127,6 +137,13 @@ export class WalletGateway {
                 'the wallet gateway has a network select'
             ).toBeVisible()
             await selectNetwork.selectOption({ label: args.network })
+
+            if (args.clientId !== undefined) {
+                // Only rendered on self-signed networks. Prefilled with the
+                // network's client id.
+                await popup.locator('#client-id').fill(args.clientId)
+            }
+
             const confirmConnectButton = popup.getByRole('button', {
                 name: 'Connect',
             })

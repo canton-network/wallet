@@ -5,6 +5,8 @@ import { pino } from 'pino'
 import { expect, type Page, test } from '@playwright/test'
 import { OTCTrade } from '@canton-network/core-wallet-test-utils'
 import {
+    createGatewayApi,
+    connectGateway,
     createWalletGateway,
     gotoConnect,
     setupRegistry,
@@ -68,31 +70,34 @@ const setupOtcTrade = async (page: Page) => {
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(page)
 
-    await gotoConnect(page)
-    await wg.connect({ network: 'LocalNet' })
-
     const venueHint = `venue-${rnd}`
     const aliceHint = `alice-${rnd}`
     const bobHint = `bob-${rnd}`
     const charlieHint = `charlie-${rnd}`
-    const venue = await wg.createWalletIfNotExists({
+
+    // Scaffolding: an OTC trade needs four parties and none of them is what
+    // this test asserts, so they are created through the wallet's API.
+    const api = await createGatewayApi()
+    const venue = await api.createWallet({
         partyHint: venueHint,
         signingProvider: 'participant',
     })
-    const alice = await wg.createWalletIfNotExists({
+    const alice = await api.createWallet({
         partyHint: aliceHint,
         signingProvider: 'participant',
+        primary: true,
     })
-    const bob = await wg.createWalletIfNotExists({
+    const bob = await api.createWallet({
         partyHint: bobHint,
         signingProvider: 'participant',
     })
-    const charlie = await wg.createWalletIfNotExists({
+    const charlie = await api.createWallet({
         partyHint: charlieHint,
         signingProvider: 'participant',
     })
 
-    await wg.setPrimaryWallet(alice)
+    await gotoConnect(page)
+    await connectGateway(wg)
     await setupRegistry(page)
 
     const logger = pino({ name: 'otc-trade', level: 'info' })
@@ -107,6 +112,7 @@ const setupOtcTrade = async (page: Page) => {
 
     return {
         wg,
+        api,
         otcTrade,
         otcTradeDetails,
         alice,
@@ -127,6 +133,7 @@ test.describe('OTC allocations', () => {
     }) => {
         const {
             wg,
+            api,
             otcTrade,
             otcTradeDetails,
             alice,
@@ -139,10 +146,10 @@ test.describe('OTC allocations', () => {
 
         await tapAndCreateAllocation(dappPage, wg, '1000', 2)
 
-        await switchWallet(dappPage, wg, bob)
+        await switchWallet(api, bob)
         await tapAndCreateAllocation(dappPage, wg, '1000')
 
-        await switchWallet(dappPage, wg, charlie)
+        await switchWallet(api, charlie)
         await tapAndCreateAllocation(dappPage, wg, '1000')
 
         await otcTrade.settle(otcTradeDetails)
