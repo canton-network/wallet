@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, Locator, Page, test } from '@playwright/test'
+import { openWalletPicker } from './wallet-picker.js'
 
 export interface NetworkFormInput {
     id: string
@@ -114,9 +115,10 @@ export class WalletGateway {
                 'the dApp should offer a way to connect a wallet'
             ).toBeVisible()
 
-            const discoverPopupPromise = dapp.dappPage.waitForEvent('popup')
-            await connectButton.click()
-            const pickerPopup = await discoverPopupPromise
+            const pickerPopup = await openWalletPicker(
+                dapp.dappPage,
+                connectButton
+            )
 
             await this.selectFromWalletPicker(pickerPopup, args.customURL)
 
