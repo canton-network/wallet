@@ -385,8 +385,11 @@ jobs:
 
             - uses: ./.github/actions/setup_playwright
 
+            - name: Build extension
+              run: pnpm --filter @canton-network/wallet-gateway-extension build
+
             - name: Run extension e2e
-              run: pnpm nx playwright:e2e @canton-network/wallet-gateway-extension
+              run: pnpm --filter @canton-network/wallet-gateway-extension e2e
 
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
