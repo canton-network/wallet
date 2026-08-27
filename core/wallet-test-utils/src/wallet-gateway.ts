@@ -277,7 +277,7 @@ export class WalletGateway {
                     .check()
             }
             const submitButton = (await this.page()).getByRole('button', {
-                name: /^(Add|Create)$/,
+                name: 'Create',
             })
             await expect(
                 submitButton,
