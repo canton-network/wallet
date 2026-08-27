@@ -167,6 +167,11 @@ signingProviders:
         baseUrl: 'https://tsb.example.com'
         mtlsP12Path: '/run/secrets/client.p12'
         signatureAlgorithm: 'EDDSA'
+    bitgo:
+        enable: true
+        baseUrl: 'https://app.bitgo.com'
+        enterpriseId: 'your-enterprise-id'
+        coin: 'canton'
 ```
 
 All providers default to enabled when their block or `enable` property is
@@ -177,8 +182,8 @@ are also available. The Wallet Kernel provider additionally requires
 For compatibility, the previously supported environment variables for
 non-secret settings remain fallback values when the corresponding config field
 is omitted. A value in `signingProviders` takes precedence. The Gateway logs a
-deprecation warning whenever it uses one of these environment-variable
-fallbacks.
+deprecation warning whenever one of these environment variables is present,
+including when the corresponding config value takes precedence.
 
 ### Signing Provider Secrets
 
@@ -205,6 +210,10 @@ Secrets remain in environment variables rather than the configuration file:
 - `SECUROSYS_TSB_BEARER_TOKEN` - Optional bearer access token (access-token auth mode)
 - `SECUROSYS_TSB_MTLS_P12_PASSWORD` - Optional password for the PKCS#12/P12 client certificate
 - `SECUROSYS_TSB_KEY_PASSWORD` - Optional TSB key password used for key attributes and signing
+
+**BitGo**
+
+- `BITGO_ACCESS_TOKEN` - The long-lived BitGo access token
 
 See [Signing Providers](../signing-providers/index.md) for more information.
 

@@ -379,6 +379,28 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                         }
                     },
                     "description": "Securosys signing provider configuration."
+                },
+                "bitgo": {
+                    "type": "object",
+                    "properties": {
+                        "enable": {
+                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
+                            "type": "boolean"
+                        },
+                        "baseUrl": {
+                            "description": "BitGo API base URL. Defaults to https://app.bitgo.com.",
+                            "type": "string"
+                        },
+                        "enterpriseId": {
+                            "description": "BitGo enterprise ID. Required for wallet creation and restart-safe transaction lookup.",
+                            "type": "string"
+                        },
+                        "coin": {
+                            "description": "BitGo Canton coin identifier. Auto-detected from the API URL when omitted.",
+                            "type": "string"
+                        }
+                    },
+                    "description": "BitGo signing provider configuration."
                 }
             }
         },

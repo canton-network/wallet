@@ -53,7 +53,7 @@ The Participant signing provider uses Canton's participant node for signing tran
 **Security Considerations:**
 
 > [!IMPORTANT]
-> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon, Securosys) when the User API is exposed in production.
+> Participant-based signing is **not recommended** in production setups where the User API is accessible. Any user who can reach the User API can create parties that sign via your participant node, which may grant broader signing authority than intended. Reserve participant-based signing for deployments where wallet creation is restricted to trusted operators, or use an external signing provider (Fireblocks, Dfns, Blockdaemon, Securosys, BitGo) when the User API is exposed in production.
 
 **How it Works:**
 
@@ -165,6 +165,33 @@ See the [Securosys signing documentation](https://github.com/canton-network/wall
 - Environments already using Securosys TSB / CloudHSM
 - High-security production environments
 
+## BitGo
+
+BitGo provides MPC-based custodial wallet and transaction-signing services.
+
+**Setup:**
+
+See the [BitGo signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-bitgo) for credential setup and driver behavior.
+
+**Configuration:**
+
+- Gateway config:
+    - `signingProviders.bitgo.enable` - optional, defaults to `true`
+    - `signingProviders.bitgo.baseUrl` - optional, falls back to `BITGO_API_URL`, then defaults to `https://app.bitgo.com`
+    - `signingProviders.bitgo.enterpriseId` - optional, falls back to `BITGO_ENTERPRISE_ID`; required for wallet creation and restart-safe transaction lookup
+    - `signingProviders.bitgo.coin` - optional, falls back to `BITGO_COIN`, then auto-detected from the API URL
+- Environment variables:
+    - `BITGO_ACCESS_TOKEN` - required long-lived access token
+    - `BITGO_API_URL` - deprecated optional fallback for `signingProviders.bitgo.baseUrl`
+    - `BITGO_ENTERPRISE_ID` - deprecated optional fallback for `signingProviders.bitgo.enterpriseId`
+    - `BITGO_COIN` - deprecated optional fallback for `signingProviders.bitgo.coin`
+
+**Use Cases:**
+
+- Enterprise deployments requiring MPC-based custody
+- Deployments already using BitGo wallet infrastructure
+- High-security production environments
+
 ## Selecting a Provider
 
 When creating a new party through the User API or web UI, you can select which signing provider to use. The choice depends on your security requirements, infrastructure setup, and compliance needs.
@@ -172,7 +199,7 @@ When creating a new party through the User API or web UI, you can select which s
 **Recommendations:**
 
 - **Development/Testing**: Use Wallet Gateway (internal) or Participant-based signing
-- **Production (User API accessible)**: Use Fireblocks, Dfns, Blockdaemon, or Securosys
+- **Production (User API accessible)**: Use Fireblocks, Dfns, Blockdaemon, Securosys, or BitGo
 - **Production (operator-controlled, User API restricted)**: Participant-based signing may be appropriate when wallet creation is limited to trusted operators
 
 The signing provider is selected per-party, so you can have different parties using different providers within the same Gateway instance.
@@ -187,6 +214,7 @@ Each provider handles key management differently:
 - **Blockdaemon**: Keys are managed by Blockdaemon's infrastructure
 - **Dfns**: Keys are managed by Dfns' secure infrastructure
 - **Securosys**: Keys are managed by Securosys TSB (HSM-backed)
+- **BitGo**: Keys are managed by BitGo's MPC custody infrastructure
 
 When migrating between providers, keys cannot be directly transferred. You'll need to:
 

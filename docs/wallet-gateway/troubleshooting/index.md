@@ -259,6 +259,12 @@ The `auth` client does **not** need a pre-existing wallet or party attached in K
     - For bearer-token authentication, verify `SECUROSYS_TSB_BEARER_TOKEN`
     - For mTLS, verify `signingProviders.securosys.mtlsP12Path` and `SECUROSYS_TSB_MTLS_P12_PASSWORD`
 
+6. **BitGo:**
+    - Verify `BITGO_ACCESS_TOKEN` is set and has wallet-management and transaction-signing permissions
+    - Verify `signingProviders.bitgo.baseUrl` targets the intended BitGo environment
+    - Set `signingProviders.bitgo.enterpriseId` when creating wallets or requiring transaction lookup after a Gateway restart
+    - Verify `signingProviders.bitgo.coin` matches the environment, or omit it to use URL-based auto-detection
+
 ## Debugging
 
 ### Enable structured logging

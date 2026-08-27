@@ -598,7 +598,7 @@ Optional server setting for external custody signers:
 }
 ```
 
-- **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns, Securosys) when automation signing stays `pending` until custody approves.
+- **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns, Securosys, BitGo) when automation signing stays `pending` until custody approves.
 
 ## Configuring Signing Providers
 
@@ -635,6 +635,12 @@ provider defaults to `enable: true`.
             "baseUrl": "https://tsb.example.com",
             "mtlsP12Path": "/run/secrets/client.p12",
             "signatureAlgorithm": "EDDSA"
+        },
+        "bitgo": {
+            "enable": true,
+            "baseUrl": "https://app.bitgo.com",
+            "enterpriseId": "your-enterprise-id",
+            "coin": "canton"
         }
     }
 }
@@ -649,7 +655,7 @@ requirements.
 The signing store is an optional secondary database used for storing private keys when the Wallet Gateway is configured to act as a signing provider (using the `wallet-kernel` signing provider).
 
 > [!IMPORTANT]
-> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, Blockdaemon, or Securosys) for production when the User API is accessible. Participant-based signing is only appropriate in production when wallet creation is restricted to trusted operators; see [Signing Providers](../signing-providers/index.md#participant-based-signing).
+> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, Blockdaemon, Securosys, or BitGo) for production when the User API is accessible. Participant-based signing is only appropriate in production when wallet creation is restricted to trusted operators; see [Signing Providers](../signing-providers/index.md#participant-based-signing).
 
 **Configuration:**
 
@@ -662,7 +668,7 @@ The signing store is only needed if:
 - You're using the `wallet-kernel` signing provider (internal signing)
 - You want to store keys managed by the Wallet Gateway itself
 
-If you're using Participant or an external signing provider (Dfns, Fireblocks, Blockdaemon, or Securosys), you can omit the `signingStore` configuration entirely.
+If you're using Participant or an external signing provider (Dfns, Fireblocks, Blockdaemon, Securosys, or BitGo), you can omit the `signingStore` configuration entirely.
 
 **Example:**
 
