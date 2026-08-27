@@ -123,6 +123,46 @@ export const userController = (
         return rest
     }
 
+    const getSigningProviderKeys = async (
+        params: ListSigningProviderKeysParams
+    ) => {
+        const network = await store.getCurrentNetwork()
+        const idp = await store.getIdp(network.identityProviderId)
+
+        if (!network.adminAuth) {
+            throw new Error('No admin auth configured')
+        }
+
+        const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
+            idp,
+            network.adminAuth,
+            logger
+        )
+        const partyAllocator = new PartyAllocationService({
+            synchronizerId: network.synchronizerId,
+            accessTokenProvider: adminAccessTokenProvider,
+            httpLedgerUrl: network.ledgerApi.baseUrl,
+            logger,
+        })
+        const walletAllocationService = new WalletAllocationService(
+            store,
+            logger,
+            partyAllocator,
+            drivers
+        )
+        if (!drivers[params.signingProviderId as SigningProvider])
+            throw new Error(
+                `Signing provider ${params.signingProviderId} not supported`
+            )
+        const keys = await walletAllocationService.getKeys(
+            assertConnected(authContext),
+            params.signingProviderId as SigningProvider
+        )
+        if (!keys)
+            throw new Error(`No keys ofr ${params.signingProviderId} found`)
+        return keys
+    }
+
     return buildController({
         getUser: async (): Promise<GetUserResult> => {
             const userId = assertConnected(authContext).userId
@@ -1193,47 +1233,21 @@ export const userController = (
         listSigningProviderKeys: async (
             params: ListSigningProviderKeysParams
         ): Promise<ListSigningProviderKeysResult> => {
-            const network = await store.getCurrentNetwork()
-            const idp = await store.getIdp(network.identityProviderId)
-
-            if (!network.adminAuth) {
-                throw new Error('No admin auth configured')
-            }
-
-            const adminAccessTokenProvider =
-                AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
-            const partyAllocator = new PartyAllocationService({
-                synchronizerId: network.synchronizerId,
-                accessTokenProvider: adminAccessTokenProvider,
-                httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
-            })
-            const walletAllocationService = new WalletAllocationService(
-                store,
-                logger,
-                partyAllocator,
-                drivers
-            )
-            if (!drivers[params.signingProviderId as SigningProvider])
-                throw new Error(
-                    `Signing provider ${params.signingProviderId} not supported`
-                )
-            const keys = await walletAllocationService.getKeys(
-                assertConnected(authContext),
-                params.signingProviderId as SigningProvider
-            )
-            if (!keys)
-                throw new Error(`No keys ofr ${params.signingProviderId} found`)
-            return keys
+            return await getSigningProviderKeys(params)
         },
         changeSigningProvider: async (
             params: ChangeSigningProviderParams
         ): Promise<null> => {
             const { signingProviderId, partyId, publicKey } = params
+            const signingProviderKeys = await getSigningProviderKeys(params)
+            if (
+                !signingProviderKeys.keys
+                    .map((key) => key.publicKey)
+                    .includes(publicKey)
+            )
+                throw new Error(
+                    `provided publicKey does not belong to ${signingProviderId}`
+                )
             const network = await store.getCurrentNetwork()
             if (network === undefined) {
                 throw new Error('No network session found')
