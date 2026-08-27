@@ -14,6 +14,7 @@ import {
     DEFAULT_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
+    TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
 } from './constants.js'
 import { createMockUserClient, mockRequest } from './test-helpers.js'
 
@@ -450,6 +451,7 @@ describe('UserUIAuthRedirect', () => {
 
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
+        mockAttemptRemoveSession.mockClear()
         setLocationHref.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         authState.intendedPage = undefined
@@ -530,6 +532,70 @@ describe('UserUIAuthRedirect', () => {
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
         expect(mockAttemptRemoveSession).toHaveBeenCalled()
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining(LOGIN_PAGE_REDIRECT)
+        )
+    })
+
+    it('chains bounded timeouts until a long-lived token expires', async () => {
+        const moreThan32Bits = 30 * 24 * 60 * 60 * 1000
+        vi.useFakeTimers({ shouldAdvanceTime: true })
+        const now = new Date('2026-01-01T00:00:00Z')
+        vi.setSystemTime(now)
+        setValidAuth(moreThan32Bits)
+        mockSessionList()
+        setPath('/parties')
+
+        const authSettled = new Promise<Event>((resolve) => {
+            document.addEventListener('auth-settled', resolve, { once: true })
+        })
+        await fixture<UserUIAuthRedirect>(
+            html`<user-ui-auth-redirect></user-ui-auth-redirect>`
+        )
+        await authSettled
+
+        expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
+        expect(setLocationHref).not.toHaveBeenCalled()
+
+        vi.setSystemTime(
+            new Date(now.getTime() + TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS)
+        )
+        await vi.runOnlyPendingTimersAsync()
+
+        expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
+        expect(setLocationHref).not.toHaveBeenCalled()
+
+        vi.setSystemTime(new Date(now.getTime() + moreThan32Bits))
+        await vi.runOnlyPendingTimersAsync()
+
+        expect(mockAttemptRemoveSession).toHaveBeenCalledOnce()
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining(LOGIN_PAGE_REDIRECT)
+        )
+    })
+
+    it('logs out when a delayed timeout runs after expiration', async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true })
+        const now = new Date('2026-01-01T00:00:00Z')
+        vi.setSystemTime(now)
+        setValidAuth(2 * TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS)
+        mockSessionList()
+        setPath('/parties')
+
+        const authSettled = new Promise<Event>((resolve) => {
+            document.addEventListener('auth-settled', resolve, { once: true })
+        })
+        await fixture<UserUIAuthRedirect>(
+            html`<user-ui-auth-redirect></user-ui-auth-redirect>`
+        )
+        await authSettled
+
+        vi.setSystemTime(
+            new Date(now.getTime() + 3 * TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS)
+        )
+        await vi.runOnlyPendingTimersAsync()
+
+        expect(mockAttemptRemoveSession).toHaveBeenCalledOnce()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(LOGIN_PAGE_REDIRECT)
         )
