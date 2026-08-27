@@ -392,7 +392,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "type": "string"
                         },
                         "enterpriseId": {
-                            "description": "BitGo enterprise ID. Required for wallet creation and restart-safe transaction lookup.",
+                            "description": "BitGo enterprise ID. Required for wallet creation.",
                             "type": "string"
                         },
                         "coin": {
