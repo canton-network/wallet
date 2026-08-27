@@ -143,6 +143,28 @@ Create a system user in the Blockdaemon dashboard and save the API key displayed
 See [`@canton-network/core-signing-securosys`](../../core/signing-securosys/README.md)
 for key creation, public-key, and signature format details.
 
+### BitGo
+
+Create a long-lived access token in the BitGo dashboard and note the enterprise
+ID used for wallet creation.
+
+**Gateway config:**
+
+- `signingProviders.bitgo.enable` - optional, defaults to `true`
+- `signingProviders.bitgo.baseUrl` - optional, falls back to the deprecated `BITGO_API_URL` environment variable, then defaults to `https://app.bitgo.com`
+- `signingProviders.bitgo.enterpriseId` - optional, falls back to the deprecated `BITGO_ENTERPRISE_ID` environment variable; required for wallet creation and restart-safe transaction lookup
+- `signingProviders.bitgo.coin` - optional, falls back to the deprecated `BITGO_COIN` environment variable, then auto-detected from the API URL
+
+**Environment variables:**
+
+- `BITGO_ACCESS_TOKEN` - required long-lived BitGo access token
+- `BITGO_API_URL` - deprecated optional fallback for `signingProviders.bitgo.baseUrl`
+- `BITGO_ENTERPRISE_ID` - deprecated optional fallback for `signingProviders.bitgo.enterpriseId`
+- `BITGO_COIN` - deprecated optional fallback for `signingProviders.bitgo.coin`
+
+See [`@canton-network/core-signing-bitgo`](../../core/signing-bitgo/README.md)
+for credential setup and driver behavior.
+
 ## Postgres connection
 
 To create a Postgres database you need to:
