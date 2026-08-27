@@ -56,7 +56,9 @@ export class WalletAllocationService {
     private readonly securosysAllocator?: SecurosysWalletAllocator
     private readonly bitgoAllocator?: BitGoWalletAllocator
 
-    private getAllocator(signingProviderId: string) {
+    private getAllocator(
+        signingProviderId: string
+    ): WalletAllocator | undefined {
         switch (signingProviderId) {
             case SigningProvider.BLOCKDAEMON:
                 return this.blockdaemonAllocator
