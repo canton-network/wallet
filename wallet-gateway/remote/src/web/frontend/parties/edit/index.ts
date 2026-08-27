@@ -25,10 +25,6 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
 
     @state() accessor selectedPublicKey = ''
 
-    private readonly allowedSigningProviders = this.signingProviders.filter(
-        (providerId) => providerId !== SigningProvider.PARTICIPANT
-    )
-
     protected readonly pageTitle = 'Edit party'
     protected readonly showToast = true
 
@@ -58,7 +54,8 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         this.wallet = result
         this.selectedSigningProvider = this.wallet.signingProviderId
         this.selectedPublicKey = this.wallet.publicKey
-        await this.getSigningProviderKeys(this.wallet.signingProviderId)
+        if (this.selectedSigningProvider !== SigningProvider.PARTICIPANT)
+            await this.getSigningProviderKeys(this.wallet.signingProviderId)
     }
 
     private async onEditParty(event: WalletEditEvent) {
@@ -87,7 +84,8 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
     protected get form() {
         return html`
             <wg-wallet-edit-form
-                .signingProviders=${this.allowedSigningProviders}
+                .signingProviders=${this.signingProviders}
+                .disabledSigningProviders=${[SigningProvider.PARTICIPANT]}
                 .publicKeys=${this.publicKeys}
                 .selectedSigningProvider=${this.selectedSigningProvider}
                 .partyId=${this.partyId}

@@ -1270,6 +1270,8 @@ export const userController = (
                 signingProviderId,
                 publicKey,
                 namespace,
+                reason: '',
+                disabled: false,
             })
             return null
         },

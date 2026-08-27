@@ -202,12 +202,6 @@ export type CursorAsString = string
 export type Cursor = CursorAsString
 /**
  *
- * The user ID corresponding to the wallet.
- *
- */
-export type UserId = string
-/**
- *
  * The public key of the party.
  *
  */

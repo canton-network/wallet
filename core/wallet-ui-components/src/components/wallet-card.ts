@@ -314,7 +314,7 @@ export class WgWalletCard extends BaseElement {
     }
 
     private renderEditButton() {
-        return this.editable
+        return this.editable || this.wallet?.disabled
             ? html`
                   <button
                       type="button"

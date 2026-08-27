@@ -30,6 +30,7 @@ export class WgWalletEditForm extends WgWalletForm {
     @property() readonly partyId = ''
     @property() accessor selectedPublicKey = ''
     @property() accessor selectedSigningProvider = ''
+    @property({ type: Array }) disabledSigningProviders: string[] = []
 
     static styles = [
         WgWalletForm.styles,
@@ -64,6 +65,7 @@ export class WgWalletEditForm extends WgWalletForm {
     private onSigningProviderChange(event: Event) {
         const signingProviderId = (event.target as HTMLSelectElement).value
         this.selectedSigningProvider = signingProviderId
+        this.submitDisabled = this.isDisallowedSigningProvider
         this.selectedPublicKey = ''
         this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
     }
@@ -75,6 +77,18 @@ export class WgWalletEditForm extends WgWalletForm {
 
     protected get isLoading(): boolean {
         return this.submitting
+    }
+
+    protected get isDisallowedSigningProvider(): boolean {
+        return (
+            !this.selectedSigningProvider.length ||
+            this.disabledSigningProviders.includes(this.selectedSigningProvider)
+        )
+    }
+
+    override connectedCallback(): void {
+        super.connectedCallback()
+        this.submitDisabled = this.isDisallowedSigningProvider
     }
 
     protected get formFields() {
@@ -125,6 +139,7 @@ export class WgWalletEditForm extends WgWalletForm {
                                         this.selectedSigningProvider ===
                                         providerId
                                     }
+                                    ?disabled=${this.disabledSigningProviders.includes(providerId)}
                                 >
                                     ${providerId}
                                 </option>`
@@ -149,10 +164,10 @@ export class WgWalletEditForm extends WgWalletForm {
                     >
                         <option
                             disabled
-                            .selected=${!this.selectedPublicKey}
+                            .selected=${!this.selectedPublicKey || this.disabledSigningProviders.includes(this.selectedSigningProvider)}
                             value=""
                         >
-                            ${this.publicKeysLoading ? nothing : 'Select public key'}
+                            ${this.publicKeysLoading ? nothing : this.disabledSigningProviders.includes(this.selectedSigningProvider) ? 'Select different signing provider' : 'Select public key'}
                         </option>
                         ${this.publicKeys.map(
                             (key) =>
