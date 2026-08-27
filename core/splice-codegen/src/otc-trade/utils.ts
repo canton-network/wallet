@@ -5,6 +5,6 @@ import { packageId } from './dar'
 import { vetDarFactory } from 'src/common'
 
 export const vetDar = vetDarFactory(
-    '../../../../.localnet/dars/splice-otc-trade-v1-1.0.0.dar',
+    '../../../.localnet/dars/splice-token-test-trading-app-1.0.0.dar',
     packageId
 )
