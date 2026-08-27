@@ -4,6 +4,7 @@
 import BlockdaemonSigningProvider, {
     CantonCaip2,
 } from '@canton-network/core-signing-blockdaemon'
+import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import DfnsSigningProvider from '@canton-network/core-signing-dfns'
 import FireblocksSigningProvider from '@canton-network/core-signing-fireblocks'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
@@ -26,6 +27,7 @@ export function registerSigningProviders(
     // Sensitive settings, env vars only
     const fireblocksApiKey = Env.FIREBLOCKS_API_KEY()
     const fireblocksApiSecret = Env.FIREBLOCKS_SECRET()
+    const bitgoAccessToken = Env.BITGO_ACCESS_TOKEN()
 
     const blockdaemonApiKey = Env.BLOCKDAEMON_API_KEY()
 
@@ -117,6 +119,31 @@ export function registerSigningProviders(
     if (Env.SECUROSYS_TSB_SIGNATURE_ALGORITHM() !== undefined) {
         logger.warn(
             'SECUROSYS_TSB_SIGNATURE_ALGORITHM is deprecated. Configure signingProviders.securosys.signatureAlgorithm instead'
+        )
+    }
+
+    const bitgoBaseUrl =
+        signingProviders.bitgo.baseUrl ??
+        Env.BITGO_API_URL() ??
+        'https://app.bitgo.com'
+    if (Env.BITGO_API_URL() !== undefined) {
+        logger.warn(
+            'BITGO_API_URL is deprecated. Configure signingProviders.bitgo.baseUrl instead'
+        )
+    }
+
+    const bitgoEnterpriseId =
+        signingProviders.bitgo.enterpriseId ?? Env.BITGO_ENTERPRISE_ID()
+    if (Env.BITGO_ENTERPRISE_ID() !== undefined) {
+        logger.warn(
+            'BITGO_ENTERPRISE_ID is deprecated. Configure signingProviders.bitgo.enterpriseId instead'
+        )
+    }
+
+    const bitgoCoin = signingProviders.bitgo.coin ?? Env.BITGO_COIN()
+    if (Env.BITGO_COIN() !== undefined) {
+        logger.warn(
+            'BITGO_COIN is deprecated. Configure signingProviders.bitgo.coin instead'
         )
     }
 
@@ -226,6 +253,28 @@ export function registerSigningProviders(
     } else {
         logger.warn(
             'Dfns env vars not fully set. Dfns signing provider will be unavailable'
+        )
+    }
+
+    if (signingProviders.bitgo.enable === false) {
+        logger.info(
+            'BitGo signing provider is disabled by signingProviders.bitgo.enable'
+        )
+    } else if (bitgoAccessToken) {
+        if (!bitgoEnterpriseId) {
+            logger.warn(
+                'BitGo enterprise ID is not set. Wallet creation will fail and restart-safe transaction lookup will be unavailable'
+            )
+        }
+        drivers[SigningProvider.BITGO] = new BitGoSigningProvider({
+            accessToken: bitgoAccessToken,
+            baseUrl: bitgoBaseUrl,
+            enterpriseId: bitgoEnterpriseId,
+            coin: bitgoCoin,
+        })
+    } else {
+        logger.warn(
+            'BITGO_ACCESS_TOKEN is not set. BitGo signing provider will be unavailable'
         )
     }
 

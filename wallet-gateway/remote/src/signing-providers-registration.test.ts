@@ -10,12 +10,16 @@ import type { SigningProvidersConfig } from './config/Config.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
 
 const providerConstructors = vi.hoisted(() => ({
+    bitgo: vi.fn(),
     blockdaemon: vi.fn(),
     dfns: vi.fn(),
     fireblocks: vi.fn(),
     securosys: vi.fn(),
 }))
 
+vi.mock('@canton-network/core-signing-bitgo', () => ({
+    default: providerConstructors.bitgo,
+}))
 vi.mock('@canton-network/core-signing-blockdaemon', () => ({
     default: providerConstructors.blockdaemon,
 }))
@@ -64,6 +68,10 @@ describe('registerSigningProviders', () => {
         vi.stubEnv('SECUROSYS_TSB_KEY_OPERATION_API_KEY', 'operation-key')
         vi.stubEnv('SECUROSYS_TSB_MTLS_P12_PATH', '/env/client.p12')
         vi.stubEnv('SECUROSYS_TSB_SIGNATURE_ALGORITHM', 'SHA256_WITH_ECDSA')
+        vi.stubEnv('BITGO_ACCESS_TOKEN', 'bitgo-token')
+        vi.stubEnv('BITGO_API_URL', 'https://bitgo.env')
+        vi.stubEnv('BITGO_ENTERPRISE_ID', 'bitgo-enterprise')
+        vi.stubEnv('BITGO_COIN', 'tcanton')
 
         registerSigningProviders(providers, signingStore, logger)
 
@@ -91,6 +99,12 @@ describe('registerSigningProviders', () => {
                 signatureAlgorithm: 'SHA256_WITH_ECDSA',
             })
         )
+        expect(providerConstructors.bitgo).toHaveBeenCalledWith({
+            accessToken: 'bitgo-token',
+            baseUrl: 'https://bitgo.env',
+            enterpriseId: 'bitgo-enterprise',
+            coin: 'tcanton',
+        })
 
         const deprecatedVariables = [
             'FIREBLOCKS_API_PATH',
@@ -102,6 +116,9 @@ describe('registerSigningProviders', () => {
             'SECUROSYS_TSB_BASE_URL',
             'SECUROSYS_TSB_MTLS_P12_PATH',
             'SECUROSYS_TSB_SIGNATURE_ALGORITHM',
+            'BITGO_API_URL',
+            'BITGO_ENTERPRISE_ID',
+            'BITGO_COIN',
         ]
         deprecatedVariables.forEach((variable) => {
             expect(logger.warn).toHaveBeenCalledWith(
@@ -117,6 +134,7 @@ describe('registerSigningProviders', () => {
         providers.blockdaemon.enable = false
         providers.dfns.enable = false
         providers.securosys.enable = false
+        providers.bitgo.enable = false
 
         expect(
             registerSigningProviders(providers, signingStore, logger)
@@ -128,6 +146,7 @@ describe('registerSigningProviders', () => {
         providers.blockdaemon.enable = false
         providers.dfns.enable = false
         providers.securosys.enable = false
+        providers.bitgo.enable = false
 
         const drivers = registerSigningProviders(providers, undefined, logger)
 
@@ -450,6 +469,82 @@ describe('registerSigningProviders', () => {
                     authToken: 'auth-token',
                 },
             })
+        })
+    })
+
+    describe('BitGo', () => {
+        beforeEach(() => {
+            vi.stubEnv('BITGO_ACCESS_TOKEN', 'access-token')
+        })
+
+        test('does not register when disabled', () => {
+            providers.bitgo.enable = false
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
+
+            expect(drivers[SigningProvider.BITGO]).toBeUndefined()
+        })
+
+        test('does not register when access token is missing', () => {
+            vi.stubEnv('BITGO_ACCESS_TOKEN', '')
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
+
+            expect(drivers[SigningProvider.BITGO]).toBeUndefined()
+        })
+
+        test('uses config before deprecated non-secret environment variables', () => {
+            providers.bitgo.baseUrl = 'https://bitgo.example'
+            providers.bitgo.enterpriseId = 'config-enterprise'
+            providers.bitgo.coin = 'canton'
+            vi.stubEnv('BITGO_API_URL', 'https://bitgo.env')
+            vi.stubEnv('BITGO_ENTERPRISE_ID', 'env-enterprise')
+            vi.stubEnv('BITGO_COIN', 'tcanton')
+
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
+
+            expect(drivers[SigningProvider.BITGO]).toBeDefined()
+            expect(providerConstructors.bitgo).toHaveBeenCalledWith({
+                accessToken: 'access-token',
+                baseUrl: 'https://bitgo.example',
+                enterpriseId: 'config-enterprise',
+                coin: 'canton',
+            })
+            const deprecatedVariables = [
+                'BITGO_API_URL',
+                'BITGO_ENTERPRISE_ID',
+                'BITGO_COIN',
+            ]
+            deprecatedVariables.forEach((variable) => {
+                expect(logger.warn).toHaveBeenCalledWith(
+                    expect.stringContaining(`${variable} is deprecated`)
+                )
+            })
+        })
+
+        test('registers without enterprise ID and warns about limited functionality', () => {
+            const drivers = registerSigningProviders(
+                providers,
+                signingStore,
+                logger
+            )
+
+            expect(drivers[SigningProvider.BITGO]).toBeDefined()
+            expect(logger.warn).toHaveBeenCalledWith(
+                expect.stringContaining('BitGo enterprise ID is not set')
+            )
         })
     })
 })

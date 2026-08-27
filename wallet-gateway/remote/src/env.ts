@@ -29,8 +29,7 @@ export class Env {
     static DFNS_PRIVATE_KEY = () => Env.get('DFNS_PRIVATE_KEY')
     static DFNS_AUTH_TOKEN = () => Env.get('DFNS_AUTH_TOKEN')
     static BITGO_ACCESS_TOKEN = () => Env.get('BITGO_ACCESS_TOKEN')
-    static BITGO_API_URL = (fallback: string) =>
-        Env.get('BITGO_API_URL', { fallback })
+    static BITGO_API_URL = () => Env.get('BITGO_API_URL')
     static BITGO_ENTERPRISE_ID = () => Env.get('BITGO_ENTERPRISE_ID')
     static BITGO_COIN = () => Env.get('BITGO_COIN')
 

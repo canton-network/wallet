@@ -49,6 +49,12 @@ export default {
             enable: true,
             signatureAlgorithm: 'EDDSA',
         },
+        bitgo: {
+            enable: true,
+            baseUrl: 'https://app.bitgo.com',
+            enterpriseId: '1234',
+            coin: 'canton',
+        },
     },
     signingStore: {
         connection: {

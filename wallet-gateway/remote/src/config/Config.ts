@@ -199,6 +199,25 @@ export const signingProvidersConfigSchema = z.object({
             })
             .meta({ description: 'Securosys signing provider configuration.' })
     ),
+    bitgo: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema
+            .extend({
+                baseUrl: z.string().optional().meta({
+                    description:
+                        'BitGo API base URL. Defaults to https://app.bitgo.com.',
+                }),
+                enterpriseId: z.string().optional().meta({
+                    description:
+                        'BitGo enterprise ID. Required for wallet creation.',
+                }),
+                coin: z.string().optional().meta({
+                    description:
+                        'BitGo Canton coin identifier. Auto-detected from the API URL when omitted.',
+                }),
+            })
+            .meta({ description: 'BitGo signing provider configuration.' })
+    ),
 })
 
 // Includes secrets for networks as env vars, rather than defined explicitly
