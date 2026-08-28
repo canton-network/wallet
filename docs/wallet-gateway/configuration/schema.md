@@ -974,7 +974,6 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 "version": {
                     "type": "string",
                     "enum": [
-                        "HASHING_SCHEME_VERSION_UNSPECIFIED",
                         "HASHING_SCHEME_VERSION_V2",
                         "HASHING_SCHEME_VERSION_V3"
                     ],
