@@ -511,6 +511,7 @@ export interface GetNetworkParams {
 export interface SelfSignedAccessTokenParams {
     networkId: NetworkId
     clientId: ClientId
+    clientSecret: ClientSecret
 }
 export interface AddIdpParams {
     idp: Idp

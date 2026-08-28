@@ -448,6 +448,79 @@ describe('userController', () => {
         })
     })
 
+    describe('selfSignedAccessToken', () => {
+        const selfSignedIdp: Idp = {
+            id: 'idp-self-signed',
+            type: 'self_signed',
+            issuer: 'unsafe-auth',
+        }
+
+        const selfSignedNetwork: StoreNetwork = {
+            id: 'network-self-signed',
+            name: 'Self Signed',
+            description: 'Test',
+            identityProviderId: 'idp-self-signed',
+            ledgerApi: { baseUrl: 'http://ledger.test' },
+            auth: {
+                method: 'self_signed',
+                issuer: 'self-signed',
+                audience: 'aud',
+                scope: 'scope',
+                clientId: 'operator',
+                clientSecret: 'network-secret',
+            },
+        }
+
+        it('mints a token when the client secret matches the network', async () => {
+            const store = new StoreInternal(
+                { idps: [selfSignedIdp], networks: [selfSignedNetwork] },
+                getLogger('mock')
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            const result = await controller.selfSignedAccessToken({
+                networkId: 'network-self-signed',
+                clientId: 'test-user',
+                clientSecret: 'network-secret',
+            })
+
+            expect(typeof result.accessToken).toBe('string')
+            const payload = JSON.parse(
+                Buffer.from(
+                    result.accessToken.split('.')[1]!,
+                    'base64url'
+                ).toString()
+            )
+            expect(payload.sub).toBe('test-user')
+        })
+
+        it('rejects when the client secret does not match', async () => {
+            const store = new StoreInternal(
+                { idps: [selfSignedIdp], networks: [selfSignedNetwork] },
+                getLogger('mock')
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            await expect(
+                controller.selfSignedAccessToken({
+                    networkId: 'network-self-signed',
+                    clientId: 'test-user',
+                    clientSecret: 'wrong-secret',
+                })
+            ).rejects.toThrow('Invalid client secret')
+        })
+    })
+
     describe('idps', () => {
         it('adds and removes an idp for the admin user', async () => {
             const store = await createStore(logger, adminAuth)

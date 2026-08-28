@@ -71,7 +71,7 @@ import type {
     MessageSignatureEvent,
     TxChangedFailedEvent,
 } from '../dapp-api/rpc-gen/typings.js'
-import { rpcErrors } from '@canton-network/core-rpc-errors'
+import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 import { HASHING_SCHEME_VERSION } from '../env.js'
@@ -203,6 +203,12 @@ export const userController = (
                 throw new Error(
                     'Network does not use self_signed authentication'
                 )
+            }
+
+            if (params.clientSecret !== auth.clientSecret) {
+                throw providerErrors.unauthorized({
+                    message: 'Invalid client secret',
+                })
             }
 
             const idp = (await store.listIdps()).find(

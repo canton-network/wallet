@@ -5,6 +5,7 @@ import { test, expect, Page } from '@playwright/test'
 import { WalletGateway } from '@canton-network/core-wallet-test-utils'
 import {
     createWalletGateway,
+    connectToLocalNet,
     expectOffersBadgeCount,
     expectTransferOfferGone,
     expectWalletBalance,
@@ -39,7 +40,7 @@ const setupTransferTest = async (page: Page): Promise<TransferTestContext> => {
     const wg = createWalletGateway(page)
 
     await gotoConnect(page)
-    await wg.connect({ network: 'LocalNet' })
+    await connectToLocalNet(wg)
 
     const alice = await wg.createWalletIfNotExists({
         partyHint: `alice-${rnd}`,
