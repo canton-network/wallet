@@ -7,7 +7,12 @@ import { APIError } from './api/common'
 import metadataAPIRouter from './api/metadata/index.js'
 import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
 import { initOperatorParty, operator } from './common/operator'
-import express, { ErrorRequestHandler, Request, Response } from 'express'
+import express, {
+    ErrorRequestHandler,
+    NextFunction,
+    Request,
+    Response,
+} from 'express'
 import { TestToken } from '@canton-network/core-splice-codegen'
 import sdk from './common/sdk'
 import { Server } from 'http'
@@ -15,24 +20,28 @@ import {
     assignSynchronizerIds,
     resetSynchronizerIds,
 } from './common/synchronizer.js'
+import { SDKInterface } from '@canton-network/wallet-sdk'
+
+export type RegistryConfig = Partial<{
+    operator: typeof operator
+    synchronizerIds: {
+        transferInstruction: string
+        allocationInstruction: string
+    }
+    port: number
+    sdk: SDKInterface
+}>
 
 let server: Server
 
-export const startRegistry = async (
-    options?: Partial<{
-        operator: typeof operator
-        synchronizerIds: {
-            transferInstruction: string
-            allocationInstruction: string
-        }
-        port: number
-    }>
-) => {
+export const defaultPort = 5634
+
+export const startRegistry = async (config?: RegistryConfig) => {
     const app = express()
 
-    await initOperatorParty(options?.operator)
-    if (options?.synchronizerIds) {
-        assignSynchronizerIds(options.synchronizerIds)
+    await initOperatorParty(config?.operator)
+    if (config?.synchronizerIds) {
+        assignSynchronizerIds(config.synchronizerIds)
     }
 
     /**
@@ -44,7 +53,9 @@ export const startRegistry = async (
     const errorMiddleware: ErrorRequestHandler = (
         error: Error,
         _req: Request,
-        res: Response
+        res: Response,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _next: NextFunction
     ) => {
         if (error instanceof APIError) {
             res.status(error.status).send({
@@ -52,10 +63,10 @@ export const startRegistry = async (
             })
             return
         }
-        res.status(500).send({ error: error.message })
+        res.status(500).send({ ...error, stack: error.stack })
     }
 
-    const port = options?.port ?? 5634
+    const port = config?.port ?? defaultPort
 
     server = app
         .use(express.json())
@@ -74,3 +85,5 @@ export const stopRegistry = () => {
     resetSynchronizerIds()
     server.close()
 }
+
+if (process.env.NODE_ENV === 'development') await startRegistry()

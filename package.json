@@ -49,7 +49,8 @@
         "script:clear-blockdaemon-policies": "tsx ./scripts/src/clear-blockdaemon-policies.ts",
         "full:rebuild": "NX_TUI=false && pnpm run clean:all && pnpm run generate:all && pnpm install && pnpm run build:all --skip-nx-cache && NX_TUI=true",
         "full:down": "pnpm run stop:localnet && pnpm exec pm2 kill && pnpm run full:rebuild",
-        "full:up": "pnpm run start:localnet && pnpm run start:all"
+        "full:up": "pnpm run start:localnet && pnpm run start:all",
+        "fetch:all": "pnpm script:fetch:canton && pnpm script:fetch:splice && pnpm script:fetch:localnet"
     },
     "devDependencies": {
         "@canton-network/core-eslint-config": "workspace:^",
@@ -99,7 +100,7 @@
         "*": "pnpm prettier --config .prettierrc --write --ignore-unknown",
         "*.{ts,tsx,js,jsx,mjs,cjs}": "pnpm eslint --fix"
     },
-    "packageManager": "pnpm@11.20.0",
+    "packageManager": "pnpm@11.23.0+sha512.f00082e5b283a199b74e079da28d155c008fe232f44c8a06ea7ddfa014ecf719fc362f790ecc67b28106ddac2afb24c49a9a079159da560b2ce7d1e98efd11af",
     "dependencies": {
         "@canton-network/core-ledger-client": "^1.10.0",
         "@canton-network/core-rpc-errors": "^1.9.0",

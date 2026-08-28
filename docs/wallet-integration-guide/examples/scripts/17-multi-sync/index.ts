@@ -51,6 +51,10 @@ await startRegistry({
         party: tokenAdmin.partyId,
         keys: tokenAdmin.keyPair,
     },
+    synchronizerIds: {
+        allocationInstruction: synchronizers.globalSynchronizerId,
+        transferInstruction: synchronizers.appSynchronizerId,
+    },
     port: TEST_TOKEN_REGISTRY_PORT,
 })
 
@@ -115,12 +119,7 @@ await logAllContracts(logger, synchronizers, [
     { sdk: tradingAppSdk, parties: [tradingApp.partyId] },
 ])
 // ── Step 10a: Locate Bob's TestToken allocation ────────────────────────────────────
-console.log(
-    'connectedSynchronizers',
-    await bobSdk.ledger.connectedSynchronizers({
-        party: bob.partyId,
-    })
-)
+
 const allocationsBob = await bobSdk.token.allocation.pending(bob.partyId)
 const testTokenAllocation = allocationsBob.find(
     (a) => a.interfaceViewValue.allocation.transferLegId === legIdBob

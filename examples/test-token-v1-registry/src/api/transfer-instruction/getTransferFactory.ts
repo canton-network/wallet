@@ -10,12 +10,14 @@ import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { synchronizerId } from '../../common/synchronizer'
 
-export const getTransferFactoryChoiceArgumentsSchema = z.object({
-    sender: z.string(),
-    receiver: z.string(),
-    transferKind: z
-        .union([z.literal('self'), z.literal('offer'), z.literal('direct')])
-        .optional(),
+export const getTransferFactoryChoiceArgumentsSchema = z.looseObject({
+    transfer: z.looseObject({
+        sender: z.string(),
+        receiver: z.string(),
+        transferKind: z
+            .union([z.literal('self'), z.literal('offer'), z.literal('direct')])
+            .optional(),
+    }),
 })
 
 /**
@@ -44,12 +46,15 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
         return
     }
 
-    const isToSelf =
-        parsedChoiceArguments.data.sender ===
-        parsedChoiceArguments.data.receiver
+    const transfer = parsedChoiceArguments.data.transfer
+    const isToSelf = transfer.sender === transfer.receiver
+    const transferKind = transfer.transferKind ?? (isToSelf ? 'self' : 'offer')
 
-    const transferKind =
-        parsedChoiceArguments.data.transferKind ?? (isToSelf ? 'self' : 'offer')
+    console.log('BEFORE READING', {
+        filterByParty: true,
+        parties: [operator.party],
+        templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
+    })
 
     // fetch the factory contract (if existing)...
     const fetchedFactories = await sdk.ledger.acsReader.readJsContracts({
@@ -57,6 +62,8 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
         parties: [operator.party],
         templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
     })
+
+    console.log('NOT LOGGING HERE')
 
     // multi-sync mode
     if (synchronizerId.transferInstruction) {
