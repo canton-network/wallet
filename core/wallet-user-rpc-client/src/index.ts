@@ -434,6 +434,7 @@ export type PreparedTransactionHash = string
  *
  */
 export type Payload = string
+export type FailureReason = string
 export interface Transaction {
     id: TransactionId
     commandId: CommandId
@@ -570,6 +571,9 @@ export interface AddSessionParams {
 export interface GetTransactionParams {
     transactionId: TransactionId
 }
+export interface GetTransactionStatusParams {
+    transactionId: TransactionId
+}
 export interface ListTransactionsParams {
     limit?: Limit
     cursor?: Cursor
@@ -679,6 +683,11 @@ export interface GetTransactionResult {
     origin?: Origin
     externalTxId?: ExternalTxId
 }
+export interface GetTransactionStatusResult {
+    status: Status
+    externalTxId?: ExternalTxId
+    failureReason?: FailureReason
+}
 export interface ListTransactionsResult {
     transactions: Transactions
     nextCursor?: NextCursor
@@ -748,6 +757,9 @@ export type ListSessions = () => Promise<ListSessionsResult>
 export type GetTransaction = (
     params: GetTransactionParams
 ) => Promise<GetTransactionResult>
+export type GetTransactionStatus = (
+    params: GetTransactionStatusParams
+) => Promise<GetTransactionStatusResult>
 export type ListTransactions = (
     params: ListTransactionsParams
 ) => Promise<ListTransactionsResult>
@@ -900,6 +912,11 @@ export type RpcTypes = {
     getTransaction: {
         params: Params<GetTransaction>
         result: Result<GetTransaction>
+    }
+
+    getTransactionStatus: {
+        params: Params<GetTransactionStatus>
+        result: Result<GetTransactionStatus>
     }
 
     listTransactions: {

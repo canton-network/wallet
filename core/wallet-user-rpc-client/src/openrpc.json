@@ -885,6 +885,33 @@
             }
         },
         {
+            "name": "getTransactionStatus",
+            "description": "Polls the signing provider for a transaction awaiting external signature and udpated the store status. ",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GetTransactionStatusParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "transactionId": {
+                                "$ref": "#/components/schemas/TransactionId"
+                            }
+                        },
+                        "required": ["transactionId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetTransactionStatusResult",
+                    "$ref": "#/components/schemas/GetTransactionStatusResult"
+                }
+            }
+        },
+        {
             "name": "listTransactions",
             "params": [
                 {
@@ -1218,6 +1245,33 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The internal transaction identifier."
+            },
+            "GetTransactionStatusResult": {
+                "type": "object",
+                "additionalProperties": false,
+                "description:": "",
+                "properties": {
+                    "status": {
+                        "title": "status",
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "awaiting-signature",
+                            "signed",
+                            "executed",
+                            "failed"
+                        ]
+                    },
+                    "externalTxId": {
+                        "title": "externalTxId",
+                        "type": "string"
+                    },
+                    "failureReason": {
+                        "title": "failureReason",
+                        "type": "string"
+                    }
+                },
+                "required": ["status"]
             },
             "PublicNetwork": {
                 "title": "PublicNetwork",
