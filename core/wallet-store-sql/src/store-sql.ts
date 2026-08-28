@@ -726,11 +726,15 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         externalTxId?: string,
         opts?: { expectedStatus: Transaction['status'] }
     ): Promise<boolean> {
-        return await this.setTransactionStatus(transactionId, 'signed', {
-            signedAt,
-            ...(externalTxId !== undefined && { externalTxId }),
-            opts,
-        })
+        return await this.setTransactionStatus(
+            transactionId,
+            'signed',
+            {
+                signedAt,
+                ...(externalTxId !== undefined && { externalTxId }),
+            },
+            opts
+        )
     }
 
     async setTransactionStatus(
