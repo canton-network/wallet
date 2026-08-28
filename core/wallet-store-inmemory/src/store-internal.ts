@@ -391,6 +391,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const payload = updates.payload ?? existing.payload
         const signedAt = updates.signedAt ?? existing.signedAt
         const externalTxId = updates.externalTxId ?? existing.externalTxId
+        const failureReason = updates.failureReason ?? existing.failureReason
 
         return {
             id: existing.id,
@@ -405,6 +406,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             }),
             ...(signedAt !== undefined && { signedAt }),
             ...(externalTxId !== undefined && { externalTxId }),
+            ...(failureReason !== undefined && { failureReason }),
         }
     }
 
