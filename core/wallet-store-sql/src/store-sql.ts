@@ -476,11 +476,18 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     /**
      * Lists all pending transactions across all users.
      */
+
+    //TODO: check where this is called to see if i need both pending/awaiting-signature
     async listAllPendingTransactions(): Promise<Array<Transaction>> {
         const rows = await this.db
             .selectFrom('transactions')
             .selectAll()
-            .where('status', '=', 'pending')
+            .where((eb) =>
+                eb.or([
+                    eb('status', '=', 'pending'),
+                    eb('status', '=', 'awaiting-signature'),
+                ])
+            )
             .execute()
 
         return rows.map((row) => toTransaction(row))
@@ -714,24 +721,30 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     async setTransactionSigned(
         transactionId: string,
         signedAt: Date,
-        externalTxId?: string
-    ): Promise<void> {
-        await this.setTransactionStatus(transactionId, 'signed', {
+        externalTxId?: string,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean> {
+        return await this.setTransactionStatus(transactionId, 'signed', {
             signedAt,
             ...(externalTxId !== undefined && { externalTxId }),
+            opts,
         })
     }
 
     async setTransactionStatus(
         transactionId: string,
         status: Transaction['status'],
-        updates: TransactionStatusUpdate = {}
-    ): Promise<void> {
+        updates: TransactionStatusUpdate = {},
+        opts?: { expectedStatus?: Transaction['status'] }
+    ): Promise<boolean> {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
         const existing = await this.getTransaction(transactionId)
         if (!existing) {
             throw new Error(`Transaction not found with id: ${transactionId}`)
+        }
+        if (opts?.expectedStatus && existing.status !== opts.expectedStatus) {
+            return false
         }
 
         const updated = this.mergeTransactionStatusUpdate(
@@ -740,7 +753,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             updates
         )
 
-        await this.db
+        const res = await this.db
             .updateTable('transactions')
             .set(fromTransaction(updated, userId, network.id))
             .where((eb) =>
@@ -748,9 +761,14 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('id', '=', transactionId),
                     eb('userId', '=', userId),
                     eb('networkId', '=', network.id),
+                    ...(opts?.expectedStatus
+                        ? [eb('status', '=', opts.expectedStatus)]
+                        : []),
                 ])
             )
-            .execute()
+            .executeTakeFirst()
+
+        return res.numUpdatedRows > 0n
     }
 
     async getTransaction(

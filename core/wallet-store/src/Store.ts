@@ -213,13 +213,15 @@ export interface Store {
     setTransactionSigned(
         transactionId: string,
         signedAt: Date,
-        externalTxId?: string
-    ): Promise<void>
+        externalTxId?: string,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean>
     setTransactionStatus(
         transactionId: string,
         status: Transaction['status'],
-        updates?: TransactionStatusUpdate
-    ): Promise<void>
+        updates?: TransactionStatusUpdate,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean>
     getTransaction(transactionId: string): Promise<Transaction | undefined>
     getLatestTransactionByCommandId(
         commandId: string

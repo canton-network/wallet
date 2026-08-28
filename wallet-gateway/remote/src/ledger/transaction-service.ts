@@ -260,6 +260,129 @@ export class TransactionService {
         )
     }
 
+    public async refreshTransaction(
+        authContext: AuthContext,
+        wallet: Wallet,
+        transactionId: Transaction['id']
+    ): Promise<{
+        status: Transaction['status']
+        externalTxId?: string
+        failureReason?: string
+    }> {
+        const tx = await this.store.getTransaction(transactionId)
+        if (!tx) {
+            throw new Error(`Transaction not found with id: ${transactionId}`)
+        }
+
+        if (!tx.externalTxId || tx.status !== 'awaiting-signature') {
+            return {
+                status: tx.status,
+                ...(tx.externalTxId && { externalTxId: tx.externalTxId }),
+                ...(tx.failureReason && {
+                    failureReason: tx.failureReason,
+                }),
+            }
+        }
+
+        const signingResult = await this.getSigningResult(
+            authContext.userId,
+            wallet,
+            tx.externalTxId
+        )
+
+        logDynamically(this.logger, `Refreshed signing status`, {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
+
+        return this.applySigningResult(tx, wallet, signingResult)
+    }
+
+    async getSigningResult(
+        userId: UserId,
+        wallet: Wallet,
+        externalTxId: string
+    ): Promise<Exclude<GetTransactionResult, SigningError>> {
+        const provider = wallet.signingProviderId as SigningProvider
+        const signingProvider = this.signingDrivers[provider]
+        if (!signingProvider) {
+            throw new Error(`No driver found for provider ${provider}`)
+        }
+
+        const driver = signingProvider.controller(userId)
+        const args =
+            provider === SigningProvider.SECUROSYS
+                ? { txId: externalTxId }
+                : { userId, txId: externalTxId }
+
+        return driver.getTransaction(args).then(handleSigningError)
+    }
+
+    async applySigningResult(
+        tx: Transaction,
+        wallet: Wallet,
+        signingResult: Exclude<
+            GetTransactionResult | SignTransactionResult,
+            SigningError
+        >
+    ): Promise<{
+        status: Transaction['status']
+        externalTxId?: string
+        failureReason?: string
+    }> {
+        const now = new Date()
+        if (signingResult.status === 'signed') {
+            if (!signingResult.signature) {
+                throw new Error('No signature returned from signing driver')
+            }
+
+            const applied = await this.store.setTransactionSigned(
+                tx.id,
+                now,
+                signingResult.txId
+            )
+
+            //
+            if (!applied) {
+                const current = await this.store.getTransaction(tx.id)
+                return { status: current!.status }
+            }
+
+            this.notifier.emit('txChanged', {
+                ...tx,
+                status: 'signed',
+                signedAt: now,
+                externalTxId: signingResult.txId,
+            })
+
+            return { status: 'signed', externalTxId: signingResult.txId }
+        }
+
+        const status =
+            signingResult.status === 'pending' ? 'awaiting-signature' : 'failed'
+        const failureReason =
+            status === 'failed'
+                ? `Signing provider returned status; ${signingResult.status}`
+                : undefined
+
+        await this.store.setTransactionStatus(tx.id, status, {
+            externalTxId: signingResult.txId,
+            ...(failureReason && { failureReason }),
+        })
+
+        this.notifier.emit('txChanged', {
+            ...tx,
+            status,
+            externalTxId: signingResult.txId,
+        })
+
+        return {
+            status,
+            externalTxId: signingResult.txId,
+            ...(failureReason && { failureReason }),
+        }
+    }
+
     private async loadPreparedTransactionForSigning(
         transactionId: Transaction['id']
     ): Promise<Transaction> {
