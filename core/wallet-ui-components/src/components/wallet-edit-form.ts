@@ -65,7 +65,6 @@ export class WgWalletEditForm extends WgWalletForm {
     private onSigningProviderChange(event: Event) {
         const signingProviderId = (event.target as HTMLSelectElement).value
         this.selectedSigningProvider = signingProviderId
-        this.submitDisabled = this.isDisallowedSigningProvider
         this.selectedPublicKey = ''
         this.dispatchEvent(new SigningProviderChangeEvent(signingProviderId))
     }
@@ -79,16 +78,11 @@ export class WgWalletEditForm extends WgWalletForm {
         return this.submitting
     }
 
-    protected get isDisallowedSigningProvider(): boolean {
+    protected get submitDisabled(): boolean {
         return (
             !this.selectedSigningProvider.length ||
             this.disabledSigningProviders.includes(this.selectedSigningProvider)
         )
-    }
-
-    override connectedCallback(): void {
-        super.connectedCallback()
-        this.submitDisabled = this.isDisallowedSigningProvider
     }
 
     protected get formFields() {

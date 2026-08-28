@@ -7,7 +7,7 @@ import {
     Key,
     SigningProviderId,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { property, state } from 'lit/decorators.js'
+import { property } from 'lit/decorators.js'
 
 export class SigningProviderChangeEvent extends Event {
     constructor(public signingProviderId: SigningProviderId) {
@@ -22,13 +22,12 @@ export abstract class WgWalletForm extends BaseElement {
     protected abstract submittingMessage: string
     protected abstract get formFields(): TemplateResult
     protected abstract get isLoading(): boolean
+    protected abstract get submitDisabled(): boolean
 
     @property({ type: Array }) signingProviders: string[] = []
     @property({ type: Boolean }) submitting = false
     @property({ type: Boolean }) publicKeysLoading = false
     @property({ type: Array }) publicKeys: Key[] = []
-
-    @state() accessor submitDisabled = false
 
     static styles = [
         BaseElement.styles,
