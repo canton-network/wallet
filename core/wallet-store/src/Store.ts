@@ -115,6 +115,7 @@ export interface TransactionStatusUpdate {
     payload?: unknown
     signedAt?: Date
     externalTxId?: string
+    failureReason?: string
 }
 
 export interface ListTransactionsOptions {
