@@ -97,7 +97,7 @@ export interface Session {
 
 export interface Transaction {
     id: string
-    status: 'pending' | 'signed' | 'executed' | 'failed'
+    status: 'pending' | 'signed' | 'executed' | 'failed' | 'awaiting-signature'
     commandId: string
     preparedTransaction: string
     preparedTransactionHash: string
@@ -108,6 +108,7 @@ export interface Transaction {
     externalTxId?: string
     userId?: string
     networkId?: string
+    failureReason?: string
 }
 
 export interface TransactionStatusUpdate {
