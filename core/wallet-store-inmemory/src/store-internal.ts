@@ -475,7 +475,8 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async listAllPendingTransactions(): Promise<Array<Transaction>> {
         const storage = this.getStorage()
         return Array.from(storage.transactions.values()).filter(
-            (tx) => tx.status === 'pending'
+            (tx) =>
+                tx.status === 'pending' || tx.status === 'awaiting-signature'
         )
     }
 
