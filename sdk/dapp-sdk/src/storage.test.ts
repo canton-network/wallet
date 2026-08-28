@@ -48,29 +48,19 @@ describe('storage', () => {
     })
 
     describe('kernel discovery', () => {
-        it('round-trips remote discovery through localStorage', () => {
-            setKernelDiscovery({
-                walletType: 'remote',
-                url: 'https://gateway.example.com',
-            })
+        // Each DiscoverResult variant is validated by a different zod schema
+        // branch, so each one gets its own round-trip case.
+        it.each([
+            { walletType: 'remote', url: 'https://gateway.example.com' },
+            { walletType: 'extension', providerId: 'browser:ext:abc' },
+        ] as const)(
+            'round-trips $walletType discovery through localStorage',
+            (discovery) => {
+                setKernelDiscovery(discovery)
 
-            expect(getKernelDiscovery()).toEqual({
-                walletType: 'remote',
-                url: 'https://gateway.example.com',
-            })
-        })
-
-        it('round-trips extension discovery through localStorage', () => {
-            setKernelDiscovery({
-                walletType: 'extension',
-                providerId: 'browser:ext:abc',
-            })
-
-            expect(getKernelDiscovery()).toEqual({
-                walletType: 'extension',
-                providerId: 'browser:ext:abc',
-            })
-        })
+                expect(getKernelDiscovery()).toEqual(discovery)
+            }
+        )
 
         it('returns undefined for invalid stored discovery', () => {
             const errorSpy = vi

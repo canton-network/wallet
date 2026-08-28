@@ -18,6 +18,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { userController } from './controller.js'
+import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -137,7 +138,7 @@ const storeNetwork: StoreNetwork = {
     auth: {
         method: 'authorization_code',
         clientId: 'cid',
-        scope: 'scope',
+        scope: 'scope1 scope2',
         audience: 'aud',
     },
     adminAuth: {
@@ -202,7 +203,7 @@ async function createStore(
     const { withSession = true, withWallet = true } = options
     const store = new StoreInternal(
         { idps: [idp], networks: [storeNetwork] },
-        logger,
+        getLogger('mock'),
         context
     )
     if (context && withSession) {
@@ -955,9 +956,9 @@ describe('userController', () => {
         const validAddSessionClaims = {
             iss: idp.issuer,
             aud: storeNetwork.auth.audience,
-            sub: storeNetwork.auth.clientId,
-            scope: 'scope',
-            scp: ['scope'],
+            sub: 'sub',
+            scope: 'scope1 scope2',
+            scp: ['scope1', 'scope2'],
             exp: 1_900_000_000,
             iat: 1_800_000_000,
         }
@@ -1199,110 +1200,27 @@ describe('userController', () => {
             })
         })
 
-        it('addSession rejects token when both scope and scp are missing', async () => {
-            const authWithoutScopeClaims: AuthContext = {
-                ...auth,
-                accessToken: createJwt({
-                    iss: idp.issuer,
-                    aud: storeNetwork.auth.audience,
-                    sub: storeNetwork.auth.clientId,
-                    exp: 1_900_000_000,
-                    iat: 1_800_000_000,
-                }),
-            }
-            const store = await createStore(logger, authWithoutScopeClaims, {
+        it('addSession does not validate scope or scp against network.auth.scope', async () => {
+            const authWithUnrelatedScopes = createAuthWithAddSessionClaims({
+                scope: 'openid email',
+                scp: ['profile'],
+            })
+            const store = await createStore(logger, authWithUnrelatedScopes, {
                 withWallet: false,
             })
             const controller = createController(
                 store,
                 notificationService,
                 logger,
-                authWithoutScopeClaims
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession passes when only scope is present and matches', async () => {
-            const authWithScopeOnly = createAuthWithAddSessionClaims({
-                scp: undefined,
-            })
-            const store = await createStore(logger, authWithScopeOnly, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithScopeOnly
+                authWithUnrelatedScopes
             )
 
             const result = await controller.addSession({
                 origin: 'dapp-1',
                 networkId: 'network1',
             })
-            expect(result).toMatchObject({
-                network: expect.objectContaining({
-                    id: 'network1',
-                    auth: expect.objectContaining({
-                        method: 'authorization_code',
-                    }),
-                }),
-                status: 'connected',
-            })
-            expect(result.network).not.toHaveProperty('adminAuth')
-            expect(result.network).not.toHaveProperty('serviceAccountAuth')
-        })
 
-        it('addSession rejects when only scope is present and mismatches', async () => {
-            const authWithInvalidScope = createAuthWithAddSessionClaims({
-                scope: 'openid email',
-                scp: undefined,
-            })
-            const store = await createStore(logger, authWithInvalidScope, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithInvalidScope
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession rejects when both scope and scp are present but one mismatches', async () => {
-            const authWithMismatchedScp = createAuthWithAddSessionClaims({
-                scope: 'scope',
-                scp: ['scope openid'],
-            })
-            const store = await createStore(logger, authWithMismatchedScp, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithMismatchedScp
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
+            expect(result.status).toBe('connected')
         })
 
         it('addSession rejects token with issuer mismatch', async () => {
@@ -1654,7 +1572,7 @@ describe('userController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutAdmin] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)
@@ -1788,7 +1706,7 @@ describe('userController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutAdmin] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)

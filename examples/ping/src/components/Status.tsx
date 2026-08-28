@@ -8,11 +8,22 @@ export function Status(props: {
         <div>
             <h2>Status</h2>
             <b>connected:</b>{' '}
-            <i>{props.status?.connection?.isConnected ? '🟢' : '🔴'}</i>
+            <i
+                data-testid={
+                    props.status?.connection?.isConnected
+                        ? 'connection-indicator-connected'
+                        : 'connection-indicator-disconnected'
+                }
+            >
+                {props.status?.connection?.isConnected ? '🟢' : '🔴'}
+            </i>
             <br />
             {props.status && (
                 <div>
-                    <b>gateway:</b> <i>{props.status.provider?.id ?? '—'}</i>
+                    <b>gateway:</b>{' '}
+                    <i data-testid="connected-gateway">
+                        {props.status.provider?.id ?? '—'}
+                    </i>
                     {props.status.network && (
                         <span>
                             <br />

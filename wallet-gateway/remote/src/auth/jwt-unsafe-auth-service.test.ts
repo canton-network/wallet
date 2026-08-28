@@ -8,6 +8,7 @@ import { SignJWT } from 'jose'
 import { AuthContext } from '@canton-network/core-wallet-auth'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { jwtAuthService as jwtUnsafeAuthService } from './jwt-unsafe-auth-service.js'
+import { getLogger } from '@logtape/logtape'
 
 const authContext: AuthContext = {
     userId: 'test-user-id',
@@ -31,7 +32,7 @@ describe('jwtAuthService (unsafe)', () => {
         mockLogger = pino(sink()) as Logger
         store = new StoreInternal(
             { idps: [], networks: [] },
-            mockLogger,
+            getLogger('mock'),
             authContext
         )
         await store.addIdp({

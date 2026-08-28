@@ -3,6 +3,6 @@
 
 export { OTCTrade } from './otc-trade.js'
 export * from './wallet-gateway.js'
-export * from './wallet-gateway-2.js'
+export * from './wallet-picker.js'
 export { test, expect } from './fixtures.js'
 export * from './signing-provider-mocks/index.js'

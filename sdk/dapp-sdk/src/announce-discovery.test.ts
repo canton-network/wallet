@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     CANTON_ANNOUNCE_PROVIDER_EVENT,
     CANTON_REQUEST_PROVIDER_EVENT,
@@ -9,7 +9,12 @@ import {
 import { requestAnnouncedProviders } from './announce-discovery'
 
 describe('requestAnnouncedProviders', () => {
+    beforeEach(() => {
+        vi.useFakeTimers()
+    })
+
     afterEach(() => {
+        vi.useRealTimers()
         vi.restoreAllMocks()
     })
 
@@ -45,6 +50,8 @@ describe('requestAnnouncedProviders', () => {
             // no name
         })
 
+        await vi.advanceTimersByTimeAsync(50)
+
         await expect(promise).resolves.toEqual([
             {
                 id: 'ext-1',
@@ -66,7 +73,9 @@ describe('requestAnnouncedProviders', () => {
         const removeListenerSpy = vi.spyOn(window, 'removeEventListener')
 
         // this keeps pending until the timeout passes
-        await requestAnnouncedProviders({ timeoutMs: 10 })
+        const promise = requestAnnouncedProviders({ timeoutMs: 10 })
+        await vi.advanceTimersByTimeAsync(10)
+        await promise
 
         const announceHandler = addListenerSpy.mock.calls.find(
             ([event]) => event === CANTON_ANNOUNCE_PROVIDER_EVENT

@@ -30,6 +30,7 @@ import BlockdaemonSigningProvider, {
 import SecurosysSigningProvider, {
     type TsbSignatureAlgorithm,
 } from '@canton-network/core-signing-securosys'
+import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import TaurusProtectSigningProvider from '@canton-network/core-signing-taurus-protect'
 import { jwtAuthService } from './auth/jwt-auth-service.js'
 import express from 'express'
@@ -362,6 +363,24 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     } else {
         logger.warn(
             'Dfns env vars not fully set — Dfns signing provider will be unavailable'
+        )
+    }
+
+    if (Env.BITGO_ACCESS_TOKEN()) {
+        if (!Env.BITGO_ENTERPRISE_ID()) {
+            logger.warn(
+                'BITGO_ENTERPRISE_ID not set — wallet creation (createKey) will fail and restart-safe transaction lookup will be unavailable'
+            )
+        }
+        drivers[SigningProvider.BITGO] = new BitGoSigningProvider({
+            accessToken: Env.BITGO_ACCESS_TOKEN()!,
+            baseUrl: Env.BITGO_API_URL('https://app.bitgo.com'),
+            enterpriseId: Env.BITGO_ENTERPRISE_ID(),
+            coin: Env.BITGO_COIN(),
+        })
+    } else {
+        logger.warn(
+            'BITGO_ACCESS_TOKEN not set — BitGo signing provider will be unavailable'
         )
     }
 

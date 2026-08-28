@@ -54,7 +54,7 @@ export class WebSocketClient {
     private token: string = ''
     private protocol: string[] = []
     private readonly channelsByVersion: ChannelsMap
-    private version: SupportedVersions = '3.4'
+    private version: SupportedVersions = '3.5'
     private readonly logger: Logger
     private accessTokenProvider: AccessTokenProvider
 
@@ -70,12 +70,9 @@ export class WebSocketClient {
         this.logger = pino({ name: 'WebSocketClient', level: 'info' })
         this.baseUrl = baseUrl
         this.accessTokenProvider = accessTokenProvider
-        this.channelsByVersion = {
-            ...supportedVersions.reduce((acc, currentVersion) => {
-                acc[currentVersion] = asyncApiByVersion[currentVersion].CHANNELS
-                return acc
-            }, {} as ChannelsMap),
-        }
+        this.channelsByVersion = Object.fromEntries(
+            supportedVersions.map((v) => [v, asyncApiByVersion[v].CHANNELS])
+        ) as ChannelsMap
         this.version = version ?? this.version
     }
 

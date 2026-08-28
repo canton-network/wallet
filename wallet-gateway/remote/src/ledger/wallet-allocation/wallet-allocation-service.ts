@@ -20,6 +20,7 @@ import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet
 import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.js'
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
 import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
+import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.js'
 import { TaurusProtectWalletAllocator } from './signing-providers/taurus-protect-wallet-allocator.js'
 
 export interface WalletAllocator {
@@ -45,6 +46,7 @@ export class WalletAllocationService {
     private readonly blockdaemonAllocator?: BlockdaemonWalletAllocator
     private readonly dfnsAllocator?: DfnsWalletAllocator
     private readonly securosysAllocator?: SecurosysWalletAllocator
+    private readonly bitgoAllocator?: BitGoWalletAllocator
     private readonly taurusProtectAllocator?: TaurusProtectWalletAllocator
 
     constructor(
@@ -108,6 +110,16 @@ export class WalletAllocationService {
                 logger,
                 partyAllocator,
                 securosysDriver
+            )
+        }
+
+        const bitgoDriver = signingDrivers[SigningProvider.BITGO]
+        if (bitgoDriver) {
+            this.bitgoAllocator = new BitGoWalletAllocator(
+                store,
+                logger,
+                partyAllocator,
+                bitgoDriver
             )
         }
 
@@ -200,6 +212,16 @@ export class WalletAllocationService {
                     partyHint,
                     primary
                 )
+            case SigningProvider.BITGO:
+                if (!this.bitgoAllocator) {
+                    throw new Error('BitGo signing driver not available')
+                }
+                return this.bitgoAllocator.createWallet(
+                    authContext.userId,
+                    authContext.email,
+                    partyHint,
+                    primary
+                )
             case SigningProvider.TAURUS_PROTECT:
                 if (!this.taurusProtectAllocator) {
                     throw new Error(
@@ -281,6 +303,15 @@ export class WalletAllocationService {
                     throw new Error('Securosys signing driver not available')
                 }
                 return this.securosysAllocator.allocateParty(
+                    authContext.userId,
+                    authContext.email,
+                    existingWallet
+                )
+            case SigningProvider.BITGO:
+                if (!this.bitgoAllocator) {
+                    throw new Error('BitGo signing driver not available')
+                }
+                return this.bitgoAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
                     existingWallet

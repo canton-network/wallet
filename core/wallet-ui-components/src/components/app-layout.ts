@@ -22,6 +22,7 @@ export class AppLayout extends BaseElement {
             :host {
                 display: block;
                 width: 100%;
+                min-width: 320px;
             }
         `,
     ]
