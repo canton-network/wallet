@@ -81,7 +81,10 @@ export class WgWalletEditForm extends WgWalletForm {
     protected get submitDisabled(): boolean {
         return (
             !this.selectedSigningProvider.length ||
-            this.disabledSigningProviders.includes(this.selectedSigningProvider)
+            this.disabledSigningProviders.includes(
+                this.selectedSigningProvider
+            ) ||
+            this.publicKeysLoading
         )
     }
 
