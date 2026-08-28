@@ -164,7 +164,8 @@ test('selfSignedAccessToken rpc rejects a mismatched client secret', async () =>
             publicUrl,
             notificationService,
             {},
-            store
+            store,
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/user')
