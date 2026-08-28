@@ -231,6 +231,7 @@ function createController(
         context,
         drivers,
         logger,
+        'HASHING_SCHEME_VERSION_V3',
         adminId
     )
 }

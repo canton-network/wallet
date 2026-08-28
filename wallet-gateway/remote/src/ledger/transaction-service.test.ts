@@ -133,7 +133,13 @@ function createService(
     notifier: Notifier,
     logger: Logger
 ) {
-    return new TransactionService(store, logger, drivers, notifier)
+    return new TransactionService(
+        store,
+        logger,
+        drivers,
+        notifier,
+        'HASHING_SCHEME_VERSION_V3'
+    )
 }
 
 describe('TransactionService', () => {

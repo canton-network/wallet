@@ -74,6 +74,7 @@ import type {
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -83,6 +84,7 @@ export const userController = (
     authContext: AuthContext | undefined,
     drivers: SigningDrivers,
     _logger: Logger,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION,
     adminUserId?: string
 ) => {
     const logger = _logger.child({ component: 'user-controller' })
@@ -460,7 +462,8 @@ export const userController = (
                 store,
                 logger,
                 drivers,
-                notifier
+                notifier,
+                hashingSchemeVersion
             )
 
             logDynamically(logger, 'signing transaction with params', {
@@ -711,7 +714,8 @@ export const userController = (
                 store,
                 logger,
                 drivers,
-                notifier
+                notifier,
+                hashingSchemeVersion
             )
 
             logDynamically(logger, 'executing transaction with params', {
