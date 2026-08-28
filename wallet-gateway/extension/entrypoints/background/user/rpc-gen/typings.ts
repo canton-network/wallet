@@ -433,6 +433,11 @@ export type PreparedTransactionHash = string
  *
  */
 export type Payload = string
+/**
+ *
+ * Reason for why the transaction failed.
+ *
+ */
 export type FailureReason = string
 export interface Transaction {
     id: TransactionId
@@ -445,6 +450,7 @@ export interface Transaction {
     payload?: Payload
     origin?: Origin
     externalTxId?: ExternalTxId
+    failureReason?: FailureReason
 }
 export type Transactions = Transaction[]
 /**
@@ -681,6 +687,7 @@ export interface GetTransactionResult {
     payload?: Payload
     origin?: Origin
     externalTxId?: ExternalTxId
+    failureReason?: FailureReason
 }
 export interface GetTransactionStatusResult {
     status: Status

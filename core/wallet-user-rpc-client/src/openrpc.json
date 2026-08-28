@@ -1717,6 +1717,11 @@
                         "title": "externalTxId",
                         "type": "string",
                         "description": "External transaction ID from signing provider."
+                    },
+                    "failureReason": {
+                        "title": "failureReason",
+                        "type": "string",
+                        "description": "Reason for why the transaction failed."
                     }
                 },
                 "required": [
