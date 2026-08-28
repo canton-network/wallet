@@ -276,14 +276,11 @@ export class WalletGateway {
                     .getByRole('checkbox', { name: 'Set as primary wallet' })
                     .check()
             }
-            const submitButton = (await this.page()).getByRole('button', {
-                name: 'Create',
-            })
-            await expect(
-                submitButton,
-                'the party form should expose an Add/Create submit button'
-            ).toBeVisible()
-            await submitButton.click()
+            await (
+                await this.page()
+            )
+                .getByRole('button', { name: 'Create' })
+                .click()
 
             await this.waitForPartiesPageReady()
 
