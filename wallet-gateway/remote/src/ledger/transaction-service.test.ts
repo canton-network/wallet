@@ -38,6 +38,7 @@ const wallet: Wallet = {
     signingProviderId: SigningProvider.WALLET_KERNEL,
     publicKey: 'wallet-public-key',
     namespace: 'namespace',
+    userId: 'user-1',
     networkId: 'network1',
     rights: [],
 }

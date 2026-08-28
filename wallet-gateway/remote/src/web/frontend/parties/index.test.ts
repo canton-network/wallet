@@ -48,7 +48,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiParties, WALLET_CREATION_STATUS_CODE } from './index.js'
+import { UserUiParties, WALLET_STATUS_CODE } from './index.js'
 
 describe('UserUiParties', () => {
     let el: UserUiParties
@@ -124,7 +124,7 @@ describe('UserUiParties', () => {
         history.replaceState(
             {},
             '',
-            `?createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED}`
+            `?createPartyStatus=${WALLET_STATUS_CODE.WALLET_INITIALIZED}`
         )
 
         el = await fixture<UserUiParties>(componentFixture)
@@ -229,7 +229,7 @@ describe('UserUiParties', () => {
         history.replaceState(
             {},
             '',
-            `?createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_REMOVED}`
+            `?createPartyStatus=${WALLET_STATUS_CODE.WALLET_REMOVED}`
         )
 
         el = await fixture<UserUiParties>(componentFixture)

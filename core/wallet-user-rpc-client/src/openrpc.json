@@ -268,10 +268,10 @@
                                 "type": "string",
                                 "description": "The signing provider ID the wallet corresponds to."
                             },
-                            "vaultName": {
-                                "title": "vaultName",
+                            "keyName": {
+                                "title": "keyName",
                                 "type": "string",
-                                "description": "Name of signing provider's vault to use for getting keys."
+                                "description": "Name of signing provider's key to use for getting keys."
                             }
                         },
                         "required": [
@@ -1070,13 +1070,13 @@
             }
         },
         {
-            "name": "listSigningProviderVaults",
-            "description": "Lists available vaults of a signing provider",
+            "name": "listSigningProviderKeys",
+            "description": "Lists available keys of a signing provider",
             "params": [
                 {
                     "name": "params",
                     "schema": {
-                        "title": "ListSigningProviderVaultsParams",
+                        "title": "ListSigningProviderKeysParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
@@ -1093,21 +1093,115 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "ListSigningProviderVaultsResult",
+                    "title": "ListSigningProviderKeysResult",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "vaults": {
-                            "title": "vaults",
+                        "keys": {
+                            "title": "keys",
                             "type": "array",
                             "items": {
-                                "title": "vaultName",
-                                "type": "string"
+                                "title": "key",
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "title": "id"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "title": "name"
+                                    },
+                                    "publicKey": {
+                                        "type": "string",
+                                        "title": "publicKey"
+                                    }
+                                },
+                                "required": ["id", "name", "publicKey"]
                             },
-                            "description": "The list of signing provider's available vault names."
+                            "description": "The list of signing provider's available keys."
                         }
                     },
-                    "required": ["vaults"]
+                    "required": ["keys"]
+                }
+            }
+        },
+        {
+            "name": "getWallet",
+            "description": "Get a wallet by party ID for the connected user on the current network.",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GetWalletParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "The party ID corresponding to the wallet."
+                            }
+                        },
+                        "required": ["partyId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetWalletResult",
+                    "oneOf": [
+                        {
+                            "$ref": "#/components/schemas/Wallet"
+                        },
+                        {
+                            "$ref": "#/components/schemas/Null"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "changeSigningProvider",
+            "description": "Change signing provider for the specified party",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "changeSigningProviderParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "signingProviderId": {
+                                "title": "signingProviderId",
+                                "type": "string",
+                                "description": "The signing provider ID the party should correspond to."
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "The party ID corresponding to the wallet."
+                            },
+                            "publicKey": {
+                                "title": "publicKey",
+                                "type": "string",
+                                "description": "The key to be used for the party's signing provider"
+                            }
+                        },
+                        "required": [
+                            "signingProviderId",
+                            "partyId",
+                            "publicKey"
+                        ]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/Null"
                 }
             }
         }

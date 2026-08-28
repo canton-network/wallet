@@ -4,32 +4,29 @@
 import { UserId } from '@canton-network/core-wallet-auth'
 import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
 import {
-    Error as SigningError,
     SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import { Logger } from 'pino'
 import { PartyAllocationService } from '../../party-allocation-service.js'
 import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
-import type { WalletAllocator } from '../wallet-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-
-function handleSigningError<T extends object>(result: SigningError | T): T {
-    if ('error' in result) {
-        throw new Error(
-            `Error from signing driver: ${result.error_description}`
-        )
-    }
-    return result
-}
+import { WalletAllocator } from '../wallet-allocation-service.js'
+import { handleSigningProviderError } from '../wallet-allocation-service.js'
 
 export class SecurosysWalletAllocator implements WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
         private partyAllocator: PartyAllocationService,
-        private signingDriver: SigningDriverInterface
+        protected signingDriver: SigningDriverInterface
     ) {}
+
+    async getKeys(userId: UserId) {
+        if (!this.signingDriver) return null
+        const driver = this.signingDriver.controller(userId)
+        return await driver.getKeys().then(handleSigningProviderError)
+    }
 
     async createWallet(
         userId: UserId,
@@ -41,7 +38,7 @@ export class SecurosysWalletAllocator implements WalletAllocator {
 
         const key = await driver
             .createKey({ name: partyHint })
-            .then(handleSigningError)
+            .then(handleSigningProviderError)
 
         const namespace = this.partyAllocator.createFingerprintFromKey(
             key.publicKey
@@ -66,7 +63,7 @@ export class SecurosysWalletAllocator implements WalletAllocator {
                 keyIdentifier: { id: key.id, publicKey: key.publicKey },
                 internalTxId,
             })
-            .then(handleSigningError)
+            .then(handleSigningProviderError)
 
         const network = await this.store.getCurrentNetwork()
         const walletBase: Omit<Wallet, 'status'> = {
@@ -75,6 +72,7 @@ export class SecurosysWalletAllocator implements WalletAllocator {
             namespace,
             signingProviderId: SigningProvider.SECUROSYS,
             networkId: network.id,
+            userId,
             primary,
             publicKey: key.publicKey,
             externalTxId: txId,
@@ -113,7 +111,7 @@ export class SecurosysWalletAllocator implements WalletAllocator {
 
         const { signature, status, metadata } = await driver
             .getTransaction({ txId: existingWallet.externalTxId })
-            .then(handleSigningError)
+            .then(handleSigningProviderError)
 
         let walletUpdate: UpdateWallet = {
             partyId: existingWallet.partyId,
@@ -175,7 +173,7 @@ export class SecurosysWalletAllocator implements WalletAllocator {
         if (status === 'signed') {
             const { signature } = await driver
                 .getTransaction({ txId })
-                .then(handleSigningError)
+                .then(handleSigningProviderError)
             if (!signature) {
                 throw new Error(
                     'Transaction signed but no signature found in result'

@@ -122,6 +122,7 @@ const primaryWallet: Wallet = {
     publicKey: 'wallet-public-key',
     namespace: 'namespace',
     networkId: 'network1',
+    userId: 'user-1',
     rights: [PartyLevelRight.CanActAs],
 }
 
