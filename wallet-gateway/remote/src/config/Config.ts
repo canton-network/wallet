@@ -118,11 +118,7 @@ const bootstrapFromEnv = bootstrapConfigSchema.extend({
 const hashingSchemeSchema = z
     .object({
         version: z
-            .enum([
-                'HASHING_SCHEME_VERSION_UNSPECIFIED',
-                'HASHING_SCHEME_VERSION_V2',
-                'HASHING_SCHEME_VERSION_V3',
-            ])
+            .enum(['HASHING_SCHEME_VERSION_V2', 'HASHING_SCHEME_VERSION_V3'])
             .meta({
                 description:
                     'Hashing scheme version for the ledger. If omitted, defaults to HASHING_SCHEME_VERSION_V3',
