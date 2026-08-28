@@ -67,6 +67,7 @@ export class UserUiAddParty extends UserUiAddOrEditParty {
                 .keySigningProviders=${[SigningProvider.FIREBLOCKS]}
                 .selectedSigningProvider=${this.selectedSigningProvider}
                 .publicKeys=${this.publicKeys}
+                .submitLabel=${'Create party'}
                 ?submitting=${this.submitting}
                 ?publicKeysLoading=${this.publicKeysLoading}
                 @wallet-create=${this.onCreateParty}
