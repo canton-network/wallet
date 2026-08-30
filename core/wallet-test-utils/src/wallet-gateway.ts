@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, Locator, Page, test } from '@playwright/test'
-import { openWalletPicker } from './wallet-picker.js'
+import {
+    openWalletPicker,
+    WALLET_PICKER_MODAL_HOST,
+    walletPickerModalRowByTitle,
+    type WalletPickerSurface,
+} from './wallet-picker.js'
 
 export interface NetworkFormInput {
     id: string
@@ -121,14 +126,13 @@ export class WalletGateway {
                 'the dApp should offer a way to connect a wallet'
             ).toBeVisible()
 
-            const pickerPopup = await openWalletPicker(
-                dapp.dappPage,
-                connectButton
+            const picker = await openWalletPicker(dapp.dappPage, connectButton)
+
+            await this.selectFromWalletPicker(picker, args.customURL)
+
+            const popup = await this.waitForConnectFormPopup(
+                picker.kind === 'popup' ? picker.page : undefined
             )
-
-            await this.selectFromWalletPicker(pickerPopup, args.customURL)
-
-            const popup = await this.waitForConnectFormPopup(pickerPopup)
             const selectNetwork = popup.getByLabel('Select a network')
             await expect(
                 selectNetwork,
@@ -482,23 +486,46 @@ export class WalletGateway {
     }
 
     private async selectFromWalletPicker(
-        popup: Page,
+        picker: WalletPickerSurface,
         customURL?: string
     ): Promise<void> {
-        if (customURL !== undefined) {
-            const customUrlInput = popup.locator('.custom-url-input')
-            await customUrlInput.waitFor({ state: 'visible', timeout: 3000 })
-            await customUrlInput.fill(customURL)
-            await popup.locator('.btn-add').click()
+        const { page, kind } = picker
+
+        if (kind === 'modal') {
+            if (customURL !== undefined) {
+                await walletPickerModalRowByTitle(page, 'Remote Wallet').click()
+                const host = page.locator(WALLET_PICKER_MODAL_HOST)
+                const urlInput = host.getByLabel('Remote Wallet URL')
+                await urlInput.waitFor({ state: 'visible', timeout: 5_000 })
+                await urlInput.fill(customURL)
+                await host.locator('.gateway-connect-button').click()
+                return
+            }
+
+            const firstWallet = page
+                .locator(WALLET_PICKER_MODAL_HOST)
+                .getByRole('button')
+                .filter({ hasNotText: /^Remote Wallet/ })
+                .first()
+            await firstWallet.waitFor({ state: 'visible', timeout: 5_000 })
+            await firstWallet.click()
             return
         }
 
-        const walletCard = popup.locator('.wallet-card').first()
+        if (customURL !== undefined) {
+            const customUrlInput = page.locator('.custom-url-input')
+            await customUrlInput.waitFor({ state: 'visible', timeout: 3000 })
+            await customUrlInput.fill(customURL)
+            await page.locator('.btn-add').click()
+            return
+        }
+
+        const walletCard = page.locator('.wallet-card').first()
         await walletCard.waitFor({ state: 'visible', timeout: 3000 })
         await walletCard.click()
     }
 
-    private async waitForConnectFormPopup(initialPopup: Page): Promise<Page> {
+    private async waitForConnectFormPopup(initialPopup?: Page): Promise<Page> {
         const hasConnectForm = async (page: Page): Promise<boolean> => {
             try {
                 await page
@@ -518,13 +545,10 @@ export class WalletGateway {
             }
         }
 
-        // Pre-fix behavior: picker page itself transitions to connect form.
-        if (await hasConnectForm(initialPopup)) {
+        if (initialPopup && (await hasConnectForm(initialPopup))) {
             return initialPopup
         }
 
-        // New behavior: picker may close and the wallet connect form appears in
-        // a fresh popup. Poll the tracked popup first to avoid races.
         for (let i = 0; i < 20; i++) {
             const popup = this._popup
             if (popup && !popup.isClosed() && (await hasConnectForm(popup))) {

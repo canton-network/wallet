@@ -8,7 +8,7 @@ test('config from json file', async () => {
     const resp = ConfigUtils.loadConfigFile('../test/config.json')
     expect(resp.bootstrap.networks[0].name).toBe('Local (OAuth IDP)')
     expect(resp.bootstrap.networks[0].ledgerApi.baseUrl).toBe(
-        'http://127.0.0.1:5003'
+        'http://127.0.0.1:2975'
     )
     expect(resp.bootstrap.networks[0].auth.clientId).toBe('operator')
     expect(resp.bootstrap.networks[0].auth.scope).toBe(

@@ -76,7 +76,7 @@
                     "clientSecret": "service-account-secret"
                 },
                 "ledgerApi": {
-                    "baseUrl": "http://127.0.0.1:5003"
+                    "baseUrl": "http://127.0.0.1:2975"
                 }
             },
             {
@@ -99,7 +99,7 @@
                     "clientSecret": "admin-client-secret"
                 },
                 "ledgerApi": {
-                    "baseUrl": "http://127.0.0.1:5003"
+                    "baseUrl": "http://127.0.0.1:2975"
                 }
             },
             {
@@ -123,7 +123,7 @@
                     "clientSecret": "admin-client-secret"
                 },
                 "ledgerApi": {
-                    "baseUrl": "http://127.0.0.1:5003"
+                    "baseUrl": "http://127.0.0.1:2975"
                 }
             },
             {
@@ -149,7 +149,7 @@
                     "clientSecret": "admin-client-secret"
                 },
                 "ledgerApi": {
-                    "baseUrl": "http://127.0.0.1:5003"
+                    "baseUrl": "http://127.0.0.1:2975"
                 }
             },
             {

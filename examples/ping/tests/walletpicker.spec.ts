@@ -1,12 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import {
+    expect,
+    openWalletPicker,
+    test,
+    WALLET_PICKER_MODAL_HOST,
+    walletPickerModalHost,
+    walletPickerModalRowByTitle,
+} from '@canton-network/core-wallet-test-utils'
+import type { Page } from '@playwright/test'
 import {
     connectPingDapp,
+    connectWalletGateway,
     createPingDappWalletGateway,
+    expectDappConnected,
     expectDappDisconnected,
+    GATEWAY_NAME,
 } from './ping-test-helpers.js'
 
 test('wallet picker: handling error cases', async ({
@@ -20,51 +30,46 @@ test('wallet picker: handling error cases', async ({
     // 1. Connect via custom wallet API URL and verify connected status.
     await connectPingDapp(wg, dappPage)
 
-    // 2. Logout from the popup and verify disconnected status.
-    await test.step('log out from the popup', async () => {
-        await wg.logoutFromPopup()
+    // Modal connect closes the WG login popup; use dApp disconnect instead of WG logout.
+    await test.step('disconnect from the dApp', async () => {
+        await dappPage.getByTestId('disconnect-wallet').click()
         await expectDappDisconnected(dappPage)
     })
 
-    // 3. Enter an invalid URL, recover via "Try Again", and connect injected.
-    const pickerPopup =
-        await test.step('reopen the wallet picker', async () => {
-            await expect(
-                connectButton,
-                'the dApp should be ready to connect again after logging out'
-            ).toBeEnabled()
+    const picker = await test.step('reopen the wallet picker', async () => {
+        await expect(
+            connectButton,
+            'the dApp should be ready to connect again after logging out'
+        ).toBeEnabled()
+        return openWalletPicker(dappPage, connectButton)
+    })
 
-            const discoverPopupPromise = dappPage.waitForEvent('popup')
-            await connectButton.click()
-            return discoverPopupPromise
-        })
+    expect(picker.kind, 'SDK default picker should be the in-page modal').toBe(
+        'modal'
+    )
 
-    await test.step('an unreachable wallet API URL surfaces a retryable error', async () => {
-        await pickerPopup
-            .getByRole('textbox', { name: 'Wallet API URL' })
-            .fill('thisisnotarealurl')
-        await pickerPopup
-            .getByRole('button', { name: 'Connect', exact: true })
-            .click()
+    const host = walletPickerModalHost(dappPage)
+
+    await test.step('an unreachable wallet API URL surfaces an error in the modal', async () => {
+        await walletPickerModalRowByTitle(dappPage, 'Remote Wallet').click()
+        await host.getByLabel('Remote Wallet URL').fill('thisisnotarealurl')
+        await host.locator('.gateway-connect-button').click()
 
         await expect(
-            pickerPopup.getByRole('button', { name: 'Try Again' }),
-            'failing to reach a wallet API should show retry button'
+            host.locator('.discovery-modal-error[role="alert"]'),
+            'failing to reach a wallet API should show an error alert in the modal'
+        ).toBeVisible({ timeout: 30_000 })
+        await expect(
+            host.getByRole('heading', { name: 'Connect Wallet', level: 2 }),
+            'error path should show the list heading together with the alert'
         ).toBeVisible()
     })
 
-    await test.step('Try Again returns to the picker without the failed entry', async () => {
-        await pickerPopup.getByRole('button', { name: 'Try Again' }).click()
+    await test.step('retry after error connects through the live gateway', async () => {
+        await host.getByLabel('Close modal').click()
+        await expect(dappPage.locator(WALLET_PICKER_MODAL_HOST)).toHaveCount(0)
 
-        await expect(
-            pickerPopup.getByRole('textbox', { name: 'Wallet API URL' }),
-            'Try Again should return to the wallet picker list'
-        ).toBeVisible()
-        await expect(
-            pickerPopup.getByRole('button', {
-                name: 'Connect to thisisnotarealurl',
-            }),
-            'the entry that failed to connect should not be offered again'
-        ).toHaveCount(0)
+        await connectWalletGateway(wg, dappPage)
+        await expectDappConnected(dappPage, GATEWAY_NAME)
     })
 })
