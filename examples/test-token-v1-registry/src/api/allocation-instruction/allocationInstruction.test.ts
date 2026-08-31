@@ -3,7 +3,7 @@
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
 import { expressContext, mock, RequestType } from '../../__test__/mocks'
-import { APIError, emptyChoiceContext } from '../common'
+import { APIError } from '../common'
 import { getAllocationFactory } from './getAllocationFactory'
 
 const { res, next } = expressContext
@@ -16,7 +16,11 @@ vi.mock('../../common/sdk', async () => {
     }
 })
 
-vi.mock('../../common/state', () => mock.state)
+vi.mock('../../common/state', async () => {
+    const { mock: importedMock } = await import('../../__test__/mocks')
+
+    return importedMock.state
+})
 
 vi.mock('@canton-network/core-splice-codegen', () => ({
     TestToken: {
@@ -56,10 +60,17 @@ describe('Allocation Instruction', () => {
         await getAllocationFactory(request, res, next)
 
         expect(mock.sdk.ledger.acsReader.readJsContracts).toHaveBeenCalledOnce()
-        expect(res.json).toHaveBeenCalledWith({
-            factoryId: 'cid',
-            choiceContext: emptyChoiceContext,
-        })
+        expect(res.json).toHaveBeenCalledWith(
+            expect.objectContaining({
+                factoryId: 'cid',
+                choiceContext: expect.objectContaining({
+                    choiceContextData: {},
+                    disclosedContracts: expect.arrayContaining([
+                        expect.objectContaining({ contractId: 'cid' }),
+                    ]),
+                }),
+            })
+        )
     })
 
     it('should return error in case contract creation fails', async () => {
@@ -93,10 +104,17 @@ describe('Allocation Instruction', () => {
 
         await getAllocationFactory(request, res, next)
 
-        expect(res.json).toHaveBeenCalledWith({
-            factoryId: 'cid',
-            choiceContext: emptyChoiceContext,
-        })
+        expect(res.json).toHaveBeenCalledWith(
+            expect.objectContaining({
+                factoryId: 'cid',
+                choiceContext: expect.objectContaining({
+                    choiceContextData: {},
+                    disclosedContracts: expect.arrayContaining([
+                        expect.objectContaining({ contractId: 'cid' }),
+                    ]),
+                }),
+            })
+        )
     })
 
     it('should return factory matching allocation synchronizer id', async () => {
@@ -117,10 +135,17 @@ describe('Allocation Instruction', () => {
 
         await getAllocationFactory(request, res, next)
 
-        expect(res.json).toHaveBeenCalledWith({
-            factoryId: 'cid-2',
-            choiceContext: emptyChoiceContext,
-        })
+        expect(res.json).toHaveBeenCalledWith(
+            expect.objectContaining({
+                factoryId: 'cid-2',
+                choiceContext: expect.objectContaining({
+                    choiceContextData: {},
+                    disclosedContracts: expect.arrayContaining([
+                        expect.objectContaining({ contractId: 'cid-2' }),
+                    ]),
+                }),
+            })
+        )
     })
 
     it('should pass allocation synchronizer id when creating factory contract', async () => {

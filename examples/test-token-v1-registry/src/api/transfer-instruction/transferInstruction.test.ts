@@ -124,11 +124,18 @@ describe('Transfer Instruction', () => {
             expect(
                 mock.sdk.ledger.acsReader.readJsContracts
             ).toHaveBeenCalledOnce()
-            expect(res.json).toHaveBeenCalledWith({
-                factoryId: 'cid',
-                transferKind: 'offer',
-                choiceContext: emptyChoiceContext,
-            })
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    factoryId: 'cid',
+                    transferKind: 'offer',
+                    choiceContext: expect.objectContaining({
+                        choiceContextData: {},
+                        disclosedContracts: expect.arrayContaining([
+                            expect.objectContaining({ contractId: 'cid' }),
+                        ]),
+                    }),
+                })
+            )
         })
 
         it('should return error in case contract creation fails', async () => {
@@ -166,11 +173,18 @@ describe('Transfer Instruction', () => {
 
             await getTransferFactory(request, res, next)
 
-            expect(res.json).toHaveBeenCalledWith({
-                factoryId: 'cid',
-                transferKind: 'offer',
-                choiceContext: emptyChoiceContext,
-            })
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    factoryId: 'cid',
+                    transferKind: 'offer',
+                    choiceContext: expect.objectContaining({
+                        choiceContextData: {},
+                        disclosedContracts: expect.arrayContaining([
+                            expect.objectContaining({ contractId: 'cid' }),
+                        ]),
+                    }),
+                })
+            )
         })
 
         it('should change transfer kind if sender and receiver is equal', async () => {
@@ -186,11 +200,18 @@ describe('Transfer Instruction', () => {
 
             await getTransferFactory(request, res, next)
 
-            expect(res.json).toHaveBeenCalledWith({
-                factoryId: 'cid',
-                transferKind: 'self',
-                choiceContext: emptyChoiceContext,
-            })
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    factoryId: 'cid',
+                    transferKind: 'self',
+                    choiceContext: expect.objectContaining({
+                        choiceContextData: {},
+                        disclosedContracts: expect.arrayContaining([
+                            expect.objectContaining({ contractId: 'cid' }),
+                        ]),
+                    }),
+                })
+            )
 
             vi.clearAllMocks()
 
@@ -204,11 +225,18 @@ describe('Transfer Instruction', () => {
 
             await getTransferFactory(request, res, next)
 
-            expect(res.json).toHaveBeenCalledWith({
-                factoryId: 'cid',
-                transferKind: 'self',
-                choiceContext: emptyChoiceContext,
-            })
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    factoryId: 'cid',
+                    transferKind: 'self',
+                    choiceContext: expect.objectContaining({
+                        choiceContextData: {},
+                        disclosedContracts: expect.arrayContaining([
+                            expect.objectContaining({ contractId: 'cid' }),
+                        ]),
+                    }),
+                })
+            )
         })
 
         it('should set transfer kind overwrite', async () => {
@@ -226,11 +254,18 @@ describe('Transfer Instruction', () => {
 
             await getTransferFactory(request, res, next)
 
-            expect(res.json).toHaveBeenCalledWith({
-                factoryId: 'cid',
-                transferKind: 'direct',
-                choiceContext: emptyChoiceContext,
-            })
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    factoryId: 'cid',
+                    transferKind: 'direct',
+                    choiceContext: expect.objectContaining({
+                        choiceContextData: {},
+                        disclosedContracts: expect.arrayContaining([
+                            expect.objectContaining({ contractId: 'cid' }),
+                        ]),
+                    }),
+                })
+            )
 
             vi.clearAllMocks()
 
@@ -244,11 +279,18 @@ describe('Transfer Instruction', () => {
 
             await getTransferFactory(request, res, next)
 
-            expect(res.json).toHaveBeenCalledWith({
-                factoryId: 'cid',
-                transferKind: 'direct',
-                choiceContext: emptyChoiceContext,
-            })
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    factoryId: 'cid',
+                    transferKind: 'direct',
+                    choiceContext: expect.objectContaining({
+                        choiceContextData: {},
+                        disclosedContracts: expect.arrayContaining([
+                            expect.objectContaining({ contractId: 'cid' }),
+                        ]),
+                    }),
+                })
+            )
         })
 
         it('should return factory matching transfer synchronizer id', async () => {
@@ -272,11 +314,18 @@ describe('Transfer Instruction', () => {
 
             await getTransferFactory(request, res, next)
 
-            expect(res.json).toHaveBeenCalledWith({
-                factoryId: 'cid-2',
-                transferKind: 'offer',
-                choiceContext: emptyChoiceContext,
-            })
+            expect(res.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    factoryId: 'cid-2',
+                    transferKind: 'offer',
+                    choiceContext: expect.objectContaining({
+                        choiceContextData: {},
+                        disclosedContracts: expect.arrayContaining([
+                            expect.objectContaining({ contractId: 'cid-2' }),
+                        ]),
+                    }),
+                })
+            )
         })
 
         it('should pass transfer synchronizer id when creating factory contract', async () => {

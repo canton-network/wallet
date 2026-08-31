@@ -53,7 +53,7 @@ await startRegistry({
         keys: tokenAdmin.keyPair,
     },
     synchronizerIds: {
-        allocationInstruction: synchronizers.globalSynchronizerId,
+        allocationInstruction: synchronizers.appSynchronizerId,
         transferInstruction: synchronizers.appSynchronizerId,
     },
     port: TEST_TOKEN_REGISTRY_PORT,
@@ -62,7 +62,7 @@ await startRegistry({
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)
-// Steps 5a–5e: TokenAdmin self-mints Token, offers to Bob via
+// Steps 5a–5e: TokenAdmin self-mints TestToken, offers to Bob via
 //             TransferFactory_Transfer; Bob accepts via
 //             TransferInstruction_Accept — all single-party submissions
 //             (the TokenRules were created by the registry on start-up)

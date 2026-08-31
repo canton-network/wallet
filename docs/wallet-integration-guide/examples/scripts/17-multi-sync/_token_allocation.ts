@@ -55,7 +55,7 @@ export async function allocateTokenForBob(
             },
             asset,
             inputUtxos: [tokenHolding.contractId],
-            requestedAt: new Date().toISOString(),
+            requestedAt: new Date(Date.now() - 5).toISOString(),
         })
 
     await bobSdk.ledger

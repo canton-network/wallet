@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TestToken } from '@canton-network/core-splice-codegen'
-import { APIError, emptyChoiceContext } from '../common'
+import { APIError } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { RegistryState } from '../../common/state'
@@ -24,25 +24,31 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
 
-    // multi-sync mode
-    if (RegistryState.instance.synchronizerIds.allocationInstruction) {
-        const syncFactory = fetchedFactories.find(
-            (factory) =>
-                factory.synchronizerId ===
-                RegistryState.instance.synchronizerIds.allocationInstruction
-        )
-        if (syncFactory) {
-            res.json({
-                factoryId: syncFactory.contractId,
-                choiceContext: emptyChoiceContext,
-            })
-            return
-        }
-        // no multi-sync mode
-    } else if (fetchedFactories[0]) {
+    const foundFactory = RegistryState.instance.synchronizerIds
+        .allocationInstruction
+        ? // multi-sync mode
+          fetchedFactories.find(
+              (factory) =>
+                  factory.synchronizerId ===
+                  RegistryState.instance.synchronizerIds.allocationInstruction
+          )
+        : // no multi-sync mode
+          fetchedFactories[0]
+
+    if (foundFactory) {
         res.json({
-            factoryId: fetchedFactories[0].contractId,
-            choiceContext: emptyChoiceContext,
+            factoryId: foundFactory.contractId,
+            choiceContext: {
+                choiceContextData: {},
+                disclosedContracts: [
+                    {
+                        templateId: foundFactory.templateId,
+                        contractId: foundFactory.contractId,
+                        createdEventBlob: foundFactory.createdEventBlob ?? '',
+                        synchronizerId: foundFactory.synchronizerId,
+                    },
+                ],
+            },
         })
         return
     }
@@ -76,25 +82,32 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
 
-    // multi-sync mode
-    if (RegistryState.instance.synchronizerIds.allocationInstruction) {
-        const syncFactory = newFactoryContracts.find(
-            (factory) =>
-                factory.synchronizerId ===
-                RegistryState.instance.synchronizerIds.allocationInstruction
-        )
-        if (syncFactory) {
-            res.json({
-                factoryId: syncFactory.contractId,
-                choiceContext: emptyChoiceContext,
-            })
-            return
-        }
-        // no multi-sync mode
-    } else if (newFactoryContracts[0]) {
+    const newFactoryFound = RegistryState.instance.synchronizerIds
+        .allocationInstruction
+        ? // multi-sync mode
+          newFactoryContracts.find(
+              (factory) =>
+                  factory.synchronizerId ===
+                  RegistryState.instance.synchronizerIds.allocationInstruction
+          )
+        : // no multi-sync mode
+          newFactoryContracts[0]
+
+    if (newFactoryFound) {
         res.json({
-            factoryId: newFactoryContracts[0].contractId,
-            choiceContext: emptyChoiceContext,
+            factoryId: newFactoryFound.contractId,
+            choiceContext: {
+                choiceContextData: {},
+                disclosedContracts: [
+                    {
+                        templateId: newFactoryFound.templateId,
+                        contractId: newFactoryFound.contractId,
+                        createdEventBlob:
+                            newFactoryFound.createdEventBlob ?? '',
+                        synchronizerId: newFactoryFound.synchronizerId,
+                    },
+                ],
+            },
         })
         return
     }

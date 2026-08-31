@@ -3,7 +3,7 @@
 
 import { TestToken } from '@canton-network/core-splice-codegen'
 import z from 'zod'
-import { APIError, emptyChoiceContext } from '../common'
+import { APIError } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { RegistryState } from '../../common/state'
@@ -56,28 +56,32 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
 
-    // multi-sync mode
-    if (RegistryState.instance.synchronizerIds.transferInstruction) {
-        const syncFactory = fetchedFactories.find(
-            (factory) =>
-                factory.synchronizerId ===
-                RegistryState.instance.synchronizerIds.transferInstruction
-        )
-        if (syncFactory) {
-            res.json({
-                factoryId: syncFactory.contractId,
-                transferKind,
-                choiceContext: emptyChoiceContext,
-            })
-            return
-        }
-    }
+    const foundFactory = RegistryState.instance.synchronizerIds
+        .transferInstruction
+        ? // multi-sync mode
+          fetchedFactories.find(
+              (factory) =>
+                  factory.synchronizerId ===
+                  RegistryState.instance.synchronizerIds.transferInstruction
+          )
+        : // no multi-sync mode
+          fetchedFactories[0]
 
-    if (fetchedFactories[0]) {
+    if (foundFactory) {
         res.json({
-            factoryId: fetchedFactories[0].contractId,
+            factoryId: foundFactory.contractId,
             transferKind,
-            choiceContext: emptyChoiceContext,
+            choiceContext: {
+                choiceContextData: {},
+                disclosedContracts: [
+                    {
+                        templateId: foundFactory.templateId,
+                        contractId: foundFactory.contractId,
+                        createdEventBlob: foundFactory.createdEventBlob ?? '',
+                        synchronizerId: foundFactory.synchronizerId,
+                    },
+                ],
+            },
         })
         return
     }
@@ -103,28 +107,49 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
         })
 
     // fetch the newly created contract id
-    const factoryContract = (
+    const newFactoryContracts =
         await RegistryState.instance.sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
             parties: [RegistryState.instance.operator.party],
             offset: executionResult.completionOffset,
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
-    )[0]
 
-    if (!factoryContract) {
-        next(
-            new APIError(
-                500,
-                `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`
-            )
-        )
+    const newFactoryFound = RegistryState.instance.synchronizerIds
+        .allocationInstruction
+        ? // multi-sync mode
+          newFactoryContracts.find(
+              (factory) =>
+                  factory.synchronizerId ===
+                  RegistryState.instance.synchronizerIds.allocationInstruction
+          )
+        : // no multi-sync mode
+          newFactoryContracts[0]
+
+    if (newFactoryFound) {
+        res.json({
+            factoryId: newFactoryFound.contractId,
+            transferKind,
+            choiceContext: {
+                choiceContextData: {},
+                disclosedContracts: [
+                    {
+                        templateId: newFactoryFound.templateId,
+                        contractId: newFactoryFound.contractId,
+                        createdEventBlob:
+                            newFactoryFound.createdEventBlob ?? '',
+                        synchronizerId: newFactoryFound.synchronizerId,
+                    },
+                ],
+            },
+        })
         return
     }
 
-    res.json({
-        factoryId: factoryContract.contractId,
-        transferKind,
-        choiceContext: emptyChoiceContext,
-    })
+    next(
+        new APIError(
+            500,
+            `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`
+        )
+    )
 }

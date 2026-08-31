@@ -45,8 +45,9 @@ export async function mintAndTransferTokenToBob(
     // The TestToken registry URL comes from the SDK's own configured registries
     // (`token.find` resolves assets from the registries passed to `SDK.create`),
     // so it no longer needs to be threaded through the setup object.
-    const { registryUrl: testTokenRegistryUrl } =
-        await tokenAdminSdk.token.find(TestToken.DAR.TestTokenID)
+    const { registryUrl } = await tokenAdminSdk.token.find(
+        TestToken.DAR.TestTokenID
+    )
 
     await tokenAdminSdk.ledger
         .prepare({
@@ -83,7 +84,7 @@ export async function mintAndTransferTokenToBob(
             recipient: bob.partyId,
             amount: BOB_TOKEN_MINT_AMOUNT,
             instrumentId: TestToken.DAR.TestTokenID,
-            registryUrl: testTokenRegistryUrl,
+            registryUrl,
             inputUtxos: [adminTokenCid],
         })
 
@@ -111,7 +112,7 @@ export async function mintAndTransferTokenToBob(
     const [acceptCommand, acceptDisclosed] = await bobSdk.token.transfer.accept(
         {
             transferInstructionCid: transferOfferCid,
-            registryUrl: testTokenRegistryUrl,
+            registryUrl,
         }
     )
 
