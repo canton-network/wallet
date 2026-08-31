@@ -45,7 +45,7 @@ export class ApproveUi extends BaseElement {
 
     @state() accessor externalTxId: string | null = null
     @state() accessor failureReason: string | null = null
-    @state() accessor isSigning = true
+    @state() accessor isSigning = false
     private pollTimer: ReturnType<typeof setTimeout> | null = null
     private pollDelay = 3000
     private polling = false
@@ -54,6 +54,7 @@ export class ApproveUi extends BaseElement {
         super.connectedCallback()
         const url = new URL(window.location.href)
         this.transactionId = url.searchParams.get('transactionId') || ''
+        document.addEventListener('visibilitychange', this.onVisibilityChange)
         void this.updateState()
     }
 
@@ -103,8 +104,6 @@ export class ApproveUi extends BaseElement {
         this.externalTxId = result.externalTxId || null
         this.failureReason = result.failureReason || null
 
-        this.syncPolling()
-
         try {
             this.txParsed = parsePreparedTransaction(this.tx)
         } catch (error) {
@@ -127,6 +126,8 @@ export class ApproveUi extends BaseElement {
         this.walletCapabilityMessage = submitCapable
             ? null
             : 'The selected wallet is read-only for submission (no CanActAs/CanExecuteAs right).'
+
+        this.syncPolling()
     }
 
     private onVisibilityChange = () => {
@@ -138,7 +139,7 @@ export class ApproveUi extends BaseElement {
         }
     }
 
-    private async syncPolling() {
+    private syncPolling() {
         if (this.status === 'awaiting-signature' && !document.hidden) {
             this.startPolling()
         } else {
@@ -146,12 +147,12 @@ export class ApproveUi extends BaseElement {
         }
     }
 
-    private async startPolling() {
+    private startPolling() {
         if (this.pollTimer) return
         this.pollTimer = setTimeout(() => void this.poll(), this.pollDelay)
     }
 
-    private async stopPolling() {
+    private stopPolling() {
         if (this.pollTimer) {
             clearTimeout(this.pollTimer)
             this.pollTimer = null
@@ -198,6 +199,11 @@ export class ApproveUi extends BaseElement {
 
     private async handleSign() {
         if (!this.canSubmit) {
+            showToast(
+                'Read-only wallet',
+                'This wallet can read but not submit transactions',
+                'error'
+            )
             return
         }
         this.isSigning = true
@@ -248,12 +254,12 @@ export class ApproveUi extends BaseElement {
             showToast('', 'Activity executed successfully', 'success')
             this.closeOrGoToList()
         } catch (err) {
+            console.error(err)
             handleErrorToast(err, { message: 'Error submitting transaction' })
             this.updateState()
         } finally {
             this.isApproving = false
         }
-        throw new Error('not implemented yet')
     }
 
     private async handleReject() {
@@ -283,76 +289,19 @@ export class ApproveUi extends BaseElement {
         }
     }
 
-    private async handleApprove() {
-        if (!this.canSubmit) {
-            showToast(
-                'Read-only wallet',
-                'This wallet can read but cannot submit transactions. Switch to a wallet with CanActAs or CanExecuteAs.',
-                'error'
-            )
-            return
-        }
-        this.isApproving = true
-
-        try {
-            const currentOrigin = await detectCurrentOrigin()
-            const userClient = await createUserClient(
-                await stateManager.accessToken.get(currentOrigin)
-            )
-            const result: SignResult = await userClient.request({
-                method: 'sign',
-                params: {
-                    transactionId: this.transactionId,
-                    partyId: this.partyId,
-                },
-            })
-
-            if (result.status === 'pending') {
-                showToast(
-                    'Activity pending',
-                    'Complete signing in your external provider, then click Approve to finish.',
-                    'info'
-                )
-                await this.updateState()
-                return
-            }
-
-            if (result.status === 'signed') {
-                await userClient.request({
-                    method: 'execute',
-                    params: {
-                        signature: result.signature,
-                        signedBy: result.signedBy,
-                        transactionId: this.transactionId,
-                        partyId: this.partyId,
-                    },
-                })
-
-                showToast('', 'Activity executed successfully', 'success')
-                this.closeOrGoToList()
-                return
-            }
-
-            const message =
-                result.status === 'rejected'
-                    ? 'Activity was rejected'
-                    : 'Activity failed'
-            showToast('', message, 'error')
-            await this.updateState()
-        } catch (err) {
-            console.error(err)
-            handleErrorToast(err, { message: 'Error executing activity' })
-        } finally {
-            this.isApproving = false
-        }
-    }
-
     protected render() {
         return html`
             ${
                 this.walletCapabilityMessage
                     ? html`<div class="alert alert-warning" role="alert">
                           ${this.walletCapabilityMessage}
+                      </div>`
+                    : ''
+            }
+            ${
+                this.failureReason
+                    ? html`<div class="alert alert-warning" role="alert">
+                          ${this.failureReason}
                       </div>`
                     : ''
             }
@@ -365,11 +314,13 @@ export class ApproveUi extends BaseElement {
                 .createdAt=${this.createdAt}
                 .signedAt=${this.signedAt}
                 .origin=${this.origin}
+                .externalTxId=${this.externalTxId}
                 .backHref=${toRelHref(ACTIVITIES_PAGE_REDIRECT)}
                 .isApproving=${this.isApproving}
                 .isDeleting=${this.isDeleting}
+                .isSigning=${this.isSigning}
                 .disabled=${this.disabled}
-                @transaction-approve=${this.handleApprove}
+                @transaction-approve=${this.handleApproveAction}
                 @transaction-delete=${this.handleReject}
             ></wg-transaction-detail>
         `
