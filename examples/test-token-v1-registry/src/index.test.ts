@@ -68,6 +68,10 @@ vi.mock('@canton-network/core-splice-codegen', () => ({
     },
 }))
 
+vi.mock('./common/defaultSdk', () => ({
+    default: {},
+}))
+
 describe('entry file', () => {
     afterEach(() => {
         vi.clearAllMocks()
