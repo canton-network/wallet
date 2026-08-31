@@ -772,12 +772,7 @@
                                 "type": "string"
                             }
                         },
-                        "required": [
-                            "transactionId",
-                            "signature",
-                            "partyId",
-                            "signedBy"
-                        ]
+                        "required": ["transactionId", "partyId"]
                     }
                 }
             ],

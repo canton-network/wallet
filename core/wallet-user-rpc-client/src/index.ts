@@ -565,10 +565,10 @@ export interface DeleteMessageToSignParams {
     messageId: MessageId
 }
 export interface ExecuteParams {
-    signature: Signature
+    signature?: Signature
     partyId: PartyId
     transactionId: TransactionId
-    signedBy: SignedBy
+    signedBy?: SignedBy
 }
 export interface AddSessionParams {
     origin: Origin

@@ -230,6 +230,29 @@ export class ApproveUi extends BaseElement {
     }
 
     private async handleExecute() {
+        this.isApproving = true
+
+        try {
+            const currentOrigin = await detectCurrentOrigin()
+            const userClient = await createUserClient(
+                await stateManager.accessToken.get(currentOrigin)
+            )
+            await userClient.request({
+                method: 'execute',
+                params: {
+                    transactionId: this.transactionId,
+                    partyId: this.partyId,
+                },
+            })
+
+            showToast('', 'Activity executed successfully', 'success')
+            this.closeOrGoToList()
+        } catch (err) {
+            handleErrorToast(err, { message: 'Error submitting transaction' })
+            this.updateState()
+        } finally {
+            this.isApproving = false
+        }
         throw new Error('not implemented yet')
     }
 
