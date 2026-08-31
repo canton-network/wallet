@@ -256,7 +256,7 @@ export class ApproveUi extends BaseElement {
         } catch (err) {
             console.error(err)
             handleErrorToast(err, { message: 'Error submitting transaction' })
-            this.updateState()
+            await this.updateState()
         } finally {
             this.isApproving = false
         }
