@@ -363,7 +363,7 @@ export class TransactionService {
             signingResult.status === 'pending' ? 'awaiting-signature' : 'failed'
         const failureReason =
             status === 'failed'
-                ? `Signing provider returned status; ${signingResult.status}`
+                ? `Signing provider returned status: ${signingResult.status}`
                 : undefined
 
         await this.store.setTransactionStatus(tx.id, status, {

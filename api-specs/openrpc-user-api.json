@@ -1244,7 +1244,7 @@
             "GetTransactionStatusResult": {
                 "type": "object",
                 "additionalProperties": false,
-                "description:": "",
+                "description:": "Represents status of transaction from the store.",
                 "properties": {
                     "status": {
                         "title": "status",
