@@ -4,11 +4,6 @@
 import type { Logger } from 'pino'
 import type { MultiSyncSetup } from './_setup.js'
 import { TestToken } from '@canton-network/core-splice-codegen'
-import {
-    AllocationFactory_Allocate,
-    Holding,
-} from '@canton-network/core-token-standard'
-import { ContractId } from '@canton-network/core-types'
 
 export async function allocateTokenForBob(
     setup: MultiSyncSetup,
@@ -18,9 +13,7 @@ export async function allocateTokenForBob(
 
     // Resolve the TestToken registry URL from the SDK's configured registries
     // (`token.find`) rather than passing it in through the setup object.
-    const { registryUrl: testTokenRegistryUrl } = await bobSdk.token.find(
-        TestToken.DAR.TestTokenID
-    )
+    const asset = await bobSdk.token.find(TestToken.DAR.TestTokenID)
 
     const pendingRequests = await bobSdk.token.allocation.request.pending(
         bob.partyId
@@ -53,33 +46,23 @@ export async function allocateTokenForBob(
     if (!appTokenRules)
         throw new Error('TokenRules not found on app synchronizer')
 
-    const command = TestToken.commands.exercise.rules.allocation.allocate({
-        contractId: appTokenRules.contractId,
-        choiceArgument: {
-            expectedAdmin: tokenAdmin.partyId,
-            allocation: {
+    const [command, disclosedContracts] =
+        await tokenAdminSdk.token.allocation.instruction.create({
+            allocationSpecification: {
                 settlement: requestView.settlement,
                 transferLegId: legId,
                 transferLeg: requestView.transferLegs[legId],
             },
-            requestedAt: new Date(Date.now()).toISOString(),
-            inputHoldingCids: [tokenHolding.contractId as ContractId<Holding>],
-            extraArgs: {
-                meta: {
-                    values: {},
-                },
-                context: {
-                    values: {},
-                },
-            },
-        } satisfies AllocationFactory_Allocate,
-    })
+            asset,
+            inputUtxos: [tokenHolding.contractId],
+            requestedAt: new Date().toISOString(),
+        })
 
     await bobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [command],
-            disclosedContracts: [],
+            disclosedContracts,
             synchronizerId: appSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)
