@@ -5,7 +5,6 @@ import { describe, vi, it, expect, beforeEach } from 'vitest'
 import { expressContext, mock, RequestType } from '../../__test__/mocks'
 import { APIError, emptyChoiceContext } from '../common'
 import { getAllocationFactory } from './getAllocationFactory'
-import { synchronizerId } from '../../common/synchronizer'
 
 const { res, next } = expressContext
 
@@ -17,14 +16,7 @@ vi.mock('../../common/sdk', async () => {
     }
 })
 
-vi.mock('../../common/operator', () => ({
-    operator: {
-        party: 'party',
-        keys: {
-            privateKey: 'privateKey',
-        },
-    },
-}))
+vi.mock('../../common/state', () => mock.state)
 
 vi.mock('@canton-network/core-splice-codegen', () => ({
     TestToken: {
@@ -49,8 +41,7 @@ vi.mock('@canton-network/core-splice-codegen', () => ({
 describe('Allocation Instruction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        synchronizerId.transferInstruction = ''
-        synchronizerId.allocationInstruction = ''
+        mock.state.RegistryState.instance.reset()
     })
 
     it('should successfully return factory contract from acs reader', async () => {
@@ -111,7 +102,8 @@ describe('Allocation Instruction', () => {
     it('should return factory matching allocation synchronizer id', async () => {
         const request = {} as RequestType<typeof getAllocationFactory>
 
-        synchronizerId.allocationInstruction = 'allocation-sync-id'
+        mock.state.RegistryState.instance.synchronizerIds.allocationInstruction =
+            'allocation-sync-id'
         mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
             {
                 contractId: 'cid-1',
@@ -134,7 +126,8 @@ describe('Allocation Instruction', () => {
     it('should pass allocation synchronizer id when creating factory contract', async () => {
         const request = {} as RequestType<typeof getAllocationFactory>
 
-        synchronizerId.allocationInstruction = 'allocation-sync-id'
+        mock.state.RegistryState.instance.synchronizerIds.allocationInstruction =
+            'allocation-sync-id'
         mock.sdk.ledger.acsReader.readJsContracts
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([

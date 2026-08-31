@@ -8,7 +8,6 @@ import { getTransferInstructionWithdrawContext } from './getTransferInstructionW
 import { getTransferFactory } from './getTransferFactory'
 import { APIError, emptyChoiceContext } from '../common'
 import { expressContext, mock, RequestType } from '../../__test__/mocks'
-import { synchronizerId } from '../../common/synchronizer'
 
 const { res, next } = expressContext
 
@@ -20,14 +19,11 @@ vi.mock('../../common/sdk', async () => {
     }
 })
 
-vi.mock('../../common/operator', () => ({
-    operator: {
-        party: 'party',
-        keys: {
-            privateKey: 'privateKey',
-        },
-    },
-}))
+vi.mock('../../common/state', async () => {
+    const { mock: importedMock } = await import('../../__test__/mocks')
+
+    return importedMock.state
+})
 
 vi.mock('@canton-network/core-splice-codegen', () => ({
     TestToken: {
@@ -52,8 +48,7 @@ vi.mock('@canton-network/core-splice-codegen', () => ({
 describe('Transfer Instruction', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        synchronizerId.transferInstruction = ''
-        synchronizerId.allocationInstruction = ''
+        mock.state.RegistryState.instance.reset()
     })
 
     it('should get accept choice context', () => {
@@ -94,7 +89,9 @@ describe('Transfer Instruction', () => {
         }) =>
             ({
                 body: {
-                    choiceArguments,
+                    choiceArguments: {
+                        transfer: choiceArguments,
+                    },
                     excludeDebugFields: false,
                 },
             }) as unknown as RequestType<typeof getTransferFactory>
@@ -260,7 +257,8 @@ describe('Transfer Instruction', () => {
                 receiver: 'r',
             })
 
-            synchronizerId.transferInstruction = 'transfer-sync-id'
+            mock.state.RegistryState.instance.synchronizerIds.transferInstruction =
+                'transfer-sync-id'
             mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
                 {
                     contractId: 'cid-1',
@@ -287,7 +285,8 @@ describe('Transfer Instruction', () => {
                 receiver: 'r',
             })
 
-            synchronizerId.transferInstruction = 'transfer-sync-id'
+            mock.state.RegistryState.instance.synchronizerIds.transferInstruction =
+                'transfer-sync-id'
             mock.sdk.ledger.acsReader.readJsContracts
                 .mockResolvedValueOnce([])
                 .mockResolvedValueOnce([

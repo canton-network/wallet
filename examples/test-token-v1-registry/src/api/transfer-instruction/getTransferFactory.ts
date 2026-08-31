@@ -2,13 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TestToken } from '@canton-network/core-splice-codegen'
-import sdk from '../../common/sdk'
-import { operator } from '../../common/operator'
 import z from 'zod'
 import { APIError, emptyChoiceContext } from '../common'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { synchronizerId } from '../../common/synchronizer'
+import { RegistryState } from '../../common/state'
 
 export const getTransferFactoryChoiceArgumentsSchema = z.looseObject({
     transfer: z.looseObject({
@@ -50,26 +48,20 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
     const isToSelf = transfer.sender === transfer.receiver
     const transferKind = transfer.transferKind ?? (isToSelf ? 'self' : 'offer')
 
-    console.log('BEFORE READING', {
-        filterByParty: true,
-        parties: [operator.party],
-        templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
-    })
-
     // fetch the factory contract (if existing)...
-    const fetchedFactories = await sdk.ledger.acsReader.readJsContracts({
-        filterByParty: true,
-        parties: [operator.party],
-        templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
-    })
-
-    console.log('NOT LOGGING HERE')
+    const fetchedFactories =
+        await RegistryState.instance.sdk.ledger.acsReader.readJsContracts({
+            filterByParty: true,
+            parties: [RegistryState.instance.operator.party],
+            templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
+        })
 
     // multi-sync mode
-    if (synchronizerId.transferInstruction) {
+    if (RegistryState.instance.synchronizerIds.transferInstruction) {
         const syncFactory = fetchedFactories.find(
             (factory) =>
-                factory.synchronizerId === synchronizerId.transferInstruction
+                factory.synchronizerId ===
+                RegistryState.instance.synchronizerIds.transferInstruction
         )
         if (syncFactory) {
             res.json({
@@ -91,26 +83,30 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
     }
 
     // ...and create one otherwise
-    const executionResult = await sdk.ledger
+    const executionResult = await RegistryState.instance.sdk.ledger
         .prepare({
-            partyId: operator.party,
+            partyId: RegistryState.instance.operator.party,
             commands: TestToken.commands.create.rules({
-                admin: operator.party,
+                admin: RegistryState.instance.operator.party,
             }),
-            ...(synchronizerId.transferInstruction
-                ? { synchronizerId: synchronizerId.transferInstruction }
+            ...(RegistryState.instance.synchronizerIds.transferInstruction
+                ? {
+                      synchronizerId:
+                          RegistryState.instance.synchronizerIds
+                              .transferInstruction,
+                  }
                 : {}),
         })
-        .sign(operator.keys.privateKey)
+        .sign(RegistryState.instance.operator.keys.privateKey)
         .execute({
-            partyId: operator.party,
+            partyId: RegistryState.instance.operator.party,
         })
 
     // fetch the newly created contract id
     const factoryContract = (
-        await sdk.ledger.acsReader.readJsContracts({
+        await RegistryState.instance.sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
-            parties: [operator.party],
+            parties: [RegistryState.instance.operator.party],
             offset: executionResult.completionOffset,
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })

@@ -37,6 +37,66 @@ const sdk = {
     },
 }
 
+const instantiate = vi.fn().mockImplementation(() => {
+    state.RegistryState.instance = {
+        reset,
+        port: 5634,
+        synchronizerIds: {
+            transferInstruction: 'transferInstruction',
+            allocationInstruction: 'allocationInstruction',
+        },
+        operator: {
+            party: 'some-party',
+            keys: {
+                publicKey: 'publicKey',
+                privateKey: 'privateKey',
+            },
+        },
+        sdk,
+    }
+})
+const reset = vi.fn().mockImplementation(() => {
+    state.RegistryState.instance = {
+        reset,
+        port: 5634,
+        synchronizerIds: {
+            transferInstruction: '',
+            allocationInstruction: '',
+        },
+        operator: {
+            party: '',
+            keys: {
+                publicKey: '',
+                privateKey: '',
+            },
+        },
+        sdk,
+    }
+})
+
+const state = {
+    RegistryState: {
+        instantiate,
+        instance: {
+            reset,
+            port: 5634,
+            synchronizerIds: {
+                transferInstruction: '',
+                allocationInstruction: '',
+            },
+            operator: {
+                party: '',
+                keys: {
+                    publicKey: '',
+                    privateKey: '',
+                },
+            },
+            sdk,
+        },
+    },
+    defaultConfig: {},
+}
+
 const req = {
     params: {},
     query: {},
@@ -58,6 +118,7 @@ export const mock = {
     sign,
     execute,
     create,
+    state,
 }
 
 export type RequestType<

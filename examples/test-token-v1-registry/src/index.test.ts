@@ -3,6 +3,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { stopRegistry } from '.'
+import { mock } from './__test__/mocks'
 
 const mocks = vi.hoisted(() => {
     const use = vi.fn().mockReturnThis()
@@ -17,7 +18,6 @@ const mocks = vi.hoisted(() => {
         listen,
     }))
 
-    const initOperatorParty = vi.fn()
     const vetDar = vi.fn()
 
     return {
@@ -26,9 +26,14 @@ const mocks = vi.hoisted(() => {
         listen,
         json,
         expressFactory,
-        initOperatorParty,
         vetDar,
     }
+})
+
+vi.mock('./common/state', async () => {
+    const { mock: importedMock } = await import('./__test__/mocks')
+
+    return importedMock.state
 })
 
 vi.mock('express', () => {
@@ -38,20 +43,6 @@ vi.mock('express', () => {
         default: defaultFn,
     }
 })
-
-vi.mock('./common/operator', () => ({
-    initOperatorParty: mocks.initOperatorParty,
-    operator: {
-        party: 'operator-party',
-        keys: {
-            privateKey: 'operator-private-key',
-        },
-    },
-}))
-
-vi.mock('./common/sdk', () => ({
-    default: {},
-}))
 
 vi.mock('./api/metadata/index.js', () => ({
     default: 'metadataRouter',
@@ -82,17 +73,24 @@ describe('entry file', () => {
         vi.clearAllMocks()
     })
 
-    it("shouldn't do anything", async () => {
+    it("shouldn't do anything when stopRegistry is called without startRegistry", async () => {
         stopRegistry()
+        expect(mock.state.RegistryState.instance.reset).not.toHaveBeenCalled()
         expect(mocks.close).not.toHaveBeenCalled()
     })
 
     it('should initialize the app and start listening', async () => {
         const { startRegistry } = await import('.')
 
-        await startRegistry()
+        await startRegistry({
+            port: 1111,
+        })
 
-        expect(mocks.initOperatorParty).toHaveBeenCalledOnce()
+        expect(mock.state.RegistryState.instantiate).toHaveBeenCalledOnce()
+        expect(mock.state.RegistryState.instantiate).toHaveBeenCalledWith({
+            port: 1111,
+        })
+
         expect(mocks.json).toHaveBeenCalledOnce()
         expect(mocks.use).toHaveBeenCalledTimes(6)
         expect(mocks.listen).toHaveBeenCalledOnce()
@@ -109,6 +107,31 @@ describe('entry file', () => {
 
         stopRegistry()
 
+        expect(mock.state.RegistryState.instance.reset).toHaveBeenCalledOnce()
         expect(mocks.close).toHaveBeenCalledOnce()
+    })
+
+    it('should pass empty config when no config is provided', async () => {
+        const { startRegistry } = await import('.')
+
+        await startRegistry()
+
+        expect(mock.state.RegistryState.instantiate).toHaveBeenCalledWith({})
+    })
+
+    it('should setup middleware in correct order', async () => {
+        const { startRegistry } = await import('.')
+
+        await startRegistry()
+
+        const callOrder = mocks.use.mock.calls
+            .map((call) => call[0])
+            .filter((arg) => arg !== undefined)
+        expect(callOrder.length).toBe(5)
+        expect(callOrder[0]).toBe('metadataRouter')
+        expect(callOrder[1]).toBe('transferInstructionRouter')
+        expect(callOrder[2]).toBe('allocationRouter')
+        expect(callOrder[3]).toBe('allocationInstructionRouter')
+        expect(typeof callOrder[4]).toBe('function') // error middleware
     })
 })

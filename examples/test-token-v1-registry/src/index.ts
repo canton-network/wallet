@@ -6,7 +6,6 @@ import allocationAPIRouter from './api/allocation/index.js'
 import { APIError } from './api/common'
 import metadataAPIRouter from './api/metadata/index.js'
 import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
-import { initOperatorParty, operator } from './common/operator'
 import express, {
     ErrorRequestHandler,
     NextFunction,
@@ -14,41 +13,24 @@ import express, {
     Response,
 } from 'express'
 import { TestToken } from '@canton-network/core-splice-codegen'
-import sdk from './common/sdk'
+import defaultSdk from './common/defaultSdk.js'
 import { Server } from 'http'
-import {
-    assignSynchronizerIds,
-    resetSynchronizerIds,
-} from './common/synchronizer.js'
-import { SDKInterface } from '@canton-network/wallet-sdk'
+import { RegistryConfig, RegistryState, defaultConfig } from './common/state.js'
 
-export type RegistryConfig = Partial<{
-    operator: typeof operator
-    synchronizerIds: {
-        transferInstruction: string
-        allocationInstruction: string
-    }
-    port: number
-    sdk: SDKInterface
-}>
+export { RegistryState, defaultConfig, type RegistryConfig }
 
 let server: Server
 
-export const defaultPort = 5634
-
-export const startRegistry = async (config?: RegistryConfig) => {
+export const startRegistry = async (config?: Partial<RegistryConfig>) => {
     const app = express()
 
-    await initOperatorParty(config?.operator)
-    if (config?.synchronizerIds) {
-        assignSynchronizerIds(config.synchronizerIds)
-    }
+    await RegistryState.instantiate(config ?? {})
 
     /**
      * @customize The registry shouldn't be responsible for vetting daml files. We're doing this for development purposes only. Feel free to remove this when constructing your own token.
      */
     if (process.env.NODE_ENV === 'development')
-        await TestToken.utils.vetDar(sdk)
+        await TestToken.utils.vetDar(defaultSdk)
 
     const errorMiddleware: ErrorRequestHandler = (
         error: Error,
@@ -66,8 +48,6 @@ export const startRegistry = async (config?: RegistryConfig) => {
         res.status(500).send({ ...error, stack: error.stack })
     }
 
-    const port = config?.port ?? defaultPort
-
     server = app
         .use(express.json())
         .use(metadataAPIRouter)
@@ -75,14 +55,16 @@ export const startRegistry = async (config?: RegistryConfig) => {
         .use(allocationAPIRouter)
         .use(allocationInstructionAPIRouter)
         .use(errorMiddleware)
-        .listen(port, () =>
-            console.info(`api listening on http://localhost:${port}`)
+        .listen(RegistryState.instance.port, () =>
+            console.info(
+                `api listening on http://localhost:${RegistryState.instance.port}`
+            )
         )
 }
 
 export const stopRegistry = () => {
     if (!server) return
-    resetSynchronizerIds()
+    RegistryState.instance.reset()
     server.close()
 }
 

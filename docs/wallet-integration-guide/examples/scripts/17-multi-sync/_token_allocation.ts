@@ -4,6 +4,11 @@
 import type { Logger } from 'pino'
 import type { MultiSyncSetup } from './_setup.js'
 import { TestToken } from '@canton-network/core-splice-codegen'
+import {
+    AllocationFactory_Allocate,
+    Holding,
+} from '@canton-network/core-token-standard'
+import { ContractId } from '@canton-network/core-types'
 
 export async function allocateTokenForBob(
     setup: MultiSyncSetup,
@@ -38,24 +43,6 @@ export async function allocateTokenForBob(
     // Fetch the AllocationFactory + choice context from the TestToken registry's
     // allocation-instruction-v1 API. The registry returns the global-synchronizer
     // TokenRules contract as the factory (disclosed in `disclosedFromHelper`).
-    const [command, disclosedFromHelper] =
-        await bobSdk.token.allocation.instruction.create({
-            allocationSpecification: {
-                settlement: requestView.settlement,
-                transferLegId: legId,
-                transferLeg: requestView.transferLegs[legId],
-            },
-            asset: {
-                id: TestToken.DAR.TestTokenID,
-                displayName: TestToken.DAR.TestTokenID,
-                symbol: 'TT',
-                registryUrl: testTokenRegistryUrl,
-                admin: tokenAdmin.partyId,
-            },
-            inputUtxos: [tokenHolding.contractId],
-            requestedAt: new Date(Date.now()).toISOString(),
-        })
-
     const appTokenRules = (
         await tokenAdminSdk.ledger.acsReader.raw.readJsContracts({
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
@@ -66,29 +53,33 @@ export async function allocateTokenForBob(
     if (!appTokenRules)
         throw new Error('TokenRules not found on app synchronizer')
 
-    const originalFactoryId =
-        'ExerciseCommand' in command
-            ? command.ExerciseCommand.contractId
-            : undefined
-    if ('ExerciseCommand' in command)
-        command.ExerciseCommand.contractId = appTokenRules.contractId
-
-    const disclosedOnApp = disclosedFromHelper.map((dc) =>
-        dc.contractId === originalFactoryId
-            ? {
-                  templateId: appTokenRules.templateId,
-                  contractId: appTokenRules.contractId,
-                  createdEventBlob: appTokenRules.createdEventBlob!,
-                  synchronizerId: appTokenRules.synchronizerId,
-              }
-            : dc
-    )
+    const command = TestToken.commands.exercise.rules.allocation.allocate({
+        contractId: appTokenRules.contractId,
+        choiceArgument: {
+            expectedAdmin: tokenAdmin.partyId,
+            allocation: {
+                settlement: requestView.settlement,
+                transferLegId: legId,
+                transferLeg: requestView.transferLegs[legId],
+            },
+            requestedAt: new Date(Date.now()).toISOString(),
+            inputHoldingCids: [tokenHolding.contractId as ContractId<Holding>],
+            extraArgs: {
+                meta: {
+                    values: {},
+                },
+                context: {
+                    values: {},
+                },
+            },
+        } satisfies AllocationFactory_Allocate,
+    })
 
     await bobSdk.ledger
         .prepare({
             partyId: bob.partyId,
             commands: [command],
-            disclosedContracts: disclosedOnApp,
+            disclosedContracts: [],
             synchronizerId: appSynchronizerId,
         })
         .sign(bob.keyPair.privateKey)

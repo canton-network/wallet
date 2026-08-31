@@ -16,6 +16,7 @@ import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v1-registry'
+import { TestToken } from '@canton-network/core-splice-codegen'
 
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
 // app-user participant hosts Alice + TradingApp, app-provider hosts Bob (+ TokenAdmin); both
@@ -56,6 +57,7 @@ await startRegistry({
         transferInstruction: synchronizers.appSynchronizerId,
     },
     port: TEST_TOKEN_REGISTRY_PORT,
+    sdk: tokenAdminSdk,
 })
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
@@ -90,7 +92,10 @@ const transferLegs = {
         sender: bob.partyId,
         receiver: alice.partyId,
         amount: TRADE_TOKEN_AMOUNT,
-        instrumentId: { admin: tokenAdmin.partyId, id: 'TestToken' },
+        instrumentId: {
+            admin: tokenAdmin.partyId,
+            id: TestToken.DAR.TestTokenID,
+        },
         meta: { values: {} },
     },
 }
