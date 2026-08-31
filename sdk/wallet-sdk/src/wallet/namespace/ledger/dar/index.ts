@@ -15,7 +15,7 @@ export class DarNamespace {
     ) {
         const isUploaded = await this.check(packageId)
 
-        if (isUploaded) {
+        if (isUploaded && !vetAllPackages) {
             this.sdkContext.logger.info(
                 { packageId },
                 'DAR already uploaded, skipping upload'
@@ -23,51 +23,6 @@ export class DarNamespace {
             return
         }
 
-        await this.sdkContext.ledgerProvider.request<Ops.PostV2Packages>({
-            method: 'ledgerApi',
-            params: {
-                resource: '/v2/packages',
-                requestMethod: 'post',
-                query: {
-                    synchronizerId:
-                        synchronizerId ?? this.sdkContext.defaultSynchronizerId,
-                    vetAllPackages: vetAllPackages ?? true,
-                },
-                body: darBytes as never,
-                headers: { 'Content-Type': 'application/octet-stream' },
-            },
-        })
-    }
-
-    async check(packageId: string): Promise<boolean> {
-        const result =
-            await this.sdkContext.ledgerProvider.request<Ops.GetV2Packages>({
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/packages',
-                    requestMethod: 'get',
-                },
-            })
-
-        return (
-            Array.isArray(result.packageIds) &&
-            result.packageIds.includes(packageId)
-        )
-    }
-
-    /**
-     * Vets a DAR package on the specified synchronizer.
-     *
-     * Tolerates the case where a package with the same name+version is already
-     * vetted on the participant.
-     * @param darBytes - Raw DAR file bytes.
-     * @param synchronizerId - The synchronizer on which the package should be
-     *   vetted. Defaults to the SDK's configured synchronizer.
-     */
-    async uploadAndVet(
-        darBytes: Uint8Array | Buffer,
-        synchronizerId?: string
-    ): Promise<void> {
         try {
             await this.sdkContext.ledgerProvider.request<Ops.PostV2Packages>({
                 method: 'ledgerApi',
@@ -78,7 +33,7 @@ export class DarNamespace {
                         synchronizerId:
                             synchronizerId ??
                             this.sdkContext.defaultSynchronizerId,
-                        vetAllPackages: true,
+                        vetAllPackages: vetAllPackages ?? true,
                     },
                     body: darBytes as never,
                     headers: { 'Content-Type': 'application/octet-stream' },
@@ -98,5 +53,21 @@ export class DarNamespace {
             }
             throw e
         }
+    }
+
+    async check(packageId: string): Promise<boolean> {
+        const result =
+            await this.sdkContext.ledgerProvider.request<Ops.GetV2Packages>({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/packages',
+                    requestMethod: 'get',
+                },
+            })
+
+        return (
+            Array.isArray(result.packageIds) &&
+            result.packageIds.includes(packageId)
+        )
     }
 }
