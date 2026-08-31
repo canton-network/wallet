@@ -68,27 +68,42 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
         })
 
     // fetch the newly created contract id
-    const factoryContract = (
+    const newFactoryContracts =
         await RegistryState.instance.sdk.ledger.acsReader.readJsContracts({
             filterByParty: true,
             parties: [RegistryState.instance.operator.party],
             offset: executionResult.completionOffset,
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
-    )[0]
 
-    if (!factoryContract) {
-        next(
-            new APIError(
-                500,
-                `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`
-            )
+    // multi-sync mode
+    if (RegistryState.instance.synchronizerIds.allocationInstruction) {
+        const syncFactory = newFactoryContracts.find(
+            (factory) =>
+                factory.synchronizerId ===
+                RegistryState.instance.synchronizerIds.allocationInstruction
         )
+        if (syncFactory) {
+            res.json({
+                factoryId: syncFactory.contractId,
+                choiceContext: emptyChoiceContext,
+            })
+            return
+        }
+        // no multi-sync mode
+    } else if (newFactoryContracts[0]) {
+        res.json({
+            factoryId: newFactoryContracts[0].contractId,
+            choiceContext: emptyChoiceContext,
+        })
         return
     }
 
-    res.json({
-        factoryId: factoryContract.contractId,
-        choiceContext: emptyChoiceContext,
-    })
+    next(
+        new APIError(
+            500,
+            `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`
+        )
+    )
+    return
 }
