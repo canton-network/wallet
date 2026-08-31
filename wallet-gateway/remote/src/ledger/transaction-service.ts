@@ -36,6 +36,7 @@ import {
 } from '@canton-network/core-wallet-auth'
 import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
 import { HASHING_SCHEME_VERSION } from '../env.js'
+import { error } from 'node:console'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -187,6 +188,7 @@ export class TransactionService {
                 return this.executeWithExternal(
                     userId,
                     executeParams,
+                    wallet,
                     transaction,
                     ledgerClient
                 )
@@ -399,6 +401,12 @@ export class TransactionService {
         }
 
         return existingTx
+    }
+
+    private normalizeSignature(signingProviderId: string, signature: string) {
+        if (signingProviderId === SigningProvider.FIREBLOCKS) {
+            return Buffer.from(signature, 'hex').toString('base64')
+        } else return signature
     }
 
     // This doesn't really sign the transaction.
@@ -1108,66 +1116,125 @@ export class TransactionService {
     private async executeWithExternal(
         userId: UserId,
         executeParams: ExecuteParams,
+        wallet: Wallet,
         transaction: Transaction,
         ledgerClient: LedgerClient
     ): Promise<ExecuteResult> {
-        const { partyId, signature, signedBy } = executeParams
+        const { partyId } = executeParams
         const { commandId } = transaction
 
-        const result = await ledgerClient.postWithRetry(
-            '/v2/interactive-submission/executeAndWait',
-            {
-                userId,
-                preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: this.hashingSchemeVersion,
-                submissionId: commandId,
-                deduplicationPeriod: {
-                    Empty: {},
-                },
-                partySignatures: {
-                    signatures: [
-                        {
-                            party: partyId,
-                            signatures: [
-                                {
-                                    signature,
-                                    signedBy,
-                                    format: 'SIGNATURE_FORMAT_CONCAT',
-                                    signingAlgorithmSpec:
-                                        'SIGNING_ALGORITHM_SPEC_ED25519',
-                                },
-                            ],
-                        },
-                    ],
-                },
-            } as Types['JsExecuteSubmissionAndWaitRequest']
+        if (!transaction.externalTxId) {
+            throw new Error(
+                `Transaction ${transaction.id} has no externalTxId. Can't retrieve signature.`
+            )
+        }
+
+        const signingResult = await this.getSigningResult(
+            userId,
+            wallet,
+            transaction.externalTxId
         )
 
-        logDynamically(this.logger, 'Externally signed execution result', {
-            info: { transactionId: transaction.id },
-            debug: { result, transaction, executeParams, userId },
-        })
-
-        const executedTx: Transaction = {
-            id: transaction.id,
-            commandId,
-            status: 'executed',
-            preparedTransaction: transaction.preparedTransaction,
-            preparedTransactionHash: transaction.preparedTransactionHash,
-            payload: result,
-            origin: transaction.origin ?? null,
-            ...(transaction.createdAt && {
-                createdAt: transaction.createdAt,
-            }),
-            ...(transaction.signedAt && {
-                signedAt: transaction.signedAt,
-            }),
+        if (signingResult.status !== 'signed' || !signingResult.signature) {
+            throw new Error(
+                `Status either not signed or no signature available`
+            )
         }
-        await this.store.setTransactionStatus(transaction.id, 'executed', {
-            payload: result,
-        })
-        this.notifier.emit('txChanged', executedTx)
 
-        return result
+        const signature = this.normalizeSignature(
+            wallet.signingProviderId,
+            signingResult.signature
+        )
+
+        const signedBy = wallet.namespace
+
+        try {
+            const result = await ledgerClient.postWithRetry(
+                '/v2/interactive-submission/executeAndWait',
+                {
+                    userId,
+                    preparedTransaction: transaction.preparedTransaction,
+                    hashingSchemeVersion: this.hashingSchemeVersion,
+                    submissionId: commandId,
+                    deduplicationPeriod: {
+                        Empty: {},
+                    },
+                    partySignatures: {
+                        signatures: [
+                            {
+                                party: partyId,
+                                signatures: [
+                                    {
+                                        signature,
+                                        signedBy,
+                                        format: 'SIGNATURE_FORMAT_CONCAT',
+                                        signingAlgorithmSpec:
+                                            'SIGNING_ALGORITHM_SPEC_ED25519',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                } as Types['JsExecuteSubmissionAndWaitRequest']
+            )
+
+            logDynamically(this.logger, 'Externally signed execution result', {
+                info: { transactionId: transaction.id },
+                debug: { result, transaction, executeParams, userId },
+            })
+
+            const executedTx: Transaction = {
+                id: transaction.id,
+                commandId,
+                status: 'executed',
+                preparedTransaction: transaction.preparedTransaction,
+                preparedTransactionHash: transaction.preparedTransactionHash,
+                payload: result,
+                origin: transaction.origin ?? null,
+                ...(transaction.createdAt && {
+                    createdAt: transaction.createdAt,
+                }),
+                ...(transaction.signedAt && {
+                    signedAt: transaction.signedAt,
+                }),
+            }
+            await this.store.setTransactionStatus(transaction.id, 'executed', {
+                payload: result,
+            })
+            this.notifier.emit('txChanged', executedTx)
+
+            return result
+        } catch (err) {
+            const failureReason = this.extractLedgerError(error)
+            this.logger.error(
+                { err: err, transactionId: transaction.id },
+                `Ledger rejected the sumission`
+            )
+
+            await this.store.setTransactionStatus(transaction.id, 'failed', {
+                failureReason: failureReason,
+            })
+
+            this.notifier.emit(`txChanged`, {
+                ...transaction,
+                status: 'failed',
+            })
+
+            throw new Error(`Ledger rejected submission ${failureReason}`, {
+                cause: err,
+            })
+        }
+    }
+
+    private extractLedgerError(error: unknown): string {
+        if (error instanceof Error) {
+            return error.message
+        }
+
+        if (typeof error === 'object' && error !== null) {
+            return JSON.stringify(error)
+        }
+
+        return String(error)
     }
 }
