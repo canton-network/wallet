@@ -576,6 +576,7 @@ export class TransactionService {
 
         const signingResult = await driver
             .signTransaction({
+                userId,
                 tx: tx.preparedTransaction,
                 txHash: Buffer.from(
                     tx.preparedTransactionHash,
@@ -824,11 +825,15 @@ export class TransactionService {
             return result
         } catch (err) {
             const failureReason = this.extractLedgerError(err)
+
             this.logger.error(
                 { err, transactionId: transaction.id },
                 'Ledger rejected submission'
             )
 
+            await this.store.setTransactionStatus(transaction.id, 'failed', {
+                failureReason,
+            })
             this.notifier.emit('txChanged', {
                 ...transaction,
                 status: 'failed',
