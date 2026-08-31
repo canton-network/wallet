@@ -124,7 +124,7 @@ export class TransactionService {
         }
     }
 
-    public execute(
+    public async execute(
         userId: UserId,
         wallet: Wallet,
         transaction: Transaction,
@@ -156,7 +156,7 @@ export class TransactionService {
                             'Network is required for participant signing'
                         )
                     }
-                    return this.executeWithParticipant(
+                    return await this.executeWithParticipant(
                         userId,
                         executeParams,
                         transaction,
@@ -184,7 +184,7 @@ export class TransactionService {
                         'Ledger client is required for external signing'
                     )
                 }
-                return this.executeWithExternal(
+                return await this.executeWithExternal(
                     userId,
                     executeParams,
                     wallet,
@@ -299,7 +299,7 @@ export class TransactionService {
         return this.applySigningResult(tx, wallet, signingResult)
     }
 
-    async getSigningResult(
+    private async getSigningResult(
         userId: UserId,
         wallet: Wallet,
         externalTxId: string
@@ -319,7 +319,7 @@ export class TransactionService {
         return driver.getTransaction(args).then(handleSigningError)
     }
 
-    async applySigningResult(
+    private async applySigningResult(
         tx: Transaction,
         wallet: Wallet,
         signingResult: Exclude<
@@ -509,14 +509,17 @@ export class TransactionService {
     ): Promise<SignResult> {
         const signingProvider = this.signingDrivers[SigningProvider.BLOCKDAEMON]
         if (!signingProvider) {
-            throw new Error('Fireblocks signing driver not available')
+            throw new Error('Blockdaemon signing driver not available')
         }
         const driver = signingProvider.controller(userId)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
         )
-
+        const internalTxId = crypto
+            .randomUUID()
+            .replace(/-/g, '')
+            .substring(0, 16)
         const signingResult = await driver
             .signTransaction({
                 tx: tx.preparedTransaction,
@@ -524,6 +527,7 @@ export class TransactionService {
                 keyIdentifier: {
                     publicKey: wallet.publicKey,
                 },
+                internalTxId,
             })
             .then(handleSigningError)
 
@@ -573,7 +577,10 @@ export class TransactionService {
         const signingResult = await driver
             .signTransaction({
                 tx: tx.preparedTransaction,
-                txHash: tx.preparedTransactionHash,
+                txHash: Buffer.from(
+                    tx.preparedTransactionHash,
+                    'base64'
+                ).toString('hex'),
                 keyIdentifier: {
                     publicKey: wallet.publicKey,
                 },
@@ -690,7 +697,7 @@ export class TransactionService {
             })
             .then(handleSigningError)
 
-        logDynamically(this.logger, 'Dfns signing result', {
+        logDynamically(this.logger, 'Securosys signing result', {
             info: { transactionId: tx.id, status: signingResult.status },
             debug: { signingResult, tx },
         })
@@ -734,7 +741,6 @@ export class TransactionService {
                 tx: tx.preparedTransaction,
                 txHash: tx.preparedTransactionHash,
                 keyIdentifier: {
-                    id: keyLabelFromPublicKey(wallet.publicKey),
                     publicKey: wallet.publicKey,
                 },
             })
@@ -784,37 +790,54 @@ export class TransactionService {
             transaction.payload as PrepareParams,
             this.hashingSchemeVersion
         )
-        const result = await ledgerClient.postWithRetry(
-            '/v2/commands/submit-and-wait',
-            prep
-        )
 
-        logDynamically(this.logger, 'Participant execution result', {
-            info: { transactionId: transaction.id },
-            debug: { result, transaction, executeParams, userId },
-        })
+        try {
+            const result = await ledgerClient.postWithRetry(
+                '/v2/commands/submit-and-wait',
+                prep
+            )
+            logDynamically(this.logger, 'Participant execution result', {
+                info: { transactionId: transaction.id },
+                debug: { result, transaction, executeParams, userId },
+            })
 
-        const executedTx: Transaction = {
-            id: transaction.id,
-            commandId,
-            status: 'executed',
-            preparedTransaction: transaction.preparedTransaction,
-            preparedTransactionHash: transaction.preparedTransactionHash,
-            payload: result,
-            origin: transaction.origin ?? null,
-            ...(transaction.createdAt && {
-                createdAt: transaction.createdAt,
-            }),
-            ...(transaction.signedAt && {
-                signedAt: transaction.signedAt,
-            }),
+            const executedTx: Transaction = {
+                id: transaction.id,
+                commandId,
+                status: 'executed',
+                preparedTransaction: transaction.preparedTransaction,
+                preparedTransactionHash: transaction.preparedTransactionHash,
+                payload: result,
+                origin: transaction.origin ?? null,
+                ...(transaction.createdAt && {
+                    createdAt: transaction.createdAt,
+                }),
+                ...(transaction.signedAt && {
+                    signedAt: transaction.signedAt,
+                }),
+            }
+            await this.store.setTransactionStatus(transaction.id, 'executed', {
+                payload: result,
+            })
+            this.notifier.emit('txChanged', executedTx)
+
+            return result
+        } catch (err) {
+            const failureReason = this.extractLedgerError(err)
+            this.logger.error(
+                { err, transactionId: transaction.id },
+                'Ledger rejected submission'
+            )
+
+            this.notifier.emit('txChanged', {
+                ...transaction,
+                status: 'failed',
+            })
+
+            throw new Error(`Ledger rejected submission ${failureReason}`, {
+                cause: err,
+            })
         }
-        await this.store.setTransactionStatus(transaction.id, 'executed', {
-            payload: result,
-        })
-        this.notifier.emit('txChanged', executedTx)
-
-        return result
     }
 
     private async executeWithExternal(
@@ -826,28 +849,52 @@ export class TransactionService {
     ): Promise<ExecuteResult> {
         const { partyId } = executeParams
         const { commandId } = transaction
+        let rawSignature: string
 
-        if (!transaction.externalTxId) {
-            throw new Error(
-                `Transaction ${transaction.id} has no externalTxId. Can't retrieve signature.`
+        if (transaction.externalTxId) {
+            const signingResult = await this.getSigningResult(
+                userId,
+                wallet,
+                transaction.externalTxId
             )
-        }
 
-        const signingResult = await this.getSigningResult(
-            userId,
-            wallet,
-            transaction.externalTxId
-        )
+            if (signingResult.status !== 'signed' || !signingResult.signature) {
+                throw new Error(
+                    `Status either not signed or no signature available`
+                )
+            }
 
-        if (signingResult.status !== 'signed' || !signingResult.signature) {
-            throw new Error(
-                `Status either not signed or no signature available`
-            )
+            rawSignature = signingResult.signature
+        } else if (wallet.signingProviderId === SigningProvider.WALLET_KERNEL) {
+            const driver =
+                this.signingDrivers[SigningProvider.WALLET_KERNEL]?.controller(
+                    userId
+                )
+
+            if (!driver) {
+                throw new Error(`Wallet kernel signing driver not available`)
+            }
+
+            const { signature } = await driver
+                .signTransaction({
+                    tx: transaction.preparedTransaction,
+                    txHash: transaction.preparedTransactionHash,
+                    keyIdentifier: { publicKey: wallet.publicKey },
+                })
+                .then(handleSigningError)
+
+            if (!signature) {
+                throw new Error(`Wallet kernel did not return a signature`)
+            }
+
+            rawSignature = signature
+        } else {
+            throw new Error('no signature available')
         }
 
         const signature = this.normalizeSignature(
             wallet.signingProviderId,
-            signingResult.signature
+            rawSignature
         )
 
         const signedBy = wallet.namespace
@@ -912,7 +959,7 @@ export class TransactionService {
             const failureReason = this.extractLedgerError(err)
             this.logger.error(
                 { err: err, transactionId: transaction.id },
-                `Ledger rejected the sumission`
+                `Ledger rejected the submission`
             )
 
             await this.store.setTransactionStatus(transaction.id, 'failed', {
