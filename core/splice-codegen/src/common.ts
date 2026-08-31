@@ -15,7 +15,7 @@ export const vetDarFactory =
         const darFile = path.join(import.meta.dirname, pathToDar)
         const darBytes = readFileSync(darFile)
 
-        await sdk.ledger.dar.upload(darBytes, packageId, synchronizerId)
+        await sdk.ledger.dar.upload(darBytes, packageId, synchronizerId, true)
     }
 
 export const generateCommand = {
