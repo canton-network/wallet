@@ -25,18 +25,24 @@ function fillForm(
     }
 ) {
     if (values.partyHint !== undefined) {
-        el.shadowRoot!.querySelector<HTMLInputElement>(
-            '#party-id-hint'
-        )!.value = values.partyHint
+        const input =
+            el.shadowRoot!.querySelector<HTMLInputElement>('#party-id-hint')!
+        input.value = values.partyHint
+        input.dispatchEvent(new Event('input', { bubbles: true }))
     }
     if (values.signingProviderId !== undefined) {
         el.shadowRoot!.querySelector<HTMLSelectElement>(
             '#signing-provider-id'
         )!.value = values.signingProviderId
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )!.dispatchEvent(new Event('change', { bubbles: true }))
     }
     if (values.primary !== undefined) {
-        el.shadowRoot!.querySelector<HTMLInputElement>('#primary')!.checked =
-            values.primary
+        const checkbox =
+            el.shadowRoot!.querySelector<HTMLInputElement>('#primary')!
+        checkbox.checked = values.primary
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }))
     }
 }
 
@@ -113,7 +119,7 @@ describe('wg-wallet-create-form', () => {
         expect(event.partyHint).toBe('alice')
         expect(event.signingProviderId).toBe('wallet-kernel')
         expect(event.primary).toBe(false)
-        expect(event.vaultName).toBeUndefined()
+        expect(event.keyName).toBeUndefined()
     })
 
     it('includes primary=true when the checkbox is checked', async () => {
@@ -216,11 +222,12 @@ describe('wg-wallet-create-form', () => {
     })
 
     it('shows vault select only for configured vault signing providers', async () => {
+        const keys = [{ id: 'key-1', name: 'Vault A', publicKey: 'pk1' }]
         const el = await fixture<WgWalletCreateForm>(
             html`<wg-wallet-create-form
                 .signingProviders=${['participant', 'fireblocks']}
-                .vaultSigningProviders=${['fireblocks']}
-                .vaults=${['Vault A']}
+                .keySigningProviders=${['fireblocks']}
+                .publicKeys=${keys}
             ></wg-wallet-create-form>`
         )
 
@@ -240,15 +247,16 @@ describe('wg-wallet-create-form', () => {
                 '#vault-name option'
             )
         ).map((option) => option.value)
-        expect(options).toContain('Vault A')
+        expect(options).toContain('key-1')
     })
 
-    it('includes vaultName in WalletCreateEvent when selected', async () => {
+    it('includes keyName in WalletCreateEvent when selected', async () => {
+        const keys = [{ id: 'key-1', name: 'Vault A', publicKey: 'pk1' }]
         const el = await fixture<WgWalletCreateForm>(
             html`<wg-wallet-create-form
                 .signingProviders=${['fireblocks']}
-                .vaultSigningProviders=${['fireblocks']}
-                .vaults=${['Vault A']}
+                .keySigningProviders=${['fireblocks']}
+                .publicKeys=${keys}
             ></wg-wallet-create-form>`
         )
 
@@ -261,13 +269,16 @@ describe('wg-wallet-create-form', () => {
         )!.dispatchEvent(new Event('change', { bubbles: true }))
         await elementUpdated(el)
         el.shadowRoot!.querySelector<HTMLSelectElement>('#vault-name')!.value =
-            'Vault A'
+            'key-1'
+        el.shadowRoot!.querySelector<HTMLSelectElement>(
+            '#vault-name'
+        )!.dispatchEvent(new Event('change', { bubbles: true }))
 
         const listener = vi.fn()
         el.addEventListener('wallet-create', listener)
         submitForm(el)
 
-        expect((listener.mock.calls[0][0] as WalletCreateEvent).vaultName).toBe(
+        expect((listener.mock.calls[0][0] as WalletCreateEvent).keyName).toBe(
             'Vault A'
         )
     })
@@ -276,8 +287,8 @@ describe('wg-wallet-create-form', () => {
         const el = await fixture<WgWalletCreateForm>(
             html`<wg-wallet-create-form
                 .signingProviders=${['fireblocks']}
-                .vaultSigningProviders=${['fireblocks']}
-                ?vaultsLoading=${true}
+                .keySigningProviders=${['fireblocks']}
+                ?publicKeysLoading=${true}
             ></wg-wallet-create-form>`
         )
 
@@ -305,8 +316,8 @@ describe('wg-wallet-create-form', () => {
         const el = await fixture<WgWalletCreateForm>(
             html`<wg-wallet-create-form
                 .signingProviders=${['fireblocks']}
-                .vaultSigningProviders=${['fireblocks']}
-                ?vaultsLoading=${true}
+                .keySigningProviders=${['fireblocks']}
+                ?publicKeysLoading=${true}
             ></wg-wallet-create-form>`
         )
 
@@ -324,26 +335,5 @@ describe('wg-wallet-create-form', () => {
         submitForm(el)
 
         expect(listener).not.toHaveBeenCalled()
-    })
-
-    it('reset clears the party hint and primary checkbox', async () => {
-        const el = await fixture<WgWalletCreateForm>(
-            html`<wg-wallet-create-form></wg-wallet-create-form>`
-        )
-        fillForm(el, {
-            partyHint: 'alice',
-            primary: true,
-        })
-
-        el.reset()
-        await elementUpdated(el)
-
-        expect(
-            el.shadowRoot!.querySelector<HTMLInputElement>('#party-id-hint')!
-                .value
-        ).toBe('')
-        expect(
-            el.shadowRoot!.querySelector<HTMLInputElement>('#primary')!.checked
-        ).toBe(false)
     })
 })

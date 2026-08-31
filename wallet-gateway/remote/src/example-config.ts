@@ -135,4 +135,7 @@ export default {
             },
         ],
     },
+    hashingScheme: {
+        version: 'HASHING_SCHEME_VERSION_V3',
+    },
 } satisfies RawConfig

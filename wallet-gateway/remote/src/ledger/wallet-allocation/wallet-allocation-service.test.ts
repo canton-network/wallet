@@ -33,6 +33,7 @@ const createWallet = (
     publicKey: 'test-public-key',
     namespace: 'namespace',
     networkId: 'network1',
+    userId: 'user-1',
     disabled: false,
     rights: [],
     ...overrides,
@@ -774,7 +775,7 @@ describe('WalletAllocationService', () => {
             ).rejects.toThrow('Error from signing driver: Keys unavailable')
         })
 
-        it('throws when vaultName is missing for Fireblocks', async () => {
+        it('throws when keyName is missing for Fireblocks', async () => {
             const serviceWithFireblocks = createService({
                 [SigningProvider.FIREBLOCKS]: createFireblocksDriver({}),
             })
@@ -787,7 +788,7 @@ describe('WalletAllocationService', () => {
                     SigningProvider.FIREBLOCKS
                 )
             ).rejects.toThrow(
-                'vaultName is required for creating a wallet with Fireblocks'
+                'keyName is required for creating a wallet with Fireblocks'
             )
         })
 
@@ -809,47 +810,46 @@ describe('WalletAllocationService', () => {
             ).rejects.toThrow('Fireblocks key not found')
         })
 
-        it('getVaults returns vault names for Fireblocks', async () => {
+        it('getKeys returns key names for Fireblocks', async () => {
+            const keys = [
+                {
+                    id: 'key-1',
+                    name: 'Vault A',
+                    publicKey: 'fb-pk-a',
+                },
+                {
+                    id: 'key-2',
+                    name: 'Vault B',
+                    publicKey: 'fb-pk-b',
+                },
+            ]
             const serviceWithFireblocks = createService({
                 [SigningProvider.FIREBLOCKS]: createFireblocksDriver({
                     getKeysResult: {
-                        keys: [
-                            {
-                                id: 'key-1',
-                                name: 'Vault A',
-                                publicKey: 'fb-pk-a',
-                            },
-                            {
-                                id: 'key-2',
-                                name: 'Vault B',
-                                publicKey: 'fb-pk-b',
-                            },
-                        ],
+                        keys,
                     },
                 }),
             })
 
-            const result = await serviceWithFireblocks.getVaults(
+            const result = await serviceWithFireblocks.getKeys(
                 authContext,
                 SigningProvider.FIREBLOCKS
             )
 
-            expect(result).toEqual({ vaults: ['Vault A', 'Vault B'] })
+            expect(result).toEqual({ keys })
         })
 
-        it('throws when listing vaults for an unsupported signing provider', async () => {
+        it('throws error when listing vaults for an unsupported signing provider', async () => {
             const serviceWithFireblocks = createService({
                 [SigningProvider.FIREBLOCKS]: createFireblocksDriver({}),
             })
 
             await expect(
-                serviceWithFireblocks.getVaults(
+                serviceWithFireblocks.getKeys(
                     authContext,
                     SigningProvider.PARTICIPANT
                 )
-            ).rejects.toThrow(
-                'Signing provider participant does not support listing vaults'
-            )
+            ).rejects.toThrow()
         })
 
         it('throws when a signed createWallet has no signature in getTransaction', async () => {

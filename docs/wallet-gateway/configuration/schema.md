@@ -1046,6 +1046,21 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 }
             },
             "required": ["idps", "networks"]
+        },
+        "hashingScheme": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "enum": [
+                        "HASHING_SCHEME_VERSION_V2",
+                        "HASHING_SCHEME_VERSION_V3"
+                    ],
+                    "description": "Hashing scheme version for the ledger. If omitted, defaults to HASHING_SCHEME_VERSION_V3"
+                }
+            },
+            "required": ["version"],
+            "additionalProperties": false
         }
     },
     "required": ["kernel", "store", "bootstrap"]

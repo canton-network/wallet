@@ -12,6 +12,7 @@ function createMockPopupWindow() {
         close: vi.fn(() => {
             win.closed = true
         }),
+        postMessage: vi.fn(),
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
     }

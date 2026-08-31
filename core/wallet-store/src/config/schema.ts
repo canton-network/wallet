@@ -5,7 +5,7 @@ import { authSchema, idpSchema } from '@canton-network/core-wallet-auth'
 import { z } from 'zod'
 
 export const ledgerApiSchema = z.object({
-    baseUrl: z.string().url(),
+    baseUrl: z.url(),
 })
 
 export const networkSchema = z.object({

@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+export type HASHING_SCHEME_VERSION =
+    'HASHING_SCHEME_VERSION_V2' | 'HASHING_SCHEME_VERSION_V3' | undefined
+
 export class Env {
     static FIREBLOCKS_API_KEY = () => Env.get('FIREBLOCKS_API_KEY')
     static FIREBLOCKS_SECRET = () => Env.get('FIREBLOCKS_SECRET')

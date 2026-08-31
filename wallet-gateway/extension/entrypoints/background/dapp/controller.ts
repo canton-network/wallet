@@ -4,7 +4,10 @@
 // Disabled unused vars rule to allow for future implementations
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { LedgerClient } from '@canton-network/core-ledger-client'
+import {
+    LedgerClient,
+    type PrepareSubmissionResponse,
+} from '@canton-network/core-ledger-client'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
 import { AuthService } from '../auth-service.js'
 import buildController from './rpc-gen'
@@ -20,9 +23,13 @@ import type {
     Wallet,
 } from './rpc-gen/typings.js'
 
-import type { Store } from '@canton-network/core-wallet-store'
+import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { networkStatus } from '@/utils/legacy-backend/utils.js'
+import {
+    ledgerPrepareParams,
+    networkStatus,
+} from '@/utils/legacy-backend/utils.js'
+import { enqueueApprovalRequest } from '@/utils/approval-requests.js'
 
 export const dappController = (
     getStore: () => Promise<Store>,
@@ -109,8 +116,100 @@ export const dappController = (
         },
         ledgerApi: async (params: LedgerApiParams) =>
             Promise.resolve({ response: 'default-response' }),
+
         prepareExecute: async (params: PrepareExecuteParams) => {
-            throw new Error('Function prepareExecute not implemented.')
+            const context = await AuthService.loadAuthContext()
+            if (!context) {
+                throw new Error('Unauthenticated context')
+            }
+
+            const store = await getStore()
+            const session = await store.getSession(context.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
+            const primaryWallet = await store.getPrimaryWallet()
+            const wallets = await store.getWallets()
+            const network = await store.getCurrentNetwork()
+
+            let actAs = params.actAs ? [...params.actAs] : []
+            if (actAs.length === 0) {
+                if (!primaryWallet) {
+                    throw new Error(
+                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
+                    )
+                }
+                actAs = [primaryWallet.partyId]
+            }
+
+            for (const party of actAs) {
+                if (!wallets.some((wallet) => wallet.partyId === party)) {
+                    throw new Error(
+                        `Acting party ${party} does not belong to user`
+                    )
+                }
+            }
+
+            const wallet = wallets.find(
+                (candidate) => candidate.partyId === actAs[0]
+            )
+            if (!wallet) {
+                throw new Error(
+                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
+                )
+            }
+
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger: pinoLogger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    context.accessToken,
+                    pinoLogger
+                ),
+            })
+            const commandId = params.commandId || crypto.randomUUID()
+            const transactionId = crypto.randomUUID()
+            const synchronizerId =
+                network.synchronizerId ??
+                (await ledgerClient.getSynchronizerId())
+
+            pinoLogger.info(
+                { transactionId, commandId, actAs },
+                'prepareExecute: Submitting request to ledger'
+            )
+
+            const prepared: PrepareSubmissionResponse =
+                await ledgerClient.postWithRetry(
+                    '/v2/interactive-submission/prepare',
+                    ledgerPrepareParams(context.userId, actAs, synchronizerId, {
+                        ...params,
+                        commandId,
+                        actAs,
+                    })
+                )
+
+            const transaction: Transaction = {
+                id: transactionId,
+                commandId,
+                status: 'pending',
+                preparedTransaction: prepared.preparedTransaction,
+                preparedTransactionHash: prepared.preparedTransactionHash,
+                payload: params,
+                origin: session.origin || null,
+                createdAt: new Date(),
+            }
+
+            await store.setTransaction(transaction)
+
+            await enqueueApprovalRequest({ transactionId, commandId })
+
+            pinoLogger.info(
+                { transactionId, commandId, actAs },
+                'prepareExecute: Prepared transaction for approval'
+            )
+
+            return null
         },
         prepareExecuteAndWait: async (params: PrepareExecuteParams) => {
             throw new Error('Function prepareExecuteAndWait not implemented.')

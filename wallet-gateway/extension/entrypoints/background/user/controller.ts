@@ -1,18 +1,34 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { LedgerClient } from '@canton-network/core-ledger-client'
 import buildController from './rpc-gen/index.js'
-import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import {
     AddSessionParams,
+    CreateWalletParams,
+    DeleteTransactionParams,
+    ExecuteParams,
+    GetTransactionParams,
+    GetTransactionResult,
     PublicNetwork,
+    SignParams,
     Network as ApiNetwork,
     Auth,
     Status,
     UserLevelRight,
 } from './rpc-gen/typings.js'
+import {
+    assertConnected,
+    AuthTokenProvider,
+} from '@canton-network/core-wallet-auth'
 import { AuthService } from '../auth-service.js'
+import { createExtensionWallet } from './create-wallet.js'
+import { TransactionService } from './transaction-service.js'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     const base = {
@@ -81,8 +97,6 @@ export const userController = (
     getStore: () => Promise<Store>,
     signingDriver: SigningDriverInterface
 ) => {
-    void signingDriver
-
     return buildController({
         addNetwork: async () => {
             throw new Error('Function addNetwork not implemented.')
@@ -111,8 +125,48 @@ export const userController = (
             const store = await getStore()
             return { idps: await store.listIdps() }
         },
-        createWallet: async () => {
-            throw new Error('Function createWallet not implemented.')
+        createWallet: async (params: CreateWalletParams) => {
+            const authContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const network = await store.getCurrentNetwork()
+
+            if (
+                params.signingProviderId !== SigningProvider.WALLET_KERNEL ||
+                signingDriver.signingProvider !== SigningProvider.WALLET_KERNEL
+            ) {
+                throw new Error(
+                    `Signing provider ${params.signingProviderId} not supported`
+                )
+            }
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
+            }
+
+            const idp = await store.getIdp(network.identityProviderId)
+            const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                idp,
+                network.adminAuth,
+                pinoLogger
+            )
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger: pinoLogger,
+                accessTokenProvider: adminTokenProvider,
+            })
+            const wallet = await createExtensionWallet({
+                authContext,
+                ledgerClient,
+                networkId: network.id,
+                partyHint: params.partyHint,
+                primary: params.primary ?? false,
+                signingDriver,
+                store,
+                synchronizerId: network.synchronizerId,
+            })
+
+            return { wallet }
         },
         allocatePartyForWallet: async () => {
             throw new Error('Function allocatePartyForWallet not implemented.')
@@ -135,8 +189,50 @@ export const userController = (
         isWalletSyncNeeded: async () => {
             throw new Error('Function isWalletSyncNeeded not implemented.')
         },
-        sign: async () => {
-            throw new Error('Function sign not implemented.')
+        sign: async (signParams: SignParams) => {
+            const connectedContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const network = await store.getCurrentNetwork()
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+
+            const wallets = await store.getWallets()
+            const wallet = wallets.find(
+                (candidate) => candidate.partyId === signParams.partyId
+            )
+            if (wallet === undefined) {
+                throw new Error('No primary wallet found')
+            }
+
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
+            const transactionService = new TransactionService(
+                store,
+                pinoLogger,
+                signingDriver
+            )
+
+            pinoLogger.info(
+                { transactionId: signParams.transactionId },
+                'Signing transaction'
+            )
+            const response = await transactionService.sign(
+                connectedContext,
+                wallet,
+                signParams
+            )
+            pinoLogger.info(
+                { transactionId: signParams.transactionId },
+                'Transaction signed'
+            )
+
+            return response
         },
         signMessage: async () => {
             throw new Error('Function signMessage not implemented.')
@@ -150,8 +246,66 @@ export const userController = (
         deleteMessageToSign: async () => {
             throw new Error('Function deleteMessageToSign not implemented.')
         },
-        execute: async () => {
-            throw new Error('Function execute not implemented.')
+        execute: async (executeParams: ExecuteParams) => {
+            const connectedContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const wallets = await store.getWallets()
+            const network = await store.getCurrentNetwork()
+            const transaction = await store.getTransaction(
+                executeParams.transactionId
+            )
+            const wallet = wallets.find(
+                (candidate) => candidate.partyId === executeParams.partyId
+            )
+
+            if (wallet === undefined) {
+                throw new Error('Requested wallet not found for user')
+            }
+            if (transaction === undefined) {
+                throw new Error('No transaction found')
+            }
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger: pinoLogger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    connectedContext.accessToken,
+                    pinoLogger
+                ),
+            })
+            const transactionService = new TransactionService(
+                store,
+                pinoLogger,
+                signingDriver
+            )
+
+            pinoLogger.info(
+                { transactionId: executeParams.transactionId },
+                'Executing transaction'
+            )
+            const response = await transactionService.execute(
+                connectedContext.userId,
+                wallet,
+                transaction,
+                executeParams,
+                ledgerClient
+            )
+            pinoLogger.info(
+                { transactionId: executeParams.transactionId },
+                'Transaction executed'
+            )
+
+            return response
         },
         addSession: async (params: AddSessionParams) => {
             const context = await AuthService.loadAuthContext()
@@ -237,14 +391,69 @@ export const userController = (
                 ),
             }
         },
-        getTransaction: async () => {
-            throw new Error('Function getTransaction not implemented.')
+        getTransaction: async (
+            params: GetTransactionParams
+        ): Promise<GetTransactionResult> => {
+            const store = await getStore()
+            const transaction = await store.getTransaction(params.transactionId)
+            if (!transaction) {
+                throw new Error(
+                    `Transaction not found with id: ${params.transactionId}`
+                )
+            }
+
+            return {
+                id: transaction.id,
+                commandId: transaction.commandId,
+                status: transaction.status,
+                preparedTransaction: transaction.preparedTransaction,
+                preparedTransactionHash: transaction.preparedTransactionHash,
+                payload: transaction.payload
+                    ? JSON.stringify(transaction.payload)
+                    : '',
+                ...(transaction.origin !== null && {
+                    origin: transaction.origin,
+                }),
+                ...(transaction.createdAt && {
+                    createdAt: transaction.createdAt.toISOString(),
+                }),
+                ...(transaction.signedAt && {
+                    signedAt: transaction.signedAt.toISOString(),
+                }),
+                ...(transaction.externalTxId && {
+                    externalTxId: transaction.externalTxId,
+                }),
+            }
         },
         listTransactions: async () => {
             throw new Error('Function listTransactions not implemented.')
         },
-        deleteTransaction: async () => {
-            throw new Error('Function deleteTransaction not implemented.')
+        deleteTransaction: async (
+            params: DeleteTransactionParams
+        ): Promise<null> => {
+            const connectedContext = assertConnected(
+                await AuthService.loadAuthContext()
+            )
+            const store = await getStore()
+            const transaction = await store.getTransaction(params.transactionId)
+            if (!transaction) {
+                throw new Error(
+                    `Transaction not found with id: ${params.transactionId}`
+                )
+            }
+            if (transaction.status !== 'pending') {
+                throw new Error(
+                    `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
+                )
+            }
+
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+
+            await store.removeTransaction(transaction.id)
+            return null
         },
         getUser: async () => {
             throw new Error('Function getUser not implemented.')

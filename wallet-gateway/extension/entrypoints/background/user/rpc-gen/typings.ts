@@ -6,15 +6,10 @@
 
 /**
  *
- * Network ID
+ * The network ID the wallet corresponds to.
  *
  */
 export type NetworkId = string
-/**
- *
- * The name of the API key.
- *
- */
 export type Name = string
 /**
  *
@@ -86,11 +81,6 @@ export interface Network {
  *
  */
 export type NetworkName = string
-/**
- *
- * The unique identifier of the API key.
- *
- */
 export type Id = string
 /**
  *
@@ -127,11 +117,21 @@ export type Primary = boolean
  *
  */
 export type PartyHint = string
-export type SigningProviderId = string
-export type VaultName = string
 /**
  *
- * The party id of the wallet to be removed.
+ * The signing provider ID the wallet corresponds to.
+ *
+ */
+export type SigningProviderId = string
+/**
+ *
+ * Name of signing provider's key to use for getting keys.
+ *
+ */
+export type KeyName = string
+/**
+ *
+ * The party ID corresponding to the wallet.
  *
  */
 export type PartyId = string
@@ -201,6 +201,12 @@ export type CursorAsString = string
 export type Cursor = CursorAsString
 /**
  *
+ * The public key of the party.
+ *
+ */
+export type PublicKey = string
+/**
+ *
  * Authentication method configured for this network
  *
  */
@@ -244,19 +250,13 @@ export type WalletStatus = 'initialized' | 'allocated' | 'removed'
 export type Hint = string
 /**
  *
- * The public key of the party.
- *
- */
-export type PublicKey = string
-/**
- *
  * The namespace of the party.
  *
  */
 export type Namespace = string
 /**
  *
- * External transaction ID from signing provider.
+ * Unique identifier of the signed transaction given by the Signing Provider. This may not be the same as the internal txId given by the Wallet Gateway.
  *
  */
 export type ExternalTxId = string
@@ -274,17 +274,17 @@ export type TopologyTransactions = string
 export type Disabled = boolean
 /**
  *
- * The reason for the current status.
+ * Reason for the wallet state, e.g., 'no signing provider matched'.
  *
  */
 export type Reason = string
 export type PartyLevelRight = any
 /**
  *
- * The rights of the user for the network.
+ * The rights of the wallet.
  *
  */
-export type Rights = UserLevelRight[]
+export type Rights = PartyLevelRight[]
 /**
  *
  * Structure representing a wallet
@@ -493,12 +493,23 @@ export type ApiKeys = ApiKey[]
  *
  */
 export type SigningProviders = SigningProviderId[]
+export interface Key {
+    id: Id
+    name: Name
+    publicKey: PublicKey
+}
 /**
  *
- * The list of signing provider's available vault names.
+ * The list of signing provider's available keys.
  *
  */
-export type Vaults = VaultName[]
+export type Keys = Key[]
+/**
+ *
+ * Represents a null value, used in responses where no data is returned.
+ *
+ */
+export type Null = null
 export interface AddNetworkParams {
     network: Network
 }
@@ -511,6 +522,7 @@ export interface GetNetworkParams {
 export interface SelfSignedAccessTokenParams {
     networkId: NetworkId
     clientId: ClientId
+    clientSecret: ClientSecret
 }
 export interface AddIdpParams {
     idp: Idp
@@ -522,7 +534,7 @@ export interface CreateWalletParams {
     primary?: Primary
     partyHint: PartyHint
     signingProviderId: SigningProviderId
-    vaultName?: VaultName
+    keyName?: KeyName
 }
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
@@ -576,15 +588,17 @@ export interface GenerateApiKeyParams {
 export interface RemoveApiKeyParams {
     id: Id
 }
-export interface ListSigningProviderVaultsParams {
+export interface ListSigningProviderKeysParams {
     signingProviderId: SigningProviderId
 }
-/**
- *
- * Represents a null value, used in responses where no data is returned.
- *
- */
-export type Null = null
+export interface GetWalletParams {
+    partyId: PartyId
+}
+export interface ChangeSigningProviderParams {
+    signingProviderId: SigningProviderId
+    partyId: PartyId
+    publicKey: PublicKey
+}
 export interface ListNetworksResult {
     networks: Networks
 }
@@ -689,9 +703,10 @@ export interface ListApiKeysResult {
 export interface ListSigningProvidersResult {
     signingProviders: SigningProviders
 }
-export interface ListSigningProviderVaultsResult {
-    vaults: Vaults
+export interface ListSigningProviderKeysResult {
+    keys: Keys
 }
+export type GetWalletResult = Wallet | Null
 /**
  *
  * Generated! Represents an alias to any of the provided schemas
@@ -754,6 +769,10 @@ export type GenerateApiKey = (
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
 export type ListSigningProviders = () => Promise<ListSigningProvidersResult>
-export type ListSigningProviderVaults = (
-    params: ListSigningProviderVaultsParams
-) => Promise<ListSigningProviderVaultsResult>
+export type ListSigningProviderKeys = (
+    params: ListSigningProviderKeysParams
+) => Promise<ListSigningProviderKeysResult>
+export type GetWallet = (params: GetWalletParams) => Promise<GetWalletResult>
+export type ChangeSigningProvider = (
+    params: ChangeSigningProviderParams
+) => Promise<Null>

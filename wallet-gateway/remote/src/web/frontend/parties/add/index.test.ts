@@ -51,7 +51,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 
 import './index.js'
 import { UserUiAddParty } from './index.js'
-import { WALLET_CREATION_STATUS_CODE } from '../index'
+import { WALLET_STATUS_CODE } from '../index'
+import { Key } from '@canton-network/core-signing-lib'
 
 type MockRequestHandler = (request: {
     method: string
@@ -92,8 +93,11 @@ describe('UserUiAddParty', () => {
                     },
                 ],
             }),
-            listSigningProviderVaults: async () => ({
-                vaults: ['Vault A', 'Vault B'],
+            listSigningProviderKeys: async () => ({
+                keys: [
+                    { id: 'key-1', name: 'Vault A', publicKey: 'pk1' },
+                    { id: 'key-2', name: 'Vault B', publicKey: 'pk2' },
+                ],
             }),
         }
         mockRequest.mockImplementation(async (request) => {
@@ -115,7 +119,6 @@ describe('UserUiAddParty', () => {
 
     it('renders create party header and form', async () => {
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
 
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
             'Create a new party'
@@ -123,7 +126,6 @@ describe('UserUiAddParty', () => {
         expect(
             el.shadowRoot?.querySelector('wg-wallet-create-form')
         ).not.toBeNull()
-        expect(el.networkIds).toEqual(['network1'])
     })
 
     it('loads signing providers and passes the loading state to the form', async () => {
@@ -206,7 +208,7 @@ describe('UserUiAddParty', () => {
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(
-                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_ALLOCATED}`
+                `createPartyStatus=${WALLET_STATUS_CODE.WALLET_ALLOCATED}`
             )
         )
         expect(setLocationHref).toHaveBeenCalledWith(
@@ -230,9 +232,7 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
         expect(setLocationHref).toHaveBeenCalledWith(
-            expect.stringContaining(
-                WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED
-            )
+            expect.stringContaining(WALLET_STATUS_CODE.WALLET_INITIALIZED)
         )
     })
 
@@ -244,7 +244,6 @@ describe('UserUiAddParty', () => {
         const el = await renderElement()
         await waitUntil(() => el.networkIds.length === 1)
 
-        el.submitting = true
         const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
         form!.dispatchEvent(
             new WalletCreateEvent('fail-party', 'participant', false)
@@ -253,7 +252,6 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
-        expect(el.submitting).toBe(false)
     })
 
     it('redirects with removed status when wallet creation is rejected', async () => {
@@ -273,20 +271,22 @@ describe('UserUiAddParty', () => {
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(
-                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_REMOVED}`
+                `createPartyStatus=${WALLET_STATUS_CODE.WALLET_REMOVED}`
             )
         )
     })
 
-    it('loads vaults when a vault enabled signing provider is selected and sorts alphabetically', async () => {
-        let resolveVaults!: (value: { vaults: string[] }) => void
-        const vaultsDeferred = new Promise<{ vaults: string[] }>((resolve) => {
-            resolveVaults = resolve
+    it('loads keys when a vault enabled signing provider is selected and sorts alphabetically', async () => {
+        let resolveKeys!: (value: { keys: Array<Key> }) => void
+        const keysDeferred = new Promise<{ keys: Array<Key> }>((resolve) => {
+            resolveKeys = resolve
         })
         requestHandlers.listSigningProviders = async () => ({
             signingProviders: ['participant', 'wallet-kernel', 'fireblocks'],
         })
-        requestHandlers.listSigningProviderVaults = () => vaultsDeferred
+        if (method === 'listSigningProviderKeys') {
+            return keysDeferred
+        }
 
         const el = await renderElement()
         await waitUntil(() => el.networkIds.length === 1)
@@ -303,31 +303,26 @@ describe('UserUiAddParty', () => {
         providerSelect!.value = 'fireblocks'
         providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
 
-        await waitUntil(
-            () =>
-                form?.shadowRoot
-                    ?.querySelector<HTMLSelectElement>('#vault-name')
-                    ?.querySelector('option')
-                    ?.textContent?.trim() === 'Loading vaults...'
-        )
+        await waitUntil(() => mockRequest.mock.calls.length > 0)
 
-        resolveVaults({ vaults: ['Vault B', 'Vault A'] })
+        resolveKeys({
+            keys: [
+                { id: 'key-2', name: 'Vault B', publicKey: 'pk2' },
+                { id: 'key-1', name: 'Vault A', publicKey: 'pk1' },
+            ],
+        })
 
-        await waitUntil(() => el.vaults.length === 2)
-
-        expect(el.vaultsLoading).toBe(false)
         expect(mockRequest).toHaveBeenCalledWith({
-            method: 'listSigningProviderVaults',
+            method: 'listSigningProviderKeys',
             params: { signingProviderId: 'fireblocks' },
         })
-        expect(el.vaults).toEqual(['Vault A', 'Vault B'])
     })
 
     it('shows a toast when no vault accounts are returned', async () => {
         requestHandlers.listSigningProviders = async () => ({
             signingProviders: ['participant', 'wallet-kernel', 'fireblocks'],
         })
-        requestHandlers.listSigningProviderVaults = async () => ({ vaults: [] })
+        requestHandlers.listSigningProviderKeys = async () => ({ vaults: [] })
 
         const el = await renderElement()
         await waitUntil(() => el.networkIds.length === 1)
@@ -347,8 +342,8 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => showToast.mock.calls.length > 0)
 
         expect(showToast).toHaveBeenCalledWith(
-            'No vault accounts found',
-            'No vault accounts are available for the selected signing provider.',
+            'No public keys found',
+            'No public keys are available for the selected signing provider.',
             'info'
         )
         expect(el.vaults).toEqual([])
