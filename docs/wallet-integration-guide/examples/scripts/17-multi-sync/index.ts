@@ -52,10 +52,7 @@ await startRegistry({
         party: tokenAdmin.partyId,
         keys: tokenAdmin.keyPair,
     },
-    synchronizerIds: {
-        allocationInstruction: synchronizers.appSynchronizerId,
-        transferInstruction: synchronizers.appSynchronizerId,
-    },
+    synchronizerId: synchronizers.appSynchronizerId,
     port: TEST_TOKEN_REGISTRY_PORT,
     sdk: tokenAdminSdk,
 })

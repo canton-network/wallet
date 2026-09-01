@@ -41,10 +41,7 @@ const instantiate = vi.fn().mockImplementation(() => {
     state.RegistryState.instance = {
         reset,
         port: 5634,
-        synchronizerIds: {
-            transferInstruction: 'transferInstruction',
-            allocationInstruction: 'allocationInstruction',
-        },
+        synchronizerId: 'sync',
         operator: {
             party: 'some-party',
             keys: {
@@ -59,10 +56,7 @@ const reset = vi.fn().mockImplementation(() => {
     state.RegistryState.instance = {
         reset,
         port: 5634,
-        synchronizerIds: {
-            transferInstruction: '',
-            allocationInstruction: '',
-        },
+        synchronizerId: '',
         operator: {
             party: '',
             keys: {
@@ -80,10 +74,7 @@ const state = {
         instance: {
             reset,
             port: 5634,
-            synchronizerIds: {
-                transferInstruction: '',
-                allocationInstruction: '',
-            },
+            synchronizerId: '',
             operator: {
                 party: '',
                 keys: {

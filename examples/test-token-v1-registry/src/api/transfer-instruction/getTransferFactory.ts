@@ -56,13 +56,12 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
 
-    const foundFactory = RegistryState.instance.synchronizerIds
-        .transferInstruction
+    const foundFactory = RegistryState.instance.synchronizerId
         ? // multi-sync mode
           fetchedFactories.find(
               (factory) =>
                   factory.synchronizerId ===
-                  RegistryState.instance.synchronizerIds.transferInstruction
+                  RegistryState.instance.synchronizerId
           )
         : // no multi-sync mode
           fetchedFactories[0]
@@ -93,11 +92,9 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
             commands: TestToken.commands.create.rules({
                 admin: RegistryState.instance.operator.party,
             }),
-            ...(RegistryState.instance.synchronizerIds.transferInstruction
+            ...(RegistryState.instance.synchronizerId
                 ? {
-                      synchronizerId:
-                          RegistryState.instance.synchronizerIds
-                              .transferInstruction,
+                      synchronizerId: RegistryState.instance.synchronizerId,
                   }
                 : {}),
         })
@@ -115,13 +112,12 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
         })
 
-    const newFactoryFound = RegistryState.instance.synchronizerIds
-        .allocationInstruction
+    const newFactoryFound = RegistryState.instance.synchronizerId
         ? // multi-sync mode
           newFactoryContracts.find(
               (factory) =>
                   factory.synchronizerId ===
-                  RegistryState.instance.synchronizerIds.allocationInstruction
+                  RegistryState.instance.synchronizerId
           )
         : // no multi-sync mode
           newFactoryContracts[0]

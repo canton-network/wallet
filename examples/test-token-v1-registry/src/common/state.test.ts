@@ -65,10 +65,7 @@ describe('RegistryState', () => {
         it('should create a singleton instance with provided config', async () => {
             const config: Partial<RegistryConfig> = {
                 port: 8080,
-                synchronizerIds: {
-                    transferInstruction: 'sync-1',
-                    allocationInstruction: 'sync-2',
-                },
+                synchronizerId: 'sync',
             }
 
             await RegistryState.instantiate(config)
@@ -76,10 +73,7 @@ describe('RegistryState', () => {
 
             expect(instance).toBeDefined()
             expect(instance.port).toBe(8080)
-            expect(instance.synchronizerIds.transferInstruction).toBe('sync-1')
-            expect(instance.synchronizerIds.allocationInstruction).toBe(
-                'sync-2'
-            )
+            expect(instance.synchronizerId).toBe('sync')
         })
 
         it('should merge provided config with defaults', async () => {
@@ -91,8 +85,8 @@ describe('RegistryState', () => {
             const instance = RegistryState.instance
 
             expect(instance.port).toBe(9000)
-            expect(instance.synchronizerIds).toEqual(
-                defaultConfig.synchronizerIds
+            expect(instance.synchronizerId).toEqual(
+                defaultConfig.synchronizerId
             )
         })
 
@@ -164,18 +158,15 @@ describe('RegistryState', () => {
         it('should reset instance to default config', async () => {
             await RegistryState.instantiate({
                 port: 8000,
-                synchronizerIds: {
-                    transferInstruction: 'custom-sync-1',
-                    allocationInstruction: 'custom-sync-2',
-                },
+                synchronizerId: 'sync',
             })
 
             const instance = RegistryState.instance
             instance.reset()
 
             expect(instance.port).toBe(defaultConfig.port)
-            expect(instance.synchronizerIds).toEqual(
-                defaultConfig.synchronizerIds
+            expect(instance.synchronizerId).toEqual(
+                defaultConfig.synchronizerId
             )
         })
 
@@ -194,8 +185,7 @@ describe('RegistryState', () => {
     describe('default config', () => {
         it('should have expected default values', () => {
             expect(defaultConfig.port).toBe(5634)
-            expect(defaultConfig.synchronizerIds.transferInstruction).toBe('')
-            expect(defaultConfig.synchronizerIds.allocationInstruction).toBe('')
+            expect(defaultConfig.synchronizerId).toBe('')
             expect(defaultConfig.operator.party).toBe('')
             expect(defaultConfig.operator.keys).toBeDefined()
         })
@@ -212,16 +202,8 @@ describe('RegistryState', () => {
             instance.port = 4000
             expect(instance.port).toBe(4000)
 
-            instance.synchronizerIds = {
-                transferInstruction: 'new-sync-1',
-                allocationInstruction: 'new-sync-2',
-            }
-            expect(instance.synchronizerIds.transferInstruction).toBe(
-                'new-sync-1'
-            )
-            expect(instance.synchronizerIds.allocationInstruction).toBe(
-                'new-sync-2'
-            )
+            instance.synchronizerId = 'sync'
+            expect(instance.synchronizerId).toBe('sync')
         })
     })
 

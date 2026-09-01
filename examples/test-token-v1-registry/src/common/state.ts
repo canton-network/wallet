@@ -6,10 +6,7 @@ import defaultSdk from './defaultSdk'
 
 export interface RegistryConfig {
     sdk: SDKInterface
-    synchronizerIds: {
-        transferInstruction: string
-        allocationInstruction: string
-    }
+    synchronizerId: string
     operator: {
         party: string
         keys: ReturnType<SDKInterface['keys']['generate']>
@@ -19,10 +16,7 @@ export interface RegistryConfig {
 
 export const defaultConfig: RegistryConfig = {
     sdk: defaultSdk,
-    synchronizerIds: {
-        transferInstruction: '',
-        allocationInstruction: '',
-    },
+    synchronizerId: '',
     operator: {
         party: '',
         keys: defaultSdk.keys.generate(),
@@ -35,7 +29,7 @@ export class RegistryState implements RegistryConfig {
         Object.assign(this, defaultConfig, config)
     }
     sdk!: RegistryConfig['sdk']
-    synchronizerIds!: RegistryConfig['synchronizerIds']
+    synchronizerId!: RegistryConfig['synchronizerId']
     operator!: RegistryConfig['operator']
     port!: RegistryConfig['port']
 

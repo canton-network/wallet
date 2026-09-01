@@ -299,7 +299,7 @@ describe('Transfer Instruction', () => {
                 receiver: 'r',
             })
 
-            mock.state.RegistryState.instance.synchronizerIds.transferInstruction =
+            mock.state.RegistryState.instance.synchronizerId =
                 'transfer-sync-id'
             mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
                 {
@@ -334,7 +334,7 @@ describe('Transfer Instruction', () => {
                 receiver: 'r',
             })
 
-            mock.state.RegistryState.instance.synchronizerIds.transferInstruction =
+            mock.state.RegistryState.instance.synchronizerId =
                 'transfer-sync-id'
             mock.sdk.ledger.acsReader.readJsContracts
                 .mockResolvedValueOnce([])

@@ -120,8 +120,7 @@ describe('Allocation Instruction', () => {
     it('should return factory matching allocation synchronizer id', async () => {
         const request = {} as RequestType<typeof getAllocationFactory>
 
-        mock.state.RegistryState.instance.synchronizerIds.allocationInstruction =
-            'allocation-sync-id'
+        mock.state.RegistryState.instance.synchronizerId = 'allocation-sync-id'
         mock.sdk.ledger.acsReader.readJsContracts.mockResolvedValueOnce([
             {
                 contractId: 'cid-1',
@@ -151,8 +150,7 @@ describe('Allocation Instruction', () => {
     it('should pass allocation synchronizer id when creating factory contract', async () => {
         const request = {} as RequestType<typeof getAllocationFactory>
 
-        mock.state.RegistryState.instance.synchronizerIds.allocationInstruction =
-            'allocation-sync-id'
+        mock.state.RegistryState.instance.synchronizerId = 'allocation-sync-id'
         mock.sdk.ledger.acsReader.readJsContracts
             .mockResolvedValueOnce([])
             .mockResolvedValueOnce([
