@@ -6,62 +6,8 @@ import type { SDKInterface } from '@canton-network/wallet-sdk'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
 import { pollUntil } from './_poll.js'
-
-const OTC_TRADE_PROPOSAL_TEMPLATE_ID =
-    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal'
-const OTC_TRADE_TEMPLATE_ID =
-    '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade'
-
-function buildOtcTradeProposalCommand(params: {
-    venue: string
-    transferLegs: Record<string, unknown>
-    approvers: string[]
-    tradeCid?: string | null
-}) {
-    return {
-        CreateCommand: {
-            templateId: OTC_TRADE_PROPOSAL_TEMPLATE_ID,
-            createArguments: {
-                venue: params.venue,
-                tradeCid: params.tradeCid ?? null,
-                transferLegs: params.transferLegs,
-                approvers: params.approvers,
-            },
-        },
-    }
-}
-
-function buildAcceptOtcTradeCommand(params: {
-    proposalCid: string
-    approver: string
-}) {
-    return {
-        ExerciseCommand: {
-            templateId: OTC_TRADE_PROPOSAL_TEMPLATE_ID,
-            contractId: params.proposalCid,
-            choice: 'OTCTradeProposal_Accept',
-            choiceArgument: { approver: params.approver },
-        },
-    }
-}
-
-function buildInitiateSettlementCommand(params: {
-    proposalCid: string
-    prepareUntil: string
-    settleBefore: string
-}) {
-    return {
-        ExerciseCommand: {
-            templateId: OTC_TRADE_PROPOSAL_TEMPLATE_ID,
-            contractId: params.proposalCid,
-            choice: 'OTCTradeProposal_InitiateSettlement',
-            choiceArgument: {
-                prepareUntil: params.prepareUntil,
-                settleBefore: params.settleBefore,
-            },
-        },
-    }
-}
+import { OTCTrade } from '@canton-network/core-splice-codegen'
+import { TransferLeg } from '@canton-network/core-token-standard'
 
 const MS_30_MIN = 30 * 60 * 1000
 const MS_1_HOUR = 60 * 60 * 1000
@@ -71,7 +17,7 @@ const PROPOSAL_POLL_INTERVAL_MS = 500
 
 export async function createAndInitiateOtcTrade(
     setup: MultiSyncSetup,
-    transferLegs: Record<string, unknown>,
+    transferLegs: Record<string, TransferLeg>,
     logger: Logger
 ): Promise<string> {
     const {
@@ -95,7 +41,9 @@ export async function createAndInitiateOtcTrade(
             async () => {
                 const proposals =
                     await sdk.ledger.acsReader.raw.readJsContracts({
-                        templateIds: [OTC_TRADE_PROPOSAL_TEMPLATE_ID],
+                        templateIds: [
+                            OTCTrade.DAR.TradingApp.OTCTradeProposal.templateId,
+                        ],
                         parties: [party],
                         filterByParty: true,
                     })
@@ -119,10 +67,11 @@ export async function createAndInitiateOtcTrade(
     await aliceSdk.ledger
         .prepare({
             partyId: alice.partyId,
-            commands: buildOtcTradeProposalCommand({
+            commands: OTCTrade.commands.create.otcTradeProposal({
                 venue: tradingApp.partyId,
                 transferLegs,
                 approvers: [alice.partyId],
+                tradeCid: null,
             }),
             disclosedContracts: [],
             synchronizerId: globalSynchronizerId,
@@ -137,9 +86,11 @@ export async function createAndInitiateOtcTrade(
         .prepare({
             partyId: bob.partyId,
             commands: [
-                buildAcceptOtcTradeCommand({
-                    proposalCid: await readProposalCid(bobSdk, bob.partyId),
-                    approver: bob.partyId,
+                OTCTrade.commands.exercise.otcTradeProposal.accept({
+                    contractId: await readProposalCid(bobSdk, bob.partyId),
+                    choiceArgument: {
+                        approver: bob.partyId,
+                    },
                 }),
             ],
             disclosedContracts: [],
@@ -156,14 +107,16 @@ export async function createAndInitiateOtcTrade(
         .prepare({
             partyId: tradingApp.partyId,
             commands: [
-                buildInitiateSettlementCommand({
-                    proposalCid: await readProposalCid(
+                OTCTrade.commands.exercise.otcTradeProposal.initiateSettlement({
+                    contractId: await readProposalCid(
                         tradingAppSdk,
                         tradingApp.partyId,
                         (approvers) => approvers.includes(bob.partyId)
                     ),
-                    prepareUntil,
-                    settleBefore,
+                    choiceArgument: {
+                        prepareUntil,
+                        settleBefore,
+                    },
                 }),
             ],
             disclosedContracts: [],
@@ -177,7 +130,7 @@ export async function createAndInitiateOtcTrade(
 
     const otcTradeContracts =
         await tradingAppSdk.ledger.acsReader.raw.readJsContracts({
-            templateIds: [OTC_TRADE_TEMPLATE_ID],
+            templateIds: [OTCTrade.DAR.TradingApp.OTCTrade.templateId],
             parties: [tradingApp.partyId],
             filterByParty: true,
         })

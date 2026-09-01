@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
-import * as SpliceTestTokenV1 from '@canton-network/core-test-token'
-import type { Token } from '@canton-network/core-test-token'
+import { TestToken, type Token } from '@canton-network/core-splice-codegen'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_TOKEN_AMOUNT } from './_constants.js'
-
-const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
 
 const TOKEN_POLL_TIMEOUT_MS = 30_000
 const TOKEN_POLL_INTERVAL_MS = 500
@@ -20,8 +17,9 @@ export async function aliceTransferToCharlie(
 
     // Resolve the TestToken registry URL from the SDK's configured registries
     // (`token.find`) instead of threading it through the setup object.
-    const { registryUrl: testTokenRegistryUrl } =
-        await aliceSdk.token.find('TestToken')
+    const { registryUrl: testTokenRegistryUrl } = await aliceSdk.token.find(
+        TestToken.DAR.TestTokenID
+    )
 
     // The settlement is submitted by TradingApp (sv), so Alice's resulting Token
     // holding propagates to her participant (app-user) asynchronously. Poll app-user until it
@@ -31,7 +29,7 @@ export async function aliceTransferToCharlie(
     for (;;) {
         const aliceTokens = await aliceSdk.ledger.acsReader.raw.readJsContracts(
             {
-                templateIds: [TestTokenV1.Token.templateId],
+                templateIds: [TestToken.DAR.TestTokenV1.Token.templateId],
                 parties: [alice.partyId],
                 filterByParty: true,
             }
@@ -63,7 +61,7 @@ export async function aliceTransferToCharlie(
             sender: alice.partyId,
             recipient: charlie.partyId,
             amount: TRADE_TOKEN_AMOUNT,
-            instrumentId: 'TestToken',
+            instrumentId: TestToken.DAR.TestTokenID,
             registryUrl: testTokenRegistryUrl,
             inputUtxos: [aliceToken.contractId],
         })
@@ -80,7 +78,9 @@ export async function aliceTransferToCharlie(
 
     const transferOffers =
         await charlieSdk.ledger.acsReader.raw.readJsContracts({
-            templateIds: [TestTokenV1.TokenTransferOffer.templateId],
+            templateIds: [
+                TestToken.DAR.TestTokenV1.TokenTransferOffer.templateId,
+            ],
             parties: [charlie.partyId],
             filterByParty: true,
         })
@@ -116,7 +116,7 @@ export async function bobSelfTransferToApp(
     const { bobSdk, bob, appSynchronizerId } = setup
 
     const bobTokens = await bobSdk.ledger.acsReader.raw.readJsContracts({
-        templateIds: [TestTokenV1.Token.templateId],
+        templateIds: [TestToken.DAR.TestTokenV1.Token.templateId],
         parties: [bob.partyId],
         filterByParty: true,
     })
@@ -127,8 +127,9 @@ export async function bobSelfTransferToApp(
     }
 
     // Resolve the TestToken registry URL from the SDK's configured registries.
-    const { registryUrl: testTokenRegistryUrl } =
-        await bobSdk.token.find('TestToken')
+    const { registryUrl: testTokenRegistryUrl } = await bobSdk.token.find(
+        TestToken.DAR.TestTokenID
+    )
 
     for (const token of bobTokens) {
         if (token.synchronizerId !== appSynchronizerId) {
@@ -141,11 +142,8 @@ export async function bobSelfTransferToApp(
             })
         }
 
-        const holdingAmount = (
-            token as unknown as {
-                createArgument: Token
-            }
-        ).createArgument.holding.amount
+        const holdingAmount = (token as { createArgument: Token })
+            .createArgument.holding.amount
         if (!holdingAmount)
             throw new Error('Cannot read amount from Bob Token holding')
 

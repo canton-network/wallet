@@ -17,6 +17,16 @@ vi.mock('../../common/operator', () => ({
     },
 }))
 
+vi.mock('../../common/state', () => ({
+    RegistryState: {
+        instance: {
+            operator: {
+                party: 'admin',
+            },
+        },
+    },
+}))
+
 describe('Metadata', () => {
     beforeEach(() => {
         vi.clearAllMocks()

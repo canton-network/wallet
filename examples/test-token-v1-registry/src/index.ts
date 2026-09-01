@@ -6,44 +6,38 @@ import allocationAPIRouter from './api/allocation/index.js'
 import { APIError } from './api/common'
 import metadataAPIRouter from './api/metadata/index.js'
 import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
-import { initOperatorParty, operator } from './common/operator'
-import express, { ErrorRequestHandler, Request, Response } from 'express'
+import express, {
+    ErrorRequestHandler,
+    NextFunction,
+    Request,
+    Response,
+} from 'express'
 import { TestToken } from '@canton-network/core-splice-codegen'
-import sdk from './common/sdk'
+import defaultSdk from './common/defaultSdk.js'
 import { Server } from 'http'
-import {
-    assignSynchronizerIds,
-    resetSynchronizerIds,
-} from './common/synchronizer.js'
+import { RegistryConfig, RegistryState, defaultConfig } from './common/state.js'
+
+export { RegistryState, defaultConfig, type RegistryConfig }
 
 let server: Server
 
-export const startRegistry = async (
-    options?: Partial<{
-        operator: typeof operator
-        synchronizerIds: {
-            transferInstruction: string
-            allocationInstruction: string
-        }
-    }>
-) => {
+export const startRegistry = async (config?: Partial<RegistryConfig>) => {
     const app = express()
 
-    await initOperatorParty(options?.operator)
-    if (options?.synchronizerIds) {
-        assignSynchronizerIds(options.synchronizerIds)
-    }
+    await RegistryState.instantiate(config ?? {})
 
     /**
      * @customize The registry shouldn't be responsible for vetting daml files. We're doing this for development purposes only. Feel free to remove this when constructing your own token.
      */
     if (process.env.NODE_ENV === 'development')
-        await TestToken.utils.vetDar(sdk)
+        await TestToken.utils.vetDar(defaultSdk)
 
     const errorMiddleware: ErrorRequestHandler = (
         error: Error,
         _req: Request,
-        res: Response
+        res: Response,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _next: NextFunction
     ) => {
         if (error instanceof APIError) {
             res.status(error.status).send({
@@ -51,7 +45,7 @@ export const startRegistry = async (
             })
             return
         }
-        res.status(500).send({ error: error.message })
+        res.status(500).send({ ...error, stack: error.stack })
     }
 
     server = app
@@ -61,13 +55,17 @@ export const startRegistry = async (
         .use(allocationAPIRouter)
         .use(allocationInstructionAPIRouter)
         .use(errorMiddleware)
-        .listen(5634, () =>
-            console.info('api listening on http://localhost:5634')
+        .listen(RegistryState.instance.port, () =>
+            console.info(
+                `api listening on http://localhost:${RegistryState.instance.port}`
+            )
         )
 }
 
 export const stopRegistry = () => {
     if (!server) return
-    resetSynchronizerIds()
+    RegistryState.instance.reset()
     server.close()
 }
+
+if (process.env.NODE_ENV === 'development') await startRegistry()

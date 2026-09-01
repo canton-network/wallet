@@ -2,15 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
-import {
-    buildCreateTokenRulesCommand,
-    buildMintTokenCommand,
-} from '@canton-network/core-test-token'
-import * as SpliceTestTokenV1 from '@canton-network/core-test-token'
+import { TestToken } from '@canton-network/core-splice-codegen'
 import type { MultiSyncSetup } from './_setup.js'
 import { BOB_TOKEN_MINT_AMOUNT } from './_constants.js'
-
-const TestTokenV1 = SpliceTestTokenV1.Splice.Testing.Tokens.TestTokenV1
 
 /**
  * Creates a `TokenRules` contract for the TokenAdmin party on a single
@@ -27,7 +21,9 @@ export async function createTokenRules(
     await tokenAdminSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
-            commands: buildCreateTokenRulesCommand(tokenAdmin.partyId),
+            commands: TestToken.commands.create.rules({
+                admin: tokenAdmin.partyId,
+            }),
             disclosedContracts: [],
             synchronizerId,
         })
@@ -49,14 +45,15 @@ export async function mintAndTransferTokenToBob(
     // The TestToken registry URL comes from the SDK's own configured registries
     // (`token.find` resolves assets from the registries passed to `SDK.create`),
     // so it no longer needs to be threaded through the setup object.
-    const { registryUrl: testTokenRegistryUrl } =
-        await tokenAdminSdk.token.find('TestToken')
+    const { registryUrl } = await tokenAdminSdk.token.find(
+        TestToken.DAR.TestTokenID
+    )
 
     await tokenAdminSdk.ledger
         .prepare({
             partyId: tokenAdmin.partyId,
             commands: [
-                buildMintTokenCommand({
+                TestToken.commands.create.token({
                     owner: tokenAdmin.partyId,
                     admin: tokenAdmin.partyId,
                     amount: BOB_TOKEN_MINT_AMOUNT,
@@ -70,7 +67,7 @@ export async function mintAndTransferTokenToBob(
 
     const adminTokenHoldings =
         await tokenAdminSdk.ledger.acsReader.raw.readJsContracts({
-            templateIds: [TestTokenV1.Token.templateId],
+            templateIds: [TestToken.DAR.TestTokenV1.Token.templateId],
             parties: [tokenAdmin.partyId],
             filterByParty: true,
         })
@@ -86,8 +83,8 @@ export async function mintAndTransferTokenToBob(
             sender: tokenAdmin.partyId,
             recipient: bob.partyId,
             amount: BOB_TOKEN_MINT_AMOUNT,
-            instrumentId: 'TestToken',
-            registryUrl: testTokenRegistryUrl,
+            instrumentId: TestToken.DAR.TestTokenID,
+            registryUrl,
             inputUtxos: [adminTokenCid],
         })
 
@@ -102,7 +99,7 @@ export async function mintAndTransferTokenToBob(
         .execute({ partyId: tokenAdmin.partyId })
 
     const transferOffers = await bobSdk.ledger.acsReader.raw.readJsContracts({
-        templateIds: [TestTokenV1.TokenTransferOffer.templateId],
+        templateIds: [TestToken.DAR.TestTokenV1.TokenTransferOffer.templateId],
         parties: [bob.partyId],
         filterByParty: true,
     })
@@ -115,7 +112,7 @@ export async function mintAndTransferTokenToBob(
     const [acceptCommand, acceptDisclosed] = await bobSdk.token.transfer.accept(
         {
             transferInstructionCid: transferOfferCid,
-            registryUrl: testTokenRegistryUrl,
+            registryUrl,
         }
     )
 
