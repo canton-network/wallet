@@ -86,16 +86,27 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 // TODO: validate transaction here
 
                 try {
+                    const txHashHex = Buffer.from(
+                        params.txHash,
+                        'base64'
+                    ).toString('hex')
+
                     const tx = await this.fireblocks.signTransaction(
                         userId,
-                        params.txHash,
+                        txHashHex,
                         params.keyIdentifier,
                         params.internalTxId
                     )
+
+                    // decode signature back to base64 for wallet gateway
+                    const decodedSignature =
+                        tx.signature &&
+                        Buffer.from(tx.signature, 'hex').toString('base64')
+
                     return {
                         txId: tx.txId,
                         status: tx.status,
-                        signature: tx.signature,
+                        signature: decodedSignature,
                         publicKey: tx.publicKey,
                     }
                 } catch (error) {
