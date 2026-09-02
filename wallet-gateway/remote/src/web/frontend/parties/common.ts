@@ -33,6 +33,11 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
     @state() protected accessor publicKeysLoading = false
     @state() accessor selectedSigningProvider = ''
 
+    override connectedCallback() {
+        super.connectedCallback()
+        void this.loadContext()
+    }
+
     static styles = [
         BaseElement.styles,
         css`
