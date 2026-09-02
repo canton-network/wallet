@@ -4,7 +4,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { WalletCreateEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    WalletCreateEvent,
+    WgWalletCreateForm,
+} from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeWallet,
@@ -65,12 +68,21 @@ describe('UserUiAddParty', () => {
 
     const renderElement = () => fixture<UserUiAddParty>(componentFixture)
 
+    const getCreateForm = (el: UserUiAddParty) =>
+        el.shadowRoot?.querySelector<WgWalletCreateForm>(
+            'wg-wallet-create-form'
+        )
+
     const getSigningProviderSelect = (el: UserUiAddParty) =>
-        el.shadowRoot
-            ?.querySelector('wg-wallet-create-form')
-            ?.shadowRoot?.querySelector<HTMLSelectElement>(
-                '#signing-provider-id'
-            )
+        getCreateForm(el)?.shadowRoot?.querySelector<HTMLSelectElement>(
+            '#signing-provider-id'
+        )
+
+    const waitForSigningProviders = (el: UserUiAddParty) =>
+        waitUntil(() => {
+            const form = getCreateForm(el)
+            return Boolean(form && !form.signingProvidersLoading)
+        })
 
     beforeEach(() => {
         mockCreateUserClient.mockReset()
@@ -84,14 +96,6 @@ describe('UserUiAddParty', () => {
         requestHandlers = {
             listSigningProviders: async () => ({
                 signingProviders: ['participant', 'wallet-kernel'],
-            }),
-            listSessions: async () => ({
-                sessions: [
-                    {
-                        id: 'sess-1',
-                        network: { id: 'network1', name: 'Test' },
-                    },
-                ],
             }),
             listSigningProviderKeys: async () => ({
                 keys: [
@@ -123,9 +127,7 @@ describe('UserUiAddParty', () => {
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
             'Create a new party'
         )
-        expect(
-            el.shadowRoot?.querySelector('wg-wallet-create-form')
-        ).not.toBeNull()
+        expect(getCreateForm(el)).not.toBeNull()
     })
 
     it('loads signing providers and passes the loading state to the form', async () => {
@@ -138,16 +140,22 @@ describe('UserUiAddParty', () => {
             resolveSigningProviders = resolve
         })
         requestHandlers.listSigningProviders = () => signingProvidersDeferred
-        requestHandlers.listSessions = async () => ({ sessions: [] })
 
         const el = await renderElement()
 
-        await waitUntil(() => el.signingProvidersLoading)
-        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
-        const providerSelect =
-            form?.shadowRoot?.querySelector<HTMLSelectElement>(
-                '#signing-provider-id'
+        await waitUntil(() => {
+            const form = getCreateForm(el)
+            const providerSelect = getSigningProviderSelect(el)
+            return (
+                form?.signingProvidersLoading === true &&
+                providerSelect?.disabled === true &&
+                providerSelect.querySelector('option')?.textContent?.trim() ===
+                    'Loading signing providers...'
             )
+        })
+        const form = getCreateForm(el)
+        const providerSelect = getSigningProviderSelect(el)
+        expect(form?.signingProvidersLoading).toBe(true)
         expect(providerSelect?.disabled).toBe(true)
         expect(
             providerSelect?.querySelector('option')?.textContent?.trim()
@@ -159,13 +167,13 @@ describe('UserUiAddParty', () => {
 
         await waitUntil(
             () =>
-                !el.signingProvidersLoading &&
+                getCreateForm(el)?.signingProvidersLoading === false &&
                 Array.from(getSigningProviderSelect(el)?.options ?? []).some(
                     (option) => option.value === 'fireblocks'
                 )
         )
-        expect(el.signingProvidersLoading).toBe(false)
-        expect(el.signingProviders).toEqual(['participant', 'fireblocks'])
+        expect(form?.signingProvidersLoading).toBe(false)
+        expect(form?.signingProviders).toEqual(['participant', 'fireblocks'])
         expect(mockRequest).toHaveBeenCalledWith({
             method: 'listSigningProviders',
         })
@@ -174,12 +182,11 @@ describe('UserUiAddParty', () => {
                 (option) => option.value
             )
         ).toEqual(['', 'participant', 'fireblocks'])
-        await waitUntil(() => el.networkIds.length === 1)
     })
 
     it('navigates back to parties list when Back is clicked', async () => {
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
+        await waitForSigningProviders(el)
 
         const backBtn = el.shadowRoot?.querySelector(
             '.page-header button'
@@ -197,10 +204,9 @@ describe('UserUiAddParty', () => {
         })
 
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
+        await waitForSigningProviders(el)
 
-        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
-        form!.dispatchEvent(
+        getCreateForm(el)!.dispatchEvent(
             new WalletCreateEvent('my-party', 'participant', true)
         )
 
@@ -222,10 +228,9 @@ describe('UserUiAddParty', () => {
         })
 
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
+        await waitForSigningProviders(el)
 
-        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
-        form!.dispatchEvent(
+        getCreateForm(el)!.dispatchEvent(
             new WalletCreateEvent('pending-party', 'participant', false)
         )
 
@@ -242,10 +247,9 @@ describe('UserUiAddParty', () => {
         }
 
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
+        await waitForSigningProviders(el)
 
-        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
-        form!.dispatchEvent(
+        getCreateForm(el)!.dispatchEvent(
             new WalletCreateEvent('fail-party', 'participant', false)
         )
 
@@ -260,10 +264,9 @@ describe('UserUiAddParty', () => {
         })
 
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
+        await waitForSigningProviders(el)
 
-        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
-        form!.dispatchEvent(
+        getCreateForm(el)!.dispatchEvent(
             new WalletCreateEvent('removed-party', 'participant', false)
         )
 
@@ -284,18 +287,16 @@ describe('UserUiAddParty', () => {
         requestHandlers.listSigningProviders = async () => ({
             signingProviders: ['participant', 'wallet-kernel', 'fireblocks'],
         })
-        if (method === 'listSigningProviderKeys') {
-            return keysDeferred
-        }
+        requestHandlers.listSigningProviderKeys = () => keysDeferred
 
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
+        await waitForSigningProviders(el)
         await waitUntil(() =>
             Array.from(getSigningProviderSelect(el)?.options ?? []).some(
                 (option) => option.value === 'fireblocks'
             )
         )
-        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
+        const form = getCreateForm(el)
         const providerSelect =
             form?.shadowRoot?.querySelector<HTMLSelectElement>(
                 '#signing-provider-id'
@@ -303,7 +304,7 @@ describe('UserUiAddParty', () => {
         providerSelect!.value = 'fireblocks'
         providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
 
-        await waitUntil(() => mockRequest.mock.calls.length > 0)
+        await waitUntil(() => form?.publicKeysLoading === true)
 
         resolveKeys({
             keys: [
@@ -312,6 +313,11 @@ describe('UserUiAddParty', () => {
             ],
         })
 
+        await waitUntil(() => form?.publicKeysLoading === false)
+        expect(form?.publicKeys.map((key) => key.name)).toEqual([
+            'Vault A',
+            'Vault B',
+        ])
         expect(mockRequest).toHaveBeenCalledWith({
             method: 'listSigningProviderKeys',
             params: { signingProviderId: 'fireblocks' },
@@ -322,16 +328,16 @@ describe('UserUiAddParty', () => {
         requestHandlers.listSigningProviders = async () => ({
             signingProviders: ['participant', 'wallet-kernel', 'fireblocks'],
         })
-        requestHandlers.listSigningProviderKeys = async () => ({ vaults: [] })
+        requestHandlers.listSigningProviderKeys = async () => ({ keys: [] })
 
         const el = await renderElement()
-        await waitUntil(() => el.networkIds.length === 1)
+        await waitForSigningProviders(el)
         await waitUntil(() =>
             Array.from(getSigningProviderSelect(el)?.options ?? []).some(
                 (option) => option.value === 'fireblocks'
             )
         )
-        const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
+        const form = getCreateForm(el)
         const providerSelect =
             form?.shadowRoot?.querySelector<HTMLSelectElement>(
                 '#signing-provider-id'
@@ -346,29 +352,6 @@ describe('UserUiAddParty', () => {
             'No public keys are available for the selected signing provider.',
             'info'
         )
-        expect(el.vaults).toEqual([])
-    })
-
-    it('uses networkId from state when listSessions fails', async () => {
-        requestHandlers.listSessions = async () => {
-            throw new Error('sessions unavailable')
-        }
-
-        const el = await renderElement()
-
-        await waitUntil(() => el.networkIds.length === 1)
-
-        expect(el.networkIds).toEqual(['network1'])
-    })
-
-    it('leaves networkIds empty when there is no session and no stored network', async () => {
-        mockNetworkIdGet.mockReturnValue(undefined)
-        requestHandlers.listSessions = async () => ({ sessions: [] })
-
-        const el = await renderElement()
-
-        await waitUntil(() => mockNetworkIdGet.mock.calls.length > 0)
-
-        expect(el.networkIds).toEqual([])
+        expect(form?.publicKeys).toEqual([])
     })
 })
