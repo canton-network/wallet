@@ -1133,8 +1133,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     "description": "Hashing scheme version for the ledger. If omitted, defaults to HASHING_SCHEME_VERSION_V3"
                 }
             },
-            "required": ["version"],
-            "additionalProperties": false
+            "required": ["version"]
         }
     },
     "required": ["kernel", "store", "bootstrap"]
