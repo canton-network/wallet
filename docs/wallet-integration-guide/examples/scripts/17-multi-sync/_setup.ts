@@ -148,20 +148,17 @@ export async function setupMultiSyncTrade(
     // Vetting is per (participant, synchronizer). aliceSdk represents the
     // app-user participant and bobSdk the app-provider participant, so
     // vetting through one SDK per participant covers every party hosted there.
-    await Promise.all([
-        ...[aliceSdk, bobSdk].flatMap((sdk) =>
+    // sv needs no vetting — it hosts no stakeholder in either trade leg.
+    await Promise.all(
+        [aliceSdk, bobSdk].flatMap((sdk) =>
             [globalSynchronizerId, appSynchronizerId].map(async (sid) => {
                 await TestToken.utils.vetDar(sdk, sid)
                 await OTCTrade.utils.vetDar(sdk, sid)
             })
-        ),
-        async () => {
-            await TestToken.utils.vetDar(svSdk, globalSynchronizerId)
-            await OTCTrade.utils.vetDar(svSdk, globalSynchronizerId)
-        },
-    ])
+        )
+    )
     logger.info(
-        'DARs vetted: app-user participant node + app-provider participant node have TestTokenV1 + trading-app on both synchronizers; sv has both on global only'
+        'DARs vetted: app-user + app-provider participant nodes have TestTokenV1 + trading-app on both synchronizers (sv not vetted — not a stakeholder in either trade leg)'
     )
 
     const aliceKey = aliceSdk.keys.generate()
