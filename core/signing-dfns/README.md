@@ -93,7 +93,9 @@ the Gateway config:
 - `signingProviders.dfns.baseUrl`: The base URL for the Dfns API. Defaults to `https://api.dfns.io`.
 - `signingProviders.dfns.credId`: The default credential ID for Dfns API authentication.
 
-Set `DFNS_PRIVATE_KEY` and `DFNS_AUTH_TOKEN` in environment variables.
+Set the environment variables that contain secret/private values separately.
+- `DFNS_PRIVATE_KEY`: The private key for signing Dfns API requests.
+- `DFNS_AUTH_TOKEN`: The authentication token for the Dfns API.
 
 Example usage:
 
