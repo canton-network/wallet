@@ -64,13 +64,13 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
     }
 
     private async loadContext() {
-        const currentOrigin = await detectCurrentOrigin()
-        const userClient = await createUserClient(
-            await stateManager.accessToken.get(currentOrigin)
-        )
         this.signingProviders = []
         this.signingProvidersLoading = true
         try {
+            const currentOrigin = await detectCurrentOrigin()
+            const userClient = await createUserClient(
+                await stateManager.accessToken.get(currentOrigin)
+            )
             const result = await userClient.request({
                 method: 'listSigningProviders',
             })
