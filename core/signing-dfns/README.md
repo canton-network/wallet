@@ -94,6 +94,7 @@ the Gateway config:
 - `signingProviders.dfns.credId`: The default credential ID for Dfns API authentication.
 
 Set the environment variables that contain secret/private values separately.
+
 - `DFNS_PRIVATE_KEY`: The private key for signing Dfns API requests.
 - `DFNS_AUTH_TOKEN`: The authentication token for the Dfns API.
 

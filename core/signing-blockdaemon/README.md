@@ -75,6 +75,7 @@ Gateway config:
 - `signingProviders.blockdaemon.caip2`: The CAIP-2 network identifier. Defaults to `canton:testnet`.
 
 Set the following environment variable separately:
+
 - `BLOCKDAEMON_API_URL`: The base URL for the Blockdaemon API. Defaults to `http://localhost:5080/api/cwp/canton` if not set.
 - `BLOCKDAEMON_API_KEY`: The API key for authenticating with Blockdaemon.
 
