@@ -28,15 +28,19 @@ The `store.connection` object selects one of three backends.
 
 Recommended for production for its robustness, concurrent access, and backup support.
 
-| Field      | Required            | Description                                                                                                       |
-| ---------- | ------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `type`     | yes                 | Must be `"postgres"`.                                                                                             |
-| `host`     | yes                 | Hostname or IP of the PostgreSQL server.                                                                          |
-| `port`     | no (default `5432`) | Port PostgreSQL listens on.                                                                                       |
-| `user`     | yes                 | Database user to connect with.                                                                                    |
-| `password` | yes                 | Password for the database user.                                                                                   |
-| `database` | yes                 | Name of the database to use (must exist).                                                                         |
-| `ssl`      | no                  | TLS settings, passed through to the Node.js `pg` driver. See [PostgreSQL over TLS/SSL](#postgresql-over-tls-ssl). |
+| Field         | Required            | Description                                                                                                       |
+| ------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `type`        | yes                 | Must be `"postgres"`.                                                                                             |
+| `host`        | yes                 | Hostname or IP of the PostgreSQL server.                                                                          |
+| `port`        | no (default `5432`) | Port PostgreSQL listens on.                                                                                       |
+| `user`        | yes                 | Database user to connect with.                                                                                    |
+| `password`    | one of              | Password for the database user. Do not set together with `passwordEnv`.                                           |
+| `passwordEnv` | one of              | Name of the environment variable that holds the database password. Prefer this in production.                     |
+| `database`    | yes                 | Name of the database to use (must exist).                                                                         |
+| `ssl`         | no                  | TLS settings, passed through to the Node.js `pg` driver. See [PostgreSQL over TLS/SSL](#postgresql-over-tls-ssl). |
+
+Provide exactly one of `password` or `passwordEnv`. For Helm, inject the variable with `extraEnv`
+and a Kubernetes secret; see [Deploy](../operate/deploy.md#postgresql).
 
 ```json
 {
@@ -181,7 +185,7 @@ Maintain separate configuration files per environment (for example `config.dev.j
 `config.staging.json`, `config.prod.json`) to isolate settings and credentials.
 
 Never commit secrets. Override sensitive values with environment variables using the `Env`
-suffix on the field, for example `clientSecretEnv`:
+suffix on the field, for example `clientSecretEnv` or `passwordEnv`:
 
 ```json
 {

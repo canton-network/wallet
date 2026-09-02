@@ -1,12 +1,12 @@
 ---
 title: 'Configure the Wallet Gateway'
-description: 'Understand the Wallet Gateway configuration file: kernel, server, and store settings.'
+description: 'Understand the Wallet Gateway configuration file: kernel, server, store, and hashing scheme settings.'
 ---
 
 The Wallet Gateway reads a single JSON configuration file that defines who the Wallet Gateway is,
 how it serves requests, where it persists data, and which networks and identity providers it
-starts with. This guide covers the file's structure and the kernel, server, and store
-sections. For networks and authentication, see
+starts with. This guide covers the file's structure and the kernel, server, store, and hashing
+scheme sections. For networks and authentication, see
 [Networks & identity providers](networks-and-identity.md).
 For an exhaustive field reference, see the
 [Configuration reference](../reference/configuration-reference.md).
@@ -27,15 +27,16 @@ wallet-gateway --config-schema
 
 ## File structure
 
-The configuration file has five top-level sections:
+The configuration file has these top-level sections:
 
-| Section        | Required | Purpose                                                                      |
-| -------------- | -------- | ---------------------------------------------------------------------------- |
-| `kernel`       | yes      | Identity of this Wallet Gateway instance, served to dApps.                   |
-| `server`       | yes      | Network binding, ports, API paths, and the admin user.                       |
-| `store`        | yes      | Database connection for sessions, wallets, networks, IDPs, and transactions. |
-| `bootstrap`    | yes      | Networks and identity providers seeded on first run.                         |
-| `signingStore` | no       | Secondary database for keys when using internal signing.                     |
+| Section         | Required | Purpose                                                                      |
+| --------------- | -------- | ---------------------------------------------------------------------------- |
+| `kernel`        | yes      | Identity of this Wallet Gateway instance, served to dApps.                   |
+| `server`        | yes      | Network binding, ports, API paths, and the admin user.                       |
+| `store`         | yes      | Database connection for sessions, wallets, networks, IDPs, and transactions. |
+| `bootstrap`     | yes      | Networks and identity providers seeded on first run.                         |
+| `signingStore`  | no       | Secondary database for keys when using internal signing.                     |
+| `hashingScheme` | no       | Ledger hashing scheme version used to compute transaction hashes.            |
 
 A minimal configuration for a local setup looks like this:
 
@@ -196,6 +197,20 @@ transactions itself (the internal signing provider). It uses the same connection
 > The internal signing provider stores private keys in the signing store database. Do not use it
 > in production systems with valuable assets. See
 > [Signing providers](signing-providers.md).
+
+## Hashing scheme
+
+The optional `hashingScheme` section selects the hashing scheme version used to compute
+transaction hashes on the ledger. It defaults to `HASHING_SCHEME_VERSION_V3` and can be
+downgraded to `HASHING_SCHEME_VERSION_V2` if a connected participant still requires it.
+
+```json
+{
+    "hashingScheme": {
+        "version": "HASHING_SCHEME_VERSION_V3"
+    }
+}
+```
 
 ## Next steps
 

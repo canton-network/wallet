@@ -215,6 +215,30 @@ store:
         password: '<DB_PASSWORD>'
 ```
 
+Prefer `passwordEnv` over an inline password so the credential comes from the environment (or a
+Kubernetes secret) rather than the config file:
+
+```yaml
+# config YAML for Helm
+config:
+    store:
+        connection:
+            type: 'postgres'
+            host: '<HOST_NAME>'
+            port: 5432
+            database: '<DB_NAME>'
+            user: '<DB_USERNAME>'
+            passwordEnv: 'POSTGRES_DB_PASSWORD'
+
+extraEnv:
+    # example names for illustrative purposes: adapt to your specific needs
+    - name: POSTGRES_DB_PASSWORD
+      valueFrom:
+          secretKeyRef:
+              name: my-database-secrets
+              key: postgres-db-password
+```
+
 For TLS to PostgreSQL, add an `ssl` block (passed through to the Node.js `pg` driver). See
 [PostgreSQL over TLS/SSL](../reference/configuration-reference.md#postgresql-over-tls-ssl).
 
