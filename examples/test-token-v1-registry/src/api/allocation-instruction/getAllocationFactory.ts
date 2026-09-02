@@ -111,7 +111,8 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
     next(
         new APIError(
             500,
-            `Error instantiating transfer factory (completionOffset=${executionResult.completionOffset}`
+            `Error instantiating allocation
+             factory (completionOffset=${executionResult.completionOffset}`
         )
     )
     return
