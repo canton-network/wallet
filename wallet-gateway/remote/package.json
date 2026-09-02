@@ -1,13 +1,15 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
     "version": "1.10.0",
+    "type": "module",
     "description": "A server-side Wallet Gateway implementation over HTTP",
+    "license": "Apache-2.0",
+    "author": "Alex Matson <alex.matson@digitalasset.com>",
     "main": "dist/index.js",
     "bin": {
         "wallet-gateway": "dist/index.js",
         "wallet-gateway-remote": "dist/index.js"
     },
-    "type": "module",
     "scripts": {
         "build": "vite build && tsc -b && tsc -b tsconfig.frontend.json",
         "clean": "tsc -b --clean && rm -rf ./dist && rm ./*.sqlite || true",
@@ -28,9 +30,6 @@
         "signing-db:migrate:status": "tsx ./src/index -c ../test/config.json signing-db status",
         "signing-db:migrate:reset": "tsx ./src/index -c ../test/config.json signing-db reset"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
     "files": [
         "dist/**"
     ],
