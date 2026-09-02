@@ -264,6 +264,29 @@ store:
         password: "<DB_PASSWORD>"
 ```
 
+We also support postgres passwords specified as environment variables:
+
+```yaml
+# config YAML for Helm
+config:
+    store:
+        connection:
+            type: "postgres",
+            host: "<HOST_NAME>",
+            port: 5432,
+            database: "<DB_NAME>",
+            user: "<DB_USERNAME>",
+            passwordEnv: "POSTGRES_DB_PASSWORD"
+
+extraEnv:
+    # example names for illustrative purposes: adapt to your specific needs
+    - name: POSTGRES_DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: my-database-secrets
+          key: postgres-db-password
+```
+
 ### Local PostgreSQL over TLS (Docker)
 
 For local development you can run PostgreSQL in Docker with TLS enabled and point the Wallet Gateway `store` / `signingStore` at it.
