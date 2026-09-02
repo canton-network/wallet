@@ -7,31 +7,6 @@ import type { MultiSyncSetup } from './_setup.js'
 import { BOB_TOKEN_MINT_AMOUNT } from './_constants.js'
 
 /**
- * Creates a `TokenRules` contract for the TokenAdmin party on a single
- * synchronizer. Passed to the TestToken registry as its `createTokenRules`
- * callback so the registry can deploy the token's `TokenRules` on each
- * configured synchronizer as part of initialization.
- */
-export async function createTokenRules(
-    setup: MultiSyncSetup,
-    synchronizerId: string
-): Promise<void> {
-    const { tokenAdminSdk, tokenAdmin } = setup
-
-    await tokenAdminSdk.ledger
-        .prepare({
-            partyId: tokenAdmin.partyId,
-            commands: TestToken.commands.create.rules({
-                admin: tokenAdmin.partyId,
-            }),
-            disclosedContracts: [],
-            synchronizerId,
-        })
-        .sign(tokenAdmin.keyPair.privateKey)
-        .execute({ partyId: tokenAdmin.partyId })
-}
-
-/**
  * Mints TestTokens for the TokenAdmin and offers them to Bob via the registry's
  * transfer-instruction-v1 API, which Bob then accepts. Assumes the TestToken
  * `TokenRules` contracts already exist (created by the registry on start-up).
