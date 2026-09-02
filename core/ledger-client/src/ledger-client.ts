@@ -522,7 +522,7 @@ export class LedgerClient {
     }
 
     // Retrieve the default synchronizer id from the validator.
-    // Prefers a synchronizer aliased 'global' or 'global-domain' over application-specific ones.
+    // Prefers a synchronizer aliased 'global' over application-specific ones.
     // This synchronizer id is cached for the remainder of this object's life.
     public async getSynchronizerId(): Promise<string> {
         if (this.synchronizerId) return this.synchronizerId
@@ -535,9 +535,6 @@ export class LedgerClient {
         }
         const defaultEntry =
             synchronizers.find((s) => s.synchronizerAlias === 'global') ??
-            synchronizers.find(
-                (s) => s.synchronizerAlias === 'global-domain'
-            ) ??
             synchronizers.find(
                 (s) => s.synchronizerAlias !== 'app-synchronizer'
             ) ??
