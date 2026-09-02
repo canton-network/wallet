@@ -24,6 +24,7 @@ import {
     MessageRawStatusUpdate,
     ApiKey,
     ListTransactionsOptions,
+    WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import { AccessToken } from '@canton-network/core-types'
@@ -130,6 +131,24 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             ...filter,
             networkIds: [network.id],
         })
+    }
+
+    async getWallet(partyId: PartyId): Promise<Wallet | null> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const constraint: WalletUniqueConstraint = {
+            partyId,
+            networkId: network.id,
+            userId,
+        }
+        return (
+            this.getStorage().wallets.find(
+                (wallet) =>
+                    constraint.networkId === wallet.networkId &&
+                    constraint.partyId === wallet.partyId &&
+                    constraint.userId === wallet.userId
+            ) ?? null
+        )
     }
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {

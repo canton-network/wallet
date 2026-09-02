@@ -30,6 +30,7 @@ import BlockdaemonSigningProvider, {
 import SecurosysSigningProvider, {
     type TsbSignatureAlgorithm,
 } from '@canton-network/core-signing-securosys'
+import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import { jwtAuthService } from './auth/jwt-auth-service.js'
 import express from 'express'
 import { CliOptions } from './index.js'
@@ -46,7 +47,7 @@ import { GATEWAY_VERSION } from './version.js'
 import { sessionHandler } from './middleware/sessionHandler.js'
 import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
-import { Env } from './env.js'
+import { Env, HASHING_SCHEME_VERSION } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { securityHeaders } from './middleware/securityHeaders.js'
@@ -364,6 +365,24 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         )
     }
 
+    if (Env.BITGO_ACCESS_TOKEN()) {
+        if (!Env.BITGO_ENTERPRISE_ID()) {
+            logger.warn(
+                'BITGO_ENTERPRISE_ID not set — wallet creation (createKey) will fail and restart-safe transaction lookup will be unavailable'
+            )
+        }
+        drivers[SigningProvider.BITGO] = new BitGoSigningProvider({
+            accessToken: Env.BITGO_ACCESS_TOKEN()!,
+            baseUrl: Env.BITGO_API_URL('https://app.bitgo.com'),
+            enterpriseId: Env.BITGO_ENTERPRISE_ID(),
+            coin: Env.BITGO_COIN(),
+        })
+    } else {
+        logger.warn(
+            'BITGO_ACCESS_TOKEN not set — BitGo signing provider will be unavailable'
+        )
+    }
+
     const allowedPaths = {
         [config.server.dappPath]: ['*'],
         [config.server.userPath]: [
@@ -401,12 +420,16 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         component: 'SigningWorker',
     })
 
+    const hashingSchemeVersion: HASHING_SCHEME_VERSION =
+        config.hashingScheme?.version ?? 'HASHING_SCHEME_VERSION_V3'
+
     signingWorker = new SigningWorker({
         intervalMs: config.server.signingWorker.pollInterval,
         signingDrivers: drivers,
         store,
         notificationService,
         logger: signingWorkerLogger,
+        hashingSchemeVersion,
     })
     signingWorker.start()
 
@@ -424,7 +447,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         store,
         {
             signingDrivers: drivers,
-        }
+        },
+        hashingSchemeVersion
     )
 
     // register user API handlers
@@ -437,6 +461,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         notificationService,
         drivers,
         store,
+        hashingSchemeVersion,
         config.server.admin
     )
 

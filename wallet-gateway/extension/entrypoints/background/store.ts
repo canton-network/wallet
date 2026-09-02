@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { SigningDriverStore } from '@canton-network/core-signing-lib'
+import { WxtStore } from '@canton-network/core-signing-store-wxt'
 import type { Store } from '@canton-network/core-wallet-store'
 import {
     StoreInternal,
@@ -71,6 +73,8 @@ export async function initializeWalletStore(): Promise<
     return new StoreInternal(config, logger, authContext)
 }
 
-export function initializeSigningStore(): Store {
-    return undefined as unknown as Store
+export function initializeSigningStore(): SigningDriverStore {
+    // Signing keys are stored for this browser profile and remain available
+    // when the user logs out or signs in again.
+    return new WxtStore('extension-user')
 }

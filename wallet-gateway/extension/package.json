@@ -14,11 +14,16 @@
         "zip": "wxt zip",
         "zip:firefox": "wxt zip -b firefox",
         "compile": "tsc --noEmit",
+        "e2e": "playwright test",
+        "e2e:ui": "playwright test --ui",
         "postinstall": "wxt prepare"
     },
     "dependencies": {
+        "@canton-network/core-ledger-client": "workspace:*",
         "@canton-network/core-rpc-transport": "workspace:*",
+        "@canton-network/core-signing-internal": "workspace:*",
         "@canton-network/core-signing-lib": "workspace:*",
+        "@canton-network/core-signing-store-wxt": "workspace:*",
         "@canton-network/core-tx-visualizer": "workspace:*",
         "@canton-network/core-types": "workspace:*",
         "@canton-network/core-wallet-auth": "workspace:*",
@@ -33,9 +38,26 @@
         "pino": "^10.3.1"
     },
     "devDependencies": {
+        "@canton-network/core-wallet-test-utils": "workspace:^",
+        "@playwright/test": "^1.61.1",
         "@wxt-dev/module-react": "^1.1.5",
         "typescript": "^5.9.3",
         "web-ext": "^10.5.0",
         "wxt": "^0.21.3"
+    },
+    "nx": {
+        "targets": {
+            "build": {
+                "outputs": [
+                    "{projectRoot}/.output"
+                ]
+            },
+            "playwright:e2e": {
+                "dependsOn": [
+                    "build",
+                    "^build"
+                ]
+            }
+        }
     }
 }

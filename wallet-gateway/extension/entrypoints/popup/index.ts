@@ -1,8 +1,29 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// import { configure } from '@logtape/logtape'
+import { browser } from 'wxt/browser'
+import { consumeNextApprovalRequest } from '@/utils/approval-requests.js'
 
-// void configure(configuration)
+async function initializePopup(): Promise<void> {
+    let approvalRequest
+    try {
+        approvalRequest = await consumeNextApprovalRequest()
+    } catch (error) {
+        logger.error('Failed to load approval requests: {*}', { error })
+    }
 
-import '@/utils/legacy-frontend'
+    if (approvalRequest) {
+        const approvalUrl = new URL(browser.runtime.getURL('/approve.html'))
+        approvalUrl.searchParams.set(
+            'transactionId',
+            approvalRequest.transactionId
+        )
+        approvalUrl.searchParams.set('commandId', approvalRequest.commandId)
+        window.location.replace(approvalUrl.toString())
+        return
+    }
+
+    await import('@/utils/legacy-frontend')
+}
+
+void initializePopup()

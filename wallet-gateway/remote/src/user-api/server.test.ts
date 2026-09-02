@@ -38,7 +38,8 @@ test('call listNetworks rpc', async () => {
             publicUrl,
             notificationService,
             drivers,
-            store
+            store,
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/user')
@@ -81,7 +82,8 @@ test('selfSignedAccessToken rpc', async () => {
             publicUrl,
             notificationService,
             drivers,
-            store
+            store,
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/user')
@@ -92,6 +94,7 @@ test('selfSignedAccessToken rpc', async () => {
             params: {
                 networkId: 'canton:local-self-signed',
                 clientId: 'test-user',
+                clientSecret: 'unsafe',
             },
         })
         .set('Accept', 'application/json')
@@ -123,7 +126,8 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
             publicUrl,
             notificationService,
             {},
-            store
+            store,
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/user')
@@ -134,6 +138,7 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
             params: {
                 networkId: 'canton:local-self-signed',
                 clientId: 'test-user',
+                clientSecret: 'unsafe',
             },
         })
 
@@ -142,4 +147,41 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
 
     expect(context?.userId).toBe('test-user')
     expect(context?.accessToken).toBe(accessToken)
+})
+
+test('selfSignedAccessToken rpc rejects a mismatched client secret', async () => {
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+
+    const { publicUrl } = deriveUrls(config)
+    const response = await request(
+        user(
+            '/api/v0/user',
+            app,
+            pino(sink()),
+            config.kernel,
+            publicUrl,
+            notificationService,
+            {},
+            store,
+            'HASHING_SCHEME_VERSION_V3'
+        )
+    )
+        .post('/api/v0/user')
+        .send({
+            jsonrpc: '2.0',
+            id: 3,
+            method: 'selfSignedAccessToken',
+            params: {
+                networkId: 'canton:local-self-signed',
+                clientId: 'test-user',
+                clientSecret: 'wrong-secret',
+            },
+        })
+        .set('Accept', 'application/json')
+
+    expect(response.statusCode).toBe(401)
+    expect(response.body.result).toBeUndefined()
+    expect(response.body.error).toBeDefined()
 })

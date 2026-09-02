@@ -63,13 +63,11 @@ export class WalletSyncService {
         // Extract the namespace part from participantId
         // Format is hint::namespace
         const [, extractedNamespace] = participantId.split('::')
-        if (extractedNamespace) {
-            return extractedNamespace
-        } else {
+        if (!extractedNamespace)
             throw new Error(
                 `Invalid participantId format: expected "hint::namespace", got "${participantId}"`
             )
-        }
+        return extractedNamespace
     }
 
     // Protected for tests
@@ -143,6 +141,7 @@ export class WalletSyncService {
                                 this.partyAllocator.createFingerprintFromKey(
                                     normalizedKey
                                 )
+
                             if (keyNamespace === partyNamespace) {
                                 this.logger.info(
                                     {
@@ -429,6 +428,7 @@ export class WalletSyncService {
                     signingProviderId:
                         resolvedSigningProvider.signingProviderId,
                     disabled: !isMatched,
+                    userId: this.authContext.userId,
                     rights:
                         rightsByParty.get(partyId) ??
                         WalletSyncService.EMPTY_RIGHTS,

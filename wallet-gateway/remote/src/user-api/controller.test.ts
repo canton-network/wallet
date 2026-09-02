@@ -138,7 +138,7 @@ const storeNetwork: StoreNetwork = {
     auth: {
         method: 'authorization_code',
         clientId: 'cid',
-        scope: 'scope',
+        scope: 'scope1 scope2',
         audience: 'aud',
     },
     adminAuth: {
@@ -186,6 +186,7 @@ const primaryWallet: Wallet = {
     publicKey: 'wallet-public-key',
     namespace: 'namespace',
     networkId: 'network1',
+    userId: 'user-1',
     rights: [PartyLevelRight.CanActAs],
 }
 
@@ -231,6 +232,7 @@ function createController(
         context,
         drivers,
         logger,
+        'HASHING_SCHEME_VERSION_V3',
         adminId
     )
 }
@@ -444,6 +446,79 @@ describe('userController', () => {
                 id: 'network1',
                 ledgerApi: 'http://ledger.test',
             })
+        })
+    })
+
+    describe('selfSignedAccessToken', () => {
+        const selfSignedIdp: Idp = {
+            id: 'idp-self-signed',
+            type: 'self_signed',
+            issuer: 'unsafe-auth',
+        }
+
+        const selfSignedNetwork: StoreNetwork = {
+            id: 'network-self-signed',
+            name: 'Self Signed',
+            description: 'Test',
+            identityProviderId: 'idp-self-signed',
+            ledgerApi: { baseUrl: 'http://ledger.test' },
+            auth: {
+                method: 'self_signed',
+                issuer: 'self-signed',
+                audience: 'aud',
+                scope: 'scope',
+                clientId: 'operator',
+                clientSecret: 'network-secret',
+            },
+        }
+
+        it('mints a token when the client secret matches the network', async () => {
+            const store = new StoreInternal(
+                { idps: [selfSignedIdp], networks: [selfSignedNetwork] },
+                getLogger('mock')
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            const result = await controller.selfSignedAccessToken({
+                networkId: 'network-self-signed',
+                clientId: 'test-user',
+                clientSecret: 'network-secret',
+            })
+
+            expect(typeof result.accessToken).toBe('string')
+            const payload = JSON.parse(
+                Buffer.from(
+                    result.accessToken.split('.')[1]!,
+                    'base64url'
+                ).toString()
+            )
+            expect(payload.sub).toBe('test-user')
+        })
+
+        it('rejects when the client secret does not match', async () => {
+            const store = new StoreInternal(
+                { idps: [selfSignedIdp], networks: [selfSignedNetwork] },
+                getLogger('mock')
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            await expect(
+                controller.selfSignedAccessToken({
+                    networkId: 'network-self-signed',
+                    clientId: 'test-user',
+                    clientSecret: 'wrong-secret',
+                })
+            ).rejects.toThrow('Invalid client secret')
         })
     })
 
@@ -956,9 +1031,9 @@ describe('userController', () => {
         const validAddSessionClaims = {
             iss: idp.issuer,
             aud: storeNetwork.auth.audience,
-            sub: storeNetwork.auth.clientId,
-            scope: 'scope',
-            scp: ['scope'],
+            sub: 'sub',
+            scope: 'scope1 scope2',
+            scp: ['scope1', 'scope2'],
             exp: 1_900_000_000,
             iat: 1_800_000_000,
         }
@@ -1200,110 +1275,27 @@ describe('userController', () => {
             })
         })
 
-        it('addSession rejects token when both scope and scp are missing', async () => {
-            const authWithoutScopeClaims: AuthContext = {
-                ...auth,
-                accessToken: createJwt({
-                    iss: idp.issuer,
-                    aud: storeNetwork.auth.audience,
-                    sub: storeNetwork.auth.clientId,
-                    exp: 1_900_000_000,
-                    iat: 1_800_000_000,
-                }),
-            }
-            const store = await createStore(logger, authWithoutScopeClaims, {
+        it('addSession does not validate scope or scp against network.auth.scope', async () => {
+            const authWithUnrelatedScopes = createAuthWithAddSessionClaims({
+                scope: 'openid email',
+                scp: ['profile'],
+            })
+            const store = await createStore(logger, authWithUnrelatedScopes, {
                 withWallet: false,
             })
             const controller = createController(
                 store,
                 notificationService,
                 logger,
-                authWithoutScopeClaims
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession passes when only scope is present and matches', async () => {
-            const authWithScopeOnly = createAuthWithAddSessionClaims({
-                scp: undefined,
-            })
-            const store = await createStore(logger, authWithScopeOnly, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithScopeOnly
+                authWithUnrelatedScopes
             )
 
             const result = await controller.addSession({
                 origin: 'dapp-1',
                 networkId: 'network1',
             })
-            expect(result).toMatchObject({
-                network: expect.objectContaining({
-                    id: 'network1',
-                    auth: expect.objectContaining({
-                        method: 'authorization_code',
-                    }),
-                }),
-                status: 'connected',
-            })
-            expect(result.network).not.toHaveProperty('adminAuth')
-            expect(result.network).not.toHaveProperty('serviceAccountAuth')
-        })
 
-        it('addSession rejects when only scope is present and mismatches', async () => {
-            const authWithInvalidScope = createAuthWithAddSessionClaims({
-                scope: 'openid email',
-                scp: undefined,
-            })
-            const store = await createStore(logger, authWithInvalidScope, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithInvalidScope
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession rejects when both scope and scp are present but one mismatches', async () => {
-            const authWithMismatchedScp = createAuthWithAddSessionClaims({
-                scope: 'scope',
-                scp: ['scope openid'],
-            })
-            const store = await createStore(logger, authWithMismatchedScp, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithMismatchedScp
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
+            expect(result.status).toBe('connected')
         })
 
         it('addSession rejects token with issuer mismatch', async () => {

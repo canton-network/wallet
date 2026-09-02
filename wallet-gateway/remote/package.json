@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
-    "version": "1.9.0",
+    "version": "1.10.0",
     "description": "A server-side Wallet Gateway implementation over HTTP",
     "main": "dist/index.js",
     "bin": {
@@ -41,6 +41,7 @@
         "@canton-network/core-ledger-client": "workspace:^",
         "@canton-network/core-rpc-errors": "workspace:^",
         "@canton-network/core-rpc-transport": "workspace:^",
+        "@canton-network/core-signing-bitgo": "workspace:^",
         "@canton-network/core-signing-blockdaemon": "workspace:^",
         "@canton-network/core-signing-dfns": "workspace:^",
         "@canton-network/core-signing-fireblocks": "workspace:^",
