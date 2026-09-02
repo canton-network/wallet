@@ -171,7 +171,10 @@ export class ApproveUi extends BaseElement {
             )
             const res: GetTransactionStatusResult = await userClient.request({
                 method: 'getTransactionStatus',
-                params: { transactionId: this.transactionId },
+                params: {
+                    transactionId: this.transactionId,
+                    partyId: this.partyId,
+                },
             })
 
             if (res.status !== this.status) {

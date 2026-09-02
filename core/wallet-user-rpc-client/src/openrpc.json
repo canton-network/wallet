@@ -881,7 +881,7 @@
         },
         {
             "name": "getTransactionStatus",
-            "description": "Polls the signing provider for a transaction awaiting external signature and udpated the store status. ",
+            "description": "Polls the signing provider for a transaction awaiting external signature and updated the store status. ",
             "params": [
                 {
                     "name": "params",
@@ -892,6 +892,11 @@
                         "properties": {
                             "transactionId": {
                                 "$ref": "#/components/schemas/TransactionId"
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "The party ID corresponding to the wallet."
                             }
                         },
                         "required": ["transactionId"]

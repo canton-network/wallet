@@ -1324,10 +1324,11 @@ export const userController = (
                 }
             }
 
-            //double check if I should pass in partyId and then do getWallets.find()
-            const wallet = await store.getPrimaryWallet()
+            const wallet = (await store.getWallets()).find(
+                (x) => x.partyId === params.partyId
+            )
             if (!wallet) {
-                throw new Error(`No primary wallet found`)
+                throw new Error(`No wallet found for partyId`)
             }
 
             const connectedContext = assertConnected(authContext)

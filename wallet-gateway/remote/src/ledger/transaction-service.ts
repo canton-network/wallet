@@ -296,7 +296,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        return this.applySigningResult(tx, wallet, signingResult)
+        return this.applySigningResult(tx, signingResult)
     }
 
     private async getSigningResult(
@@ -321,7 +321,6 @@ export class TransactionService {
 
     private async applySigningResult(
         tx: Transaction,
-        wallet: Wallet,
         signingResult: Exclude<
             GetTransactionResult | SignTransactionResult,
             SigningError
@@ -536,7 +535,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        await this.applySigningResult(tx, wallet, signingResult)
+        await this.applySigningResult(tx, signingResult)
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
@@ -593,7 +592,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        await this.applySigningResult(tx, wallet, signingResult)
+        await this.applySigningResult(tx, signingResult)
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
@@ -652,7 +651,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        await this.applySigningResult(tx, wallet, signingResult)
+        await this.applySigningResult(tx, signingResult)
 
         if (signingResult.status === 'signed') {
             return {
@@ -703,7 +702,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        await this.applySigningResult(tx, wallet, signingResult)
+        await this.applySigningResult(tx, signingResult)
 
         if (signingResult.status === 'signed') {
             return {
@@ -752,7 +751,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        await this.applySigningResult(tx, wallet, signingResult)
+        await this.applySigningResult(tx, signingResult)
 
         if (signingResult.status === 'signed') {
             return {

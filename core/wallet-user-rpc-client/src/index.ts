@@ -579,6 +579,7 @@ export interface GetTransactionParams {
 }
 export interface GetTransactionStatusParams {
     transactionId: TransactionId
+    partyId?: PartyId
 }
 export interface ListTransactionsParams {
     limit?: Limit
