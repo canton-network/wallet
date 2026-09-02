@@ -80,15 +80,6 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         } finally {
             this.signingProvidersLoading = false
         }
-
-        // const sessions = await userClient
-        //     .request({ method: 'listSessions' })
-        //     .catch(() => ({ sessions: [] }))
-        // const currentSession = sessions?.sessions?.[0]
-        // const networkId =
-        //     currentSession?.network?.id ||
-        //     stateManager.networkId.get(currentOrigin)
-        // this.networkIds = networkId ? [networkId] : []
     }
 
     protected async getSigningProviderKeys(
