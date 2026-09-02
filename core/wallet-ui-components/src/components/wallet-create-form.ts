@@ -28,7 +28,9 @@ export class WgWalletCreateForm extends WgWalletForm {
     protected readonly submitLabel = 'Add'
     protected readonly submittingLabel = 'Adding...'
     protected readonly submittingMessage = 'Creating party, please wait...'
-    protected readonly submitDisabled = false
+    protected get submitDisabled(): boolean {
+        return this.hasNoSigningProviders
+    }
 
     @property({ type: Array }) keySigningProviders: string[] = []
 
@@ -40,7 +42,7 @@ export class WgWalletCreateForm extends WgWalletForm {
     protected onSubmit = (event: SubmitEvent) => {
         event.preventDefault()
 
-        if (this.isLoading) {
+        if (this.isLoading || this.hasNoSigningProviders) {
             return
         }
 
@@ -121,7 +123,11 @@ export class WgWalletCreateForm extends WgWalletForm {
                 <div class="select-wrap">
                     <select
                         .value=${this.selectedSigningProvider}
-                        ?disabled=${this.submitting || this.signingProvidersLoading}
+                        ?disabled=${
+                            this.submitting ||
+                            this.signingProvidersLoading ||
+                            this.hasNoSigningProviders
+                        }
                         class="form-select field-control"
                         id="signing-provider-id"
                         required
@@ -135,7 +141,9 @@ export class WgWalletCreateForm extends WgWalletForm {
                             ${
                                 this.signingProvidersLoading
                                     ? this.signingProvidersLoadingLabel
-                                    : 'Select signing provider'
+                                    : this.hasNoSigningProviders
+                                      ? this.noSigningProvidersLabel
+                                      : 'Select signing provider'
                             }
                         </option>
                         ${this.signingProviders.map(
