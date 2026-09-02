@@ -1,0 +1,62 @@
+{
+    "name": "@canton-network/core-lib",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Core library for the Canton Network wallet",
+    "license": "Apache-2.0",
+    "author": "Alex Matson <alex.matson@digitalasset.com>",
+    "sideEffects": false,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./crypto": {
+            "types": "./dist/crypto/index.d.ts",
+            "import": "./dist/crypto/index.js",
+            "require": "./dist/crypto/index.cjs"
+        },
+        "./encoding": {
+            "types": "./dist/encoding/index.d.ts",
+            "import": "./dist/encoding/index.js",
+            "require": "./dist/encoding/index.cjs"
+        }
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "test": "vitest run --project node --project browser --passWithNoTests",
+        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+    },
+    "dependencies": {
+        "@logtape/logtape": "^2.3.1"
+    },
+    "devDependencies": {
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
+        "playwright": "^1.61.1",
+        "tsdown": "^0.22.9",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.10"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/lib"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/lib#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
