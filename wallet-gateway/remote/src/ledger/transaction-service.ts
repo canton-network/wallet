@@ -23,7 +23,6 @@ import {
     ExecuteParams,
     ExecuteResult,
     SignParams,
-    SignResultSigned,
 } from '../user-api/rpc-gen/typings.js'
 import { UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
@@ -89,9 +88,26 @@ export class TransactionService {
             .replace(/-/g, '')
             .substring(0, 16)
 
+        /**
+         * The ultimate goal is that every signing driver is indistinguishable,
+         * and so we can just call the same function for all of them.
+         * However, some drivers have different requirements, so we need to handle them separately for now.
+         *
+         * This is a soft-blocker for 3rd-party driver plugins, since we wouldn't be able to add them to the codebase here
+         */
         switch (signingProvider) {
-            case SigningProvider.PARTICIPANT: {
-                return this.signWithParticipant(wallet, tx)
+            case SigningProvider.PARTICIPANT:
+            case SigningProvider.WALLET_KERNEL:
+            case SigningProvider.DFNS:
+            case SigningProvider.BITGO: {
+                return this.signWithDriver(
+                    driver,
+                    signingProvider,
+                    authContext.userId,
+                    wallet,
+                    tx,
+                    baseSignParams
+                )
             }
             case SigningProvider.BLOCKDAEMON: {
                 if (!authContext.email) {
@@ -137,18 +153,6 @@ export class TransactionService {
                             publicKey: wallet.publicKey,
                         },
                     }
-                )
-            }
-            case SigningProvider.WALLET_KERNEL:
-            case SigningProvider.DFNS:
-            case SigningProvider.BITGO: {
-                return this.signWithDriver(
-                    driver,
-                    signingProvider,
-                    authContext.userId,
-                    wallet,
-                    tx,
-                    baseSignParams
                 )
             }
             default:
@@ -278,40 +282,6 @@ export class TransactionService {
         }
 
         return existingTx
-    }
-
-    // This doesn't really sign the transaction.
-    // For participant both signing and execution are handled by /v2/commands/submit-and-wait using participant keys
-    // This behavior is unique to signing provider participant.
-    // This step intended for making participant wallets conform to a common API.
-    private async signWithParticipant(
-        wallet: Wallet,
-        tx: Transaction
-    ): Promise<SignResultSigned> {
-        const now = new Date()
-
-        const signedTx: Transaction = {
-            id: tx.id,
-            commandId: tx.commandId,
-            status: 'signed',
-            preparedTransaction: tx.preparedTransaction,
-            preparedTransactionHash: tx.preparedTransactionHash,
-            origin: tx?.origin ?? null,
-            ...(tx?.createdAt && {
-                createdAt: tx.createdAt,
-            }),
-            signedAt: now,
-        }
-
-        await this.store.setTransactionSigned(tx.id, now)
-        this.notifier.emit('txChanged', signedTx)
-
-        return {
-            status: 'signed',
-            signature: 'none',
-            signedBy: wallet.namespace,
-            partyId: wallet.partyId,
-        }
     }
 
     private async signWithDriver(

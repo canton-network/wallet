@@ -175,7 +175,13 @@ describe('TransactionService', () => {
                 const service = createService(
                     store,
                     {
-                        [SigningProvider.PARTICIPANT]: createDriver({}),
+                        [SigningProvider.PARTICIPANT]: createDriver({
+                            signTransaction: vi.fn().mockResolvedValue({
+                                status: 'signed',
+                                signature: 'none',
+                                signedBy: 'namespace',
+                            }),
+                        }),
                     },
                     notifier,
                     logger
@@ -201,7 +207,8 @@ describe('TransactionService', () => {
                 )
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
                     pendingTransaction.id,
-                    expect.any(Date)
+                    expect.any(Date),
+                    undefined
                 )
                 expect(emit).toHaveBeenCalledWith(
                     'txChanged',
@@ -423,13 +430,13 @@ describe('TransactionService', () => {
 
         describe('fireblocks', () => {
             it('returns a base64 signature when signing completes', async () => {
-                const hexSignature = Buffer.from(
-                    'fireblocks-signature'
-                ).toString('base64')
+                const signature = Buffer.from('fireblocks-signature').toString(
+                    'base64'
+                )
                 const signTransaction = vi.fn().mockResolvedValue({
                     status: 'signed',
                     txId: 'fb-tx-1',
-                    signature: hexSignature,
+                    signature,
                 })
                 const store = createStore()
                 const service = createService(
@@ -457,7 +464,7 @@ describe('TransactionService', () => {
                 )
                 expect(result).toMatchObject({
                     status: 'signed',
-                    signature: hexSignature,
+                    signature,
                     externalTxId: 'fb-tx-1',
                 })
             })
