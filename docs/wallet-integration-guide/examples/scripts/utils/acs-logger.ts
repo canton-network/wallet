@@ -36,13 +36,14 @@ export async function logAllContracts(
         )
     )
 
-    const rows: {
+    type Row = {
         label: string
         template: string
         amount: string
         cid: string
         sync: string
-    }[] = []
+    }
+    const rows: Row[] = []
     const seenCids = new Set<string>()
 
     for (let i = 0; i < specs.length; i++) {
