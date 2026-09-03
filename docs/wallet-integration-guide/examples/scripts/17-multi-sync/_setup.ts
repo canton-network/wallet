@@ -148,7 +148,6 @@ export async function setupMultiSyncTrade(
     // Vetting is per (participant, synchronizer). aliceSdk represents the
     // app-user participant and bobSdk the app-provider participant, so
     // vetting through one SDK per participant covers every party hosted there.
-    // sv needs no vetting — it hosts no stakeholder in either trade leg.
     await Promise.all(
         [aliceSdk, bobSdk].flatMap((sdk) =>
             [globalSynchronizerId, appSynchronizerId].map(async (sid) => {
