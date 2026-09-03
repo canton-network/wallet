@@ -1324,11 +1324,18 @@ export const userController = (
                 }
             }
 
-            const wallet = (await store.getWallets()).find(
-                (x) => x.partyId === params.partyId
-            )
+            const wallet = params.partyId
+                ? (await store.getWallets()).find(
+                      (x) => x.partyId === params.partyId
+                  )
+                : await store.getPrimaryWallet()
+
             if (!wallet) {
-                throw new Error(`No wallet found for partyId`)
+                throw new Error(
+                    params.partyId
+                        ? `No wallet found for partyId: ${params.partyId}`
+                        : `No primary wallet found`
+                )
             }
 
             const connectedContext = assertConnected(authContext)
