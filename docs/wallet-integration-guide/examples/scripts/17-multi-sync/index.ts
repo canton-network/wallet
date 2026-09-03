@@ -198,3 +198,4 @@ await logAllContracts(logger, synchronizers, [
 ])
 
 stopRegistry()
+process.exit(0)
