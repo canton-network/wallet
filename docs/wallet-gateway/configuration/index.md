@@ -29,6 +29,14 @@ Here is a minimalistic configuration example that can be used against a Splice l
         "allowedOrigins": ["http://localhost:8080", "http://localhost:8081"],
         "admin": "operator"
     },
+    "signingProviders": {
+        "walletKernel": {
+            "enable": true
+        },
+        "participant": {
+            "enable": true
+        }
+    },
     "store": {
         "connection": {
             "type": "sqlite",
@@ -101,6 +109,7 @@ The configuration file has the following main sections:
 - **store**: Database connection and persistence settings
 - **bootstrap**: Initial identity providers and network definitions seeded when the database is first created
 - **signingStore**: (optional) Secondary database for key storage when using internal signing
+- **signingProviders**: Signing provider enablement and non-secret connection settings
 
 ## Configuring Kernel Settings
 
@@ -592,14 +601,64 @@ Optional server setting for external custody signers:
 }
 ```
 
-- **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns) when automation signing stays `pending` until custody approves.
+- **`signingWorker.pollInterval`**: Background poll interval for external signing providers (Fireblocks, Blockdaemon, Dfns, Securosys, BitGo) when automation signing stays `pending` until custody approves.
+
+## Configuring Signing Providers
+
+The optional root-level `signingProviders` block controls which signing providers
+may be registered and contains their non-secret settings. Each
+provider defaults to `enable: true`.
+
+```json
+{
+    "signingProviders": {
+        "walletKernel": {
+            "enable": false
+        },
+        "participant": {
+            "enable": false
+        },
+        "fireblocks": {
+            "enable": true,
+            "apiPath": "https://api.fireblocks.io/v1"
+        },
+        "blockdaemon": {
+            "enable": true,
+            "baseUrl": "https://api.blockdaemon.com/api/cwp/canton",
+            "caip2": "canton:testnet"
+        },
+        "dfns": {
+            "enable": true,
+            "orgId": "your-organization-id",
+            "baseUrl": "https://api.dfns.io",
+            "credId": "your-credential-id"
+        },
+        "securosys": {
+            "enable": true,
+            "baseUrl": "https://tsb.example.com",
+            "mtlsP12Path": "/run/secrets/client.p12",
+            "signatureAlgorithm": "EDDSA"
+        },
+        "bitgo": {
+            "enable": true,
+            "baseUrl": "https://app.bitgo.com",
+            "enterpriseId": "your-enterprise-id",
+            "coin": "canton"
+        }
+    }
+}
+```
+
+External providers still require their secrets as environment variables. See
+[Signing Providers](../signing-providers/index.md) for provider-specific
+requirements.
 
 ## Configuring Signing Store
 
 The signing store is an optional secondary database used for storing private keys when the Wallet Gateway is configured to act as a signing provider (using the `wallet-kernel` signing provider).
 
 > [!IMPORTANT]
-> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, or Blockdaemon) for production when the User API is accessible. Participant-based signing is only appropriate in production when wallet creation is restricted to trusted operators; see [Signing Providers](../signing-providers/index.md#participant-based-signing).
+> If you use the Wallet Gateway as a signing provider, private keys will be stored in the signing store database. This is **not recommended** for production environments with valuable assets. Use external signing providers (Dfns, Fireblocks, Blockdaemon, Securosys, or BitGo) for production when the User API is accessible. Participant-based signing is only appropriate in production when wallet creation is restricted to trusted operators; see [Signing Providers](../signing-providers/index.md#participant-based-signing).
 
 **Configuration:**
 
@@ -612,7 +671,7 @@ The signing store is only needed if:
 - You're using the `wallet-kernel` signing provider (internal signing)
 - You want to store keys managed by the Wallet Gateway itself
 
-If you're using external signing providers (Dfns, Fireblocks, Blockdaemon, Participant), you can omit the `signingStore` configuration entirely.
+If you're using Participant or an external signing provider (Dfns, Fireblocks, Blockdaemon, Securosys, or BitGo), you can omit the `signingStore` configuration entirely.
 
 **Example:**
 

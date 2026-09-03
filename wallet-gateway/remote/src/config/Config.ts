@@ -115,6 +115,111 @@ const bootstrapFromEnv = bootstrapConfigSchema.extend({
     ),
 })
 
+const providerEnableSchema = z.object({
+    enable: z.boolean().optional().meta({
+        description:
+            'Whether this signing provider may be registered when its required configuration is available. Defaults to true.',
+    }),
+})
+
+export const signingProvidersConfigSchema = z.object({
+    walletKernel: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema.meta({
+            description:
+                'Wallet Kernel internal signing provider configuration.',
+        })
+    ),
+    participant: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema.meta({
+            description: 'Participant signing provider configuration.',
+        })
+    ),
+    fireblocks: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema
+            .extend({
+                apiPath: z.string().optional().meta({
+                    description:
+                        'Fireblocks API URL. Defaults to https://api.fireblocks.io/v1.',
+                }),
+            })
+            .meta({ description: 'Fireblocks signing provider configuration.' })
+    ),
+    blockdaemon: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema
+            .extend({
+                baseUrl: z.string().optional().meta({
+                    description:
+                        'Blockdaemon API URL. Defaults to http://localhost:5080/api/cwp/canton.',
+                }),
+                caip2: z.string().optional().meta({
+                    description:
+                        'Blockdaemon CAIP-2 network identifier. Defaults to canton:testnet.',
+                }),
+            })
+            .meta({
+                description: 'Blockdaemon signing provider configuration.',
+            })
+    ),
+    dfns: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema
+            .extend({
+                orgId: z.string().optional().meta({
+                    description: 'Dfns organization ID.',
+                }),
+                baseUrl: z.string().optional().meta({
+                    description:
+                        'Dfns API URL. Defaults to https://api.dfns.io.',
+                }),
+                credId: z.string().optional().meta({
+                    description: 'Dfns service account credential ID.',
+                }),
+            })
+            .meta({ description: 'Dfns signing provider configuration.' })
+    ),
+    securosys: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema
+            .extend({
+                baseUrl: z.string().optional().meta({
+                    description: 'Securosys TSB service URL.',
+                }),
+                mtlsP12Path: z.string().optional().meta({
+                    description:
+                        'Path to a PKCS#12 client certificate when TSB requires mTLS.',
+                }),
+                signatureAlgorithm: z.string().optional().meta({
+                    description:
+                        'Securosys TSB signature algorithm. Defaults to EDDSA.',
+                }),
+            })
+            .meta({ description: 'Securosys signing provider configuration.' })
+    ),
+    bitgo: z.preprocess(
+        (val) => val ?? {},
+        providerEnableSchema
+            .extend({
+                baseUrl: z.string().optional().meta({
+                    description:
+                        'BitGo API base URL. Defaults to https://app.bitgo.com.',
+                }),
+                enterpriseId: z.string().optional().meta({
+                    description:
+                        'BitGo enterprise ID. Required for wallet creation.',
+                }),
+                coin: z.string().optional().meta({
+                    description:
+                        'BitGo Canton coin identifier. Auto-detected from the API URL when omitted.',
+                }),
+            })
+            .meta({ description: 'BitGo signing provider configuration.' })
+    ),
+})
+
 const hashingSchemeSchema = z
     .object({
         version: z
@@ -132,7 +237,11 @@ export const rawConfigSchema = z.object({
     server: z.preprocess((val) => val ?? {}, serverConfigSchema),
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
-    signingStore: signingStoreConfigSchema,
+    signingStore: signingStoreConfigSchema.optional(),
+    signingProviders: z.preprocess(
+        (val) => val ?? {},
+        signingProvidersConfigSchema
+    ),
     bootstrap: bootstrapFromEnv,
     hashingScheme: hashingSchemeSchema,
 })
@@ -142,12 +251,19 @@ export const configSchema = z.object({
     server: z.preprocess((val) => val ?? {}, serverConfigSchema),
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
-    signingStore: signingStoreConfigSchema,
+    signingStore: signingStoreConfigSchema.optional(),
+    signingProviders: z.preprocess(
+        (val) => val ?? {},
+        signingProvidersConfigSchema
+    ),
     bootstrap: bootstrapConfigSchema,
     hashingScheme: hashingSchemeSchema,
 })
 
 export type KernelInfo = z.infer<typeof kernelInfoSchema>
 export type ServerConfig = z.infer<typeof serverConfigSchema>
+export type SigningProvidersConfig = z.infer<
+    typeof signingProvidersConfigSchema
+>
 export type RawConfig = z.infer<typeof rawConfigSchema>
 export type Config = z.infer<typeof configSchema>

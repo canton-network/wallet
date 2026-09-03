@@ -140,9 +140,54 @@ bootstrap:
               clientSecretEnv: 'OAUTH2_CLIENT_SECRET'
 ```
 
-### Environment Variables
+### Signing Provider Configuration
 
-Aside from the dynamic environment variables supported in config (`networks[].adminAuth.clientSecretEnv`), there are a few static environment variables available to configure external signing providers:
+Enable providers and configure their non-secret settings in the Wallet Gateway config `signingProviders` block:
+
+```yaml
+signingProviders:
+    walletKernel:
+        enable: false
+    participant:
+        enable: false
+    fireblocks:
+        enable: true
+        apiPath: 'https://api.fireblocks.io/v1'
+    blockdaemon:
+        enable: true
+        baseUrl: 'https://api.blockdaemon.com/api/cwp/canton'
+        caip2: 'canton:testnet'
+    dfns:
+        enable: true
+        orgId: 'your-organization-id'
+        credId: 'your-credential-id'
+        baseUrl: 'https://api.dfns.io'
+    securosys:
+        enable: true
+        baseUrl: 'https://tsb.example.com'
+        mtlsP12Path: '/run/secrets/client.p12'
+        signatureAlgorithm: 'EDDSA'
+    bitgo:
+        enable: true
+        baseUrl: 'https://app.bitgo.com'
+        enterpriseId: 'your-enterprise-id'
+        coin: 'canton'
+```
+
+All providers default to enabled when their block or `enable` property is
+omitted, but external providers are registered only when all required secrets
+are also available. The Wallet Kernel provider additionally requires
+`signingStore`.
+
+For compatibility, the previously supported environment variables for
+non-secret settings remain fallback values when the corresponding config field
+is omitted. A value in `signingProviders` takes precedence. The Gateway logs a
+deprecation warning whenever one of these environment variables is present,
+including when the corresponding config value takes precedence.
+
+### Signing Provider Secrets
+
+Secrets remain in environment variables rather than the configuration file:
 
 **Fireblocks**
 
@@ -152,7 +197,23 @@ Aside from the dynamic environment variables supported in config (`networks[].ad
 **Blockdaemon**
 
 - `BLOCKDAEMON_API_KEY`: The API key for the Blockdaemon integration
-- `BLOCKDAEMON_API_URL`: The URL for the Blockdaemon API
+
+**Dfns**
+
+- `DFNS_PRIVATE_KEY`: The service account private key
+- `DFNS_AUTH_TOKEN`: The service account authentication token
+
+**Securosys**
+
+- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - API key for TSB key-management endpoints
+- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - API key for TSB signing and request-status endpoints
+- `SECUROSYS_TSB_BEARER_TOKEN` - Optional bearer access token (access-token auth mode)
+- `SECUROSYS_TSB_MTLS_P12_PASSWORD` - Optional password for the PKCS#12/P12 client certificate
+- `SECUROSYS_TSB_KEY_PASSWORD` - Optional TSB key password used for key attributes and signing
+
+**BitGo**
+
+- `BITGO_ACCESS_TOKEN` - The long-lived BitGo access token
 
 See [Signing Providers](../signing-providers/index.md) for more information.
 

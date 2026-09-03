@@ -44,49 +44,126 @@ wallet-gateway --config-schema
 
 The JSON-RPC API specs from `api-specs/` are generated into strongly-typed method builders for the remote RPC server. To update the codegen, run `pnpm generate:dapp`.
 
-## Dfns
+## Signing providers
 
-1. Create a service account in the Dfns dashboard with permissions to create and sign with Canton wallets, then download its credentials.
+All signing providers are enabled by default. Set the provider's optional
+`enable` config field to `false` to prevent it from being registered.
 
-2. Set the following environment variables before starting the Gateway:
-    - `DFNS_ORG_ID` — your Dfns organization ID (required; the driver is skipped if unset)
-    - `DFNS_BASE_URL` — Dfns API base URL (defaults to `https://api.dfns.io`)
-    - `DFNS_CRED_ID` — service account credential ID
-    - `DFNS_PRIVATE_KEY` — service account private key (PEM)
-    - `DFNS_AUTH_TOKEN` — service account auth token
+### Wallet Kernel
 
-## Fireblocks
+**Gateway config:**
 
-1. Complete steps 1–3 from the instructions at https://github.com/canton-network/wallet/tree/main/core/signing-fireblocks
+- `signingProviders.walletKernel.enable` - optional, defaults to `true`
+- `signingStore` - required for this provider, the provider is unavailable when the signing store is omitted
 
-2. set the environment variable `FIREBLOCKS_API_KEY` (get it from `API User (ID)` column in fireblocks api users table).
+**Environment variables:**
 
-# Blockdaemon
+- None
 
-1. Create a system user in the Blockdaemon dashboard and save the API key displayed after successful creation.
+### Participant
 
-2. set the environment variables
+**Gateway config:**
 
-- `BLOCKDAEMON_API_URL` - The base URL for the Blockdaemon API
-- `BLOCKDAEMON_API_KEY` - Your Blockdaemon API key
+- `signingProviders.participant.enable` - optional, defaults to `true`
 
-## Securosys
+**Environment variables:**
 
-The Securosys TSB signing driver is registered at startup as `securosys` when
-`SECUROSYS_TSB_BASE_URL` is set. Set these environment variables before starting
-the Gateway:
+- None
 
-- `SECUROSYS_TSB_BASE_URL` — TSB base URL
-- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` — `X-API-KEY` optional for key-management endpoints
-- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` — `X-API-KEY` optional for signing/request endpoints
-- `SECUROSYS_TSB_BEARER_TOKEN` — optional bearer token for access-token mode
-- `SECUROSYS_TSB_MTLS_P12_PATH` — optional client PKCS#12/P12 file for mTLS
-- `SECUROSYS_TSB_MTLS_P12_PASSWORD` — optional PKCS#12/P12 password
-- `SECUROSYS_TSB_KEY_PASSWORD` — optional TSB key password
-- `SECUROSYS_TSB_SIGNATURE_ALGORITHM` — TSB signature algorithm, defaults to `EDDSA`
+### Dfns
+
+Create a service account in the Dfns dashboard with permissions to create and sign with Canton wallets, then download its credentials.
+
+**Gateway config:**
+
+- `signingProviders.dfns.enable` - optional, defaults to `true`
+- `signingProviders.dfns.orgId` - required, falls back to the deprecated `DFNS_ORG_ID` environment variable
+- `signingProviders.dfns.credId` - required, falls back to the deprecated `DFNS_CRED_ID` environment variable
+- `signingProviders.dfns.baseUrl` - optional, falls back to the deprecated `DFNS_BASE_URL` environment variable, then defaults to `https://api.dfns.io`
+
+**Environment variables:**
+
+- `DFNS_PRIVATE_KEY` - required service account private key (PEM)
+- `DFNS_AUTH_TOKEN` - required service account auth token
+- `DFNS_ORG_ID` - deprecated optional fallback for `signingProviders.dfns.orgId`
+- `DFNS_CRED_ID` - deprecated optional fallback for `signingProviders.dfns.credId`
+- `DFNS_BASE_URL` - deprecated optional fallback for `signingProviders.dfns.baseUrl`
+
+### Fireblocks
+
+Complete steps 1–3 from the instructions at https://github.com/canton-network/wallet/tree/main/core/signing-fireblocks.
+
+**Gateway config:**
+
+- `signingProviders.fireblocks.enable` - optional, defaults to `true`
+- `signingProviders.fireblocks.apiPath` - optional, falls back to the deprecated `FIREBLOCKS_API_PATH` environment variable, then defaults to `https://api.fireblocks.io/v1`
+
+**Environment variables:**
+
+- `FIREBLOCKS_API_KEY` - required API key from the `API User (ID)` column in the Fireblocks API users table
+- `FIREBLOCKS_SECRET` - required corresponding API secret
+- `FIREBLOCKS_API_PATH` - deprecated optional fallback for `signingProviders.fireblocks.apiPath`
+
+### Blockdaemon
+
+Create a system user in the Blockdaemon dashboard and save the API key displayed after successful creation.
+
+**Gateway config:**
+
+- `signingProviders.blockdaemon.enable` - optional, defaults to `true`
+- `signingProviders.blockdaemon.baseUrl` - optional, falls back to the deprecated `BLOCKDAEMON_API_URL` environment variable, then defaults to `http://localhost:5080/api/cwp/canton`
+- `signingProviders.blockdaemon.caip2` - optional, falls back to the deprecated `BLOCKDAEMON_CAIP2` environment variable, then defaults to `canton:testnet`
+
+**Environment variables:**
+
+- `BLOCKDAEMON_API_KEY` - required API key for authenticating with Blockdaemon
+- `BLOCKDAEMON_API_URL` - deprecated optional fallback for `signingProviders.blockdaemon.baseUrl`
+- `BLOCKDAEMON_CAIP2` - deprecated optional fallback for `signingProviders.blockdaemon.caip2`
+
+### Securosys
+
+**Gateway config:**
+
+- `signingProviders.securosys.enable` - optional, defaults to `true`
+- `signingProviders.securosys.baseUrl` - required, falls back to the deprecated `SECUROSYS_TSB_BASE_URL` environment variable
+- `signingProviders.securosys.mtlsP12Path` - optional client PKCS#12/P12 file for mTLS, falls back to the deprecated `SECUROSYS_TSB_MTLS_P12_PATH` environment variable
+- `signingProviders.securosys.signatureAlgorithm` - optional TSB signature algorithm, falls back to the deprecated `SECUROSYS_TSB_SIGNATURE_ALGORITHM` environment variable, then defaults to `EDDSA`
+
+**Environment variables:**
+
+- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - optional `X-API-KEY` for key-management endpoints when using API-key authentication
+- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - optional `X-API-KEY` for signing/request endpoints when using API-key authentication
+- `SECUROSYS_TSB_BEARER_TOKEN` - optional bearer token for access-token mode
+- `SECUROSYS_TSB_MTLS_P12_PASSWORD` - optional PKCS#12/P12 password
+- `SECUROSYS_TSB_KEY_PASSWORD` - optional TSB key password
+- `SECUROSYS_TSB_BASE_URL` - deprecated optional fallback for `signingProviders.securosys.baseUrl`
+- `SECUROSYS_TSB_MTLS_P12_PATH` - deprecated optional fallback for `signingProviders.securosys.mtlsP12Path`
+- `SECUROSYS_TSB_SIGNATURE_ALGORITHM` - deprecated optional fallback for `signingProviders.securosys.signatureAlgorithm`
 
 See [`@canton-network/core-signing-securosys`](../../core/signing-securosys/README.md)
 for key creation, public-key, and signature format details.
+
+### BitGo
+
+Create a long-lived access token in the BitGo dashboard and note the enterprise
+ID used for wallet creation.
+
+**Gateway config:**
+
+- `signingProviders.bitgo.enable` - optional, defaults to `true`
+- `signingProviders.bitgo.baseUrl` - optional, falls back to the deprecated `BITGO_API_URL` environment variable, then defaults to `https://app.bitgo.com`
+- `signingProviders.bitgo.enterpriseId` - optional, falls back to the deprecated `BITGO_ENTERPRISE_ID` environment variable; required for wallet creation and restart-safe transaction lookup
+- `signingProviders.bitgo.coin` - optional, falls back to the deprecated `BITGO_COIN` environment variable, then auto-detected from the API URL
+
+**Environment variables:**
+
+- `BITGO_ACCESS_TOKEN` - required long-lived BitGo access token
+- `BITGO_API_URL` - deprecated optional fallback for `signingProviders.bitgo.baseUrl`
+- `BITGO_ENTERPRISE_ID` - deprecated optional fallback for `signingProviders.bitgo.enterpriseId`
+- `BITGO_COIN` - deprecated optional fallback for `signingProviders.bitgo.coin`
+
+See [`@canton-network/core-signing-bitgo`](../../core/signing-bitgo/README.md)
+for credential setup and driver behavior.
 
 ## Postgres connection
 
@@ -98,7 +175,7 @@ To create a Postgres database you need to:
 $ docker run --network=host --name some-postgres -e POSTGRES_PASSWORD=postgres -d postgres
 ```
 
-2. In the file `splice-wallet-kernel/wallet-gateway/test/config.json`, specify the connection settings for both databases (store and signingStore). The connection should look like this (it is important that `store.connection.database !== signingStore.connection.database !== 'postgres'`):
+2. In the file `/wallet-gateway/test/config.json`, specify the connection settings for both databases - store (required) and signingStore (optional, only needed for signing provider `wallet-kernel`). The connection should look like this (it is important that `store.connection.database !== signingStore.connection.database !== 'postgres'`):
 
 ```json
 {

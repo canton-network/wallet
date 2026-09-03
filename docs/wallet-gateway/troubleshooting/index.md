@@ -241,14 +241,29 @@ The `auth` client does **not** need a pre-existing wallet or party attached in K
     - Check participant logs for signing errors
 
 3. **Blockdaemon:**
-    - Verify environment variables are set: `BLOCKDAEMON_API_URL` and `BLOCKDAEMON_API_KEY`
+    - Verify `signingProviders.blockdaemon.baseUrl` and `signingProviders.blockdaemon.caip2` in the Gateway config
+    - Verify the `BLOCKDAEMON_API_KEY` environment variable is set
     - Test API connectivity
     - Ensure API key has signing permissions
 
 4. **Dfns:**
-    - Verify environment variables are set: `DFNS_ORG_ID`, `DFNS_BASE_URL`, `DFNS_CRED_ID`, `DFNS_PRIVATE_KEY`, and `DFNS_AUTH_TOKEN`
+    - Verify `signingProviders.dfns.orgId`, `signingProviders.dfns.credId`, and `signingProviders.dfns.baseUrl` in the Gateway config
+    - Verify `DFNS_PRIVATE_KEY` and `DFNS_AUTH_TOKEN` are set
     - Ensure the service account credentials are correct
     - Confirm the service account has wallet creation and signing permissions
+
+5. **Securosys:**
+    - Verify `signingProviders.securosys.baseUrl` in the Gateway config
+    - Verify the selected authentication mode is configured correctly: API keys, bearer token, and/or mTLS
+    - For API-key authentication, verify `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` and `SECUROSYS_TSB_KEY_OPERATION_API_KEY`
+    - For bearer-token authentication, verify `SECUROSYS_TSB_BEARER_TOKEN`
+    - For mTLS, verify `signingProviders.securosys.mtlsP12Path` and `SECUROSYS_TSB_MTLS_P12_PASSWORD`
+
+6. **BitGo:**
+    - Verify `BITGO_ACCESS_TOKEN` is set and has wallet-management and transaction-signing permissions
+    - Verify `signingProviders.bitgo.baseUrl` targets the intended BitGo environment
+    - Set `signingProviders.bitgo.enterpriseId` when creating wallets or requiring transaction lookup after a Gateway restart
+    - Verify `signingProviders.bitgo.coin` matches the environment, or omit it to use URL-based auto-detection
 
 ## Debugging
 
