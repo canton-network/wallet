@@ -155,6 +155,19 @@ describe('RegistryState', () => {
     })
 
     describe('reset', () => {
+        it('should preserve exported defaults when instance data mutates', async () => {
+            await RegistryState.instantiate({
+                port: 8000,
+                synchronizerId: 'sync',
+            })
+
+            const instance = RegistryState.instance
+            instance.operator.party = 'mutated-party'
+
+            expect(defaultConfig.operator.party).toBe('')
+            expect(instance.operator.party).toBe('mutated-party')
+        })
+
         it('should reset instance to default config', async () => {
             await RegistryState.instantiate({
                 port: 8000,

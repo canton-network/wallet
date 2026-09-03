@@ -14,7 +14,7 @@ export interface RegistryConfig {
     port: number
 }
 
-export const defaultConfig: RegistryConfig = {
+const createDefaultConfig = (): RegistryConfig => ({
     sdk: defaultSdk,
     synchronizerId: '',
     operator: {
@@ -22,11 +22,13 @@ export const defaultConfig: RegistryConfig = {
         keys: defaultSdk.keys.generate(),
     },
     port: 5634,
-} as const
+})
+
+export const defaultConfig: RegistryConfig = createDefaultConfig()
 
 export class RegistryState implements RegistryConfig {
     protected constructor(private config: Partial<RegistryConfig>) {
-        Object.assign(this, defaultConfig, config)
+        Object.assign(this, createDefaultConfig(), config)
     }
     sdk!: RegistryConfig['sdk']
     synchronizerId!: RegistryConfig['synchronizerId']
@@ -53,6 +55,6 @@ export class RegistryState implements RegistryConfig {
     }
 
     public reset() {
-        Object.assign(this, defaultConfig)
+        Object.assign(this, createDefaultConfig())
     }
 }
