@@ -9,12 +9,12 @@ import {
 } from '@canton-network/wallet-sdk'
 import type { KeyPair } from '@canton-network/core-signing-lib'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { Provider as Ops } from '@canton-network/core-ledger-client-types'
 import {
     AMULET_NAMESPACE_CONFIG,
     ASSET_CONFIG,
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
-    resolveGlobalSynchronizerId,
 } from '../utils/index.js'
 import type { KnownSynchronizers } from '../utils/index.js'
 import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
@@ -60,6 +60,27 @@ export interface MultiSyncSetup {
     appSynchronizerId: string
     synchronizers: KnownSynchronizers
     amuletAdmin: string
+}
+
+/**
+ * Resolve the global synchronizer ID from the list returned by the ledger API.
+ *
+ * Looks for the entry whose alias is `'global'` and returns its synchronizer ID.
+ * `synchronizers` is the `connectedSynchronizers` array from the Ledger API
+ * `GET /v2/state/connected-synchronizers` method
+ * ({@link Ops.GetV2StateConnectedSynchronizers}), exposed via the SDK as
+ * `sdk.ledger.connectedSynchronizers()`.
+ *
+ * @throws {Error} When no entry with alias `'global'` is present.
+ */
+function resolveGlobalSynchronizerId(
+    synchronizers: NonNullable<
+        Ops.GetV2StateConnectedSynchronizers['ledgerApi']['result']['connectedSynchronizers']
+    >
+): string {
+    const global = synchronizers.find((s) => s.synchronizerAlias === 'global')
+    if (!global) throw new Error('Global synchronizer not found')
+    return global.synchronizerId
 }
 
 /**

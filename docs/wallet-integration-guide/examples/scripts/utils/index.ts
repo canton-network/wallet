@@ -1,5 +1,4 @@
 import { JSContractEntry } from '@canton-network/core-ledger-client'
-import type { Provider as Ops } from '@canton-network/core-ledger-client-types'
 import {
     TokenProviderConfig,
     localNetStaticConfig,
@@ -22,27 +21,6 @@ export function getActiveContractCid(entry: JSContractEntry) {
 export type KnownSynchronizers = {
     globalSynchronizerId: string
     appSynchronizerId: string
-}
-
-/**
- * Resolve the global synchronizer ID from the list returned by the ledger API.
- *
- * Looks for the entry whose alias is `'global'` and returns its synchronizer ID.
- * `synchronizers` is the `connectedSynchronizers` array from the Ledger API
- * `GET /v2/state/connected-synchronizers` method
- * ({@link Ops.GetV2StateConnectedSynchronizers}), exposed via the SDK as
- * `sdk.ledger.connectedSynchronizers()`.
- *
- * @throws {Error} When no entry with alias `'global'` is present.
- */
-export function resolveGlobalSynchronizerId(
-    synchronizers: NonNullable<
-        Ops.GetV2StateConnectedSynchronizers['ledgerApi']['result']['connectedSynchronizers']
-    >
-): string {
-    const global = synchronizers.find((s) => s.synchronizerAlias === 'global')
-    if (!global) throw new Error('Global synchronizer not found')
-    return global.synchronizerId
 }
 
 export const TOKEN_PROVIDER_CONFIG_DEFAULT: TokenProviderConfig = {

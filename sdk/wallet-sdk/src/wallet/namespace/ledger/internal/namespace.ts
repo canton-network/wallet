@@ -20,66 +20,62 @@ export class InternalLedgerNamespace {
         const { submitter, contractId, source, target } = params
 
         // Phase 1: Unassign
-        let unassignResponse: Awaited<
-            ReturnType<
-                typeof this.ctx.ledgerProvider.request<Ops.PostV2CommandsSubmitAndWaitForReassignment>
-            >
-        >
-        try {
-            unassignResponse =
-                await this.ctx.ledgerProvider.request<Ops.PostV2CommandsSubmitAndWaitForReassignment>(
-                    {
-                        method: 'ledgerApi',
-                        params: {
-                            resource:
-                                '/v2/commands/submit-and-wait-for-reassignment',
-                            requestMethod: 'post',
-                            body: {
-                                reassignmentCommands: {
-                                    commandId: v4(),
-                                    submitter,
-                                    commands: [
-                                        {
-                                            command: {
-                                                UnassignCommand: {
-                                                    value: {
-                                                        contractId,
-                                                        source,
-                                                        target,
-                                                    },
-                                                },
+        const unassignResponse = await this.ctx.ledgerProvider
+            .request<Ops.PostV2CommandsSubmitAndWaitForReassignment>({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/commands/submit-and-wait-for-reassignment',
+                    requestMethod: 'post',
+                    body: {
+                        reassignmentCommands: {
+                            commandId: v4(),
+                            submitter,
+                            commands: [
+                                {
+                                    command: {
+                                        UnassignCommand: {
+                                            value: {
+                                                contractId,
+                                                source,
+                                                target,
                                             },
                                         },
-                                    ],
+                                    },
                                 },
-                                eventFormat: {
-                                    filtersByParty: { [submitter]: {} },
-                                    verbose: false,
-                                },
-                            },
+                            ],
                         },
-                    }
-                )
-        } catch (e: unknown) {
-            if (
-                typeof e === 'object' &&
-                e !== null &&
-                'code' in e &&
-                (e as { code: string }).code === 'SUBMITTER_ALWAYS_STAKEHOLDER'
-            ) {
-                this.ctx.error.throw({
-                    message:
-                        `Cannot reassign contract ${contractId} from ${source} to ${target}: ` +
-                        `submitter "${submitter}" is not a stakeholder. ` +
-                        `Only a stakeholder of the contract may initiate a reassignment.`,
-                    type: 'CantonError',
-                    originalError: e,
-                })
-            }
+                        eventFormat: {
+                            filtersByParty: { [submitter]: {} },
+                            verbose: false,
+                        },
+                    },
+                },
+            })
+            .catch((originalError: unknown) => {
+                if (
+                    typeof originalError === 'object' &&
+                    originalError !== null &&
+                    'code' in originalError &&
+                    (originalError as { code: string }).code ===
+                        'SUBMITTER_ALWAYS_STAKEHOLDER'
+                ) {
+                    this.ctx.error.throw({
+                        message:
+                            `Cannot reassign contract ${contractId} from ${source} to ${target}: ` +
+                            `submitter "${submitter}" is not a stakeholder. ` +
+                            `Only a stakeholder of the contract may initiate a reassignment.`,
+                        type: 'CantonError',
+                        originalError: originalError,
+                    })
+                }
 
-            // TODO #2103 implement proper compensation algorigthms for reassign
-            throw e
-        }
+                // TODO #2103 implement proper compensation algorigthms for reassign
+                this.ctx.error.throw({
+                    message: 'Unexpected error',
+                    type: 'Unexpected',
+                    originalError,
+                })
+            })
 
         const events = unassignResponse.reassignment?.events ?? []
         const unassignedEvent = events.find((e) => 'JsUnassignedEvent' in e)
@@ -93,48 +89,44 @@ export class InternalLedgerNamespace {
             unassignedEvent.JsUnassignedEvent.value.reassignmentId
 
         // Phase 2: Assign
-        try {
-            await this.ctx.ledgerProvider.request<Ops.PostV2CommandsSubmitAndWaitForReassignment>(
-                {
-                    method: 'ledgerApi',
-                    params: {
-                        resource:
-                            '/v2/commands/submit-and-wait-for-reassignment',
-                        requestMethod: 'post',
-                        body: {
-                            reassignmentCommands: {
-                                commandId: v4(),
-                                submitter,
-                                commands: [
-                                    {
-                                        command: {
-                                            AssignCommand: {
-                                                value: {
-                                                    reassignmentId,
-                                                    source,
-                                                    target,
-                                                },
+        await this.ctx.ledgerProvider
+            .request<Ops.PostV2CommandsSubmitAndWaitForReassignment>({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/commands/submit-and-wait-for-reassignment',
+                    requestMethod: 'post',
+                    body: {
+                        reassignmentCommands: {
+                            commandId: v4(),
+                            submitter,
+                            commands: [
+                                {
+                                    command: {
+                                        AssignCommand: {
+                                            value: {
+                                                reassignmentId,
+                                                source,
+                                                target,
                                             },
                                         },
                                     },
-                                ],
-                            },
+                                },
+                            ],
                         },
                     },
-                }
-            )
-        } catch (e) {
-            throw Object.assign(
-                new Error(
-                    `Phase 2 (Assign) failed for contract ${contractId} ` +
+                },
+            })
+            .catch((e: unknown) => {
+                this.ctx.error.throw({
+                    message:
+                        `Phase 2 (Assign) failed for contract ${contractId} ` +
                         `(reassignmentId: ${reassignmentId}). ` +
                         `The contract is in-flight on source synchronizer "${source}" and must be ` +
                         `assigned to "${target}" using the reassignmentId above.`,
-                    { cause: e }
-                ),
-                { reassignmentId, source, target, contractId }
-            )
-        }
+                    type: 'Unexpected',
+                    originalError: e,
+                })
+            })
     }
 
     public async submit(

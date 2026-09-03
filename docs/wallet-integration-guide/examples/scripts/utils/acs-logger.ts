@@ -21,6 +21,8 @@ function syncAlias(syncId: string, synchronizers: KnownSynchronizers): string {
  * Query contracts for all given specs in parallel, then log the results as a
  * formatted ASCII table. Queries run concurrently; rows are printed in
  * declaration order.
+ *
+ * Notice: this function is intended for debugging and demonstration purposes in test scenarios only. It is not intended for generic use in production code
  */
 export async function logAllContracts(
     logger: Logger,
