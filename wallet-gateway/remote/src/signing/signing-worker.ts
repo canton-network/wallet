@@ -31,7 +31,7 @@ export interface SigningWorkerOptions {
  *
  * During M2M automation (`prepareExecute` → `signAndExecute`), external signing
  * providers (Fireblocks, Blockdaemon, Dfns) may return `pending` instead of a
- * signature. The gateway persists the transaction with `status: 'pending'` and
+ * signature. The gateway persists the transaction with `status: 'pending'` and `status: 'awaiting-signature'` and
  * an `externalTxId` from the provider. This worker picks up those rows on each
  * tick via {@link Store.listAllPendingTransactions} (rows with an
  * `externalTxId` are processed; others are skipped).
@@ -45,22 +45,26 @@ export interface SigningWorkerOptions {
  * calls {@link TransactionService.signAndExecute}.
  *
  * Although the worker always invokes `signAndExecute`, **retries do not submit a
- * new sign request**. `TransactionService.sign()` checks whether the stored
- * transaction already has an `externalTxId`:
+ * new sign request**. `signAndExecute`branches on the stored transaction's status
  *
- * - **First pass** (no `externalTxId`): `driver.signTransaction()` submits to
- *   custody and stores the returned `externalTxId`.
- * - **Subsequent ticks** (`externalTxId` present): `driver.getTransaction()`
- *   polls the existing custody request for an updated status/signature.
+ * - **First pass** ( `pending`, no `externalTxId`): calls `sign()` which submits to singing provider
+ *  via `driver.signTransaction()` and stores the returned `externalTxId` with status `awaiting-signature`
+ * - **Subsequent ticks** (`awaiting-signature` with `externalTxId` present): `refreshTransaction()`
+ *  which polls the existing requst via `driver.getTransaction()` and updated the stored status
+ *
+ *  `sign()` initiates only and will throw for a transaction that already has an `externalTxId`
  *
  * `signAndExecute` then:
  *
- * - returns early while the provider still reports `pending` (worker logs and
- *   waits for the next tick), or
- * - calls `execute()` once signing is `signed`.
+ * - returns `{status: pending}` while provider still reports the request as awaiting approval
+ *   (worker logs and waits for the next tick), or
+ * - calls `execute()` once provider reports `signed`. The signature is re-fetched from provider at
+ *   execution time rather than carried from the signing step.
  *
  * A transaction is re-read before processing so a concurrent DApp call or an
  * earlier tick that already completed it is skipped.
+ *
+ * Rows that reach `failed` (rejected by provider or by the ledger) are not retried and `failureReason` records why
  *
  * ## Lifecycle
  *
