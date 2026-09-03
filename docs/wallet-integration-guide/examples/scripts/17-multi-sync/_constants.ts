@@ -10,7 +10,7 @@ export const TRADE_TOKEN_AMOUNT = '20'
 
 // Port + URL of the local TestToken registry that implements the four
 // CIP-56 Token Standard off-ledger APIs (served by
-// `@canton-network/core-splice-codegen/registry`).
+// `@canton-network/example-test-token-v1-registry`).
 export const TEST_TOKEN_REGISTRY_PORT = parseInt(
     process.env['REGISTRY_PORT'] ?? defaultConfig.port.toString(),
     10
