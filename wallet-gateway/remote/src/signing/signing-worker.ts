@@ -179,7 +179,12 @@ export class SigningWorker {
         }
 
         const refreshedTx = await store.getTransaction(transaction.id)
-        if (!refreshedTx || refreshedTx.status !== 'pending') {
+
+        if (
+            !refreshedTx ||
+            (refreshedTx.status !== 'pending' &&
+                refreshedTx.status !== 'awaiting-signature')
+        ) {
             logger.debug(
                 { refreshedTx },
                 'Skipping signing worker tick: transaction no longer pending'

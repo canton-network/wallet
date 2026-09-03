@@ -205,30 +205,44 @@ export class TransactionService {
         wallet: Wallet,
         transaction: Transaction
     ): Promise<SignAndExecuteResult> {
+        const existing = await this.store.getTransaction(transaction.id)
         const signParams: SignParams = {
             transactionId: transaction.id,
             partyId: wallet.partyId,
         }
-
-        const signResult = await this.sign(authContext, wallet, signParams)
-
-        if (signResult.status === 'pending') {
-            return signResult
+        if (!existing) {
+            throw new Error(`Transaction not found with id ${transaction.id}`)
         }
 
-        if (signResult.status !== 'signed') {
-            throw new Error(
-                `Service account signing failed with status: ${signResult.status}`
+        if (existing.status === 'awaiting-signature' && existing.externalTxId) {
+            const refreshed = await this.refreshTransaction(
+                authContext,
+                wallet,
+                transaction.id
             )
-        }
 
-        if (
-            !('signature' in signResult) ||
-            signResult.signature === undefined
-        ) {
-            throw new Error(
-                'Service account signing did not return a signature'
-            )
+            if (refreshed.status === 'awaiting-signature') {
+                return {
+                    status: 'pending',
+                    partyId: wallet.partyId,
+                    externalTxId: existing.externalTxId,
+                }
+            }
+
+            if (refreshed.status !== 'signed') {
+                throw new Error(
+                    `Service account signing failed with status: ${refreshed.status} and reason: ${refreshed.failureReason}`
+                )
+            }
+        } else {
+            const signResult = await this.sign(authContext, wallet, signParams)
+            if (signResult.status === 'pending') return signResult
+
+            if (signResult.status !== 'signed') {
+                throw new Error(
+                    `Service account signing failed with status ${signResult.status}`
+                )
+            }
         }
 
         const ledgerClient = new LedgerClient({
@@ -243,18 +257,22 @@ export class TransactionService {
         const executeParams: ExecuteParams = {
             transactionId: transaction.id,
             partyId: wallet.partyId,
-            signature: signResult.signature,
-            signedBy: signResult.signedBy,
         }
 
         const userId = authContext.isApiKey
             ? authContext.ledgerUserId
             : authContext.userId
 
+        const signedTx = await this.store.getTransaction(transaction.id)
+
+        if (!signedTx) {
+            throw new Error(`Transaction not found with id: ${transaction.id}`)
+        }
+
         return this.execute(
             userId,
             wallet,
-            { ...transaction, status: 'signed' as const },
+            signedTx,
             executeParams,
             ledgerClient,
             network
