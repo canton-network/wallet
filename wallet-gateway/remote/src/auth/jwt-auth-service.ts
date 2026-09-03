@@ -20,7 +20,6 @@ function getEmail(value: unknown): string | undefined {
     return value
 }
 
-// TODO maybe share this util with addSession instead of copy paste?
 function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
     if (typeof value === 'string') {
         return [value]
