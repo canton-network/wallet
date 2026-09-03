@@ -5,9 +5,17 @@ import { defineConfig } from 'wxt'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-    modules: ['@wxt-dev/module-react'],
+    modules: [],
     manifest: {
         name: 'Canton Wallet',
         description: 'Canton Wallet Extension',
+        permissions: [
+            'identity',
+            'storage',
+            'tabs',
+            'webRequest',
+            'webRequestBlocking',
+        ],
+        host_permissions: ['http://127.0.0.1/*'],
     },
 })

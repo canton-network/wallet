@@ -31,6 +31,10 @@ export const CANTON_BIN = path.join(CANTON_PATH, 'bin/canton')
 export const CANTON_CONF = path.join(repoRoot, 'canton/canton.conf')
 export const CANTON_BOOTSTRAP = path.join(repoRoot, 'canton/bootstrap.sc')
 export const API_SPECS_PATH = path.join(repoRoot, 'api-specs')
+export const LEDGER_CLIENTS_PATH = path.join(
+    repoRoot,
+    'core/ledger-client-types/src/generated-clients'
+)
 
 export type Network = 'mainnet' | 'devnet'
 export type ArtifactKind = 'localnet' | 'splice' | 'spliceSpec'
@@ -66,6 +70,18 @@ const versionConfig = JSON.parse(versionConfigRaw) as {
 export const DAML_RELEASE_VERSION = versionConfig.DAML_RELEASE_VERSION
 export const SUPPORTED_VERSIONS: SupportedVersions =
     versionConfig.SUPPORTED_VERSIONS
+
+// Every Canton version the repo supports, one per network, in the form generated filenames use:
+// "3.4.12", not the full "3.4.12-snapshot.20260318..." that mainnet pins.
+export function getSupportedCantonVersions(): string[] {
+    return [
+        ...new Set(
+            Object.values(SUPPORTED_VERSIONS).map(
+                (config) => config.canton.version.split('-')[0]
+            )
+        ),
+    ]
+}
 
 export async function downloadToFile(
     url: string | URL,
@@ -308,11 +324,55 @@ export function getAllFilesWithExtension(
     return results
 }
 
+// Delete generated files like `<prefix>-<version>.ts`, `<prefix>-<version>-paths.ts`,
+// `<prefix>-<version>-provider-types.ts`, or their `.d.ts`/`.d.ts.map` build artifacts,
+// for any <version> that isn't in currentVersions. Used to stop codegen scripts from
+// piling up stale versioned clients across Canton version bumps (see #1380).
+export function cleanupStaleVersionedFiles(
+    dir: string,
+    prefix: string,
+    currentVersions: string[]
+): void {
+    if (!fs.existsSync(dir)) return
+    const pattern = new RegExp(
+        `^${prefix}-(\\d+\\.\\d+\\.\\d+)(?:-paths|-provider-types)?\\.(?:d\\.ts\\.map|d\\.ts|ts)$`
+    )
+    for (const entry of fs.readdirSync(dir)) {
+        const match = entry.match(pattern)
+        if (match && !currentVersions.includes(match[1])) {
+            console.log(warn(`Removing stale generated file: ${entry}`))
+            fs.unlinkSync(path.join(dir, entry))
+        }
+    }
+}
+
 // Ensure a directory exists
 export async function ensureDir(dir: string) {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true })
     }
+}
+
+// Delete the files of `dir` whose version is not in `keep`, and return the names deleted.
+// `pattern` must capture the version in group 1. Files it does not match are left untouched.
+export function pruneVersionedFiles(
+    dir: string,
+    pattern: RegExp,
+    keep: string[]
+): string[] {
+    if (!fs.existsSync(dir)) return []
+
+    const kept = new Set(keep)
+    const stale = fs.readdirSync(dir).filter((name) => {
+        const version = name.match(pattern)?.[1]
+        return version !== undefined && !kept.has(version)
+    })
+
+    for (const name of stale) {
+        fs.rmSync(path.join(dir, name))
+    }
+
+    return stale
 }
 
 // Copy a file

@@ -16,6 +16,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { dappController, DappControllerDeps } from './controller.js'
+import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -121,6 +122,7 @@ const primaryWallet: Wallet = {
     publicKey: 'wallet-public-key',
     namespace: 'namespace',
     networkId: 'network1',
+    userId: 'user-1',
     rights: [PartyLevelRight.CanActAs],
 }
 
@@ -132,7 +134,7 @@ async function createStore(
     const { withSession = true, withWallet = true } = options
     const store = new StoreInternal(
         { idps: [idp], networks: [storeNetwork] },
-        logger,
+        getLogger('mock'),
         context
     )
     if (context && withSession) {
@@ -161,6 +163,7 @@ function createController(
         logger,
         requestOrigin,
         deps || { signingDrivers: {} },
+        'HASHING_SCHEME_VERSION_V3',
         context
     )
 }
@@ -668,7 +671,7 @@ describe('dappController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutSync] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)

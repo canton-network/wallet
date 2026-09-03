@@ -1,13 +1,15 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
-    "version": "1.9.0",
+    "version": "1.10.0",
+    "type": "module",
     "description": "A server-side Wallet Gateway implementation over HTTP",
+    "license": "Apache-2.0",
+    "author": "Alex Matson <alex.matson@digitalasset.com>",
     "main": "dist/index.js",
     "bin": {
         "wallet-gateway": "dist/index.js",
         "wallet-gateway-remote": "dist/index.js"
     },
-    "type": "module",
     "scripts": {
         "build": "vite build && tsc -b && tsc -b tsconfig.frontend.json",
         "clean": "tsc -b --clean && rm -rf ./dist && rm ./*.sqlite || true",
@@ -28,9 +30,6 @@
         "signing-db:migrate:status": "tsx ./src/index -c ../test/config.json signing-db status",
         "signing-db:migrate:reset": "tsx ./src/index -c ../test/config.json signing-db reset"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
     "files": [
         "dist/**"
     ],
@@ -41,6 +40,7 @@
         "@canton-network/core-ledger-client": "workspace:^",
         "@canton-network/core-rpc-errors": "workspace:^",
         "@canton-network/core-rpc-transport": "workspace:^",
+        "@canton-network/core-signing-bitgo": "workspace:^",
         "@canton-network/core-signing-blockdaemon": "workspace:^",
         "@canton-network/core-signing-dfns": "workspace:^",
         "@canton-network/core-signing-fireblocks": "workspace:^",
@@ -48,16 +48,18 @@
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-signing-participant": "workspace:^",
         "@canton-network/core-signing-securosys": "workspace:^",
-        "@canton-network/core-signing-store-sql": "workspace:^",
+        "@canton-network/core-signing-store-sql": "workspace:*",
         "@canton-network/core-tx-visualizer": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
         "@canton-network/core-wallet-dapp-rpc-client": "workspace:^",
         "@canton-network/core-wallet-store": "workspace:^",
-        "@canton-network/core-wallet-store-sql": "workspace:^",
+        "@canton-network/core-wallet-store-sql": "workspace:*",
         "@canton-network/core-wallet-ui-components": "workspace:^",
         "@canton-network/core-wallet-user-rpc-client": "workspace:^",
         "@commander-js/extra-typings": "^14.0.0",
+        "@logtape/adaptor-pino": "^2.3.1",
+        "@logtape/logtape": "^2.3.1",
         "commander": "^14.0.3",
         "cors": "^2.8.6",
         "dotenv": "^17.4.2",

@@ -14,32 +14,50 @@
         "zip": "wxt zip",
         "zip:firefox": "wxt zip -b firefox",
         "compile": "tsc --noEmit",
+        "e2e": "playwright test",
+        "e2e:ui": "playwright test --ui",
         "postinstall": "wxt prepare"
     },
     "dependencies": {
-        "@canton-network/core-types": "^1.10.0",
-        "@canton-network/core-wallet-store": "^1.11.0",
-        "@emotion/react": "^11.14.0",
-        "@emotion/styled": "^11.14.1",
-        "@mui/material": "^9.3.1",
-        "react": "^19.2.4",
-        "react-dom": "^19.2.4"
+        "@canton-network/core-ledger-client": "workspace:*",
+        "@canton-network/core-rpc-transport": "workspace:*",
+        "@canton-network/core-signing-internal": "workspace:*",
+        "@canton-network/core-signing-lib": "workspace:*",
+        "@canton-network/core-signing-store-wxt": "workspace:*",
+        "@canton-network/core-tx-visualizer": "workspace:*",
+        "@canton-network/core-types": "workspace:*",
+        "@canton-network/core-wallet-auth": "workspace:*",
+        "@canton-network/core-wallet-store": "workspace:*",
+        "@canton-network/core-wallet-store-inmemory": "workspace:*",
+        "@canton-network/core-wallet-ui-components": "workspace:*",
+        "@canton-network/core-wallet-user-rpc-client": "workspace:*",
+        "@logtape/adaptor-pino": "^2.3.1",
+        "@logtape/logtape": "^2.3.1",
+        "@webext-core/proxy-service": "^3.0.2",
+        "lit": "^3.3.3",
+        "pino": "^10.3.1"
     },
     "devDependencies": {
-        "@types/react": "^19.2.14",
-        "@types/react-dom": "^19.2.3",
+        "@canton-network/core-wallet-test-utils": "workspace:^",
+        "@playwright/test": "^1.61.1",
         "@wxt-dev/module-react": "^1.1.5",
         "typescript": "^5.9.3",
         "web-ext": "^10.5.0",
         "wxt": "^0.21.3"
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "wallet-gateway/extension"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/wallet-gateway/extension#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "nx": {
+        "targets": {
+            "build": {
+                "outputs": [
+                    "{projectRoot}/.output"
+                ]
+            },
+            "playwright:e2e": {
+                "dependsOn": [
+                    "build",
+                    "^build"
+                ]
+            }
+        }
     }
 }

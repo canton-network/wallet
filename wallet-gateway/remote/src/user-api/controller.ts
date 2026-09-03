@@ -42,9 +42,12 @@ import {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
-    ListSigningProviderVaultsResult,
-    ListSigningProviderVaultsParams,
     ListTransactionsParams,
+    ChangeSigningProviderParams,
+    GetWalletParams,
+    GetWalletResult,
+    ListSigningProviderKeysParams,
+    ListSigningProviderKeysResult,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -71,9 +74,10 @@ import type {
     MessageSignatureEvent,
     TxChangedFailedEvent,
 } from '../dapp-api/rpc-gen/typings.js'
-import { rpcErrors } from '@canton-network/core-rpc-errors'
+import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -83,6 +87,7 @@ export const userController = (
     authContext: AuthContext | undefined,
     drivers: SigningDrivers,
     _logger: Logger,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION,
     adminUserId?: string
 ) => {
     const logger = _logger.child({ component: 'user-controller' })
@@ -118,6 +123,46 @@ export const userController = (
         }
         const { adminAuth: _adminAuth, serviceAccountAuth: _sa, ...rest } = dto
         return rest
+    }
+
+    const getSigningProviderKeys = async (
+        params: ListSigningProviderKeysParams
+    ) => {
+        const network = await store.getCurrentNetwork()
+        const idp = await store.getIdp(network.identityProviderId)
+
+        if (!network.adminAuth) {
+            throw new Error('No admin auth configured')
+        }
+
+        const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
+            idp,
+            network.adminAuth,
+            logger
+        )
+        const partyAllocator = new PartyAllocationService({
+            synchronizerId: network.synchronizerId,
+            accessTokenProvider: adminAccessTokenProvider,
+            httpLedgerUrl: network.ledgerApi.baseUrl,
+            logger,
+        })
+        const walletAllocationService = new WalletAllocationService(
+            store,
+            logger,
+            partyAllocator,
+            drivers
+        )
+        if (!drivers[params.signingProviderId as SigningProvider])
+            throw new Error(
+                `Signing provider ${params.signingProviderId} not supported`
+            )
+        const keys = await walletAllocationService.getKeys(
+            assertConnected(authContext),
+            params.signingProviderId as SigningProvider
+        )
+        if (!keys)
+            throw new Error(`No keys ofr ${params.signingProviderId} found`)
+        return keys
     }
 
     return buildController({
@@ -201,6 +246,12 @@ export const userController = (
                 throw new Error(
                     'Network does not use self_signed authentication'
                 )
+            }
+
+            if (params.clientSecret !== auth.clientSecret) {
+                throw providerErrors.unauthorized({
+                    message: 'Invalid client secret',
+                })
             }
 
             const idp = (await store.listIdps()).find(
@@ -299,7 +350,7 @@ export const userController = (
                 partyHint,
                 primary ?? false,
                 signingProviderId as SigningProvider,
-                params.vaultName
+                params.keyName
             )
 
             // Sync wallets (TODO: separate rights sync from wallet sync as we only need rights sync here)
@@ -460,7 +511,8 @@ export const userController = (
                 store,
                 logger,
                 drivers,
-                notifier
+                notifier,
+                hashingSchemeVersion
             )
 
             logDynamically(logger, 'signing transaction with params', {
@@ -711,7 +763,8 @@ export const userController = (
                 store,
                 logger,
                 drivers,
-                notifier
+                notifier,
+                hashingSchemeVersion
             )
 
             logDynamically(logger, 'executing transaction with params', {
@@ -1187,43 +1240,67 @@ export const userController = (
             await store.removeApiKey(params.id)
             return null
         },
-        listSigningProviderVaults: async (
-            params: ListSigningProviderVaultsParams
-        ): Promise<ListSigningProviderVaultsResult> => {
+        listSigningProviderKeys: async (
+            params: ListSigningProviderKeysParams
+        ): Promise<ListSigningProviderKeysResult> => {
+            return await getSigningProviderKeys(params)
+        },
+        changeSigningProvider: async (
+            params: ChangeSigningProviderParams
+        ): Promise<null> => {
+            const { signingProviderId, partyId, publicKey } = params
+            const signingProviderKeys = await getSigningProviderKeys(params)
+            if (
+                !signingProviderKeys.keys
+                    .map((key) => key.publicKey)
+                    .includes(publicKey)
+            )
+                throw new Error(
+                    `provided publicKey does not belong to ${signingProviderId}`
+                )
             const network = await store.getCurrentNetwork()
-            const idp = await store.getIdp(network.identityProviderId)
-
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
-
-            const adminAccessTokenProvider =
-                AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
+            const idp = await store.getIdp(network.identityProviderId)
+            const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                idp,
+                network.adminAuth,
+                logger
+            )
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
-                accessTokenProvider: adminAccessTokenProvider,
+                accessTokenProvider: adminTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
                 logger,
             })
-            const walletAllocationService = new WalletAllocationService(
-                store,
-                logger,
-                partyAllocator,
-                drivers
-            )
-            if (!drivers[params.signingProviderId as SigningProvider]) {
+            const normalizedKey =
+                partyAllocator.normalizePublicKeyToBase64(publicKey)
+            if (!normalizedKey) {
                 throw new Error(
-                    `Signing provider ${params.signingProviderId} not supported`
+                    'provided key cannot be converted to Base64 format'
                 )
             }
-            return walletAllocationService.getVaults(
-                assertConnected(authContext),
-                params.signingProviderId as SigningProvider
-            )
+            const namespace =
+                partyAllocator.createFingerprintFromKey(normalizedKey)
+
+            await store.updateWallet({
+                partyId,
+                signingProviderId,
+                publicKey,
+                namespace,
+                reason: '',
+                disabled: false,
+            })
+            return null
+        },
+        getWallet: async (
+            params: GetWalletParams
+        ): Promise<GetWalletResult> => {
+            return await store.getWallet(params.partyId)
         },
     })
 }

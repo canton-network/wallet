@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import { Logger } from '@logtape/logtape'
 import {
     AuthContext,
     UserId,
@@ -24,6 +24,7 @@ import {
     MessageRawStatusUpdate,
     ApiKey,
     ListTransactionsOptions,
+    WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import { AccessToken } from '@canton-network/core-types'
@@ -58,7 +59,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         authContext?: AuthContext,
         userStorage?: Memory
     ) {
-        this.logger = logger.child({ component: 'StoreInternal' })
+        this.logger = logger.getChild('StoreInternal')
         this.systemStorage = config
         this.authContext = authContext
         this.userStorage = userStorage || new Map()
@@ -130,6 +131,24 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             ...filter,
             networkIds: [network.id],
         })
+    }
+
+    async getWallet(partyId: PartyId): Promise<Wallet | null> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const constraint: WalletUniqueConstraint = {
+            partyId,
+            networkId: network.id,
+            userId,
+        }
+        return (
+            this.getStorage().wallets.find(
+                (wallet) =>
+                    constraint.networkId === wallet.networkId &&
+                    constraint.partyId === wallet.partyId &&
+                    constraint.userId === wallet.userId
+            ) ?? null
+        )
     }
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {

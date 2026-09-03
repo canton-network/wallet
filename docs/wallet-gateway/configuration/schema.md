@@ -168,7 +168,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "type": "object",
             "properties": {
                 "connection": {
-                    "oneOf": [
+                    "anyOf": [
                         {
                             "type": "object",
                             "properties": {
@@ -195,37 +195,74 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "additionalProperties": false
                         },
                         {
-                            "type": "object",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "const": "postgres"
+                            "anyOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "password": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "password",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 },
-                                "host": {
-                                    "type": "string"
-                                },
-                                "port": {
-                                    "type": "number"
-                                },
-                                "user": {
-                                    "type": "string"
-                                },
-                                "password": {
-                                    "type": "string"
-                                },
-                                "database": {
-                                    "type": "string"
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "passwordEnv": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "passwordEnv",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 }
-                            },
-                            "required": [
-                                "type",
-                                "host",
-                                "port",
-                                "user",
-                                "password",
-                                "database"
-                            ],
-                            "additionalProperties": {}
+                            ]
                         }
                     ]
                 }
@@ -237,7 +274,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "type": "object",
             "properties": {
                 "connection": {
-                    "oneOf": [
+                    "anyOf": [
                         {
                             "type": "object",
                             "properties": {
@@ -264,37 +301,74 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "additionalProperties": false
                         },
                         {
-                            "type": "object",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "const": "postgres"
+                            "anyOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "password": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "password",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 },
-                                "host": {
-                                    "type": "string"
-                                },
-                                "port": {
-                                    "type": "number"
-                                },
-                                "user": {
-                                    "type": "string"
-                                },
-                                "password": {
-                                    "type": "string"
-                                },
-                                "database": {
-                                    "type": "string"
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "passwordEnv": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "passwordEnv",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 }
-                            },
-                            "required": [
-                                "type",
-                                "host",
-                                "port",
-                                "user",
-                                "password",
-                                "database"
-                            ],
-                            "additionalProperties": {}
+                            ]
                         }
                     ]
                 }
@@ -966,6 +1040,21 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 }
             },
             "required": ["idps", "networks"],
+            "additionalProperties": false
+        },
+        "hashingScheme": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "enum": [
+                        "HASHING_SCHEME_VERSION_V2",
+                        "HASHING_SCHEME_VERSION_V3"
+                    ],
+                    "description": "Hashing scheme version for the ledger. If omitted, defaults to HASHING_SCHEME_VERSION_V3"
+                }
+            },
+            "required": ["version"],
             "additionalProperties": false
         }
     },

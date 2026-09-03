@@ -63,6 +63,7 @@ jobs:
                       sdk/**/dist/
                       wallet-gateway/**/dist/
                       damljs
+                      examples/test-token-v1-registry/dist/
                       .nx/cache
                       .nx/workspace-data
                       !**/node_modules/**
@@ -364,6 +365,51 @@ jobs:
                     exit 1
                   fi
                   echo "test-ping-e2e passed"
+
+    extension-e2e:
+        name: extension-e2e (devnet)
+        runs-on: ubuntu-latest
+        needs: [version-config, build, hydrate-canton-caches]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+
+            - uses: ./.github/actions/setup_pnpm/artifacts
+              with:
+                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+
+            - uses: ./.github/actions/setup_canton/artifacts
+              with:
+                  network: devnet
+                  canton_version: ${{ needs.version-config.outputs.devnet_canton_version }}
+
+            - uses: ./.github/actions/setup_playwright
+
+            - name: Build extension
+              run: pnpm --filter @canton-network/wallet-gateway-extension build
+
+            - name: Run extension e2e
+              run: pnpm --filter @canton-network/wallet-gateway-extension e2e
+
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              if: ${{ !cancelled() }}
+              with:
+                  name: wallet-gateway-extension-playwright-report
+                  path: wallet-gateway/extension/playwright-report/
+                  retention-days: 5
+
+    test-extension-e2e:
+        runs-on: ubuntu-latest
+        needs: extension-e2e
+        if: always()
+        steps:
+            - name: Report extension e2e execution
+              run: |
+                  if [ "${{ needs.extension-e2e.result }}" != "success" ]; then
+                    echo "extension-e2e did not succeed"
+                    exit 1
+                  fi
+                  echo "test-extension-e2e passed"
 
     portfolio-e2e:
         name: portfolio-e2e (${{ matrix.network }})

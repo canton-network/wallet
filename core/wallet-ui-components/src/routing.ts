@@ -5,6 +5,7 @@ export const ALLOWED_ROUTES = [
     '/api-keys/add',
     '/api-keys',
     '/login',
+    '/parties/edit',
     '/parties/add',
     '/parties',
     '/wallets',

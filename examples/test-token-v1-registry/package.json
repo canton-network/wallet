@@ -35,7 +35,7 @@
         "vitest": "^4.1.8"
     },
     "dependencies": {
-        "@canton-network/core-test-token": "workspace:^",
+        "@canton-network/core-splice-codegen": "workspace:^",
         "@canton-network/core-token-standard": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",

@@ -35,6 +35,7 @@ import {
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -52,7 +53,8 @@ export class TransactionService {
         private store: Store,
         private logger: Logger,
         private signingDrivers: SigningDrivers = {},
-        private notifier: Notifier
+        private notifier: Notifier,
+        private hashingSchemeVersion: HASHING_SCHEME_VERSION
     ) {}
 
     public async sign(
@@ -103,6 +105,13 @@ export class TransactionService {
             }
             case SigningProvider.SECUROSYS: {
                 return this.signWithSecurosys(
+                    authContext.userId,
+                    wallet,
+                    signParams
+                )
+            }
+            case SigningProvider.BITGO: {
+                return this.signWithBitgo(
                     authContext.userId,
                     wallet,
                     signParams
@@ -163,7 +172,8 @@ export class TransactionService {
             case SigningProvider.BLOCKDAEMON:
             case SigningProvider.FIREBLOCKS:
             case SigningProvider.DFNS:
-            case SigningProvider.SECUROSYS: {
+            case SigningProvider.SECUROSYS:
+            case SigningProvider.BITGO: {
                 if (!executeParams) {
                     throw new Error(
                         'Execute params are required for external signing'
@@ -809,6 +819,116 @@ export class TransactionService {
         }
     }
 
+    private async signWithBitgo(
+        userId: UserId,
+        wallet: Wallet,
+        signParams: SignParams
+    ): Promise<SignResult> {
+        const signingProvider = this.signingDrivers[SigningProvider.BITGO]
+        if (!signingProvider) {
+            throw new Error('BitGo signing driver not available')
+        }
+        const driver = signingProvider.controller(userId)
+
+        const tx = await this.loadPreparedTransactionForSigning(
+            signParams.transactionId
+        )
+
+        let signingResult: Exclude<
+            GetTransactionResult | SignTransactionResult,
+            SigningError
+        >
+        if (tx.externalTxId) {
+            signingResult = await driver
+                .getTransaction({
+                    userId,
+                    txId: tx.externalTxId,
+                })
+                .then(handleSigningError)
+        } else {
+            signingResult = await driver
+                .signTransaction({
+                    tx: tx.preparedTransaction,
+                    txHash: tx.preparedTransactionHash,
+                    keyIdentifier: {
+                        publicKey: wallet.publicKey,
+                    },
+                })
+                .then(handleSigningError)
+        }
+
+        const now = new Date()
+
+        logDynamically(this.logger, 'BitGo signing result', {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
+
+        if (signingResult.status === 'signed') {
+            if (!signingResult.signature) {
+                throw new Error(
+                    'No signature returned from BitGo signing driver'
+                )
+            }
+
+            const signedTx: Transaction = {
+                id: tx.id,
+                commandId: tx.commandId,
+                status: signingResult.status,
+                preparedTransaction: tx.preparedTransaction,
+                preparedTransactionHash: tx.preparedTransactionHash,
+                origin: tx?.origin ?? null,
+                ...(tx?.createdAt && {
+                    createdAt: tx.createdAt,
+                }),
+                signedAt: now,
+                externalTxId: signingResult.txId,
+            }
+
+            await this.store.setTransactionSigned(
+                tx.id,
+                now,
+                signingResult.txId
+            )
+            this.notifier.emit('txChanged', signedTx)
+
+            return {
+                status: signingResult.status,
+                signature: signingResult.signature,
+                signedBy: wallet.namespace,
+                partyId: wallet.partyId,
+                externalTxId: signingResult.txId,
+            }
+        } else {
+            const status =
+                signingResult.status === 'pending' ? 'pending' : 'failed'
+            const pendingTx: Transaction = {
+                id: tx.id,
+                commandId: tx.commandId,
+                status,
+                preparedTransaction: tx.preparedTransaction,
+                preparedTransactionHash: tx.preparedTransactionHash,
+                externalTxId: signingResult.txId,
+                origin: tx?.origin ?? null,
+                ...(tx?.createdAt && {
+                    createdAt: tx.createdAt,
+                }),
+            }
+
+            await this.store.setTransactionStatus(tx.id, status, {
+                externalTxId: signingResult.txId,
+            })
+
+            this.notifier.emit('txChanged', pendingTx)
+
+            return {
+                status: signingResult.status,
+                externalTxId: signingResult.txId,
+                partyId: wallet.partyId,
+            }
+        }
+    }
+
     private async executeWithParticipant(
         userId: UserId,
         executeParams: ExecuteParams,
@@ -826,7 +946,8 @@ export class TransactionService {
             userId,
             [partyId],
             synchronizerId,
-            transaction.payload as PrepareParams
+            transaction.payload as PrepareParams,
+            this.hashingSchemeVersion
         )
         const result = await ledgerClient.postWithRetry(
             '/v2/commands/submit-and-wait',
@@ -875,7 +996,7 @@ export class TransactionService {
             {
                 userId,
                 preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                hashingSchemeVersion: this.hashingSchemeVersion,
                 submissionId: commandId,
                 deduplicationPeriod: {
                     Empty: {},
