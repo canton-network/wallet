@@ -1356,8 +1356,6 @@ export const userController = (
                 debug: { result },
             })
             return result
-
-            throw new Error('not implemented yet')
         },
     })
 }
