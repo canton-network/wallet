@@ -17,11 +17,8 @@ import {
     Ops,
 } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import {
-    PrivateKey,
-    PublicKey,
-    signTransactionHash,
-} from '@canton-network/core-signing-lib'
+import { PrivateKey, PublicKey } from '@canton-network/core-signing-lib'
+import { ExternalPartyNamespace } from './service.js'
 
 /**
  * Represents a signed party creation, ready to be allocated on the ledger.
@@ -143,50 +140,23 @@ export class SignedPartyCreationService {
             return
         }
 
-        const topology =
-            await this.ctx.ledgerProvider.request<Ops.PostV2PartiesExternalGenerateTopology>(
-                {
-                    method: 'ledgerApi',
-                    params: {
-                        resource: '/v2/parties/external/generate-topology',
-                        body: {
-                            synchronizer: synchronizerId,
-                            partyHint: this.createPartyOptions?.partyHint ?? '',
-                            publicKey: {
-                                format: 'CRYPTO_KEY_FORMAT_RAW',
-                                keyData: this.publicKey,
-                                keySpec: 'SIGNING_KEY_SPEC_EC_CURVE25519',
-                            },
-                            localParticipantObservationOnly: false,
-                            confirmationThreshold: 1,
-                            otherConfirmingParticipantUids: [],
-                            observingParticipantUids: [],
-                        },
-                        requestMethod: 'post',
-                    },
-                }
-            )
-
-        const signature = signTransactionHash(
-            topology.multiHash,
-            this.privateKey
-        )
-
-        await this.allocate(
-            this.ctx.ledgerProvider,
-            synchronizerId,
-            topology.topologyTransactions!.map((transaction) => ({
-                transaction,
-            })),
-            [
-                {
-                    format: 'SIGNATURE_FORMAT_CONCAT',
-                    signature,
-                    signedBy: topology.publicKeyFingerprint,
-                    signingAlgorithmSpec: 'SIGNING_ALGORITHM_SPEC_ED25519',
-                },
-            ]
-        )
+        // Registering the same external party on another synchronizer is exactly
+        // a party creation scoped to that synchronizer, so reuse the create flow.
+        // Endpoints and additionalSynchronizerIds are cleared to keep the
+        // registration single-participant and avoid recursing back here.
+        await new ExternalPartyNamespace(this.ctx)
+            .create(this.publicKey, {
+                ...this.createPartyOptions,
+                partyHint: this.createPartyOptions?.partyHint ?? '',
+                synchronizerId,
+                confirmingThreshold: 1,
+                localParticipantObservationOnly: false,
+                additionalSynchronizerIds: [],
+                confirmingParticipantEndpoints: [],
+                observingParticipantEndpoints: [],
+            })
+            .sign(this.privateKey)
+            .execute({ grantUserRights: false })
 
         this.ctx.logger.info(
             `Party registered on additional synchronizer ${synchronizerId}.`
