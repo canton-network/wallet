@@ -498,7 +498,9 @@ export const userController = (
             const wallet = wallets.find((w) => w.partyId === signParams.partyId)
 
             if (wallet === undefined) {
-                throw new Error('No primary wallet found')
+                throw new Error(
+                    `No wallet found for partyId ${signParams.partyId}`
+                )
             }
 
             const connectedContext = assertConnected(authContext)
@@ -1169,7 +1171,10 @@ export const userController = (
                     `Transaction not found with id: ${params.transactionId}`
                 )
             }
-            if (transaction.status !== 'pending') {
+            if (
+                transaction.status !== 'pending' &&
+                transaction.status !== 'awaiting-signature'
+            ) {
                 throw new Error(
                     `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
                 )
