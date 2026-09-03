@@ -15,7 +15,8 @@ import {
     GetTransactionResult,
     SigningProvider,
     SignTransactionResult,
-    SigningDriverInterface,
+    Methods as SigningController,
+    SignTransactionParams,
 } from '@canton-network/core-signing-lib'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
 import {
@@ -92,23 +93,20 @@ export class TransactionService {
             case SigningProvider.PARTICIPANT: {
                 return this.signWithParticipant(wallet, tx)
             }
-            case SigningProvider.WALLET_KERNEL: {
-                return this.signWithDriver(
-                    driver,
-                    authContext.userId,
-                    wallet,
-                    tx,
-                    baseSignParams
-                )
-            }
             case SigningProvider.BLOCKDAEMON: {
                 if (!authContext.email) {
                     throw new Error(
                         'Email is required for Blockdaemon wallet allocation'
                     )
                 }
+
+                const blockdaemonDriver = this.signingDrivers[
+                    SigningProvider.BLOCKDAEMON
+                ]?.controller(authContext.email)
+
                 return this.signWithDriver(
-                    driver,
+                    blockdaemonDriver!, // we checked the driver existence above, so this is safe
+                    signingProvider,
                     authContext.email,
                     wallet,
                     tx,
@@ -118,24 +116,17 @@ export class TransactionService {
             case SigningProvider.FIREBLOCKS: {
                 return this.signWithDriver(
                     driver,
+                    signingProvider,
                     authContext.userId,
                     wallet,
                     tx,
                     { ...baseSignParams, userId: authContext.userId }
                 )
             }
-            case SigningProvider.DFNS: {
-                return this.signWithDriver(
-                    driver,
-                    authContext.userId,
-                    wallet,
-                    tx,
-                    baseSignParams
-                )
-            }
             case SigningProvider.SECUROSYS: {
                 return this.signWithDriver(
                     driver,
+                    signingProvider,
                     authContext.userId,
                     wallet,
                     tx,
@@ -148,9 +139,12 @@ export class TransactionService {
                     }
                 )
             }
+            case SigningProvider.WALLET_KERNEL:
+            case SigningProvider.DFNS:
             case SigningProvider.BITGO: {
                 return this.signWithDriver(
                     driver,
+                    signingProvider,
                     authContext.userId,
                     wallet,
                     tx,
@@ -321,13 +315,12 @@ export class TransactionService {
     }
 
     private async signWithDriver(
-        driver: ReturnType<SigningDriverInterface['controller']>,
+        driver: SigningController,
+        driverId: SigningProvider,
         userId: UserId,
         wallet: Wallet,
         tx: Transaction,
-        signTransactionParams: Parameters<
-            ReturnType<SigningDriverInterface['controller']>['signTransaction']
-        >[0]
+        signTransactionParams: SignTransactionParams
     ): Promise<SignResult> {
         let signingResult: Exclude<
             GetTransactionResult | SignTransactionResult,
@@ -350,11 +343,13 @@ export class TransactionService {
         const now = new Date()
 
         logDynamically(this.logger, 'Driver signing result', {
-            info: { transactionId: tx.id, status: signingResult.status },
+            info: {
+                transactionId: tx.id,
+                status: signingResult.status,
+                driverId,
+            },
             debug: { signingResult, tx },
         })
-
-        // throw new Error(JSON.stringify(signingResult))
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
