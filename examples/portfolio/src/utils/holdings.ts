@@ -7,6 +7,7 @@ export const toPortfolioHolding = (
     contract: PrettyContract<Holding>
 ): Holding => ({
     ...contract.interfaceViewValue,
+    contractCreatedAt: contract.activeContract.createdEvent.createdAt,
     contractId: contract.contractId,
 })
 
