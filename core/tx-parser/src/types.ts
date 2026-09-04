@@ -49,6 +49,7 @@ export interface TokenStandardEvent {
 // Same definition as HoldingView in Daml
 export interface Holding {
     contractId: string
+    contractCreatedAt: string
     owner: string
     instrumentId: { admin: string; id: string }
     amount: string
@@ -59,7 +60,9 @@ export interface Holding {
 export interface HoldingLock {
     holders: string[]
     expiresAt?: string
-    expiresAfter?: string
+    expiresAfter?: {
+        microseconds: string
+    }
     context?: string
 }
 

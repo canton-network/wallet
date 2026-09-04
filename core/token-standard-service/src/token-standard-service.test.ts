@@ -964,61 +964,50 @@ describe('Token standard service', () => {
         ])
     })
 
-    it('holding locked returns correctly', async () => {
-        const future = new Date(Date.now() + 100_000).toISOString()
-        const past = new Date(Date.now() - 100_000).toISOString()
+    describe('isHoldingLocked', () => {
+        // Used for relative time
+        const createdAt = '2026-09-01T10:00:00.000Z'
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: null,
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(false)
+        const past = '2026-09-01T10:59:59.999Z'
+        const pastRel = { microseconds: '3599999000' }
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: {},
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(true)
+        const now = '2026-09-01T11:00:00.000Z'
+        const nowRel = { microseconds: '3600000000' }
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: { expiresAt: future },
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(true)
+        const future = '2026-09-01T11:00:00.001Z'
+        const futureRel = { microseconds: '3600001000' }
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: { expiresAt: past },
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(false)
+        it.each([
+            [null, false],
+            [{}, true],
+            [{ expiresAt: null }, true],
+            [{ expiresAt: past }, false],
+            [{ expiresAt: now }, false],
+            [{ expiresAt: future }, true],
+            [{ expiresAfter: pastRel }, false],
+            [{ expiresAfter: nowRel }, false],
+            [{ expiresAfter: futureRel }, true],
+            [{ expiresAt: future, expiresAfter: futureRel }, true],
+            [{ expiresAt: now, expiresAfter: futureRel }, false],
+            [{ expiresAt: future, expiresAfter: nowRel }, false],
+        ])('holding locked with lock %o returns %s', (lock, expected) => {
+            expect(
+                TokenStandardService.isHoldingLocked(
+                    {
+                        lock,
+                        contractCreatedAt: createdAt,
+                        owner: '',
+                        instrumentId: {
+                            admin: '',
+                            id: '',
+                        },
+                        amount: '',
+                        meta: undefined,
+                    } as any,
+                    new Date(now)
+                )
+            ).toBe(expected)
+        })
     })
 
     it('create delegate proxy transfer', async () => {

@@ -839,6 +839,7 @@ export class TransactionParser {
                     amount: holdingView.amount,
                     instrumentId: holdingView.instrumentId,
                     contractId: exercisedEvent.contractId,
+                    contractCreatedAt: holdingView.contractCreatedAt,
                     owner: holdingView.owner,
                     meta: holdingView.meta,
                     lock: holdingView.lock,
@@ -866,6 +867,7 @@ export class TransactionParser {
                         amount: holdingView.amount,
                         instrumentId: holdingView.instrumentId,
                         contractId: createdEvent.contractId,
+                        contractCreatedAt: holdingView.contractCreatedAt,
                         owner: holdingView.owner,
                         meta: holdingView.meta,
                         lock: holdingView.lock,
@@ -892,6 +894,7 @@ export class TransactionParser {
                         contractId:
                             archivedEvent?.contractId ||
                             exercisedEvent!.contractId,
+                        contractCreatedAt: holdingView.contractCreatedAt,
                         owner: holdingView.owner,
                         meta: holdingView.meta,
                         lock: holdingView.lock,

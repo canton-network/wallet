@@ -1720,16 +1720,44 @@ export class TokenStandardService {
     }
 
     static isHoldingLocked(
-        holding: Holding | TxParseHolding,
+        holding: TxParseHolding,
         currentTime: Date = new Date()
     ): boolean {
         const lock = holding.lock
         if (!lock) return false
 
-        const expiresAt = lock.expiresAt
-        if (!expiresAt) return true
+        let expiresAtAbsolute: Date | null = null
+        let expiresAtRelative: Date | null = null
 
-        const expiresAtDate = new Date(expiresAt)
-        return currentTime < expiresAtDate
+        if (lock.expiresAfter) {
+            const createdAt = new Date(holding.contractCreatedAt)
+
+            // 1 microsecond = 0.001 milliseconds
+            const msToAdd = parseInt(lock.expiresAfter.microseconds) / 1000
+
+            expiresAtRelative = new Date(createdAt.getTime() + msToAdd)
+        }
+        if (lock.expiresAt) {
+            expiresAtAbsolute = new Date(lock.expiresAt)
+        }
+
+        let expiresAt: Date
+
+        // If both `expiresAt` and `expiresAfter` are set, the lock expires at the earlier of the two times.
+        if (expiresAtRelative && expiresAtAbsolute) {
+            expiresAt =
+                expiresAtRelative < expiresAtAbsolute
+                    ? expiresAtRelative
+                    : expiresAtAbsolute
+        } else if (expiresAtRelative) {
+            expiresAt = expiresAtRelative
+        } else if (expiresAtAbsolute) {
+            expiresAt = expiresAtAbsolute
+        } else {
+            // No expiration => locked
+            return true
+        }
+
+        return currentTime < expiresAt
     }
 }
