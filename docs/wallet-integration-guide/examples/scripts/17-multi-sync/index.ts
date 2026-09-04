@@ -108,7 +108,7 @@ await logAllContracts(logger, synchronizers, [
 ])
 // ── Steps 8–9: Allocate in parallel ────────────────────────────────────────
 // Step 8:  Alice allocates Amulet for leg-0 (global synchronizer)
-// Step 9: Bob allocates TestToken for leg-1 (global synchronizer)
+// Step 9: Bob allocates TestToken for leg-1 (app-synchronizer)
 const [legIdAlice, { legId: legIdBob }] = await Promise.all([
     allocateAmuletForAlice(setup, logger),
     allocateTokenForBob(setup, logger),

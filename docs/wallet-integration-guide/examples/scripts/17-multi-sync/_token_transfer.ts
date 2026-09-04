@@ -21,12 +21,12 @@ export async function aliceTransferToCharlie(
         TestToken.DAR.TestTokenID
     )
 
-    // The settlement is submitted by TradingApp (sv), so Alice's resulting Token
+    // The settlement is submitted by TradingApp, so Alice's resulting Token
     // holding propagates to her participant (app-user) asynchronously. Poll app-user until it
     // becomes visible instead of reading once (cross-participant read-after-write).
     const deadline = Date.now() + TOKEN_POLL_TIMEOUT_MS
     let aliceToken
-    for (;;) {
+    while (!aliceToken) {
         const aliceTokens = await aliceSdk.ledger.acsReader.raw.readJsContracts(
             {
                 templateIds: [TestToken.DAR.TestTokenV1.Token.templateId],
@@ -35,7 +35,6 @@ export async function aliceTransferToCharlie(
             }
         )
         aliceToken = aliceTokens[0]
-        if (aliceToken) break
         if (Date.now() >= deadline)
             throw new Error('Alice: Token holding not found after settlement')
         await new Promise((resolve) =>

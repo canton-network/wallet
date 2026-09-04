@@ -35,9 +35,13 @@ export type InternalOperationParams<Operation extends AllowedOperation> =
             >
         >
 
-export interface ReassignParams {
-    submitter: string
-    contractId: string
-    source: string
-    target: string
-}
+type ReassignmentCommandsBody =
+    Ops.PostV2CommandsSubmitAndWaitForReassignment['ledgerApi']['params']['body']['reassignmentCommands']
+
+type UnassignCommandValue = Extract<
+    NonNullable<ReassignmentCommandsBody['commands'][number]['command']>,
+    { UnassignCommand: unknown }
+>['UnassignCommand']['value']
+
+export type ReassignParams = Pick<ReassignmentCommandsBody, 'submitter'> &
+    Pick<UnassignCommandValue, 'contractId' | 'source' | 'target'>
