@@ -20,7 +20,6 @@ import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
 import { showToast } from '../utils'
 import { SignResult } from '@canton-network/core-wallet-user-rpc-client'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
-import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-approve')
 export class ApproveUi extends BaseElement {
@@ -64,7 +63,7 @@ export class ApproveUi extends BaseElement {
     }
 
     private async updateState() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -114,7 +113,7 @@ export class ApproveUi extends BaseElement {
         this.isDeleting = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -145,7 +144,7 @@ export class ApproveUi extends BaseElement {
         this.isApproving = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

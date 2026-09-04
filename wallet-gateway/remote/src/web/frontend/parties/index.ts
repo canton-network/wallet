@@ -22,7 +22,7 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils'
-import { detectCurrentOrigin } from '../listeners.js'
+
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
 export enum WALLET_STATUS_CODE {
@@ -171,7 +171,7 @@ export class UserUiParties extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         this.client = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -220,7 +220,7 @@ export class UserUiParties extends BaseElement {
     }
 
     private async updateWallets() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -251,7 +251,7 @@ export class UserUiParties extends BaseElement {
     }
 
     private async _onSetPrimary(e: WalletSetPrimaryEvent) {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -268,7 +268,7 @@ export class UserUiParties extends BaseElement {
         this.loading = true
         const wallet = e.wallet
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

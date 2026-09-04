@@ -24,7 +24,6 @@ import {
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 import './listeners'
-import { detectCurrentOrigin } from './listeners'
 import { fetchDappApiUrl, showToast } from './utils'
 
 const globalPageResetStyle = document.createElement('style')
@@ -39,7 +38,7 @@ globalPageResetStyle.textContent = `
 document.head.appendChild(globalPageResetStyle)
 
 export const redirectToIntendedOrDefault = async (): Promise<void> => {
-    const currentOrigin = await detectCurrentOrigin()
+    const currentOrigin = await stateManager.currentOrigin.poll()
     const intendedPage = stateManager.intendedPage.get(currentOrigin)
     stateManager.intendedPage.clear(currentOrigin)
     const route = intendedPage || DEFAULT_PAGE_REDIRECT
@@ -62,13 +61,13 @@ export class UserApp extends LitElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        this.currentOrigin = await detectCurrentOrigin()
+        this.currentOrigin = await stateManager.currentOrigin.poll()
         void this.refreshNetworkConnected()
     }
 
     private async refreshNetworkConnected(): Promise<void> {
         const currentOrigin =
-            this.currentOrigin ?? (await detectCurrentOrigin())
+            this.currentOrigin ?? (await stateManager.currentOrigin.poll())
         const accessToken = await stateManager.accessToken.get(currentOrigin)
         if (!accessToken) {
             this.networkConnected = false
@@ -95,7 +94,7 @@ export class UserApp extends LitElement {
     private async handleLogout() {
         clearTokenExpirationTimeout()
 
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const accessToken = await stateManager.accessToken.get(currentOrigin)
 
         if (!accessToken) {
@@ -253,7 +252,7 @@ export class UserUIAuthRedirect extends LitElement {
     private async resolveAuthRedirect(): Promise<AuthVerdict> {
         const currentRoute = getCurrentRoute(window.location.pathname)
         const isLoginPage = currentRoute === LOGIN_PAGE_REDIRECT
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const accessToken = await stateManager.accessToken.get(currentOrigin)
 
         if (!accessToken) {
@@ -286,7 +285,7 @@ export class UserUIAuthRedirect extends LitElement {
 
     private async clearAuthStateAndPreserveIntendedPage(): Promise<void> {
         const intendedPage = this.getIntendedPageFromCurrentPath()
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
 
         await stateManager.clearAuthState(currentOrigin)
         if (intendedPage) {
@@ -315,7 +314,7 @@ export class UserUIAuthRedirect extends LitElement {
     ): Promise<AuthVerdict> {
         clearTokenExpirationTimeout()
 
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const accessToken = await stateManager.accessToken.get(currentOrigin)
         if (accessToken) {
             // Attempt to remove session even if token is expired
@@ -336,7 +335,7 @@ export class UserUIAuthRedirect extends LitElement {
         accessToken: string
     ): Promise<AuthVerdict> {
         const sessionId = await getSessionId(accessToken)
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         if (sessionId) {
             this.setTokenExpirationTimeout(currentOrigin)
             await redirectToIntendedOrDefault()
@@ -352,7 +351,7 @@ export class UserUIAuthRedirect extends LitElement {
     private async handleAuthenticatedOnLoggedInPage(
         accessToken: string
     ): Promise<AuthVerdict> {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const networkId = stateManager.networkId.get(currentOrigin)
         if (!networkId) {
             throw new Error('missing networkId in state manager')
@@ -420,7 +419,7 @@ export class UserUIAuthRedirect extends LitElement {
 export const addUserSession = async (token: string, networkId: string) => {
     const authenticatedUserClient = await createUserClient(token)
 
-    const currentOrigin = await detectCurrentOrigin()
+    const currentOrigin = await stateManager.currentOrigin.poll()
 
     if (!currentOrigin) {
         throw new Error('Missing dApp origin. Cannot add user session.')

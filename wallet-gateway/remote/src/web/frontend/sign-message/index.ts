@@ -12,7 +12,6 @@ import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'
 import { stateManager } from '../state-manager'
 import '../index'
-import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-sign-message')
 export class UserUiSignMessage extends BaseElement {
@@ -126,7 +125,7 @@ export class UserUiSignMessage extends BaseElement {
                 this.loadError = 'Message not found.'
                 return
             }
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -150,7 +149,7 @@ export class UserUiSignMessage extends BaseElement {
         if (!confirm('Reject message signing request?')) return
         this.isDeleting = true
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -170,7 +169,7 @@ export class UserUiSignMessage extends BaseElement {
     private async handleApprove() {
         this.isApproving = true
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

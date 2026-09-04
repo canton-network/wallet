@@ -17,7 +17,6 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
-import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-review-network')
 export class UserUiReviewNetwork extends BaseElement {
@@ -62,7 +61,7 @@ export class UserUiReviewNetwork extends BaseElement {
         }
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -87,7 +86,7 @@ export class UserUiReviewNetwork extends BaseElement {
         const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -120,7 +119,7 @@ export class UserUiReviewNetwork extends BaseElement {
         if (!confirm(`Delete network "${e.network.name}"?`)) return
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
