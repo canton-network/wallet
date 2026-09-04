@@ -680,6 +680,40 @@ describe('TransactionService', () => {
                     )
                 ).rejects.toThrow('No driver found for bitgo')
             })
+
+            it('does not emit when concurrent polling service already moved the transaction on', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    txId: 'external-tx-id',
+                    signature: 'sig',
+                })
+
+                const store = createStore(
+                    awaitingTransaction,
+                    executedTransaction
+                )
+                store.setTransactionSigned.mockResolvedValue(false)
+
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.BITGO]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const result = await service.refreshTransaction(
+                    authContext,
+                    walletWithProvider(SigningProvider.BITGO),
+                    pendingTransaction.id
+                )
+
+                expect(result).toEqual({ status: 'executed' })
+                expect(emit).not.toHaveBeenCalled()
+            })
         })
 
         it.each([
@@ -742,32 +776,33 @@ describe('TransactionService', () => {
     })
 
     describe('execute', () => {
-        // it.each(['pending', 'failed', 'executed'] as const)(
-        //     'throws when execute is called for a %s transaction',
-        //     async (status) => {
-        //         const service = createService(
-        //             createStore(),
-        //             {},
-        //             notifier,
-        //             logger
-        //         )
-        //         const transaction = {
-        //             ...pendingTransaction,
-        //             status,
-        //         }
+        it.each([
+            'pending',
+            'failed',
+            'executed',
+            'awaiting-signature',
+        ] as const)(
+            'throws when execute is called for a %s transaction',
+            async (status) => {
+                const service = createService(
+                    createStore(),
+                    {},
+                    notifier,
+                    logger
+                )
 
-        //         expect(() =>
-        //             service.execute(
-        //                 authContext.userId,
-        //                 wallet,
-        //                 transaction,
-        //                 executeParams
-        //             )
-        //         ).toThrow(
-        //             `Cannot execute a ${status} transaction. Expected status: signed.`
-        //         )
-        //     }
-        // )
+                expect(
+                    service.execute(
+                        authContext.userId,
+                        wallet,
+                        { ...pendingTransaction, status },
+                        executeParams
+                    )
+                ).rejects.toThrow(
+                    `Cannot execute a ${status} transaction. Expected status: signed.`
+                )
+            }
+        )
 
         describe('participant', () => {
             it('submits the prepared transaction to the ledger', async () => {
