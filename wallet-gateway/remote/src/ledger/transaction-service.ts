@@ -124,7 +124,7 @@ export class TransactionService {
         }
     }
 
-    public execute(
+    public async execute(
         userId: UserId,
         wallet: Wallet,
         transaction: Transaction,
@@ -156,7 +156,7 @@ export class TransactionService {
                             'Network is required for participant signing'
                         )
                     }
-                    return this.executeWithParticipant(
+                    return await this.executeWithParticipant(
                         userId,
                         executeParams,
                         transaction,
@@ -184,9 +184,10 @@ export class TransactionService {
                         'Ledger client is required for external signing'
                     )
                 }
-                return this.executeWithExternal(
+                return await this.executeWithExternal(
                     userId,
                     executeParams,
+                    wallet,
                     transaction,
                     ledgerClient
                 )
@@ -204,30 +205,44 @@ export class TransactionService {
         wallet: Wallet,
         transaction: Transaction
     ): Promise<SignAndExecuteResult> {
+        const existing = await this.store.getTransaction(transaction.id)
         const signParams: SignParams = {
             transactionId: transaction.id,
             partyId: wallet.partyId,
         }
-
-        const signResult = await this.sign(authContext, wallet, signParams)
-
-        if (signResult.status === 'pending') {
-            return signResult
+        if (!existing) {
+            throw new Error(`Transaction not found with id ${transaction.id}`)
         }
 
-        if (signResult.status !== 'signed') {
-            throw new Error(
-                `Service account signing failed with status: ${signResult.status}`
+        if (existing.status === 'awaiting-signature' && existing.externalTxId) {
+            const refreshed = await this.refreshTransaction(
+                authContext,
+                wallet,
+                transaction.id
             )
-        }
 
-        if (
-            !('signature' in signResult) ||
-            signResult.signature === undefined
-        ) {
-            throw new Error(
-                'Service account signing did not return a signature'
-            )
+            if (refreshed.status === 'awaiting-signature') {
+                return {
+                    status: 'pending',
+                    partyId: wallet.partyId,
+                    externalTxId: existing.externalTxId,
+                }
+            }
+
+            if (refreshed.status !== 'signed') {
+                throw new Error(
+                    `Service account signing failed with status: ${refreshed.status} and reason: ${refreshed.failureReason}`
+                )
+            }
+        } else {
+            const signResult = await this.sign(authContext, wallet, signParams)
+            if (signResult.status === 'pending') return signResult
+
+            if (signResult.status !== 'signed') {
+                throw new Error(
+                    `Service account signing failed with status ${signResult.status}`
+                )
+            }
         }
 
         const ledgerClient = new LedgerClient({
@@ -242,22 +257,148 @@ export class TransactionService {
         const executeParams: ExecuteParams = {
             transactionId: transaction.id,
             partyId: wallet.partyId,
-            signature: signResult.signature,
-            signedBy: signResult.signedBy,
         }
 
         const userId = authContext.isApiKey
             ? authContext.ledgerUserId
             : authContext.userId
 
+        const signedTx = await this.store.getTransaction(transaction.id)
+
+        if (!signedTx) {
+            throw new Error(`Transaction not found with id: ${transaction.id}`)
+        }
+
         return this.execute(
             userId,
             wallet,
-            { ...transaction, status: 'signed' as const },
+            signedTx,
             executeParams,
             ledgerClient,
             network
         )
+    }
+
+    public async refreshTransaction(
+        authContext: AuthContext,
+        wallet: Wallet,
+        transactionId: Transaction['id']
+    ): Promise<{
+        status: Transaction['status']
+        externalTxId?: string
+        failureReason?: string
+    }> {
+        const tx = await this.store.getTransaction(transactionId)
+        if (!tx) {
+            throw new Error(`Transaction not found with id: ${transactionId}`)
+        }
+
+        if (!tx.externalTxId || tx.status !== 'awaiting-signature') {
+            return {
+                status: tx.status,
+                ...(tx.externalTxId && { externalTxId: tx.externalTxId }),
+                ...(tx.failureReason && {
+                    failureReason: tx.failureReason,
+                }),
+            }
+        }
+
+        const signingResult = await this.getSigningResult(
+            authContext.userId,
+            wallet,
+            tx.externalTxId
+        )
+
+        logDynamically(this.logger, `Refreshed signing status`, {
+            info: { transactionId: tx.id, status: signingResult.status },
+            debug: { signingResult, tx },
+        })
+
+        return this.applySigningResult(tx, signingResult)
+    }
+
+    private async getSigningResult(
+        userId: UserId,
+        wallet: Wallet,
+        externalTxId: string
+    ): Promise<Exclude<GetTransactionResult, SigningError>> {
+        const provider = wallet.signingProviderId as SigningProvider
+        const signingProvider = this.signingDrivers[provider]
+        if (!signingProvider) {
+            throw new Error(`No driver found for provider ${provider}`)
+        }
+
+        const driver = signingProvider.controller(userId)
+        const args =
+            provider === SigningProvider.SECUROSYS
+                ? { txId: externalTxId }
+                : { userId, txId: externalTxId }
+
+        return driver.getTransaction(args).then(handleSigningError)
+    }
+
+    private async applySigningResult(
+        tx: Transaction,
+        signingResult: Exclude<
+            GetTransactionResult | SignTransactionResult,
+            SigningError
+        >
+    ): Promise<{
+        status: Transaction['status']
+        externalTxId?: string
+        failureReason?: string
+    }> {
+        const now = new Date()
+        if (signingResult.status === 'signed') {
+            if (!signingResult.signature) {
+                throw new Error('No signature returned from signing driver')
+            }
+
+            const applied = await this.store.setTransactionSigned(
+                tx.id,
+                now,
+                signingResult.txId,
+                { expectedStatus: tx.status }
+            )
+
+            if (!applied) {
+                const current = await this.store.getTransaction(tx.id)
+                return { status: current!.status }
+            }
+
+            this.notifier.emit('txChanged', {
+                ...tx,
+                status: 'signed',
+                signedAt: now,
+                externalTxId: signingResult.txId,
+            })
+
+            return { status: 'signed', externalTxId: signingResult.txId }
+        }
+
+        const status =
+            signingResult.status === 'pending' ? 'awaiting-signature' : 'failed'
+        const failureReason =
+            status === 'failed'
+                ? `Signing provider returned status: ${signingResult.status}`
+                : undefined
+
+        await this.store.setTransactionStatus(tx.id, status, {
+            externalTxId: signingResult.txId,
+            ...(failureReason && { failureReason }),
+        })
+
+        this.notifier.emit('txChanged', {
+            ...tx,
+            status,
+            externalTxId: signingResult.txId,
+        })
+
+        return {
+            status,
+            externalTxId: signingResult.txId,
+            ...(failureReason && { failureReason }),
+        }
     }
 
     private async loadPreparedTransactionForSigning(
@@ -269,13 +410,19 @@ export class TransactionService {
             throw new Error(`Transaction not found with id: ${transactionId}`)
         }
 
-        if (existingTx.status !== 'pending') {
+        if (existingTx.status !== 'pending' || existingTx.externalTxId) {
             throw new Error(
                 `Cannot sign an already ${existingTx.status} transaction`
             )
         }
 
         return existingTx
+    }
+
+    private normalizeSignature(signingProviderId: string, signature: string) {
+        if (signingProviderId === SigningProvider.FIREBLOCKS) {
+            return Buffer.from(signature, 'hex').toString('base64')
+        } else return signature
     }
 
     // This doesn't really sign the transaction.
@@ -386,67 +533,32 @@ export class TransactionService {
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
         )
-
-        let signingResult: Exclude<
-            GetTransactionResult | SignTransactionResult,
-            SigningError
-        >
-        if (tx.externalTxId) {
-            signingResult = await driver
-                .getTransaction({
-                    userId,
-                    txId: tx.externalTxId,
-                })
-                .then(handleSigningError)
-        } else {
-            const internalTxId = crypto
-                .randomUUID()
-                .replace(/-/g, '')
-                .substring(0, 16)
-            signingResult = await driver
-                .signTransaction({
-                    tx: tx.preparedTransaction,
-                    txHash: tx.preparedTransactionHash,
-                    keyIdentifier: {
-                        publicKey: wallet.publicKey,
-                    },
-                    internalTxId,
-                })
-                .then(handleSigningError)
-        }
-
-        const now = new Date()
+        const internalTxId = crypto
+            .randomUUID()
+            .replace(/-/g, '')
+            .substring(0, 16)
+        const signingResult = await driver
+            .signTransaction({
+                tx: tx.preparedTransaction,
+                txHash: tx.preparedTransactionHash,
+                keyIdentifier: {
+                    publicKey: wallet.publicKey,
+                },
+                internalTxId,
+            })
+            .then(handleSigningError)
 
         logDynamically(this.logger, 'Blockdaemon signing result', {
             info: { transactionId: tx.id, status: signingResult.status },
             debug: { signingResult, tx },
         })
 
+        await this.applySigningResult(tx, signingResult)
+
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
                 throw new Error('No signature returned from signing driver')
             }
-
-            const signedTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status: signingResult.status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-                signedAt: now,
-                externalTxId: signingResult.txId,
-            }
-
-            await this.store.setTransactionSigned(
-                tx.id,
-                now,
-                signingResult.txId
-            )
-            this.notifier.emit('txChanged', signedTx)
 
             return {
                 status: signingResult.status,
@@ -455,33 +567,12 @@ export class TransactionService {
                 partyId: wallet.partyId,
                 externalTxId: signingResult.txId,
             }
-        } else {
-            const status =
-                signingResult.status === 'pending' ? 'pending' : 'failed'
-            const pendingTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                externalTxId: signingResult.txId,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-            }
+        }
 
-            await this.store.setTransactionStatus(tx.id, status, {
-                externalTxId: signingResult.txId,
-            })
-
-            this.notifier.emit('txChanged', pendingTx)
-
-            return {
-                status: signingResult.status,
-                externalTxId: signingResult.txId,
-                partyId: wallet.partyId,
-            }
+        return {
+            status: signingResult.status,
+            externalTxId: signingResult.txId,
+            partyId: wallet.partyId,
         }
     }
 
@@ -499,66 +590,32 @@ export class TransactionService {
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
         )
-        let signingResult: Exclude<
-            GetTransactionResult | SignTransactionResult,
-            SigningError
-        >
 
-        if (tx.externalTxId) {
-            signingResult = await driver
-                .getTransaction({
-                    userId,
-                    txId: tx.externalTxId,
-                })
-                .then(handleSigningError)
-        } else {
-            signingResult = await driver
-                .signTransaction({
-                    userId,
-                    tx: tx.preparedTransaction,
-                    txHash: Buffer.from(
-                        tx.preparedTransactionHash,
-                        'base64'
-                    ).toString('hex'),
-                    keyIdentifier: {
-                        publicKey: wallet.publicKey,
-                    },
-                })
-                .then(handleSigningError)
-        }
-
-        const now = new Date()
+        const signingResult = await driver
+            .signTransaction({
+                userId,
+                tx: tx.preparedTransaction,
+                txHash: Buffer.from(
+                    tx.preparedTransactionHash,
+                    'base64'
+                ).toString('hex'),
+                keyIdentifier: {
+                    publicKey: wallet.publicKey,
+                },
+            })
+            .then(handleSigningError)
 
         logDynamically(this.logger, 'Fireblocks signing result', {
             info: { transactionId: tx.id, status: signingResult.status },
             debug: { signingResult, tx },
         })
 
+        await this.applySigningResult(tx, signingResult)
+
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
                 throw new Error('No signature returned from signing driver')
             }
-
-            const signedTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status: signingResult.status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-                signedAt: now,
-                externalTxId: signingResult.txId,
-            }
-
-            await this.store.setTransactionSigned(
-                tx.id,
-                now,
-                signingResult.txId
-            )
-            this.notifier.emit('txChanged', signedTx)
 
             // return signature in format that is already usable in execute
             const decodedSignature = Buffer.from(
@@ -573,32 +630,12 @@ export class TransactionService {
                 partyId: wallet.partyId,
                 externalTxId: signingResult.txId,
             }
-        } else {
-            const status =
-                signingResult.status === 'pending' ? 'pending' : 'failed'
-            const pendingTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                externalTxId: signingResult.txId,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-            }
+        }
 
-            await this.store.setTransactionStatus(tx.id, status, {
-                externalTxId: signingResult.txId,
-            })
-            this.notifier.emit('txChanged', pendingTx)
-
-            return {
-                status: signingResult.status,
-                externalTxId: signingResult.txId,
-                partyId: wallet.partyId,
-            }
+        return {
+            status: signingResult.status,
+            externalTxId: signingResult.txId,
+            partyId: wallet.partyId,
         }
     }
 
@@ -617,97 +654,37 @@ export class TransactionService {
             signParams.transactionId
         )
 
-        let signingResult: Exclude<
-            GetTransactionResult | SignTransactionResult,
-            SigningError
-        >
-        if (tx.externalTxId) {
-            signingResult = await driver
-                .getTransaction({
-                    userId,
-                    txId: tx.externalTxId,
-                })
-                .then(handleSigningError)
-        } else {
-            signingResult = await driver
-                .signTransaction({
-                    tx: tx.preparedTransaction,
-                    txHash: tx.preparedTransactionHash,
-                    keyIdentifier: {
-                        publicKey: wallet.publicKey,
-                    },
-                })
-                .then(handleSigningError)
-        }
-
-        const now = new Date()
+        const signingResult = await driver
+            .signTransaction({
+                tx: tx.preparedTransaction,
+                txHash: tx.preparedTransactionHash,
+                keyIdentifier: {
+                    publicKey: wallet.publicKey,
+                },
+            })
+            .then(handleSigningError)
 
         logDynamically(this.logger, 'Dfns signing result', {
             info: { transactionId: tx.id, status: signingResult.status },
             debug: { signingResult, tx },
         })
 
+        await this.applySigningResult(tx, signingResult)
+
         if (signingResult.status === 'signed') {
-            if (!signingResult.signature) {
-                throw new Error(
-                    'No signature returned from Dfns signing driver'
-                )
-            }
-
-            const signedTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status: signingResult.status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-                signedAt: now,
-                externalTxId: signingResult.txId,
-            }
-
-            await this.store.setTransactionSigned(
-                tx.id,
-                now,
-                signingResult.txId
-            )
-            this.notifier.emit('txChanged', signedTx)
-
             return {
-                status: signingResult.status,
-                signature: signingResult.signature,
+                status: 'signed',
+                signature: signingResult.signature!,
                 signedBy: wallet.namespace,
                 partyId: wallet.partyId,
                 externalTxId: signingResult.txId,
             }
-        } else {
-            const status =
-                signingResult.status === 'pending' ? 'pending' : 'failed'
-            const pendingTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                externalTxId: signingResult.txId,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-            }
+        }
 
-            await this.store.setTransactionStatus(tx.id, status, {
-                externalTxId: signingResult.txId,
-            })
-            this.notifier.emit('txChanged', pendingTx)
-
-            return {
-                status: signingResult.status,
-                externalTxId: signingResult.txId,
-                partyId: wallet.partyId,
-            }
+        return {
+            status: signingResult.status,
+            externalTxId: signingResult.txId,
+            partyId: wallet.partyId,
         }
     }
 
@@ -720,102 +697,45 @@ export class TransactionService {
         if (!signingProvider) {
             throw new Error('Securosys signing driver not available')
         }
+
         const driver = signingProvider.controller(userId)
 
         const tx = await this.loadPreparedTransactionForSigning(
             signParams.transactionId
         )
 
-        let signingResult: Exclude<
-            GetTransactionResult | SignTransactionResult,
-            SigningError
-        >
-        if (tx.externalTxId) {
-            signingResult = await driver
-                .getTransaction({
-                    txId: tx.externalTxId,
-                })
-                .then(handleSigningError)
-        } else {
-            signingResult = await driver
-                .signTransaction({
-                    tx: tx.preparedTransaction,
-                    txHash: tx.preparedTransactionHash,
-                    keyIdentifier: {
-                        id: keyLabelFromPublicKey(wallet.publicKey),
-                        publicKey: wallet.publicKey,
-                    },
-                })
-                .then(handleSigningError)
-        }
-
-        const now = new Date()
+        const signingResult = await driver
+            .signTransaction({
+                tx: tx.preparedTransaction,
+                txHash: tx.preparedTransactionHash,
+                keyIdentifier: {
+                    id: keyLabelFromPublicKey(wallet.publicKey),
+                    publicKey: wallet.publicKey,
+                },
+            })
+            .then(handleSigningError)
 
         logDynamically(this.logger, 'Securosys signing result', {
             info: { transactionId: tx.id, status: signingResult.status },
             debug: { signingResult, tx },
         })
 
+        await this.applySigningResult(tx, signingResult)
+
         if (signingResult.status === 'signed') {
-            if (!signingResult.signature) {
-                throw new Error('No signature returned from signing driver')
-            }
-
-            const signedTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status: signingResult.status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-                signedAt: now,
-                externalTxId: signingResult.txId,
-            }
-
-            await this.store.setTransactionSigned(
-                tx.id,
-                now,
-                signingResult.txId
-            )
-            this.notifier.emit('txChanged', signedTx)
-
             return {
-                status: signingResult.status,
-                signature: signingResult.signature,
+                status: 'signed',
+                signature: signingResult.signature!,
                 signedBy: wallet.namespace,
                 partyId: wallet.partyId,
                 externalTxId: signingResult.txId,
             }
-        } else {
-            const status =
-                signingResult.status === 'pending' ? 'pending' : 'failed'
-            const pendingTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                externalTxId: signingResult.txId,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-            }
+        }
 
-            await this.store.setTransactionStatus(tx.id, status, {
-                externalTxId: signingResult.txId,
-            })
-
-            this.notifier.emit('txChanged', pendingTx)
-
-            return {
-                status: signingResult.status,
-                externalTxId: signingResult.txId,
-                partyId: wallet.partyId,
-            }
+        return {
+            status: signingResult.status,
+            externalTxId: signingResult.txId,
+            partyId: wallet.partyId,
         }
     }
 
@@ -834,98 +754,37 @@ export class TransactionService {
             signParams.transactionId
         )
 
-        let signingResult: Exclude<
-            GetTransactionResult | SignTransactionResult,
-            SigningError
-        >
-        if (tx.externalTxId) {
-            signingResult = await driver
-                .getTransaction({
-                    userId,
-                    txId: tx.externalTxId,
-                })
-                .then(handleSigningError)
-        } else {
-            signingResult = await driver
-                .signTransaction({
-                    tx: tx.preparedTransaction,
-                    txHash: tx.preparedTransactionHash,
-                    keyIdentifier: {
-                        publicKey: wallet.publicKey,
-                    },
-                })
-                .then(handleSigningError)
-        }
+        const signingResult = await driver
+            .signTransaction({
+                tx: tx.preparedTransaction,
+                txHash: tx.preparedTransactionHash,
+                keyIdentifier: {
+                    publicKey: wallet.publicKey,
+                },
+            })
+            .then(handleSigningError)
 
-        const now = new Date()
-
-        logDynamically(this.logger, 'BitGo signing result', {
+        logDynamically(this.logger, 'Bitgo signing result', {
             info: { transactionId: tx.id, status: signingResult.status },
             debug: { signingResult, tx },
         })
 
+        await this.applySigningResult(tx, signingResult)
+
         if (signingResult.status === 'signed') {
-            if (!signingResult.signature) {
-                throw new Error(
-                    'No signature returned from BitGo signing driver'
-                )
-            }
-
-            const signedTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status: signingResult.status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-                signedAt: now,
-                externalTxId: signingResult.txId,
-            }
-
-            await this.store.setTransactionSigned(
-                tx.id,
-                now,
-                signingResult.txId
-            )
-            this.notifier.emit('txChanged', signedTx)
-
             return {
-                status: signingResult.status,
-                signature: signingResult.signature,
+                status: 'signed',
+                signature: signingResult.signature!,
                 signedBy: wallet.namespace,
                 partyId: wallet.partyId,
                 externalTxId: signingResult.txId,
             }
-        } else {
-            const status =
-                signingResult.status === 'pending' ? 'pending' : 'failed'
-            const pendingTx: Transaction = {
-                id: tx.id,
-                commandId: tx.commandId,
-                status,
-                preparedTransaction: tx.preparedTransaction,
-                preparedTransactionHash: tx.preparedTransactionHash,
-                externalTxId: signingResult.txId,
-                origin: tx?.origin ?? null,
-                ...(tx?.createdAt && {
-                    createdAt: tx.createdAt,
-                }),
-            }
+        }
 
-            await this.store.setTransactionStatus(tx.id, status, {
-                externalTxId: signingResult.txId,
-            })
-
-            this.notifier.emit('txChanged', pendingTx)
-
-            return {
-                status: signingResult.status,
-                externalTxId: signingResult.txId,
-                partyId: wallet.partyId,
-            }
+        return {
+            status: signingResult.status,
+            externalTxId: signingResult.txId,
+            partyId: wallet.partyId,
         }
     }
 
@@ -949,102 +808,206 @@ export class TransactionService {
             transaction.payload as PrepareParams,
             this.hashingSchemeVersion
         )
-        const result = await ledgerClient.postWithRetry(
-            '/v2/commands/submit-and-wait',
-            prep
-        )
 
-        logDynamically(this.logger, 'Participant execution result', {
-            info: { transactionId: transaction.id },
-            debug: { result, transaction, executeParams, userId },
-        })
+        try {
+            const result = await ledgerClient.postWithRetry(
+                '/v2/commands/submit-and-wait',
+                prep
+            )
+            logDynamically(this.logger, 'Participant execution result', {
+                info: { transactionId: transaction.id },
+                debug: { result, transaction, executeParams, userId },
+            })
 
-        const executedTx: Transaction = {
-            id: transaction.id,
-            commandId,
-            status: 'executed',
-            preparedTransaction: transaction.preparedTransaction,
-            preparedTransactionHash: transaction.preparedTransactionHash,
-            payload: result,
-            origin: transaction.origin ?? null,
-            ...(transaction.createdAt && {
-                createdAt: transaction.createdAt,
-            }),
-            ...(transaction.signedAt && {
-                signedAt: transaction.signedAt,
-            }),
+            const executedTx: Transaction = {
+                id: transaction.id,
+                commandId,
+                status: 'executed',
+                preparedTransaction: transaction.preparedTransaction,
+                preparedTransactionHash: transaction.preparedTransactionHash,
+                payload: result,
+                origin: transaction.origin ?? null,
+                ...(transaction.createdAt && {
+                    createdAt: transaction.createdAt,
+                }),
+                ...(transaction.signedAt && {
+                    signedAt: transaction.signedAt,
+                }),
+            }
+            await this.store.setTransactionStatus(transaction.id, 'executed', {
+                payload: result,
+            })
+            this.notifier.emit('txChanged', executedTx)
+
+            return result
+        } catch (err) {
+            const failureReason = this.extractLedgerError(err)
+
+            this.logger.error(
+                { err, transactionId: transaction.id },
+                'Ledger rejected submission'
+            )
+
+            await this.store.setTransactionStatus(transaction.id, 'failed', {
+                failureReason,
+            })
+            this.notifier.emit('txChanged', {
+                ...transaction,
+                status: 'failed',
+            })
+
+            throw new Error(`Ledger rejected submission ${failureReason}`, {
+                cause: err,
+            })
         }
-        await this.store.setTransactionStatus(transaction.id, 'executed', {
-            payload: result,
-        })
-        this.notifier.emit('txChanged', executedTx)
-
-        return result
     }
 
     private async executeWithExternal(
         userId: UserId,
         executeParams: ExecuteParams,
+        wallet: Wallet,
         transaction: Transaction,
         ledgerClient: LedgerClient
     ): Promise<ExecuteResult> {
-        const { partyId, signature, signedBy } = executeParams
+        const { partyId } = executeParams
         const { commandId } = transaction
+        let rawSignature: string
 
-        const result = await ledgerClient.postWithRetry(
-            '/v2/interactive-submission/executeAndWait',
-            {
+        if (transaction.externalTxId) {
+            const signingResult = await this.getSigningResult(
                 userId,
-                preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: this.hashingSchemeVersion,
-                submissionId: commandId,
-                deduplicationPeriod: {
-                    Empty: {},
-                },
-                partySignatures: {
-                    signatures: [
-                        {
-                            party: partyId,
-                            signatures: [
-                                {
-                                    signature,
-                                    signedBy,
-                                    format: 'SIGNATURE_FORMAT_CONCAT',
-                                    signingAlgorithmSpec:
-                                        'SIGNING_ALGORITHM_SPEC_ED25519',
-                                },
-                            ],
-                        },
-                    ],
-                },
-            } as Types['JsExecuteSubmissionAndWaitRequest']
+                wallet,
+                transaction.externalTxId
+            )
+
+            if (signingResult.status !== 'signed' || !signingResult.signature) {
+                throw new Error(
+                    `Status either not signed or no signature available`
+                )
+            }
+
+            rawSignature = signingResult.signature
+        } else if (wallet.signingProviderId === SigningProvider.WALLET_KERNEL) {
+            const driver =
+                this.signingDrivers[SigningProvider.WALLET_KERNEL]?.controller(
+                    userId
+                )
+
+            if (!driver) {
+                throw new Error(`Wallet kernel signing driver not available`)
+            }
+
+            const { signature } = await driver
+                .signTransaction({
+                    tx: transaction.preparedTransaction,
+                    txHash: transaction.preparedTransactionHash,
+                    keyIdentifier: { publicKey: wallet.publicKey },
+                })
+                .then(handleSigningError)
+
+            if (!signature) {
+                throw new Error(`Wallet kernel did not return a signature`)
+            }
+
+            rawSignature = signature
+        } else {
+            throw new Error('no signature available')
+        }
+
+        const signature = this.normalizeSignature(
+            wallet.signingProviderId,
+            rawSignature
         )
 
-        logDynamically(this.logger, 'Externally signed execution result', {
-            info: { transactionId: transaction.id },
-            debug: { result, transaction, executeParams, userId },
-        })
+        const signedBy = wallet.namespace
 
-        const executedTx: Transaction = {
-            id: transaction.id,
-            commandId,
-            status: 'executed',
-            preparedTransaction: transaction.preparedTransaction,
-            preparedTransactionHash: transaction.preparedTransactionHash,
-            payload: result,
-            origin: transaction.origin ?? null,
-            ...(transaction.createdAt && {
-                createdAt: transaction.createdAt,
-            }),
-            ...(transaction.signedAt && {
-                signedAt: transaction.signedAt,
-            }),
+        try {
+            const result = await ledgerClient.postWithRetry(
+                '/v2/interactive-submission/executeAndWait',
+                {
+                    userId,
+                    preparedTransaction: transaction.preparedTransaction,
+                    hashingSchemeVersion: this.hashingSchemeVersion,
+                    submissionId: commandId,
+                    deduplicationPeriod: {
+                        Empty: {},
+                    },
+                    partySignatures: {
+                        signatures: [
+                            {
+                                party: partyId,
+                                signatures: [
+                                    {
+                                        signature,
+                                        signedBy,
+                                        format: 'SIGNATURE_FORMAT_CONCAT',
+                                        signingAlgorithmSpec:
+                                            'SIGNING_ALGORITHM_SPEC_ED25519',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                } as Types['JsExecuteSubmissionAndWaitRequest']
+            )
+
+            logDynamically(this.logger, 'Externally signed execution result', {
+                info: { transactionId: transaction.id },
+                debug: { result, transaction, executeParams, userId },
+            })
+
+            const executedTx: Transaction = {
+                id: transaction.id,
+                commandId,
+                status: 'executed',
+                preparedTransaction: transaction.preparedTransaction,
+                preparedTransactionHash: transaction.preparedTransactionHash,
+                payload: result,
+                origin: transaction.origin ?? null,
+                ...(transaction.createdAt && {
+                    createdAt: transaction.createdAt,
+                }),
+                ...(transaction.signedAt && {
+                    signedAt: transaction.signedAt,
+                }),
+            }
+            await this.store.setTransactionStatus(transaction.id, 'executed', {
+                payload: result,
+            })
+            this.notifier.emit('txChanged', executedTx)
+
+            return result
+        } catch (err) {
+            const failureReason = this.extractLedgerError(err)
+            this.logger.error(
+                { err: err, transactionId: transaction.id },
+                `Ledger rejected the submission`
+            )
+
+            await this.store.setTransactionStatus(transaction.id, 'failed', {
+                failureReason: failureReason,
+            })
+
+            this.notifier.emit(`txChanged`, {
+                ...transaction,
+                status: 'failed',
+            })
+
+            throw new Error(`Ledger rejected submission ${failureReason}`, {
+                cause: err,
+            })
         }
-        await this.store.setTransactionStatus(transaction.id, 'executed', {
-            payload: result,
-        })
-        this.notifier.emit('txChanged', executedTx)
+    }
 
-        return result
+    private extractLedgerError(error: unknown): string {
+        if (error instanceof Error) {
+            return error.message
+        }
+
+        if (typeof error === 'object' && error !== null) {
+            return JSON.stringify(error)
+        }
+
+        return String(error)
     }
 }

@@ -22,16 +22,19 @@ const {
     handleErrorToast,
     setLocationHref,
     parsePreparedTransaction,
+    detectCurrentOrigin,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     showToast: vi.fn(),
     handleErrorToast: vi.fn(),
     setLocationHref: vi.fn(),
     parsePreparedTransaction: vi.fn(() => ({ summary: 'parsed' })),
+    detectCurrentOrigin: vi.fn().mockResolvedValue('http://localhost'),
 }))
 
 vi.mock('../index.js', () => ({}))
 vi.mock('../navigation.js', () => ({ setLocationHref }))
+vi.mock('../listeners.js', () => ({ detectCurrentOrigin }))
 vi.mock('../rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -106,6 +109,7 @@ describe('UserUiApprove', () => {
         showToast.mockReset()
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
+        detectCurrentOrigin.mockClear()
         parsePreparedTransaction.mockClear()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         vi.stubGlobal(
@@ -116,7 +120,6 @@ describe('UserUiApprove', () => {
     })
 
     afterEach(() => {
-        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
         vi.useRealTimers()
@@ -280,44 +283,67 @@ describe('UserUiApprove', () => {
         })
     })
 
-    it('shows info toast when sign returns pending', async () => {
-        mockApproveState()
+    it('starts polling when sign returns pending', async () => {
+        // vi.useFakeTimers()
+        let txStatus = 'pending'
+
+        // mockApproveState()
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'getTransaction') {
-                return makeTransaction()
+                return makeTransaction({
+                    status: txStatus,
+                    ...(txStatus !== 'pending' && { externalTxId: 'ext-1' }),
+                })
             }
             if (method === 'listWallets') {
                 return [
                     makeWallet({
                         primary: true,
                         rights: [PartyLevelRight.CanActAs],
+                        partyId: 'alice::1220abc',
                     }),
                 ]
             }
             if (method === 'sign') {
+                txStatus = 'awaiting-signature'
                 return {
-                    status: 'pending',
+                    status: txStatus,
                     partyId: 'alice::1220abc',
                     externalTxId: 'ext-1',
                 }
             }
+            if (method === 'getTransactionStatus') {
+                return { status: 'awaiting-signature', externalTxId: 'ext-1' }
+            }
             return undefined
         })
-        el = await fixture<ApproveUi>(componentFixture)
+
+        const element = document.createElement('user-ui-approve') as ApproveUi
+        element.pollIntervalMs = 10
+        document.body.appendChild(element)
+        el = element
+
         await waitUntil(() => el.commandId === 'cmd-1')
 
         el.shadowRoot
             ?.querySelector('wg-transaction-detail')
             ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
 
-        await waitUntil(() => showToast.mock.calls.some((c) => c[2] === 'info'))
+        await waitUntil(() => el.status === 'awaiting-signature')
 
-        expect(showToast).toHaveBeenCalledWith(
-            'Activity pending',
-            expect.stringContaining('external provider'),
-            'info'
+        await waitUntil(
+            () =>
+                mockRequest.mock.calls.some(
+                    (c) => c[0]?.method === 'getTransactionStatus'
+                ),
+            'poll fired'
         )
-        expect(setLocationHref).not.toHaveBeenCalled()
+        expect(mockRequest).toHaveBeenCalledWith(
+            expect.objectContaining({
+                method: 'getTransactionStatus',
+                params: expect.objectContaining({ partyId: 'alice::1220abc' }),
+            })
+        )
     })
 
     it('does not delete when reject confirmation is cancelled', async () => {
@@ -338,5 +364,150 @@ describe('UserUiApprove', () => {
         expect(mockRequest).not.toHaveBeenCalledWith(
             expect.objectContaining({ method: 'deleteTransaction' })
         )
+    })
+
+    describe('failure reasons and error handling', () => {
+        it('renders an alert warning when a failure reason exists', async () => {
+            const txWithFailure = makeTransaction({
+                failureReason: 'Insufficient funds or ledger rejection',
+            })
+            mockApproveState(txWithFailure)
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.commandId === 'cmd-1')
+
+            const warnings = el.shadowRoot?.querySelectorAll('.alert-warning')
+            const hasFailureText = Array.from(warnings || []).some((node) =>
+                node.textContent?.includes('Insufficient funds')
+            )
+            expect(hasFailureText).toBe(true)
+        })
+
+        it('refreshes state after a failed execute', async () => {
+            let txStatus = 'signed'
+
+            mockRequest.mockImplementation(async ({ method }) => {
+                if (method === 'getTransaction') {
+                    return makeTransaction({
+                        status: txStatus,
+                        ...(txStatus === 'failed' && {
+                            failureReason: 'Ledger rejected submission',
+                        }),
+                    })
+                }
+
+                if (method === 'listWallets') {
+                    return [
+                        makeWallet({
+                            primary: true,
+                            partyId: 'alice::abc',
+                            rights: [PartyLevelRight.CanActAs],
+                        }),
+                    ]
+                }
+
+                if (method === 'execute') {
+                    txStatus = 'failed'
+                    throw new Error('Ledger rejected submission')
+                }
+
+                return undefined
+            })
+
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.commandId === 'cmd-1')
+            expect(el.status).toBe('signed')
+
+            el.shadowRoot
+                ?.querySelector('wg-transaction-detail')
+                ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
+
+            await waitUntil(
+                () => el.status === 'failed',
+                'state refreshed after failure'
+            )
+
+            expect(handleErrorToast).toHaveBeenCalled()
+            expect(el.failureReason).toContain('Ledger rejected')
+            expect(setLocationHref).not.toHaveBeenCalled()
+
+            expect(mockRequest).not.toHaveBeenCalledWith(
+                expect.objectContaining({ method: 'sign' })
+            )
+        })
+    })
+
+    describe('visibility change polling synchronization', () => {
+        let hidden = false
+        beforeEach(() => {
+            hidden = false
+            Object.defineProperty(document, 'hidden', {
+                configurable: true,
+                get: () => hidden,
+            })
+        })
+
+        afterEach(
+            () => delete (document as unknown as { hidden?: boolean }).hidden
+        )
+
+        it('pauses polling while doc is hidden and resumes when visible', async () => {
+            mockRequest.mockImplementation(async ({ method }) => {
+                if (method === 'getTransaction') {
+                    return makeTransaction({
+                        status: 'awaiting-signature',
+                        externalTxId: 'ext-1',
+                    })
+                }
+
+                if (method === 'listWallets') {
+                    return [
+                        makeWallet({
+                            primary: true,
+                            partyId: 'alice::abc',
+                            rights: [PartyLevelRight.CanActAs],
+                        }),
+                    ]
+                }
+
+                if (method === 'getTransactionStatus') {
+                    return {
+                        status: 'awaiting-signature',
+                        externalTxId: 'ext-1',
+                    }
+                }
+
+                return undefined
+            })
+
+            const element = document.createElement(
+                'user-ui-approve'
+            ) as ApproveUi
+            element.pollIntervalMs = 10
+            document.body.appendChild(element)
+            el = element
+
+            await waitUntil(() => el.commandId === 'cmd-1')
+
+            const pollCount = () =>
+                mockRequest.mock.calls.filter(
+                    (c) => c[0]?.method === 'getTransactionStatus'
+                ).length
+
+            await waitUntil(() => pollCount() > 0, 'poll started')
+
+            hidden = true
+            document.dispatchEvent(new Event('visibilitychange'))
+
+            await new Promise((r) => setTimeout(r, 30))
+            const whileHidden = pollCount()
+
+            await new Promise((r) => setTimeout(r, 60))
+            expect(pollCount()).toBe(whileHidden)
+
+            hidden = false
+            document.dispatchEvent(new Event('visibilitychange'))
+
+            await waitUntil(() => pollCount() > whileHidden, 'poll resumed')
+        })
     })
 })
