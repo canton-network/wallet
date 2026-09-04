@@ -46,6 +46,7 @@ export class ApproveUi extends BaseElement {
     @state() accessor externalTxId: string | null = null
     @state() accessor failureReason: string | null = null
     @state() accessor isSigning = false
+    @state() accessor pollIntervalMs = 3000
     private pollTimer: ReturnType<typeof setTimeout> | null = null
     private pollDelay = 3000
     private polling = false
@@ -54,6 +55,7 @@ export class ApproveUi extends BaseElement {
         super.connectedCallback()
         const url = new URL(window.location.href)
         this.transactionId = url.searchParams.get('transactionId') || ''
+        this.pollDelay = this.pollIntervalMs
         document.addEventListener('visibilitychange', this.onVisibilityChange)
         void this.updateState()
     }
@@ -134,7 +136,7 @@ export class ApproveUi extends BaseElement {
         if (document.hidden) {
             this.stopPolling()
         } else {
-            this.pollDelay = 3000
+            this.pollDelay = this.pollIntervalMs
             this.syncPolling()
         }
     }
@@ -178,15 +180,21 @@ export class ApproveUi extends BaseElement {
             })
 
             if (res.status !== this.status) {
-                this.pollDelay = 3000
+                this.pollDelay = this.pollIntervalMs
                 await this.updateState()
                 return
             }
 
-            this.pollDelay = Math.min(this.pollDelay * 1.5, 15000)
+            this.pollDelay = Math.min(
+                this.pollDelay * 1.5,
+                this.pollIntervalMs * 5
+            )
         } catch (err) {
             console.error(err)
-            this.pollDelay = Math.min(this.pollDelay * 2, 15000)
+            this.pollDelay = Math.min(
+                this.pollDelay * 2,
+                this.pollIntervalMs * 10
+            )
         } finally {
             this.polling = false
             this.syncPolling()
