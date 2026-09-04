@@ -112,6 +112,15 @@ export const waitForWalletPickerRetrySelection =
         return await awaitWalletPickerSelection(win)
     }
 
+export type PickWalletOptions = {
+    /**
+     * Extra CSS applied to the wallet picker popup, e.g. to override the
+     * `--wg-theme-*` custom properties for a custom theme. See
+     * PopupOptions.stylesheet for details.
+     */
+    stylesheet?: string
+}
+
 /**
  * Opens a wallet picker popup and resolves with the user's selection.
  *
@@ -119,7 +128,8 @@ export const waitForWalletPickerRetrySelection =
  * communicated back via postMessage.
  */
 export async function pickWallet(
-    entries: WalletPickerEntry[]
+    entries: WalletPickerEntry[],
+    options?: PickWalletOptions
 ): Promise<WalletPickerResult> {
     localStorage.setItem(
         'splice_wallet_picker_entries',
@@ -128,6 +138,9 @@ export async function pickWallet(
 
     const win = popup.open(WalletPicker, {
         title: 'Connect a wallet',
+        ...(options?.stylesheet !== undefined
+            ? { stylesheet: options.stylesheet }
+            : {}),
     })
     activeWalletPickerWindow = win
 
