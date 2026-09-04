@@ -175,8 +175,8 @@ export async function setupMultiSyncTrade(
                 await TestToken.utils.vetDar(sdk, sid)
                 await OTCTrade.utils.vetDar(sdk, sid)
             })
-        )
-    )
+        ),
+    ])
     logger.info(
         'DARs vetted: app-user + app-provider participant nodes have TestTokenV1 + trading-app on both synchronizers (sv not vetted — not a stakeholder in either trade leg)'
     )

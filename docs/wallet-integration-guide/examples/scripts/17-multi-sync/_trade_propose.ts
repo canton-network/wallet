@@ -5,15 +5,11 @@ import type { Logger } from 'pino'
 import type { SDKInterface } from '@canton-network/wallet-sdk'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
-import { pollUntil } from './_poll.js'
 import { OTCTrade } from '@canton-network/core-splice-codegen'
 import { TransferLeg } from '@canton-network/core-token-standard'
 
 const MS_30_MIN = 30 * 60 * 1000
 const MS_1_HOUR = 60 * 60 * 1000
-
-const PROPOSAL_POLL_TIMEOUT_MS = 30_000
-const PROPOSAL_POLL_INTERVAL_MS = 500
 
 export async function createAndInitiateOtcTrade(
     setup: MultiSyncSetup,
@@ -32,37 +28,30 @@ export async function createAndInitiateOtcTrade(
 
     // The proposal is created on Alice's participant but read from other
     // participants (Bob, TradingApp)
-    const readProposalCid = (
+    const readProposalCid = async (
         sdk: SDKInterface<'token'>,
         party: string,
         predicate: (approvers: string[]) => boolean = () => true
-    ): Promise<string> =>
-        pollUntil(
-            async () => {
-                const proposals =
-                    await sdk.ledger.acsReader.raw.readJsContracts({
-                        templateIds: [
-                            OTCTrade.DAR.TradingApp.OTCTradeProposal.templateId,
-                        ],
-                        parties: [party],
-                        filterByParty: true,
-                    })
-                return proposals.find((proposal) =>
-                    predicate(
-                        ((
-                            proposal as unknown as {
-                                createArgument?: { approvers?: string[] }
-                            }
-                        ).createArgument?.approvers ?? []) as string[]
-                    )
-                )?.contractId
-            },
-            {
-                timeoutMs: PROPOSAL_POLL_TIMEOUT_MS,
-                intervalMs: PROPOSAL_POLL_INTERVAL_MS,
-                timeoutMessage: `OTCTradeProposal not visible to ${party} within ${PROPOSAL_POLL_TIMEOUT_MS}ms`,
-            }
-        )
+    ): Promise<string> => {
+        const proposals = await sdk.ledger.acsReader.raw.readJsContracts({
+            templateIds: [OTCTrade.DAR.TradingApp.OTCTradeProposal.templateId],
+            parties: [party],
+            filterByParty: true,
+        })
+        const result = proposals.find((proposal) =>
+            predicate(
+                ((
+                    proposal as unknown as {
+                        createArgument?: { approvers?: string[] }
+                    }
+                ).createArgument?.approvers ?? []) as string[]
+            )
+        )?.contractId
+
+        if (!result) throw new Error('Failed to find proposal cid')
+
+        return result
+    }
 
     await aliceSdk.ledger
         .prepare({

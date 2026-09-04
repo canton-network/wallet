@@ -1,6 +1,6 @@
 # Example 17: Multi-Synchronizer DvP Trade
 
-This example implements a Delivery vs Payment (DvP) flow across two synchronizers: Amulet on the global synchronizer and a Token instrument on a private app-synchronizer, settled via the OTC Trading App using only single-party submissions.
+This example implements a Delivery vs Payment (DvP) flow across two synchronizers: Amulet on the global synchronizer and a Token instrument on a dedicated app-synchronizer, settled via the OTC Trading App using only single-party submissions.
 
 ## Running Locally
 
@@ -8,33 +8,34 @@ All commands are run from the **repository root** unless noted otherwise.
 
 ```bash
 # Step 0: Build all components
-yarn install
+pnpm install
 
-yarn build:all
+pnpm build:all
 
 # Step 1: Fetch localnet bundle (first time or after a Splice version update)
-yarn script:fetch:localnet
+pnpm script:fetch:localnet
 
 # Step 2: Start localnet (multi-sync is the default; pass --no-multi-sync for single-synchronizer debug mode)
-yarn start:localnet
+pnpm start:localnet
 
 # Step 3: Run the example
-yarn workspace docs-wallet-integration-guide-examples run-17
+pnpm workspace docs-wallet-integration-guide-examples run-17
 
 # Step 4: Stop when done (from the repository root)
-yarn stop:localnet
+pnpm stop:localnet
 ```
 
 ## Example details
 
-The goal here is to show an exchange operation with a custom token (`TestToken`) that supports running workflows on both a private synchronizer and the global synchronizer.
-A private synchronizer helps avoid some of the traffic costs of using the global synchronizer, but still enables parties to do transactions on the global network,
+The goal here is to show an exchange operation with a custom token (`TestToken`) that supports running workflows on both a dedicated synchronizer and the global synchronizer.
+A dedicated synchronizer helps avoid some of the traffic costs of using the global synchronizer, but still enables parties to do transactions on the global network,
 provided that at some point the contracts are re-assigned (automatically or explicitly) to the global synchronizer.
 
 The parties in the example are:
 
 - **Alice** - hosted on the **app-user** participant. Holds Amulet, buys `TestToken`.
 - **Bob** - hosted on the **app-provider** participant. Holds `TestToken`, buys Amulet.
+- **Charlie** - hosted on the **app-user** participant. Receives `TestToken` from Alice after settlement.
 - **TokenAdmin** - issuer / admin of `TestToken`, also hosted on the **app-provider** participant.
 - **TradingApp** - the OTC settlement venue (DvP), hosted on the **app-user** participant (which is connected to both synchronizers).
 
@@ -49,6 +50,8 @@ the **app-user** participant — which is connected to both synchronizers — se
 the **global** synchronizer and Canton **automatically reassigns** the app-synchronizer
 allocation to global as part of the atomic settlement. `TradingApp` is a stakeholder
 (observer) of the allocation, which is what authorizes that reassignment.
+
+After settlement, Alice moves the received `TestToken` holding from the global synchronizer back to the app-synchronizer and transfers it to **Charlie** there. This final step shows that a settled holding can be re-used across synchronizers and still be settled with registry-based single-party transfers.
 
 The whole flow uses **single-party submissions only** (no multi-party signing) and is settled atomically by the TradingApp.
 
@@ -70,10 +73,11 @@ GLOBAL synchronizer  —  Amulet*  ·  leg-0:  Alice --100 CC-->  Bob
    │ app-user     │        │ app-provider │        │ sv           │
    │ participant  │        │ participant  │        │ participant  │
    │ Alice        │        │ Bob          │        │ (no example  │
-   │ TradingApp   │        │ TokenAdmin   │        │  parties)    │
+   │ Charlie      │        │ TokenAdmin   │        │  parties)    │
+   │ TradingApp   │        │              │        │              │
    └──────┬───────┘        └──────┬───────┘        └──────────────┘
           │                       │
-          │ vetted on PRIVATE:  TestTokenV1, — app-user & app-provider only (sv not connected)
+          │ vetted on DEDICATED:  TestTokenV1, — app-user & app-provider only (sv not connected)
           │                       │
 ══════════╧═══════════════════════╧═════════════════════════════════════════
 APP synchronizer  —  TestToken  ·  leg-1:  Bob --20 TT-->  Alice
@@ -81,11 +85,11 @@ APP synchronizer  —  TestToken  ·  leg-1:  Bob --20 TT-->  Alice
 
 Vetting matrix (which DAR is vetted where):
 
-| Participant (hosts)                | global synchronizer                  | app synchronizer         |
-| ---------------------------------- | ------------------------------------ | ------------------------ |
-| **app-user** (Alice, TradingApp)   | TestTokenV1, trading-app, (Amulet\*) | TestTokenV1, trading-app |
-| **app-provider** (Bob, TokenAdmin) | TestTokenV1, trading-app, (Amulet\*) | TestTokenV1, trading-app |
-| **sv** (no example parties)        | TestTokenV1, trading-app, (Amulet\*) | — _(not connected)_      |
+| Participant (hosts)                       | global synchronizer                  | app synchronizer         |
+| ----------------------------------------- | ------------------------------------ | ------------------------ |
+| **app-user** (Alice, Charlie, TradingApp) | TestTokenV1, trading-app, (Amulet\*) | TestTokenV1, trading-app |
+| **app-provider** (Bob, TokenAdmin)        | TestTokenV1, trading-app, (Amulet\*) | TestTokenV1, trading-app |
+| **sv** (no example parties)               | TestTokenV1, trading-app, (Amulet\*) | — _(not connected)_      |
 
 DARs referenced above:
 

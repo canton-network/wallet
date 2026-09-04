@@ -2,15 +2,15 @@ import { JSContractEntry } from '@canton-network/core-ledger-client'
 import {
     TokenProviderConfig,
     localNetStaticConfig,
-} from '@canton-network/wallet-sdk'
-import {
     TokenConfig,
     AmuletConfig,
     AssetConfig,
 } from '@canton-network/wallet-sdk'
 
-export { logAllContracts } from './acs-logger.js'
-export type { ContractReadSpec as ContractSpec } from './acs-logger.js'
+export {
+    logAllContracts,
+    type ContractReadSpec as ContractSpec,
+} from './acs-logger.js'
 export function getActiveContractCid(entry: JSContractEntry) {
     if ('JsActiveContract' in entry) {
         return entry.JsActiveContract.createdEvent.contractId
