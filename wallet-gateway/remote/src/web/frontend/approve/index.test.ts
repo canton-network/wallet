@@ -381,6 +381,59 @@ describe('UserUiApprove', () => {
             )
             expect(hasFailureText).toBe(true)
         })
+
+        it('refreshes state after a failed execute', async () => {
+            let txStatus = 'signed'
+
+            mockRequest.mockImplementation(async ({ method }) => {
+                if (method === 'getTransaction') {
+                    return makeTransaction({
+                        status: txStatus,
+                        ...(txStatus === 'failed' && {
+                            failureReason: 'Ledger rejected submission',
+                        }),
+                    })
+                }
+
+                if (method === 'listWallets') {
+                    return [
+                        makeWallet({
+                            primary: true,
+                            partyId: 'alice::abc',
+                            rights: [PartyLevelRight.CanActAs],
+                        }),
+                    ]
+                }
+
+                if (method === 'execute') {
+                    txStatus = 'failed'
+                    throw new Error('Ledger rejected submission')
+                }
+
+                return undefined
+            })
+
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.commandId === 'cmd-1')
+            expect(el.status).toBe('signed')
+
+            el.shadowRoot
+                ?.querySelector('wg-transaction-detail')
+                ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
+
+            await waitUntil(
+                () => el.status === 'failed',
+                'state refreshed after failure'
+            )
+
+            expect(handleErrorToast).toHaveBeenCalled()
+            expect(el.failureReason).toContain('Ledger rejected')
+            expect(setLocationHref).not.toHaveBeenCalled()
+
+            expect(mockRequest).not.toHaveBeenCalledWith(
+                expect.objectContaining({ method: 'sign' })
+            )
+        })
     })
 
     describe('visibility change polling synchronization', () => {
