@@ -714,6 +714,48 @@ describe('TransactionService', () => {
                 expect(result).toEqual({ status: 'executed' })
                 expect(emit).not.toHaveBeenCalled()
             })
+
+            it('records failed with a failureReason when ledger rejects an external submission', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    signature: 'sig',
+                })
+
+                const postWithRetry = vi
+                    .fn()
+                    .mockRejectedValue(
+                        new Error('INVALID_ARGUMENT: bad signature')
+                    )
+                const store = createStore(signedWithExternal)
+
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.BITGO]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                await expect(
+                    service.execute(
+                        authContext.userId,
+                        walletWithProvider(SigningProvider.BITGO),
+                        signedWithExternal,
+                        executeParams,
+                        { postWithRetry } as unknown as LedgerClient,
+                        network
+                    )
+                ).rejects.toThrow(/INVALID_ARGUMENT/)
+
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    'failed',
+                    { failureReason: 'INVALID_ARGUMENT: bad signature' }
+                )
+            })
         })
 
         it.each([
