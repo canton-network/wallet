@@ -22,16 +22,19 @@ const {
     handleErrorToast,
     setLocationHref,
     parsePreparedTransaction,
+    detectCurrentOrigin,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     showToast: vi.fn(),
     handleErrorToast: vi.fn(),
     setLocationHref: vi.fn(),
     parsePreparedTransaction: vi.fn(() => ({ summary: 'parsed' })),
+    detectCurrentOrigin: vi.fn().mockResolvedValue('http://localhost'),
 }))
 
 vi.mock('../index.js', () => ({}))
 vi.mock('../navigation.js', () => ({ setLocationHref }))
+vi.mock('../listeners.js', () => ({ detectCurrentOrigin }))
 vi.mock('../rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -106,6 +109,7 @@ describe('UserUiApprove', () => {
         showToast.mockReset()
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
+        detectCurrentOrigin.mockClear()
         parsePreparedTransaction.mockClear()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         vi.stubGlobal(
@@ -116,7 +120,6 @@ describe('UserUiApprove', () => {
     })
 
     afterEach(() => {
-        // make sure toast is gone from DOM
         document.body.innerHTML = ''
         vi.unstubAllGlobals()
         vi.useRealTimers()
@@ -280,11 +283,11 @@ describe('UserUiApprove', () => {
         })
     })
 
-    it('shows info toast when sign returns pending', async () => {
+    it('updates state properly when sign returns pending status', async () => {
         mockApproveState()
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'getTransaction') {
-                return makeTransaction()
+                return makeTransaction({ status: 'awaiting-signature' })
             }
             if (method === 'listWallets') {
                 return [
@@ -310,12 +313,8 @@ describe('UserUiApprove', () => {
             ?.querySelector('wg-transaction-detail')
             ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
 
-        await waitUntil(() => showToast.mock.calls.some((c) => c[2] === 'info'))
-
-        expect(showToast).toHaveBeenCalledWith(
-            'Activity pending',
-            expect.stringContaining('external provider'),
-            'info'
+        await waitUntil(() =>
+            mockRequest.mock.calls.some((c) => c[0]?.method === 'sign')
         )
         expect(setLocationHref).not.toHaveBeenCalled()
     })
@@ -338,5 +337,45 @@ describe('UserUiApprove', () => {
         expect(mockRequest).not.toHaveBeenCalledWith(
             expect.objectContaining({ method: 'deleteTransaction' })
         )
+    })
+
+    describe('failure reasons and error handling', () => {
+        it('renders an alert warning when a failure reason exists', async () => {
+            const txWithFailure = makeTransaction({
+                failureReason: 'Insufficient funds or ledger rejection',
+            })
+            mockApproveState(txWithFailure)
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.commandId === 'cmd-1')
+
+            const warnings = el.shadowRoot?.querySelectorAll('.alert-warning')
+            const hasFailureText = Array.from(warnings || []).some((node) =>
+                node.textContent?.includes('Insufficient funds')
+            )
+            expect(hasFailureText).toBe(true)
+        })
+    })
+
+    describe('visibility change polling synchronization', () => {
+        it('stops or syncs polling appropriately when document visibility changes', async () => {
+            const txPending = makeTransaction({ status: 'awaiting-signature' })
+            mockApproveState(txPending)
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.commandId === 'cmd-1')
+
+            Object.defineProperty(document, 'hidden', {
+                configurable: true,
+                get: () => true,
+            })
+            document.dispatchEvent(new Event('visibilitychange'))
+
+            Object.defineProperty(document, 'hidden', {
+                configurable: true,
+                get: () => false,
+            })
+            document.dispatchEvent(new Event('visibilitychange'))
+
+            expect(el.transactionId).toBe('tx-1')
+        })
     })
 })
