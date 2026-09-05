@@ -234,7 +234,7 @@ describe('manager', () => {
                 origin: exampleOrigin,
             } as unknown as Window
             const childWindowOriginManagerWithParentWindow =
-                new ChildWindowOriginManager(parentWindow)
+                new ChildWindowOriginManager({ parentWindow })
 
             window.dispatchEvent(
                 new MessageEvent('message', {
