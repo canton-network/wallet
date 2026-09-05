@@ -51,15 +51,37 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
             }
 
             if (idp.type == 'self_signed') {
-                const sub = decoded.sub
-                if (!sub) {
+                const network = (await store.listNetworks()).find(
+                    (n) => n.identityProviderId === idp.id
+                )
+                const clientSecret =
+                    network?.auth.method === 'self_signed'
+                        ? network.auth.clientSecret
+                        : undefined
+                if (!clientSecret) {
+                    logger.warn(
+                        `No client secret configured for self-signed IDP: ${idp.id}`
+                    )
+                    return undefined
+                }
+
+                const { payload } = await jwtVerify(
+                    jwt,
+                    new TextEncoder().encode(clientSecret),
+                    {
+                        algorithms: ['HS256'],
+                        issuer: idp.issuer,
+                    }
+                )
+
+                if (!payload.sub) {
                     logger.warn('JWT does not contain a subject')
                     return undefined
                 }
 
-                const email = getEmail(decoded.email)
+                const email = getEmail(payload.email)
                 return {
-                    userId: sub,
+                    userId: payload.sub,
                     accessToken: jwt,
                     ...(email ? { email } : {}),
                 }
