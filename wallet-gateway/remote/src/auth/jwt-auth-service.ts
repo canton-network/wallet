@@ -1,10 +1,112 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthService, resolveUserEmail } from '@canton-network/core-wallet-auth'
-import { Store } from '@canton-network/core-wallet-store'
-import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
+import {
+    AuthContext,
+    AuthService,
+    Idp,
+    SelfSignedAuth,
+    resolveUserEmail,
+} from '@canton-network/core-wallet-auth'
+import { Network, Store } from '@canton-network/core-wallet-store'
+import { createRemoteJWKSet, decodeJwt, jwtVerify, JWTPayload } from 'jose'
 import { Logger } from 'pino'
+
+function getEmail(value: unknown): string | undefined {
+    if (typeof value !== 'string' || value.length === 0) {
+        return undefined
+    }
+
+    return value
+}
+
+function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
+    if (typeof value === 'string') {
+        return [value]
+    }
+
+    if (Array.isArray(value)) {
+        return value
+    }
+
+    return []
+}
+
+function isSelfSignedNetwork(
+    network: Network
+): network is Network & { auth: SelfSignedAuth } {
+    return network.auth.method === 'self_signed'
+}
+
+async function verifySelfSignedToken(
+    jwt: string,
+    decoded: JWTPayload,
+    idp: Extract<Idp, { type: 'self_signed' }>,
+    store: Store,
+    logger: Logger
+): Promise<AuthContext | undefined> {
+    const tokenAudiences = normalizeAudienceClaim(decoded.aud)
+    if (tokenAudiences.length === 0) {
+        logger.warn('JWT does not contain an audience claim')
+        return undefined
+    }
+
+    const networks = await store.listNetworks()
+    const candidates = networks.filter(
+        (network): network is Network & { auth: SelfSignedAuth } =>
+            isSelfSignedNetwork(network) &&
+            network.identityProviderId === idp.id &&
+            tokenAudiences.includes(network.auth.audience)
+    )
+
+    if (candidates.length === 0) {
+        logger.warn(
+            {
+                tokenAudiences,
+                idpId: idp.id,
+            },
+            'No self-signed networks match the JWT audience'
+        )
+        return undefined
+    }
+
+    for (const network of candidates) {
+        try {
+            const { payload } = await jwtVerify(
+                jwt,
+                new TextEncoder().encode(network.auth.clientSecret),
+                {
+                    algorithms: ['HS256'],
+                    issuer: idp.issuer,
+                    audience: network.auth.audience,
+                }
+            )
+
+            if (!payload.sub) {
+                logger.warn('JWT does not contain a subject')
+                return undefined
+            }
+
+            const email = getEmail(payload.email)
+            return {
+                userId: payload.sub,
+                accessToken: jwt,
+                ...(email ? { email } : {}),
+            }
+        } catch {
+            // Token may belong to another candidate that shares this audience.
+        }
+    }
+
+    logger.warn(
+        {
+            tokenAudiences,
+            candidateNetworkIds: candidates.map((network) => network.id),
+        },
+        'Failed to verify self-signed JWT against any matching network secret'
+    )
+    return undefined
+}
 
 /**
  * Creates an AuthService that verifies JWT tokens using a remote JWK set.
@@ -14,14 +116,6 @@ import { Logger } from 'pino'
  */
 export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
     verifyToken: async (accessToken?: string) => {
-        const getEmail = (value: unknown): string | undefined => {
-            if (typeof value !== 'string' || value.length === 0) {
-                return undefined
-            }
-
-            return value
-        }
-
         if (!accessToken || !accessToken.startsWith('Bearer ')) {
             return undefined
         }
@@ -51,18 +145,7 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
             }
 
             if (idp.type == 'self_signed') {
-                const sub = decoded.sub
-                if (!sub) {
-                    logger.warn('JWT does not contain a subject')
-                    return undefined
-                }
-
-                const email = getEmail(decoded.email)
-                return {
-                    userId: sub,
-                    accessToken: jwt,
-                    ...(email ? { email } : {}),
-                }
+                return verifySelfSignedToken(jwt, decoded, idp, store, logger)
             }
             logger.debug({ idp }, 'Using IDP')
             const response = await fetch(idp.configUrl)
