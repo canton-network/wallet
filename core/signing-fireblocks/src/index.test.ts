@@ -35,7 +35,7 @@ const TEST_KEY: Key = {
 const FAKE_TRANSACTION: FireblocksTransaction = {
     txId: TEST_TRANSACTION_HASH,
     status: 'signed',
-    signature: 'test-signature',
+    signature: 'deadbeef',
     publicKey: TEST_FIREBLOCKS_PUBLIC_KEY,
     derivationPath: TEST_FIREBLOCKS_DERIVATION_PATH,
 }
@@ -85,7 +85,7 @@ function mockHandlerDefaults() {
     fireblocksHandlerMock.signTransaction.mockResolvedValue({
         txId: TEST_TRANSACTION_HASH,
         status: 'signed',
-        signature: 'test-signature',
+        signature: 'deadbeef',
         publicKey: TEST_FIREBLOCKS_PUBLIC_KEY,
     })
 }
@@ -225,11 +225,14 @@ describe('FireblocksSigningDriver', () => {
         })
         throwWhenRpcError(result)
 
+        // the fireblocks driver should return the signature + publicKey in base64 format
         expect(result).toEqual({
             txId: TEST_TRANSACTION_HASH,
             status: 'signed',
-            signature: 'test-signature',
-            publicKey: TEST_FIREBLOCKS_PUBLIC_KEY,
+            signature: Buffer.from('deadbeef', 'hex').toString('base64'),
+            publicKey: Buffer.from(TEST_FIREBLOCKS_PUBLIC_KEY, 'hex').toString(
+                'base64'
+            ),
         })
     })
 

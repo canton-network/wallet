@@ -68,6 +68,18 @@ const createFireblocksHandler = (
     )
 }
 
+function toBase64(hexString: string): string
+function toBase64(hexString?: string | undefined): string | undefined
+function toBase64(hexString?: string | undefined): string | undefined {
+    return hexString && Buffer.from(hexString, 'hex').toString('base64')
+}
+
+function toHex(base64String: string): string
+function toHex(base64String?: string | undefined): string | undefined
+function toHex(base64String?: string | undefined): string | undefined {
+    return base64String && Buffer.from(base64String, 'base64').toString('hex')
+}
+
 export default class FireblocksSigningDriver implements SigningDriverInterface {
     private fireblocks: FireblocksHandler
     private config: FireblocksConfig
@@ -88,15 +100,16 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 try {
                     const tx = await this.fireblocks.signTransaction(
                         userId,
-                        params.txHash,
+                        toHex(params.txHash),
                         params.keyIdentifier,
                         params.internalTxId
                     )
+
                     return {
                         txId: tx.txId,
                         status: tx.status,
-                        signature: tx.signature,
-                        publicKey: tx.publicKey,
+                        signature: toBase64(tx.signature),
+                        publicKey: toBase64(tx.publicKey),
                     }
                 } catch (error) {
                     return {
@@ -127,8 +140,8 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     return {
                         txId: tx.txId,
                         status: tx.status,
-                        signature: tx.signature,
-                        publicKey: tx.publicKey,
+                        signature: toBase64(tx.signature),
+                        publicKey: toBase64(tx.publicKey),
                     } as GetTransactionResult
                 } else {
                     return {
@@ -156,8 +169,8 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                             transactions.push({
                                 txId: tx.txId,
                                 status: tx.status,
-                                signature: tx.signature,
-                                publicKey: tx.publicKey,
+                                signature: toBase64(tx.signature),
+                                publicKey: toBase64(tx.publicKey),
                             })
                         }
                         if (
@@ -188,7 +201,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         keys: keys.map((k) => ({
                             id: k.derivationPath.join('-'),
                             name: k.name,
-                            publicKey: k.publicKey,
+                            publicKey: toBase64(k.publicKey),
                         })),
                     }
                 } catch (error) {
