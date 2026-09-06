@@ -14,11 +14,11 @@ import {
     getNetworkArg,
     pruneVersionedFiles,
     SPLICE_SPEC_PATH,
-    success,
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
     warn,
+    success,
 } from './lib/utils.js'
 import * as fs from 'fs'
 import generateSchema, { astToString } from 'openapi-typescript'
@@ -253,13 +253,13 @@ async function main(network: Network = 'devnet') {
             SUPPORTED_VERSIONS[network].splice.version,
             SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
         ).map(generateOpenApiClient)
-    )
+    ).then(async () => {
+        pruneStaleLedgerClients()
 
-    pruneStaleLedgerClients()
-
-    console.log(
-        success('Generated fresh TypeScript clients for all OpenAPI specs')
-    )
+        console.log(
+            success('Generated fresh TypeScript clients for all OpenAPI specs')
+        )
+    })
 }
 
 main(getNetworkArg())

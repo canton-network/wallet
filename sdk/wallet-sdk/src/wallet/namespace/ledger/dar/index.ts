@@ -15,7 +15,7 @@ export class DarNamespace {
     ) {
         const isUploaded = await this.check(packageId)
 
-        if (isUploaded) {
+        if (isUploaded && !vetAllPackages) {
             this.sdkContext.logger.info(
                 { packageId },
                 'DAR already uploaded, skipping upload'
@@ -23,20 +23,36 @@ export class DarNamespace {
             return
         }
 
-        await this.sdkContext.ledgerProvider.request<Ops.PostV2Packages>({
-            method: 'ledgerApi',
-            params: {
-                resource: '/v2/packages',
-                requestMethod: 'post',
-                query: {
-                    synchronizerId:
-                        synchronizerId ?? this.sdkContext.defaultSynchronizerId,
-                    vetAllPackages: vetAllPackages ?? true,
+        try {
+            await this.sdkContext.ledgerProvider.request<Ops.PostV2Packages>({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/packages',
+                    requestMethod: 'post',
+                    query: {
+                        synchronizerId:
+                            synchronizerId ??
+                            this.sdkContext.defaultSynchronizerId,
+                        vetAllPackages: vetAllPackages ?? true,
+                    },
+                    body: darBytes as never,
+                    headers: { 'Content-Type': 'application/octet-stream' },
                 },
-                body: darBytes as never,
-                headers: { 'Content-Type': 'application/octet-stream' },
-            },
-        })
+            })
+        } catch (e) {
+            const code = (e as { code?: string })?.code
+            const message = `${(e as { cause?: unknown })?.cause ?? (e as Error)?.message ?? e}`
+            if (
+                code === 'KNOWN_PACKAGE_VERSION' ||
+                message.includes('same name and version')
+            ) {
+                this.sdkContext.logger.warn(
+                    'A package with the same name+version is already vetted; reusing the existing package.'
+                )
+                return
+            }
+            throw e
+        }
     }
 
     async check(packageId: string): Promise<boolean> {

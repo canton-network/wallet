@@ -23,6 +23,42 @@ export class LedgerNamespace {
         this.acsReader = new ACSReader(sdkContext.ledgerProvider)
     }
 
+    /**
+     * Returns connected synchronizers visible to the caller, optionally filtered
+     * by party, participant, or identity provider.
+     *
+     * Uses the Ledger API endpoint GET /v2/state/connected-synchronizers.
+     */
+    public async connectedSynchronizers(
+        options?: Ops.GetV2StateConnectedSynchronizers['ledgerApi']['params']['query']
+    ) {
+        this.sdkContext.logger.debug(
+            { options },
+            'Fetching connected synchronizers'
+        )
+
+        return this.sdkContext.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
+            {
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/state/connected-synchronizers',
+                    requestMethod: 'get',
+                    query: {
+                        ...(options?.party !== undefined && {
+                            party: options.party,
+                        }),
+                        ...(options?.participantId !== undefined && {
+                            participantId: options.participantId,
+                        }),
+                        ...(options?.identityProviderId !== undefined && {
+                            identityProviderId: options.identityProviderId,
+                        }),
+                    },
+                },
+            }
+        )
+    }
+
     public async ledgerEnd() {
         return (
             await this.sdkContext.ledgerProvider.request<Ops.GetV2StateLedgerEnd>(
@@ -212,5 +248,10 @@ export class LedgerNamespace {
                     }
                 })
         },
+        /**
+         * Queries the ACS and returns the first matching contract, throwing if none is found.
+         * @param options AcsOptions for querying the Active Contract Set (ACS).
+         * @throws {SDKError} When no matching contract is found.
+         */
     }
 }
