@@ -11,5 +11,6 @@ export default defineConfig([
     {
         files: ['**/*.{ts,tsx}'],
         extends: [config, reactConfig],
+        ignores: ['playwright.config.ts'],
     },
 ])
