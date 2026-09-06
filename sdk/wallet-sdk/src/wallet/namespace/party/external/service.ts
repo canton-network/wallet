@@ -10,6 +10,7 @@ import { CreatePartyOptions } from './types.js'
 import { SDKLogger } from '../../../logger/index.js'
 import { LedgerProvider, Ops } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { resolveSynchronizerId } from '../../../synchronizer.js'
 
 export class ExternalPartyNamespace {
     private readonly logger: SDKLogger
@@ -32,7 +33,11 @@ export class ExternalPartyNamespace {
             this.resolveParticipantUids(
                 options?.confirmingParticipantEndpoints ?? []
             ),
-            options?.synchronizerId || this.resolveSynchronizerId(),
+            resolveSynchronizerId(
+                this.ctx.ledgerProvider,
+                this.ctx.error,
+                options?.synchronizerId
+            ),
         ]).then(
             ([
                 observingParticipantUids,
@@ -77,34 +82,6 @@ export class ExternalPartyNamespace {
             partyCreationPromise,
             options
         )
-    }
-
-    private async resolveSynchronizerId() {
-        const connectedSynchronizers =
-            await this.ctx.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-                {
-                    method: 'ledgerApi',
-                    params: {
-                        resource: '/v2/state/connected-synchronizers',
-                        requestMethod: 'get',
-                        query: {},
-                    },
-                }
-            )
-
-        if (!connectedSynchronizers.connectedSynchronizers?.[0]) {
-            throw new Error('No connected synchronizers found')
-        }
-
-        const synchronizerId =
-            connectedSynchronizers.connectedSynchronizers[0].synchronizerId
-        if (connectedSynchronizers.connectedSynchronizers.length > 1) {
-            this.logger.warn(
-                `Found ${connectedSynchronizers.connectedSynchronizers.length} synchronizers, defaulting to ${synchronizerId}`
-            )
-        }
-
-        return synchronizerId
     }
 
     /**

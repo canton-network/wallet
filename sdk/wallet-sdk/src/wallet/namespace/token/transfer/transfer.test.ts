@@ -29,7 +29,6 @@ const mockTokenStandard = {
 const config: TokenNamespaceConfig = {
     commonCtx: {
         ...ctx,
-        defaultSynchronizerId: 'mock-synchronizer-id',
         logger: mockLogger,
     } as any,
     registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
@@ -165,6 +164,7 @@ describe('token transfer namespace', () => {
             created_at: 'createdat',
         },
         registryUrl: new URL('http://registry.com'),
+        synchronizerId: 'mock-synchronizer-id',
     }
 
     it('should create proxy transfer instruction accept', async () => {
@@ -234,7 +234,6 @@ describe('token transfer namespace no validatorURL', () => {
         transfer = new TransferNamespace({
             commonCtx: {
                 ...ctx,
-                defaultSynchronizerId: 'mock-synchronizer-id',
                 logger: mockLogger,
             } as any,
             registryUrls: [new ParsedURL(ctx, 'http://registry.com')],

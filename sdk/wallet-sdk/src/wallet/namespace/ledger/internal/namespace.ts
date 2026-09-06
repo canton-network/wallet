@@ -5,6 +5,7 @@ import { SDKContext } from '../../../sdk.js'
 import { v4 } from 'uuid'
 import { Ops } from '@canton-network/core-provider-ledger'
 import { InternalOperationParams } from './types.js'
+import { resolveSynchronizerId } from '../../../synchronizer.js'
 
 export class InternalLedgerNamespace {
     constructor(private readonly ctx: SDKContext) {}
@@ -14,13 +15,18 @@ export class InternalLedgerNamespace {
     ) {
         const {
             commands,
-            synchronizerId = this.ctx.defaultSynchronizerId,
+            synchronizerId: synchronizerIdArg,
             disclosedContracts = [],
             readAs = [],
             actAs,
             commandId = v4(),
             packageIdSelectionPreference = [],
         } = args
+        const synchronizerId = await resolveSynchronizerId(
+            this.ctx.ledgerProvider,
+            this.ctx.error,
+            synchronizerIdArg
+        )
         const request = {
             commands,
             commandId,
@@ -49,7 +55,7 @@ export class InternalLedgerNamespace {
     ) {
         const {
             commands,
-            synchronizerId = this.ctx.defaultSynchronizerId,
+            synchronizerId: synchronizerIdArg,
             disclosedContracts = [],
             readAs = [],
             actAs,
@@ -57,6 +63,11 @@ export class InternalLedgerNamespace {
             packageIdSelectionPreference = [],
             verboseHashing = false,
         } = args
+        const synchronizerId = await resolveSynchronizerId(
+            this.ctx.ledgerProvider,
+            this.ctx.error,
+            synchronizerIdArg
+        )
         const request = {
             commands,
             commandId,

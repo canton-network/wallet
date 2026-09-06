@@ -47,6 +47,7 @@ describe('Internal Leger Namespace', () => {
                 },
             ],
             actAs: ['partyId'],
+            synchronizerId: 'synchronizerId',
         }
         const result = await internal.submit(arg)
 
@@ -79,6 +80,7 @@ describe('Internal Leger Namespace', () => {
                 },
             ],
             actAs: ['partyId'],
+            synchronizerId: 'synchronizerId',
         }
         const result = await internal.prepare(arg)
 

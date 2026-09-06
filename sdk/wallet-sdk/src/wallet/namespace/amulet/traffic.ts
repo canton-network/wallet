@@ -5,6 +5,7 @@ import { PartyId } from '@canton-network/core-types'
 import { PreparedCommand } from '../transactions/types.js'
 import { Ops } from '@canton-network/core-provider-ledger'
 import { AmuletNamespaceConfig, fetchAmulet } from './namespace.js'
+import { resolveSynchronizerId } from '../../synchronizer.js'
 
 export class TrafficNamespace {
     constructor(private readonly sdkContext: AmuletNamespaceConfig) {}
@@ -12,9 +13,11 @@ export class TrafficNamespace {
     async status(
         params?: Partial<{ memberId?: string; synchronizerId?: string }>
     ) {
-        const synchronizerId =
-            params?.synchronizerId ||
-            this.sdkContext.commonCtx.defaultSynchronizerId
+        const synchronizerId = await resolveSynchronizerId(
+            this.sdkContext.commonCtx.ledgerProvider,
+            this.sdkContext.commonCtx.error,
+            params?.synchronizerId
+        )
 
         const memberId =
             params?.memberId ??
@@ -46,6 +49,11 @@ export class TrafficNamespace {
     }): Promise<PreparedCommand> {
         const { buyer, ccAmount, inputUtxos } = params
         const migrationId = params.migrationId ?? 0
+        const synchronizerId = await resolveSynchronizerId(
+            this.sdkContext.commonCtx.ledgerProvider,
+            this.sdkContext.commonCtx.error,
+            params.synchronizerId
+        )
         const defaultAmulet = await fetchAmulet(this.sdkContext)
         const memberId =
             params.memberId ??
@@ -60,10 +68,6 @@ export class TrafficNamespace {
                     }
                 )
             ).participantId
-
-        const synchronizerId =
-            params.synchronizerId ||
-            this.sdkContext.commonCtx.defaultSynchronizerId
 
         const [command, dc] =
             await this.sdkContext.amuletService.buyMemberTraffic(

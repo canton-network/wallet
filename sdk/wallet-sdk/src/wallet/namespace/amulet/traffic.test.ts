@@ -20,7 +20,6 @@ describe('TrafficNamespace', () => {
         config = {
             commonCtx: {
                 ...mock.ctx,
-                defaultSynchronizerId: 'SYNCDEFAULT::123',
             } as any,
             amuletService: {
                 getMemberTrafficStatus: vi.fn(),
@@ -69,9 +68,18 @@ describe('TrafficNamespace', () => {
                 },
             })
 
-            mock.ledgerProvider.request.mockResolvedValueOnce({
-                participantId: 'PAR::234',
-            })
+            mock.ledgerProvider.request
+                .mockResolvedValueOnce({
+                    connectedSynchronizers: [
+                        {
+                            synchronizerId: 'SYNCDEFAULT::123',
+                            synchronizerAlias: 'global',
+                        },
+                    ],
+                })
+                .mockResolvedValueOnce({
+                    participantId: 'PAR::234',
+                })
 
             const result = await trafficNamespace.status()
 
@@ -149,9 +157,18 @@ describe('TrafficNamespace', () => {
                 [],
             ])
 
-            mock.ledgerProvider.request.mockResolvedValueOnce({
-                participantId: 'PAR::234',
-            })
+            mock.ledgerProvider.request
+                .mockResolvedValueOnce({
+                    connectedSynchronizers: [
+                        {
+                            synchronizerId: 'SYNCDEFAULT::123',
+                            synchronizerAlias: 'global',
+                        },
+                    ],
+                })
+                .mockResolvedValueOnce({
+                    participantId: 'PAR::234',
+                })
 
             await trafficNamespace.buy({
                 buyer: buyer,
@@ -159,7 +176,7 @@ describe('TrafficNamespace', () => {
                 inputUtxos: utxos,
             })
 
-            expect(mock.ledgerProvider.request).toHaveBeenCalledTimes(1)
+            expect(mock.ledgerProvider.request).toHaveBeenCalledTimes(2)
             expect(config.amuletService.buyMemberTraffic).toHaveBeenCalledWith(
                 'DSO::123',
                 buyer,

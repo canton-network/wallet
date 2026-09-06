@@ -288,14 +288,16 @@ describe('Party namespace', () => {
 
             preparedParty = new PreparedPartyCreationService(
                 ctx,
-                Promise.resolve(partyTransaction)
+                Promise.resolve(partyTransaction),
+                { synchronizerId: 'syncId' }
             )
             signedParty = new SignedPartyCreationService(
                 ctx,
                 Promise.resolve({
                     party: partyTransaction,
                     signature: 'defaultSignature',
-                })
+                }),
+                { synchronizerId: 'syncId' }
             )
         })
 
@@ -513,7 +515,7 @@ describe('Party namespace', () => {
                         resource: '/v2/parties/external/allocate',
                         requestMethod: 'post',
                         body: {
-                            synchronizer: ctx.defaultSynchronizerId,
+                            synchronizer: 'syncId',
                             identityProviderId: '',
                             onboardingTransactions:
                                 partyTransaction.topologyTransactions.map(
@@ -560,7 +562,7 @@ describe('Party namespace', () => {
                         resource: '/v2/parties/external/allocate',
                         requestMethod: 'post',
                         body: {
-                            synchronizer: ctx.defaultSynchronizerId,
+                            synchronizer: 'syncId',
                             identityProviderId: '',
                             onboardingTransactions:
                                 partyTransaction.topologyTransactions.map(

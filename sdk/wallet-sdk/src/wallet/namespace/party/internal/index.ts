@@ -6,6 +6,7 @@ import { SDKContext } from '../../../sdk.js'
 import { v4 } from 'uuid'
 import { PartyId } from '@canton-network/core-types'
 import { SDKLogger } from '../../../logger/logger.js'
+import { resolveSynchronizerId } from '../../../synchronizer.js'
 
 export class InternalPartyNamespace {
     private readonly logger: SDKLogger
@@ -50,9 +51,11 @@ export class InternalPartyNamespace {
                     body: {
                         partyIdHint: params.partyHint ?? v4(),
                         identityProviderId: '',
-                        synchronizerId:
-                            params.synchronizerId ??
-                            this.ctx.defaultSynchronizerId,
+                        synchronizerId: await resolveSynchronizerId(
+                            this.ctx.ledgerProvider,
+                            this.ctx.error,
+                            params.synchronizerId
+                        ),
                         userId: params.userId ?? this.ctx.userId,
                     },
                 },

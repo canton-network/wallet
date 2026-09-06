@@ -18,6 +18,7 @@ import { PreapprovalNamespace } from './preapproval.js'
 import { Decimal } from 'decimal.js'
 import { parseAssets, ParsedURL } from '../utils/url.js'
 import { resolveProviderParty } from './utils.js'
+import { resolveSynchronizerId } from '../../synchronizer.js'
 
 const defaultMaxRetries = 10
 const defaultDelayMs = 5000
@@ -101,15 +102,14 @@ export class AmuletNamespace {
             'tapInternal',
             options?.partyId
         )
-        const synchronizerId =
-            options?.synchronizerId ??
-            this.sdkContext.commonCtx.defaultSynchronizerId
         const [tapCommand, disclosedContracts] = await this.tap(partyId, amount)
 
         return await this.ledger.internal.submit({
             commands: [tapCommand],
             disclosedContracts,
-            synchronizerId,
+            ...(options?.synchronizerId !== undefined && {
+                synchronizerId: options.synchronizerId,
+            }),
             actAs: [partyId],
         })
     }
@@ -144,9 +144,11 @@ export class AmuletNamespace {
         if (featuredAppRights) {
             return featuredAppRights
         }
-        const synchronizerId =
-            options.synchronizerId ??
-            this.sdkContext.commonCtx.defaultSynchronizerId
+        const synchronizerId = await resolveSynchronizerId(
+            this.sdkContext.commonCtx.ledgerProvider,
+            this.sdkContext.commonCtx.error,
+            options.synchronizerId
+        )
 
         const [featuredAppCommand, dc] =
             await this.sdkContext.amuletService.selfGrantFeatureAppRight(

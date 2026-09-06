@@ -14,6 +14,7 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 import { LedgerNamespace } from '../../ledger/index.js'
 import { ParsedURL, URLInput } from '../../utils/url.js'
 import { resolveProviderParty } from '../utils.js'
+import { resolveSynchronizerId } from '../../../synchronizer.js'
 
 export type ProxyDelegationCommandArgs = {
     proxyCid: string
@@ -22,6 +23,7 @@ export type ProxyDelegationCommandArgs = {
     featuredAppRight: FeaturedAppRight
     beneficiaries?: Beneficiaries[]
     validatorParty?: PartyId
+    synchronizerId?: string
 }
 
 type ProxyDelegationCommand = 'accept' | 'reject' | 'withdraw'
@@ -111,12 +113,18 @@ export class ProxyDelegationNamespace {
             beneficiaries = [],
             registryUrl = localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
             validatorParty,
+            synchronizerId,
         } = args
 
         const providerParty = resolveProviderParty(
             this.ctx,
             'command',
             validatorParty
+        )
+        const resolvedSynchronizerId = await resolveSynchronizerId(
+            this.ctx.commonCtx.ledgerProvider,
+            this.ctx.commonCtx.error,
+            synchronizerId
         )
         const defaultBeneficiary: Beneficiaries = {
             beneficiary: providerParty,
@@ -140,20 +148,24 @@ export class ProxyDelegationNamespace {
             },
             [
                 ...disclosedContracts,
-                this.createFeaturedAppDisclosedContract(args),
+                this.createFeaturedAppDisclosedContract(
+                    args,
+                    resolvedSynchronizerId
+                ),
             ],
         ]
     }
 
     private createFeaturedAppDisclosedContract(
-        args: ProxyDelegationCommandArgs
+        args: ProxyDelegationCommandArgs,
+        synchronizerId: string
     ) {
         const { featuredAppRight } = args
         return {
             templateId: featuredAppRight.template_id,
             contractId: featuredAppRight.contract_id,
             createdEventBlob: featuredAppRight.created_event_blob,
-            synchronizerId: this.ctx.commonCtx.defaultSynchronizerId,
+            synchronizerId,
         }
     }
 }
