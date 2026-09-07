@@ -202,6 +202,8 @@ export interface Store {
     // Network methods
     getNetwork(networkId: string): Promise<Network>
     getCurrentNetwork(): Promise<Network>
+    getNetworkByKeyId(keyId: string): Promise<Network | undefined>
+
     listNetworks(): Promise<Array<Network>>
     updateNetwork(network: Network): Promise<void>
     addNetwork(network: Network): Promise<void>
