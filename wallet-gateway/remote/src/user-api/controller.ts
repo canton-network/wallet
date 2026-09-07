@@ -815,7 +815,12 @@ export const userController = (
                 const network = await store.getNetwork(params.networkId)
                 const idp = await store.getIdp(network.identityProviderId)
 
-                assertTokenClaimsMatchNetwork(accessToken, network, idp)
+                await assertTokenClaimsMatchNetwork(
+                    store,
+                    accessToken,
+                    network,
+                    idp
+                )
 
                 await store.setSession({
                     id: newSessionId,
