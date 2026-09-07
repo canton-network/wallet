@@ -1,40 +1,125 @@
-# Wallet Gateway
+---
+title: 'Overview'
+description: 'Run a self-hosted Wallet Gateway that lets dApps connect to your own validator and signing provider.'
+---
 
-**Published:** [NPM](https://www.npmjs.com/package/@canton-network/dapp-sdk), [Docker](https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fdocker%2Fwallet-gateway), [Helm](https://github.com/digital-asset/wallet-gateway/pkgs/container/wallet-gateway%2Fhelm%2Fwallet-gateway)
+The Wallet Gateway is a self-hosted component that lets dApps connect to your infrastructure on
+Canton Network. You run it in your own environment, next to a validator you already operate, so
+any [CIP-0103](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md) dApp can
+connect to the Wallet Gateway while it talks to **your** validator and signs through **your**
+signing or custody provider, without moving signing away from infrastructure you already trust.
 
-The Wallet Gateway is a JavaScript/TypeScript-based server that facilitates secure communication between decentralized applications (dApps), Canton Validator nodes, and Wallet Providers. It acts as a mediator, enabling seamless transaction signing and ledger interactions while maintaining the privacy and security guarantees of the Canton protocol.
+Run the Wallet Gateway to:
 
-> [!IMPORTANT]
-> This guide is under active development, not all sections are complete and sections will be added and adjusted over time.
+- **Connect to dApps**: expose the CIP-0103 dApp API so any compatible dApp can connect,
+  list accounts, and request transactions.
+- **Use your own validator**: talk to your Canton validator's Ledger API on behalf of
+  authenticated users.
+- **Keep signing where you want it**: sign with a participant node, an external custody
+  provider (Fireblocks, Blockdaemon, DFNS), or an internal store for development.
+- **Manage wallets**: create and manage parties across one or more networks, through a web
+  UI or programmatically.
+- **Authenticate users**: log users in through OAuth / OpenID Connect or self-signed tokens,
+  and issue sessions for API access.
 
-**What is Wallet Gateway?**
+> [!NOTE]
+> The Wallet Gateway is for teams that operate their own infrastructure: validator operators,
+> builders, and organizations that want to let dApps connect to a Wallet Gateway backed by a
+> validator and signing provider they control. If you are building a dApp frontend instead, use
+> the [dApp SDK](../dapp-sdk/overview.md).
 
-The Wallet Gateway enables transparent interaction between a dApp, Validator Node, and a Wallet Provider. Unlike public permissionless blockchains where a total state is shared amongst all nodes, Canton's unique approach to security and privacy results in fractured states shared amongst selected Validator nodes. Simply showing ownership of an associated private key does not reveal your entire financial data to a counter-party (such as a dApp).
+## How it fits together
 
-**Wallet Gateway aims to**
+```mermaid
+flowchart TB
+    D["dApp<br/>(dApp SDK)"]
+    U["User"]
+    subgraph WG["Wallet Gateway (self-hosted)"]
+        direction TB
+        DA["dApp API"]
+        UA["User API"]
+        UI["User UI"]
+    end
+    V["Your Canton validator"]
+    S["Signing provider<br/>(participant, Fireblocks, …)"]
+    D -->|dApp API| DA
+    U -->|browser| UI
+    U -->|programmatic| UA
+    WG <-->|Ledger API| V
+    WG <-->|signing| S
+```
 
-- Maintain the high-level of security and trust inherent in the Canton Protocol
-- Enable seamless communication between a dApp, Validator Node, and Signature Provider, similar in experience to other blockchains
-- Provide transparency against malicious dApps, Validator Nodes, or Signature Providers
-- Create a standardized communication framework that allows anybody to extend or integrate with the Wallet Gateway
+## Core concepts
 
-**Key Features**
+**Networks.** A network points the Wallet Gateway at one Canton validator's Ledger API, identified
+in [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md) form (for
+example `canton:localnet`). You can configure several networks in one Wallet Gateway, and each
+wallet belongs to exactly one network.
 
-- **JSON-RPC APIs**: Two distinct APIs for dApp and user interactions
-- **Multiple Signing Providers**: Support for participant-based signing, internal signing, Dfns, Fireblocks, and Blockdaemon
-- **Flexible Identity Providers**: Support for OAuth 2.0 and self-signed JWT tokens
-- **Network Management**: Configure and manage multiple Canton networks
-- **Session Management**: Secure session handling with JWT authentication
-- **Web UI**: User-friendly web interface for wallet management
-- **Multiple Storage Backends**: Support for in-memory, SQLite, and PostgreSQL storage
+**Identity providers.** Every network references an identity provider (IDP) that issues the
+JWT used to authenticate against the validator. The Wallet Gateway supports **OAuth / OpenID Connect**
+providers (recommended for production) and **self-signed** tokens (development only).
 
-## Contents
+**Sessions.** Users authenticate through an IDP, and the Wallet Gateway issues a session (a JWT)
+that authorizes later calls. Sessions are bound to the connecting dApp: each dApp gets its own
+session with its own JWT, created when it connects and ended on disconnect or logout.
 
-- [Getting Started](getting-started/index.md)
-- [Configuration](configuration/index.md)
-- [Automations](automations/index.md) — service account automation and API keys
-- [Usage](usage/index.md)
-- [APIs](apis/index.md)
-- [Signing Providers](signing-providers/index.md)
-- [Deployment](deployment/index.md) — Docker/Helm images, exposure, persistence
-- [Troubleshooting](troubleshooting/index.md) — Verification checklist, auth/ledger debugging
+**Wallets and parties.** A wallet is a Canton party the Wallet Gateway manages for a user. Each
+wallet is tied to a network and a signing provider, and a user can mark one wallet as
+primary. dApps see these wallets as the accounts a user can transact with.
+
+**Signing providers.** Signing is delegated to a signing provider chosen per wallet, so
+different wallets in the same Wallet Gateway can sign through different providers. Keys stay with the
+provider you choose: a participant node, an external custody service, or an internal store for
+testing. See [Signing providers](operate/signing-providers.md).
+
+## Transaction lifecycle
+
+Once a dApp is connected, transactions flow through the Wallet Gateway so that approval and
+signing stay under your control. A dApp asks the Wallet Gateway to execute a transaction, the
+Wallet Gateway prepares it against your validator, the user reviews and approves it in the
+User UI, your signing provider signs it, and the Wallet Gateway submits it to the ledger and
+returns the result. Preparation and submission happen on your validator's Ledger API, approval
+happens in your User UI, and signing happens in the provider you chose, so private keys never
+pass through the dApp.
+
+```mermaid
+sequenceDiagram
+    participant D as dApp
+    participant UI as User UI
+    participant WG as Wallet Gateway
+    participant S as Signing provider
+    participant L as Ledger API
+
+    D->>WG: prepareExecute
+    WG->>L: prepare
+    L-->>WG: prepared transaction
+
+    alt UI approval
+        WG->>UI: queue for user approval
+        Note over UI: User clicks Approve
+        UI->>WG: user approves
+    end
+
+    alt Signing driver
+        WG->>S: sign
+        S-->>WG: signed transaction
+    end
+
+    WG->>L: execute
+    L-->>WG: completion
+    WG-->>D: result
+```
+
+## Quickstart
+
+Ready to run it? The [Quickstart](quickstart.md) walks through
+installing the Wallet Gateway, generating a configuration file, starting it against a network, and
+verifying the three endpoints.
+
+## Where to go next
+
+- [Quickstart](quickstart.md): Install, configure, run, and verify a Wallet Gateway.
+- [Configure the Wallet Gateway](operate/configure.md): Understand the configuration file, store, and server settings.
+- [Signing providers](operate/signing-providers.md): Choose where transaction signing and key custody happen.
+- [API reference](reference/user-api.md): Drive the Wallet Gateway from scripts with the User API.
