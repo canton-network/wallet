@@ -28,6 +28,7 @@ import {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
+    ensureSelfSignedKeyId,
 } from '@canton-network/core-wallet-store'
 import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
@@ -588,6 +589,20 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return network
     }
 
+    async getNetworkByKeyId(keyId: string): Promise<Network | undefined> {
+        // Not scoped by userId: key id resolution happens during token
+        // verification, before there is an authenticated user.
+        const rows = await this.db.selectFrom('networks').selectAll().execute()
+
+        return rows
+            .map((row) => toNetwork(row))
+            .find(
+                (network) =>
+                    network.auth.method === 'self_signed' &&
+                    network.auth.keyId === keyId
+            )
+    }
+
     async listNetworks(): Promise<Array<Network>> {
         let query = this.db.selectFrom('networks').selectAll()
 
@@ -611,8 +626,20 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         // todo: check and compare idpId of existing network
         this.assertConnected()
         await this.db.transaction().execute(async (trx) => {
+            const existing = await trx
+                .selectFrom('networks')
+                .selectAll()
+                .where('id', '=', network.id)
+                .executeTakeFirst()
+
             // we do not set a userId for now and leave all networks global when updating
-            const networkEntry = fromNetwork(network, undefined)
+            const networkEntry = fromNetwork(
+                ensureSelfSignedKeyId(
+                    network,
+                    existing ? toNetwork(existing) : undefined
+                ),
+                undefined
+            )
             this.logger.info(networkEntry, 'Updating network table')
             await trx
                 .updateTable('networks')
@@ -646,7 +673,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             } else {
                 await trx
                     .insertInto('networks')
-                    .values(fromNetwork(network, userId))
+                    .values(fromNetwork(ensureSelfSignedKeyId(network), userId))
                     .execute()
             }
         })
