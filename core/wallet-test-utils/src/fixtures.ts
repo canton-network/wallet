@@ -10,6 +10,7 @@ import {
 } from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
+import { withGatewayCapture } from './gateway-traffic.js'
 
 interface LogEntry {
     timestamp: string
@@ -144,7 +145,7 @@ const setupNetworkTracking = (
     })
 }
 
-export const test = base.extend<{ page: Page }>({
+const testWithLogging = base.extend<{ page: Page }>({
     page: async ({ page }, use, testInfo) => {
         const popups: Page[] = []
         const consoleLogs: LogEntry[] = []
@@ -264,3 +265,8 @@ export const test = base.extend<{ page: Page }>({
 })
 
 export { expect } from '@playwright/test'
+
+// Tests using this `test` get the console tracking and failure screenshots set
+// up above, and on top of that every request they send to the wallet gateway is
+// recorded for the rate limit report.
+export const test = withGatewayCapture(testWithLogging)

@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, type Page } from '@playwright/test'
+import {
+    testWithGatewayCapture as test,
+    expect,
+} from '@canton-network/core-wallet-test-utils'
+import { type Page } from '@playwright/test'
 import type { PartyId } from '@canton-network/core-types'
 import { toPortfolioInstrument } from '../src/types/instruments'
 import { normalizeRegistryUrl } from '../src/utils/registry'
