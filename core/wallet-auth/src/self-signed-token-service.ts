@@ -10,7 +10,8 @@ export class SelfSignedTokenService {
         logger: Logger,
         credentials: ClientCredentials,
         issuer: string,
-        expirySeconds: number = 3600
+        expirySeconds: number = 3600,
+        keyId?: string
     ): Promise<string> {
         const secret = new TextEncoder().encode(credentials.clientSecret)
         const now = Math.floor(Date.now() / 1000)
@@ -22,7 +23,10 @@ export class SelfSignedTokenService {
             exp: now + expirySeconds,
             iss: issuer,
         })
-            .setProtectedHeader({ alg: 'HS256' })
+            .setProtectedHeader({
+                alg: 'HS256',
+                ...(keyId ? { kid: keyId } : {}),
+            })
             .sign(secret)
 
         logger.info(`Generated self-signed JWT token: ${jwt}`)

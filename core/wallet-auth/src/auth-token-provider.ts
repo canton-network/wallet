@@ -21,6 +21,7 @@ export type TokenProviderConfig =
           method: 'self_signed'
           issuer: string
           credentials: ClientCredentials
+          keyId?: string
       }
     | {
           method: 'client_credentials'
@@ -63,6 +64,7 @@ export class AuthTokenProvider implements AccessTokenProvider {
                 {
                     method: auth.method,
                     issuer: auth.issuer,
+                    ...(auth.keyId ? { keyId: auth.keyId } : {}),
                     credentials: {
                         clientId: auth.clientId,
                         clientSecret: auth.clientSecret,
@@ -111,7 +113,9 @@ export class AuthTokenProvider implements AccessTokenProvider {
                 return SelfSignedTokenService.fetchToken(
                     this.logger,
                     this.config.credentials,
-                    this.config.issuer
+                    this.config.issuer,
+                    undefined,
+                    this.config.keyId
                 )
             case 'client_credentials':
                 return clientCredentialsService(

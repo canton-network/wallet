@@ -1520,6 +1520,9 @@ importers:
       jose:
         specifier: ^5.10.0
         version: 5.10.0
+      uuid:
+        specifier: ^14.0.1
+        version: 14.0.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3

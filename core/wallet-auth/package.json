@@ -36,6 +36,7 @@
         "@canton-network/core-rpc-errors": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "jose": "^6.2.3",
+        "uuid": "^14.0.1",
         "zod": "^4.4.3"
     },
     "files": [

@@ -30,6 +30,8 @@ const selfSignedAuthSchema = z.object({
     scope: z.string(),
     clientId: z.string(),
     clientSecret: z.string(),
+    // TODO Should it really be in config, or purely in db?
+    keyId: z.string().optional(),
 })
 
 const clientCredentialsEnvAuthSchema = z.object({
@@ -47,6 +49,7 @@ const selfSignedEnvAuthSchema = z.object({
     scope: z.string(),
     clientId: z.string(),
     clientSecretEnv: z.string(),
+    keyId: z.string().optional(),
 })
 
 export const authSchema = z.discriminatedUnion('method', [
