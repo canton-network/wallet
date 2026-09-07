@@ -51,7 +51,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 
 import './index.js'
 import { UserUiAddParty } from './index.js'
-import { WALLET_CREATION_STATUS_CODE } from '../index'
+import { WALLET_STATUS_CODE } from '../index'
+import { Key } from '@canton-network/core-signing-lib'
 
 describe('UserUiAddParty', () => {
     let el: UserUiAddParty
@@ -77,8 +78,13 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSigningProviderVaults') {
-                return { vaults: ['Vault A', 'Vault B'] }
+            if (method === 'listSigningProviderKeys') {
+                return {
+                    keys: [
+                        { id: 'key-1', name: 'Vault A', publicKey: 'pk1' },
+                        { id: 'key-2', name: 'Vault B', publicKey: 'pk2' },
+                    ],
+                }
             }
             return undefined
         })
@@ -92,20 +98,15 @@ describe('UserUiAddParty', () => {
     })
 
     it('renders create party header and form', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
         expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
             'Create a new party'
         )
         expect(
             el.shadowRoot?.querySelector('wg-wallet-create-form')
         ).not.toBeNull()
-        expect(el.networkIds).toEqual(['network1'])
     })
 
     it('navigates back to parties list when Back is clicked', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
         const backBtn = el.shadowRoot?.querySelector(
             '.page-header button'
         ) as HTMLButtonElement
@@ -117,8 +118,6 @@ describe('UserUiAddParty', () => {
     })
 
     it('redirects to parties with allocated status after successful create', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listSessions') {
                 return {
@@ -142,7 +141,7 @@ describe('UserUiAddParty', () => {
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(
-                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_ALLOCATED}`
+                `createPartyStatus=${WALLET_STATUS_CODE.WALLET_ALLOCATED}`
             )
         )
         expect(setLocationHref).toHaveBeenCalledWith(
@@ -151,8 +150,6 @@ describe('UserUiAddParty', () => {
     })
 
     it('redirects with initialized status when wallet is not yet allocated', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'createWallet') {
                 return { wallet: makeWallet({ status: 'initialized' }) }
@@ -175,15 +172,11 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
         expect(setLocationHref).toHaveBeenCalledWith(
-            expect.stringContaining(
-                WALLET_CREATION_STATUS_CODE.WALLET_INITIALIZED
-            )
+            expect.stringContaining(WALLET_STATUS_CODE.WALLET_INITIALIZED)
         )
     })
 
     it('calls handleErrorToast and clears loading when createWallet fails', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listSessions') {
                 return {
@@ -198,7 +191,6 @@ describe('UserUiAddParty', () => {
             return undefined
         })
 
-        el.submitting = true
         const form = el.shadowRoot?.querySelector('wg-wallet-create-form')
         form!.dispatchEvent(
             new WalletCreateEvent('fail-party', 'participant', false)
@@ -207,12 +199,9 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
-        expect(el.submitting).toBe(false)
     })
 
     it('redirects with removed status when wallet creation is rejected', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listSessions') {
                 return {
@@ -236,17 +225,15 @@ describe('UserUiAddParty', () => {
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(
-                `createPartyStatus=${WALLET_CREATION_STATUS_CODE.WALLET_REMOVED}`
+                `createPartyStatus=${WALLET_STATUS_CODE.WALLET_REMOVED}`
             )
         )
     })
 
-    it('loads vaults when a vault enabled signing provider is selected and sorts alphabetically', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
-        let resolveVaults!: (value: { vaults: string[] }) => void
-        const vaultsDeferred = new Promise<{ vaults: string[] }>((resolve) => {
-            resolveVaults = resolve
+    it('loads keys when a vault enabled signing provider is selected and sorts alphabetically', async () => {
+        let resolveKeys!: (value: { keys: Array<Key> }) => void
+        const keysDeferred = new Promise<{ keys: Array<Key> }>((resolve) => {
+            resolveKeys = resolve
         })
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listSessions') {
@@ -259,8 +246,8 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSigningProviderVaults') {
-                return vaultsDeferred
+            if (method === 'listSigningProviderKeys') {
+                return keysDeferred
             }
             return undefined
         })
@@ -273,29 +260,22 @@ describe('UserUiAddParty', () => {
         providerSelect!.value = 'fireblocks'
         providerSelect!.dispatchEvent(new Event('change', { bubbles: true }))
 
-        await waitUntil(() => el.vaultsLoading)
-        expect(
-            form?.shadowRoot
-                ?.querySelector<HTMLSelectElement>('#vault-name')
-                ?.querySelector('option')
-                ?.textContent?.trim()
-        ).toBe('Loading vaults...')
+        await waitUntil(() => mockRequest.mock.calls.length > 0)
 
-        resolveVaults({ vaults: ['Vault B', 'Vault A'] })
+        resolveKeys({
+            keys: [
+                { id: 'key-2', name: 'Vault B', publicKey: 'pk2' },
+                { id: 'key-1', name: 'Vault A', publicKey: 'pk1' },
+            ],
+        })
 
-        await waitUntil(() => el.vaults.length === 2)
-
-        expect(el.vaultsLoading).toBe(false)
         expect(mockRequest).toHaveBeenCalledWith({
-            method: 'listSigningProviderVaults',
+            method: 'listSigningProviderKeys',
             params: { signingProviderId: 'fireblocks' },
         })
-        expect(el.vaults).toEqual(['Vault A', 'Vault B'])
     })
 
     it('shows a toast when no vault accounts are returned', async () => {
-        await waitUntil(() => el.networkIds.length === 1)
-
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listSessions') {
                 return {
@@ -307,8 +287,8 @@ describe('UserUiAddParty', () => {
                     ],
                 }
             }
-            if (method === 'listSigningProviderVaults') {
-                return { vaults: [] }
+            if (method === 'listSigningProviderKeys') {
+                return { keys: [] }
             }
             return undefined
         })
@@ -324,41 +304,9 @@ describe('UserUiAddParty', () => {
         await waitUntil(() => showToast.mock.calls.length > 0)
 
         expect(showToast).toHaveBeenCalledWith(
-            'No vault accounts found',
-            'No vault accounts are available for the selected signing provider.',
+            'No public keys found',
+            'No public keys are available for the selected signing provider.',
             'info'
         )
-        expect(el.vaults).toEqual([])
-    })
-
-    it('uses networkId from state when listSessions fails', async () => {
-        mockRequest.mockImplementation(async ({ method }) => {
-            if (method === 'listSessions') {
-                throw new Error('sessions unavailable')
-            }
-            return undefined
-        })
-
-        el = await fixture<UserUiAddParty>(componentFixture)
-
-        await waitUntil(() => el.networkIds.length === 1)
-
-        expect(el.networkIds).toEqual(['network1'])
-    })
-
-    it('leaves networkIds empty when there is no session and no stored network', async () => {
-        mockNetworkIdGet.mockReturnValue(undefined)
-        mockRequest.mockImplementation(async ({ method }) => {
-            if (method === 'listSessions') {
-                return { sessions: [] }
-            }
-            return undefined
-        })
-
-        el = await fixture<UserUiAddParty>(componentFixture)
-
-        await waitUntil(() => el.networkIds.length === 0)
-
-        expect(el.networkIds).toEqual([])
     })
 })

@@ -13,6 +13,7 @@ import { Server } from 'http'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo, ServerConfig } from '../config/Config.js'
 import { DappControllerDeps } from './controller.js'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)
@@ -30,7 +31,8 @@ export const dapp = (
     serverConfig: ServerConfig,
     notificationService: NotificationService,
     store: Store & AuthAware<Store>,
-    controllerDeps: DappControllerDeps
+    controllerDeps: DappControllerDeps,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
 ) => {
     app.use(
         cors({
@@ -136,6 +138,7 @@ export const dapp = (
                 logger,
                 origin,
                 controllerDeps,
+                hashingSchemeVersion,
                 req.authContext
             ),
             logger,

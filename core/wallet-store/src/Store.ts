@@ -39,18 +39,6 @@ export enum UserLevelRight {
     CanExecuteAsAnyParty = 'CanExecuteAsAnyParty',
 }
 
-export interface UpdateWallet {
-    partyId: PartyId
-    networkId?: string
-    status?: WalletStatus
-    externalTxId?: string
-    topologyTransactions?: string
-    disabled?: boolean
-    reason?: string
-    primary?: boolean
-    rights?: PartyLevelRight[]
-}
-
 export type WalletStatus = 'initialized' | 'allocated' | 'removed'
 
 export interface Wallet {
@@ -67,8 +55,35 @@ export interface Wallet {
     disabled?: boolean
     reason?: string
     rights: PartyLevelRight[]
+    userId: string
     // hosted: [network]
 }
+
+export type WalletUniqueConstraint = Pick<
+    Wallet,
+    'networkId' | 'partyId' | 'userId'
+>
+
+export type UpdateWallet =
+    // Required items
+    Pick<Wallet, 'partyId'> &
+        // Optional items
+        Partial<
+            Pick<
+                Wallet,
+                | 'networkId'
+                | 'status'
+                | 'externalTxId'
+                | 'topologyTransactions'
+                | 'disabled'
+                | 'reason'
+                | 'primary'
+                | 'rights'
+                | 'signingProviderId'
+                | 'publicKey'
+                | 'namespace'
+            >
+        >
 
 // Session management
 
@@ -141,6 +156,7 @@ export interface ApiKey {
 export interface Store {
     // Wallet methods
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
+    getWallet(partyId: PartyId): Promise<Wallet | null>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>

@@ -40,7 +40,8 @@ test('call connect rpc', async () => {
             config.server,
             notificationService,
             store,
-            { signingDrivers: {} }
+            { signingDrivers: {} },
+            'HASHING_SCHEME_VERSION_V3'
         )
     )
         .post('/api/v0/dapp')

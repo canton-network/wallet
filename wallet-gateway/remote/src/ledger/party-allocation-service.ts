@@ -86,10 +86,8 @@ export class PartyAllocationService {
 
     /**
      * Create fingerprint
-     * @param publicKey The public key of the user.
+     * @param publicKey The public key of the user (in base64 format).
      */
-    createFingerprintFromKey(publicKey: string): string
-
     createFingerprintFromKey(publicKey: string): string {
         // Hash purpose codes can be looked up in the Canton codebase:
         //  https://github.com/DACH-NY/canton/blob/62e9ccd3f1743d2c9422d863cfc2ca800405c71b/community/base/src/main/scala/com/digitalasset/canton/crypto/HashPurpose.scala#L52

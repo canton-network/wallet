@@ -4,6 +4,7 @@
 import { test } from '@playwright/test'
 import {
     createWalletGateway,
+    connectToLocalNet,
     expectTransferOfferGone,
     expectWalletBalance,
     fillAndSubmitTransfer,
@@ -40,7 +41,7 @@ test('toggle preapproval', async ({ page: dappPage }) => {
     const wg = createWalletGateway(dappPage)
 
     await gotoConnect(dappPage)
-    await wg.connect({ network: 'LocalNet' })
+    await connectToLocalNet(wg)
 
     const alice = await wg.createWalletIfNotExists({
         partyHint: `alice-${rnd}`,
@@ -69,7 +70,7 @@ test('one step transfer to preapproved receiver', async ({
     const wg = createWalletGateway(dappPage)
 
     await gotoConnect(dappPage)
-    await wg.connect({ network: 'LocalNet' })
+    await connectToLocalNet(wg)
 
     const alice = await wg.createWalletIfNotExists({
         partyHint: `alice-${rnd}`,

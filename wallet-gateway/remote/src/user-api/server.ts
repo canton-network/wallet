@@ -14,6 +14,7 @@ import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { userController } from './controller.js'
 import { Methods } from './rpc-gen/index.js'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export const user = (
     route: string,
@@ -24,6 +25,7 @@ export const user = (
     notificationService: NotificationService,
     drivers: Partial<Record<SigningProvider, SigningDriverInterface>>,
     store: Store & AuthAware<Store>,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION,
     adminUserId?: string
 ) => {
     app.use(route, (req, res, next) =>
@@ -36,6 +38,7 @@ export const user = (
                 req.authContext,
                 drivers,
                 logger,
+                hashingSchemeVersion,
                 adminUserId
             ),
             logger,

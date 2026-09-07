@@ -88,6 +88,26 @@ function resolveRawNetworkAuth(n: RawNetworkAuth): NetworkAuth {
     }
 }
 
+function resolvePostgressPassword(s: RawConfig['store']): Config['store'] {
+    if (s.connection.type !== 'postgres') {
+        return s
+    }
+
+    if ('password' in s.connection) {
+        return s
+    } else {
+        const { passwordEnv, ...rest } = s.connection
+        const password = Env.get(passwordEnv, { required: true })
+        return {
+            ...s,
+            connection: {
+                ...rest,
+                password,
+            },
+        }
+    }
+}
+
 function resolveRawConfig(rawConfig: RawConfig): Config {
     const rawNetworks = rawConfig.bootstrap.networks
     const networks: Config['bootstrap']['networks'] = rawNetworks.map((n) => {
@@ -103,8 +123,16 @@ function resolveRawConfig(rawConfig: RawConfig): Config {
         }
     })
 
+    const store: Config['store'] = resolvePostgressPassword(rawConfig.store)
+
+    const signingStore: Config['signingStore'] = resolvePostgressPassword(
+        rawConfig.signingStore
+    )
+
     return {
         ...rawConfig,
+        store,
+        signingStore,
         bootstrap: {
             ...rawConfig.bootstrap,
             networks,

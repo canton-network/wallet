@@ -122,6 +122,7 @@ const primaryWallet: Wallet = {
     publicKey: 'wallet-public-key',
     namespace: 'namespace',
     networkId: 'network1',
+    userId: 'user-1',
     rights: [PartyLevelRight.CanActAs],
 }
 
@@ -162,6 +163,7 @@ function createController(
         logger,
         requestOrigin,
         deps || { signingDrivers: {} },
+        'HASHING_SCHEME_VERSION_V3',
         context
     )
 }

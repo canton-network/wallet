@@ -86,7 +86,7 @@ function addTx(id: string, createdAt: Date | undefined) {
         preparedTransactionHash: 'hash-1',
         payload: { amount: 100 },
         origin: 'https://safe.example',
-        createdAt: createdAt,
+        ...(createdAt ? { createdAt } : {}),
     }
     return initial
 }
@@ -108,6 +108,7 @@ implementations.forEach(([name, StoreImpl]) => {
         test('should add and retrieve wallets', async () => {
             const wallet: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint',
@@ -130,6 +131,11 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addWallet(wallet)
             const wallets = await store.getWallets()
             expect(wallets).toHaveLength(1)
+            expect(await store.getWallet('party1')).toMatchObject({
+                partyId: 'party1',
+                networkId: 'network1',
+            })
+            expect(await store.getWallet('missing')).toBeNull()
         })
 
         test('should filter wallets', async () => {
@@ -150,6 +156,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint1',
@@ -161,6 +168,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party2',
                 status: 'allocated',
                 hint: 'hint2',
@@ -172,6 +180,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet3: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party3',
                 status: 'allocated',
                 hint: 'hint3',
@@ -217,11 +226,17 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(getWalletsByNetworkId).toHaveLength(2)
             expect(getWalletsBySigningProviderId).toHaveLength(3)
             expect(getWalletsByNetworkIdAndSigningProviderId).toHaveLength(2)
+            expect(await store.getWallet('party1')).toMatchObject({
+                partyId: 'party1',
+                networkId: 'network1',
+            })
+            expect(await store.getWallet('party3')).toBeNull()
         })
 
         test('should set and get primary wallet', async () => {
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint1',
@@ -233,6 +248,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party2',
                 status: 'allocated',
                 hint: 'hint2',
@@ -264,6 +280,7 @@ implementations.forEach(([name, StoreImpl]) => {
         test('should persist wallet rights and update rights-only changes', async () => {
             const wallet: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party-rights',
                 status: 'allocated',
                 hint: 'rights',
@@ -369,6 +386,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace',
                 status: 'allocated',
                 hint: 'party1',
@@ -380,6 +398,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace', // Same party ID
                 status: 'allocated',
                 hint: 'party1',
@@ -432,6 +451,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint1',
@@ -443,6 +463,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party2',
                 status: 'allocated',
                 hint: 'hint2',
@@ -454,6 +475,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet3: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party3',
                 status: 'allocated',
                 hint: 'hint3',
@@ -465,6 +487,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet4: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party4',
                 status: 'allocated',
                 hint: 'hint4',
@@ -519,6 +542,7 @@ implementations.forEach(([name, StoreImpl]) => {
         test('addWallet should upsert when same party exists on different network', async () => {
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace',
                 status: 'allocated',
                 hint: 'party1',
@@ -530,6 +554,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace', // Same party ID
                 status: 'allocated',
                 hint: 'party1',
@@ -770,6 +795,7 @@ implementations.forEach(([name, StoreImpl]) => {
 
             await store.addWallet({
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party-cascade-1',
                 status: 'allocated',
                 hint: 'hint',
@@ -808,6 +834,7 @@ implementations.forEach(([name, StoreImpl]) => {
 
             await store.addWallet({
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party-cascade-2',
                 status: 'allocated',
                 hint: 'hint',

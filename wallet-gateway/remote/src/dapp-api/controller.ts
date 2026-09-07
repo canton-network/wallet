@@ -38,6 +38,7 @@ import { TransactionService } from '../ledger/transaction-service.js'
 
 import { SigningDrivers } from '../signing/signing-drivers.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
@@ -52,6 +53,7 @@ export const dappController = (
     _logger: Logger,
     origin: string | null,
     deps: DappControllerDeps,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION,
     context?: AuthContext
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
@@ -311,7 +313,8 @@ export const dappController = (
                 actAs,
                 synchronizerId,
                 params,
-                ledgerClient
+                ledgerClient,
+                hashingSchemeVersion
             )
 
             logDynamically(
@@ -374,7 +377,8 @@ export const dappController = (
                     store,
                     logger,
                     deps!.signingDrivers,
-                    notifier
+                    notifier,
+                    hashingSchemeVersion
                 )
                 try {
                     await transactionService.signAndExecute(
@@ -540,10 +544,17 @@ async function prepareSubmission(
     partyIds: string[],
     synchronizerId: string,
     params: PrepareExecuteParams,
-    ledgerClient: LedgerClient
+    ledgerClient: LedgerClient,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(userId, partyIds, synchronizerId, params)
+        ledgerPrepareParams(
+            userId,
+            partyIds,
+            synchronizerId,
+            params,
+            hashingSchemeVersion
+        )
     )
 }

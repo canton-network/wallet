@@ -35,6 +35,7 @@ import {
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -52,7 +53,8 @@ export class TransactionService {
         private store: Store,
         private logger: Logger,
         private signingDrivers: SigningDrivers = {},
-        private notifier: Notifier
+        private notifier: Notifier,
+        private hashingSchemeVersion: HASHING_SCHEME_VERSION
     ) {}
 
     public async sign(
@@ -944,7 +946,8 @@ export class TransactionService {
             userId,
             [partyId],
             synchronizerId,
-            transaction.payload as PrepareParams
+            transaction.payload as PrepareParams,
+            this.hashingSchemeVersion
         )
         const result = await ledgerClient.postWithRetry(
             '/v2/commands/submit-and-wait',
@@ -993,7 +996,7 @@ export class TransactionService {
             {
                 userId,
                 preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                hashingSchemeVersion: this.hashingSchemeVersion,
                 submissionId: commandId,
                 deduplicationPeriod: {
                     Empty: {},

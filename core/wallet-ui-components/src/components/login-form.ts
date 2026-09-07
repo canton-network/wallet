@@ -14,7 +14,8 @@ export class LoginConnectEvent extends Event {
     constructor(
         public selectedNetwork: PublicNetwork,
         public selectedIdp: Idp,
-        public clientId: string
+        public clientId?: string,
+        public clientSecret?: string
     ) {
         super('login-connect', { bubbles: true, composed: true })
     }
@@ -99,7 +100,7 @@ export class WgLoginForm extends BaseElement {
             }
 
             .network-select,
-            .client-id-input {
+            .login-input {
                 width: 100%;
                 border: 1px solid #d4d4d8;
                 border-radius: 4px;
@@ -112,7 +113,7 @@ export class WgLoginForm extends BaseElement {
             }
 
             .network-select:focus,
-            .client-id-input:focus {
+            .login-input:focus {
                 border-color: var(--wg-input-border-focus);
                 box-shadow: 0 0 0 3px rgba(var(--wg-accent-rgb), 0.12);
             }
@@ -215,16 +216,38 @@ export class WgLoginForm extends BaseElement {
             return
         }
 
-        const clientId =
-            (
-                this.renderRoot.querySelector(
-                    '#client-id'
-                ) as HTMLInputElement | null
-            )?.value || this.selectedNetwork.clientId
+        let clientId: string | undefined
+        let clientSecret: string | undefined
+
+        if (idp.type === 'self_signed') {
+            clientId =
+                (
+                    this.renderRoot.querySelector(
+                        '#client-id'
+                    ) as HTMLInputElement | null
+                )?.value || this.selectedNetwork.clientId
+
+            clientSecret =
+                (
+                    this.renderRoot.querySelector(
+                        '#client-secret'
+                    ) as HTMLInputElement | null
+                )?.value ?? ''
+        }
 
         this.dispatchEvent(
-            new LoginConnectEvent(this.selectedNetwork, idp, clientId || '')
+            new LoginConnectEvent(
+                this.selectedNetwork,
+                idp,
+                clientId,
+                clientSecret
+            )
         )
+    }
+
+    private handleSubmit(e: Event) {
+        e.preventDefault()
+        this.handleConnect()
     }
 
     /** Set a status message on the form (e.g. "Redirecting...") */
@@ -241,7 +264,7 @@ export class WgLoginForm extends BaseElement {
 
     protected render() {
         return html`
-            <main class="screen">
+            <form class="screen" @submit=${this.handleSubmit}>
                 <div class="top-bar">
                     <img class="top-logo" src=${cantonLogo} alt="Canton logo" />
                 </div>
@@ -293,9 +316,22 @@ export class WgLoginForm extends BaseElement {
                                   >
                                   <input
                                       id="client-id"
-                                      class="client-id-input form-control"
+                                      class="login-input form-control"
                                       type="text"
+                                      autocomplete="username"
                                       .value=${this.selectedNetwork?.clientId || ''}
+                                      ?disabled=${this.connecting}
+                                  />
+                                  <label
+                                      class="form-label fw-semibold text-body mt-3 mb-2"
+                                      for="client-secret"
+                                      >Client Secret</label
+                                  >
+                                  <input
+                                      id="client-secret"
+                                      class="login-input form-control"
+                                      type="password"
+                                      autocomplete="current-password"
                                       ?disabled=${this.connecting}
                                   />
                               `
@@ -329,8 +365,8 @@ export class WgLoginForm extends BaseElement {
 
                 <div class="footer">
                     <button
+                        type="submit"
                         class="connect-btn btn btn-primary w-100 rounded-pill"
-                        @click=${this.handleConnect}
                         ?disabled=${
                             this.loading ||
                             this.connecting ||
@@ -340,7 +376,7 @@ export class WgLoginForm extends BaseElement {
                         ${this.connecting ? 'Connecting…' : 'Connect'}
                     </button>
                 </div>
-            </main>
+            </form>
         `
     }
 }

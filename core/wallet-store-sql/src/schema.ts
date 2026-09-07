@@ -276,6 +276,9 @@ export const toWalletUpdateProperties = (
         disabled,
         reason,
         primary,
+        signingProviderId,
+        publicKey,
+        namespace,
     } = params
     return {
         ...(status !== undefined && { status }),
@@ -284,6 +287,9 @@ export const toWalletUpdateProperties = (
         ...(primary !== undefined && { primary: primary ? 1 : 0 }),
         ...(disabled !== undefined && { disabled: disabled ? 1 : 0 }),
         ...(reason !== undefined && { reason }),
+        ...(signingProviderId !== undefined && { signingProviderId }),
+        ...(publicKey !== undefined && { publicKey }),
+        ...(namespace !== undefined && { namespace }),
     }
 }
 
@@ -304,6 +310,7 @@ export const toWallet = (table: WalletTable): Wallet => {
         networkId: table.networkId,
         signingProviderId: table.signingProviderId,
         disabled: table.disabled === 1,
+        userId: table.userId,
         ...(table.externalTxId !== null && {
             externalTxId: table.externalTxId,
         }),

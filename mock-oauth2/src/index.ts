@@ -143,7 +143,7 @@ async function main() {
         token.payload.sub = clientId // Mocked subject given the clientId
         token.payload.email =
             process.env.BLOCKDAEMON_API_EMAIL ||
-            'phillip.olesen@digitalasset.com'
+            'mateusz.piatkowski@digitalasset.com'
         token.payload.aud = aud
         token.payload.scope = scope
         token.payload.scp = scope.split(' ')

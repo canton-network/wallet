@@ -5,6 +5,7 @@ import { expect, Page } from '@playwright/test'
 import { WalletGateway } from '@canton-network/core-wallet-test-utils'
 
 const BASE_URL = 'http://localhost:8081'
+const LOCALNET_CLIENT_SECRET = 'unsafe'
 
 export const createWalletGateway = (dappPage: Page): WalletGateway =>
     new WalletGateway({
@@ -17,6 +18,12 @@ export const createWalletGateway = (dappPage: Page): WalletGateway =>
             page.getByRole('button', {
                 name: 'Connect Wallet',
             }),
+    })
+
+export const connectToLocalNet = (wg: WalletGateway): Promise<void> =>
+    wg.connect({
+        network: 'LocalNet',
+        credentials: { clientSecret: LOCALNET_CLIENT_SECRET },
     })
 
 export const gotoConnect = async (page: Page): Promise<void> => {

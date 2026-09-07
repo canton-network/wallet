@@ -169,8 +169,33 @@ export const toSigningDriverConfig = (
     }
 }
 
+// Add validation for some of the most important properties of the postgres driver,
+// but allow for any additional properties to be passed in (e.g. `ssl` for TLS).
+export const postgresSchema = z.looseObject({
+    type: z.literal('postgres'),
+    host: z.string(),
+    port: z.number(),
+    user: z.string(),
+    password: z.string(),
+    database: z.string(),
+})
+
+export const postgresEnvSchema = z.looseObject({
+    type: z.literal('postgres'),
+    host: z.string(),
+    port: z.number(),
+    user: z.string(),
+    passwordEnv: z.string(),
+    database: z.string(),
+})
+
+export const postgresFromEnvOrConfig = z.union([
+    postgresSchema,
+    postgresEnvSchema,
+])
+
 export const storeConfigSchema = z.object({
-    connection: z.discriminatedUnion('type', [
+    connection: z.union([
         z.object({
             type: z.literal('memory'),
         }),
@@ -178,16 +203,7 @@ export const storeConfigSchema = z.object({
             type: z.literal('sqlite'),
             database: z.string(),
         }),
-        // Add validation for some of the most important properties of the postgres driver,
-        // but allow for any additional properties to be passed in (e.g. `ssl` for TLS).
-        z.looseObject({
-            type: z.literal('postgres'),
-            host: z.string(),
-            port: z.number(),
-            user: z.string(),
-            password: z.string(),
-            database: z.string(),
-        }),
+        postgresFromEnvOrConfig,
     ]),
 })
 

@@ -8,6 +8,7 @@ import { NotificationService } from '../notification/NotificationService.js'
 import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from './signing-drivers.js'
 import { resolveAutomationRunContext } from './service-account-session.js'
+import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export type { AccessTokenProviderFactory } from './service-account-session.js'
 
@@ -19,6 +20,7 @@ export interface SigningWorkerOptions {
     store: Store & AuthAware<Store>
     notificationService: NotificationService
     logger: Logger
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
 }
 
 /**
@@ -209,7 +211,8 @@ export class SigningWorker {
             store,
             transactionLogger,
             this.options.signingDrivers,
-            notifier
+            notifier,
+            this.options.hashingSchemeVersion
         )
 
         try {

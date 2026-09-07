@@ -14,6 +14,7 @@ import {
     NOT_FOUND_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
     TOKEN_EXPIRED_SKEW_MS,
+    TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
 } from './constants'
 import {
     AllowedRoute,
@@ -389,13 +390,22 @@ export class UserUIAuthRedirect extends LitElement {
             expirationDate.getTime() - now.getTime() - TOKEN_EXPIRED_SKEW_MS
 
         if (timeUntilExpiration > 0) {
-            tokenExpirationTimeoutId = setTimeout(async () => {
-                const isLoginPage =
-                    getCurrentRoute(window.location.pathname) ===
-                    LOGIN_PAGE_REDIRECT
-                await this.handleExpiredToken(isLoginPage)
-                tokenExpirationTimeoutId = null
-            }, timeUntilExpiration)
+            tokenExpirationTimeoutId = setTimeout(
+                async () => {
+                    tokenExpirationTimeoutId = null
+
+                    if (!this.isTokenExpired(origin)) {
+                        this.setTokenExpirationTimeout(origin)
+                        return
+                    }
+
+                    const isLoginPage =
+                        getCurrentRoute(window.location.pathname) ===
+                        LOGIN_PAGE_REDIRECT
+                    await this.handleExpiredToken(isLoginPage)
+                },
+                Math.min(timeUntilExpiration, TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS)
+            )
         }
     }
 

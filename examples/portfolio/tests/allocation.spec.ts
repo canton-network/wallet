@@ -6,6 +6,7 @@ import { expect, type Page, test } from '@playwright/test'
 import { OTCTrade } from '@canton-network/core-wallet-test-utils'
 import {
     createWalletGateway,
+    connectToLocalNet,
     gotoConnect,
     setupRegistry,
     switchWallet,
@@ -69,7 +70,7 @@ const setupOtcTrade = async (page: Page) => {
     const wg = createWalletGateway(page)
 
     await gotoConnect(page)
-    await wg.connect({ network: 'LocalNet' })
+    await connectToLocalNet(wg)
 
     const venueHint = `venue-${rnd}`
     const aliceHint = `alice-${rnd}`
