@@ -3,6 +3,9 @@
 
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 
+// TODO gateway now requires self-signed tokens to carry a kid header
+// Should I just hardcode key IDs in default config if self-signed networks and use it here?
+// Or is using user api to mint token here possible?
 const DEFAULT_ISSUER = import.meta.env.VITE_AUTH_ISSUER || 'unsafe-auth'
 
 const DEFAULT_CREDENTIALS = {
