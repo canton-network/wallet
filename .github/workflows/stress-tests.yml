@@ -65,7 +65,6 @@ jobs:
               run: pnpm script:test:stress-scripts
 
             - uses: ./.github/actions/check_resources
-
             - name: Stop localnet (${{ github.event.inputs.network || 'devnet' }})
               if: always()
               run: pnpm run stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}

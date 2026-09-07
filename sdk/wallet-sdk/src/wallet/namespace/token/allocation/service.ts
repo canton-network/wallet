@@ -16,6 +16,7 @@ import {
     AllocationParams,
     AllocationInstructionCreateParams,
     AllocationContextParams,
+    AllocationScanParams,
 } from './types.js'
 import { TokenNamespaceConfig } from '../../../sdk.js'
 import { ParsedURL } from '../../utils/url.js'
@@ -30,6 +31,66 @@ export class AllocationNamespace {
         return await this.sdkContext.tokenStandardService.listContractsByInterface<T>(
             interfaceId,
             partyId
+        )
+    }
+
+    /**
+     * Polls {@link pending} until an allocation is visible for every requested
+     * `transferLegId`, then returns each leg's allocation contract. Matching is
+     * purely on `transferLegId`, so it is token-agnostic — the same call scans
+     * for Amulet, TestToken, or any mix of allocations across a settlement.
+
+     * @param params.partyId Party whose visible allocations are polled.
+     * @param params.transferLegIds Transfer leg ids to wait for; every one must
+     *   become visible for the call to resolve.
+     * @param params.maxAttempts Maximum polling attempts before failing. Default 30.
+     * @param params.retryIntervalMs Delay between attempts in ms. Default 1000.
+     * @returns A map from `transferLegId` to its `PrettyContract<AllocationView>`.
+     * @throws If any requested leg is still missing once attempts are exhausted.
+     */
+    async scan(
+        params: AllocationScanParams
+    ): Promise<Record<string, PrettyContract<AllocationView>>> {
+        const {
+            partyId,
+            transferLegIds,
+            maxAttempts = 30,
+            retryIntervalMs = 1000,
+        } = params
+        const { logger } = this.sdkContext.commonCtx
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            const allocations = await this.pending(partyId)
+
+            const found: Record<string, PrettyContract<AllocationView>> = {}
+            for (const legId of transferLegIds) {
+                const match = allocations.find(
+                    (a) =>
+                        a.interfaceViewValue.allocation.transferLegId === legId
+                )
+                if (match) found[legId] = match
+            }
+
+            const missing = transferLegIds.filter((legId) => !(legId in found))
+            if (missing.length === 0) {
+                logger.info(
+                    { partyId, transferLegIds },
+                    'All requested allocations are visible'
+                )
+                return found
+            }
+
+            logger.info(
+                { partyId, attempt, maxAttempts, missing },
+                'Waiting for allocations to propagate'
+            )
+            await new Promise((resolve) => setTimeout(resolve, retryIntervalMs))
+        }
+
+        throw new Error(
+            `Allocations for transfer legs [${transferLegIds.join(
+                ', '
+            )}] did not propagate to party ${partyId} in time`
         )
     }
 
@@ -51,7 +112,7 @@ export class AllocationNamespace {
         return [{ ExerciseCommand: command }, disclosedConctracts]
     }
 
-    async withdraw(params: AllocationParams) {
+    async withdraw(params: AllocationParams): Promise<PreparedCommand> {
         const [command, disclosedConctracts] =
             await this.sdkContext.tokenStandardService.allocation.createWithdrawAllocation(
                 params.allocationCid,
@@ -62,7 +123,7 @@ export class AllocationNamespace {
         return [{ ExerciseCommand: command }, disclosedConctracts]
     }
 
-    async cancel(params: AllocationParams) {
+    async cancel(params: AllocationParams): Promise<PreparedCommand> {
         const [command, disclosedConctracts] =
             await this.sdkContext.tokenStandardService.allocation.createCancelAllocation(
                 params.allocationCid,

@@ -5,8 +5,3 @@ import { Splice } from '@daml.js/otc-trade'
 
 export { packageId } from '@daml.js/otc-trade'
 export const TradingApp = Splice.Testing.Apps.TradingApp
-
-export type {
-    OTCTrade,
-    OTCTradeProposal,
-} from '@daml.js/otc-trade/Splice/Testing/Apps/TradingApp'
