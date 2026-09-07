@@ -5,11 +5,15 @@ import {
     AuthContext,
     AuthService,
     Idp,
-    SelfSignedAuth,
     resolveUserEmail,
 } from '@canton-network/core-wallet-auth'
-import { Network, Store } from '@canton-network/core-wallet-store'
-import { createRemoteJWKSet, decodeJwt, jwtVerify, JWTPayload } from 'jose'
+import { Store } from '@canton-network/core-wallet-store'
+import {
+    createRemoteJWKSet,
+    decodeJwt,
+    decodeProtectedHeader,
+    jwtVerify,
+} from 'jose'
 import { Logger } from 'pino'
 
 function getEmail(value: unknown): string | undefined {
@@ -20,94 +24,58 @@ function getEmail(value: unknown): string | undefined {
     return value
 }
 
-function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
-    if (typeof value === 'string') {
-        return [value]
-    }
-
-    if (Array.isArray(value)) {
-        return value
-    }
-
-    return []
-}
-
-function isSelfSignedNetwork(
-    network: Network
-): network is Network & { auth: SelfSignedAuth } {
-    return network.auth.method === 'self_signed'
-}
-
+// TODO maybe add a nice description
 async function verifySelfSignedToken(
     jwt: string,
-    decoded: JWTPayload,
     idp: Extract<Idp, { type: 'self_signed' }>,
     store: Store,
     logger: Logger
 ): Promise<AuthContext | undefined> {
-    const tokenAudiences = normalizeAudienceClaim(decoded.aud)
-    if (tokenAudiences.length === 0) {
-        logger.warn('JWT does not contain an audience claim')
+    const { kid } = decodeProtectedHeader(jwt)
+    if (!kid) {
+        logger.warn('Self-signed JWT does not contain a kid header')
         return undefined
     }
 
-    const networks = await store.listNetworks()
-    const candidates = networks.filter(
-        (network): network is Network & { auth: SelfSignedAuth } =>
-            isSelfSignedNetwork(network) &&
-            network.identityProviderId === idp.id &&
-            tokenAudiences.includes(network.auth.audience)
-    )
+    const network = await store.getNetworkByKeyId(kid)
+    if (!network || network.auth.method !== 'self_signed') {
+        logger.warn({ kid }, 'No self-signed network uses this JWT key id')
+        return undefined
+    }
 
-    if (candidates.length === 0) {
+    if (network.identityProviderId !== idp.id) {
         logger.warn(
-            {
-                tokenAudiences,
-                idpId: idp.id,
-            },
-            'No self-signed networks match the JWT audience'
+            { kid, networkId: network.id, idpId: idp.id },
+            'JWT key id belongs to a network of a different identity provider'
         )
         return undefined
     }
 
-    for (const network of candidates) {
-        try {
-            const { payload } = await jwtVerify(
-                jwt,
-                new TextEncoder().encode(network.auth.clientSecret),
-                {
-                    algorithms: ['HS256'],
-                    issuer: idp.issuer,
-                    audience: network.auth.audience,
-                }
-            )
-
-            if (!payload.sub) {
-                logger.warn('JWT does not contain a subject')
-                return undefined
-            }
-
-            const email = getEmail(payload.email)
-            return {
-                userId: payload.sub,
-                accessToken: jwt,
-                ...(email ? { email } : {}),
-            }
-        } catch {
-            // Token may belong to another candidate that shares this audience.
+    const auth = network.auth
+    const { payload } = await jwtVerify(
+        jwt,
+        new TextEncoder().encode(auth.clientSecret),
+        {
+            algorithms: ['HS256'],
+            issuer: idp.issuer,
+            audience: auth.audience,
         }
+    )
+
+    if (!payload.sub) {
+        logger.warn('JWT does not contain a subject')
+        return undefined
     }
 
-    logger.warn(
-        {
-            tokenAudiences,
-            candidateNetworkIds: candidates.map((network) => network.id),
-        },
-        'Failed to verify self-signed JWT against any matching network secret'
-    )
-    return undefined
+    const email = getEmail(payload.email)
+    return {
+        userId: payload.sub,
+        accessToken: jwt,
+        ...(email ? { email } : {}),
+    }
 }
 
+// TODO I probably should adjust the comment for non-JWKS path
 /**
  * Creates an AuthService that verifies JWT tokens using a remote JWK set.
  * @param store - The Store instance to access network configurations.
@@ -144,8 +112,9 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 return undefined
             }
 
+            // TODO Check if I can divide it nicer per idp type, like each one in it's own method or other kind of block
             if (idp.type == 'self_signed') {
-                return verifySelfSignedToken(jwt, decoded, idp, store, logger)
+                return await verifySelfSignedToken(jwt, idp, store, logger)
             }
             logger.debug({ idp }, 'Using IDP')
             const response = await fetch(idp.configUrl)
@@ -185,6 +154,7 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 ? tokenAudience
                 : [tokenAudience]
 
+            // TODO is this enough for token aud to match any network audience?
             const audMatch = tokenAudiences.some((aud) =>
                 expectedAudiences.includes(aud)
             )
