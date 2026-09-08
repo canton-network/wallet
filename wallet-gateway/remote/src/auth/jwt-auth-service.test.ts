@@ -45,16 +45,21 @@ const authContext: AuthContext = {
 const SELF_SIGNED_ISSUER = 'unsafe-auth'
 const SELF_SIGNED_AUDIENCE = 'self-signed-audience'
 const SELF_SIGNED_SECRET = 'test-secret'
+const SELF_SIGNED_KEY_ID = 'self-signed-key'
 const OAUTH_ISSUER = 'https://oauth.example.com'
 const OAUTH_JWKS_URI = 'https://oauth.example.com/jwks'
 const OAUTH_KEY_ID = 'oauth-test-key'
 
 async function hs256BearerToken(
     claims: Record<string, unknown>,
-    secret = SELF_SIGNED_SECRET
+    secret = SELF_SIGNED_SECRET,
+    keyId: string | null = SELF_SIGNED_KEY_ID
 ): Promise<string> {
     const jwt = await new SignJWT(claims)
-        .setProtectedHeader({ alg: 'HS256' })
+        .setProtectedHeader({
+            alg: 'HS256',
+            ...(keyId ? { kid: keyId } : {}),
+        })
         .sign(new TextEncoder().encode(secret))
     return `Bearer ${jwt}`
 }
@@ -91,7 +96,8 @@ const createOAuthNetwork = (
 const createSelfSignedNetwork = (
     id: string,
     audience: string,
-    clientSecret: string
+    clientSecret: string,
+    keyId = SELF_SIGNED_KEY_ID
 ): Network => ({
     id,
     name: `Network ${id}`,
@@ -106,6 +112,7 @@ const createSelfSignedNetwork = (
         scope: 'openid',
         clientId: 'cid',
         clientSecret,
+        keyId,
     },
 })
 
@@ -296,6 +303,52 @@ describe('jwtAuthService', () => {
             await expect(service.verifyToken(token)).resolves.toBeUndefined()
         })
 
+        it('returns undefined when JWT has no key id', async () => {
+            await store.addNetwork(
+                createSelfSignedNetwork(
+                    'network-self',
+                    SELF_SIGNED_AUDIENCE,
+                    SELF_SIGNED_SECRET
+                )
+            )
+
+            const service = jwtAuthService(store, mockLogger)
+            const token = await hs256BearerToken(
+                {
+                    iss: SELF_SIGNED_ISSUER,
+                    sub: 'user-1',
+                    aud: SELF_SIGNED_AUDIENCE,
+                    scope: 'openid',
+                },
+                SELF_SIGNED_SECRET,
+                null
+            )
+            await expect(service.verifyToken(token)).resolves.toBeUndefined()
+        })
+
+        it('returns undefined when no network has the JWT key id', async () => {
+            await store.addNetwork(
+                createSelfSignedNetwork(
+                    'network-self',
+                    SELF_SIGNED_AUDIENCE,
+                    SELF_SIGNED_SECRET
+                )
+            )
+
+            const service = jwtAuthService(store, mockLogger)
+            const token = await hs256BearerToken(
+                {
+                    iss: SELF_SIGNED_ISSUER,
+                    sub: 'user-1',
+                    aud: SELF_SIGNED_AUDIENCE,
+                    scope: 'openid',
+                },
+                SELF_SIGNED_SECRET,
+                'unknown-key'
+            )
+            await expect(service.verifyToken(token)).resolves.toBeUndefined()
+        })
+
         it('returns undefined when JWT has no audience', async () => {
             await store.addNetwork(
                 createSelfSignedNetwork(
@@ -380,6 +433,8 @@ describe('jwtAuthService', () => {
             const AUD_B = 'audience-b'
             const SECRET_A = 'secret-a'
             const SECRET_B = 'secret-b'
+            const KEY_A = 'key-a'
+            const KEY_B = 'key-b'
 
             const claims = (aud: string): Record<string, unknown> => ({
                 iss: SELF_SIGNED_ISSUER,
@@ -388,112 +443,86 @@ describe('jwtAuthService', () => {
                 scope: 'openid',
             })
 
-            it('accepts a token when two networks share audience and secret', async () => {
+            it('accepts tokens only when kid, secret, and audience belong to the same network', async () => {
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A)
+                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A, KEY_A)
                 )
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-b', AUD_A, SECRET_A)
+                    createSelfSignedNetwork('network-b', AUD_B, SECRET_B, KEY_B)
                 )
 
                 const service = jwtAuthService(store, mockLogger)
-                const token = await hs256BearerToken(claims(AUD_A), SECRET_A)
-                await expect(service.verifyToken(token)).resolves.toMatchObject(
-                    {
-                        userId: 'user-1',
-                    }
-                )
-            })
 
-            it('accepts a token signed by either secret when networks share audience', async () => {
-                await store.addNetwork(
-                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A)
-                )
-                await store.addNetwork(
-                    createSelfSignedNetwork('network-b', AUD_A, SECRET_B)
-                )
-
-                const service = jwtAuthService(store, mockLogger)
                 await expect(
                     service.verifyToken(
-                        await hs256BearerToken(claims(AUD_A), SECRET_A)
+                        await hs256BearerToken(claims(AUD_A), SECRET_A, KEY_A)
                     )
                 ).resolves.toMatchObject({ userId: 'user-1' })
                 await expect(
                     service.verifyToken(
-                        await hs256BearerToken(claims(AUD_A), SECRET_B)
+                        await hs256BearerToken(claims(AUD_B), SECRET_B, KEY_B)
                     )
                 ).resolves.toMatchObject({ userId: 'user-1' })
             })
 
-            it('rejects a token whose secret matches no network that shares the audience', async () => {
+            it('does not fall back to another network secret when the kid-selected secret rejects the token', async () => {
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A)
+                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A, KEY_A)
                 )
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-b', AUD_A, SECRET_B)
+                    createSelfSignedNetwork('network-b', AUD_A, SECRET_B, KEY_B)
                 )
 
                 const service = jwtAuthService(store, mockLogger)
-                const token = await hs256BearerToken(
+                const tokenSignedWithNetworkBSecret = await hs256BearerToken(
                     claims(AUD_A),
-                    'other-secret'
+                    SECRET_B,
+                    KEY_A
                 )
+
                 await expect(
-                    service.verifyToken(token)
+                    service.verifyToken(tokenSignedWithNetworkBSecret)
                 ).resolves.toBeUndefined()
             })
 
-            it('accepts a token only for the matching audience when networks share a secret', async () => {
+            it('does not accept another network audience when networks share a secret', async () => {
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A)
+                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A, KEY_A)
                 )
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-b', AUD_B, SECRET_A)
+                    createSelfSignedNetwork('network-b', AUD_B, SECRET_A, KEY_B)
                 )
 
                 const service = jwtAuthService(store, mockLogger)
+                const tokenForNetworkBAudience = await hs256BearerToken(
+                    claims(AUD_B),
+                    SECRET_A,
+                    KEY_A
+                )
+
                 await expect(
-                    service.verifyToken(
-                        await hs256BearerToken(claims(AUD_A), SECRET_A)
-                    )
-                ).resolves.toMatchObject({ userId: 'user-1' })
-                await expect(
-                    service.verifyToken(
-                        await hs256BearerToken(claims(AUD_B), SECRET_A)
-                    )
-                ).resolves.toMatchObject({ userId: 'user-1' })
+                    service.verifyToken(tokenForNetworkBAudience)
+                ).resolves.toBeUndefined()
             })
 
-            it('rejects a token signed for another network when audience and secret both differ', async () => {
+            it('rejects changing a valid token kid to another network key id', async () => {
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A)
+                    createSelfSignedNetwork('network-a', AUD_A, SECRET_A, KEY_A)
                 )
                 await store.addNetwork(
-                    createSelfSignedNetwork('network-b', AUD_B, SECRET_B)
+                    createSelfSignedNetwork('network-b', AUD_B, SECRET_B, KEY_B)
                 )
 
                 const service = jwtAuthService(store, mockLogger)
+                const networkATokenWithNetworkBKid = await hs256BearerToken(
+                    claims(AUD_A),
+                    SECRET_A,
+                    KEY_B
+                )
+
                 await expect(
-                    service.verifyToken(
-                        await hs256BearerToken(claims(AUD_A), SECRET_A)
-                    )
-                ).resolves.toMatchObject({ userId: 'user-1' })
-                await expect(
-                    service.verifyToken(
-                        await hs256BearerToken(claims(AUD_A), SECRET_B)
-                    )
+                    service.verifyToken(networkATokenWithNetworkBKid)
                 ).resolves.toBeUndefined()
-                await expect(
-                    service.verifyToken(
-                        await hs256BearerToken(claims(AUD_B), SECRET_A)
-                    )
-                ).resolves.toBeUndefined()
-                await expect(
-                    service.verifyToken(
-                        await hs256BearerToken(claims(AUD_B), SECRET_B)
-                    )
-                ).resolves.toMatchObject({ userId: 'user-1' })
             })
         })
     })

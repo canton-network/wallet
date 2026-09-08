@@ -402,6 +402,33 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(store.getNetwork('doesnotexist')).rejects.toThrow()
         })
 
+        test('should generate and look up a self-signed network key id', async () => {
+            const network: Network = {
+                ...baseNetwork(),
+                auth: {
+                    method: 'self_signed',
+                    issuer: 'unsafe-auth',
+                    clientId: 'cid',
+                    clientSecret: 'secret',
+                    scope: 'scope',
+                    audience: 'aud',
+                },
+            }
+
+            await store.addNetwork(network)
+            const stored = await store.getNetwork(network.id)
+            expect(stored.auth).toMatchObject({
+                method: 'self_signed',
+                keyId: expect.any(String),
+            })
+            if (stored.auth.method !== 'self_signed' || !stored.auth.keyId) {
+                throw new Error('Expected a self-signed key id')
+            }
+            await expect(
+                store.getNetworkByKeyId(stored.auth.keyId)
+            ).resolves.toEqual(stored)
+        })
+
         test('should throw when getting current network if none set', async () => {
             await expect(store.getCurrentNetwork()).rejects.toThrow()
         })
