@@ -25,15 +25,27 @@ const selfSigned = (overrides: Record<string, unknown> = {}) =>
         ...overrides,
     })
 
+function parseJsonColumn(value: unknown): Record<string, unknown> {
+    if (typeof value === 'string') {
+        return JSON.parse(value) as Record<string, unknown>
+    }
+
+    if (typeof value === 'object' && value !== null) {
+        return value as Record<string, unknown>
+    }
+
+    throw new Error(`Unexpected JSON column value: ${String(value)}`)
+}
+
 forEachDialect('migration 016 - add self signed key id', ({ getDb }) => {
     const readAuth = async (): Promise<
         Map<string, Record<string, unknown>>
     > => {
         const db = getDb()
-        const rows = await sql<{ id: string; auth: string }>`
+        const rows = await sql<{ id: string; auth: unknown }>`
             SELECT id, auth FROM networks
         `.execute(db)
-        return new Map(rows.rows.map((r) => [r.id, JSON.parse(r.auth)]))
+        return new Map(rows.rows.map((r) => [r.id, parseJsonColumn(r.auth)]))
     }
 
     test('backfills a distinct key id for every self_signed network', async () => {
