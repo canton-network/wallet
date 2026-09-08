@@ -2302,9 +2302,6 @@ importers:
 
   examples/walletconnect:
     dependencies:
-      '@canton-network/core-wallet-auth':
-        specifier: workspace:^
-        version: link:../../core/wallet-auth
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)
