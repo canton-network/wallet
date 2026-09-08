@@ -161,9 +161,13 @@ export async function prepareSignExecute(
         params
     )
 
-    // Extract commandId from the userUrl query string
+    // Extract transactionId and commandId from the userUrl query string
     const url = new URL(prepResult.userUrl, window.location.origin)
+    const transactionId = url.searchParams.get('transactionId')
     const commandId = url.searchParams.get('commandId')
+    if (!transactionId) {
+        throw new Error('No transactionId in prepareExecute response')
+    }
     if (!commandId) throw new Error('No commandId in prepareExecute response')
 
     // 2. Get partyId for signing
@@ -174,7 +178,7 @@ export async function prepareSignExecute(
         status: string
         signature?: string
         signedBy?: string
-    }>('sign', { commandId, partyId })
+    }>('sign', { transactionId, partyId })
 
     if (signResult.status !== 'signed') {
         throw new Error(`Sign returned status: ${signResult.status}`)
@@ -185,7 +189,7 @@ export async function prepareSignExecute(
         updateId?: string
         completionOffset?: number
     }>('execute', {
-        commandId,
+        transactionId,
         partyId,
         signature: signResult.signature,
         signedBy: signResult.signedBy,
