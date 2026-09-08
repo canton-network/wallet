@@ -48,6 +48,14 @@ describe('schemas', () => {
         }
         expect(authSchema.safeParse(validAuthSelfSigned).success).toBe(true)
 
+        const persistedSelfSigned = {
+            ...validAuthSelfSigned,
+            keyId: 'network-key-id',
+        }
+        expect(authSchema.parse(persistedSelfSigned)).not.toHaveProperty(
+            'keyId'
+        )
+
         const validAuthClientCredentials = {
             method: 'client_credentials',
             clientId: 'ledger-api-user',

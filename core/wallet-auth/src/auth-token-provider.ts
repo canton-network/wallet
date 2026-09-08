@@ -64,7 +64,6 @@ export class AuthTokenProvider implements AccessTokenProvider {
                 {
                     method: auth.method,
                     issuer: auth.issuer,
-                    ...(auth.keyId ? { keyId: auth.keyId } : {}),
                     credentials: {
                         clientId: auth.clientId,
                         clientSecret: auth.clientSecret,

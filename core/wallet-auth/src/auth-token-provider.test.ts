@@ -11,7 +11,6 @@ import { Logger } from '@canton-network/core-types'
 import { Auth, Idp } from './config/schema.js'
 import { clientCredentialsService } from './client-credentials-service.js'
 import { SelfSignedTokenService } from './self-signed-token-service.js'
-import { decodeProtectedHeader } from 'jose'
 
 vi.mock('./client-credentials-service.js', () => {
     return {
@@ -80,7 +79,6 @@ describe('AuthTokenProvider', () => {
         const auth: Auth = {
             method: 'self_signed',
             issuer: 'unsafe-auth',
-            keyId: 'network-key-id',
             clientId: 'ledger-api-user',
             clientSecret: 'unsafe',
             audience: 'https://canton.network.global',
@@ -95,9 +93,6 @@ describe('AuthTokenProvider', () => {
 
         const authContext = await authProviderFromGateway.getAuthContext()
         expect(assertConnected(authContext)).toBe(authContext)
-        expect(decodeProtectedHeader(authContext.accessToken).kid).toBe(
-            'network-key-id'
-        )
     })
 
     it('should test an auth token provider initialization with fromGatewayConfig with oauth', async () => {
