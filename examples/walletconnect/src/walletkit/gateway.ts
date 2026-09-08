@@ -218,11 +218,8 @@ export async function signMessageFlow(
         { message }
     )
 
-    const messageId =
-        response.messageId ||
-        new URL(response.userUrl, window.location.origin).searchParams.get(
-            'messageId'
-        )
+    const url = new URL(response.userUrl, window.location.origin)
+    const messageId = url.searchParams.get('messageId')
     if (!messageId) {
         throw new Error('No messageId in signMessage response')
     }
