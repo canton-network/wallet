@@ -103,7 +103,6 @@ export class TransactionService {
                 return this.signWithDriver(
                     driver,
                     signingProvider,
-                    authContext.userId,
                     wallet,
                     tx,
                     baseSignParams
@@ -123,7 +122,6 @@ export class TransactionService {
                 return this.signWithDriver(
                     blockdaemonDriver!, // we checked the driver existence above, so this is safe
                     signingProvider,
-                    authContext.email,
                     wallet,
                     tx,
                     { ...baseSignParams, internalTxId }
@@ -133,7 +131,6 @@ export class TransactionService {
                 return this.signWithDriver(
                     driver,
                     signingProvider,
-                    authContext.userId,
                     wallet,
                     tx,
                     { ...baseSignParams, userId: authContext.userId }
@@ -143,7 +140,6 @@ export class TransactionService {
                 return this.signWithDriver(
                     driver,
                     signingProvider,
-                    authContext.userId,
                     wallet,
                     tx,
                     {
@@ -168,7 +164,7 @@ export class TransactionService {
         transaction: Transaction,
         executeParams: ExecuteParams,
         ledgerClient: LedgerClient,
-        // authContext: AuthContext,
+        authContext: AuthContext,
         network?: Network
     ): Promise<ExecuteResult> {
         if (transaction.status !== 'signed') {
@@ -178,23 +174,17 @@ export class TransactionService {
         }
 
         if (wallet.signingProviderId === SigningProvider.PARTICIPANT) {
-            try {
-                if (!network) {
-                    throw new Error(
-                        'Network is required for participant signing'
-                    )
-                }
-                return this.executeWithParticipant(
-                    userId,
-                    executeParams,
-                    transaction,
-                    ledgerClient,
-                    network
-                )
-            } catch (error) {
-                this.logger.error(error, 'Failed to submit transaction')
-                throw error
+            if (!network) {
+                throw new Error('Network is required for participant signing')
             }
+
+            return await this.executeWithParticipant(
+                userId,
+                executeParams,
+                transaction,
+                ledgerClient,
+                network
+            )
         }
 
         return await this.executeWithExternal(
@@ -202,7 +192,8 @@ export class TransactionService {
             executeParams,
             wallet,
             transaction,
-            ledgerClient
+            ledgerClient,
+            authContext
         )
     }
 
@@ -282,6 +273,7 @@ export class TransactionService {
             signedTx,
             executeParams,
             ledgerClient,
+            authContext,
             network
         )
     }
@@ -311,7 +303,7 @@ export class TransactionService {
         }
 
         const signingResult = await this.getSigningResult(
-            authContext.userId,
+            authContext,
             wallet,
             tx.externalTxId
         )
@@ -325,7 +317,7 @@ export class TransactionService {
     }
 
     private async getSigningResult(
-        userId: UserId,
+        authContext: AuthContext,
         wallet: Wallet,
         externalTxId: string
     ): Promise<Exclude<GetTransactionResult, SigningError>> {
@@ -335,14 +327,16 @@ export class TransactionService {
             throw new Error(`No driver found for provider ${provider}`)
         }
 
-        //TODO: check if blockdaemon needs email, if so pass in AuthContext from refreshTransaction rather than just userId
-        // const controllerId = provider === SigningProvider.BLOCKDAEMON ? authContext.email : authContext.userId
+        const controllerId =
+            provider === SigningProvider.BLOCKDAEMON
+                ? authContext.email
+                : authContext.userId
 
-        const driver = signingProvider.controller(userId)
+        const driver = signingProvider.controller(controllerId)
         const args =
             provider === SigningProvider.SECUROSYS
                 ? { txId: externalTxId }
-                : { userId, txId: externalTxId }
+                : { userId: controllerId, txId: externalTxId }
 
         return driver.getTransaction(args).then(handleSigningError)
     }
@@ -432,38 +426,16 @@ export class TransactionService {
     private async signWithDriver(
         driver: SigningController,
         driverId: SigningProvider,
-        userId: UserId,
         wallet: Wallet,
         tx: Transaction,
         signTransactionParams: SignTransactionParams
     ): Promise<SignResult> {
-        // let signingResult: Exclude<
-        //     GetTransactionResult | SignTransactionResult,
-        //     SigningError
-        // >
-
-        // if (tx.externalTxId) {
-        //     signingResult = await driver
-        //         .getTransaction({
-        //             userId,
-        //             txId: tx.externalTxId,
-        //         })
-        //         .then(handleSigningError)
-        // } else {
-        //     signingResult = await driver
-        //         .signTransaction(signTransactionParams)
-        //         .then(handleSigningError)
-
-        // }
-
         const signingResult: Exclude<
             GetTransactionResult | SignTransactionResult,
             SigningError
         > = await driver
             .signTransaction(signTransactionParams)
             .then(handleSigningError)
-
-        const now = new Date()
 
         logDynamically(this.logger, 'Driver signing result', {
             info: {
@@ -576,7 +548,8 @@ export class TransactionService {
         executeParams: ExecuteParams,
         wallet: Wallet,
         transaction: Transaction,
-        ledgerClient: LedgerClient
+        ledgerClient: LedgerClient,
+        authContext: AuthContext
     ): Promise<ExecuteResult> {
         const { partyId } = executeParams
         const { commandId } = transaction
@@ -584,7 +557,7 @@ export class TransactionService {
 
         if (transaction.externalTxId) {
             const signingResult = await this.getSigningResult(
-                userId,
+                authContext,
                 wallet,
                 transaction.externalTxId
             )
@@ -623,7 +596,6 @@ export class TransactionService {
             throw new Error('no signature available')
         }
 
-        //TODO: fix this
         const signature = rawSignature
 
         const signedBy = wallet.namespace
