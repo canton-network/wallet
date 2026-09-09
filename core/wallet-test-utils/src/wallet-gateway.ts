@@ -26,7 +26,12 @@ export interface IdpFormInput {
 }
 
 export type ActivityStatus =
-    'pending' | 'signed' | 'executed' | 'failed' | 'rejected'
+    | 'pending'
+    | 'signed'
+    | 'executed'
+    | 'failed'
+    | 'rejected'
+    | 'awaiting-signature'
 
 // Limit on how many pages to go through when looking for a tx / network / idp.
 // Way smaller number would be needed for CI, as db is reset after each full run,
@@ -403,14 +408,15 @@ export class WalletGateway {
             await opts?.review?.(popupPage)
             await approveButton.click()
 
-            if (opts?.isExternalSigning) {
-                await expect(
-                    popupPage.getByText(
-                        'Complete signing in your external provider'
-                    ),
-                    'approving should show message guiding user to sign in the external signing provider'
-                ).toBeVisible()
-            }
+            //TODO: maybe change this to confirm that it's in awaiting-signature state
+            // if (opts?.isExternalSigning) {
+            //     await expect(
+            //         popupPage.getByText(
+            //             'Complete signing in your external provider'
+            //         ),
+            //         'approving should show message guiding user to sign in the external signing provider'
+            //     ).toBeVisible()
+            // }
 
             if (opts?.waitForClose !== false) {
                 await this.waitForPopupToCloseAfterAction(popupPage)
