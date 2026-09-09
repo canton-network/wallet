@@ -496,7 +496,7 @@ describe('Party namespace', () => {
                         resource: '/v2/parties/external/allocate',
                         requestMethod: 'post',
                         body: {
-                            synchronizer: ctx.defaultSynchronizerId,
+                            synchronizer: ctx.synchronizerId,
                             identityProviderId: '',
                             onboardingTransactions:
                                 partyTransaction.topologyTransactions.map(
@@ -543,7 +543,7 @@ describe('Party namespace', () => {
                         resource: '/v2/parties/external/allocate',
                         requestMethod: 'post',
                         body: {
-                            synchronizer: ctx.defaultSynchronizerId,
+                            synchronizer: ctx.synchronizerId,
                             identityProviderId: '',
                             onboardingTransactions:
                                 partyTransaction.topologyTransactions.map(

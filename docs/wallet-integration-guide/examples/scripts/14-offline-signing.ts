@@ -1,4 +1,5 @@
 import {
+    localNetGlobalSynchronizer,
     localNetStaticConfig,
     SDK,
     signTransactionHash,
@@ -16,6 +17,7 @@ const offlineLogger = pino({ name: '14-oggline-localnet', level: 'info' })
 const onlineSDK = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+    synchronizerId: localNetGlobalSynchronizer,
     amulet: AMULET_NAMESPACE_CONFIG,
     token: TOKEN_NAMESPACE_CONFIG,
 })

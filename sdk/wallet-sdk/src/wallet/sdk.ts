@@ -31,6 +31,7 @@ import {
 import { AllowedLogAdapters } from './logger/types.js'
 import { DappLedgerRpc } from '@canton-network/core-provider-dapp'
 import { SDKContext } from './index.js'
+import { resolveSdkSynchronizerId } from './init/synchronizer.js'
 import { ValidatorInternalClient } from '@canton-network/core-splice-client'
 export { findAsset } from './namespace/asset/index.js'
 export type * from './namespace/asset/index.js'
@@ -122,18 +123,21 @@ export class SDK {
             })
         }
 
-        const defaultSynchronizerId = await getDefaultSynchronizerId(
-            ledgerProvider,
-            logger,
-            error
-        )
+        const { synchronizerId, connectedSynchronizerIds } =
+            await resolveSdkSynchronizerId(
+                ledgerProvider,
+                options.synchronizerId,
+                logger,
+                error
+            )
 
         const ctx: SDKContext = {
             ledgerProvider,
             userId: userId!,
             logger,
             error,
-            defaultSynchronizerId,
+            synchronizerId,
+            connectedSynchronizerIds,
         }
 
         const config = {} as Pick<
@@ -164,46 +168,6 @@ export class SDK {
         const error = new SDKErrorHandler(logger)
         return new OfflineInitializedSDK({ logger, error })
     }
-}
-
-async function getDefaultSynchronizerId(
-    provider: AbstractLedgerProvider,
-    logger: SDKLogger,
-    error: SDKErrorHandler
-) {
-    const connectedSynchronizers =
-        await provider.request<Ops.GetV2StateConnectedSynchronizers>({
-            method: 'ledgerApi',
-            params: {
-                resource: '/v2/state/connected-synchronizers',
-                requestMethod: 'get',
-                query: {},
-            },
-        })
-
-    const synchronizers = connectedSynchronizers.connectedSynchronizers
-    if (!synchronizers?.[0]) {
-        error.throw({
-            message: 'No connected synchronizers found',
-            type: 'NotFound',
-        })
-    }
-    // TODO #1740 this logic is a temporary workaround to make sdk work with multiple synchronizers and ensure the
-    // the choice of default synchronizer is not random. In subsequent PR we remove this logic from sdk code (and fix existing tests)
-    const defaultEntry =
-        synchronizers.find((s) => s.synchronizerAlias === 'global') ??
-        synchronizers.find((s) => s.synchronizerAlias === 'global-domain') ??
-        synchronizers.find((s) => s.synchronizerAlias !== 'app-synchronizer') ??
-        synchronizers[0]
-
-    const defaultSynchronizerId = defaultEntry.synchronizerId
-    if (synchronizers.length > 1) {
-        logger.warn(
-            `Found ${synchronizers.length} synchronizers, defaulting to ${defaultSynchronizerId}`
-        )
-    }
-
-    return defaultSynchronizerId
 }
 
 export async function getValidatorParty(

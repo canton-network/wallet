@@ -1,4 +1,5 @@
 import {
+    localNetGlobalSynchronizer,
     localNetStaticConfig,
     SDK,
     LedgerProvider,
@@ -28,6 +29,7 @@ const ledgerProvider = new LedgerProvider({
 
 const sdkOptions = {
     ledgerProvider,
+    synchronizerId: localNetGlobalSynchronizer,
     token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
 } as const

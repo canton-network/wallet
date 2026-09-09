@@ -23,7 +23,7 @@ import { getLogger } from '@logtape/logtape'
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
     postWithRetry: vi.fn(),
-    getSynchronizerId: vi.fn(),
+    resolveSynchronizerId: vi.fn(),
 }))
 
 const mockNetworkStatus = vi.hoisted(() =>
@@ -75,7 +75,7 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
             return {
                 getWithRetry: ledgerMocks.getWithRetry,
                 postWithRetry: ledgerMocks.postWithRetry,
-                getSynchronizerId: ledgerMocks.getSynchronizerId,
+                resolveSynchronizerId: ledgerMocks.resolveSynchronizerId,
             }
         }),
     }
@@ -247,7 +247,7 @@ describe('userController', () => {
         ledgerMocks.getWithRetry.mockReset()
         ledgerMocks.getWithRetry.mockResolvedValue({ rights: [] })
         ledgerMocks.postWithRetry.mockReset()
-        ledgerMocks.getSynchronizerId.mockReset()
+        ledgerMocks.resolveSynchronizerId.mockReset()
         mockNetworkStatus.mockReset()
         mockNetworkStatus.mockResolvedValue({
             isConnected: true,

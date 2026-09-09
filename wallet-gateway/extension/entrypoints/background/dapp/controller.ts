@@ -170,9 +170,9 @@ export const dappController = (
             })
             const commandId = params.commandId || crypto.randomUUID()
             const transactionId = crypto.randomUUID()
-            const synchronizerId =
-                network.synchronizerId ??
-                (await ledgerClient.getSynchronizerId())
+            const synchronizerId = await ledgerClient.resolveSynchronizerId(
+                network.synchronizerId
+            )
 
             pinoLogger.info(
                 { transactionId, commandId, actAs },

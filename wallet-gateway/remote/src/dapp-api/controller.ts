@@ -289,9 +289,9 @@ export const dappController = (
 
             notifier.emit('txChanged', { status: 'pending', commandId })
 
-            const synchronizerId =
-                network.synchronizerId ??
-                (await ledgerClient.getSynchronizerId())
+            const synchronizerId = await ledgerClient.resolveSynchronizerId(
+                network.synchronizerId
+            )
 
             logDynamically(
                 logger,
