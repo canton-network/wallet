@@ -521,20 +521,28 @@ export class LedgerClient {
         return this.valueOrError(resp)
     }
 
-    // Retrieve an (arbitrary) synchronizer id from the validator.
+    // Retrieve the default synchronizer id from the validator.
+    // Prefers a synchronizer aliased 'global' over application-specific ones.
     // This synchronizer id is cached for the remainder of this object's life.
     public async getSynchronizerId(): Promise<string> {
         if (this.synchronizerId) return this.synchronizerId
         const response = await this.getWithRetry(
             '/v2/state/connected-synchronizers'
         )
-        if (!response.connectedSynchronizers?.[0]) {
+        const synchronizers = response.connectedSynchronizers
+        if (!synchronizers?.[0]) {
             throw new Error('No connected synchronizers found')
         }
-        const synchronizerId = response.connectedSynchronizers[0].synchronizerId
-        if (response.connectedSynchronizers.length > 1) {
+        const defaultEntry =
+            synchronizers.find((s) => s.synchronizerAlias === 'global') ??
+            synchronizers.find(
+                (s) => s.synchronizerAlias !== 'app-synchronizer'
+            ) ??
+            synchronizers[0]
+        const synchronizerId = defaultEntry.synchronizerId
+        if (synchronizers.length > 1) {
             this.logger.warn(
-                `Found ${response.connectedSynchronizers.length} synchronizers, defaulting to ${synchronizerId}`
+                `Found ${synchronizers.length} synchronizers, defaulting to ${synchronizerId}`
             )
         }
         this.synchronizerId = synchronizerId
