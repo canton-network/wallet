@@ -232,7 +232,8 @@ describe('TransactionService', () => {
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
                     pendingTransaction.id,
                     expect.any(Date),
-                    undefined
+                    undefined,
+                    { expectedStatus: 'pending' }
                 )
                 expect(emit).toHaveBeenCalledWith(
                     'txChanged',
@@ -276,7 +277,8 @@ describe('TransactionService', () => {
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
                     pendingTransaction.id,
                     expect.any(Date),
-                    undefined
+                    undefined,
+                    { expectedStatus: 'pending' }
                 )
                 expect(emit).toHaveBeenCalledWith(
                     'txChanged',
@@ -432,9 +434,8 @@ describe('TransactionService', () => {
                     pendingTransaction.id
                 )
 
-                //TODO: check if it works with userId and not email for bd
                 expect(getTransaction).toHaveBeenCalledWith({
-                    userId: authContextWithEmail.userId,
+                    userId: authContextWithEmail.email,
                     txId: 'external-tx-1',
                 })
 
@@ -760,6 +761,7 @@ describe('TransactionService', () => {
                         signedWithExternal,
                         executeParams,
                         { postWithRetry } as unknown as LedgerClient,
+                        authContext,
                         network
                     )
                 ).rejects.toThrow(/INVALID_ARGUMENT/)
@@ -858,7 +860,8 @@ describe('TransactionService', () => {
                         wallet,
                         transaction,
                         executeParams,
-                        ledgerClient
+                        ledgerClient,
+                        authContext
                     )
                 ).rejects.toThrow(
                     `Cannot execute a ${status} transaction. Expected status: signed.`
@@ -887,6 +890,7 @@ describe('TransactionService', () => {
                     transaction,
                     executeParams,
                     ledgerClient,
+                    authContext,
                     network
                 )
 
@@ -945,6 +949,7 @@ describe('TransactionService', () => {
                         signedWithExternal,
                         executeParams,
                         { postWithRetry } as unknown as LedgerClient,
+                        authContext,
                         network
                     )
 

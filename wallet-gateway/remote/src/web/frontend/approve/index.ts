@@ -262,7 +262,7 @@ export class ApproveUi extends BaseElement {
                 },
             })
 
-            showToast('', 'Transaction executed successfully', 'success')
+            showToast('', 'Activity executed successfully', 'success')
             this.closeOrGoToList()
         } catch (err) {
             console.error(err)
@@ -290,7 +290,7 @@ export class ApproveUi extends BaseElement {
                 params: { transactionId: this.transactionId },
             })
 
-            showToast('', 'Transaction rejected successfully', 'success')
+            showToast('', 'Activity rejected successfully', 'success')
             this.closeOrGoToList()
         } catch (err) {
             console.error(err)
