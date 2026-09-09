@@ -17,7 +17,7 @@ import {
     SigningProvider,
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
-import type { Notifier } from '../notification/NotificationService.js'
+import type { Notifier } from './types.js'
 import { TransactionService } from './transaction-service.js'
 
 const authContext: AuthContext = {

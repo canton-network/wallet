@@ -5,10 +5,12 @@ import { Logger } from 'pino'
 import { AuthAware } from '@canton-network/core-wallet-auth'
 import { Store, Transaction, Wallet } from '@canton-network/core-wallet-store'
 import { NotificationService } from '../notification/NotificationService.js'
-import { TransactionService } from '../ledger/transaction-service.js'
-import type { SigningDrivers } from './signing-drivers.js'
 import { resolveAutomationRunContext } from './service-account-session.js'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import {
+    TransactionService,
+    HASHING_SCHEME_VERSION,
+    type SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export type { AccessTokenProviderFactory } from './service-account-session.js'
 

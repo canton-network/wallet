@@ -14,7 +14,7 @@ import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
 import { NotificationService } from '../notification/NotificationService.js'
 import { userController } from './controller.js'
 import { Methods } from './rpc-gen/index.js'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import { HASHING_SCHEME_VERSION } from '@canton-network/core-wallet-services'
 
 export const user = (
     route: string,

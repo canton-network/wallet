@@ -1686,6 +1686,31 @@ importers:
         version: 4.1.10(@types/node@25.9.4)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))
 
   core/wallet-services:
+    dependencies:
+      '@canton-network/core-signing-lib':
+        specifier: workspace:^
+        version: link:../signing-lib
+      '@canton-network/core-signing-securosys':
+        specifier: workspace:^
+        version: link:../signing-securosys
+      '@canton-network/core-wallet-auth':
+        specifier: workspace:^
+        version: link:../wallet-auth
+      '@canton-network/core-wallet-store':
+        specifier: workspace:^
+        version: link:../wallet-store
+      '@canton-network/core-wallet-user-rpc-client':
+        specifier: workspace:^
+        version: link:../wallet-user-rpc-client
+      '@logtape/logtape':
+        specifier: ^2.3.1
+        version: 2.3.1
+      pino:
+        specifier: ^10.3.1
+        version: 10.3.1
+      uuid:
+        specifier: ^14.0.2
+        version: 14.0.2
     devDependencies:
       '@vitest/browser-playwright':
         specifier: ^4.1.10
@@ -1693,6 +1718,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.10
         version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
+      pino-test:
+        specifier: ^1.1.0
+        version: 1.1.0
       playwright:
         specifier: 1.58.2
         version: 1.58.2
@@ -2774,6 +2802,9 @@ importers:
       '@canton-network/core-wallet-dapp-rpc-client':
         specifier: workspace:^
         version: link:../../core/wallet-dapp-rpc-client
+      '@canton-network/core-wallet-services':
+        specifier: workspace:*
+        version: link:../../core/wallet-services
       '@canton-network/core-wallet-store':
         specifier: workspace:^
         version: link:../../core/wallet-store
@@ -3517,6 +3548,9 @@ packages:
   '@canton-network/core-ledger-proto@1.9.0':
     resolution: {integrity: sha512-9AsDgfpJYtydjVnfzemvZzRmxaogNcPTPnpwJRk2fHJJ/Eopsz+kYJbrPYhuXS2yLHBPRxn0za9JfazWiO2MxQ==}
 
+  '@canton-network/core-rpc-errors@1.10.0':
+    resolution: {integrity: sha512-u1Jn3iIqijM5uzvq9oMSSP4ZQbfL8DDlm7vaShyEzzIFk3X0AwIkQKXQgA24JW1TjvWB/KrAw0YNrScGdaDj7g==}
+
   '@canton-network/core-rpc-errors@1.9.0':
     resolution: {integrity: sha512-u7cbt/opgHnvCRRTG3xe+PrskYtdVxDcnJOWYK6h8uQ6QdzlhwYMEe/UGMRcqMyuNnuEqwgkzPR4wCsXaxN6OA==}
 
@@ -3532,8 +3566,14 @@ packages:
   '@canton-network/core-types@1.10.0':
     resolution: {integrity: sha512-MFP0iY8REKtq4kM85Uxuq80V3KZ6BncXw8kGfcD0Q4rroheZ+fXCY7Tbzz5Zohd/Jv4ztJsC7UGxMKijcmp4IA==}
 
+  '@canton-network/core-types@1.11.0':
+    resolution: {integrity: sha512-2iE0tbZc5e7Hnc8SDcxUGQ2fcnBHCUR3JGWEcerI+i2rU5MtcDpbbWrgMOc6sEMAG+hc5PchHKSHU/awuywvWw==}
+
   '@canton-network/core-wallet-auth@1.10.0':
     resolution: {integrity: sha512-nHalOp7ucrsCdB893GL6iydP4fTDUxaUo0txnDWWRw50c8u3pALetTGD6SG89W/b/U1xsa1uxelGMpLiUSd2Ew==}
+
+  '@canton-network/core-wallet-auth@1.11.0':
+    resolution: {integrity: sha512-5Cj7onjP38J0JtIw1IedtvNwtMfQtb5pNEVGc4ZE0YcfxVLyj65FZ4u05/Ylq/d45RH25WLM6VSD5Xnit14QYQ==}
 
   '@cbor-extract/cbor-extract-darwin-arm64@2.2.2':
     resolution: {integrity: sha512-ZKZ/F8US7JR92J4DMct6cLW/Y66o2K576+zjlEN/MevH70bFIsB10wkZEQPLzl2oNh2SMGy55xpJ9JoBRl5DOA==}
@@ -11279,6 +11319,10 @@ packages:
     resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
+  uuid@14.0.2:
+    resolution: {integrity: sha512-xZe/16rV4aa+HGSOCiY2YeLT1OybRLrrkL/Rqaq7p7GMVXjFh+6wN4oMYgjFmnSnhY8t6Xpdl2l9qmnHYuMHwQ==}
+    hasBin: true
+
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
@@ -12486,7 +12530,7 @@ snapshots:
 
   '@canton-network/core-ledger-client-types@1.10.0':
     dependencies:
-      '@canton-network/core-types': 1.10.0
+      '@canton-network/core-types': 1.11.0
       bignumber.js: 10.0.2
       dayjs: 1.11.21
       openapi-fetch: 0.17.0
@@ -12513,6 +12557,12 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
+  '@canton-network/core-rpc-errors@1.10.0(supports-color@10.2.2)':
+    dependencies:
+      '@metamask/rpc-errors': 7.0.3(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
   '@canton-network/core-rpc-errors@1.9.0(supports-color@10.2.2)':
     dependencies:
       '@metamask/rpc-errors': 7.0.3(supports-color@10.2.2)
@@ -12526,8 +12576,8 @@ snapshots:
 
   '@canton-network/core-splice-client@1.10.0(supports-color@10.2.2)':
     dependencies:
-      '@canton-network/core-types': 1.10.0
-      '@canton-network/core-wallet-auth': 1.10.0(supports-color@10.2.2)
+      '@canton-network/core-types': 1.11.0
+      '@canton-network/core-wallet-auth': 1.11.0(supports-color@10.2.2)
       openapi-fetch: 0.17.0
       uuid: 14.0.1
       zod: 4.4.3
@@ -12536,8 +12586,8 @@ snapshots:
 
   '@canton-network/core-token-standard@1.10.0(supports-color@10.2.2)':
     dependencies:
-      '@canton-network/core-types': 1.10.0
-      '@canton-network/core-wallet-auth': 1.10.0(supports-color@10.2.2)
+      '@canton-network/core-types': 1.11.0
+      '@canton-network/core-wallet-auth': 1.11.0(supports-color@10.2.2)
       '@daml/types': 3.5.2
       '@mojotech/json-type-validation': 3.1.0
       lodash: 4.18.1
@@ -12553,10 +12603,25 @@ snapshots:
       uuid: 14.0.1
       zod: 4.4.3
 
+  '@canton-network/core-types@1.11.0':
+    dependencies:
+      '@daml/types': 3.5.2
+      uuid: 14.0.2
+      zod: 4.4.3
+
   '@canton-network/core-wallet-auth@1.10.0(supports-color@10.2.2)':
     dependencies:
       '@canton-network/core-rpc-errors': 1.9.0(supports-color@10.2.2)
-      '@canton-network/core-types': 1.10.0
+      '@canton-network/core-types': 1.11.0
+      jose: 5.10.0
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
+
+  '@canton-network/core-wallet-auth@1.11.0(supports-color@10.2.2)':
+    dependencies:
+      '@canton-network/core-rpc-errors': 1.10.0(supports-color@10.2.2)
+      '@canton-network/core-types': 1.11.0
       jose: 5.10.0
       zod: 4.4.3
     transitivePeerDependencies:
@@ -21471,6 +21536,8 @@ snapshots:
   uuid@10.0.0: {}
 
   uuid@14.0.1: {}
+
+  uuid@14.0.2: {}
 
   uuid@8.3.2: {}
 

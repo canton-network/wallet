@@ -62,13 +62,11 @@ import {
 } from '@canton-network/core-wallet-auth'
 import { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import { logDynamically, networkStatus } from '../utils.js'
+import { networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
-import { TransactionService } from '../ledger/transaction-service.js'
 import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
     MessageSignatureEvent,
@@ -77,7 +75,12 @@ import type {
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import {
+    TransactionService,
+    logDynamically,
+    HASHING_SCHEME_VERSION,
+    type SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export const userController = (
     kernelInfo: KernelInfo,

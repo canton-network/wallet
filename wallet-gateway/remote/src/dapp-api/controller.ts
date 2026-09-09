@@ -32,13 +32,17 @@ import { v4 } from 'uuid'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
-import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
+import { networkStatus } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
-import { TransactionService } from '../ledger/transaction-service.js'
 
-import { SigningDrivers } from '../signing/signing-drivers.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import {
+    TransactionService,
+    ledgerPrepareParams,
+    logDynamically,
+    HASHING_SCHEME_VERSION,
+    SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers

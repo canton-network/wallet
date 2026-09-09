@@ -9,7 +9,6 @@ import {
     Wallet,
     Network,
 } from '@canton-network/core-wallet-store'
-import type { SignResult } from '../user-api/rpc-gen/typings.js'
 import {
     Error as SigningError,
     GetTransactionResult,
@@ -18,25 +17,28 @@ import {
     Methods as SigningController,
     SignTransactionParams,
 } from '@canton-network/core-signing-lib'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
+import {
+    type SigningDrivers,
+    Notifier,
+    HASHING_SCHEME_VERSION,
+} from './types.js'
 import {
     ExecuteParams,
     ExecuteResult,
     SignParams,
-} from '../user-api/rpc-gen/typings.js'
-import { UserId } from '../dapp-api/rpc-gen/typings.js'
-import { Notifier } from '../notification/NotificationService.js'
+    type SignResult,
+} from '@canton-network/core-wallet-user-rpc-client'
+import { UserId } from '@canton-network/core-wallet-dapp-rpc-client'
 import {
     ledgerPrepareParams,
     logDynamically,
     type PrepareParams,
-} from '../utils.js'
+} from './utils.js'
 import {
     AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
-import { HASHING_SCHEME_VERSION } from '../env.js'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -191,7 +193,7 @@ export class TransactionService {
                     network
                 )
             } catch (error) {
-                this.logger.error(error, 'Failed to submit transaction')
+                this.logger.error({ error }, 'Failed to submit transaction')
                 throw error
             }
         }
