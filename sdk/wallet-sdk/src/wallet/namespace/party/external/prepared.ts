@@ -4,6 +4,7 @@
 import { GenerateTransactionResponse } from './types.js'
 import {
     PrivateKey,
+    PublicKey,
     signTransactionHash,
 } from '@canton-network/core-signing-lib'
 import { SDKContext } from '../../../sdk.js'
@@ -18,7 +19,8 @@ export class PreparedPartyCreationService {
     constructor(
         private readonly ctx: SDKContext,
         private readonly partyCreationPromise: Promise<GenerateTransactionResponse>,
-        private readonly createPartyOptions?: CreatePartyOptions
+        private readonly createPartyOptions?: CreatePartyOptions,
+        private readonly publicKey?: PublicKey
     ) {}
 
     /**
@@ -40,7 +42,9 @@ export class PreparedPartyCreationService {
         return new SignedPartyCreationService(
             this.ctx,
             signedPartyPromise,
-            this.createPartyOptions
+            this.createPartyOptions,
+            this.publicKey,
+            privateKey
         )
     }
 
