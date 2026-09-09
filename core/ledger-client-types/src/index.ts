@@ -60,9 +60,13 @@ export type LedgerCommonPaths = Common<
 
 export type AsyncChannelsByVersion = {
     '3.5': typeof asyncapi_v3_5.CHANNELS
+    '3.6': typeof asyncapi_v3_6.CHANNELS
 }
 
-export type AsyncCommonChannels = AsyncChannelsByVersion['3.5']
+export type AsyncCommonChannels = Common<
+    AsyncChannelsByVersion['3.5'],
+    AsyncChannelsByVersion['3.6']
+>
 
 export type LedgerTypes = V3_5_provider.LedgerTypes
 export * as Provider from './generated-clients/openapi-3.5.10-provider-types.js'
