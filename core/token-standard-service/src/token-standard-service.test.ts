@@ -1377,15 +1377,25 @@ describe('Token standard service', () => {
 
     it('transaction by id', async () => {
         const { service, provider } = makeService()
-        provider.request.mockResolvedValue({ transaction: {} })
+        provider.request.mockResolvedValue({
+            update: { Transaction: { value: {} } },
+        })
         vi.spyOn(service.core, 'toPrettyTransaction').mockResolvedValue({
             id: 'tx-1',
         } as any)
 
         await service.getTransactionById('update-abc', senderParty)
         const [call] = provider.request.mock.calls
-        expect(call[0].params.resource).toBe('/v2/updates/transaction-by-id')
+        expect(call[0].params.resource).toBe('/v2/updates/update-by-id')
         expect(call[0].params.requestMethod).toBe('post')
+        expect(call[0].params.body).toMatchObject({
+            updateId: 'update-abc',
+            updateFormat: {
+                includeTransactions: {
+                    transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+                },
+            },
+        })
     })
 
     it('to pretty transactions process transaction updates', async () => {

@@ -56,10 +56,10 @@ type JsGetActiveContractsResponse =
     LedgerCommonSchemas['JsGetActiveContractsResponse']
 type JsGetUpdatesResponse =
     Ops.PostV2UpdatesFlats['ledgerApi']['result'][number]
-type JsGetTransactionResponse = LedgerCommonSchemas['JsGetTransactionResponse']
+type JsGetUpdateResponse = LedgerCommonSchemas['JsGetUpdateResponse']
 type OffsetCheckpoint2 = LedgerCommonSchemas['OffsetCheckpoint2']
 type JsTransaction = LedgerCommonSchemas['JsTransaction']
-type TransactionFormat = LedgerCommonSchemas['TransactionFormat']
+type UpdateFormat = LedgerCommonSchemas['UpdateFormat']
 
 type JsActiveContract = LedgerCommonSchemas['JsActiveContract']
 
@@ -378,10 +378,10 @@ export class CoreService {
     }
 
     async toPrettyTransaction(
-        getTransactionResponse: JsGetTransactionResponse,
+        getUpdateResponse: JsGetUpdateResponse,
         partyId: PartyId
     ): Promise<Transaction> {
-        const tx = getTransactionResponse.transaction
+        const tx = this.getTransactionFromUpdate(getUpdateResponse)
         const parser = new TransactionParser(
             this.ledgerProvider,
             tx,
@@ -393,10 +393,10 @@ export class CoreService {
     }
 
     async toPrettyTransferObjects(
-        getTransactionResponse: JsGetTransactionResponse,
+        getUpdateResponse: JsGetUpdateResponse,
         partyId: PartyId
     ): Promise<TransferObject[]> {
-        const tx = getTransactionResponse.transaction
+        const tx = this.getTransactionFromUpdate(getUpdateResponse)
         const parser = new TransactionParser(
             this.ledgerProvider,
             tx,
@@ -404,6 +404,16 @@ export class CoreService {
             this.isMasterUser
         )
         return await parser.parseTransferObjects()
+    }
+
+    private getTransactionFromUpdate(
+        getUpdateResponse: JsGetUpdateResponse
+    ): JsTransaction {
+        const update = getUpdateResponse.update
+        if (!update || !('Transaction' in update)) {
+            throw new Error('Expected transaction update')
+        }
+        return update.Transaction.value
     }
 
     async toPrettyTransactionsPerParty(
@@ -1544,67 +1554,64 @@ export class TokenStandardService {
         updateId: string,
         partyId: PartyId
     ): Promise<Transaction> {
-        const transactionFormat: TransactionFormat = {
-            eventFormat: EventFilterBySetup({
-                interfaceIds: TokenStandardTransactionInterfaces,
-                isMasterUser: this.isMasterUser,
-                partyId: partyId,
-                includeWildcard: true,
-            }),
-            transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+        const updateFormat: UpdateFormat = {
+            includeTransactions: {
+                eventFormat: EventFilterBySetup({
+                    interfaceIds: TokenStandardTransactionInterfaces,
+                    isMasterUser: this.isMasterUser,
+                    partyId: partyId,
+                    includeWildcard: true,
+                }),
+                transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+            },
         }
 
-        const getTransactionResponse =
-            await this.ledgerProvider.request<Ops.PostV2UpdatesTransactionById>(
-                {
-                    method: 'ledgerApi',
-                    params: {
-                        resource: '/v2/updates/transaction-by-id',
-                        requestMethod: 'post',
-                        body: {
-                            updateId,
-                            transactionFormat,
-                        } as Ops.PostV2UpdatesTransactionById['ledgerApi']['params']['body'],
+        const getUpdateResponse =
+            await this.ledgerProvider.request<Ops.PostV2UpdatesUpdateById>({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/updates/update-by-id',
+                    requestMethod: 'post',
+                    body: {
+                        updateId,
+                        updateFormat,
                     },
-                }
-            )
+                },
+            })
 
-        return this.core.toPrettyTransaction(getTransactionResponse, partyId)
+        return this.core.toPrettyTransaction(getUpdateResponse, partyId)
     }
 
     async getTransferObjectsById(
         updateId: string,
         partyId: PartyId
     ): Promise<TransferObject[]> {
-        const transactionFormat: TransactionFormat = {
-            eventFormat: EventFilterBySetup({
-                interfaceIds: TokenStandardTransactionInterfaces,
-                isMasterUser: this.isMasterUser,
-                partyId: partyId,
-                includeWildcard: true,
-            }),
-            transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+        const updateFormat: UpdateFormat = {
+            includeTransactions: {
+                eventFormat: EventFilterBySetup({
+                    interfaceIds: TokenStandardTransactionInterfaces,
+                    isMasterUser: this.isMasterUser,
+                    partyId: partyId,
+                    includeWildcard: true,
+                }),
+                transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+            },
         }
 
-        const getTransactionResponse =
-            await this.ledgerProvider.request<Ops.PostV2UpdatesTransactionById>(
-                {
-                    method: 'ledgerApi',
-                    params: {
-                        resource: '/v2/updates/transaction-by-id',
-                        requestMethod: 'post',
-                        body: {
-                            updateId,
-                            transactionFormat,
-                        } as Ops.PostV2UpdatesTransactionById['ledgerApi']['params']['body'],
+        const getUpdateResponse =
+            await this.ledgerProvider.request<Ops.PostV2UpdatesUpdateById>({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/updates/update-by-id',
+                    requestMethod: 'post',
+                    body: {
+                        updateId,
+                        updateFormat,
                     },
-                }
-            )
+                },
+            })
 
-        return this.core.toPrettyTransferObjects(
-            getTransactionResponse,
-            partyId
-        )
+        return this.core.toPrettyTransferObjects(getUpdateResponse, partyId)
     }
 
     async getInputHoldingsCids(

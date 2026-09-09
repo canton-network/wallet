@@ -58,33 +58,36 @@ export function LedgerSubmission(props: {
     async function getByUpdateId(updateId: string) {
         const response = await sdk.ledgerApi({
             requestMethod: 'post',
-            resource: `/v2/updates/transaction-by-id`,
+            resource: `/v2/updates/update-by-id`,
             body: {
                 updateId,
-                transactionFormat: {
-                    eventFormat: {
-                        filtersByParty: {
-                            [props.primaryParty!]: {
-                                cumulative: [
-                                    {
-                                        identifierFilter: {
-                                            TemplateFilter: {
-                                                value: {
-                                                    templateId:
-                                                        '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
-                                                    includeInterfaceView: true,
-                                                    includeCreatedEventBlob: true,
+                updateFormat: {
+                    includeTransactions: {
+                        eventFormat: {
+                            filtersByParty: {
+                                [props.primaryParty!]: {
+                                    cumulative: [
+                                        {
+                                            identifierFilter: {
+                                                TemplateFilter: {
+                                                    value: {
+                                                        templateId:
+                                                            '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
+                                                        includeInterfaceView:
+                                                            true,
+                                                        includeCreatedEventBlob:
+                                                            true,
+                                                    },
                                                 },
                                             },
                                         },
-                                    },
-                                ],
+                                    ],
+                                },
                             },
+                            verbose: false,
                         },
-                        verbose: false,
+                        transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
                     },
-                    verbose: false,
-                    transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
                 },
             },
         })
@@ -97,8 +100,12 @@ export function LedgerSubmission(props: {
         setLoading(true)
 
         const responseByUpdateId = await getByUpdateId(updateId)
+        const update = responseByUpdateId.update
+        if (!update || !('Transaction' in update)) {
+            throw new Error('Expected transaction update')
+        }
         const contractId =
-            responseByUpdateId.transaction.events[0].CreatedEvent.contractId
+            update.Transaction.value.events[0].CreatedEvent.contractId
         sdk.prepareExecute(exercisePongCommand(contractId))
             .then(() => {
                 setLoading(false)
