@@ -1,6 +1,10 @@
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { HoldingView } from '@canton-network/core-token-standard'
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import {
+    localNetGlobalSynchronizer,
+    localNetStaticConfig,
+    SDK,
+} from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import {
     TOKEN_NAMESPACE_CONFIG,
@@ -13,6 +17,7 @@ const logger = pino({ name: 'v1-05-preapproval', level: 'info' })
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+    synchronizerId: localNetGlobalSynchronizer,
     token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
 })
