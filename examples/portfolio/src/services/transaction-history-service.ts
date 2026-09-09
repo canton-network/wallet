@@ -14,7 +14,7 @@ import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 
 type FiltersByParty = LedgerCommonSchemas['Map_Filters']
 
-type Update = Ops.PostV2UpdatesFlats['ledgerApi']['result'][number]
+type Update = Ops.PostV2Updates['ledgerApi']['result'][number]
 type JsTransaction = LedgerCommonSchemas['JsTransaction']
 
 const updateOffset = (update: Update): number => {
@@ -49,18 +49,17 @@ const paginateUpdates = async function* ({
     const limit = 32 // just to test
     let more = true
     while (more) {
-        const updates = await provider.request<Ops.PostV2UpdatesFlats>({
+        const updates = await provider.request<Ops.PostV2Updates>({
             method: 'ledgerApi',
             params: {
-                resource: '/v2/updates/flats',
+                resource: '/v2/updates',
                 requestMethod: 'post',
                 body: {
                     beginExclusive,
-                    verbose: false, // deprecated in 3.4
                     updateFormat: {
                         includeTransactions: {
                             transactionShape:
-                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+                                'TRANSACTION_SHAPE_ACS_DELTA',
                             eventFormat: {
                                 verbose: false,
                                 filtersByParty,

@@ -54,8 +54,7 @@ const EMPTY_META: Metadata = { values: {} }
 
 type JsGetActiveContractsResponse =
     LedgerCommonSchemas['JsGetActiveContractsResponse']
-type JsGetUpdatesResponse =
-    Ops.PostV2UpdatesFlats['ledgerApi']['result'][number]
+type JsGetUpdatesResponse = Ops.PostV2Updates['ledgerApi']['result'][number]
 type JsGetUpdateResponse = LedgerCommonSchemas['JsGetUpdateResponse']
 type OffsetCheckpoint2 = LedgerCommonSchemas['OffsetCheckpoint2']
 type JsTransaction = LedgerCommonSchemas['JsTransaction']
@@ -1512,10 +1511,10 @@ export class TokenStandardService {
 
             this.logger.debug(afterOffsetOrLatest, 'Using offset')
             const updatesResponse: JsGetUpdatesResponse[] =
-                await this.ledgerProvider.request<Ops.PostV2UpdatesFlats>({
+                await this.ledgerProvider.request<Ops.PostV2Updates>({
                     method: 'ledgerApi',
                     params: {
-                        resource: '/v2/updates/flats',
+                        resource: '/v2/updates',
                         requestMethod: 'post',
                         query: {},
                         body: {
@@ -1529,13 +1528,12 @@ export class TokenStandardService {
                                         includeWildcard: true,
                                     }),
                                     transactionShape:
-                                        'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+                                        'TRANSACTION_SHAPE_ACS_DELTA',
                                 },
                             },
                             beginExclusive: afterOffsetOrLatest,
                             endInclusive: beforeOffsetOrLatest,
-                            verbose: false,
-                        } as unknown as Ops.PostV2UpdatesFlats['ledgerApi']['params']['body'],
+                        },
                     },
                 })
 

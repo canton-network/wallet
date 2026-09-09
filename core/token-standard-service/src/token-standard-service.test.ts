@@ -1254,7 +1254,7 @@ describe('Token standard service', () => {
             },
             { resource: '/v2/state/ledger-end', requestMethod: 'get' },
             {
-                resource: '/v2/updates/flats',
+                resource: '/v2/updates',
                 requestMethod: 'post',
                 query: {},
                 body: {
@@ -1363,13 +1363,11 @@ describe('Token standard service', () => {
                                 },
                                 verbose: false,
                             },
-                            transactionShape:
-                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+                            transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
                         },
                     },
                     beginExclusive: 5,
                     endInclusive: 100,
-                    verbose: false,
                 },
             },
         ])
