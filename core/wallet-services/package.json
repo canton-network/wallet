@@ -1,0 +1,51 @@
+{
+    "name": "@canton-network/core-wallet-services",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Services needed to implement a Wallet.",
+    "license": "Apache-2.0",
+    "author": "Alex Matson <alex.matson@example.com>",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "test": "vitest run --project node --project browser --passWithNoTests",
+        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@vitest/browser-playwright": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.10",
+        "playwright": "^1.61.1",
+        "tsdown": "^0.22.9",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.10"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-services"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-services#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
