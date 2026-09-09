@@ -798,6 +798,7 @@ export const userController = (
                 transaction,
                 executeParams,
                 ledgerClient,
+                connectedContext,
                 network
             )
 
