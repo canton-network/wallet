@@ -98,10 +98,16 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 // TODO: validate transaction here
 
                 try {
+                    const hexKeyIdentifier = params.keyIdentifier.publicKey
+                        ? {
+                              publicKey: toHex(params.keyIdentifier.publicKey),
+                          }
+                        : params.keyIdentifier
+
                     const tx = await this.fireblocks.signTransaction(
                         userId,
                         toHex(params.txHash),
-                        params.keyIdentifier,
+                        hexKeyIdentifier,
                         params.internalTxId
                     )
 
