@@ -3,8 +3,9 @@
 
 import { AllKnownMetaKeys, matchInterfaceIds } from './constants.js'
 
-import { Holding, TransferInstructionView } from './types.js'
+import { TransferInstructionView } from './types.js'
 import {
+    HoldingView,
     HOLDING_INTERFACE_ID,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
     Metadata,
@@ -34,7 +35,7 @@ export function getInterfaceView(
 }
 
 export type KnownInterfaceView =
-    | { type: 'Holding'; viewValue: Holding }
+    | { type: 'Holding'; viewValue: HoldingView }
     | { type: 'TransferInstruction'; viewValue: TransferInstructionView }
 
 export function getKnownInterfaceView(
@@ -48,7 +49,7 @@ export function getKnownInterfaceView(
     ) {
         return {
             type: 'Holding',
-            viewValue: interfaceView.viewValue as Holding,
+            viewValue: interfaceView.viewValue as HoldingView,
         }
     } else if (
         matchInterfaceIds(

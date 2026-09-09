@@ -3,7 +3,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Metadata } from '@canton-network/core-token-standard'
+import { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined
@@ -46,22 +46,10 @@ export interface TokenStandardEvent {
     transferInstruction: TransferInstructionView | null
 }
 
-// Same definition as HoldingView in Daml
-export interface Holding {
-    contractId: string
-    owner: string
-    instrumentId: { admin: string; id: string }
-    amount: string
-    lock: HoldingLock | null
-    meta: any
-}
+export type Holding = HoldingView & { contractId: string }
 
-export interface HoldingLock {
-    holders: string[]
-    expiresAt?: string
-    expiresAfter?: string
-    context?: string
-}
+/** @deprecated use Lock from @canton-network/core-token-standard directly */
+export type HoldingLock = Required<Holding['lock']>
 
 export interface HoldingsChange {
     creates: Holding[]

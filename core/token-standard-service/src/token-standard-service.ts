@@ -34,7 +34,6 @@ import {
     PrettyContract,
     renderTransaction,
     ViewValue,
-    Holding as TxParseHolding,
     PrettyTransactions,
     Transaction,
     TransferObject,
@@ -1723,7 +1722,7 @@ export class TokenStandardService {
     }
 
     static isHoldingLocked(
-        holding: Holding | TxParseHolding,
+        holding: HoldingView,
         currentTime: Date = new Date()
     ): boolean {
         const lock = holding.lock
