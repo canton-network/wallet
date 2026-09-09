@@ -48,6 +48,8 @@ import {
     GetWalletResult,
     ListSigningProviderKeysParams,
     ListSigningProviderKeysResult,
+    GetTransactionStatusParams,
+    GetTransactionStatusResult,
 } from './rpc-gen/typings.js'
 import { Store, Network } from '@canton-network/core-wallet-store'
 import { Logger } from 'pino'
@@ -496,7 +498,9 @@ export const userController = (
             const wallet = wallets.find((w) => w.partyId === signParams.partyId)
 
             if (wallet === undefined) {
-                throw new Error('No primary wallet found')
+                throw new Error(
+                    `No wallet found for partyId ${signParams.partyId}`
+                )
             }
 
             const connectedContext = assertConnected(authContext)
@@ -1167,7 +1171,10 @@ export const userController = (
                     `Transaction not found with id: ${params.transactionId}`
                 )
             }
-            if (transaction.status !== 'pending') {
+            if (
+                transaction.status !== 'pending' &&
+                transaction.status !== 'awaiting-signature'
+            ) {
                 throw new Error(
                     `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
                 )
@@ -1301,6 +1308,66 @@ export const userController = (
             params: GetWalletParams
         ): Promise<GetWalletResult> => {
             return await store.getWallet(params.partyId)
+        },
+        getTransactionStatus: async (
+            params: GetTransactionStatusParams
+        ): Promise<GetTransactionStatusResult> => {
+            const tx = await store.getTransaction(params.transactionId)
+            if (!tx)
+                throw new Error(
+                    `Transaction with txId: ${params.transactionId} not found in store`
+                )
+
+            //no externalTxId means nothing sent to signing provider, so no need to poll
+            if (!tx.externalTxId || tx.status !== 'awaiting-signature') {
+                return {
+                    status: tx.status,
+                    ...(tx.externalTxId && { externalTxId: tx.externalTxId }),
+                    ...(tx.failureReason && {
+                        failureReason: tx.failureReason,
+                    }),
+                }
+            }
+
+            const wallet = params.partyId
+                ? (await store.getWallets()).find(
+                      (x) => x.partyId === params.partyId
+                  )
+                : await store.getPrimaryWallet()
+
+            if (!wallet) {
+                throw new Error(
+                    params.partyId
+                        ? `No wallet found for partyId: ${params.partyId}`
+                        : `No primary wallet found`
+                )
+            }
+
+            const connectedContext = assertConnected(authContext)
+            const session = await store.getSession(connectedContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
+
+            const transactionService = new TransactionService(
+                store,
+                logger,
+                drivers,
+                notifier,
+                hashingSchemeVersion
+            )
+
+            const result = await transactionService.refreshTransaction(
+                connectedContext,
+                wallet,
+                tx.id
+            )
+            logDynamically(logger, `refreshed transaction status`, {
+                info: { transactionId: tx.id, status: result.status },
+                debug: { result },
+            })
+            return result
         },
     })
 }

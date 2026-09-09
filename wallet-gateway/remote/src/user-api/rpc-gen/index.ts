@@ -26,6 +26,7 @@ import type { AddSession } from './typings.js'
 import type { RemoveSession } from './typings.js'
 import type { ListSessions } from './typings.js'
 import type { GetTransaction } from './typings.js'
+import type { GetTransactionStatus } from './typings.js'
 import type { ListTransactions } from './typings.js'
 import type { DeleteTransaction } from './typings.js'
 import type { GetUser } from './typings.js'
@@ -62,6 +63,7 @@ export type Methods = {
     removeSession: RemoveSession
     listSessions: ListSessions
     getTransaction: GetTransaction
+    getTransactionStatus: GetTransactionStatus
     listTransactions: ListTransactions
     deleteTransaction: DeleteTransaction
     getUser: GetUser
@@ -100,6 +102,7 @@ function buildController(methods: Methods) {
         removeSession: methods.removeSession,
         listSessions: methods.listSessions,
         getTransaction: methods.getTransaction,
+        getTransactionStatus: methods.getTransactionStatus,
         listTransactions: methods.listTransactions,
         deleteTransaction: methods.deleteTransaction,
         getUser: methods.getUser,
