@@ -1,13 +1,12 @@
 import pino from 'pino'
-import {
-    localNetGlobalSynchronizer,
-    localNetStaticConfig,
-    SDK,
-} from '@canton-network/wallet-sdk'
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
-import { TOKEN_PROVIDER_CONFIG_DEFAULT } from './index.js'
+import {
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+    localNetGlobalSynchronizer,
+} from './index.js'
 
 /*
 This script is so that the CI can run all the scripts in parallel

@@ -1,5 +1,4 @@
 import {
-    localNetGlobalSynchronizer,
     localNetStaticConfig,
     SDK,
     signTransactionHash,
@@ -10,6 +9,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    localNetGlobalSynchronizer,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-01-ping-localnet', level: 'info' })
