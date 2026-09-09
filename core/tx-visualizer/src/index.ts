@@ -237,6 +237,12 @@ function extractChoiceIdAndAmount(obj: any) {
                 ),
                 'amount'
             )
+        ) ??
+        getNumericValue(
+            getFieldValue(
+                getFieldValue(exercise?.chosenValue, 'mint'),
+                'amount'
+            )
         )
     const createAmount =
         getNumericValue(getFieldValue(create?.argument, 'amount')) ??
