@@ -48,9 +48,6 @@ export interface TokenStandardEvent {
 
 export type Holding = HoldingView & { contractId: string }
 
-/** @deprecated use Lock from @canton-network/core-token-standard directly */
-export type HoldingLock = Required<Holding['lock']>
-
 export interface HoldingsChange {
     creates: Holding[]
     archives: Holding[]
