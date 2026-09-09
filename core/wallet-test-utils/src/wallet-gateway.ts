@@ -408,15 +408,19 @@ export class WalletGateway {
             await opts?.review?.(popupPage)
             await approveButton.click()
 
-            //TODO: maybe change this to confirm that it's in awaiting-signature state
-            // if (opts?.isExternalSigning) {
-            //     await expect(
-            //         popupPage.getByText(
-            //             'Complete signing in your external provider'
-            //         ),
-            //         'approving should show message guiding user to sign in the external signing provider'
-            //     ).toBeVisible()
-            // }
+            if (opts?.isExternalSigning) {
+                //TODO: race condition where the poll already updated to signed. figure out a better assertion
+                // await this.expectActivityWithStatus(
+                //     commandId,
+                //     'awaiting-signature'
+                // )
+
+                await expect(
+                    popupPage.getByRole('button', { name: 'Approve' }),
+                    'the popup should stay open while the provider signs'
+                ).toBeVisible()
+                return { commandId }
+            }
 
             if (opts?.waitForClose !== false) {
                 await this.waitForPopupToCloseAfterAction(popupPage)
