@@ -23,7 +23,7 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import './listeners'
+import { originManager } from './origin'
 import { fetchDappApiUrl, showToast } from './utils'
 
 const globalPageResetStyle = document.createElement('style')
@@ -35,6 +35,7 @@ globalPageResetStyle.textContent = `
         min-height: 100%;
     }
 `
+
 document.head.appendChild(globalPageResetStyle)
 
 export const redirectToIntendedOrDefault = async (): Promise<void> => {
@@ -114,10 +115,9 @@ export class UserApp extends LitElement {
         await stateManager.clearAuthState(currentOrigin)
 
         if (window.opener && !window.opener.closed) {
-            window.opener.postMessage(
-                { type: WalletEvent.SPLICE_WALLET_LOGOUT },
-                '*'
-            )
+            originManager.postMessage({
+                type: WalletEvent.SPLICE_WALLET_LOGOUT,
+            })
             // close the gateway UI automatically if we are within a popup
             window.close()
         } else {
@@ -202,14 +202,11 @@ const getSessionId = async (token: string): Promise<string | undefined> => {
 
 export const shareConnection = (token: string, sessionId: string) => {
     if (window.opener && !window.opener.closed) {
-        window.opener.postMessage(
-            {
-                type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
-                token,
-                sessionId,
-            },
-            '*'
-        )
+        originManager.postMessage({
+            type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
+            token,
+            sessionId,
+        })
     }
 }
 

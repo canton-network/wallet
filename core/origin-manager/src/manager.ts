@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { OriginHandshake, OriginHandshakeMessage } from './types'
+import { SpliceMessageHandshake, WalletEvent } from '@canton-network/core-types'
 
 type OriginManagerConstructor = {
     readonly userHandshakeCallback?: (event: MessageEvent) => void
@@ -9,7 +9,7 @@ type OriginManagerConstructor = {
 
 abstract class OriginManager {
     protected allowedOrigins: Set<Location['origin']> = new Set()
-    protected abstract readonly messageToReceive: OriginHandshakeMessage
+    protected abstract readonly messageToReceive: WalletEvent
     protected abstract readonly classHandshakeCallback: (
         event: MessageEvent
     ) => void
@@ -23,9 +23,9 @@ abstract class OriginManager {
      */
     protected get messageToSend() {
         return this.messageToReceive ===
-            OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
-            ? OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
-            : OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+            WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+            ? WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+            : WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
     }
 
     /**
@@ -33,11 +33,11 @@ abstract class OriginManager {
      */
     protected listenerFactory =
         (callback: (event: MessageEvent) => void) => (event: MessageEvent) => {
-            const parsedData = OriginHandshake.safeParse(event.data)
+            const parsedData = SpliceMessageHandshake.safeParse(event.data)
             if (
                 !parsedData.success ||
                 event.origin !== parsedData.data.origin ||
-                parsedData.data.message !== this.messageToReceive
+                parsedData.data.type !== this.messageToReceive
             )
                 return
             callback(event)
@@ -61,7 +61,7 @@ abstract class OriginManager {
     }) {
         ;(options?.window ?? window).postMessage(
             {
-                message: this.messageToSend,
+                type: this.messageToSend,
                 origin: window.location.origin,
             },
             options.origin
@@ -104,7 +104,7 @@ abstract class OriginManager {
 
 export class ParentWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
@@ -155,16 +155,17 @@ export class ParentWindowOriginManager extends OriginManager {
 
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+
+    private parentWindow: Window
 
     constructor(
         private readonly childOptions: {
-            parentWindow: Window
-        } & OriginManagerConstructor = {
-            parentWindow: window.opener,
-        }
+            parentWindow?: Window
+        } & OriginManagerConstructor
     ) {
         super(childOptions)
+        this.parentWindow = childOptions.parentWindow ?? window.opener
     }
 
     /**
@@ -172,7 +173,7 @@ export class ChildWindowOriginManager extends OriginManager {
      */
     protected readonly classHandshakeCallback = (event: MessageEvent) => {
         this.handshake({
-            window: this.childOptions.parentWindow,
+            window: this.parentWindow,
             origin: event.origin,
         })
         this.removeListener()
@@ -182,10 +183,10 @@ export class ChildWindowOriginManager extends OriginManager {
      * Sends a message to the parent window if it exists.
      */
     public readonly postMessage = (message: unknown) => {
-        if (!this.childOptions.parentWindow) return
+        if (!this.parentWindow) return
         this.postMessageFactory({
-            window: this.childOptions.parentWindow,
-            origin: this.childOptions.parentWindow.origin,
+            window: this.parentWindow,
+            origin: this.parentWindow.origin,
         })(message)
     }
 }

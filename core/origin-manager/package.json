@@ -29,6 +29,7 @@
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
+        "@canton-network/core-types": "workspace:^",
         "@vitest/browser-playwright": "^4.1.10",
         "@vitest/coverage-v8": "^4.1.10",
         "typescript": "^5.7.2",

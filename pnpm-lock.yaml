@@ -528,6 +528,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@canton-network/core-types':
+        specifier: workspace:^
+        version: link:../types
       '@vitest/browser-playwright':
         specifier: ^4.1.10
         version: 4.1.10(playwright@1.58.2)(vite@7.3.6(@types/node@25.9.4)(jiti@2.7.0)(tsx@4.23.5)(yaml@2.9.0))(vitest@4.1.10)
@@ -2671,6 +2674,9 @@ importers:
       '@canton-network/core-ledger-client':
         specifier: workspace:^
         version: link:../../core/ledger-client
+      '@canton-network/core-origin-manager':
+        specifier: workspace:^
+        version: link:../../core/origin-manager
       '@canton-network/core-rpc-errors':
         specifier: workspace:^
         version: link:../../core/rpc-errors
