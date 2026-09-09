@@ -3,7 +3,7 @@
 
 import { vi, describe, it, expect, beforeEach, type Mocked } from 'vitest'
 
-import { v3_4 } from '@canton-network/core-ledger-client-types'
+import { v3_5 } from '@canton-network/core-ledger-client-types'
 import { CoreService } from './token-standard-service.js'
 import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import { LedgerProvider } from '@canton-network/core-provider-ledger'
@@ -13,9 +13,9 @@ import ledgerEffectsMock from './test-data/mock/utility-payload-ledger-effects.j
 import ledgerEffectsExpected from './test-data/expected/utility-payload-ledger-effects-sender.json'
 
 type JsGetEventsByContractIdResponse =
-    v3_4.components['schemas']['JsGetEventsByContractIdResponse']
+    v3_5.components['schemas']['JsGetEventsByContractIdResponse']
 
-type CreatedEvent = v3_4.components['schemas']['CreatedEvent']
+type CreatedEvent = v3_5.components['schemas']['CreatedEvent']
 
 const makeLedgerProviderMock = (
     responses: JsGetEventsByContractIdResponse[]
