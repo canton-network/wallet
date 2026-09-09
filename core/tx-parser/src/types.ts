@@ -112,7 +112,7 @@ export type Label =
 type UnknownAction = RawArchive | RawCreate
 interface BaseLabel {
     type: string
-    meta: any
+    meta: Metadata | undefined
 }
 interface KnownLabel extends BaseLabel {
     mintAmount: string
@@ -171,7 +171,7 @@ export interface RawArchive extends BaseLabel {
     packageName: string
     actingParties: string[]
     payload: any
-    meta: any
+    meta: Metadata | undefined
 }
 export interface RawCreate extends BaseLabel {
     type: 'Create' | 'Lock'
@@ -181,7 +181,7 @@ export interface RawCreate extends BaseLabel {
     templateId: string
     payload: any
     packageName: string
-    meta: any
+    meta: Metadata | undefined
 }
 
 export const renderTransaction = (t: Transaction): any => {
