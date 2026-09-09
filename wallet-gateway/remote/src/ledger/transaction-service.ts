@@ -392,9 +392,11 @@ export class TransactionService {
             ...(failureReason && { failureReason }),
         })
 
+        // dApp reports pending for anything not yet signed
+        // awaiting-signature can be a gateway UI internal distinction for polling
         this.notifier.emit('txChanged', {
             ...tx,
-            status,
+            status: status === 'awaiting-signature' ? 'pending' : status,
             externalTxId: signingResult.txId,
         })
 
