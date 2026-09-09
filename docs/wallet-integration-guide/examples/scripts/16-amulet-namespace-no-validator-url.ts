@@ -1,7 +1,6 @@
 import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
 import {
     getValidatorParty,
-    localNetGlobalSynchronizer,
     localNetStaticConfig,
     SDK,
 } from '@canton-network/wallet-sdk'
@@ -10,6 +9,7 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG_SIMPLE,
     TOKEN_NAMESPACE_CONFIG_SIMPLE,
+    localNetGlobalSynchronizer,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-16-preapproval', level: 'info' })

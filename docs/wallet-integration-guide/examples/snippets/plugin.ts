@@ -1,9 +1,4 @@
-import {
-    SDK,
-    SDKPlugin,
-    SDKPluginContext,
-    localNetGlobalSynchronizer,
-} from '@canton-network/wallet-sdk'
+import { SDK, SDKPlugin, SDKPluginContext } from '@canton-network/wallet-sdk'
 
 export default async function () {
     const sdk = (
@@ -19,7 +14,7 @@ export default async function () {
                 },
             },
             ledgerClientUrl: 'http://localhost:2975',
-            synchronizerId: localNetGlobalSynchronizer,
+            synchronizerId: global.LOCALNET_GLOBAL_SYNCHRONIZER,
         })
     ).registerPlugins({
         myPlugin: class extends SDKPlugin {

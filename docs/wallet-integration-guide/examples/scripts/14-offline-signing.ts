@@ -1,5 +1,4 @@
 import {
-    localNetGlobalSynchronizer,
     localNetStaticConfig,
     SDK,
     signTransactionHash,
@@ -9,6 +8,7 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    localNetGlobalSynchronizer,
 } from './utils/index.js'
 
 const onlineLogger = pino({ name: '14-online-localnet', level: 'info' })
