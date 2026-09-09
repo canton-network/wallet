@@ -14,42 +14,49 @@ import {
 import { ParentWindowOriginManager, ChildWindowOriginManager } from './manager'
 import { WalletEvent } from '@canton-network/core-types'
 
-const { postMessage, exampleOrigin, falseOrigin, sessionStorage } = vi.hoisted(
-    () => {
-        const exampleOrigin = 'http://example.com'
-        const falseOrigin = 'http://false.origin.com'
+const {
+    postMessage,
+    exampleOrigin,
+    falseOrigin,
+    sessionStorage,
+    userHandshakeCallback,
+} = vi.hoisted(() => {
+    const exampleOrigin = 'http://example.com'
+    const falseOrigin = 'http://false.origin.com'
 
-        const postMessage = vi.fn()
-        const sessionStorage = {
-            getItem: vi.fn(),
-            setItem: vi.fn(),
-        }
-        const windowOpener = {
-            postMessage,
-            origin: exampleOrigin,
-        }
-        // Mock opener and sessionStorage
-        Object.defineProperties(window, {
-            opener: {
-                value: windowOpener,
-                writable: true,
-                configurable: true,
-            },
-            sessionStorage: {
-                value: sessionStorage,
-                writable: true,
-                configurable: true,
-            },
-        })
-
-        return {
-            postMessage,
-            exampleOrigin,
-            falseOrigin,
-            sessionStorage,
-        }
+    const postMessage = vi.fn()
+    const sessionStorage = {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
     }
-)
+    const windowOpener = {
+        postMessage,
+        origin: exampleOrigin,
+    }
+    // Mock opener and sessionStorage
+    Object.defineProperties(window, {
+        opener: {
+            value: windowOpener,
+            writable: true,
+            configurable: true,
+        },
+        sessionStorage: {
+            value: sessionStorage,
+            writable: true,
+            configurable: true,
+        },
+    })
+
+    const userHandshakeCallback = vi.fn()
+
+    return {
+        postMessage,
+        exampleOrigin,
+        falseOrigin,
+        sessionStorage,
+        userHandshakeCallback,
+    }
+})
 
 describe('manager', () => {
     let eventListenerSpy: Mock<Window['addEventListener']>
@@ -69,7 +76,9 @@ describe('manager', () => {
         let parentWindowManager: ParentWindowOriginManager
 
         beforeEach(() => {
-            parentWindowManager = new ParentWindowOriginManager()
+            parentWindowManager = new ParentWindowOriginManager({
+                userHandshakeCallback,
+            })
         })
 
         afterEach(() => {
@@ -132,6 +141,7 @@ describe('manager', () => {
                 exampleOrigin
             )
 
+            expect(userHandshakeCallback).toHaveBeenCalledOnce()
             expect(parentWindowManager.assert(exampleOrigin)).toBe(true)
         })
 
@@ -235,7 +245,9 @@ describe('manager', () => {
         let childWindowManager: ChildWindowOriginManager
 
         beforeEach(() => {
-            childWindowManager = new ChildWindowOriginManager()
+            childWindowManager = new ChildWindowOriginManager({
+                userHandshakeCallback,
+            })
         })
 
         afterEach(() => {
@@ -243,7 +255,7 @@ describe('manager', () => {
         })
 
         it('should add event listener upon instantiation', () => {
-            expect(eventListenerSpy).toHaveBeenCalledTimes(1)
+            expect(eventListenerSpy).toHaveBeenCalledOnce()
         })
 
         it('should remove event listener', () => {
@@ -276,6 +288,7 @@ describe('manager', () => {
                 },
                 exampleOrigin
             )
+            expect(userHandshakeCallback).toHaveBeenCalledOnce()
         })
 
         it('should send postMessage when origin is allowed', () => {

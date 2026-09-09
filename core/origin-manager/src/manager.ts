@@ -267,6 +267,7 @@ export class ChildWindowOriginManager extends OriginManager {
     ) {
         super(childOptions)
         this.parentWindow = childOptions?.parentWindow ?? window.opener
+        this.loadOrigins()
     }
 
     /**
