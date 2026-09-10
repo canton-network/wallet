@@ -15,6 +15,10 @@ import {
     getPaths as getPaths_v3_5,
     postPaths as postPaths_v3_5,
 } from './generated-clients/openapi-3.5.10-paths.js'
+import {
+    getPaths as getPaths_v3_6,
+    postPaths as postPaths_v3_6,
+} from './generated-clients/openapi-3.6.0-paths.js'
 
 export * from './utils.js'
 
@@ -44,17 +48,18 @@ export type LedgerPathsByVersion = {
     '3.6': openapi_v3_6.paths
 }
 
-// type CommonKeys<A, B> = keyof A & keyof B
-type Common<A, B> = {
-    [K in keyof A & keyof B]: A[K] & B[K]
+// Includes keys from both types and unions values for shared keys
+type Union<A, B> = {
+    [K in keyof A | keyof B]:
+        (K extends keyof A ? A[K] : never) | (K extends keyof B ? B[K] : never)
 }
 
-export type LedgerCommonSchemas = Common<
+export type LedgerCommonSchemas = Union<
     LedgerSchemasByVersion['3.5'],
     LedgerSchemasByVersion['3.6']
 >
 
-export type LedgerCommonPaths = Common<
+export type LedgerCommonPaths = Union<
     LedgerPathsByVersion['3.5'],
     LedgerPathsByVersion['3.6']
 >
@@ -64,7 +69,7 @@ export type AsyncChannelsByVersion = {
     '3.6': typeof asyncapi_v3_6.CHANNELS
 }
 
-export type AsyncCommonChannels = Common<
+export type AsyncCommonChannels = Union<
     AsyncChannelsByVersion['3.5'],
     AsyncChannelsByVersion['3.6']
 >
@@ -75,9 +80,15 @@ export * as Provider from './generated-clients/openapi-3.6.0-provider-types.js'
 export { V3_5_provider as V3_5Provider }
 export { V3_6_provider as V3_6Provider }
 
-export const LedgerGetRoutes = new Set<string>([...getPaths_v3_5])
+export const LedgerGetRoutes = new Set<string>([
+    ...getPaths_v3_5,
+    ...getPaths_v3_6,
+])
 
-export const LedgerPostRoutes = new Set<string>([...postPaths_v3_5])
+export const LedgerPostRoutes = new Set<string>([
+    ...postPaths_v3_5,
+    ...postPaths_v3_6,
+])
 
 export type RawCommandMap = {
     ExerciseCommand: LedgerCommonSchemas['ExerciseCommand']
