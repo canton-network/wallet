@@ -3,8 +3,8 @@
     "SUPPORTED_VERSIONS": {
         "devnet": {
             "canton": {
-                "version": "3.5.14-snapshot.20260815.19176.0.v65fa04f6",
-                "hash": "c900cfbbdaf4214152ee275a25dbc6b45cdc61e46574605202681df6663233f2"
+                "version": "3.6.0-snapshot.20260909.20244.0.v9d7eddd6",
+                "hash": "ea837acb3092d6425989cddd38d250b66e583c0d46126a5c28cd082a0ffd96c0"
             },
             "splice": {
                 "version": "0.7.3",
