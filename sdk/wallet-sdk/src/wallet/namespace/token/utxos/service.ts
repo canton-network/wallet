@@ -5,7 +5,11 @@ import { MergeUtxosParams, ListHoldingsParams } from './types.js'
 import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
-import { findAsset, LedgerTypes, TokenNamespaceConfig } from '../../../sdk.js'
+import {
+    findAsset,
+    LedgerCommonSchemas,
+    TokenNamespaceConfig,
+} from '../../../sdk.js'
 import { Decimal } from 'decimal.js'
 import { TransferNamespace } from '../transfer/index.js'
 import { MergeDelegationNamespace } from './mergeDelegation.js'
@@ -34,7 +38,7 @@ export class UtxoNamespace {
     ): Promise<
         [
             WrappedCommand<'ExerciseCommand'>[],
-            LedgerTypes['DisclosedContract'][],
+            LedgerCommonSchemas['DisclosedContract'][],
         ]
     > {
         const utxos =

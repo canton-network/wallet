@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export * as v3_5 from './generated-clients/openapi-3.5.10.js'
-export * as v3_5_async from './generated-clients/asyncapi-3.5.10.js'
 export * as v3_6 from './generated-clients/openapi-3.6.0.js'
+export * as v3_5_async from './generated-clients/asyncapi-3.5.10.js'
 export * as v3_6_async from './generated-clients/asyncapi-3.6.0.js'
 import * as V3_5_provider from './generated-clients/openapi-3.5.10-provider-types.js'
+import * as V3_6_provider from './generated-clients/openapi-3.6.0-provider-types.js'
 import * as openapi_v3_5 from './generated-clients/openapi-3.5.10.js'
 import * as openapi_v3_6 from './generated-clients/openapi-3.6.0.js'
 import * as asyncapi_v3_5 from './generated-clients/asyncapi-3.5.10.js'
@@ -68,9 +69,11 @@ export type AsyncCommonChannels = Common<
     AsyncChannelsByVersion['3.6']
 >
 
-export type LedgerTypes = V3_5_provider.LedgerTypes
-export * as Provider from './generated-clients/openapi-3.5.10-provider-types.js'
+export type LedgerApiOperations =
+    V3_5_provider.LedgerTypes | V3_6_provider.LedgerTypes
+export * as Provider from './generated-clients/openapi-3.6.0-provider-types.js'
 export { V3_5_provider as V3_5Provider }
+export { V3_6_provider as V3_6Provider }
 
 export const LedgerGetRoutes = new Set<string>([...getPaths_v3_5])
 
