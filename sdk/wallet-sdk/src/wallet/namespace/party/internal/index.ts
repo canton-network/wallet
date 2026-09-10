@@ -42,6 +42,10 @@ export class InternalPartyNamespace {
             }
         }
 
+        const synchronizerId = requireSynchronizerId(
+            this.ctx,
+            params.synchronizerId
+        )
         const allocatedParty =
             await this.ctx.ledgerProvider.request<Ops.PostV2Parties>({
                 method: 'ledgerApi',
@@ -51,10 +55,7 @@ export class InternalPartyNamespace {
                     body: {
                         partyIdHint: params.partyHint ?? v4(),
                         identityProviderId: '',
-                        synchronizerId: requireSynchronizerId(
-                            this.ctx,
-                            params.synchronizerId
-                        ),
+                        synchronizerId,
                         userId: params.userId ?? this.ctx.userId,
                     },
                 },
