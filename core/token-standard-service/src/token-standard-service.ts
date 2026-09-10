@@ -1553,7 +1553,7 @@ export class TokenStandardService {
                     partyId: partyId,
                     includeWildcard: true,
                 }),
-                transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+                transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
             },
         }
 
@@ -1585,7 +1585,7 @@ export class TokenStandardService {
                     partyId: partyId,
                     includeWildcard: true,
                 }),
-                transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+                transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
             },
         }
 

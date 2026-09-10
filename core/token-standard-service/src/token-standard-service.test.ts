@@ -1390,7 +1390,7 @@ describe('Token standard service', () => {
             updateId: 'update-abc',
             updateFormat: {
                 includeTransactions: {
-                    transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+                    transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
                 },
             },
         })
