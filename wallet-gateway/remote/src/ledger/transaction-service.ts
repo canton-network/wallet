@@ -448,7 +448,13 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        await this.applySigningResult(tx, signingResult)
+        const applied = await this.applySigningResult(tx, signingResult)
+
+        if (applied.status !== 'signed' && signingResult.status === 'signed') {
+            throw new Error(
+                `Transansaction ${tx.id} changed to ${applied.status} while signing`
+            )
+        }
 
         if (signingResult.status === 'signed') {
             if (!signingResult.signature) {
