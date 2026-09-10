@@ -1,0 +1,10 @@
+.git
+.localnet
+.nx
+.pnpm-store
+**/node_modules
+**/dist
+**/coverage
+**/*.sqlite
+log
+tmp
