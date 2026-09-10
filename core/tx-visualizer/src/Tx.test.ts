@@ -76,7 +76,7 @@ test('decode a base 64 encoded prepared tx', async () => {
     )
 })
 
-test('parsePreparedTransaction extracts amount nested under a Mint choice argument', async () => {
+test('parsePreparedTransaction finds amount nested within a Mint choice argument', async () => {
     const mintChosenValue: Value = {
         sum: {
             oneofKind: 'record',
@@ -90,11 +90,25 @@ test('parsePreparedTransaction extracts amount nested under a Mint choice argume
                                 record: {
                                     fields: [
                                         {
-                                            label: 'amount',
+                                            label: 'unexpectedWrapper',
                                             value: {
                                                 sum: {
-                                                    oneofKind: 'numeric',
-                                                    numeric: '100.0',
+                                                    oneofKind: 'record',
+                                                    record: {
+                                                        fields: [
+                                                            {
+                                                                label: 'amount',
+                                                                value: {
+                                                                    sum: {
+                                                                        oneofKind:
+                                                                            'numeric',
+                                                                        numeric:
+                                                                            '100.0',
+                                                                    },
+                                                                },
+                                                            },
+                                                        ],
+                                                    },
                                                 },
                                             },
                                         },
