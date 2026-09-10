@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MergeUtxosParams, ListHoldingsParams } from './types.js'
-import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
+import {
+    HOLDING_INTERFACE_ID,
+    HoldingView,
+} from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
+import { PrettyContract } from '@canton-network/core-tx-parser'
 import { findAsset, LedgerTypes, TokenNamespaceConfig } from '../../../sdk.js'
 import { Decimal } from 'decimal.js'
 import { TransferNamespace } from '../transfer/index.js'
@@ -47,7 +50,7 @@ export class UtxoNamespace {
 
         const utxoGroupedByInstrument: Record<
             string,
-            PrettyContract<Holding>[] | undefined
+            PrettyContract<HoldingView>[] | undefined
         > = Object.groupBy(
             utxos,
             (utxo) =>
@@ -139,7 +142,7 @@ export class UtxoNamespace {
             continueUntilCompletion,
         } = params
         const utxos =
-            await this.sdkContext.tokenStandardService.listContractsByInterface<Holding>(
+            await this.sdkContext.tokenStandardService.listContractsByInterface<HoldingView>(
                 HOLDING_INTERFACE_ID,
                 partyId,
                 limit,
@@ -153,10 +156,7 @@ export class UtxoNamespace {
             ? utxos
             : utxos.filter(
                   (utxo) =>
-                      !TokenStandardService.isHoldingLocked(
-                          utxo.interfaceViewValue,
-                          currentTime
-                      )
+                      !TokenStandardService.isHoldingLocked(utxo, currentTime)
               )
 
         return filteredUtxos

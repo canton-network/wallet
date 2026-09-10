@@ -644,6 +644,7 @@
                                     "id": "LOAD"
                                 },
                                 "amount": "1016.0000000000",
+                                "contractId": "0027bd11771073016844744a664ae407f590c36090602e6ed6fa5c044c6185b911ca111220d8c8c605a8a79276475e4f3e2133cf1ef154669624084fde9fcf7ded8c08dc9a",
                                 "lock": {
                                     "holders": [
                                         "test-registrar::122002e9e6d1d24cf3fc613d9c6e44919e13f6577b805000f629a773f3817081efc6"

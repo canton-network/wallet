@@ -59,15 +59,13 @@ export const useWalletSdk = () => {
                     scanApiUrl: deriveScanApiUrl(amulet.registry),
                     registryUrl: amulet.registry,
                     auth,
+                    registryAuth: 'none',
                 },
                 token: {
                     validatorUrl: token.validatorUrl,
                     registries: sdkRegistryUrls,
                     auth,
-                },
-                asset: {
-                    registries: sdkRegistryUrls,
-                    auth,
+                    registryAuth: 'none',
                 },
             })
 

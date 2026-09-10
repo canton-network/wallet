@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-internal",
-    "version": "1.12.0",
+    "version": "1.13.0",
     "type": "module",
     "description": "Wallet Gateway driver for offline Ed25519 keypairs",
     "license": "Apache-2.0",
@@ -40,7 +40,7 @@
         "tweetnacl": "^1.0.3",
         "tweetnacl-util": "^0.15.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "files": [
         "dist/**"

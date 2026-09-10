@@ -1,7 +1,7 @@
 {
     "name": "@canton-network/wallet-sdk",
     "type": "module",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "Node/browser SDK for integrating with Canton Network",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
     "license": "Apache-2.0",
@@ -55,7 +55,7 @@
         "playwright": "^1.61.1",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "files": [
         "dist/**"

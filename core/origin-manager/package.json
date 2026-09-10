@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-origin-manager",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "type": "module",
     "description": "Secure cross-window origin handshake and guarded postMessage helpers.",
     "license": "Apache-2.0",
@@ -34,7 +34,7 @@
         "typescript": "^5.7.2",
         "vite": "^8.1.5",
         "vite-plugin-dts": "^5.0.3",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "files": [
         "dist/**"

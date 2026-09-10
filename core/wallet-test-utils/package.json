@@ -1,7 +1,7 @@
 {
     "name": "@canton-network/core-wallet-test-utils",
     "private": true,
-    "version": "1.11.0",
+    "version": "1.12.0",
     "type": "module",
     "description": "Utilities for writing (E2E) tests for the wallet gateway",
     "main": "dist/index.cjs",
@@ -28,7 +28,7 @@
         "@vitest/coverage-v8": "^4.1.10",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
