@@ -58,6 +58,8 @@ function App() {
                             onClick={() => {
                                 setLoading(true)
                                 disconnect().then(() => {
+                                    setLedgerApiVersion(undefined)
+                                    status()
                                     setLoading(false)
                                 })
                             }}

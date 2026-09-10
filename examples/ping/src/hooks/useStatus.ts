@@ -19,7 +19,9 @@ export function useStatus(): {
     async function status() {
         await sdk
             .status()
-            .then(setStatusEvent)
+            .then((s) =>
+                setStatusEvent(s.connection?.isConnected ? s : undefined)
+            )
             .catch(() => {
                 setStatusEvent(undefined)
             })
@@ -30,26 +32,15 @@ export function useStatus(): {
     }, [])
 
     useEffect(() => {
-        if (statusEvent?.connection?.isConnected) {
-            console.debug('[use-status] Adding status changed listener')
-            const onStatusChanged = (status: sdk.dappAPI.StatusEvent) => {
-                console.debug(
-                    '[use-status] Received status changed event:',
-                    status
-                )
-                setStatusEvent(
-                    status.connection?.isConnected ? status : undefined
-                )
-            }
-
-            sdk.onStatusChanged(onStatusChanged)
-
-            return () => {
-                console.debug('[use-status] Removing status changed listener')
-                sdk.removeOnStatusChanged(onStatusChanged)
-            }
+        const onStatusChanged = (s: sdk.dappAPI.StatusEvent) => {
+            setStatusEvent(s.connection?.isConnected ? s : undefined)
         }
-    }, [statusEvent])
+
+        sdk.onStatusChanged(onStatusChanged)
+        return () => {
+            sdk.removeOnStatusChanged(onStatusChanged)
+        }
+    }, [])
 
     return {
         status,

@@ -129,7 +129,10 @@ describe('WalletConnectAdapter', () => {
         expect(SignClientInit).toHaveBeenCalledWith(
             expect.objectContaining({ projectId: 'test-project-id' })
         )
-        expect(onUri).toHaveBeenCalledWith('wc:test-uri')
+        expect(onUri).toHaveBeenCalledWith(
+            'wc:test-uri',
+            expect.stringMatching(/^data:image\/png;base64,/)
+        )
         expect(statusListener).toHaveBeenCalledWith(
             expect.objectContaining({
                 connection: {
