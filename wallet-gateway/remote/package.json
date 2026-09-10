@@ -89,7 +89,7 @@
         "supertest": "^7.2.2",
         "tsx": "^4.23.0",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "nx": {
         "targets": {

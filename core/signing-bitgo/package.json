@@ -32,7 +32,7 @@
         "@vitest/coverage-v8": "^4.1.8",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.8"
+        "vitest": "^4.1.11"
     },
     "files": [
         "dist/**"
