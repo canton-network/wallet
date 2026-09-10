@@ -105,11 +105,18 @@ vi.mock('../ledger/party-allocation-service.js', () => ({
     PartyAllocationService: vi.fn(),
 }))
 
-vi.mock('../ledger/transaction-service.js', () => ({
-    TransactionService: vi.fn(function TransactionServiceMock() {
-        return transactionServiceMocks
-    }),
-}))
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
+    return {
+        ...actual,
+        TransactionService: vi.fn(function TransactionServiceMock() {
+            return transactionServiceMocks
+        }),
+    }
+})
 
 const kernelInfo: KernelInfo = {
     id: 'kernel-test',

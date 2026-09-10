@@ -24,13 +24,17 @@ export default defineConfig({
                 test: {
                     name: 'node',
                     environment: 'node',
-                    include: ['src/**/*.test.ts'],
+                    // Include node-specific tests AND shared tests
+                    include: ['src/**/*.node.test.ts', 'src/**/*.test.ts'],
                 },
             }),
             defineProject({
                 test: {
                     name: 'browser',
+                    // Include node-specific tests AND shared tests
                     include: ['src/**/*.test.ts'],
+                    // Ensure node tests never run here
+                    exclude: ['src/**/*.node.test.ts'],
                     browser: {
                         enabled: true,
                         provider: playwright({

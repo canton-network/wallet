@@ -1687,6 +1687,9 @@ importers:
 
   core/wallet-services:
     dependencies:
+      '@canton-network/core-ledger-client':
+        specifier: workspace:*
+        version: link:../ledger-client
       '@canton-network/core-signing-lib':
         specifier: workspace:^
         version: link:../signing-lib

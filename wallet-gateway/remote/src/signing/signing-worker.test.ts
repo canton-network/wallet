@@ -30,11 +30,18 @@ vi.mock('@canton-network/core-wallet-auth', async () => {
     }
 })
 
-vi.mock('../ledger/transaction-service.js', () => ({
-    TransactionService: vi.fn(function TransactionServiceMock() {
-        return { signAndExecute: mocks.signAndExecute }
-    }),
-}))
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
+    return {
+        ...actual,
+        TransactionService: vi.fn(function TransactionServiceMock() {
+            return { signAndExecute: mocks.signAndExecute }
+        }),
+    }
+})
 
 const idp: Idp = {
     id: 'idp1',

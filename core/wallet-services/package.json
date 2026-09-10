@@ -25,6 +25,7 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "dependencies": {
+        "@canton-network/core-ledger-client": "workspace:*",
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-signing-securosys": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
