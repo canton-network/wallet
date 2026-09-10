@@ -29,7 +29,7 @@ const mockTokenStandard = {
 const config: TokenNamespaceConfig = {
     commonCtx: {
         ...ctx,
-        synchronizerId: 'mock-synchronizer-id',
+        defaultSynchronizerId: 'mock-synchronizer-id',
         logger: mockLogger,
     } as any,
     registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
@@ -234,7 +234,7 @@ describe('token transfer namespace no validatorURL', () => {
         transfer = new TransferNamespace({
             commonCtx: {
                 ...ctx,
-                synchronizerId: 'mock-synchronizer-id',
+                defaultSynchronizerId: 'mock-synchronizer-id',
                 logger: mockLogger,
             } as any,
             registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
