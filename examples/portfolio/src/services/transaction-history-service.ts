@@ -58,7 +58,10 @@ const paginateUpdates = async function* ({
                     beginExclusive,
                     updateFormat: {
                         includeTransactions: {
-                            transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+                            // Tap transfers have tx-kind metadata on
+                            // exercised events, which ACS_DELTA omits.
+                            transactionShape:
+                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
                             eventFormat: {
                                 verbose: false,
                                 filtersByParty,
