@@ -34,7 +34,12 @@ vi.mock('../rpc-client.js', () => ({
 vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
-        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        currentOrigin: {
+            get: vi.fn(),
+            poll: vi.fn().mockResolvedValue('browserext'),
+            set: vi.fn(),
+            clear: vi.fn(),
+        },
     },
 }))
 vi.mock('@canton-network/core-tx-visualizer', () => ({

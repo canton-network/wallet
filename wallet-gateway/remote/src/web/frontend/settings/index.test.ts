@@ -20,10 +20,12 @@ import {
     networkEditSaveEventFrom,
 } from '../test-helpers.js'
 
-const { mockCreateUserClient, handleErrorToast } = vi.hoisted(() => ({
-    mockCreateUserClient: vi.fn(),
-    handleErrorToast: vi.fn(),
-}))
+const { mockCreateUserClient, handleErrorToast, mockCurrentOriginPoll } =
+    vi.hoisted(() => ({
+        mockCreateUserClient: vi.fn(),
+        handleErrorToast: vi.fn(),
+        mockCurrentOriginPoll: vi.fn<() => Promise<string>>(),
+    }))
 
 vi.mock('../index.js', () => ({}))
 vi.mock('../rpc-client.js', () => ({
@@ -32,7 +34,12 @@ vi.mock('../rpc-client.js', () => ({
 vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
-        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        currentOrigin: {
+            get: vi.fn(),
+            set: vi.fn(),
+            clear: vi.fn(),
+            poll: mockCurrentOriginPoll,
+        },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
@@ -59,7 +66,9 @@ describe('UserUiSettings', () => {
         mockCreateUserClient.mockReset()
         mockRequest.mockReset()
         handleErrorToast.mockReset()
+        mockCurrentOriginPoll.mockReset()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
+        mockCurrentOriginPoll.mockResolvedValue('browserext')
         mockSettingsPageFlow({ isAdmin: true, gatewayVersion: '2.0.0' })
         vi.stubGlobal(
             'confirm',

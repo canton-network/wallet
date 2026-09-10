@@ -16,11 +16,13 @@ const {
     handleErrorToast,
     setLocationHref,
     mockNetworkIdGet,
+    mockCurrentOriginPoll,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
     setLocationHref: vi.fn(),
     mockNetworkIdGet: vi.fn<() => string | undefined>(() => 'network1'),
+    mockCurrentOriginPoll: vi.fn<() => Promise<string>>(),
 }))
 
 vi.mock('../../index.js', () => ({}))
@@ -32,7 +34,12 @@ vi.mock('../../state-manager.js', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         networkId: { get: mockNetworkIdGet },
-        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        currentOrigin: {
+            get: vi.fn(),
+            set: vi.fn(),
+            clear: vi.fn(),
+            poll: mockCurrentOriginPoll,
+        },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
@@ -70,7 +77,9 @@ describe('UserUiEditParty', () => {
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
         mockNetworkIdGet.mockReset()
+        mockCurrentOriginPoll.mockReset()
         mockNetworkIdGet.mockReturnValue('network1')
+        mockCurrentOriginPoll.mockResolvedValue('browserext')
 
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockRequest.mockImplementation(async ({ method }) => {

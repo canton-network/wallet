@@ -79,7 +79,12 @@ vi.mock('./state-manager.js', () => ({
             clear: vi.fn(),
         },
         clearAuthState: mockClearAuthState,
-        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        currentOrigin: {
+            get: vi.fn(),
+            poll: vi.fn().mockResolvedValue('http://localhost'),
+            set: vi.fn(),
+            clear: vi.fn(),
+        },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', () => ({
