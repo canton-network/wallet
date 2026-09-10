@@ -18,3 +18,18 @@ export async function up(db: Kysely<DB>): Promise<void> {
                 WHERE status = 'pending' AND external_tx_id IS NOT NULL
             `.execute(db)
 }
+
+export async function down(db: Kysely<DB>): Promise<void> {
+    console.log('Dropping failure reason to transaction')
+
+    await sql`
+                UPDATE transactions
+                SET status = 'pending'
+                WHERE status = 'awaiting-signature'
+            `.execute(db)
+
+    await db.schema
+        .alterTable('transactions')
+        .dropColumn('failure_reason')
+        .execute()
+}
