@@ -48,7 +48,7 @@ describe('plugin', () => {
             })
             // Mock the connected synchronizers response
             .mockResolvedValueOnce({
-                connectedSynchronizers: [{ id: 'sync-1' }],
+                connectedSynchronizers: [{ synchronizerId: 'sync-1' }],
             })
 
         const sdk = await SDK.create({
@@ -73,7 +73,7 @@ describe('plugin', () => {
             })
             // Mock the connected synchronizers response
             .mockResolvedValueOnce({
-                connectedSynchronizers: [{ id: 'sync-1' }],
+                connectedSynchronizers: [{ synchronizerId: 'sync-1' }],
             })
 
         const sdk = await SDK.create({
