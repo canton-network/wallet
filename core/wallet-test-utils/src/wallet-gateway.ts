@@ -481,13 +481,22 @@ export class WalletGateway {
     }): Promise<void> {
         await test.step('wallet gateway: submit the externally signed transaction', async () => {
             const popupPage = await this.page()
+
+            await expect(
+                popupPage.locator('[data-test-status="signed"]'),
+                'the transaction should reach signed before it can be executed'
+            ).toBeVisible({ timeout: 60000 })
+
+            // await expect(
+            //     approveButton,
+            //     'the wallet should show approve button for the submitted transaction'
+            // ).toBeVisible()
+            // await approveButton.click()
+
             const approveButton = popupPage.getByRole('button', {
                 name: 'Approve',
             })
-            await expect(
-                approveButton,
-                'the wallet should show approve button for the submitted transaction'
-            ).toBeVisible()
+
             await approveButton.click()
 
             if (opts?.waitForClose !== false) {
