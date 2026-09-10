@@ -1247,6 +1247,7 @@
                 "description": "The internal transaction identifier."
             },
             "GetTransactionStatusResult": {
+                "title": "GetTransactionStatusResult",
                 "type": "object",
                 "additionalProperties": false,
                 "description:": "Represents status of transaction from the store.",

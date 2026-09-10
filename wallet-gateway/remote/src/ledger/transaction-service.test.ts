@@ -913,7 +913,7 @@ describe('TransactionService', () => {
 
         describe('external signing providers', () => {
             it.each([
-                // SigningProvider.WALLET_KERNEL,
+                SigningProvider.WALLET_KERNEL,
                 SigningProvider.BLOCKDAEMON,
                 SigningProvider.FIREBLOCKS,
                 SigningProvider.DFNS,
