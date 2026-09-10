@@ -17,8 +17,8 @@
         },
         "mainnet": {
             "canton": {
-                "version": "3.5.10",
-                "hash": "ec298b4c971a47c1c0e2ec54763b3c28f49815d29ffbba45b1a745633b7c24d8"
+                "version": "3.6.0-snapshot.20260909.20244.0.v9d7eddd6",
+                "hash": "ea837acb3092d6425989cddd38d250b66e583c0d46126a5c28cd082a0ffd96c0"
             },
             "splice": {
                 "version": "0.6.14",
