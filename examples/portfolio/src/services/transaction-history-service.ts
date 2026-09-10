@@ -362,6 +362,7 @@ export class TransactionHistoryService {
             params: {
                 resource: '/v2/state/ledger-end',
                 requestMethod: 'get',
+                query: {}
             },
         })
     }
