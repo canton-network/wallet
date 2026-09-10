@@ -325,7 +325,7 @@ class WgWalletCard extends BaseElement {
     }
 
     private renderEditButton() {
-        return this.editable || this.wallet?.disabled
+        return this.editable && !this.wallet?.disabled
             ? html`
                   <button
                       type="button"

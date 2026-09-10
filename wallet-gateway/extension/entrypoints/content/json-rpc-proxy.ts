@@ -12,6 +12,7 @@ import {
 import { createProxyService } from '@webext-core/proxy-service'
 import type { Methods } from '../background/dapp/rpc-gen'
 import type { NotificationRelay } from './notification-relay'
+import { parentOriginManager } from '@/utils/legacy-frontend/origin'
 
 /**
  * Proxies JSON-RPC requests, responses, between the dApp page (window message events),
@@ -57,7 +58,7 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay) {
                 response: msgResponse,
             }
 
-            window.postMessage(response, '*')
+            parentOriginManager.postMessage(response, '*')
 
             if ('result' in msgResponse) {
                 notificationRelay.onResponse(
@@ -76,7 +77,7 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay) {
         // Acknowledge the extension readiness request
         if (msg.type === WalletEvent.SPLICE_WALLET_EXT_READY) {
             if (!shouldHandle(msg.target)) return
-            window.postMessage(
+            parentOriginManager.postMessage(
                 {
                     type: WalletEvent.SPLICE_WALLET_EXT_ACK,
                     target: msg.target,

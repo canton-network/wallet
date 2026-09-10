@@ -22,9 +22,9 @@ import {
     redirectToIntendedOrDefault,
     addUserSession,
 } from '@/utils/legacy-frontend'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
 import { buildAuthorization, fetchToken } from '@/utils/reusable/oauth'
 import { jwtExpiresAt } from '@canton-network/core-wallet-auth'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/origin'
 
 @customElement('user-ui-login')
 export class LoginUI extends BaseElement {
