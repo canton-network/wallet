@@ -1520,6 +1520,9 @@ importers:
       jose:
         specifier: ^5.10.0
         version: 5.10.0
+      uuid:
+        specifier: ^14.0.1
+        version: 14.0.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -2299,9 +2302,6 @@ importers:
 
   examples/walletconnect:
     dependencies:
-      '@canton-network/core-wallet-auth':
-        specifier: workspace:^
-        version: link:../../core/wallet-auth
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@10.2.2)

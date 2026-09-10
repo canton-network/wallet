@@ -1,11 +1,81 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthService, resolveUserEmail } from '@canton-network/core-wallet-auth'
+import {
+    AuthContext,
+    AuthService,
+    Idp,
+    resolveUserEmail,
+} from '@canton-network/core-wallet-auth'
 import { Store } from '@canton-network/core-wallet-store'
-import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
+import {
+    createRemoteJWKSet,
+    decodeJwt,
+    decodeProtectedHeader,
+    jwtVerify,
+} from 'jose'
 import { Logger } from 'pino'
 
+function getEmail(value: unknown): string | undefined {
+    if (typeof value !== 'string' || value.length === 0) {
+        return undefined
+    }
+
+    return value
+}
+
+// TODO maybe add a nice description
+async function verifySelfSignedToken(
+    jwt: string,
+    idp: Extract<Idp, { type: 'self_signed' }>,
+    store: Store,
+    logger: Logger
+): Promise<AuthContext | undefined> {
+    const { kid } = decodeProtectedHeader(jwt)
+    if (!kid) {
+        logger.warn('Self-signed JWT does not contain a kid header')
+        return undefined
+    }
+
+    const network = await store.getNetworkByKeyId(kid)
+    if (!network || network.auth.method !== 'self_signed') {
+        logger.warn({ kid }, 'No self-signed network uses this JWT key id')
+        return undefined
+    }
+
+    if (network.identityProviderId !== idp.id) {
+        logger.warn(
+            { kid, networkId: network.id, idpId: idp.id },
+            'JWT key id belongs to a network of a different identity provider'
+        )
+        return undefined
+    }
+
+    const auth = network.auth
+    const { payload } = await jwtVerify(
+        jwt,
+        new TextEncoder().encode(auth.clientSecret),
+        {
+            algorithms: ['HS256'],
+            issuer: idp.issuer,
+            audience: auth.audience,
+        }
+    )
+
+    if (!payload.sub) {
+        logger.warn('JWT does not contain a subject')
+        return undefined
+    }
+
+    const email = getEmail(payload.email)
+    return {
+        userId: payload.sub,
+        accessToken: jwt,
+        ...(email ? { email } : {}),
+    }
+}
+
+// TODO I probably should adjust the comment for non-JWKS path
 /**
  * Creates an AuthService that verifies JWT tokens using a remote JWK set.
  * @param store - The Store instance to access network configurations.
@@ -14,14 +84,6 @@ import { Logger } from 'pino'
  */
 export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
     verifyToken: async (accessToken?: string) => {
-        const getEmail = (value: unknown): string | undefined => {
-            if (typeof value !== 'string' || value.length === 0) {
-                return undefined
-            }
-
-            return value
-        }
-
         if (!accessToken || !accessToken.startsWith('Bearer ')) {
             return undefined
         }
@@ -50,19 +112,9 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 return undefined
             }
 
+            // TODO Check if I can divide it nicer per idp type, like each one in it's own method or other kind of block
             if (idp.type == 'self_signed') {
-                const sub = decoded.sub
-                if (!sub) {
-                    logger.warn('JWT does not contain a subject')
-                    return undefined
-                }
-
-                const email = getEmail(decoded.email)
-                return {
-                    userId: sub,
-                    accessToken: jwt,
-                    ...(email ? { email } : {}),
-                }
+                return await verifySelfSignedToken(jwt, idp, store, logger)
             }
             logger.debug({ idp }, 'Using IDP')
             const response = await fetch(idp.configUrl)
@@ -102,6 +154,7 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 ? tokenAudience
                 : [tokenAudience]
 
+            // TODO is this enough for token aud to match any network audience?
             const audMatch = tokenAudiences.some((aud) =>
                 expectedAudiences.includes(aud)
             )

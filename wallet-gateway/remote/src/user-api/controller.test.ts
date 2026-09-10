@@ -491,11 +491,23 @@ describe('userController', () => {
             })
 
             expect(typeof result.accessToken).toBe('string')
+            const header = JSON.parse(
+                Buffer.from(
+                    result.accessToken.split('.')[0]!,
+                    'base64url'
+                ).toString()
+            )
             const payload = JSON.parse(
                 Buffer.from(
                     result.accessToken.split('.')[1]!,
                     'base64url'
                 ).toString()
+            )
+            const storedNetwork = await store.getNetwork('network-self-signed')
+            expect(header.kid).toBe(
+                storedNetwork.auth.method === 'self_signed'
+                    ? storedNetwork.auth.keyId
+                    : undefined
             )
             expect(payload.sub).toBe('test-user')
         })
