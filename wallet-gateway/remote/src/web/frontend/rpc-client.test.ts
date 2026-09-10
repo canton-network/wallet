@@ -128,7 +128,7 @@ describe('rpc-client', () => {
     it('createUserClient uses userPath from gateway config', async () => {
         const customUserPath = `${window.location.origin}/api/v0/custom-user`
         fetchMock.mockResolvedValue(
-            new Response(JSON.stringify({ userPath: customUserPath }), {
+            new Response(JSON.stringify({ userApiUrl: customUserPath }), {
                 status: 200,
             })
         )
