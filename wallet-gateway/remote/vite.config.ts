@@ -24,6 +24,10 @@ export default defineConfig({
                     __dirname,
                     'src/web/frontend/approve/index.html'
                 ),
+                signMessage: resolve(
+                    __dirname,
+                    'src/web/frontend/sign-message/index.html'
+                ),
                 callback: resolve(
                     __dirname,
                     'src/web/frontend/callback/index.html'
@@ -44,6 +48,14 @@ export default defineConfig({
                 settings: resolve(
                     __dirname,
                     'src/web/frontend/settings/index.html'
+                ),
+                apiKeys: resolve(
+                    __dirname,
+                    'src/web/frontend/api-keys/index.html'
+                ),
+                addApiKey: resolve(
+                    __dirname,
+                    'src/web/frontend/api-keys/add/index.html'
                 ),
                 activities: resolve(
                     __dirname,
