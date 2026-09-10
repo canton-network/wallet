@@ -65,7 +65,12 @@ vi.mock('../state-manager.js', () => ({
         expirationDate: { set: mockExpirationDateSet },
         networkId: { set: mockNetworkIdSet, get: mockNetworkIdGet },
         selfIssuedLoginSessionId: { set: mockOnboardingSessionIdSet },
-        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        currentOrigin: {
+            get: vi.fn(),
+            poll: vi.fn().mockResolvedValue('browserext'),
+            set: vi.fn(),
+            clear: vi.fn(),
+        },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
