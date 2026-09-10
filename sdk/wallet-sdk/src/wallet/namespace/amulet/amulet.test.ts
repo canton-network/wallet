@@ -47,7 +47,7 @@ const mockAmuletService = {
 const config: AmuletNamespaceConfig = {
     commonCtx: {
         ...ctx,
-        synchronizerId: 'mock-synchronizer-id',
+        defaultSynchronizerId: 'mock-synchronizer-id',
         logger: mockLogger,
     } as any,
     registry: {
@@ -65,7 +65,7 @@ const config: AmuletNamespaceConfig = {
 const configNoValidator: AmuletNamespaceConfig = {
     commonCtx: {
         ...ctx,
-        synchronizerId: 'mock-synchronizer-id',
+        defaultSynchronizerId: 'mock-synchronizer-id',
         logger: mockLogger,
     } as any,
     registry: {
@@ -149,7 +149,7 @@ describe('AmuletNamespace', () => {
             expect(mockSubmit).toHaveBeenCalledWith({
                 commands: [{ ExerciseCommand: tapCommand }],
                 disclosedContracts: ['dc-1'],
-                synchronizerId: config.commonCtx.synchronizerId,
+                synchronizerId: config.commonCtx.defaultSynchronizerId,
                 actAs: [config.validatorParty],
             })
             expect(result).toStrictEqual({
@@ -337,7 +337,7 @@ describe('AmuletNamespace with no validator party', () => {
             expect(mockSubmit).toHaveBeenCalledWith({
                 commands: [{ ExerciseCommand: tapCommand }],
                 disclosedContracts: ['dc-1'],
-                synchronizerId: config.commonCtx.synchronizerId,
+                synchronizerId: config.commonCtx.defaultSynchronizerId,
                 actAs: ['providerParty::123'],
             })
             expect(result).toStrictEqual({
