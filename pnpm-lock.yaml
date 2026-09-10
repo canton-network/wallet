@@ -2601,6 +2601,9 @@ importers:
       '@canton-network/core-ledger-client':
         specifier: workspace:*
         version: link:../../core/ledger-client
+      '@canton-network/core-origin-manager':
+        specifier: workspace:*
+        version: link:../../core/origin-manager
       '@canton-network/core-rpc-transport':
         specifier: workspace:*
         version: link:../../core/rpc-transport

@@ -20,10 +20,10 @@ import type {
 import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
 import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
 import { stateManager } from '@/utils/legacy-frontend/state-manager'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
 import { toRelHref } from '@/utils/legacy-frontend/routing'
 import { showToast } from '@/utils/legacy-frontend/utils'
 import '@/utils/legacy-frontend'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/origin'
 
 @customElement('user-ui-approve')
 export class ApproveUi extends BaseElement {

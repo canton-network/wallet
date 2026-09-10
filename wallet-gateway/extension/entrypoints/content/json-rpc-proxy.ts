@@ -11,6 +11,7 @@ import {
 
 import { createProxyService } from '@webext-core/proxy-service'
 import { Methods } from '../background/dapp/rpc-gen'
+import { parentOriginManager } from '@/utils/legacy-frontend/origin'
 
 /**
  * Proxies JSON-RPC requests, responses, between the dApp page (window message events),
@@ -52,7 +53,7 @@ export function jsonRpcProxy() {
                 response: msgResponse,
             }
 
-            window.postMessage(response, '*')
+            parentOriginManager.postMessage(response, '*')
         }
 
         // Forward UI open requests to the background script
@@ -64,7 +65,7 @@ export function jsonRpcProxy() {
         // Acknowledge the extension readiness request
         if (msg.type === WalletEvent.SPLICE_WALLET_EXT_READY) {
             if (!shouldHandle(msg.target)) return
-            window.postMessage(
+            parentOriginManager.postMessage(
                 {
                     type: WalletEvent.SPLICE_WALLET_EXT_ACK,
                     target: msg.target,

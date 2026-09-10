@@ -160,12 +160,12 @@ export class ChildWindowOriginManager extends OriginManager {
     private parentWindow: Window
 
     constructor(
-        private readonly childOptions: {
+        private readonly childOptions?: {
             parentWindow?: Window
         } & OriginManagerConstructor
     ) {
         super(childOptions)
-        this.parentWindow = childOptions.parentWindow ?? window.opener
+        this.parentWindow = childOptions?.parentWindow ?? window.opener
     }
 
     /**

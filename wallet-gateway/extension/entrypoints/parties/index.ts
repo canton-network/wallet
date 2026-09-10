@@ -20,11 +20,11 @@ import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
 
 import { stateManager } from '@/utils/legacy-frontend/state-manager'
 import { showToast } from '@/utils/legacy-frontend/utils'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
 import { toRelHref } from '@/utils/legacy-frontend/routing'
 
 import '@canton-network/core-wallet-ui-components'
 import '@/utils/legacy-frontend'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/origin'
 
 export enum WALLET_CREATION_STATUS_CODE {
     WALLET_ALLOCATED = '1',
@@ -143,6 +143,7 @@ export class UserUiParties extends BaseElement {
                             <wg-wallet-card
                                 .wallet=${wallet}
                                 ?loading=${this.loading}
+                                ?editable=${false}
                                 @wallet-allocate=${this._onAllocateParty}
                             ></wg-wallet-card>
                         </div>
@@ -158,6 +159,7 @@ export class UserUiParties extends BaseElement {
                                 .wallet=${wallet}
                                 verified
                                 ?loading=${this.loading}
+                                ?editable=${false}
                                 @wallet-set-primary=${this._onSetPrimary}
                             ></wg-wallet-card>
                         </div>

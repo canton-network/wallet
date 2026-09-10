@@ -14,32 +14,28 @@ import {
 import { ParentWindowOriginManager, ChildWindowOriginManager } from './manager'
 import { WalletEvent } from '@canton-network/core-types'
 
-const { postMessage, exampleOrigin, falseOrigin, userHandshakeCallback } =
-    vi.hoisted(() => {
-        const exampleOrigin = 'http://example.com'
-        const falseOrigin = 'http://false.origin.com'
+const { postMessage, exampleOrigin, falseOrigin } = vi.hoisted(() => {
+    const exampleOrigin = 'http://example.com'
+    const falseOrigin = 'http://false.origin.com'
 
-        // Mock window.opener with a postMessage method
-        const postMessage = vi.fn()
-        const windowOpener = {
-            postMessage,
-            origin: exampleOrigin,
-        }
-        Object.defineProperty(window, 'opener', {
-            value: windowOpener,
-            writable: true,
-            configurable: true,
-        })
-
-        const userHandshakeCallback = vi.fn()
-
-        return {
-            postMessage,
-            exampleOrigin,
-            falseOrigin,
-            userHandshakeCallback,
-        }
+    // Mock window.opener with a postMessage method
+    const postMessage = vi.fn()
+    const windowOpener = {
+        postMessage,
+        origin: exampleOrigin,
+    }
+    Object.defineProperty(window, 'opener', {
+        value: windowOpener,
+        writable: true,
+        configurable: true,
     })
+
+    return {
+        postMessage,
+        exampleOrigin,
+        falseOrigin,
+    }
+})
 
 describe('manager', () => {
     let eventListenerSpy: Mock<Window['addEventListener']>
@@ -59,9 +55,7 @@ describe('manager', () => {
         let parentWindowManager: ParentWindowOriginManager
 
         beforeEach(() => {
-            parentWindowManager = new ParentWindowOriginManager({
-                userHandshakeCallback,
-            })
+            parentWindowManager = new ParentWindowOriginManager()
         })
 
         afterEach(() => {
@@ -92,7 +86,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -103,18 +97,41 @@ describe('manager', () => {
             expect(postMessageSpy).toHaveBeenNthCalledWith(
                 1,
                 {
-                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                    message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                     origin: window.location.origin,
                 },
                 exampleOrigin
             )
 
-            expect(userHandshakeCallback).toHaveBeenCalledOnce()
             expect(parentWindowManager.assert(exampleOrigin)).toBe(true)
         })
 
         it("should return false when asking for origin where a handshake wasn't established with", () => {
             expect(parentWindowManager.assert(falseOrigin)).toBe(false)
+        })
+
+        it('should send postMessage when origin is allowed', () => {
+            const testMessage = { test: 'data' }
+
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
+
+            vi.clearAllMocks()
+            postMessageSpy = vi.spyOn(window, 'postMessage')
+
+            parentWindowManager.postMessage(testMessage, exampleOrigin)
+
+            expect(postMessageSpy).toHaveBeenCalledExactlyOnceWith(
+                testMessage,
+                exampleOrigin
+            )
         })
 
         it('should not send postMessage when origin is not allowed', () => {
@@ -130,9 +147,7 @@ describe('manager', () => {
         let childWindowManager: ChildWindowOriginManager
 
         beforeEach(() => {
-            childWindowManager = new ChildWindowOriginManager({
-                userHandshakeCallback,
-            })
+            childWindowManager = new ChildWindowOriginManager()
         })
 
         afterEach(() => {
@@ -140,7 +155,7 @@ describe('manager', () => {
         })
 
         it('should add event listener upon instantiation', () => {
-            expect(eventListenerSpy).toHaveBeenCalledOnce()
+            expect(eventListenerSpy).toHaveBeenCalledTimes(1)
         })
 
         it('should remove event listener', () => {
@@ -159,7 +174,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -168,12 +183,34 @@ describe('manager', () => {
 
             expect(postMessage).toHaveBeenCalledExactlyOnceWith(
                 {
-                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                    message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                     origin: window.location.origin,
                 },
                 exampleOrigin
             )
-            expect(userHandshakeCallback).toHaveBeenCalledOnce()
+        })
+
+        it('should send postMessage when origin is allowed', () => {
+            const testMessage = { test: 'data' }
+
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
+
+            vi.clearAllMocks()
+
+            childWindowManager.postMessage(testMessage)
+
+            expect(postMessage).toHaveBeenCalledExactlyOnceWith(
+                testMessage,
+                exampleOrigin
+            )
         })
 
         it('should not send postMessage when origin is not allowed', () => {
@@ -195,7 +232,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
