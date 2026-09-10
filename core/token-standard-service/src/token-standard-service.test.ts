@@ -1363,7 +1363,8 @@ describe('Token standard service', () => {
                                 },
                                 verbose: false,
                             },
-                            transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+                            transactionShape:
+                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
                         },
                     },
                     beginExclusive: 5,
