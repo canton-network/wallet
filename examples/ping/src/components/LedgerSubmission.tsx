@@ -73,10 +73,8 @@ export function LedgerSubmission(props: {
                                                     value: {
                                                         templateId:
                                                             '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
-                                                        includeInterfaceView:
-                                                            true,
-                                                        includeCreatedEventBlob:
-                                                            true,
+                                                        includeInterfaceView: true,
+                                                        includeCreatedEventBlob: true,
                                                     },
                                                 },
                                             },
