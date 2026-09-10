@@ -10,7 +10,10 @@ import {
     AllocationContextParams,
     AllocationInstructionCreateParams,
 } from './types'
-import { ALLOCATION_REQUEST_INTERFACE_ID } from '@canton-network/core-token-standard'
+import {
+    ALLOCATION_INTERFACE_ID,
+    ALLOCATION_REQUEST_INTERFACE_ID,
+} from '@canton-network/core-token-standard'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const { ctx, mockLogger } = mock
@@ -238,6 +241,71 @@ describe('allocation namespace namespace', () => {
                 ALLOCATION_REQUEST_INTERFACE_ID,
                 'alice::abc'
             )
+        })
+    })
+
+    describe('scanning allocations by transfer leg', () => {
+        const allocationForLeg = (transferLegId: string, contractId: string) =>
+            ({
+                contractId,
+                interfaceViewValue: { allocation: { transferLegId } },
+                activeContract: 'contract',
+                fetchedAtOffset: 10,
+            }) as any
+
+        it('should return each requested leg once all are visible', async () => {
+            const spy = mockTokenStandard.listContractsByInterface
+            spy.mockResolvedValue([
+                allocationForLeg('leg-0', 'amulet-cid'),
+                allocationForLeg('leg-1', 'test-token-cid'),
+            ])
+
+            const result = await allocation.scan({
+                partyId: 'venue::abc',
+                transferLegIds: ['leg-0', 'leg-1'],
+            })
+
+            expect(spy).toHaveBeenCalledExactlyOnceWith(
+                ALLOCATION_INTERFACE_ID,
+                'venue::abc'
+            )
+            expect(result['leg-0'].contractId).toBe('amulet-cid')
+            expect(result['leg-1'].contractId).toBe('test-token-cid')
+        })
+
+        it('should poll until a lagging allocation propagates', async () => {
+            const spy = mockTokenStandard.listContractsByInterface
+            spy.mockResolvedValueOnce([
+                allocationForLeg('leg-0', 'amulet-cid'),
+            ]).mockResolvedValueOnce([
+                allocationForLeg('leg-0', 'amulet-cid'),
+                allocationForLeg('leg-1', 'test-token-cid'),
+            ])
+
+            const result = await allocation.scan({
+                partyId: 'venue::abc',
+                transferLegIds: ['leg-0', 'leg-1'],
+                retryIntervalMs: 0,
+            })
+
+            expect(spy).toHaveBeenCalledTimes(2)
+            expect(result['leg-1'].contractId).toBe('test-token-cid')
+        })
+
+        it('should throw when a leg never propagates within maxAttempts', async () => {
+            const spy = mockTokenStandard.listContractsByInterface
+            spy.mockResolvedValue([allocationForLeg('leg-0', 'amulet-cid')])
+
+            await expect(
+                allocation.scan({
+                    partyId: 'venue::abc',
+                    transferLegIds: ['leg-0', 'leg-1'],
+                    maxAttempts: 2,
+                    retryIntervalMs: 0,
+                })
+            ).rejects.toThrow(/did not propagate/)
+
+            expect(spy).toHaveBeenCalledTimes(2)
         })
     })
 

@@ -19,9 +19,8 @@ import {
     TxKindMetaKey,
 } from './constants.js'
 import {
-    Holding,
+    Holding as HoldingWithContractId,
     HoldingsChangeSummary,
-    HoldingLock,
     HoldingsChange,
     Label,
     TokenStandardEvent,
@@ -41,6 +40,8 @@ import BigNumber from 'bignumber.js'
 import { PartyId } from '@canton-network/core-types'
 import {
     HOLDING_INTERFACE_ID,
+    HoldingView,
+    Lock,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
 
@@ -351,11 +352,25 @@ export class TransactionParser {
                     result = {
                         payload: holdingView,
                         unlockedHoldingsChange: {
-                            creates: isLocked ? [] : [holdingView],
+                            creates: isLocked
+                                ? []
+                                : [
+                                      toHoldingWithContractId(
+                                          holdingView,
+                                          originalCreate.contractId
+                                      ),
+                                  ],
                             archives: [],
                         },
                         lockedHoldingsChange: {
-                            creates: isLocked ? [holdingView] : [],
+                            creates: isLocked
+                                ? [
+                                      toHoldingWithContractId(
+                                          holdingView,
+                                          originalCreate.contractId
+                                      ),
+                                  ]
+                                : [],
                             archives: [],
                         },
                         lockedHoldingsChangeSummaries,
@@ -834,15 +849,13 @@ export class TransactionParser {
                 const holdingView = ensureInterfaceViewIsPresent(
                     selfEvent.created.createdEvent,
                     HOLDING_INTERFACE_ID
-                ).viewValue as Holding
-                mutatingResult.archives.push({
-                    amount: holdingView.amount,
-                    instrumentId: holdingView.instrumentId,
-                    contractId: exercisedEvent.contractId,
-                    owner: holdingView.owner,
-                    meta: holdingView.meta,
-                    lock: holdingView.lock,
-                })
+                ).viewValue as HoldingView
+                mutatingResult.archives.push(
+                    toHoldingWithContractId(
+                        holdingView,
+                        exercisedEvent.contractId
+                    )
+                )
             }
         }
 
@@ -861,15 +874,13 @@ export class TransactionParser {
                         interfaceView.interfaceId
                     )
                 ) {
-                    const holdingView = interfaceView.viewValue as Holding
-                    mutatingResult.creates.push({
-                        amount: holdingView.amount,
-                        instrumentId: holdingView.instrumentId,
-                        contractId: createdEvent.contractId,
-                        owner: holdingView.owner,
-                        meta: holdingView.meta,
-                        lock: holdingView.lock,
-                    })
+                    const holdingView = interfaceView.viewValue as HoldingView
+                    mutatingResult.creates.push(
+                        toHoldingWithContractId(
+                            holdingView,
+                            createdEvent.contractId
+                        )
+                    )
                 }
             } else if (
                 (archivedEvent &&
@@ -885,17 +896,14 @@ export class TransactionParser {
                     const holdingView = ensureInterfaceViewIsPresent(
                         contractEvents.created?.createdEvent,
                         HOLDING_INTERFACE_ID
-                    ).viewValue as Holding
-                    mutatingResult.archives.push({
-                        amount: holdingView.amount,
-                        instrumentId: holdingView.instrumentId,
-                        contractId:
+                    ).viewValue as HoldingView
+                    mutatingResult.archives.push(
+                        toHoldingWithContractId(
+                            holdingView,
                             archivedEvent?.contractId ||
-                            exercisedEvent!.contractId,
-                        owner: holdingView.owner,
-                        meta: holdingView.meta,
-                        lock: holdingView.lock,
-                    })
+                                exercisedEvent!.contractId
+                        )
+                    )
                 }
             }
         }
@@ -1037,7 +1045,7 @@ function getNodeIdAndEvent(event: Event): NodeIdAndEvent {
  *  instrument. */
 function sumHoldingsChange(
     change: HoldingsChange,
-    filter: (owner: string, lock: HoldingLock | null) => boolean
+    filter: (owner: string, lock: Lock | null) => boolean
 ): BigNumber {
     return sumHoldings(
         change.creates.filter((create) => filter(create.owner, create.lock))
@@ -1050,7 +1058,7 @@ function sumHoldingsChange(
     )
 }
 
-function sumHoldings(holdings: Holding[]): BigNumber {
+function sumHoldings(holdings: HoldingView[]): BigNumber {
     if (holdings.length > 0) {
         // Sanity check.
         const instrumentId = holdings[0].instrumentId
@@ -1068,6 +1076,16 @@ function sumHoldings(holdings: Holding[]): BigNumber {
     return BigNumber.sum(
         ...holdings.map((h) => h.amount).concat(['0']) // avoid NaN
     )
+}
+
+function toHoldingWithContractId(
+    holding: HoldingView,
+    contractId: string
+): HoldingWithContractId {
+    return {
+        ...holding,
+        contractId,
+    }
 }
 
 function computeAmountChanges(
@@ -1117,7 +1135,7 @@ function computeSummary(
 function holdingsChangeByInstrument(
     changes: HoldingsChange
 ): InstrumentMap<HoldingsChange> {
-    const map = new InstrumentMap<{ creates: Holding[]; archives: Holding[] }>()
+    const map = new InstrumentMap<HoldingsChange>()
     for (const create of changes.creates) {
         if (map.has(create.instrumentId)) {
             map.get(create.instrumentId)!.creates.push(create)

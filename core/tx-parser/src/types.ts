@@ -3,7 +3,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Metadata } from '@canton-network/core-token-standard'
+import { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined
@@ -46,22 +46,7 @@ export interface TokenStandardEvent {
     transferInstruction: TransferInstructionView | null
 }
 
-// Same definition as HoldingView in Daml
-export interface Holding {
-    contractId: string
-    owner: string
-    instrumentId: { admin: string; id: string }
-    amount: string
-    lock: HoldingLock | null
-    meta: any
-}
-
-export interface HoldingLock {
-    holders: string[]
-    expiresAt?: string
-    expiresAfter?: string
-    context?: string
-}
+export type Holding = HoldingView & { contractId: string }
 
 export interface HoldingsChange {
     creates: Holding[]
@@ -112,7 +97,7 @@ export type Label =
 type UnknownAction = RawArchive | RawCreate
 interface BaseLabel {
     type: string
-    meta: any
+    meta: Metadata | undefined
 }
 interface KnownLabel extends BaseLabel {
     mintAmount: string
@@ -171,7 +156,7 @@ export interface RawArchive extends BaseLabel {
     packageName: string
     actingParties: string[]
     payload: any
-    meta: any
+    meta: Metadata | undefined
 }
 export interface RawCreate extends BaseLabel {
     type: 'Create' | 'Lock'
@@ -181,7 +166,7 @@ export interface RawCreate extends BaseLabel {
     templateId: string
     payload: any
     packageName: string
-    meta: any
+    meta: Metadata | undefined
 }
 
 export const renderTransaction = (t: Transaction): any => {
