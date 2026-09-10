@@ -213,7 +213,7 @@ export class SignedPartyCreationService {
         } = options
         const ledgerProvider = defaultLedgerProvider ?? this.ctx.ledgerProvider
         try {
-            const synchronizerId = requireSynchronizerId(
+            const synchronizerId = await requireSynchronizerId(
                 this.ctx,
                 this.createPartyOptions?.synchronizerId
             )

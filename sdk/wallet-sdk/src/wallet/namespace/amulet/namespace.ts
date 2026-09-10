@@ -102,7 +102,7 @@ export class AmuletNamespace {
             'tapInternal',
             options?.partyId
         )
-        const synchronizerId = requireSynchronizerId(
+        const synchronizerId = await requireSynchronizerId(
             this.sdkContext.commonCtx,
             options?.synchronizerId
         )
@@ -146,7 +146,7 @@ export class AmuletNamespace {
         if (featuredAppRights) {
             return featuredAppRights
         }
-        const synchronizerId = requireSynchronizerId(
+        const synchronizerId = await requireSynchronizerId(
             this.sdkContext.commonCtx,
             options.synchronizerId
         )
