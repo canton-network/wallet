@@ -74,8 +74,7 @@ export type AsyncCommonChannels = Union<
     AsyncChannelsByVersion['3.6']
 >
 
-export type LedgerApiOperations =
-    V3_5_provider.LedgerTypes | V3_6_provider.LedgerTypes
+export type LedgerTypes = V3_5_provider.LedgerTypes | V3_6_provider.LedgerTypes
 export * as Provider from './generated-clients/openapi-3.6.0-provider-types.js'
 export { V3_5_provider as V3_5Provider }
 export { V3_6_provider as V3_6Provider }

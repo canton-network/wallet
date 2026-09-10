@@ -25,7 +25,7 @@ import {
     OfflineInitializedSDK,
 } from './init/initializedSDK.js'
 import {
-    LedgerApiOperations as LedgerRpc,
+    LedgerTypes as LedgerRpc,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
 import { AllowedLogAdapters } from './logger/types.js'

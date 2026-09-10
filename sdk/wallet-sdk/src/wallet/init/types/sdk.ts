@@ -18,7 +18,7 @@ import {
     TokenConfig,
 } from './config.js'
 import { Provider } from '@canton-network/core-splice-provider'
-import { LedgerApiOperations } from '@canton-network/core-ledger-client-types'
+import { LedgerTypes } from '@canton-network/core-ledger-client-types'
 import { SDKPlugin, SDKPluginContext } from '../plugin.js'
 
 // SDK OPTIONS
@@ -31,7 +31,7 @@ import { SDKPlugin, SDKPluginContext } from '../plugin.js'
  *   If not provided, a default adapter (pino) is used. This enables customization of log output and integration
  *   with application-wide logging strategies.
  */
-export type BasicSDKOptions<L extends LedgerApiOperations> = Readonly<
+export type BasicSDKOptions<L extends LedgerTypes> = Readonly<
     {
         websocketUrl?: URL | string // default to same host as ledgerClientUrl with ws protocol
         logAdapter?: AllowedLogAdapters
@@ -64,8 +64,7 @@ export type ExtendedSDKOptions = EnforceKeys<
 >
 
 export type SDKOptions<ExtendedItems extends keyof ExtendedSDKOptions = never> =
-    BasicSDKOptions<LedgerApiOperations> &
-        Pick<ExtendedSDKOptions, ExtendedItems>
+    BasicSDKOptions<LedgerTypes> & Pick<ExtendedSDKOptions, ExtendedItems>
 
 // Helper type to extract which extended options are present in an options object
 export type GetExtendedKeys<T> = {

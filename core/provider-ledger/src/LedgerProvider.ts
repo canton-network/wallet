@@ -3,7 +3,7 @@
 
 import { AbstractProvider } from '@canton-network/core-splice-provider'
 import { RequestArgs } from '@canton-network/core-types'
-import { LedgerApiOperations } from '@canton-network/core-ledger-client-types'
+import { LedgerTypes } from '@canton-network/core-ledger-client-types'
 import {
     GetEndpoint,
     LedgerClient,
@@ -14,12 +14,12 @@ import pino from 'pino'
 import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export interface AbstractLedgerProvider {
-    request<L extends LedgerApiOperations>(
+    request<L extends LedgerTypes>(
         args: RequestArgs<L, 'ledgerApi'>
     ): Promise<L['ledgerApi']['result']>
 }
 
-export class LedgerProvider extends AbstractProvider<LedgerApiOperations> {
+export class LedgerProvider extends AbstractProvider<LedgerTypes> {
     private client: LedgerClient
 
     constructor({
@@ -58,7 +58,7 @@ export class LedgerProvider extends AbstractProvider<LedgerApiOperations> {
      * @param args
      * @returns
      */
-    public async request<L extends LedgerApiOperations>(
+    public async request<L extends LedgerTypes>(
         args: RequestArgs<L, 'ledgerApi'>
     ): Promise<L['ledgerApi']['result']> {
         if (args.method === 'ledgerApi' && 'params' in args) {
