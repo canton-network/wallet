@@ -141,7 +141,7 @@ export class InternalLedgerNamespace {
             commandId = v4(),
             packageIdSelectionPreference = [],
         } = args
-        const synchronizerId = requireSynchronizerId(
+        const synchronizerId = await requireSynchronizerId(
             this.ctx,
             args.synchronizerId
         )
@@ -180,7 +180,7 @@ export class InternalLedgerNamespace {
             packageIdSelectionPreference = [],
             verboseHashing = false,
         } = args
-        const synchronizerId = requireSynchronizerId(
+        const synchronizerId = await requireSynchronizerId(
             this.ctx,
             args.synchronizerId
         )
