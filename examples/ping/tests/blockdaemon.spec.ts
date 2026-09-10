@@ -54,13 +54,14 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'signed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
             'signed'
         )
+        await wg.executeSignedTransaction({ waitForClose: false })
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -87,7 +88,7 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'rejected'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
+        // await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
@@ -106,7 +107,7 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'failed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
+        // await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
