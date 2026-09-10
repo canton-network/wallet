@@ -193,7 +193,7 @@ export class TransactionService {
                     network
                 )
             } catch (error) {
-                this.logger.error({ error }, 'Failed to submit transaction')
+                this.logger.error(error, 'Failed to submit transaction')
                 throw error
             }
         }
