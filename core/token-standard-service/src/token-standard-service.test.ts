@@ -1252,7 +1252,11 @@ describe('Token standard service', () => {
                 resource: '/v2/state/latest-pruned-offsets',
                 requestMethod: 'get',
             },
-            { resource: '/v2/state/ledger-end', requestMethod: 'get' },
+            {
+                resource: '/v2/state/ledger-end',
+                requestMethod: 'get',
+                query: {},
+            },
             {
                 resource: '/v2/updates',
                 requestMethod: 'post',

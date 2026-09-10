@@ -250,6 +250,7 @@ export class CoreService {
                         params: {
                             resource: '/v2/state/ledger-end',
                             requestMethod: 'get',
+                            query: {},
                         },
                     })
                 ).offset!
@@ -1505,6 +1506,7 @@ export class TokenStandardService {
                         params: {
                             resource: '/v2/state/ledger-end',
                             requestMethod: 'get',
+                            query: {},
                         },
                     })
                 ).offset!
