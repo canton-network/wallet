@@ -25,7 +25,7 @@ import {
     OfflineInitializedSDK,
 } from './init/initializedSDK.js'
 import {
-    LedgerTypes as LedgerRpc,
+    LedgerApiOperations as LedgerRpc,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
 import { AllowedLogAdapters } from './logger/types.js'
@@ -48,7 +48,7 @@ export {
     signTransactionHash,
     getPublicKeyFromPrivate,
 } from '@canton-network/core-signing-lib'
-export type LedgerTypes = LedgerCommonSchemas
+export type { LedgerCommonSchemas }
 
 export * from './init/index.js'
 export type {
