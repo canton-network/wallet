@@ -122,7 +122,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -133,7 +133,7 @@ describe('manager', () => {
             expect(postMessageSpy).toHaveBeenNthCalledWith(
                 1,
                 {
-                    message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                     origin: window.location.origin,
                 },
                 exampleOrigin
@@ -211,7 +211,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -269,7 +269,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -278,7 +278,7 @@ describe('manager', () => {
 
             expect(postMessage).toHaveBeenCalledExactlyOnceWith(
                 {
-                    message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                     origin: window.location.origin,
                 },
                 exampleOrigin
@@ -291,7 +291,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -350,7 +350,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
