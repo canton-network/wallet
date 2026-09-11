@@ -6,6 +6,7 @@ import allocationAPIRouter from './api/allocation/index.js'
 import { APIError } from './api/common'
 import metadataAPIRouter from './api/metadata/index.js'
 import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
+import cors from 'cors'
 import express, {
     ErrorRequestHandler,
     NextFunction,
@@ -49,6 +50,7 @@ export const startRegistry = async (config?: Partial<RegistryConfig>) => {
     }
 
     server = app
+        .use(cors())
         .use(express.json())
         .use(metadataAPIRouter)
         .use(transferInstructionAPIRouter)
