@@ -394,9 +394,8 @@ export class TransactionService {
         const { partyId } = executeParams
         const { commandId } = transaction
 
-        const synchronizerId = await ledgerClient.resolveSynchronizerId(
-            network.synchronizerId
-        )
+        const synchronizerId =
+            network.synchronizerId ?? (await ledgerClient.getSynchronizerId())
 
         const prep = ledgerPrepareParams(
             userId,
