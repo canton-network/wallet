@@ -100,7 +100,9 @@ export function isValidGetEndpoint(resource: string): resource is GetEndpoint {
     return LedgerGetRoutes.has(resource)
 }
 
-export function isValidPostEndpoint(resource: string): resource is GetEndpoint {
+export function isValidPostEndpoint(
+    resource: string
+): resource is PostEndpoint {
     return LedgerPostRoutes.has(resource)
 }
 

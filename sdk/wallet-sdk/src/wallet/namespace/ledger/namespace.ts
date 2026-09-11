@@ -55,6 +55,7 @@ export class LedgerNamespace {
                     params: {
                         resource: '/v2/state/ledger-end',
                         requestMethod: 'get',
+                        query: {},
                     },
                 }
             )

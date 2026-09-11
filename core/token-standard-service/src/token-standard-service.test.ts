@@ -1248,9 +1248,13 @@ describe('Token standard service', () => {
                 resource: '/v2/state/latest-pruned-offsets',
                 requestMethod: 'get',
             },
-            { resource: '/v2/state/ledger-end', requestMethod: 'get' },
             {
-                resource: '/v2/updates/flats',
+                resource: '/v2/state/ledger-end',
+                requestMethod: 'get',
+                query: {},
+            },
+            {
+                resource: '/v2/updates',
                 requestMethod: 'post',
                 query: {},
                 body: {
@@ -1365,7 +1369,6 @@ describe('Token standard service', () => {
                     },
                     beginExclusive: 5,
                     endInclusive: 100,
-                    verbose: false,
                 },
             },
         ])
@@ -1373,15 +1376,25 @@ describe('Token standard service', () => {
 
     it('transaction by id', async () => {
         const { service, provider } = makeService()
-        provider.request.mockResolvedValue({ transaction: {} })
+        provider.request.mockResolvedValue({
+            update: { Transaction: { value: {} } },
+        })
         vi.spyOn(service.core, 'toPrettyTransaction').mockResolvedValue({
             id: 'tx-1',
         } as any)
 
         await service.getTransactionById('update-abc', senderParty)
         const [call] = provider.request.mock.calls
-        expect(call[0].params.resource).toBe('/v2/updates/transaction-by-id')
+        expect(call[0].params.resource).toBe('/v2/updates/update-by-id')
         expect(call[0].params.requestMethod).toBe('post')
+        expect(call[0].params.body).toMatchObject({
+            updateId: 'update-abc',
+            updateFormat: {
+                includeTransactions: {
+                    transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+                },
+            },
+        })
     })
 
     it('to pretty transactions process transaction updates', async () => {

@@ -47,10 +47,7 @@ export class ACSCache extends BaseACSCache {
         const updates = await this.fetchUpdates({
             beginExclusive: this.updates.offset,
             endInclusive: options.offset,
-            eventFormat: {
-                verbose: Boolean(builtFilter.verbose),
-                ...builtFilter.filter,
-            },
+            eventFormat: builtFilter.eventFormat,
         })
 
         /**
@@ -171,10 +168,9 @@ export class ACSCache extends BaseACSCache {
         beginExclusive: number
         endInclusive: number
         eventFormat: LedgerCommonSchemas['EventFormat']
-        filter?: LedgerCommonSchemas['TransactionFilter']
     }) {
-        const { beginExclusive, endInclusive, eventFormat, filter } = args
-        const updateFormat: Ops.PostV2UpdatesFlats['ledgerApi']['params']['body']['updateFormat'] =
+        const { beginExclusive, endInclusive, eventFormat } = args
+        const updateFormat: Ops.PostV2Updates['ledgerApi']['params']['body']['updateFormat'] =
             {
                 includeTransactions: {
                     eventFormat,
@@ -191,8 +187,6 @@ export class ACSCache extends BaseACSCache {
                     beginExclusive,
                     endInclusive,
                     updateFormat,
-                    verbose: false,
-                    ...(filter ? { filter } : {}),
                 },
                 query: {
                     limit: ACS_UPDATE_CONFIG.maxUpdatesToFetch,
