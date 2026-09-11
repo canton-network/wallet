@@ -66,7 +66,7 @@ export function useTogglePreapproval({
                 utilityOperatorQueryOptions({
                     registryPartyId: row.registryPartyId,
                     registryUrl: row.registryUrl,
-            })
+                })
             )
 
             const args = {

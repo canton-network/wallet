@@ -148,7 +148,7 @@ Creating and Registering a Plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To create a plugin, extend the ``SDKPlugin`` class and implement your custom functionality. Plugins are registered using the
-``registerPlugins`` method, which accepts a record of plugin constructors keyed by their desired property names.
+``registerPlugins`` method, which accepts an array of plugin constructors.
 
 .. literalinclude:: ../../examples/snippets/plugin.ts
             :language: typescript
