@@ -11,6 +11,7 @@ import type { PreapprovalRow } from '../types/preapprovals'
 import { logger } from '@lib/logger'
 import { TransactionHistoryService } from '@services/transaction-history-service'
 import { toUniquePortfolioHoldings } from '@utils/holdings'
+import { WalletSDKUtilitiesPluginName } from '@lib/utilities-wallet-sdk-plugin'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -216,7 +217,9 @@ export const preapprovalStatusQueryOptions = ({
                 })
             )
 
-            return await sdk.utilities.preapprovalTransfer.fetchQuick({
+            return await sdk[
+                WalletSDKUtilitiesPluginName
+            ].preapprovalTransfer.fetchQuick({
                 receiver: party,
                 operator,
                 instrumentAdmin: row.registryPartyId,

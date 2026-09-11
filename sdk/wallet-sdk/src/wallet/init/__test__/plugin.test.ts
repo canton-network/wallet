@@ -2,31 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { EXTENDED_SDK_OPTION_KEYS, SDKPlugin } from '../'
+import { EXTENDED_SDK_OPTION_KEYS, SDKPlugin, SDKPluginContext } from '../'
 import * as mock from '../../__test__/mocks'
 import { SDK } from '../..'
-import { SDKContext } from '../types/context'
 
 const testPluginFactory = (key: string) => {
     return vi.fn(
         class extends SDKPlugin {
-            constructor(ctx: SDKContext) {
+            constructor(ctx: SDKPluginContext) {
                 super(key, ctx)
             }
         }
     )
 }
 
-const pluginName = 'pluginName'
+const createTestSDK = async () => {
+    // Mock the authenticated user response
+    mock.ledgerProvider.request
+        .mockResolvedValueOnce({
+            user: { id: 'test-user-id' },
+        })
+        // Mock the connected synchronizers response
+        .mockResolvedValueOnce({
+            connectedSynchronizers: [{ id: 'sync-1' }],
+        })
 
-class TestPlugin extends SDKPlugin {
-    constructor(ctx: SDKContext) {
-        super(pluginName, ctx)
-    }
-
-    public testMethod() {
-        return true
-    }
+    return await SDK.create({
+        ledgerProvider: mock.ledgerProvider as never,
+    })
 }
 
 describe('plugin', () => {
@@ -36,54 +39,123 @@ describe('plugin', () => {
 
     EXTENDED_SDK_OPTION_KEYS.forEach((key) => {
         it(`should throw error if ${key} is used as a name`, () => {
-            expect(() => new (testPluginFactory(key))(mock.ctx)).toThrow()
+            expect(
+                () => new (testPluginFactory(key))(mock.ctx as never)
+            ).toThrow()
         })
     })
 
-    it('should call a plugin constructor when registering', async () => {
-        // Mock the authenticated user response
-        mock.ledgerProvider.request
-            .mockResolvedValueOnce({
-                user: { id: 'test-user-id' },
-            })
-            // Mock the connected synchronizers response
-            .mockResolvedValueOnce({
-                connectedSynchronizers: [{ id: 'sync-1' }],
+    describe('record based registration (deprecated)', () => {
+        it('should call a plugin constructor when registering', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+
+            sdk.registerPlugins({
+                plugin: TestPlugin,
             })
 
-        const sdk = await SDK.create({
-            ledgerProvider: mock.ledgerProvider as never,
+            expect(TestPlugin).toHaveBeenCalledOnce()
         })
 
-        const PluginClass = testPluginFactory('plugin')
+        it('should successfully register a plugin under provided name', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            const SDKWithPlugin = sdk.registerPlugins({
+                plugin: TestPlugin,
+            })
 
-        const SDKWithPlugin = sdk.registerPlugins({
-            plugin: PluginClass,
+            expect(SDKWithPlugin.plugin).toBeInstanceOf(TestPlugin)
         })
 
-        expect(SDKWithPlugin.plugin).toBeInstanceOf(PluginClass)
-        expect(PluginClass).toHaveBeenCalledOnce()
+        it('should throw error if plugin name collides with an existing property', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            sdk.registerPlugins({
+                plugin: TestPlugin,
+            })
+
+            const CollidingPlugin = testPluginFactory('plugin')
+            expect(() =>
+                sdk.registerPlugins({
+                    plugin: CollidingPlugin,
+                })
+            ).toThrow(
+                'Plugin with name plugin collides with an existing property on the SDK instance.'
+            )
+        })
     })
 
-    it('should successfully register a plugin under provided name', async () => {
-        // Mock the authenticated user response
-        mock.ledgerProvider.request
-            .mockResolvedValueOnce({
-                user: { id: 'test-user-id' },
-            })
-            // Mock the connected synchronizers response
-            .mockResolvedValueOnce({
-                connectedSynchronizers: [{ id: 'sync-1' }],
-            })
+    describe('array based registration', () => {
+        it('should call a plugin constructor when registering', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
 
-        const sdk = await SDK.create({
-            ledgerProvider: mock.ledgerProvider as never,
-        })
-        const SDKWithPlugin = sdk.registerPlugins({
-            [pluginName]: TestPlugin,
+            const SDKWithPlugin = sdk.registerPlugins([TestPlugin])
+
+            expect(SDKWithPlugin.plugin).toBeInstanceOf(TestPlugin)
+            expect(TestPlugin).toHaveBeenCalledOnce()
         })
 
-        expect(SDKWithPlugin[pluginName]).toBeDefined()
-        expect(SDKWithPlugin[pluginName].testMethod()).toBe(true)
+        it('should successfully register a plugin under plugin.name', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            const SDKWithPlugin = sdk.registerPlugins([TestPlugin])
+
+            expect(SDKWithPlugin['plugin']).toBeDefined()
+        })
+
+        it('should successfully register multiple plugins', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            const SecondTestPlugin = testPluginFactory('secondPlugin')
+            const SDKWithPlugin = sdk.registerPlugins([
+                TestPlugin,
+                SecondTestPlugin,
+            ])
+
+            expect(SDKWithPlugin.plugin).toBeInstanceOf(TestPlugin)
+            expect(SDKWithPlugin.secondPlugin).toBeInstanceOf(SecondTestPlugin)
+        })
+
+        it('should throw error if multiple plugins in the array have colliding names', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            const CollidingPlugin = testPluginFactory('plugin')
+
+            expect(() =>
+                sdk.registerPlugins([TestPlugin, CollidingPlugin])
+            ).toThrow(
+                'Plugin with name plugin collides with an existing property on the SDK instance.'
+            )
+        })
+
+        it('should throw error if plugin name collides with an existing registered plugin', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            sdk.registerPlugins([TestPlugin])
+
+            const CollidingPlugin = testPluginFactory('plugin')
+            expect(() => sdk.registerPlugins([CollidingPlugin])).toThrow(
+                'Plugin with name plugin collides with an existing property on the SDK instance.'
+            )
+        })
+
+        it('should throw error if plugin name collides with an existing property on SDK', async () => {
+            const sdk = await createTestSDK()
+            const LedgerCollidingPlugin = testPluginFactory('ledger')
+
+            expect(() => sdk.registerPlugins([LedgerCollidingPlugin])).toThrow(
+                'Plugin with name ledger collides with an existing property on the SDK instance.'
+            )
+        })
+
+        it('should throw error if plugin has an empty name', async () => {
+            const sdk = await createTestSDK()
+            const EmptyNamePlugin = testPluginFactory('')
+
+            expect(() => sdk.registerPlugins([EmptyNamePlugin])).toThrow(
+                'Plugin must define a valid non-empty string name.'
+            )
+        })
     })
 })

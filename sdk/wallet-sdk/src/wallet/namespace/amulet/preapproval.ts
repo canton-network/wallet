@@ -296,9 +296,7 @@ function isNotFoundError(e: unknown): boolean {
         typeof e === 'object' &&
         e !== null &&
         'error' in e &&
-        typeof (e as { error: unknown }).error === 'string' &&
-        (e as { error: string }).error.startsWith(
-            'No TransferPreapproval found for party'
-        )
+        typeof e.error === 'string' &&
+        e.error.startsWith('No TransferPreapproval found for party')
     )
 }

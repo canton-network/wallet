@@ -205,13 +205,23 @@ export class InitializedSDK<
          */
         P extends PluginConstructor[] | Record<string, PluginConstructor>,
     >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
-        if (plugins instanceof Array) {
-            for (const name in plugins) {
-                const plugin = new plugins[name]({
+        if (Array.isArray(plugins)) {
+            for (const pluginConstructor of plugins as PluginConstructor[]) {
+                const plugin = new pluginConstructor({
                     ...this.ctx,
                     namespace: this,
                 })
-                Object.defineProperty(this, name, {
+                if (!plugin.name || typeof plugin.name !== 'string') {
+                    throw new Error(
+                        'Plugin must define a valid non-empty string name.'
+                    )
+                }
+                if (plugin.name in this) {
+                    throw new Error(
+                        `Plugin with name ${plugin.name} collides with an existing property on the SDK instance.`
+                    )
+                }
+                Object.defineProperty(this, plugin.name, {
                     value: plugin,
                     writable: false,
                     enumerable: true,
@@ -227,6 +237,11 @@ export class InitializedSDK<
                     ...this.ctx,
                     namespace: this,
                 })
+                if (name in this) {
+                    throw new Error(
+                        `Plugin with name ${name} collides with an existing property on the SDK instance.`
+                    )
+                }
                 Object.defineProperty(this, name, {
                     value: plugin,
                     writable: false,
