@@ -2256,6 +2256,9 @@ importers:
       '@canton-network/wallet-sdk':
         specifier: workspace:^
         version: link:../../sdk/wallet-sdk
+      cors:
+        specifier: ^2.8.6
+        version: 2.8.6
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@10.2.2)
@@ -2272,6 +2275,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@types/cors':
+        specifier: ^2.8.19
+        version: 2.8.19
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
