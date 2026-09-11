@@ -27,8 +27,8 @@
     "devDependencies": {
         "@swc/core": "^1.15.43",
         "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/browser-playwright": "^4.1.11",
+        "@vitest/coverage-v8": "^4.1.11",
         "esbuild-plugin-replace": "^1.4.0",
         "playwright": "^1.61.1",
         "tsdown": "^0.22.9",
