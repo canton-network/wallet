@@ -6,6 +6,7 @@ import { SDKContext } from '../../../sdk.js'
 import { v4 } from 'uuid'
 import { PartyId } from '@canton-network/core-types'
 import { SDKLogger } from '../../../logger/logger.js'
+import { requireSynchronizerId } from '../../../init/synchronizer.js'
 
 export class InternalPartyNamespace {
     private readonly logger: SDKLogger
@@ -41,6 +42,10 @@ export class InternalPartyNamespace {
             }
         }
 
+        const synchronizerId = await requireSynchronizerId(
+            this.ctx,
+            params.synchronizerId
+        )
         const allocatedParty =
             await this.ctx.ledgerProvider.request<Ops.PostV2Parties>({
                 method: 'ledgerApi',
@@ -50,9 +55,7 @@ export class InternalPartyNamespace {
                     body: {
                         partyIdHint: params.partyHint ?? v4(),
                         identityProviderId: '',
-                        synchronizerId:
-                            params.synchronizerId ??
-                            this.ctx.defaultSynchronizerId,
+                        synchronizerId,
                         userId: params.userId ?? this.ctx.userId,
                     },
                 },

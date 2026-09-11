@@ -19,6 +19,10 @@ import {
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { PrivateKey, PublicKey } from '@canton-network/core-signing-lib'
 import { ExternalPartyNamespace } from './service.js'
+import {
+    fetchConnectedSynchronizers,
+    requireSynchronizerId,
+} from '../../../init/synchronizer.js'
 
 /**
  * Represents a signed party creation, ready to be allocated on the ledger.
@@ -212,9 +216,10 @@ export class SignedPartyCreationService {
         } = options
         const ledgerProvider = defaultLedgerProvider ?? this.ctx.ledgerProvider
         try {
-            const synchronizerId =
-                this.createPartyOptions?.synchronizerId ??
-                this.ctx.defaultSynchronizerId
+            const synchronizerId = await requireSynchronizerId(
+                this.ctx,
+                this.createPartyOptions?.synchronizerId
+            )
 
             await this.allocate(
                 ledgerProvider,
@@ -261,17 +266,10 @@ export class SignedPartyCreationService {
     ): Promise<boolean> {
         try {
             if (synchronizerId) {
-                const response =
-                    await this.ctx.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-                        {
-                            method: 'ledgerApi',
-                            params: {
-                                resource: '/v2/state/connected-synchronizers',
-                                requestMethod: 'get',
-                                query: { party: partyId },
-                            },
-                        }
-                    )
+                const response = await fetchConnectedSynchronizers(
+                    this.ctx.ledgerProvider,
+                    { party: partyId }
+                )
                 return (
                     response.connectedSynchronizers?.some(
                         (s) => s.synchronizerId === synchronizerId
