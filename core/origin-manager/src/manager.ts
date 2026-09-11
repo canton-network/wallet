@@ -1,14 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { OriginHandshake, OriginHandshakeMessage } from './types'
+import { SpliceMessageHandshake, WalletEvent } from '@canton-network/core-types'
+
+type OriginManagerConstructor = {
+    readonly userHandshakeCallback?: (event: MessageEvent) => void
+}
 
 abstract class OriginManager {
     protected allowedOrigins: Set<Location['origin']> = new Set()
-    protected abstract readonly messageToReceive: OriginHandshakeMessage
-    protected abstract readonly handshakeCallback: (event: MessageEvent) => void
+    protected abstract readonly messageToReceive: WalletEvent
+    protected abstract readonly classHandshakeCallback: (
+        event: MessageEvent
+    ) => void
 
-    constructor() {
+    constructor(private options?: OriginManagerConstructor) {
         window.addEventListener('message', this.listener)
     }
 
@@ -17,9 +23,9 @@ abstract class OriginManager {
      */
     protected get messageToSend() {
         return this.messageToReceive ===
-            OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
-            ? OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
-            : OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+            WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+            ? WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+            : WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
     }
 
     /**
@@ -27,11 +33,11 @@ abstract class OriginManager {
      */
     protected listenerFactory =
         (callback: (event: MessageEvent) => void) => (event: MessageEvent) => {
-            const parsedData = OriginHandshake.safeParse(event.data)
+            const parsedData = SpliceMessageHandshake.safeParse(event.data)
             if (
                 !parsedData.success ||
                 event.origin !== parsedData.data.origin ||
-                parsedData.data.message !== this.messageToReceive
+                parsedData.data.type !== this.messageToReceive
             )
                 return
             callback(event)
@@ -42,7 +48,8 @@ abstract class OriginManager {
      */
     private listener = this.listenerFactory((event) => {
         this.allowedOrigins.add(event.origin)
-        this.handshakeCallback(event)
+        this.classHandshakeCallback(event)
+        this.options?.userHandshakeCallback?.(event)
     })
 
     /**
@@ -54,7 +61,7 @@ abstract class OriginManager {
     }) {
         ;(options?.window ?? window).postMessage(
             {
-                message: this.messageToSend,
+                type: this.messageToSend,
                 origin: window.location.origin,
             },
             options.origin
@@ -97,11 +104,11 @@ abstract class OriginManager {
 
 export class ParentWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
-    protected readonly handshakeCallback = (event: MessageEvent) => {
+    protected readonly classHandshakeCallback = (event: MessageEvent) => {
         const associatedIntervalID = this.intervalMap.get(event.origin)
         if (associatedIntervalID) {
             clearInterval(associatedIntervalID)
@@ -148,16 +155,23 @@ export class ParentWindowOriginManager extends OriginManager {
 
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
 
-    constructor(private readonly parentWindow: Window = window.opener) {
-        super()
+    private parentWindow: Window
+
+    constructor(
+        private readonly childOptions?: {
+            parentWindow?: Window
+        } & OriginManagerConstructor
+    ) {
+        super(childOptions)
+        this.parentWindow = childOptions?.parentWindow ?? window.opener
     }
 
     /**
      * Replies to parent handshake messages and then removes the listener.
      */
-    protected readonly handshakeCallback = (event: MessageEvent) => {
+    protected readonly classHandshakeCallback = (event: MessageEvent) => {
         this.handshake({
             window: this.parentWindow,
             origin: event.origin,

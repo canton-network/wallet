@@ -12,7 +12,7 @@ import {
     beforeAll,
 } from 'vitest'
 import { ParentWindowOriginManager, ChildWindowOriginManager } from './manager'
-import { OriginHandshakeMessage } from './types'
+import { WalletEvent } from '@canton-network/core-types'
 
 const { postMessage, exampleOrigin, falseOrigin } = vi.hoisted(() => {
     const exampleOrigin = 'http://example.com'
@@ -86,9 +86,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -97,8 +95,11 @@ describe('manager', () => {
 
             vi.advanceTimersToNextTimer()
             expect(postMessageSpy).toHaveBeenNthCalledWith(
-                2,
-                'some message',
+                1,
+                {
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                    origin: window.location.origin,
+                },
                 exampleOrigin
             )
 
@@ -115,9 +116,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -175,9 +174,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -186,9 +183,7 @@ describe('manager', () => {
 
             expect(postMessage).toHaveBeenCalledExactlyOnceWith(
                 {
-                    message:
-                        OriginHandshakeMessage.enum
-                            .SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                     origin: window.location.origin,
                 },
                 exampleOrigin
@@ -201,9 +196,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -234,14 +227,12 @@ describe('manager', () => {
                 origin: exampleOrigin,
             } as unknown as Window
             const childWindowOriginManagerWithParentWindow =
-                new ChildWindowOriginManager(parentWindow)
+                new ChildWindowOriginManager({ parentWindow })
 
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,

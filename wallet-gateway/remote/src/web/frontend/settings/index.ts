@@ -25,7 +25,6 @@ import '../index'
 import { stateManager } from '../state-manager'
 import { createUserClient } from '../rpc-client'
 import { UserLevelRight } from '@canton-network/core-wallet-store'
-import { detectCurrentOrigin } from '../listeners'
 
 @customElement('user-ui-settings')
 export class UserUiSettings extends BaseElement {
@@ -51,7 +50,7 @@ export class UserUiSettings extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const accessToken = await stateManager.accessToken.get(currentOrigin)
         this.client = await createUserClient(accessToken)
         this.listNetworks()
@@ -70,7 +69,7 @@ export class UserUiSettings extends BaseElement {
 
     private async checkAdmin() {
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -83,7 +82,7 @@ export class UserUiSettings extends BaseElement {
     }
 
     private async listNetworks() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -92,7 +91,7 @@ export class UserUiSettings extends BaseElement {
     }
 
     private async listSessions() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -101,7 +100,7 @@ export class UserUiSettings extends BaseElement {
     }
 
     private async listIdps() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -115,7 +114,7 @@ export class UserUiSettings extends BaseElement {
         const { auth, adminAuth, serviceAccountAuth } = e.network
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -146,7 +145,7 @@ export class UserUiSettings extends BaseElement {
     private async handleNetworkDelete(e: NetworkCardDeleteEvent) {
         if (!confirm(`Delete network "${e.network.name}"?`)) return
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -165,7 +164,7 @@ export class UserUiSettings extends BaseElement {
     private handleIdpSubmit = async (ev: IdpAddEvent) => {
         console.log(ev)
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -184,7 +183,7 @@ export class UserUiSettings extends BaseElement {
     private handleIdpDelete = async (ev: IdpCardDeleteEvent) => {
         console.log(ev)
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

@@ -17,7 +17,6 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
-import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-review-idp')
 export class UserUiReviewIdp extends BaseElement {
@@ -62,7 +61,7 @@ export class UserUiReviewIdp extends BaseElement {
         }
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -92,7 +91,7 @@ export class UserUiReviewIdp extends BaseElement {
 
     private async onSave(e: IdpFormSaveEvent) {
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -111,7 +110,7 @@ export class UserUiReviewIdp extends BaseElement {
         if (!confirm(`Delete identity provider "${e.idp.id}"?`)) return
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

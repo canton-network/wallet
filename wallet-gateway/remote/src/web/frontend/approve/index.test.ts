@@ -40,6 +40,7 @@ vi.mock('../state-manager.js', () => ({
         accessToken: { get: () => 'test-token' },
         currentOrigin: {
             get: vi.fn().mockReturnValue('http://localhost'),
+            poll: vi.fn().mockResolvedValue('http://localhost'),
             set: vi.fn(),
             clear: vi.fn(),
         },

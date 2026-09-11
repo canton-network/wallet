@@ -19,7 +19,6 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils.js'
-import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {
@@ -75,7 +74,7 @@ export class UserUiApiKeys extends BaseElement {
 
     private async loadData() {
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -101,7 +100,7 @@ export class UserUiApiKeys extends BaseElement {
     // TODO: https://github.com/canton-network/wallet/issues/2043
     private async _revokeApiKey(apiKeyEvent: ApiKeyCardRevokeEvent) {
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
