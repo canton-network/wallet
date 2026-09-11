@@ -206,12 +206,12 @@ export class InitializedSDK<
         P extends PluginConstructor[] | Record<string, PluginConstructor>,
     >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
         if (plugins instanceof Array) {
-            for (const name in plugins) {
-                const plugin = new plugins[name]({
+            for (const pluginConstructor of plugins) {
+                const plugin = new pluginConstructor({
                     ...this.ctx,
                     namespace: this,
                 })
-                Object.defineProperty(this, name, {
+                Object.defineProperty(this, plugin.name, {
                     value: plugin,
                     writable: false,
                     enumerable: true,

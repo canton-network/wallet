@@ -11,6 +11,7 @@ import type { PreapprovalRow } from '../types/preapprovals'
 import { logger } from '@lib/logger'
 import { TransactionHistoryService } from '@services/transaction-history-service'
 import { toUniquePortfolioHoldings } from '@utils/holdings'
+import { WalletSDKUtilitiesPluginName } from '@lib/utilities-wallet-sdk-plugin'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -204,7 +205,7 @@ export const preapprovalStatusQueryOptions = ({
             if (row.kind === 'amulet') {
                 return (await sdk.amulet.preapproval.fetchQuick(party)) ?? null
             }
-
+ 
             // The operator party is a precondition for the utility status
             // lookup. Resolving it here means a failed operator fetch surfaces
             // through this query's error state (and its retry), rather than
@@ -216,7 +217,7 @@ export const preapprovalStatusQueryOptions = ({
                 })
             )
 
-            return await sdk.utilities.preapprovalTransfer.fetchQuick({
+            return await sdk[WalletSDKUtilitiesPluginName].preapprovalTransfer.fetchQuick({
                 receiver: party,
                 operator,
                 instrumentAdmin: row.registryPartyId,
