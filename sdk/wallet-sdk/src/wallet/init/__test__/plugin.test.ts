@@ -66,6 +66,23 @@ describe('plugin', () => {
 
             expect(SDKWithPlugin.plugin).toBeInstanceOf(TestPlugin)
         })
+
+        it('should throw error if plugin name collides with an existing property', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            sdk.registerPlugins({
+                plugin: TestPlugin,
+            })
+
+            const CollidingPlugin = testPluginFactory('plugin')
+            expect(() =>
+                sdk.registerPlugins({
+                    plugin: CollidingPlugin,
+                })
+            ).toThrow(
+                'Plugin with name plugin collides with an existing property on the SDK instance.'
+            )
+        })
     })
 
     describe('array based registration', () => {
@@ -98,6 +115,47 @@ describe('plugin', () => {
 
             expect(SDKWithPlugin.plugin).toBeInstanceOf(TestPlugin)
             expect(SDKWithPlugin.secondPlugin).toBeInstanceOf(SecondTestPlugin)
+        })
+
+        it('should throw error if multiple plugins in the array have colliding names', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            const CollidingPlugin = testPluginFactory('plugin')
+
+            expect(() =>
+                sdk.registerPlugins([TestPlugin, CollidingPlugin])
+            ).toThrow(
+                'Plugin with name plugin collides with an existing property on the SDK instance.'
+            )
+        })
+
+        it('should throw error if plugin name collides with an existing registered plugin', async () => {
+            const sdk = await createTestSDK()
+            const TestPlugin = testPluginFactory('plugin')
+            sdk.registerPlugins([TestPlugin])
+
+            const CollidingPlugin = testPluginFactory('plugin')
+            expect(() => sdk.registerPlugins([CollidingPlugin])).toThrow(
+                'Plugin with name plugin collides with an existing property on the SDK instance.'
+            )
+        })
+
+        it('should throw error if plugin name collides with an existing property on SDK', async () => {
+            const sdk = await createTestSDK()
+            const LedgerCollidingPlugin = testPluginFactory('ledger')
+
+            expect(() => sdk.registerPlugins([LedgerCollidingPlugin])).toThrow(
+                'Plugin with name ledger collides with an existing property on the SDK instance.'
+            )
+        })
+
+        it('should throw error if plugin has an empty name', async () => {
+            const sdk = await createTestSDK()
+            const EmptyNamePlugin = testPluginFactory('')
+
+            expect(() => sdk.registerPlugins([EmptyNamePlugin])).toThrow(
+                'Plugin must define a valid non-empty string name.'
+            )
         })
     })
 })
