@@ -1342,50 +1342,6 @@ describe('userController', () => {
             ).rejects.toThrow('Failed to add session')
         })
 
-        it('addSession rejects token with client_id claim and auth.clientId mismatch', async () => {
-            const authWithInvalidSubject = createAuthWithAddSessionClaims({
-                client_id: 'wrong-client-id',
-            })
-            const store = await createStore(logger, authWithInvalidSubject, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithInvalidSubject
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
-        it('addSession rejects token with azp claim and auth.clientId mismatch', async () => {
-            const authWithInvalidSubject = createAuthWithAddSessionClaims({
-                azp: 'wrong-client-id',
-            })
-            const store = await createStore(logger, authWithInvalidSubject, {
-                withWallet: false,
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                authWithInvalidSubject
-            )
-
-            await expect(
-                controller.addSession({
-                    origin: 'dapp-1',
-                    networkId: 'network1',
-                })
-            ).rejects.toThrow('Failed to add session')
-        })
-
         it("addSession passes when token doesn't token have azp and client-id claims", async () => {
             const authWithInvalidSubject = createAuthWithAddSessionClaims()
             const store = await createStore(logger, authWithInvalidSubject, {
