@@ -503,12 +503,7 @@ describe('userController', () => {
                     'base64url'
                 ).toString()
             )
-            const storedNetwork = await store.getNetwork('network-self-signed')
-            expect(header.kid).toBe(
-                storedNetwork.auth.method === 'self_signed'
-                    ? storedNetwork.auth.keyId
-                    : undefined
-            )
+            expect(header.kid).toBe('network-self-signed')
             expect(payload.sub).toBe('test-user')
         })
 

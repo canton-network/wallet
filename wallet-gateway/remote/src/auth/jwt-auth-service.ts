@@ -39,14 +39,14 @@ async function verifySelfSignedToken(
 
     const network = await store.getNetworkByKeyId(kid)
     if (!network || network.auth.method !== 'self_signed') {
-        logger.warn({ kid }, 'No self-signed network uses this JWT key id')
+        logger.warn({ kid }, 'No self-signed network has this network id')
         return undefined
     }
 
     if (network.identityProviderId !== idp.id) {
         logger.warn(
             { kid, networkId: network.id, idpId: idp.id },
-            'JWT key id belongs to a network of a different identity provider'
+            'JWT network id belongs to a different identity provider'
         )
         return undefined
     }

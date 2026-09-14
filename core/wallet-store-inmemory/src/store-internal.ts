@@ -25,7 +25,6 @@ import {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
-    ensureSelfSignedKeyId,
 } from '@canton-network/core-wallet-store'
 import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import { AccessToken } from '@canton-network/core-types'
@@ -62,9 +61,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     ) {
         this.logger = logger.getChild('StoreInternal')
         this.systemStorage = config
-        config.networks.forEach((network, index) => {
-            config.networks[index] = ensureSelfSignedKeyId(network)
-        })
         this.authContext = authContext
         this.userStorage = userStorage || new Map()
 
@@ -366,20 +362,14 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async getNetworkByKeyId(keyId: string): Promise<Network | undefined> {
         return this.systemStorage.networks.find(
             (network) =>
-                network.auth.method === 'self_signed' &&
-                network.auth.keyId === keyId
+                network.auth.method === 'self_signed' && network.id === keyId
         )
     }
 
     async updateNetwork(network: Network): Promise<void> {
         this.assertConnected()
-        const existing = this.systemStorage.networks.find(
-            (n) => n.id === network.id
-        )
         this.removeNetwork(network.id) // Ensure no duplicates
-        this.systemStorage.networks.push(
-            ensureSelfSignedKeyId(network, existing)
-        )
+        this.systemStorage.networks.push(network)
     }
 
     async addNetwork(network: Network): Promise<void> {
@@ -389,7 +379,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         if (networkAlreadyExists) {
             throw new Error(`Network ${network.id} already exists`)
         } else {
-            this.systemStorage.networks.push(ensureSelfSignedKeyId(network))
+            this.systemStorage.networks.push(network)
         }
     }
 

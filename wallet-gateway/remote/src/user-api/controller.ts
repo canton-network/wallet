@@ -268,17 +268,11 @@ export const userController = (
                 )
             }
 
-            if (!auth.keyId) {
-                throw new Error(
-                    `Network "${params.networkId}" has no self_signed key id, tokens minted for it cannot be verified`
-                )
-            }
-
             const accessToken = await new AuthTokenProvider(
                 {
                     method: 'self_signed',
                     issuer: idp.issuer,
-                    keyId: auth.keyId,
+                    keyId: network.id,
                     credentials: {
                         clientId: params.clientId,
                         clientSecret: auth.clientSecret,
@@ -815,12 +809,7 @@ export const userController = (
                 const network = await store.getNetwork(params.networkId)
                 const idp = await store.getIdp(network.identityProviderId)
 
-                await assertTokenClaimsMatchNetwork(
-                    store,
-                    accessToken,
-                    network,
-                    idp
-                )
+                assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
                 await store.setSession({
                     id: newSessionId,

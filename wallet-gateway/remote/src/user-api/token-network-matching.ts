@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Idp } from '@canton-network/core-wallet-auth'
-import { Network, Store } from '@canton-network/core-wallet-store'
+import { Network } from '@canton-network/core-wallet-store'
 import { decodeJwt, decodeProtectedHeader, JWTPayload } from 'jose'
 
 function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
@@ -17,12 +17,11 @@ function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
     return []
 }
 
-export async function assertTokenClaimsMatchNetwork(
-    store: Store,
+export function assertTokenClaimsMatchNetwork(
     accessToken: string,
     network: Network,
     idp: Idp
-): Promise<void> {
+): void {
     const expectedIssuer = idp.issuer
     const tokenClaims: JWTPayload = decodeJwt(accessToken)
     const tokenIssuer = tokenClaims.iss
@@ -43,15 +42,8 @@ export async function assertTokenClaimsMatchNetwork(
             throw new Error('Self-signed JWT does not contain a kid header.')
         }
 
-        const tokenNetwork = await store.getNetworkByKeyId(kid)
-        if (!tokenNetwork) {
-            throw new Error('No self-signed network uses this JWT key id.')
-        }
-
-        if (tokenNetwork.id !== network.id) {
-            throw new Error(
-                `Token kid does not match the selected network's key id.`
-            )
+        if (kid !== network.id) {
+            throw new Error(`Token kid does not match the selected network id.`)
         }
     }
 }
