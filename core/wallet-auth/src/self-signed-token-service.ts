@@ -29,7 +29,7 @@ export class SelfSignedTokenService {
             })
             .sign(secret)
 
-        logger.info(`Generated self-signed JWT token: ${jwt}`)
+        logger.debug('Generated self-signed JWT token')
         return jwt
     }
 }
