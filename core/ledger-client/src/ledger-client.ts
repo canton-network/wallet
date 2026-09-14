@@ -100,7 +100,9 @@ export function isValidGetEndpoint(resource: string): resource is GetEndpoint {
     return LedgerGetRoutes.has(resource)
 }
 
-export function isValidPostEndpoint(resource: string): resource is GetEndpoint {
+export function isValidPostEndpoint(
+    resource: string
+): resource is PostEndpoint {
     return LedgerPostRoutes.has(resource)
 }
 
@@ -187,10 +189,6 @@ export class LedgerClient {
 
     public async init() {
         if (!this.initialized) {
-            this.logger.debug(
-                `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href}`
-            )
-
             //TODO: parse error response and escalate
             const versionFromClient =
                 await this.currentClient.GET('/v2/version')
@@ -207,6 +205,10 @@ export class LedgerClient {
                 versionFromClient.data?.version
             )
             this.initialized = true
+
+            this.logger.debug(
+                `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href} and setting initialized to true`
+            )
         }
     }
 
@@ -521,20 +523,28 @@ export class LedgerClient {
         return this.valueOrError(resp)
     }
 
-    // Retrieve an (arbitrary) synchronizer id from the validator.
+    // Retrieve the default synchronizer id from the validator.
+    // Prefers a synchronizer aliased 'global' over application-specific ones.
     // This synchronizer id is cached for the remainder of this object's life.
     public async getSynchronizerId(): Promise<string> {
         if (this.synchronizerId) return this.synchronizerId
         const response = await this.getWithRetry(
             '/v2/state/connected-synchronizers'
         )
-        if (!response.connectedSynchronizers?.[0]) {
+        const synchronizers = response.connectedSynchronizers
+        if (!synchronizers?.[0]) {
             throw new Error('No connected synchronizers found')
         }
-        const synchronizerId = response.connectedSynchronizers[0].synchronizerId
-        if (response.connectedSynchronizers.length > 1) {
+        const defaultEntry =
+            synchronizers.find((s) => s.synchronizerAlias === 'global') ??
+            synchronizers.find(
+                (s) => s.synchronizerAlias !== 'app-synchronizer'
+            ) ??
+            synchronizers[0]
+        const synchronizerId = defaultEntry.synchronizerId
+        if (synchronizers.length > 1) {
             this.logger.warn(
-                `Found ${response.connectedSynchronizers.length} synchronizers, defaulting to ${synchronizerId}`
+                `Found ${synchronizers.length} synchronizers, defaulting to ${synchronizerId}`
             )
         }
         this.synchronizerId = synchronizerId

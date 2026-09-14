@@ -42,6 +42,7 @@ declare global {
             | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
             | 'HASHING_SCHEME_VERSION_V2'
             | 'HASHING_SCHEME_VERSION_V3'
+            | 'HASHING_SCHEME_VERSION_V4'
         hashingDetails?: string
         costEstimation?: {
             estimationTimestamp?: string

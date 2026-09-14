@@ -53,9 +53,9 @@ function buildDamlJsPackagesMap(baseDir) {
 }
 
 const TEST_TOKEN_COMPAT_ALIAS = '@daml.js/test-token-v1'
-const TEST_TOKEN_CANONICAL_NAME = '@daml.js/splice-test-token-v1-1.0.0'
+const TEST_TOKEN_CANONICAL_PREFIX = '@daml.js/splice-test-token-v1'
 const OTC_TRADE_COMPAT_ALIAS = '@daml.js/otc-trade'
-const OTC_TRADE_CANONICAL_NAME = '@daml.js/splice-token-test-trading-app-1.0.0'
+const OTC_TRADE_CANONICAL_PREFIX = '@daml.js/splice-token-test-trading-app'
 
 const DAML_JS_PACKAGES = {
     testToken: buildDamlJsPackagesMap(TEST_TOKEN_BASE),
@@ -68,15 +68,31 @@ const allDamlJsPackages = {
     ...DAML_JS_PACKAGES.otcTrade,
 }
 
-// Add compatibility aliases
-if (DAML_JS_PACKAGES.testToken[TEST_TOKEN_CANONICAL_NAME]) {
-    allDamlJsPackages[TEST_TOKEN_COMPAT_ALIAS] =
-        DAML_JS_PACKAGES.testToken[TEST_TOKEN_CANONICAL_NAME]
+function findPackageDirByPrefix(packages, prefix) {
+    const packageName = Object.keys(packages).find((name) =>
+        name.startsWith(prefix)
+    )
+
+    return packageName ? packages[packageName] : undefined
 }
 
-if (DAML_JS_PACKAGES.otcTrade[OTC_TRADE_CANONICAL_NAME]) {
-    allDamlJsPackages[OTC_TRADE_COMPAT_ALIAS] =
-        DAML_JS_PACKAGES.otcTrade[OTC_TRADE_CANONICAL_NAME]
+// Add compatibility aliases
+const testTokenCompatTarget = findPackageDirByPrefix(
+    DAML_JS_PACKAGES.testToken,
+    TEST_TOKEN_CANONICAL_PREFIX
+)
+
+if (testTokenCompatTarget) {
+    allDamlJsPackages[TEST_TOKEN_COMPAT_ALIAS] = testTokenCompatTarget
+}
+
+const otcTradeCompatTarget = findPackageDirByPrefix(
+    DAML_JS_PACKAGES.otcTrade,
+    OTC_TRADE_CANONICAL_PREFIX
+)
+
+if (otcTradeCompatTarget) {
+    allDamlJsPackages[OTC_TRADE_COMPAT_ALIAS] = otcTradeCompatTarget
 }
 
 function buildPathsMap(packageDirs) {

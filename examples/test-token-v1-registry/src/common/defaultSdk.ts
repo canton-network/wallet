@@ -21,9 +21,9 @@ const auth: TokenProviderConfig = {
     },
 }
 
-const sdk = await SDK.create({
+const defaultSdk = await SDK.create({
     auth,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
 })
 
-export default sdk
+export default defaultSdk

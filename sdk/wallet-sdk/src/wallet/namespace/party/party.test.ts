@@ -372,15 +372,6 @@ describe('Party namespace', () => {
                     })
                 })
 
-                // Mock get connected synchronizers
-                ledgerProvider.request.mockResolvedValueOnce({
-                    connectedSynchronizers: [
-                        {
-                            synchronizerId: 'syncId',
-                        },
-                    ],
-                })
-
                 party.external.create('publicKey', {
                     observingParticipantEndpoints,
                     confirmingParticipantEndpoints,
@@ -399,14 +390,6 @@ describe('Party namespace', () => {
                             },
                         }
                     )
-                })
-                expect(ledgerProvider.request).toHaveBeenNthCalledWith(6, {
-                    method: 'ledgerApi',
-                    params: {
-                        resource: '/v2/state/connected-synchronizers',
-                        requestMethod: 'get',
-                        query: {},
-                    },
                 })
             })
         })

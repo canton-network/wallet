@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TokenNamespaceConfig } from '../../../sdk.js'
-import { Metadata } from '@canton-network/core-token-standard'
+import { HoldingView, Metadata } from '@canton-network/core-token-standard'
 import {
     DisclosedContract,
     ExerciseCommand,
 } from '@canton-network/core-token-standard-service'
-import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
+import { PrettyContract } from '@canton-network/core-tx-parser'
 import { PartyId } from '@canton-network/core-types'
 import { LedgerNamespace } from '../../ledger/index.js'
 import { UtxoNamespace } from './index.js'
@@ -103,7 +103,7 @@ export class MergeDelegationNamespace {
         party: PartyId
         synchronizerId?: string
         nodeLimit?: number
-        inputUtxos?: PrettyContract<Holding>[]
+        inputUtxos?: PrettyContract<HoldingView>[]
         validatorParty?: PartyId
     }) {
         const providerParty = resolveProviderParty(

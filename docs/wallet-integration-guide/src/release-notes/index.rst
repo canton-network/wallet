@@ -3,6 +3,49 @@ Wallet SDK Release Notes
 
 Below are the release notes for the Wallet SDK versions, detailing new features, improvements, and bug fixes in each version.
 
+1.5.1
+-----
+
+**Released on September 10th, 2026**
+
+* Added support for Canton 3.6.X
+
+1.5.0
+-----
+
+**Released on September 9th, 2026**
+
+* Correctly handle holding locks which have a relative expiresAfter
+
+*previously, holdings with a relative `expiresAfter` could be incorrectly considered locked forever. This fix also revealed some misleading typings in the SDK which are now corrected.*
+
+.. code-block:: javascript
+
+    import { PrettyContract } from '@canton-network/core-tx-parser'
+    import { HoldingView, Lock } from '@canton-network/core-token-standard'
+
+    // Return type narrowed to PrettyContract<HoldingView>[]
+    const utxos = await sdk.token.utxos.list({ partyId: sender.partyId })
+    const result: PrettyContract<HoldingView> = utxos[0]
+
+    // The badly typed result.interfaceViewValue.contractId was always undefined at runtime and has been removed
+    const contractId: string = result.contractId
+
+    // New typing for the lock object
+    const lock: Lock = result.interfaceViewValue.lock
+    // New typing matches existing runtime structure
+    const expiresAfter: { microseconds: string } = lock.expiresAfter
+
+    // Now requires PrettyContract<HoldingView> as an argument
+    const isLocked: boolean = TokenStandardService.isHoldingLocked(result)
+
+* New isDevNet in amulet namespace
+
+.. code-block:: javascript
+
+    // Returns whether the configured Amulet network is a development network.
+    await sdk.amulet.isDevNet()
+
 1.4.0
 -----
 

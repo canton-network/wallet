@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { TestToken } from '@canton-network/core-splice-codegen'
 import { OffLedger } from '@canton-network/core-token-standard'
 
 export const supportedApis: OffLedger.MetadataV1.components['schemas']['SupportedApis'] =
@@ -17,7 +18,7 @@ export const supportedApis: OffLedger.MetadataV1.components['schemas']['Supporte
 export const instruments: OffLedger.MetadataV1.components['schemas']['Instrument'][] =
     [
         {
-            id: 'test-token-v1',
+            id: TestToken.DAR.TestTokenID,
             name: 'TestTokenV1',
             symbol: 'tt',
             totalSupply: '1_000_000_000',

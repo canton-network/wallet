@@ -10,11 +10,6 @@ import { paths as metadataPaths } from './generated-clients/splice-api-token-met
 import { paths as transferInstructionPaths } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
 import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
-export { components as allocationRegistryTypes } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
-export { components as metadataRegistryTypes } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
-export { components as transferInstructionRegistryTypes } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
-export { components as allocationInstructionRegistryTypes } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
-
 type paths = allocationPaths &
     metadataPaths &
     transferInstructionPaths &

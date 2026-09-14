@@ -44,14 +44,25 @@ For developers **running or configuring** the Wallet Gateway server that mediate
 
 **Contents:**
 
-- [Getting Started](wallet-gateway/getting-started/index.md)
-- [Configuration](wallet-gateway/configuration/index.md)
-- [Automations](wallet-gateway/automations/index.md)
-- [Usage](wallet-gateway/usage/index.md)
-- [APIs](wallet-gateway/apis/index.md)
-- [Signing Providers](wallet-gateway/signing-providers/index.md)
-- [Deployment](wallet-gateway/deployment/index.md)
-- [Troubleshooting](wallet-gateway/troubleshooting/index.md)
+- [Overview](wallet-gateway/index.md)
+- [Quickstart](wallet-gateway/quickstart.md)
+- Set up and operate
+    - [Configure the Wallet Gateway](wallet-gateway/operate/configure.md)
+    - [Networks and identity providers](wallet-gateway/operate/networks-and-identity.md)
+    - [Signing providers](wallet-gateway/operate/signing-providers.md)
+    - [Deploy](wallet-gateway/operate/deploy.md)
+    - [Security checklist](wallet-gateway/operate/security.md)
+    - [Troubleshooting](wallet-gateway/operate/troubleshooting.md)
+- Use the Wallet Gateway
+    - [Party management](wallet-gateway/use/party-management.md)
+    - [Approve and sign transactions](wallet-gateway/use/approve-and-sign.md)
+- Automation
+    - [Automate with the User API](wallet-gateway/automation/automate-with-user-api.md)
+    - [Service account automations](wallet-gateway/automation/service-account-automations.md)
+- Reference
+    - [Configuration reference](wallet-gateway/reference/configuration-reference.md)
+    - [dApp API](wallet-gateway/reference/dapp-api.md)
+    - [User API](wallet-gateway/reference/user-api.md)
 
 **Audience:** Operators and backend developers deploying the Wallet Gateway or integrating it with signing providers and identity systems.
 

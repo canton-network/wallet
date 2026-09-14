@@ -71,6 +71,7 @@ export class TransferNamespace {
                 this.sdkContext.registryUrls.map((url) => url.href)
             )
         )
+
         const asset = findAsset(
             assets,
             params.instrumentId,

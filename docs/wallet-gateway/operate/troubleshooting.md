@@ -1,0 +1,136 @@
+---
+title: 'Troubleshooting'
+description: 'Common Wallet Gateway problems and how to resolve them.'
+---
+
+Common issues you may hit when running the Wallet Gateway, with fixes.
+
+## Database connection errors
+
+The Wallet Gateway fails to start with database connection errors.
+
+- **PostgreSQL**: verify the database exists (`psql -U postgres -l`), check credentials in your
+  config, ensure PostgreSQL is running (`pg_isready`), and check network and firewall rules.
+- **SQLite**: ensure the directory for the database file exists, check read/write permissions,
+  and verify disk space.
+- **Memory**: no configuration is needed, but remember data is lost on restart.
+
+## Authentication failures
+
+API calls return `401 Unauthorized`.
+
+- **Invalid or expired token**: use a valid JWT, check its expiration, and regenerate it if
+  needed.
+- **Missing Authorization header**: include `Authorization: Bearer <token>` in the correct
+  format.
+- **Session not found**: create a session with `addSession()` first, ensure it has not expired,
+  and confirm you are using the correct user context.
+
+## Network connection issues
+
+The Wallet Gateway cannot connect to a configured network or Ledger API.
+
+- **Network unreachable**: verify the Ledger API URL, test connectivity with
+  `curl <ledger-api-url>/v2/version`, and check firewall rules and routing.
+- **Invalid network configuration**: confirm `synchronizerId` matches the validator, the
+  `identityProviderId` matches an IDP, and the credentials are correct.
+- **SSL/TLS issues**: verify certificates for HTTPS endpoints. In development you may need HTTP
+  or to configure certificate trust.
+
+## Port already in use
+
+`EADDRINUSE: address already in use :::3030`.
+
+- Find and stop the process using the port:
+
+    ```bash
+    lsof -ti:3030 | xargs kill -9
+    # Or inspect it first
+    lsof -i :3030
+    ```
+
+- Use a different port:
+
+    ```bash
+    wallet-gateway -c ./config.json -p 8080
+    ```
+
+- Check whether another Wallet Gateway instance is running:
+
+    ```bash
+    ps aux | grep wallet-gateway
+    ```
+
+## Configuration validation errors
+
+The Wallet Gateway fails to start with configuration errors.
+
+- Validate your config against the schema:
+
+    ```bash
+    wallet-gateway --config-schema > schema.json
+    # Then run it through a JSON Schema validator
+    ```
+
+- Check for common mistakes: missing required fields, invalid JSON, type mismatches (strings
+  vs numbers), and incorrect IDP references in networks.
+- Start from the example config:
+
+    ```bash
+    wallet-gateway --config-example > my-config.json
+    ```
+
+## Signing provider issues
+
+Transactions fail with signing errors. Verify the provider's environment variables and
+permissions:
+
+- **Fireblocks**: `FIREBLOCKS_SECRET` and `FIREBLOCKS_API_KEY` set, keys valid with proper
+  permissions, and the Fireblocks API reachable.
+- **Participant**: the participant node is running and reachable, the party exists on it, and
+  the participant logs show no signing errors.
+- **Blockdaemon**: `BLOCKDAEMON_API_URL` and `BLOCKDAEMON_API_KEY` set, API reachable, and the
+  key has signing permissions.
+- **DFNS**: `DFNS_ORG_ID`, `DFNS_BASE_URL`, `DFNS_CRED_ID`, `DFNS_PRIVATE_KEY`, and
+  `DFNS_AUTH_TOKEN` set, credentials correct, and the service account has wallet-creation and
+  signing permissions.
+
+See [Signing providers](signing-providers.md) for each
+provider's setup.
+
+## Debugging
+
+- **Enable pretty logs** for readable, detailed output:
+
+    ```bash
+    wallet-gateway -c ./config.json -f pretty
+    ```
+
+- **Use structured logs** for aggregation:
+
+    ```bash
+    wallet-gateway -c ./config.json -f json
+    ```
+
+- **Check logs** in console output, system logs, or container logs depending on how you run
+  the Wallet Gateway.
+
+- **Verify endpoints** respond:
+
+    ```bash
+    # Web UI
+    curl http://localhost:3030
+
+    # dApp API status (requires authentication)
+    curl -X POST http://localhost:3030/api/v0/dapp \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer <token>" \
+      -d '{"jsonrpc":"2.0","id":1,"method":"status","params":[]}'
+    ```
+
+## Getting help
+
+If problems persist: check the logs for detailed errors, validate your configuration against
+the schema, review the [User API](../reference/user-api.md) and
+[dApp API](../reference/dapp-api.md) specifications, and check the
+project's GitHub issues for similar reports.

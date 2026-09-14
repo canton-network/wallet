@@ -21,6 +21,12 @@ export type ExecuteOptions = {
     partyId: PartyId
 }
 
+export type ConnectedSynchronizersOptions = {
+    party?: string
+    participantId?: string
+    identityProviderId?: string
+}
+
 export type AcsRequestOptions = Omit<AcsOptions, 'offset'> & {
     offset?: number
 }

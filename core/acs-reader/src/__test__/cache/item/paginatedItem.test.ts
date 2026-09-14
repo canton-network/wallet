@@ -11,8 +11,7 @@ const {
 } = vi.hoisted(() => {
     const getPaginatedActiveContracts = vi.fn()
     const mockBuildActiveContractFilter = vi.fn((options) => ({
-        filter: { filtersByParty: {} },
-        verbose: false,
+        eventFormat: { filtersByParty: {}, verbose: false },
         activeAtOffset: options.offset,
     }))
 

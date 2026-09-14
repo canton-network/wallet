@@ -44,25 +44,21 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         const keys = await driver.getKeys().then(handleSigningProviderError)
         const key = keys?.keys?.find((k) => k.name === keyName)
         if (!key) throw new Error('Fireblocks key not found')
-        const formattedPublicKey = Buffer.from(key.publicKey, 'hex').toString(
-            'base64'
-        )
 
-        const namespace =
-            this.partyAllocator.createFingerprintFromKey(formattedPublicKey)
+        const namespace = this.partyAllocator.createFingerprintFromKey(
+            key.publicKey
+        )
         const transactions =
             await this.partyAllocator.generateTopologyTransactions(
                 partyHint,
-                formattedPublicKey
+                key.publicKey
             )
         const topologyTransactions = transactions.topologyTransactions ?? []
 
         const { status, txId } = await driver
             .signTransaction({
                 tx: '',
-                txHash: Buffer.from(transactions.multiHash, 'base64').toString(
-                    'hex'
-                ),
+                txHash: transactions.multiHash,
                 keyIdentifier: {
                     publicKey: key.publicKey,
                 },
@@ -101,7 +97,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 await this.partyAllocator.allocatePartyWithExistingWallet(
                     namespace,
                     topologyTransactions,
-                    Buffer.from(signature, 'hex').toString('base64'),
+                    signature,
                     userId
                 )
             wallet = {
@@ -169,7 +165,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 await this.partyAllocator.allocatePartyWithExistingWallet(
                     existingWallet.namespace,
                     existingWallet.topologyTransactions.split(', '),
-                    Buffer.from(signature, 'hex').toString('base64'),
+                    signature,
                     userId
                 )
             walletUpdate = {

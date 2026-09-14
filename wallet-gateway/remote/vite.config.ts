@@ -4,8 +4,10 @@
 import { defineConfig } from 'vite'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
+import { resolveRouteInputs } from './src/web/route-inputs.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const frontendRoot = resolve(__dirname, 'src/web/frontend')
 
 export default defineConfig({
     root: 'src/web/frontend',
@@ -17,59 +19,7 @@ export default defineConfig({
         outDir: resolve(__dirname, './dist/web/frontend'),
         emptyOutDir: true,
         rollupOptions: {
-            input: {
-                main: resolve(__dirname, 'src/web/frontend/index.html'),
-                404: resolve(__dirname, 'src/web/frontend/404/index.html'),
-                approve: resolve(
-                    __dirname,
-                    'src/web/frontend/approve/index.html'
-                ),
-                callback: resolve(
-                    __dirname,
-                    'src/web/frontend/callback/index.html'
-                ),
-                login: resolve(__dirname, 'src/web/frontend/login/index.html'),
-                parties: resolve(
-                    __dirname,
-                    'src/web/frontend/parties/index.html'
-                ),
-                addParty: resolve(
-                    __dirname,
-                    'src/web/frontend/parties/add/index.html'
-                ),
-                settings: resolve(
-                    __dirname,
-                    'src/web/frontend/settings/index.html'
-                ),
-                activities: resolve(
-                    __dirname,
-                    'src/web/frontend/activities/index.html'
-                ),
-                networks: resolve(
-                    __dirname,
-                    'src/web/frontend/networks/index.html'
-                ),
-                addNetwork: resolve(
-                    __dirname,
-                    'src/web/frontend/networks/add/index.html'
-                ),
-                reviewNetwork: resolve(
-                    __dirname,
-                    'src/web/frontend/networks/review/index.html'
-                ),
-                identityProviders: resolve(
-                    __dirname,
-                    'src/web/frontend/identity-providers/index.html'
-                ),
-                addIdentityProvider: resolve(
-                    __dirname,
-                    'src/web/frontend/identity-providers/add/index.html'
-                ),
-                reviewIdentityProvider: resolve(
-                    __dirname,
-                    'src/web/frontend/identity-providers/review/index.html'
-                ),
-            },
+            input: resolveRouteInputs(frontendRoot),
         },
     },
     resolve: {

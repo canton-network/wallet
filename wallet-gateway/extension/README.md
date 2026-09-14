@@ -2,6 +2,8 @@
 
 The browser extension Wallet for Chrome and Firefox.
 
+> **Disclaimer:** This extension is under heavy development and is not recommended for production use.
+
 # Building
 
 The extension's source code is written in TypeScript and built with `WXT`.
