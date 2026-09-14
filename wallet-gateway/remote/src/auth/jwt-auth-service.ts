@@ -24,7 +24,10 @@ function getEmail(value: unknown): string | undefined {
     return value
 }
 
-// TODO maybe add a nice description
+/**
+ * Verifies a self-signed token against the secret of the network named by
+ * the `kid` header, and rejects it if that network belongs to another IDP.
+ */
 async function verifySelfSignedToken(
     jwt: string,
     idp: Extract<Idp, { type: 'self_signed' }>,
@@ -37,7 +40,7 @@ async function verifySelfSignedToken(
         return undefined
     }
 
-    const network = await store.getNetworkByKeyId(kid)
+    const network = await store.getNetworkForTokenVerification(kid)
     if (!network || network.auth.method !== 'self_signed') {
         logger.warn({ kid }, 'No self-signed network has this network id')
         return undefined
@@ -75,9 +78,9 @@ async function verifySelfSignedToken(
     }
 }
 
-// TODO I probably should adjust the comment for non-JWKS path
 /**
- * Creates an AuthService that verifies JWT tokens using a remote JWK set.
+ * Creates an AuthService that verifies JWT tokens, using a remote JWK set for
+ * oauth identity providers and the network's secret for self_signed ones.
  * @param store - The Store instance to access network configurations.
  * @param logger - Logger instance for logging debug and warning messages.
  * @returns An AuthService implementation that verifies JWT tokens.
@@ -112,7 +115,6 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 return undefined
             }
 
-            // TODO Check if I can divide it nicer per idp type, like each one in it's own method or other kind of block
             if (idp.type == 'self_signed') {
                 return await verifySelfSignedToken(jwt, idp, store, logger)
             }
@@ -154,7 +156,6 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 ? tokenAudience
                 : [tokenAudience]
 
-            // TODO is this enough for token aud to match any network audience?
             const audMatch = tokenAudiences.some((aud) =>
                 expectedAudiences.includes(aud)
             )

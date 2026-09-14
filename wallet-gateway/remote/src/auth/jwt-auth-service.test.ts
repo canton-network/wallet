@@ -64,6 +64,18 @@ async function hs256BearerToken(
     return `Bearer ${jwt}`
 }
 
+function unsignedBearerToken(
+    claims: Record<string, unknown>,
+    keyId = SELF_SIGNED_NETWORK_ID
+): string {
+    const encode = (value: Record<string, unknown>): string =>
+        Buffer.from(JSON.stringify(value)).toString('base64url')
+
+    const header = encode({ alg: 'none', typ: 'JWT', kid: keyId })
+    const payload = encode(claims)
+    return `Bearer ${header}.${payload}.`
+}
+
 async function rs256BearerToken(
     claims: Record<string, unknown>,
     privateKey: KeyLike
@@ -96,12 +108,13 @@ const createOAuthNetwork = (
 const createSelfSignedNetwork = (
     id: string,
     audience: string,
-    clientSecret: string
+    clientSecret: string,
+    identityProviderId = 'idp-self'
 ): Network => ({
     id,
     name: `Network ${id}`,
     synchronizerId: `${id}-sync`,
-    identityProviderId: 'idp-self',
+    identityProviderId,
     description: `Test Network ${id}`,
     ledgerApi: { baseUrl: `http://${id}` },
     auth: {
@@ -424,6 +437,87 @@ describe('jwtAuthService', () => {
                 exp: Math.floor(Date.now() / 1000) - 60,
             })
             await expect(service.verifyToken(token)).resolves.toBeUndefined()
+        })
+
+        it('returns undefined when the kid network belongs to another identity provider', async () => {
+            await store.addIdp({
+                id: 'idp-other',
+                type: 'self_signed',
+                issuer: 'other-issuer',
+            })
+            await store.addNetwork(
+                createSelfSignedNetwork(
+                    'network-other',
+                    SELF_SIGNED_AUDIENCE,
+                    SELF_SIGNED_SECRET,
+                    'idp-other'
+                )
+            )
+
+            const service = jwtAuthService(store, mockLogger)
+            // Issuer resolves to idp-self, but the kid names a network owned
+            // by idp-other.
+            const token = await hs256BearerToken(
+                {
+                    iss: SELF_SIGNED_ISSUER,
+                    sub: 'user-1',
+                    aud: SELF_SIGNED_AUDIENCE,
+                    scope: 'openid',
+                },
+                SELF_SIGNED_SECRET,
+                'network-other'
+            )
+
+            await expect(service.verifyToken(token)).resolves.toBeUndefined()
+        })
+
+        it('returns undefined for an unsigned token using the none algorithm', async () => {
+            await store.addNetwork(
+                createSelfSignedNetwork(
+                    'network-self',
+                    SELF_SIGNED_AUDIENCE,
+                    SELF_SIGNED_SECRET
+                )
+            )
+
+            const service = jwtAuthService(store, mockLogger)
+            const token = unsignedBearerToken({
+                iss: SELF_SIGNED_ISSUER,
+                sub: 'user-1',
+                aud: SELF_SIGNED_AUDIENCE,
+                scope: 'openid',
+            })
+
+            await expect(service.verifyToken(token)).resolves.toBeUndefined()
+        })
+
+        it('returns undefined for an asymmetrically signed token', async () => {
+            await store.addNetwork(
+                createSelfSignedNetwork(
+                    'network-self',
+                    SELF_SIGNED_AUDIENCE,
+                    SELF_SIGNED_SECRET
+                )
+            )
+
+            const { privateKey } = await generateKeyPair('RS256')
+            const service = jwtAuthService(store, mockLogger)
+            const jwt = await new SignJWT({
+                iss: SELF_SIGNED_ISSUER,
+                sub: 'user-1',
+                aud: SELF_SIGNED_AUDIENCE,
+                scope: 'openid',
+                exp: Math.floor(Date.now() / 1000) + 3600,
+            })
+                .setProtectedHeader({
+                    alg: 'RS256',
+                    kid: SELF_SIGNED_NETWORK_ID,
+                })
+                .sign(privateKey)
+
+            await expect(
+                service.verifyToken(`Bearer ${jwt}`)
+            ).resolves.toBeUndefined()
         })
 
         describe('multiple networks', () => {
