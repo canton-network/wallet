@@ -49,7 +49,6 @@ type CancelArgs = FetchPreapprovalArgs & {
 type CancelCommandResult =
     PreparedCommand<'ExerciseCommand'> | typeof EMPTY_COMMAND_RESULT
 
-
 const TRANSFER_PREAPPROVAL_TEMPLATE_ID =
     '#utility-registry-app-v0:Utility.Registry.App.V0.Model.TransferPreapproval:TransferPreapproval'
 const TRANSFER_PREAPPROVAL_WITHDRAW_CHOICE = 'TransferPreapproval_Withdraw'
