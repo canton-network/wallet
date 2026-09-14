@@ -228,12 +228,31 @@ describe('handleRpcError', () => {
         expect(body).toEqual({
             jsonrpc: '2.0',
             id: 99,
-            error: err,
+            error: { code: err.code, message: 'bad' },
         })
         expect(errorLog).not.toHaveBeenCalled()
     })
 
-    it('uses generic method-specific message for non-JsonRpcError then replaces with Error.message', () => {
+    it('keeps the JsonRpcError message once the response is serialised', () => {
+        const err = rpcErrors.invalidParams({ message: 'error description' })
+        const [, body] = handleRpcError(err, 99)
+
+        expect(JSON.parse(JSON.stringify(body))).toMatchObject({
+            error: { code: err.code, message: 'error description' },
+        })
+    })
+
+    it('forwards data that was deliberately attached to a JsonRpcError', () => {
+        const err = rpcErrors.invalidParams({
+            message: 'bad',
+            data: { field: 'value' },
+        })
+        const [, body] = handleRpcError(err, 1)
+
+        expect(errorPayload(body)).toMatchObject({ data: { field: 'value' } })
+    })
+
+    it('forwards the Error message but not the error object itself', () => {
         const [status, body] = handleRpcError(
             new Error('some error'),
             'id',
@@ -244,12 +263,24 @@ describe('handleRpcError', () => {
         expect(body).toEqual({
             jsonrpc: '2.0',
             id: 'id',
-            error: expect.objectContaining({
+            error: {
                 code: rpcErrors.internal().code,
                 message: 'some error',
-                data: expect.any(Error),
-            }),
+            },
         })
+    })
+
+    it('does not leak enumerable properties of runtime errors', () => {
+        const dbError = Object.assign(new Error('connect ECONNREFUSED'), {
+            code: 'ECONNREFUSED',
+            address: '127.0.0.1',
+            port: 5432,
+        })
+
+        const [, body] = handleRpcError(dbError, 1, 'listWallets')
+
+        expect(errorPayload(body)).not.toHaveProperty('data')
+        expect(JSON.stringify(body)).not.toContain('5432')
     })
 
     it('uses generic message when method name is omitted', () => {
@@ -307,10 +338,9 @@ describe('handleRpcError', () => {
         const [status, body] = handleRpcError({ foo: 'bar' }, 2, 'wrongMethod')
 
         expect(status).toBe(500)
-        expect(errorPayload(body)).toMatchObject({
+        expect(errorPayload(body)).toEqual({
             code: rpcErrors.internal().code,
             message: 'Something went wrong while calling wrongMethod',
-            data: { foo: 'bar' },
         })
     })
 })

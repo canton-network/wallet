@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PartyId } from '@canton-network/core-types'
-import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
+import { PrettyContract } from '@canton-network/core-tx-parser'
+import { HoldingView } from '@canton-network/core-token-standard'
 
 export type MergeUtxosParams = {
     partyId: PartyId
-    inputUtxos?: PrettyContract<Holding>[]
+    inputUtxos?: PrettyContract<HoldingView>[]
     nodeLimit?: number
     memo?: string
 }

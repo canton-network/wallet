@@ -964,61 +964,57 @@ describe('Token standard service', () => {
         ])
     })
 
-    it('holding locked returns correctly', async () => {
-        const future = new Date(Date.now() + 100_000).toISOString()
-        const past = new Date(Date.now() - 100_000).toISOString()
+    describe('isHoldingLocked', () => {
+        // Used for relative time
+        const createdAt = '2026-09-01T10:00:00.000Z'
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: null,
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(false)
+        const past = '2026-09-01T10:59:59.999Z'
+        const pastRel = { microseconds: '3599999000' }
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: {},
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(true)
+        const now = '2026-09-01T11:00:00.000Z'
+        const nowRel = { microseconds: '3600000000' }
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: { expiresAt: future },
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(true)
+        const future = '2026-09-01T11:00:00.001Z'
+        const futureRel = { microseconds: '3600001000' }
 
-        expect(
-            TokenStandardService.isHoldingLocked({
-                lock: { expiresAt: past },
-                owner: '',
-                instrumentId: {
-                    admin: '',
-                    id: '',
-                },
-                amount: '',
-                meta: undefined,
-            } as any)
-        ).toBe(false)
+        it.each([
+            [null, false],
+            [{}, true],
+            [{ expiresAt: null }, true],
+            [{ expiresAt: past }, false],
+            [{ expiresAt: now }, false],
+            [{ expiresAt: future }, true],
+            [{ expiresAfter: pastRel }, false],
+            [{ expiresAfter: nowRel }, false],
+            [{ expiresAfter: futureRel }, true],
+            [{ expiresAt: future, expiresAfter: futureRel }, true],
+            [{ expiresAt: now, expiresAfter: futureRel }, false],
+            [{ expiresAt: future, expiresAfter: nowRel }, false],
+        ])('holding locked with lock %o returns %s', (lock, expected) => {
+            expect(
+                TokenStandardService.isHoldingLocked(
+                    {
+                        interfaceViewValue: {
+                            lock,
+                            owner: '',
+                            instrumentId: {
+                                admin: '',
+                                id: '',
+                            },
+                            amount: '',
+                            meta: undefined,
+                        },
+                        contractId: '',
+                        activeContract: {
+                            createdEvent: { createdAt },
+                            synchronizerId: '',
+                            reassignmentCounter: 0,
+                        },
+                    } as any,
+                    new Date(now)
+                )
+            ).toBe(expected)
+        })
     })
 
     it('create delegate proxy transfer', async () => {
@@ -1252,9 +1248,13 @@ describe('Token standard service', () => {
                 resource: '/v2/state/latest-pruned-offsets',
                 requestMethod: 'get',
             },
-            { resource: '/v2/state/ledger-end', requestMethod: 'get' },
             {
-                resource: '/v2/updates/flats',
+                resource: '/v2/state/ledger-end',
+                requestMethod: 'get',
+                query: {},
+            },
+            {
+                resource: '/v2/updates',
                 requestMethod: 'post',
                 query: {},
                 body: {
@@ -1369,7 +1369,6 @@ describe('Token standard service', () => {
                     },
                     beginExclusive: 5,
                     endInclusive: 100,
-                    verbose: false,
                 },
             },
         ])
@@ -1377,15 +1376,25 @@ describe('Token standard service', () => {
 
     it('transaction by id', async () => {
         const { service, provider } = makeService()
-        provider.request.mockResolvedValue({ transaction: {} })
+        provider.request.mockResolvedValue({
+            update: { Transaction: { value: {} } },
+        })
         vi.spyOn(service.core, 'toPrettyTransaction').mockResolvedValue({
             id: 'tx-1',
         } as any)
 
         await service.getTransactionById('update-abc', senderParty)
         const [call] = provider.request.mock.calls
-        expect(call[0].params.resource).toBe('/v2/updates/transaction-by-id')
+        expect(call[0].params.resource).toBe('/v2/updates/update-by-id')
         expect(call[0].params.requestMethod).toBe('post')
+        expect(call[0].params.body).toMatchObject({
+            updateId: 'update-abc',
+            updateFormat: {
+                includeTransactions: {
+                    transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+                },
+            },
+        })
     })
 
     it('to pretty transactions process transaction updates', async () => {

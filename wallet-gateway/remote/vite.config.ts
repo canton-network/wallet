@@ -37,6 +37,10 @@ export default defineConfig({
                     __dirname,
                     'src/web/frontend/parties/add/index.html'
                 ),
+                editParty: resolve(
+                    __dirname,
+                    'src/web/frontend/parties/edit/index.html'
+                ),
                 settings: resolve(
                     __dirname,
                     'src/web/frontend/settings/index.html'

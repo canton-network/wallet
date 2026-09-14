@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import {
+    AuthTokenProvider,
+    type AccessTokenProvider,
+} from '@canton-network/core-wallet-auth'
 import { parseAssets, ParsedURL } from '../namespace/utils/url.js'
 import { KeysNamespace } from '../namespace/keys/index.js'
 import { LedgerNamespace } from '../namespace/ledger/index.js'
@@ -23,12 +26,36 @@ import {
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
+    RegistryAuth,
 } from './types/index.js'
 import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
+
+const noAuthProvider: AccessTokenProvider = {
+    async getAccessToken() {
+        return ''
+    },
+    async getAuthContext() {
+        return { accessToken: '', userId: '' }
+    },
+}
+
+const resolveAuth = (
+    registryAuth: RegistryAuth | undefined,
+    auth: AuthTokenProvider,
+    logger: SDKContext['logger']
+): AccessTokenProvider => {
+    if (registryAuth === 'none') {
+        return noAuthProvider
+    }
+    if (registryAuth) {
+        return new AuthTokenProvider(registryAuth, logger)
+    }
+    return auth
+}
 
 const createNamespace: {
     [K in keyof ExtendedSDKOptions]: (
@@ -55,7 +82,7 @@ const createNamespace: {
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
-            auth,
+            resolveAuth(config.registryAuth, auth, ctx.logger),
             false
         )
 
@@ -87,7 +114,7 @@ const createNamespace: {
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
-            auth,
+            resolveAuth(config.registryAuth, auth, ctx.logger),
             false
         )
 
@@ -115,7 +142,7 @@ const createNamespace: {
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
-            auth,
+            resolveAuth(config.registryAuth, auth, ctx.logger),
             false
         )
 

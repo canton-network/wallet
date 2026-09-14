@@ -51,6 +51,7 @@ import { Env, HASHING_SCHEME_VERSION } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { securityHeaders } from './middleware/securityHeaders.js'
+import { errorHandler } from './middleware/errorHandler.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -394,9 +395,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         ],
     }
 
-    app.use(
-        '/api/*splat',
-        express.json(),
+    const apiMiddleware = [
         preAuthRateLimit,
         apiKeyAuth(
             store,
@@ -409,8 +408,11 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             store,
             allowedPaths,
             logger.child({ component: 'SessionHandler' })
-        )
-    )
+        ),
+    ]
+
+    app.use(config.server.userPath, ...apiMiddleware)
+    app.use(config.server.dappPath, ...apiMiddleware)
 
     logger.info({ ...config.server, port }, 'Server configuration')
 
@@ -465,8 +467,20 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         config.server.admin
     )
 
+    const { userPath, dappPath } = config.server
+    const isApiPath = (path: string) =>
+        path === userPath ||
+        path === dappPath ||
+        path.startsWith(`${userPath}/`) ||
+        path.startsWith(`${dappPath}/`)
+
     // register web handler
-    web(app, server, userApiUrl, dappApiUrl)
+    web(app, server, userApiUrl, dappApiUrl, isApiPath)
+
+    app.use(
+        errorHandler(logger.child({ component: 'ErrorHandler' }), isApiPath)
+    )
+
     isReady = true
 
     logger.info(
