@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-ui-components",
-    "version": "1.13.0",
+    "version": "1.14.0",
     "type": "module",
     "description": "Reusable UI components for the Splice wallet",
     "license": "Apache-2.0",
@@ -42,7 +42,7 @@
         "typescript": "^5.9.3",
         "vite": "^7.3.6",
         "vite-plugin-dts": "^4.5.4",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "dependencies": {
         "@canton-network/core-tx-visualizer": "workspace:^",

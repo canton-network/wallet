@@ -1,4 +1,5 @@
-import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
+import { PrettyContract } from '@canton-network/core-tx-parser'
+import { HoldingView } from '@canton-network/core-token-standard'
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import {
@@ -125,7 +126,7 @@ logger.info({ sentValue }, 'Executed transfer from Alice to Bob with value:')
 const aliceUtxos = await sdk.token.utxos.list({ partyId: alice.partyId })
 const bobUtxos = await sdk.token.utxos.list({ partyId: bob.partyId })
 
-const partyAmuletValue = (utxos: PrettyContract<Holding>[]) =>
+const partyAmuletValue = (utxos: PrettyContract<HoldingView>[]) =>
     utxos.reduce(
         (acc, utxo) => acc + parseFloat(utxo.interfaceViewValue.amount),
         0

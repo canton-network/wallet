@@ -76,6 +76,12 @@ const executeParams = {
     signedBy: wallet.namespace,
 }
 
+const postWithRetry = vi.fn().mockResolvedValue({ updateId: 'ledger-update-1' })
+const ledgerClient = {
+    postWithRetry,
+    getSynchronizerId: vi.fn(),
+} as unknown as LedgerClient
+
 const network: Network = {
     id: 'network1',
     name: 'testnet',
@@ -143,6 +149,10 @@ function createService(
     )
 }
 
+vi.stubGlobal('crypto', {
+    randomUUID: vi.fn().mockReturnValue('internal-tx-uuid'),
+})
+
 describe('TransactionService', () => {
     let logger: Logger
     let notifier: Notifier
@@ -165,7 +175,13 @@ describe('TransactionService', () => {
                 const service = createService(
                     store,
                     {
-                        [SigningProvider.PARTICIPANT]: createDriver({}),
+                        [SigningProvider.PARTICIPANT]: createDriver({
+                            signTransaction: vi.fn().mockResolvedValue({
+                                status: 'signed',
+                                signature: 'none',
+                                signedBy: 'namespace',
+                            }),
+                        }),
                     },
                     notifier,
                     logger
@@ -191,7 +207,8 @@ describe('TransactionService', () => {
                 )
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
                     pendingTransaction.id,
-                    expect.any(Date)
+                    expect.any(Date),
+                    undefined
                 )
                 expect(emit).toHaveBeenCalledWith(
                     'txChanged',
@@ -205,9 +222,10 @@ describe('TransactionService', () => {
 
         describe('wallet-kernel', () => {
             it('signs the transaction and persists the signed state', async () => {
-                const signTransaction = vi
-                    .fn()
-                    .mockResolvedValue({ signature: 'kernel-signature' })
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    signature: 'kernel-signature',
+                })
                 const store = createStore()
                 const service = createService(
                     store,
@@ -233,7 +251,8 @@ describe('TransactionService', () => {
                 })
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
                     pendingTransaction.id,
-                    expect.any(Date)
+                    expect.any(Date),
+                    undefined
                 )
                 expect(emit).toHaveBeenCalledWith(
                     'txChanged',
@@ -411,13 +430,13 @@ describe('TransactionService', () => {
 
         describe('fireblocks', () => {
             it('returns a base64 signature when signing completes', async () => {
-                const hexSignature = Buffer.from(
-                    'fireblocks-signature'
-                ).toString('hex')
+                const signature = Buffer.from('fireblocks-signature').toString(
+                    'base64'
+                )
                 const signTransaction = vi.fn().mockResolvedValue({
                     status: 'signed',
                     txId: 'fb-tx-1',
-                    signature: hexSignature,
+                    signature,
                 })
                 const store = createStore()
                 const service = createService(
@@ -440,17 +459,12 @@ describe('TransactionService', () => {
                 expect(signTransaction).toHaveBeenCalledWith(
                     expect.objectContaining({
                         userId: authContext.userId,
-                        txHash: Buffer.from(
-                            pendingTransaction.preparedTransactionHash,
-                            'base64'
-                        ).toString('hex'),
+                        txHash: 'tx-hash',
                     })
                 )
                 expect(result).toMatchObject({
                     status: 'signed',
-                    signature: Buffer.from(hexSignature, 'hex').toString(
-                        'base64'
-                    ),
+                    signature,
                     externalTxId: 'fb-tx-1',
                 })
             })
@@ -737,7 +751,8 @@ describe('TransactionService', () => {
                         authContext.userId,
                         wallet,
                         transaction,
-                        executeParams
+                        executeParams,
+                        ledgerClient
                     )
                 ).toThrow(
                     `Cannot execute a ${status} transaction. Expected status: signed.`
@@ -758,13 +773,6 @@ describe('TransactionService', () => {
                     },
                 }
                 const store = createStore(transaction)
-                const postWithRetry = vi
-                    .fn()
-                    .mockResolvedValue({ updateId: 'ledger-update-1' })
-                const ledgerClient = {
-                    postWithRetry,
-                    getSynchronizerId: vi.fn(),
-                } as unknown as LedgerClient
                 const service = createService(store, {}, notifier, logger)
 
                 const result = await service.execute(
