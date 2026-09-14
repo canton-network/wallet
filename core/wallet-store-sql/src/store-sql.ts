@@ -588,14 +588,15 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return network
     }
 
-    // TODO should I just get rid of it in favor of getNetwork?
-    async getNetworkByKeyId(keyId: string): Promise<Network | undefined> {
+    async getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined> {
         // Not scoped by userId: key id resolution happens during token
         // verification, before there is an authenticated user.
         const row = await this.db
             .selectFrom('networks')
             .selectAll()
-            .where('id', '=', keyId)
+            .where('id', '=', networkId)
             .executeTakeFirst()
         if (!row) return undefined
 

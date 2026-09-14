@@ -359,10 +359,13 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return this.systemStorage.networks
     }
 
-    async getNetworkByKeyId(keyId: string): Promise<Network | undefined> {
+    async getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined> {
         return this.systemStorage.networks.find(
             (network) =>
-                network.auth.method === 'self_signed' && network.id === keyId
+                network.auth.method === 'self_signed' &&
+                network.id === networkId
         )
     }
 

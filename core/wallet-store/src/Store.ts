@@ -202,8 +202,15 @@ export interface Store {
     // Network methods
     getNetwork(networkId: string): Promise<Network>
     getCurrentNetwork(): Promise<Network>
-    getNetworkByKeyId(keyId: string): Promise<Network | undefined>
-
+    /**
+     * Looks up a self_signed network without scoping to the authenticated user,
+     * because this runs during token verification, before there is one.
+     * Returns undefined for unknown networks and for networks using any other
+     * auth method.
+     */
+    getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined>
     listNetworks(): Promise<Array<Network>>
     updateNetwork(network: Network): Promise<void>
     addNetwork(network: Network): Promise<void>
