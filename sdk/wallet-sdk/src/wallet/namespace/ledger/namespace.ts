@@ -11,6 +11,10 @@ import { Ops } from '@canton-network/core-provider-ledger'
 import { InternalLedgerNamespace } from './internal/index.js'
 import { ACSReader } from '@canton-network/core-acs-reader'
 import { DarNamespace } from './dar/index.js'
+import {
+    fetchConnectedSynchronizers,
+    requireSynchronizerId,
+} from '../../init/synchronizer.js'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace
@@ -37,25 +41,9 @@ export class LedgerNamespace {
             'Fetching connected synchronizers'
         )
 
-        return this.sdkContext.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-            {
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/state/connected-synchronizers',
-                    requestMethod: 'get',
-                    query: {
-                        ...(options?.party !== undefined && {
-                            party: options.party,
-                        }),
-                        ...(options?.participantId !== undefined && {
-                            participantId: options.participantId,
-                        }),
-                        ...(options?.identityProviderId !== undefined && {
-                            identityProviderId: options.identityProviderId,
-                        }),
-                    },
-                },
-            }
+        return fetchConnectedSynchronizers(
+            this.sdkContext.ledgerProvider,
+            options
         )
     }
 
@@ -79,8 +67,10 @@ export class LedgerNamespace {
      */
     public prepare(options: PrepareOptions): PreparedTransaction {
         const preparePromise = async () => {
-            const synchronizerId =
-                options.synchronizerId || this.sdkContext.defaultSynchronizerId
+            const synchronizerId = await requireSynchronizerId(
+                this.sdkContext,
+                options.synchronizerId
+            )
 
             const {
                 partyId,
