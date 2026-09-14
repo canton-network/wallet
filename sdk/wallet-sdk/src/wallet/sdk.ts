@@ -48,7 +48,7 @@ export {
     signTransactionHash,
     getPublicKeyFromPrivate,
 } from '@canton-network/core-signing-lib'
-export type { LedgerCommonSchemas }
+export type LedgerTypes = LedgerCommonSchemas
 
 export * from './init/index.js'
 export type {

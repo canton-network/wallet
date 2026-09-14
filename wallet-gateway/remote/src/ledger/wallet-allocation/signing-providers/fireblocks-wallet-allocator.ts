@@ -44,21 +44,25 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         const keys = await driver.getKeys().then(handleSigningProviderError)
         const key = keys?.keys?.find((k) => k.name === keyName)
         if (!key) throw new Error('Fireblocks key not found')
-
-        const namespace = this.partyAllocator.createFingerprintFromKey(
-            key.publicKey
+        const formattedPublicKey = Buffer.from(key.publicKey, 'hex').toString(
+            'base64'
         )
+
+        const namespace =
+            this.partyAllocator.createFingerprintFromKey(formattedPublicKey)
         const transactions =
             await this.partyAllocator.generateTopologyTransactions(
                 partyHint,
-                key.publicKey
+                formattedPublicKey
             )
         const topologyTransactions = transactions.topologyTransactions ?? []
 
         const { status, txId } = await driver
             .signTransaction({
                 tx: '',
-                txHash: transactions.multiHash,
+                txHash: Buffer.from(transactions.multiHash, 'base64').toString(
+                    'hex'
+                ),
                 keyIdentifier: {
                     publicKey: key.publicKey,
                 },
@@ -97,7 +101,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 await this.partyAllocator.allocatePartyWithExistingWallet(
                     namespace,
                     topologyTransactions,
-                    signature,
+                    Buffer.from(signature, 'hex').toString('base64'),
                     userId
                 )
             wallet = {
@@ -165,7 +169,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 await this.partyAllocator.allocatePartyWithExistingWallet(
                     existingWallet.namespace,
                     existingWallet.topologyTransactions.split(', '),
-                    signature,
+                    Buffer.from(signature, 'hex').toString('base64'),
                     userId
                 )
             walletUpdate = {

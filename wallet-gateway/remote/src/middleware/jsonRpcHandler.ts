@@ -25,6 +25,7 @@ interface JsonRpcHttpOptions<T> {
  * Handles JSON-RPC errors and maps them to HTTP responses.
  * @param error The error that occurred.
  * @param id The JSON-RPC request ID.
+ * @param logger The logger instance.
  * @param method The name of the JSON-RPC method being called.
  * @returns A tuple containing the HTTP status code and the JSON-RPC response.
  */
@@ -41,15 +42,12 @@ export const handleRpcError = (
         error: {
             ...rpcErrors.internal(),
             message: genericMessage,
+            data: error,
         },
     }
 
     if (error instanceof JsonRpcError) {
-        response.error = {
-            code: error.code,
-            message: error.message,
-            data: error.data,
-        }
+        response.error = error
         const httpCode = toHttpErrorCode(error.code)
         return [httpCode, jsonRpcResponse(id, response)]
     }
@@ -166,9 +164,8 @@ export const jsonRpcHandler =
                             method
                         )
 
-                        // Full error with callstack in logs, sanitized version in response
                         logger.error(
-                            { err: error, response },
+                            { response },
                             'RPC response: error with response'
                         )
                         res.status(status).json(response)

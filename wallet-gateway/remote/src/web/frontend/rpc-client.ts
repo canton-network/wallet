@@ -23,7 +23,7 @@ export function resetRpcClientCachesForTests(): void {
 }
 
 const getUserApiPath = async (): Promise<URL> => {
-    const defaultUserUrl = new URL(
+    const defaultUserPath = new URL(
         toRelPath('/api/v0/user'),
         window.location.origin
     )
@@ -34,14 +34,14 @@ const getUserApiPath = async (): Promise<URL> => {
         )
             .then((response) => response.json())
             .then((config) =>
-                config?.userApiUrl ? new URL(config.userApiUrl) : defaultUserUrl
+                config?.userPath ? new URL(config.userPath) : defaultUserPath
             )
             .catch((error) => {
                 console.warn(
-                    'Failed to fetch userApiUrl from config, using default',
+                    'Failed to fetch userPath from config, using default',
                     error
                 )
-                return defaultUserUrl
+                return defaultUserPath
             })
     }
     return userApiPathPromise

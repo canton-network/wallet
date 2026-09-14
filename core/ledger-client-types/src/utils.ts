@@ -4,7 +4,9 @@
 import { PartyId } from '@canton-network/core-types'
 import type { LedgerCommonSchemas } from './index.js'
 
-type EventFormat = LedgerCommonSchemas['EventFormat']
+type TransactionFilter = Types['TransactionFilter']
+type EventFormat = Types['EventFormat']
+type Types = LedgerCommonSchemas
 type BaseFilterOptions = {
     includeWildcard?: boolean
     isMasterUser?: boolean
@@ -21,8 +23,20 @@ type FilterIdentifiers =
           templateIds?: never
       }
 
-type EventFilterOptions = BaseFilterOptions &
-    FilterIdentifiers & { verbose?: boolean }
+type TransactionFilterOptions = BaseFilterOptions & FilterIdentifiers
+
+type EventFilterOptions = TransactionFilterOptions & { verbose?: boolean }
+
+export function TransactionFilterBySetup(
+    options: TransactionFilterOptions
+): TransactionFilter {
+    const { templateIds, interfaceIds, ...baseOptions } = options
+    return buildFilter<TransactionFilter>(
+        normalizeToArray(templateIds || []),
+        normalizeToArray(interfaceIds || []),
+        baseOptions
+    )
+}
 
 export function EventFilterBySetup(options: EventFilterOptions): EventFormat {
     const {
@@ -109,7 +123,7 @@ function filtersByParty(
     templateIds: string[],
     interfaceIds: string[],
     includeWildcard: boolean
-): EventFormat['filtersByParty'] {
+): TransactionFilter['filtersByParty'] {
     return {
         [party]: {
             cumulative: buildCumulativeFilters(
@@ -125,7 +139,7 @@ function filtersForAnyParty(
     interfaceNames: string[],
     templateIds: string[],
     includeWildcard: boolean
-): EventFormat['filtersForAnyParty'] {
+): TransactionFilter['filtersForAnyParty'] {
     return {
         cumulative: buildCumulativeFilters(
             templateIds,

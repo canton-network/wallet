@@ -18,13 +18,7 @@ import com.digitalasset.canton.version.ProtocolVersion._
 import com.digitalasset.canton.topology.{SynchronizerId, UniqueIdentifier}
 import com.digitalasset.canton.console.commands.ConsoleCommandGroup
 import com.digitalasset.canton.util.BinaryFileUtil
-import com.digitalasset.canton.admin.api.client.data.{
-  SequencerConnections,
-  SubmissionRequestAmplification,
-  SequencerConnectionPoolDelays,
-  SubscriptionLivenessLimits,
-}
-import com.digitalasset.nonempty.NonEmpty
+import com.digitalasset.canton.admin.api.client.data.{SequencerConnections, SubmissionRequestAmplification, SequencerConnectionPoolDelays}
 
 
 val cantonDir = "canton"
@@ -58,7 +52,7 @@ val encryptionKey = participant1.keys.secret.generate_encryption_key("participan
 
 participant1.topology.owner_to_key_mappings.propose(
   member = participant1.id.member,
-  keys = NonEmpty(Seq, sequencerAuthKey, signingKey, encryptionKey),
+  keys = com.daml.nonempty.NonEmpty(Seq, sequencerAuthKey, signingKey, encryptionKey),
   signedBy = Seq(namespaceKey.fingerprint, sequencerAuthKey.fingerprint, signingKey.fingerprint),
 )
 
@@ -78,13 +72,7 @@ val testedProtocolVersion = ProtocolVersion.v35
 val newStaticSynchronizerParameters =
   StaticSynchronizerParameters.defaultsWithoutKMS(protocolVersion = testedProtocolVersion)
 
-val physicalSynchronizerId = com.digitalasset.canton.topology.PhysicalSynchronizerId(
-  synchronizerId,
-  newStaticSynchronizerParameters.toInternal.fold(
-    err => sys.error(s"Invalid static synchronizer parameters: $err"),
-    identity,
-  ),
-)
+val physicalSynchronizerId = com.digitalasset.canton.topology.PhysicalSynchronizerId(synchronizerId, newStaticSynchronizerParameters.toInternal)
 
 migrateNode(
   migratedNode = sequencer1,
@@ -207,8 +195,7 @@ def migrateNode(
           sequencerTrustThreshold,
           sequencerLivenessMargin,
           SubmissionRequestAmplification.NoAmplification,
-          SequencerConnectionPoolDelays.default,
-          SubscriptionLivenessLimits.default,
+          SequencerConnectionPoolDelays.default
         ),
       )
 

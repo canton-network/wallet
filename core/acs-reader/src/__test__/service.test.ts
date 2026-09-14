@@ -62,9 +62,7 @@ describe('service', () => {
                     requestMethod: 'post',
                     body: expect.objectContaining({
                         activeAtOffset: 100,
-                        eventFormat: expect.objectContaining({
-                            verbose: false,
-                        }),
+                        verbose: false,
                     }),
                     query: {},
                 },
@@ -746,12 +744,12 @@ describe('service', () => {
             })
 
             expect(filter.activeAtOffset).toBe(100)
-            expect(filter.eventFormat.verbose).toBe(false)
+            expect(filter.verbose).toBe(false)
+            expect(filter.filter?.filtersForAnyParty?.cumulative).toHaveLength(
+                2
+            )
             expect(
-                filter.eventFormat.filtersForAnyParty?.cumulative
-            ).toHaveLength(2)
-            expect(
-                filter.eventFormat.filtersForAnyParty?.cumulative?.[0]
+                filter.filter?.filtersForAnyParty?.cumulative?.[0]
                     ?.identifierFilter
             ).toHaveProperty('TemplateFilter')
         })
@@ -763,11 +761,11 @@ describe('service', () => {
             })
 
             expect(filter.activeAtOffset).toBe(100)
+            expect(filter.filter?.filtersForAnyParty?.cumulative).toHaveLength(
+                2
+            )
             expect(
-                filter.eventFormat.filtersForAnyParty?.cumulative
-            ).toHaveLength(2)
-            expect(
-                filter.eventFormat.filtersForAnyParty?.cumulative?.[0]
+                filter.filter?.filtersForAnyParty?.cumulative?.[0]
                     ?.identifierFilter
             ).toHaveProperty('InterfaceFilter')
         })
@@ -780,10 +778,10 @@ describe('service', () => {
                 filterByParty: true,
             })
 
-            expect(filter.eventFormat.filtersByParty).toHaveProperty('party1')
-            expect(filter.eventFormat.filtersByParty).toHaveProperty('party2')
+            expect(filter.filter?.filtersByParty).toHaveProperty('party1')
+            expect(filter.filter?.filtersByParty).toHaveProperty('party2')
             expect(
-                filter.eventFormat.filtersByParty?.['party1']?.cumulative
+                filter.filter?.filtersByParty?.['party1']?.cumulative
             ).toHaveLength(1)
         })
 
@@ -795,9 +793,9 @@ describe('service', () => {
                 filterByParty: true,
             })
 
-            expect(filter.eventFormat.filtersByParty).toHaveProperty('party1')
+            expect(filter.filter?.filtersByParty).toHaveProperty('party1')
             expect(
-                filter.eventFormat.filtersByParty?.['party1']?.cumulative?.[0]
+                filter.filter?.filtersByParty?.['party1']?.cumulative?.[0]
                     ?.identifierFilter
             ).toHaveProperty('InterfaceFilter')
         })
@@ -809,9 +807,9 @@ describe('service', () => {
                 filterByParty: true,
             })
 
-            expect(filter.eventFormat.filtersByParty).toHaveProperty('party1')
+            expect(filter.filter?.filtersByParty).toHaveProperty('party1')
             expect(
-                filter.eventFormat.filtersByParty?.['party1']?.cumulative
+                filter.filter?.filtersByParty?.['party1']?.cumulative
             ).toHaveLength(0)
         })
 
@@ -822,7 +820,7 @@ describe('service', () => {
             })
 
             const identifierFilter =
-                filter.eventFormat.filtersForAnyParty?.cumulative?.[0]
+                filter.filter?.filtersForAnyParty?.cumulative?.[0]
                     ?.identifierFilter
 
             expect(identifierFilter).toBeDefined()
@@ -846,7 +844,7 @@ describe('service', () => {
             })
 
             const identifierFilter =
-                filter.eventFormat.filtersForAnyParty?.cumulative?.[0]
+                filter.filter?.filtersForAnyParty?.cumulative?.[0]
                     ?.identifierFilter
 
             expect(identifierFilter).toBeDefined()

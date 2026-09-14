@@ -2,17 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MergeUtxosParams, ListHoldingsParams } from './types.js'
-import {
-    HOLDING_INTERFACE_ID,
-    HoldingView,
-} from '@canton-network/core-token-standard'
+import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { PrettyContract } from '@canton-network/core-tx-parser'
-import {
-    findAsset,
-    LedgerCommonSchemas,
-    TokenNamespaceConfig,
-} from '../../../sdk.js'
+import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
+import { findAsset, LedgerTypes, TokenNamespaceConfig } from '../../../sdk.js'
 import { Decimal } from 'decimal.js'
 import { TransferNamespace } from '../transfer/index.js'
 import { MergeDelegationNamespace } from './mergeDelegation.js'
@@ -41,7 +34,7 @@ export class UtxoNamespace {
     ): Promise<
         [
             WrappedCommand<'ExerciseCommand'>[],
-            LedgerCommonSchemas['DisclosedContract'][],
+            LedgerTypes['DisclosedContract'][],
         ]
     > {
         const utxos =
@@ -54,7 +47,7 @@ export class UtxoNamespace {
 
         const utxoGroupedByInstrument: Record<
             string,
-            PrettyContract<HoldingView>[] | undefined
+            PrettyContract<Holding>[] | undefined
         > = Object.groupBy(
             utxos,
             (utxo) =>
@@ -146,7 +139,7 @@ export class UtxoNamespace {
             continueUntilCompletion,
         } = params
         const utxos =
-            await this.sdkContext.tokenStandardService.listContractsByInterface<HoldingView>(
+            await this.sdkContext.tokenStandardService.listContractsByInterface<Holding>(
                 HOLDING_INTERFACE_ID,
                 partyId,
                 limit,
@@ -160,7 +153,10 @@ export class UtxoNamespace {
             ? utxos
             : utxos.filter(
                   (utxo) =>
-                      !TokenStandardService.isHoldingLocked(utxo, currentTime)
+                      !TokenStandardService.isHoldingLocked(
+                          utxo.interfaceViewValue,
+                          currentTime
+                      )
               )
 
         return filteredUtxos

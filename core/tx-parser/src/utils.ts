@@ -3,12 +3,10 @@
 
 import { AllKnownMetaKeys, matchInterfaceIds } from './constants.js'
 
-import { TransferInstructionView } from './types.js'
+import { Holding, TransferInstructionView } from './types.js'
 import {
-    HoldingView,
     HOLDING_INTERFACE_ID,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
-    Metadata,
 } from '@canton-network/core-token-standard'
 
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
@@ -35,7 +33,7 @@ export function getInterfaceView(
 }
 
 export type KnownInterfaceView =
-    | { type: 'Holding'; viewValue: HoldingView }
+    | { type: 'Holding'; viewValue: Holding }
     | { type: 'TransferInstruction'; viewValue: TransferInstructionView }
 
 export function getKnownInterfaceView(
@@ -49,7 +47,7 @@ export function getKnownInterfaceView(
     ) {
         return {
             type: 'Holding',
-            viewValue: interfaceView.viewValue as HoldingView,
+            viewValue: interfaceView.viewValue as Holding,
         }
     } else if (
         matchInterfaceIds(
@@ -96,16 +94,15 @@ export function ensureInterfaceViewIsPresent(
     return interfaceView
 }
 
-export function mergeMetas(
-    event: ExercisedEvent,
-    extra?: Metadata
-): Metadata | undefined {
+type Meta = { values: { [key: string]: string } } | undefined
+
+export function mergeMetas(event: ExercisedEvent, extra?: Meta): Meta {
     // Add a type assertion to help TypeScript understand the shape of choiceArgument
     const choiceArgument = event.choiceArgument as
         | {
-              transfer?: { meta?: Metadata }
-              extraArgs?: { meta?: Metadata }
-              meta?: Metadata
+              transfer?: { meta?: Meta }
+              extraArgs?: { meta?: Meta }
+              meta?: Meta
           }
         | undefined
 
@@ -114,7 +111,7 @@ export function mergeMetas(
         choiceArgument?.extraArgs?.meta,
         choiceArgument?.meta,
         extra,
-        (event.exerciseResult as { meta?: Metadata } | undefined)?.meta,
+        (event.exerciseResult as { meta?: Meta } | undefined)?.meta,
     ]
     const result: { [key: string]: string } = {}
     lastWriteWins.forEach((meta) => {
@@ -132,10 +129,7 @@ export function mergeMetas(
     }
 }
 
-export function getMetaKeyValue(
-    key: string,
-    meta: Metadata | undefined
-): string | null {
+export function getMetaKeyValue(key: string, meta: Meta): string | null {
     return (meta?.values || {})[key] || null
 }
 
@@ -144,7 +138,7 @@ export function getMetaKeyValue(
  * we remove all metadata fields that were fully parsed, and whose content is reflected in the TypeScript structure.
  * Otherwise, the display code has to do so, overloading the user with superfluous metadata entries.
  */
-export function removeParsedMetaKeys(meta: Metadata | undefined): Metadata {
+export function removeParsedMetaKeys(meta: Meta): Meta {
     return {
         values: Object.fromEntries(
             Object.entries(meta?.values || {}).filter(

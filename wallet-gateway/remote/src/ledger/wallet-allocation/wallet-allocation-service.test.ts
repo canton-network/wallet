@@ -928,9 +928,7 @@ describe('WalletAllocationService', () => {
                     getTransactionResult: {
                         txId: 'tx-1',
                         status: 'signed',
-                        signature: Buffer.from(hexSignature, 'hex').toString(
-                            'base64'
-                        ),
+                        signature: hexSignature,
                     },
                 }),
             })

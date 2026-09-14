@@ -4,7 +4,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
 import { jwtAuth } from './jwtAuth.js'
-import { providerErrors } from '@canton-network/core-rpc-errors'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 
@@ -28,7 +27,6 @@ describe('jwtAuth', () => {
         partial: Partial<Request> & {
             headers?: { authorization?: string }
             query?: Record<string, unknown>
-            body?: { id?: number }
         }
     ): Request {
         return {
@@ -91,12 +89,11 @@ describe('jwtAuth', () => {
         expect(next).toHaveBeenCalledOnce()
     })
 
-    it('returns a JSON-RPC 401 when verification throws', async () => {
+    it('returns 401 JSON when verification throws', async () => {
         verifyToken.mockRejectedValue(new Error('bad sig'))
 
         const req = makeReq({
             headers: { authorization: 'Bearer x' },
-            body: { id: 7 },
         })
         const res = makeRes()
         const middleware = jwtAuth(authService, logger)
@@ -106,21 +103,12 @@ describe('jwtAuth', () => {
         expect(next).not.toHaveBeenCalled()
         expect(status).toHaveBeenCalledWith(401)
         expect(json).toHaveBeenCalledWith({
-            jsonrpc: '2.0',
-            id: 7,
-            error: {
-                code: providerErrors.unauthorized().code,
-                message: 'Invalid or expired token',
-            },
+            error: 'Invalid or expired token: bad sig',
         })
     })
 
-    it('does not leak the underlying verification failure to the client', async () => {
-        verifyToken.mockRejectedValue(
-            new Error(
-                'signature doesnt match the secret which is leaked-secret-123'
-            )
-        )
+    it('stringifies non-Error rejection values in the response', async () => {
+        verifyToken.mockRejectedValue('rejected')
 
         const req = makeReq({
             headers: { authorization: 'Bearer x' },
@@ -130,8 +118,8 @@ describe('jwtAuth', () => {
 
         await middleware(req, res, next)
 
-        const body = JSON.stringify(json.mock.calls[0][0])
-        expect(body).not.toContain('leaked-secret-123')
-        expect(body).toContain('Invalid or expired token')
+        expect(json).toHaveBeenCalledWith({
+            error: 'Invalid or expired token: rejected',
+        })
     })
 })

@@ -36,13 +36,6 @@ type ResolvedOptions<Options> = Omit<Options, 'offset'> & { offset: number }
 export type ResolvedAcsOptions = ResolvedOptions<AcsOptions>
 export type PaginatedResolvedAcsOptions = ResolvedOptions<PaginatedAcsOptions>
 
-type ActiveContractsRequest = Omit<
-    Ops.PostV2StateActiveContracts['ledgerApi']['params']['body'],
-    'eventFormat' | 'filter' | 'verbose'
-> & {
-    eventFormat: Types['EventFormat']
-}
-
 export class AcsService {
     constructor(private readonly ledgerProvider: AbstractLedgerProvider) {}
 
@@ -74,8 +67,7 @@ export class AcsService {
         const { continueUntilCompletion, ...baseArgs } = options
         const { maxPageSize, pageToken } = baseArgs
 
-        const { activeAtOffset, eventFormat } =
-            buildActiveContractFilter(options)
+        const { activeAtOffset, filter } = buildActiveContractFilter(options)
 
         if (continueUntilCompletion) {
             const results: Types['JsGetActiveContractsPageResponse'][] = []
@@ -98,9 +90,15 @@ export class AcsService {
 
         const body: Ops.GetV2StateActiveContractsPage['ledgerApi']['params']['body'] =
             {
-                eventFormat,
+                eventFormat: {},
                 activeAtOffset,
             }
+        if (filter?.filtersByParty) {
+            body.eventFormat.filtersByParty = filter.filtersByParty
+        }
+        if (filter?.filtersForAnyParty) {
+            body.eventFormat.filtersForAnyParty = filter.filtersForAnyParty
+        }
         if (maxPageSize !== undefined) {
             body.maxPageSize = maxPageSize
         }
@@ -149,7 +147,7 @@ export class AcsService {
     }
 
     private async fetchActiveContractsUntilComplete(
-        args: ActiveContractsRequest,
+        args: Ops.PostV2StateActiveContracts['ledgerApi']['params']['body'],
         limit: number
     ): Promise<Array<Types['JsGetActiveContractsResponse']>> {
         const ledgerEnd =
@@ -158,7 +156,6 @@ export class AcsService {
                 params: {
                     resource: '/v2/state/ledger-end',
                     requestMethod: 'get',
-                    query: {},
                 },
             })
 
@@ -166,16 +163,13 @@ export class AcsService {
             Ops.PostV2Updates['ledgerApi']['params']['body']
         > = {
             beginExclusive: 0,
-            updateFormat: {
-                includeTransactions: {
-                    eventFormat: args.eventFormat,
-                    transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
-                },
-            },
+            verbose: false,
         }
         if (ledgerEnd.offset !== undefined) {
             bodyRequest.endInclusive = ledgerEnd.offset
         }
+
+        if (args.filter) bodyRequest.filter = args.filter
 
         const finalLedgerEnd = ledgerEnd.offset ?? 0
         let currentOffset = 0
@@ -243,7 +237,7 @@ export class AcsService {
                         // TODO: remove the filter once /v2/updates is fixed
                         .filter((event) =>
                             Object.keys(
-                                args.eventFormat.filtersByParty ?? {}
+                                args.filter?.filtersByParty ?? {}
                             ).includes(
                                 (event.createArgument as { owner?: string })
                                     ?.owner ?? ''
@@ -298,11 +292,13 @@ export function buildActiveContractFilter(options: {
     interfaceIds?: string[]
     limit?: number
 }) {
-    const request: ActiveContractsRequest = {
-        eventFormat: {
+    const filter: Partial<
+        Ops.PostV2StateActiveContracts['ledgerApi']['params']['body']
+    > = {
+        filter: {
             filtersByParty: {},
-            verbose: false,
         },
+        verbose: false,
         activeAtOffset: options?.offset,
     }
 
@@ -352,7 +348,7 @@ export function buildActiveContractFilter(options: {
                   : []
 
         for (const party of options.parties) {
-            const filtersByParty = request.eventFormat?.filtersByParty
+            const filtersByParty = filter.filter?.filtersByParty
             if (!filtersByParty) {
                 throw new Error(
                     'filtersByParty is missing from active contract filter'
@@ -364,16 +360,16 @@ export function buildActiveContractFilter(options: {
         }
     } else if (options?.templateIds) {
         // Only template filter, no party
-        request.eventFormat!.filtersForAnyParty = {
+        filter.filter!.filtersForAnyParty = {
             cumulative: buildTemplateFilter(options.templateIds),
         }
     } else if (options?.interfaceIds) {
-        request.eventFormat!.filtersForAnyParty = {
+        filter.filter!.filtersForAnyParty = {
             cumulative: buildInterfaceFilter(options.interfaceIds),
         }
     }
 
-    return request
+    return filter as Ops.PostV2StateActiveContracts['ledgerApi']['params']['body']
 }
 
 /**

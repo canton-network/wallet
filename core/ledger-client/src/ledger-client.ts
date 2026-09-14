@@ -100,9 +100,7 @@ export function isValidGetEndpoint(resource: string): resource is GetEndpoint {
     return LedgerGetRoutes.has(resource)
 }
 
-export function isValidPostEndpoint(
-    resource: string
-): resource is PostEndpoint {
+export function isValidPostEndpoint(resource: string): resource is GetEndpoint {
     return LedgerPostRoutes.has(resource)
 }
 
@@ -189,6 +187,10 @@ export class LedgerClient {
 
     public async init() {
         if (!this.initialized) {
+            this.logger.debug(
+                `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href}`
+            )
+
             //TODO: parse error response and escalate
             const versionFromClient =
                 await this.currentClient.GET('/v2/version')
@@ -205,10 +207,6 @@ export class LedgerClient {
                 versionFromClient.data?.version
             )
             this.initialized = true
-
-            this.logger.debug(
-                `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href} and setting initialized to true`
-            )
         }
     }
 

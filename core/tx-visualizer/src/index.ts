@@ -227,18 +227,8 @@ function extractChoiceIdAndAmount(obj: any) {
     const create = getNodeType(createNode)?.create
 
     const choiceId = exercise?.choiceId
-    const exerciseAmount =
+    const amount =
         getNumericValue(getFieldValue(exercise?.chosenValue, 'amount')) ??
-        getNumericValue(
-            getFieldValue(
-                getFieldValue(
-                    getFieldValue(exercise?.chosenValue, 'allocation'),
-                    'transferLeg'
-                ),
-                'amount'
-            )
-        )
-    const createAmount =
         getNumericValue(getFieldValue(create?.argument, 'amount')) ??
         getNumericValue(
             getFieldValue(
@@ -246,7 +236,6 @@ function extractChoiceIdAndAmount(obj: any) {
                 'initialAmount'
             )
         )
-    const amount = exercise ? exerciseAmount : createAmount
 
     return {
         ...(choiceId ? { choiceId } : {}),

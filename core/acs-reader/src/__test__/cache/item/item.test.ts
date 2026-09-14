@@ -8,7 +8,8 @@ const { getActiveContracts, MockACSService, mockBuildActiveContractFilter } =
     vi.hoisted(() => {
         const getActiveContracts = vi.fn()
         const mockBuildActiveContractFilter = vi.fn((options) => ({
-            eventFormat: { filtersByParty: {}, verbose: false },
+            filter: { filtersByParty: {} },
+            verbose: false,
             activeAtOffset: options.offset,
         }))
 

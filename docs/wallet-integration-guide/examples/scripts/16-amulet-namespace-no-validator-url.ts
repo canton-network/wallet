@@ -1,5 +1,4 @@
-import { PrettyContract } from '@canton-network/core-tx-parser'
-import { HoldingView } from '@canton-network/core-token-standard'
+import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
 import {
     getValidatorParty,
     localNetStaticConfig,
@@ -152,7 +151,7 @@ logger.info({ sentValue }, 'Executed transfer from Alice to Bob with value:')
 const aliceUtxos = await sdk.token.utxos.list({ partyId: alice.partyId })
 const bobUtxos = await sdk.token.utxos.list({ partyId: bob.partyId })
 
-const partyAmuletValue = (utxos: PrettyContract<HoldingView>[]) =>
+const partyAmuletValue = (utxos: PrettyContract<Holding>[]) =>
     utxos.reduce(
         (acc, utxo) => acc + parseFloat(utxo.interfaceViewValue.amount),
         0

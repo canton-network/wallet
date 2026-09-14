@@ -34,7 +34,6 @@ export class ParticipantSigningDriver implements SigningDriverInterface {
                 return Promise.resolve({
                     txId: params.internalTxId || randomUUID(),
                     status: 'signed',
-                    signature: 'none',
                 })
             },
             signMessage: async (): Promise<SignMessageResult> => {

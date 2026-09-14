@@ -129,7 +129,6 @@ export abstract class BaseReader<
                     params: {
                         resource: '/v2/state/ledger-end',
                         requestMethod: 'get',
-                        query: {},
                     },
                 })
             ).offset!

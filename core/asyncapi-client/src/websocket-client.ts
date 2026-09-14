@@ -5,7 +5,7 @@ import { PartyId } from '@canton-network/core-types'
 import {
     asyncApiByVersion,
     supportedAsyncApiVersions,
-    EventFilterBySetup,
+    TransactionFilterBySetup,
     type AsyncChannelsByVersion,
     type AsyncApiVersion,
     type AsyncCommonChannels,
@@ -156,36 +156,24 @@ export class WebSocketClient {
     ): AsyncIterableIterator<JsGetUpdatesResponse> {
         const wsUpdatesUrl = `${this.baseUrl}${this.channels.v2_updates}`
 
-        const eventFormat = options.templateIds
-            ? EventFilterBySetup({
+        const filter = options.templateIds
+            ? TransactionFilterBySetup({
                   templateIds: options.templateIds,
                   partyId: options.partyId,
-                  verbose: options.verbose ?? true,
               })
-            : EventFilterBySetup({
+            : TransactionFilterBySetup({
                   interfaceIds: options.interfaceIds!,
                   partyId: options.partyId,
-                  verbose: options.verbose ?? true,
               })
 
         const request = {
             beginExclusive: options.beginExclusive,
-            updateFormat: {
-                includeTransactions: {
-                    eventFormat,
-                    transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
-                },
-                includeReassignments: eventFormat,
-                includeTopologyEvents: {
-                    includeParticipantAuthorizationEvents: {
-                        parties: options.partyId ? [options.partyId] : [],
-                    },
-                },
-            },
+            verbose: options.verbose ?? true,
+            filter,
             ...(options.endInclusive !== undefined
                 ? { endInclusive: options.endInclusive }
                 : {}),
-        } satisfies GetUpdatesRequest
+        } as GetUpdatesRequest
 
         return this.generate<JsGetUpdatesResponse>(wsUpdatesUrl, request)
     }

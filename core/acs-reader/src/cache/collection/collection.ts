@@ -43,7 +43,6 @@ export class PaginatedACSCacheCollection extends BaseCacheCollection<PaginatedAC
                 params: {
                     requestMethod: 'get',
                     resource: '/v2/state/ledger-end',
-                    query: {},
                 },
             })
         ).offset

@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { EventFilterBySetup } from './utils'
+import { EventFilterBySetup, TransactionFilterBySetup } from './utils'
 
 const PARTY_ID = 'alice::abc123'
 const TEMPLATE_ID = 'pkg:Module:Template'
 const INTERFACE_ID = 'pkg:Module:Interface'
 
-describe('EventFilterBySetup', () => {
+describe('TransactionFilterBySetup', () => {
     it('builds a party filter for a single template id', () => {
-        const filter = EventFilterBySetup({
+        const filter = TransactionFilterBySetup({
             partyId: PARTY_ID,
             templateIds: TEMPLATE_ID,
         })
@@ -34,7 +34,7 @@ describe('EventFilterBySetup', () => {
     })
 
     it('normalizes template ids and adds a wildcard filter when requested', () => {
-        const filter = EventFilterBySetup({
+        const filter = TransactionFilterBySetup({
             partyId: PARTY_ID,
             templateIds: [TEMPLATE_ID, 'pkg:Module:Other'],
             includeWildcard: true,
@@ -72,7 +72,7 @@ describe('EventFilterBySetup', () => {
     })
 
     it('builds interface filters when no template ids are provided', () => {
-        const filter = EventFilterBySetup({
+        const filter = TransactionFilterBySetup({
             partyId: PARTY_ID,
             interfaceIds: INTERFACE_ID,
         })
@@ -93,7 +93,7 @@ describe('EventFilterBySetup', () => {
     })
 
     it('uses filtersForAnyParty for master users', () => {
-        const filter = EventFilterBySetup({
+        const filter = TransactionFilterBySetup({
             isMasterUser: true,
             templateIds: TEMPLATE_ID,
         })
@@ -117,13 +117,13 @@ describe('EventFilterBySetup', () => {
     })
 
     it('requires a party id for non-master users', () => {
-        expect(() => EventFilterBySetup({ templateIds: TEMPLATE_ID })).toThrow(
-            'Party must be provided for non-master users'
-        )
+        expect(() =>
+            TransactionFilterBySetup({ templateIds: TEMPLATE_ID })
+        ).toThrow('Party must be provided for non-master users')
     })
 })
 
-describe('EventFilterBySetup verbose option', () => {
+describe('EventFilterBySetup', () => {
     it('defaults verbose to false', () => {
         const filter = EventFilterBySetup({
             partyId: PARTY_ID,

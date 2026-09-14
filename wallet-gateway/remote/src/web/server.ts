@@ -11,13 +11,12 @@ import { GATEWAY_VERSION } from '../version.js'
 export const web = (
     app: express.Express,
     server: Server,
-    userApiUrl: string,
-    dappApiUrl: string,
-    isApiPath: (path: string) => boolean
+    userPath: string,
+    dappApiUrl: string
 ) => {
     // Expose API URLs via well-known configuration endpoint
     app.get('/.well-known/wallet-gateway-config', (_req, res) => {
-        res.json({ userApiUrl, dappApiUrl })
+        res.json({ userPath, dappApiUrl })
     })
     if (process.env.NODE_ENV === 'development') {
         // Enable live reloading and Vite dev server for frontend in development
@@ -45,7 +44,7 @@ export const web = (
         if (
             req.method !== 'GET' ||
             req.path.length <= 1 || // Skip root path
-            isApiPath(req.path) || // Ignore API routes
+            req.path.startsWith('/api') || // Ignore API routes
             req.path.endsWith('/') || // Path already ends with a slash
             req.path.includes('.') || // Ignore paths with file extensions
             req.path.includes('@vite') // Ignore Vite dev server paths

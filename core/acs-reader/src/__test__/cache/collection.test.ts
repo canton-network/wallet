@@ -258,7 +258,6 @@ describe('cache collection', () => {
             params: {
                 requestMethod: 'get',
                 resource: '/v2/state/ledger-end',
-                query: {},
             },
         })
         expect(mockCache.update).toHaveBeenCalledExactlyOnceWith({

@@ -3,8 +3,6 @@
 
 import type { Request, Response, NextFunction } from 'express'
 import { AuthService } from '@canton-network/core-wallet-auth'
-import { providerErrors } from '@canton-network/core-rpc-errors'
-import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import { Logger } from 'pino'
 
 export function jwtAuth(authService: AuthService, logger: Logger) {
@@ -24,16 +22,11 @@ export function jwtAuth(authService: AuthService, logger: Logger) {
             req.authContext = context
             next()
         } catch (err) {
-            // Reason stays in the logs, the client sees the token was rejected.
             logger.warn({ err }, 'JWT verification failed')
-            res.status(401).json(
-                jsonRpcResponse(req.body?.id ?? null, {
-                    error: {
-                        code: providerErrors.unauthorized().code,
-                        message: 'Invalid or expired token',
-                    },
-                })
-            )
+            const message = err instanceof Error ? err.message : String(err)
+            res.status(401).json({
+                error: 'Invalid or expired token: ' + message,
+            })
         }
     }
 }

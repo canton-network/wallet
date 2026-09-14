@@ -14,7 +14,7 @@ import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 
 type FiltersByParty = LedgerCommonSchemas['Map_Filters']
 
-type Update = Ops.PostV2Updates['ledgerApi']['result'][number]
+type Update = Ops.PostV2UpdatesFlats['ledgerApi']['result'][number]
 type JsTransaction = LedgerCommonSchemas['JsTransaction']
 
 const updateOffset = (update: Update): number => {
@@ -49,17 +49,16 @@ const paginateUpdates = async function* ({
     const limit = 32 // just to test
     let more = true
     while (more) {
-        const updates = await provider.request<Ops.PostV2Updates>({
+        const updates = await provider.request<Ops.PostV2UpdatesFlats>({
             method: 'ledgerApi',
             params: {
-                resource: '/v2/updates',
+                resource: '/v2/updates/flats',
                 requestMethod: 'post',
                 body: {
                     beginExclusive,
+                    verbose: false, // deprecated in 3.4
                     updateFormat: {
                         includeTransactions: {
-                            // Tap transfers have tx-kind metadata on
-                            // exercised events, which ACS_DELTA omits.
                             transactionShape:
                                 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
                             eventFormat: {
@@ -364,7 +363,6 @@ export class TransactionHistoryService {
             params: {
                 resource: '/v2/state/ledger-end',
                 requestMethod: 'get',
-                query: {},
             },
         })
     }
