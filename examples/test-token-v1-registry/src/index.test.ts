@@ -60,6 +60,10 @@ vi.mock('./api/allocation-instruction/index.js', () => ({
     default: 'allocationInstructionRouter',
 }))
 
+vi.mock('./api/utilities/index.js', () => ({
+    default: 'utilitiesRouter',
+}))
+
 vi.mock('@canton-network/core-splice-codegen', () => ({
     TestToken: {
         utils: {
@@ -96,7 +100,7 @@ describe('entry file', () => {
         })
 
         expect(mocks.json).toHaveBeenCalledOnce()
-        expect(mocks.use).toHaveBeenCalledTimes(6)
+        expect(mocks.use).toHaveBeenCalledTimes(8)
         expect(mocks.listen).toHaveBeenCalledOnce()
         expect(mocks.listen).toHaveBeenCalledWith(5634, expect.any(Function))
         expect(mocks.vetDar).not.toHaveBeenCalled()
@@ -128,14 +132,16 @@ describe('entry file', () => {
 
         await startRegistry()
 
-        const callOrder = mocks.use.mock.calls
+        const routerCallOrder = mocks.use.mock.calls
             .map((call) => call[0])
-            .filter((arg) => arg !== undefined)
-        expect(callOrder.length).toBe(5)
-        expect(callOrder[0]).toBe('metadataRouter')
-        expect(callOrder[1]).toBe('transferInstructionRouter')
-        expect(callOrder[2]).toBe('allocationRouter')
-        expect(callOrder[3]).toBe('allocationInstructionRouter')
-        expect(typeof callOrder[4]).toBe('function') // error middleware
+            .filter((arg): arg is string => typeof arg === 'string')
+        expect(routerCallOrder).toEqual([
+            'metadataRouter',
+            'transferInstructionRouter',
+            'allocationRouter',
+            'allocationInstructionRouter',
+            'utilitiesRouter',
+        ])
+        expect(typeof mocks.use.mock.calls.at(-1)?.[0]).toBe('function')
     })
 })
