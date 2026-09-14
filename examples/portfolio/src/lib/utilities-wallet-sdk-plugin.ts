@@ -49,15 +49,14 @@ type CancelArgs = FetchPreapprovalArgs & {
 type CancelCommandResult =
     PreparedCommand<'ExerciseCommand'> | typeof EMPTY_COMMAND_RESULT
 
-export const WalletSDKUtilitiesPluginName = 'utilities' as const
 
 const TRANSFER_PREAPPROVAL_TEMPLATE_ID =
     '#utility-registry-app-v0:Utility.Registry.App.V0.Model.TransferPreapproval:TransferPreapproval'
 const TRANSFER_PREAPPROVAL_WITHDRAW_CHOICE = 'TransferPreapproval_Withdraw'
 
-export class WalletSDKUtilitiesPlugin extends SDKPlugin {
+export class WalletSDKUtilitiesPlugin extends SDKPlugin<'utilities'> {
     constructor(ctx: SDKPluginContext) {
-        super(WalletSDKUtilitiesPluginName, ctx)
+        super('utilities', ctx)
     }
 
     public preapprovalTransfer = {

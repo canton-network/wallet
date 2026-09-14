@@ -16,7 +16,7 @@ export default async function () {
             ledgerClientUrl: 'http://localhost:2975',
         })
     ).registerPlugins([
-        class MyPlugin extends SDKPlugin {
+        class MyPlugin extends SDKPlugin<'myPlugin'> {
             // wallet-sdk plugin should always accept SDKPluginContext
             constructor(protected readonly ctx: SDKPluginContext) {
                 super('myPlugin', ctx)

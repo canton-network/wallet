@@ -17,6 +17,7 @@ export type SDKPluginContext<
 }
 
 export abstract class SDKPlugin<
+    const Name extends string = string,
     ExtendedNamespaceItems extends keyof ExtendedFullSDKInterface = never,
 > {
     /**
@@ -27,7 +28,7 @@ export abstract class SDKPlugin<
     protected readonly ctx: SDKPluginContext<ExtendedNamespaceItems>
 
     constructor(
-        public readonly name: string,
+        public readonly name: Name,
         protected readonly _ctx: SDKPluginContext<ExtendedNamespaceItems>
     ) {
         if (EXTENDED_SDK_OPTION_KEYS.includes(name as keyof ExtendedSDKOptions))

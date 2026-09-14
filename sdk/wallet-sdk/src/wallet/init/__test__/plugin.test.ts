@@ -6,9 +6,9 @@ import { EXTENDED_SDK_OPTION_KEYS, SDKPlugin, SDKPluginContext } from '../'
 import * as mock from '../../__test__/mocks'
 import { SDK } from '../..'
 
-const testPluginFactory = (key: string) => {
+const testPluginFactory = <T extends string>(key: T) => {
     return vi.fn(
-        class extends SDKPlugin {
+        class extends SDKPlugin<T> {
             constructor(ctx: SDKPluginContext) {
                 super(key, ctx)
             }
@@ -43,6 +43,37 @@ describe('plugin', () => {
                 () => new (testPluginFactory(key))(mock.ctx as never)
             ).toThrow()
         })
+    })
+
+    it('should ensure type safety', async () => {
+        const objectSdk = await createTestSDK()
+        const arraySdk = await createTestSDK()
+
+        const TestPlugin = testPluginFactory('plugin')
+
+        const UntypedTestPlugin = testPluginFactory<string>('untyped')
+
+        const objectRegistration = objectSdk.registerPlugins({
+            plugin: TestPlugin,
+            untyped: UntypedTestPlugin,
+        })
+        const arrayRegistration = arraySdk.registerPlugins([TestPlugin])
+
+        // @ts-expect-error array based registration must not allow untyped plugins
+        arraySdk.registerPlugins([UntypedTestPlugin])
+
+        void (objectRegistration.plugin.name satisfies 'plugin')
+        void (arrayRegistration.plugin.name satisfies 'plugin')
+
+        void objectRegistration.plugin
+        void objectRegistration.untyped
+        void arrayRegistration.plugin
+
+        // @ts-expect-error plugin2 must not be exposed by object registration
+        void objectRegistration.plugin2
+
+        // @ts-expect-error plugin2 must not be exposed by array registration
+        void arrayRegistration.plugin2
     })
 
     describe('record based registration (deprecated)', () => {

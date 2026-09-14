@@ -23,6 +23,7 @@ import {
     ExtendedSDKOptions,
     OfflineSDKInterface,
     PluginConstructor,
+    PluginRegistration,
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
@@ -204,7 +205,9 @@ export class InitializedSDK<
          * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
          */
         P extends PluginConstructor[] | Record<string, PluginConstructor>,
-    >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
+    >(
+        plugins: PluginRegistration<P>
+    ): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
         if (Array.isArray(plugins)) {
             for (const pluginConstructor of plugins as PluginConstructor[]) {
                 const plugin = new pluginConstructor({
