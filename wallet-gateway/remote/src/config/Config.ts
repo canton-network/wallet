@@ -115,42 +115,46 @@ const bootstrapFromEnv = bootstrapConfigSchema.extend({
     ),
 })
 
-const providerEnableSchema = z.object({
-    enable: z.boolean().optional().meta({
-        description:
-            'Whether this signing provider may be registered when its required configuration is available. Defaults to true.',
-    }),
-})
+const secretEnvName = (defaultName: string, purpose: string) =>
+    z
+        .string()
+        .optional()
+        .meta({
+            description: `Name of the environment variable that holds ${purpose}. Defaults to ${defaultName}. The secret value stays in the environment and is never stored in the config file.`,
+        })
 
-export const signingProvidersConfigSchema = z.object({
-    walletKernel: z.preprocess(
-        (val) => val ?? {},
-        providerEnableSchema.meta({
+export const signingProvidersConfigSchema = z
+    .object({
+        walletKernel: z.object({}).optional().meta({
             description:
-                'Wallet Kernel internal signing provider configuration.',
-        })
-    ),
-    participant: z.preprocess(
-        (val) => val ?? {},
-        providerEnableSchema.meta({
-            description: 'Participant signing provider configuration.',
-        })
-    ),
-    fireblocks: z.preprocess(
-        (val) => val ?? {},
-        providerEnableSchema
-            .extend({
+                'Include this object to opt in the Wallet Kernel internal signing provider. Requires signingStore.',
+        }),
+        participant: z.object({}).optional().meta({
+            description:
+                'Include this object to opt in the participant signing provider.',
+        }),
+        fireblocks: z
+            .object({
                 apiPath: z.string().optional().meta({
                     description:
                         'Fireblocks API URL. Defaults to https://api.fireblocks.io/v1.',
                 }),
+                apiKeyEnv: secretEnvName(
+                    'FIREBLOCKS_API_KEY',
+                    'the Fireblocks API key'
+                ),
+                secretEnv: secretEnvName(
+                    'FIREBLOCKS_SECRET',
+                    'the Fireblocks API secret'
+                ),
             })
-            .meta({ description: 'Fireblocks signing provider configuration.' })
-    ),
-    blockdaemon: z.preprocess(
-        (val) => val ?? {},
-        providerEnableSchema
-            .extend({
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in Fireblocks. Secrets are read from the environment variables named by apiKeyEnv and secretEnv.',
+            }),
+        blockdaemon: z
+            .object({
                 baseUrl: z.string().optional().meta({
                     description:
                         'Blockdaemon API URL. Defaults to http://localhost:5080/api/cwp/canton.',
@@ -159,33 +163,45 @@ export const signingProvidersConfigSchema = z.object({
                     description:
                         'Blockdaemon CAIP-2 network identifier. Defaults to canton:testnet.',
                 }),
+                apiKeyEnv: secretEnvName(
+                    'BLOCKDAEMON_API_KEY',
+                    'the Blockdaemon API key'
+                ),
             })
+            .optional()
             .meta({
-                description: 'Blockdaemon signing provider configuration.',
-            })
-    ),
-    dfns: z.preprocess(
-        (val) => val ?? {},
-        providerEnableSchema
-            .extend({
-                orgId: z.string().optional().meta({
+                description:
+                    'Include this object to opt in Blockdaemon. The API key is read from the environment variable named by apiKeyEnv.',
+            }),
+        dfns: z
+            .object({
+                orgId: z.string().meta({
                     description: 'Dfns organization ID.',
                 }),
                 baseUrl: z.string().optional().meta({
                     description:
                         'Dfns API URL. Defaults to https://api.dfns.io.',
                 }),
-                credId: z.string().optional().meta({
+                credId: z.string().meta({
                     description: 'Dfns service account credential ID.',
                 }),
+                privateKeyEnv: secretEnvName(
+                    'DFNS_PRIVATE_KEY',
+                    'the Dfns service account private key'
+                ),
+                authTokenEnv: secretEnvName(
+                    'DFNS_AUTH_TOKEN',
+                    'the Dfns service account auth token'
+                ),
             })
-            .meta({ description: 'Dfns signing provider configuration.' })
-    ),
-    securosys: z.preprocess(
-        (val) => val ?? {},
-        providerEnableSchema
-            .extend({
-                baseUrl: z.string().optional().meta({
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in Dfns. Requires orgId and credId. Secrets are read from the environment variables named by privateKeyEnv and authTokenEnv.',
+            }),
+        securosys: z
+            .object({
+                baseUrl: z.string().meta({
                     description: 'Securosys TSB service URL.',
                 }),
                 mtlsP12Path: z.string().optional().meta({
@@ -196,13 +212,34 @@ export const signingProvidersConfigSchema = z.object({
                     description:
                         'Securosys TSB signature algorithm. Defaults to EDDSA.',
                 }),
+                keyManagementApiKeyEnv: secretEnvName(
+                    'SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY',
+                    'the Securosys key-management API key'
+                ),
+                keyOperationApiKeyEnv: secretEnvName(
+                    'SECUROSYS_TSB_KEY_OPERATION_API_KEY',
+                    'the Securosys key-operation API key'
+                ),
+                bearerTokenEnv: secretEnvName(
+                    'SECUROSYS_TSB_BEARER_TOKEN',
+                    'the Securosys bearer token'
+                ),
+                mtlsP12PasswordEnv: secretEnvName(
+                    'SECUROSYS_TSB_MTLS_P12_PASSWORD',
+                    'the Securosys PKCS#12 password'
+                ),
+                keyPasswordEnv: secretEnvName(
+                    'SECUROSYS_TSB_KEY_PASSWORD',
+                    'the Securosys key password'
+                ),
             })
-            .meta({ description: 'Securosys signing provider configuration.' })
-    ),
-    bitgo: z.preprocess(
-        (val) => val ?? {},
-        providerEnableSchema
-            .extend({
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in Securosys. Requires baseUrl. Secrets are read from the environment variables named by the *Env fields.',
+            }),
+        bitgo: z
+            .object({
                 baseUrl: z.string().optional().meta({
                     description:
                         'BitGo API base URL. Defaults to https://app.bitgo.com.',
@@ -215,10 +252,21 @@ export const signingProvidersConfigSchema = z.object({
                     description:
                         'BitGo Canton coin identifier. Auto-detected from the API URL when omitted.',
                 }),
+                accessTokenEnv: secretEnvName(
+                    'BITGO_ACCESS_TOKEN',
+                    'the BitGo access token'
+                ),
             })
-            .meta({ description: 'BitGo signing provider configuration.' })
-    ),
-})
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in BitGo. The access token is read from the environment variable named by accessTokenEnv.',
+            }),
+    })
+    .meta({
+        description:
+            'Explicit signing provider configuration. When omitted, the Wallet Gateway uses legacy discovery: every provider is available if its required environment variables are set. When present, only listed providers are registered; non-secret settings come from this object, and secrets are read from environment variables named by the *Env fields.',
+    })
 
 const hashingSchemeSchema = z
     .object({
@@ -238,10 +286,7 @@ export const rawConfigSchema = z.object({
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
-    signingProviders: z.preprocess(
-        (val) => val ?? {},
-        signingProvidersConfigSchema
-    ),
+    signingProviders: signingProvidersConfigSchema.optional(),
     bootstrap: bootstrapFromEnv,
     hashingScheme: hashingSchemeSchema,
 })
@@ -252,10 +297,7 @@ export const configSchema = z.object({
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
-    signingProviders: z.preprocess(
-        (val) => val ?? {},
-        signingProvidersConfigSchema
-    ),
+    signingProviders: signingProvidersConfigSchema.optional(),
     bootstrap: bootstrapConfigSchema,
     hashingScheme: hashingSchemeSchema,
 })

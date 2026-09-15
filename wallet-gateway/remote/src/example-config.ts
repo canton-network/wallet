@@ -26,34 +26,39 @@ export default {
         },
     },
     signingProviders: {
-        walletKernel: {
-            enable: true,
-        },
-        participant: {
-            enable: true,
-        },
+        walletKernel: {},
+        participant: {},
         fireblocks: {
-            enable: true,
             apiPath: 'https://api.fireblocks.io/v1',
+            apiKeyEnv: 'FIREBLOCKS_API_KEY',
+            secretEnv: 'FIREBLOCKS_SECRET',
         },
         blockdaemon: {
-            enable: true,
             baseUrl: 'http://localhost:5080/api/cwp/canton',
             caip2: 'canton:testnet',
+            apiKeyEnv: 'BLOCKDAEMON_API_KEY',
         },
         dfns: {
-            enable: true,
+            orgId: '<REPLACE_DFNS_ORG_ID>',
+            credId: '<REPLACE_DFNS_CRED_ID>',
             baseUrl: 'https://api.dfns.io',
+            privateKeyEnv: 'DFNS_PRIVATE_KEY',
+            authTokenEnv: 'DFNS_AUTH_TOKEN',
         },
         securosys: {
-            enable: true,
+            baseUrl: '<REPLACE_SECUROSYS_BASE_URL>',
             signatureAlgorithm: 'EDDSA',
+            keyManagementApiKeyEnv: 'SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY',
+            keyOperationApiKeyEnv: 'SECUROSYS_TSB_KEY_OPERATION_API_KEY',
+            bearerTokenEnv: 'SECUROSYS_TSB_BEARER_TOKEN',
+            mtlsP12PasswordEnv: 'SECUROSYS_TSB_MTLS_P12_PASSWORD',
+            keyPasswordEnv: 'SECUROSYS_TSB_KEY_PASSWORD',
         },
         bitgo: {
-            enable: true,
             baseUrl: 'https://app.bitgo.com',
             enterpriseId: '1234',
             coin: 'canton',
+            accessTokenEnv: 'BITGO_ACCESS_TOKEN',
         },
     },
     signingStore: {
