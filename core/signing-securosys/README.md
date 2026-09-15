@@ -110,14 +110,7 @@ Run the wallet monorepo commands from the wallet repository root:
 cd /path/to/wallet
 ```
 
-Use Node.js 20+ for the wallet toolchain.
-Install pnpm v11 and the wallet dependencies:
-
-```bash
-# corepack installation is recommended
-corepack enable pnpm
-pnpm install
-```
+See [`docs/CONTRIBUTING.md`](../../docs/CONTRIBUTING.md) for development environment setup.
 
 Download the Playwright browsers required by the wallet browser tests:
 
