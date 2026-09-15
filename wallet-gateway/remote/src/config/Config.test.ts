@@ -3,6 +3,11 @@
 
 import { expect, test } from 'vitest'
 import { ConfigUtils } from './ConfigUtils.js'
+import {
+    configSchema,
+    rawConfigSchema,
+    signingProvidersConfigSchema,
+} from './Config.js'
 
 test('config from json file', async () => {
     const resp = ConfigUtils.loadConfigFile('../test/config.json')
@@ -27,4 +32,60 @@ test('config from json file', async () => {
             'devnet_secret_testval'
         )
     }
+})
+
+test('signingStore is optional', () => {
+    const config = { ...ConfigUtils.loadConfigFile('../test/config.json') }
+    delete config.signingStore
+
+    expect(configSchema.parse(config).signingStore).toBeUndefined()
+    expect(rawConfigSchema.parse(config).signingStore).toBeUndefined()
+})
+
+test('signingProviders is optional and opt-in by presence', () => {
+    const config = ConfigUtils.loadConfigFile('../test/config.json')
+
+    expect(configSchema.parse(config).signingProviders).toBeUndefined()
+    expect(rawConfigSchema.parse(config).signingProviders).toBeUndefined()
+    expect(
+        configSchema.parse({ ...config, signingProviders: {} }).signingProviders
+    ).toEqual({})
+    expect(
+        configSchema.parse({
+            ...config,
+            signingProviders: { fireblocks: { apiPath: 'https://example' } },
+        }).signingProviders
+    ).toEqual({ fireblocks: { apiPath: 'https://example' } })
+    expect(
+        configSchema.parse({
+            ...config,
+            signingProviders: {
+                fireblocks: {
+                    apiKeyEnv: 'MY_FIREBLOCKS_API_KEY',
+                    secretEnv: 'MY_FIREBLOCKS_SECRET',
+                },
+            },
+        }).signingProviders
+    ).toEqual({
+        fireblocks: {
+            apiKeyEnv: 'MY_FIREBLOCKS_API_KEY',
+            secretEnv: 'MY_FIREBLOCKS_SECRET',
+        },
+    })
+})
+
+test('dfns and securosys in config require non-secret settings', () => {
+    expect(() => signingProvidersConfigSchema.parse({ dfns: {} })).toThrow()
+    expect(() =>
+        signingProvidersConfigSchema.parse({ securosys: {} })
+    ).toThrow()
+    expect(
+        signingProvidersConfigSchema.parse({
+            dfns: { orgId: 'org-id', credId: 'credential-id' },
+            securosys: { baseUrl: 'https://securosys.example' },
+        })
+    ).toEqual({
+        dfns: { orgId: 'org-id', credId: 'credential-id' },
+        securosys: { baseUrl: 'https://securosys.example' },
+    })
 })

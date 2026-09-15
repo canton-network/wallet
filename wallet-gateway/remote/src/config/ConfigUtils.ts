@@ -125,9 +125,9 @@ function resolveRawConfig(rawConfig: RawConfig): Config {
 
     const store: Config['store'] = resolvePostgressPassword(rawConfig.store)
 
-    const signingStore: Config['signingStore'] = resolvePostgressPassword(
-        rawConfig.signingStore
-    )
+    const signingStore: Config['signingStore'] = rawConfig.signingStore
+        ? resolvePostgressPassword(rawConfig.signingStore)
+        : undefined
 
     return {
         ...rawConfig,

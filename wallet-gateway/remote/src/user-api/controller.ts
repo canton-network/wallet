@@ -43,6 +43,7 @@ import {
     ListApiKeysResult,
     RemoveApiKeyParams,
     ListTransactionsParams,
+    ListSigningProvidersResult,
     ChangeSigningProviderParams,
     GetWalletParams,
     GetWalletResult,
@@ -1240,6 +1241,10 @@ export const userController = (
             await store.removeApiKey(params.id)
             return null
         },
+        listSigningProviders:
+            async (): Promise<ListSigningProvidersResult> => ({
+                signingProviders: Object.keys(drivers),
+            }),
         listSigningProviderKeys: async (
             params: ListSigningProviderKeysParams
         ): Promise<ListSigningProviderKeysResult> => {
