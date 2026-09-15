@@ -25,6 +25,7 @@
         "test:coverage": "vitest run --project node --coverage"
     },
     "devDependencies": {
+        "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/lodash": "^4.17.24",
         "@types/node": "^25.9.3",
@@ -39,6 +40,7 @@
         "@canton-network/core-token-standard": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
+        "cors": "^2.8.6",
         "express": "^5.2.1",
         "openapi-ts-router": "^0.4.1",
         "openapi-typescript-helpers": "^0.1.0",
