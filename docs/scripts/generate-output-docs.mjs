@@ -3,7 +3,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// generateOutputDocs.js
+// generate-output-docs.mjs
 //
 // - Reads a single export config: docs/config/exportConfig.json
 // - Writes extracted snippets into: docs-output/<snippetName>.mdx
@@ -12,7 +12,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const REPO_ROOT = path.join(__dirname, '..', '..')
+const REPO_ROOT = path.join(import.meta.dirname, '..', '..')
 const EXPORT_CONFIG_PATH = path.join(REPO_ROOT, 'docs/config/exportConfig.json')
 const OUTPUT_FOLDER_PATH = path.join(REPO_ROOT, 'docs-output')
 

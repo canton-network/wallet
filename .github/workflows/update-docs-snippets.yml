@@ -18,7 +18,7 @@ jobs:
               uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
 
             - name: Extract Snippet data
-              run: node docs/scripts/generateOutputDocs.js
+              run: node docs/scripts/generate-output-docs.mjs
 
             - name: Store Artifact output
               id: store-artifact
@@ -32,16 +32,28 @@ jobs:
               run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
             - name: Update Main Docs Repo
-              uses: passeidireto/trigger-external-workflow-action@main
               if: vars.ENABLE_SYNC_PROCESS == 'true'
-              env:
-                  PAYLOAD_run-id: ${{ github.run_id }}
-                  PAYLOAD_artifact-id: ${{ steps.store-artifact.outputs.artifact-id }}
-                  PAYLOAD_repo-name: ${{ vars.SOURCE_REPO_NAME }}
-                  PAYLOAD_repo-org: ${{ vars.SOURCE_REPO_ORG }}
-                  PAYLOAD_repo-version: ${{ vars.SOURCE_REPO_VERSION }}
-                  PAYLOAD_trigger_sha_short: ${{ steps.additional-params.outputs.short_sha }}
-              with:
-                  repository: ${{ vars.MAIN_REPO_ORG }}/${{ vars.MAIN_REPO_NAME }}
-                  event: update_snippets
-                  github_pat: ${{ secrets.MAIN_DOCS_REPO_TOKEN }}
+              run: |
+                  set -euo pipefail
+
+                  curl -L --fail-with-body \
+                    -X POST \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "Authorization: Bearer ${{ secrets.MAIN_DOCS_REPO_TOKEN }}" \
+                    -H "Content-Type: application/json" \
+                    -H "User-Agent: ${{ github.repository }} update-docs-snippets workflow" \
+                    -H "X-GitHub-Api-Version: 2026-03-10" \
+                    -d @- \
+                    "https://api.github.com/repos/${{ vars.MAIN_REPO_ORG }}/${{ vars.MAIN_REPO_NAME }}/dispatches" <<'JSON'
+                  {
+                    "event_type": "update_snippets",
+                    "client_payload": {
+                      "run-id": ${{ toJson(github.run_id) }},
+                      "artifact-id": ${{ toJson(steps.store-artifact.outputs.artifact-id) }},
+                      "repo-name": ${{ toJson(vars.SOURCE_REPO_NAME) }},
+                      "repo-org": ${{ toJson(vars.SOURCE_REPO_ORG) }},
+                      "repo-version": ${{ toJson(vars.SOURCE_REPO_VERSION) }},
+                      "trigger_sha_short": ${{ toJson(steps.additional-params.outputs.short_sha) }}
+                    }
+                  }
+                  JSON
