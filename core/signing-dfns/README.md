@@ -86,17 +86,20 @@ Dfns uses two-layer authentication: a long-lived service account JWT plus per-re
 
 ### Wallet Gateway Configuration
 
-When running the Wallet Gateway (Remote), configure the non-secret values in
-the Gateway config:
+When running the Wallet Gateway (Remote), listing `dfns` under `signingProviders`
+opts the provider in. Configure the non-secret values in the Gateway config:
 
 - `signingProviders.dfns.orgId`: Your Dfns organization ID.
 - `signingProviders.dfns.baseUrl`: The base URL for the Dfns API. Defaults to `https://api.dfns.io`.
 - `signingProviders.dfns.credId`: The default credential ID for Dfns API authentication.
+- `signingProviders.dfns.privateKeyEnv`: Name of the environment variable that holds the service account private key. Defaults to `DFNS_PRIVATE_KEY`.
+- `signingProviders.dfns.authTokenEnv`: Name of the environment variable that holds the service account auth token. Defaults to `DFNS_AUTH_TOKEN`.
 
-Set the environment variables that contain secret/private values separately.
+Secret values stay in those environment variables and are never stored in the config file.
 
-- `DFNS_PRIVATE_KEY`: The private key for signing Dfns API requests.
-- `DFNS_AUTH_TOKEN`: The authentication token for the Dfns API.
+If `signingProviders` is omitted, `DFNS_PRIVATE_KEY`, `DFNS_AUTH_TOKEN`, `DFNS_ORG_ID`,
+`DFNS_CRED_ID`, and `DFNS_BASE_URL` are read from the environment. Non-secret variables are
+ignored once `signingProviders` is present.
 
 Example usage:
 
@@ -106,7 +109,9 @@ Example usage:
         "dfns": {
             "orgId": "your-org-id",
             "baseUrl": "https://api.dfns.io",
-            "credId": "your-cred-id"
+            "credId": "your-cred-id",
+            "privateKeyEnv": "DFNS_PRIVATE_KEY",
+            "authTokenEnv": "DFNS_AUTH_TOKEN"
         }
     }
 }

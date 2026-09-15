@@ -61,24 +61,32 @@ the existing PascalCase convention: `MtlsP12Path` and `MtlsP12Password`.
 
 ### Wallet Gateway config
 
-| Gateway config field                            | Driver property      |
-| :---------------------------------------------- | :------------------- |
-| `signingProviders.securosys.baseUrl`            | `baseUrl`            |
-| `signingProviders.securosys.mtlsP12Path`        | `mtlsP12Path`        |
-| `signingProviders.securosys.signatureAlgorithm` | `signatureAlgorithm` |
+| Gateway config field                                | Driver property       |
+| :-------------------------------------------------- | :-------------------- |
+| `signingProviders.securosys.baseUrl`                | `baseUrl`             |
+| `signingProviders.securosys.mtlsP12Path`            | `mtlsP12Path`         |
+| `signingProviders.securosys.signatureAlgorithm`     | `signatureAlgorithm`  |
+| `signingProviders.securosys.keyManagementApiKeyEnv` | `keyManagementApiKey` |
+| `signingProviders.securosys.keyOperationApiKeyEnv`  | `keyOperationApiKey`  |
+| `signingProviders.securosys.bearerTokenEnv`         | `bearerToken`         |
+| `signingProviders.securosys.mtlsP12PasswordEnv`     | `mtlsP12Password`     |
+| `signingProviders.securosys.keyPasswordEnv`         | `keyPassword`         |
+
+The `*Env` fields store only the environment variable **name**. Secret values stay in the
+environment. Defaults match the variable names below.
 
 ### Wallet Gateway environment variables
 
-| Environment variable                   | Driver property       | Usage                                                                   |
-| :------------------------------------- | :-------------------- | :---------------------------------------------------------------------- |
-| `SECUROSYS_TSB_BASE_URL`               | `baseUrl`             | Deprecated fallback for `signingProviders.securosys.baseUrl`            |
-| `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` | `keyManagementApiKey` | API key for `/v1/key` endpoints                                         |
-| `SECUROSYS_TSB_KEY_OPERATION_API_KEY`  | `keyOperationApiKey`  | API key for signing/request-status endpoints                            |
-| `SECUROSYS_TSB_BEARER_TOKEN`           | `bearerToken`         | Optional bearer access token                                            |
-| `SECUROSYS_TSB_MTLS_P12_PATH`          | `mtlsP12Path`         | Deprecated fallback for `signingProviders.securosys.mtlsP12Path`        |
-| `SECUROSYS_TSB_MTLS_P12_PASSWORD`      | `mtlsP12Password`     | Optional PKCS#12/P12 password                                           |
-| `SECUROSYS_TSB_KEY_PASSWORD`           | `keyPassword`         | Optional TSB key password                                               |
-| `SECUROSYS_TSB_SIGNATURE_ALGORITHM`    | `signatureAlgorithm`  | Deprecated fallback for `signingProviders.securosys.signatureAlgorithm` |
+| Environment variable                   | Driver property       | Usage                                                                               |
+| :------------------------------------- | :-------------------- | :---------------------------------------------------------------------------------- |
+| `SECUROSYS_TSB_BASE_URL`               | `baseUrl`             | Legacy discovery only; ignored when `signingProviders` is configured                |
+| `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` | `keyManagementApiKey` | Default name for the key-management API key; override with `keyManagementApiKeyEnv` |
+| `SECUROSYS_TSB_KEY_OPERATION_API_KEY`  | `keyOperationApiKey`  | Default name for the key-operation API key; override with `keyOperationApiKeyEnv`   |
+| `SECUROSYS_TSB_BEARER_TOKEN`           | `bearerToken`         | Default name for the bearer token; override with `bearerTokenEnv`                   |
+| `SECUROSYS_TSB_MTLS_P12_PATH`          | `mtlsP12Path`         | Legacy discovery only; ignored when `signingProviders` is configured                |
+| `SECUROSYS_TSB_MTLS_P12_PASSWORD`      | `mtlsP12Password`     | Default name for the PKCS#12/P12 password; override with `mtlsP12PasswordEnv`       |
+| `SECUROSYS_TSB_KEY_PASSWORD`           | `keyPassword`         | Default name for the TSB key password; override with `keyPasswordEnv`               |
+| `SECUROSYS_TSB_SIGNATURE_ALGORITHM`    | `signatureAlgorithm`  | Legacy discovery only; ignored when `signingProviders` is configured                |
 
 Every key created by this driver is first sent to TSB with a temporary
 `wallet-{uuid}` label. After TSB returns the public key, the driver renames the

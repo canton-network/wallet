@@ -18,27 +18,19 @@ BitGo signs Canton transactions asynchronously via its MPC TSS protocol:
 
 ## Wallet Gateway configuration
 
-Configure non-secret values in the Wallet Gateway config:
+Configure non-secret values in the Wallet Gateway config. Listing `bitgo` under
+`signingProviders` opts the provider in:
 
-| Gateway config field                  | Required | Description                                                                                                                            |
-| ------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `signingProviders.bitgo.enable`       | No       | Whether BitGo may be registered. Defaults to `true`.                                                                                   |
-| `signingProviders.bitgo.baseUrl`      | No       | API base URL. Defaults to `https://app.bitgo.com` (prod). Use `https://app.bitgo-test.com` for testnet.                                |
-| `signingProviders.bitgo.enterpriseId` | No       | BitGo enterprise ID. Required for `createKey`. Enables restart-safe `getTransaction` fallback via the enterprise txrequests endpoint.  |
-| `signingProviders.bitgo.coin`         | No       | Canton coin identifier. Auto-detected: `tcanton` for `bitgo-test.com` URLs, `canton` for everything else (prod, proxies, custom URLs). |
+| Gateway config field                    | Required | Description                                                                                                                               |
+| --------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `signingProviders.bitgo.baseUrl`        | No       | API base URL. Defaults to `https://app.bitgo.com` (prod). Use `https://app.bitgo-test.com` for testnet.                                   |
+| `signingProviders.bitgo.enterpriseId`   | No       | BitGo enterprise ID. Required for `createKey`. Enables restart-safe `getTransaction` fallback via the enterprise txrequests endpoint.     |
+| `signingProviders.bitgo.coin`           | No       | Canton coin identifier. Auto-detected: `tcanton` for `bitgo-test.com` URLs, `canton` for everything else (prod, proxies, custom URLs).    |
+| `signingProviders.bitgo.accessTokenEnv` | No       | Name of the environment variable that holds the access token. Defaults to `BITGO_ACCESS_TOKEN`. The token value stays in the environment. |
 
-Set the sensitive access token in the environment:
-
-| Variable             | Required | Description                   |
-| -------------------- | -------- | ----------------------------- |
-| `BITGO_ACCESS_TOKEN` | Yes      | BitGo long-lived access token |
-
-The previous non-secret environment variables remain supported as deprecated
-fallbacks when the corresponding Gateway config field is omitted:
-
-- `BITGO_API_URL`
-- `BITGO_ENTERPRISE_ID`
-- `BITGO_COIN`
+If `signingProviders` is omitted, the Wallet Gateway uses legacy discovery and
+reads `BITGO_ACCESS_TOKEN`, `BITGO_API_URL`, `BITGO_ENTERPRISE_ID`, and `BITGO_COIN` from the
+environment. Non-secret variables are ignored once `signingProviders` is present.
 
 ## Transaction state lifecycle
 
