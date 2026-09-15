@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
-    "version": "1.11.0",
+    "version": "1.11.2",
     "type": "module",
     "description": "A server-side Wallet Gateway implementation over HTTP",
     "license": "Apache-2.0",
@@ -82,8 +82,8 @@
         "@types/express": "^5.0.6",
         "@types/node": "^25.9.4",
         "@types/supertest": "^7.2.0",
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/browser-playwright": "^4.1.11",
+        "@vitest/coverage-v8": "^4.1.11",
         "pino-test": "^1.1.0",
         "playwright": "^1.61.1",
         "supertest": "^7.2.2",

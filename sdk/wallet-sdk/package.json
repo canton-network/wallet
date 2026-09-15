@@ -1,7 +1,7 @@
 {
     "name": "@canton-network/wallet-sdk",
     "type": "module",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "description": "Node/browser SDK for integrating with Canton Network",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
     "license": "Apache-2.0",
@@ -50,8 +50,8 @@
     },
     "devDependencies": {
         "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/browser-playwright": "^4.1.11",
+        "@vitest/coverage-v8": "^4.1.11",
         "playwright": "^1.61.1",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",

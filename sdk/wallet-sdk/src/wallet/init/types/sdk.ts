@@ -94,7 +94,7 @@ export type BasicSDKInterface<
          */
         P extends PluginConstructor[] | Record<string, PluginConstructor>,
     >(
-        plugins: P
+        plugins: PluginRegistration<P>
     ) => SDKInterface<CurrentlyExtended> & RegisteredPlugins<P>
 }>
 
@@ -129,6 +129,19 @@ export type OfflineSDKInterface = Readonly<{
 // PLUGINS
 
 export type PluginConstructor = new (ctx: SDKPluginContext) => SDKPlugin
+
+/**
+ * Represents the registration of plugins, either as an array of plugin constructors or as a record mapping names to plugin constructors.
+ * Enforces use of SdkPlugin<'pluginName'> for plugins if used with array registration to enforce type safety.
+ */
+export type PluginRegistration<
+    P extends PluginConstructor[] | Record<string, PluginConstructor>,
+> = P &
+    (P extends PluginConstructor[]
+        ? string extends InstanceType<P[number]>['name']
+            ? never
+            : unknown
+        : unknown)
 
 export type RegisteredPlugins<
     /**

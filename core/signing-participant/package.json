@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-participant",
-    "version": "1.12.0",
+    "version": "1.12.1",
     "type": "module",
     "description": "Wallet Gateway driver for Canton participant internal parties",
     "license": "Apache-2.0",
@@ -32,7 +32,7 @@
         "@types/fs-extra": "^11.0.4",
         "@types/lodash": "^4.17.24",
         "@types/node": "^25.9.4",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/coverage-v8": "^4.1.11",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
         "vitest": "^4.1.11"
