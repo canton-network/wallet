@@ -58,7 +58,7 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay) {
                 response: msgResponse,
             }
 
-            parentOriginManager.postMessage(response, '*')
+            parentOriginManager.postMessage(response)
 
             if ('result' in msgResponse) {
                 notificationRelay.onResponse(
@@ -77,13 +77,10 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay) {
         // Acknowledge the extension readiness request
         if (msg.type === WalletEvent.SPLICE_WALLET_EXT_READY) {
             if (!shouldHandle(msg.target)) return
-            parentOriginManager.postMessage(
-                {
-                    type: WalletEvent.SPLICE_WALLET_EXT_ACK,
-                    target: msg.target,
-                },
-                '*'
-            )
+            parentOriginManager.postMessage({
+                type: WalletEvent.SPLICE_WALLET_EXT_ACK,
+                target: msg.target,
+            })
         }
     })
 }

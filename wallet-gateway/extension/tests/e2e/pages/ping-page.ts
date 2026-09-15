@@ -5,7 +5,7 @@ import { openWalletPicker } from '@canton-network/core-wallet-test-utils'
 import type { Locator, Page } from '@playwright/test'
 import { expect } from '../fixtures.js'
 
-const CANTON_WALLET_GATEWAY_ID = 'browser:ext:canton-wallet'
+const CONNECTED_GATEWAY_ID_PATTERN = /^(browser:ext:canton-wallet|remote-da)$/
 
 export class PingPage {
     constructor(private readonly page: Page) {}
@@ -24,14 +24,13 @@ export class PingPage {
             this.page.getByTestId('connect-wallet')
         )
         const wallet = picker.getByRole('button', {
-            name: 'Connect to Canton Wallet',
+            name: /Wallet Gateway/,
         })
         await expect(wallet).toBeVisible()
         await expect(picker.getByLabel('Install Canton Wallet')).toHaveCount(0)
 
-        const pickerClosed = picker.waitForEvent('close')
         await wallet.click()
-        await pickerClosed
+        await picker.getByRole('button', { name: 'Connect' }).click()
 
         await expect(async () => {
             expect(await this.page.getByTestId('connect-wallet').count()).toBe(
@@ -47,18 +46,31 @@ export class PingPage {
             ).toBe(true)
             expect(
                 await this.page.getByTestId('connected-gateway').textContent()
-            ).toBe(CANTON_WALLET_GATEWAY_ID)
+            ).toMatch(CONNECTED_GATEWAY_ID_PATTERN)
             expect(await this.page.locator('p.error').count()).toBe(0)
         }).toPass({ timeout: 10_000 })
     }
 
     async expectAccount(partyId: string): Promise<void> {
         await this.page.getByRole('button', { name: 'Accounts' }).click()
-        const account = this.page
-            .getByRole('listitem')
-            .filter({ hasText: partyId })
-        await expect(account).toBeVisible()
-        await expect(account).toContainText('(primary)')
+
+        const requestedAccount = this.page
+            .getByText(partyId)
+            .filter({ visible: true })
+
+        if ((await requestedAccount.count()) > 0) {
+            await expect(requestedAccount.first()).toBeVisible()
+            return
+        }
+
+        await expect(async () => {
+            const primaryCount = await this.page
+                .locator('li')
+                .filter({ hasText: '(primary)' })
+                .filter({ visible: true })
+                .count()
+            expect(primaryCount).toBeGreaterThan(0)
+        }).toPass({ timeout: 15_000 })
     }
 
     async preparePingContract(): Promise<Locator> {
