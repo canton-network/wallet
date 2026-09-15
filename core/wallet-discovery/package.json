@@ -30,8 +30,8 @@
         "@canton-network/core-wallet-dapp-rpc-client": "workspace:^"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/browser-playwright": "^4.1.11",
+        "@vitest/coverage-v8": "^4.1.11",
         "playwright": "^1.61.1",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
