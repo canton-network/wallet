@@ -76,6 +76,109 @@ test('decode a base 64 encoded prepared tx', async () => {
     )
 })
 
+test('parsePreparedTransaction finds amount nested within a Mint choice argument', async () => {
+    const mintChosenValue: Value = {
+        sum: {
+            oneofKind: 'record',
+            record: {
+                fields: [
+                    {
+                        label: 'mint',
+                        value: {
+                            sum: {
+                                oneofKind: 'record',
+                                record: {
+                                    fields: [
+                                        {
+                                            label: 'unexpectedWrapper',
+                                            value: {
+                                                sum: {
+                                                    oneofKind: 'record',
+                                                    record: {
+                                                        fields: [
+                                                            {
+                                                                label: 'amount',
+                                                                value: {
+                                                                    sum: {
+                                                                        oneofKind:
+                                                                            'numeric',
+                                                                        numeric:
+                                                                            '100.0',
+                                                                    },
+                                                                },
+                                                            },
+                                                        ],
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+    }
+
+    const preparedTx = PreparedTransaction.create({
+        transaction: {
+            version: '2.1',
+            roots: ['0'],
+            nodes: [
+                {
+                    nodeId: '0',
+                    versionedNode: {
+                        oneofKind: 'v1',
+                        v1: {
+                            nodeType: {
+                                oneofKind: 'exercise',
+                                exercise: {
+                                    lfVersion: '2.1',
+                                    contractId: '00aa',
+                                    packageName: 'dtc-registry-app',
+                                    templateId: {
+                                        packageId: 'pkg',
+                                        moduleName:
+                                            'Dtc.Registry.App.V3.Service.HoldingOperationsDelegation',
+                                        entityName:
+                                            'RegistrarHoldingOperationsDelegation',
+                                    },
+                                    signatories: [],
+                                    stakeholders: [],
+                                    actingParties: [],
+                                    choiceId:
+                                        'RegistrarHoldingOperationsDelegation_Mint',
+                                    chosenValue: mintChosenValue,
+                                    consuming: false,
+                                    children: [],
+                                    choiceObservers: [],
+                                },
+                            },
+                        },
+                    },
+                },
+            ],
+            nodeSeeds: [],
+        },
+        metadata: {
+            submitterInfo: { actAs: [], commandId: '' },
+            transactionUuid: 'uuid',
+            mediatorGroup: 0,
+            synchronizerId: 'sync',
+            preparationTime: BigInt(0),
+            inputContracts: [],
+        },
+    })
+
+    const base64 = toBase64(PreparedTransaction.toBinary(preparedTx))
+    const result = parsePreparedTransaction(base64)
+
+    expect(result.choiceId).toBe('RegistrarHoldingOperationsDelegation_Mint')
+    expect(result.amount).toBe('100.0')
+})
+
 test('hash from preparedTx ledger api call should match calculated hash', async () => {
     const preparedTxHashFromLAPI =
         'f97Cv1BO7QS7jmSY03p56JGsPf60Vx/ABXmRub7iiQI='

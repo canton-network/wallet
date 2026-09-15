@@ -210,6 +210,28 @@ function getNumericValue(value: any): string | undefined {
     return undefined
 }
 
+function findFirstNumericField(value: any, label: string): string | undefined {
+    if (value === null || typeof value !== 'object') {
+        return undefined
+    }
+
+    if (value.label === label) {
+        const numericValue = getNumericValue(value.value)
+        if (numericValue !== undefined) {
+            return numericValue
+        }
+    }
+
+    for (const nestedValue of Object.values(value)) {
+        const numericValue = findFirstNumericField(nestedValue, label)
+        if (numericValue !== undefined) {
+            return numericValue
+        }
+    }
+
+    return undefined
+}
+
 function extractChoiceIdAndAmount(obj: any) {
     const nodes = obj?.transaction?.nodes ?? []
     if (!Array.isArray(nodes) || nodes.length === 0) {
@@ -237,6 +259,10 @@ function extractChoiceIdAndAmount(obj: any) {
                 ),
                 'amount'
             )
+        ) ??
+        findFirstNumericField(
+            getFieldValue(exercise?.chosenValue, 'mint'),
+            'amount'
         )
     const createAmount =
         getNumericValue(getFieldValue(create?.argument, 'amount')) ??
