@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, test } from 'vitest'
-import { z } from 'zod'
 import { ConfigUtils } from './ConfigUtils.js'
-import { configSchema, rawConfigSchema } from './Config.js'
+import {
+    configSchema,
+    rawConfigSchema,
+    signingProvidersConfigSchema,
+} from './Config.js'
 
 test('config from json file', async () => {
     const resp = ConfigUtils.loadConfigFile('../test/config.json')
@@ -39,12 +42,50 @@ test('signingStore is optional', () => {
     expect(rawConfigSchema.parse(config).signingStore).toBeUndefined()
 })
 
-test('generated input schema keeps defaulted signing provider config optional', () => {
-    const schema = z.toJSONSchema(rawConfigSchema, { io: 'input' })
-    const signingProvidersSchema = schema.properties?.signingProviders as {
-        required?: string[]
-    }
+test('signingProviders is optional and opt-in by presence', () => {
+    const config = ConfigUtils.loadConfigFile('../test/config.json')
 
-    expect(schema.required).not.toContain('signingProviders')
-    expect(signingProvidersSchema.required).toBeUndefined()
+    expect(configSchema.parse(config).signingProviders).toBeUndefined()
+    expect(rawConfigSchema.parse(config).signingProviders).toBeUndefined()
+    expect(
+        configSchema.parse({ ...config, signingProviders: {} }).signingProviders
+    ).toEqual({})
+    expect(
+        configSchema.parse({
+            ...config,
+            signingProviders: { fireblocks: { apiPath: 'https://example' } },
+        }).signingProviders
+    ).toEqual({ fireblocks: { apiPath: 'https://example' } })
+    expect(
+        configSchema.parse({
+            ...config,
+            signingProviders: {
+                fireblocks: {
+                    apiKeyEnv: 'MY_FIREBLOCKS_API_KEY',
+                    secretEnv: 'MY_FIREBLOCKS_SECRET',
+                },
+            },
+        }).signingProviders
+    ).toEqual({
+        fireblocks: {
+            apiKeyEnv: 'MY_FIREBLOCKS_API_KEY',
+            secretEnv: 'MY_FIREBLOCKS_SECRET',
+        },
+    })
+})
+
+test('dfns and securosys in config require non-secret settings', () => {
+    expect(() => signingProvidersConfigSchema.parse({ dfns: {} })).toThrow()
+    expect(() =>
+        signingProvidersConfigSchema.parse({ securosys: {} })
+    ).toThrow()
+    expect(
+        signingProvidersConfigSchema.parse({
+            dfns: { orgId: 'org-id', credId: 'credential-id' },
+            securosys: { baseUrl: 'https://securosys.example' },
+        })
+    ).toEqual({
+        dfns: { orgId: 'org-id', credId: 'credential-id' },
+        securosys: { baseUrl: 'https://securosys.example' },
+    })
 })
