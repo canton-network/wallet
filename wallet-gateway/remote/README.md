@@ -46,14 +46,20 @@ The JSON-RPC API specs from `api-specs/` are generated into strongly-typed metho
 
 ## Signing providers
 
-All signing providers are enabled by default. Set the provider's optional
-`enable` config field to `false` to prevent it from being registered.
+`signingProviders` configuration has two modes:
+
+- **Legacy** - for backwards compatibility only, will be removed in the future. Omit the `signingProviders` config property. Every provider stays available
+  when its required environment variables are set. Non-secret settings also come
+  from those environment variables.
+- **Explicit** - include `signingProviders` config property. Each listed provider is opt-in by
+  presence of its key. Non-secret settings come from the config object. Secret values stay in the environment variables,
+  Config allows altering names of those variables via `*Env` fields (each defaults to the name used in legacy config).
 
 ### Wallet Kernel
 
 **Gateway config:**
 
-- `signingProviders.walletKernel.enable` - optional, defaults to `true`
+- `signingProviders.walletKernel` - set it to {} to enable
 - `signingStore` - required for this provider, the provider is unavailable when the signing store is omitted
 
 **Environment variables:**
@@ -64,7 +70,7 @@ All signing providers are enabled by default. Set the provider's optional
 
 **Gateway config:**
 
-- `signingProviders.participant.enable` - optional, defaults to `true`
+- `signingProviders.participant` - set it to `{}` to enable
 
 **Environment variables:**
 
@@ -76,18 +82,16 @@ Create a service account in the Dfns dashboard with permissions to create and si
 
 **Gateway config:**
 
-- `signingProviders.dfns.enable` - optional, defaults to `true`
-- `signingProviders.dfns.orgId` - required, falls back to the deprecated `DFNS_ORG_ID` environment variable
-- `signingProviders.dfns.credId` - required, falls back to the deprecated `DFNS_CRED_ID` environment variable
-- `signingProviders.dfns.baseUrl` - optional, falls back to the deprecated `DFNS_BASE_URL` environment variable, then defaults to `https://api.dfns.io`
+- `signingProviders.dfns` - include this object to enable
+- `signingProviders.dfns.orgId` - required
+- `signingProviders.dfns.credId` - required
+- `signingProviders.dfns.baseUrl` - optional, defaults to `https://api.dfns.io`
+- `signingProviders.dfns.privateKeyEnv` - optional name of the env var that holds the service account private key (PEM), defaults to `DFNS_PRIVATE_KEY`
+- `signingProviders.dfns.authTokenEnv` - optional name of the env var that holds the service account auth token, defaults to `DFNS_AUTH_TOKEN`
 
 **Environment variables:**
 
-- `DFNS_PRIVATE_KEY` - required service account private key (PEM)
-- `DFNS_AUTH_TOKEN` - required service account auth token
-- `DFNS_ORG_ID` - deprecated optional fallback for `signingProviders.dfns.orgId`
-- `DFNS_CRED_ID` - deprecated optional fallback for `signingProviders.dfns.credId`
-- `DFNS_BASE_URL` - deprecated optional fallback for `signingProviders.dfns.baseUrl`
+- The variables named by `privateKeyEnv` and `authTokenEnv` (defaults above)
 
 ### Fireblocks
 
@@ -95,14 +99,14 @@ Complete steps 1–3 from the instructions at https://github.com/canton-network/
 
 **Gateway config:**
 
-- `signingProviders.fireblocks.enable` - optional, defaults to `true`
-- `signingProviders.fireblocks.apiPath` - optional, falls back to the deprecated `FIREBLOCKS_API_PATH` environment variable, then defaults to `https://api.fireblocks.io/v1`
+- `signingProviders.fireblocks` - include this object to enable
+- `signingProviders.fireblocks.apiPath` - optional, defaults to `https://api.fireblocks.io/v1`
+- `signingProviders.fireblocks.apiKeyEnv` - optional name of the env var that holds the API key, defaults to `FIREBLOCKS_API_KEY`
+- `signingProviders.fireblocks.secretEnv` - optional name of the env var that holds the API secret, defaults to `FIREBLOCKS_SECRET`
 
 **Environment variables:**
 
-- `FIREBLOCKS_API_KEY` - required API key from the `API User (ID)` column in the Fireblocks API users table
-- `FIREBLOCKS_SECRET` - required corresponding API secret
-- `FIREBLOCKS_API_PATH` - deprecated optional fallback for `signingProviders.fireblocks.apiPath`
+- The variables named by `apiKeyEnv` and `secretEnv` (defaults above)
 
 ### Blockdaemon
 
@@ -110,35 +114,32 @@ Create a system user in the Blockdaemon dashboard and save the API key displayed
 
 **Gateway config:**
 
-- `signingProviders.blockdaemon.enable` - optional, defaults to `true`
-- `signingProviders.blockdaemon.baseUrl` - optional, falls back to the deprecated `BLOCKDAEMON_API_URL` environment variable, then defaults to `http://localhost:5080/api/cwp/canton`
-- `signingProviders.blockdaemon.caip2` - optional, falls back to the deprecated `BLOCKDAEMON_CAIP2` environment variable, then defaults to `canton:testnet`
+- `signingProviders.blockdaemon` - include this object to enable
+- `signingProviders.blockdaemon.baseUrl` - optional, defaults to `http://localhost:5080/api/cwp/canton`
+- `signingProviders.blockdaemon.caip2` - optional, defaults to `canton:testnet`
+- `signingProviders.blockdaemon.apiKeyEnv` - optional name of the env var that holds the API key, defaults to `BLOCKDAEMON_API_KEY`
 
 **Environment variables:**
 
-- `BLOCKDAEMON_API_KEY` - required API key for authenticating with Blockdaemon
-- `BLOCKDAEMON_API_URL` - deprecated optional fallback for `signingProviders.blockdaemon.baseUrl`
-- `BLOCKDAEMON_CAIP2` - deprecated optional fallback for `signingProviders.blockdaemon.caip2`
+- The variable named by `apiKeyEnv` (default above)
 
 ### Securosys
 
 **Gateway config:**
 
-- `signingProviders.securosys.enable` - optional, defaults to `true`
-- `signingProviders.securosys.baseUrl` - required, falls back to the deprecated `SECUROSYS_TSB_BASE_URL` environment variable
-- `signingProviders.securosys.mtlsP12Path` - optional client PKCS#12/P12 file for mTLS, falls back to the deprecated `SECUROSYS_TSB_MTLS_P12_PATH` environment variable
-- `signingProviders.securosys.signatureAlgorithm` - optional TSB signature algorithm, falls back to the deprecated `SECUROSYS_TSB_SIGNATURE_ALGORITHM` environment variable, then defaults to `EDDSA`
+- `signingProviders.securosys` - include this object to enable
+- `signingProviders.securosys.baseUrl` - required
+- `signingProviders.securosys.mtlsP12Path` - optional client PKCS#12/P12 file for mTLS
+- `signingProviders.securosys.signatureAlgorithm` - optional TSB signature algorithm, defaults to `EDDSA`
+- `signingProviders.securosys.keyManagementApiKeyEnv` - optional name of the env var that holds the key-management API key, defaults to `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY`
+- `signingProviders.securosys.keyOperationApiKeyEnv` - optional name of the env var that holds the key-operation API key, defaults to `SECUROSYS_TSB_KEY_OPERATION_API_KEY`
+- `signingProviders.securosys.bearerTokenEnv` - optional name of the env var that holds the bearer token, defaults to `SECUROSYS_TSB_BEARER_TOKEN`
+- `signingProviders.securosys.mtlsP12PasswordEnv` - optional name of the env var that holds the PKCS#12/P12 password, defaults to `SECUROSYS_TSB_MTLS_P12_PASSWORD`
+- `signingProviders.securosys.keyPasswordEnv` - optional name of the env var that holds the TSB key password, defaults to `SECUROSYS_TSB_KEY_PASSWORD`
 
 **Environment variables:**
 
-- `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` - optional `X-API-KEY` for key-management endpoints when using API-key authentication
-- `SECUROSYS_TSB_KEY_OPERATION_API_KEY` - optional `X-API-KEY` for signing/request endpoints when using API-key authentication
-- `SECUROSYS_TSB_BEARER_TOKEN` - optional bearer token for access-token mode
-- `SECUROSYS_TSB_MTLS_P12_PASSWORD` - optional PKCS#12/P12 password
-- `SECUROSYS_TSB_KEY_PASSWORD` - optional TSB key password
-- `SECUROSYS_TSB_BASE_URL` - deprecated optional fallback for `signingProviders.securosys.baseUrl`
-- `SECUROSYS_TSB_MTLS_P12_PATH` - deprecated optional fallback for `signingProviders.securosys.mtlsP12Path`
-- `SECUROSYS_TSB_SIGNATURE_ALGORITHM` - deprecated optional fallback for `signingProviders.securosys.signatureAlgorithm`
+- The variables named by the `*Env` fields (defaults above)
 
 See [`@canton-network/core-signing-securosys`](../../core/signing-securosys/README.md)
 for key creation, public-key, and signature format details.
@@ -150,17 +151,15 @@ ID used for wallet creation.
 
 **Gateway config:**
 
-- `signingProviders.bitgo.enable` - optional, defaults to `true`
-- `signingProviders.bitgo.baseUrl` - optional, falls back to the deprecated `BITGO_API_URL` environment variable, then defaults to `https://app.bitgo.com`
-- `signingProviders.bitgo.enterpriseId` - optional, falls back to the deprecated `BITGO_ENTERPRISE_ID` environment variable; required for wallet creation and restart-safe transaction lookup
-- `signingProviders.bitgo.coin` - optional, falls back to the deprecated `BITGO_COIN` environment variable, then auto-detected from the API URL
+- `signingProviders.bitgo` - include this object to enable
+- `signingProviders.bitgo.baseUrl` - optional, defaults to `https://app.bitgo.com`
+- `signingProviders.bitgo.enterpriseId` - optional, required for wallet creation and restart-safe transaction lookup
+- `signingProviders.bitgo.coin` - optional, auto-detected from the API URL when omitted
+- `signingProviders.bitgo.accessTokenEnv` - optional name of the env var that holds the access token, defaults to `BITGO_ACCESS_TOKEN`
 
 **Environment variables:**
 
-- `BITGO_ACCESS_TOKEN` - required long-lived BitGo access token
-- `BITGO_API_URL` - deprecated optional fallback for `signingProviders.bitgo.baseUrl`
-- `BITGO_ENTERPRISE_ID` - deprecated optional fallback for `signingProviders.bitgo.enterpriseId`
-- `BITGO_COIN` - deprecated optional fallback for `signingProviders.bitgo.coin`
+- The variable named by `accessTokenEnv` (default above)
 
 See [`@canton-network/core-signing-bitgo`](../../core/signing-bitgo/README.md)
 for credential setup and driver behavior.
