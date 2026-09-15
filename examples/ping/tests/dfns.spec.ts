@@ -51,13 +51,14 @@ test.describe('Dfns external signing', () => {
             dappPage
         )
         await setMockDfnsTransactionState(submission.externalTxId, 'Signed')
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
             'signed'
         )
+        await wg.executeSignedTransaction({ waitForClose: false })
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -82,7 +83,6 @@ test.describe('Dfns external signing', () => {
             dappPage
         )
         await setMockDfnsTransactionState(submission.externalTxId, 'Rejected')
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
@@ -98,7 +98,6 @@ test.describe('Dfns external signing', () => {
             dappPage
         )
         await setMockDfnsTransactionState(submission.externalTxId, 'Failed')
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,

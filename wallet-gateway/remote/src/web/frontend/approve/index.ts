@@ -18,7 +18,10 @@ import { stateManager } from '../state-manager'
 import '../index'
 import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
 import { showToast } from '../utils'
-import { SignResult } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    SignResult,
+    GetTransactionStatusResult,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import { detectCurrentOrigin } from '../listeners.js'
 
@@ -40,11 +43,30 @@ export class ApproveUi extends BaseElement {
     @state() accessor canSubmit = true
     @state() accessor walletCapabilityMessage: string | null = null
 
+    @state() accessor externalTxId: string | null = null
+    @state() accessor failureReason: string | null = null
+    @state() accessor isSigning = false
+    @state() accessor pollIntervalMs = 3000
+    private pollTimer: ReturnType<typeof setTimeout> | null = null
+    private pollDelay = 3000
+    private polling = false
+
     connectedCallback(): void {
         super.connectedCallback()
         const url = new URL(window.location.href)
         this.transactionId = url.searchParams.get('transactionId') || ''
+        this.pollDelay = this.pollIntervalMs
+        document.addEventListener('visibilitychange', this.onVisibilityChange)
         void this.updateState()
+    }
+
+    disconnectedCallback(): void {
+        super.disconnectedCallback()
+        this.stopPolling()
+        document.removeEventListener(
+            'visibilitychange',
+            this.onVisibilityChange
+        )
     }
 
     private closeOrGoToList() {
@@ -81,6 +103,8 @@ export class ApproveUi extends BaseElement {
         this.createdAt = result.createdAt || null
         this.signedAt = result.signedAt || null
         this.origin = result.origin || null
+        this.externalTxId = result.externalTxId || null
+        this.failureReason = result.failureReason || null
 
         try {
             this.txParsed = parsePreparedTransaction(this.tx)
@@ -104,6 +128,149 @@ export class ApproveUi extends BaseElement {
         this.walletCapabilityMessage = submitCapable
             ? null
             : 'The selected wallet is read-only for submission (no CanActAs/CanExecuteAs right).'
+
+        this.syncPolling()
+    }
+
+    private onVisibilityChange = () => {
+        if (document.hidden) {
+            this.stopPolling()
+        } else {
+            this.pollDelay = this.pollIntervalMs
+            this.syncPolling()
+        }
+    }
+
+    private syncPolling() {
+        if (this.status === 'awaiting-signature' && !document.hidden) {
+            this.startPolling()
+        } else {
+            this.stopPolling()
+        }
+    }
+
+    private startPolling() {
+        if (this.pollTimer) return
+        this.pollTimer = setTimeout(() => void this.poll(), this.pollDelay)
+    }
+
+    private stopPolling() {
+        if (this.pollTimer) {
+            clearTimeout(this.pollTimer)
+            this.pollTimer = null
+        }
+    }
+
+    private async poll() {
+        this.pollTimer = null
+        if (this.polling) return
+        this.polling = true
+
+        try {
+            const currentOrigin = await detectCurrentOrigin()
+            const userClient = await createUserClient(
+                await stateManager.accessToken.get(currentOrigin)
+            )
+            const res: GetTransactionStatusResult = await userClient.request({
+                method: 'getTransactionStatus',
+                params: {
+                    transactionId: this.transactionId,
+                    partyId: this.partyId,
+                },
+            })
+
+            if (res.status !== this.status) {
+                this.pollDelay = this.pollIntervalMs
+                await this.updateState()
+                return
+            }
+
+            this.pollDelay = Math.min(
+                this.pollDelay * 1.5,
+                this.pollIntervalMs * 5
+            )
+        } catch (err) {
+            console.error(err)
+            this.pollDelay = Math.min(
+                this.pollDelay * 2,
+                this.pollIntervalMs * 10
+            )
+        } finally {
+            this.polling = false
+            this.syncPolling()
+        }
+    }
+
+    private async handleApproveAction() {
+        if (this.status === 'signed') {
+            return this.handleExecute()
+        }
+        return this.handleSign()
+    }
+
+    private async handleSign() {
+        if (!this.canSubmit) {
+            showToast(
+                'Read-only wallet',
+                'This wallet can read but not submit transactions',
+                'error'
+            )
+            return
+        }
+        this.isSigning = true
+
+        try {
+            const currentOrigin = await detectCurrentOrigin()
+            const userClient = await createUserClient(
+                await stateManager.accessToken.get(currentOrigin)
+            )
+            const result: SignResult = await userClient.request({
+                method: 'sign',
+                params: {
+                    transactionId: this.transactionId,
+                    partyId: this.partyId,
+                },
+            })
+
+            if (result.status === 'signed') {
+                await this.updateState()
+                return this.handleExecute()
+            }
+            await this.updateState()
+        } catch (err) {
+            console.error(err)
+            handleErrorToast(err, { message: 'Error signing activity' })
+            await this.updateState()
+        } finally {
+            this.isSigning = false
+        }
+    }
+
+    private async handleExecute() {
+        this.isApproving = true
+
+        try {
+            const currentOrigin = await detectCurrentOrigin()
+            const userClient = await createUserClient(
+                await stateManager.accessToken.get(currentOrigin)
+            )
+            await userClient.request({
+                method: 'execute',
+                params: {
+                    transactionId: this.transactionId,
+                    partyId: this.partyId,
+                },
+            })
+
+            showToast('', 'Activity executed successfully', 'success')
+            this.closeOrGoToList()
+        } catch (err) {
+            console.error(err)
+            handleErrorToast(err, { message: 'Error submitting transaction' })
+            await this.updateState()
+        } finally {
+            this.isApproving = false
+        }
     }
 
     private async handleReject() {
@@ -133,76 +300,19 @@ export class ApproveUi extends BaseElement {
         }
     }
 
-    private async handleApprove() {
-        if (!this.canSubmit) {
-            showToast(
-                'Read-only wallet',
-                'This wallet can read but cannot submit transactions. Switch to a wallet with CanActAs or CanExecuteAs.',
-                'error'
-            )
-            return
-        }
-        this.isApproving = true
-
-        try {
-            const currentOrigin = await detectCurrentOrigin()
-            const userClient = await createUserClient(
-                await stateManager.accessToken.get(currentOrigin)
-            )
-            const result: SignResult = await userClient.request({
-                method: 'sign',
-                params: {
-                    transactionId: this.transactionId,
-                    partyId: this.partyId,
-                },
-            })
-
-            if (result.status === 'pending') {
-                showToast(
-                    'Activity pending',
-                    'Complete signing in your external provider, then click Approve to finish.',
-                    'info'
-                )
-                await this.updateState()
-                return
-            }
-
-            if (result.status === 'signed') {
-                await userClient.request({
-                    method: 'execute',
-                    params: {
-                        signature: result.signature,
-                        signedBy: result.signedBy,
-                        transactionId: this.transactionId,
-                        partyId: this.partyId,
-                    },
-                })
-
-                showToast('', 'Activity executed successfully', 'success')
-                this.closeOrGoToList()
-                return
-            }
-
-            const message =
-                result.status === 'rejected'
-                    ? 'Activity was rejected'
-                    : 'Activity failed'
-            showToast('', message, 'error')
-            await this.updateState()
-        } catch (err) {
-            console.error(err)
-            handleErrorToast(err, { message: 'Error executing activity' })
-        } finally {
-            this.isApproving = false
-        }
-    }
-
     protected render() {
         return html`
             ${
                 this.walletCapabilityMessage
                     ? html`<div class="alert alert-warning" role="alert">
                           ${this.walletCapabilityMessage}
+                      </div>`
+                    : ''
+            }
+            ${
+                this.failureReason
+                    ? html`<div class="alert alert-warning" role="alert">
+                          ${this.failureReason}
                       </div>`
                     : ''
             }
@@ -215,11 +325,13 @@ export class ApproveUi extends BaseElement {
                 .createdAt=${this.createdAt}
                 .signedAt=${this.signedAt}
                 .origin=${this.origin}
+                .externalTxId=${this.externalTxId}
                 .backHref=${toRelHref(ACTIVITIES_PAGE_REDIRECT)}
                 .isApproving=${this.isApproving}
                 .isDeleting=${this.isDeleting}
+                .isSigning=${this.isSigning}
                 .disabled=${this.disabled}
-                @transaction-approve=${this.handleApprove}
+                @transaction-approve=${this.handleApproveAction}
                 @transaction-delete=${this.handleReject}
             ></wg-transaction-detail>
         `

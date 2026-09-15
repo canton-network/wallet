@@ -988,6 +988,7 @@ describe('userController', () => {
                 expect.objectContaining({
                     getWithRetry: ledgerMocks.getWithRetry,
                 }),
+                auth,
                 expect.objectContaining({ id: storeNetwork.id })
             )
             expect(result).toEqual({ commandId: pendingTransaction.commandId })
@@ -1021,6 +1022,7 @@ describe('userController', () => {
                 expect.objectContaining({
                     getWithRetry: ledgerMocks.getWithRetry,
                 }),
+                auth,
                 expect.objectContaining({ id: storeNetwork.id })
             )
             expect(result).toEqual({ commandId: pendingTransaction.commandId })

@@ -434,6 +434,12 @@ export type PreparedTransactionHash = string
  *
  */
 export type Payload = string
+/**
+ *
+ * Reason for why the transaction failed.
+ *
+ */
+export type FailureReason = string
 export interface Transaction {
     id: TransactionId
     commandId: CommandId
@@ -445,6 +451,7 @@ export interface Transaction {
     payload?: Payload
     origin?: Origin
     externalTxId?: ExternalTxId
+    failureReason?: FailureReason
 }
 export type Transactions = Transaction[]
 /**
@@ -558,10 +565,10 @@ export interface DeleteMessageToSignParams {
     messageId: MessageId
 }
 export interface ExecuteParams {
-    signature: Signature
+    signature?: Signature
     partyId: PartyId
     transactionId: TransactionId
-    signedBy: SignedBy
+    signedBy?: SignedBy
 }
 export interface AddSessionParams {
     origin: Origin
@@ -569,6 +576,10 @@ export interface AddSessionParams {
 }
 export interface GetTransactionParams {
     transactionId: TransactionId
+}
+export interface GetTransactionStatusParams {
+    transactionId: TransactionId
+    partyId?: PartyId
 }
 export interface ListTransactionsParams {
     limit?: Limit
@@ -678,6 +689,12 @@ export interface GetTransactionResult {
     payload?: Payload
     origin?: Origin
     externalTxId?: ExternalTxId
+    failureReason?: FailureReason
+}
+export interface GetTransactionStatusResult {
+    status: Status
+    externalTxId?: ExternalTxId
+    failureReason?: FailureReason
 }
 export interface ListTransactionsResult {
     transactions: Transactions
@@ -748,6 +765,9 @@ export type ListSessions = () => Promise<ListSessionsResult>
 export type GetTransaction = (
     params: GetTransactionParams
 ) => Promise<GetTransactionResult>
+export type GetTransactionStatus = (
+    params: GetTransactionStatusParams
+) => Promise<GetTransactionStatusResult>
 export type ListTransactions = (
     params: ListTransactionsParams
 ) => Promise<ListTransactionsResult>
@@ -900,6 +920,11 @@ export type RpcTypes = {
     getTransaction: {
         params: Params<GetTransaction>
         result: Result<GetTransaction>
+    }
+
+    getTransactionStatus: {
+        params: Params<GetTransactionStatus>
+        result: Result<GetTransactionStatus>
     }
 
     listTransactions: {
