@@ -179,6 +179,6 @@ If you've cloned this repository when it was set up to use `yarn`, finalize the 
 If you've cloned this repository when it was set up to use `corepack`, finalize the switch to native `pnpm`:
 
 1. Pull latest main into your fork / branch
-2. Stop all running services: `yarn pm2 kill` (and `yarn stop:localnet`, if applicable)
-3. Delete any residual `pnpm` references (see [pnpm troubleshooting](https://pnpm.io/installation#troubleshooting))
+2. Delete any residual `pnpm over corepack` references: `corepack disable pnpm` (see [pnpm troubleshooting](https://pnpm.io/installation#troubleshooting))
+3. Ensure you have at least pnpm 11 installed globally
 4. Use `pnpm`
