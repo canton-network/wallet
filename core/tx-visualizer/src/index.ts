@@ -210,6 +210,28 @@ function getNumericValue(value: any): string | undefined {
     return undefined
 }
 
+function findFirstNumericField(value: any, label: string): string | undefined {
+    if (value === null || typeof value !== 'object') {
+        return undefined
+    }
+
+    if (value.label === label) {
+        const numericValue = getNumericValue(value.value)
+        if (numericValue !== undefined) {
+            return numericValue
+        }
+    }
+
+    for (const nestedValue of Object.values(value)) {
+        const numericValue = findFirstNumericField(nestedValue, label)
+        if (numericValue !== undefined) {
+            return numericValue
+        }
+    }
+
+    return undefined
+}
+
 function extractChoiceIdAndAmount(obj: any) {
     const nodes = obj?.transaction?.nodes ?? []
     if (!Array.isArray(nodes) || nodes.length === 0) {
@@ -221,13 +243,11 @@ function extractChoiceIdAndAmount(obj: any) {
         getNodeType(primaryNode)?.oneofKind === 'exercise' ? primaryNode : null
     const exerciseNode =
         primaryExerciseNode || getFirstNodeOfType(nodes, 'exercise')
-    const createNode = getFirstNodeOfType(nodes, 'create')
 
     const exercise = getNodeType(exerciseNode)?.exercise
-    const create = getNodeType(createNode)?.create
-
     const choiceId = exercise?.choiceId
-    const exerciseAmount =
+
+    let amount =
         getNumericValue(getFieldValue(exercise?.chosenValue, 'amount')) ??
         getNumericValue(
             getFieldValue(
@@ -237,16 +257,30 @@ function extractChoiceIdAndAmount(obj: any) {
                 ),
                 'amount'
             )
+        ) ??
+        findFirstNumericField(
+            getFieldValue(exercise?.chosenValue, 'mint'),
+            'amount'
         )
-    const createAmount =
-        getNumericValue(getFieldValue(create?.argument, 'amount')) ??
-        getNumericValue(
-            getFieldValue(
-                getFieldValue(create?.argument, 'amount'),
-                'initialAmount'
-            )
-        )
-    const amount = exercise ? exerciseAmount : createAmount
+
+    if (!amount) {
+        for (const node of nodes) {
+            const create = getNodeType(node)?.create
+            if (create) {
+                amount =
+                    getNumericValue(getFieldValue(create.argument, 'amount')) ??
+                    getNumericValue(
+                        getFieldValue(
+                            getFieldValue(create.argument, 'amount'),
+                            'initialAmount'
+                        )
+                    ) ??
+                    findFirstNumericField(create.argument, 'amount')
+
+                if (amount) break
+            }
+        }
+    }
 
     return {
         ...(choiceId ? { choiceId } : {}),
