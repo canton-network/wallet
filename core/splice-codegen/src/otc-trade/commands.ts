@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { generateCommand } from 'src/common'
-import { OTCTrade, OTCTradeProposal, TradingApp } from './dar'
+import { TradingApp } from './dar'
+import { OTCTrade, OTCTradeProposal } from './types'
 
 const commands = {
     create: {

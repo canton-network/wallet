@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Router } from 'express'
-import {
-    getTransferFactory,
-    getTransferFactoryChoiceArgumentsSchema,
-} from './getTransferFactory'
+import { getTransferFactory } from './getTransferFactory'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
@@ -27,7 +24,7 @@ const openAPIRouter =
 
 openAPIRouter.post('/registry/transfer-instruction/v1/transfer-factory', {
     bodySchema: z.object({
-        choiceArguments: getTransferFactoryChoiceArgumentsSchema,
+        choiceArguments: z.record(z.string(), z.unknown()),
         excludeDebugFields: z.boolean(),
     }) as unknown as ZodType<
         OffLedger.TransferInstructionV1.operations['getTransferFactory']['requestBody']['content']['application/json']

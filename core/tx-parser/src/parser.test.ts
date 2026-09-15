@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerProvider } from '@canton-network/core-provider-ledger'
-import { v3_4 } from '@canton-network/core-ledger-client-types'
+import { v3_5 } from '@canton-network/core-ledger-client-types'
 import { vi, describe, it, expect, beforeEach, Mocked } from 'vitest'
 import { TransactionParser } from './parser.js'
 import eventsByContractIdResponses from './test-data/mock/eventsByContractIdResponses.json'
@@ -11,11 +11,11 @@ import bobTransferObjectsExpected from './test-data/expected/bob-transfer-object
 import txsMock from './test-data/mock/txs.json'
 import txsExpected from './test-data/expected/txs.json'
 
-type JsTransaction = v3_4.components['schemas']['JsTransaction']
-type CreatedEvent = v3_4.components['schemas']['CreatedEvent']
+type JsTransaction = v3_5.components['schemas']['JsTransaction']
+type CreatedEvent = v3_5.components['schemas']['CreatedEvent']
 const EVENTS_BY_CID_PATH = '/v2/events/events-by-contract-id' as const
 type JsGetEventsByContractIdResponse =
-    v3_4.components['schemas']['JsGetEventsByContractIdResponse']
+    v3_5.components['schemas']['JsGetEventsByContractIdResponse']
 
 const makeLedgerProviderMock = (
     responses: JsGetEventsByContractIdResponse[]

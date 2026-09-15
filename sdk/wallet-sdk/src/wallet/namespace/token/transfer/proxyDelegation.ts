@@ -8,7 +8,7 @@ import {
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
 import { localNetStaticConfig } from '../../../../config.js'
-import { LedgerTypes } from '../../../sdk.js'
+import { LedgerCommonSchemas } from '../../../sdk.js'
 import { FeaturedAppRight } from '../../amulet/types.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { LedgerNamespace } from '../../ledger/index.js'
@@ -34,8 +34,8 @@ type ProxyDelegationCommandWrapperFunction = (
         | 'exerciseDelegateProxyTransferInstructionReject']
 ) => Promise<
     [
-        { ExerciseCommand: LedgerTypes['ExerciseCommand'] },
-        LedgerTypes['DisclosedContract'][],
+        { ExerciseCommand: LedgerCommonSchemas['ExerciseCommand'] },
+        LedgerCommonSchemas['DisclosedContract'][],
     ]
 >
 

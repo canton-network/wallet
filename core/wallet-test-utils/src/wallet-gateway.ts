@@ -368,7 +368,11 @@ export class WalletGateway {
 
     async approveTransaction(
         start: () => Promise<void>,
-        opts?: { waitForClose?: boolean; isExternalSigning?: boolean }
+        opts?: {
+            waitForClose?: boolean
+            isExternalSigning?: boolean
+            review?: (approvalPage: Page) => Promise<void>
+        }
     ): Promise<{
         commandId: string
     }> {
@@ -396,6 +400,7 @@ export class WalletGateway {
             if (!commandId)
                 throw new Error('Approve popup has no commandId in URL')
 
+            await opts?.review?.(popupPage)
             await approveButton.click()
 
             if (opts?.isExternalSigning) {

@@ -5,7 +5,7 @@ import { Router } from 'express'
 import { getAllocationFactory } from './getAllocationFactory'
 import { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z from 'zod'
+import z, { ZodType } from 'zod'
 
 const allocationInstructionAPIRouter: Router = Router()
 
@@ -17,9 +17,11 @@ const openAPIRouter =
 openAPIRouter.post('/registry/allocation-instruction/v1/allocation-factory', {
     handler: getAllocationFactory,
     bodySchema: z.object({
-        choiceArguments: z.record(z.string(), z.never()),
+        choiceArguments: z.record(z.string(), z.unknown()),
         excludeDebugFields: z.boolean(),
-    }),
+    }) as unknown as ZodType<
+        OffLedger.AllocationInstructionV1.operations['getAllocationFactory']['requestBody']['content']['application/json']
+    >,
 })
 
 export default allocationInstructionAPIRouter

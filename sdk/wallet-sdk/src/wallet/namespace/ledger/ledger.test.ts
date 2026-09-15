@@ -102,6 +102,7 @@ describe('Ledger Namespace', () => {
             params: {
                 resource: '/v2/state/ledger-end',
                 requestMethod: 'get',
+                query: {},
             },
         })
         expect(result).toBe(150)

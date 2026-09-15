@@ -4,7 +4,7 @@
 import z from 'zod'
 
 export const emptyChoiceContext = {
-    choiceContextData: {},
+    choiceContextData: { values: {} },
     disclosedContracts: [],
 }
 

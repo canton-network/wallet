@@ -2667,6 +2667,7 @@
                     "creates": [
                         {
                             "amount": "30.0000000000",
+                            "contractId": "4",
                             "instrumentId": {
                                 "admin": "alice::normalized",
                                 "id": "DummyHolding"
@@ -2759,6 +2760,7 @@
                     "creates": [
                         {
                             "amount": "40.0000000000",
+                            "contractId": "5",
                             "instrumentId": {
                                 "admin": "alice::normalized",
                                 "id": "DummyHolding"

@@ -10,15 +10,15 @@ const MOCK_CHANNELS = vi.hoisted(() => ({
     v2_commands_completions: '/v2/commands/completions',
 }))
 
-const mockTransactionFilterBySetup = vi.hoisted(() =>
-    vi.fn((opts) => ({ filter: opts }))
+const mockEventFilterBySetup = vi.hoisted(() =>
+    vi.fn((opts) => ({ filtersByParty: {}, verbose: opts.verbose }))
 )
 vi.mock('@canton-network/core-ledger-client-types', () => ({
     asyncApiByVersion: {
         '3.5': { CHANNELS: MOCK_CHANNELS },
     },
     supportedAsyncApiVersions: ['3.5'],
-    TransactionFilterBySetup: mockTransactionFilterBySetup,
+    EventFilterBySetup: mockEventFilterBySetup,
 }))
 
 class MockWebSocket {
@@ -102,9 +102,7 @@ describe('Async api service', () => {
 
         const gen = client.generate(`wss://ledger/v2/updates`, {
             beginExclusive: 0,
-            filter: {},
             updateFormat: {},
-            verbose: true,
         } as any)
 
         const collectPromise = collectAll(gen)
@@ -126,9 +124,7 @@ describe('Async api service', () => {
         const { client } = makeClient()
         const request = {
             beginExclusive: 10,
-            filter: {},
             updateFormat: {},
-            verbose: false,
         }
         const gen = client.generate(`wss://ledger/v2/updates`, request as any)
 
@@ -184,13 +180,18 @@ describe('Async api service', () => {
         lastWsInstance.triggerOpen()
         await vi.waitFor(() => expect(lastWsInstance.send).toHaveBeenCalled())
         const sent = JSON.parse(lastWsInstance.send.mock.calls[0][0])
-        expect(mockTransactionFilterBySetup).toHaveBeenCalledWith({
+        expect(mockEventFilterBySetup).toHaveBeenCalledWith({
             templateIds: ['ping'],
             partyId: 'alice:123',
+            verbose: false,
         })
 
         expect(sent.beginExclusive).toBe(10)
-        expect(sent.verbose).toBe(false)
+        expect(sent.updateFormat.includeTransactions.eventFormat.verbose).toBe(
+            false
+        )
+        expect(sent).not.toHaveProperty('filter')
+        expect(sent).not.toHaveProperty('verbose')
         lastWsInstance.triggerClose()
         await collectPromise
     })
@@ -211,13 +212,16 @@ describe('Async api service', () => {
         lastWsInstance.triggerOpen()
         await vi.waitFor(() => expect(lastWsInstance.send).toHaveBeenCalled())
         const sent = JSON.parse(lastWsInstance.send.mock.calls[0][0])
-        expect(mockTransactionFilterBySetup).toHaveBeenCalledWith({
+        expect(mockEventFilterBySetup).toHaveBeenCalledWith({
             interfaceIds: ['ping'],
             partyId: 'alice:123',
+            verbose: false,
         })
 
         expect(sent.beginExclusive).toBe(10)
-        expect(sent.verbose).toBe(false)
+        expect(sent.updateFormat.includeTransactions.eventFormat.verbose).toBe(
+            false
+        )
         expect(sent).not.toHaveProperty('endInclusive')
         lastWsInstance.triggerClose()
         await collectPromise
@@ -240,14 +244,17 @@ describe('Async api service', () => {
         lastWsInstance.triggerOpen()
         await vi.waitFor(() => expect(lastWsInstance.send).toHaveBeenCalled())
         const sent = JSON.parse(lastWsInstance.send.mock.calls[0][0])
-        expect(mockTransactionFilterBySetup).toHaveBeenCalledWith({
+        expect(mockEventFilterBySetup).toHaveBeenCalledWith({
             interfaceIds: ['ping'],
             partyId: 'alice:123',
+            verbose: false,
         })
 
         expect(sent.beginExclusive).toBe(10)
         expect(sent.endInclusive).toBe(99)
-        expect(sent.verbose).toBe(false)
+        expect(sent.updateFormat.includeTransactions.eventFormat.verbose).toBe(
+            false
+        )
         lastWsInstance.triggerClose()
         await collectPromise
     })
