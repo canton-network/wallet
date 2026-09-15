@@ -81,7 +81,10 @@ export const useWalletSdk = () => {
             walletSdkQuery.error instanceof Error
                 ? walletSdkQuery.error.message
                 : walletSdkQuery.error
-                  ? String(walletSdkQuery.error)
+                  ? JSON.stringify(
+                        walletSdkQuery.error,
+                        Object.getOwnPropertyNames(walletSdkQuery.error)
+                    )
                   : undefined,
         refresh: () => {
             void walletSdkQuery.refetch()
