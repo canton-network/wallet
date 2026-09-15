@@ -259,7 +259,6 @@ export class ChildWindowOriginManager extends OriginManager {
         WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
 
     private parentWindow: Window
-    private parentOrigin?: Window['origin']
 
     constructor(
         childOptions?: {
@@ -275,7 +274,6 @@ export class ChildWindowOriginManager extends OriginManager {
      * Replies to parent handshake messages and then removes the listener.
      */
     protected readonly classHandshakeCallback = (event: MessageEvent) => {
-        this.parentOrigin = event.origin
         this.handshake({
             window: this.parentWindow,
             origin: event.origin,
