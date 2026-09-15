@@ -17,7 +17,7 @@ import { stateManager } from '@/utils/legacy-frontend/state-manager'
 import '@/utils/legacy-frontend'
 import { WALLET_CREATION_STATUS_CODE } from '../parties/index'
 import { type WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/origin'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {
@@ -89,7 +89,7 @@ export class UserUiAddParty extends BaseElement {
                     primary: event.primary,
                     partyHint: event.partyHint,
                     signingProviderId: event.signingProviderId,
-                    ...(event.vaultName && { vaultName: event.vaultName }),
+                    ...(event.keyName && { keyName: event.keyName }),
                 },
             })
 

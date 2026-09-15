@@ -25,6 +25,28 @@ const authState = vi.hoisted(() => ({
     intendedPage: undefined as string | undefined,
 }))
 
+const openerState = vi.hoisted(() => {
+    const openerOrigin = 'http://example.com'
+    const openerPostMessage = vi.fn()
+    const openerWindow = {
+        closed: false,
+        postMessage: openerPostMessage,
+        origin: openerOrigin,
+    }
+
+    Object.defineProperty(window, 'opener', {
+        value: openerWindow,
+        writable: true,
+        configurable: true,
+    })
+
+    return {
+        openerOrigin,
+        openerPostMessage,
+        openerWindow,
+    }
+})
+
 const {
     mockCreateUserClient,
     mockAttemptRemoveSession,
@@ -111,6 +133,7 @@ vi.mock('./state-manager.js', () => ({
         },
         currentOrigin: {
             get: vi.fn().mockReturnValue('http://localhost'),
+            poll: vi.fn().mockResolvedValue('http://localhost'),
             set: vi.fn(),
             clear: vi.fn(),
         },
@@ -190,34 +213,44 @@ describe('redirectToIntendedOrDefault', () => {
 })
 
 describe('shareConnection', () => {
-    const postMessage = vi.fn()
-
     beforeEach(() => {
-        postMessage.mockReset()
-        vi.stubGlobal('opener', { closed: false, postMessage })
-    })
-
-    afterEach(() => {
-        vi.unstubAllGlobals()
+        openerState.openerPostMessage.mockReset()
+        openerState.openerWindow.closed = false
+        Object.defineProperty(window, 'opener', {
+            value: openerState.openerWindow,
+            writable: true,
+            configurable: true,
+        })
     })
 
     it('posts auth success to the opener window', () => {
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: {
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                    origin: openerState.openerOrigin,
+                },
+                origin: openerState.openerOrigin,
+            })
+        )
+
+        openerState.openerPostMessage.mockClear()
         shareConnection('token-abc', 'session-xyz')
 
-        expect(postMessage).toHaveBeenCalledWith(
+        expect(openerState.openerPostMessage).toHaveBeenCalledWith(
             {
                 type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
                 token: 'token-abc',
                 sessionId: 'session-xyz',
             },
-            '*'
+            openerState.openerOrigin
         )
     })
 
     it('does nothing when there is no opener', () => {
         vi.stubGlobal('opener', null)
         shareConnection('token-abc', 'session-xyz')
-        expect(postMessage).not.toHaveBeenCalled()
+        expect(openerState.openerPostMessage).not.toHaveBeenCalled()
     })
 })
 
