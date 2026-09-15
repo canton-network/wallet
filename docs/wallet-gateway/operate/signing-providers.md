@@ -12,16 +12,12 @@ When a wallet submits a transaction, the Wallet Gateway hands the prepared trans
 wallet's signing provider, which signs it with the party's key and returns it for the Wallet
 Gateway to submit.
 
-## Configuration modes
+## Configuration
 
-The Wallet Gateway config property `signingProviders` selects how providers are registered:
-
-- **Legacy** - for backwards compatibility only, will be removed in the future. Omit the `signingProviders` config property. Every provider stays available
-  when its required environment variables are set. Non-secret settings also come
-  from those environment variables.
-- **Explicit** - include `signingProviders` config property. Each listed provider is opt-in by
-  presence of its key. Non-secret settings come from the config object. Secret values stay in the environment variables,
-  Config allows altering names of those variables via `*Env` fields (each defaults to the name used in legacy config).
+List each provider you want under `signingProviders`. Presence of the key opts the provider in.
+Non-secret settings come from the config object. Secret values stay in the environment, `*Env`
+fields name those variables (each defaults to the name in the environment-variable tables
+below).
 
 ```json
 {
@@ -35,6 +31,13 @@ The Wallet Gateway config property `signingProviders` selects how providers are 
     }
 }
 ```
+
+Omit a provider to leave it unregistered. An empty `"signingProviders": {}` registers none.
+
+> [!NOTE]
+> If `signingProviders` is omitted entirely, the Wallet Gateway uses a legacy discovery mode
+> (every provider is available when its required environment variables are set). That mode is
+> deprecated and will be removed.
 
 ## Available providers
 
@@ -56,8 +59,12 @@ The Wallet Gateway config property `signingProviders` selects how providers are 
 Stores private keys directly in the Wallet Gateway's signing store database and signs
 transactions itself. Suitable for development and testing only.
 
-It is available whenever a `signingStore` is configured. In explicit mode, also include
-`signingProviders.walletKernel`. See [Configure the Wallet Gateway](configure.md#signing-store).
+See [Configure the Wallet Gateway](configure.md#signing-store).
+
+| Config field                    | Required | Description                                                             |
+| ------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `signingProviders.walletKernel` | yes      | Include `{}` to opt in.                                                 |
+| `signingStore`                  | yes      | Signing-store database. The provider is unavailable if this is omitted. |
 
 > [!WARNING]
 > Private keys are stored in the signing store database. If it is compromised, all keys are at
@@ -69,34 +76,50 @@ It is available whenever a `signingStore` is configured. In explicit mode, also 
 Uses a Canton participant node to sign. The participant holds the key material and performs all
 cryptographic operations, so keys never live in the Wallet Gateway.
 
-In legacy mode it is always available. In explicit mode, include
-`signingProviders.participant`. When a transaction is submitted, the Wallet Gateway forwards the
-command to the participant node, which signs it using the party's key from the participant's
-keystore.
+When a transaction is submitted, the Wallet Gateway forwards the command to the participant
+node, which signs it using the party's key from the participant's keystore.
+
+| Config field                   | Required | Description             |
+| ------------------------------ | -------- | ----------------------- |
+| `signingProviders.participant` | yes      | Include `{}` to opt in. |
 
 ## Fireblocks
 
 Enterprise-grade, HSM-backed key management and signing from Fireblocks. Keys stay in
 Fireblocks' secure infrastructure.
 
-1. Complete steps 1-3 from the [Fireblocks signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-fireblocks).
-2. Supply `FIREBLOCKS_API_KEY` with your Fireblocks API key (from the `API User (ID)` column in
-   the Fireblocks API users table).
-3. Supply `FIREBLOCKS_SECRET` with your Fireblocks API secret key.
+Complete steps 1-3 from the [Fireblocks signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-fireblocks).
+The API key is the value in the `API User (ID)` column in the Fireblocks API users table,
+then set the following config fields and environment variables:
 
-The provider reads its configuration from environment variables and key files; no additional
-Wallet Gateway configuration is needed beyond placing the required files.
+| Config field                            | Required | Description                                                                     |
+| --------------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `signingProviders.fireblocks`           | yes      | Include this object to opt in.                                                  |
+| `signingProviders.fireblocks.apiPath`   | no       | Fireblocks API URL. Defaults to `https://api.fireblocks.io/v1`.                 |
+| `signingProviders.fireblocks.apiKeyEnv` | no       | Name of the env var that holds the API key. Defaults to `FIREBLOCKS_API_KEY`.   |
+| `signingProviders.fireblocks.secretEnv` | no       | Name of the env var that holds the API secret. Defaults to `FIREBLOCKS_SECRET`. |
+
+| Environment variable | Required | Description                                            |
+| -------------------- | -------- | ------------------------------------------------------ |
+| `FIREBLOCKS_API_KEY` | yes      | Fireblocks API key. Override name with `apiKeyEnv`.    |
+| `FIREBLOCKS_SECRET`  | yes      | Fireblocks API secret. Override name with `secretEnv`. |
 
 ## Blockdaemon
 
 Managed signing from Blockdaemon's infrastructure. Complete the setup from the
 [Blockdaemon signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-blockdaemon),
-then set the following environment variables:
+then set the following config fields and environment variables:
 
-| Variable              | Description                           |
-| --------------------- | ------------------------------------- |
-| `BLOCKDAEMON_API_URL` | The base URL for the Blockdaemon API. |
-| `BLOCKDAEMON_API_KEY` | Your Blockdaemon API key.             |
+| Config field                             | Required | Description                                                                    |
+| ---------------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| `signingProviders.blockdaemon`           | yes      | Include this object to opt in.                                                 |
+| `signingProviders.blockdaemon.baseUrl`   | no       | Blockdaemon API URL. Defaults to `http://localhost:5080/api/cwp/canton`.       |
+| `signingProviders.blockdaemon.caip2`     | no       | CAIP-2 network identifier. Defaults to `canton:testnet`.                       |
+| `signingProviders.blockdaemon.apiKeyEnv` | no       | Name of the env var that holds the API key. Defaults to `BLOCKDAEMON_API_KEY`. |
+
+| Environment variable  | Required | Description                                          |
+| --------------------- | -------- | ---------------------------------------------------- |
+| `BLOCKDAEMON_API_KEY` | yes      | Blockdaemon API key. Override name with `apiKeyEnv`. |
 
 ## DFNS
 
@@ -105,15 +128,21 @@ infrastructure. Complete the setup from the
 [DFNS signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-dfns).
 
 Set up a service account with appropriate permissions and download its credentials, then set
-the following environment variables:
+the following config fields and environment variables:
 
-| Variable           | Description                                           |
-| ------------------ | ----------------------------------------------------- |
-| `DFNS_ORG_ID`      | Your DFNS organization ID.                            |
-| `DFNS_BASE_URL`    | The DFNS API URL (defaults to `https://api.dfns.io`). |
-| `DFNS_CRED_ID`     | Your service account credential ID.                   |
-| `DFNS_PRIVATE_KEY` | Your service account private key (PEM format).        |
-| `DFNS_AUTH_TOKEN`  | Your service account authentication token.            |
+| Config field                          | Required | Description                                                                     |
+| ------------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `signingProviders.dfns`               | yes      | Include this object to opt in.                                                  |
+| `signingProviders.dfns.orgId`         | yes      | Dfns organization ID.                                                           |
+| `signingProviders.dfns.credId`        | yes      | Dfns service account credential ID.                                             |
+| `signingProviders.dfns.baseUrl`       | no       | Dfns API URL. Defaults to `https://api.dfns.io`.                                |
+| `signingProviders.dfns.privateKeyEnv` | no       | Name of the env var that holds the private key. Defaults to `DFNS_PRIVATE_KEY`. |
+| `signingProviders.dfns.authTokenEnv`  | no       | Name of the env var that holds the auth token. Defaults to `DFNS_AUTH_TOKEN`.   |
+
+| Environment variable | Required | Description                                                            |
+| -------------------- | -------- | ---------------------------------------------------------------------- |
+| `DFNS_PRIVATE_KEY`   | yes      | Service account private key (PEM). Override name with `privateKeyEnv`. |
+| `DFNS_AUTH_TOKEN`    | yes      | Service account auth token. Override name with `authTokenEnv`.         |
 
 DFNS creates and activates Canton wallets directly through its validator integration: it
 provisions a Canton-formatted key, registers the party on the network, and returns the wallet
