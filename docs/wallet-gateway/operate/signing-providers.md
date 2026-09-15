@@ -12,6 +12,30 @@ When a wallet submits a transaction, the Wallet Gateway hands the prepared trans
 wallet's signing provider, which signs it with the party's key and returns it for the Wallet
 Gateway to submit.
 
+## Configuration modes
+
+The Wallet Gateway config property `signingProviders` selects how providers are registered:
+
+- **Legacy** - for backwards compatibility only, will be removed in the future. Omit the `signingProviders` config property. Every provider stays available
+  when its required environment variables are set. Non-secret settings also come
+  from those environment variables.
+- **Explicit** - include `signingProviders` config property. Each listed provider is opt-in by
+  presence of its key. Non-secret settings come from the config object. Secret values stay in the environment variables,
+  Config allows altering names of those variables via `*Env` fields (each defaults to the name used in legacy config).
+
+```json
+{
+    "signingProviders": {
+        "participant": {},
+        "fireblocks": {
+            "apiPath": "https://api.fireblocks.io/v1",
+            "apiKeyEnv": "FIREBLOCKS_API_KEY",
+            "secretEnv": "FIREBLOCKS_SECRET"
+        }
+    }
+}
+```
+
 ## Available providers
 
 | Provider                    | Key custody                           | Best for                                             |
@@ -32,8 +56,8 @@ Gateway to submit.
 Stores private keys directly in the Wallet Gateway's signing store database and signs
 transactions itself. Suitable for development and testing only.
 
-It is available whenever a `signingStore` is configured; no other setup is required. See
-[Configure the Wallet Gateway](configure.md#signing-store).
+It is available whenever a `signingStore` is configured. In explicit mode, also include
+`signingProviders.walletKernel`. See [Configure the Wallet Gateway](configure.md#signing-store).
 
 > [!WARNING]
 > Private keys are stored in the signing store database. If it is compromised, all keys are at
@@ -45,9 +69,10 @@ It is available whenever a `signingStore` is configured; no other setup is requi
 Uses a Canton participant node to sign. The participant holds the key material and performs all
 cryptographic operations, so keys never live in the Wallet Gateway.
 
-It is always available and needs no additional configuration; select it when creating a party.
-When a transaction is submitted, the Wallet Gateway forwards the command to the participant
-node, which signs it using the party's key from the participant's keystore.
+In legacy mode it is always available. In explicit mode, include
+`signingProviders.participant`. When a transaction is submitted, the Wallet Gateway forwards the
+command to the participant node, which signs it using the party's key from the participant's
+keystore.
 
 ## Fireblocks
 

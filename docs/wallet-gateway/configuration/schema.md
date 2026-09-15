@@ -359,46 +359,37 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "type": "object",
             "properties": {
                 "walletKernel": {
+                    "description": "Include this object to opt in the Wallet Kernel internal signing provider. Requires signingStore.",
                     "type": "object",
-                    "properties": {
-                        "enable": {
-                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
-                            "type": "boolean"
-                        }
-                    },
-                    "description": "Wallet Kernel internal signing provider configuration."
+                    "properties": {}
                 },
                 "participant": {
+                    "description": "Include this object to opt in the participant signing provider.",
                     "type": "object",
-                    "properties": {
-                        "enable": {
-                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
-                            "type": "boolean"
-                        }
-                    },
-                    "description": "Participant signing provider configuration."
+                    "properties": {}
                 },
                 "fireblocks": {
+                    "description": "Include this object to opt in Fireblocks. Secrets are read from the environment variables named by apiKeyEnv and secretEnv.",
                     "type": "object",
                     "properties": {
-                        "enable": {
-                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
-                            "type": "boolean"
-                        },
                         "apiPath": {
                             "description": "Fireblocks API URL. Defaults to https://api.fireblocks.io/v1.",
                             "type": "string"
+                        },
+                        "apiKeyEnv": {
+                            "description": "Name of the environment variable that holds the Fireblocks API key. Defaults to FIREBLOCKS_API_KEY. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
+                        },
+                        "secretEnv": {
+                            "description": "Name of the environment variable that holds the Fireblocks API secret. Defaults to FIREBLOCKS_SECRET. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
                         }
-                    },
-                    "description": "Fireblocks signing provider configuration."
+                    }
                 },
                 "blockdaemon": {
+                    "description": "Include this object to opt in Blockdaemon. The API key is read from the environment variable named by apiKeyEnv.",
                     "type": "object",
                     "properties": {
-                        "enable": {
-                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
-                            "type": "boolean"
-                        },
                         "baseUrl": {
                             "description": "Blockdaemon API URL. Defaults to http://localhost:5080/api/cwp/canton.",
                             "type": "string"
@@ -406,42 +397,47 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                         "caip2": {
                             "description": "Blockdaemon CAIP-2 network identifier. Defaults to canton:testnet.",
                             "type": "string"
+                        },
+                        "apiKeyEnv": {
+                            "description": "Name of the environment variable that holds the Blockdaemon API key. Defaults to BLOCKDAEMON_API_KEY. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
                         }
-                    },
-                    "description": "Blockdaemon signing provider configuration."
+                    }
                 },
                 "dfns": {
+                    "description": "Include this object to opt in Dfns. Requires orgId and credId. Secrets are read from the environment variables named by privateKeyEnv and authTokenEnv.",
                     "type": "object",
                     "properties": {
-                        "enable": {
-                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
-                            "type": "boolean"
-                        },
                         "orgId": {
-                            "description": "Dfns organization ID.",
-                            "type": "string"
+                            "type": "string",
+                            "description": "Dfns organization ID."
                         },
                         "baseUrl": {
                             "description": "Dfns API URL. Defaults to https://api.dfns.io.",
                             "type": "string"
                         },
                         "credId": {
-                            "description": "Dfns service account credential ID.",
+                            "type": "string",
+                            "description": "Dfns service account credential ID."
+                        },
+                        "privateKeyEnv": {
+                            "description": "Name of the environment variable that holds the Dfns service account private key. Defaults to DFNS_PRIVATE_KEY. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
+                        },
+                        "authTokenEnv": {
+                            "description": "Name of the environment variable that holds the Dfns service account auth token. Defaults to DFNS_AUTH_TOKEN. The secret value stays in the environment and is never stored in the config file.",
                             "type": "string"
                         }
                     },
-                    "description": "Dfns signing provider configuration."
+                    "required": ["orgId", "credId"]
                 },
                 "securosys": {
+                    "description": "Include this object to opt in Securosys. Requires baseUrl. Secrets are read from the environment variables named by the *Env fields.",
                     "type": "object",
                     "properties": {
-                        "enable": {
-                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
-                            "type": "boolean"
-                        },
                         "baseUrl": {
-                            "description": "Securosys TSB service URL.",
-                            "type": "string"
+                            "type": "string",
+                            "description": "Securosys TSB service URL."
                         },
                         "mtlsP12Path": {
                             "description": "Path to a PKCS#12 client certificate when TSB requires mTLS.",
@@ -450,17 +446,34 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                         "signatureAlgorithm": {
                             "description": "Securosys TSB signature algorithm. Defaults to EDDSA.",
                             "type": "string"
+                        },
+                        "keyManagementApiKeyEnv": {
+                            "description": "Name of the environment variable that holds the Securosys key-management API key. Defaults to SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
+                        },
+                        "keyOperationApiKeyEnv": {
+                            "description": "Name of the environment variable that holds the Securosys key-operation API key. Defaults to SECUROSYS_TSB_KEY_OPERATION_API_KEY. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
+                        },
+                        "bearerTokenEnv": {
+                            "description": "Name of the environment variable that holds the Securosys bearer token. Defaults to SECUROSYS_TSB_BEARER_TOKEN. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
+                        },
+                        "mtlsP12PasswordEnv": {
+                            "description": "Name of the environment variable that holds the Securosys PKCS#12 password. Defaults to SECUROSYS_TSB_MTLS_P12_PASSWORD. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
+                        },
+                        "keyPasswordEnv": {
+                            "description": "Name of the environment variable that holds the Securosys key password. Defaults to SECUROSYS_TSB_KEY_PASSWORD. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
                         }
                     },
-                    "description": "Securosys signing provider configuration."
+                    "required": ["baseUrl"]
                 },
                 "bitgo": {
+                    "description": "Include this object to opt in BitGo. The access token is read from the environment variable named by accessTokenEnv.",
                     "type": "object",
                     "properties": {
-                        "enable": {
-                            "description": "Whether this signing provider may be registered when its required configuration is available. Defaults to true.",
-                            "type": "boolean"
-                        },
                         "baseUrl": {
                             "description": "BitGo API base URL. Defaults to https://app.bitgo.com.",
                             "type": "string"
@@ -472,11 +485,15 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                         "coin": {
                             "description": "BitGo Canton coin identifier. Auto-detected from the API URL when omitted.",
                             "type": "string"
+                        },
+                        "accessTokenEnv": {
+                            "description": "Name of the environment variable that holds the BitGo access token. Defaults to BITGO_ACCESS_TOKEN. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
                         }
-                    },
-                    "description": "BitGo signing provider configuration."
+                    }
                 }
-            }
+            },
+            "description": "Explicit signing provider configuration. When omitted, the Wallet Gateway uses legacy discovery: every provider is available if its required environment variables are set. When present, only listed providers are registered; non-secret settings come from this object, and secrets are read from environment variables named by the *Env fields."
         },
         "bootstrap": {
             "type": "object",
