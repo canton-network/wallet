@@ -196,7 +196,7 @@ function buildDrivers(
 
     if (selected.walletKernel) {
         if (!signingStore) {
-            logger.info(
+            logger.warn(
                 'Wallet Kernel signing provider is unavailable because signingStore is not configured'
             )
         } else {
