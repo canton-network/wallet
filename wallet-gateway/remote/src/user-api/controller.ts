@@ -248,7 +248,17 @@ export const userController = (
                 )
             }
 
-            if (params.clientSecret !== auth.clientSecret) {
+            const clientSecretMatch = crypto.timingSafeEqual(
+                crypto
+                    .createHash('sha256')
+                    .update(params.clientSecret, 'utf8')
+                    .digest(),
+                crypto
+                    .createHash('sha256')
+                    .update(auth.clientSecret, 'utf8')
+                    .digest()
+            )
+            if (!clientSecretMatch) {
                 throw providerErrors.unauthorized({
                     message: 'Invalid client secret',
                 })
