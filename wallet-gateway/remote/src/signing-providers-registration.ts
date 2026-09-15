@@ -26,24 +26,6 @@ const DEFAULT_DFNS_BASE_URL = 'https://api.dfns.io'
 const DEFAULT_SECUROSYS_SIGNATURE_ALGORITHM = 'EDDSA'
 const DEFAULT_BITGO_BASE_URL = 'https://app.bitgo.com'
 
-const IGNORED_NON_SECRET_ENV_VARS = [
-    ['FIREBLOCKS_API_PATH', 'signingProviders.fireblocks.apiPath'],
-    ['BLOCKDAEMON_API_URL', 'signingProviders.blockdaemon.baseUrl'],
-    ['BLOCKDAEMON_CAIP2', 'signingProviders.blockdaemon.caip2'],
-    ['DFNS_ORG_ID', 'signingProviders.dfns.orgId'],
-    ['DFNS_BASE_URL', 'signingProviders.dfns.baseUrl'],
-    ['DFNS_CRED_ID', 'signingProviders.dfns.credId'],
-    ['SECUROSYS_TSB_BASE_URL', 'signingProviders.securosys.baseUrl'],
-    ['SECUROSYS_TSB_MTLS_P12_PATH', 'signingProviders.securosys.mtlsP12Path'],
-    [
-        'SECUROSYS_TSB_SIGNATURE_ALGORITHM',
-        'signingProviders.securosys.signatureAlgorithm',
-    ],
-    ['BITGO_API_URL', 'signingProviders.bitgo.baseUrl'],
-    ['BITGO_ENTERPRISE_ID', 'signingProviders.bitgo.enterpriseId'],
-    ['BITGO_COIN', 'signingProviders.bitgo.coin'],
-] as const
-
 type ProviderSecrets = {
     fireblocksApiKey: string | undefined
     fireblocksApiSecret: string | undefined
@@ -149,16 +131,6 @@ function readExplicitSecrets(
         bitgoAccessToken: Env.get(
             signingProviders.bitgo?.accessTokenEnv ?? 'BITGO_ACCESS_TOKEN'
         ),
-    }
-}
-
-function warnIgnoredNonSecretEnvVars(logger: Logger) {
-    for (const [envName, configPath] of IGNORED_NON_SECRET_ENV_VARS) {
-        if (Env.get(envName) !== undefined) {
-            logger.warn(
-                `${envName} is ignored because signingProviders is configured. Set ${configPath} instead.`
-            )
-        }
     }
 }
 
@@ -368,7 +340,6 @@ export function registerSigningProviders(
         )
     }
 
-    warnIgnoredNonSecretEnvVars(logger)
     return buildDrivers(
         {
             participant: signingProviders.participant !== undefined,
