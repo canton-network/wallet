@@ -32,7 +32,7 @@ export class StateManager {
         try {
             // WXT storage doesn't have getKeys, so we use the native browser API
             const localData = await browser.storage.local.get(null)
-            const sessionData = await browser.storage.session.get(null)
+            const sessionData = await this.getSessionStorageDataSafe()
 
             const localKeys = Object.keys(localData).map(
                 (k) => `local:${k}` as WxtStorageKey
@@ -55,6 +55,27 @@ export class StateManager {
             logger.warn('Failed to cleanup old storage versions: {*}', {
                 error,
             })
+        }
+    }
+
+    private async getSessionStorageDataSafe(): Promise<
+        Record<string, unknown>
+    > {
+        const storageSession = browser.storage.session
+        if (!storageSession) {
+            return {}
+        }
+
+        try {
+            return await storageSession.get(null)
+        } catch (error) {
+            logger.debug(
+                'Skipping session storage cleanup in this context: {*}',
+                {
+                    error,
+                }
+            )
+            return {}
         }
     }
 

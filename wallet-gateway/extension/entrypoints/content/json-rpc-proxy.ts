@@ -53,7 +53,7 @@ export function jsonRpcProxy() {
                 response: msgResponse,
             }
 
-            parentOriginManager.postMessage(response, '*')
+            parentOriginManager.postMessage(response)
         }
 
         // Forward UI open requests to the background script
@@ -65,13 +65,10 @@ export function jsonRpcProxy() {
         // Acknowledge the extension readiness request
         if (msg.type === WalletEvent.SPLICE_WALLET_EXT_READY) {
             if (!shouldHandle(msg.target)) return
-            parentOriginManager.postMessage(
-                {
-                    type: WalletEvent.SPLICE_WALLET_EXT_ACK,
-                    target: msg.target,
-                },
-                '*'
-            )
+            parentOriginManager.postMessage({
+                type: WalletEvent.SPLICE_WALLET_EXT_ACK,
+                target: msg.target,
+            })
         }
     })
 }
