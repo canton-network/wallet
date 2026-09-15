@@ -14,6 +14,15 @@ interface PopupOptions {
     height?: number
     screenX?: number
     screenY?: number
+    /**
+     * Extra CSS injected into the popup document's `<head>`, outside the
+     * component's shadow root. Use it to override the `--wg-theme-*` custom
+     * properties (see themes/default.css) that the component's own styles
+     * are built on -- custom properties inherit through the shadow boundary,
+     * so a `:root { --wg-theme-primary-color: ... }` rule here re-themes the
+     * component without needing to know its internal selectors.
+     */
+    stylesheet?: string
 }
 
 interface StyledElement {
@@ -130,10 +139,17 @@ class PopupInstance {
         component: StyledElement,
         options?: PopupOptions
     ): string {
-        const { title = 'Custom Popup' } = options || {}
+        const { title = 'Custom Popup', stylesheet } = options || {}
 
         // Extract and safely escape styles for use in template literal within <script> tag
         const escapedStyles = this.escapeStylesForTemplate(component.styles)
+
+        // Neutralize a literal "</style" in caller-supplied CSS so it can't prematurely
+        // close the <style> tag it's injected into below.
+        const safeStylesheet = (stylesheet ?? '').replace(
+            /<\/style/gi,
+            '&lt;/style'
+        )
 
         // Get serialized component and remove any static styles assignments
         // This prevents minification issues where identifiers get renamed
@@ -159,6 +175,8 @@ class PopupInstance {
                 body {
                     display: flex;
                 }
+
+                ${safeStylesheet}
             </style>
         </head>
         <body>
