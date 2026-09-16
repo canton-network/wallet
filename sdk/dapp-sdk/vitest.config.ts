@@ -32,11 +32,8 @@ export default defineConfig({
                     exclude: ['src/integration-test/*.test.ts'],
                     browser: {
                         enabled: true,
-                        provider: playwright({
-                            trace: 'off',
-                            screenshot: 'off',
-                            video: 'off',
-                        }),
+                        provider: playwright(),
+                        trace: 'off',
                         instances: [{ browser: 'chromium' }],
                         headless: true,
                     },
@@ -48,11 +45,8 @@ export default defineConfig({
                     include: ['src/integration-test/*.test.ts'],
                     browser: {
                         enabled: true,
-                        provider: playwright({
-                            trace: 'off',
-                            screenshot: 'off',
-                            video: 'off',
-                        }),
+                        provider: playwright(),
+                        trace: 'off',
                         instances: [{ browser: 'chromium' }],
                         headless: true,
                     },

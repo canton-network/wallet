@@ -38,11 +38,8 @@ export default defineConfig({
                     },
                     browser: {
                         enabled: true,
-                        provider: playwright({
-                            trace: 'off',
-                            screenshot: 'off',
-                            video: 'off',
-                        }),
+                        provider: playwright(),
+                        trace: 'off',
                         instances: [{ browser: 'chromium' }],
                         headless: true,
                     },
