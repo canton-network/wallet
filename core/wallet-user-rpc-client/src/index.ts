@@ -171,13 +171,6 @@ export type TransactionId = string
 export type MessageId = string
 /**
  *
- * The signature of the message.
- *
- */
-export type Signature = string
-export type SignedBy = string
-/**
- *
  * The origin (dApp URL) that initiated this transaction request.
  *
  */
@@ -332,6 +325,13 @@ export type SyncWalletsResultDisabled = Wallet[]
  */
 export type WalletSyncNeeded = boolean
 export type TxStatusSigned = 'signed'
+/**
+ *
+ * The signature of the message.
+ *
+ */
+export type Signature = string
+export type SignedBy = string
 export interface SignResultSigned {
     status: TxStatusSigned
     signature: Signature
@@ -565,10 +565,8 @@ export interface DeleteMessageToSignParams {
     messageId: MessageId
 }
 export interface ExecuteParams {
-    signature?: Signature
     partyId: PartyId
     transactionId: TransactionId
-    signedBy?: SignedBy
 }
 export interface AddSessionParams {
     origin: Origin

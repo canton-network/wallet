@@ -756,20 +756,12 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "signature": {
-                                "title": "signature",
-                                "type": "string"
-                            },
                             "partyId": {
                                 "title": "partyId",
                                 "type": "string"
                             },
                             "transactionId": {
                                 "$ref": "#/components/schemas/TransactionId"
-                            },
-                            "signedBy": {
-                                "title": "signedBy",
-                                "type": "string"
                             }
                         },
                         "required": ["transactionId", "partyId"]
