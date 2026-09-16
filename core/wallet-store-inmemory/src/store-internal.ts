@@ -359,6 +359,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return this.systemStorage.networks
     }
 
+    async getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined> {
+        return this.systemStorage.networks.find(
+            (network) =>
+                network.auth.method === 'self_signed' &&
+                network.id === networkId
+        )
+    }
+
     async updateNetwork(network: Network): Promise<void> {
         this.assertConnected()
         this.removeNetwork(network.id) // Ensure no duplicates

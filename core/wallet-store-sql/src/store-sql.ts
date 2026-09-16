@@ -588,6 +588,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return network
     }
 
+    async getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined> {
+        // Not scoped by userId: key id resolution happens during token
+        // verification, before there is an authenticated user.
+        const row = await this.db
+            .selectFrom('networks')
+            .selectAll()
+            .where('id', '=', networkId)
+            .executeTakeFirst()
+        if (!row) return undefined
+
+        const network = toNetwork(row)
+        return network.auth.method === 'self_signed' ? network : undefined
+    }
+
     async listNetworks(): Promise<Array<Network>> {
         let query = this.db.selectFrom('networks').selectAll()
 
