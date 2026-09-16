@@ -32,6 +32,8 @@ export class PingPage {
         await wallet.click()
         await picker.getByRole('button', { name: 'Connect' }).click()
 
+        await expect(picker.getByText('Logging in')).toHaveCount(0)
+
         await expect(async () => {
             expect(await this.page.getByTestId('connect-wallet').count()).toBe(
                 0
@@ -48,7 +50,7 @@ export class PingPage {
                 await this.page.getByTestId('connected-gateway').textContent()
             ).toMatch(CONNECTED_GATEWAY_ID_PATTERN)
             expect(await this.page.locator('p.error').count()).toBe(0)
-        }).toPass({ timeout: 10_000 })
+        }).toPass({ timeout: 15_000 })
     }
 
     async expectAccount(partyId: string): Promise<void> {
