@@ -329,7 +329,7 @@ export class TransactionService {
 
         if (provider === SigningProvider.BLOCKDAEMON && !authContext.email) {
             throw new Error(
-                'Signing provider is Blockdaemon but the email is missing from the auth context'
+                'Invalid auth context (missing email) for SigningProvider BlockDaemon'
             )
         }
 

@@ -963,7 +963,7 @@ describe('TransactionService', () => {
                                   signedWithExternal,
                                   executeParams,
                                   { postWithRetry } as unknown as LedgerClient,
-                                  authContextWithEmail,
+                                  authContext,
                                   network
                               )
 
@@ -991,6 +991,45 @@ describe('TransactionService', () => {
                     expect(result).toEqual({ updateId: 'external-update-1' })
                 }
             )
+
+            it('throws an error if email is not provided in auth context for blockdaemon', async () => {
+                const signingProviderId = SigningProvider.BLOCKDAEMON
+                const getTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    signature: 'sig',
+                })
+
+                const store = createStore(signedWithExternal)
+
+                const service = createService(
+                    store,
+                    {
+                        [signingProviderId]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier,
+                    logger
+                )
+
+                const postWithRetry = vi
+                    .fn()
+                    .mockResolvedValue({ updateId: 'external-update-1' })
+
+                await expect(
+                    service.execute(
+                        authContext.userId,
+                        walletWithProvider(signingProviderId),
+                        signedWithExternal,
+                        executeParams,
+                        { postWithRetry } as unknown as LedgerClient,
+                        authContext,
+                        network
+                    )
+                ).rejects.toThrow(
+                    'Invalid auth context (missing email) for SigningProvider BlockDaemon'
+                )
+            })
         })
 
         describe('signAndExecute', () => {
