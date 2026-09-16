@@ -327,6 +327,12 @@ export class TransactionService {
             throw new Error(`No driver found for provider ${provider}`)
         }
 
+        if (provider === SigningProvider.BLOCKDAEMON && !authContext.email) {
+            throw new Error(
+                'Signing provider is Blockdaemon but the email is missing from the auth context'
+            )
+        }
+
         const controllerId =
             provider === SigningProvider.BLOCKDAEMON
                 ? authContext.email

@@ -947,12 +947,12 @@ describe('TransactionService', () => {
                         .mockResolvedValue({ updateId: 'external-update-1' })
 
                     const result = await service.execute(
-                        authContext.userId,
+                        authContextWithEmail.userId,
                         walletWithProvider(signingProviderId),
                         signedWithExternal,
                         executeParams,
                         { postWithRetry } as unknown as LedgerClient,
-                        authContext,
+                        authContextWithEmail,
                         network
                     )
 
