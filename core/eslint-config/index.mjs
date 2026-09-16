@@ -4,7 +4,7 @@
 import js from '@eslint/js'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
-import { includeIgnoreFile } from '@eslint/compat'
+import { includeIgnoreFile } from '@eslint/config-helpers'
 import headers from 'eslint-plugin-headers'
 import nxeslint from '@nx/eslint-plugin'
 import { dirname, join } from 'node:path'
