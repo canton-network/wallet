@@ -946,15 +946,26 @@ describe('TransactionService', () => {
                         .fn()
                         .mockResolvedValue({ updateId: 'external-update-1' })
 
-                    const result = await service.execute(
-                        authContextWithEmail.userId,
-                        walletWithProvider(signingProviderId),
-                        signedWithExternal,
-                        executeParams,
-                        { postWithRetry } as unknown as LedgerClient,
-                        authContextWithEmail,
-                        network
-                    )
+                    const result =
+                        signingProviderId === SigningProvider.BLOCKDAEMON
+                            ? await service.execute(
+                                  authContextWithEmail.userId,
+                                  walletWithProvider(signingProviderId),
+                                  signedWithExternal,
+                                  executeParams,
+                                  { postWithRetry } as unknown as LedgerClient,
+                                  authContextWithEmail,
+                                  network
+                              )
+                            : await service.execute(
+                                  authContext.userId,
+                                  walletWithProvider(signingProviderId),
+                                  signedWithExternal,
+                                  executeParams,
+                                  { postWithRetry } as unknown as LedgerClient,
+                                  authContextWithEmail,
+                                  network
+                              )
 
                     expect(postWithRetry).toHaveBeenCalledWith(
                         '/v2/interactive-submission/executeAndWait',
