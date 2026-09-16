@@ -971,6 +971,7 @@ describe('TransactionService', () => {
                         '/v2/interactive-submission/executeAndWait',
                         expect.objectContaining({
                             userId: authContext.userId,
+
                             preparedTransaction:
                                 pendingTransaction.preparedTransaction,
                             submissionId: pendingTransaction.commandId,
@@ -981,7 +982,19 @@ describe('TransactionService', () => {
                                     }),
                                 ],
                             }),
-                        })
+                        }),
+                        {
+                            retries: 20,
+                            delayMs: 3000,
+                            cantonErrorKeys: [
+                                'SEQUENCER_REQUEST_FAILED',
+                                'SEQUENCER_BACKPRESSURE',
+                                'SUBMISSION_ALREADY_IN_FLIGHT',
+                                'LOCAL_VERDICT_TIMEOUT',
+                                'NOT_SEQUENCED_TIMEOUT',
+                                'NO_VIEW_WITH_VALID_RECIPIENTS',
+                            ],
+                        }
                     )
                     expect(store.setTransactionStatus).toHaveBeenCalledWith(
                         pendingTransaction.id,

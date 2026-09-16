@@ -646,7 +646,19 @@ export class TransactionService {
                             },
                         ],
                     },
-                } as Types['JsExecuteSubmissionAndWaitRequest']
+                } as Types['JsExecuteSubmissionAndWaitRequest'],
+                {
+                    retries: 20,
+                    delayMs: 3000,
+                    cantonErrorKeys: [
+                        'SEQUENCER_REQUEST_FAILED',
+                        'SEQUENCER_BACKPRESSURE',
+                        'SUBMISSION_ALREADY_IN_FLIGHT',
+                        'LOCAL_VERDICT_TIMEOUT',
+                        'NOT_SEQUENCED_TIMEOUT',
+                        'NO_VIEW_WITH_VALID_RECIPIENTS',
+                    ],
+                }
             )
 
             logDynamically(this.logger, 'Externally signed execution result', {
