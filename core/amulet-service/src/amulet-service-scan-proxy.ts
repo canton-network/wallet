@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
-import {
+import type { PartyId } from '@canton-network/core-types'
+import type {
     ScanClient,
     ScanProxyClient,
     ScanProxyTypes,
 } from '@canton-network/core-splice-client'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 
 import { AmuletServiceBase } from './amulet-service-base'
 

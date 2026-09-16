@@ -3,10 +3,10 @@
 
 import { Encoder } from './encoder.js'
 import { PrimitiveEncoder } from './primitiveEncoder.js'
-import { OfflineSDKContext } from '../../../../../sdk.js'
-import { Identifier, Value } from '@canton-network/core-ledger-proto'
+import type { OfflineSDKContext } from '../../../../../sdk.js'
+import type { Identifier, Value } from '@canton-network/core-ledger-proto'
 import { CollectionEncoder } from './collectionEncoder.js'
-import { ArgValueOneOfKind } from './types.js'
+import type { ArgValueOneOfKind } from './types.js'
 
 type ArgValueOf<T extends NonNullable<Value['sum']['oneofKind']>> =
     ArgValueOneOfKind<Value['sum'], T>

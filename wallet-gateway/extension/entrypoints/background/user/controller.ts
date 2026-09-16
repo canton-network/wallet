@@ -8,7 +8,7 @@ import {
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
 import type { Store, Network } from '@canton-network/core-wallet-store'
-import {
+import type {
     AddSessionParams,
     CreateWalletParams,
     DeleteTransactionParams,

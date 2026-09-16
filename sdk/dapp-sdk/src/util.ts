@@ -3,7 +3,7 @@
 
 import { popup } from '@canton-network/core-wallet-ui-components'
 import { removeKernelDiscovery, removeKernelSession } from './storage'
-import { SIWXMessageParams } from './adapter/walletconnect-adapter'
+import type { SIWXMessageParams } from './adapter/walletconnect-adapter'
 
 export const clearAllLocalState = ({
     closePopup,

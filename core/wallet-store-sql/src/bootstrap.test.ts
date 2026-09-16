@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { Kysely } from 'kysely'
+import type { Kysely } from 'kysely'
 import { pino } from 'pino'
 import type { BootstrapConfig } from '@canton-network/core-wallet-store'
 import { bootstrap } from './bootstrap.js'

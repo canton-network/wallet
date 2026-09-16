@@ -7,14 +7,17 @@ import FireblocksSigningDriver from './index.js'
 
 import {
     isRpcError,
-    Transaction,
+    type Transaction,
     CC_COIN_TYPE,
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
 import { PublicKeyInformationAlgorithmEnum } from '@fireblocks/ts-sdk'
-import { AuthContext } from '@canton-network/core-wallet-auth'
-import { FireblocksApiKeyInfo, FireblocksTransaction } from './fireblocks.js'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type {
+    FireblocksApiKeyInfo,
+    FireblocksTransaction,
+} from './fireblocks.js'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'

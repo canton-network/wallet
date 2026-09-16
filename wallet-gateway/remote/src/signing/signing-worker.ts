@@ -1,14 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
-import { AuthAware } from '@canton-network/core-wallet-auth'
-import { Store, Transaction, Wallet } from '@canton-network/core-wallet-store'
-import { NotificationService } from '../notification/NotificationService.js'
+import type { Logger } from 'pino'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
+import type {
+    Store,
+    Transaction,
+    Wallet,
+} from '@canton-network/core-wallet-store'
+import type { NotificationService } from '../notification/NotificationService.js'
 import { TransactionService } from '../ledger/transaction-service.js'
 import type { SigningDrivers } from './signing-drivers.js'
 import { resolveAutomationRunContext } from './service-account-session.js'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import type { HASHING_SCHEME_VERSION } from '../env.js'
 
 export type { AccessTokenProviderFactory } from './service-account-session.js'
 

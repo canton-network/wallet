@@ -4,16 +4,16 @@
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { Wallet } from '@canton-network/core-wallet-user-rpc-client'
-import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
+import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
+import type UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 
 import {
     BaseElement,
-    WalletSetPrimaryEvent,
-    WalletAllocateEvent,
+    type WalletSetPrimaryEvent,
+    type WalletAllocateEvent,
     handleErrorToast,
     toRelPath,
-    WalletCardEditEvent,
+    type WalletCardEditEvent,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'

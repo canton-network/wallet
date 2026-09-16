@@ -1,7 +1,7 @@
 import pino from 'pino'
 import {
-    CompletionEvent,
-    UpdateEvent,
+    type CompletionEvent,
+    type UpdateEvent,
     localNetStaticConfig,
     SDK,
 } from '@canton-network/wallet-sdk'

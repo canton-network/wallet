@@ -1,17 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthContext, UserId } from '@canton-network/core-wallet-auth'
-import { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { AuthContext, UserId } from '@canton-network/core-wallet-auth'
+import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import {
     type Error as SigningProviderError,
-    Keys,
-    SigningDriverInterface,
+    type Keys,
+    type SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { Logger } from 'pino'
-import { PartyAllocationService } from '../party-allocation-service.js'
-import { KeyName, PartyHint, Primary } from '../../user-api/rpc-gen/typings.js'
+import type { Logger } from 'pino'
+import type { PartyAllocationService } from '../party-allocation-service.js'
+import type {
+    KeyName,
+    PartyHint,
+    Primary,
+} from '../../user-api/rpc-gen/typings.js'
 import { ParticipantWalletAllocator } from './signing-providers/participant-wallet-allocator.js'
 import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.js'
 import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.js'

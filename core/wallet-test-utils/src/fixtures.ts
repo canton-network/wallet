@@ -3,10 +3,11 @@
 
 import {
     test as base,
-    Page,
-    ConsoleMessage,
-    Request,
-    Response,
+    type Page,
+    type ConsoleMessage,
+    type Request,
+    type Response,
+    type TestInfo,
 } from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -36,16 +37,7 @@ const captureScreenshot = async (
     sanitizedTitle: string,
     timestamp: string,
     label: string,
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    testInfo: typeof import('@playwright/test').test extends import('@playwright/test').PlaywrightTestArgs &
-        import('@playwright/test').PlaywrightTestOptions &
-        import('@playwright/test').PlaywrightWorkerArgs &
-        import('@playwright/test').PlaywrightWorkerOptions & {
-            [key: string]: any
-        }
-        ? any
-        : any
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+    testInfo: TestInfo
 ) => {
     const screenshotPath = path.join(
         screenshotDir,

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
-import { expressContext, mock, RequestType } from '../../__test__/mocks'
+import { expressContext, mock, type RequestType } from '../../__test__/mocks'
 import { APIError } from '../common'
 import { getAllocationFactory } from './getAllocationFactory'
 

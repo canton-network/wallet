@@ -8,12 +8,15 @@ import '@canton-network/core-wallet-ui-components'
 import {
     BaseElement,
     handleErrorToast,
-    LoginConnectEvent,
-    WgLoginForm,
+    type LoginConnectEvent,
+    type WgLoginForm,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
-import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    PublicNetwork,
+    Idp,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '../state-manager'
 import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Idp } from '@canton-network/core-wallet-auth'
-import { Network } from './config/schema'
+import type { Network } from './config/schema'
 
 export enum AddressType {
     PaperAddress = 'PaperAddress',

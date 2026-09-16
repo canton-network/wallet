@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LedgerClient } from './ledger-client.js'
+import type { LedgerClient } from './ledger-client.js'
 
-import { Types } from './ledger-client.js'
-import { PartyId } from '@canton-network/core-types'
+import type { Types } from './ledger-client.js'
+import type { PartyId } from '@canton-network/core-types'
 
-import { Logger } from '@canton-network/core-types'
+import type { Logger } from '@canton-network/core-types'
 import { ErrorInfo, RetryInfo } from '@canton-network/core-ledger-proto'
 
 type Completion = Types['Completion']['value']

@@ -74,7 +74,7 @@ const version = await provider.request({
 Due to some type inference limitations, the return type of request collapses to `unknown`. In order to aid the compiler, you can supply an optional type argument corresponding to the operation you are using on the ledgerApi. Afterwards, the response is cleanly typed:
 
 ```ts
-import { LedgerProvider, Ops } from '@canton-network/core-provider-ledger'
+import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 
 const party = await provider.request<Ops.PostV2Parties>({
     method: 'ledgerApi',

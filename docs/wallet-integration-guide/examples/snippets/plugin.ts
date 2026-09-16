@@ -1,4 +1,8 @@
-import { SDK, SDKPlugin, SDKPluginContext } from '@canton-network/wallet-sdk'
+import {
+    SDK,
+    SDKPlugin,
+    type SDKPluginContext,
+} from '@canton-network/wallet-sdk'
 
 export default async function () {
     const sdk = (

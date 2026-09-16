@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { OpenAPI } from '@scalar/openapi-types'
+import type { OpenAPI } from '@scalar/openapi-types'
 import { dereference } from '@scalar/openapi-parser'
 import * as fs from 'node:fs/promises'
 import { bundle } from '@scalar/json-magic/bundle'

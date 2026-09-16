@@ -3,13 +3,13 @@
 
 import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import {
-    Network as StoreNetwork,
+    type Network as StoreNetwork,
     networkSchema,
 } from '@canton-network/core-wallet-store'
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
-import { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
+import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.js'
 import './auth-editor.js'
 
 /**

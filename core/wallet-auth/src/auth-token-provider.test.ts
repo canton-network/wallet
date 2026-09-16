@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi, MockedObject, afterEach } from 'vitest'
+import { describe, it, expect, vi, type MockedObject, afterEach } from 'vitest'
 import { assertConnected, jwtExpired } from './auth-utils.js'
 import {
     AuthTokenProvider,
-    TokenProviderConfig,
+    type TokenProviderConfig,
 } from './auth-token-provider.js'
-import { Logger } from '@canton-network/core-types'
-import { Auth, Idp } from './config/schema.js'
+import type { Logger } from '@canton-network/core-types'
+import type { Auth, Idp } from './config/schema.js'
 import { clientCredentialsService } from './client-credentials-service.js'
 import { SelfSignedTokenService } from './self-signed-token-service.js'
 

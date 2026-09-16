@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import '../themes/default.css'
 import '../src/index' // import all web component definitions
 
-import { Preview } from '@storybook/web-components-vite'
+import type { Preview } from '@storybook/web-components-vite'
 
 const preview: Preview = {}
 

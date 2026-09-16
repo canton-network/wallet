@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect } from 'vitest'
-import { Ops } from './index.js'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import type { Ops } from './index.js'
+import type { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 
 const MOCK_LEDGER_VERSION = 'example-ledger-version'
 const MOCK_IDP_CONFIG = {

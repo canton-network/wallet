@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { pino, Logger } from 'pino'
+import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
-import { AuthContext, Idp } from '@canton-network/core-wallet-auth'
+import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
-    MessageRaw,
-    Network as StoreNetwork,
+    type MessageRaw,
+    type Network as StoreNetwork,
     PartyLevelRight,
-    Session,
-    Transaction,
-    Wallet,
+    type Session,
+    type Transaction,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'

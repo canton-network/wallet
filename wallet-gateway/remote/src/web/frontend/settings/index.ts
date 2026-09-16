@@ -5,26 +5,26 @@ import '@canton-network/core-wallet-ui-components'
 import {
     BaseElement,
     handleErrorToast,
-    IdpAddEvent,
-    IdpCardDeleteEvent,
-    NetworkCardDeleteEvent,
-    NetworkEditSaveEvent,
+    type IdpAddEvent,
+    type IdpCardDeleteEvent,
+    type NetworkCardDeleteEvent,
+    type NetworkEditSaveEvent,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 
 import { html, css } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import {
+import type {
     PublicNetwork,
     Session,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
+import type UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 
 import '../index'
 import { stateManager } from '../state-manager'
 import { createUserClient } from '../rpc-client'
-import { UserLevelRight } from '@canton-network/core-wallet-store'
+import type { UserLevelRight } from '@canton-network/core-wallet-store'
 import { detectCurrentOrigin } from '../listeners'
 
 @customElement('user-ui-settings')

@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PaginatedResolvedAcsOptions } from '../../service'
-import { PaginatedACSState } from '../../types'
+import type { PaginatedResolvedAcsOptions } from '../../service'
+import type { PaginatedACSState } from '../../types'
 import { BaseACSCache } from './base'
 
 export class PaginatedACSCache extends BaseACSCache<true> {

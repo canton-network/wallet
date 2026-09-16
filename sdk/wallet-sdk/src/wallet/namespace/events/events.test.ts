@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import { CompletionOptions, EventsContext, UpdatesOptions } from './types'
+import type { CompletionOptions, EventsContext, UpdatesOptions } from './types'
 import { ctx } from '../../__test__/mocks'
 import { ParsedURL } from '../utils/url'
 

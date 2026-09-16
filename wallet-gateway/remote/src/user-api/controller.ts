@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { LedgerClient } from '@canton-network/core-ledger-client'
 import buildController from './rpc-gen/index.js'
-import {
+import type {
     AddNetworkParams,
     RemoveNetworkParams,
     ExecuteParams,
@@ -49,18 +49,18 @@ import {
     ListSigningProviderKeysParams,
     ListSigningProviderKeysResult,
 } from './rpc-gen/typings.js'
-import { Store, Network } from '@canton-network/core-wallet-store'
-import { Logger } from 'pino'
-import { NotificationService } from '../notification/NotificationService.js'
+import type { Store, Network } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+import type { NotificationService } from '../notification/NotificationService.js'
 import {
     assertConnected,
-    AuthContext,
+    type AuthContext,
     authSchema,
-    Auth,
+    type Auth,
     AuthTokenProvider,
     idpSchema,
 } from '@canton-network/core-wallet-auth'
-import { KernelInfo } from '../config/Config.js'
+import type { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
@@ -69,7 +69,7 @@ import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import { logDynamically, networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
 import { TransactionService } from '../ledger/transaction-service.js'
-import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
+import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
     MessageSignatureEvent,
     TxChangedFailedEvent,
@@ -77,7 +77,7 @@ import type {
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import type { HASHING_SCHEME_VERSION } from '../env.js'
 
 export const userController = (
     kernelInfo: KernelInfo,

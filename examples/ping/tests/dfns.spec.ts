@@ -1,8 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, WalletGateway } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import {
+    test,
+    type WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
+import type { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,

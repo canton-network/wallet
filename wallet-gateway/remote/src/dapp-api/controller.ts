@@ -3,11 +3,11 @@
 
 import {
     assertConnected,
-    AuthContext,
+    type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import buildController from './rpc-gen/index.js'
-import {
+import type {
     ConnectResult,
     LedgerApiParams,
     LedgerApiResult,
@@ -19,26 +19,26 @@ import {
     StatusEvent,
     Wallet,
 } from './rpc-gen/typings.js'
-import { Store, Transaction } from '@canton-network/core-wallet-store'
+import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import {
     LedgerClient,
-    GetEndpoint,
-    PostEndpoint,
-    PrepareSubmissionResponse,
+    type GetEndpoint,
+    type PostEndpoint,
+    type PrepareSubmissionResponse,
     isValidGetEndpoint,
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
 import { v4 } from 'uuid'
-import { NotificationService } from '../notification/NotificationService.js'
-import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
-import { Logger } from 'pino'
+import type { NotificationService } from '../notification/NotificationService.js'
+import type { KernelInfo as KernelInfoConfig } from '../config/Config.js'
+import type { Logger } from 'pino'
 import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 import { TransactionService } from '../ledger/transaction-service.js'
 
-import { SigningDrivers } from '../signing/signing-drivers.js'
+import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import type { HASHING_SCHEME_VERSION } from '../env.js'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers

@@ -5,7 +5,7 @@ import { html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { chevronDownIcon } from '../icons/index.js'
 import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
-import {
+import type {
     KeyName,
     PartyHint,
     SigningProviderId,

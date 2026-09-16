@@ -1,5 +1,5 @@
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
-import { TransferTestScriptParameters } from './types.js'
+import type { TransferTestScriptParameters } from './types.js'
 
 export default async (args: TransferTestScriptParameters) => {
     const { sdk, receiver, sender, senderKeys, logger } = args

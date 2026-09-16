@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
-    AuthContext,
-    UserId,
-    AuthAware,
+    type AuthContext,
+    type UserId,
+    type AuthAware,
     assertConnected,
-    Idp,
+    type Idp,
 } from '@canton-network/core-wallet-auth'
-import {
+import type {
     Store as BaseStore,
     Wallet,
     PartyId,
@@ -29,10 +29,16 @@ import {
     ListTransactionsOptions,
     WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
-import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
+import {
+    CamelCasePlugin,
+    Kysely,
+    PostgresDialect,
+    SqliteDialect,
+    sql,
+} from 'kysely'
 import Database from 'better-sqlite3'
 import {
-    DB,
+    type DB,
     fromIdp,
     fromNetwork,
     fromTransaction,
@@ -51,8 +57,7 @@ import {
     toSession,
 } from './schema.js'
 import pg from 'pg'
-import { sql } from 'kysely'
-import { AccessToken } from '@canton-network/core-types'
+import type { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined

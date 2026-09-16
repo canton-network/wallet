@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import express from 'express'
-import { Server } from 'http'
+import type { Server } from 'http'
 import path, { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import ViteExpress from 'vite-express'

@@ -3,10 +3,10 @@
 
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
 import { Encoder } from './encoder.js'
-import { HashEncoder } from './types.js'
+import type { HashEncoder } from './types.js'
 import { TransactionEncoder } from './transactionEncoder.js'
 import { MetadataEncoder } from './metadataEncoder.js'
-import { OfflineSDKContext } from '../../../../../sdk.js'
+import type { OfflineSDKContext } from '../../../../../sdk.js'
 import {
     HASHING_SCHEME_VERSION,
     PREPARED_TRANSACTION_HASH_PURPOSE,

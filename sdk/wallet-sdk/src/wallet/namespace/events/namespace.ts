@@ -3,14 +3,14 @@
 
 import { WebSocketClient } from '@canton-network/core-asyncapi-client'
 
-import { SDKLogger } from '../../logger/logger.js'
+import type { SDKLogger } from '../../logger/logger.js'
 import {
-    UpdatesOptions,
-    CompletionOptions,
+    type UpdatesOptions,
+    type CompletionOptions,
+    type EventsContext,
     InvalidSubscriptionOptionsError,
-    EventsContext,
-    UpdateEvent,
-    CompletionEvent,
+    type UpdateEvent,
+    type CompletionEvent,
 } from './types.js'
 
 export class EventsNamespace {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync, existsSync } from 'fs'
-import { Config, RawConfig, rawConfigSchema } from './Config.js'
+import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
 import { Env } from '../env.js'
 
 export class ConfigUtils {
