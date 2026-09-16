@@ -401,7 +401,8 @@ describe('TransactionService', () => {
                 expect(store.setTransactionStatus).toHaveBeenCalledWith(
                     pendingTransaction.id,
                     'awaiting-signature',
-                    { externalTxId: 'external-tx-1' }
+                    { externalTxId: 'external-tx-1' },
+                    { expectedStatus: 'pending' }
                 )
                 expect(result).toEqual({
                     status: 'pending',
@@ -564,7 +565,8 @@ describe('TransactionService', () => {
                 expect(store.setTransactionStatus).toHaveBeenCalledWith(
                     pendingTransaction.id,
                     'awaiting-signature',
-                    { externalTxId: 'tsb-request-1' }
+                    { externalTxId: 'tsb-request-1' },
+                    { expectedStatus: 'pending' }
                 )
                 expect(result).toEqual({
                     status: 'pending',
@@ -639,7 +641,8 @@ describe('TransactionService', () => {
                 expect(store.setTransactionStatus).toHaveBeenCalledWith(
                     pendingTransaction.id,
                     'awaiting-signature',
-                    { externalTxId: 'bitgo-tx-1' }
+                    { externalTxId: 'bitgo-tx-1' },
+                    { expectedStatus: 'pending' }
                 )
             })
 
