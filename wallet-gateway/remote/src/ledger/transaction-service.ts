@@ -327,6 +327,12 @@ export class TransactionService {
             throw new Error(`No driver found for provider ${provider}`)
         }
 
+        if (SigningProvider.BLOCKDAEMON && !authContext.email) {
+            throw new Error(
+                'Email is required for Blockdaemon to get the signing result.'
+            )
+        }
+
         const controllerId =
             provider === SigningProvider.BLOCKDAEMON
                 ? authContext.email
@@ -387,10 +393,15 @@ export class TransactionService {
                 ? `Signing provider returned status: ${signingResult.status}`
                 : undefined
 
-        await this.store.setTransactionStatus(tx.id, status, {
-            externalTxId: signingResult.txId,
-            ...(failureReason && { failureReason }),
-        })
+        await this.store.setTransactionStatus(
+            tx.id,
+            status,
+            {
+                externalTxId: signingResult.txId,
+                ...(failureReason && { failureReason }),
+            },
+            { expectedStatus: tx.status }
+        )
 
         // dApp reports pending for anything not yet signed
         // awaiting-signature can be a gateway UI internal distinction for polling
