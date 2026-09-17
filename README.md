@@ -120,8 +120,8 @@ Shared libraries used by the Wallet Gateway, SDKs, and signing providers:
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm v11 (Corepack)
+- Node.js 24+ (see `.nvmrc` for exact version)
+- pnpm (version specified in `package.json#packageManager`)
 - A running Canton participant node (or use the included local setup)
 
 ### Quick Start

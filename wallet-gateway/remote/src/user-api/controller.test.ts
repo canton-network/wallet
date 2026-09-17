@@ -491,12 +491,19 @@ describe('userController', () => {
             })
 
             expect(typeof result.accessToken).toBe('string')
+            const header = JSON.parse(
+                Buffer.from(
+                    result.accessToken.split('.')[0]!,
+                    'base64url'
+                ).toString()
+            )
             const payload = JSON.parse(
                 Buffer.from(
                     result.accessToken.split('.')[1]!,
                     'base64url'
                 ).toString()
             )
+            expect(header.kid).toBe('network-self-signed')
             expect(payload.sub).toBe('test-user')
         })
 
@@ -1332,6 +1339,50 @@ describe('userController', () => {
                 notificationService,
                 logger,
                 authWithInvalidAudience
+            )
+
+            await expect(
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession rejects token with client_id claim and auth.clientId mismatch', async () => {
+            const authWithInvalidSubject = createAuthWithAddSessionClaims({
+                client_id: 'wrong-client-id',
+            })
+            const store = await createStore(logger, authWithInvalidSubject, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidSubject
+            )
+
+            await expect(
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                })
+            ).rejects.toThrow('Failed to add session')
+        })
+
+        it('addSession rejects token with azp claim and auth.clientId mismatch', async () => {
+            const authWithInvalidSubject = createAuthWithAddSessionClaims({
+                azp: 'wrong-client-id',
+            })
+            const store = await createStore(logger, authWithInvalidSubject, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithInvalidSubject
             )
 
             await expect(

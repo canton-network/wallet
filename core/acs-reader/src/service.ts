@@ -96,7 +96,7 @@ export class AcsService {
             return results
         }
 
-        const body: Ops.GetV2StateActiveContractsPage['ledgerApi']['params']['body'] =
+        const body: Ops.PostV2StateActiveContractsPage['ledgerApi']['params']['body'] =
             {
                 eventFormat,
                 activeAtOffset,
@@ -108,11 +108,11 @@ export class AcsService {
             body.pageToken = pageToken
         }
 
-        return await this.ledgerProvider.request<Ops.GetV2StateActiveContractsPage>(
+        return await this.ledgerProvider.request<Ops.PostV2StateActiveContractsPage>(
             {
                 method: 'ledgerApi',
                 params: {
-                    requestMethod: 'get',
+                    requestMethod: 'post',
                     resource: '/v2/state/active-contracts-page',
                     body,
                 },

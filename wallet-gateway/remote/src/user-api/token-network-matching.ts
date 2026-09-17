@@ -3,7 +3,7 @@
 
 import { Idp } from '@canton-network/core-wallet-auth'
 import { Network } from '@canton-network/core-wallet-store'
-import { decodeJwt, JWTPayload } from 'jose'
+import { decodeJwt, decodeProtectedHeader, JWTPayload } from 'jose'
 
 function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
     if (typeof value === 'string') {
@@ -34,5 +34,24 @@ export function assertTokenClaimsMatchNetwork(
         throw new Error(
             `Token aud claim doesn't match network's auth audience.`
         )
+    }
+
+    // check client ID based on `azp` (Authorized Party) claim or `client_id` claim, only if present.
+    const tokenClientId = tokenClaims.azp || tokenClaims.client_id
+    if (tokenClientId && tokenClientId !== network.auth.clientId) {
+        throw new Error(
+            `Token client ID doesn't match network's auth clientId.`
+        )
+    }
+
+    if (idp.type === 'self_signed') {
+        const { kid } = decodeProtectedHeader(accessToken)
+        if (!kid) {
+            throw new Error('Self-signed JWT does not contain a kid header.')
+        }
+
+        if (kid !== network.id) {
+            throw new Error(`Token kid does not match the selected network id.`)
+        }
     }
 }
