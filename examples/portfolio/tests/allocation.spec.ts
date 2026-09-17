@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { pino } from 'pino'
-import { expect, type Page, test } from '@playwright/test'
+import {
+    testWithGatewayCapture as test,
+    expect,
+} from '@canton-network/core-wallet-test-utils'
+import { type Page } from '@playwright/test'
 import { OTCTrade } from '@canton-network/core-wallet-test-utils'
 import {
     createWalletGateway,
