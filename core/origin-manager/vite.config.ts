@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
+import dts from 'unplugin-dts/vite'
 
 export default defineConfig({
     build: {
@@ -13,7 +13,7 @@ export default defineConfig({
             fileName: (format) => (format === 'cjs' ? 'index.cjs' : 'index.js'),
             cssFileName: 'index',
         },
-        rollupOptions: {
+        rolldownOptions: {
             external: ['lit', 'bootstrap', '@popperjs/core'],
             output: {
                 exports: 'auto',
@@ -21,5 +21,13 @@ export default defineConfig({
         },
         sourcemap: true,
     },
-    plugins: [dts()],
+    plugins: [
+        dts({
+            outDirs: [
+                { dir: 'dist', moduleFormat: 'esm' },
+                { dir: 'dist', moduleFormat: 'cjs' },
+            ],
+            bundleTypes: true,
+        }),
+    ],
 })

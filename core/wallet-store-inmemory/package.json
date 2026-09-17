@@ -23,12 +23,12 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
+        "@vitest/browser-playwright": "^5.0.1",
+        "@vitest/coverage-v8": "^5.0.1",
         "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "tsdown": "^0.23.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.1"
     },
     "files": [
         "dist/**"

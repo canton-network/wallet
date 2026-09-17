@@ -27,10 +27,10 @@ export class WalletAllocateEvent extends Event {
 
 @customElement('wg-wallet-card')
 export class WgWalletCard extends BaseElement {
-    @property({ type: Object }) wallet: Wallet | null = null
-    @property({ type: Boolean }) verified = false
-    @property({ type: Boolean }) loading = false
-    @property({ type: Boolean }) editable = true
+    @property({ type: Object }) accessor wallet: Wallet | null = null
+    @property({ type: Boolean }) accessor verified = false
+    @property({ type: Boolean }) accessor loading = false
+    @property({ type: Boolean }) accessor editable = true
 
     static styles = [
         BaseElement.styles,

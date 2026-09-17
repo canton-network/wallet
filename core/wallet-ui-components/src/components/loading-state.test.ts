@@ -18,4 +18,17 @@ describe('wg-loading-state', () => {
 
         expect(el).toBeInstanceOf(WgLoadingState)
     })
+
+    it('updates the rendered text when its property changes', async () => {
+        const el = await fixture<WgLoadingState>(
+            html`<wg-loading-state></wg-loading-state>`
+        )
+
+        el.text = 'Refreshing'
+        await el.updateComplete
+
+        expect(el.shadowRoot?.querySelector('.loading-text')?.textContent).toBe(
+            'Refreshing'
+        )
+    })
 })

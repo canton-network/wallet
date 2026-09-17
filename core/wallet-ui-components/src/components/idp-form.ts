@@ -49,9 +49,9 @@ export class IdpFormComponent extends BaseElement {
         configUrl: '',
     }
 
-    @property({ type: Boolean }) loading = false
+    @property({ type: Boolean }) accessor loading = false
 
-    @state() private _error = ''
+    @state() private accessor _error = ''
 
     @query('#idp-id') accessor idpIdInput: HTMLInputElement | null = null
     @query('#idp-type') accessor idpTypeSelect: HTMLSelectElement | null = null

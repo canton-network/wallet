@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
+import dts from 'unplugin-dts/vite'
+import { resolve } from 'path'
+import { standardDecorators } from '../../vite.decorators.js'
 
 export default defineConfig({
     build: {
@@ -13,13 +15,22 @@ export default defineConfig({
             fileName: (format) => (format === 'cjs' ? 'index.cjs' : 'index.js'),
             cssFileName: 'index',
         },
-        rollupOptions: {
-            external: ['lit', 'bootstrap', '@popperjs/core'],
+        rolldownOptions: {
+            external: [/^lit(?:\/|$)/, 'bootstrap', '@popperjs/core'],
             output: {
                 exports: 'auto',
             },
         },
         sourcemap: true,
     },
-    plugins: [dts()],
+    plugins: [
+        standardDecorators(resolve(import.meta.dirname, 'src/**/*.ts')),
+        dts({
+            outDirs: [
+                { dir: 'dist', moduleFormat: 'esm' },
+                { dir: 'dist', moduleFormat: 'cjs' },
+            ],
+            bundleTypes: true,
+        }),
+    ],
 })

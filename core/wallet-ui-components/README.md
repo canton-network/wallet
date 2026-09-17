@@ -42,6 +42,21 @@ To start a local web development server for interactive testing and development,
 pnpm dev
 ```
 
+## Decorators
+
+Components use standard decorators with auto-accessors for reactive properties:
+
+```ts
+@property({ type: String }) accessor label = ''
+@state() private accessor loading = false
+```
+
+Keep `experimentalDecorators` and `emitDecoratorMetadata` disabled. Vite 8's Oxc
+transformer does not lower standard decorators, so builds, browser tests, and
+Storybook use the shared SWC transform in [vite.decorators.ts](../../vite.decorators.ts).
+Lit subpath imports remain external in the library build so decorators and
+`LitElement` resolve to the same runtime in consuming applications.
+
 ## Usage
 
 The main entry point for building wallet UIs is the `AppLayout` component.

@@ -25,10 +25,10 @@
         "clean": "tsc -b --clean; rm -rf dist"
     },
     "devDependencies": {
-        "@vitest/coverage-v8": "^4.1.11",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@vitest/coverage-v8": "^5.0.1",
+        "tsdown": "^0.23.0",
+        "typescript": "^6.0.3",
+        "vitest": "^5.0.1"
     },
     "dependencies": {
         "@canton-network/core-ledger-client": "workspace:^",

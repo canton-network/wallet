@@ -17,7 +17,7 @@
         "@types/basic-auth": "^1.1.8",
         "ts-node": "^10.9.2",
         "tsx": "^4.23.0",
-        "typescript": "^5.9.3"
+        "typescript": "^6.0.3"
     },
     "dependencies": {
         "@types/node": "^25.9.4",

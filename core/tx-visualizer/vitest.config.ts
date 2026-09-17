@@ -6,6 +6,7 @@ import { playwright } from '@vitest/browser-playwright'
 
 export default defineConfig({
     test: {
+        clearMocks: false,
         coverage: {
             include: ['src/**/*.ts'],
             exclude: ['**/fixtures/**'],

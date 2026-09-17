@@ -4,9 +4,7 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "resolveJsonModule": true,
-        "esModuleInterop": true,
-        "moduleResolution": "node",
-        "baseUrl": "./",
+        "moduleResolution": "bundler",
         "paths": {
             "@canton-network/core-wallet-dapp-rpc-client": [
                 "../core/wallet-dapp-rpc-client/src"

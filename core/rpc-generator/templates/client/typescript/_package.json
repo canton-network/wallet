@@ -39,9 +39,9 @@
         "@types/ws": "^8.18.1",
         "eslint": "^10.6.0",
         "prettier": "3.9.4",
-        "tsdown": "^0.22.9",
+        "tsdown": "^0.23.0",
         "typedoc": "^0.28.20",
-        "typescript": "^5.9.3"
+        "typescript": "^6.0.3"
     },
     "repository": {
         "type": "git",

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { StorybookConfig } from '@storybook/web-components-vite'
+import { resolve } from 'path'
+import { standardDecorators } from '../../../vite.decorators.js'
 
 const config: StorybookConfig = {
     stories: ['../src/**/*.@(mdx|stories.@(js|jsx|ts|tsx))'],
@@ -13,6 +15,17 @@ const config: StorybookConfig = {
                 viteConfigPath: 'vite.config.js',
             },
         },
+    },
+    viteFinal(config) {
+        return {
+            ...config,
+            plugins: [
+                ...(config.plugins ?? []),
+                standardDecorators(
+                    resolve(import.meta.dirname, '../src/**/*.ts')
+                ),
+            ],
+        }
     },
 }
 

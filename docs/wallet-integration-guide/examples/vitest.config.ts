@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
     test: {
+        clearMocks: false,
         environment: 'node',
         include: ['**/*.test.ts'],
         setupFiles: ['./snippets/setupTests.ts'],

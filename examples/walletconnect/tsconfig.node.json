@@ -7,15 +7,13 @@
         "skipLibCheck": true,
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
-        "verbatimModuleSyntax": true,
         "moduleDetection": "force",
         "noEmit": true,
-        "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "erasableSyntaxOnly": true,
         "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true
+        "types": ["node", "react", "react-dom"]
     },
     "include": ["vite.config.ts"]
 }

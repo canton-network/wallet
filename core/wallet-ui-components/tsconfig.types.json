@@ -2,7 +2,6 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "emitDeclarationOnly": true,
-        "experimentalDecorators": true,
         "declaration": true,
         "declarationMap": true,
         "rootDir": "./src",

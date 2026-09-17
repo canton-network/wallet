@@ -1,15 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import typescript from '@rollup/plugin-typescript'
-import commonjs from '@rollup/plugin-commonjs'
-import { nodeResolve } from '@rollup/plugin-node-resolve'
-import json from '@rollup/plugin-json'
-import alias from '@rollup/plugin-alias'
+import { defineConfig } from 'rolldown'
+import { esmExternalRequirePlugin } from 'rolldown/plugins'
+import { dts } from 'rolldown-plugin-dts'
 
 import fs from 'node:fs'
 import path from 'node:path'
-import dts from 'rollup-plugin-dts'
 
 const TEST_TOKEN_BASE = path.resolve(
     import.meta.dirname,
@@ -62,7 +59,7 @@ const DAML_JS_PACKAGES = {
     otcTrade: buildDamlJsPackagesMap(OTC_TRADE_BASE),
 }
 
-// Flatten DAML_JS_PACKAGES into a single map for rollup config
+// Flatten DAML_JS_PACKAGES into a single map for rolldown config
 const allDamlJsPackages = {
     ...DAML_JS_PACKAGES.testToken,
     ...DAML_JS_PACKAGES.otcTrade,
@@ -115,126 +112,159 @@ function buildPathsMap(packageDirs) {
 }
 
 function buildAliasEntries(packageDirs) {
-    const entries = []
+    const entries = {
+        lodash: path.resolve(process.cwd(), 'node_modules/lodash/lodash.js'),
+        'lodash.isequal': path.resolve(
+            process.cwd(),
+            'node_modules/lodash.isequal/index.js'
+        ),
+        '@mojotech/json-type-validation': path.resolve(
+            process.cwd(),
+            'node_modules/@mojotech/json-type-validation/dist/index.es5.js'
+        ),
+    }
     for (const [name, pkgDir] of Object.entries(packageDirs)) {
         const pkgJson = JSON.parse(
             fs.readFileSync(path.join(pkgDir, 'package.json'), 'utf8')
         )
         const mainAbs = path.resolve(pkgDir, pkgJson.main || 'lib/index.js')
-        const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        // Sub-path must come before main to avoid premature matching
-        entries.push({
-            find: new RegExp(`^${escapedName}/(.+)$`),
-            replacement: `${pkgDir}/$1`,
-        })
-        entries.push({ find: name, replacement: mainAbs })
+        entries[`${name}/`] = `${pkgDir}/`
+        entries[name] = mainAbs
     }
     return entries
 }
 
-const pathsMap = buildPathsMap(allDamlJsPackages)
-const damlJsAlias = alias({ entries: buildAliasEntries(allDamlJsPackages) })
-const commonjsPlugin = commonjs({
-    transformMixedEsModules: true,
-    esmExternals: true,
-    requireReturnsDefault: false,
-})
+function resolveGeneratedDependencies() {
+    const resolved = {
+        lodash: path.resolve(process.cwd(), 'node_modules/lodash/lodash.js'),
+        '@mojotech/json-type-validation': path.resolve(
+            process.cwd(),
+            'node_modules/@mojotech/json-type-validation/dist/index.es5.js'
+        ),
+    }
+    return {
+        name: 'resolve-generated-dependencies',
+        resolveId(source) {
+            return resolved[source]
+        },
+    }
+}
 
-const typescriptPlugin = typescript({
-    compilerOptions: {
-        baseUrl: '.',
-        paths: pathsMap,
-    },
-})
+function promoteDeclarationBundle() {
+    return {
+        name: 'promote-declaration-bundle',
+        writeBundle() {
+            const typesDir = path.resolve(process.cwd(), 'dist/types')
+            const declaration = fs
+                .readdirSync(typesDir)
+                .filter((file) => file.endsWith('.d.ts'))
+                .map((file) => ({
+                    file,
+                    text: fs.readFileSync(path.join(typesDir, file), 'utf8'),
+                }))
+                .find(({ text }) => text.trim() !== 'export {}')
+
+            if (!declaration) {
+                throw new Error('No declaration bundle was generated')
+            }
+
+            fs.writeFileSync(
+                path.resolve(process.cwd(), 'dist/index.d.ts'),
+                declaration.text
+            )
+        },
+    }
+}
+
+const pathsMap = buildPathsMap(allDamlJsPackages)
+const aliasEntries = buildAliasEntries(allDamlJsPackages)
 
 const pkgPath = path.resolve(process.cwd(), 'package.json')
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
 
-// Collect deps + peerDeps + transitive deps that should be external
+// Keep runtime dependencies external for Node-compatible ESM and CJS builds.
 const external = [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
     // Transitive dependencies from damljs packages
     '@daml/types',
     '@daml/ledger',
-    '@mojotech/json-type-validation',
     // Node built-ins
     'node:fs',
     'node:url',
     'node:path',
+].filter((dep) => dep !== '@mojotech/json-type-validation')
+
+const dtsExternal = [
+    ...Object.keys(pkg.dependencies || {}),
+    ...Object.keys(pkg.peerDependencies || {}),
+    '@daml/ledger',
 ]
+const browserExternal = external.filter((dep) => !dep.startsWith('node:'))
 
-// bundle ESM
-const codeEsm = {
+const base = {
     input: 'src/index.ts',
-    output: { file: 'dist/index.js', format: 'es', sourcemap: true },
     external,
-    plugins: [
-        damlJsAlias,
-        json(),
-        commonjsPlugin,
-        nodeResolve(),
-        typescriptPlugin,
-    ],
+    platform: 'neutral',
+    resolve: { alias: aliasEntries },
+    plugins: [resolveGeneratedDependencies()],
 }
 
-// bundle CJS
-const codeCjs = {
-    input: 'src/index.ts',
-    output: {
-        file: 'dist/index.cjs',
-        format: 'cjs',
-        interop: 'auto',
-        sourcemap: true,
-        exports: 'named',
+export default defineConfig([
+    {
+        ...base,
+        output: {
+            file: 'dist/index.js',
+            format: 'es',
+            sourcemap: true,
+            codeSplitting: false,
+        },
     },
-    external,
-    plugins: [
-        damlJsAlias,
-        json(),
-        commonjsPlugin,
-        nodeResolve(),
-        typescriptPlugin,
-    ],
-}
-
-// bundle for browser
-const codeBrowser = {
-    input: 'src/index.ts',
-    output: {
-        file: 'dist/index.browser.js',
-        format: 'es',
-        sourcemap: true,
+    {
+        ...base,
+        output: {
+            file: 'dist/index.cjs',
+            format: 'cjs',
+            sourcemap: true,
+            exports: 'named',
+            codeSplitting: false,
+        },
     },
-    external,
-    plugins: [
-        damlJsAlias,
-        json(),
-        commonjsPlugin,
-        nodeResolve({
-            browser: true, // Prefer browser entrypoints
-            preferBuiltins: false, // Do NOT use Node builtins
-        }),
-        typescriptPlugin,
-    ],
-}
-
-// bundle DTS including types from codegen
-const types = {
-    input: 'src/index.ts',
-    output: { file: 'dist/index.d.ts', format: 'es' },
-    external,
-    plugins: [
-        dts({
-            respectExternal: true,
-            compilerOptions: {
-                baseUrl: '.',
-                paths: pathsMap,
-                declaration: true,
-                emitDeclarationOnly: true,
-            },
-        }),
-    ],
-}
-
-export default [codeEsm, codeCjs, codeBrowser, types]
+    {
+        ...base,
+        external: [],
+        output: {
+            file: 'dist/index.browser.js',
+            format: 'es',
+            sourcemap: true,
+            codeSplitting: false,
+        },
+        platform: 'browser',
+        plugins: [
+            resolveGeneratedDependencies(),
+            esmExternalRequirePlugin({ external: browserExternal }),
+        ],
+    },
+    {
+        input: 'src/index.ts',
+        external: dtsExternal,
+        output: {
+            dir: 'dist/types',
+            format: 'es',
+        },
+        plugins: [
+            ...dts({
+                generator: 'tsc',
+                resolver: 'tsc',
+                emitDtsOnly: true,
+                compilerOptions: {
+                    baseUrl: '.',
+                    paths: pathsMap,
+                    declaration: true,
+                    emitDeclarationOnly: true,
+                },
+            }),
+            promoteDeclarationBundle(),
+        ],
+    },
+])

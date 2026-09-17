@@ -3,9 +3,12 @@
 
 import { defineConfig, defineProject } from 'vitest/config'
 import { playwright } from '@vitest/browser-playwright'
+import { resolve } from 'path'
+import { standardDecorators } from '../../vite.decorators.js'
 
 export default defineConfig({
     test: {
+        clearMocks: false,
         coverage: {
             include: ['src/**/*.ts'],
             exclude: [
@@ -24,6 +27,11 @@ export default defineConfig({
         },
         projects: [
             defineProject({
+                plugins: [
+                    standardDecorators(
+                        resolve(import.meta.dirname, 'src/**/*.ts')
+                    ),
+                ],
                 test: {
                     name: 'browser',
                     include: ['src/**/*.test.ts'],

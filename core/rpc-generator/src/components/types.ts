@@ -17,7 +17,7 @@ export type FHook = (
     fromDir: string | undefined,
     component: IComponent,
     openrpcDocument: OpenRPC,
-    Typings: Typings,
+    Typings: Typings.default,
     dereffedDocument: OpenRPC
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => Promise<any>

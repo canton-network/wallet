@@ -6,6 +6,7 @@ import { WxtVitest } from 'wxt/testing/vitest-plugin'
 
 export default defineConfig({
     test: {
+        clearMocks: false,
         coverage: {
             include: ['src/**/*.ts'],
             exclude: ['src/index.ts'],

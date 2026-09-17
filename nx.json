@@ -8,7 +8,7 @@
             "!{projectRoot}/.storybook/**/*",
             "!{projectRoot}/tsconfig.storybook.json"
         ],
-        "sharedGlobals": []
+        "sharedGlobals": ["{workspaceRoot}/vite.decorators.ts"]
     },
     "release": {
         "version": {

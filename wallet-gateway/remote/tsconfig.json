@@ -5,8 +5,8 @@
         "outDir": "./dist",
         "emitDeclarationOnly": false,
         "exactOptionalPropertyTypes": false,
-        "experimentalDecorators": false,
-        "useDefineForClassFields": false
+        "useDefineForClassFields": true,
+        "types": ["cors", "express", "node", "supertest"]
     },
     "include": ["src", "types/express.d.ts"],
     "exclude": ["src/web/frontend"]
