@@ -515,7 +515,7 @@ describe('service', () => {
                 method: 'ledgerApi',
                 params: {
                     resource: '/v2/state/active-contracts-page',
-                    requestMethod: 'get',
+                    requestMethod: 'post',
                     body: expect.objectContaining({
                         pageToken: 'page2Token',
                         maxPageSize: 50,
@@ -542,7 +542,7 @@ describe('service', () => {
                 method: 'ledgerApi',
                 params: {
                     resource: '/v2/state/active-contracts-page',
-                    requestMethod: 'get',
+                    requestMethod: 'post',
                     body: expect.objectContaining({
                         eventFormat: expect.objectContaining({
                             filtersByParty: expect.any(Object),
@@ -566,7 +566,7 @@ describe('service', () => {
                 method: 'ledgerApi',
                 params: {
                     resource: '/v2/state/active-contracts-page',
-                    requestMethod: 'get',
+                    requestMethod: 'post',
                     body: expect.objectContaining({
                         eventFormat: expect.objectContaining({
                             filtersForAnyParty: expect.any(Object),
