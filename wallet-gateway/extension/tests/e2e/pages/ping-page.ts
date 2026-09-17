@@ -23,13 +23,27 @@ export class PingPage {
             this.page,
             this.page.getByTestId('connect-wallet')
         )
-        const wallet = picker.getByRole('button', {
-            name: 'Connect to Canton Wallet',
-        })
+        const wallet = picker.page
+            .locator('.wallet-picker-item-main, .wallet-card')
+            .filter({ hasText: /Canton Wallet/i })
+            .first()
         await expect(wallet).toBeVisible()
-        await expect(picker.getByLabel('Install Canton Wallet')).toHaveCount(0)
+        if (picker.kind === 'modal') {
+            await expect(
+                wallet.locator('.wallet-installed-badge')
+            ).toBeVisible()
+        } else {
+            await expect(
+                picker.page.getByLabel('Install Canton Wallet')
+            ).toHaveCount(0)
+        }
 
-        const pickerClosed = picker.waitForEvent('close')
+        const pickerClosed =
+            picker.kind === 'popup'
+                ? picker.page.waitForEvent('close')
+                : picker.dappPage
+                      .locator('[data-swk-wallet-picker-modal]')
+                      .waitFor({ state: 'detached' })
         await wallet.click()
         await pickerClosed
 
