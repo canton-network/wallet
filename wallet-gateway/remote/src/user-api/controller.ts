@@ -32,6 +32,10 @@ import {
     Null,
     ListTransactionsResult,
     GetUserResult,
+    GetCurrentUserResult,
+    SetLedgerPrimaryPartyParams,
+    ProbeSelfIssuedTokenParams,
+    ProbeSelfIssuedTokenResult,
     GetNetworkParams,
     GetNetworkResult,
     SelfSignedAccessTokenParams,
@@ -59,6 +63,9 @@ import {
     Auth,
     AuthTokenProvider,
     idpSchema,
+    prepareJwsForSigning,
+    appendJwsBase64Signature,
+    getKeyId,
 } from '@canton-network/core-wallet-auth'
 import { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
@@ -1301,6 +1308,149 @@ export const userController = (
             params: GetWalletParams
         ): Promise<GetWalletResult> => {
             return await store.getWallet(params.partyId)
+        },
+        // temp
+        getCurrentUser: async (): Promise<GetCurrentUserResult> => {
+            const { accessToken } = assertConnected(authContext)
+            const network = await store.getCurrentNetwork()
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    accessToken,
+                    logger
+                ),
+            })
+            return ledgerClient.get('/v2/authenticated-user')
+        },
+        setLedgerPrimaryParty: async (params: SetLedgerPrimaryPartyParams) => {
+            const { userId } = assertConnected(authContext)
+            const network = await store.getCurrentNetwork()
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
+            }
+
+            const idp = await store.getIdp(network.identityProviderId)
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger,
+                accessTokenProvider: AuthTokenProvider.fromGatewayConfig(
+                    idp,
+                    network.adminAuth,
+                    logger
+                ),
+            })
+            await ledgerClient.init()
+
+            await ledgerClient.patch(
+                '/v2/users/{user-id}',
+                {
+                    user: {
+                        id: userId,
+                        primaryParty: params.partyId,
+                        primaryPartyAuthentication: true,
+                    },
+                    updateMask: {
+                        paths: [
+                            'primary_party',
+                            'primary_party_authentication',
+                        ],
+                        unknownFields: { fields: {} },
+                    },
+                },
+                { path: { 'user-id': userId } }
+            )
+            return null
+        },
+        probeSelfIssuedToken: async (
+            params: ProbeSelfIssuedTokenParams
+        ): Promise<ProbeSelfIssuedTokenResult> => {
+            const { userId, accessToken } = assertConnected(authContext)
+            const network = await store.getCurrentNetwork()
+            if (network === undefined) {
+                throw new Error('No network session found')
+            }
+            if (!network.synchronizerId) {
+                throw new Error('Current network has no synchronizerId')
+            }
+
+            const wallet = (await store.getWallets()).find(
+                (w) => w.partyId === params.partyId
+            )
+            if (!wallet) {
+                throw new Error(`No wallet found for partyId ${params.partyId}`)
+            }
+            if (wallet.signingProviderId !== SigningProvider.WALLET_KERNEL) {
+                throw new Error(
+                    `probeSelfIssuedToken is only supported for ${SigningProvider.WALLET_KERNEL} wallets, got ${wallet.signingProviderId}`
+                )
+            }
+
+            const driver =
+                drivers[SigningProvider.WALLET_KERNEL]?.controller(userId)
+            if (!driver) {
+                throw new Error('Wallet Kernel signing driver not available')
+            }
+
+            const sessionLedger = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    accessToken,
+                    logger
+                ),
+            })
+            const { participantId } = await sessionLedger.get(
+                '/v2/parties/participant-id'
+            )
+
+            const now = Math.floor(Date.now() / 1000)
+            const kid = await getKeyId(wallet.publicKey)
+            const signingInput = prepareJwsForSigning(
+                { alg: 'EdDSA', typ: 'JWT', kid },
+                {
+                    aud: participantId,
+                    exp: now + 3600,
+                    iss: params.partyId,
+                    sub: params.partyId,
+                    'daml.com': {
+                        syn: network.synchronizerId,
+                        usr: userId,
+                    },
+                }
+            )
+
+            const result = await driver.signMessage({
+                message: signingInput,
+                keyIdentifier: { publicKey: wallet.publicKey },
+            })
+            if (isRpcError(result) || !result.signature) {
+                throw new Error(
+                    isRpcError(result)
+                        ? result.error_description
+                        : 'signMessage failed'
+                )
+            }
+
+            const token = appendJwsBase64Signature(
+                signingInput,
+                result.signature
+            )
+
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger,
+                accessTokenProvider: AuthTokenProvider.fromToken(token, logger),
+            })
+            const probe = await ledgerClient.get('/v2/authenticated-user')
+            return { token, probe }
         },
     })
 }

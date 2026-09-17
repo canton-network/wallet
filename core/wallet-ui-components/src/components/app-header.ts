@@ -318,6 +318,14 @@ export class AppHeader extends BaseElement {
                         <button
                             type="button"
                             class="menu-item"
+                            @click=${() =>
+                                this.navigateTo('/self-issued-token/')}
+                        >
+                            <span>Self-issued token</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="menu-item"
                             @click=${() => this.navigateTo('/networks/')}
                         >
                             <span>Networks</span>
