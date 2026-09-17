@@ -272,6 +272,29 @@ describe('userController', () => {
         vi.clearAllMocks()
     })
 
+    describe('listSigningProviders', () => {
+        it('returns the registered signing provider ids', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {
+                    [SigningProvider.PARTICIPANT]: {},
+                    [SigningProvider.FIREBLOCKS]: {},
+                }
+            )
+
+            await expect(controller.listSigningProviders()).resolves.toEqual({
+                signingProviders: [
+                    SigningProvider.PARTICIPANT,
+                    SigningProvider.FIREBLOCKS,
+                ],
+            })
+        })
+    })
+
     describe('getUser', () => {
         it('returns user id and isAdmin false for a regular user', async () => {
             const store = await createStore(logger, auth)
