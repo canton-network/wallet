@@ -39,7 +39,6 @@ describe('service', () => {
     ]
 
     beforeEach(() => {
-        vi.clearAllMocks()
         ledgerProvider.request.mockResolvedValue(mockActiveContracts)
 
         service = new AcsService(ledgerProvider)

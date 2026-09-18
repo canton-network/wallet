@@ -104,7 +104,6 @@ export function assertNotRpcError<T>(value: T | RpcError): asserts value is T {
 
 describe('DfnsSigningDriver', () => {
     beforeEach(() => {
-        vi.clearAllMocks()
         mockHandlerDefaults()
     })
 
