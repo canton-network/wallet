@@ -202,9 +202,25 @@ export class ApproveUi extends BaseElement {
     }
 
     private async handleApproveAction() {
+        if (this.isSigning || this.isApproving) return
+
         if (this.status === 'signed') {
             return this.handleExecute()
         }
+
+        if (this.status === 'awaiting-signature') {
+            showToast(
+                'Awaiting external signature',
+                'Approval the request with your signing provider. This page will update automatically.',
+                'info'
+            )
+            return
+        }
+
+        if (this.status !== 'pending') {
+            return
+        }
+
         return this.handleSign()
     }
 
