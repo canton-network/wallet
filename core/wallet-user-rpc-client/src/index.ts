@@ -85,7 +85,7 @@ export type NetworkName = string
 export type Id = string
 /**
  *
- * Type of identity provider (oauth / self_signed)
+ * Type of identity provider (oauth / self_signed / self_issued)
  *
  */
 export type Type = any

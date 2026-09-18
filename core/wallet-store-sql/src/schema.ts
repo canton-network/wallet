@@ -26,7 +26,7 @@ interface MigrationTable {
 
 interface IdpTable {
     id: string
-    type: 'oauth' | 'self_signed'
+    type: 'oauth' | 'self_signed' | 'self_issued'
     issuer: string
     configUrl: string | undefined
 }
@@ -163,6 +163,7 @@ export const toIdp = (table: IdpTable): Idp => {
             }
         }
         case 'self_signed':
+        case 'self_issued':
             return {
                 id: table.id,
                 type: table.type,
@@ -181,6 +182,7 @@ export const fromIdp = (idp: Idp): IdpTable => {
                 configUrl: idp.configUrl,
             }
         case 'self_signed':
+        case 'self_issued':
             return {
                 id: idp.id,
                 type: idp.type,

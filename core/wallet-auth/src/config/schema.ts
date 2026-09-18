@@ -32,6 +32,14 @@ const selfSignedAuthSchema = z.object({
     clientSecret: z.string(),
 })
 
+// TODO does issuer make sense here?
+const selfIssuedAuthSchema = z.object({
+    method: z.literal('self_issued'),
+    audience: z.string(),
+    scope: z.string(),
+    clientId: z.string(),
+})
+
 const clientCredentialsEnvAuthSchema = z.object({
     method: z.literal('client_credentials'),
     audience: z.string(),
@@ -53,12 +61,14 @@ export const authSchema = z.discriminatedUnion('method', [
     authorizationCodeAuthSchema,
     clientCredentialsAuthSchema,
     selfSignedAuthSchema,
+    selfIssuedAuthSchema,
 ])
 
 export const authFromEnvSchema = z.discriminatedUnion('method', [
     authorizationCodeAuthSchema,
     clientCredentialsEnvAuthSchema,
     selfSignedEnvAuthSchema,
+    selfIssuedAuthSchema,
 ])
 
 export type Auth = z.infer<typeof authSchema>
@@ -66,11 +76,17 @@ export type AuthFromEnv = z.infer<typeof authFromEnvSchema>
 export type AuthorizationCodeAuth = z.infer<typeof authorizationCodeAuthSchema>
 export type ClientCredentialsAuth = z.infer<typeof clientCredentialsAuthSchema>
 export type SelfSignedAuth = z.infer<typeof selfSignedAuthSchema>
+export type SelfIssuedAuth = z.infer<typeof selfIssuedAuthSchema>
 
 export const idpSchema = z.discriminatedUnion('type', [
     z.object({
         id: z.string(),
         type: z.literal('self_signed'),
+        issuer: z.string(),
+    }),
+    z.object({
+        id: z.string(),
+        type: z.literal('self_issued'),
         issuer: z.string(),
     }),
     z.object({

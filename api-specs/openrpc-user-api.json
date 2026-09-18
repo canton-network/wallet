@@ -1353,8 +1353,8 @@
                     },
                     "type": {
                         "title": "type",
-                        "enum": ["oauth", "self_signed"],
-                        "description": "Type of identity provider (oauth / self_signed)"
+                        "enum": ["oauth", "self_signed", "self_issued"],
+                        "description": "Type of identity provider (oauth / self_signed / self_issued)"
                     },
                     "issuer": {
                         "title": "issuer",
