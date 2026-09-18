@@ -26,8 +26,7 @@ export async function createAndInitiateOtcTrade(
         globalSynchronizerId,
     } = setup
 
-    // The proposal is created on Alice's participant but read from other
-    // participants (Bob, TradingApp)
+    // The proposal is created on Alice's participant but read from other participants (Bob, TradingApp)
     const readProposalCid = async (
         sdk: SDKInterface<'token'>,
         party: string,
