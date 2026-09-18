@@ -212,6 +212,26 @@ describe('wg-login-form', () => {
         expect(event.clientSecret).toBe('network-secret')
     })
 
+    it('shows a username field for self_issued identity providers', async () => {
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form
+                .networks=${[
+                    makePublicNetwork({
+                        identityProviderId: 'idp-1',
+                    }),
+                ]}
+                .idps=${[makeIdp({ id: 'idp-1', type: 'self_issued' })]}
+            ></wg-login-form>`
+        )
+
+        const username =
+            el.shadowRoot!.querySelector<HTMLInputElement>('#username')
+        expect(username).not.toBeNull()
+        expect(username!.type).toBe('text')
+        expect(el.shadowRoot!.querySelector('#client-id')).toBeNull()
+        expect(el.shadowRoot!.querySelector('#client-secret')).toBeNull()
+    })
+
     it('submits on form submit event', async () => {
         const network = makePublicNetwork({
             identityProviderId: 'idp-1',

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, type PropertyValues } from 'lit'
+import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import './back-link.js'
 import { BaseElement } from '../internal/base-element.js'
@@ -266,6 +266,56 @@ export class WgLoginForm extends BaseElement {
     }
 
     protected render() {
+        const renderAuthSpecificInputs = () => {
+            switch (this.selectedIdp?.type) {
+                case 'self_issued':
+                    return html`
+                        <label
+                            class="form-label fw-semibold text-body mt-3 mb-2"
+                            for="username"
+                            >Username</label
+                        >
+                        <input
+                            id="username"
+                            class="login-input form-control"
+                            type="text"
+                            autocomplete="username"
+                            ?disabled=${this.connecting}
+                        />
+                    `
+                case 'self_signed':
+                    return html`
+                        <label
+                            class="form-label fw-semibold text-body mt-3 mb-2"
+                            for="client-id"
+                            >Client ID</label
+                        >
+                        <input
+                            id="client-id"
+                            class="login-input form-control"
+                            type="text"
+                            autocomplete="username"
+                            .value=${this.selectedNetwork?.clientId || ''}
+                            ?disabled=${this.connecting}
+                        />
+                        <label
+                            class="form-label fw-semibold text-body mt-3 mb-2"
+                            for="client-secret"
+                            >Client Secret</label
+                        >
+                        <input
+                            id="client-secret"
+                            class="login-input form-control"
+                            type="password"
+                            autocomplete="current-password"
+                            ?disabled=${this.connecting}
+                        />
+                    `
+                default:
+                    return nothing
+            }
+        }
+
         return html`
             <form class="screen" @submit=${this.handleSubmit}>
                 <div class="top-bar">
@@ -309,37 +359,7 @@ export class WgLoginForm extends BaseElement {
                         <span class="select-chevron">${chevronDownIcon}</span>
                     </div>
 
-                    ${
-                        this.selectedIdp?.type === 'self_signed'
-                            ? html`
-                                  <label
-                                      class="form-label fw-semibold text-body mt-3 mb-2"
-                                      for="client-id"
-                                      >Client ID</label
-                                  >
-                                  <input
-                                      id="client-id"
-                                      class="login-input form-control"
-                                      type="text"
-                                      autocomplete="username"
-                                      .value=${this.selectedNetwork?.clientId || ''}
-                                      ?disabled=${this.connecting}
-                                  />
-                                  <label
-                                      class="form-label fw-semibold text-body mt-3 mb-2"
-                                      for="client-secret"
-                                      >Client Secret</label
-                                  >
-                                  <input
-                                      id="client-secret"
-                                      class="login-input form-control"
-                                      type="password"
-                                      autocomplete="current-password"
-                                      ?disabled=${this.connecting}
-                                  />
-                              `
-                            : null
-                    }
+                    ${renderAuthSpecificInputs()}
                     ${
                         this.message
                             ? html`<div
