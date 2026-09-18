@@ -41,6 +41,12 @@ const selfSignedIdp: Idp = {
     issuer: 'unsafe-auth',
 }
 
+const selfIssuedIdp: Idp = {
+    id: 'idp-self-issued',
+    type: 'self_issued',
+    issuer: 'party-jwt',
+}
+
 const baseNetwork: Network = {
     id: 'net-1',
     name: 'Testnet',
@@ -71,9 +77,10 @@ const baseNetwork: Network = {
 
 describe('schema mappers', () => {
     describe('Idp', () => {
-        test('round-trips oauth and self_signed IdPs', () => {
+        test('round-trips oauth, self_signed, and self_issued IdPs', () => {
             expect(toIdp(fromIdp(oauthIdp))).toEqual(oauthIdp)
             expect(toIdp(fromIdp(selfSignedIdp))).toEqual(selfSignedIdp)
+            expect(toIdp(fromIdp(selfIssuedIdp))).toEqual(selfIssuedIdp)
         })
 
         test('throws when oauth IdP row is missing configUrl', () => {

@@ -118,6 +118,12 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
             if (idp.type == 'self_signed') {
                 return await verifySelfSignedToken(jwt, idp, store, logger)
             }
+            if (idp.type === 'self_issued') {
+                logger.warn(
+                    'self_issued identity provider authentication is not implemented'
+                )
+                return undefined
+            }
             logger.debug({ idp }, 'Using IDP')
             const response = await fetch(idp.configUrl)
             const config = await response.json()

@@ -10,11 +10,13 @@ test('config from json file', async () => {
     expect(resp.bootstrap.networks[0].ledgerApi.baseUrl).toBe(
         'http://127.0.0.1:5003'
     )
-    expect(resp.bootstrap.networks[0].auth.clientId).toBe('operator')
+    expect(resp.bootstrap.networks[0].auth.method).toBe('authorization_code')
+    if (resp.bootstrap.networks[0].auth.method === 'authorization_code') {
+        expect(resp.bootstrap.networks[0].auth.clientId).toBe('operator')
+    }
     expect(resp.bootstrap.networks[0].auth.scope).toBe(
         'openid email daml_ledger_api offline_access'
     )
-    expect(resp.bootstrap.networks[0].auth.method).toBe('authorization_code')
     expect(resp.bootstrap.networks[2].auth.method).toBe('client_credentials')
     if (resp.bootstrap.networks[2].auth.method === 'client_credentials') {
         expect(resp.bootstrap.networks[2].auth.audience).toBe(

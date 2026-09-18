@@ -1317,6 +1317,14 @@ export const userController = (
 }
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
+    if (auth.method === 'self_issued') {
+        return {
+            method: auth.method,
+            audience: auth.audience,
+            scope: auth.scope,
+        }
+    }
+
     const base = {
         method: auth.method,
         audience: auth.audience,
@@ -1372,7 +1380,7 @@ function toPublicNetwork(network: Network): PublicNetwork {
         ledgerApi: network.ledgerApi.baseUrl,
         authMethod: auth.method,
         ...(auth.method !== 'client_credentials' && {
-            clientId: auth.clientId,
+            ...('clientId' in auth ? { clientId: auth.clientId } : {}),
             scope: auth.scope,
             audience: auth.audience,
         }),

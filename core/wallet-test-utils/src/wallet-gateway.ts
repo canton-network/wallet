@@ -20,7 +20,7 @@ export interface NetworkFormInput {
 
 export interface IdpFormInput {
     id: string
-    type: 'oauth' | 'self_signed'
+    type: 'oauth' | 'self_signed' | 'self_issued'
     issuer: string
     configUrl: string
 }

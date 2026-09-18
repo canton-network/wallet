@@ -149,6 +149,9 @@ export class WgIdps extends BaseElement {
                                               <option value="self_signed">
                                                   self_signed
                                               </option>
+                                              <option value="self_issued">
+                                                  self_issued
+                                              </option>
                                           </select>
 
                                           <form-input

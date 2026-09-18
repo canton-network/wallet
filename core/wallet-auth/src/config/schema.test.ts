@@ -14,6 +14,14 @@ describe('schemas', () => {
 
         expect(idpSchema.safeParse(validIdpSelfSigned).success).toBe(true)
 
+        const validIdpSelfIssued = {
+            id: 'test1',
+            type: 'self_issued',
+            issuer: 'party-jwt',
+        }
+
+        expect(idpSchema.safeParse(validIdpSelfIssued).success).toBe(true)
+
         const validIdpClientOauth = {
             id: 'test1',
             type: 'oauth',
@@ -47,6 +55,13 @@ describe('schemas', () => {
             scope: '',
         }
         expect(authSchema.safeParse(validAuthSelfSigned).success).toBe(true)
+
+        const validAuthSelfIssued = {
+            method: 'self_issued',
+            audience: 'https://canton.network.global',
+            scope: '',
+        }
+        expect(authSchema.safeParse(validAuthSelfIssued).success).toBe(true)
 
         const validAuthClientCredentials = {
             method: 'client_credentials',
