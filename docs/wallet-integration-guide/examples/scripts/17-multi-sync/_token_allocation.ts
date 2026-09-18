@@ -33,7 +33,7 @@ export async function allocateTokenForBob(
     const tokenHolding = tokenHoldings[0]
     if (!tokenHolding) throw new Error('Token holding not found for Bob')
 
-    // obtain TokenRules factory associated with the app synchronizerId
+    // Verify that the TokenRules factory for the app synchronizer is available.
     const appTokenRules = (
         await tokenAdminSdk.ledger.acsReader.raw.readJsContracts({
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],
