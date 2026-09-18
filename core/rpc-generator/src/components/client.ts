@@ -3,7 +3,7 @@
 
 import * as path from 'path'
 import { move } from 'fs-extra'
-import type { IHooks } from './types.js'
+import type { IHooks } from './types'
 import { readFile } from 'fs-extra'
 import * as fs from 'fs'
 import { promisify } from 'util'
