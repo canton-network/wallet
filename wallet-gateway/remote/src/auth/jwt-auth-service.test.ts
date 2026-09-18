@@ -11,7 +11,7 @@ import {
     afterEach,
 } from 'vitest'
 import { getLogger } from '@logtape/logtape'
-import { pino, Logger } from 'pino'
+import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
 import {
     createLocalJWKSet,
@@ -21,8 +21,8 @@ import {
     type JWK,
     type KeyLike,
 } from 'jose'
-import { AuthContext } from '@canton-network/core-wallet-auth'
-import { Network } from '@canton-network/core-wallet-store'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { Network } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { jwtAuthService } from './jwt-auth-service.js'
 

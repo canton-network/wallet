@@ -6,7 +6,7 @@ import { getAllocationTransferContext } from './getAllocationTransferContext'
 import { getAllocationCancelContext } from './getAllocationCancelContext'
 import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
 import { emptyChoiceContext } from '../common'
-import { expressContext, RequestType } from '../../__test__/mocks'
+import { expressContext, type RequestType } from '../../__test__/mocks'
 
 const { res, next } = expressContext
 

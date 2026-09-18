@@ -7,11 +7,11 @@ import type {
     SigningKey,
     SigningTransaction,
 } from '@canton-network/core-signing-lib'
-import { AuthContext } from '@canton-network/core-wallet-auth'
-import { Kysely } from 'kysely'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { Kysely } from 'kysely'
 import { pino } from 'pino'
 import { migrator } from './migrator.js'
-import { DB } from './schema.js'
+import type { DB } from './schema.js'
 import { connection, StoreSql } from './store-sql.js'
 
 const userId = 'test-user-id'

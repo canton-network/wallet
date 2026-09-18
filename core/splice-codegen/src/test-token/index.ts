@@ -4,7 +4,7 @@
 import * as DAR from './dar'
 import commands from './commands'
 import * as utils from './utils'
-import { SpliceCodegen } from 'src/types'
+import type { SpliceCodegen } from '../types'
 
 export const module: SpliceCodegen<typeof DAR, typeof commands> = {
     DAR,

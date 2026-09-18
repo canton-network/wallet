@@ -8,7 +8,7 @@ import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { sessionHandler } from './sessionHandler.js'
 import { providerErrors } from '@canton-network/core-rpc-errors'
-import { Store } from '@canton-network/core-wallet-store'
+import type { Store } from '@canton-network/core-wallet-store'
 
 describe('sessionHandler', () => {
     const getSession = vi.fn()

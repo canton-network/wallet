@@ -3,7 +3,7 @@
 
 import { html, css } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import {
+import type {
     PublicNetwork,
     Session,
 } from '@canton-network/core-wallet-user-rpc-client'

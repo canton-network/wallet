@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vite'
-import { dirname, resolve } from 'path'
-import { fileURLToPath } from 'url'
+import { resolve } from 'path'
 import { resolveRouteInputs } from './src/web/route-inputs.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const frontendRoot = resolve(__dirname, 'src/web/frontend')
+const frontendRoot = resolve(import.meta.dirname, 'src/web/frontend')
 
 export default defineConfig({
     root: 'src/web/frontend',
@@ -16,7 +14,7 @@ export default defineConfig({
     // dev mode does both build and later serve, hence relying on env var instead of command
     base: process.env.NODE_ENV === 'development' ? '/' : './',
     build: {
-        outDir: resolve(__dirname, './dist/web/frontend'),
+        outDir: resolve(import.meta.dirname, './dist/web/frontend'),
         emptyOutDir: true,
         rollupOptions: {
             input: resolveRouteInputs(frontendRoot),

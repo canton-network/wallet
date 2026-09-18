@@ -6,9 +6,11 @@ import config from '@canton-network/core-eslint-config'
 
 export default defineConfig([
     {
+        ignores: ['.output/**', '.wxt/**'],
+    },
+    {
         files: ['**/*.{ts,tsx}'],
         extends: [config],
-        ignores: ['.output/**', '.wxt/**'],
         languageOptions: {
             parserOptions: {
                 // This tells ESLint to automatically find the nearest tsconfig.json

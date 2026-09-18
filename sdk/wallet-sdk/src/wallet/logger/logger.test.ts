@@ -5,7 +5,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import ConsoleLogAdapter from './adapter/console'
 import CustomLogAdapter from './adapter/custom'
 import { SDKLogger } from './logger'
-import { LogAdapter } from './types'
+import type { LogAdapter } from './types'
 
 function makeCustomAdapter() {
     const log = vi.fn()

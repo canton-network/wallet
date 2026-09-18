@@ -8,7 +8,7 @@ import {
     vi,
     beforeEach,
     afterEach,
-    Mock,
+    type Mock,
     beforeAll,
 } from 'vitest'
 import { ParentWindowOriginManager, ChildWindowOriginManager } from './manager'

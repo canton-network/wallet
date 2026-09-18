@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
-import { LedgerClient, Types } from '@canton-network/core-ledger-client'
-import {
+import type { Logger } from 'pino'
+import { LedgerClient, type Types } from '@canton-network/core-ledger-client'
+import type {
     Store,
     Transaction,
     Wallet,
@@ -11,32 +11,32 @@ import {
 } from '@canton-network/core-wallet-store'
 import type { SignResult } from '../user-api/rpc-gen/typings.js'
 import {
-    Error as SigningError,
-    GetTransactionResult,
+    type Error as SigningError,
+    type GetTransactionResult,
     SigningProvider,
-    SignTransactionResult,
-    Methods as SigningController,
-    SignTransactionParams,
+    type SignTransactionResult,
+    type Methods as SigningController,
+    type SignTransactionParams,
 } from '@canton-network/core-signing-lib'
 import type { SigningDrivers } from '../signing/signing-drivers.js'
-import {
+import type {
     ExecuteParams,
     ExecuteResult,
     SignParams,
 } from '../user-api/rpc-gen/typings.js'
-import { UserId } from '../dapp-api/rpc-gen/typings.js'
-import { Notifier } from '../notification/NotificationService.js'
+import type { UserId } from '../dapp-api/rpc-gen/typings.js'
+import type { Notifier } from '../notification/NotificationService.js'
 import {
     ledgerPrepareParams,
     logDynamically,
     type PrepareParams,
 } from '../utils.js'
 import {
-    AuthContext,
+    type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import type { HASHING_SCHEME_VERSION } from '../env.js'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 

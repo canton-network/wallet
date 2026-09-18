@@ -5,11 +5,11 @@ import { css, html, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { chevronDownIcon } from '../icons/index.js'
 import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
-import {
+import type {
     Key,
     SigningProviderId,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 
 export class WalletEditEvent extends Event {
     constructor(

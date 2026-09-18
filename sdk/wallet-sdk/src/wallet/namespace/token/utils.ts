@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
-import { TokenNamespaceConfig } from './namespace.js'
+import type { PartyId } from '@canton-network/core-types'
+import type { TokenNamespaceConfig } from './namespace.js'
 
 export function resolveProviderParty(
     ctx: TokenNamespaceConfig,

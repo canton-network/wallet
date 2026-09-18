@@ -4,7 +4,7 @@
 import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { LoginConnectEvent, WgLoginForm } from './login-form.js'
+import { LoginConnectEvent, type WgLoginForm } from './login-form.js'
 import { makeIdp, makePublicNetwork } from './fixtures.js'
 
 describe('wg-login-form', () => {

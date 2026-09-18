@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import SpliceWalletJSONRPCDAppAPI, {
-    RpcTypes as DappRpcTypes,
+    type RpcTypes as DappRpcTypes,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import { AbstractProvider } from '@canton-network/core-splice-provider'
-import { RequestArgs } from '@canton-network/core-types'
+import type { RequestArgs } from '@canton-network/core-types'
 import {
-    RpcTransport,
+    type RpcTransport,
     WindowTransport,
 } from '@canton-network/core-rpc-transport'
 

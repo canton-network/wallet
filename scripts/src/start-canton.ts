@@ -11,7 +11,7 @@ import {
     info,
     trimNewline,
     getNetworkArg,
-    Network,
+    type Network,
     getArgValue,
 } from './lib/utils.js'
 import { existsSync } from 'fs'

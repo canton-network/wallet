@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import { Idp } from '@canton-network/core-wallet-auth'
-import { Network } from '@canton-network/core-wallet-store'
+import type { Idp } from '@canton-network/core-wallet-auth'
+import type { Network } from '@canton-network/core-wallet-store'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 
 const ISSUER = 'unsafe-auth'

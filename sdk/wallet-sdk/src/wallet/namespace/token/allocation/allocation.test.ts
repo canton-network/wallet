@@ -3,10 +3,10 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import * as mock from '../../../__test__/mocks'
-import { TokenNamespaceConfig } from '../index'
+import type { TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
 import { AllocationNamespace } from './service'
-import {
+import type {
     AllocationContextParams,
     AllocationInstructionCreateParams,
 } from './types'

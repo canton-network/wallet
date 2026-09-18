@@ -3,25 +3,25 @@
 
 import { beforeEach, describe, expect, test } from 'vitest'
 
-import { StoreInternal, StoreInternalConfig } from './store-internal'
+import { StoreInternal, type StoreInternalConfig } from './store-internal'
 import {
-    Wallet,
-    Session,
-    Store,
-    LedgerApi,
-    Network,
-    Transaction,
-    MessageRaw,
+    type Wallet,
+    type Session,
+    type Store,
+    type LedgerApi,
+    type Network,
+    type Transaction,
+    type MessageRaw,
     UserLevelRight,
     PartyLevelRight,
-    ApiKey,
+    type ApiKey,
 } from '@canton-network/core-wallet-store'
-import {
+import type {
     AuthContext,
     AuthorizationCodeAuth,
     Idp,
 } from '@canton-network/core-wallet-auth'
-import { getLogger, Logger } from '@logtape/logtape'
+import { getLogger, type Logger } from '@logtape/logtape'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',

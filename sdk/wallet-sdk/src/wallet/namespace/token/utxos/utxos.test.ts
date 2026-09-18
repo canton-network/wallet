@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
+import { describe, it, vi, beforeEach, expect, type Mock } from 'vitest'
 import * as mock from '../../../__test__/mocks'
-import { TokenNamespace, TokenNamespaceConfig } from '../index'
+import { TokenNamespace, type TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
-import { UtxoNamespace } from './service'
+import type { UtxoNamespace } from './service'
 import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
 import { v4 } from 'uuid'
-import { MergeDelegationNamespace } from './mergeDelegation'
+import type { MergeDelegationNamespace } from './mergeDelegation'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const { ctx, mockLogger } = mock

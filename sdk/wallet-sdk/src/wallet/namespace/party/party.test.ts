@@ -8,7 +8,7 @@ import {
     PreparedPartyCreationService,
     SignedPartyCreationService,
 } from '.'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { signTransactionHash } from '@canton-network/core-signing-lib'
 
 const { ctx, ledgerProvider } = mock

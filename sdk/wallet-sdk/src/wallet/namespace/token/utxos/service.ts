@@ -1,23 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { MergeUtxosParams, ListHoldingsParams } from './types.js'
+import type { MergeUtxosParams, ListHoldingsParams } from './types.js'
 import {
     HOLDING_INTERFACE_ID,
-    HoldingView,
+    type HoldingView,
 } from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { PrettyContract } from '@canton-network/core-tx-parser'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
 import {
     findAsset,
-    LedgerCommonSchemas,
-    TokenNamespaceConfig,
+    type LedgerCommonSchemas,
+    type TokenNamespaceConfig,
 } from '../../../sdk.js'
 import { Decimal } from 'decimal.js'
-import { TransferNamespace } from '../transfer/index.js'
+import type { TransferNamespace } from '../transfer/index.js'
 import { MergeDelegationNamespace } from './mergeDelegation.js'
 import { parseAssets } from '../../utils/url.js'
-import { WrappedCommand } from '@canton-network/core-ledger-client-types'
+import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 
 export class UtxoNamespace {
     public readonly delegatedMerge: MergeDelegationNamespace

@@ -5,7 +5,7 @@ import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import './pagination.js'
-import { PageChangeEvent, WgPagination } from './pagination.js'
+import { PageChangeEvent, type WgPagination } from './pagination.js'
 
 describe('wg-pagination', () => {
     afterEach(() => {

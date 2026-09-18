@@ -3,12 +3,12 @@
 
 import type { Request, Response, NextFunction } from 'express'
 import {
-    AuthAware,
-    AuthContext,
+    type AuthAware,
+    type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
-import { Logger } from 'pino'
-import { Store } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+import type { Store } from '@canton-network/core-wallet-store'
 import crypto from 'crypto'
 import { v4 } from 'uuid'
 import { rpcErrors } from '@canton-network/core-rpc-errors'

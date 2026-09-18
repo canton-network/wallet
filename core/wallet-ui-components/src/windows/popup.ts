@@ -3,7 +3,7 @@
 
 import {
     isSpliceMessageEvent,
-    SpliceMessage,
+    type SpliceMessage,
     WalletEvent,
 } from '@canton-network/core-types'
 

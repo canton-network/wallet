@@ -4,11 +4,11 @@
 import { AllocationNamespace } from './allocation/index.js'
 import { UtxoNamespace } from './utxos/index.js'
 import { TransferNamespace } from './transfer/index.js'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { PartyId } from '@canton-network/core-types'
-import { PrettyTransactions } from '@canton-network/core-tx-parser'
+import type { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { PartyId } from '@canton-network/core-types'
+import type { PrettyTransactions } from '@canton-network/core-tx-parser'
 import type { SDKContext } from '../../init/types/context.js'
-import { ParsedURL, parseAssets } from '../utils/url.js'
+import { type ParsedURL, parseAssets } from '../utils/url.js'
 import { findAsset, type AssetBody } from '../asset/index.js'
 
 export type TokenNamespaceConfig = {

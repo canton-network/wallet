@@ -9,7 +9,7 @@ import {
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import {
-    ParsedTransactionInfo,
+    type ParsedTransactionInfo,
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
 import { createUserClient } from '../rpc-client'
@@ -18,7 +18,7 @@ import { stateManager } from '../state-manager'
 import '../index'
 import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
 import { showToast } from '../utils'
-import { SignResult } from '@canton-network/core-wallet-user-rpc-client'
+import type { SignResult } from '@canton-network/core-wallet-user-rpc-client'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import { detectCurrentOrigin } from '../listeners.js'
 

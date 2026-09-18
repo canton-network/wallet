@@ -29,11 +29,8 @@ export default defineConfig({
                     include: ['src/**/*.test.ts'],
                     browser: {
                         enabled: true,
-                        provider: playwright({
-                            trace: 'off',
-                            screenshot: 'off',
-                            video: 'off',
-                        }),
+                        provider: playwright(),
+                        trace: 'off',
                         instances: [{ browser: 'chromium' }],
                         headless: true,
                     },

@@ -7,7 +7,7 @@ import { getTransferInstructionRejectContext } from './getTransferInstructionRej
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
 import { getTransferFactory } from './getTransferFactory'
 import { APIError, emptyChoiceContext } from '../common'
-import { expressContext, mock, RequestType } from '../../__test__/mocks'
+import { expressContext, mock, type RequestType } from '../../__test__/mocks'
 
 const { res, next } = expressContext
 

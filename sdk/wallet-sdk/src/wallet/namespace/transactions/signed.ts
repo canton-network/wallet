@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Ops } from '@canton-network/core-provider-ledger'
+import type { Ops } from '@canton-network/core-provider-ledger'
 import type { SDKContext } from '../../init/types/context.js'
-import { ExecuteOptions } from '../ledger/types.js'
-import { LedgerNamespace } from '../ledger/index.js'
+import type { ExecuteOptions } from '../ledger/types.js'
+import type { LedgerNamespace } from '../ledger/index.js'
 
 export class SignedTransaction {
     constructor(
