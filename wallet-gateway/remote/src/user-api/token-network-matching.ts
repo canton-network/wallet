@@ -37,11 +37,13 @@ export function assertTokenClaimsMatchNetwork(
     }
 
     // check client ID based on `azp` (Authorized Party) claim or `client_id` claim, only if present.
-    const tokenClientId = tokenClaims.azp || tokenClaims.client_id
-    if (tokenClientId && tokenClientId !== network.auth.clientId) {
-        throw new Error(
-            `Token client ID doesn't match network's auth clientId.`
-        )
+    if ('clientId' in network.auth) {
+        const tokenClientId = tokenClaims.azp || tokenClaims.client_id
+        if (tokenClientId && tokenClientId !== network.auth.clientId) {
+            throw new Error(
+                `Token client ID doesn't match network's auth clientId.`
+            )
+        }
     }
 
     if (idp.type === 'self_signed') {

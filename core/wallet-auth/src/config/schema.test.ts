@@ -58,7 +58,6 @@ describe('schemas', () => {
 
         const validAuthSelfIssued = {
             method: 'self_issued',
-            clientId: 'ledger-api-user',
             audience: 'https://canton.network.global',
             scope: '',
         }

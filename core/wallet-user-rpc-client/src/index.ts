@@ -49,7 +49,7 @@ export type Audience = string
 export interface Auth {
     method: Method
     scope: Scope
-    clientId: ClientId
+    clientId?: ClientId
     clientSecret?: ClientSecret
     issuer?: Issuer
     audience: Audience

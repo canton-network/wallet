@@ -223,7 +223,6 @@ export class AuthEditor extends BaseElement {
         if (method === 'self_issued') {
             return {
                 method,
-                clientId: '',
                 audience: '',
                 scope: '',
             } satisfies SelfIssuedAuth
@@ -246,10 +245,16 @@ export class AuthEditor extends BaseElement {
     private _getSummary(auth: Auth): Array<{ key: string; value: string }> {
         const rows: Array<{ key: string; value: string }> = [
             { key: 'Method', value: auth.method },
-            { key: 'Client Id', value: auth.clientId ?? '' },
             { key: 'Audience', value: auth.audience ?? '' },
             { key: 'Scope', value: auth.scope ?? '' },
         ]
+
+        if ('clientId' in auth) {
+            rows.splice(1, 0, {
+                key: 'Client Id',
+                value: auth.clientId ?? '',
+            })
+        }
 
         if ('issuer' in auth) {
             rows.push({ key: 'Issuer', value: auth.issuer ?? '' })
@@ -370,7 +375,10 @@ export class AuthEditor extends BaseElement {
             case 'authorization_code':
                 this._emit({
                     method: 'authorization_code',
-                    clientId: this.auth?.clientId ?? '',
+                    clientId:
+                        this.auth && 'clientId' in this.auth
+                            ? this.auth.clientId
+                            : '',
                     audience: this.auth?.audience ?? '',
                     scope: this.auth?.scope ?? '',
                 } satisfies AuthorizationCodeAuth)
@@ -379,7 +387,10 @@ export class AuthEditor extends BaseElement {
             case 'self_signed':
                 this._emit({
                     method: 'self_signed',
-                    clientId: this.auth?.clientId ?? '',
+                    clientId:
+                        this.auth && 'clientId' in this.auth
+                            ? this.auth.clientId
+                            : '',
                     audience: this.auth?.audience ?? '',
                     scope: this.auth?.scope ?? '',
                     issuer: (this.auth as SelfSignedAuth)?.issuer ?? '',
@@ -391,7 +402,6 @@ export class AuthEditor extends BaseElement {
             case 'self_issued':
                 this._emit({
                     method: 'self_issued',
-                    clientId: this.auth?.clientId ?? '',
                     audience: this.auth?.audience ?? '',
                     scope: this.auth?.scope ?? '',
                 } satisfies SelfIssuedAuth)
@@ -400,7 +410,10 @@ export class AuthEditor extends BaseElement {
             case 'client_credentials':
                 this._emit({
                     method: 'client_credentials',
-                    clientId: this.auth?.clientId ?? '',
+                    clientId:
+                        this.auth && 'clientId' in this.auth
+                            ? this.auth.clientId
+                            : '',
                     audience: this.auth?.audience ?? '',
                     scope: this.auth?.scope ?? '',
                     clientSecret:
@@ -529,22 +542,30 @@ export class AuthEditor extends BaseElement {
                 </div>
             </div>
 
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Client Id <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    data-test-id="auth-editor-client-id-input"
-                    type="text"
-                    required
-                    .value=${authObj.clientId}
-                    @change=${(e: Event) => {
-                        authObj.clientId = (e.target as HTMLInputElement).value
-                        this._emit(authObj)
-                    }}
-                />
-            </div>
+            ${
+                'clientId' in authObj
+                    ? html`
+                          <div class="field-group d-flex flex-column">
+                              <label class="form-label field-label mb-0">
+                                  Client Id <span class="required">*</span>
+                              </label>
+                              <input
+                                  class="form-control field-control"
+                                  data-test-id="auth-editor-client-id-input"
+                                  type="text"
+                                  required
+                                  .value=${authObj.clientId}
+                                  @change=${(e: Event) => {
+                                      authObj.clientId = (
+                                          e.target as HTMLInputElement
+                                      ).value
+                                      this._emit(authObj)
+                                  }}
+                              />
+                          </div>
+                      `
+                    : nothing
+            }
 
             <div class="field-group d-flex flex-column">
                 <label class="form-label field-label mb-0">

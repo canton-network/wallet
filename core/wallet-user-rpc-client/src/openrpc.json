@@ -1400,7 +1400,7 @@
                         "type": "string"
                     }
                 },
-                "required": ["method", "audience", "scope", "clientId"]
+                "required": ["method", "audience", "scope"]
             },
             "Wallet": {
                 "title": "Wallet",

@@ -36,7 +36,6 @@ const selfIssuedAuthSchema = z.object({
     method: z.literal('self_issued'),
     audience: z.string(),
     scope: z.string(),
-    clientId: z.string(),
 })
 
 const clientCredentialsEnvAuthSchema = z.object({
