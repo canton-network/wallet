@@ -40,8 +40,6 @@ describe('BlockdaemonSigningDriver', () => {
     let mockClient: Mocked<SigningAPIClient>
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         mockClient = {
             signTransaction: vi.fn(),
             getTransaction: vi.fn(),

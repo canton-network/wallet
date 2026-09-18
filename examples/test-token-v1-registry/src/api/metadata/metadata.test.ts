@@ -28,9 +28,7 @@ vi.mock('../../common/state', () => ({
 }))
 
 describe('Metadata', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     it('should get registry info', () => {
         getRegistryInfo({} as RequestType<typeof getRegistryInfo>, res, next)

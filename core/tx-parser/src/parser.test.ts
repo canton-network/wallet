@@ -60,7 +60,6 @@ describe('transaction parser', () => {
     let mockProvider: Mocked<LedgerProvider>
 
     beforeEach(() => {
-        vi.clearAllMocks()
         mockProvider = makeLedgerProviderMock(eventsByContractIdResponses)
     })
 

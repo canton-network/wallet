@@ -24,7 +24,6 @@ describe('Internal Leger Namespace', () => {
     let internal: InternalLedgerNamespace
 
     beforeEach(() => {
-        vi.clearAllMocks()
         ledgerProvider.request.mockClear()
 
         internal = new InternalLedgerNamespace(ctx)

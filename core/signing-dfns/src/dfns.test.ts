@@ -60,9 +60,7 @@ function activeDfnsKey(overrides: Record<string, unknown> = {}) {
 }
 
 describe('DfnsHandler', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     test('constructs Dfns client with org, base URL, and asymmetric signer', () => {
         createHandler()
