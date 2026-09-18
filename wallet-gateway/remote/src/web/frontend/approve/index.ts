@@ -345,6 +345,7 @@ export class ApproveUi extends BaseElement {
                 .backHref=${toRelHref(ACTIVITIES_PAGE_REDIRECT)}
                 .isApproving=${this.isApproving}
                 .isDeleting=${this.isDeleting}
+                .isSigning=${this.isSigning}
                 .disabled=${this.disabled}
                 @transaction-approve=${this.handleApproveAction}
                 @transaction-delete=${this.handleReject}
