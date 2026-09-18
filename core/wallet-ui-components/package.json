@@ -36,7 +36,7 @@
         "@vitest/browser-playwright": "^5.0.1",
         "@vitest/coverage-v8": "^5.0.1",
         "fs-extra": "^11.3.6",
-        "playwright": "^1.61.1",
+        "playwright": "^1.63.0",
         "storybook": "^10.4.6",
         "tsx": "^4.23.0",
         "typescript": "^5.9.3",

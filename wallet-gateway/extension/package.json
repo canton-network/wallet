@@ -39,7 +39,7 @@
     },
     "devDependencies": {
         "@canton-network/core-wallet-test-utils": "workspace:^",
-        "@playwright/test": "^1.61.1",
+        "@playwright/test": "^1.63.0",
         "@wxt-dev/module-react": "^1.1.5",
         "typescript": "^5.9.3",
         "web-ext": "^10.5.0",
