@@ -284,6 +284,7 @@ export class IdpFormComponent extends BaseElement {
                             >
                                 <option value="oauth">oauth</option>
                                 <option value="self_signed">self_signed</option>
+                                <option value="self_issued">self_issued</option>
                             </select>
                             <span class="select-chevron"
                                 >${chevronDownIcon}</span

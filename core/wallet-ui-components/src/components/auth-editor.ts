@@ -9,11 +9,12 @@ import type {
     Auth,
     AuthorizationCodeAuth,
     ClientCredentialsAuth,
+    SelfIssuedAuth,
     SelfSignedAuth,
 } from '@canton-network/core-wallet-auth'
 
 export type AuthMethod =
-    'authorization_code' | 'client_credentials' | 'self_signed'
+    'authorization_code' | 'client_credentials' | 'self_signed' | 'self_issued'
 
 type EditorMode = 'none' | 'view' | 'edit' | 'add' | 'pending-remove'
 
@@ -34,6 +35,7 @@ export class AuthEditor extends BaseElement {
         'authorization_code',
         'client_credentials',
         'self_signed',
+        'self_issued',
     ]
     @property({ type: Boolean }) accessor optional = false
     @property({ type: String }) accessor emptyText = 'No auth configured.'
@@ -218,6 +220,15 @@ export class AuthEditor extends BaseElement {
             } satisfies ClientCredentialsAuth
         }
 
+        if (method === 'self_issued') {
+            return {
+                method,
+                clientId: '',
+                audience: '',
+                scope: '',
+            } satisfies SelfIssuedAuth
+        }
+
         return {
             method: 'self_signed',
             clientId: '',
@@ -377,6 +388,15 @@ export class AuthEditor extends BaseElement {
                 } satisfies SelfSignedAuth)
                 break
 
+            case 'self_issued':
+                this._emit({
+                    method: 'self_issued',
+                    clientId: this.auth?.clientId ?? '',
+                    audience: this.auth?.audience ?? '',
+                    scope: this.auth?.scope ?? '',
+                } satisfies SelfIssuedAuth)
+                break
+
             case 'client_credentials':
                 this._emit({
                     method: 'client_credentials',
@@ -494,6 +514,16 @@ export class AuthEditor extends BaseElement {
                                   </option>`
                                 : nothing
                         }
+                        ${
+                            this.allowedMethods.includes('self_issued')
+                                ? html`<option
+                                      value="self_issued"
+                                      ?selected=${method === 'self_issued'}
+                                  >
+                                      self_issued
+                                  </option>`
+                                : nothing
+                        }
                     </select>
                     <span class="select-chevron">${chevronDownIcon}</span>
                 </div>
@@ -551,7 +581,7 @@ export class AuthEditor extends BaseElement {
             </div>
         `
 
-        if (method === 'authorization_code') {
+        if (method === 'authorization_code' || method === 'self_issued') {
             return commonFields
         }
 
