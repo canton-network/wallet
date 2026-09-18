@@ -52,7 +52,6 @@ export async function mintAndTransferTokenToBob(
 
     // TokenAdmin offers the freshly-minted TestToken to Bob. The transfer factory
     // and choice context come from the registry's transfer-instruction-v1 API
-    // (the TestToken registry is also resolved via the metadata-v1 API).
     const [transferCommand, transferDisclosed] =
         await tokenAdminSdk.token.transfer.create({
             sender: tokenAdmin.partyId,
