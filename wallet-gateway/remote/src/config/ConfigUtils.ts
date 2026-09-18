@@ -72,7 +72,7 @@ type NetworkAuth = NonNullable<
 // The Wallet Gateway can accept adminAuth secrets from environment variables.
 // However, the store expects strings. This function resolves the config from env vars
 function resolveRawNetworkAuth(n: RawNetworkAuth): NetworkAuth {
-    if (n.method === 'authorization_code') {
+    if (n.method === 'authorization_code' || n.method === 'self_issued') {
         return n
     }
 
@@ -166,6 +166,7 @@ function validateNetworkToIdpMapping(
 
 const SUPPORTED_IDP_METHODS = {
     self_signed: ['self_signed'],
+    self_issued: ['self_issued'],
     oauth: ['authorization_code', 'client_credentials'],
 }
 
