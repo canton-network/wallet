@@ -22,14 +22,14 @@ const EMPTY_COMMAND_RESULT = [null, []] as const
 
 type TransferPreapprovalParty = TransferPreapproval['receiver']
 
-type TransferPreapprovalStatus = {
+export type TransferPreapprovalStatus = {
     contractId: string
     templateId: string
     synchronizerId: string
     payload: TransferPreapproval
 }
 
-type FetchPreapprovalArgs = {
+export type FetchPreapprovalArgs = {
     receiver: TransferPreapprovalParty
     operator: TransferPreapprovalParty
     instrumentAdmin: TransferPreapprovalParty
@@ -81,11 +81,19 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin<'utilities'> {
             return [transferPreapprovalCommand, []]
         },
 
+        /** Reads all preapprovals of a receiver. */
+        list: async (
+            receiver: TransferPreapprovalParty
+        ): Promise<TransferPreapprovalStatus[]> =>
+            this.readTransferPreapprovals(receiver),
+
         fetchQuick: async (
             args: FetchPreapprovalArgs
         ): Promise<TransferPreapprovalStatus | null> => {
-            const preapprovals = await this.readTransferPreapprovals(args)
-            const preapproval = preapprovals[0]
+            const preapprovals = await this.readTransferPreapprovals(
+                args.receiver
+            )
+            const preapproval = findPreapproval(preapprovals, args)
 
             if (!preapproval) {
                 this.ctx.logger.info(args, 'Preapproval is no longer visible')
@@ -188,13 +196,13 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin<'utilities'> {
     }
 
     private async readTransferPreapprovals(
-        args: FetchPreapprovalArgs
+        receiver: TransferPreapprovalParty
     ): Promise<TransferPreapprovalStatus[]> {
         const contracts =
             await this.ctx.namespace.ledger.acsReader.paginated.raw.readJsContracts(
                 {
                     templateIds: [TRANSFER_PREAPPROVAL_TEMPLATE_ID],
-                    parties: [args.receiver],
+                    parties: [receiver],
                     filterByParty: true,
                     continueUntilCompletion: true,
                 }
@@ -207,8 +215,7 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin<'utilities'> {
                 !contract.synchronizerId ||
                 !contract.contractId ||
                 !contract.templateId ||
-                !payload ||
-                !this.matchesPreapproval(payload, args)
+                !payload
             ) {
                 return []
             }
@@ -223,19 +230,23 @@ export class WalletSDKUtilitiesPlugin extends SDKPlugin<'utilities'> {
             ]
         })
     }
-
-    private matchesPreapproval(
-        payload: TransferPreapproval,
-        args: FetchPreapprovalArgs
-    ): boolean {
-        return (
-            payload.receiver === args.receiver &&
-            payload.operator === args.operator &&
-            payload.instrumentAdmin === args.instrumentAdmin &&
-            (payload.instrumentAllowances.length === 0 ||
-                payload.instrumentAllowances.some(
-                    ({ id }) => id === args.instrumentId
-                ))
-        )
-    }
 }
+
+/** Returns the preapproval for an operator and instrument, or null. */
+export const findPreapproval = (
+    preapprovals: readonly TransferPreapprovalStatus[],
+    args: FetchPreapprovalArgs
+): TransferPreapprovalStatus | null =>
+    preapprovals.find(({ payload }) => matchesPreapproval(payload, args)) ??
+    null
+
+/** Does this preapproval cover the instrument? No allowances means all. */
+const matchesPreapproval = (
+    payload: TransferPreapproval,
+    args: FetchPreapprovalArgs
+): boolean =>
+    payload.receiver === args.receiver &&
+    payload.operator === args.operator &&
+    payload.instrumentAdmin === args.instrumentAdmin &&
+    (payload.instrumentAllowances.length === 0 ||
+        payload.instrumentAllowances.some(({ id }) => id === args.instrumentId))
