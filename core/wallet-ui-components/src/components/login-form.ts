@@ -18,7 +18,8 @@ export class LoginConnectEvent extends Event {
         public selectedNetwork: PublicNetwork,
         public selectedIdp: Idp,
         public clientId?: string,
-        public clientSecret?: string
+        public clientSecret?: string,
+        public username?: string
     ) {
         super('login-connect', { bubbles: true, composed: true })
     }
@@ -221,6 +222,7 @@ export class WgLoginForm extends BaseElement {
 
         let clientId: string | undefined
         let clientSecret: string | undefined
+        let username: string | undefined
 
         if (idp.type === 'self_signed') {
             clientId =
@@ -238,12 +240,22 @@ export class WgLoginForm extends BaseElement {
                 )?.value ?? ''
         }
 
+        if (idp.type === 'self_issued') {
+            username =
+                (
+                    this.renderRoot.querySelector(
+                        '#username'
+                    ) as HTMLInputElement | null
+                )?.value ?? ''
+        }
+
         this.dispatchEvent(
             new LoginConnectEvent(
                 this.selectedNetwork,
                 idp,
                 clientId,
-                clientSecret
+                clientSecret,
+                username
             )
         )
     }
@@ -280,6 +292,7 @@ export class WgLoginForm extends BaseElement {
                             class="login-input form-control"
                             type="text"
                             autocomplete="username"
+                            required
                             ?disabled=${this.connecting}
                         />
                     `
