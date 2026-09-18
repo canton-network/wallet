@@ -32,7 +32,6 @@ const selfSignedAuthSchema = z.object({
     clientSecret: z.string(),
 })
 
-// TODO does issuer make sense here?
 const selfIssuedAuthSchema = z.object({
     method: z.literal('self_issued'),
     audience: z.string(),
