@@ -482,7 +482,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
      * Lists all pending transactions across all users.
      */
 
-    //TODO: check where this is called to see if i need both pending/awaiting-signature
     async listAllPendingTransactions(): Promise<Array<Transaction>> {
         const rows = await this.db
             .selectFrom('transactions')
