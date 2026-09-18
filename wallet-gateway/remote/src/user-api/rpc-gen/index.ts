@@ -29,6 +29,9 @@ import type { GetTransaction } from './typings.js'
 import type { ListTransactions } from './typings.js'
 import type { DeleteTransaction } from './typings.js'
 import type { GetUser } from './typings.js'
+import type { GetCurrentUser } from './typings.js'
+import type { SetLedgerPrimaryParty } from './typings.js'
+import type { ProbeSelfIssuedToken } from './typings.js'
 import type { GenerateApiKey } from './typings.js'
 import type { ListApiKeys } from './typings.js'
 import type { RemoveApiKey } from './typings.js'
@@ -65,6 +68,9 @@ export type Methods = {
     listTransactions: ListTransactions
     deleteTransaction: DeleteTransaction
     getUser: GetUser
+    getCurrentUser: GetCurrentUser
+    setLedgerPrimaryParty: SetLedgerPrimaryParty
+    probeSelfIssuedToken: ProbeSelfIssuedToken
     generateApiKey: GenerateApiKey
     listApiKeys: ListApiKeys
     removeApiKey: RemoveApiKey
@@ -103,6 +109,9 @@ function buildController(methods: Methods) {
         listTransactions: methods.listTransactions,
         deleteTransaction: methods.deleteTransaction,
         getUser: methods.getUser,
+        getCurrentUser: methods.getCurrentUser,
+        setLedgerPrimaryParty: methods.setLedgerPrimaryParty,
+        probeSelfIssuedToken: methods.probeSelfIssuedToken,
         generateApiKey: methods.generateApiKey,
         listApiKeys: methods.listApiKeys,
         removeApiKey: methods.removeApiKey,

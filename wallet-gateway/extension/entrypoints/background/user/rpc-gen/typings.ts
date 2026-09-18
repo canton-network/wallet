@@ -201,6 +201,18 @@ export type CursorAsString = string
 export type Cursor = CursorAsString
 /**
  *
+ * The party id to set as the Ledger API primary party.
+ *
+ */
+export type LedgerPrimaryPartyId = string
+/**
+ *
+ * Party whose key signs the self-issued token.
+ *
+ */
+export type ProbeSelfIssuedTokenPartyId = string
+/**
+ *
  * The public key of the party.
  *
  */
@@ -472,6 +484,32 @@ export type UserIdentifier = string
 export type IsAdminFlag = boolean
 /**
  *
+ * The Ledger API user identifier.
+ *
+ */
+export type LedgerUserId = string
+/**
+ *
+ * The primary party of the user, if configured.
+ *
+ */
+export type LedgerPrimaryParty = string
+export type LedgerUserIsDeactivated = boolean
+export type LedgerIdentityProviderId = string
+export type LedgerPrimaryPartyAuthentication = boolean
+export interface LedgerUser {
+    id: LedgerUserId
+    primaryParty?: LedgerPrimaryParty
+    isDeactivated?: LedgerUserIsDeactivated
+    identityProviderId?: LedgerIdentityProviderId
+    primaryPartyAuthentication?: LedgerPrimaryPartyAuthentication
+}
+export type SelfIssuedAccessToken = string
+export interface SelfIssuedTokenProbe {
+    [key: string]: any
+}
+/**
+ *
  * The generated API key.
  *
  */
@@ -575,6 +613,12 @@ export interface ListTransactionsParams {
 }
 export interface DeleteTransactionParams {
     transactionId: TransactionId
+}
+export interface SetLedgerPrimaryPartyParams {
+    partyId: LedgerPrimaryPartyId
+}
+export interface ProbeSelfIssuedTokenParams {
+    partyId: ProbeSelfIssuedTokenPartyId
 }
 export interface GenerateApiKeyParams {
     name: Name
@@ -687,6 +731,13 @@ export interface GetUserResult {
     userId: UserIdentifier
     isAdmin: IsAdminFlag
 }
+export interface GetCurrentUserResult {
+    user: LedgerUser
+}
+export interface ProbeSelfIssuedTokenResult {
+    token: SelfIssuedAccessToken
+    probe: SelfIssuedTokenProbe
+}
 export interface GeneratedApiKey {
     id: Id
     apiKey: ApiKeyResult
@@ -754,6 +805,13 @@ export type DeleteTransaction = (
     params: DeleteTransactionParams
 ) => Promise<Null>
 export type GetUser = () => Promise<GetUserResult>
+export type GetCurrentUser = () => Promise<GetCurrentUserResult>
+export type SetLedgerPrimaryParty = (
+    params: SetLedgerPrimaryPartyParams
+) => Promise<Null>
+export type ProbeSelfIssuedToken = (
+    params: ProbeSelfIssuedTokenParams
+) => Promise<ProbeSelfIssuedTokenResult>
 export type GenerateApiKey = (
     params: GenerateApiKeyParams
 ) => Promise<GeneratedApiKey>

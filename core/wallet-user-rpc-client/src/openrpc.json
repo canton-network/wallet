@@ -990,6 +990,122 @@
             }
         },
         {
+            "name": "getCurrentUser",
+            "description": "Returns the authenticated Canton Ledger API user for the current session, including the primary party when set.",
+            "params": [],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetCurrentUserResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "user": {
+                            "title": "ledgerUser",
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "id": {
+                                    "title": "ledgerUserId",
+                                    "type": "string",
+                                    "description": "The Ledger API user identifier."
+                                },
+                                "primaryParty": {
+                                    "title": "ledgerPrimaryParty",
+                                    "type": "string",
+                                    "description": "The primary party of the user, if configured."
+                                },
+                                "isDeactivated": {
+                                    "title": "ledgerUserIsDeactivated",
+                                    "type": "boolean"
+                                },
+                                "identityProviderId": {
+                                    "title": "ledgerIdentityProviderId",
+                                    "type": "string"
+                                },
+                                "primaryPartyAuthentication": {
+                                    "title": "ledgerPrimaryPartyAuthentication",
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": ["id"]
+                        }
+                    },
+                    "required": ["user"]
+                }
+            }
+        },
+        {
+            "name": "setLedgerPrimaryParty",
+            "description": "Sets the Ledger API user's primary party and enables primary-party authentication. This is distinct from the wallet-gateway primary wallet flag.",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "SetLedgerPrimaryPartyParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "partyId": {
+                                "title": "ledgerPrimaryPartyId",
+                                "type": "string",
+                                "description": "The party id to set as the Ledger API primary party."
+                            }
+                        },
+                        "required": ["partyId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/Null"
+                }
+            }
+        },
+        {
+            "name": "probeSelfIssuedToken",
+            "description": "Builds an EdDSA party JWT for the selected wallet, signs it with the kernel key, and probes Ledger API GET /v2/authenticated-user with that token.",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "ProbeSelfIssuedTokenParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "partyId": {
+                                "title": "probeSelfIssuedTokenPartyId",
+                                "type": "string",
+                                "description": "Party whose key signs the self-issued token."
+                            }
+                        },
+                        "required": ["partyId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ProbeSelfIssuedTokenResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "token": {
+                            "title": "selfIssuedAccessToken",
+                            "type": "string"
+                        },
+                        "probe": {
+                            "title": "selfIssuedTokenProbe",
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "required": ["token", "probe"]
+                }
+            }
+        },
+        {
             "name": "generateApiKey",
             "description": "Generates a new API key for the current user and network.",
             "params": [
