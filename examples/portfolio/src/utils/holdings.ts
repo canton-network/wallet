@@ -3,6 +3,7 @@
 
 import type { HoldingView } from '@canton-network/core-token-standard'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { PartyId } from '@canton-network/core-types'
 
 export const toUniquePortfolioHoldings = (
     contracts: PrettyContract<HoldingView>[]
@@ -17,3 +18,11 @@ export const toUniquePortfolioHoldings = (
 
     return [...holdingsByContractId.values()]
 }
+
+export const toOwnedHoldings = (
+    contracts: PrettyContract<HoldingView>[],
+    partyId: PartyId
+): PrettyContract<HoldingView>[] =>
+    contracts.filter(
+        (contract) => contract.interfaceViewValue.owner === partyId
+    )
