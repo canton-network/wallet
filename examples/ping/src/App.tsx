@@ -19,9 +19,9 @@ function App() {
     const [loading, setLoading] = useState(false)
     const [activeTab, setActiveTab] = useState<string>('accounts')
 
-    const { connect, disconnect, connectResult } = useConnect()
+    const { connect, connectPopup, disconnect, connectResult } = useConnect()
 
-    const { status, statusEvent } = useStatus()
+    const { status, statusEvent } = useStatus(connectResult?.isConnected)
 
     const accounts = useAccounts(connectResult)
     const primaryParty = accounts?.find((w) => w.primary)?.partyId
@@ -67,31 +67,64 @@ function App() {
                             disconnect
                         </button>
                     ) : (
-                        <button
-                            data-testid="connect-wallet"
-                            disabled={loading}
-                            onClick={() => {
-                                console.log('Connecting to Wallet...')
-                                setLoading(true)
-                                connect()
-                                    .then(() => {
-                                        setLoading(false)
-                                        setErrorMsg('')
-                                        status()
-                                    })
-                                    .catch((err) => {
-                                        console.log(err)
-                                        setLoading(false)
-                                        setErrorMsg(
-                                            err instanceof Error
-                                                ? err.message
-                                                : (err.details ?? String(err))
-                                        )
-                                    })
-                            }}
-                        >
-                            connect to Wallet
-                        </button>
+                        <>
+                            <button
+                                data-testid="connect-wallet"
+                                disabled={loading}
+                                onClick={() => {
+                                    console.log(
+                                        'Connecting to Wallet (modal)...'
+                                    )
+                                    setLoading(true)
+                                    connect()
+                                        .then(() => {
+                                            setLoading(false)
+                                            setErrorMsg('')
+                                            status()
+                                        })
+                                        .catch((err) => {
+                                            console.log(err)
+                                            setLoading(false)
+                                            setErrorMsg(
+                                                err instanceof Error
+                                                    ? err.message
+                                                    : (err.details ??
+                                                      String(err))
+                                            )
+                                        })
+                                }}
+                            >
+                                connect to Wallet
+                            </button>
+                            <button
+                                data-testid="connect-wallet-popup"
+                                disabled={loading}
+                                onClick={() => {
+                                    console.log(
+                                        'Connecting to Wallet (popup)...'
+                                    )
+                                    setLoading(true)
+                                    connectPopup()
+                                        .then(() => {
+                                            setLoading(false)
+                                            setErrorMsg('')
+                                            status()
+                                        })
+                                        .catch((err) => {
+                                            console.log(err)
+                                            setLoading(false)
+                                            setErrorMsg(
+                                                err instanceof Error
+                                                    ? err.message
+                                                    : (err.details ??
+                                                      String(err))
+                                            )
+                                        })
+                                }}
+                            >
+                                connect (popup)
+                            </button>
+                        </>
                     )}
                     <button
                         data-testid="open-wallet"

@@ -571,9 +571,12 @@ describe('windows/wallet-picker-modal', () => {
             name: 'wallet.example.com',
             type: 'remote',
             url: normalized,
-            reuseGlobalWalletPopup: false,
+            reuseGlobalWalletPopup: true,
         })
         expect(titleText()).toBe('Connecting...')
+        expect(JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]')).toEqual([
+            { name: 'wallet.example.com', rpcUrl: normalized },
+        ])
 
         notifyWalletPickerModalConnected()
     })
@@ -615,8 +618,13 @@ describe('windows/wallet-picker-modal', () => {
         ])
 
         const titles = walletTitles()
-        expect(titles[0]).toBe('Recent GW')
-        expect(titles).toContain('Browser Wallet')
+        expect(titles).toContain('Recent GW')
+        expect(titles.indexOf('Browser Wallet')).toBeLessThan(
+            titles.indexOf('Recent GW')
+        )
+        expect(titles.indexOf('Recent GW')).toBeLessThan(
+            titles.indexOf('Remote Wallet')
+        )
 
         const remove = shadow().querySelector<HTMLButtonElement>(
             '[aria-label="Remove Recent GW"]'

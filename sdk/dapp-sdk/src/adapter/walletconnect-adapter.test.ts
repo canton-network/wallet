@@ -66,7 +66,10 @@ const makeAdapter = (
     overrides: Partial<
         Pick<
             WalletConnectAdapterConfig,
-            'onUri' | 'onSignInWithCanton' | 'signInWithCanton'
+            | 'onUri'
+            | 'onSignInWithCanton'
+            | 'signInWithCanton'
+            | 'openPopupForUri'
         >
     > = {}
 ) =>
@@ -289,6 +292,14 @@ describe('WalletConnectAdapter', () => {
         ).rejects.toThrow('RPC error: 4001 - User rejected')
     })
 
+    it('does not open a blank popup for URI by default', async () => {
+        const windowSpy = vi.spyOn(window, 'open')
+        const adapter = makeAdapter()
+        await adapter.request({ method: 'connect' })
+        expect(windowSpy).not.toHaveBeenCalled()
+        windowSpy.mockRestore()
+    })
+
     it('only posts WalletConnect URI to dApp origin, not wildcard', async () => {
         const mockPostMessage = vi.fn()
         const mockPopupWindow = {
@@ -300,7 +311,7 @@ describe('WalletConnectAdapter', () => {
             .spyOn(window, 'open')
             .mockReturnValue(mockPopupWindow as unknown as Window)
 
-        const adapter = makeAdapter()
+        const adapter = makeAdapter({ openPopupForUri: true })
         await adapter.request({ method: 'connect' })
 
         expect(windowSpy).toHaveBeenCalledWith('', 'wallet-popup')

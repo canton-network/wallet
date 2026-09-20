@@ -128,10 +128,17 @@ export class WalletGateway {
 
             const picker = await openWalletPicker(dapp.dappPage, connectButton)
 
+            // Modal selection opens the WG login popup afterwards. Arm the
+            // waiter before click so we do not miss the popup event (CI race).
+            const loginPopupPromise =
+                picker.kind === 'modal'
+                    ? dapp.dappPage.waitForEvent('popup', { timeout: 30_000 })
+                    : null
+
             await this.selectFromWalletPicker(picker, args.customURL)
 
             const popup = await this.waitForConnectFormPopup(
-                picker.kind === 'popup' ? picker.page : undefined
+                picker.kind === 'popup' ? picker.page : await loginPopupPromise!
             )
             const selectNetwork = popup.getByLabel('Select a network')
             await expect(
@@ -550,24 +557,42 @@ export class WalletGateway {
             }
         }
 
-        if (initialPopup && (await hasConnectForm(initialPopup))) {
-            return initialPopup
+        if (initialPopup && !initialPopup.isClosed()) {
+            if (await hasConnectForm(initialPopup)) {
+                return initialPopup
+            }
+            // Popup may still be loading the connect form.
+            for (let i = 0; i < 40; i++) {
+                if (initialPopup.isClosed()) break
+                if (await hasConnectForm(initialPopup)) {
+                    return initialPopup
+                }
+                await new Promise((resolve) => setTimeout(resolve, 250))
+            }
         }
 
-        for (let i = 0; i < 20; i++) {
-            const popup = this._popup
-            if (popup && !popup.isClosed() && (await hasConnectForm(popup))) {
-                return popup
+        for (let i = 0; i < 40; i++) {
+            const tracked = this._popup
+            if (
+                tracked &&
+                !tracked.isClosed() &&
+                (await hasConnectForm(tracked))
+            ) {
+                return tracked
             }
+
+            // Scan all context pages — popup may have opened before we waited.
+            const pages = this.requireDapp().dappPage.context().pages()
+            for (const page of pages) {
+                if (page.isClosed()) continue
+                if (await hasConnectForm(page)) {
+                    return page
+                }
+            }
+
             await new Promise((resolve) => setTimeout(resolve, 250))
         }
 
-        const popup = await this.requireDapp().dappPage.waitForEvent('popup', {
-            timeout: 5000,
-        })
-        if (await hasConnectForm(popup)) {
-            return popup
-        }
         throw new Error('wallet connect form popup did not appear')
     }
 

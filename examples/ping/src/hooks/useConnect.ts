@@ -4,12 +4,16 @@
 import { useEffect, useState } from 'react'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
-import { handleErrorToast } from '@canton-network/core-wallet-ui-components'
+import {
+    handleErrorToast,
+    pickWallet,
+} from '@canton-network/core-wallet-ui-components'
 
 const wcProjectId = import.meta.env.VITE_WC_PROJECT_ID as string
 const wcAdapter = wcProjectId
     ? WalletConnectAdapter.create({
           projectId: wcProjectId,
+          openPopupForUri: false,
           signInWithCanton: {
               domain: 'http://localhost:3000',
               uri: 'http://localhost:3000/login',
@@ -29,13 +33,15 @@ const additionalAdapters = wcAdapter ? [wcAdapter] : []
  */
 export function useConnect(): {
     connect: () => Promise<void>
+    connectPopup: () => Promise<void>
     disconnect: () => Promise<void>
     connectResult?: sdk.dappAPI.ConnectResult
 } {
     const [connectResult, setConnectResult] =
         useState<sdk.dappAPI.ConnectResult>()
 
-    async function connect() {
+    async function connectWithPicker(usePopup: boolean) {
+        sdk.setWalletPicker(usePopup ? pickWallet : undefined)
         await sdk
             .connect()
             .then(setConnectResult)
@@ -44,6 +50,14 @@ export function useConnect(): {
                 handleErrorToast(err)
                 throw err
             })
+    }
+
+    async function connect() {
+        await connectWithPicker(false)
+    }
+
+    async function connectPopup() {
+        await connectWithPicker(true)
     }
 
     async function disconnect() {
@@ -72,7 +86,11 @@ export function useConnect(): {
                     '[use-connect] Received status changed event:',
                     status
                 )
-                setConnectResult(status.connection)
+                setConnectResult(
+                    status.connection?.isConnected
+                        ? status.connection
+                        : undefined
+                )
             }
 
             sdk.onStatusChanged(onStatusChanged)
@@ -86,6 +104,7 @@ export function useConnect(): {
 
     return {
         connect,
+        connectPopup,
         disconnect,
         connectResult,
     }

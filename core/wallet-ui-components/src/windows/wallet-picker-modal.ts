@@ -227,6 +227,15 @@ class WalletPickerModalController {
         return []
     }
 
+    private saveRecentGateway(name: string, rpcUrl: string): void {
+        const filtered = this.loadRecentGateways().filter(
+            (r) => r.rpcUrl !== rpcUrl
+        )
+        filtered.unshift({ name, rpcUrl })
+        this.recentGateways = filtered.slice(0, 5)
+        localStorage.setItem(RECENT_KEY, JSON.stringify(this.recentGateways))
+    }
+
     private removeRecentGateway(rpcUrl: string): void {
         this.recentGateways = this.loadRecentGateways().filter(
             (r) => r.rpcUrl !== rpcUrl
@@ -488,40 +497,21 @@ class WalletPickerModalController {
             )
         }
 
-        // Order the flat list: saved remote connections first, then installed
-        // extensions, then WalletConnect, then other remote wallets, then
-        // everything else (not-yet-installed wallets).
+        // Preserve SDK discovery order so the list matches the popup:
+        // 1. defaultAdapters  2. additionalAdapters  3. announced (installed)
+        // then saved custom remotes, Remote Wallet entry, then suggested.
         const detected = this.getAllEntries()
-        const isWc = (e: WalletPickerEntry) => e.providerId === 'walletconnect'
-
+        const registered = detected.filter((d) => !d.isRecent)
         const recent = detected.filter((d) => d.isRecent)
-        const installed = detected.filter(
-            (d) => !d.isRecent && d.entry.type === 'browser' && !isWc(d.entry)
-        )
-        const walletConnect = detected.filter(
-            (d) => !d.isRecent && isWc(d.entry)
-        )
-        const remote = detected.filter(
-            (d) => !d.isRecent && d.entry.type === 'remote' && !isWc(d.entry)
-        )
-        const rest = detected.filter(
-            (d) =>
-                !recent.includes(d) &&
-                !installed.includes(d) &&
-                !walletConnect.includes(d) &&
-                !remote.includes(d)
-        )
 
-        for (const { entry, isRecent } of [
-            ...recent,
-            ...installed,
-            ...walletConnect,
-            ...remote,
-        ]) {
+        for (const { entry, isRecent } of registered) {
+            container.appendChild(this.renderWalletItem(entry, isRecent))
+        }
+        for (const { entry, isRecent } of recent) {
             container.appendChild(this.renderWalletItem(entry, isRecent))
         }
 
-        // Remote Wallet (custom URL) connector, grouped with remote wallets.
+        // Remote Wallet (custom URL) connector after registered + saved remotes.
         const gatewayItem = el('div', '', { class: 'wallet-picker-item' })
         const gatewayBtn = el('button', '', {
             class: 'wallet-picker-item-main',
@@ -541,10 +531,6 @@ class WalletPickerModalController {
         gatewayItem.appendChild(gatewayBtn)
         container.appendChild(gatewayItem)
 
-        // The rest: any leftover detected wallets, then not-yet-installed ones.
-        for (const { entry, isRecent } of rest) {
-            container.appendChild(this.renderWalletItem(entry, isRecent))
-        }
         for (const entry of this.getSuggestedEntries()) {
             container.appendChild(this.renderSuggestedItem(entry))
         }
@@ -653,10 +639,12 @@ class WalletPickerModalController {
     private renderSuggestedItem(
         entry: WalletPickerSuggestedEntry
     ): HTMLElement {
-        // Prefer an install link for the user's current browser, else the first.
-        const preferred =
-            entry.installUrls.find((u) => u.platform === this.platform) ??
-            entry.installUrls[0]
+        // Only label the current browser when we have a matching install URL.
+        // Never fall back to another platform's name (e.g. "Get for chrome" on Firefox).
+        const preferred = entry.installUrls.find(
+            (u) => u.platform === this.platform
+        )
+        const fallbackUrl = preferred?.url ?? entry.installUrls[0]?.url
 
         const item = el('div', '', {
             class: 'wallet-picker-item wallet-suggested-item',
@@ -687,9 +675,9 @@ class WalletPickerModalController {
 
         main.append(icon, info, badge)
 
-        if (preferred?.url) {
+        if (fallbackUrl) {
             main.addEventListener('click', () => {
-                window.open(preferred.url, '_blank', 'noopener')
+                window.open(fallbackUrl, '_blank', 'noopener')
             })
         }
 
@@ -735,12 +723,15 @@ class WalletPickerModalController {
             const parsed = parse(input.value)
             if (!parsed) return
             const normalizedUrl = parsed.toString()
+            const name = parsed.hostname || 'Custom URL'
+            // Persist per-dapp so custom WG URLs reappear as deletable entries.
+            this.saveRecentGateway(name, normalizedUrl)
             this.select({
                 providerId: `custom:remote:${encodeURIComponent(normalizedUrl)}`,
-                name: parsed.hostname || 'Custom URL',
+                name,
                 type: 'remote',
                 url: normalizedUrl,
-                reuseGlobalWalletPopup: false,
+                reuseGlobalWalletPopup: true,
             })
         }
 

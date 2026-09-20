@@ -21,6 +21,7 @@ import type {
     ProviderType,
     StatusEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
+import { setWalletPickerModalWalletConnectUri } from '@canton-network/core-wallet-ui-components'
 import { WALLETCONNECT_ICON } from '../assets'
 import { composeSIWXMessage } from '../util'
 import { v4 as uuidv4 } from 'uuid'
@@ -158,7 +159,9 @@ export class WalletConnectAdapter
         this.chainId = config.chainId ?? 'canton:devnet'
         this.metadata = config.metadata
         this.onUri = config.onUri
-        this.openPopupForUri = config.openPopupForUri ?? true
+        // Modal is the SDK default picker — do not open a blank popup for the URI
+        // unless the dApp explicitly opts back into the legacy popup path.
+        this.openPopupForUri = config.openPopupForUri ?? false
         this.onSignInWithCanton = config.onSignInWithCanton
     }
 
@@ -441,6 +444,8 @@ export class WalletConnectAdapter
                 if (this.openPopupForUri) {
                     await this.showUriInPopup(uri, qrDataUrl)
                 }
+                // Feed the in-page modal when it is the active picker (no-op if closed).
+                setWalletPickerModalWalletConnectUri(uri, qrDataUrl)
                 this.onUri?.(uri, qrDataUrl)
             }
         })()
