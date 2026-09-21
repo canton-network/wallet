@@ -1820,6 +1820,9 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: workspace:^
         version: link:../wallet-auth
+      '@canton-network/core-wallet-dapp-rpc-client':
+        specifier: workspace:^
+        version: link:../wallet-dapp-rpc-client
       '@canton-network/core-wallet-store':
         specifier: workspace:^
         version: link:../wallet-store

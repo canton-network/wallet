@@ -29,6 +29,7 @@
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-signing-securosys": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
+        "@canton-network/core-wallet-dapp-rpc-client": "workspace:^",
         "@canton-network/core-wallet-store": "workspace:^",
         "@canton-network/core-wallet-user-rpc-client": "workspace:^",
         "@logtape/logtape": "^2.3.1",
