@@ -853,7 +853,7 @@ describe('TransactionService', () => {
                     status,
                 }
 
-                expect(
+                await expect(
                     service.execute(
                         authContext.userId,
                         wallet,
