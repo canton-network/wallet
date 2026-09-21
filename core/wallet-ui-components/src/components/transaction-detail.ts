@@ -9,7 +9,6 @@ import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { chevronDownIcon } from '../icons/index.js'
 import {
     formatActivityDate,
-    getActivityAmount,
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
@@ -375,7 +374,6 @@ export class WgTransactionDetail extends BaseElement {
 
     protected render() {
         const activityType = getActivityType(this.parsed)
-        const amount = getActivityAmount(this.parsed)
         const decoded = this.parsed?.jsonString || 'N/A'
 
         return html`
@@ -406,7 +404,6 @@ export class WgTransactionDetail extends BaseElement {
                     'Created at',
                     formatActivityDate(this.createdAt)
                 )}
-                ${this.renderInlineField('Amount', amount)}
                 ${this.renderSignatories()}
                 ${this.renderCopyableValue(
                     'Template',
