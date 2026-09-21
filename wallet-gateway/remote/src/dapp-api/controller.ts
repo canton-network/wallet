@@ -553,12 +553,12 @@ async function prepareSubmission(
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(
+        ledgerPrepareParams({
             userId,
             partyIds,
             synchronizerId,
             params,
-            hashingSchemeVersion
-        )
+            hashingSchemeVersion,
+        })
     )
 }

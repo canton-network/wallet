@@ -20,13 +20,20 @@ export interface PrepareParams {
     packageIdSelectionPreference?: PackageIdSelectionPreference
 }
 
-export function ledgerPrepareParams(
-    userId: string,
-    partyIds: string[],
-    synchronizerId: string,
-    params: PrepareParams,
+interface LedgerPrepareParamsArgs {
+    userId: string
+    partyIds: string[]
+    synchronizerId: string
+    params: PrepareParams
     hashingSchemeVersion: HASHING_SCHEME_VERSION
+}
+
+export function ledgerPrepareParams(
+    args: LedgerPrepareParamsArgs
 ): Types['JsPrepareSubmissionRequest'] {
+    const { userId, partyIds, synchronizerId, params, hashingSchemeVersion } =
+        args
+
     // Map disclosed contracts to ledger api format (which wrongly defines optional fields as mandatory)
     const disclosedContracts =
         params.disclosedContracts?.map((d) => {

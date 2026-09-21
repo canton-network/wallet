@@ -503,13 +503,13 @@ export class TransactionService {
         const synchronizerId =
             network.synchronizerId ?? (await ledgerClient.getSynchronizerId())
 
-        const prep = ledgerPrepareParams(
+        const prep = ledgerPrepareParams({
             userId,
-            [partyId],
+            partyIds: [partyId],
             synchronizerId,
-            transaction.payload as PrepareParams,
-            this.hashingSchemeVersion
-        )
+            params: transaction.payload as PrepareParams,
+            hashingSchemeVersion: this.hashingSchemeVersion,
+        })
 
         try {
             const result = await ledgerClient.postWithRetry(
