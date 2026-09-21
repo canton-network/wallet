@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { stopRegistry } from '.'
 import { mock } from './__test__/mocks'
 
@@ -77,10 +77,6 @@ vi.mock('./common/defaultSdk', () => ({
 }))
 
 describe('entry file', () => {
-    afterEach(() => {
-        vi.clearAllMocks()
-    })
-
     it("shouldn't do anything when stopRegistry is called without startRegistry", async () => {
         stopRegistry()
         expect(mock.state.RegistryState.instance.reset).not.toHaveBeenCalled()

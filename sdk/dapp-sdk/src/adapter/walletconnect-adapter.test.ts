@@ -76,9 +76,7 @@ const makeAdapter = (
     })
 
 describe('WalletConnectAdapter', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     it('exposes wallet picker metadata', () => {
         const adapter = makeAdapter()

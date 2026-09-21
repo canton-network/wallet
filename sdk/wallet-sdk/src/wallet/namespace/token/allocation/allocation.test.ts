@@ -71,7 +71,6 @@ describe('allocation namespace namespace', () => {
     ]
 
     beforeEach(() => {
-        vi.clearAllMocks()
         allocation = new AllocationNamespace(config)
     })
 

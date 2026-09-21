@@ -79,7 +79,6 @@ describe('UserUiParties', () => {
     afterEach(() => {
         // make sure toast is gone from DOM
         document.body.innerHTML = ''
-        vi.clearAllMocks()
     })
 
     it('renders parties header and wallet cards after loading wallets', async () => {

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
 import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
@@ -186,10 +186,6 @@ describe('dappController', () => {
             cantonVersion: '3.4',
         })
         mockUuidV4.mockReset()
-    })
-
-    afterEach(() => {
-        vi.clearAllMocks()
     })
 
     describe('connect', () => {
