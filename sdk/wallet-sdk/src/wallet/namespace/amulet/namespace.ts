@@ -1,17 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import type { AssetBody } from '../../sdk.js'
 import type { SDKContext } from '../../init/types/context.js'
-import { PreparedCommand } from '../transactions/types.js'
-import {
+import type { PreparedCommand } from '../transactions/types.js'
+import type {
     FeaturedAppRight,
     GrantFeaturedAppRightsOptions,
     LookupFeaturedAppRightsOptions,
 } from './types.js'
-import { AmuletService } from '@canton-network/core-amulet-service'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { AmuletService } from '@canton-network/core-amulet-service'
+import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { TrafficNamespace } from './traffic.js'
 import { LedgerNamespace } from '../ledger/namespace.js'
 import { PreapprovalNamespace } from './preapproval.js'

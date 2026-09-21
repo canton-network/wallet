@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createContext, useContext } from 'react'
-import * as sdk from '@canton-network/dapp-sdk'
+import type * as sdk from '@canton-network/dapp-sdk'
 
 type Connection = {
     initialized: boolean

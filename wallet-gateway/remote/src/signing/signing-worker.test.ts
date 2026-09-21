@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { SigningWorker } from './signing-worker.js'
@@ -144,8 +144,6 @@ function createWorker(
 }
 
 describe('SigningWorker', () => {
-    afterEach(() => vi.clearAllMocks())
-
     it('completes pending external transactions with a primary wallet', async () => {
         const { worker } = createWorker()
 

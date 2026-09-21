@@ -50,9 +50,9 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiAddParty } from './index.js'
+import type { UserUiAddParty } from './index.js'
 import { WALLET_STATUS_CODE } from '../index'
-import { Key } from '@canton-network/core-signing-lib'
+import type { Key } from '@canton-network/core-signing-lib'
 
 describe('UserUiAddParty', () => {
     let el: UserUiAddParty
@@ -94,7 +94,6 @@ describe('UserUiAddParty', () => {
     afterEach(() => {
         // make sure toast is gone from DOM
         document.body.innerHTML = ''
-        vi.clearAllMocks()
     })
 
     it('renders create party header and form', async () => {

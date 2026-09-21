@@ -9,16 +9,16 @@ import {
     LedgerGetRoutes,
     LedgerPostRoutes,
 } from '@canton-network/core-ledger-client-types'
-import createClient, { Client, FetchOptions } from 'openapi-fetch'
-import { Logger } from 'pino'
-import { PartyId } from '@canton-network/core-types'
+import createClient, { type Client, type FetchOptions } from 'openapi-fetch'
+import type { Logger } from 'pino'
+import type { PartyId } from '@canton-network/core-types'
 import {
     asJsCantonError,
     defaultRetryableOptions,
     retryable,
-    RetryableOptions,
+    type RetryableOptions,
 } from './ledger-api-utils.js'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export const supportedVersions = supportedLedgerApiVersions
 
@@ -189,10 +189,6 @@ export class LedgerClient {
 
     public async init() {
         if (!this.initialized) {
-            this.logger.debug(
-                `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href}`
-            )
-
             //TODO: parse error response and escalate
             const versionFromClient =
                 await this.currentClient.GET('/v2/version')
@@ -209,6 +205,10 @@ export class LedgerClient {
                 versionFromClient.data?.version
             )
             this.initialized = true
+
+            this.logger.debug(
+                `Initializing LedgerClient with version ${this.clientVersion} for url ${this.baseUrl.href} and setting initialized to true`
+            )
         }
     }
 

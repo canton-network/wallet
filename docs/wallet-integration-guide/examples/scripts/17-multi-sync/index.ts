@@ -25,9 +25,9 @@ import { TestToken } from '@canton-network/core-splice-codegen'
 const logger = pino({ name: 'v1-17-multi-sync-trade', level: 'info' })
 
 // ── Setup: create SDKs, discover synchronizers, vet DARs, allocate parties ───
-// Step 1: Create one SDK per party (Alice, TradingApp on the app-user participant; Bob, TokenAdmin on the app-provider participant; sv on its own) and discover global + app synchronizers
+// Step 1: Create one SDK per party (Alice, TradingApp and Charlie on the app-user participant; Bob, TokenAdmin on the app-provider participant; sv on its own) and discover global + app synchronizers
 // Step 2: Vet DARs on both synchronizers for app-user + app-provider; global only for sv (not connected to app-synchronizer)
-// Step 3: Allocate parties for Alice (app-user), Bob (app-provider), TradingApp (app-user, both synchronizers), and TokenAdmin (app-provider)
+// Step 3: Allocate parties for Alice, Charlie (app-user), Bob (app-provider), TradingApp (app-user, both synchronizers), and TokenAdmin (app-provider)
 const setup = await setupMultiSyncTrade(logger)
 const {
     aliceSdk,
@@ -45,8 +45,6 @@ const {
 } = setup
 
 // ── Start the TestToken registry (CIP-56 off-ledger APIs) ───────────────────
-// The registry creates the TestToken `TokenRules` on both synchronizers as part
-// of initialization, then serves the four Token Standard registry APIs for them.
 await startRegistry({
     operator: {
         party: tokenAdmin.partyId,

@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@logtape/logtape'
+import type { Logger } from '@logtape/logtape'
 import {
-    AuthContext,
-    UserId,
-    AuthAware,
+    type AuthContext,
+    type UserId,
+    type AuthAware,
     assertConnected,
-    Idp,
+    type Idp,
 } from '@canton-network/core-wallet-auth'
-import {
+import type {
     Store,
     Wallet,
     PartyId,
@@ -26,8 +26,8 @@ import {
     ListTransactionsOptions,
     WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
-import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
-import { AccessToken } from '@canton-network/core-types'
+import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
+import type { AccessToken } from '@canton-network/core-types'
 
 interface UserStorage {
     wallets: Array<Wallet>
@@ -359,6 +359,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return this.systemStorage.networks
     }
 
+    async getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined> {
+        return this.systemStorage.networks.find(
+            (network) =>
+                network.auth.method === 'self_signed' &&
+                network.id === networkId
+        )
+    }
+
     async updateNetwork(network: Network): Promise<void> {
         this.assertConnected()
         this.removeNetwork(network.id) // Ensure no duplicates
@@ -391,6 +401,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const payload = updates.payload ?? existing.payload
         const signedAt = updates.signedAt ?? existing.signedAt
         const externalTxId = updates.externalTxId ?? existing.externalTxId
+        const failureReason = updates.failureReason ?? existing.failureReason
 
         return {
             id: existing.id,
@@ -405,6 +416,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             }),
             ...(signedAt !== undefined && { signedAt }),
             ...(externalTxId !== undefined && { externalTxId }),
+            ...(failureReason !== undefined && { failureReason }),
         }
     }
 
@@ -420,24 +432,34 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async setTransactionSigned(
         transactionId: string,
         signedAt: Date,
-        externalTxId?: string
-    ): Promise<void> {
-        await this.setTransactionStatus(transactionId, 'signed', {
-            signedAt,
-            ...(externalTxId !== undefined && { externalTxId }),
-        })
+        externalTxId?: string,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean> {
+        return await this.setTransactionStatus(
+            transactionId,
+            'signed',
+            {
+                signedAt,
+                ...(externalTxId !== undefined && { externalTxId }),
+            },
+            opts
+        )
     }
 
     async setTransactionStatus(
         transactionId: string,
         status: Transaction['status'],
-        updates: TransactionStatusUpdate = {}
-    ): Promise<void> {
+        updates: TransactionStatusUpdate = {},
+        opts?: { expectedStatus?: Transaction['status'] }
+    ): Promise<boolean> {
         this.assertConnected()
         const storage = this.getStorage()
         const existing = storage.transactions.get(transactionId)
         if (!existing) {
             throw new Error(`Transaction not found with id: ${transactionId}`)
+        }
+        if (opts?.expectedStatus && existing.status !== opts.expectedStatus) {
+            return false
         }
 
         const updated = this.mergeTransactionStatusUpdate(
@@ -448,6 +470,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
         storage.transactions.set(transactionId, updated)
         this.updateStorage(storage)
+        return true
     }
 
     async getTransaction(
@@ -462,7 +485,8 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async listAllPendingTransactions(): Promise<Array<Transaction>> {
         const storage = this.getStorage()
         return Array.from(storage.transactions.values()).filter(
-            (tx) => tx.status === 'pending'
+            (tx) =>
+                tx.status === 'pending' || tx.status === 'awaiting-signature'
         )
     }
 

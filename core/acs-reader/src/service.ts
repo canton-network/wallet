@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
+import type {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import { PaginatedACSCache } from './cache/item'
 
 type Types = LedgerCommonSchemas
@@ -96,7 +96,7 @@ export class AcsService {
             return results
         }
 
-        const body: Ops.GetV2StateActiveContractsPage['ledgerApi']['params']['body'] =
+        const body: Ops.PostV2StateActiveContractsPage['ledgerApi']['params']['body'] =
             {
                 eventFormat,
                 activeAtOffset,
@@ -108,11 +108,11 @@ export class AcsService {
             body.pageToken = pageToken
         }
 
-        return await this.ledgerProvider.request<Ops.GetV2StateActiveContractsPage>(
+        return await this.ledgerProvider.request<Ops.PostV2StateActiveContractsPage>(
             {
                 method: 'ledgerApi',
                 params: {
-                    requestMethod: 'get',
+                    requestMethod: 'post',
                     resource: '/v2/state/active-contracts-page',
                     body,
                 },

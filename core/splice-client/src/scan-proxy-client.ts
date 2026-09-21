@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { components, paths } from './generated-clients/scan-proxy'
-import createClient, { Client } from 'openapi-fetch'
-import { Logger } from '@canton-network/core-types'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type { components, paths } from './generated-clients/scan-proxy'
+import createClient, { type Client } from 'openapi-fetch'
+import type { Logger } from '@canton-network/core-types'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export type ScanProxyTypes = components['schemas']
 

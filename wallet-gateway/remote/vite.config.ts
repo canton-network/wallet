@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vite'
-import { dirname, resolve } from 'path'
-import { fileURLToPath } from 'url'
+import { resolve } from 'path'
+import { resolveRouteInputs } from './src/web/route-inputs.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const frontendRoot = resolve(import.meta.dirname, 'src/web/frontend')
 
 export default defineConfig({
     root: 'src/web/frontend',
@@ -14,66 +14,10 @@ export default defineConfig({
     // dev mode does both build and later serve, hence relying on env var instead of command
     base: process.env.NODE_ENV === 'development' ? '/' : './',
     build: {
-        outDir: resolve(__dirname, './dist/web/frontend'),
+        outDir: resolve(import.meta.dirname, './dist/web/frontend'),
         emptyOutDir: true,
         rollupOptions: {
-            input: {
-                main: resolve(__dirname, 'src/web/frontend/index.html'),
-                404: resolve(__dirname, 'src/web/frontend/404/index.html'),
-                approve: resolve(
-                    __dirname,
-                    'src/web/frontend/approve/index.html'
-                ),
-                callback: resolve(
-                    __dirname,
-                    'src/web/frontend/callback/index.html'
-                ),
-                login: resolve(__dirname, 'src/web/frontend/login/index.html'),
-                parties: resolve(
-                    __dirname,
-                    'src/web/frontend/parties/index.html'
-                ),
-                addParty: resolve(
-                    __dirname,
-                    'src/web/frontend/parties/add/index.html'
-                ),
-                editParty: resolve(
-                    __dirname,
-                    'src/web/frontend/parties/edit/index.html'
-                ),
-                settings: resolve(
-                    __dirname,
-                    'src/web/frontend/settings/index.html'
-                ),
-                activities: resolve(
-                    __dirname,
-                    'src/web/frontend/activities/index.html'
-                ),
-                networks: resolve(
-                    __dirname,
-                    'src/web/frontend/networks/index.html'
-                ),
-                addNetwork: resolve(
-                    __dirname,
-                    'src/web/frontend/networks/add/index.html'
-                ),
-                reviewNetwork: resolve(
-                    __dirname,
-                    'src/web/frontend/networks/review/index.html'
-                ),
-                identityProviders: resolve(
-                    __dirname,
-                    'src/web/frontend/identity-providers/index.html'
-                ),
-                addIdentityProvider: resolve(
-                    __dirname,
-                    'src/web/frontend/identity-providers/add/index.html'
-                ),
-                reviewIdentityProvider: resolve(
-                    __dirname,
-                    'src/web/frontend/identity-providers/review/index.html'
-                ),
-            },
+            input: resolveRouteInputs(frontendRoot),
         },
     },
     resolve: {

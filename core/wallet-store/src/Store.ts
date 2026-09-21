@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Idp } from '@canton-network/core-wallet-auth'
-import { Network } from './config/schema'
+import type { Network } from './config/schema'
 
 export enum AddressType {
     PaperAddress = 'PaperAddress',
@@ -97,7 +97,7 @@ export interface Session {
 
 export interface Transaction {
     id: string
-    status: 'pending' | 'signed' | 'executed' | 'failed'
+    status: 'pending' | 'signed' | 'executed' | 'failed' | 'awaiting-signature'
     commandId: string
     preparedTransaction: string
     preparedTransactionHash: string
@@ -108,12 +108,14 @@ export interface Transaction {
     externalTxId?: string
     userId?: string
     networkId?: string
+    failureReason?: string
 }
 
 export interface TransactionStatusUpdate {
     payload?: unknown
     signedAt?: Date
     externalTxId?: string
+    failureReason?: string
 }
 
 export interface ListTransactionsOptions {
@@ -202,6 +204,15 @@ export interface Store {
     // Network methods
     getNetwork(networkId: string): Promise<Network>
     getCurrentNetwork(): Promise<Network>
+    /**
+     * Looks up a self_signed network without scoping to the authenticated user,
+     * because this runs during token verification, before there is one.
+     * Returns undefined for unknown networks and for networks using any other
+     * auth method.
+     */
+    getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined>
     listNetworks(): Promise<Array<Network>>
     updateNetwork(network: Network): Promise<void>
     addNetwork(network: Network): Promise<void>
@@ -212,13 +223,15 @@ export interface Store {
     setTransactionSigned(
         transactionId: string,
         signedAt: Date,
-        externalTxId?: string
-    ): Promise<void>
+        externalTxId?: string,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean>
     setTransactionStatus(
         transactionId: string,
         status: Transaction['status'],
-        updates?: TransactionStatusUpdate
-    ): Promise<void>
+        updates?: TransactionStatusUpdate,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean>
     getTransaction(transactionId: string): Promise<Transaction | undefined>
     getLatestTransactionByCommandId(
         commandId: string

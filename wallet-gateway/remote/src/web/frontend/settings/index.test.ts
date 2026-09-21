@@ -44,7 +44,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiSettings } from './index.js'
+import type { UserUiSettings } from './index.js'
 
 async function ready(el: UserUiSettings) {
     await waitUntil(() => el.client !== null && el.gatewayVersion !== undefined)

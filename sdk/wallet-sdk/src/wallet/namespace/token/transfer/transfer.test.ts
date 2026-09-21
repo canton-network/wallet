@@ -3,12 +3,12 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import * as mock from '../../../__test__/mocks'
-import { TokenNamespaceConfig } from '../index'
+import type { TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
 import { TransferNamespace } from './service'
-import { ProxyDelegationCommandArgs } from './proxyDelegation'
+import type { ProxyDelegationCommandArgs } from './proxyDelegation'
 import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
-import { TransferAllocationChoiceParams, TransferParams } from './types'
+import type { TransferAllocationChoiceParams, TransferParams } from './types'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const { ctx, mockLogger } = mock
 
@@ -59,7 +59,6 @@ describe('token transfer namespace', () => {
 
     let transfer: TransferNamespace
     beforeEach(() => {
-        vi.clearAllMocks()
         transfer = new TransferNamespace(config)
     })
 

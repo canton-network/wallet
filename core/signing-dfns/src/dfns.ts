@@ -3,7 +3,7 @@
 
 import { DfnsApiClient } from '@dfns/sdk'
 import { AsymmetricKeySigner } from '@dfns/sdk-keysigner'
-import { SigningStatus } from '@canton-network/core-signing-lib'
+import type { SigningStatus } from '@canton-network/core-signing-lib'
 import { pino } from 'pino'
 
 const logger = pino({ name: 'dfns-handler', level: 'debug' })

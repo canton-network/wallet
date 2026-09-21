@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    JsonRpcRequest,
-    JsonRpcResponse,
+    type JsonRpcRequest,
+    type JsonRpcResponse,
     SpliceMessage,
     WalletEvent,
     type SpliceMessageEvent,
 } from '@canton-network/core-types'
 
 import { createProxyService } from '@webext-core/proxy-service'
-import { Methods } from '../background/dapp/rpc-gen'
+import type { Methods } from '../background/dapp/rpc-gen'
 
 /**
  * Proxies JSON-RPC requests, responses, between the dApp page (window message events),

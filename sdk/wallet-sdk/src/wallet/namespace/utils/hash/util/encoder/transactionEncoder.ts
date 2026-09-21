@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { OfflineSDKContext } from '../../../../../sdk.js'
+import type { OfflineSDKContext } from '../../../../../sdk.js'
 import { Encoder } from './encoder.js'
-import { DamlTransaction } from '@canton-network/core-ledger-proto'
+import type { DamlTransaction } from '@canton-network/core-ledger-proto'
 import { PrimitiveEncoder } from './primitiveEncoder.js'
 import { CollectionEncoder } from './collectionEncoder.js'
 import { LedgerApiValueEncoder } from './ledgerApiValueEncoder.js'
@@ -11,7 +11,7 @@ import {
     NODE_ENCODING_VERSION,
     PREPARED_TRANSACTION_HASH_PURPOSE,
 } from '../const.js'
-import { ArgValueOneOfKind, HashEncoder } from './types.js'
+import type { ArgValueOneOfKind, HashEncoder } from './types.js'
 
 type Node = Extract<
     DamlTransaction['nodes'][number]['versionedNode'],

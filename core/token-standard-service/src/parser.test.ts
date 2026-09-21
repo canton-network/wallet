@@ -3,10 +3,10 @@
 
 import { vi, describe, it, expect, beforeEach, type Mocked } from 'vitest'
 
-import { v3_5 } from '@canton-network/core-ledger-client-types'
+import type { v3_5 } from '@canton-network/core-ledger-client-types'
 import { CoreService } from './token-standard-service.js'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import { LedgerProvider } from '@canton-network/core-provider-ledger'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 
 import eventsByContractIdResponses from './test-data/mock/eventsByContractIdResponses.json'
 import ledgerEffectsMock from './test-data/mock/utility-payload-ledger-effects.json'
@@ -62,7 +62,6 @@ describe('TransactionParser', () => {
     let mockProvider: Mocked<LedgerProvider>
 
     beforeEach(() => {
-        vi.clearAllMocks()
         mockProvider = makeLedgerProviderMock(eventsByContractIdResponses)
     })
 

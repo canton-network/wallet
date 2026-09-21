@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     asyncApiByVersion,
     supportedAsyncApiVersions,
@@ -11,8 +11,8 @@ import {
     type AsyncCommonChannels,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
-import pino, { Logger } from 'pino'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import pino, { type Logger } from 'pino'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export const supportedVersions = supportedAsyncApiVersions
 

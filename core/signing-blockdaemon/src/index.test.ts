@@ -3,8 +3,8 @@
 
 import { vi, expect, describe, test, beforeEach, type Mocked } from 'vitest'
 import BlockdaemonSigningDriver from './index.js'
-import { SigningAPIClient } from './signing-api-sdk.js'
-import { Transaction, Key } from '@canton-network/core-signing-lib'
+import type { SigningAPIClient } from './signing-api-sdk.js'
+import type { Transaction, Key } from '@canton-network/core-signing-lib'
 
 describe('BlockdaemonSigningDriver constructor', () => {
     test('passes caip2 from config to the client', () => {
@@ -40,8 +40,6 @@ describe('BlockdaemonSigningDriver', () => {
     let mockClient: Mocked<SigningAPIClient>
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         mockClient = {
             signTransaction: vi.fn(),
             getTransaction: vi.fn(),

@@ -54,7 +54,6 @@ describe('RegistryState', () => {
     beforeEach(() => {
         // Reset the singleton instance before each test
         RegistryState['_instance'] = null
-        vi.clearAllMocks()
     })
 
     afterEach(() => {

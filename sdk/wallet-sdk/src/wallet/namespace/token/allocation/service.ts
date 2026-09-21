@@ -1,24 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
-    AllocationInstructionView,
-    AllocationRequestView,
-    AllocationView,
+    type AllocationInstructionView,
+    type AllocationRequestView,
+    type AllocationView,
 } from '@canton-network/core-token-standard'
-import { PrettyContract } from '@canton-network/core-tx-parser'
-import { PreparedCommand } from '../../transactions/types.js'
-import {
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { PreparedCommand } from '../../transactions/types.js'
+import type {
     AllocationParams,
     AllocationInstructionCreateParams,
     AllocationContextParams,
     AllocationScanParams,
 } from './types.js'
-import { TokenNamespaceConfig } from '../../../sdk.js'
+import type { TokenNamespaceConfig } from '../../../sdk.js'
 import { ParsedURL } from '../../utils/url.js'
 
 export class AllocationNamespace {

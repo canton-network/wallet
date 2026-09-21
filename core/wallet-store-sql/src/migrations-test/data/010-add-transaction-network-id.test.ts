@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, test } from 'vitest'
-import { Kysely, sql } from 'kysely'
+import { type Kysely, sql } from 'kysely'
 
 import {
     forEachDialect,
@@ -13,7 +13,7 @@ import {
     listColumns,
     primaryKeyColumns,
 } from '../helpers'
-import { DB } from '../../schema'
+import type { DB } from '../../schema'
 import { insertIdp, insertNetwork } from '../seeds/001-init'
 import { insertTransaction as insertTransaction003 } from '../seeds/003-transaction-origin'
 import { insertTransaction as insertTransaction008 } from '../seeds/008-transaction-external-tx-id'

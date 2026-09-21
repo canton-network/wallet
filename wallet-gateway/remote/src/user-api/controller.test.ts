@@ -1,17 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { pino, Logger } from 'pino'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
-import { AuthContext, Idp } from '@canton-network/core-wallet-auth'
+import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
-    MessageRaw,
-    Network as StoreNetwork,
+    type MessageRaw,
+    type Network as StoreNetwork,
     PartyLevelRight,
-    Session,
-    Transaction,
-    Wallet,
+    type Session,
+    type Transaction,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
@@ -268,10 +268,6 @@ describe('userController', () => {
         transactionServiceMocks.execute.mockReset()
     })
 
-    afterEach(() => {
-        vi.clearAllMocks()
-    })
-
     describe('getUser', () => {
         it('returns user id and isAdmin false for a regular user', async () => {
             const store = await createStore(logger, auth)
@@ -491,12 +487,19 @@ describe('userController', () => {
             })
 
             expect(typeof result.accessToken).toBe('string')
+            const header = JSON.parse(
+                Buffer.from(
+                    result.accessToken.split('.')[0]!,
+                    'base64url'
+                ).toString()
+            )
             const payload = JSON.parse(
                 Buffer.from(
                     result.accessToken.split('.')[1]!,
                     'base64url'
                 ).toString()
             )
+            expect(header.kid).toBe('network-self-signed')
             expect(payload.sub).toBe('test-user')
         })
 
@@ -988,6 +991,7 @@ describe('userController', () => {
                 expect.objectContaining({
                     getWithRetry: ledgerMocks.getWithRetry,
                 }),
+                auth,
                 expect.objectContaining({ id: storeNetwork.id })
             )
             expect(result).toEqual({ commandId: pendingTransaction.commandId })
@@ -1021,6 +1025,7 @@ describe('userController', () => {
                 expect.objectContaining({
                     getWithRetry: ledgerMocks.getWithRetry,
                 }),
+                auth,
                 expect.objectContaining({ id: storeNetwork.id })
             )
             expect(result).toEqual({ commandId: pendingTransaction.commandId })

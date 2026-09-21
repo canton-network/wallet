@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { SDKContext } from '../../init/types/context.js'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type { AssetBody } from '../asset/index.js'
 
 export type URLInput = URL | string

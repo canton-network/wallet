@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
-    AuthContext,
-    UserId,
-    AuthAware,
+    type AuthContext,
+    type UserId,
+    type AuthAware,
     assertConnected,
 } from '@canton-network/core-wallet-auth'
-import {
+import type {
     SigningDriverStore,
     SigningKey,
     SigningTransaction,
@@ -25,15 +25,15 @@ import {
 import pg from 'pg'
 import Database from 'better-sqlite3'
 import {
-    DB,
+    type DB,
     fromSigningKey,
     toSigningKey,
     fromSigningTransaction,
     toSigningTransaction,
     fromSigningDriverConfig,
     toSigningDriverConfig,
-    SigningKeyTable,
-    StoreConfig,
+    type SigningKeyTable,
+    type StoreConfig,
 } from './schema.js'
 
 export class StoreSql implements SigningDriverStore, AuthAware<StoreSql> {

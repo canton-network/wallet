@@ -4,7 +4,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { SDKError } from './SDKError'
 import { SDKErrorHandler } from './handler'
-import { SDKLogger } from '../logger/logger'
+import type { SDKLogger } from '../logger/logger'
 
 describe('SDKError', () => {
     it('sets message from context and is the instance of Error', () => {

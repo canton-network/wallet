@@ -8,7 +8,7 @@ import { html } from 'lit'
 vi.mock('../index.js', () => ({}))
 
 import './index.js'
-import { NotFoundUi } from './index.js'
+import type { NotFoundUi } from './index.js'
 
 describe('NotFoundUi', () => {
     afterEach(() => {

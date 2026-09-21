@@ -6,7 +6,7 @@ import type { SDKInterface } from '@canton-network/wallet-sdk'
 import type { MultiSyncSetup } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
 import { OTCTrade } from '@canton-network/core-splice-codegen'
-import { TransferLeg } from '@canton-network/core-token-standard'
+import type { TransferLeg } from '@canton-network/core-token-standard'
 
 const MS_30_MIN = 30 * 60 * 1000
 const MS_1_HOUR = 60 * 60 * 1000
@@ -26,8 +26,7 @@ export async function createAndInitiateOtcTrade(
         globalSynchronizerId,
     } = setup
 
-    // The proposal is created on Alice's participant but read from other
-    // participants (Bob, TradingApp)
+    // The proposal is created on Alice's participant but read from other participants (Bob, TradingApp)
     const readProposalCid = async (
         sdk: SDKInterface<'token'>,
         party: string,

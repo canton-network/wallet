@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Request, Response, NextFunction } from 'express'
-import { AuthAware } from '@canton-network/core-wallet-auth'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
-import { Logger } from 'pino'
-import { Store } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+import type { Store } from '@canton-network/core-wallet-store'
 
 /**
  * Middleware to handle session validation based on user sessions.

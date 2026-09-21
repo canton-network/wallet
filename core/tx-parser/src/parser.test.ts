@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LedgerProvider } from '@canton-network/core-provider-ledger'
-import { v3_5 } from '@canton-network/core-ledger-client-types'
-import { vi, describe, it, expect, beforeEach, Mocked } from 'vitest'
+import type { LedgerProvider } from '@canton-network/core-provider-ledger'
+import type { v3_5 } from '@canton-network/core-ledger-client-types'
+import { vi, describe, it, expect, beforeEach, type Mocked } from 'vitest'
 import { TransactionParser } from './parser.js'
 import eventsByContractIdResponses from './test-data/mock/eventsByContractIdResponses.json'
 import aliceTransferObjectsExpected from './test-data/expected/alice-transfer-objects.json'
@@ -60,7 +60,6 @@ describe('transaction parser', () => {
     let mockProvider: Mocked<LedgerProvider>
 
     beforeEach(() => {
-        vi.clearAllMocks()
         mockProvider = makeLedgerProviderMock(eventsByContractIdResponses)
     })
 

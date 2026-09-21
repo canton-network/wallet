@@ -14,7 +14,7 @@ import {
     downloadAndUnpackTarball,
     error,
     setCantonHash,
-    Network,
+    type Network,
     getNetworkArg,
     hasFlag,
 } from './lib/utils.js'
