@@ -40,8 +40,6 @@ describe('cache - item', () => {
     let cache: ACSCache
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         getActiveContracts.mockReturnValue([
             {
                 workflowId: 'id1',

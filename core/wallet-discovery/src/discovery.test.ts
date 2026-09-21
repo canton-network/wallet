@@ -87,7 +87,6 @@ const connectClient = async (
 
 describe('DiscoveryClient', () => {
     beforeEach(() => {
-        vi.clearAllMocks()
         mockLoadPersistedSession.mockReturnValue(null)
     })
 

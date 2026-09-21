@@ -33,9 +33,7 @@ const createTestSDK = async () => {
 }
 
 describe('plugin', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     EXTENDED_SDK_OPTION_KEYS.forEach((key) => {
         it(`should throw error if ${key} is used as a name`, () => {

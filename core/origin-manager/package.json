@@ -29,12 +29,12 @@
         "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
+        "@vitest/browser-playwright": "^5.0.1",
+        "@vitest/coverage-v8": "^5.0.1",
         "typescript": "^5.7.2",
         "vite": "^8.1.5",
         "vite-plugin-dts": "^5.0.3",
-        "vitest": "^4.1.11"
+        "vitest": "^5.0.1"
     },
     "files": [
         "dist/**"

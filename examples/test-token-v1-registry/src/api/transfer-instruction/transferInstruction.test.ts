@@ -47,7 +47,6 @@ vi.mock('@canton-network/core-splice-codegen', () => ({
 
 describe('Transfer Instruction', () => {
     beforeEach(() => {
-        vi.clearAllMocks()
         mock.state.RegistryState.instance.reset()
     })
 

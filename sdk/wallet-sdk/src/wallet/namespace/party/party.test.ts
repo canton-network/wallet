@@ -43,8 +43,6 @@ describe('Party namespace', () => {
     let party: PartyNamespace
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         party = new PartyNamespace(ctx)
     })
 
@@ -279,7 +277,6 @@ describe('Party namespace', () => {
         }
 
         beforeEach(() => {
-            vi.clearAllMocks()
             vi.restoreAllMocks()
 
             signTransactionHashSpy = vi
