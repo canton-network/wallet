@@ -54,6 +54,7 @@ export interface Wallet {
     topologyTransactions?: string
     disabled?: boolean
     reason?: string
+    isAuthParty?: boolean
     rights: PartyLevelRight[]
     userId: string
     // hosted: [network]

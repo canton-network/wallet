@@ -64,6 +64,7 @@ interface WalletTable {
     status: string | null
     disabled: number
     reason: string | null
+    isAuthParty: number
 }
 interface UpdateWalletProperties {
     primary?: number
@@ -253,13 +254,15 @@ export const toSession = (table: SessionTable): Session => {
 }
 
 export const fromWallet = (wallet: Wallet, userId: UserId): WalletTable => {
-    const { externalTxId, topologyTransactions, rights, ...rest } = wallet
+    const { externalTxId, topologyTransactions, rights, isAuthParty, ...rest } =
+        wallet
     void rights
     return {
         ...rest,
         primary: wallet.primary ? 1 : 0,
         userId: userId,
         disabled: wallet.disabled !== undefined && wallet.disabled ? 1 : 0,
+        isAuthParty: isAuthParty ? 1 : 0,
         reason: wallet.reason ?? null,
         externalTxId: externalTxId && externalTxId !== '' ? externalTxId : null,
         topologyTransactions:
@@ -314,6 +317,7 @@ export const toWallet = (table: WalletTable): Wallet => {
         networkId: table.networkId,
         signingProviderId: table.signingProviderId,
         disabled: table.disabled === 1,
+        isAuthParty: table.isAuthParty === 1,
         userId: table.userId,
         ...(table.externalTxId !== null && {
             externalTxId: table.externalTxId,

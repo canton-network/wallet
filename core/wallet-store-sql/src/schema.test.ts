@@ -126,9 +126,11 @@ describe('schema mappers', () => {
             const table = fromWallet(wallet, 'user-1')
             expect(table.primary).toBe(1)
             expect(table.disabled).toBe(1)
+            expect(table.isAuthParty).toBe(0)
             expect(toWallet(table)).toMatchObject({
                 primary: true,
                 disabled: true,
+                isAuthParty: false,
                 reason: 'disabled',
                 externalTxId: 'ext-tx-id',
                 topologyTransactions: 'topo',
