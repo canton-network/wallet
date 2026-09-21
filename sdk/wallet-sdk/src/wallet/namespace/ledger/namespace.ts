@@ -4,10 +4,14 @@
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { SDKContext } from '../../init/types/context.js'
 import { v4 } from 'uuid'
-import { PrepareOptions, ExecuteOptions, AcsRequestOptions } from './types.js'
+import type {
+    PrepareOptions,
+    ExecuteOptions,
+    AcsRequestOptions,
+} from './types.js'
 import { PreparedTransaction } from '../transactions/prepared.js'
 import { SignedTransaction } from '../transactions/signed.js'
-import { Ops } from '@canton-network/core-provider-ledger'
+import type { Ops } from '@canton-network/core-provider-ledger'
 import { InternalLedgerNamespace } from './internal/index.js'
 import { ACSReader } from '@canton-network/core-acs-reader'
 import { DarNamespace } from './dar/index.js'
@@ -67,6 +71,7 @@ export class LedgerNamespace {
                     params: {
                         resource: '/v2/state/ledger-end',
                         requestMethod: 'get',
+                        query: {},
                     },
                 }
             )

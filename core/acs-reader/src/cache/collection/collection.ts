@@ -3,9 +3,9 @@
 
 import { BaseCacheCollection } from './base'
 import { ACSCache, PaginatedACSCache } from '../item'
-import { ACSKey } from '../../types'
-import { PaginatedAcsOptions } from '../../service'
-import { Ops } from '@canton-network/core-provider-ledger'
+import type { ACSKey } from '../../types'
+import type { PaginatedAcsOptions } from '../../service'
+import type { Ops } from '@canton-network/core-provider-ledger'
 
 type ReadPageFromCacheOptions = ACSKey & Pick<PaginatedAcsOptions, 'pageToken'>
 
@@ -43,6 +43,7 @@ export class PaginatedACSCacheCollection extends BaseCacheCollection<PaginatedAC
                 params: {
                     requestMethod: 'get',
                     resource: '/v2/state/ledger-end',
+                    query: {},
                 },
             })
         ).offset

@@ -1,19 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import express from 'express'
+import type express from 'express'
 import cors from 'cors'
 import { dappController } from './controller.js'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
-import { Methods } from './rpc-gen/index.js'
-import { Store } from '@canton-network/core-wallet-store'
-import { AuthAware } from '@canton-network/core-wallet-auth'
-import { Server } from 'http'
-import { NotificationService } from '../notification/NotificationService.js'
-import { KernelInfo, ServerConfig } from '../config/Config.js'
-import { DappControllerDeps } from './controller.js'
-import { HASHING_SCHEME_VERSION } from '@canton-network/core-wallet-services'
+import type { Methods } from './rpc-gen/index.js'
+import type { Store } from '@canton-network/core-wallet-store'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
+import type { Server } from 'http'
+import type { NotificationService } from '../notification/NotificationService.js'
+import type { KernelInfo, ServerConfig } from '../config/Config.js'
+import type { DappControllerDeps } from './controller.js'
+import type { HASHING_SCHEME_VERSION } from '@canton-network/core-wallet-services'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)

@@ -6,7 +6,7 @@ import {
     ACSCacheCollection,
     PaginatedACSCacheCollection,
 } from '../../cache/collection'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 const { mockCache, MockACSCache } = vi.hoisted(() => {
     const update = vi.fn()
@@ -42,9 +42,7 @@ const ledgerProvider = vi.hoisted(() => ({
 }))
 
 describe('cache collection', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
     ;[ACSCacheCollection, PaginatedACSCacheCollection].forEach(
         (cacheConstructor) => {
             describe(`using ${cacheConstructor.name}`, () => {
@@ -258,6 +256,7 @@ describe('cache collection', () => {
             params: {
                 requestMethod: 'get',
                 resource: '/v2/state/ledger-end',
+                query: {},
             },
         })
         expect(mockCache.update).toHaveBeenCalledExactlyOnceWith({

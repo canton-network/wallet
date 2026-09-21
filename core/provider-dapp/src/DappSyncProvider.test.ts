@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { RpcTransport } from '@canton-network/core-rpc-transport'
+import type { RpcTransport } from '@canton-network/core-rpc-transport'
 import { WalletEvent } from '@canton-network/core-types'
 import { DappSyncProvider } from './DappSyncProvider'
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LogAdapter, LogContext, LogLevel } from '../types'
+import type { LogAdapter, LogContext, LogLevel } from '../types'
 import pino from 'pino'
 
 export default class PinoLogAdapter implements LogAdapter {

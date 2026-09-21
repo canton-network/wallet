@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { MockedObject, vi } from 'vitest'
-import {
+import { type MockedObject, vi } from 'vitest'
+import type {
     AmuletConfig,
     AssetConfig,
     BasicSDKOptions,
@@ -10,9 +10,9 @@ import {
     TokenConfig,
     TokenProviderConfig,
 } from '../sdk.js'
-import { SDKLogger } from '../logger/logger.js'
+import type { SDKLogger } from '../logger/logger.js'
 import { SDKErrorHandler } from '../error/handler.js'
-import { OfflineSDKContext, SDKContext } from '../init/types/context.js'
+import type { OfflineSDKContext, SDKContext } from '../init/types/context.js'
 
 const exampleLink = 'http://example.com'
 

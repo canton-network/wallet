@@ -3,7 +3,7 @@
 
 import { useAllEvents } from '../hooks/useAllEvents'
 import { prettyjson } from '../utils'
-import * as sdk from '@canton-network/dapp-sdk'
+import type * as sdk from '@canton-network/dapp-sdk'
 
 export function PostEvents(props: {
     connectResult?: sdk.dappAPI.ConnectResult

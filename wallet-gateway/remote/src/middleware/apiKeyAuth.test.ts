@@ -6,8 +6,8 @@ import type { Request, Response, NextFunction } from 'express'
 import { apiKeyAuth } from './apiKeyAuth.js'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { Store } from '@canton-network/core-wallet-store'
-import { AuthAware } from '@canton-network/core-wallet-auth'
+import type { Store } from '@canton-network/core-wallet-store'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
 import crypto from 'crypto'
 
 type ApiKeyStore = Pick<

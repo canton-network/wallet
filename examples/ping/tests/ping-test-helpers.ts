@@ -9,7 +9,7 @@ import {
     WalletGateway,
     type ExternalSigningProvider,
 } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 export const DAPP_API_PORT = 3030
 export const DAPP_URL = 'http://localhost:8080/'

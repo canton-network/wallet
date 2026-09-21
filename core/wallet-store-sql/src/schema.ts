@@ -1,18 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { authSchema, Idp, UserId } from '@canton-network/core-wallet-auth'
 import {
-    Wallet,
-    Transaction,
-    Session,
-    Network,
-    WalletStatus,
-    UpdateWallet,
+    authSchema,
+    type Idp,
+    type UserId,
+} from '@canton-network/core-wallet-auth'
+import {
+    type Wallet,
+    type Transaction,
+    type Session,
+    type Network,
+    type WalletStatus,
+    type UpdateWallet,
     PartyLevelRight,
     UserLevelRight,
-    MessageRaw,
-    ApiKey,
+    type MessageRaw,
+    type ApiKey,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {

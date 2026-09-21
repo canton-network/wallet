@@ -33,9 +33,7 @@ export async function allocateTokenForBob(
     const tokenHolding = tokenHoldings[0]
     if (!tokenHolding) throw new Error('Token holding not found for Bob')
 
-    // Fetch the AllocationFactory + choice context from the TestToken registry's
-    // allocation-instruction-v1 API. The registry returns the global-synchronizer
-    // TokenRules contract as the factory (disclosed in `disclosedFromHelper`).
+    // Verify that the TokenRules factory for the app synchronizer is available.
     const appTokenRules = (
         await tokenAdminSdk.ledger.acsReader.raw.readJsContracts({
             templateIds: [TestToken.DAR.TestTokenV1.TokenRules.templateId],

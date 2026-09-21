@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-daml-codegen-helpers",
-    "version": "1.10.0",
+    "version": "1.11.1",
     "type": "module",
     "description": "Helpers for combining Daml codegen TypeScript output with the Splice Wallet SDK.",
     "license": "Apache-2.0",
@@ -26,10 +26,10 @@
     },
     "devDependencies": {
         "@types/node": "^25.9.4",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/coverage-v8": "^5.0.1",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "vitest": "^5.0.1"
     },
     "files": [
         "dist/**"

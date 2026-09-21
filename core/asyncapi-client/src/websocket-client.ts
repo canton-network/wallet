@@ -1,18 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     asyncApiByVersion,
     supportedAsyncApiVersions,
-    TransactionFilterBySetup,
+    EventFilterBySetup,
     type AsyncChannelsByVersion,
     type AsyncApiVersion,
     type AsyncCommonChannels,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
-import pino, { Logger } from 'pino'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import pino, { type Logger } from 'pino'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export const supportedVersions = supportedAsyncApiVersions
 
@@ -156,24 +156,36 @@ export class WebSocketClient {
     ): AsyncIterableIterator<JsGetUpdatesResponse> {
         const wsUpdatesUrl = `${this.baseUrl}${this.channels.v2_updates}`
 
-        const filter = options.templateIds
-            ? TransactionFilterBySetup({
+        const eventFormat = options.templateIds
+            ? EventFilterBySetup({
                   templateIds: options.templateIds,
                   partyId: options.partyId,
+                  verbose: options.verbose ?? true,
               })
-            : TransactionFilterBySetup({
+            : EventFilterBySetup({
                   interfaceIds: options.interfaceIds!,
                   partyId: options.partyId,
+                  verbose: options.verbose ?? true,
               })
 
         const request = {
             beginExclusive: options.beginExclusive,
-            verbose: options.verbose ?? true,
-            filter,
+            updateFormat: {
+                includeTransactions: {
+                    eventFormat,
+                    transactionShape: 'TRANSACTION_SHAPE_ACS_DELTA',
+                },
+                includeReassignments: eventFormat,
+                includeTopologyEvents: {
+                    includeParticipantAuthorizationEvents: {
+                        parties: options.partyId ? [options.partyId] : [],
+                    },
+                },
+            },
             ...(options.endInclusive !== undefined
                 ? { endInclusive: options.endInclusive }
                 : {}),
-        } as GetUpdatesRequest
+        } satisfies GetUpdatesRequest
 
         return this.generate<JsGetUpdatesResponse>(wsUpdatesUrl, request)
     }

@@ -3,11 +3,11 @@
 
 import {
     assertConnected,
-    AuthContext,
+    type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import buildController from './rpc-gen/index.js'
-import {
+import type {
     ConnectResult,
     LedgerApiParams,
     LedgerApiResult,
@@ -19,12 +19,12 @@ import {
     StatusEvent,
     Wallet,
 } from './rpc-gen/typings.js'
-import { Store, Transaction } from '@canton-network/core-wallet-store'
+import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import {
     LedgerClient,
-    GetEndpoint,
-    PostEndpoint,
-    PrepareSubmissionResponse,
+    type GetEndpoint,
+    type PostEndpoint,
+    type PrepareSubmissionResponse,
     isValidGetEndpoint,
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'

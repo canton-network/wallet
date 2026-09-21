@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { NextFunction, Request, Response } from 'express'
-import { Logger } from 'pino'
+import type { NextFunction, Request, Response } from 'express'
+import type { Logger } from 'pino'
 import {
     JsonRpcError,
     rpcErrors,
@@ -11,7 +11,7 @@ import {
 import {
     ErrorResponse,
     JsonRpcRequest,
-    JsonRpcResponse,
+    type JsonRpcResponse,
 } from '@canton-network/core-types'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import { isJsCantonError } from '@canton-network/core-ledger-client'
@@ -25,7 +25,6 @@ interface JsonRpcHttpOptions<T> {
  * Handles JSON-RPC errors and maps them to HTTP responses.
  * @param error The error that occurred.
  * @param id The JSON-RPC request ID.
- * @param logger The logger instance.
  * @param method The name of the JSON-RPC method being called.
  * @returns A tuple containing the HTTP status code and the JSON-RPC response.
  */
@@ -42,12 +41,15 @@ export const handleRpcError = (
         error: {
             ...rpcErrors.internal(),
             message: genericMessage,
-            data: error,
         },
     }
 
     if (error instanceof JsonRpcError) {
-        response.error = error
+        response.error = {
+            code: error.code,
+            message: error.message,
+            data: error.data,
+        }
         const httpCode = toHttpErrorCode(error.code)
         return [httpCode, jsonRpcResponse(id, response)]
     }
@@ -164,8 +166,9 @@ export const jsonRpcHandler =
                             method
                         )
 
+                        // Full error with callstack in logs, sanitized version in response
                         logger.error(
-                            { response },
+                            { err: error, response },
                             'RPC response: error with response'
                         )
                         res.status(status).json(response)

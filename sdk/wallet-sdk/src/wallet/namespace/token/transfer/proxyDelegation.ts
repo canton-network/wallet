@@ -1,18 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
-import { TokenNamespaceConfig } from '../../../sdk.js'
+import type { PartyId } from '@canton-network/core-types'
+import type { TokenNamespaceConfig } from '../../../sdk.js'
 import {
-    Beneficiaries,
+    type Beneficiaries,
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
 import { localNetStaticConfig } from '../../../../config.js'
-import { LedgerTypes } from '../../../sdk.js'
-import { FeaturedAppRight } from '../../amulet/types.js'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { LedgerCommonSchemas } from '../../../sdk.js'
+import type { FeaturedAppRight } from '../../amulet/types.js'
+import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { LedgerNamespace } from '../../ledger/index.js'
-import { ParsedURL, URLInput } from '../../utils/url.js'
+import { ParsedURL, type URLInput } from '../../utils/url.js'
 import { resolveProviderParty } from '../utils.js'
 
 export type ProxyDelegationCommandArgs = {
@@ -34,8 +34,8 @@ type ProxyDelegationCommandWrapperFunction = (
         | 'exerciseDelegateProxyTransferInstructionReject']
 ) => Promise<
     [
-        { ExerciseCommand: LedgerTypes['ExerciseCommand'] },
-        LedgerTypes['DisclosedContract'][],
+        { ExerciseCommand: LedgerCommonSchemas['ExerciseCommand'] },
+        LedgerCommonSchemas['DisclosedContract'][],
     ]
 >
 

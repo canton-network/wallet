@@ -1,11 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ACEvent, ACS_UPDATE_CONFIG, ACSState } from '../../types'
-import { Ops } from '@canton-network/core-provider-ledger'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { ResolvedAcsOptions, buildActiveContractFilter } from '../../service'
-import { ContractId } from '@canton-network/core-types'
+import type { ACEvent, ACSState } from '../../types'
+import { ACS_UPDATE_CONFIG } from '../../types'
+import type { Ops } from '@canton-network/core-provider-ledger'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import {
+    type ResolvedAcsOptions,
+    buildActiveContractFilter,
+} from '../../service'
+import type { ContractId } from '@canton-network/core-types'
 import { BaseACSCache, isCreatedEvent, logger } from './base'
 
 export class ACSCache extends BaseACSCache {
@@ -47,10 +51,7 @@ export class ACSCache extends BaseACSCache {
         const updates = await this.fetchUpdates({
             beginExclusive: this.updates.offset,
             endInclusive: options.offset,
-            eventFormat: {
-                verbose: Boolean(builtFilter.verbose),
-                ...builtFilter.filter,
-            },
+            eventFormat: builtFilter.eventFormat,
         })
 
         /**
@@ -171,10 +172,9 @@ export class ACSCache extends BaseACSCache {
         beginExclusive: number
         endInclusive: number
         eventFormat: LedgerCommonSchemas['EventFormat']
-        filter?: LedgerCommonSchemas['TransactionFilter']
     }) {
-        const { beginExclusive, endInclusive, eventFormat, filter } = args
-        const updateFormat: Ops.PostV2UpdatesFlats['ledgerApi']['params']['body']['updateFormat'] =
+        const { beginExclusive, endInclusive, eventFormat } = args
+        const updateFormat: Ops.PostV2Updates['ledgerApi']['params']['body']['updateFormat'] =
             {
                 includeTransactions: {
                     eventFormat,
@@ -191,8 +191,6 @@ export class ACSCache extends BaseACSCache {
                     beginExclusive,
                     endInclusive,
                     updateFormat,
-                    verbose: false,
-                    ...(filter ? { filter } : {}),
                 },
                 query: {
                     limit: ACS_UPDATE_CONFIG.maxUpdatesToFetch,

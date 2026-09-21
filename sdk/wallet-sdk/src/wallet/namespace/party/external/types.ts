@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Ops } from '@canton-network/core-provider-ledger'
-import { TokenProviderConfig } from '@canton-network/core-wallet-auth'
+import type { Ops } from '@canton-network/core-provider-ledger'
+import type { TokenProviderConfig } from '@canton-network/core-wallet-auth'
 
 export type CreatePartyOptions = Partial<{
     isAdmin: boolean

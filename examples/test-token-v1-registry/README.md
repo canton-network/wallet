@@ -51,9 +51,7 @@ flowchart LR
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 11.x
-- dependencies installed at repository root
+- See [`docs/CONTRIBUTING.md`](../../docs/CONTRIBUTING.md) for development environment setup.
 - local Canton/localnet setup if you want full end-to-end behavior
 
 ### Installation

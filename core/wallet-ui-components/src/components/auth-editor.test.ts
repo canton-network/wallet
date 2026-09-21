@@ -5,7 +5,7 @@ import { elementUpdated, fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { describe, expect, it, vi } from 'vitest'
 import './auth-editor.js'
-import { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
+import type { AuthEditor, AuthEditorChangeEvent } from './auth-editor.js'
 
 const byTestId = <T extends Element>(el: Element, id: string): T | null =>
     el.querySelector<T>(`[data-test-id="${id}"]`)

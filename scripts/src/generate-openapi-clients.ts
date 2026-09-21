@@ -10,7 +10,7 @@ import {
     getSupportedCantonVersions,
     info,
     LEDGER_CLIENTS_PATH,
-    Network,
+    type Network,
     getNetworkArg,
     pruneVersionedFiles,
     SPLICE_SPEC_PATH,

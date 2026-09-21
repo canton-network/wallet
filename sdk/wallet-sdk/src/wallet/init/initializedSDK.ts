@@ -12,9 +12,13 @@ import { PartyNamespace } from '../namespace/party/index.js'
 import { UserNamespace } from '../namespace/user/index.js'
 import { TokenNamespace } from '../namespace/token/index.js'
 import { AssetNamespace } from '../namespace/asset/index.js'
-import { OfflineSDKContext, SDKContext, getValidatorParty } from '../sdk.js'
-import { SDKUtilsNamespace } from '../namespace/utils/index.js'
 import {
+    type OfflineSDKContext,
+    type SDKContext,
+    getValidatorParty,
+} from '../sdk.js'
+import { SDKUtilsNamespace } from '../namespace/utils/index.js'
+import type {
     AmuletConfig,
     AssetConfig,
     BasicSDKInterface,
@@ -23,6 +27,7 @@ import {
     ExtendedSDKOptions,
     OfflineSDKInterface,
     PluginConstructor,
+    PluginRegistration,
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
@@ -204,14 +209,26 @@ export class InitializedSDK<
          * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
          */
         P extends PluginConstructor[] | Record<string, PluginConstructor>,
-    >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
-        if (plugins instanceof Array) {
-            for (const name in plugins) {
-                const plugin = new plugins[name]({
+    >(
+        plugins: PluginRegistration<P>
+    ): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
+        if (Array.isArray(plugins)) {
+            for (const pluginConstructor of plugins as PluginConstructor[]) {
+                const plugin = new pluginConstructor({
                     ...this.ctx,
                     namespace: this,
                 })
-                Object.defineProperty(this, name, {
+                if (!plugin.name || typeof plugin.name !== 'string') {
+                    throw new Error(
+                        'Plugin must define a valid non-empty string name.'
+                    )
+                }
+                if (plugin.name in this) {
+                    throw new Error(
+                        `Plugin with name ${plugin.name} collides with an existing property on the SDK instance.`
+                    )
+                }
+                Object.defineProperty(this, plugin.name, {
                     value: plugin,
                     writable: false,
                     enumerable: true,
@@ -227,6 +244,11 @@ export class InitializedSDK<
                     ...this.ctx,
                     namespace: this,
                 })
+                if (name in this) {
+                    throw new Error(
+                        `Plugin with name ${name} collides with an existing property on the SDK instance.`
+                    )
+                }
                 Object.defineProperty(this, name, {
                     value: plugin,
                     writable: false,

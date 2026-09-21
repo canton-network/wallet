@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    LedgerClient,
+    type LedgerClient,
     defaultRetryableOptions,
 } from '@canton-network/core-ledger-client'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
-    Store,
-    Wallet,
+    type Store,
+    type Wallet,
     PartyLevelRight,
     UserLevelRight,
 } from '@canton-network/core-wallet-store'
 import {
-    SigningDriverInterface,
+    type SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { Logger } from 'pino'
-import { PartyAllocationService } from './party-allocation-service.js'
-import { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
+import type { Logger } from 'pino'
+import type { PartyAllocationService } from './party-allocation-service.js'
+import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 
 export class WalletSyncService {

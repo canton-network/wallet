@@ -1,16 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { MergeUtxosParams, ListHoldingsParams } from './types.js'
-import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
+import type { MergeUtxosParams, ListHoldingsParams } from './types.js'
+import {
+    HOLDING_INTERFACE_ID,
+    type HoldingView,
+} from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
-import { findAsset, LedgerTypes, TokenNamespaceConfig } from '../../../sdk.js'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import {
+    findAsset,
+    type LedgerCommonSchemas,
+    type TokenNamespaceConfig,
+} from '../../../sdk.js'
 import { Decimal } from 'decimal.js'
-import { TransferNamespace } from '../transfer/index.js'
+import type { TransferNamespace } from '../transfer/index.js'
 import { MergeDelegationNamespace } from './mergeDelegation.js'
 import { parseAssets } from '../../utils/url.js'
-import { WrappedCommand } from '@canton-network/core-ledger-client-types'
+import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 
 export class UtxoNamespace {
     public readonly delegatedMerge: MergeDelegationNamespace
@@ -34,7 +41,7 @@ export class UtxoNamespace {
     ): Promise<
         [
             WrappedCommand<'ExerciseCommand'>[],
-            LedgerTypes['DisclosedContract'][],
+            LedgerCommonSchemas['DisclosedContract'][],
         ]
     > {
         const utxos =
@@ -47,7 +54,7 @@ export class UtxoNamespace {
 
         const utxoGroupedByInstrument: Record<
             string,
-            PrettyContract<Holding>[] | undefined
+            PrettyContract<HoldingView>[] | undefined
         > = Object.groupBy(
             utxos,
             (utxo) =>
@@ -139,7 +146,7 @@ export class UtxoNamespace {
             continueUntilCompletion,
         } = params
         const utxos =
-            await this.sdkContext.tokenStandardService.listContractsByInterface<Holding>(
+            await this.sdkContext.tokenStandardService.listContractsByInterface<HoldingView>(
                 HOLDING_INTERFACE_ID,
                 partyId,
                 limit,
@@ -153,10 +160,7 @@ export class UtxoNamespace {
             ? utxos
             : utxos.filter(
                   (utxo) =>
-                      !TokenStandardService.isHoldingLocked(
-                          utxo.interfaceViewValue,
-                          currentTime
-                      )
+                      !TokenStandardService.isHoldingLocked(utxo, currentTime)
               )
 
         return filteredUtxos

@@ -5,14 +5,14 @@ import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
-    NetworkEditSaveEvent,
-    NetworkDeleteEvent,
+    type NetworkEditSaveEvent,
+    type NetworkDeleteEvent,
     chevronLeftIcon,
     handleErrorToast,
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import { Network } from '@canton-network/core-wallet-user-rpc-client'
+import type { Network } from '@canton-network/core-wallet-user-rpc-client'
 import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'

@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
-    AuthContext,
-    UserId,
-    AuthAware,
+    type AuthContext,
+    type UserId,
+    type AuthAware,
     assertConnected,
-    Idp,
+    type Idp,
 } from '@canton-network/core-wallet-auth'
-import {
+import type {
     Store as BaseStore,
     Wallet,
     PartyId,
@@ -29,10 +29,16 @@ import {
     ListTransactionsOptions,
     WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
-import { CamelCasePlugin, Kysely, PostgresDialect, SqliteDialect } from 'kysely'
+import {
+    CamelCasePlugin,
+    Kysely,
+    PostgresDialect,
+    SqliteDialect,
+    sql,
+} from 'kysely'
 import Database from 'better-sqlite3'
 import {
-    DB,
+    type DB,
     fromIdp,
     fromNetwork,
     fromTransaction,
@@ -51,8 +57,7 @@ import {
     toSession,
 } from './schema.js'
 import pg from 'pg'
-import { sql } from 'kysely'
-import { AccessToken } from '@canton-network/core-types'
+import type { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -476,11 +481,17 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     /**
      * Lists all pending transactions across all users.
      */
+
     async listAllPendingTransactions(): Promise<Array<Transaction>> {
         const rows = await this.db
             .selectFrom('transactions')
             .selectAll()
-            .where('status', '=', 'pending')
+            .where((eb) =>
+                eb.or([
+                    eb('status', '=', 'pending'),
+                    eb('status', '=', 'awaiting-signature'),
+                ])
+            )
             .execute()
 
         return rows.map((row) => toTransaction(row))
@@ -588,6 +599,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return network
     }
 
+    async getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined> {
+        // Not scoped by userId: key id resolution happens during token
+        // verification, before there is an authenticated user.
+        const row = await this.db
+            .selectFrom('networks')
+            .selectAll()
+            .where('id', '=', networkId)
+            .executeTakeFirst()
+        if (!row) return undefined
+
+        const network = toNetwork(row)
+        return network.auth.method === 'self_signed' ? network : undefined
+    }
+
     async listNetworks(): Promise<Array<Network>> {
         let query = this.db.selectFrom('networks').selectAll()
 
@@ -683,6 +710,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         const payload = updates.payload ?? existing.payload
         const signedAt = updates.signedAt ?? existing.signedAt
         const externalTxId = updates.externalTxId ?? existing.externalTxId
+        const failureReason = updates.failureReason ?? existing.failureReason
 
         return {
             id: existing.id,
@@ -697,6 +725,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             }),
             ...(signedAt !== undefined && { signedAt }),
             ...(externalTxId !== undefined && { externalTxId }),
+            ...(failureReason !== undefined && { failureReason }),
         }
     }
 
@@ -714,24 +743,34 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     async setTransactionSigned(
         transactionId: string,
         signedAt: Date,
-        externalTxId?: string
-    ): Promise<void> {
-        await this.setTransactionStatus(transactionId, 'signed', {
-            signedAt,
-            ...(externalTxId !== undefined && { externalTxId }),
-        })
+        externalTxId?: string,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean> {
+        return await this.setTransactionStatus(
+            transactionId,
+            'signed',
+            {
+                signedAt,
+                ...(externalTxId !== undefined && { externalTxId }),
+            },
+            opts
+        )
     }
 
     async setTransactionStatus(
         transactionId: string,
         status: Transaction['status'],
-        updates: TransactionStatusUpdate = {}
-    ): Promise<void> {
+        updates: TransactionStatusUpdate = {},
+        opts?: { expectedStatus?: Transaction['status'] }
+    ): Promise<boolean> {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
         const existing = await this.getTransaction(transactionId)
         if (!existing) {
             throw new Error(`Transaction not found with id: ${transactionId}`)
+        }
+        if (opts?.expectedStatus && existing.status !== opts.expectedStatus) {
+            return false
         }
 
         const updated = this.mergeTransactionStatusUpdate(
@@ -740,7 +779,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             updates
         )
 
-        await this.db
+        const res = await this.db
             .updateTable('transactions')
             .set(fromTransaction(updated, userId, network.id))
             .where((eb) =>
@@ -748,9 +787,14 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('id', '=', transactionId),
                     eb('userId', '=', userId),
                     eb('networkId', '=', network.id),
+                    ...(opts?.expectedStatus
+                        ? [eb('status', '=', opts.expectedStatus)]
+                        : []),
                 ])
             )
-            .execute()
+            .executeTakeFirst()
+
+        return res.numUpdatedRows > 0n
     }
 
     async getTransaction(

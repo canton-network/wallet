@@ -1,9 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { RpcTransport } from '@canton-network/core-rpc-transport'
+import type { RpcTransport } from '@canton-network/core-rpc-transport'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
-import { RequestPayload, ResponsePayload } from '@canton-network/core-types'
+import type {
+    RequestPayload,
+    ResponsePayload,
+} from '@canton-network/core-types'
 import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
 import { createProxyService } from '@webext-core/proxy-service'
 

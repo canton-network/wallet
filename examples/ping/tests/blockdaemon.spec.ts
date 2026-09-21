@@ -1,8 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, WalletGateway } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import {
+    test,
+    type WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
+import type { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -54,13 +57,14 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'signed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
             'signed'
         )
+        await wg.executeSignedTransaction({ waitForClose: false })
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -87,7 +91,6 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'rejected'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
@@ -106,7 +109,6 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'failed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,

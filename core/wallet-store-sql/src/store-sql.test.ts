@@ -3,26 +3,26 @@
 
 import { describe, expect, test, beforeEach, afterEach } from 'vitest'
 
-import {
+import type {
     AuthContext,
     AuthorizationCodeAuth,
     Idp,
 } from '@canton-network/core-wallet-auth'
 import {
-    LedgerApi,
-    MessageRaw,
-    Network,
+    type LedgerApi,
+    type MessageRaw,
+    type Network,
     PartyLevelRight,
-    Session,
-    Transaction,
+    type Session,
+    type Transaction,
     UserLevelRight,
-    Wallet,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
-import { Kysely } from 'kysely'
-import { Logger, pino } from 'pino'
+import type { Kysely } from 'kysely'
+import { type Logger, pino } from 'pino'
 import { sink } from 'pino-test'
 import { migrator } from './migrator'
-import { DB } from './schema'
+import type { DB } from './schema'
 import { connection, StoreSql } from './store-sql'
 
 const authContextMock: AuthContext = {

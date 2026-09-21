@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
+import type {
     Metadata,
     Metadata_InputContract,
 } from '@canton-network/core-ledger-proto'
-import { OfflineSDKContext } from '../../../../../sdk.js'
+import type { OfflineSDKContext } from '../../../../../sdk.js'
 import { Encoder } from './encoder.js'
 import { PREPARED_TRANSACTION_HASH_PURPOSE } from '../const.js'
-import { HashEncoder } from './types.js'
+import type { HashEncoder } from './types.js'
 import { PrimitiveEncoder } from './primitiveEncoder.js'
 import { CollectionEncoder } from './collectionEncoder.js'
 import { TransactionEncoder } from './transactionEncoder.js'

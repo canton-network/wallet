@@ -9,7 +9,7 @@ import {
     type StoreInternalConfig,
 } from '@canton-network/core-wallet-store-inmemory'
 import { AuthService } from './auth-service'
-import { AuthAware } from '@canton-network/core-wallet-auth'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
 
 export async function loadAuthedStore(
     store: Store & AuthAware<Store>

@@ -7,31 +7,49 @@
 ### Prerequisites
 
 - Node.js 24+ (see `.nvmrc` for exact version)
-- pnpm (via Corepack)
+- pnpm (version specified in `package.json#packageManager`)
 - Java (for Canton) - [sdkman](https://sdkman.io/install) is recommended for version management
 
 An unofficial, community-contributed [nix shell](./development/shell.nix) is available as well to provide these system dependencies.
 
 ### Environment
 
-1. Install [nvm](https://github.com/nvm-sh/nvm):
+1. Install [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm):
+
     ```bash
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.7/install.sh | bash
+
+    # or
+
+    curl -fsSL https://fnm.vercel.app/install | bash
     ```
+
 2. Restart your terminal
-3. Run `nvm install` to install the Node.js version from `.nvmrc`
-4. Run `corepack enable` to enable pnpm
+3. Run `nvm install` or `fnm install` to install the Node.js version from `.nvmrc`
+4. Install [pnpm](https://pnpm.io/installation)
+
+    ```bash
+        curl -fsSL https://get.pnpm.io/install.sh | sh -
+    ```
+
 5. Run `pnpm install` to install dependencies
 6. Run `pnpm postinstall` to set up auto sign-off hooks
 
-In order for Husky to have access to pnpm (as part of our pre-commit), you might need to add an init file for certain IDEs.
+In order for Husky to use the correct node version (as part of our pre-commit), you might need to add an init file for certain IDEs.
 
 Create the file `~/.config/husky/init.sh` with the following content:
 
 ```bash
 # ~/.config/husky/init.sh
+
+# for nvm
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+
+# or
+
+# for fnm
+eval "$(fnm env)"
 ```
 
 ### Git "Signed-off-by" Commit
@@ -149,10 +167,18 @@ If you've cloned this repository when it was set up to use `yarn`, finalize the 
 1. Pull latest main into your fork / branch
 2. Stop all running services: `yarn pm2 kill` (and `yarn stop:localnet`, if applicable)
 3. Delete any residual `yarn` directories: `rm -rf .pnp.cjs .pnp.loader.mjs .yarn`
-4. Run `corepack enable pnpm` to install pnpm
-5. Run `pnpm install`
-6. Done! For 99% of cases, you can now use `pnpm` as a direct replacement for `yarn`, i.e.:
+4. Run `pnpm install`
+5. Done! For 99% of cases, you can now use `pnpm` as a direct replacement for `yarn`, i.e.:
     - `yarn build:all` --> `pnpm build:all`
     - `yarn start:all` --> `pnpm start:all`
     - `yarn pm2 list` --> `pnpm pm2 list`
     - ... etc
+
+## Migrating from `corepack`
+
+If you've cloned this repository when it was set up to use `corepack`, finalize the switch to native `pnpm`:
+
+1. Pull latest main into your fork / branch
+2. Delete any residual `pnpm over corepack` references: `corepack disable pnpm` (see [pnpm troubleshooting](https://pnpm.io/installation#troubleshooting))
+3. Ensure you have at least pnpm 11 installed globally
+4. Use `pnpm`

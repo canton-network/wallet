@@ -3,11 +3,11 @@
 
 import { html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 
 import { BaseElement } from '../internal/base-element'
 import { modalStyles } from '../styles/modal'
-import { FormInputChangedEvent } from './form-input'
+import type { FormInputChangedEvent } from './form-input'
 
 /** Emitted when the user Saves a Identity Provider */
 export class IdpAddEvent extends Event {

@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-provider-dapp",
-    "version": "1.11.0",
+    "version": "1.12.2",
     "type": "module",
     "description": "CIP-0103 provider for web dApps, covering both Sync and Async APIs.",
     "license": "Apache-2.0",
@@ -25,12 +25,12 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
-        "playwright": "^1.61.1",
+        "@vitest/browser-playwright": "^5.0.1",
+        "@vitest/coverage-v8": "^5.0.1",
+        "playwright": "^1.63.0",
         "tsdown": "^0.22.9",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "vitest": "^5.0.1"
     },
     "dependencies": {
         "@canton-network/core-ledger-client-types": "workspace:^",

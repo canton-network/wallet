@@ -1,27 +1,92 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthService, resolveUserEmail } from '@canton-network/core-wallet-auth'
-import { Store } from '@canton-network/core-wallet-store'
-import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
-import { Logger } from 'pino'
+import {
+    type AuthContext,
+    type AuthService,
+    type Idp,
+    resolveUserEmail,
+} from '@canton-network/core-wallet-auth'
+import type { Store } from '@canton-network/core-wallet-store'
+import {
+    createRemoteJWKSet,
+    decodeJwt,
+    decodeProtectedHeader,
+    jwtVerify,
+} from 'jose'
+import type { Logger } from 'pino'
+
+function getEmail(value: unknown): string | undefined {
+    if (typeof value !== 'string' || value.length === 0) {
+        return undefined
+    }
+
+    return value
+}
 
 /**
- * Creates an AuthService that verifies JWT tokens using a remote JWK set.
+ * Verifies a self-signed token against the secret of the network named by
+ * the `kid` header, and rejects it if that network belongs to another IDP.
+ */
+async function verifySelfSignedToken(
+    jwt: string,
+    idp: Extract<Idp, { type: 'self_signed' }>,
+    store: Store,
+    logger: Logger
+): Promise<AuthContext | undefined> {
+    const { kid } = decodeProtectedHeader(jwt)
+    if (!kid) {
+        logger.warn('Self-signed JWT does not contain a kid header')
+        return undefined
+    }
+
+    const network = await store.getNetworkForTokenVerification(kid)
+    if (!network || network.auth.method !== 'self_signed') {
+        logger.warn({ kid }, 'No self-signed network has this network id')
+        return undefined
+    }
+
+    if (network.identityProviderId !== idp.id) {
+        logger.warn(
+            { kid, networkId: network.id, idpId: idp.id },
+            'JWT network id belongs to a different identity provider'
+        )
+        return undefined
+    }
+
+    const auth = network.auth
+    const { payload } = await jwtVerify(
+        jwt,
+        new TextEncoder().encode(auth.clientSecret),
+        {
+            algorithms: ['HS256'],
+            issuer: idp.issuer,
+            audience: auth.audience,
+        }
+    )
+
+    if (!payload.sub) {
+        logger.warn('JWT does not contain a subject')
+        return undefined
+    }
+
+    const email = getEmail(payload.email)
+    return {
+        userId: payload.sub,
+        accessToken: jwt,
+        ...(email ? { email } : {}),
+    }
+}
+
+/**
+ * Creates an AuthService that verifies JWT tokens, using a remote JWK set for
+ * oauth identity providers and the network's secret for self_signed ones.
  * @param store - The Store instance to access network configurations.
  * @param logger - Logger instance for logging debug and warning messages.
  * @returns An AuthService implementation that verifies JWT tokens.
  */
 export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
     verifyToken: async (accessToken?: string) => {
-        const getEmail = (value: unknown): string | undefined => {
-            if (typeof value !== 'string' || value.length === 0) {
-                return undefined
-            }
-
-            return value
-        }
-
         if (!accessToken || !accessToken.startsWith('Bearer ')) {
             return undefined
         }
@@ -51,18 +116,7 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
             }
 
             if (idp.type == 'self_signed') {
-                const sub = decoded.sub
-                if (!sub) {
-                    logger.warn('JWT does not contain a subject')
-                    return undefined
-                }
-
-                const email = getEmail(decoded.email)
-                return {
-                    userId: sub,
-                    accessToken: jwt,
-                    ...(email ? { email } : {}),
-                }
+                return await verifySelfSignedToken(jwt, idp, store, logger)
             }
             logger.debug({ idp }, 'Using IDP')
             const response = await fetch(idp.configUrl)

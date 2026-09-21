@@ -1,7 +1,7 @@
-import { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
-import { KeyPair } from '@canton-network/core-signing-lib'
-import { SDKInterface } from '@canton-network/wallet-sdk'
-import pino from 'pino'
+import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { KeyPair } from '@canton-network/core-signing-lib'
+import type { SDKInterface } from '@canton-network/wallet-sdk'
+import type { Logger } from 'pino'
 
 export type TransferTestScriptParameters = {
     sdk: SDKInterface<'amulet' | 'token'>
@@ -9,5 +9,5 @@ export type TransferTestScriptParameters = {
     receiver: GenerateTransactionResponse
     senderKeys: KeyPair
     receiverKeys: KeyPair
-    logger: pino.Logger
+    logger: Logger
 }

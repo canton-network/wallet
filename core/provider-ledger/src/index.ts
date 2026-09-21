@@ -4,4 +4,4 @@
 export * from './LedgerProvider'
 import type { Provider as Ops } from '@canton-network/core-ledger-client-types'
 
-export { Ops }
+export type { Ops }

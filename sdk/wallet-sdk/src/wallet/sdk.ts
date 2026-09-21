@@ -4,33 +4,33 @@
 import { SDKLogger } from './logger/logger.js'
 import { SDKErrorHandler } from './error/handler.js'
 import {
-    AbstractLedgerProvider,
+    type AbstractLedgerProvider,
     LedgerProvider,
-    Ops,
+    type Ops,
 } from '@canton-network/core-provider-ledger'
 import {
     EXTENDED_SDK_OPTION_KEYS,
-    ExtendedSDKOptions,
-    BasicSDKOptions,
-    OfflineSDKInterface,
-    GetExtendedKeys,
-    SDKInterface,
+    type ExtendedSDKOptions,
+    type BasicSDKOptions,
+    type OfflineSDKInterface,
+    type GetExtendedKeys,
+    type SDKInterface,
 } from './init/types/sdk.js'
 import {
     AuthTokenProvider,
-    TokenProviderConfig,
+    type TokenProviderConfig,
 } from '@canton-network/core-wallet-auth'
 import {
     ExtendedInitializedSDK,
     OfflineInitializedSDK,
 } from './init/initializedSDK.js'
-import {
+import type {
     LedgerTypes as LedgerRpc,
-    type LedgerCommonSchemas,
+    LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
-import { AllowedLogAdapters } from './logger/types.js'
-import { DappLedgerRpc } from '@canton-network/core-provider-dapp'
-import { SDKContext } from './index.js'
+import type { AllowedLogAdapters } from './logger/types.js'
+import type { DappLedgerRpc } from '@canton-network/core-provider-dapp'
+import type { SDKContext } from './index.js'
 import { ValidatorInternalClient } from '@canton-network/core-splice-client'
 export { findAsset } from './namespace/asset/index.js'
 export type * from './namespace/asset/index.js'
@@ -48,7 +48,7 @@ export {
     signTransactionHash,
     getPublicKeyFromPrivate,
 } from '@canton-network/core-signing-lib'
-export type LedgerTypes = LedgerCommonSchemas
+export type { LedgerCommonSchemas }
 
 export * from './init/index.js'
 export type {

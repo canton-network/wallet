@@ -3,15 +3,15 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import {
-    RequestPayload,
+    type RequestPayload,
     ResponsePayload,
-    JsonRpcRequest,
-    SpliceMessage,
+    type JsonRpcRequest,
+    type SpliceMessage,
     WalletEvent,
     isSpliceMessageEvent,
-    SuccessResponse,
+    type SuccessResponse,
     ErrorResponse,
-    JsonRpcResponse,
+    type JsonRpcResponse,
 } from '@canton-network/core-types'
 
 export const jsonRpcRequest = (

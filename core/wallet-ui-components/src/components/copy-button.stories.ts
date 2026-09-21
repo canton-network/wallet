@@ -3,7 +3,7 @@
 
 import type { Meta, StoryObj } from '@storybook/web-components-vite'
 import { html } from 'lit'
-import { CopySuccessEvent } from './copy-button'
+import type { CopySuccessEvent } from './copy-button'
 
 const meta: Meta = {
     title: 'CopyButton',
