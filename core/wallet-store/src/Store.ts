@@ -83,6 +83,7 @@ export type UpdateWallet =
                 | 'signingProviderId'
                 | 'publicKey'
                 | 'namespace'
+                | 'isAuthParty'
             >
         >
 

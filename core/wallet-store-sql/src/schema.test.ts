@@ -141,10 +141,12 @@ describe('schema mappers', () => {
                     partyId: 'party::ns',
                     primary: false,
                     disabled: false,
+                    isAuthParty: true,
                 })
             ).toEqual({
                 primary: 0,
                 disabled: 0,
+                isAuthParty: 1,
             })
         })
 

@@ -74,13 +74,23 @@ export class SelfIssuedTokenService {
             existingWallet.signingProviderId as SigningProvider
         )
 
-        const wallet = await this.store.getWallet(params.partyId)
+        let wallet = await this.store.getWallet(params.partyId)
         if (!wallet) {
             throw new Error(`Wallet not found for party ${params.partyId}`)
         }
 
         if (wallet.status === 'allocated') {
             await this.patchLedgerUserPrimaryParty(username, wallet.partyId)
+            await this.store.updateWallet({
+                partyId: wallet.partyId,
+                networkId: wallet.networkId,
+                isAuthParty: true,
+            })
+            const authPartyWallet = await this.store.getWallet(params.partyId)
+            if (!authPartyWallet) {
+                throw new Error(`Wallet not found for party ${params.partyId}`)
+            }
+            wallet = authPartyWallet
         }
 
         this.logger.info(
@@ -89,6 +99,7 @@ export class SelfIssuedTokenService {
                 partyId: wallet.partyId,
                 status: wallet.status,
                 signingProviderId: existingWallet.signingProviderId,
+                isAuthParty: wallet.isAuthParty,
             },
             'Finalized self-issued wallet onboarding'
         )
