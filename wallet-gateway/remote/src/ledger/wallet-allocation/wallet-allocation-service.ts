@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AuthContext, UserId } from '@canton-network/core-wallet-auth'
-import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { Network, Store, Wallet } from '@canton-network/core-wallet-store'
 import {
     type Error as SigningProviderError,
     type Keys,
@@ -30,7 +30,8 @@ export interface WalletAllocator {
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary,
-        vaultName?: KeyName | undefined
+        vaultName?: KeyName | undefined,
+        network?: Network
     ): Promise<Wallet>
     allocateParty(
         userId: UserId,
@@ -83,7 +84,7 @@ export class WalletAllocationService {
     }
 
     constructor(
-        store: Store,
+        private readonly store: Store,
         logger: Logger,
         partyAllocator: PartyAllocationService,
         signingDrivers: Partial<
@@ -162,15 +163,30 @@ export class WalletAllocationService {
         partyHint: PartyHint,
         primary: Primary,
         signingProviderId: SigningProvider,
-        keyName?: KeyName | undefined
+        keyName?: KeyName | undefined,
+        networkId?: string
     ): Promise<Wallet> {
+        const network = networkId
+            ? await this.store.getNetwork(networkId)
+            : undefined
+        if (
+            network &&
+            (network.auth as { method: string }).method !== 'self_issued'
+        ) {
+            throw new Error(
+                'Explicit networkId is only supported for self_issued networks'
+            )
+        }
+
         switch (signingProviderId) {
             case SigningProvider.PARTICIPANT:
                 return this.participantAllocator.createWallet(
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    undefined,
+                    network
                 )
             case SigningProvider.WALLET_KERNEL:
                 if (!this.kernelAllocator) {
@@ -182,7 +198,9 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    undefined,
+                    network
                 )
             case SigningProvider.FIREBLOCKS:
                 if (!this.fireblocksAllocator) {
@@ -198,7 +216,8 @@ export class WalletAllocationService {
                     authContext.email,
                     partyHint,
                     primary,
-                    keyName
+                    keyName,
+                    network
                 )
             case SigningProvider.BLOCKDAEMON:
                 if (!this.blockdaemonAllocator) {
@@ -213,7 +232,9 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    undefined,
+                    network
                 )
             case SigningProvider.DFNS:
                 if (!this.dfnsAllocator) {
@@ -223,7 +244,9 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    undefined,
+                    network
                 )
             case SigningProvider.SECUROSYS:
                 if (!this.securosysAllocator) {
@@ -233,7 +256,9 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    undefined,
+                    network
                 )
             case SigningProvider.BITGO:
                 if (!this.bitgoAllocator) {
@@ -243,7 +268,9 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    undefined,
+                    network
                 )
             default:
                 throw new Error(

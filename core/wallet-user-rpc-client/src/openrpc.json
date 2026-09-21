@@ -300,6 +300,110 @@
             "description": "Creates a new wallet and party with the given hint."
         },
         {
+            "name": "initializeSelfIssuedOnboarding",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "InitializeSelfIssuedOnboardingParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "username": {
+                                "title": "username",
+                                "type": "string",
+                                "description": "Ledger user id."
+                            },
+                            "partyHint": {
+                                "title": "partyHint",
+                                "type": "string",
+                                "description": "The party hint and name of the wallet."
+                            },
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Network with auth type self-issued to onboard on."
+                            },
+                            "signingProviderId": {
+                                "title": "signingProviderId",
+                                "type": "string",
+                                "description": "Signing provider used to hold keys of the auth party."
+                            }
+                        },
+                        "required": [
+                            "username",
+                            "partyHint",
+                            "networkId",
+                            "signingProviderId"
+                        ]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "InitializeSelfIssuedOnboardingResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "wallet": {
+                            "description": "Wallet created for self-issued onboarding.",
+                            "$ref": "#/components/schemas/Wallet"
+                        }
+                    },
+                    "required": ["wallet"]
+                }
+            },
+            "description": "Creates a ledger user and topology transactions signing request."
+        },
+        {
+            "name": "finalizeSelfIssuedOnboarding",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "FinalizeSelfIssuedOnboardingParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "username": {
+                                "title": "username",
+                                "type": "string",
+                                "description": "Ledger user id from initializeSelfIssuedOnboarding."
+                            },
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Self-issued network to onboard on."
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "Party id of the wallet being finalized."
+                            }
+                        },
+                        "required": ["username", "networkId", "partyId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "FinalizeSelfIssuedOnboardingResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "wallet": {
+                            "description": "Wallet after polling the signing provider and ledger user setup.",
+                            "$ref": "#/components/schemas/Wallet"
+                        }
+                    },
+                    "required": ["wallet"]
+                }
+            },
+            "description": "Allocates a party and updates ledger user primary party after the topology transaction is signed."
+        },
+        {
             "name": "allocatePartyForWallet",
             "params": [
                 {

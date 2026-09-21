@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { UserId } from '@canton-network/core-wallet-auth'
-import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { Network, Store, Wallet } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
 import type { PartyAllocationService } from '../../party-allocation-service.js'
@@ -24,16 +24,18 @@ export class ParticipantWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        _vaultName?: undefined,
+        network?: Network
     ): Promise<Wallet> {
         const party = await this.partyAllocator.allocateParty(userId, partyHint)
-        const network = await this.store.getCurrentNetwork()
+        const targetNetwork = network ?? (await this.store.getCurrentNetwork())
         const wallet: Wallet = {
             partyId: party.partyId,
             hint: party.hint,
             namespace: party.namespace,
             signingProviderId: SigningProvider.PARTICIPANT,
-            networkId: network.id,
+            networkId: targetNetwork.id,
             userId,
             status: 'allocated',
             primary,
@@ -55,10 +57,9 @@ export class ParticipantWalletAllocator implements WalletAllocator {
             userId,
             existingWallet.hint
         )
-        const network = await this.store.getCurrentNetwork()
         return await this.store.updateWallet({
             partyId: party.partyId,
-            networkId: network.id,
+            networkId: existingWallet.networkId,
             status: 'allocated',
         })
     }

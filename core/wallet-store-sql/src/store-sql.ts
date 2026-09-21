@@ -142,12 +142,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         })
     }
 
-    async getWallet(partyId: PartyId): Promise<Wallet | null> {
+    async getWallet(
+        partyId: PartyId,
+        networkId?: string
+    ): Promise<Wallet | null> {
         const userId = this.assertConnected()
-        const network = await this.getCurrentNetwork()
+        const resolvedNetworkId =
+            networkId ?? (await this.getCurrentNetwork()).id
         const constraint: WalletUniqueConstraint = {
             partyId,
-            networkId: network.id,
+            networkId: resolvedNetworkId,
             userId,
         }
 

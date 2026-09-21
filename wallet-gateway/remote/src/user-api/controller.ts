@@ -25,6 +25,8 @@ import type {
     AddIdpParams,
     RemoveIdpParams,
     CreateWalletParams,
+    InitializeSelfIssuedOnboardingParams,
+    FinalizeSelfIssuedOnboardingParams,
     AllocatePartyForWalletParams,
     GetTransactionResult,
     GetTransactionParams,
@@ -57,6 +59,7 @@ import type { NotificationService } from '../notification/NotificationService.js
 import {
     assertConnected,
     type AuthContext,
+    type AuthAware,
     authSchema,
     type Auth,
     AuthTokenProvider,
@@ -71,6 +74,7 @@ import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import { logDynamically, networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
 import { TransactionService } from '../ledger/transaction-service.js'
+import { createSelfIssuedOnboardingService } from '../ledger/self-issued-onboarding.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
     MessageSignatureEvent,
@@ -126,6 +130,8 @@ export const userController = (
         const { adminAuth: _adminAuth, serviceAccountAuth: _sa, ...rest } = dto
         return rest
     }
+
+    const authAwareStore = store as Store & AuthAware<Store>
 
     const getSigningProviderKeys = async (
         params: ListSigningProviderKeysParams
@@ -391,6 +397,48 @@ export const userController = (
                 .getNotifier(connectedContext.userId)
                 .emit('accountsChanged', wallets)
 
+            return { wallet }
+        },
+        initializeSelfIssuedOnboarding: async (
+            params: InitializeSelfIssuedOnboardingParams
+        ) => {
+            const { signingProviderId } = params
+            if (!drivers[signingProviderId as SigningProvider]) {
+                throw new Error(
+                    `Signing provider ${signingProviderId} not supported`
+                )
+            }
+
+            const service = await createSelfIssuedOnboardingService(
+                authAwareStore,
+                params.networkId,
+                params.username,
+                drivers,
+                logger
+            )
+            const wallet = await service.initializeOnboarding({
+                username: params.username,
+                networkId: params.networkId,
+                partyHint: params.partyHint,
+                signingProviderId: signingProviderId as SigningProvider,
+            })
+            return { wallet }
+        },
+        finalizeSelfIssuedOnboarding: async (
+            params: FinalizeSelfIssuedOnboardingParams
+        ) => {
+            const service = await createSelfIssuedOnboardingService(
+                authAwareStore,
+                params.networkId,
+                params.username,
+                drivers,
+                logger
+            )
+            const wallet = await service.finalizeOnboarding({
+                username: params.username,
+                networkId: params.networkId,
+                partyId: params.partyId,
+            })
             return { wallet }
         },
         allocatePartyForWallet: async (

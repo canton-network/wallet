@@ -131,6 +131,12 @@ export type SigningProviderId = string
 export type KeyName = string
 /**
  *
+ * Ledger user id from initializeSelfIssuedOnboarding.
+ *
+ */
+export type Username = string
+/**
+ *
  * The party ID corresponding to the wallet.
  *
  */
@@ -537,6 +543,17 @@ export interface CreateWalletParams {
     signingProviderId: SigningProviderId
     keyName?: KeyName
 }
+export interface InitializeSelfIssuedOnboardingParams {
+    username: Username
+    partyHint: PartyHint
+    networkId: NetworkId
+    signingProviderId: SigningProviderId
+}
+export interface FinalizeSelfIssuedOnboardingParams {
+    username: Username
+    networkId: NetworkId
+    partyId: PartyId
+}
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
 }
@@ -615,6 +632,12 @@ export interface ListIdpsResult {
     idps: Idps
 }
 export interface CreateWalletResult {
+    wallet: Wallet
+}
+export interface InitializeSelfIssuedOnboardingResult {
+    wallet: Wallet
+}
+export interface FinalizeSelfIssuedOnboardingResult {
     wallet: Wallet
 }
 export interface AllocatePartyForWalletResult {
@@ -732,6 +755,12 @@ export type ListIdps = () => Promise<ListIdpsResult>
 export type CreateWallet = (
     params: CreateWalletParams
 ) => Promise<CreateWalletResult>
+export type InitializeSelfIssuedOnboarding = (
+    params: InitializeSelfIssuedOnboardingParams
+) => Promise<InitializeSelfIssuedOnboardingResult>
+export type FinalizeSelfIssuedOnboarding = (
+    params: FinalizeSelfIssuedOnboardingParams
+) => Promise<FinalizeSelfIssuedOnboardingResult>
 export type AllocatePartyForWallet = (
     params: AllocatePartyForWalletParams
 ) => Promise<AllocatePartyForWalletResult>

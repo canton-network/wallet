@@ -10,11 +10,14 @@ import type { WalletAllocationService } from './wallet-allocation/wallet-allocat
 
 export type InitializeOnboardingParams = {
     username: string
+    networkId: string
+    partyHint: string
     signingProviderId: SigningProvider
 }
 
 export type FinalizeOnboardingParams = {
     username: string
+    networkId: string
     partyId: string
 }
 
@@ -30,24 +33,58 @@ export class SelfIssuedTokenService {
         params: InitializeOnboardingParams
     ): Promise<Wallet> {
         const username = this.requireUsername(params.username)
+        const partyHint = params.partyHint.trim()
+        if (!partyHint) {
+            throw new Error('partyHint is required')
+        }
         if (params.signingProviderId === SigningProvider.PARTICIPANT) {
             throw new Error(
                 'Signing provider participant is not supported for self-issued onboarding'
             )
         }
 
-        await this.createLedgerUser(username)
+        try {
+            const existing = await this.ledgerClient.get(
+                '/v2/users/{user-id}',
+                {
+                    path: { 'user-id': username },
+                }
+            )
+            if (!existing.user) {
+                await this.ledgerClient.post('/v2/users', {
+                    user: {
+                        id: username,
+                        isDeactivated: false,
+                        identityProviderId: '',
+                    },
+                    rights: [],
+                })
+            }
+        } catch {
+            // TODO check in runtime happens when user already exists vs other error
+            await this.ledgerClient.post('/v2/users', {
+                user: {
+                    id: username,
+                    isDeactivated: false,
+                    identityProviderId: '',
+                },
+                rights: [],
+            })
+        }
 
         const wallet = await this.walletAllocator.createWallet(
             this.authContext(username),
-            username,
+            partyHint,
             false,
-            params.signingProviderId
+            params.signingProviderId,
+            undefined,
+            params.networkId
         )
 
         this.logger.info(
             {
                 username,
+                partyHint,
                 partyId: wallet.partyId,
                 status: wallet.status,
                 signingProviderId: params.signingProviderId,
@@ -63,32 +100,60 @@ export class SelfIssuedTokenService {
     ): Promise<Wallet> {
         const username = this.requireUsername(params.username)
 
-        const existingWallet = await this.store.getWallet(params.partyId)
-        if (!existingWallet) {
-            throw new Error(`Wallet not found for party ${params.partyId}`)
-        }
-
-        await this.walletAllocator.allocateParty(
-            this.authContext(username),
-            existingWallet,
-            existingWallet.signingProviderId as SigningProvider
+        let wallet = await this.store.getWallet(
+            params.partyId,
+            params.networkId
         )
-
-        let wallet = await this.store.getWallet(params.partyId)
         if (!wallet) {
             throw new Error(`Wallet not found for party ${params.partyId}`)
         }
 
+        if (wallet.status !== 'allocated') {
+            await this.walletAllocator.allocateParty(
+                this.authContext(username),
+                wallet,
+                wallet.signingProviderId as SigningProvider
+            )
+
+            wallet = await this.store.getWallet(
+                params.partyId,
+                params.networkId
+            )
+            if (!wallet) {
+                throw new Error(`Wallet not found for party ${params.partyId}`)
+            }
+        }
+
         if (wallet.status === 'allocated') {
-            await this.patchLedgerUserPrimaryParty(username, wallet.partyId)
+            await this.ledgerClient.patch(
+                '/v2/users/{user-id}',
+                {
+                    user: {
+                        id: username,
+                        primaryParty: wallet.partyId,
+                        primaryPartyAuthentication: true,
+                    },
+                    updateMask: {
+                        paths: [
+                            'primary_party',
+                            'primary_party_authentication',
+                        ],
+                        unknownFields: { fields: {} },
+                    },
+                },
+                { path: { 'user-id': username } }
+            )
             await this.store.updateWallet({
                 partyId: wallet.partyId,
                 networkId: wallet.networkId,
                 isAuthParty: true,
             })
-            const authPartyWallet = await this.store.getWallet(params.partyId)
+            const authPartyWallet = await this.store.getWallet(
+                wallet.partyId,
+                params.networkId
+            )
             if (!authPartyWallet) {
-                throw new Error(`Wallet not found for party ${params.partyId}`)
+                throw new Error(`Wallet not found for party ${wallet.partyId}`)
             }
             wallet = authPartyWallet
         }
@@ -98,7 +163,7 @@ export class SelfIssuedTokenService {
                 username,
                 partyId: wallet.partyId,
                 status: wallet.status,
-                signingProviderId: existingWallet.signingProviderId,
+                signingProviderId: wallet.signingProviderId,
                 isAuthParty: wallet.isAuthParty,
             },
             'Finalized self-issued wallet onboarding'
@@ -120,51 +185,5 @@ export class SelfIssuedTokenService {
             userId: username,
             accessToken: '',
         }
-    }
-
-    private async createLedgerUser(username: string): Promise<void> {
-        try {
-            const existing = await this.ledgerClient.get(
-                '/v2/users/{user-id}',
-                {
-                    path: { 'user-id': username },
-                }
-            )
-            if (existing.user) {
-                return
-            }
-        } catch {
-            // TODO check in runtime happens when user already exists vs other error
-        }
-
-        await this.ledgerClient.post('/v2/users', {
-            user: {
-                id: username,
-                isDeactivated: false,
-                identityProviderId: '',
-            },
-            rights: [],
-        })
-    }
-
-    private async patchLedgerUserPrimaryParty(
-        username: string,
-        partyId: string
-    ): Promise<void> {
-        await this.ledgerClient.patch(
-            '/v2/users/{user-id}',
-            {
-                user: {
-                    id: username,
-                    primaryParty: partyId,
-                    primaryPartyAuthentication: true,
-                },
-                updateMask: {
-                    paths: ['primary_party', 'primary_party_authentication'],
-                    unknownFields: { fields: {} },
-                },
-            },
-            { path: { 'user-id': username } }
-        )
     }
 }

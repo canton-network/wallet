@@ -160,7 +160,7 @@ export interface ApiKey {
 export interface Store {
     // Wallet methods
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
-    getWallet(partyId: PartyId): Promise<Wallet | null>
+    getWallet(partyId: PartyId, networkId?: string): Promise<Wallet | null>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>

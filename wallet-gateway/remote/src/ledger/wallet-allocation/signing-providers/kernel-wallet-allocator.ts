@@ -3,6 +3,7 @@
 
 import type { UserId } from '@canton-network/core-wallet-auth'
 import type {
+    Network,
     Store,
     UpdateWallet,
     Wallet,
@@ -37,7 +38,9 @@ export class KernelWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        _vaultName?: undefined,
+        network?: Network
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
         const key = await driver
@@ -69,13 +72,13 @@ export class KernelWalletAllocator implements WalletAllocator {
             }
         )
 
-        const network = await this.store.getCurrentNetwork()
+        const targetNetwork = network ?? (await this.store.getCurrentNetwork())
         const wallet: Wallet = {
             partyId: party.partyId,
             hint: party.hint,
             namespace: party.namespace,
             signingProviderId: SigningProvider.WALLET_KERNEL,
-            networkId: network.id,
+            networkId: targetNetwork.id,
             userId,
             status: 'allocated',
             primary,
@@ -116,9 +119,8 @@ export class KernelWalletAllocator implements WalletAllocator {
             signingCallback
         )
 
-        const network = await this.store.getCurrentNetwork()
         const updateWallet: UpdateWallet = {
-            networkId: network.id,
+            networkId: existingWallet.networkId,
             partyId: party.partyId,
             status: 'allocated',
         }

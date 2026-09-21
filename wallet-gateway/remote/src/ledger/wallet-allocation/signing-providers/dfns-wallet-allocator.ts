@@ -3,6 +3,7 @@
 
 import type { UserId } from '@canton-network/core-wallet-auth'
 import type {
+    Network,
     Store,
     UpdateWallet,
     Wallet,
@@ -43,7 +44,9 @@ export class DfnsWalletAllocator implements WalletAllocator {
         userId: UserId,
         _email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        _vaultName?: undefined,
+        network?: Network
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
 
@@ -76,13 +79,13 @@ export class DfnsWalletAllocator implements WalletAllocator {
             })
             .then(handleSigningProviderError)
 
-        const network = await this.store.getCurrentNetwork()
+        const targetNetwork = network ?? (await this.store.getCurrentNetwork())
         const walletBase: Omit<Wallet, 'status'> = {
             partyId: `${partyHint}::${namespace}`,
             hint: partyHint,
             namespace,
             signingProviderId: SigningProvider.DFNS,
-            networkId: network.id,
+            networkId: targetNetwork.id,
             userId,
             primary,
             publicKey: key.publicKey,

@@ -3,6 +3,7 @@
 
 import type { UserId } from '@canton-network/core-wallet-auth'
 import type {
+    Network,
     Store,
     UpdateWallet,
     Wallet,
@@ -38,7 +39,9 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        _vaultName?: undefined,
+        network?: Network
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(email)
 
@@ -81,13 +84,13 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
             })
             .then(handleSigningProviderError)
 
-        const network = await this.store.getCurrentNetwork()
+        const targetNetwork = network ?? (await this.store.getCurrentNetwork())
         const walletBase: Omit<Wallet, 'status'> = {
             partyId: `${partyHint}::${namespace}`,
             hint: partyHint,
             namespace,
             signingProviderId: SigningProvider.BLOCKDAEMON,
-            networkId: network.id,
+            networkId: targetNetwork.id,
             userId,
             primary,
             publicKey: key.publicKey,
