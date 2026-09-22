@@ -140,17 +140,25 @@ export class IdpCard extends BaseElement {
                         <p class="meta-value">${this.idp.type}</p>
                     </div>
 
-                    <div class="meta-row meta-row--copy">
-                        <p class="meta-title">Issuer</p>
-                        <p class="meta-value" title=${this.idp.issuer}>
-                            ${this.idp.issuer}
-                        </p>
-                        <wg-copy-button
-                            .value=${this.idp.issuer}
-                            label="Copy issuer URL"
-                        ></wg-copy-button>
-                    </div>
-
+                    ${
+                        'issuer' in this.idp
+                            ? html`
+                                  <div class="meta-row meta-row--copy">
+                                      <p class="meta-title">Issuer</p>
+                                      <p
+                                          class="meta-value"
+                                          title=${this.idp.issuer}
+                                      >
+                                          ${this.idp.issuer}
+                                      </p>
+                                      <wg-copy-button
+                                          .value=${this.idp.issuer}
+                                          label="Copy issuer URL"
+                                      ></wg-copy-button>
+                                  </div>
+                              `
+                            : ''
+                    }
                     ${
                         'configUrl' in this.idp && this.idp.configUrl
                             ? html`
