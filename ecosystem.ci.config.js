@@ -24,7 +24,7 @@ export const apps = [
     },
     {
         name: 'example-portfolio',
-        script: 'pnpm --filter @canton-network/example-portfolio dev',
+        script: 'pnpm --filter @canton-network/example-portfolio preview',
         env_development: sharedEnvDevelopment,
     },
 ]
