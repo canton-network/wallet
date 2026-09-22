@@ -1,6 +1,8 @@
 strictPeerDependencies: true
 catalogMode: strict
 catalogPrune: true
+update:
+    githubActions: true
 packages:
     - api-specs
     - core/**
