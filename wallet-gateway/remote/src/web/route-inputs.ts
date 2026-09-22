@@ -12,7 +12,6 @@ export const ROUTE_INPUTS: Record<string, string> = {
     parties: 'parties/index.html',
     addParty: 'parties/add/index.html',
     editParty: 'parties/edit/index.html',
-    settings: 'settings/index.html',
     activities: 'activities/index.html',
     networks: 'networks/index.html',
     addNetwork: 'networks/add/index.html',
