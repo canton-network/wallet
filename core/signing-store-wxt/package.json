@@ -24,19 +24,19 @@
         "test:coverage": "vitest run --coverage"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "workspace:^",
-        "@canton-network/core-rpc-errors": "workspace:^",
-        "@canton-network/core-signing-lib": "workspace:^",
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "@wxt-dev/storage": "^1.2.9",
-        "wxt": "^0.21.4"
+        "@canton-network/core-ledger-client": "catalog:",
+        "@canton-network/core-rpc-errors": "catalog:",
+        "@canton-network/core-signing-lib": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@wxt-dev/storage": "catalog:",
+        "wxt": "catalog:"
     },
     "devDependencies": {
-        "@swc/core": "^1.15.43",
-        "tsdown": "^0.22.9",
-        "tsx": "^4.23.0",
-        "typescript": "^5.9.3",
-        "vitest": "^5.0.1"
+        "@swc/core": "catalog:",
+        "tsdown": "catalog:",
+        "tsx": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"

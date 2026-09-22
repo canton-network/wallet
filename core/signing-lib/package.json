@@ -24,21 +24,21 @@
         "test:coverage": "vitest run --project node --coverage"
     },
     "dependencies": {
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "fs-extra": "^11.3.6",
-        "lodash": "^4.18.1",
-        "tweetnacl": "^1.0.3",
-        "tweetnacl-util": "^0.15.1",
-        "zod": "^4.4.3"
+        "@canton-network/core-wallet-auth": "catalog:",
+        "fs-extra": "catalog:",
+        "lodash": "catalog:",
+        "tweetnacl": "catalog:",
+        "tweetnacl-util": "catalog:",
+        "zod": "catalog:"
     },
     "devDependencies": {
-        "@types/fs-extra": "^11.0.4",
-        "@types/lodash": "^4.17.24",
-        "@types/node": "^25.9.4",
-        "@vitest/coverage-v8": "^5.0.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^5.0.1"
+        "@types/fs-extra": "catalog:",
+        "@types/lodash": "catalog:",
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"
