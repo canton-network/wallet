@@ -61,6 +61,7 @@ import {
     type Auth,
     AuthTokenProvider,
     idpSchema,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
 import type { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
@@ -114,6 +115,12 @@ export const userController = (
         }
     }
 
+    async function getIdpForAuth(network: Network, auth: Auth) {
+        return await store.getIdp(
+            resolveAuthIdentityProviderId(auth, network.identityProviderId)
+        )
+    }
+
     /**
      * Session responses always include user auth for the UI.
      * Privileged credentials are included only for the admin user.
@@ -131,11 +138,10 @@ export const userController = (
         params: ListSigningProviderKeysParams
     ) => {
         const network = await store.getCurrentNetwork()
-        const idp = await store.getIdp(network.identityProviderId)
-
         if (!network.adminAuth) {
             throw new Error('No admin auth configured')
         }
+        const idp = await getIdpForAuth(network, network.adminAuth)
 
         const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
             idp,
@@ -328,10 +334,10 @@ export const userController = (
             if (network === undefined) {
                 throw new Error('No network session found')
             }
-            const idp = await store.getIdp(network.identityProviderId)
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
@@ -415,7 +421,7 @@ export const userController = (
                 throw new Error(`Wallet not found for party ${params.partyId}`)
             }
 
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await getIdpForAuth(network, network.adminAuth)
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -884,9 +890,13 @@ export const userController = (
                                 throw new Error('No admin auth configured')
                             }
 
+                            const adminIdp = await getIdpForAuth(
+                                network,
+                                network.adminAuth
+                            )
                             const adminAccessTokenProvider =
                                 AuthTokenProvider.fromGatewayConfig(
-                                    idp,
+                                    adminIdp,
                                     network.adminAuth,
                                     logger
                                 )
@@ -1008,11 +1018,10 @@ export const userController = (
                 logger
             )
 
-            const idp = await store.getIdp(network.identityProviderId)
-
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
                 AuthTokenProvider.fromGatewayConfig(
@@ -1066,11 +1075,10 @@ export const userController = (
                 logger
             )
 
-            const idp = await store.getIdp(network.identityProviderId)
-
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
                 AuthTokenProvider.fromGatewayConfig(
@@ -1284,7 +1292,7 @@ export const userController = (
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await getIdpForAuth(network, network.adminAuth)
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -1396,6 +1404,9 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
         case 'client_credentials':
             return {
                 method: auth.method,
+                ...(auth.identityProviderId
+                    ? { identityProviderId: auth.identityProviderId }
+                    : {}),
                 audience: auth.audience,
                 scope: auth.scope,
                 clientId: auth.clientId,

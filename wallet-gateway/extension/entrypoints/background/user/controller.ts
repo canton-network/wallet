@@ -25,6 +25,7 @@ import type {
 import {
     assertConnected,
     AuthTokenProvider,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
 import { AuthService } from '../auth-service.js'
 import { createExtensionWallet } from './create-wallet.js'
@@ -42,6 +43,9 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
         case 'client_credentials':
             return {
                 method: auth.method,
+                ...(auth.identityProviderId
+                    ? { identityProviderId: auth.identityProviderId }
+                    : {}),
                 audience: auth.audience,
                 scope: auth.scope,
                 clientId: auth.clientId,
@@ -153,7 +157,12 @@ export const userController = (
                 throw new Error('No admin auth configured')
             }
 
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await store.getIdp(
+                resolveAuthIdentityProviderId(
+                    network.adminAuth,
+                    network.identityProviderId
+                )
+            )
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
