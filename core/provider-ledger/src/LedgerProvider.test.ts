@@ -148,7 +148,7 @@ describe('LedgerProvider', () => {
             accessTokenProvider: tokenProvider,
         })
 
-        expect(async () => {
+        await expect(async () => {
             await provider.request<Ops.DeleteV2IdpsIdpId>({
                 method: 'ledgerApi',
                 params: {
@@ -169,7 +169,7 @@ describe('LedgerProvider', () => {
             accessTokenProvider: tokenProvider,
         })
 
-        expect(async () => {
+        await expect(async () => {
             /* eslint-disable @typescript-eslint/no-explicit-any -- for testing invalid methods*/
             await provider.request({
                 method: 'notexists',

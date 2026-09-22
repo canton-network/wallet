@@ -94,7 +94,6 @@ describe('UserUiAddParty', () => {
     afterEach(() => {
         // make sure toast is gone from DOM
         document.body.innerHTML = ''
-        vi.clearAllMocks()
     })
 
     it('renders create party header and form', async () => {

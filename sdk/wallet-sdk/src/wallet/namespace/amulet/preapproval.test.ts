@@ -19,7 +19,6 @@ describe('PreapprovalNamespace', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         mockLogger.child.mockImplementation(() => mockLogger)

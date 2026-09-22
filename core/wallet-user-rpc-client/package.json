@@ -39,7 +39,7 @@
         "@types/json-schema": "7.0.15",
         "@types/lodash": "^4.17.24",
         "@types/ws": "^8.18.1",
-        "eslint": "^10.6.0",
+        "eslint": "^10.10.0",
         "prettier": "3.9.4",
         "tsdown": "^0.22.9",
         "typedoc": "^0.28.20",

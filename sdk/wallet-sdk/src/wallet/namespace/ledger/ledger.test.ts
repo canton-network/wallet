@@ -77,8 +77,6 @@ describe('Ledger Namespace', () => {
     let ledger: LedgerNamespaceType
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         v4.mockReturnValue('uuid')
 
         ledger = new LedgerNamespace(ctx)

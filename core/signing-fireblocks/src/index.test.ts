@@ -134,7 +134,6 @@ async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
 
 describe('FireblocksSigningDriver', () => {
     beforeEach(() => {
-        vi.clearAllMocks()
         mockHandlerDefaults()
     })
 

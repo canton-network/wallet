@@ -59,7 +59,6 @@ describe('token transfer namespace', () => {
 
     let transfer: TransferNamespace
     beforeEach(() => {
-        vi.clearAllMocks()
         transfer = new TransferNamespace(config)
     })
 

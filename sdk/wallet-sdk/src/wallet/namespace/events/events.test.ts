@@ -47,7 +47,6 @@ describe('events namespace', () => {
         streamCompletions: ReturnType<typeof vi.fn>
     }
     beforeEach(() => {
-        vi.clearAllMocks()
         mockWsClient = {
             streamUpdates: vi.fn(),
             streamCompletions: vi.fn(),
