@@ -29,30 +29,76 @@ export type SynchronizerId = string
  *
  */
 export type IdentityProviderId = string
-export type Method = string
+export type AuthorizationCodeAuthMethod = 'authorization_code'
 export type Scope = string
 export type ClientId = string
+export type Audience = string
+/**
+ *
+ * Authorization code authentication configuration
+ *
+ */
+export interface AuthorizationCodeAuth {
+    method: AuthorizationCodeAuthMethod
+    scope: Scope
+    clientId: ClientId
+    audience: Audience
+}
+export type ClientCredentialsAuthMethod = 'client_credentials'
 export type ClientSecret = string
+/**
+ *
+ * Client credentials authentication configuration
+ *
+ */
+export interface ClientCredentialsAuth {
+    method: ClientCredentialsAuthMethod
+    scope: Scope
+    clientId: ClientId
+    clientSecret: ClientSecret
+    audience: Audience
+}
+export type SelfSignedAuthMethod = 'self_signed'
 /**
  *
  * Issuer of identity provider
  *
  */
 export type Issuer = string
-export type Audience = string
 /**
  *
- * Represents the type of auth for a specified network
+ * Self-signed authentication configuration
  *
  */
-export interface Auth {
-    method: Method
+export interface SelfSignedAuth {
+    method: SelfSignedAuthMethod
     scope: Scope
-    clientId?: ClientId
-    clientSecret?: ClientSecret
-    issuer?: Issuer
+    clientId: ClientId
+    clientSecret: ClientSecret
+    issuer: Issuer
     audience: Audience
 }
+export type SelfIssuedAuthMethod = 'self_issued'
+/**
+ *
+ * Self-issued authentication configuration
+ *
+ */
+export interface SelfIssuedAuth {
+    method: SelfIssuedAuthMethod
+    scope: Scope
+    audience: Audience
+}
+/**
+ *
+ * Authentication configuration for a network
+ *
+ */
+export type Auth =
+    | AuthorizationCodeAuth
+    | ClientCredentialsAuth
+    | SelfSignedAuth
+    | SelfIssuedAuth
 /**
  *
  * Ledger api url

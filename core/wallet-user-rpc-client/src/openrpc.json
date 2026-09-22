@@ -1474,15 +1474,78 @@
                     }
                 ]
             },
-            "Auth": {
-                "title": "auth",
+            "AuthorizationCodeAuth": {
+                "title": "AuthorizationCodeAuth",
                 "type": "object",
-                "description": "Represents the type of auth for a specified network",
                 "additionalProperties": false,
+                "description": "Authorization code authentication configuration",
                 "properties": {
                     "method": {
-                        "title": "method",
+                        "title": "authorizationCodeAuthMethod",
+                        "type": "string",
+                        "enum": ["authorization_code"]
+                    },
+                    "scope": {
+                        "title": "scope",
                         "type": "string"
+                    },
+                    "clientId": {
+                        "title": "clientId",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string"
+                    }
+                },
+                "required": ["method", "audience", "scope", "clientId"]
+            },
+            "ClientCredentialsAuth": {
+                "title": "ClientCredentialsAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Client credentials authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "clientCredentialsAuthMethod",
+                        "type": "string",
+                        "enum": ["client_credentials"]
+                    },
+                    "scope": {
+                        "title": "scope",
+                        "type": "string"
+                    },
+                    "clientId": {
+                        "title": "clientId",
+                        "type": "string"
+                    },
+                    "clientSecret": {
+                        "title": "clientSecret",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "method",
+                    "audience",
+                    "scope",
+                    "clientId",
+                    "clientSecret"
+                ]
+            },
+            "SelfSignedAuth": {
+                "title": "SelfSignedAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Self-signed authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "selfSignedAuthMethod",
+                        "type": "string",
+                        "enum": ["self_signed"]
                     },
                     "scope": {
                         "title": "scope",
@@ -1505,7 +1568,54 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "method",
+                    "audience",
+                    "scope",
+                    "clientId",
+                    "clientSecret",
+                    "issuer"
+                ]
+            },
+            "SelfIssuedAuth": {
+                "title": "SelfIssuedAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Self-issued authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "selfIssuedAuthMethod",
+                        "type": "string",
+                        "enum": ["self_issued"]
+                    },
+                    "scope": {
+                        "title": "scope",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string"
+                    }
+                },
                 "required": ["method", "audience", "scope"]
+            },
+            "Auth": {
+                "title": "Auth",
+                "description": "Authentication configuration for a network",
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/AuthorizationCodeAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ClientCredentialsAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfSignedAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfIssuedAuth"
+                    }
+                ]
             },
             "Wallet": {
                 "title": "Wallet",
