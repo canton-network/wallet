@@ -409,12 +409,9 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     "type": {
                                         "type": "string",
                                         "const": "self_issued"
-                                    },
-                                    "issuer": {
-                                        "type": "string"
                                     }
                                 },
-                                "required": ["id", "type", "issuer"],
+                                "required": ["id", "type"],
                                 "additionalProperties": false
                             },
                             {
