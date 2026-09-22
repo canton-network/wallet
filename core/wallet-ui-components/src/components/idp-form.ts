@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing } from 'lit'
+import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, query, state } from 'lit/decorators.js'
 import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { BaseElement } from '../internal/base-element'
@@ -52,9 +52,9 @@ export class IdpFormComponent extends BaseElement {
     @property({ type: Boolean }) loading = false
 
     @state() private _error = ''
+    @state() private selectedType: Idp['type'] = 'oauth'
 
     @query('#idp-id') accessor idpIdInput: HTMLInputElement | null = null
-    @query('#idp-type') accessor idpTypeSelect: HTMLSelectElement | null = null
     @query('#idp-issuer') accessor idpIssuerInput: HTMLInputElement | null =
         null
     @query('#idp-config-url')
@@ -222,23 +222,51 @@ export class IdpFormComponent extends BaseElement {
         `,
     ]
 
+    protected willUpdate(changedProperties: PropertyValues<this>): void {
+        if (changedProperties.has('idp')) {
+            this.selectedType = this.idp.type
+        }
+    }
+
+    private handleTypeChange(event: Event): void {
+        this.selectedType = (event.target as HTMLSelectElement).value as
+            'oauth' | 'self_signed' | 'self_issued'
+    }
+
     private handleSubmit(e: Event) {
         e.preventDefault()
 
         const id = this.idpIdInput?.value ?? this.idp.id
-        const type = this.idpTypeSelect?.value ?? this.idp.type
-        const issuer = this.idpIssuerInput?.value ?? this.idp.issuer
-        const configUrl = this.idpConfigUrlInput?.value ?? this.idp.configUrl
+        const type = this.selectedType
+        const issuer =
+            this.idpIssuerInput?.value ??
+            ('issuer' in this.idp ? this.idp.issuer : '')
+        const configUrl =
+            this.idpConfigUrlInput?.value ??
+            ('configUrl' in this.idp ? this.idp.configUrl : '')
 
-        if (!id || !type || !issuer) {
+        if (
+            !id ||
+            !type ||
+            (type !== 'self_issued' && !issuer) ||
+            (type === 'oauth' && !configUrl)
+        ) {
             this._error = 'Please fill in all required fields'
             return
         }
 
         this._error = ''
-        const result: Idp = { id, type, issuer }
-        if (type === 'oauth' && configUrl) {
-            result.configUrl = configUrl
+        let result: Idp
+        switch (type) {
+            case 'oauth':
+                result = { id, type, issuer, configUrl: configUrl! }
+                break
+            case 'self_signed':
+                result = { id, type, issuer }
+                break
+            case 'self_issued':
+                result = { id, type }
+                break
         }
         this.dispatchEvent(new IdpFormSaveEvent(result))
     }
@@ -279,7 +307,8 @@ export class IdpFormComponent extends BaseElement {
                                 ?disabled=${this.loading}
                                 class="form-select field-control"
                                 id="idp-type"
-                                .value=${this.idp.type}
+                                .value=${this.selectedType}
+                                @change=${this.handleTypeChange}
                                 required
                             >
                                 <option value="oauth">oauth</option>
@@ -292,40 +321,62 @@ export class IdpFormComponent extends BaseElement {
                         </div>
                     </div>
 
-                    <div class="field-group d-flex flex-column">
-                        <label
-                            for="idp-issuer"
-                            class="form-label field-label mb-0"
-                        >
-                            Issuer URL <span class="required">*</span>
-                        </label>
-                        <input
-                            ?disabled=${this.loading}
-                            class="form-control field-control"
-                            id="idp-issuer"
-                            type="text"
-                            placeholder="Enter the issuer URL"
-                            .value=${this.idp.issuer}
-                            required
-                        />
-                    </div>
-
-                    <div class="field-group d-flex flex-column">
-                        <label
-                            for="idp-config-url"
-                            class="form-label field-label mb-0"
-                        >
-                            Config URL <span class="required">*</span>
-                        </label>
-                        <input
-                            ?disabled=${this.loading}
-                            class="form-control field-control"
-                            id="idp-config-url"
-                            type="text"
-                            placeholder="Enter the configuration URL"
-                            .value=${this.idp.configUrl ?? ''}
-                        />
-                    </div>
+                    ${
+                        this.selectedType !== 'self_issued'
+                            ? html`
+                                  <div class="field-group d-flex flex-column">
+                                      <label
+                                          for="idp-issuer"
+                                          class="form-label field-label mb-0"
+                                      >
+                                          Issuer URL
+                                          <span class="required">*</span>
+                                      </label>
+                                      <input
+                                          ?disabled=${this.loading}
+                                          class="form-control field-control"
+                                          id="idp-issuer"
+                                          type="text"
+                                          placeholder="Enter the issuer URL"
+                                          .value=${
+                                              'issuer' in this.idp
+                                                  ? this.idp.issuer
+                                                  : ''
+                                          }
+                                          required
+                                      />
+                                  </div>
+                              `
+                            : nothing
+                    }
+                    ${
+                        this.selectedType === 'oauth'
+                            ? html`
+                                  <div class="field-group d-flex flex-column">
+                                      <label
+                                          for="idp-config-url"
+                                          class="form-label field-label mb-0"
+                                      >
+                                          Config URL
+                                          <span class="required">*</span>
+                                      </label>
+                                      <input
+                                          ?disabled=${this.loading}
+                                          class="form-control field-control"
+                                          id="idp-config-url"
+                                          type="text"
+                                          placeholder="Enter the configuration URL"
+                                          .value=${
+                                              'configUrl' in this.idp
+                                                  ? this.idp.configUrl
+                                                  : ''
+                                          }
+                                          required
+                                      />
+                                  </div>
+                              `
+                            : nothing
+                    }
                 </div>
 
                 ${
