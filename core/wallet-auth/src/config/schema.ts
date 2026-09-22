@@ -17,6 +17,10 @@ const authorizationCodeAuthSchema = z
 
 const clientCredentialsAuthSchema = z.object({
     method: z.literal('client_credentials'),
+    identityProviderId: z.string().optional().meta({
+        description:
+            "Overrides the network's identity provider for client credentials token acquisition.",
+    }),
     audience: z.string(),
     scope: z.string(),
     clientId: z.string(),
@@ -40,6 +44,10 @@ const selfIssuedAuthSchema = z.object({
 
 const clientCredentialsEnvAuthSchema = z.object({
     method: z.literal('client_credentials'),
+    identityProviderId: z.string().optional().meta({
+        description:
+            "Overrides the network's identity provider for client credentials token acquisition.",
+    }),
     audience: z.string(),
     scope: z.string(),
     clientId: z.string(),
@@ -75,6 +83,15 @@ export type AuthorizationCodeAuth = z.infer<typeof authorizationCodeAuthSchema>
 export type ClientCredentialsAuth = z.infer<typeof clientCredentialsAuthSchema>
 export type SelfSignedAuth = z.infer<typeof selfSignedAuthSchema>
 export type SelfIssuedAuth = z.infer<typeof selfIssuedAuthSchema>
+
+export function resolveAuthIdentityProviderId(
+    auth: Auth,
+    networkIdentityProviderId: string
+): string {
+    return auth.method === 'client_credentials'
+        ? (auth.identityProviderId ?? networkIdentityProviderId)
+        : networkIdentityProviderId
+}
 
 export const idpSchema = z.discriminatedUnion('type', [
     z.object({

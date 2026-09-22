@@ -45,6 +45,12 @@ export interface AuthorizationCodeAuth {
     audience: Audience
 }
 export type ClientCredentialsAuthMethod = 'client_credentials'
+/**
+ *
+ * Overrides the network's identity provider for client credentials token acquisition
+ *
+ */
+export type ClientCredentialsIdentityProviderId = string
 export type ClientSecret = string
 /**
  *
@@ -53,6 +59,7 @@ export type ClientSecret = string
  */
 export interface ClientCredentialsAuth {
     method: ClientCredentialsAuthMethod
+    identityProviderId?: ClientCredentialsIdentityProviderId
     scope: Scope
     clientId: ClientId
     clientSecret: ClientSecret

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import { authSchema, idpSchema } from './schema'
+import { authSchema, idpSchema, resolveAuthIdentityProviderId } from './schema'
 
 describe('schemas', () => {
     it('should properly parse the idp schema', () => {
@@ -70,6 +70,7 @@ describe('schemas', () => {
 
         const validAuthClientCredentials = {
             method: 'client_credentials',
+            identityProviderId: 'machine-idp',
             clientId: 'ledger-api-user',
             clientSecret: 'unsafe',
             audience: 'https://canton.network.global',
@@ -78,6 +79,21 @@ describe('schemas', () => {
         expect(authSchema.safeParse(validAuthClientCredentials).success).toBe(
             true
         )
+        expect(
+            resolveAuthIdentityProviderId(
+                authSchema.parse(validAuthClientCredentials),
+                'network-idp'
+            )
+        ).toBe('machine-idp')
+        expect(
+            resolveAuthIdentityProviderId(
+                authSchema.parse({
+                    ...validAuthClientCredentials,
+                    identityProviderId: undefined,
+                }),
+                'network-idp'
+            )
+        ).toBe('network-idp')
 
         const validAuthCode = {
             method: 'authorization_code',

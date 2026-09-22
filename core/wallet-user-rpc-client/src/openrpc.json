@@ -1511,6 +1511,11 @@
                         "type": "string",
                         "enum": ["client_credentials"]
                     },
+                    "identityProviderId": {
+                        "title": "clientCredentialsIdentityProviderId",
+                        "type": "string",
+                        "description": "Overrides the network's identity provider for client credentials token acquisition"
+                    },
                     "scope": {
                         "title": "scope",
                         "type": "string"
