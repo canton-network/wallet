@@ -62,7 +62,6 @@ jobs:
                       core/**/dist/
                       sdk/**/dist/
                       wallet-gateway/**/dist/
-                      examples/portfolio/dist/
                       examples/**/dist/
                       damljs
                       .nx/cache
