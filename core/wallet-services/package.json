@@ -25,25 +25,25 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "workspace:*",
-        "@canton-network/core-signing-lib": "workspace:^",
-        "@canton-network/core-signing-securosys": "workspace:^",
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "@canton-network/core-wallet-dapp-rpc-client": "workspace:^",
-        "@canton-network/core-wallet-store": "workspace:^",
-        "@canton-network/core-wallet-user-rpc-client": "workspace:^",
-        "@logtape/logtape": "^2.3.1",
-        "pino": "^10.3.1",
-        "uuid": "^14.0.2"
+        "@canton-network/core-ledger-client": "catalog:",
+        "@canton-network/core-signing-lib": "catalog:",
+        "@canton-network/core-signing-securosys": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-wallet-dapp-rpc-client": "catalog:",
+        "@canton-network/core-wallet-store": "catalog:",
+        "@canton-network/core-wallet-user-rpc-client": "catalog:",
+        "@logtape/logtape": "catalog:",
+        "pino": "catalog:",
+        "uuid": "catalog:"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
-        "pino-test": "^1.1.0",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "pino-test": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"

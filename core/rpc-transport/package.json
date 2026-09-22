@@ -25,16 +25,16 @@
         "test:coverage": "vitest run --project node --project browser --coverage"
     },
     "dependencies": {
-        "@canton-network/core-types": "workspace:^",
-        "uuid": "^14.0.1"
+        "@canton-network/core-types": "catalog:",
+        "uuid": "catalog:"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^5.0.1",
-        "@vitest/coverage-v8": "^5.0.1",
-        "playwright": "^1.63.0",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^5.0.1"
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"
