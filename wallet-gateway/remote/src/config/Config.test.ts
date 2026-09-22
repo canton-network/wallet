@@ -29,4 +29,12 @@ test('config from json file', async () => {
             'devnet_secret_testval'
         )
     }
+
+    const selfIssuedNetwork = resp.bootstrap.networks.find(
+        (network) => network.id === 'canton:local-self-issued'
+    )
+    expect(selfIssuedNetwork?.adminAuth).toMatchObject({
+        method: 'client_credentials',
+        identityProviderId: 'idp-mock-oauth',
+    })
 })

@@ -4,6 +4,7 @@
 import { readFileSync, existsSync } from 'fs'
 import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
 import { Env } from '../env.js'
+import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
 
 export class ConfigUtils {
     static loadConfigFile(filePath: string): Config {
@@ -154,12 +155,26 @@ function validateNetworkToIdpMapping(
     config: Config
 ): { networkId: string; idpId: string } | undefined {
     for (const network of config.bootstrap.networks) {
-        const idp = config.bootstrap.idps.find(
-            (idp) => idp.id === network.identityProviderId
-        )
+        const authConfigurations = [
+            network.auth,
+            network.adminAuth,
+            network.serviceAccountAuth,
+        ].filter((auth) => auth !== undefined)
+        const idpIds = new Set([
+            network.identityProviderId,
+            ...authConfigurations.flatMap((auth) =>
+                auth.method === 'client_credentials' && auth.identityProviderId
+                    ? [auth.identityProviderId]
+                    : []
+            ),
+        ])
 
-        if (typeof idp === 'undefined') {
-            return { networkId: network.id, idpId: network.identityProviderId }
+        for (const idpId of idpIds) {
+            const idp = config.bootstrap.idps.find((idp) => idp.id === idpId)
+
+            if (typeof idp === 'undefined') {
+                return { networkId: network.id, idpId }
+            }
         }
     }
 }
@@ -174,14 +189,39 @@ function validateNetworkAuthMethods(
     config: Config
 ): { networkId: string; invalidAuthMethod: string } | undefined {
     for (const network of config.bootstrap.networks) {
-        const idp = config.bootstrap.idps.find(
-            (idp) => idp.id === network.identityProviderId
+        const networkAuthIdpId = resolveAuthIdentityProviderId(
+            network.auth,
+            network.identityProviderId
+        )
+        const networkAuthIdp = config.bootstrap.idps.find(
+            (idp) => idp.id === networkAuthIdpId
         )!
 
-        if (!SUPPORTED_IDP_METHODS[idp.type].includes(network.auth.method)) {
+        if (
+            !SUPPORTED_IDP_METHODS[networkAuthIdp.type].includes(
+                network.auth.method
+            )
+        ) {
             return {
                 networkId: network.id,
                 invalidAuthMethod: network.auth.method,
+            }
+        }
+
+        for (const auth of [network.adminAuth, network.serviceAccountAuth]) {
+            if (
+                auth?.method === 'client_credentials' &&
+                auth.identityProviderId
+            ) {
+                const idp = config.bootstrap.idps.find(
+                    (idp) => idp.id === auth.identityProviderId
+                )!
+                if (idp.type !== 'oauth') {
+                    return {
+                        networkId: network.id,
+                        invalidAuthMethod: auth.method,
+                    }
+                }
             }
         }
     }
