@@ -1387,9 +1387,8 @@
                     "ledgerApi"
                 ]
             },
-            "Idp": {
-                "title": "Idp",
-                "description": "Structure representing the Identity Providers",
+            "OauthIdp": {
+                "title": "OauthIdp",
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -1399,9 +1398,10 @@
                         "description": "ID of the identity provider"
                     },
                     "type": {
-                        "title": "type",
-                        "enum": ["oauth", "self_signed", "self_issued"],
-                        "description": "Type of identity provider (oauth / self_signed / self_issued)"
+                        "title": "oauthIdpType",
+                        "type": "string",
+                        "enum": ["oauth"],
+                        "description": "OAuth identity provider"
                     },
                     "issuer": {
                         "title": "issuer",
@@ -1414,7 +1414,65 @@
                         "description": "The configuration URL for the identity provider."
                     }
                 },
+                "required": ["id", "type", "issuer", "configUrl"]
+            },
+            "SelfSignedIdp": {
+                "title": "SelfSignedIdp",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "ID of the identity provider"
+                    },
+                    "type": {
+                        "title": "selfSignedIdpType",
+                        "type": "string",
+                        "enum": ["self_signed"],
+                        "description": "Self-signed identity provider"
+                    },
+                    "issuer": {
+                        "title": "issuer",
+                        "type": "string",
+                        "description": "Issuer of identity provider"
+                    }
+                },
                 "required": ["id", "type", "issuer"]
+            },
+            "SelfIssuedIdp": {
+                "title": "SelfIssuedIdp",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "ID of the identity provider"
+                    },
+                    "type": {
+                        "title": "selfIssuedIdpType",
+                        "type": "string",
+                        "enum": ["self_issued"],
+                        "description": "Self-issued identity provider"
+                    }
+                },
+                "required": ["id", "type"]
+            },
+            "Idp": {
+                "title": "Idp",
+                "description": "Structure representing an identity provider",
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OauthIdp"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfSignedIdp"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfIssuedIdp"
+                    }
+                ]
             },
             "Auth": {
                 "title": "auth",

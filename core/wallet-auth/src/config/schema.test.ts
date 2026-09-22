@@ -17,10 +17,15 @@ describe('schemas', () => {
         const validIdpSelfIssued = {
             id: 'test1',
             type: 'self_issued',
-            issuer: 'party-jwt',
         }
 
         expect(idpSchema.safeParse(validIdpSelfIssued).success).toBe(true)
+        expect(
+            idpSchema.safeParse({
+                ...validIdpSelfIssued,
+                issuer: null,
+            }).success
+        ).toBe(false)
 
         const validIdpClientOauth = {
             id: 'test1',

@@ -44,7 +44,6 @@ const selfSignedIdp: Idp = {
 const selfIssuedIdp: Idp = {
     id: 'idp-self-issued',
     type: 'self_issued',
-    issuer: 'party-jwt',
 }
 
 const baseNetwork: Network = {
@@ -128,6 +127,7 @@ describe('schema mappers', () => {
                 externalTxId: 'ext-tx-id',
                 topologyTransactions: 'topo',
                 rights: [],
+                userId: 'the-user',
             }
 
             const table = fromWallet(wallet, 'user-1')

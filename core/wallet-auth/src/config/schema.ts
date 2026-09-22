@@ -82,11 +82,12 @@ export const idpSchema = z.discriminatedUnion('type', [
         type: z.literal('self_signed'),
         issuer: z.string(),
     }),
-    z.object({
-        id: z.string(),
-        type: z.literal('self_issued'),
-        issuer: z.string(),
-    }),
+    z
+        .object({
+            id: z.string(),
+            type: z.literal('self_issued'),
+        })
+        .strict(),
     z.object({
         id: z.string(),
         type: z.literal('oauth'),

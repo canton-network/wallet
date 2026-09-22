@@ -27,7 +27,7 @@ interface MigrationTable {
 interface IdpTable {
     id: string
     type: 'oauth' | 'self_signed' | 'self_issued'
-    issuer: string
+    issuer: string | null
     configUrl: string | undefined
 }
 
@@ -154,6 +154,9 @@ export const toIdp = (table: IdpTable): Idp => {
             if (!table.configUrl) {
                 throw new Error(`Missing configUrl for oauth IdP: ${table.id}`)
             }
+            if (table.issuer === null) {
+                throw new Error(`Missing issuer for oauth IdP: ${table.id}`)
+            }
 
             return {
                 id: table.id,
@@ -163,11 +166,20 @@ export const toIdp = (table: IdpTable): Idp => {
             }
         }
         case 'self_signed':
-        case 'self_issued':
+            if (table.issuer === null) {
+                throw new Error(
+                    `Missing issuer for self_signed IdP: ${table.id}`
+                )
+            }
             return {
                 id: table.id,
                 type: table.type,
                 issuer: table.issuer,
+            }
+        case 'self_issued':
+            return {
+                id: table.id,
+                type: table.type,
             }
     }
 }
@@ -182,11 +194,18 @@ export const fromIdp = (idp: Idp): IdpTable => {
                 configUrl: idp.configUrl,
             }
         case 'self_signed':
-        case 'self_issued':
             return {
                 id: idp.id,
                 type: idp.type,
                 issuer: idp.issuer,
+                configUrl: undefined,
+            }
+        case 'self_issued':
+            return {
+                id: idp.id,
+                type: idp.type,
+                issuer: null,
+                // TODO I probably want to make it null here as well, so it's cleared from db if type changes to the one that doesn't use configUrl
                 configUrl: undefined,
             }
     }

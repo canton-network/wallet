@@ -16,6 +16,7 @@
         "013-add-api-key": "e58fe813f6cbb8c2b31e937f03d26c357366329b3bf9f4fb7bae1aae15270ce4",
         "014-add-service-account-column": "d7185ac8909c5ba0fe064a96e0c749158b0b2d78bf5e9f29d57a9994525aa641",
         "015-add-origin-field-session": "484d7046ba8d4af470e17d9c779ecdcb445ff242aa6e6bc1d3f1e3043ee8126c",
-        "016-add-failure-reason-and-awaiting-signature": "26f62a7ef65310dac129593a0c93246706b989dc8055ee50f4919cafdaf3962f"
+        "016-add-failure-reason-and-awaiting-signature": "26f62a7ef65310dac129593a0c93246706b989dc8055ee50f4919cafdaf3962f",
+        "017-make-idp-issuer-nullable": "c6f1684aafe8cd595d21051936b54de6dff9f73c2f5602f040e84d6b898de0cf"
     }
 }

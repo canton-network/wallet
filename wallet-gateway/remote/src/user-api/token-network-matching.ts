@@ -22,11 +22,11 @@ export function assertTokenClaimsMatchNetwork(
     network: Network,
     idp: Idp
 ): void {
-    const expectedIssuer = idp.issuer
     const tokenClaims: JWTPayload = decodeJwt(accessToken)
-    const tokenIssuer = tokenClaims.iss
-    if (tokenIssuer !== expectedIssuer) {
-        throw new Error(`Token iss claim doesn't match IDP's issuer.`)
+    if (idp.type !== 'self_issued') {
+        if (tokenClaims.iss !== idp.issuer) {
+            throw new Error(`Token iss claim doesn't match IDP's issuer.`)
+        }
     }
 
     const tokenAudiences = normalizeAudienceClaim(tokenClaims.aud)
