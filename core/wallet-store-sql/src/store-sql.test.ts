@@ -916,6 +916,28 @@ implementations.forEach(([name, StoreImpl]) => {
             ).toEqual(selfIssuedIdp)
         })
 
+        test('should clear issuer and config URL when changing an idp to self_issued', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const id = 'changed-to-self-issued'
+
+            await store.addIdp({
+                id,
+                type: 'oauth',
+                issuer: 'https://issuer.example',
+                configUrl:
+                    'https://issuer.example/.well-known/openid-configuration',
+            })
+            await store.updateIdp({ id, type: 'self_issued' })
+
+            expect(
+                await db
+                    .selectFrom('idps')
+                    .select(['issuer', 'configUrl'])
+                    .where('id', '=', id)
+                    .executeTakeFirstOrThrow()
+            ).toEqual({ issuer: null, configUrl: null })
+        })
+
         test('should set and read user level rights for the current network', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)

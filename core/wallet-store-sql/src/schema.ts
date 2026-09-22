@@ -28,7 +28,7 @@ interface IdpTable {
     id: string
     type: 'oauth' | 'self_signed' | 'self_issued'
     issuer: string | null
-    configUrl: string | undefined
+    configUrl: string | null
 }
 
 interface NetworkTable {
@@ -198,15 +198,14 @@ export const fromIdp = (idp: Idp): IdpTable => {
                 id: idp.id,
                 type: idp.type,
                 issuer: idp.issuer,
-                configUrl: undefined,
+                configUrl: null,
             }
         case 'self_issued':
             return {
                 id: idp.id,
                 type: idp.type,
                 issuer: null,
-                // TODO I probably want to make it null here as well, so it's cleared from db if type changes to the one that doesn't use configUrl
-                configUrl: undefined,
+                configUrl: null,
             }
     }
 }
