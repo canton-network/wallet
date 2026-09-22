@@ -942,26 +942,26 @@ describe('TransactionService', () => {
                         .fn()
                         .mockResolvedValue({ updateId: 'external-update-1' })
 
-                    const result =
+                    const providerAuthContext =
                         signingProviderId === SigningProvider.BLOCKDAEMON
-                            ? await service.execute(
-                                  authContextWithEmail.userId,
-                                  walletWithProvider(signingProviderId),
-                                  signedWithExternal,
-                                  executeParams,
-                                  { postWithRetry } as unknown as LedgerClient,
-                                  authContextWithEmail,
-                                  network
-                              )
-                            : await service.execute(
-                                  authContext.userId,
-                                  walletWithProvider(signingProviderId),
-                                  signedWithExternal,
-                                  executeParams,
-                                  { postWithRetry } as unknown as LedgerClient,
-                                  authContext,
-                                  network
-                              )
+                            ? authContextWithEmail
+                            : authContext
+
+                    let wkSignedTx = undefined
+                    if (signingProviderId === SigningProvider.WALLET_KERNEL) {
+                        wkSignedTx = { ...signedWithExternal }
+                        delete wkSignedTx.externalTxId
+                    }
+
+                    const result = await service.execute(
+                        providerAuthContext.userId,
+                        walletWithProvider(signingProviderId),
+                        wkSignedTx || signedWithExternal,
+                        executeParams,
+                        { postWithRetry } as unknown as LedgerClient,
+                        providerAuthContext,
+                        network
+                    )
 
                     expect(postWithRetry).toHaveBeenCalledWith(
                         '/v2/interactive-submission/executeAndWait',
