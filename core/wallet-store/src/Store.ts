@@ -159,6 +159,14 @@ export interface Store {
     // Wallet methods
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
     getWallet(partyId: PartyId): Promise<Wallet | null>
+    /**
+     * Looks up a wallet by user and party without an authenticated session,
+     * because this runs during self-issued token verification, before there is one.
+     */
+    getWalletByUserParty(
+        userId: string,
+        partyId: PartyId
+    ): Promise<Wallet | undefined>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>
