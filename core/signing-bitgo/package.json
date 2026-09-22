@@ -22,17 +22,17 @@
         "test:coverage": "vitest run --project node --coverage"
     },
     "dependencies": {
-        "@bitgo/sdk-lib-mpc": "^10.15.0",
-        "@canton-network/core-signing-lib": "workspace:^",
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "zod": "^4.4.3"
+        "@bitgo/sdk-lib-mpc": "catalog:",
+        "@canton-network/core-signing-lib": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "zod": "catalog:"
     },
     "devDependencies": {
-        "@types/node": "^25.9.3",
-        "@vitest/coverage-v8": "^5.0.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^5.0.1"
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"

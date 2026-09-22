@@ -24,18 +24,18 @@
         "test:coverage": "vitest run --project node --coverage"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "workspace:^",
-        "@canton-network/core-signing-lib": "workspace:^",
-        "@canton-network/core-wallet-auth": "workspace:^"
+        "@canton-network/core-ledger-client": "catalog:",
+        "@canton-network/core-signing-lib": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:"
     },
     "devDependencies": {
-        "@types/fs-extra": "^11.0.4",
-        "@types/lodash": "^4.17.24",
-        "@types/node": "^25.9.4",
-        "@vitest/coverage-v8": "^5.0.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^5.0.1"
+        "@types/fs-extra": "catalog:",
+        "@types/lodash": "catalog:",
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"
