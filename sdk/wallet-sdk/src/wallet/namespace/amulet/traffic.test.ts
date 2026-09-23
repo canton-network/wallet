@@ -16,7 +16,6 @@ describe('TrafficNamespace', () => {
     let config: AmuletNamespaceConfig
 
     beforeEach(() => {
-        vi.clearAllMocks()
         config = {
             commonCtx: {
                 ...mock.ctx,

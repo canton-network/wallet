@@ -19,12 +19,12 @@ export const apps = [
     },
     {
         name: 'example-ping',
-        script: 'pnpm --filter @canton-network/example-ping dev',
+        script: 'pnpm --filter @canton-network/example-ping preview',
         env_development: sharedEnvDevelopment,
     },
     {
         name: 'example-portfolio',
-        script: 'pnpm --filter @canton-network/example-portfolio dev',
+        script: 'pnpm --filter @canton-network/example-portfolio preview',
         env_development: sharedEnvDevelopment,
     },
 ]

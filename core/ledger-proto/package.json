@@ -25,19 +25,19 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@swc/core": "^1.15.43",
-        "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
-        "esbuild-plugin-replace": "^1.4.0",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@swc/core": "catalog:",
+        "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "esbuild-plugin-replace": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
-        "@protobuf-ts/runtime": "^2.11.1",
-        "@protobuf-ts/runtime-rpc": "^2.11.1"
+        "@protobuf-ts/runtime": "catalog:",
+        "@protobuf-ts/runtime-rpc": "catalog:"
     },
     "files": [
         "dist/**"

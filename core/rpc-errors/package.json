@@ -31,13 +31,13 @@
         "test:coverage": "vitest run --project node --coverage --passWithNoTests"
     },
     "dependencies": {
-        "@metamask/rpc-errors": "^7.0.3"
+        "@metamask/rpc-errors": "catalog:"
     },
     "devDependencies": {
-        "@vitest/coverage-v8": "^4.1.11",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "repository": {
         "type": "git",

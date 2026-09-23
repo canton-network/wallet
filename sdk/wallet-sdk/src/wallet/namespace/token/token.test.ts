@@ -104,7 +104,6 @@ describe('token namespace', () => {
     let token: TokenNamespace
 
     beforeEach(() => {
-        vi.clearAllMocks()
         token = new TokenNamespace(config)
     })
 

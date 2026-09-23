@@ -25,18 +25,18 @@
         "test:coverage": "vitest run --project node --project browser --coverage"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-rpc-errors": "workspace:^",
-        "@canton-network/core-types": "workspace:^",
-        "jose": "^6.2.3",
-        "zod": "^4.4.3"
+        "@canton-network/core-rpc-errors": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "jose": "catalog:",
+        "zod": "catalog:"
     },
     "files": [
         "dist/**"

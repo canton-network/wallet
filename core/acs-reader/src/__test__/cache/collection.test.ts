@@ -42,9 +42,7 @@ const ledgerProvider = vi.hoisted(() => ({
 }))
 
 describe('cache collection', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
     ;[ACSCacheCollection, PaginatedACSCacheCollection].forEach(
         (cacheConstructor) => {
             describe(`using ${cacheConstructor.name}`, () => {

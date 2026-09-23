@@ -886,7 +886,9 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.listApiKeys()).toHaveLength(0)
 
             // removing a non-existent key should not throw
-            expect(store.removeApiKey('non-existent')).resolves.toBeUndefined()
+            await expect(
+                store.removeApiKey('non-existent')
+            ).resolves.toBeUndefined()
         })
 
         test('addApiKey should error with wrong userId or networkId', async () => {
@@ -908,7 +910,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 createdAt: new Date('2026-05-08T13:00:00.000Z'),
             }
 
-            expect(store.addApiKey(apiKey)).rejects.toThrow(
+            await expect(store.addApiKey(apiKey)).rejects.toThrow(
                 'Network "network2" not found'
             )
 
@@ -917,7 +919,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 accessToken: 'test-access-token',
             })
 
-            expect(
+            await expect(
                 newstore.addApiKey({ ...apiKey, networkId: 'network2' })
             ).rejects.toThrow(
                 'ApiKey userId mismatch: expected other-user-id, got test-user-id'

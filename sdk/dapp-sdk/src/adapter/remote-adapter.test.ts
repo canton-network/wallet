@@ -118,7 +118,6 @@ describe('RemoteAdapter', () => {
 
     beforeEach(() => {
         localStorage.clear()
-        vi.clearAllMocks()
         adapter = new RemoteAdapter({ name: 'Gateway', rpcUrl: RPC_URL })
         mockController.status.mockResolvedValue(kernelSession())
         mockController.connect.mockResolvedValue(kernelSession().connection)

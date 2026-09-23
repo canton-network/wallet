@@ -23,15 +23,15 @@ jobs:
             (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore(release):'))
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
                   fetch-tags: true
 
             - name: Install pnpm and Node.js
-              uses: pnpm/setup@c9883cc79df532ad1a7b81bf9ab944ceb090d65c # v2.0.0
+              uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
               with:
-                  runtime: node@24
+                  node-version-file: .nvmrc
                   cache: true
 
             - name: Generate

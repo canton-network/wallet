@@ -25,27 +25,27 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
-        "openapi-typescript": "^7.13.0",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "openapi-typescript": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client-types": "workspace:^",
-        "@canton-network/core-ledger-proto": "workspace:^",
-        "@canton-network/core-provider-ledger": "workspace:^",
-        "@canton-network/core-splice-client": "workspace:^",
-        "@canton-network/core-token-standard": "workspace:^",
-        "@canton-network/core-types": "workspace:^",
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "bignumber.js": "^10.0.2",
-        "dayjs": "^1.11.21",
-        "openapi-fetch": "^0.17.0",
-        "pino": "^10.3.1"
+        "@canton-network/core-ledger-client-types": "catalog:",
+        "@canton-network/core-ledger-proto": "catalog:",
+        "@canton-network/core-provider-ledger": "catalog:",
+        "@canton-network/core-splice-client": "catalog:",
+        "@canton-network/core-token-standard": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "bignumber.js": "catalog:",
+        "dayjs": "catalog:",
+        "openapi-fetch": "catalog:",
+        "pino": "catalog:"
     },
     "files": [
         "dist/**"

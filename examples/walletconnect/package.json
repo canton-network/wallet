@@ -9,23 +9,23 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@emotion/react": "^11.14.0",
-        "@emotion/styled": "^11.14.1",
-        "@mui/icons-material": "^7.3.11",
-        "@mui/material": "^7.3.11",
-        "@reown/walletkit": "^1.5.6",
-        "@walletconnect/core": "^2.23.10",
-        "@walletconnect/types": "^2.23.10",
-        "react": "^19.2.7",
-        "react-dom": "^19.2.7"
+        "@emotion/react": "catalog:",
+        "@emotion/styled": "catalog:",
+        "@mui/icons-material": "catalog:mui7",
+        "@mui/material": "catalog:mui7",
+        "@reown/walletkit": "catalog:",
+        "@walletconnect/core": "catalog:",
+        "@walletconnect/types": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:"
     },
     "devDependencies": {
-        "@canton-network/core-eslint-config": "workspace:^",
-        "@types/react": "^19.2.17",
-        "@types/react-dom": "^19.2.3",
-        "@vitejs/plugin-react": "^5.2.0",
-        "eslint": "^10.6.0",
-        "typescript": "~5.9.3",
-        "vite": "^7.3.6"
+        "@canton-network/core-eslint-config": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "catalog:",
+        "eslint": "catalog:",
+        "typescript": "catalog:",
+        "vite": "catalog:"
     }
 }

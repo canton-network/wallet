@@ -27,7 +27,7 @@ jobs:
             mainnet_splice_version: ${{ steps.version.outputs.mainnet_splice_version }}
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - name: Resolve version config outputs
               id: version
@@ -45,7 +45,7 @@ jobs:
         needs: version-config
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/initial
               with:
@@ -82,7 +82,7 @@ jobs:
                 instance: [canton, localnet]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
               with:
@@ -105,7 +105,7 @@ jobs:
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
 

@@ -83,7 +83,6 @@ describe('AmuletNamespace', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         amuletNamespace = new AmuletNamespace(config)
@@ -226,7 +225,6 @@ describe('AmuletNamespace with no validator party', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         amuletNamespace = new AmuletNamespace(configNoValidator)

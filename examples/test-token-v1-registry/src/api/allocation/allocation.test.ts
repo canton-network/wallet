@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, beforeEach, vi } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import { getAllocationTransferContext } from './getAllocationTransferContext'
 import { getAllocationCancelContext } from './getAllocationCancelContext'
 import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
@@ -11,9 +11,7 @@ import { expressContext, type RequestType } from '../../__test__/mocks'
 const { res, next } = expressContext
 
 describe('Allocation', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     it('should return correct allocation transfer context', () => {
         getAllocationTransferContext(
