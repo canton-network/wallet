@@ -58,6 +58,11 @@ export const apps = [
         env_development: sharedEnvDevelopment,
     },
     {
+        name: 'core-wallet-services',
+        script: 'pnpm --filter @canton-network/core-wallet-services dev',
+        env_development: sharedEnvDevelopment,
+    },
+    {
         name: 'core-wallet-store',
         script: 'pnpm --filter @canton-network/core-wallet-store dev',
         env_development: sharedEnvDevelopment,
