@@ -19,6 +19,7 @@ import {
  * See: https://docs.digitalasset.com/build/3.4/dpm/dpm.html
  */
 export interface DamlCodegenConfig {
+    sourceDirs: string[]
     destDir: string
     packageName: string
     version: string
@@ -195,6 +196,7 @@ export async function generateDamlJsBindings(
     config: DamlCodegenConfig
 ): Promise<void> {
     const damlYamlPath = path.join(config.destDir, 'daml.yaml')
+
     if (!fs.existsSync(damlYamlPath)) {
         throw new Error(
             `Missing daml.yaml in destination project: ${damlYamlPath}`

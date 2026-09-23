@@ -201,6 +201,19 @@ const getSpecs = (
         input: `api-specs/splice/${spliceVersion}/transfer-instruction-v1.yaml`,
         output: 'core/token-standard/src/generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.ts',
     },
+    //splice v2 specs
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-instruction-v2.yaml`,
+        output: 'core/token-standard-v2/src/generated-clients/splice-api-token-allocation-instruction-v2/allocation-instruction-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-v2.yaml`,
+        output: 'core/token-standard-v2/src/generated-clients/splice-api-token-allocation-v2/allocation-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/transfer-instruction-v2.yaml`,
+        output: 'core/token-standard-v2/src/generated-clients/splice-api-token-transfer-instruction-v2/transfer-instruction-v2.ts',
+    },
 ]
 
 /**
