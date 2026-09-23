@@ -456,6 +456,27 @@ export class AuthEditor extends BaseElement {
         </div>`
     }
 
+    _renderClientIdInput(
+        authObj: AuthorizationCodeAuth | ClientCredentialsAuth | SelfSignedAuth
+    ) {
+        return html` <div class="field-group d-flex flex-column">
+            <label class="form-label field-label mb-0">
+                Client Id <span class="required">*</span>
+            </label>
+            <input
+                class="form-control field-control"
+                data-test-id="auth-editor-client-id-input"
+                type="text"
+                required
+                .value=${authObj.clientId}
+                @change=${(e: Event) => {
+                    authObj.clientId = (e.target as HTMLInputElement).value
+                    this._emit(authObj)
+                }}
+            />
+        </div>`
+    }
+
     _renderClientSecretInput(authObj: ClientCredentialsAuth | SelfSignedAuth) {
         return html` <div class="field-group d-flex flex-column">
             <label class="form-label field-label mb-0">
@@ -579,31 +600,6 @@ export class AuthEditor extends BaseElement {
                 </div>
             </div>
 
-            ${
-                'clientId' in authObj
-                    ? html`
-                          <div class="field-group d-flex flex-column">
-                              <label class="form-label field-label mb-0">
-                                  Client Id <span class="required">*</span>
-                              </label>
-                              <input
-                                  class="form-control field-control"
-                                  data-test-id="auth-editor-client-id-input"
-                                  type="text"
-                                  required
-                                  .value=${authObj.clientId}
-                                  @change=${(e: Event) => {
-                                      authObj.clientId = (
-                                          e.target as HTMLInputElement
-                                      ).value
-                                      this._emit(authObj)
-                                  }}
-                              />
-                          </div>
-                      `
-                    : nothing
-            }
-
             <div class="field-group d-flex flex-column">
                 <label class="form-label field-label mb-0">
                     Audience <span class="required">*</span>
@@ -639,18 +635,23 @@ export class AuthEditor extends BaseElement {
             </div>
         `
 
-        if (method === 'authorization_code' || method === 'self_issued') {
+        if (method === 'authorization_code') {
+            return html`${commonFields} ${this._renderClientIdInput(authObj)}`
+        }
+
+        if (method === 'self_issued') {
             return commonFields
         }
 
         if (method === 'client_credentials') {
-            return html` ${commonFields}
+            return html`${commonFields} ${this._renderClientIdInput(authObj)}
             ${this._renderIdentityProviderIdInput(authObj)}
             ${this._renderClientSecretInput(authObj)}`
         }
 
         if (method === 'self_signed') {
-            return html` ${commonFields} ${this._renderIssuerInput(authObj)}
+            return html`${commonFields} ${this._renderClientIdInput(authObj)}
+            ${this._renderIssuerInput(authObj)}
             ${this._renderClientSecretInput(authObj)}`
         }
 
