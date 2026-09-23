@@ -11,7 +11,7 @@ import type {
     ClientCredentialsAuth,
     SelfIssuedAuth,
     SelfSignedAuth,
-} from '@canton-network/core-wallet-auth'
+} from '@canton-network/core-wallet-user-rpc-client'
 
 export type AuthMethod =
     'authorization_code' | 'client_credentials' | 'self_signed' | 'self_issued'
@@ -265,6 +265,13 @@ export class AuthEditor extends BaseElement {
                 value: this._maskSecret(auth.clientSecret),
             })
         }
+
+        if (auth.method === 'client_credentials' && auth.identityProviderId) {
+            rows.push({
+                key: 'Identity Provider Id',
+                value: auth.identityProviderId,
+            })
+        }
         return rows
     }
 
@@ -410,6 +417,10 @@ export class AuthEditor extends BaseElement {
             case 'client_credentials':
                 this._emit({
                     method: 'client_credentials',
+                    ...(this.auth?.method === 'client_credentials' &&
+                    this.auth.identityProviderId
+                        ? { identityProviderId: this.auth.identityProviderId }
+                        : {}),
                     clientId:
                         this.auth && 'clientId' in this.auth
                             ? this.auth.clientId
@@ -478,6 +489,32 @@ export class AuthEditor extends BaseElement {
                       </p>`
                     : nothing
             }
+        </div>`
+    }
+
+    _renderIdentityProviderIdInput(authObj: ClientCredentialsAuth) {
+        return html` <div class="field-group d-flex flex-column">
+            <label class="form-label field-label mb-0">
+                Identity Provider Id Override
+            </label>
+            <input
+                class="form-control field-control"
+                data-test-id="auth-editor-identity-provider-id-input"
+                type="text"
+                .value=${authObj.identityProviderId ?? ''}
+                @change=${(e: Event) => {
+                    const value = (e.target as HTMLInputElement).value.trim()
+                    if (value) {
+                        authObj.identityProviderId = value
+                    } else {
+                        delete authObj.identityProviderId
+                    }
+                    this._emit(authObj)
+                }}
+            />
+            <p class="field-help mb-0">
+                Optional. Uses the network identity provider when empty.
+            </p>
         </div>`
     }
 
@@ -608,6 +645,7 @@ export class AuthEditor extends BaseElement {
 
         if (method === 'client_credentials') {
             return html` ${commonFields}
+            ${this._renderIdentityProviderIdInput(authObj)}
             ${this._renderClientSecretInput(authObj)}`
         }
 
