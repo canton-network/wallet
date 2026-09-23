@@ -63,6 +63,7 @@ jobs:
                       sdk/*/dist/
                       wallet-gateway/*/dist/
                       examples/*/dist/
+                      tools/*/dist/
                       damljs
                       .nx/cache
                       .nx/workspace-data

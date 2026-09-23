@@ -1,0 +1,57 @@
+{
+    "name": "@canton-network/core-provider-conformance",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Typed conformance test providers and wallet interaction wrappers",
+    "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "license": "Apache-2.0",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "test": "vitest run --project node --project browser",
+        "test:coverage": "vitest run --project node --project browser --coverage"
+    },
+    "dependencies": {
+        "@canton-network/dapp-sdk": "catalog:",
+        "zod": "catalog:"
+    },
+    "devDependencies": {
+        "@canton-network/core-eslint-config": "catalog:",
+        "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "eslint": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/provider-conformance"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/provider-conformance#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
