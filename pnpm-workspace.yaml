@@ -1,6 +1,8 @@
 strictPeerDependencies: true
 catalogMode: strict
 catalogPrune: true
+update:
+    githubActions: true
 packages:
     - api-specs
     - core/**
@@ -239,6 +241,7 @@ catalog:
     wxt: ^0.21.4
     rollup: ^4.62.0
     '@mui/material': ^9.2.0
+    '@mui/icons-material': ^9.2.0
 catalogs:
     mui7:
         '@mui/icons-material': ^7.3.11
