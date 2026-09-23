@@ -25,24 +25,23 @@
         "test:coverage": "vitest run --project node --project browser --coverage"
     },
     "devDependencies": {
-        "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^5.0.1",
-        "@vitest/coverage-v8": "^5.0.1",
-        "openapi-typescript": "^7.13.0",
-        "playwright": "^1.63.0",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^5.0.1"
+        "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "openapi-typescript": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client-types": "workspace:^",
-        "@canton-network/core-provider-ledger": "workspace:^",
-        "@canton-network/core-types": "workspace:^",
-        "bignumber.js": "^9.3.1",
-        "dayjs": "^1.11.21",
-        "openapi-fetch": "^0.15.2",
-        "pino": "^10.3.1",
-        "typescript-lru-cache": "^2.0.0"
+        "@canton-network/core-ledger-client-types": "catalog:",
+        "@canton-network/core-provider-ledger": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "dayjs": "catalog:",
+        "openapi-fetch": "catalog:",
+        "pino": "catalog:",
+        "typescript-lru-cache": "catalog:"
     },
     "files": [
         "dist/**"
