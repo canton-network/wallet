@@ -54,6 +54,10 @@ export class IdpFormComponent extends BaseElement {
     @state() private _error = ''
     @state() private selectedType: Idp['type'] = 'oauth'
 
+    private _draftId = ''
+    private _draftIssuer = ''
+    private _draftConfigUrl = ''
+
     @query('#idp-id') accessor idpIdInput: HTMLInputElement | null = null
     @query('#idp-issuer') accessor idpIssuerInput: HTMLInputElement | null =
         null
@@ -225,10 +229,18 @@ export class IdpFormComponent extends BaseElement {
     protected willUpdate(changedProperties: PropertyValues<this>): void {
         if (changedProperties.has('idp')) {
             this.selectedType = this.idp.type
+            this._draftId = this.idp.id
+            this._draftIssuer = 'issuer' in this.idp ? this.idp.issuer : ''
+            this._draftConfigUrl =
+                'configUrl' in this.idp ? this.idp.configUrl : ''
         }
     }
 
     private handleTypeChange(event: Event): void {
+        this._draftId = this.idpIdInput?.value ?? this._draftId
+        this._draftIssuer = this.idpIssuerInput?.value ?? this._draftIssuer
+        this._draftConfigUrl =
+            this.idpConfigUrlInput?.value ?? this._draftConfigUrl
         this.selectedType = (event.target as HTMLSelectElement).value as
             'oauth' | 'self_signed' | 'self_issued'
     }
@@ -236,14 +248,10 @@ export class IdpFormComponent extends BaseElement {
     private handleSubmit(e: Event) {
         e.preventDefault()
 
-        const id = this.idpIdInput?.value ?? this.idp.id
+        const id = this.idpIdInput?.value ?? this._draftId
         const type = this.selectedType
-        const issuer =
-            this.idpIssuerInput?.value ??
-            ('issuer' in this.idp ? this.idp.issuer : '')
-        const configUrl =
-            this.idpConfigUrlInput?.value ??
-            ('configUrl' in this.idp ? this.idp.configUrl : '')
+        const issuer = this.idpIssuerInput?.value ?? this._draftIssuer
+        const configUrl = this.idpConfigUrlInput?.value ?? this._draftConfigUrl
 
         if (
             !id ||
@@ -271,112 +279,117 @@ export class IdpFormComponent extends BaseElement {
         this.dispatchEvent(new IdpFormSaveEvent(result))
     }
 
+    private _renderIssuerInput() {
+        return html`
+            <div class="field-group d-flex flex-column">
+                <label for="idp-issuer" class="form-label field-label mb-0">
+                    Issuer URL <span class="required">*</span>
+                </label>
+                <input
+                    ?disabled=${this.loading}
+                    class="form-control field-control"
+                    id="idp-issuer"
+                    type="text"
+                    placeholder="Enter the issuer URL"
+                    .value=${this._draftIssuer}
+                    @input=${(event: Event) => {
+                        this._draftIssuer = (
+                            event.target as HTMLInputElement
+                        ).value
+                    }}
+                    required
+                />
+            </div>
+        `
+    }
+
+    private _renderConfigUrlInput() {
+        return html`
+            <div class="field-group d-flex flex-column">
+                <label for="idp-config-url" class="form-label field-label mb-0">
+                    Config URL <span class="required">*</span>
+                </label>
+                <input
+                    ?disabled=${this.loading}
+                    class="form-control field-control"
+                    id="idp-config-url"
+                    type="text"
+                    placeholder="Enter the configuration URL"
+                    .value=${this._draftConfigUrl}
+                    @input=${(event: Event) => {
+                        this._draftConfigUrl = (
+                            event.target as HTMLInputElement
+                        ).value
+                    }}
+                    required
+                />
+            </div>
+        `
+    }
+
+    private _renderIdpFields() {
+        const commonFields = html`
+            <div class="field-group d-flex flex-column">
+                <label for="idp-id" class="form-label field-label mb-0">
+                    ID <span class="required">*</span>
+                </label>
+                <input
+                    ?disabled=${this.loading}
+                    class="form-control field-control"
+                    id="idp-id"
+                    type="text"
+                    placeholder="Enter the identity provider ID"
+                    .value=${this._draftId}
+                    @input=${(event: Event) => {
+                        this._draftId = (event.target as HTMLInputElement).value
+                    }}
+                    required
+                />
+                <p class="field-help mb-0">
+                    A unique identifier for the identity provider
+                </p>
+            </div>
+
+            <div class="field-group d-flex flex-column">
+                <label for="idp-type" class="form-label field-label mb-0">
+                    Type <span class="required">*</span>
+                </label>
+                <div class="select-wrap">
+                    <select
+                        ?disabled=${this.loading}
+                        class="form-select field-control"
+                        id="idp-type"
+                        .value=${this.selectedType}
+                        @change=${this.handleTypeChange}
+                        required
+                    >
+                        <option value="oauth">oauth</option>
+                        <option value="self_signed">self_signed</option>
+                        <option value="self_issued">self_issued</option>
+                    </select>
+                    <span class="select-chevron">${chevronDownIcon}</span>
+                </div>
+            </div>
+        `
+
+        switch (this.selectedType) {
+            case 'oauth':
+                return html`${commonFields} ${this._renderIssuerInput()}
+                ${this._renderConfigUrlInput()}`
+            case 'self_signed':
+                return html`${commonFields} ${this._renderIssuerInput()}`
+            case 'self_issued':
+                return commonFields
+        }
+    }
+
     render() {
         const isReview = this.mode === 'review'
 
         return html`
             <form class="d-flex flex-column h-100" @submit=${this.handleSubmit}>
                 <div class="form-fields d-flex flex-column">
-                    <div class="field-group d-flex flex-column">
-                        <label for="idp-id" class="form-label field-label mb-0">
-                            ID <span class="required">*</span>
-                        </label>
-                        <input
-                            ?disabled=${this.loading}
-                            class="form-control field-control"
-                            id="idp-id"
-                            type="text"
-                            placeholder="Enter the identity provider ID"
-                            .value=${this.idp.id}
-                            required
-                        />
-                        <p class="field-help mb-0">
-                            A unique identifier for the identity provider
-                        </p>
-                    </div>
-
-                    <div class="field-group d-flex flex-column">
-                        <label
-                            for="idp-type"
-                            class="form-label field-label mb-0"
-                        >
-                            Type <span class="required">*</span>
-                        </label>
-                        <div class="select-wrap">
-                            <select
-                                ?disabled=${this.loading}
-                                class="form-select field-control"
-                                id="idp-type"
-                                .value=${this.selectedType}
-                                @change=${this.handleTypeChange}
-                                required
-                            >
-                                <option value="oauth">oauth</option>
-                                <option value="self_signed">self_signed</option>
-                                <option value="self_issued">self_issued</option>
-                            </select>
-                            <span class="select-chevron"
-                                >${chevronDownIcon}</span
-                            >
-                        </div>
-                    </div>
-
-                    ${
-                        this.selectedType !== 'self_issued'
-                            ? html`
-                                  <div class="field-group d-flex flex-column">
-                                      <label
-                                          for="idp-issuer"
-                                          class="form-label field-label mb-0"
-                                      >
-                                          Issuer URL
-                                          <span class="required">*</span>
-                                      </label>
-                                      <input
-                                          ?disabled=${this.loading}
-                                          class="form-control field-control"
-                                          id="idp-issuer"
-                                          type="text"
-                                          placeholder="Enter the issuer URL"
-                                          .value=${
-                                              'issuer' in this.idp
-                                                  ? this.idp.issuer
-                                                  : ''
-                                          }
-                                          required
-                                      />
-                                  </div>
-                              `
-                            : nothing
-                    }
-                    ${
-                        this.selectedType === 'oauth'
-                            ? html`
-                                  <div class="field-group d-flex flex-column">
-                                      <label
-                                          for="idp-config-url"
-                                          class="form-label field-label mb-0"
-                                      >
-                                          Config URL
-                                          <span class="required">*</span>
-                                      </label>
-                                      <input
-                                          ?disabled=${this.loading}
-                                          class="form-control field-control"
-                                          id="idp-config-url"
-                                          type="text"
-                                          placeholder="Enter the configuration URL"
-                                          .value=${
-                                              'configUrl' in this.idp
-                                                  ? this.idp.configUrl
-                                                  : ''
-                                          }
-                                          required
-                                      />
-                                  </div>
-                              `
-                            : nothing
-                    }
+                    ${this._renderIdpFields()}
                 </div>
 
                 ${
