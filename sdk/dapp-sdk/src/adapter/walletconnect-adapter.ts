@@ -7,7 +7,10 @@ import type {
     Provider,
     EventListener,
 } from '@canton-network/core-splice-provider'
-import type { RequestArgs } from '@canton-network/core-types'
+import {
+    CIP103_ERROR_CODES,
+    type RequestArgs,
+} from '@canton-network/core-types'
 import type {
     RpcTypes as DappRpcTypes,
     Provider as ProviderInfo,
@@ -334,7 +337,9 @@ export class WalletConnectAdapter
                       ? (errObj as { message: string }).message
                       : String(err)
             const code =
-                'code' in errObj ? (errObj as { code: number }).code : -32603
+                'code' in errObj
+                    ? (errObj as { code: number }).code
+                    : CIP103_ERROR_CODES.InternalError
             throw new Error(`RPC error: ${code} - ${message}`, { cause: err })
         }
     }
@@ -464,7 +469,7 @@ export class WalletConnectAdapter
                     signature: '',
                     error: {
                         message: err.message,
-                        code: -32603,
+                        code: CIP103_ERROR_CODES.InternalError,
                     },
                 })
             }
