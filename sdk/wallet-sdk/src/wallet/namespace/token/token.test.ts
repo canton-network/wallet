@@ -3,7 +3,7 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import * as mock from '../../__test__/mocks'
-import { TokenNamespace, TokenNamespaceConfig } from './index'
+import { TokenNamespace, type TokenNamespaceConfig } from './index'
 import { ParsedURL } from '../utils/url'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -104,7 +104,6 @@ describe('token namespace', () => {
     let token: TokenNamespace
 
     beforeEach(() => {
-        vi.clearAllMocks()
         token = new TokenNamespace(config)
     })
 

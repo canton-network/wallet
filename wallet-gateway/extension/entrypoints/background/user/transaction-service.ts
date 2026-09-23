@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LedgerClient, type Types } from '@canton-network/core-ledger-client'
+import type { LedgerClient, Types } from '@canton-network/core-ledger-client'
 import {
     isRpcError,
     SigningProvider,

@@ -3,25 +3,25 @@
 
 import { beforeEach, describe, expect, test } from 'vitest'
 
-import { StoreInternal, StoreInternalConfig } from './store-internal'
+import { StoreInternal, type StoreInternalConfig } from './store-internal'
 import {
-    Wallet,
-    Session,
-    Store,
-    LedgerApi,
-    Network,
-    Transaction,
-    MessageRaw,
+    type Wallet,
+    type Session,
+    type Store,
+    type LedgerApi,
+    type Network,
+    type Transaction,
+    type MessageRaw,
     UserLevelRight,
     PartyLevelRight,
-    ApiKey,
+    type ApiKey,
 } from '@canton-network/core-wallet-store'
-import {
+import type {
     AuthContext,
     AuthorizationCodeAuth,
     Idp,
 } from '@canton-network/core-wallet-auth'
-import { getLogger, Logger } from '@logtape/logtape'
+import { getLogger, type Logger } from '@logtape/logtape'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',
@@ -886,7 +886,9 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.listApiKeys()).toHaveLength(0)
 
             // removing a non-existent key should not throw
-            expect(store.removeApiKey('non-existent')).resolves.toBeUndefined()
+            await expect(
+                store.removeApiKey('non-existent')
+            ).resolves.toBeUndefined()
         })
 
         test('addApiKey should error with wrong userId or networkId', async () => {
@@ -908,7 +910,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 createdAt: new Date('2026-05-08T13:00:00.000Z'),
             }
 
-            expect(store.addApiKey(apiKey)).rejects.toThrow(
+            await expect(store.addApiKey(apiKey)).rejects.toThrow(
                 'Network "network2" not found'
             )
 
@@ -917,7 +919,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 accessToken: 'test-access-token',
             })
 
-            expect(
+            await expect(
                 newstore.addApiKey({ ...apiKey, networkId: 'network2' })
             ).rejects.toThrow(
                 'ApiKey userId mismatch: expected other-user-id, got test-user-id'

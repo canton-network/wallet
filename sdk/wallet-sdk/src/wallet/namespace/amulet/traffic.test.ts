@@ -3,7 +3,7 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { TrafficNamespace } from './traffic'
-import { AmuletNamespaceConfig, fetchAmulet } from './namespace'
+import { type AmuletNamespaceConfig, fetchAmulet } from './namespace'
 import * as mock from '../../__test__/mocks'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -16,7 +16,6 @@ describe('TrafficNamespace', () => {
     let config: AmuletNamespaceConfig
 
     beforeEach(() => {
-        vi.clearAllMocks()
         config = {
             commonCtx: {
                 ...mock.ctx,

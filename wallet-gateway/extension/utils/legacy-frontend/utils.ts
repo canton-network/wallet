@@ -3,7 +3,7 @@
 
 import {
     Toast,
-    ToastMessageType,
+    type ToastMessageType,
 } from '@canton-network/core-wallet-ui-components'
 
 export const showToast = (

@@ -6,13 +6,13 @@ import { customElement, state } from 'lit/decorators.js'
 
 import {
     BaseElement,
-    PageChangeEvent,
-    TransactionCardReviewEvent,
+    type PageChangeEvent,
+    type TransactionCardReviewEvent,
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import {
-    ParsedTransactionInfo,
+    type ParsedTransactionInfo,
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
 

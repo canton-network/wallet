@@ -39,7 +39,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiSignMessage } from './index.js'
+import type { UserUiSignMessage } from './index.js'
 
 function makeRpcTransportError(rpcMessage: string) {
     return {

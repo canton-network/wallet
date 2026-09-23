@@ -17,7 +17,7 @@ import {
     TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
 } from './constants'
 import {
-    AllowedRoute,
+    type AllowedRoute,
     getCurrentRoute,
     isAllowedRoute,
     toRelHref,

@@ -78,7 +78,6 @@ function mockPublicKeyLookup(publicKey = PUBLIC_KEY) {
 
 describe('FireblocksHandler', () => {
     beforeEach(() => {
-        vi.clearAllMocks()
         mockGetPagedVaultAccounts.mockReset()
         mockGetPublicKeyInfo.mockReset()
         mockGetTransaction.mockReset()

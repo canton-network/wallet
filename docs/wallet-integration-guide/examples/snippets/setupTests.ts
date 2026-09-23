@@ -3,10 +3,10 @@ import { PartyId } from '@canton-network/core-types'
 import {
     localNetStaticConfig,
     SDK,
-    AmuletConfig,
-    AssetConfig,
-    TokenConfig,
-    TokenProviderConfig,
+    type AmuletConfig,
+    type AssetConfig,
+    type TokenConfig,
+    type TokenProviderConfig,
     getValidatorParty,
 } from '@canton-network/wallet-sdk'
 

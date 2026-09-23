@@ -1,5 +1,5 @@
-import { PrettyContract } from '@canton-network/core-tx-parser'
-import { HoldingView } from '@canton-network/core-token-standard'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { HoldingView } from '@canton-network/core-token-standard'
 import {
     getValidatorParty,
     localNetStaticConfig,

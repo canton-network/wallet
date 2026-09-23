@@ -8,10 +8,15 @@ import {
     TransferFactory,
     TransferInstruction,
 } from '@canton-network/core-token-standard'
-import { PartyId } from '@canton-network/core-types'
-import { WrappedCommand } from '@canton-network/core-ledger-client-types'
-import { generateCommand } from 'src/common'
-import { Token, TokenAllocation, TokenRules, TokenTransferOffer } from './types'
+import type { PartyId } from '@canton-network/core-types'
+import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
+import { generateCommand } from '../common'
+import type {
+    Token,
+    TokenAllocation,
+    TokenRules,
+    TokenTransferOffer,
+} from './types'
 
 const commands = {
     create: {

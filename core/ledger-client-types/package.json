@@ -25,21 +25,20 @@
         "test:coverage": "vitest run --project node --project browser --coverage"
     },
     "devDependencies": {
-        "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
-        "openapi-typescript": "^7.13.0",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "openapi-typescript": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-types": "workspace:^",
-        "bignumber.js": "^10.0.2",
-        "dayjs": "^1.11.21",
-        "openapi-fetch": "^0.17.0",
-        "pino": "^10.3.1"
+        "@canton-network/core-types": "catalog:",
+        "dayjs": "catalog:",
+        "openapi-fetch": "catalog:",
+        "pino": "catalog:"
     },
     "files": [
         "dist/**"

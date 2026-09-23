@@ -10,36 +10,36 @@ import {
     ALLOCATION_REQUEST_INTERFACE_ID,
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
-    HoldingView,
-    AllocationFactory_Allocate,
-    AllocationSpecification,
-    Transfer,
-    ExtraArgs,
-    Metadata,
+    type HoldingView,
+    type AllocationFactory_Allocate,
+    type AllocationSpecification,
+    type Transfer,
+    type ExtraArgs,
+    type Metadata,
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
-    Holding,
-    Beneficiaries,
-    OffLedger,
+    type Holding,
+    type Beneficiaries,
+    type OffLedger,
 } from '@canton-network/core-token-standard'
 import {
     EventFilterBySetup,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
-import { ContractId, Logger, PartyId } from '@canton-network/core-types'
-import { ACSReader, AcsOptions } from '@canton-network/core-acs-reader'
+import type { ContractId, Logger, PartyId } from '@canton-network/core-types'
+import { ACSReader, type AcsOptions } from '@canton-network/core-acs-reader'
 import {
     TokenStandardTransactionInterfaces,
     ensureInterfaceViewIsPresent,
     TransactionParser,
-    PrettyContract,
+    type PrettyContract,
     renderTransaction,
-    ViewValue,
-    PrettyTransactions,
-    Transaction,
-    TransferObject,
+    type ViewValue,
+    type PrettyTransactions,
+    type Transaction,
+    type TransferObject,
 } from '@canton-network/core-tx-parser'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import {
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'

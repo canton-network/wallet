@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
+import { describe, it, vi, beforeEach, expect, type Mock } from 'vitest'
 import { PreapprovalNamespace } from './preapproval'
-import { AmuletNamespaceConfig, fetchAmulet } from './namespace'
+import { type AmuletNamespaceConfig, fetchAmulet } from './namespace'
 import * as mock from '../../__test__/mocks'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 vi.mock('./namespace', () => ({
@@ -19,7 +19,6 @@ describe('PreapprovalNamespace', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         mockLogger.child.mockImplementation(() => mockLogger)

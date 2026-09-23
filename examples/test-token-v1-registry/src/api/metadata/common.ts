@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TestToken } from '@canton-network/core-splice-codegen'
-import { OffLedger } from '@canton-network/core-token-standard'
+import type { OffLedger } from '@canton-network/core-token-standard'
 
 export const supportedApis: OffLedger.MetadataV1.components['schemas']['SupportedApis'] =
     {

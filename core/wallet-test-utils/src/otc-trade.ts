@@ -5,11 +5,11 @@ import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { type Logger } from 'pino'
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     SDK,
-    SDKInterface,
-    TokenProviderConfig,
+    type SDKInterface,
+    type TokenProviderConfig,
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
 

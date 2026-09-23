@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Idp } from '@canton-network/core-wallet-auth'
-import { Network } from '@canton-network/core-wallet-store'
-import { decodeJwt, decodeProtectedHeader, JWTPayload } from 'jose'
+import type { Idp } from '@canton-network/core-wallet-auth'
+import type { Network } from '@canton-network/core-wallet-store'
+import { decodeJwt, decodeProtectedHeader, type JWTPayload } from 'jose'
 
 function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
     if (typeof value === 'string') {

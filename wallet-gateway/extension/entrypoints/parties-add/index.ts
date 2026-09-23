@@ -5,7 +5,7 @@ import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
-    WalletCreateEvent,
+    type WalletCreateEvent,
     chevronLeftIcon,
     handleErrorToast,
 } from '@canton-network/core-wallet-ui-components'

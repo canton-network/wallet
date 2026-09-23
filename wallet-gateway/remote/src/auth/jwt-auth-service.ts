@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    AuthContext,
-    AuthService,
-    Idp,
+    type AuthContext,
+    type AuthService,
+    type Idp,
     resolveUserEmail,
 } from '@canton-network/core-wallet-auth'
-import { Store } from '@canton-network/core-wallet-store'
+import type { Store } from '@canton-network/core-wallet-store'
 import {
     createRemoteJWKSet,
     decodeJwt,
     decodeProtectedHeader,
     jwtVerify,
 } from 'jose'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 function getEmail(value: unknown): string | undefined {
     if (typeof value !== 'string' || value.length === 0) {

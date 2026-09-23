@@ -7,7 +7,7 @@ import {
     expect,
     vi,
     beforeEach,
-    MockedObject,
+    type MockedObject,
     afterEach,
 } from 'vitest'
 import {
@@ -18,9 +18,9 @@ import {
     jwtExpired,
     resolveUserEmail,
 } from './auth-utils.js'
-import { Idp } from './config/schema.js'
-import { TokenProviderConfig } from './auth-token-provider.js'
-import { Logger } from '@canton-network/core-types'
+import type { Idp } from './config/schema.js'
+import type { TokenProviderConfig } from './auth-token-provider.js'
+import type { Logger } from '@canton-network/core-types'
 import { SelfSignedTokenService } from './self-signed-token-service.js'
 
 describe('Auth Utils', () => {

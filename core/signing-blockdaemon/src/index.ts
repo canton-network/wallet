@@ -16,13 +16,13 @@ import {
     type SetConfigurationResult,
     type SigningDriverInterface,
     SigningProvider,
-    SignMessageResult,
+    type SignMessageResult,
     type SignTransactionParams,
     type SignTransactionResult,
     type SubscribeTransactionsParams,
     type SubscribeTransactionsResult,
 } from '@canton-network/core-signing-lib'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.js'
 
 export { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.js'

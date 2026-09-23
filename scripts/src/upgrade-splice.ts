@@ -11,8 +11,8 @@ import {
     getRepoRoot,
     VERSIONS_CONFIG_PATH,
     getArgValue,
-    Network,
-    SupportedVersions,
+    type Network,
+    type SupportedVersions,
 } from './lib/utils.js'
 
 async function getNetworkInput(): Promise<Network> {

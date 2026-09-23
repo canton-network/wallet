@@ -4,7 +4,7 @@
 import { dapp } from './dapp-api/server.js'
 import { user } from './user-api/server.js'
 import { web } from './web/server.js'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
     StoreSql,
     bootstrap,
@@ -25,7 +25,7 @@ import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import DfnsSigningProvider from '@canton-network/core-signing-dfns'
 import FireblocksSigningProvider from '@canton-network/core-signing-fireblocks'
 import BlockdaemonSigningProvider, {
-    CantonCaip2,
+    type CantonCaip2,
 } from '@canton-network/core-signing-blockdaemon'
 import SecurosysSigningProvider, {
     type TsbSignatureAlgorithm,
@@ -33,21 +33,22 @@ import SecurosysSigningProvider, {
 import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import { jwtAuthService } from './auth/jwt-auth-service.js'
 import express from 'express'
-import { CliOptions } from './index.js'
+import type { CliOptions } from './index.js'
 import { jwtAuth } from './middleware/jwtAuth.js'
 import {
     authenticatedRateLimiter,
     preAuthIpRateLimiter,
     rateLimiter,
 } from './middleware/rateLimit.js'
-import { Config } from './config/Config.js'
+import type { Config } from './config/Config.js'
 import { deriveUrls } from './config/ConfigUtils.js'
 import { existsSync } from 'fs'
 import { GATEWAY_VERSION } from './version.js'
 import { sessionHandler } from './middleware/sessionHandler.js'
 import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
-import { Env, HASHING_SCHEME_VERSION } from './env.js'
+import type { HASHING_SCHEME_VERSION } from './env.js'
+import { Env } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { securityHeaders } from './middleware/securityHeaders.js'

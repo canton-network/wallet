@@ -4,7 +4,7 @@
 import { html } from 'lit'
 import { customElement } from 'lit/decorators.js'
 import {
-    WalletCreateEvent,
+    type WalletCreateEvent,
     handleErrorToast,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'

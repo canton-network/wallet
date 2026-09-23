@@ -25,20 +25,20 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client-types": "workspace:^",
-        "@canton-network/core-rpc-transport": "workspace:^",
-        "@canton-network/core-splice-provider": "workspace:^",
-        "@canton-network/core-types": "workspace:^",
-        "@canton-network/core-wallet-dapp-remote-rpc-client": "workspace:^",
-        "@canton-network/core-wallet-dapp-rpc-client": "workspace:^"
+        "@canton-network/core-ledger-client-types": "catalog:",
+        "@canton-network/core-rpc-transport": "catalog:",
+        "@canton-network/core-splice-provider": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "@canton-network/core-wallet-dapp-remote-rpc-client": "catalog:",
+        "@canton-network/core-wallet-dapp-rpc-client": "catalog:"
     },
     "files": [
         "dist/**"

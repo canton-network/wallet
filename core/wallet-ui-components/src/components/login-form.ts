@@ -1,11 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, PropertyValues } from 'lit'
+import { css, html, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import './back-link.js'
 import { BaseElement } from '../internal/base-element.js'
-import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    PublicNetwork,
+    Idp,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { chevronDownIcon } from '../icons'
 import cantonLogo from '../../images/logos/canton-logo.png'
 

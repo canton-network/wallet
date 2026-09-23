@@ -15,7 +15,7 @@ import {
     type SetConfigurationParams,
     type SetConfigurationResult,
     type SigningDriverInterface,
-    SigningProvider,
+    type SigningProvider,
     type SignMessageResult,
     type SignTransactionParams,
     type SignTransactionResult,

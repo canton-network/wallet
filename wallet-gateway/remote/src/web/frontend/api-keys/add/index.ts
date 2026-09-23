@@ -4,7 +4,7 @@
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
-    ApiKeyGenerateEvent,
+    type ApiKeyGenerateEvent,
     BaseElement,
     chevronLeftIcon,
     handleErrorToast,

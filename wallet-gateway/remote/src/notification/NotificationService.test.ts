@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import pino, { Logger } from 'pino'
+import pino, { type Logger } from 'pino'
 import { consecutive, once, sink } from 'pino-test'
 import { NotificationService } from './NotificationService.js'
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { NextFunction, Request, Response } from 'express'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
     JsonRpcError,
     rpcErrors,

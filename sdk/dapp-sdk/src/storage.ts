@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { DiscoverResult } from '@canton-network/core-types'
-import * as dappAPI from '@canton-network/core-wallet-dapp-rpc-client'
+import type * as dappAPI from '@canton-network/core-wallet-dapp-rpc-client'
 
 enum LOCAL_STORAGE {
     KERNEL_DISCOVERY = 'splice_wallet_kernel_discovery',

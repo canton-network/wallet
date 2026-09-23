@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from 'vitest'
-import { RequestArgs } from '@canton-network/core-types'
+import type { RequestArgs } from '@canton-network/core-types'
 import { AbstractProvider } from './index'
 
 type TestRpcTypes = {

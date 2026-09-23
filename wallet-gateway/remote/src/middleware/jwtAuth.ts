@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Request, Response, NextFunction } from 'express'
-import { AuthService } from '@canton-network/core-wallet-auth'
+import type { AuthService } from '@canton-network/core-wallet-auth'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 export function jwtAuth(authService: AuthService, logger: Logger) {
     return async (req: Request, res: Response, next: NextFunction) => {
