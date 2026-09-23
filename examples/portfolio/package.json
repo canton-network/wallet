@@ -23,7 +23,7 @@
         "@emotion/react": "catalog:",
         "@emotion/styled": "catalog:",
         "@fontsource/inter": "catalog:",
-        "@mui/icons-material": "^9.2.0",
+        "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
         "@mui/system": "catalog:",
         "@mui/x-date-pickers": "catalog:",
