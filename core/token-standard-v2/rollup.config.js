@@ -13,7 +13,7 @@ import dts from 'rollup-plugin-dts'
 
 const DAML_JS_BASE = path.resolve(
     import.meta.dirname,
-    '../../damljs/token-standard-models'
+    '../../damljs/token-standard-models-v2'
 )
 
 const DAML_JS_PACKAGES = {
