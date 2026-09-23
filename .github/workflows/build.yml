@@ -59,14 +59,13 @@ jobs:
               with:
                   name: build-dist-${{ github.run_id }}
                   path: |
-                      core/**/dist/
-                      sdk/**/dist/
-                      wallet-gateway/**/dist/
-                      examples/**/dist/
+                      core/*/dist/
+                      sdk/*/dist/
+                      wallet-gateway/*/dist/
+                      examples/*/dist/
                       damljs
                       .nx/cache
                       .nx/workspace-data
-                      !**/node_modules/**
                   if-no-files-found: error
                   retention-days: 1
 
