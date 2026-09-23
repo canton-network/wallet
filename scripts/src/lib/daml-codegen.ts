@@ -12,6 +12,7 @@ import {
     ensureDir,
     copyFileRecursive,
 } from './utils.js'
+import * as crypto from 'crypto'
 
 /**
  * Configuration for a DAML codegen target
@@ -25,6 +26,42 @@ export interface DamlCodegenConfig {
     version: string
 }
 
+export interface DamlFileMapping {
+    source: string
+    dest: string
+}
+
+export function mapDamlFiles(
+    sourceDir: string,
+    destDir: string
+): DamlFileMapping[] {
+    if (!fs.existsSync(sourceDir)) return []
+
+    return getAllFilesWithExtension(sourceDir, '.daml')
+        .filter((file) => !file.includes('test'))
+        .map((file) => {
+            const relativePath = path.relative(sourceDir, file)
+            const parts = relativePath.split(path.sep)
+            const newRelativePath =
+                parts.length > 1 ? path.join(...parts.slice(1)) : relativePath
+            return { source: file, dest: path.join(destDir, newRelativePath) }
+        })
+}
+
+function sha256(file: string): string {
+    return crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(file))
+        .digest('hex')
+}
+
+export function checkFileUpToDate(mappings: DamlFileMapping[]): boolean {
+    return mappings.every(
+        ({ source, dest }) =>
+            fs.existsSync(dest) && sha256(source) === sha256(dest)
+    )
+}
+
 /**
  * Copy .daml files from source to destination, skipping test files
  * and maintaining directory structure (minus first directory level)
@@ -34,7 +71,7 @@ export async function copyDamlFiles(
     destDir: string
 ): Promise<string[]> {
     console.log(info('Finding .daml files...'))
-    const damlFiles = getAllFilesWithExtension(sourceDir, '.daml')
+    const damlFiles = mapDamlFiles(sourceDir, destDir)
 
     if (damlFiles.length === 0) {
         console.log(warn('No .daml files found.'))
@@ -46,20 +83,13 @@ export async function copyDamlFiles(
     console.log(
         info(`Copying ${damlFiles.length} .daml files to ${destDir}...`)
     )
-    const copiedFiles: string[] = []
-    for (const file of damlFiles) {
-        if (file.includes('test')) continue // Skip test files
-        const relativePath = path.relative(sourceDir, file)
-        const parts = relativePath.split(path.sep)
-        const newRelativePath =
-            parts.length > 1 ? path.join(...parts.slice(1)) : relativePath
-        const destPath = path.join(destDir, newRelativePath)
-        await ensureDir(path.dirname(destPath))
-        await copyFileRecursive(file, destPath)
-        copiedFiles.push(destPath)
+
+    for (const { source, dest } of damlFiles) {
+        await ensureDir(path.dirname(dest))
+        await copyFileRecursive(source, dest)
     }
 
-    return copiedFiles
+    return damlFiles.map((mapping) => mapping.dest)
 }
 
 /**

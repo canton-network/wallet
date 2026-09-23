@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as path from 'path'
-import { getRepoRoot } from './lib/utils.js'
+import { getAllFilesWithExtension, getRepoRoot } from './lib/utils.js'
 import { installDPM } from './install-dpm.js'
 import {
+    checkFileUpToDate,
     copyDamlFiles,
     DamlCodegenConfig,
     generateDamlJsBindings,
+    mapDamlFiles,
 } from './lib/daml-codegen.js'
-import * as fs from 'fs'
 
 const repoRoot = getRepoRoot()
 
@@ -68,25 +69,59 @@ const TOKEN_STANDARD_CONFIG_V2 = {
     version: '1.0.0',
 }
 
-async function copyFiles(destDir: string, sourceDirs: string[]) {
-    if (!fs.existsSync(destDir)) {
-        fs.mkdirSync(destDir, { recursive: true })
+async function syncSources(config: DamlCodegenConfig) {
+    const { destDir, sourceDirs, packageName } = config
+    const syncedSources = sourceDirs.map((dir) => ({
+        dir,
+        files: mapDamlFiles(dir, destDir),
+    }))
+    const missing = syncedSources
+        .filter((p) => p.files.length === 0)
+        .map((p) => p.dir)
+
+    // in CI, for the generate:all step, build from what is already in the package because the distribution is not fetched
+    if (missing.length === syncedSources.length) {
+        if (getAllFilesWithExtension(destDir, '.daml').length === 0) {
+            throw new Error(
+                `${packageName} no distribution in ${tokenStandardSplicePath}. Fetch splice distribution first.`
+            )
+        }
+
+        console.log(`${packageName} not found, using existing files`)
+
+        return
     }
 
-    sourceDirs.map(async (dir) => {
+    if (missing.length > 0) {
+        throw new Error(`Missing ${missing.join('\n')}`)
+    }
+
+    for (const { dir, files } of syncedSources) {
+        if (checkFileUpToDate(files)) {
+            console.log(
+                `${packageName} ${path.basename(dir)} unchanged, skipping copy`
+            )
+            continue
+        }
+
         await copyDamlFiles(dir, destDir)
-    })
+    }
 }
 
 async function generate(config: DamlCodegenConfig) {
-    await copyFiles(config.destDir, config.sourceDirs)
+    await syncSources(config)
     await generateDamlJsBindings(config)
 }
 
 async function main(configs: DamlCodegenConfig[]) {
     await installDPM()
 
-    configs.map((config) => generate(config))
+    for (const config of configs) {
+        await generate(config)
+    }
 }
 
-main([TOKEN_STANDARD_CONFIG_V1, TOKEN_STANDARD_CONFIG_V2])
+main([TOKEN_STANDARD_CONFIG_V1, TOKEN_STANDARD_CONFIG_V2]).catch((err) => {
+    console.error(err)
+    process.exit(1)
+})
