@@ -13,7 +13,7 @@ import type { Server } from 'http'
 import type { NotificationService } from '../notification/NotificationService.js'
 import type { KernelInfo, ServerConfig } from '../config/Config.js'
 import type { DappControllerDeps } from './controller.js'
-import type { HASHING_SCHEME_VERSION } from '../env.js'
+import type { HASHING_SCHEME_VERSION } from '@canton-network/core-wallet-services'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)

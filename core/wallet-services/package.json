@@ -1,0 +1,63 @@
+{
+    "name": "@canton-network/core-wallet-services",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Services needed to implement a Wallet.",
+    "license": "Apache-2.0",
+    "author": "Alex Matson <alex.matson@example.com>",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc\"",
+        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "tsc -b --clean; rm -rf dist",
+        "test": "vitest run --project node --project browser --passWithNoTests",
+        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+    },
+    "dependencies": {
+        "@canton-network/core-ledger-client": "catalog:",
+        "@canton-network/core-signing-lib": "catalog:",
+        "@canton-network/core-signing-securosys": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-wallet-dapp-rpc-client": "catalog:",
+        "@canton-network/core-wallet-store": "catalog:",
+        "@canton-network/core-wallet-user-rpc-client": "catalog:",
+        "@logtape/logtape": "catalog:",
+        "pino": "catalog:",
+        "uuid": "catalog:"
+    },
+    "devDependencies": {
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "pino-test": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-services"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-services#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}
