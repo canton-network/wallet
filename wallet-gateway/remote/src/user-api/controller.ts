@@ -209,6 +209,31 @@ export const userController = (
                 ledgerApi,
             }
 
+            const referencedIdentityProviderIds = new Set([
+                newNetwork.identityProviderId,
+                ...[
+                    newNetwork.auth,
+                    newNetwork.adminAuth,
+                    newNetwork.serviceAccountAuth,
+                ].flatMap((auth) =>
+                    auth?.method === 'client_credentials' &&
+                    auth.identityProviderId
+                        ? [auth.identityProviderId]
+                        : []
+                ),
+            ])
+            const configuredIdentityProviderIds = new Set(
+                (await store.listIdps()).map((idp) => idp.id)
+            )
+            const missingIdentityProviderId = [
+                ...referencedIdentityProviderIds,
+            ].find((id) => !configuredIdentityProviderIds.has(id))
+            if (missingIdentityProviderId) {
+                throw new Error(
+                    `Identity provider "${missingIdentityProviderId}" not found`
+                )
+            }
+
             // TODO: Add an explicit updateNetwork method to the User API spec and controller
             const existingNetworks = await store.listNetworks()
             if (existingNetworks.find((n) => n.id === newNetwork.id)) {
