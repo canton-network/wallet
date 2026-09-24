@@ -4,6 +4,7 @@
     "version": "1.12.4",
     "type": "module",
     "description": "Utilities for writing (E2E) tests for the wallet gateway",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { v4 } from 'uuid'
-import { Types } from '@canton-network/core-ledger-client'
+import { LedgerClient, Types } from '@canton-network/core-ledger-client'
 import type {
     DisclosedContracts,
     Commands,
@@ -81,6 +81,29 @@ export function logDynamically(
             logger.info(data.info, msg)
         } else {
             logger.info(msg)
+        }
+    }
+}
+
+type NetworkStatus = {
+    isConnected: boolean
+    reason?: string
+    cantonVersion?: string
+}
+
+export async function networkStatus(
+    ledgerClient: LedgerClient
+): Promise<NetworkStatus> {
+    try {
+        const response = await ledgerClient.get('/v2/version')
+        return {
+            isConnected: true,
+            cantonVersion: response.version,
+        }
+    } catch (e) {
+        return {
+            isConnected: false,
+            reason: `Ledger unreachable: ${(e as Error).message}`,
         }
     }
 }

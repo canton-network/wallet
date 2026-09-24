@@ -68,7 +68,6 @@ import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import { networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
@@ -81,6 +80,7 @@ import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 import {
     TransactionService,
     logDynamically,
+    networkStatus,
     type HASHING_SCHEME_VERSION,
     type SigningDrivers,
 } from '@canton-network/core-wallet-services'

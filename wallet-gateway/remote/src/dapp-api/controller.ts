@@ -32,11 +32,11 @@ import { v4 } from 'uuid'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
-import { networkStatus } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import {
+    networkStatus,
     TransactionService,
     ledgerPrepareParams,
     logDynamically,

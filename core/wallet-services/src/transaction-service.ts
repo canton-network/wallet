@@ -38,7 +38,6 @@ import {
     type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
-import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -139,6 +138,8 @@ export class TransactionService {
                 )
             }
             case SigningProvider.SECUROSYS: {
+                const { keyLabelFromPublicKey } =
+                    await import('@canton-network/core-signing-securosys')
                 return this.signWithDriver(
                     driver,
                     signingProvider,

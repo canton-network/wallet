@@ -5,6 +5,7 @@
     "description": "CIP-0103 provider for web dApps, covering both Sync and Async APIs.",
     "license": "Apache-2.0",
     "author": "Alex Matson <alex.matson@digitalasset.com>",
+    "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",

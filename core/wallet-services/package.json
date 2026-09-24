@@ -5,6 +5,7 @@
     "description": "Services needed to implement a Wallet.",
     "license": "Apache-2.0",
     "author": "Alex Matson <alex.matson@example.com>",
+    "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -14,6 +15,12 @@
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
+        },
+        "./utils": {
+            "types": "./dist/utils.d.ts",
+            "import": "./dist/utils.js",
+            "require": "./dist/utils.cjs",
+            "default": "./dist/utils.js"
         }
     },
     "scripts": {
