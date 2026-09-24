@@ -17,6 +17,7 @@ export type {
     Lock,
     InstrumentId,
     HoldingInterface,
+    Account,
 } from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/HoldingV2/module.js'
 
 export type {
@@ -80,6 +81,8 @@ export type {
     SettlementFactory_PublicFetch,
     SettlementFactory_SettleBatch,
     SettlementFactoryView,
+    FinalizedAllocation,
+    TransferLegSide,
 } from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/AllocationV2/module.js'
 
 // Export companion object as value (needed for accessing choice names at runtime)
