@@ -93,12 +93,12 @@ export interface AssetCapabilities {
     allocationRequest: SupportedVersions
 }
 
-const KEY_MAPPING: { [key: string]: keyof AssetCapabilities } = {
-    'token-holding': 'holding',
-    'token-transfer-instruction': 'transferInstruction',
-    'token-allocation': 'allocation',
-    'token-allocation-instruction': 'allocationInstruction',
-    'token-allocation-request': 'allocationRequest',
+const KEY_MAPPING: Record<string, keyof AssetCapabilities> = {
+    holding: 'holding',
+    'transfer-instruction': 'transferInstruction',
+    allocation: 'allocation',
+    'allocation-instruction': 'allocationInstruction',
+    'allocation-request': 'allocationRequest',
 }
 
 export type InstrumentInfo = {
@@ -126,7 +126,7 @@ export function resolveCapabilities(opts: {
     }
 
     for (const key of Object.keys(supportedApis)) {
-        const match = key.match(/^splice-(.+)-(v\d+)$/)
+        const match = key.match(/^splice-api-token-(.+)-(v\d+)$/)
 
         if (match) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
