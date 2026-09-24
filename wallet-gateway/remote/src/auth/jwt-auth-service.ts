@@ -95,6 +95,18 @@ function getSelfIssuedUserId(payload: JWTPayload): string | undefined {
     return usr
 }
 
+function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
+    if (typeof value === 'string') {
+        return [value]
+    }
+
+    if (Array.isArray(value)) {
+        return value
+    }
+
+    return []
+}
+
 // wallet.publicKey is 32 raw Ed25519 bytes as standard base64. jwtVerify
 // wants a JWK: OKP = octet key pair, crv names Ed25519, x is the same
 // point in base64url (RFC 8037).
@@ -142,10 +154,44 @@ async function verifySelfIssuedToken(
         return undefined
     }
 
+    // Present once pawel/self-issued-onboarding lands `Wallet.isAuthParty`.
+    // if (isAuthParty(wallet) === false) {
+    //     logger.warn(
+    //         { userId, partyId },
+    //         'Wallet is not an auth party for self-issued tokens'
+    //     )
+    //     return undefined
+    // }
+
+    let network
+    try {
+        network = await store.getNetwork(wallet.networkId)
+    } catch {
+        logger.warn(
+            { networkId: wallet.networkId },
+            'No network found for self-issued wallet'
+        )
+        return undefined
+    }
+
+    const tokenAudiences = normalizeAudienceClaim(payload.aud)
+    if (!tokenAudiences.includes(network.auth.audience)) {
+        logger.warn(
+            {
+                tokenAudiences,
+                expectedAudience: network.auth.audience,
+                networkId: network.id,
+            },
+            'Self-issued JWT audience does not match the wallet network'
+        )
+        return undefined
+    }
+
     const jwk = await ed25519KeyFromWalletPublicKey(wallet.publicKey)
 
     await jwtVerify(jwt, jwk, {
         algorithms: ['EdDSA'],
+        requiredClaims: ['exp'],
     })
 
     const email = getEmail(payload.email)
@@ -229,15 +275,11 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 return undefined
             }
 
-            const tokenAudience = payload.aud
-            if (!tokenAudience) {
+            const tokenAudiences = normalizeAudienceClaim(payload.aud)
+            if (tokenAudiences.length === 0) {
                 logger.warn('JWT does not contain an audience claim')
                 return undefined
             }
-
-            const tokenAudiences = Array.isArray(tokenAudience)
-                ? tokenAudience
-                : [tokenAudience]
 
             const audMatch = tokenAudiences.some((aud) =>
                 expectedAudiences.includes(aud)

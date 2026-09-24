@@ -162,6 +162,10 @@ export interface Store {
     /**
      * Looks up a wallet by user and party without an authenticated session,
      * because this runs during self-issued token verification, before there is one.
+     *
+     * TODO: also take networkId so we can require
+     * `network.auth.method === 'self_issued'` and match `network.auth.audience`.
+     * userId+partyId can collide across networks until that lands.
      */
     getWalletByUserParty(
         userId: string,
