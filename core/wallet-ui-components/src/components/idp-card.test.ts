@@ -49,13 +49,21 @@ describe('idp-card', () => {
     })
 
     it('omits the config URL row when configUrl is absent', async () => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { configUrl: _configUrl, ...idp } = makeIdp()
+        const idp = makeIdp({ type: 'self_signed' })
         const el = await fixture<IdpCard>(
             html`<idp-card .idp=${idp}></idp-card>`
         )
 
         expect(el.shadowRoot?.textContent).not.toContain('Config URL')
+    })
+
+    it('omits the issuer row when issuer is absent', async () => {
+        const idp = makeIdp({ type: 'self_issued' })
+        const el = await fixture<IdpCard>(
+            html`<idp-card .idp=${idp}></idp-card>`
+        )
+
+        expect(el.shadowRoot?.textContent).not.toContain('Issuer')
     })
 
     it('emits IdpCardReviewEvent when the card is clicked', async () => {

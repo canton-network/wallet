@@ -1387,9 +1387,8 @@
                     "ledgerApi"
                 ]
             },
-            "Idp": {
-                "title": "Idp",
-                "description": "Structure representing the Identity Providers",
+            "OauthIdp": {
+                "title": "OauthIdp",
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -1399,9 +1398,10 @@
                         "description": "ID of the identity provider"
                     },
                     "type": {
-                        "title": "type",
-                        "enum": ["oauth", "self_signed"],
-                        "description": "Type of identity provider (oauth / self_signed)"
+                        "title": "oauthIdpType",
+                        "type": "string",
+                        "enum": ["oauth"],
+                        "description": "OAuth identity provider"
                     },
                     "issuer": {
                         "title": "issuer",
@@ -1414,17 +1414,143 @@
                         "description": "The configuration URL for the identity provider."
                     }
                 },
-                "required": ["id", "type", "issuer"]
+                "required": ["id", "type", "issuer", "configUrl"]
             },
-            "Auth": {
-                "title": "auth",
+            "SelfSignedIdp": {
+                "title": "SelfSignedIdp",
                 "type": "object",
-                "description": "Represents the type of auth for a specified network",
                 "additionalProperties": false,
                 "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "ID of the identity provider"
+                    },
+                    "type": {
+                        "title": "selfSignedIdpType",
+                        "type": "string",
+                        "enum": ["self_signed"],
+                        "description": "Self-signed identity provider"
+                    },
+                    "issuer": {
+                        "title": "issuer",
+                        "type": "string",
+                        "description": "Issuer of identity provider"
+                    }
+                },
+                "required": ["id", "type", "issuer"]
+            },
+            "SelfIssuedIdp": {
+                "title": "SelfIssuedIdp",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "ID of the identity provider"
+                    },
+                    "type": {
+                        "title": "selfIssuedIdpType",
+                        "type": "string",
+                        "enum": ["self_issued"],
+                        "description": "Self-issued identity provider"
+                    }
+                },
+                "required": ["id", "type"]
+            },
+            "Idp": {
+                "title": "Idp",
+                "description": "Structure representing an identity provider",
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OauthIdp"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfSignedIdp"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfIssuedIdp"
+                    }
+                ]
+            },
+            "AuthorizationCodeAuth": {
+                "title": "AuthorizationCodeAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Authorization code authentication configuration",
+                "properties": {
                     "method": {
-                        "title": "method",
+                        "title": "authorizationCodeAuthMethod",
+                        "type": "string",
+                        "enum": ["authorization_code"]
+                    },
+                    "scope": {
+                        "title": "scope",
                         "type": "string"
+                    },
+                    "clientId": {
+                        "title": "clientId",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string"
+                    }
+                },
+                "required": ["method", "audience", "scope", "clientId"]
+            },
+            "ClientCredentialsAuth": {
+                "title": "ClientCredentialsAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Client credentials authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "clientCredentialsAuthMethod",
+                        "type": "string",
+                        "enum": ["client_credentials"]
+                    },
+                    "identityProviderId": {
+                        "title": "clientCredentialsIdentityProviderId",
+                        "type": "string",
+                        "description": "Overrides the network's identity provider for client credentials token acquisition"
+                    },
+                    "scope": {
+                        "title": "scope",
+                        "type": "string"
+                    },
+                    "clientId": {
+                        "title": "clientId",
+                        "type": "string"
+                    },
+                    "clientSecret": {
+                        "title": "clientSecret",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "method",
+                    "audience",
+                    "scope",
+                    "clientId",
+                    "clientSecret"
+                ]
+            },
+            "SelfSignedAuth": {
+                "title": "SelfSignedAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Self-signed authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "selfSignedAuthMethod",
+                        "type": "string",
+                        "enum": ["self_signed"]
                     },
                     "scope": {
                         "title": "scope",
@@ -1447,7 +1573,54 @@
                         "type": "string"
                     }
                 },
-                "required": ["method", "audience", "scope", "clientId"]
+                "required": [
+                    "method",
+                    "audience",
+                    "scope",
+                    "clientId",
+                    "clientSecret",
+                    "issuer"
+                ]
+            },
+            "SelfIssuedAuth": {
+                "title": "SelfIssuedAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Self-issued authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "selfIssuedAuthMethod",
+                        "type": "string",
+                        "enum": ["self_issued"]
+                    },
+                    "scope": {
+                        "title": "scope",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string"
+                    }
+                },
+                "required": ["method", "audience", "scope"]
+            },
+            "Auth": {
+                "title": "Auth",
+                "description": "Authentication configuration for a network",
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/AuthorizationCodeAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ClientCredentialsAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfSignedAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfIssuedAuth"
+                    }
+                ]
             },
             "Wallet": {
                 "title": "Wallet",

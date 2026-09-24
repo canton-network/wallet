@@ -16,11 +16,20 @@ function getForm(el: IdpFormComponent) {
     return el.shadowRoot!.querySelector<HTMLFormElement>('form')!
 }
 
+async function changeIdpType(
+    el: IdpFormComponent,
+    type: 'oauth' | 'self_signed' | 'self_issued'
+) {
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#idp-type')!
+    select.value = type
+    select.dispatchEvent(new Event('change'))
+    await elementUpdated(el)
+}
+
 function fillIdpForm(
     el: IdpFormComponent,
     values: {
         id?: string
-        type?: string
         issuer?: string
         configUrl?: string
     }
@@ -28,10 +37,6 @@ function fillIdpForm(
     if (values.id !== undefined) {
         el.shadowRoot!.querySelector<HTMLInputElement>('#idp-id')!.value =
             values.id
-    }
-    if (values.type !== undefined) {
-        el.shadowRoot!.querySelector<HTMLSelectElement>('#idp-type')!.value =
-            values.type
     }
     if (values.issuer !== undefined) {
         el.shadowRoot!.querySelector<HTMLInputElement>('#idp-issuer')!.value =
@@ -77,6 +82,30 @@ describe('idp-form', () => {
         expect(el.shadowRoot?.textContent).toContain('Delete identity provider')
     })
 
+    it('renders inputs appropriate for the selected idp type', async () => {
+        const el = await fixture<IdpFormComponent>(
+            html`<idp-form mode="add"></idp-form>`
+        )
+
+        expect(el.shadowRoot?.querySelector('#idp-issuer')).not.toBeNull()
+        expect(el.shadowRoot?.querySelector('#idp-config-url')).not.toBeNull()
+
+        await changeIdpType(el, 'self_signed')
+
+        expect(el.shadowRoot?.querySelector('#idp-issuer')).not.toBeNull()
+        expect(el.shadowRoot?.querySelector('#idp-config-url')).toBeNull()
+
+        await changeIdpType(el, 'self_issued')
+
+        expect(el.shadowRoot?.querySelector('#idp-issuer')).toBeNull()
+        expect(el.shadowRoot?.querySelector('#idp-config-url')).toBeNull()
+
+        await changeIdpType(el, 'oauth')
+
+        expect(el.shadowRoot?.querySelector('#idp-issuer')).not.toBeNull()
+        expect(el.shadowRoot?.querySelector('#idp-config-url')).not.toBeNull()
+    })
+
     it('shows a validation error when required fields are missing', async () => {
         const el = await fixture<IdpFormComponent>(
             html`<idp-form mode="add"></idp-form>`
@@ -99,9 +128,9 @@ describe('idp-form', () => {
         const el = await fixture<IdpFormComponent>(
             html`<idp-form mode="add"></idp-form>`
         )
+        await changeIdpType(el, 'oauth')
         fillIdpForm(el, {
             id: 'new-idp',
-            type: 'oauth',
             issuer: 'https://issuer.example',
             configUrl: 'https://issuer.example/.well-known',
         })
@@ -125,12 +154,13 @@ describe('idp-form', () => {
         const el = await fixture<IdpFormComponent>(
             html`<idp-form mode="add"></idp-form>`
         )
+        await changeIdpType(el, 'oauth')
         fillIdpForm(el, {
             id: 'self-signed-idp',
-            type: 'self_signed',
             issuer: 'https://issuer.example',
             configUrl: 'https://should-be-ignored.example',
         })
+        await changeIdpType(el, 'self_signed')
 
         const listener = vi.fn()
         el.addEventListener('idp-form-save', listener)
@@ -142,6 +172,27 @@ describe('idp-form', () => {
             id: 'self-signed-idp',
             type: 'self_signed',
             issuer: 'https://issuer.example',
+        })
+    })
+
+    it('omits issuer from save payload for self_issued idps', async () => {
+        const el = await fixture<IdpFormComponent>(
+            html`<idp-form mode="add"></idp-form>`
+        )
+        await changeIdpType(el, 'self_issued')
+        el.shadowRoot!.querySelector<HTMLInputElement>('#idp-id')!.value =
+            'self-issued-idp'
+
+        const listener = vi.fn()
+        el.addEventListener('idp-form-save', listener)
+
+        getForm(el).requestSubmit()
+
+        expect(el.shadowRoot?.querySelector('#idp-issuer')).toBeNull()
+        expect(listener).toHaveBeenCalledOnce()
+        expect((listener.mock.calls[0][0] as IdpFormSaveEvent).idp).toEqual({
+            id: 'self-issued-idp',
+            type: 'self_issued',
         })
     })
 

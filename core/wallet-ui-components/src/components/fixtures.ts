@@ -69,13 +69,36 @@ export function makeWalletPickerEntry(
     }
 }
 
-export function makeIdp(overrides: Partial<Idp> = {}): Idp {
-    return {
+export function makeIdp(
+    overrides: Partial<{
+        id: string
+        type: Idp['type']
+        issuer: string
+        configUrl: string
+    }> = {}
+): Idp {
+    const idp = {
         id: 'idp-1',
-        type: 'oauth',
+        type: 'oauth' as Idp['type'],
         issuer: 'https://issuer.example',
         configUrl: 'https://issuer.example/.well-known',
         ...overrides,
+    }
+
+    switch (idp.type) {
+        case 'oauth':
+            return idp
+        case 'self_signed':
+            return {
+                id: idp.id,
+                type: idp.type,
+                issuer: idp.issuer,
+            }
+        case 'self_issued':
+            return {
+                id: idp.id,
+                type: idp.type,
+            }
     }
 }
 
