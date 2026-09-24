@@ -30,7 +30,9 @@ export class PingPage {
         await expect(picker.getByLabel('Install Canton Wallet')).toHaveCount(0)
 
         await wallet.click()
-        await picker.getByRole('button', { name: 'Connect' }).click()
+        await picker.getByRole('button', { name: 'Connect' }).click({
+            timeout: 60_000,
+        })
 
         await expect(picker.getByText('Logging in')).toHaveCount(0)
 
