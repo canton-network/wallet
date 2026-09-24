@@ -25,35 +25,48 @@ import type {
 import {
     assertConnected,
     AuthTokenProvider,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
 import { AuthService } from '../auth-service.js'
 import { createExtensionWallet } from './create-wallet.js'
 import { TransactionService } from './transaction-service.js'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
-    const base = {
-        method: auth.method,
-        audience: auth.audience,
-        scope: auth.scope,
-        clientId: auth.clientId,
+    switch (auth.method) {
+        case 'authorization_code':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+            }
+        case 'client_credentials':
+            return {
+                method: auth.method,
+                ...(auth.identityProviderId
+                    ? { identityProviderId: auth.identityProviderId }
+                    : {}),
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+                clientSecret: auth.clientSecret,
+            }
+        case 'self_signed':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+                clientSecret: auth.clientSecret,
+                issuer: auth.issuer,
+            }
+        case 'self_issued':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+            }
     }
-
-    if (auth.method === 'self_signed') {
-        return {
-            ...base,
-            issuer: auth.issuer,
-            clientSecret: auth.clientSecret,
-        }
-    }
-
-    if (auth.method === 'client_credentials') {
-        return {
-            ...base,
-            clientSecret: auth.clientSecret,
-        }
-    }
-
-    return base
 }
 
 function toNetworkDto(network: Network): ApiNetwork {
@@ -86,7 +99,7 @@ function toPublicNetwork(network: Network): PublicNetwork {
         ledgerApi: network.ledgerApi.baseUrl,
         authMethod: auth.method,
         ...(auth.method !== 'client_credentials' && {
-            clientId: auth.clientId,
+            ...('clientId' in auth ? { clientId: auth.clientId } : {}),
             scope: auth.scope,
             audience: auth.audience,
         }),
@@ -144,7 +157,12 @@ export const userController = (
                 throw new Error('No admin auth configured')
             }
 
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await store.getIdp(
+                resolveAuthIdentityProviderId(
+                    network.adminAuth,
+                    network.identityProviderId
+                )
+            )
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,

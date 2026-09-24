@@ -46,6 +46,10 @@
                 "id": "idp-self-signed",
                 "type": "self_signed",
                 "issuer": "unsafe-auth"
+            },
+            {
+                "id": "idp-self-issued",
+                "type": "self_issued"
             }
         ],
         "networks": [
@@ -198,6 +202,29 @@
                 },
                 "ledgerApi": {
                     "baseUrl": "http://localhost:2975"
+                }
+            },
+            {
+                "id": "canton:local-self-issued",
+                "name": "Local (Self issued)",
+                "description": "Party JWT / self-issued authentication",
+                "synchronizerId": "wallet::1220e7b23ea52eb5c672fb0b1cdbc916922ffed3dd7676c223a605664315e2d43edd",
+                "identityProviderId": "idp-self-issued",
+                "auth": {
+                    "method": "self_issued",
+                    "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
+                    "scope": "openid daml_ledger_api offline_access"
+                },
+                "adminAuth": {
+                    "method": "client_credentials",
+                    "identityProviderId": "idp-mock-oauth",
+                    "scope": "daml_ledger_api",
+                    "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
+                    "clientId": "participant_admin",
+                    "clientSecret": "admin-client-secret"
+                },
+                "ledgerApi": {
+                    "baseUrl": "http://127.0.0.1:5003"
                 }
             }
         ]

@@ -105,11 +105,18 @@ vi.mock('../ledger/party-allocation-service.js', () => ({
     PartyAllocationService: vi.fn(),
 }))
 
-vi.mock('../ledger/transaction-service.js', () => ({
-    TransactionService: vi.fn(function TransactionServiceMock() {
-        return transactionServiceMocks
-    }),
-}))
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
+    return {
+        ...actual,
+        TransactionService: vi.fn(function TransactionServiceMock() {
+            return transactionServiceMocks
+        }),
+    }
+})
 
 const kernelInfo: KernelInfo = {
     id: 'kernel-test',
@@ -418,6 +425,35 @@ describe('userController', () => {
             )
         })
 
+        it('rejects a new network referencing an unknown identity provider', async () => {
+            const store = await createStore(logger, adminAuth)
+            const addSpy = vi.spyOn(store, 'addNetwork')
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId
+            )
+
+            await expect(
+                controller.addNetwork({
+                    network: {
+                        id: 'net-new',
+                        name: 'New Net',
+                        synchronizerId: 'sync::fingerprint',
+                        identityProviderId: 'missing-idp',
+                        ledgerApi: 'http://ledger.new',
+                        auth: storeNetwork.auth,
+                        description: 'description',
+                    },
+                })
+            ).rejects.toThrow('Identity provider "missing-idp" not found')
+
+            expect(addSpy).not.toHaveBeenCalled()
+        })
+
         it('updates an existing network for the admin user', async () => {
             const store = await createStore(logger, adminAuth)
             const updateSpy = vi.spyOn(store, 'updateNetwork')
@@ -448,6 +484,43 @@ describe('userController', () => {
                     name: 'Renamed Net',
                 })
             )
+        })
+
+        it('rejects an update with an unknown auth identity provider override', async () => {
+            const store = await createStore(logger, adminAuth)
+            const updateSpy = vi.spyOn(store, 'updateNetwork')
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId
+            )
+
+            await expect(
+                controller.addNetwork({
+                    network: {
+                        id: 'network1',
+                        name: 'Renamed Net',
+                        synchronizerId: storeNetwork.synchronizerId,
+                        identityProviderId: 'idp1',
+                        ledgerApi: 'http://ledger.updated',
+                        auth: storeNetwork.auth,
+                        adminAuth: {
+                            method: 'client_credentials',
+                            identityProviderId: 'missing-admin-idp',
+                            clientId: 'admin-cid',
+                            clientSecret: 'admin-secret',
+                            audience: 'admin-aud',
+                            scope: 'admin-scope',
+                        },
+                        description: 'description',
+                    },
+                })
+            ).rejects.toThrow('Identity provider "missing-admin-idp" not found')
+
+            expect(updateSpy).not.toHaveBeenCalled()
         })
 
         it('removes a network for the admin user', async () => {

@@ -10,7 +10,6 @@ export const ALLOWED_ROUTES = [
     '/parties/add',
     '/parties',
     '/wallets',
-    '/settings',
     '/networks/add',
     '/networks/review',
     '/networks',

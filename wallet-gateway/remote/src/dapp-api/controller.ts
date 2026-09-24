@@ -29,16 +29,20 @@ import {
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
 import { v4 } from 'uuid'
-import type { NotificationService } from '../notification/NotificationService.js'
-import type { KernelInfo as KernelInfoConfig } from '../config/Config.js'
-import type { Logger } from 'pino'
-import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
+import { NotificationService } from '../notification/NotificationService.js'
+import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
+import { Logger } from 'pino'
+import { networkStatus } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
-import { TransactionService } from '../ledger/transaction-service.js'
 
-import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
-import type { HASHING_SCHEME_VERSION } from '../env.js'
+import {
+    TransactionService,
+    ledgerPrepareParams,
+    logDynamically,
+    HASHING_SCHEME_VERSION,
+    SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
@@ -549,12 +553,12 @@ async function prepareSubmission(
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(
+        ledgerPrepareParams({
             userId,
             partyIds,
             synchronizerId,
             params,
-            hashingSchemeVersion
-        )
+            hashingSchemeVersion,
+        })
     )
 }

@@ -931,7 +931,9 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.getIdp('idp1')).toEqual(idp)
             await store.updateIdp({ ...idp, issuer: 'https://issuer-updated' })
             expect(
-                (await store.listIdps()).find((i) => i.id === 'idp1')?.issuer
+                (await store.listIdps()).find(
+                    (i): i is typeof idp => i.id === 'idp1'
+                )?.issuer
             ).toBe('https://issuer-updated')
 
             await expect(store.addIdp(idp)).rejects.toThrow(
@@ -944,6 +946,43 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.removeNetwork('network1')
             await store.removeIdp('idp1')
             expect(await store.listIdps()).toHaveLength(1)
+        })
+
+        test('should store a null issuer for self_issued idps', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const selfIssuedIdp = {
+                id: 'self-issued',
+                type: 'self_issued' as const,
+            }
+
+            await store.addIdp(selfIssuedIdp)
+
+            expect(
+                await store.getIdp(selfIssuedIdp.id),
+                "Doesn't throw if issuer is missing for self_issued"
+            ).toEqual(selfIssuedIdp)
+        })
+
+        test('should clear issuer and config URL when changing an idp to self_issued', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const id = 'changed-to-self-issued'
+
+            await store.addIdp({
+                id,
+                type: 'oauth',
+                issuer: 'https://issuer.example',
+                configUrl:
+                    'https://issuer.example/.well-known/openid-configuration',
+            })
+            await store.updateIdp({ id, type: 'self_issued' })
+
+            expect(
+                await db
+                    .selectFrom('idps')
+                    .select(['issuer', 'configUrl'])
+                    .where('id', '=', id)
+                    .executeTakeFirstOrThrow()
+            ).toEqual({ issuer: null, configUrl: null })
         })
 
         test('should set and read user level rights for the current network', async () => {

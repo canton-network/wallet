@@ -214,6 +214,7 @@ export class LoginUI extends BaseElement {
                     return
                 }
 
+                // TODO self_issued flow login here
                 await this.showLoginError(
                     'This authentication method is not valid.'
                 )

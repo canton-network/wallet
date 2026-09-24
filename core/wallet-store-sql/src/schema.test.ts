@@ -41,6 +41,11 @@ const selfSignedIdp: Idp = {
     issuer: 'unsafe-auth',
 }
 
+const selfIssuedIdp: Idp = {
+    id: 'idp-self-issued',
+    type: 'self_issued',
+}
+
 const baseNetwork: Network = {
     id: 'net-1',
     name: 'Testnet',
@@ -71,9 +76,12 @@ const baseNetwork: Network = {
 
 describe('schema mappers', () => {
     describe('Idp', () => {
-        test('round-trips oauth and self_signed IdPs', () => {
+        test('round-trips oauth, self_signed, and self_issued IdPs', () => {
             expect(toIdp(fromIdp(oauthIdp))).toEqual(oauthIdp)
             expect(toIdp(fromIdp(selfSignedIdp))).toEqual(selfSignedIdp)
+            expect(toIdp(fromIdp(selfIssuedIdp))).toEqual(selfIssuedIdp)
+            expect(fromIdp(selfSignedIdp).configUrl).toBeNull()
+            expect(fromIdp(selfIssuedIdp).configUrl).toBeNull()
         })
 
         test('throws when oauth IdP row is missing configUrl', () => {
@@ -82,7 +90,7 @@ describe('schema mappers', () => {
                     id: 'bad',
                     type: 'oauth',
                     issuer: 'https://issuer.example',
-                    configUrl: undefined,
+                    configUrl: null,
                 })
             ).toThrow('Missing configUrl for oauth IdP: bad')
         })
@@ -121,6 +129,7 @@ describe('schema mappers', () => {
                 externalTxId: 'ext-tx-id',
                 topologyTransactions: 'topo',
                 rights: [],
+                userId: 'the-user',
             }
 
             const table = fromWallet(wallet, 'user-1')

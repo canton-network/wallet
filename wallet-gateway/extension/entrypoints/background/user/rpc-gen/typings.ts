@@ -29,30 +29,83 @@ export type SynchronizerId = string
  *
  */
 export type IdentityProviderId = string
-export type Method = string
+export type AuthorizationCodeAuthMethod = 'authorization_code'
 export type Scope = string
 export type ClientId = string
+export type Audience = string
+/**
+ *
+ * Authorization code authentication configuration
+ *
+ */
+export interface AuthorizationCodeAuth {
+    method: AuthorizationCodeAuthMethod
+    scope: Scope
+    clientId: ClientId
+    audience: Audience
+}
+export type ClientCredentialsAuthMethod = 'client_credentials'
+/**
+ *
+ * Overrides the network's identity provider for client credentials token acquisition
+ *
+ */
+export type ClientCredentialsIdentityProviderId = string
 export type ClientSecret = string
+/**
+ *
+ * Client credentials authentication configuration
+ *
+ */
+export interface ClientCredentialsAuth {
+    method: ClientCredentialsAuthMethod
+    identityProviderId?: ClientCredentialsIdentityProviderId
+    scope: Scope
+    clientId: ClientId
+    clientSecret: ClientSecret
+    audience: Audience
+}
+export type SelfSignedAuthMethod = 'self_signed'
 /**
  *
  * Issuer of identity provider
  *
  */
 export type Issuer = string
-export type Audience = string
 /**
  *
- * Represents the type of auth for a specified network
+ * Self-signed authentication configuration
  *
  */
-export interface Auth {
-    method: Method
+export interface SelfSignedAuth {
+    method: SelfSignedAuthMethod
     scope: Scope
     clientId: ClientId
-    clientSecret?: ClientSecret
-    issuer?: Issuer
+    clientSecret: ClientSecret
+    issuer: Issuer
     audience: Audience
 }
+export type SelfIssuedAuthMethod = 'self_issued'
+/**
+ *
+ * Self-issued authentication configuration
+ *
+ */
+export interface SelfIssuedAuth {
+    method: SelfIssuedAuthMethod
+    scope: Scope
+    audience: Audience
+}
+/**
+ *
+ * Authentication configuration for a network
+ *
+ */
+export type Auth =
+    | AuthorizationCodeAuth
+    | ClientCredentialsAuth
+    | SelfSignedAuth
+    | SelfIssuedAuth
 /**
  *
  * Ledger api url
@@ -84,27 +137,49 @@ export type NetworkName = string
 export type Id = string
 /**
  *
- * Type of identity provider (oauth / self_signed)
+ * OAuth identity provider
  *
  */
-export type Type = any
+export type OauthIdpType = 'oauth'
 /**
  *
  * The configuration URL for the identity provider.
  *
  */
 export type ConfigUrl = string
+export interface OauthIdp {
+    id: Id
+    type: OauthIdpType
+    issuer: Issuer
+    configUrl: ConfigUrl
+}
 /**
  *
- * Structure representing the Identity Providers
+ * Self-signed identity provider
  *
  */
-export interface Idp {
+export type SelfSignedIdpType = 'self_signed'
+export interface SelfSignedIdp {
     id: Id
-    type: Type
+    type: SelfSignedIdpType
     issuer: Issuer
-    configUrl?: ConfigUrl
 }
+/**
+ *
+ * Self-issued identity provider
+ *
+ */
+export type SelfIssuedIdpType = 'self_issued'
+export interface SelfIssuedIdp {
+    id: Id
+    type: SelfIssuedIdpType
+}
+/**
+ *
+ * Structure representing an identity provider
+ *
+ */
+export type Idp = OauthIdp | SelfSignedIdp | SelfIssuedIdp
 /**
  *
  * Set as primary wallet for dApp usage.
