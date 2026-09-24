@@ -168,6 +168,19 @@ export const userController = (
 
             return { wallet }
         },
+        addSelfIssuedSession: async () => {
+            throw new Error('Function addSelfIssuedSession not implemented.')
+        },
+        initializeSelfIssuedOnboarding: async () => {
+            throw new Error(
+                'Function initializeSelfIssuedOnboarding not implemented.'
+            )
+        },
+        finalizeSelfIssuedOnboarding: async () => {
+            throw new Error(
+                'Function finalizeSelfIssuedOnboarding not implemented.'
+            )
+        },
         allocatePartyForWallet: async () => {
             throw new Error('Function allocatePartyForWallet not implemented.')
         },

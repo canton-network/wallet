@@ -142,16 +142,12 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         })
     }
 
-    async getWallet(
-        partyId: PartyId,
-        networkId?: string
-    ): Promise<Wallet | null> {
+    async getWallet(partyId: PartyId): Promise<Wallet | null> {
         const userId = this.assertConnected()
-        const resolvedNetworkId =
-            networkId ?? (await this.getCurrentNetwork()).id
+        const network = await this.getCurrentNetwork()
         const constraint: WalletUniqueConstraint = {
             partyId,
-            networkId: resolvedNetworkId,
+            networkId: network.id,
             userId,
         }
 
@@ -449,20 +445,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         }
 
         await this.db.transaction().execute(async (trx) => {
-            const deleted = await trx
+            let deleteQuery = trx
                 .deleteFrom('sessions')
-                .where((eb) =>
-                    eb.and([
-                        eb('userId', '=', userId),
-                        eb('origin', '=', session.origin),
-                    ])
-                )
-                .execute()
+                .where('userId', '=', userId)
+            deleteQuery = session.accessToken
+                ? deleteQuery.where('origin', '=', session.origin)
+                : deleteQuery.where('accessToken', 'is', null)
+            const deleted = await deleteQuery.execute()
             this.logger.debug(deleted, 'Deleted old session')
 
             const inserted = await trx
                 .insertInto('sessions')
-                .values({ ...session, userId })
+                .values({
+                    ...session,
+                    accessToken: session.accessToken ?? null,
+                    userId,
+                })
                 .execute()
 
             this.logger.debug(inserted, 'Inserted new session')
@@ -580,16 +578,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const token = this.authContext?.accessToken as AccessToken
-
-        if (!token) {
-            throw new Error('No access token found in auth context')
-        }
-
-        const session = await this.getSession(token)
-        if (!session) {
+        const userId = this.assertConnected()
+        const token = this.authContext?.accessToken
+        let sessionQuery = this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('userId', '=', userId)
+        // Self-issued onboarding has a user-scoped session before it has a token.
+        sessionQuery = token
+            ? sessionQuery.where('accessToken', '=', token)
+            : sessionQuery.where('accessToken', 'is', null)
+        const sessionRow = await sessionQuery.executeTakeFirst()
+        if (!sessionRow) {
             throw new Error('No session found')
         }
+
+        const session = toSession(sessionRow)
         const networkId = session.network
         if (!networkId) {
             throw new Error('No current network set in session')

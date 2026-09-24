@@ -268,6 +268,47 @@ describe('userController', () => {
         transactionServiceMocks.execute.mockReset()
     })
 
+    describe('addSelfIssuedSession', () => {
+        it('creates a tokenless session for the username and network', async () => {
+            const selfIssuedNetwork = {
+                ...storeNetwork,
+                id: 'self-issued-network',
+                auth: { method: 'self_issued' },
+            } as unknown as StoreNetwork
+            const store = new StoreInternal(
+                { idps: [idp], networks: [selfIssuedNetwork] },
+                getLogger('mock')
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            await controller.addSelfIssuedSession({
+                username: 'alice',
+                networkId: selfIssuedNetwork.id,
+                origin: 'https://example.com',
+            })
+
+            const onboardingStore = store.withAuthContext({
+                userId: 'alice',
+                accessToken: '',
+            })
+            await expect(onboardingStore.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    origin: 'https://example.com',
+                    network: selfIssuedNetwork.id,
+                    userId: 'alice',
+                }),
+            ])
+            await expect(onboardingStore.getCurrentNetwork()).resolves.toEqual(
+                selfIssuedNetwork
+            )
+        })
+    })
+
     describe('getUser', () => {
         it('returns user id and isAdmin false for a regular user', async () => {
             const store = await createStore(logger, auth)

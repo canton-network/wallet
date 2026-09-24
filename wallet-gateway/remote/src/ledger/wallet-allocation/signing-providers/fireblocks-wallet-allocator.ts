@@ -3,7 +3,6 @@
 
 import type { UserId } from '@canton-network/core-wallet-auth'
 import type {
-    Network,
     Store,
     UpdateWallet,
     Wallet,
@@ -44,8 +43,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary = false,
-        keyName: KeyName,
-        network?: Network
+        keyName: KeyName
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
 
@@ -73,13 +71,13 @@ export class FireblocksWalletAllocator implements WalletAllocator {
             })
             .then(handleSigningProviderError)
 
-        const targetNetwork = network ?? (await this.store.getCurrentNetwork())
+        const network = await this.store.getCurrentNetwork()
         const walletBase: Omit<Wallet, 'status'> = {
             partyId: `${partyHint}::${namespace}`,
             hint: partyHint,
             namespace,
             signingProviderId: SigningProvider.FIREBLOCKS,
-            networkId: targetNetwork.id,
+            networkId: network.id,
             userId,
             primary,
             publicKey: key.publicKey,

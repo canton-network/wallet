@@ -26,7 +26,14 @@ export async function createSelfIssuedOnboardingService(
         throw new Error('username is required')
     }
 
-    const network = await bootstrapStore.getNetwork(networkId)
+    const scopedStore = bootstrapStore.withAuthContext({
+        userId: trimmedUsername,
+        accessToken: '',
+    })
+    const network = await scopedStore.getCurrentNetwork()
+    if (network.id !== networkId) {
+        throw new Error('Onboarding session network does not match networkId')
+    }
     if ((network.auth as { method: string }).method !== 'self_issued') {
         throw new Error('Network does not use self_issued authentication')
     }
@@ -43,11 +50,6 @@ export async function createSelfIssuedOnboardingService(
     if (!network.adminAuth) {
         throw new Error('No admin auth configured')
     }
-
-    const scopedStore = bootstrapStore.withAuthContext({
-        userId: trimmedUsername,
-        accessToken: '',
-    })
 
     const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
         idp,

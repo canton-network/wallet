@@ -15,9 +15,9 @@ import {
 import { insertIdp, insertNetwork } from '../seeds/001-init'
 import { insertWallet } from '../seeds/005-add-wallet-disabled-reason'
 
-const TARGET = 17
+const TARGET = 18
 
-forEachDialect('migration 017 - add wallet isAuthParty', ({ getDb }) => {
+forEachDialect('migration 018 - add wallet isAuthParty', ({ getDb }) => {
     test('adds is_auth_party (NOT NULL, default false) and preserves existing rows', async () => {
         const db = getDb()
         await migrateUpToBefore(db, TARGET)

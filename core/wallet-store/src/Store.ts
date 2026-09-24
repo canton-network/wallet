@@ -93,7 +93,8 @@ export interface Session {
     id: string
     origin: string
     network: string
-    accessToken: string
+    /** Absent only while self-issued onboarding is in progress. */
+    accessToken?: string
     userId?: string
 }
 
@@ -160,7 +161,7 @@ export interface ApiKey {
 export interface Store {
     // Wallet methods
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
-    getWallet(partyId: PartyId, networkId?: string): Promise<Wallet | null>
+    getWallet(partyId: PartyId): Promise<Wallet | null>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>

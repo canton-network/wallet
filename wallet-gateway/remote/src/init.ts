@@ -393,6 +393,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'listIdps',
             'getUser',
             'selfSignedAccessToken',
+            'addSelfIssuedSession',
             'initializeSelfIssuedOnboarding',
             'finalizeSelfIssuedOnboarding',
         ],

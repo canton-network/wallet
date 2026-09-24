@@ -300,6 +300,44 @@
             "description": "Creates a new wallet and party with the given hint."
         },
         {
+            "name": "addSelfIssuedSession",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "AddSelfIssuedSessionParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "username": {
+                                "title": "username",
+                                "type": "string",
+                                "description": "User id used while onboarding."
+                            },
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Self-issued network to onboard on."
+                            },
+                            "origin": {
+                                "title": "origin",
+                                "type": "string",
+                                "description": "Origin starting the onboarding flow."
+                            }
+                        },
+                        "required": ["username", "networkId", "origin"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "type": "null"
+                }
+            },
+            "description": "Creates a tokenless session used during self-issued token creation process."
+        },
+        {
             "name": "initializeSelfIssuedOnboarding",
             "params": [
                 {

@@ -25,6 +25,7 @@ import type {
     AddIdpParams,
     RemoveIdpParams,
     CreateWalletParams,
+    AddSelfIssuedSessionParams,
     InitializeSelfIssuedOnboardingParams,
     FinalizeSelfIssuedOnboardingParams,
     AllocatePartyForWalletParams,
@@ -398,6 +399,31 @@ export const userController = (
                 .emit('accountsChanged', wallets)
 
             return { wallet }
+        },
+        addSelfIssuedSession: async (params: AddSelfIssuedSessionParams) => {
+            const username = params.username.trim()
+            if (!username) {
+                throw new Error('username is required')
+            }
+
+            const network = await authAwareStore.getNetwork(params.networkId)
+            if ((network.auth as { method: string }).method !== 'self_issued') {
+                throw new Error(
+                    'Network does not use self_issued authentication'
+                )
+            }
+
+            const onboardingStore = authAwareStore.withAuthContext({
+                userId: username,
+                accessToken: '',
+            })
+            await onboardingStore.setSession({
+                id: v4(),
+                origin: params.origin,
+                network: network.id,
+            })
+
+            return null
         },
         initializeSelfIssuedOnboarding: async (
             params: InitializeSelfIssuedOnboardingParams

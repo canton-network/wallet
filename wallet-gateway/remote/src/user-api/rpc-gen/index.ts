@@ -10,6 +10,7 @@ import type { AddIdp } from './typings.js'
 import type { RemoveIdp } from './typings.js'
 import type { ListIdps } from './typings.js'
 import type { CreateWallet } from './typings.js'
+import type { AddSelfIssuedSession } from './typings.js'
 import type { InitializeSelfIssuedOnboarding } from './typings.js'
 import type { FinalizeSelfIssuedOnboarding } from './typings.js'
 import type { AllocatePartyForWallet } from './typings.js'
@@ -49,6 +50,7 @@ export type Methods = {
     removeIdp: RemoveIdp
     listIdps: ListIdps
     createWallet: CreateWallet
+    addSelfIssuedSession: AddSelfIssuedSession
     initializeSelfIssuedOnboarding: InitializeSelfIssuedOnboarding
     finalizeSelfIssuedOnboarding: FinalizeSelfIssuedOnboarding
     allocatePartyForWallet: AllocatePartyForWallet
@@ -90,6 +92,7 @@ function buildController(methods: Methods) {
         removeIdp: methods.removeIdp,
         listIdps: methods.listIdps,
         createWallet: methods.createWallet,
+        addSelfIssuedSession: methods.addSelfIssuedSession,
         initializeSelfIssuedOnboarding: methods.initializeSelfIssuedOnboarding,
         finalizeSelfIssuedOnboarding: methods.finalizeSelfIssuedOnboarding,
         allocatePartyForWallet: methods.allocatePartyForWallet,

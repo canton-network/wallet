@@ -138,6 +138,12 @@ export type KeyName = string
 export type Username = string
 /**
  *
+ * The origin (dApp URL) that initiated this transaction request.
+ *
+ */
+export type Origin = string
+/**
+ *
  * The party ID corresponding to the wallet.
  *
  */
@@ -175,12 +181,6 @@ export type TransactionId = string
  *
  */
 export type MessageId = string
-/**
- *
- * The origin (dApp URL) that initiated this transaction request.
- *
- */
-export type Origin = string
 /**
  *
  * Limit of transactions to return.
@@ -544,6 +544,11 @@ export interface CreateWalletParams {
     signingProviderId: SigningProviderId
     keyName?: KeyName
 }
+export interface AddSelfIssuedSessionParams {
+    username: Username
+    networkId: NetworkId
+    origin: Origin
+}
 export interface InitializeSelfIssuedOnboardingParams {
     username: Username
     partyHint: PartyHint
@@ -635,6 +640,7 @@ export interface ListIdpsResult {
 export interface CreateWalletResult {
     wallet: Wallet
 }
+export type NullQu0Arl1F = null
 export interface InitializeSelfIssuedOnboardingResult {
     wallet: Wallet
 }
@@ -756,6 +762,9 @@ export type ListIdps = () => Promise<ListIdpsResult>
 export type CreateWallet = (
     params: CreateWalletParams
 ) => Promise<CreateWalletResult>
+export type AddSelfIssuedSession = (
+    params: AddSelfIssuedSessionParams
+) => Promise<NullQu0Arl1F>
 export type InitializeSelfIssuedOnboarding = (
     params: InitializeSelfIssuedOnboardingParams
 ) => Promise<InitializeSelfIssuedOnboardingResult>
@@ -867,6 +876,11 @@ export type RpcTypes = {
     createWallet: {
         params: Params<CreateWallet>
         result: Result<CreateWallet>
+    }
+
+    addSelfIssuedSession: {
+        params: Params<AddSelfIssuedSession>
+        result: Result<AddSelfIssuedSession>
     }
 
     initializeSelfIssuedOnboarding: {

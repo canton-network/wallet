@@ -212,6 +212,36 @@ describe('wg-login-form', () => {
         expect(event.clientSecret).toBe('network-secret')
     })
 
+    it('emits the username for self-issued onboarding', async () => {
+        const network = makePublicNetwork({
+            identityProviderId: 'idp-1',
+            authMethod: 'self_issued',
+        })
+        const idp = makeIdp({ id: 'idp-1', type: 'self_signed' })
+        const el = await fixture<WgLoginForm>(
+            html`<wg-login-form
+                .networks=${[network]}
+                .idps=${[idp]}
+            ></wg-login-form>`
+        )
+
+        const usernameInput =
+            el.shadowRoot!.querySelector<HTMLInputElement>('#username')!
+        expect(usernameInput).not.toBeNull()
+        expect(el.shadowRoot!.querySelector('#client-id')).toBeNull()
+        expect(el.shadowRoot!.querySelector('#client-secret')).toBeNull()
+        usernameInput.value = 'alice'
+
+        const listener = vi.fn()
+        el.addEventListener('login-connect', listener)
+        el.shadowRoot!.querySelector<HTMLButtonElement>('.connect-btn')!.click()
+
+        const event = listener.mock.calls[0][0] as LoginConnectEvent
+        expect(event.username).toBe('alice')
+        expect(event.clientId).toBeUndefined()
+        expect(event.clientSecret).toBeUndefined()
+    })
+
     it('submits on form submit event', async () => {
         const network = makePublicNetwork({
             identityProviderId: 'idp-1',

@@ -31,6 +31,7 @@ export class WgWalletCreateForm extends WgWalletForm {
     protected readonly submitDisabled = false
 
     @property({ type: Array }) keySigningProviders: string[] = []
+    @property({ type: Boolean }) showPrimary = true
 
     @state() accessor partyHint = ''
     @property() accessor selectedSigningProvider = ''
@@ -202,20 +203,27 @@ export class WgWalletCreateForm extends WgWalletForm {
                       `
                     : nothing
             }
-
-            <div class="primary-row mb-0">
-                <input
-                    id="primary"
-                    type="checkbox"
-                    .checked=${this.isPrimaryValue}
-                    @change=${this.onPrimaryChange}
-                    class="form-check-input"
-                    ?disabled=${this.submitting}
-                />
-                <label for="primary" class="form-check-label primary-label"
-                    >Set as primary wallet</label
-                >
-            </div>
+            ${
+                this.showPrimary
+                    ? html`
+                          <div class="primary-row mb-0">
+                              <input
+                                  id="primary"
+                                  type="checkbox"
+                                  .checked=${this.isPrimaryValue}
+                                  @change=${this.onPrimaryChange}
+                                  class="form-check-input"
+                                  ?disabled=${this.submitting}
+                              />
+                              <label
+                                  for="primary"
+                                  class="form-check-label primary-label"
+                                  >Set as primary wallet</label
+                              >
+                          </div>
+                      `
+                    : nothing
+            }
         `
     }
 }

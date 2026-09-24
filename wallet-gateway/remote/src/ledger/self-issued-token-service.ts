@@ -76,9 +76,7 @@ export class SelfIssuedTokenService {
             this.authContext(username),
             partyHint,
             false,
-            params.signingProviderId,
-            undefined,
-            params.networkId
+            params.signingProviderId
         )
 
         this.logger.info(
@@ -100,10 +98,7 @@ export class SelfIssuedTokenService {
     ): Promise<Wallet> {
         const username = this.requireUsername(params.username)
 
-        let wallet = await this.store.getWallet(
-            params.partyId,
-            params.networkId
-        )
+        let wallet = await this.store.getWallet(params.partyId)
         if (!wallet) {
             throw new Error(`Wallet not found for party ${params.partyId}`)
         }
@@ -115,10 +110,7 @@ export class SelfIssuedTokenService {
                 wallet.signingProviderId as SigningProvider
             )
 
-            wallet = await this.store.getWallet(
-                params.partyId,
-                params.networkId
-            )
+            wallet = await this.store.getWallet(params.partyId)
             if (!wallet) {
                 throw new Error(`Wallet not found for party ${params.partyId}`)
             }
@@ -148,10 +140,7 @@ export class SelfIssuedTokenService {
                 networkId: wallet.networkId,
                 isAuthParty: true,
             })
-            const authPartyWallet = await this.store.getWallet(
-                wallet.partyId,
-                params.networkId
-            )
+            const authPartyWallet = await this.store.getWallet(wallet.partyId)
             if (!authPartyWallet) {
                 throw new Error(`Wallet not found for party ${wallet.partyId}`)
             }

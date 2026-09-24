@@ -33,7 +33,7 @@ interface UserStorage {
     wallets: Array<Wallet>
     transactions: Map<string, Transaction>
     messageRaws: Map<string, MessageRaw>
-    sessions: Map<AccessToken, Session>
+    sessions: Map<AccessToken | undefined, Session>
     apiKeys: Map<string, ApiKey>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
@@ -81,7 +81,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             wallets: [],
             transactions: new Map<string, Transaction>(),
             messageRaws: new Map<string, MessageRaw>(),
-            sessions: new Map<AccessToken, Session>(),
+            sessions: new Map<AccessToken | undefined, Session>(),
             apiKeys: new Map<string, ApiKey>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
@@ -133,16 +133,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         })
     }
 
-    async getWallet(
-        partyId: PartyId,
-        networkId?: string
-    ): Promise<Wallet | null> {
+    async getWallet(partyId: PartyId): Promise<Wallet | null> {
         const userId = this.assertConnected()
-        const resolvedNetworkId =
-            networkId ?? (await this.getCurrentNetwork()).id
+        const network = await this.getCurrentNetwork()
         const constraint: WalletUniqueConstraint = {
             partyId,
-            networkId: resolvedNetworkId,
+            networkId: network.id,
             userId,
         }
         return (
@@ -273,8 +269,17 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async setSession(session: Session): Promise<void> {
+        const userId = this.assertConnected()
         const storage = this.getStorage()
-        storage.sessions.set(session.accessToken, session)
+        for (const [accessToken, existingSession] of storage.sessions) {
+            if (
+                existingSession.origin === session.origin ||
+                (!session.accessToken && !existingSession.accessToken)
+            ) {
+                storage.sessions.delete(accessToken)
+            }
+        }
+        storage.sessions.set(session.accessToken, { ...session, userId })
         this.updateStorage(storage)
     }
 
@@ -338,11 +343,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async getCurrentNetwork(): Promise<Network> {
         const accessToken = this.authContext?.accessToken
-        if (!accessToken) {
-            throw new Error('No access token found in auth context')
-        }
-
-        const session = this.getStorage().sessions.get(accessToken)
+        const session = this.getStorage().sessions.get(accessToken || undefined)
         if (!session) {
             throw new Error('No session found')
         }

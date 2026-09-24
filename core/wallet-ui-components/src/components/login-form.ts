@@ -18,7 +18,8 @@ export class LoginConnectEvent extends Event {
         public selectedNetwork: PublicNetwork,
         public selectedIdp: Idp,
         public clientId?: string,
-        public clientSecret?: string
+        public clientSecret?: string,
+        public username?: string
     ) {
         super('login-connect', { bubbles: true, composed: true })
     }
@@ -221,8 +222,12 @@ export class WgLoginForm extends BaseElement {
 
         let clientId: string | undefined
         let clientSecret: string | undefined
+        let username: string | undefined
 
-        if (idp.type === 'self_signed') {
+        if (
+            idp.type === 'self_signed' &&
+            (this.selectedNetwork.authMethod as string) !== 'self_issued'
+        ) {
             clientId =
                 (
                     this.renderRoot.querySelector(
@@ -238,12 +243,22 @@ export class WgLoginForm extends BaseElement {
                 )?.value ?? ''
         }
 
+        if ((this.selectedNetwork.authMethod as string) === 'self_issued') {
+            username =
+                (
+                    this.renderRoot.querySelector(
+                        '#username'
+                    ) as HTMLInputElement | null
+                )?.value.trim() ?? ''
+        }
+
         this.dispatchEvent(
             new LoginConnectEvent(
                 this.selectedNetwork,
                 idp,
                 clientId,
-                clientSecret
+                clientSecret,
+                username
             )
         )
     }
@@ -310,7 +325,29 @@ export class WgLoginForm extends BaseElement {
                     </div>
 
                     ${
-                        this.selectedIdp?.type === 'self_signed'
+                        (this.selectedNetwork?.authMethod as string) ===
+                        'self_issued'
+                            ? html`
+                                  <label
+                                      class="form-label fw-semibold text-body mt-3 mb-2"
+                                      for="username"
+                                      >Username</label
+                                  >
+                                  <input
+                                      id="username"
+                                      class="login-input form-control"
+                                      type="text"
+                                      autocomplete="username"
+                                      required
+                                      ?disabled=${this.connecting}
+                                  />
+                              `
+                            : null
+                    }
+                    ${
+                        this.selectedIdp?.type === 'self_signed' &&
+                        (this.selectedNetwork?.authMethod as string) !==
+                            'self_issued'
                             ? html`
                                   <label
                                       class="form-label fw-semibold text-body mt-3 mb-2"

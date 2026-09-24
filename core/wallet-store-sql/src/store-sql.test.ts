@@ -336,6 +336,53 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(removed).toBeUndefined()
         })
 
+        test('should resolve the current network from a tokenless session', async () => {
+            const onboardingContext: AuthContext = {
+                userId: authContextMock.userId,
+                accessToken: '',
+            }
+            const store = new StoreImpl(db, pino(sink()), onboardingContext)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: network.id,
+            })
+
+            await expect(store.getCurrentNetwork()).resolves.toEqual(network)
+            await expect(store.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    userId: onboardingContext.userId,
+                }),
+            ])
+        })
+
+        test('should replace a tokenless session when authentication completes', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const baseSession = {
+                origin: 'https://example.com',
+                network: 'network1',
+            }
+            await store.setSession({
+                ...baseSession,
+                id: 'onboarding-session',
+            })
+            await store.setSession({
+                ...baseSession,
+                id: 'authenticated-session',
+                accessToken: authContextMock.accessToken,
+            })
+
+            await expect(store.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    id: 'authenticated-session',
+                    accessToken: authContextMock.accessToken,
+                }),
+            ])
+        })
+
         test('should add, list, get, update, and remove networks', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)

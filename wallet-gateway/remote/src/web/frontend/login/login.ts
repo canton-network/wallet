@@ -117,7 +117,13 @@ export class LoginUI extends BaseElement {
     }
 
     private async handleConnect(e: LoginConnectEvent) {
-        const { selectedNetwork, selectedIdp, clientId, clientSecret } = e
+        const {
+            selectedNetwork,
+            selectedIdp,
+            clientId,
+            clientSecret,
+            username,
+        } = e
 
         this.connecting = true
         this.connectingMessage = `Connecting to ${selectedNetwork.name}...`
@@ -125,6 +131,33 @@ export class LoginUI extends BaseElement {
         stateManager.networkId.set(selectedNetwork.id, currentOrigin)
 
         try {
+            if ((selectedNetwork.authMethod as string) === 'self_issued') {
+                const onboardingUsername = username?.trim()
+                if (!onboardingUsername) {
+                    await this.showLoginError('Username is required.')
+                    return
+                }
+
+                const userClient = await createUserClient()
+                await userClient.request({
+                    method: 'addSelfIssuedSession',
+                    params: {
+                        username: onboardingUsername,
+                        networkId: selectedNetwork.id,
+                        origin: currentOrigin,
+                    },
+                })
+
+                const onboardingUrl = new URL(
+                    toRelHref('/onboarding'),
+                    window.location.origin
+                )
+                onboardingUrl.searchParams.set('username', onboardingUsername)
+                onboardingUrl.searchParams.set('networkId', selectedNetwork.id)
+                setLocationHref(onboardingUrl.toString())
+                return
+            }
+
             if (selectedIdp.type === 'self_signed') {
                 await this.selfSign(
                     selectedNetwork.id,

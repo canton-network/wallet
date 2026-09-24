@@ -113,12 +113,19 @@ function dispatchConnect(
     network = selfSignedNetwork,
     idp = selfSignedIdp,
     clientId = 'client-id',
-    clientSecret = 'client-secret'
+    clientSecret = 'client-secret',
+    username?: string
 ) {
     el.shadowRoot
         ?.querySelector('wg-login-form')
         ?.dispatchEvent(
-            new LoginConnectEvent(network, idp, clientId, clientSecret)
+            new LoginConnectEvent(
+                network,
+                idp,
+                clientId,
+                clientSecret,
+                username
+            )
         )
 }
 
@@ -219,6 +226,39 @@ describe('LoginUI', () => {
             'net-1'
         )
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
+    })
+
+    it('creates a tokenless session before self-issued onboarding', async () => {
+        await waitUntil(() => el.networks.length === 1)
+        const network = makePublicNetwork({
+            id: 'self-issued-network',
+            authMethod: 'self_issued',
+        })
+
+        dispatchConnect(
+            el,
+            network,
+            selfSignedIdp,
+            undefined,
+            undefined,
+            'alice'
+        )
+
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+        expect(mockRequest).toHaveBeenCalledWith({
+            method: 'addSelfIssuedSession',
+            params: {
+                username: 'alice',
+                networkId: 'self-issued-network',
+                origin: window.location.origin,
+            },
+        })
+        const redirectUrl = new URL(setLocationHref.mock.calls[0]![0])
+        expect(redirectUrl.pathname).toBe('/onboarding/')
+        expect(redirectUrl.searchParams.get('username')).toBe('alice')
+        expect(redirectUrl.searchParams.get('networkId')).toBe(
+            'self-issued-network'
+        )
     })
 
     it('sends the client secret from the login form', async () => {

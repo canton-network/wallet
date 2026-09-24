@@ -17,6 +17,7 @@
         "014-add-service-account-column": "d7185ac8909c5ba0fe064a96e0c749158b0b2d78bf5e9f29d57a9994525aa641",
         "015-add-origin-field-session": "484d7046ba8d4af470e17d9c779ecdcb445ff242aa6e6bc1d3f1e3043ee8126c",
         "016-add-failure-reason-and-awaiting-signature": "26f62a7ef65310dac129593a0c93246706b989dc8055ee50f4919cafdaf3962f",
-        "017-add-wallet-is-auth-party": "ec76c8546589d1be520fee1d51fa8766f83afadeb436e1390197709ca6639926"
+        "018-add-wallet-is-auth-party": "ec76c8546589d1be520fee1d51fa8766f83afadeb436e1390197709ca6639926",
+        "019-make-session-access-token-nullable": "2168c0b6059e21dc79c5e31924cfd8fe70574899d2429e90829670bd3c758e51"
     }
 }
