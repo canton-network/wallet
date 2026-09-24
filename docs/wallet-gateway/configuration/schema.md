@@ -408,6 +408,20 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     },
                                     "type": {
                                         "type": "string",
+                                        "const": "self_issued"
+                                    }
+                                },
+                                "required": ["id", "type"],
+                                "additionalProperties": false
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
                                         "const": "oauth"
                                     },
                                     "issuer": {
@@ -500,6 +514,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -552,6 +570,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -592,6 +631,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -644,6 +687,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -688,6 +752,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -740,6 +808,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -780,6 +869,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -832,6 +925,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -876,6 +990,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -928,6 +1046,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -968,6 +1107,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -1020,6 +1163,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
