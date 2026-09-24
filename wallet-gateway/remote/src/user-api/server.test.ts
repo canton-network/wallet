@@ -49,7 +49,7 @@ test('call listNetworks rpc', async () => {
     const json = await response.body.result
 
     expect(response.statusCode).toBe(200)
-    expect(json.networks.length).toBe(6)
+    expect(json.networks.length).toBe(7)
     expect(json.networks.map((n: { name: string }) => n.name)).toStrictEqual([
         'Local (OAuth IDP)',
         'Local (OAuth IDP - 2)',
@@ -57,6 +57,7 @@ test('call listNetworks rpc', async () => {
         'Local (Self signed)',
         'Devnet (Auth0)',
         'LocalNet',
+        'Local (Self issued)',
     ])
 
     for (const network of json.networks) {

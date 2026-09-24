@@ -101,9 +101,6 @@
     },
     "packageManager": "pnpm@12.4.1",
     "dependencies": {
-        "@canton-network/core-ledger-client": "catalog:",
-        "@canton-network/core-rpc-errors": "catalog:",
-        "@canton-network/core-rpc-transport": "catalog:",
         "@nx/js": "catalog:",
         "nx": "catalog:"
     },

@@ -53,6 +53,7 @@
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
         "@canton-network/core-wallet-dapp-rpc-client": "catalog:",
+        "@canton-network/core-wallet-services": "catalog:",
         "@canton-network/core-wallet-store": "catalog:",
         "@canton-network/core-wallet-store-sql": "catalog:",
         "@canton-network/core-wallet-ui-components": "catalog:",

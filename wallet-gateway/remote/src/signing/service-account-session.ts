@@ -6,6 +6,7 @@ import {
     type AuthAware,
     type AuthContext,
     AuthTokenProvider,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
 import type { Network, Store } from '@canton-network/core-wallet-store'
 
@@ -47,7 +48,12 @@ export async function resolveAutomationRunContext(
         return undefined
     }
 
-    const idp = await bootstrapStore.getIdp(network.identityProviderId)
+    const idp = await bootstrapStore.getIdp(
+        resolveAuthIdentityProviderId(
+            network.serviceAccountAuth,
+            network.identityProviderId
+        )
+    )
     const provider = AuthTokenProvider.fromGatewayConfig(
         idp,
         network.serviceAccountAuth,

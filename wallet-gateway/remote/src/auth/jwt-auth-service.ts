@@ -103,7 +103,11 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
             }
 
             const idps = await store.listIdps()
-            const idp = idps.find((i) => i.issuer === iss)
+            // TODO(#2456) validate self_issued token
+            const idp = idps.find(
+                (i): i is Exclude<Idp, { type: 'self_issued' }> =>
+                    i.type !== 'self_issued' && i.issuer === iss
+            )
 
             if (!idp) {
                 logger.warn(`No identity provider found for issuer: ${iss}`)

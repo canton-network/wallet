@@ -61,16 +61,15 @@ import {
     type Auth,
     AuthTokenProvider,
     idpSchema,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
 import type { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import { logDynamically, networkStatus } from '../utils.js'
+import { networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
-import { TransactionService } from '../ledger/transaction-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
     MessageSignatureEvent,
@@ -79,7 +78,12 @@ import type {
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
-import type { HASHING_SCHEME_VERSION } from '../env.js'
+import {
+    TransactionService,
+    logDynamically,
+    type HASHING_SCHEME_VERSION,
+    type SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -114,6 +118,12 @@ export const userController = (
         }
     }
 
+    async function getIdpForAuth(network: Network, auth: Auth) {
+        return await store.getIdp(
+            resolveAuthIdentityProviderId(auth, network.identityProviderId)
+        )
+    }
+
     /**
      * Session responses always include user auth for the UI.
      * Privileged credentials are included only for the admin user.
@@ -131,11 +141,10 @@ export const userController = (
         params: ListSigningProviderKeysParams
     ) => {
         const network = await store.getCurrentNetwork()
-        const idp = await store.getIdp(network.identityProviderId)
-
         if (!network.adminAuth) {
             throw new Error('No admin auth configured')
         }
+        const idp = await getIdpForAuth(network, network.adminAuth)
 
         const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
             idp,
@@ -201,6 +210,31 @@ export const userController = (
                 adminAuth,
                 serviceAccountAuth,
                 ledgerApi,
+            }
+
+            const referencedIdentityProviderIds = new Set([
+                newNetwork.identityProviderId,
+                ...[
+                    newNetwork.auth,
+                    newNetwork.adminAuth,
+                    newNetwork.serviceAccountAuth,
+                ].flatMap((auth) =>
+                    auth?.method === 'client_credentials' &&
+                    auth.identityProviderId
+                        ? [auth.identityProviderId]
+                        : []
+                ),
+            ])
+            const configuredIdentityProviderIds = new Set(
+                (await store.listIdps()).map((idp) => idp.id)
+            )
+            const missingIdentityProviderId = [
+                ...referencedIdentityProviderIds,
+            ].find((id) => !configuredIdentityProviderIds.has(id))
+            if (missingIdentityProviderId) {
+                throw new Error(
+                    `Identity provider "${missingIdentityProviderId}" not found`
+                )
             }
 
             // TODO: Add an explicit updateNetwork method to the User API spec and controller
@@ -328,10 +362,10 @@ export const userController = (
             if (network === undefined) {
                 throw new Error('No network session found')
             }
-            const idp = await store.getIdp(network.identityProviderId)
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
@@ -415,7 +449,7 @@ export const userController = (
                 throw new Error(`Wallet not found for party ${params.partyId}`)
             }
 
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await getIdpForAuth(network, network.adminAuth)
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -884,9 +918,13 @@ export const userController = (
                                 throw new Error('No admin auth configured')
                             }
 
+                            const adminIdp = await getIdpForAuth(
+                                network,
+                                network.adminAuth
+                            )
                             const adminAccessTokenProvider =
                                 AuthTokenProvider.fromGatewayConfig(
-                                    idp,
+                                    adminIdp,
                                     network.adminAuth,
                                     logger
                                 )
@@ -1008,11 +1046,10 @@ export const userController = (
                 logger
             )
 
-            const idp = await store.getIdp(network.identityProviderId)
-
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
                 AuthTokenProvider.fromGatewayConfig(
@@ -1066,11 +1103,10 @@ export const userController = (
                 logger
             )
 
-            const idp = await store.getIdp(network.identityProviderId)
-
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
                 AuthTokenProvider.fromGatewayConfig(
@@ -1284,7 +1320,7 @@ export const userController = (
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await getIdpForAuth(network, network.adminAuth)
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -1385,29 +1421,41 @@ export const userController = (
 }
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
-    const base = {
-        method: auth.method,
-        audience: auth.audience,
-        scope: auth.scope,
-        clientId: auth.clientId,
+    switch (auth.method) {
+        case 'authorization_code':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+            }
+        case 'client_credentials':
+            return {
+                method: auth.method,
+                ...(auth.identityProviderId
+                    ? { identityProviderId: auth.identityProviderId }
+                    : {}),
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+                clientSecret: auth.clientSecret,
+            }
+        case 'self_signed':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+                clientSecret: auth.clientSecret,
+                issuer: auth.issuer,
+            }
+        case 'self_issued':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+            }
     }
-
-    if (auth.method === 'self_signed') {
-        return {
-            ...base,
-            issuer: auth.issuer,
-            clientSecret: auth.clientSecret,
-        }
-    }
-
-    if (auth.method === 'client_credentials') {
-        return {
-            ...base,
-            clientSecret: auth.clientSecret,
-        }
-    }
-
-    return base
 }
 
 function toNetworkDto(network: Network): ApiNetwork {
@@ -1440,7 +1488,7 @@ function toPublicNetwork(network: Network): PublicNetwork {
         ledgerApi: network.ledgerApi.baseUrl,
         authMethod: auth.method,
         ...(auth.method !== 'client_credentials' && {
-            clientId: auth.clientId,
+            ...('clientId' in auth ? { clientId: auth.clientId } : {}),
             scope: auth.scope,
             audience: auth.audience,
         }),

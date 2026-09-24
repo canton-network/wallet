@@ -61,6 +61,7 @@ catalog:
     '@canton-network/core-wallet-dapp-remote-rpc-client': workspace:^
     '@canton-network/core-wallet-dapp-rpc-client': workspace:^
     '@canton-network/core-wallet-discovery': workspace:^
+    '@canton-network/core-wallet-services': workspace:^
     '@canton-network/core-wallet-store-inmemory': workspace:^
     '@canton-network/core-wallet-store-sql': workspace:^
     '@canton-network/core-wallet-store': workspace:^

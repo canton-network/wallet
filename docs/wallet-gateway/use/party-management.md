@@ -25,7 +25,6 @@ main pages are:
 | **Parties**    | `/parties`    | List, create, and remove parties, and set the primary party. Default landing page.    |
 | **Activities** | `/activities` | List of activities and view their status and details.                                 |
 | **Approve**    | `/approve`    | Review and sign or reject a transaction a dApp requested.                             |
-| **Settings**   | `/settings`   | Manage `/networks` and `/identity-providers`, view sessions, and see version info.    |
 | **Callback**   | `/callback`   | Internal OAuth redirect target after login.                                           |
 
 ## Log in
@@ -43,7 +42,7 @@ main pages are:
 
 > [!NOTE]
 > The networks and IDPs you can choose from are configured by the operator. To add more, an
-> admin manages them under **Settings** or in the configuration file. See
+> admin manages them on the **Networks** and **Identity Providers** pages or in the configuration file. See
 > [Networks & identity providers](../operate/networks-and-identity.md).
 
 ## Create a party
