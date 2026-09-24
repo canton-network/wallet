@@ -82,6 +82,25 @@ type CreateTransferChoiceArgs = {
     extraArgs: ExtraArgs
 }
 
+type ApiVersion = 'v1' | 'v2'
+type SupportedVersions = ApiVersion[]
+
+interface AssetCapabilities {
+    holding: SupportedVersions
+    transferInstruction: SupportedVersions
+    allocation: SupportedVersions
+    allocationInstruction: SupportedVersions
+    allocationRequest: SupportedVersions
+}
+
+const KEY_MAPPING: { [key: string]: keyof AssetCapabilities } = {
+    'token-holding': 'holding',
+    'token-transfer-instruction': 'transferInstruction',
+    'token-allocation': 'allocation',
+    'token-allocation-instruction': 'allocationInstruction',
+    'token-allocation-request': 'allocationRequest',
+}
+
 export class CoreService {
     constructor(
         private ledgerProvider: AbstractLedgerProvider,
@@ -1367,6 +1386,45 @@ export class TokenStandardService {
         )
         this.allocation = new AllocationService(this.core, this.logger)
         this.transfer = new TransferService(this.core, this.logger)
+    }
+
+    async resolveCapabilities(
+        registryUrl: string,
+        instrumentId: string
+    ): Promise<AssetCapabilities> {
+        const metadataInfo = await this.getInstrumentById(
+            registryUrl,
+            instrumentId
+        )
+        const supportedApis = metadataInfo.supportedApis
+
+        const resolvedCapabilities: AssetCapabilities = {
+            holding: [],
+            transferInstruction: [],
+            allocation: [],
+            allocationInstruction: [],
+            allocationRequest: [],
+        }
+
+        for (const key of Object.keys(supportedApis)) {
+            const match = key.match(/^splice-(.+)-(v\d+)$/)
+
+            if (match) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const [_, capabilityName, version] = match
+                const targetKey = KEY_MAPPING[capabilityName]
+
+                if (targetKey && supportedApis[key] === 1) {
+                    resolvedCapabilities[targetKey].push(version as 'v1' | 'v2')
+                }
+            }
+        }
+
+        for (const key in resolvedCapabilities) {
+            resolvedCapabilities[key as keyof AssetCapabilities].sort()
+        }
+
+        return resolvedCapabilities
     }
 
     async getInstrumentById(registryUrl: string, instrumentId: string) {
