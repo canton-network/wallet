@@ -101,6 +101,51 @@ const KEY_MAPPING: { [key: string]: keyof AssetCapabilities } = {
     'token-allocation-request': 'allocationRequest',
 }
 
+export type InstrumentInfo = {
+    id: string
+    displayName: string
+    symbol: string
+    registryUrl: string
+    admin: PartyId
+    capabilities: AssetCapabilities
+}
+
+export function resolveCapabilities(opts: {
+    supportedApis: {
+        [key: string]: number
+    }
+}): AssetCapabilities {
+    const supportedApis = opts.supportedApis
+
+    const resolvedCapabilities: AssetCapabilities = {
+        holding: [],
+        transferInstruction: [],
+        allocation: [],
+        allocationInstruction: [],
+        allocationRequest: [],
+    }
+
+    for (const key of Object.keys(supportedApis)) {
+        const match = key.match(/^splice-(.+)-(v\d+)$/)
+
+        if (match) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const [_, capabilityName, version] = match
+            const targetKey = KEY_MAPPING[capabilityName]
+
+            if (targetKey && supportedApis[key] === 1) {
+                resolvedCapabilities[targetKey].push(version as 'v1' | 'v2')
+            }
+        }
+    }
+
+    for (const key in resolvedCapabilities) {
+        resolvedCapabilities[key as keyof AssetCapabilities].sort()
+    }
+
+    return resolvedCapabilities
+}
+
 export class CoreService {
     constructor(
         private ledgerProvider: AbstractLedgerProvider,
@@ -1396,45 +1441,9 @@ export class TokenStandardService {
             registryUrl,
             instrumentId
         )
-        return await this.resolveCapabilities({
+        return resolveCapabilities({
             supportedApis: metadataInfo.supportedApis,
         })
-    }
-
-    resolveCapabilities(opts: {
-        supportedApis: {
-            [key: string]: number
-        }
-    }): AssetCapabilities {
-        const supportedApis = opts.supportedApis
-
-        const resolvedCapabilities: AssetCapabilities = {
-            holding: [],
-            transferInstruction: [],
-            allocation: [],
-            allocationInstruction: [],
-            allocationRequest: [],
-        }
-
-        for (const key of Object.keys(supportedApis)) {
-            const match = key.match(/^splice-(.+)-(v\d+)$/)
-
-            if (match) {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const [_, capabilityName, version] = match
-                const targetKey = KEY_MAPPING[capabilityName]
-
-                if (targetKey && supportedApis[key] === 1) {
-                    resolvedCapabilities[targetKey].push(version as 'v1' | 'v2')
-                }
-            }
-        }
-
-        for (const key in resolvedCapabilities) {
-            resolvedCapabilities[key as keyof AssetCapabilities].sort()
-        }
-
-        return resolvedCapabilities
     }
 
     async getInstrumentById(registryUrl: string, instrumentId: string) {
@@ -1511,13 +1520,15 @@ export class TokenStandardService {
             symbol: instrument.symbol,
             registryUrl,
             admin: instrumentAdmin,
-            capabilities: this.resolveCapabilities({
+            capabilities: resolveCapabilities({
                 supportedApis: instrument.supportedApis,
             }),
         }))
     }
 
-    async registriesToAssets(registryUrls: string[]) {
+    async registriesToAssets(
+        registryUrls: string[]
+    ): Promise<InstrumentInfo[]> {
         const allInstruments: {
             id: string
             displayName: string

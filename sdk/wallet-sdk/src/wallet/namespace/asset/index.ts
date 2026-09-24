@@ -16,7 +16,7 @@ export type AssetBody = {
     symbol: string
     registryUrl: URL
     admin: PartyId
-    capabilities?: AssetCapabilities
+    capabilities: AssetCapabilities
 }
 
 export type AssetContext = {
