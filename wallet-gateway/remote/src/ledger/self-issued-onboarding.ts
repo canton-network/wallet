@@ -82,6 +82,7 @@ export async function createSelfIssuedOnboardingService(
         scopedStore,
         logger,
         walletAllocationService,
-        ledgerClient
+        ledgerClient,
+        drivers
     )
 }

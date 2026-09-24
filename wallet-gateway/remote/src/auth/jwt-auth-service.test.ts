@@ -795,4 +795,68 @@ describe('jwtAuthService', () => {
             await expect(service.verifyToken(token)).resolves.toBeUndefined()
         })
     })
+
+    it('accepts a self-issued token signed by the authentication party', async () => {
+        const partyId = 'momo-party::namespace'
+        const synchronizerId = 'global-domain::fingerprint'
+        const { publicKey, privateKey } = await generateKeyPair('EdDSA', {
+            crv: 'Ed25519',
+        })
+        const jwk = await exportJWK(publicKey)
+        const walletPublicKey = Buffer.from(jwk.x!, 'base64url').toString(
+            'base64'
+        )
+        const localStore = new StoreInternal(
+            {
+                idps: [{ id: 'idp-self', type: 'self_issued' }],
+                networks: [
+                    {
+                        id: 'network-self-issued',
+                        name: 'Self issued',
+                        description: 'Test',
+                        synchronizerId,
+                        identityProviderId: 'idp-self',
+                        ledgerApi: { baseUrl: 'http://ledger.example' },
+                        auth: {
+                            method: 'self_issued',
+                            audience:
+                                'https://daml.com/jwt/aud/participant/participant1',
+                            scope: 'daml_ledger_api',
+                        },
+                    },
+                ],
+            },
+            getLogger('mock'),
+            { userId: 'momo', accessToken: 'bootstrap' }
+        )
+        await localStore.addWallet({
+            primary: true,
+            status: 'allocated',
+            partyId,
+            hint: 'momo',
+            publicKey: walletPublicKey,
+            namespace: 'namespace',
+            networkId: 'network-self-issued',
+            signingProviderId: 'wallet-kernel',
+            isAuthParty: true,
+            rights: [],
+            userId: 'momo',
+        })
+        const jwt = await new SignJWT({
+            scope: 'daml_ledger_api',
+            'daml.com': { usr: 'momo', syn: synchronizerId },
+        })
+            .setProtectedHeader({ alg: 'EdDSA', typ: 'JWT' })
+            .setIssuer(partyId)
+            .setSubject(partyId)
+            .setAudience('participant1::1220')
+            .setExpirationTime('1h')
+            .sign(privateKey)
+
+        const service = jwtAuthService(localStore, mockLogger)
+        await expect(service.verifyToken(`Bearer ${jwt}`)).resolves.toEqual({
+            userId: 'momo',
+            accessToken: jwt,
+        })
+    })
 })

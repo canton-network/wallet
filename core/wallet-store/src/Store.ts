@@ -216,6 +216,16 @@ export interface Store {
     getNetworkForTokenVerification(
         networkId: string
     ): Promise<Network | undefined>
+    /**
+     * Looks up the authentication party for a self-issued token before a session
+     * exists. Matches the ledger user, party, and synchronizer. Returns undefined
+     * when there is not exactly one wallet.
+     */
+    getWalletForSelfIssuedToken(
+        userId: string,
+        partyId: PartyId,
+        synchronizerId: string
+    ): Promise<Wallet | undefined>
     listNetworks(): Promise<Array<Network>>
     updateNetwork(network: Network): Promise<void>
     addNetwork(network: Network): Promise<void>

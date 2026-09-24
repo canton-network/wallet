@@ -434,12 +434,17 @@
                         "wallet": {
                             "description": "Wallet after polling the signing provider and ledger user setup.",
                             "$ref": "#/components/schemas/Wallet"
+                        },
+                        "accessToken": {
+                            "title": "accessToken",
+                            "type": "string",
+                            "description": "Self-issued access token, present once the authentication party is allocated."
                         }
                     },
                     "required": ["wallet"]
                 }
             },
-            "description": "Allocates a party and updates ledger user primary party after the topology transaction is signed."
+            "description": "Allocates a party and updates ledger user primary party after the topology transaction is signed. Returns an access token once the authentication party is allocated."
         },
         {
             "name": "allocatePartyForWallet",
@@ -1637,7 +1642,8 @@
                     },
                     "audience": {
                         "title": "audience",
-                        "type": "string"
+                        "type": "string",
+                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                     }
                 },
                 "required": ["method", "audience", "scope", "clientId"]
@@ -1672,7 +1678,8 @@
                     },
                     "audience": {
                         "title": "audience",
-                        "type": "string"
+                        "type": "string",
+                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                     }
                 },
                 "required": [
@@ -1712,7 +1719,8 @@
                     },
                     "audience": {
                         "title": "audience",
-                        "type": "string"
+                        "type": "string",
+                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                     }
                 },
                 "required": [
@@ -1741,7 +1749,8 @@
                     },
                     "audience": {
                         "title": "audience",
-                        "type": "string"
+                        "type": "string",
+                        "description": "Participant ID. Unlike other auth methods without a prefix \"https://daml.com/jwt/aud/participant/\"."
                     }
                 },
                 "required": ["method", "audience", "scope"]

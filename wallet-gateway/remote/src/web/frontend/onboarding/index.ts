@@ -12,6 +12,9 @@ import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import { createUserClient } from '../rpc-client.js'
 import { showToast } from '../utils.js'
+import { stateManager } from '../state-manager.js'
+import { detectCurrentOrigin } from '../listeners.js'
+import { addUserSession, redirectToIntendedOrDefault } from '../index.js'
 
 import '@canton-network/core-wallet-ui-components'
 
@@ -29,12 +32,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         window.location.search
     ).get('networkId')
 
-    private readonly signingProviders = Object.values(SigningProvider).filter(
-        (provider) =>
-            provider !== SigningProvider.PARTICIPANT &&
-            provider !== SigningProvider.FIREBLOCKS &&
-            provider !== SigningProvider.BLOCKDAEMON
-    )
+    private readonly signingProviders = [SigningProvider.WALLET_KERNEL]
 
     static styles = [
         BaseElement.styles,
@@ -66,8 +64,8 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         `,
     ]
 
-    private async finalizeOnboarding(): Promise<void> {
-        if (!this.username || !this.networkId || !this.wallet) {
+    private async finalizeOnboarding(wallet: Wallet): Promise<void> {
+        if (!this.username || !this.networkId) {
             return
         }
 
@@ -79,32 +77,48 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 params: {
                     username: this.username,
                     networkId: this.networkId,
-                    partyId: this.wallet.partyId,
+                    partyId: wallet.partyId,
                 },
             })
-            this.wallet = result.wallet
 
-            if (result.wallet.status === 'allocated') {
-                this.completed = true
-                showToast(
-                    'Onboarding complete',
-                    'Your authentication party is ready.',
-                    'success'
-                )
-            } else if (result.wallet.status === 'removed') {
-                throw new Error('Party allocation was rejected')
-            } else {
-                showToast(
-                    'Party creation pending',
-                    'Approve the signing request, then try again.',
-                    'info'
-                )
+            if (result.wallet.status === 'allocated' && result.accessToken) {
+                await this.completeLogin(result.accessToken)
+                return
             }
+            this.wallet = result.wallet
+            if (result.wallet.status === 'removed') {
+                throw new Error('Party allocation was rejected')
+            }
+            showToast(
+                'Party creation pending',
+                'Approve the signing request, then try again.',
+                'info'
+            )
         } catch (error) {
             handleErrorToast(error)
         } finally {
             this.submitting = false
         }
+    }
+
+    private async completeLogin(accessToken: string): Promise<void> {
+        if (!this.networkId) {
+            return
+        }
+        const currentOrigin = await detectCurrentOrigin()
+        const payloadSegment = accessToken.split('.')[1] ?? ''
+        const payload = JSON.parse(
+            atob(payloadSegment.replace(/-/g, '+').replace(/_/g, '/'))
+        ) as { exp?: number }
+        if (payload.exp) {
+            stateManager.expirationDate.set(
+                new Date(payload.exp * 1000).toISOString(),
+                currentOrigin
+            )
+        }
+        await stateManager.accessToken.set(accessToken, currentOrigin)
+        await addUserSession(accessToken, this.networkId)
+        await redirectToIntendedOrDefault()
     }
 
     private async initializeOnboarding(
@@ -126,13 +140,12 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                     signingProviderId: event.signingProviderId,
                 },
             })
-            this.wallet = result.wallet
-
             if (result.wallet.status === 'allocated') {
-                await this.finalizeOnboarding()
+                await this.finalizeOnboarding(result.wallet)
             } else if (result.wallet.status === 'removed') {
                 throw new Error('Party allocation was rejected')
             } else {
+                this.wallet = result.wallet
                 showToast(
                     'Party creation pending',
                     'Approve the signing request, then complete onboarding.',
@@ -192,7 +205,9 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                                       class="btn btn-primary rounded-pill w-100"
                                       type="button"
                                       ?disabled=${this.submitting}
-                                      @click=${this.finalizeOnboarding}
+                                      @click=${() =>
+                                          this.wallet &&
+                                          this.finalizeOnboarding(this.wallet)}
                                   >
                                       ${
                                           this.submitting

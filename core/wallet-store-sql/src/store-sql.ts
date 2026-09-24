@@ -623,6 +623,30 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return network.auth.method === 'self_signed' ? network : undefined
     }
 
+    async getWalletForSelfIssuedToken(
+        userId: string,
+        partyId: string,
+        synchronizerId: string
+    ): Promise<Wallet | undefined> {
+        const rows = await this.db
+            .selectFrom('wallets')
+            .selectAll()
+            .where('userId', '=', userId)
+            .where('partyId', '=', partyId)
+            .execute()
+        const networks = await this.listNetworks()
+        const matches = rows
+            .map((row) => toWallet(row))
+            .filter((wallet) => {
+                const network = networks.find((n) => n.id === wallet.networkId)
+                return (
+                    network?.auth.method === 'self_issued' &&
+                    network.synchronizerId === synchronizerId
+                )
+            })
+        return matches.length === 1 ? matches[0] : undefined
+    }
+
     async listNetworks(): Promise<Array<Network>> {
         let query = this.db.selectFrom('networks').selectAll()
 

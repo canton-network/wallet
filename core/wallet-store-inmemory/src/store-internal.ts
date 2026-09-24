@@ -374,6 +374,31 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         )
     }
 
+    async getWalletForSelfIssuedToken(
+        userId: string,
+        partyId: PartyId,
+        synchronizerId: string
+    ): Promise<Wallet | undefined> {
+        const matches: Wallet[] = []
+        for (const storage of this.userStorage.values()) {
+            for (const wallet of storage.wallets) {
+                if (wallet.userId !== userId || wallet.partyId !== partyId) {
+                    continue
+                }
+                const network = this.systemStorage.networks.find(
+                    (candidate) => candidate.id === wallet.networkId
+                )
+                if (
+                    network?.auth.method === 'self_issued' &&
+                    network.synchronizerId === synchronizerId
+                ) {
+                    matches.push(wallet)
+                }
+            }
+        }
+        return matches.length === 1 ? matches[0] : undefined
+    }
+
     async updateNetwork(network: Network): Promise<void> {
         this.assertConnected()
         this.removeNetwork(network.id) // Ensure no duplicates

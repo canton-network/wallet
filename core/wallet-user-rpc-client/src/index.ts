@@ -33,6 +33,11 @@ export type IdentityProviderId = string
 export type AuthorizationCodeAuthMethod = 'authorization_code'
 export type Scope = string
 export type ClientId = string
+/**
+ *
+ * Participant ID. Unlike other auth methods without a prefix "https://daml.com/jwt/aud/participant/".
+ *
+ */
 export type Audience = string
 /**
  *
@@ -721,6 +726,7 @@ export interface InitializeSelfIssuedOnboardingResult {
 }
 export interface FinalizeSelfIssuedOnboardingResult {
     wallet: Wallet
+    accessToken?: AccessToken
 }
 export interface AllocatePartyForWalletResult {
     wallet: Wallet

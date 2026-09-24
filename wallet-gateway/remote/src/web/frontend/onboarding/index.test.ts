@@ -11,18 +11,39 @@ import {
     mockRequest,
 } from '../test-helpers.js'
 
-const { mockCreateUserClient, handleErrorToast, showToast } = vi.hoisted(
-    () => ({
-        mockCreateUserClient: vi.fn(),
-        handleErrorToast: vi.fn(),
-        showToast: vi.fn(),
-    })
-)
+const {
+    mockCreateUserClient,
+    handleErrorToast,
+    showToast,
+    addUserSession,
+    redirectToIntendedOrDefault,
+    accessTokenSet,
+} = vi.hoisted(() => ({
+    mockCreateUserClient: vi.fn(),
+    handleErrorToast: vi.fn(),
+    showToast: vi.fn(),
+    addUserSession: vi.fn(),
+    redirectToIntendedOrDefault: vi.fn(),
+    accessTokenSet: vi.fn(),
+}))
 
 vi.mock('../rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
 }))
 vi.mock('../utils.js', () => ({ showToast }))
+vi.mock('../index.js', () => ({
+    addUserSession,
+    redirectToIntendedOrDefault,
+}))
+vi.mock('../state-manager.js', () => ({
+    stateManager: {
+        accessToken: { set: accessTokenSet },
+        expirationDate: { set: vi.fn() },
+    },
+}))
+vi.mock('../listeners.js', () => ({
+    detectCurrentOrigin: vi.fn().mockResolvedValue('https://app.example'),
+}))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     const actual =
         await importOriginal<
@@ -36,6 +57,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 
 import './index.js'
 import type { UserUiSelfIssuedOnboarding } from './index.js'
+
+const accessToken = `header.${btoa(JSON.stringify({ exp: 2_000_000_000 }))}.sig`
 
 describe('UserUiSelfIssuedOnboarding', () => {
     beforeEach(() => {
@@ -72,6 +95,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
             .mockResolvedValueOnce({ wallet: initializedWallet })
             .mockResolvedValueOnce({
                 wallet: { ...initializedWallet, isAuthParty: true },
+                accessToken,
             })
 
         const element = await fixture<UserUiSelfIssuedOnboarding>(
@@ -103,8 +127,13 @@ describe('UserUiSelfIssuedOnboarding', () => {
             },
         })
         await waitUntil(
-            () => element.shadowRoot?.querySelector('[role="status"]') !== null
+            () => redirectToIntendedOrDefault.mock.calls.length === 1
         )
+        expect(accessTokenSet).toHaveBeenCalledWith(
+            accessToken,
+            'https://app.example'
+        )
+        expect(addUserSession).toHaveBeenCalledWith(accessToken, 'network-1')
     })
 
     it('lets the user finalize a pending external signing request', async () => {

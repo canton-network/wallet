@@ -7,8 +7,21 @@ import { sink } from 'pino-test'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
 import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import type { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
 import { SelfIssuedTokenService } from './self-issued-token-service.js'
+
+const { probeGet } = vi.hoisted(() => ({
+    probeGet: vi.fn(),
+}))
+
+vi.mock('@canton-network/core-ledger-client', () => ({
+    LedgerClient: class {
+        get = probeGet
+    },
+}))
+
+const publicKey = Buffer.alloc(32, 1).toString('base64')
 
 const createWallet = (overrides: Partial<Wallet> = {}): Wallet => ({
     primary: true,
@@ -16,7 +29,7 @@ const createWallet = (overrides: Partial<Wallet> = {}): Wallet => ({
     status: 'initialized',
     hint: 'alice',
     signingProviderId: SigningProvider.WALLET_KERNEL,
-    publicKey: 'kernel-pk',
+    publicKey,
     namespace: 'ns',
     networkId: 'network-1',
     userId: 'alice',
@@ -24,12 +37,27 @@ const createWallet = (overrides: Partial<Wallet> = {}): Wallet => ({
     ...overrides,
 })
 
+const network = {
+    id: 'network-1',
+    synchronizerId: 'global-domain::fingerprint',
+    ledgerApi: { baseUrl: 'http://ledger.example' },
+    auth: {
+        method: 'self_issued' as const,
+        audience: 'participant-aud',
+        scope: 'daml_ledger_api',
+    },
+}
+
 describe('SelfIssuedTokenService', () => {
     const logger = pino(sink())
     let store: {
         getWallet: ReturnType<typeof vi.fn>
         updateWallet: ReturnType<typeof vi.fn>
+        getCurrentNetwork: ReturnType<typeof vi.fn>
+        listSessions: ReturnType<typeof vi.fn>
+        setSession: ReturnType<typeof vi.fn>
     }
+    let signMessage: ReturnType<typeof vi.fn>
     let walletAllocator: {
         createWallet: ReturnType<typeof vi.fn>
         allocateParty: ReturnType<typeof vi.fn>
@@ -41,9 +69,23 @@ describe('SelfIssuedTokenService', () => {
     }
 
     beforeEach(() => {
+        signMessage = vi.fn().mockResolvedValue({
+            signature: Buffer.from('sig-bytes').toString('base64'),
+        })
+        probeGet.mockResolvedValue({ userId: 'alice' })
         store = {
             getWallet: vi.fn(),
             updateWallet: vi.fn().mockResolvedValue(undefined),
+            getCurrentNetwork: vi.fn().mockResolvedValue(network),
+            listSessions: vi.fn().mockResolvedValue([
+                {
+                    id: 'onboarding-session',
+                    origin: 'https://app.example',
+                    network: 'network-1',
+                    userId: 'alice',
+                },
+            ]),
+            setSession: vi.fn().mockResolvedValue(undefined),
         }
         walletAllocator = {
             createWallet: vi.fn(),
@@ -61,11 +103,17 @@ describe('SelfIssuedTokenService', () => {
     })
 
     function createService() {
+        const driver = { controller: () => ({ signMessage }) }
+        const drivers = {
+            [SigningProvider.WALLET_KERNEL]: driver,
+            [SigningProvider.FIREBLOCKS]: driver,
+        } as unknown as SigningDrivers
         return new SelfIssuedTokenService(
             store as unknown as Store,
             logger,
             walletAllocator as unknown as WalletAllocationService,
-            ledgerClient as unknown as LedgerClient
+            ledgerClient as unknown as LedgerClient,
+            drivers
         )
     }
 
@@ -173,11 +221,13 @@ describe('SelfIssuedTokenService', () => {
                 .mockResolvedValueOnce(allocatedWallet)
                 .mockResolvedValueOnce(authPartyWallet)
 
-            const wallet = await createService().finalizeOnboarding({
-                username: 'alice',
-                networkId: 'network-1',
-                partyId: pendingWallet.partyId,
-            })
+            const wallet = (
+                await createService().finalizeOnboarding({
+                    username: 'alice',
+                    networkId: 'network-1',
+                    partyId: pendingWallet.partyId,
+                })
+            ).wallet
 
             expect(walletAllocator.allocateParty).toHaveBeenCalledWith(
                 { userId: 'alice', accessToken: '' },
@@ -209,6 +259,14 @@ describe('SelfIssuedTokenService', () => {
             })
             expect(wallet.status).toBe('allocated')
             expect(wallet.isAuthParty).toBe(true)
+            expect(store.setSession).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    origin: 'https://app.example',
+                    network: 'network-1',
+                    accessToken: expect.any(String),
+                })
+            )
         })
 
         it('patches the ledger user when the wallet is already allocated', async () => {
@@ -221,11 +279,13 @@ describe('SelfIssuedTokenService', () => {
                 .mockResolvedValueOnce(allocatedWallet)
                 .mockResolvedValueOnce(authPartyWallet)
 
-            const wallet = await createService().finalizeOnboarding({
-                username: 'alice',
-                networkId: 'network-1',
-                partyId: allocatedWallet.partyId,
-            })
+            const wallet = (
+                await createService().finalizeOnboarding({
+                    username: 'alice',
+                    networkId: 'network-1',
+                    partyId: allocatedWallet.partyId,
+                })
+            ).wallet
 
             expect(walletAllocator.allocateParty).not.toHaveBeenCalled()
             expect(ledgerClient.patch).toHaveBeenCalled()
@@ -235,21 +295,63 @@ describe('SelfIssuedTokenService', () => {
                 isAuthParty: true,
             })
             expect(wallet.isAuthParty).toBe(true)
+            expect(probeGet).toHaveBeenCalledWith('/v2/authenticated-user')
+            const signingInput = signMessage.mock.calls[0][0].message as string
+            const payload = JSON.parse(
+                Buffer.from(signingInput.split('.')[1], 'base64url').toString()
+            )
+            expect(payload).toMatchObject({
+                aud: 'participant-aud',
+                scope: 'daml_ledger_api',
+                iss: allocatedWallet.partyId,
+                sub: allocatedWallet.partyId,
+                'daml.com': {
+                    syn: network.synchronizerId,
+                    usr: 'alice',
+                },
+            })
+            expect(payload.exp).toBe(Math.floor(Date.now() / 1000) + 3600)
+            expect(store.setSession).toHaveBeenCalledOnce()
+        })
+
+        it('keeps the tokenless session when the participant rejects the token', async () => {
+            const allocatedWallet = createWallet({ status: 'allocated' })
+            store.getWallet
+                .mockResolvedValueOnce(allocatedWallet)
+                .mockResolvedValueOnce(
+                    createWallet({ status: 'allocated', isAuthParty: true })
+                )
+            probeGet.mockRejectedValue(new Error('UNAUTHENTICATED'))
+
+            await expect(
+                createService().finalizeOnboarding({
+                    username: 'alice',
+                    networkId: 'network-1',
+                    partyId: allocatedWallet.partyId,
+                })
+            ).rejects.toThrow(
+                'Self-issued token was rejected by the participant'
+            )
+            expect(store.setSession).not.toHaveBeenCalled()
         })
 
         it('does not patch the ledger user when allocateParty leaves the wallet unallocated', async () => {
             store.getWallet.mockResolvedValue(createWallet())
 
-            const wallet = await createService().finalizeOnboarding({
-                username: 'alice',
-                networkId: 'network-1',
-                partyId: 'alice::ns',
-            })
+            const wallet = (
+                await createService().finalizeOnboarding({
+                    username: 'alice',
+                    networkId: 'network-1',
+                    partyId: 'alice::ns',
+                })
+            ).wallet
 
             expect(walletAllocator.allocateParty).toHaveBeenCalled()
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(store.updateWallet).not.toHaveBeenCalled()
             expect(wallet.status).toBe('initialized')
+            expect(signMessage).not.toHaveBeenCalled()
+            expect(store.setSession).not.toHaveBeenCalled()
         })
 
         it('throws when the wallet is missing', async () => {

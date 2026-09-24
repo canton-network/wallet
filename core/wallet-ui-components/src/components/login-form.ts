@@ -291,54 +291,58 @@ export class WgLoginForm extends BaseElement {
 
     protected render() {
         const renderAuthSpecificInputs = () => {
-            switch (this.selectedIdp?.type) {
-                case 'self_issued':
-                    return html`
-                        <label
-                            class="form-label fw-semibold text-body mt-3 mb-2"
-                            for="username"
-                            >Username</label
-                        >
-                        <input
-                            id="username"
-                            class="login-input form-control"
-                            type="text"
-                            autocomplete="username"
-                            required
-                            ?disabled=${this.connecting}
-                        />
-                    `
-                case 'self_signed':
-                    return html`
-                        <label
-                            class="form-label fw-semibold text-body mt-3 mb-2"
-                            for="client-id"
-                            >Client ID</label
-                        >
-                        <input
-                            id="client-id"
-                            class="login-input form-control"
-                            type="text"
-                            autocomplete="username"
-                            .value=${this.selectedNetwork?.clientId || ''}
-                            ?disabled=${this.connecting}
-                        />
-                        <label
-                            class="form-label fw-semibold text-body mt-3 mb-2"
-                            for="client-secret"
-                            >Client Secret</label
-                        >
-                        <input
-                            id="client-secret"
-                            class="login-input form-control"
-                            type="password"
-                            autocomplete="current-password"
-                            ?disabled=${this.connecting}
-                        />
-                    `
-                default:
-                    return nothing
+            if (
+                this.selectedIdp?.type === 'self_issued' ||
+                (this.selectedNetwork?.authMethod as string) === 'self_issued'
+            ) {
+                return html`
+                    <label
+                        class="form-label fw-semibold text-body mt-3 mb-2"
+                        for="username"
+                        >Username</label
+                    >
+                    <input
+                        id="username"
+                        class="login-input form-control"
+                        type="text"
+                        autocomplete="username"
+                        required
+                        ?disabled=${this.connecting}
+                    />
+                `
             }
+
+            if (this.selectedIdp?.type === 'self_signed') {
+                return html`
+                    <label
+                        class="form-label fw-semibold text-body mt-3 mb-2"
+                        for="client-id"
+                        >Client ID</label
+                    >
+                    <input
+                        id="client-id"
+                        class="login-input form-control"
+                        type="text"
+                        autocomplete="username"
+                        .value=${this.selectedNetwork?.clientId || ''}
+                        ?disabled=${this.connecting}
+                    />
+                    <label
+                        class="form-label fw-semibold text-body mt-3 mb-2"
+                        for="client-secret"
+                        >Client Secret</label
+                    >
+                    <input
+                        id="client-secret"
+                        class="login-input form-control"
+                        type="password"
+                        autocomplete="current-password"
+                        ?disabled=${this.connecting}
+                    />
+                `
+            }
+
+            return nothing
         }
 
         return html`
