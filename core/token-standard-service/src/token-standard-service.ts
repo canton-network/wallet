@@ -85,7 +85,7 @@ type CreateTransferChoiceArgs = {
 type ApiVersion = 'v1' | 'v2'
 type SupportedVersions = ApiVersion[]
 
-interface AssetCapabilities {
+export interface AssetCapabilities {
     holding: SupportedVersions
     transferInstruction: SupportedVersions
     allocation: SupportedVersions
@@ -1388,7 +1388,7 @@ export class TokenStandardService {
         this.transfer = new TransferService(this.core, this.logger)
     }
 
-    async resolveCapabilities(
+    async resolveCapabilitiesFromRegsitryByInstrumentId(
         registryUrl: string,
         instrumentId: string
     ): Promise<AssetCapabilities> {
@@ -1396,7 +1396,17 @@ export class TokenStandardService {
             registryUrl,
             instrumentId
         )
-        const supportedApis = metadataInfo.supportedApis
+        return await this.resolveCapabilities({
+            supportedApis: metadataInfo.supportedApis,
+        })
+    }
+
+    resolveCapabilities(opts: {
+        supportedApis: {
+            [key: string]: number
+        }
+    }): AssetCapabilities {
+        const supportedApis = opts.supportedApis
 
         const resolvedCapabilities: AssetCapabilities = {
             holding: [],
@@ -1472,7 +1482,16 @@ export class TokenStandardService {
         })
     }
 
-    async instrumentsToAsset(registryUrl: string) {
+    async instrumentsToAsset(registryUrl: string): Promise<
+        {
+            id: string
+            displayName: string
+            symbol: string
+            registryUrl: string
+            admin: PartyId
+            capabilities: AssetCapabilities
+        }[]
+    > {
         let instrumentsResponse = await this.listInstruments(registryUrl)
         const instruments = [...instrumentsResponse.instruments]
 
@@ -1485,12 +1504,16 @@ export class TokenStandardService {
             instruments.push(...instrumentsResponse.instruments)
         }
         const instrumentAdmin = await this.getInstrumentAdmin(registryUrl)
+
         return instruments.map((instrument) => ({
             id: instrument.id,
             displayName: instrument.name,
             symbol: instrument.symbol,
             registryUrl,
             admin: instrumentAdmin,
+            capabilities: this.resolveCapabilities({
+                supportedApis: instrument.supportedApis,
+            }),
         }))
     }
 
@@ -1501,6 +1524,7 @@ export class TokenStandardService {
             symbol: string
             registryUrl: string
             admin: PartyId
+            capabilities: AssetCapabilities
         }[] = []
         for (const registryUrl of registryUrls) {
             const instruments = await this.instrumentsToAsset(registryUrl)
