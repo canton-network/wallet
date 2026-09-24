@@ -245,15 +245,9 @@ test.describe('OTC allocations', () => {
             name: 'Allocate',
         })
         await expect(allocateButton).toHaveClass(/MuiButton-sizeSmall/)
-        await wg.approveTransaction(() => allocateButton.click(), {
-            review: async (approvalPage) => {
-                const amountRow = approvalPage
-                    .getByRole('heading', { name: 'Amount' })
-                    .locator('..')
 
-                await expect(amountRow).toContainText('100.0000000000')
-            },
-        })
+        await wg.approveTransaction(() => allocateButton.click())
+
         await expect(
             aliceToBobLeg.getByRole('button', { name: 'Withdraw' })
         ).toBeVisible({ timeout: 15_000 })

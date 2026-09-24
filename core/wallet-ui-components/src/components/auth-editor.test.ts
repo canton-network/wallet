@@ -331,6 +331,9 @@ describe('auth-editor', () => {
         methodSelect!.dispatchEvent(new Event('change', { bubbles: true }))
         await elementUpdated(el)
         expect(byTestId(el, 'auth-editor-client-secret-input')).not.toBeNull()
+        expect(
+            byTestId(el, 'auth-editor-identity-provider-id-input')
+        ).not.toBeNull()
         expect(byTestId(el, 'auth-editor-issuer-input')).toBeNull()
 
         methodSelect!.value = 'self_signed'
@@ -338,6 +341,36 @@ describe('auth-editor', () => {
         await elementUpdated(el)
         expect(byTestId(el, 'auth-editor-client-secret-input')).not.toBeNull()
         expect(byTestId(el, 'auth-editor-issuer-input')).not.toBeNull()
+    })
+
+    it('emits the client credentials identity provider override', async () => {
+        const el = await fixture<AuthEditor>(
+            html`<auth-editor
+                .optional=${false}
+                .auth=${{
+                    method: 'client_credentials',
+                    clientId: 'client-id',
+                    clientSecret: 'secret',
+                    audience: 'aud',
+                    scope: 'scope',
+                }}
+            ></auth-editor>`
+        )
+        const listener = vi.fn()
+        el.addEventListener('auth-change', listener)
+
+        const input = byTestId<HTMLInputElement>(
+            el,
+            'auth-editor-identity-provider-id-input'
+        )!
+        input.value = 'machine-idp'
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+
+        const lastEvent = listener.mock.calls.at(-1)?.[0]
+        expect(lastEvent.auth).toMatchObject({
+            method: 'client_credentials',
+            identityProviderId: 'machine-idp',
+        })
     })
 
     it('hides current secret in input and emits replacement secret', async () => {

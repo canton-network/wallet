@@ -29,21 +29,21 @@
         "access": "public"
     },
     "dependencies": {
-        "@canton-network/core-rpc-transport": "workspace:^",
-        "@canton-network/core-types": "workspace:^",
-        "lodash": "^4.18.1"
+        "@canton-network/core-rpc-transport": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "lodash": "catalog:"
     },
     "devDependencies": {
-        "@canton-network/core-eslint-config": "workspace:^",
-        "@types/isomorphic-fetch": "^0.0.39",
-        "@types/json-schema": "7.0.15",
-        "@types/lodash": "^4.17.24",
-        "@types/ws": "^8.18.1",
-        "eslint": "^10.10.0",
-        "prettier": "3.9.4",
-        "tsdown": "^0.22.9",
-        "typedoc": "^0.28.20",
-        "typescript": "^5.9.3"
+        "@canton-network/core-eslint-config": "catalog:",
+        "@types/isomorphic-fetch": "catalog:",
+        "@types/json-schema": "catalog:",
+        "@types/lodash": "catalog:",
+        "@types/ws": "catalog:",
+        "eslint": "catalog:",
+        "prettier": "catalog:",
+        "tsdown": "catalog:",
+        "typedoc": "catalog:",
+        "typescript": "catalog:"
     },
     "repository": {
         "type": "git",

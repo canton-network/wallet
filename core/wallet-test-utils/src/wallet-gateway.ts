@@ -18,12 +18,24 @@ export interface NetworkFormInput {
     }
 }
 
-export interface IdpFormInput {
-    id: string
-    type: 'oauth' | 'self_signed'
-    issuer: string
-    configUrl: string
-}
+export type IdpFormInput =
+    | {
+          id: string
+          type: 'oauth'
+          issuer: string
+          configUrl: string
+      }
+    | {
+          id: string
+          type: 'self_signed'
+          issuer: string
+          configUrl: string
+      }
+    | {
+          id: string
+          type: 'self_issued'
+          configUrl: string
+      }
 
 export type ActivityStatus =
     | 'pending'
@@ -1034,7 +1046,9 @@ export class WalletGateway {
 
         await popup.locator('#idp-id').fill(idp.id)
         await popup.locator('#idp-type').selectOption(idp.type)
-        await popup.locator('#idp-issuer').fill(idp.issuer)
+        if (idp.type !== 'self_issued') {
+            await popup.locator('#idp-issuer').fill(idp.issuer)
+        }
         if (idp.type === 'oauth') {
             if (!idp.configUrl) {
                 throw new Error('configUrl is required for oauth IDPs')

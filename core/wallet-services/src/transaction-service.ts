@@ -9,7 +9,6 @@ import type {
     Wallet,
     Network,
 } from '@canton-network/core-wallet-store'
-import type { SignResult } from '../user-api/rpc-gen/typings.js'
 import {
     type Error as SigningError,
     type GetTransactionResult,
@@ -18,25 +17,28 @@ import {
     type Methods as SigningController,
     type SignTransactionParams,
 } from '@canton-network/core-signing-lib'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
-import type {
+import {
+    type SigningDrivers,
+    Notifier,
+    HASHING_SCHEME_VERSION,
+} from './types.js'
+import {
     ExecuteParams,
     ExecuteResult,
     SignParams,
-} from '../user-api/rpc-gen/typings.js'
-import type { UserId } from '../dapp-api/rpc-gen/typings.js'
-import type { Notifier } from '../notification/NotificationService.js'
+    type SignResult,
+} from '@canton-network/core-wallet-user-rpc-client'
+import { UserId } from '@canton-network/core-wallet-dapp-rpc-client'
 import {
     ledgerPrepareParams,
     logDynamically,
     type PrepareParams,
-} from '../utils.js'
+} from './utils.js'
 import {
     type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
-import type { HASHING_SCHEME_VERSION } from '../env.js'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -501,13 +503,13 @@ export class TransactionService {
         const synchronizerId =
             network.synchronizerId ?? (await ledgerClient.getSynchronizerId())
 
-        const prep = ledgerPrepareParams(
+        const prep = ledgerPrepareParams({
             userId,
-            [partyId],
+            partyIds: [partyId],
             synchronizerId,
-            transaction.payload as PrepareParams,
-            this.hashingSchemeVersion
-        )
+            params: transaction.payload as PrepareParams,
+            hashingSchemeVersion: this.hashingSchemeVersion,
+        })
 
         try {
             const result = await ledgerClient.postWithRetry(
