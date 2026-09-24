@@ -80,6 +80,7 @@ async function verifySelfSignedToken(
     }
 }
 
+// TODO probably remove in favor of #2456
 async function verifySelfIssuedToken(
     jwt: string,
     decoded: ReturnType<typeof decodeJwt>,

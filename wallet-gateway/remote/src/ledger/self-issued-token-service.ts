@@ -53,31 +53,10 @@ export class SelfIssuedTokenService {
             )
         }
 
-        try {
-            const existing = await this.ledgerClient.get(
-                '/v2/users/{user-id}',
-                {
-                    path: { 'user-id': username },
-                }
-            )
-            if (!existing.user) {
-                await this.ledgerClient.post('/v2/users', {
-                    user: {
-                        id: username,
-                        isDeactivated: false,
-                        identityProviderId: '',
-                    },
-                    rights: [],
-                })
-            } else {
-                // TODO(#2458)
-                throw new Error(
-                    'User already exists, logging as existing user is not implemented yet.'
-                )
-            }
-        } catch {
-            // TODO check in runtime happens when user already exists vs other error
-            // especially for cases where this succeeds but further step fails, to not get locked with user without party
+        const existing = await this.ledgerClient.get('/v2/users/{user-id}', {
+            path: { 'user-id': username },
+        })
+        if (!existing.user) {
             await this.ledgerClient.post('/v2/users', {
                 user: {
                     id: username,
@@ -86,8 +65,14 @@ export class SelfIssuedTokenService {
                 },
                 rights: [],
             })
+        } else {
+            // TODO(#2458)
+            throw new Error(
+                'User already exists, logging as existing user is not implemented yet.'
+            )
         }
 
+        // TODO handle case when this fails, but user is already created
         const wallet = await this.walletAllocator.createWallet(
             this.authContext(username),
             partyHint,
@@ -192,6 +177,7 @@ export class SelfIssuedTokenService {
         username: string,
         wallet: Wallet
     ): Promise<string> {
+        // TODO think about division of responsibilities related to token minting between this service and self-issued-token-service in wallet-auth
         const network = await this.store.getCurrentNetwork()
         if (network.auth.method !== 'self_issued') {
             throw new Error('Network does not use self_issued authentication')

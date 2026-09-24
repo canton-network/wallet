@@ -587,7 +587,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         // Self-issued onboarding has a user-scoped session before it has a token.
         sessionQuery = token
             ? sessionQuery.where('accessToken', '=', token)
-            : sessionQuery.where('accessToken', 'is', null)
+            : // TODO this doesn't seem okay, I probably need a different way to grab a session without token
+              sessionQuery.where('accessToken', 'is', null)
         const sessionRow = await sessionQuery.executeTakeFirst()
         if (!sessionRow) {
             throw new Error('No session found')
