@@ -9,7 +9,7 @@ export const AllocationInstructionV2 = Splice.Api.Token.AllocationInstructionV2
 export const AllocationRequestV2 = Splice.Api.Token.AllocationRequestV2
 export const AllocationV2 = Splice.Api.Token.AllocationV2
 export const HoldingV2 = Splice.Api.Token.HoldingV2
-export const MetadataV2 = Splice.Api.Token.MetadataV1
+export const MetadataV1 = Splice.Api.Token.MetadataV1
 
 export type {
     Holding,
