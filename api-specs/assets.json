@@ -430,6 +430,54 @@
             ],
             "linkToDAR": "https://github.com/DLC-link/cbtc-lib/tree/main/cbtc-dars/dars/cbtc",
             "assetLogo": "https://raw.githubusercontent.com/DLC-link/cbtc-lib/v0.6.1/assets/cbtc-logo.svg"
+        },
+        {
+            "instrumentId": {
+                "admin": "cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c",
+                "id": "SEND.B"
+            },
+            "symbol": "SEND",
+            "registryURLs": [
+                "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c/registry/"
+            ],
+            "linkToDAR": "https://docs.digitalasset.com/registry/releases/daml-models",
+            "assetLogo": "https://ghassets.send.app/logos/tokens/send.png"
+        },
+        {
+            "instrumentId": {
+                "admin": "cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c",
+                "id": "CBBTC.B"
+            },
+            "symbol": "cbBTC.B",
+            "registryURLs": [
+                "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c/registry/"
+            ],
+            "linkToDAR": "https://docs.digitalasset.com/registry/releases/daml-models",
+            "assetLogo": "https://ghassets.send.app/logos/tokens/cbbtc.png"
+        },
+        {
+            "instrumentId": {
+                "admin": "cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c",
+                "id": "USDC.B"
+            },
+            "symbol": "USDC.B",
+            "registryURLs": [
+                "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c/registry/"
+            ],
+            "linkToDAR": "https://docs.digitalasset.com/registry/releases/daml-models",
+            "assetLogo": "https://ghassets.send.app/logos/tokens/usdc.svg"
+        },
+        {
+            "instrumentId": {
+                "admin": "cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c",
+                "id": "FRXUSD.B"
+            },
+            "symbol": "FRXUSD.B",
+            "registryURLs": [
+                "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c/registry/"
+            ],
+            "linkToDAR": "https://docs.digitalasset.com/registry/releases/daml-models",
+            "assetLogo": "https://ghassets.send.app/logos/tokens/frxusd.png"
         }
     ],
     "TestNet": [
@@ -863,6 +911,42 @@
             ],
             "linkToDAR": "https://github.com/DLC-link/cbtc-lib/tree/main/cbtc-dars/dars/cbtc",
             "assetLogo": "https://raw.githubusercontent.com/DLC-link/cbtc-lib/v0.6.1/assets/cbtc-logo.svg"
+        },
+        {
+            "instrumentId": {
+                "admin": "cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57",
+                "id": "SEND"
+            },
+            "symbol": "SEND",
+            "registryURLs": [
+                "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57/registry/"
+            ],
+            "linkToDAR": "https://docs.digitalasset.com/registry/releases/daml-models",
+            "assetLogo": "https://ghassets.send.app/logos/tokens/send.png"
+        },
+        {
+            "instrumentId": {
+                "admin": "cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57",
+                "id": "CBBTC.B"
+            },
+            "symbol": "cbBTC.B",
+            "registryURLs": [
+                "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57/registry/"
+            ],
+            "linkToDAR": "https://docs.digitalasset.com/registry/releases/daml-models",
+            "assetLogo": "https://ghassets.send.app/logos/tokens/cbbtc.png"
+        },
+        {
+            "instrumentId": {
+                "admin": "cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57",
+                "id": "USDC.B"
+            },
+            "symbol": "USDC.B",
+            "registryURLs": [
+                "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57/registry/"
+            ],
+            "linkToDAR": "https://docs.digitalasset.com/registry/releases/daml-models",
+            "assetLogo": "https://ghassets.send.app/logos/tokens/usdc.svg"
         }
     ],
     "DevNet": [
