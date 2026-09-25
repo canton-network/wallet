@@ -15,8 +15,8 @@ import {
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import { setLocationHref } from '../navigation.js'
-import type { SigningProviderId } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../listeners.js'
+import { SigningProviderId } from '@canton-network/core-wallet-user-rpc-client'
+
 import { createUserClient } from '../rpc-client.js'
 import { stateManager } from '../state-manager.js'
 import { showToast } from '../utils.js'
@@ -61,7 +61,7 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         signingProviderId: SigningProviderId
     ) {
         this.publicKeysLoading = true
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         try {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)

@@ -21,7 +21,6 @@ import { stateManager } from '../state-manager'
 import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
 import { setLocationHref } from '../navigation.js'
-import { detectCurrentOrigin } from '../listeners.js'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -71,7 +70,7 @@ export class LoginUI extends BaseElement {
     accessor connectingMessage = 'Connecting...'
 
     private async loadNetworks() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -80,7 +79,7 @@ export class LoginUI extends BaseElement {
     }
 
     private async loadIdps() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -121,7 +120,7 @@ export class LoginUI extends BaseElement {
 
         this.connecting = true
         this.connectingMessage = `Connecting to ${selectedNetwork.name}...`
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         stateManager.networkId.set(selectedNetwork.id, currentOrigin)
 
         try {
@@ -207,7 +206,7 @@ export class LoginUI extends BaseElement {
         clientId: string,
         clientSecret: string
     ) {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )

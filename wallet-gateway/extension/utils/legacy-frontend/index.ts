@@ -25,10 +25,9 @@ import {
     toRelHref,
     toRelPath,
 } from './routing'
-import '@/utils/legacy-frontend/listeners'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners'
 import { fetchDappApiUrl, showToast } from '@/utils/legacy-frontend/utils'
 import { createProxyService } from '@webext-core/proxy-service'
+import { childOriginManager, detectCurrentOrigin } from './origin'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `
@@ -46,7 +45,7 @@ export const redirectToIntendedOrDefault = async (): Promise<void> => {
     const intendedPage = await stateManager.intendedPage.get(currentOrigin)
     await stateManager.intendedPage.clear(currentOrigin)
     const route = intendedPage || DEFAULT_PAGE_REDIRECT
-    setLocationHref(toRelHref(route))
+    setLocationHref(toRelHref(route as AllowedRoute))
 }
 
 @customElement('user-app')
@@ -127,10 +126,9 @@ export class UserApp extends LitElement {
         await stateManager.clearAuthState(currentOrigin)
 
         if (window.opener && !window.opener.closed) {
-            window.opener.postMessage(
-                { type: WalletEvent.SPLICE_WALLET_LOGOUT },
-                '*'
-            )
+            childOriginManager.postMessage({
+                type: WalletEvent.SPLICE_WALLET_LOGOUT,
+            })
             // close the gateway UI automatically if we are within a popup
             window.close()
         } else {
@@ -215,14 +213,11 @@ const getSessionId = async (token: string): Promise<string | undefined> => {
 
 export const shareConnection = (token: string, sessionId: string) => {
     if (window.opener && !window.opener.closed) {
-        window.opener.postMessage(
-            {
-                type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
-                token,
-                sessionId,
-            },
-            '*'
-        )
+        childOriginManager.postMessage({
+            type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
+            token,
+            sessionId,
+        })
     }
 }
 

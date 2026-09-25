@@ -9,7 +9,6 @@ import {
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import { detectCurrentOrigin } from '../listeners'
 import { LOGIN_PAGE_REDIRECT } from '../constants'
 
 @customElement('login-callback')
@@ -72,7 +71,7 @@ export class LoginCallback extends LitElement {
                 throw new Error('OAuth token response has no access token')
             }
 
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
 
             const payload = JSON.parse(
                 atob(tokenResponse.access_token.split('.')[1])

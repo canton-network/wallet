@@ -68,6 +68,7 @@ catalog:
     '@canton-network/core-wallet-test-utils': workspace:^
     '@canton-network/core-wallet-ui-components': workspace:^
     '@canton-network/core-wallet-user-rpc-client': workspace:^
+    '@canton-network/core-origin-manager': workspace:^
     '@canton-network/dapp-sdk': workspace:^
     '@canton-network/example-test-token-v1-registry': workspace:^
     '@canton-network/wallet-sdk': workspace:^
