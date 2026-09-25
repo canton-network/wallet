@@ -22,6 +22,12 @@ message string.
 | `-32601` | Method not found      | Method does not exist.                                   |
 | `-32602` | Invalid params        | Invalid method parameters.                               |
 | `-32603` | Internal error        | Internal JSON-RPC error.                                 |
+| `-32000` | Invalid input         | Missing or invalid parameters.                           |
+| `-32001` | Resource not found    | Requested resource not found.                            |
+| `-32002` | Resource unavailable  | Requested resource not available.                        |
+| `-32003` | Transaction rejected  | Transaction creation failed.                             |
+| `-32004` | Method not supported  | Method is not implemented.                               |
+| `-32005` | Limit exceeded        | Request exceeds defined limit.                           |
 
 For the complete specification, see
 [CIP-103](https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md).
