@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LedgerClient } from '@canton-network/core-ledger-client'
+import {
+    isJsCantonError,
+    LedgerClient,
+} from '@canton-network/core-ledger-client'
 import {
     type AuthAware,
     type AuthContext,
@@ -62,9 +65,11 @@ export class SelfIssuedAuthService {
                 }
             )
             return response.user ?? null
-        } catch {
-            // TODO return null if doesn't exist, throw otherwise
-            return null
+        } catch (error) {
+            if (isJsCantonError(error) && error.code === 'USER_NOT_FOUND') {
+                return null
+            }
+            throw error
         }
     }
 

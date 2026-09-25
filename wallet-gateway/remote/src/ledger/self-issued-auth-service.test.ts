@@ -15,11 +15,18 @@ const { probeGet } = vi.hoisted(() => ({
     probeGet: vi.fn(),
 }))
 
-vi.mock('@canton-network/core-ledger-client', () => ({
-    LedgerClient: class {
-        get = probeGet
-    },
-}))
+vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-ledger-client')
+        >()
+    return {
+        ...actual,
+        LedgerClient: class {
+            get = probeGet
+        },
+    }
+})
 
 const publicKey = Buffer.alloc(32, 1).toString('base64')
 
@@ -131,6 +138,34 @@ describe('SelfIssuedAuthService', () => {
                 userExists: true,
                 wallets: [wallet],
             })
+        })
+
+        it('treats USER_NOT_FOUND as a missing ledger user', async () => {
+            ledgerClient.get.mockRejectedValue({
+                code: 'USER_NOT_FOUND',
+                cause: 'getting user failed for unknown user "bubu"',
+                errorCategory: 11,
+            })
+
+            await expect(
+                createService().getOnboardingState('bubu')
+            ).resolves.toEqual({
+                userExists: false,
+                wallets: [],
+            })
+        })
+
+        it('propagates non–USER_NOT_FOUND ledger errors', async () => {
+            const permissionDenied = {
+                code: 'PERMISSION_DENIED',
+                cause: 'not allowed',
+                errorCategory: 7,
+            }
+            ledgerClient.get.mockRejectedValue(permissionDenied)
+
+            await expect(
+                createService().getOnboardingState('alice')
+            ).rejects.toEqual(permissionDenied)
         })
     })
 
