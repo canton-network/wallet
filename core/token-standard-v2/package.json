@@ -1,5 +1,5 @@
 {
-  "author": "Rukmini Basu <rukmini.base@digitalasset.com>",
+    "author": "Rukmini Basu <rukmini.base@digitalasset.com>",
     "name": "@canton-network/core-token-standard-v2",
     "version": "1.0.0",
     "type": "module",
