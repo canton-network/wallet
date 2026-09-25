@@ -333,7 +333,6 @@ export async function createSelfIssuedAuthService(
             network.identityProviderId
         )
     )
-    // TODO should I actually get adminAuth.idp inside token provider?
     const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
         adminIdp,
         network.adminAuth,
