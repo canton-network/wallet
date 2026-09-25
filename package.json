@@ -42,6 +42,7 @@
         "script:test:examples": "pnpm exec node --trace-uncaught --enable-source-maps --import tsx ./scripts/src/test-example-scripts.ts",
         "script:test:examples-stress": "tsx ./scripts/src/test-examples-scripts-under-stress.ts",
         "script:test:stress-scripts": "tsx ./scripts/src/test-stress-scripts.ts",
+        "script:conformance-cli": "pnpm --filter @canton-network/tool-conformance-cli run run",
         "script:release": "tsx ./scripts/src/release.ts",
         "script:retag": "tsx ./scripts/src/retag.ts",
         "script:flat-pack": "tsx ./scripts/src/flat-pack.ts",

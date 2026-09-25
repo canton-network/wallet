@@ -42,6 +42,10 @@
                 "projects": ["wallet-gateway/remote"],
                 "projectsRelationship": "independent"
             },
+            "tools-conformance": {
+                "projects": ["tools/conformance-dapp", "tools/conformance-cli"],
+                "projectsRelationship": "independent"
+            },
             "example-portfolio": {
                 "projects": ["examples/portfolio"],
                 "projectsRelationship": "independent"
