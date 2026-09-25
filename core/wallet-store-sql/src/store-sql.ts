@@ -447,22 +447,44 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         await this.db.transaction().execute(async (trx) => {
             const deleted = await trx
                 .deleteFrom('sessions')
+                .where('userId', '=', userId)
                 .where((eb) =>
-                    eb.and([
-                        eb('userId', '=', userId),
-                        eb('origin', '=', session.origin),
-                    ])
+                    session.accessToken
+                        ? eb('origin', '=', session.origin)
+                        : eb.or([
+                              eb('origin', '=', session.origin),
+                              eb.and([
+                                  eb('accessToken', 'is', null),
+                                  eb('network', '=', session.network),
+                              ]),
+                          ])
                 )
                 .execute()
             this.logger.debug(deleted, 'Deleted old session')
 
             const inserted = await trx
                 .insertInto('sessions')
-                .values({ ...session, userId })
+                .values({
+                    ...session,
+                    accessToken: session.accessToken ?? null,
+                    userId,
+                })
                 .execute()
 
             this.logger.debug(inserted, 'Inserted new session')
         })
+    }
+
+    async getOnboardingSession(
+        sessionId: string
+    ): Promise<Session | undefined> {
+        const row = await this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('id', '=', sessionId)
+            .where('accessToken', 'is', null)
+            .executeTakeFirst()
+        return row ? toSession(row) : undefined
     }
 
     async removeSession(accessToken: string): Promise<void> {
@@ -576,16 +598,34 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const token = this.authContext?.accessToken as AccessToken
-
-        if (!token) {
-            throw new Error('No access token found in auth context')
-        }
-
-        const session = await this.getSession(token)
-        if (!session) {
+        const userId = this.assertConnected()
+        const token = this.authContext?.accessToken
+        const onboardingSessionId =
+            this.authContext && !this.authContext.isApiKey
+                ? this.authContext.sessionId
+                : undefined
+        if (!token && !onboardingSessionId) {
             throw new Error('No session found')
         }
+
+        const sessionRow = await this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('userId', '=', userId)
+            .where((eb) =>
+                token
+                    ? eb('accessToken', '=', token)
+                    : eb.and([
+                          eb('id', '=', onboardingSessionId!),
+                          eb('accessToken', 'is', null),
+                      ])
+            )
+            .executeTakeFirst()
+        if (!sessionRow) {
+            throw new Error('No session found')
+        }
+
+        const session = toSession(sessionRow)
         const networkId = session.network
         if (!networkId) {
             throw new Error('No current network set in session')
@@ -613,6 +653,30 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
         const network = toNetwork(row)
         return network.auth.method === 'self_signed' ? network : undefined
+    }
+
+    async getWalletForSelfIssuedToken(
+        userId: string,
+        partyId: string,
+        synchronizerId: string
+    ): Promise<Wallet | undefined> {
+        const rows = await this.db
+            .selectFrom('wallets')
+            .selectAll()
+            .where('userId', '=', userId)
+            .where('partyId', '=', partyId)
+            .execute()
+        const networks = await this.listNetworks()
+        const matches = rows
+            .map((row) => toWallet(row))
+            .filter((wallet) => {
+                const network = networks.find((n) => n.id === wallet.networkId)
+                return (
+                    network?.auth.method === 'self_issued' &&
+                    network.synchronizerId === synchronizerId
+                )
+            })
+        return matches.length === 1 ? matches[0] : undefined
     }
 
     async listNetworks(): Promise<Array<Network>> {

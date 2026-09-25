@@ -6,7 +6,10 @@ import { z } from 'zod'
 const authorizationCodeAuthSchema = z
     .object({
         method: z.literal('authorization_code'),
-        audience: z.string(),
+        audience: z.string().meta({
+            description:
+                'Participant ID prefixed with "https://daml.com/jwt/aud/participant/".',
+        }),
         scope: z.string(),
         clientId: z.string(),
     })
@@ -21,7 +24,10 @@ const clientCredentialsAuthSchema = z.object({
         description:
             "Overrides the network's identity provider for client credentials token acquisition.",
     }),
-    audience: z.string(),
+    audience: z.string().meta({
+        description:
+            'Participant ID prefixed with "https://daml.com/jwt/aud/participant/".',
+    }),
     scope: z.string(),
     clientId: z.string(),
     clientSecret: z.string(),
@@ -30,7 +36,10 @@ const clientCredentialsAuthSchema = z.object({
 const selfSignedAuthSchema = z.object({
     method: z.literal('self_signed'),
     issuer: z.string(),
-    audience: z.string(),
+    audience: z.string().meta({
+        description:
+            'Participant ID prefixed with "https://daml.com/jwt/aud/participant/".',
+    }),
     scope: z.string(),
     clientId: z.string(),
     clientSecret: z.string(),
@@ -38,7 +47,10 @@ const selfSignedAuthSchema = z.object({
 
 const selfIssuedAuthSchema = z.object({
     method: z.literal('self_issued'),
-    audience: z.string(),
+    audience: z.string().meta({
+        description:
+            'Participant ID. Unlike other auth methods without a prefix "https://daml.com/jwt/aud/participant/".',
+    }),
     scope: z.string(),
 })
 

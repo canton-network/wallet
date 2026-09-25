@@ -336,6 +336,87 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(removed).toBeUndefined()
         })
 
+        test('should resolve the current network from a tokenless session id', async () => {
+            const onboardingContext: AuthContext = {
+                userId: authContextMock.userId,
+                accessToken: '',
+                sessionId: 'onboarding-session',
+            }
+            const store = new StoreImpl(db, pino(sink()), onboardingContext)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: network.id,
+            })
+
+            await expect(store.getCurrentNetwork()).resolves.toEqual(network)
+            await expect(
+                store.getOnboardingSession('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    userId: onboardingContext.userId,
+                })
+            )
+            await expect(
+                new StoreImpl(db, pino(sink()), {
+                    userId: authContextMock.userId,
+                    accessToken: '',
+                }).getCurrentNetwork()
+            ).rejects.toThrow('No session found')
+        })
+
+        test('should keep one tokenless session per user and network', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.setSession({
+                id: 'onboarding-1',
+                origin: 'https://a.example',
+                network: 'network1',
+            })
+            await store.setSession({
+                id: 'onboarding-2',
+                origin: 'https://b.example',
+                network: 'network2',
+            })
+            await store.setSession({
+                id: 'onboarding-3',
+                origin: 'https://c.example',
+                network: 'network1',
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual(['onboarding-2', 'onboarding-3'])
+        })
+
+        test('should replace a tokenless session when authentication completes', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const baseSession = {
+                origin: 'https://example.com',
+                network: 'network1',
+            }
+            await store.setSession({
+                ...baseSession,
+                id: 'onboarding-session',
+            })
+            await store.setSession({
+                ...baseSession,
+                id: 'authenticated-session',
+                accessToken: authContextMock.accessToken,
+            })
+
+            await expect(store.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    id: 'authenticated-session',
+                    accessToken: authContextMock.accessToken,
+                }),
+            ])
+            await expect(
+                store.getOnboardingSession('onboarding-session')
+            ).resolves.toBeUndefined()
+        })
+
         test('should add, list, get, update, and remove networks', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)

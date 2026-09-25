@@ -64,6 +64,7 @@ interface WalletTable {
     status: string | null
     disabled: number
     reason: string | null
+    isAuthParty: number
 }
 interface UpdateWalletProperties {
     primary?: number
@@ -72,6 +73,7 @@ interface UpdateWalletProperties {
     status?: string | null
     disabled?: number
     reason?: string | null
+    isAuthParty?: number
 }
 
 interface UserPartyRightTable {
@@ -120,7 +122,7 @@ interface SessionTable {
     id: string
     origin: string
     network: string
-    accessToken: string
+    accessToken: string | null
     userId: UserId
 }
 
@@ -267,19 +269,21 @@ export const toSession = (table: SessionTable): Session => {
         id: table.id,
         network: table.network,
         origin: table.origin,
-        accessToken: table.accessToken,
+        ...(table.accessToken ? { accessToken: table.accessToken } : {}),
         userId: table.userId,
     }
 }
 
 export const fromWallet = (wallet: Wallet, userId: UserId): WalletTable => {
-    const { externalTxId, topologyTransactions, rights, ...rest } = wallet
+    const { externalTxId, topologyTransactions, rights, isAuthParty, ...rest } =
+        wallet
     void rights
     return {
         ...rest,
         primary: wallet.primary ? 1 : 0,
         userId: userId,
         disabled: wallet.disabled !== undefined && wallet.disabled ? 1 : 0,
+        isAuthParty: isAuthParty ? 1 : 0,
         reason: wallet.reason ?? null,
         externalTxId: externalTxId && externalTxId !== '' ? externalTxId : null,
         topologyTransactions:
@@ -303,6 +307,7 @@ export const toWalletUpdateProperties = (
         signingProviderId,
         publicKey,
         namespace,
+        isAuthParty,
     } = params
     return {
         ...(status !== undefined && { status }),
@@ -314,6 +319,7 @@ export const toWalletUpdateProperties = (
         ...(signingProviderId !== undefined && { signingProviderId }),
         ...(publicKey !== undefined && { publicKey }),
         ...(namespace !== undefined && { namespace }),
+        ...(isAuthParty !== undefined && { isAuthParty: isAuthParty ? 1 : 0 }),
     }
 }
 
@@ -334,6 +340,7 @@ export const toWallet = (table: WalletTable): Wallet => {
         networkId: table.networkId,
         signingProviderId: table.signingProviderId,
         disabled: table.disabled === 1,
+        isAuthParty: Boolean(table.isAuthParty),
         userId: table.userId,
         ...(table.externalTxId !== null && {
             externalTxId: table.externalTxId,

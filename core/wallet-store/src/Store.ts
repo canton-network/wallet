@@ -54,6 +54,7 @@ export interface Wallet {
     topologyTransactions?: string
     disabled?: boolean
     reason?: string
+    isAuthParty?: boolean
     rights: PartyLevelRight[]
     userId: string
     // hosted: [network]
@@ -82,6 +83,7 @@ export type UpdateWallet =
                 | 'signingProviderId'
                 | 'publicKey'
                 | 'namespace'
+                | 'isAuthParty'
             >
         >
 
@@ -91,7 +93,8 @@ export interface Session {
     id: string
     origin: string
     network: string
-    accessToken: string
+    /** Absent only while self-issued onboarding is in progress. */
+    accessToken?: string
     userId?: string
 }
 
@@ -194,6 +197,13 @@ export interface Store {
      */
     removeSession(accessToken: string): Promise<void>
 
+    /**
+     * Looks up a tokenless self-issued onboarding session by id without scoping
+     * to the authenticated user, because the session is what identifies the user.
+     * Returns undefined once the session has been upgraded with an access token.
+     */
+    getOnboardingSession(sessionId: string): Promise<Session | undefined>
+
     // IDP methods
     getIdp(idpId: string): Promise<Idp>
     listIdps(): Promise<Array<Idp>>
@@ -213,6 +223,16 @@ export interface Store {
     getNetworkForTokenVerification(
         networkId: string
     ): Promise<Network | undefined>
+    /**
+     * Looks up the authentication party for a self-issued token before a session
+     * exists. Matches the ledger user, party, and synchronizer. Returns undefined
+     * when there is not exactly one wallet.
+     */
+    getWalletForSelfIssuedToken(
+        userId: string,
+        partyId: PartyId,
+        synchronizerId: string
+    ): Promise<Wallet | undefined>
     listNetworks(): Promise<Array<Network>>
     updateNetwork(network: Network): Promise<void>
     addNetwork(network: Network): Promise<void>

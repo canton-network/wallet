@@ -5,6 +5,7 @@ import {
     type AuthContext,
     type AuthService,
     type Idp,
+    SelfIssuedTokenService,
     resolveUserEmail,
 } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
@@ -12,6 +13,7 @@ import {
     createRemoteJWKSet,
     decodeJwt,
     decodeProtectedHeader,
+    importJWK,
     jwtVerify,
 } from 'jose'
 import type { Logger } from 'pino'
@@ -78,6 +80,58 @@ async function verifySelfSignedToken(
     }
 }
 
+// TODO probably remove in favor of #2456
+async function verifySelfIssuedToken(
+    jwt: string,
+    decoded: ReturnType<typeof decodeJwt>,
+    store: Store,
+    logger: Logger
+): Promise<AuthContext | undefined> {
+    if (!decoded.iss || decoded.iss !== decoded.sub) {
+        logger.warn('Self-issued JWT issuer and subject must be the party id')
+        return undefined
+    }
+
+    const daml = decoded['daml.com']
+    if (!daml || typeof daml !== 'object') {
+        logger.warn('Self-issued JWT does not contain a daml.com claim')
+        return undefined
+    }
+    const { usr, syn } = daml as { usr?: unknown; syn?: unknown }
+    if (typeof usr !== 'string' || typeof syn !== 'string') {
+        logger.warn('Self-issued JWT daml.com claim is missing usr or syn')
+        return undefined
+    }
+
+    const wallet = await store.getWalletForSelfIssuedToken(
+        usr,
+        decoded.iss,
+        syn
+    )
+    if (!wallet || wallet.disabled || !wallet.isAuthParty) {
+        logger.warn(
+            { userId: usr, partyId: decoded.iss },
+            'No authentication party wallet matches this self-issued token'
+        )
+        return undefined
+    }
+
+    const key = await importJWK(
+        SelfIssuedTokenService.publicKeyToEd25519Jwk(wallet.publicKey),
+        'EdDSA'
+    )
+    await jwtVerify(jwt, key, {
+        algorithms: ['EdDSA'],
+        issuer: wallet.partyId,
+        subject: wallet.partyId,
+    })
+
+    return {
+        userId: usr,
+        accessToken: jwt,
+    }
+}
+
 /**
  * Creates an AuthService that verifies JWT tokens, using a remote JWK set for
  * oauth identity providers and the network's secret for self_signed ones.
@@ -103,13 +157,20 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
             }
 
             const idps = await store.listIdps()
-            // TODO(#2456) validate self_issued token
             const idp = idps.find(
                 (i): i is Exclude<Idp, { type: 'self_issued' }> =>
                     i.type !== 'self_issued' && i.issuer === iss
             )
 
             if (!idp) {
+                if (idps.some((i) => i.type === 'self_issued')) {
+                    return await verifySelfIssuedToken(
+                        jwt,
+                        decoded,
+                        store,
+                        logger
+                    )
+                }
                 logger.warn(`No identity provider found for issuer: ${iss}`)
                 return undefined
             }
