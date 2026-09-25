@@ -202,7 +202,7 @@ export type UserUrl = string
 export interface Provider {
     id: ProviderId
     version?: Version
-    providerType?: ProviderType
+    providerType: ProviderType
     url?: Url
     userUrl?: UserUrl
 }

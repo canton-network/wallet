@@ -237,7 +237,7 @@
                         "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/UserUrl"
                     }
                 },
-                "required": ["id", "clientType"]
+                "required": ["id", "providerType"]
             },
             "LedgerApiResult": {
                 "title": "LedgerApiResult",
