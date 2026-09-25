@@ -338,12 +338,63 @@
             "description": "Creates a tokenless session used during self-issued token creation process."
         },
         {
-            "name": "initializeSelfIssuedOnboarding",
+            "name": "getSelfIssuedOnboarding",
             "params": [
                 {
                     "name": "params",
                     "schema": {
-                        "title": "InitializeSelfIssuedOnboardingParams",
+                        "title": "GetSelfIssuedOnboardingParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "username": {
+                                "title": "username",
+                                "type": "string",
+                                "description": "Ledger user id to inspect."
+                            },
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Self-issued network selected for the session."
+                            }
+                        },
+                        "required": ["username", "networkId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetSelfIssuedOnboardingResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "userExists": {
+                            "title": "userExists",
+                            "type": "boolean",
+                            "description": "Whether the ledger user already exists."
+                        },
+                        "wallets": {
+                            "title": "wallets",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/components/schemas/Wallet"
+                            },
+                            "description": "Wallets stored for the user on the selected network."
+                        }
+                    },
+                    "required": ["userExists", "wallets"]
+                }
+            },
+            "description": "Returns the ledger-user and wallet state needed to select the self-issued onboarding path."
+        },
+        {
+            "name": "createSelfIssuedWallet",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "CreateSelfIssuedWalletParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
@@ -360,12 +411,12 @@
                             "networkId": {
                                 "title": "networkId",
                                 "type": "string",
-                                "description": "Network with auth type self-issued to onboard on."
+                                "description": "Self-issued network selected for the session."
                             },
                             "signingProviderId": {
                                 "title": "signingProviderId",
                                 "type": "string",
-                                "description": "Signing provider used to hold keys of the auth party."
+                                "description": "Signing provider used to hold keys of the authentication party."
                             }
                         },
                         "required": [
@@ -380,44 +431,44 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "InitializeSelfIssuedOnboardingResult",
+                    "title": "CreateSelfIssuedWalletResult",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
                         "wallet": {
-                            "description": "Wallet created for self-issued onboarding.",
+                            "description": "The created wallet, possibly awaiting party allocation.",
                             "$ref": "#/components/schemas/Wallet"
                         }
                     },
                     "required": ["wallet"]
                 }
             },
-            "description": "Creates a ledger user and topology transactions signing request."
+            "description": "Creates the ledger user and its self-issued wallet. Party allocation and rights may complete immediately."
         },
         {
-            "name": "finalizeSelfIssuedOnboarding",
+            "name": "allocateSelfIssuedWallet",
             "params": [
                 {
                     "name": "params",
                     "schema": {
-                        "title": "FinalizeSelfIssuedOnboardingParams",
+                        "title": "AllocateSelfIssuedWalletParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
                             "username": {
                                 "title": "username",
                                 "type": "string",
-                                "description": "Ledger user id from initializeSelfIssuedOnboarding."
+                                "description": "Ledger user id."
                             },
                             "networkId": {
                                 "title": "networkId",
                                 "type": "string",
-                                "description": "Self-issued network to onboard on."
+                                "description": "Self-issued network selected for the session."
                             },
                             "partyId": {
                                 "title": "partyId",
                                 "type": "string",
-                                "description": "Party id of the wallet being finalized."
+                                "description": "Party id of the wallet awaiting allocation."
                             }
                         },
                         "required": ["username", "networkId", "partyId"]
@@ -427,24 +478,71 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "FinalizeSelfIssuedOnboardingResult",
+                    "title": "AllocateSelfIssuedWalletResult",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
                         "wallet": {
-                            "description": "Wallet after polling the signing provider and ledger user setup.",
+                            "description": "The wallet after polling allocation and granting user rights.",
                             "$ref": "#/components/schemas/Wallet"
-                        },
-                        "accessToken": {
-                            "title": "accessToken",
-                            "type": "string",
-                            "description": "Self-issued access token, present once the authentication party is allocated."
                         }
                     },
                     "required": ["wallet"]
                 }
             },
-            "description": "Allocates a party and updates ledger user primary party after the topology transaction is signed. Returns an access token once the authentication party is allocated."
+            "description": "Polls the signing provider, allocates the party, and grants ledger-user rights when signing is complete."
+        },
+        {
+            "name": "connectSelfIssuedSession",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "ConnectSelfIssuedSessionParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "username": {
+                                "title": "username",
+                                "type": "string",
+                                "description": "Ledger user id."
+                            },
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Self-issued network selected for the session."
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "Allocated party selected for authentication."
+                            }
+                        },
+                        "required": ["username", "networkId", "partyId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ConnectSelfIssuedSessionResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "wallet": {
+                            "description": "Wallet configured as the user's authentication party.",
+                            "$ref": "#/components/schemas/Wallet"
+                        },
+                        "accessToken": {
+                            "title": "accessToken",
+                            "type": "string",
+                            "description": "Self-issued access token added to the session."
+                        }
+                    },
+                    "required": ["wallet", "accessToken"]
+                }
+            },
+            "description": "Configures the selected wallet as the authentication party, mints a token, and connects the tokenless session."
         },
         {
             "name": "allocatePartyForWallet",

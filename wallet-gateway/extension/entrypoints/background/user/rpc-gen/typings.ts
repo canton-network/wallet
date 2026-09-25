@@ -211,7 +211,7 @@ export type SigningProviderId = string
 export type KeyName = string
 /**
  *
- * Ledger user id from initializeSelfIssuedOnboarding.
+ * Ledger user id.
  *
  */
 export type Username = string
@@ -384,6 +384,18 @@ export interface Wallet {
     reason?: Reason
     rights: Rights
 }
+/**
+ *
+ * Whether the ledger user already exists.
+ *
+ */
+export type UserExists = boolean
+/**
+ *
+ * Wallets stored for the user on the selected network.
+ *
+ */
+export type Wallets = Wallet[]
 type AlwaysTrue = any
 /**
  *
@@ -628,13 +640,22 @@ export interface AddSelfIssuedSessionParams {
     networkId: NetworkId
     origin: Origin
 }
-export interface InitializeSelfIssuedOnboardingParams {
+export interface GetSelfIssuedOnboardingParams {
+    username: Username
+    networkId: NetworkId
+}
+export interface CreateSelfIssuedWalletParams {
     username: Username
     partyHint: PartyHint
     networkId: NetworkId
     signingProviderId: SigningProviderId
 }
-export interface FinalizeSelfIssuedOnboardingParams {
+export interface AllocateSelfIssuedWalletParams {
+    username: Username
+    networkId: NetworkId
+    partyId: PartyId
+}
+export interface ConnectSelfIssuedSessionParams {
     username: Username
     networkId: NetworkId
     partyId: PartyId
@@ -720,12 +741,19 @@ export interface CreateWalletResult {
     wallet: Wallet
 }
 export type NullQu0Arl1F = null
-export interface InitializeSelfIssuedOnboardingResult {
+export interface GetSelfIssuedOnboardingResult {
+    userExists: UserExists
+    wallets: Wallets
+}
+export interface CreateSelfIssuedWalletResult {
     wallet: Wallet
 }
-export interface FinalizeSelfIssuedOnboardingResult {
+export interface AllocateSelfIssuedWalletResult {
     wallet: Wallet
-    accessToken?: AccessToken
+}
+export interface ConnectSelfIssuedSessionResult {
+    wallet: Wallet
+    accessToken: AccessToken
 }
 export interface AllocatePartyForWalletResult {
     wallet: Wallet
@@ -845,12 +873,18 @@ export type CreateWallet = (
 export type AddSelfIssuedSession = (
     params: AddSelfIssuedSessionParams
 ) => Promise<NullQu0Arl1F>
-export type InitializeSelfIssuedOnboarding = (
-    params: InitializeSelfIssuedOnboardingParams
-) => Promise<InitializeSelfIssuedOnboardingResult>
-export type FinalizeSelfIssuedOnboarding = (
-    params: FinalizeSelfIssuedOnboardingParams
-) => Promise<FinalizeSelfIssuedOnboardingResult>
+export type GetSelfIssuedOnboarding = (
+    params: GetSelfIssuedOnboardingParams
+) => Promise<GetSelfIssuedOnboardingResult>
+export type CreateSelfIssuedWallet = (
+    params: CreateSelfIssuedWalletParams
+) => Promise<CreateSelfIssuedWalletResult>
+export type AllocateSelfIssuedWallet = (
+    params: AllocateSelfIssuedWalletParams
+) => Promise<AllocateSelfIssuedWalletResult>
+export type ConnectSelfIssuedSession = (
+    params: ConnectSelfIssuedSessionParams
+) => Promise<ConnectSelfIssuedSessionResult>
 export type AllocatePartyForWallet = (
     params: AllocatePartyForWalletParams
 ) => Promise<AllocatePartyForWalletResult>

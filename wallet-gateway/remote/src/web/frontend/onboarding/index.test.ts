@@ -77,10 +77,19 @@ describe('UserUiSelfIssuedOnboarding', () => {
     })
 
     it('renders the create-party form without the primary-wallet option', async () => {
+        mockRequest.mockResolvedValue({
+            userExists: false,
+            wallets: [],
+        })
         const element = await fixture<UserUiSelfIssuedOnboarding>(
             html`<user-ui-self-issued-onboarding></user-ui-self-issued-onboarding>`
         )
 
+        await waitUntil(
+            () =>
+                element.shadowRoot?.querySelector('wg-wallet-create-form') !==
+                null
+        )
         const form = element.shadowRoot?.querySelector('wg-wallet-create-form')
         expect(form).not.toBeNull()
         expect(form?.shadowRoot?.querySelector('#primary')).toBeNull()
@@ -92,6 +101,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
             status: 'allocated',
         })
         mockRequest
+            .mockResolvedValueOnce({ userExists: false, wallets: [] })
             .mockResolvedValueOnce({ wallet: initializedWallet })
             .mockResolvedValueOnce({
                 wallet: { ...initializedWallet, isAuthParty: true },
@@ -101,16 +111,28 @@ describe('UserUiSelfIssuedOnboarding', () => {
         const element = await fixture<UserUiSelfIssuedOnboarding>(
             html`<user-ui-self-issued-onboarding></user-ui-self-issued-onboarding>`
         )
+        await waitUntil(
+            () =>
+                element.shadowRoot?.querySelector('wg-wallet-create-form') !==
+                null
+        )
         element.shadowRoot
             ?.querySelector('wg-wallet-create-form')
             ?.dispatchEvent(
                 new WalletCreateEvent('auth-party', 'wallet-kernel', false)
             )
 
-        await waitUntil(() => mockRequest.mock.calls.length === 2)
+        await waitUntil(() => mockRequest.mock.calls.length === 3)
 
         expect(mockRequest).toHaveBeenNthCalledWith(1, {
-            method: 'initializeSelfIssuedOnboarding',
+            method: 'getSelfIssuedOnboarding',
+            params: {
+                username: 'alice',
+                networkId: 'network-1',
+            },
+        })
+        expect(mockRequest).toHaveBeenNthCalledWith(2, {
+            method: 'createSelfIssuedWallet',
             params: {
                 username: 'alice',
                 networkId: 'network-1',
@@ -118,8 +140,8 @@ describe('UserUiSelfIssuedOnboarding', () => {
                 signingProviderId: 'wallet-kernel',
             },
         })
-        expect(mockRequest).toHaveBeenNthCalledWith(2, {
-            method: 'finalizeSelfIssuedOnboarding',
+        expect(mockRequest).toHaveBeenNthCalledWith(3, {
+            method: 'connectSelfIssuedSession',
             params: {
                 username: 'alice',
                 networkId: 'network-1',
@@ -142,17 +164,30 @@ describe('UserUiSelfIssuedOnboarding', () => {
             status: 'initialized',
         })
         mockRequest
+            .mockResolvedValueOnce({ userExists: false, wallets: [] })
             .mockResolvedValueOnce({ wallet: pendingWallet })
+            .mockResolvedValueOnce({
+                wallet: {
+                    ...pendingWallet,
+                    status: 'allocated',
+                },
+            })
             .mockResolvedValueOnce({
                 wallet: {
                     ...pendingWallet,
                     status: 'allocated',
                     isAuthParty: true,
                 },
+                accessToken,
             })
 
         const element = await fixture<UserUiSelfIssuedOnboarding>(
             html`<user-ui-self-issued-onboarding></user-ui-self-issued-onboarding>`
+        )
+        await waitUntil(
+            () =>
+                element.shadowRoot?.querySelector('wg-wallet-create-form') !==
+                null
         )
         element.shadowRoot
             ?.querySelector('wg-wallet-create-form')
@@ -168,15 +203,46 @@ describe('UserUiSelfIssuedOnboarding', () => {
             ?.querySelector<HTMLButtonElement>('.status-actions button')
             ?.click()
 
-        await waitUntil(() => mockRequest.mock.calls.length === 2)
-        expect(mockRequest).toHaveBeenLastCalledWith({
-            method: 'finalizeSelfIssuedOnboarding',
+        await waitUntil(() => mockRequest.mock.calls.length === 4)
+        expect(mockRequest).toHaveBeenNthCalledWith(3, {
+            method: 'allocateSelfIssuedWallet',
             params: {
                 username: 'alice',
                 networkId: 'network-1',
                 partyId: 'alice::namespace',
             },
         })
+        expect(mockRequest).toHaveBeenNthCalledWith(4, {
+            method: 'connectSelfIssuedSession',
+            params: {
+                username: 'alice',
+                networkId: 'network-1',
+                partyId: 'alice::namespace',
+            },
+        })
+    })
+
+    it('rejects existing users until wallet selection is implemented', async () => {
+        mockRequest.mockResolvedValue({
+            userExists: true,
+            wallets: [makeWallet()],
+        })
+
+        const element = await fixture<UserUiSelfIssuedOnboarding>(
+            html`<user-ui-self-issued-onboarding></user-ui-self-issued-onboarding>`
+        )
+
+        await waitUntil(
+            () => element.shadowRoot?.querySelector('[role="alert"]') !== null
+        )
+        expect(
+            element.shadowRoot?.querySelector('[role="alert"]')?.textContent
+        ).toContain(
+            'Selecting an existing self-issued user is not implemented yet.'
+        )
+        expect(
+            element.shadowRoot?.querySelector('wg-wallet-create-form')
+        ).toBeNull()
     })
 
     it('shows a configuration error when URL parameters are missing', async () => {

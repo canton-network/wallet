@@ -396,8 +396,10 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'getUser',
             'selfSignedAccessToken',
             'addSelfIssuedSession',
-            'initializeSelfIssuedOnboarding',
-            'finalizeSelfIssuedOnboarding',
+            'getSelfIssuedOnboarding',
+            'createSelfIssuedWallet',
+            'allocateSelfIssuedWallet',
+            'connectSelfIssuedSession',
         ],
     }
 

@@ -23,6 +23,8 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     @state() private accessor submitting = false
     @state() private accessor wallet: Wallet | undefined
     @state() private accessor completed = false
+    @state() private accessor onboardingReady = false
+    @state() private accessor onboardingError: string | undefined
 
     private readonly username = new URLSearchParams(window.location.search).get(
         'username'
@@ -64,7 +66,37 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         `,
     ]
 
-    private async finalizeOnboarding(wallet: Wallet): Promise<void> {
+    async connectedCallback(): Promise<void> {
+        super.connectedCallback()
+        if (!this.username || !this.networkId) {
+            return
+        }
+
+        try {
+            const client = await createUserClient()
+            const state = await client.request({
+                method: 'getSelfIssuedOnboarding',
+                params: {
+                    username: this.username,
+                    networkId: this.networkId,
+                },
+            })
+            if (state.userExists) {
+                throw new Error(
+                    'Selecting an existing self-issued user is not implemented yet.'
+                )
+            }
+            this.onboardingReady = true
+        } catch (error) {
+            this.onboardingError =
+                error instanceof Error
+                    ? error.message
+                    : 'Unable to load self-issued onboarding.'
+            handleErrorToast(error)
+        }
+    }
+
+    private async connectSession(wallet: Wallet): Promise<void> {
         if (!this.username || !this.networkId) {
             return
         }
@@ -73,7 +105,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         try {
             const client = await createUserClient()
             const result = await client.request({
-                method: 'finalizeSelfIssuedOnboarding',
+                method: 'connectSelfIssuedSession',
                 params: {
                     username: this.username,
                     networkId: this.networkId,
@@ -81,19 +113,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 },
             })
 
-            if (result.wallet.status === 'allocated' && result.accessToken) {
-                await this.completeLogin(result.accessToken)
-                return
-            }
-            this.wallet = result.wallet
-            if (result.wallet.status === 'removed') {
-                throw new Error('Party allocation was rejected')
-            }
-            showToast(
-                'Party creation pending',
-                'Approve the signing request, then try again.',
-                'info'
-            )
+            await this.completeLogin(result.accessToken)
         } catch (error) {
             handleErrorToast(error)
         } finally {
@@ -121,9 +141,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         await redirectToIntendedOrDefault()
     }
 
-    private async initializeOnboarding(
-        event: WalletCreateEvent
-    ): Promise<void> {
+    private async allocateParty(wallet: Wallet): Promise<void> {
         if (!this.username || !this.networkId) {
             return
         }
@@ -132,7 +150,43 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         try {
             const client = await createUserClient()
             const result = await client.request({
-                method: 'initializeSelfIssuedOnboarding',
+                method: 'allocateSelfIssuedWallet',
+                params: {
+                    username: this.username,
+                    networkId: this.networkId,
+                    partyId: wallet.partyId,
+                },
+            })
+            this.wallet = result.wallet
+            if (result.wallet.status === 'allocated') {
+                await this.connectSession(result.wallet)
+                return
+            }
+            if (result.wallet.status === 'removed') {
+                throw new Error('Party allocation was rejected')
+            }
+            showToast(
+                'Party creation pending',
+                'Approve the signing request, then try again.',
+                'info'
+            )
+        } catch (error) {
+            handleErrorToast(error)
+        } finally {
+            this.submitting = false
+        }
+    }
+
+    private async createWallet(event: WalletCreateEvent): Promise<void> {
+        if (!this.username || !this.networkId) {
+            return
+        }
+
+        this.submitting = true
+        try {
+            const client = await createUserClient()
+            const result = await client.request({
+                method: 'createSelfIssuedWallet',
                 params: {
                     username: this.username,
                     networkId: this.networkId,
@@ -141,7 +195,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 },
             })
             if (result.wallet.status === 'allocated') {
-                await this.finalizeOnboarding(result.wallet)
+                await this.connectSession(result.wallet)
             } else if (result.wallet.status === 'removed') {
                 throw new Error('Party allocation was rejected')
             } else {
@@ -194,7 +248,19 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                         : nothing
                 }
                 ${
-                    !missingConfiguration && this.wallet && !this.completed
+                    !missingConfiguration && this.onboardingError
+                        ? html`
+                              <div class="alert alert-danger mb-0" role="alert">
+                                  ${this.onboardingError}
+                              </div>
+                          `
+                        : nothing
+                }
+                ${
+                    !missingConfiguration &&
+                    this.onboardingReady &&
+                    this.wallet &&
+                    !this.completed
                         ? html`
                               <div class="status-actions">
                                   <p class="status-message mb-0">
@@ -207,7 +273,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                                       ?disabled=${this.submitting}
                                       @click=${() =>
                                           this.wallet &&
-                                          this.finalizeOnboarding(this.wallet)}
+                                          this.allocateParty(this.wallet)}
                                   >
                                       ${
                                           this.submitting
@@ -220,14 +286,16 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                         : nothing
                 }
                 ${
-                    !missingConfiguration && !this.wallet
+                    !missingConfiguration &&
+                    this.onboardingReady &&
+                    !this.wallet
                         ? html`
                               <wg-wallet-create-form
                                   .signingProviders=${this.signingProviders}
                                   .showPrimary=${false}
                                   .submitLabel=${'Create party'}
                                   ?submitting=${this.submitting}
-                                  @wallet-create=${this.initializeOnboarding}
+                                  @wallet-create=${this.createWallet}
                               ></wg-wallet-create-form>
                           `
                         : nothing

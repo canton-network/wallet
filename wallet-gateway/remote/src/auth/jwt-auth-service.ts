@@ -5,6 +5,7 @@ import {
     type AuthContext,
     type AuthService,
     type Idp,
+    SelfIssuedTokenService,
     resolveUserEmail,
 } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
@@ -14,7 +15,6 @@ import {
     decodeProtectedHeader,
     importJWK,
     jwtVerify,
-    base64url,
 } from 'jose'
 import type { Logger } from 'pino'
 
@@ -116,15 +116,8 @@ async function verifySelfIssuedToken(
         return undefined
     }
 
-    const raw = Uint8Array.from(atob(wallet.publicKey), (char) =>
-        char.charCodeAt(0)
-    )
     const key = await importJWK(
-        {
-            kty: 'OKP',
-            crv: 'Ed25519',
-            x: base64url.encode(raw),
-        },
+        SelfIssuedTokenService.publicKeyToEd25519Jwk(wallet.publicKey),
         'EdDSA'
     )
     await jwtVerify(jwt, key, {

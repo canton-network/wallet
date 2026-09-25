@@ -26,8 +26,10 @@ import type {
     RemoveIdpParams,
     CreateWalletParams,
     AddSelfIssuedSessionParams,
-    InitializeSelfIssuedOnboardingParams,
-    FinalizeSelfIssuedOnboardingParams,
+    GetSelfIssuedOnboardingParams,
+    CreateSelfIssuedWalletParams,
+    AllocateSelfIssuedWalletParams,
+    ConnectSelfIssuedSessionParams,
     AllocatePartyForWalletParams,
     GetTransactionResult,
     GetTransactionParams,
@@ -74,7 +76,7 @@ import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allo
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import { networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
-import { createSelfIssuedOnboardingService } from '../ledger/self-issued-onboarding.js'
+import { createSelfIssuedAuthService } from '../ledger/self-issued-auth-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
     MessageSignatureEvent,
@@ -459,8 +461,20 @@ export const userController = (
 
             return null
         },
-        initializeSelfIssuedOnboarding: async (
-            params: InitializeSelfIssuedOnboardingParams
+        getSelfIssuedOnboarding: async (
+            params: GetSelfIssuedOnboardingParams
+        ) => {
+            const service = await createSelfIssuedAuthService(
+                authAwareStore,
+                params.networkId,
+                params.username,
+                drivers,
+                logger
+            )
+            return service.getOnboardingState(params.username)
+        },
+        createSelfIssuedWallet: async (
+            params: CreateSelfIssuedWalletParams
         ) => {
             const { signingProviderId } = params
             if (!drivers[signingProviderId as SigningProvider]) {
@@ -469,79 +483,90 @@ export const userController = (
                 )
             }
 
-            const service = await createSelfIssuedOnboardingService(
+            const service = await createSelfIssuedAuthService(
                 authAwareStore,
                 params.networkId,
                 params.username,
                 drivers,
                 logger
             )
-            const wallet = await service.initializeOnboarding({
+            const wallet = await service.createWallet({
                 username: params.username,
-                networkId: params.networkId,
                 partyHint: params.partyHint,
                 signingProviderId: signingProviderId as SigningProvider,
             })
             return { wallet }
         },
-        finalizeSelfIssuedOnboarding: async (
-            params: FinalizeSelfIssuedOnboardingParams
+        allocateSelfIssuedWallet: async (
+            params: AllocateSelfIssuedWalletParams
         ) => {
-            const service = await createSelfIssuedOnboardingService(
+            const service = await createSelfIssuedAuthService(
                 authAwareStore,
                 params.networkId,
                 params.username,
                 drivers,
                 logger
             )
-            const { wallet, accessToken } = await service.finalizeOnboarding({
+            const allocated = await service.allocateParty({
                 username: params.username,
-                networkId: params.networkId,
                 partyId: params.partyId,
             })
-            if (accessToken) {
-                const connectedContext = {
-                    userId: params.username.trim(),
-                    accessToken,
-                }
-                const scopedStore =
-                    authAwareStore.withAuthContext(connectedContext)
-                const network = await scopedStore.getCurrentNetwork()
-                if (!network.adminAuth) {
-                    throw new Error('No admin auth configured')
-                }
-                const idp = await getIdpForAuth(network, network.adminAuth)
-                const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
-                const partyAllocator = new PartyAllocationService({
-                    synchronizerId: network.synchronizerId,
-                    accessTokenProvider: adminTokenProvider,
-                    httpLedgerUrl: network.ledgerApi.baseUrl,
-                    logger,
-                })
-                // TODO(#1493) separate rights sync from wallets sync
-                const ledgerClient = new LedgerClient({
-                    baseUrl: new URL(network.ledgerApi.baseUrl),
-                    logger,
-                    accessTokenProvider: AuthTokenProvider.fromToken(
-                        accessToken,
-                        logger
-                    ),
-                })
-                const syncService = new WalletSyncService(
-                    scopedStore,
-                    ledgerClient,
-                    connectedContext,
-                    logger,
-                    drivers,
-                    partyAllocator
-                )
-                await syncService.syncWallets()
+            return { wallet: allocated }
+        },
+        connectSelfIssuedSession: async (
+            params: ConnectSelfIssuedSessionParams
+        ) => {
+            const service = await createSelfIssuedAuthService(
+                authAwareStore,
+                params.networkId,
+                params.username,
+                drivers,
+                logger
+            )
+            const { wallet, accessToken } = await service.connectSession({
+                username: params.username,
+                partyId: params.partyId,
+            })
+            const connectedContext = {
+                userId: params.username.trim(),
+                accessToken,
             }
-            return accessToken ? { wallet, accessToken } : { wallet }
+            const scopedStore = authAwareStore.withAuthContext(connectedContext)
+            const network = await scopedStore.getCurrentNetwork()
+            if (!network.adminAuth) {
+                throw new Error('No admin auth configured')
+            }
+            const idp = await getIdpForAuth(network, network.adminAuth)
+            const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
+                idp,
+                network.adminAuth,
+                logger
+            )
+            const partyAllocator = new PartyAllocationService({
+                synchronizerId: network.synchronizerId,
+                accessTokenProvider: adminTokenProvider,
+                httpLedgerUrl: network.ledgerApi.baseUrl,
+                logger,
+            })
+            // TODO(#1493) separate rights sync from wallets sync
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    accessToken,
+                    logger
+                ),
+            })
+            const syncService = new WalletSyncService(
+                scopedStore,
+                ledgerClient,
+                connectedContext,
+                logger,
+                drivers,
+                partyAllocator
+            )
+            await syncService.syncWallets()
+            return { wallet, accessToken }
         },
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams
