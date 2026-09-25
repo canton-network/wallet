@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-token-standard-v2",
-    "version": "1.12.1",
+    "version": "1.0.0",
     "type": "module",
     "description": "daml codegen js for core token standard v2",
     "license": "Apache-2.0",
