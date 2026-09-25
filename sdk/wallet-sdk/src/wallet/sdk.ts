@@ -61,6 +61,7 @@ export type {
     PrepareOptions,
     ExecuteOptions,
 } from './namespace/ledger/index.ts'
+export type * from './namespace/traffic/types.ts'
 export * from './namespace/transactions/prepared.ts'
 export * from './namespace/transactions/signed.ts'
 export { ScanProxyClient } from '@canton-network/core-splice-client'

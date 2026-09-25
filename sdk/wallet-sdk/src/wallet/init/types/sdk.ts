@@ -4,13 +4,13 @@
 import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
 import type { Provider } from '@canton-network/core-splice-provider'
 import type { TokenProviderConfig } from '@canton-network/core-wallet-auth'
-
 import type { AllowedLogAdapters } from '../../logger/types.ts'
 import type { AmuletNamespace } from '../../namespace/amulet/namespace.ts'
 import type { EventsNamespace } from '../../namespace/events/namespace.ts'
 import type { KeysNamespace } from '../../namespace/keys/index.ts'
 import type { LedgerNamespace } from '../../namespace/ledger/index.ts'
 import type { PartyNamespace } from '../../namespace/party/index.ts'
+import type { TrafficAccountNamespace } from '../../namespace/traffic/index.ts'
 import type { UserNamespace } from '../../namespace/user/index.ts'
 import type { SDKUtilsNamespace } from '../../namespace/utils/index.ts'
 import type { AssetNamespace, TokenNamespace } from '../../sdk.ts'
@@ -89,6 +89,7 @@ export type BasicSDKInterface<
     keys: KeysNamespace
     ledger: LedgerNamespace
     party: PartyNamespace
+    traffic: TrafficAccountNamespace
     user: UserNamespace
     utils: SDKUtilsNamespace
     extend: <ExtendedItems extends keyof ExtendedSDKOptions>(
