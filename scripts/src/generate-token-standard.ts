@@ -71,9 +71,10 @@ const TOKEN_STANDARD_CONFIG_V2 = {
 
 async function syncSources(config: DamlCodegenConfig) {
     const { destDir, sourceDirs, packageName } = config
+    const damlSrcDir = path.join(destDir, 'daml')
     const syncedSources = sourceDirs.map((dir) => ({
         dir,
-        files: mapDamlFiles(dir, destDir),
+        files: mapDamlFiles(dir, damlSrcDir),
     }))
     const missing = syncedSources
         .filter((p) => p.files.length === 0)
@@ -81,7 +82,7 @@ async function syncSources(config: DamlCodegenConfig) {
 
     // in CI, for the generate:all step, build from what is already in the package because the distribution is not fetched
     if (missing.length === syncedSources.length) {
-        if (getAllFilesWithExtension(destDir, '.daml').length === 0) {
+        if (getAllFilesWithExtension(damlSrcDir, '.daml').length === 0) {
             throw new Error(
                 `${packageName} no distribution in ${tokenStandardSplicePath}. Fetch splice distribution first.`
             )
@@ -104,7 +105,7 @@ async function syncSources(config: DamlCodegenConfig) {
             continue
         }
 
-        await copyDamlFiles(dir, destDir)
+        await copyDamlFiles(dir, damlSrcDir)
     }
 }
 
