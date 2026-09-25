@@ -13,16 +13,16 @@
                 "../../damljs/token-standard-models-v2/token-standard-models-v2-1.0.0/*"
             ],
             "@daml.js/ghc-stdlib-DA-Internal-Template-1.0.0": [
-                "../../damljs/token-standard-models/ghc-stdlib-DA-Internal-Template-1.0.0/lib/index.d.ts"
+                "../../damljs/token-standard-models-v2/ghc-stdlib-DA-Internal-Template-1.0.0/lib/index.d.ts"
             ],
             "@daml.js/ghc-stdlib-DA-Internal-Template-1.0.0/*": [
-                "../../damljs/token-standard-models/ghc-stdlib-DA-Internal-Template-1.0.0/*"
+                "../../damljs/token-standard-models-v2/ghc-stdlib-DA-Internal-Template-1.0.0/*"
             ],
             "@daml.js/daml-stdlib-DA-Time-Types-1.0.0": [
-                "../../damljs/token-standard-models/daml-stdlib-DA-Time-Types-1.0.0/lib/index.d.ts"
+                "../../damljs/token-standard-models-v2/daml-stdlib-DA-Time-Types-1.0.0/lib/index.d.ts"
             ],
             "@daml.js/daml-stdlib-DA-Time-Types-1.0.0/*": [
-                "../../damljs/token-standard-models/daml-stdlib-DA-Time-Types-1.0.0/*"
+                "../../damljs/token-standard-models-v2/daml-stdlib-DA-Time-Types-1.0.0/*"
             ]
         }
     },
