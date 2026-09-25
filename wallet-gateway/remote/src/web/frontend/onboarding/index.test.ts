@@ -18,6 +18,9 @@ const {
     addUserSession,
     redirectToIntendedOrDefault,
     accessTokenSet,
+    onboardingSessionIdGet,
+    onboardingSessionIdClear,
+    networkIdGet,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
@@ -25,6 +28,9 @@ const {
     addUserSession: vi.fn(),
     redirectToIntendedOrDefault: vi.fn(),
     accessTokenSet: vi.fn(),
+    onboardingSessionIdGet: vi.fn(),
+    onboardingSessionIdClear: vi.fn(),
+    networkIdGet: vi.fn(),
 }))
 
 vi.mock('../rpc-client.js', () => ({
@@ -39,6 +45,11 @@ vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { set: accessTokenSet },
         expirationDate: { set: vi.fn() },
+        networkId: { get: networkIdGet },
+        onboardingSessionId: {
+            get: onboardingSessionIdGet,
+            clear: onboardingSessionIdClear,
+        },
     },
 }))
 vi.mock('../listeners.js', () => ({
@@ -62,7 +73,8 @@ const accessToken = `header.${btoa(JSON.stringify({ exp: 2_000_000_000 }))}.sig`
 
 describe('UserUiSelfIssuedOnboarding', () => {
     beforeEach(() => {
-        history.replaceState({}, '', '?username=alice&networkId=network-1')
+        onboardingSessionIdGet.mockReturnValue('onboarding-session-1')
+        networkIdGet.mockReturnValue('network-1')
         mockRequest.mockReset()
         mockCreateUserClient.mockReset()
         handleErrorToast.mockReset()
@@ -72,7 +84,6 @@ describe('UserUiSelfIssuedOnboarding', () => {
 
     afterEach(() => {
         document.body.innerHTML = ''
-        history.replaceState({}, '', '/')
         vi.clearAllMocks()
     })
 
@@ -126,16 +137,12 @@ describe('UserUiSelfIssuedOnboarding', () => {
 
         expect(mockRequest).toHaveBeenNthCalledWith(1, {
             method: 'getSelfIssuedOnboarding',
-            params: {
-                username: 'alice',
-                networkId: 'network-1',
-            },
+            params: { sessionId: 'onboarding-session-1' },
         })
         expect(mockRequest).toHaveBeenNthCalledWith(2, {
             method: 'createSelfIssuedWallet',
             params: {
-                username: 'alice',
-                networkId: 'network-1',
+                sessionId: 'onboarding-session-1',
                 partyHint: 'auth-party',
                 signingProviderId: 'wallet-kernel',
             },
@@ -143,8 +150,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
         expect(mockRequest).toHaveBeenNthCalledWith(3, {
             method: 'connectSelfIssuedSession',
             params: {
-                username: 'alice',
-                networkId: 'network-1',
+                sessionId: 'onboarding-session-1',
                 partyId: 'alice::namespace',
             },
         })
@@ -153,6 +159,9 @@ describe('UserUiSelfIssuedOnboarding', () => {
         )
         expect(accessTokenSet).toHaveBeenCalledWith(
             accessToken,
+            'https://app.example'
+        )
+        expect(onboardingSessionIdClear).toHaveBeenCalledWith(
             'https://app.example'
         )
         expect(addUserSession).toHaveBeenCalledWith(accessToken, 'network-1')
@@ -207,16 +216,14 @@ describe('UserUiSelfIssuedOnboarding', () => {
         expect(mockRequest).toHaveBeenNthCalledWith(3, {
             method: 'allocateSelfIssuedWallet',
             params: {
-                username: 'alice',
-                networkId: 'network-1',
+                sessionId: 'onboarding-session-1',
                 partyId: 'alice::namespace',
             },
         })
         expect(mockRequest).toHaveBeenNthCalledWith(4, {
             method: 'connectSelfIssuedSession',
             params: {
-                username: 'alice',
-                networkId: 'network-1',
+                sessionId: 'onboarding-session-1',
                 partyId: 'alice::namespace',
             },
         })
@@ -245,18 +252,22 @@ describe('UserUiSelfIssuedOnboarding', () => {
         ).toBeNull()
     })
 
-    it('shows a configuration error when URL parameters are missing', async () => {
-        history.replaceState({}, '', '/onboarding/')
+    it('shows an error when there is no onboarding session', async () => {
+        onboardingSessionIdGet.mockReturnValue(undefined)
 
         const element = await fixture<UserUiSelfIssuedOnboarding>(
             html`<user-ui-self-issued-onboarding></user-ui-self-issued-onboarding>`
         )
 
+        await waitUntil(
+            () => element.shadowRoot?.querySelector('[role="alert"]') !== null
+        )
         expect(
-            element.shadowRoot?.querySelector('[role="alert"]')
-        ).not.toBeNull()
+            element.shadowRoot?.querySelector('[role="alert"]')?.textContent
+        ).toContain('No onboarding session found')
         expect(
             element.shadowRoot?.querySelector('wg-wallet-create-form')
         ).toBeNull()
+        expect(mockRequest).not.toHaveBeenCalled()
     })
 })

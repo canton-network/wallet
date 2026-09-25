@@ -139,7 +139,7 @@ export class LoginUI extends BaseElement {
                 }
 
                 const userClient = await createUserClient()
-                await userClient.request({
+                const { sessionId } = await userClient.request({
                     method: 'addSelfIssuedSession',
                     params: {
                         username: onboardingUsername,
@@ -147,14 +147,14 @@ export class LoginUI extends BaseElement {
                         origin: currentOrigin,
                     },
                 })
+                stateManager.onboardingSessionId.set(sessionId, currentOrigin)
 
-                const onboardingUrl = new URL(
-                    toRelHref('/onboarding'),
-                    window.location.origin
+                setLocationHref(
+                    new URL(
+                        toRelHref('/onboarding'),
+                        window.location.origin
+                    ).toString()
                 )
-                onboardingUrl.searchParams.set('username', onboardingUsername)
-                onboardingUrl.searchParams.set('networkId', selectedNetwork.id)
-                setLocationHref(onboardingUrl.toString())
                 return
             }
 

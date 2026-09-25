@@ -197,6 +197,13 @@ export interface Store {
      */
     removeSession(accessToken: string): Promise<void>
 
+    /**
+     * Looks up a tokenless self-issued onboarding session by id without scoping
+     * to the authenticated user, because the session is what identifies the user.
+     * Returns undefined once the session has been upgraded with an access token.
+     */
+    getOnboardingSession(sessionId: string): Promise<Session | undefined>
+
     // IDP methods
     getIdp(idpId: string): Promise<Idp>
     listIdps(): Promise<Array<Idp>>

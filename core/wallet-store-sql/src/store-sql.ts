@@ -445,13 +445,21 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         }
 
         await this.db.transaction().execute(async (trx) => {
-            let deleteQuery = trx
+            const deleted = await trx
                 .deleteFrom('sessions')
                 .where('userId', '=', userId)
-            deleteQuery = session.accessToken
-                ? deleteQuery.where('origin', '=', session.origin)
-                : deleteQuery.where('accessToken', 'is', null)
-            const deleted = await deleteQuery.execute()
+                .where((eb) =>
+                    session.accessToken
+                        ? eb('origin', '=', session.origin)
+                        : eb.or([
+                              eb('origin', '=', session.origin),
+                              eb.and([
+                                  eb('accessToken', 'is', null),
+                                  eb('network', '=', session.network),
+                              ]),
+                          ])
+                )
+                .execute()
             this.logger.debug(deleted, 'Deleted old session')
 
             const inserted = await trx
@@ -465,6 +473,18 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
             this.logger.debug(inserted, 'Inserted new session')
         })
+    }
+
+    async getOnboardingSession(
+        sessionId: string
+    ): Promise<Session | undefined> {
+        const row = await this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('id', '=', sessionId)
+            .where('accessToken', 'is', null)
+            .executeTakeFirst()
+        return row ? toSession(row) : undefined
     }
 
     async removeSession(accessToken: string): Promise<void> {
@@ -580,16 +600,27 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     async getCurrentNetwork(): Promise<Network> {
         const userId = this.assertConnected()
         const token = this.authContext?.accessToken
-        let sessionQuery = this.db
+        const onboardingSessionId =
+            this.authContext && !this.authContext.isApiKey
+                ? this.authContext.sessionId
+                : undefined
+        if (!token && !onboardingSessionId) {
+            throw new Error('No session found')
+        }
+
+        const sessionRow = await this.db
             .selectFrom('sessions')
             .selectAll()
             .where('userId', '=', userId)
-        // Self-issued onboarding has a user-scoped session before it has a token.
-        sessionQuery = token
-            ? sessionQuery.where('accessToken', '=', token)
-            : // TODO this doesn't seem okay, I probably need a different way to grab a session without token
-              sessionQuery.where('accessToken', 'is', null)
-        const sessionRow = await sessionQuery.executeTakeFirst()
+            .where((eb) =>
+                token
+                    ? eb('accessToken', '=', token)
+                    : eb.and([
+                          eb('id', '=', onboardingSessionId!),
+                          eb('accessToken', 'is', null),
+                      ])
+            )
+            .executeTakeFirst()
         if (!sessionRow) {
             throw new Error('No session found')
         }

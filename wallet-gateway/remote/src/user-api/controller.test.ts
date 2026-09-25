@@ -293,26 +293,35 @@ describe('userController', () => {
                 undefined
             )
 
-            await controller.addSelfIssuedSession({
+            const { sessionId } = await controller.addSelfIssuedSession({
                 username: 'alice',
                 networkId: selfIssuedNetwork.id,
                 origin: 'https://example.com',
             })
 
-            const onboardingStore = store.withAuthContext({
-                userId: 'alice',
-                accessToken: '',
-            })
-            await expect(onboardingStore.listSessions()).resolves.toEqual([
+            await expect(
+                store.getOnboardingSession(sessionId)
+            ).resolves.toEqual(
                 expect.objectContaining({
+                    id: sessionId,
                     origin: 'https://example.com',
                     network: selfIssuedNetwork.id,
                     userId: 'alice',
-                }),
-            ])
+                })
+            )
+            const onboardingStore = store.withAuthContext({
+                userId: 'alice',
+                accessToken: '',
+                sessionId,
+            })
             await expect(onboardingStore.getCurrentNetwork()).resolves.toEqual(
                 selfIssuedNetwork
             )
+            await expect(
+                store
+                    .withAuthContext({ userId: 'alice', accessToken: '' })
+                    .getCurrentNetwork()
+            ).rejects.toThrow('No session found')
         })
     })
 

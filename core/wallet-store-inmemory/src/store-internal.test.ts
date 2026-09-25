@@ -377,7 +377,11 @@ implementations.forEach(([name, StoreImpl]) => {
             const onboardingStore = new StoreInternal(
                 { idps: [oauthIdp()], networks: [network] },
                 getLogger('mock'),
-                { userId: authContextMock.userId, accessToken: '' }
+                {
+                    userId: authContextMock.userId,
+                    accessToken: '',
+                    sessionId: 'onboarding-session',
+                }
             )
             await onboardingStore.setSession({
                 id: 'onboarding-session',
@@ -388,11 +392,22 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(onboardingStore.getCurrentNetwork()).resolves.toEqual(
                 network
             )
-            await expect(onboardingStore.listSessions()).resolves.toEqual([
+            await expect(
+                onboardingStore.getOnboardingSession('onboarding-session')
+            ).resolves.toEqual(
                 expect.objectContaining({
                     id: 'onboarding-session',
-                }),
-            ])
+                    userId: authContextMock.userId,
+                })
+            )
+            await expect(
+                onboardingStore
+                    .withAuthContext({
+                        userId: authContextMock.userId,
+                        accessToken: '',
+                    })
+                    .getCurrentNetwork()
+            ).rejects.toThrow('No session found')
         })
 
         test('should replace a tokenless session when authentication completes', async () => {

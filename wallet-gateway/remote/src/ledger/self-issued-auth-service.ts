@@ -19,14 +19,17 @@ import type { Logger } from 'pino'
 import { PartyAllocationService } from './party-allocation-service.js'
 import { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
 
+export type SelfIssuedOnboardingSession = {
+    userId: string
+    sessionId: string
+}
+
 export type CreatePartyParams = {
-    username: string
     partyHint: string
     signingProviderId: SigningProvider
 }
 
 export type PartyParams = {
-    username: string
     partyId: string
 }
 
@@ -39,6 +42,7 @@ const ACCESS_TOKEN_TTL_SECONDS = 10 * 60
 
 export class SelfIssuedAuthService {
     constructor(
+        private readonly session: SelfIssuedOnboardingSession,
         private readonly store: Store,
         private readonly logger: Logger,
         private readonly walletAllocator: WalletAllocationService,
@@ -46,22 +50,20 @@ export class SelfIssuedAuthService {
         private readonly drivers: SigningDrivers
     ) {}
 
-    async getOnboardingState(
-        username: string
-    ): Promise<SelfIssuedOnboardingState> {
-        const user = await this.getExistingUser(this.requireUsername(username))
+    async getOnboardingState(): Promise<SelfIssuedOnboardingState> {
+        const user = await this.getExistingUser()
         return {
             userExists: user !== null,
             wallets: await this.store.getWallets(),
         }
     }
 
-    private async getExistingUser(username: string) {
+    private async getExistingUser() {
         try {
             const response = await this.ledgerClient.get(
                 '/v2/users/{user-id}',
                 {
-                    path: { 'user-id': username },
+                    path: { 'user-id': this.session.userId },
                 }
             )
             return response.user ?? null
@@ -74,7 +76,7 @@ export class SelfIssuedAuthService {
     }
 
     async createWallet(params: CreatePartyParams): Promise<Wallet> {
-        const username = this.requireUsername(params.username)
+        const username = this.session.userId
         const partyHint = params.partyHint.trim()
         if (!partyHint) {
             throw new Error('partyHint is required')
@@ -85,7 +87,7 @@ export class SelfIssuedAuthService {
             )
         }
 
-        if (await this.getExistingUser(username)) {
+        if (await this.getExistingUser()) {
             throw new Error(
                 'Selecting an existing self-issued user is not implemented yet.'
             )
@@ -102,7 +104,7 @@ export class SelfIssuedAuthService {
 
         // TODO handle case when this fails, but user is already created
         const wallet = await this.walletAllocator.createWallet(
-            this.authContext(username),
+            this.authContext(),
             partyHint,
             false,
             params.signingProviderId
@@ -123,14 +125,13 @@ export class SelfIssuedAuthService {
     }
 
     async allocateParty(params: PartyParams): Promise<Wallet> {
-        const username = this.requireUsername(params.username)
         const wallet = await this.requireWallet(params.partyId)
         if (wallet.status === 'allocated') {
             return wallet
         }
 
         await this.walletAllocator.allocateParty(
-            this.authContext(username),
+            this.authContext(),
             wallet,
             wallet.signingProviderId as SigningProvider
         )
@@ -141,7 +142,7 @@ export class SelfIssuedAuthService {
     async connectSession(
         params: PartyParams
     ): Promise<{ wallet: Wallet; accessToken: string }> {
-        const username = this.requireUsername(params.username)
+        const username = this.session.userId
         const wallet = await this.requireWallet(params.partyId)
         if (wallet.status !== 'allocated') {
             throw new Error(
@@ -170,10 +171,7 @@ export class SelfIssuedAuthService {
             isAuthParty: true,
         })
         const authPartyWallet = await this.requireWallet(wallet.partyId)
-        const accessToken = await this.mintAccessToken(
-            username,
-            authPartyWallet
-        )
+        const accessToken = await this.mintAccessToken(authPartyWallet)
 
         this.logger.info(
             {
@@ -189,14 +187,6 @@ export class SelfIssuedAuthService {
         return { wallet: authPartyWallet, accessToken }
     }
 
-    private requireUsername(username: string): string {
-        const trimmed = username.trim()
-        if (!trimmed) {
-            throw new Error('username is required')
-        }
-        return trimmed
-    }
-
     private async requireWallet(partyId: string): Promise<Wallet> {
         const wallet = await this.store.getWallet(partyId)
         if (!wallet) {
@@ -205,10 +195,8 @@ export class SelfIssuedAuthService {
         return wallet
     }
 
-    private async mintAccessToken(
-        username: string,
-        wallet: Wallet
-    ): Promise<string> {
+    private async mintAccessToken(wallet: Wallet): Promise<string> {
+        const username = this.session.userId
         const network = await this.store.getCurrentNetwork()
         if (network.auth.method !== 'self_issued') {
             throw new Error('Network does not use self_issued authentication')
@@ -271,8 +259,8 @@ export class SelfIssuedAuthService {
             )
         }
 
-        const onboardingSession = (await this.store.listSessions()).find(
-            (session) => !session.accessToken
+        const onboardingSession = await this.store.getOnboardingSession(
+            this.session.sessionId
         )
         if (!onboardingSession) {
             throw new Error('Onboarding session not found')
@@ -286,34 +274,31 @@ export class SelfIssuedAuthService {
         return token
     }
 
-    private authContext(username: string): AuthContext {
-        return {
-            userId: username,
-            accessToken: '',
-        }
+    private authContext(): AuthContext {
+        return toOnboardingAuthContext(this.session)
+    }
+}
+
+function toOnboardingAuthContext(
+    session: SelfIssuedOnboardingSession
+): AuthContext {
+    return {
+        userId: session.userId,
+        accessToken: '',
+        sessionId: session.sessionId,
     }
 }
 
 export async function createSelfIssuedAuthService(
     bootstrapStore: Store & AuthAware<Store>,
-    networkId: string,
-    username: string,
+    session: SelfIssuedOnboardingSession,
     drivers: SigningDrivers,
     logger: Logger
 ): Promise<SelfIssuedAuthService> {
-    const trimmedUsername = username.trim()
-    if (!trimmedUsername) {
-        throw new Error('username is required')
-    }
-
-    const scopedStore = bootstrapStore.withAuthContext({
-        userId: trimmedUsername,
-        accessToken: '',
-    })
+    const scopedStore = bootstrapStore.withAuthContext(
+        toOnboardingAuthContext(session)
+    )
     const network = await scopedStore.getCurrentNetwork()
-    if (network.id !== networkId) {
-        throw new Error('Onboarding session network does not match networkId')
-    }
     if (network.auth.method !== 'self_issued') {
         throw new Error('Network does not use self_issued authentication')
     }
@@ -357,6 +342,7 @@ export async function createSelfIssuedAuthService(
     })
 
     return new SelfIssuedAuthService(
+        session,
         scopedStore,
         logger,
         walletAllocationService,

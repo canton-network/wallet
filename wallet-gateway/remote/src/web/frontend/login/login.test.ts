@@ -25,6 +25,7 @@ const {
     mockExpirationDateSet,
     mockNetworkIdSet,
     mockNetworkIdGet,
+    mockOnboardingSessionIdSet,
     setLocationHref,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
@@ -36,6 +37,7 @@ const {
     mockExpirationDateSet: vi.fn(),
     mockNetworkIdSet: vi.fn(),
     mockNetworkIdGet: vi.fn(() => 'net-1'),
+    mockOnboardingSessionIdSet: vi.fn(),
     setLocationHref: vi.fn(),
 }))
 
@@ -64,6 +66,7 @@ vi.mock('../state-manager.js', () => ({
         },
         expirationDate: { set: mockExpirationDateSet },
         networkId: { set: mockNetworkIdSet, get: mockNetworkIdGet },
+        onboardingSessionId: { set: mockOnboardingSessionIdSet },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
@@ -169,6 +172,7 @@ describe('LoginUI', () => {
         mockNetworkIdSet.mockReset()
         mockNetworkIdGet.mockReset()
         mockNetworkIdGet.mockReturnValue('net-1')
+        mockOnboardingSessionIdSet.mockReset()
         setLocationHref.mockReset()
         mockGetAccessToken.mockResolvedValue(defaultAccessToken)
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
@@ -181,6 +185,9 @@ describe('LoginUI', () => {
             }
             if (method === 'selfSignedAccessToken') {
                 return { accessToken: defaultAccessToken }
+            }
+            if (method === 'addSelfIssuedSession') {
+                return { sessionId: 'onboarding-session-1' }
             }
             return undefined
         })
@@ -253,12 +260,13 @@ describe('LoginUI', () => {
                 origin: window.location.origin,
             },
         })
+        expect(mockOnboardingSessionIdSet).toHaveBeenCalledWith(
+            'onboarding-session-1',
+            window.location.origin
+        )
         const redirectUrl = new URL(setLocationHref.mock.calls[0]![0])
         expect(redirectUrl.pathname).toBe('/onboarding/')
-        expect(redirectUrl.searchParams.get('username')).toBe('alice')
-        expect(redirectUrl.searchParams.get('networkId')).toBe(
-            'self-issued-network'
-        )
+        expect(redirectUrl.search).toBe('')
     })
 
     it('sends the client secret from the login form', async () => {

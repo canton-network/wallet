@@ -25,14 +25,11 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     @state() private accessor completed = false
     @state() private accessor onboardingReady = false
     @state() private accessor onboardingError: string | undefined
+    @state() private accessor sessionLoaded = false
 
-    private readonly username = new URLSearchParams(window.location.search).get(
-        'username'
-    )
-
-    private readonly networkId = new URLSearchParams(
-        window.location.search
-    ).get('networkId')
+    private origin: string | undefined
+    private sessionId: string | undefined
+    private networkId: string | undefined
 
     private readonly signingProviders = [SigningProvider.WALLET_KERNEL]
 
@@ -68,7 +65,11 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        if (!this.username || !this.networkId) {
+        this.origin = await detectCurrentOrigin()
+        this.sessionId = stateManager.onboardingSessionId.get(this.origin)
+        this.networkId = stateManager.networkId.get(this.origin)
+        this.sessionLoaded = true
+        if (!this.sessionId || !this.networkId) {
             return
         }
 
@@ -76,10 +77,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
             const client = await createUserClient()
             const state = await client.request({
                 method: 'getSelfIssuedOnboarding',
-                params: {
-                    username: this.username,
-                    networkId: this.networkId,
-                },
+                params: { sessionId: this.sessionId },
             })
             if (state.userExists) {
                 throw new Error(
@@ -97,7 +95,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     }
 
     private async connectSession(wallet: Wallet): Promise<void> {
-        if (!this.username || !this.networkId) {
+        if (!this.sessionId) {
             return
         }
 
@@ -107,8 +105,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
             const result = await client.request({
                 method: 'connectSelfIssuedSession',
                 params: {
-                    username: this.username,
-                    networkId: this.networkId,
+                    sessionId: this.sessionId,
                     partyId: wallet.partyId,
                 },
             })
@@ -122,10 +119,11 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     }
 
     private async completeLogin(accessToken: string): Promise<void> {
-        if (!this.networkId) {
+        if (!this.networkId || !this.origin) {
             return
         }
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = this.origin
+        stateManager.onboardingSessionId.clear(currentOrigin)
         const payloadSegment = accessToken.split('.')[1] ?? ''
         const payload = JSON.parse(
             atob(payloadSegment.replace(/-/g, '+').replace(/_/g, '/'))
@@ -142,7 +140,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     }
 
     private async allocateParty(wallet: Wallet): Promise<void> {
-        if (!this.username || !this.networkId) {
+        if (!this.sessionId) {
             return
         }
 
@@ -152,8 +150,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
             const result = await client.request({
                 method: 'allocateSelfIssuedWallet',
                 params: {
-                    username: this.username,
-                    networkId: this.networkId,
+                    sessionId: this.sessionId,
                     partyId: wallet.partyId,
                 },
             })
@@ -178,7 +175,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     }
 
     private async createWallet(event: WalletCreateEvent): Promise<void> {
-        if (!this.username || !this.networkId) {
+        if (!this.sessionId) {
             return
         }
 
@@ -188,8 +185,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
             const result = await client.request({
                 method: 'createSelfIssuedWallet',
                 params: {
-                    username: this.username,
-                    networkId: this.networkId,
+                    sessionId: this.sessionId,
                     partyHint: event.partyHint,
                     signingProviderId: event.signingProviderId,
                 },
@@ -214,7 +210,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     }
 
     protected render() {
-        const missingConfiguration = !this.username || !this.networkId
+        const missingConfiguration = !this.sessionId || !this.networkId
 
         return html`
             <section class="onboarding-card">
@@ -225,11 +221,11 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 </p>
 
                 ${
-                    missingConfiguration
+                    this.sessionLoaded && missingConfiguration
                         ? html`
                               <div class="alert alert-danger mb-0" role="alert">
-                                  Onboarding requires username and networkId URL
-                                  parameters.
+                                  No onboarding session found. Start onboarding
+                                  from the login page.
                               </div>
                           `
                         : nothing

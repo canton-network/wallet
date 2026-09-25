@@ -332,7 +332,17 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "type": "null"
+                    "title": "AddSelfIssuedSessionResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "sessionId": {
+                            "title": "sessionId",
+                            "type": "string",
+                            "description": "Onboarding session id required by the remaining self-issued onboarding methods."
+                        }
+                    },
+                    "required": ["sessionId"]
                 }
             },
             "description": "Creates a tokenless session used during self-issued token creation process."
@@ -347,18 +357,13 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "username": {
-                                "title": "username",
+                            "sessionId": {
+                                "title": "sessionId",
                                 "type": "string",
-                                "description": "Ledger user id to inspect."
-                            },
-                            "networkId": {
-                                "title": "networkId",
-                                "type": "string",
-                                "description": "Self-issued network selected for the session."
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
                             }
                         },
-                        "required": ["username", "networkId"]
+                        "required": ["sessionId"]
                     }
                 }
             ],
@@ -398,20 +403,15 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "username": {
-                                "title": "username",
+                            "sessionId": {
+                                "title": "sessionId",
                                 "type": "string",
-                                "description": "Ledger user id."
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
                             },
                             "partyHint": {
                                 "title": "partyHint",
                                 "type": "string",
                                 "description": "The party hint and name of the wallet."
-                            },
-                            "networkId": {
-                                "title": "networkId",
-                                "type": "string",
-                                "description": "Self-issued network selected for the session."
                             },
                             "signingProviderId": {
                                 "title": "signingProviderId",
@@ -420,9 +420,8 @@
                             }
                         },
                         "required": [
-                            "username",
+                            "sessionId",
                             "partyHint",
-                            "networkId",
                             "signingProviderId"
                         ]
                     }
@@ -443,7 +442,7 @@
                     "required": ["wallet"]
                 }
             },
-            "description": "Creates the ledger user and its self-issued wallet. Party allocation and rights may complete immediately."
+            "description": "Creates a ledger user and topology transactions signing request."
         },
         {
             "name": "allocateSelfIssuedWallet",
@@ -455,15 +454,10 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "username": {
-                                "title": "username",
+                            "sessionId": {
+                                "title": "sessionId",
                                 "type": "string",
-                                "description": "Ledger user id."
-                            },
-                            "networkId": {
-                                "title": "networkId",
-                                "type": "string",
-                                "description": "Self-issued network selected for the session."
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
                             },
                             "partyId": {
                                 "title": "partyId",
@@ -471,7 +465,7 @@
                                 "description": "Party id of the wallet awaiting allocation."
                             }
                         },
-                        "required": ["username", "networkId", "partyId"]
+                        "required": ["sessionId", "partyId"]
                     }
                 }
             ],
@@ -502,15 +496,10 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                            "username": {
-                                "title": "username",
+                            "sessionId": {
+                                "title": "sessionId",
                                 "type": "string",
-                                "description": "Ledger user id."
-                            },
-                            "networkId": {
-                                "title": "networkId",
-                                "type": "string",
-                                "description": "Self-issued network selected for the session."
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
                             },
                             "partyId": {
                                 "title": "partyId",
@@ -518,7 +507,7 @@
                                 "description": "Allocated party selected for authentication."
                             }
                         },
-                        "required": ["username", "networkId", "partyId"]
+                        "required": ["sessionId", "partyId"]
                     }
                 }
             ],
@@ -542,7 +531,7 @@
                     "required": ["wallet", "accessToken"]
                 }
             },
-            "description": "Configures the selected wallet as the authentication party, mints a token, and connects the tokenless session."
+            "description": "Configures the selected wallet as the authentication party, mints a token, and stores it in the session."
         },
         {
             "name": "allocatePartyForWallet",

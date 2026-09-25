@@ -212,7 +212,7 @@ export type SigningProviderId = string
 export type KeyName = string
 /**
  *
- * Ledger user id.
+ * User id used while onboarding.
  *
  */
 export type Username = string
@@ -222,6 +222,12 @@ export type Username = string
  *
  */
 export type Origin = string
+/**
+ *
+ * Onboarding session id required by the remaining self-issued onboarding methods.
+ *
+ */
+export type SessionId = string
 /**
  *
  * The party ID corresponding to the wallet.
@@ -642,23 +648,19 @@ export interface AddSelfIssuedSessionParams {
     origin: Origin
 }
 export interface GetSelfIssuedOnboardingParams {
-    username: Username
-    networkId: NetworkId
+    sessionId: SessionId
 }
 export interface CreateSelfIssuedWalletParams {
-    username: Username
+    sessionId: SessionId
     partyHint: PartyHint
-    networkId: NetworkId
     signingProviderId: SigningProviderId
 }
 export interface AllocateSelfIssuedWalletParams {
-    username: Username
-    networkId: NetworkId
+    sessionId: SessionId
     partyId: PartyId
 }
 export interface ConnectSelfIssuedSessionParams {
-    username: Username
-    networkId: NetworkId
+    sessionId: SessionId
     partyId: PartyId
 }
 export interface AllocatePartyForWalletParams {
@@ -741,7 +743,9 @@ export interface ListIdpsResult {
 export interface CreateWalletResult {
     wallet: Wallet
 }
-export type NullQu0Arl1F = null
+export interface AddSelfIssuedSessionResult {
+    sessionId: SessionId
+}
 export interface GetSelfIssuedOnboardingResult {
     userExists: UserExists
     wallets: Wallets
@@ -873,7 +877,7 @@ export type CreateWallet = (
 ) => Promise<CreateWalletResult>
 export type AddSelfIssuedSession = (
     params: AddSelfIssuedSessionParams
-) => Promise<NullQu0Arl1F>
+) => Promise<AddSelfIssuedSessionResult>
 export type GetSelfIssuedOnboarding = (
     params: GetSelfIssuedOnboardingParams
 ) => Promise<GetSelfIssuedOnboardingResult>

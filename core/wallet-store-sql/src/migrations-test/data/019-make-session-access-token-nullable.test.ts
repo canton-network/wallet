@@ -76,7 +76,7 @@ forEachDialect('migration 019 - nullable session access token', ({ getDb }) => {
             await indexExists(
                 db,
                 'sessions',
-                'sessions_one_onboarding_session_per_user'
+                'sessions_one_onboarding_session_per_user_network'
             )
         ).toBe(true)
     })
@@ -114,7 +114,7 @@ forEachDialect('migration 019 - nullable session access token', ({ getDb }) => {
             await indexExists(
                 db,
                 'sessions',
-                'sessions_one_onboarding_session_per_user'
+                'sessions_one_onboarding_session_per_user_network'
             )
         ).toBe(false)
     })

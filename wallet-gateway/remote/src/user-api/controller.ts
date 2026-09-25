@@ -76,7 +76,10 @@ import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allo
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import { networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
-import { createSelfIssuedAuthService } from '../ledger/self-issued-auth-service.js'
+import {
+    createSelfIssuedAuthService,
+    type SelfIssuedOnboardingSession,
+} from '../ledger/self-issued-auth-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
     MessageSignatureEvent,
@@ -122,6 +125,16 @@ export const userController = (
             throw new Error(
                 'Unauthorized: only the admin user can perform this operation'
             )
+        }
+    }
+
+    function requireOnboardingSession(): SelfIssuedOnboardingSession {
+        if (!authContext || authContext.isApiKey || !authContext.sessionId) {
+            throw new Error('No onboarding session found')
+        }
+        return {
+            userId: authContext.userId,
+            sessionId: authContext.sessionId,
         }
     }
 
@@ -453,25 +466,25 @@ export const userController = (
                 userId: username,
                 accessToken: '',
             })
+            const sessionId = v4()
             await onboardingStore.setSession({
-                id: v4(),
+                id: sessionId,
                 origin: params.origin,
                 network: network.id,
             })
 
-            return null
+            return { sessionId }
         },
         getSelfIssuedOnboarding: async (
-            params: GetSelfIssuedOnboardingParams
+            _params: GetSelfIssuedOnboardingParams
         ) => {
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                params.networkId,
-                params.username,
+                requireOnboardingSession(),
                 drivers,
                 logger
             )
-            return service.getOnboardingState(params.username)
+            return service.getOnboardingState()
         },
         createSelfIssuedWallet: async (
             params: CreateSelfIssuedWalletParams
@@ -485,13 +498,11 @@ export const userController = (
 
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                params.networkId,
-                params.username,
+                requireOnboardingSession(),
                 drivers,
                 logger
             )
             const wallet = await service.createWallet({
-                username: params.username,
                 partyHint: params.partyHint,
                 signingProviderId: signingProviderId as SigningProvider,
             })
@@ -502,13 +513,11 @@ export const userController = (
         ) => {
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                params.networkId,
-                params.username,
+                requireOnboardingSession(),
                 drivers,
                 logger
             )
             const allocated = await service.allocateParty({
-                username: params.username,
                 partyId: params.partyId,
             })
             return { wallet: allocated }
@@ -516,19 +525,18 @@ export const userController = (
         connectSelfIssuedSession: async (
             params: ConnectSelfIssuedSessionParams
         ) => {
+            const onboardingSession = requireOnboardingSession()
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                params.networkId,
-                params.username,
+                onboardingSession,
                 drivers,
                 logger
             )
             const { wallet, accessToken } = await service.connectSession({
-                username: params.username,
                 partyId: params.partyId,
             })
             const connectedContext = {
-                userId: params.username.trim(),
+                userId: onboardingSession.userId,
                 accessToken,
             }
             const scopedStore = authAwareStore.withAuthContext(connectedContext)

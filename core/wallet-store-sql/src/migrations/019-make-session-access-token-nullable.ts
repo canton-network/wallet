@@ -13,8 +13,8 @@ export async function up(db: Kysely<DB>): Promise<void> {
             .execute()
 
         await sql`
-            CREATE UNIQUE INDEX sessions_one_onboarding_session_per_user
-            ON sessions(user_id)
+            CREATE UNIQUE INDEX sessions_one_onboarding_session_per_user_network
+            ON sessions(network, user_id)
             WHERE access_token IS NULL
         `.execute(db)
         return
@@ -54,10 +54,10 @@ export async function up(db: Kysely<DB>): Promise<void> {
             ON sessions(network, access_token)
         `.execute(trx)
 
-        // New in this migration - one tokenless session per user.
+        // New in this migration - one tokenless session per user and network.
         await sql`
-            CREATE UNIQUE INDEX IF NOT EXISTS sessions_one_onboarding_session_per_user
-            ON sessions(user_id)
+            CREATE UNIQUE INDEX IF NOT EXISTS sessions_one_onboarding_session_per_user_network
+            ON sessions(network, user_id)
             WHERE access_token IS NULL
         `.execute(trx)
     })
@@ -68,7 +68,7 @@ export async function down(db: Kysely<DB>): Promise<void> {
 
     if (await isPostgres(db)) {
         await db.schema
-            .dropIndex('sessions_one_onboarding_session_per_user')
+            .dropIndex('sessions_one_onboarding_session_per_user_network')
             .execute()
         await db.schema
             .alterTable('sessions')

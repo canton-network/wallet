@@ -62,7 +62,7 @@ describe('SelfIssuedAuthService', () => {
         getWallets: ReturnType<typeof vi.fn>
         updateWallet: ReturnType<typeof vi.fn>
         getCurrentNetwork: ReturnType<typeof vi.fn>
-        listSessions: ReturnType<typeof vi.fn>
+        getOnboardingSession: ReturnType<typeof vi.fn>
         setSession: ReturnType<typeof vi.fn>
     }
     let signMessage: ReturnType<typeof vi.fn>
@@ -86,14 +86,12 @@ describe('SelfIssuedAuthService', () => {
             getWallets: vi.fn().mockResolvedValue([]),
             updateWallet: vi.fn().mockResolvedValue(undefined),
             getCurrentNetwork: vi.fn().mockResolvedValue(network),
-            listSessions: vi.fn().mockResolvedValue([
-                {
-                    id: 'onboarding-session',
-                    origin: 'https://app.example',
-                    network: 'network-1',
-                    userId: 'alice',
-                },
-            ]),
+            getOnboardingSession: vi.fn().mockResolvedValue({
+                id: 'onboarding-session',
+                origin: 'https://app.example',
+                network: 'network-1',
+                userId: 'alice',
+            }),
             setSession: vi.fn().mockResolvedValue(undefined),
         }
         walletAllocator = {
@@ -118,6 +116,7 @@ describe('SelfIssuedAuthService', () => {
             [SigningProvider.FIREBLOCKS]: driver,
         } as unknown as SigningDrivers
         return new SelfIssuedAuthService(
+            { userId: 'alice', sessionId: 'onboarding-session' },
             store as unknown as Store,
             logger,
             walletAllocator as unknown as WalletAllocationService,
@@ -132,12 +131,12 @@ describe('SelfIssuedAuthService', () => {
             ledgerClient.get.mockResolvedValue({ user: { id: 'alice' } })
             store.getWallets.mockResolvedValue([wallet])
 
-            await expect(
-                createService().getOnboardingState('alice')
-            ).resolves.toEqual({
-                userExists: true,
-                wallets: [wallet],
-            })
+            await expect(createService().getOnboardingState()).resolves.toEqual(
+                {
+                    userExists: true,
+                    wallets: [wallet],
+                }
+            )
         })
 
         it('treats USER_NOT_FOUND as a missing ledger user', async () => {
@@ -147,12 +146,12 @@ describe('SelfIssuedAuthService', () => {
                 errorCategory: 11,
             })
 
-            await expect(
-                createService().getOnboardingState('bubu')
-            ).resolves.toEqual({
-                userExists: false,
-                wallets: [],
-            })
+            await expect(createService().getOnboardingState()).resolves.toEqual(
+                {
+                    userExists: false,
+                    wallets: [],
+                }
+            )
         })
 
         it('propagates non–USER_NOT_FOUND ledger errors', async () => {
@@ -163,9 +162,9 @@ describe('SelfIssuedAuthService', () => {
             }
             ledgerClient.get.mockRejectedValue(permissionDenied)
 
-            await expect(
-                createService().getOnboardingState('alice')
-            ).rejects.toEqual(permissionDenied)
+            await expect(createService().getOnboardingState()).rejects.toEqual(
+                permissionDenied
+            )
         })
     })
 
@@ -175,7 +174,6 @@ describe('SelfIssuedAuthService', () => {
             walletAllocator.createWallet.mockResolvedValue(pendingWallet)
 
             const wallet = await createService().createWallet({
-                username: 'alice',
                 partyHint: 'my-party',
                 signingProviderId: SigningProvider.WALLET_KERNEL,
             })
@@ -193,7 +191,11 @@ describe('SelfIssuedAuthService', () => {
                 rights: [],
             })
             expect(walletAllocator.createWallet).toHaveBeenCalledWith(
-                { userId: 'alice', accessToken: '' },
+                {
+                    userId: 'alice',
+                    accessToken: '',
+                    sessionId: 'onboarding-session',
+                },
                 'my-party',
                 false,
                 SigningProvider.WALLET_KERNEL
@@ -207,7 +209,6 @@ describe('SelfIssuedAuthService', () => {
 
             await expect(
                 createService().createWallet({
-                    username: 'alice',
                     partyHint: 'my-party',
                     signingProviderId: SigningProvider.WALLET_KERNEL,
                 })
@@ -221,7 +222,6 @@ describe('SelfIssuedAuthService', () => {
         it('rejects participant onboarding', async () => {
             await expect(
                 createService().createWallet({
-                    username: 'alice',
                     partyHint: 'my-party',
                     signingProviderId: SigningProvider.PARTICIPANT,
                 })
@@ -231,20 +231,9 @@ describe('SelfIssuedAuthService', () => {
             expect(walletAllocator.createWallet).not.toHaveBeenCalled()
         })
 
-        it('rejects an empty username', async () => {
-            await expect(
-                createService().createWallet({
-                    username: '  ',
-                    partyHint: 'my-party',
-                    signingProviderId: SigningProvider.WALLET_KERNEL,
-                })
-            ).rejects.toThrow('username is required')
-        })
-
         it('rejects an empty party hint', async () => {
             await expect(
                 createService().createWallet({
-                    username: 'alice',
                     partyHint: '  ',
                     signingProviderId: SigningProvider.WALLET_KERNEL,
                 })
@@ -274,18 +263,20 @@ describe('SelfIssuedAuthService', () => {
 
             const service = createService()
             await service.allocateParty({
-                username: 'alice',
                 partyId: pendingWallet.partyId,
             })
             const wallet = (
                 await service.connectSession({
-                    username: 'alice',
                     partyId: pendingWallet.partyId,
                 })
             ).wallet
 
             expect(walletAllocator.allocateParty).toHaveBeenCalledWith(
-                { userId: 'alice', accessToken: '' },
+                {
+                    userId: 'alice',
+                    accessToken: '',
+                    sessionId: 'onboarding-session',
+                },
                 pendingWallet,
                 SigningProvider.FIREBLOCKS
             )
@@ -314,6 +305,9 @@ describe('SelfIssuedAuthService', () => {
             })
             expect(wallet.status).toBe('allocated')
             expect(wallet.isAuthParty).toBe(true)
+            expect(store.getOnboardingSession).toHaveBeenCalledWith(
+                'onboarding-session'
+            )
             expect(store.setSession).toHaveBeenCalledWith(
                 expect.objectContaining({
                     id: 'onboarding-session',
@@ -336,7 +330,6 @@ describe('SelfIssuedAuthService', () => {
 
             const wallet = (
                 await createService().connectSession({
-                    username: 'alice',
                     partyId: allocatedWallet.partyId,
                 })
             ).wallet
@@ -379,7 +372,6 @@ describe('SelfIssuedAuthService', () => {
 
             await expect(
                 createService().connectSession({
-                    username: 'alice',
                     partyId: allocatedWallet.partyId,
                 })
             ).rejects.toThrow(
@@ -392,7 +384,6 @@ describe('SelfIssuedAuthService', () => {
             store.getWallet.mockResolvedValue(createWallet())
 
             const wallet = await createService().allocateParty({
-                username: 'alice',
                 partyId: 'alice::ns',
             })
 
@@ -409,7 +400,6 @@ describe('SelfIssuedAuthService', () => {
 
             await expect(
                 createService().allocateParty({
-                    username: 'alice',
                     partyId: 'missing::ns',
                 })
             ).rejects.toThrow('Wallet not found for party missing::ns')

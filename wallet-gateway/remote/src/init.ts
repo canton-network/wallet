@@ -396,6 +396,10 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'getUser',
             'selfSignedAccessToken',
             'addSelfIssuedSession',
+        ],
+    }
+    const onboardingPaths = {
+        [config.server.userPath]: [
             'getSelfIssuedOnboarding',
             'createSelfIssuedWallet',
             'allocateSelfIssuedWallet',
@@ -415,7 +419,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         sessionHandler(
             store,
             allowedPaths,
-            logger.child({ component: 'SessionHandler' })
+            logger.child({ component: 'SessionHandler' }),
+            onboardingPaths
         ),
     ]
 

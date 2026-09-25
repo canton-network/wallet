@@ -13,16 +13,20 @@ import type { Store } from '@canton-network/core-wallet-store'
  * @param store needs to be AuthAware
  * @param allowedPaths a record of path -> list of methods which do not require authentication
  * @param logger
+ * @param onboardingPaths a record of path -> list of methods authenticated by a tokenless
+ * onboarding session, passed as `params.sessionId`
  * @returns
  */
 export function sessionHandler(
     store: Store & AuthAware<Store>,
     allowedPaths: Record<string, string[]>,
-    logger: Logger
+    logger: Logger,
+    onboardingPaths: Record<string, string[]> = {}
 ) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const context = req.authContext
         const allowedMethods = allowedPaths[req.baseUrl as string]
+        const onboardingMethods = onboardingPaths[req.baseUrl as string]
 
         if (req.method !== 'POST') {
             logger.debug(
@@ -43,6 +47,32 @@ export function sessionHandler(
         }
 
         const reqId = req.body?.id ?? null
+
+        if (onboardingMethods?.includes(req.body.method)) {
+            const sessionId = req.body.params?.sessionId
+            const session =
+                typeof sessionId === 'string' && sessionId
+                    ? await store.getOnboardingSession(sessionId)
+                    : undefined
+            if (!session?.userId) {
+                logger.debug('No onboarding session found')
+                return res.status(401).json(
+                    jsonRpcResponse(reqId, {
+                        error: {
+                            code: providerErrors.unauthorized().code,
+                            message: 'No onboarding session found',
+                        },
+                    })
+                )
+            }
+
+            req.authContext = {
+                userId: session.userId,
+                accessToken: '',
+                sessionId: session.id,
+            }
+            return next()
+        }
 
         if (!context?.accessToken) {
             logger.debug('No access token provided for protected method')
