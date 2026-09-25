@@ -82,6 +82,70 @@ type CreateTransferChoiceArgs = {
     extraArgs: ExtraArgs
 }
 
+type ApiVersion = 'v1' | 'v2'
+type SupportedVersions = ApiVersion[]
+
+export interface AssetCapabilities {
+    holding: SupportedVersions
+    transferInstruction: SupportedVersions
+    allocation: SupportedVersions
+    allocationInstruction: SupportedVersions
+    allocationRequest: SupportedVersions
+}
+
+const KEY_MAPPING: Record<string, keyof AssetCapabilities> = {
+    holding: 'holding',
+    'transfer-instruction': 'transferInstruction',
+    allocation: 'allocation',
+    'allocation-instruction': 'allocationInstruction',
+    'allocation-request': 'allocationRequest',
+}
+
+export type InstrumentInfo = {
+    id: string
+    displayName: string
+    symbol: string
+    registryUrl: string
+    admin: PartyId
+    capabilities: AssetCapabilities
+}
+
+export function resolveCapabilities(opts: {
+    supportedApis: {
+        [key: string]: number
+    }
+}): AssetCapabilities {
+    const supportedApis = opts.supportedApis
+
+    const resolvedCapabilities: AssetCapabilities = {
+        holding: [],
+        transferInstruction: [],
+        allocation: [],
+        allocationInstruction: [],
+        allocationRequest: [],
+    }
+
+    for (const key of Object.keys(supportedApis)) {
+        const match = key.match(/^splice-api-token-(.+)-(v\d+)$/)
+
+        if (match) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const [_, capabilityName, version] = match
+            const targetKey = KEY_MAPPING[capabilityName]
+
+            if (targetKey && supportedApis[key] === 1) {
+                resolvedCapabilities[targetKey].push(version as 'v1' | 'v2')
+            }
+        }
+    }
+
+    for (const key in resolvedCapabilities) {
+        resolvedCapabilities[key as keyof AssetCapabilities].sort()
+    }
+
+    return resolvedCapabilities
+}
+
 export class CoreService {
     constructor(
         private ledgerProvider: AbstractLedgerProvider,
@@ -1369,6 +1433,19 @@ export class TokenStandardService {
         this.transfer = new TransferService(this.core, this.logger)
     }
 
+    async resolveCapabilitiesFromRegsitryByInstrumentId(
+        registryUrl: string,
+        instrumentId: string
+    ): Promise<AssetCapabilities> {
+        const metadataInfo = await this.getInstrumentById(
+            registryUrl,
+            instrumentId
+        )
+        return resolveCapabilities({
+            supportedApis: metadataInfo.supportedApis,
+        })
+    }
+
     async getInstrumentById(registryUrl: string, instrumentId: string) {
         try {
             const params: Record<string, unknown> = {
@@ -1414,7 +1491,16 @@ export class TokenStandardService {
         })
     }
 
-    async instrumentsToAsset(registryUrl: string) {
+    async instrumentsToAsset(registryUrl: string): Promise<
+        {
+            id: string
+            displayName: string
+            symbol: string
+            registryUrl: string
+            admin: PartyId
+            capabilities: AssetCapabilities
+        }[]
+    > {
         let instrumentsResponse = await this.listInstruments(registryUrl)
         const instruments = [...instrumentsResponse.instruments]
 
@@ -1427,22 +1513,29 @@ export class TokenStandardService {
             instruments.push(...instrumentsResponse.instruments)
         }
         const instrumentAdmin = await this.getInstrumentAdmin(registryUrl)
+
         return instruments.map((instrument) => ({
             id: instrument.id,
             displayName: instrument.name,
             symbol: instrument.symbol,
             registryUrl,
             admin: instrumentAdmin,
+            capabilities: resolveCapabilities({
+                supportedApis: instrument.supportedApis,
+            }),
         }))
     }
 
-    async registriesToAssets(registryUrls: string[]) {
+    async registriesToAssets(
+        registryUrls: string[]
+    ): Promise<InstrumentInfo[]> {
         const allInstruments: {
             id: string
             displayName: string
             symbol: string
             registryUrl: string
             admin: PartyId
+            capabilities: AssetCapabilities
         }[] = []
         for (const registryUrl of registryUrls) {
             const instruments = await this.instrumentsToAsset(registryUrl)
