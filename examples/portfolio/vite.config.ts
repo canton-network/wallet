@@ -27,4 +27,9 @@ export default defineConfig({
     server: {
         port: 8081,
     },
+    // e2e (and the CI job) hit this app on 8081 whether it is served from the
+    // dev server or from the build.
+    preview: {
+        port: 8081,
+    },
 })

@@ -129,3 +129,6 @@ logger.info({ result }, 'Result from the script')
 
 if (result.length !== 1 || result.amount !== 300)
     throw Error('Either length != 1 or amount != 300')
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

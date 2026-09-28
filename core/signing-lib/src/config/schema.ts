@@ -9,6 +9,8 @@ export enum SigningProvider {
     FIREBLOCKS = 'fireblocks',
     BLOCKDAEMON = 'blockdaemon',
     DFNS = 'dfns',
+    SECUROSYS = 'securosys',
+    BITGO = 'bitgo',
 }
 
 // Generic signing driver configuration schema

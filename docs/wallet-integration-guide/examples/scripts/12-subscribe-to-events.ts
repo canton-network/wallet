@@ -1,7 +1,7 @@
 import pino from 'pino'
 import {
-    CompletionEvent,
-    UpdateEvent,
+    type CompletionEvent,
+    type UpdateEvent,
     localNetStaticConfig,
     SDK,
 } from '@canton-network/wallet-sdk'
@@ -15,9 +15,7 @@ const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
     events: {
-        websocketURL: new URL(
-            `ws://${localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL.host}`
-        ),
+        websocketURL: `ws://${new URL(localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL).host}`,
         auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     },
 })
@@ -54,7 +52,7 @@ logger.info('Preparing multi hosted party...')
 
 const participantEndpoints = [
     {
-        url: new URL('http://127.0.0.1:3975'),
+        url: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
         tokenProviderConfig: TOKEN_PROVIDER_CONFIG_DEFAULT,
     },
 ]

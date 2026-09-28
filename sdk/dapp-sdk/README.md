@@ -24,10 +24,6 @@ npm install @canton-network/dapp-sdk
 ```
 
 ```shell
-yarn add @canton-network/dapp-sdk
-```
-
-```shell
 pnpm add @canton-network/dapp-sdk
 ```
 

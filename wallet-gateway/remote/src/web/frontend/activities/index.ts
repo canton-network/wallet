@@ -6,13 +6,13 @@ import { customElement, state } from 'lit/decorators.js'
 
 import {
     BaseElement,
-    PageChangeEvent,
-    TransactionCardReviewEvent,
+    type PageChangeEvent,
+    type TransactionCardReviewEvent,
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import {
-    ParsedTransactionInfo,
+    type ParsedTransactionInfo,
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
 
@@ -21,7 +21,8 @@ import { setLocationHref } from '../navigation.js'
 
 import '../index'
 import { stateManager } from '../state-manager'
-import { Transaction } from '@canton-network/core-wallet-user-rpc-client'
+import type { Transaction } from '@canton-network/core-wallet-user-rpc-client'
+import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-activities')
 export class UserUiActivities extends BaseElement {
@@ -150,8 +151,9 @@ export class UserUiActivities extends BaseElement {
     private async updateTransactions() {
         this.loading = true
         try {
+            const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
-                await stateManager.accessToken.get()
+                await stateManager.accessToken.get(currentOrigin)
             )
 
             const currentCursor = this.pageCursors[this.currentPage - 1]

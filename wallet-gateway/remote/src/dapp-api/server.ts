@@ -1,18 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import express from 'express'
+import type express from 'express'
 import cors from 'cors'
 import { dappController } from './controller.js'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
-import { Methods } from './rpc-gen/index.js'
-import { Store } from '@canton-network/core-wallet-store'
-import { AuthAware } from '@canton-network/core-wallet-auth'
-import { Server } from 'http'
-import { NotificationService } from '../notification/NotificationService.js'
-import { KernelInfo, ServerConfig } from '../config/Config.js'
-import { DappControllerDeps } from './controller.js'
+import type { Methods } from './rpc-gen/index.js'
+import type { Store } from '@canton-network/core-wallet-store'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
+import type { Server } from 'http'
+import type { NotificationService } from '../notification/NotificationService.js'
+import type { KernelInfo, ServerConfig } from '../config/Config.js'
+import type { DappControllerDeps } from './controller.js'
+import type { HASHING_SCHEME_VERSION } from '@canton-network/core-wallet-services'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)
@@ -30,7 +31,8 @@ export const dapp = (
     serverConfig: ServerConfig,
     notificationService: NotificationService,
     store: Store & AuthAware<Store>,
-    controllerDeps: DappControllerDeps
+    controllerDeps: DappControllerDeps,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
 ) => {
     app.use(
         cors({
@@ -47,7 +49,8 @@ export const dapp = (
         }
 
         const newStore = store.withAuthContext(context)
-        const session = await newStore.getSession()
+        const session = await newStore.getSession(context.accessToken)
+
         const sessionId = session?.id
 
         if (!sessionId) {
@@ -65,7 +68,12 @@ export const dapp = (
         res.setHeader('X-Accel-Buffering', 'no')
         res.flushHeaders?.()
 
-        const notifier = notificationService.getNotifier(context.userId)
+        // Events scoped to the user (e.g. wallet/account changes) are broadcast
+        // across all of that user's sessions; events scoped to a session (e.g.
+        // transaction progress, connection status) are delivered only to the
+        // session that originated them.
+        const sessionNotifier = notificationService.getNotifier(sessionId)
+        const userNotifier = notificationService.getNotifier(context.userId)
 
         const onAccountsChanged = (...event: unknown[]) => {
             writeSSE(res, 'accountsChanged', event)
@@ -93,21 +101,24 @@ export const dapp = (
             res.end()
         }
 
-        notifier.on('accountsChanged', onAccountsChanged)
-        notifier.on('connected', onConnected)
-        notifier.on('statusChanged', onStatusChanged)
-        notifier.on('txChanged', onTxChanged)
-        notifier.on('messageSignature', onMessageSignature)
-        notifier.on('logout', onLogout)
+        userNotifier.on('accountsChanged', onAccountsChanged)
+        sessionNotifier.on('connected', onConnected)
+        sessionNotifier.on('statusChanged', onStatusChanged)
+        sessionNotifier.on('txChanged', onTxChanged)
+        sessionNotifier.on('messageSignature', onMessageSignature)
+        sessionNotifier.on('logout', onLogout)
 
         const cleanup = () => {
             logger.debug('SSE client disconnected')
-            notifier.removeListener('accountsChanged', onAccountsChanged)
-            notifier.removeListener('connected', onConnected)
-            notifier.removeListener('statusChanged', onStatusChanged)
-            notifier.removeListener('txChanged', onTxChanged)
-            notifier.removeListener('messageSignature', onMessageSignature)
-            notifier.removeListener('logout', onLogout)
+            userNotifier.removeListener('accountsChanged', onAccountsChanged)
+            sessionNotifier.removeListener('connected', onConnected)
+            sessionNotifier.removeListener('statusChanged', onStatusChanged)
+            sessionNotifier.removeListener('txChanged', onTxChanged)
+            sessionNotifier.removeListener(
+                'messageSignature',
+                onMessageSignature
+            )
+            sessionNotifier.removeListener('logout', onLogout)
         }
 
         req.on('close', cleanup)
@@ -127,6 +138,7 @@ export const dapp = (
                 logger,
                 origin,
                 controllerDeps,
+                hashingSchemeVersion,
                 req.authContext
             ),
             logger,

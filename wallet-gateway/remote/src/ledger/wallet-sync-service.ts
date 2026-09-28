@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    LedgerClient,
+    type LedgerClient,
     defaultRetryableOptions,
 } from '@canton-network/core-ledger-client'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
-    Store,
-    Wallet,
+    type Store,
+    type Wallet,
     PartyLevelRight,
     UserLevelRight,
 } from '@canton-network/core-wallet-store'
 import {
-    SigningDriverInterface,
+    type SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { Logger } from 'pino'
-import { PartyAllocationService } from './party-allocation-service.js'
-import { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
+import type { Logger } from 'pino'
+import type { PartyAllocationService } from './party-allocation-service.js'
+import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 
 export class WalletSyncService {
@@ -63,13 +63,11 @@ export class WalletSyncService {
         // Extract the namespace part from participantId
         // Format is hint::namespace
         const [, extractedNamespace] = participantId.split('::')
-        if (extractedNamespace) {
-            return extractedNamespace
-        } else {
+        if (!extractedNamespace)
             throw new Error(
                 `Invalid participantId format: expected "hint::namespace", got "${participantId}"`
             )
-        }
+        return extractedNamespace
     }
 
     // Protected for tests
@@ -143,6 +141,7 @@ export class WalletSyncService {
                                 this.partyAllocator.createFingerprintFromKey(
                                     normalizedKey
                                 )
+
                             if (keyNamespace === partyNamespace) {
                                 this.logger.info(
                                     {
@@ -429,6 +428,7 @@ export class WalletSyncService {
                     signingProviderId:
                         resolvedSigningProvider.signingProviderId,
                     disabled: !isMatched,
+                    userId: this.authContext.userId,
                     rights:
                         rightsByParty.get(partyId) ??
                         WalletSyncService.EMPTY_RIGHTS,

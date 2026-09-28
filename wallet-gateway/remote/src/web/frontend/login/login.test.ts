@@ -64,6 +64,7 @@ vi.mock('../state-manager.js', () => ({
         },
         expirationDate: { set: mockExpirationDateSet },
         networkId: { set: mockNetworkIdSet, get: mockNetworkIdGet },
+        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 vi.mock('@canton-network/core-wallet-auth', () => ({
@@ -111,11 +112,14 @@ function dispatchConnect(
     el: LoginUI,
     network = selfSignedNetwork,
     idp = selfSignedIdp,
-    clientId = 'client-id'
+    clientId = 'client-id',
+    clientSecret = 'client-secret'
 ) {
     el.shadowRoot
         ?.querySelector('wg-login-form')
-        ?.dispatchEvent(new LoginConnectEvent(network, idp, clientId))
+        ?.dispatchEvent(
+            new LoginConnectEvent(network, idp, clientId, clientSecret)
+        )
 }
 
 function getLoginForm(el: LoginUI): WgLoginForm | null {
@@ -201,8 +205,14 @@ describe('LoginUI', () => {
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
         )
 
-        expect(mockNetworkIdSet).toHaveBeenCalledWith('net-1')
-        expect(mockAccessTokenSet).toHaveBeenCalledWith(defaultAccessToken)
+        expect(mockNetworkIdSet).toHaveBeenCalledWith(
+            'net-1',
+            expect.any(String)
+        )
+        expect(mockAccessTokenSet).toHaveBeenCalledWith(
+            defaultAccessToken,
+            expect.any(String)
+        )
         expect(mockExpirationDateSet).toHaveBeenCalled()
         expect(mockAddUserSession).toHaveBeenCalledWith(
             defaultAccessToken,
@@ -211,18 +221,16 @@ describe('LoginUI', () => {
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
 
-    it('uses an empty client secret when the network omits one', async () => {
+    it('sends the client secret from the login form', async () => {
         await waitUntil(() => el.networks.length === 1)
 
-        const networkWithoutSecret = makePublicNetwork({
-            id: 'net-1',
-            authMethod: 'client_credentials',
-            audience: 'aud',
-            scope: 'scope',
-            clientId: 'client-id',
-        })
-
-        dispatchConnect(el, networkWithoutSecret, selfSignedIdp, 'client-id')
+        dispatchConnect(
+            el,
+            selfSignedNetwork,
+            selfSignedIdp,
+            'client-id',
+            'network-secret'
+        )
 
         await waitUntil(
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
@@ -231,7 +239,11 @@ describe('LoginUI', () => {
         expect(mockRequest).toHaveBeenCalledWith(
             expect.objectContaining({
                 method: 'selfSignedAccessToken',
-                params: { networkId: 'net-1', clientId: 'client-id' },
+                params: {
+                    networkId: 'net-1',
+                    clientId: 'client-id',
+                    clientSecret: 'network-secret',
+                },
             })
         )
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
@@ -359,7 +371,10 @@ describe('LoginUI', () => {
 
         expect(el.shadowRoot?.querySelector('wg-loading-state')).not.toBeNull()
         expect(el.connectingMessage).toBe('Redirecting to OAuth Network...')
-        expect(mockNetworkIdSet).toHaveBeenCalledWith('net-oauth')
+        expect(mockNetworkIdSet).toHaveBeenCalledWith(
+            'net-oauth',
+            expect.any(String)
+        )
         expect(vi.mocked(fetch)).toHaveBeenCalledWith(oauthConfigUrl)
 
         const storedKeys = Object.keys(sessionStorage).filter((key) =>

@@ -3,10 +3,9 @@
 
 import {
     test,
-    expect,
-    WalletGateway,
+    type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -15,33 +14,8 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-    toMockEndpoint,
-    isLocalhost,
-} from './external-signing-test-helpers.js'
-
-const dfnsApiUrl = process.env.DFNS_BASE_URL
-
-async function setMockDfnsTransactionState(
-    signatureId: string,
-    status: 'Signed' | 'Rejected' | 'Failed'
-): Promise<void> {
-    const isMockedApi = dfnsApiUrl && isLocalhost(new URL(dfnsApiUrl))
-    if (!isMockedApi) {
-        return
-    }
-    const setResponse = await fetch(
-        toMockEndpoint(dfnsApiUrl, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ signatureId, status }),
-        }
-    )
-    expect(setResponse.ok).toBeTruthy()
-
-    const updated = (await setResponse.json()) as { status: string }
-    expect(updated.status).toBe(status)
-}
+} from './ping-test-helpers.js'
+import { setMockDfnsTransactionState } from './external-signing-test-helpers.js'
 
 test.describe('Dfns external signing', () => {
     test.describe.configure({ mode: 'serial' })
@@ -80,13 +54,14 @@ test.describe('Dfns external signing', () => {
             dappPage
         )
         await setMockDfnsTransactionState(submission.externalTxId, 'Signed')
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
             'signed'
         )
+        await wg.executeSignedTransaction({ waitForClose: false })
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -96,9 +71,13 @@ test.describe('Dfns external signing', () => {
     })
 
     test('rejects a transaction in the wallet UI', async () => {
-        await wg.rejectTransaction(() => clickCreatePingContract(dappPage), {
-            waitForClose: true,
-        })
+        const { commandId } = await wg.rejectTransaction(
+            () => clickCreatePingContract(dappPage),
+            { waitForClose: true }
+        )
+
+        // TODO check dapp event, once removing tx starts emitting one
+        await wg.expectActivityRemoved(commandId)
     })
 
     test('fails when Dfns rejects signing', async () => {
@@ -107,7 +86,6 @@ test.describe('Dfns external signing', () => {
             dappPage
         )
         await setMockDfnsTransactionState(submission.externalTxId, 'Rejected')
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
@@ -123,7 +101,6 @@ test.describe('Dfns external signing', () => {
             dappPage
         )
         await setMockDfnsTransactionState(submission.externalTxId, 'Failed')
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,

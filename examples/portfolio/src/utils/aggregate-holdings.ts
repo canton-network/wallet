@@ -3,7 +3,8 @@
 
 import Decimal from 'decimal.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { type Holding } from '@canton-network/core-tx-parser'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { HoldingView } from '@canton-network/core-token-standard'
 import type { Instruments } from '../types/instruments'
 
 export interface AggregatedWalletBalance {
@@ -30,19 +31,20 @@ export function getInstrumentKey(instrumentId: { admin: string; id: string }) {
 }
 
 export function aggregateHoldings(
-    holdings: Holding[],
+    holdings: PrettyContract<HoldingView>[],
     currentTime: Date = new Date()
 ): Map<string, AggregatedHolding> {
     const aggregated = new Map<string, AggregatedHolding>()
 
     for (const holding of holdings) {
-        const key = getInstrumentKey(holding.instrumentId)
+        const holdingView = holding.interfaceViewValue
+        const key = getInstrumentKey(holdingView.instrumentId)
         const existing = aggregated.get(key)
         const isLocked = TokenStandardService.isHoldingLocked(
             holding,
             currentTime
         )
-        const amount = new Decimal(holding.amount)
+        const amount = new Decimal(holdingView.amount)
 
         if (existing) {
             const newTotal = new Decimal(existing.totalAmount).plus(amount)
@@ -54,18 +56,18 @@ export function aggregateHoldings(
             existing.lockedAmount = newLocked.toString()
             existing.availableAmount = newTotal.minus(newLocked).toString()
             existing.numOfHoldings += 1
-            addWalletBalance(existing.walletBalances, holding.owner, amount)
+            addWalletBalance(existing.walletBalances, holdingView.owner, amount)
         } else {
             const lockedAmount = isLocked ? amount : new Decimal(0)
             aggregated.set(key, {
-                instrumentId: holding.instrumentId,
+                instrumentId: holdingView.instrumentId,
                 totalAmount: amount.toString(),
                 lockedAmount: lockedAmount.toString(),
                 availableAmount: amount.minus(lockedAmount).toString(),
                 numOfHoldings: 1,
                 walletBalances: [
                     {
-                        owner: holding.owner,
+                        owner: holdingView.owner,
                         totalAmount: amount.toString(),
                     },
                 ],

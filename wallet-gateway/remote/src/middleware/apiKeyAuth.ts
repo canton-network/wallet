@@ -3,12 +3,13 @@
 
 import type { Request, Response, NextFunction } from 'express'
 import {
-    AuthAware,
-    AuthContext,
+    type AuthAware,
+    type AuthContext,
     AuthTokenProvider,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import { Logger } from 'pino'
-import { Store } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+import type { Store } from '@canton-network/core-wallet-store'
 import crypto from 'crypto'
 import { v4 } from 'uuid'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
@@ -69,18 +70,19 @@ export function apiKeyAuth(
             // temporary auth context to access the store with the API key user
             const authStore = store.withAuthContext({
                 userId: matchingKey.userId,
-                accessToken: 'unused',
+                accessToken: hashedApiKey,
             })
 
             // automatically initiate a session for the API key user
+            const sessionId = v4()
             await authStore.setSession({
-                id: v4(),
+                id: sessionId,
+                origin: `apikey:${matchingKey.id}`,
                 network: matchingKey.networkId,
-                accessToken: 'unused',
+                accessToken: hashedApiKey,
             })
 
             const network = await authStore.getNetwork(matchingKey.networkId)
-            const idp = await authStore.getIdp(network.identityProviderId)
 
             if (!network.serviceAccountAuth) {
                 logger.debug(
@@ -114,6 +116,12 @@ export function apiKeyAuth(
                 )
             }
 
+            const idp = await authStore.getIdp(
+                resolveAuthIdentityProviderId(
+                    network.serviceAccountAuth,
+                    network.identityProviderId
+                )
+            )
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.serviceAccountAuth,
@@ -129,6 +137,14 @@ export function apiKeyAuth(
                 accessToken: serviceAccountCtx.accessToken,
                 email: matchingKey.email || undefined,
             }
+
+            // we need to override the session now, so that the accessToken matches what the controller expects (accessToken == serviceAccount token)
+            await authStore.setSession({
+                id: sessionId,
+                origin: `apikey:${matchingKey.id}`,
+                network: matchingKey.networkId,
+                accessToken: serviceAccountCtx.accessToken,
+            })
 
             req.authContext = context
             return next()

@@ -11,9 +11,9 @@ import type {
     Network,
     PublicNetwork,
     Transaction,
-    Wallet,
     ApiKey,
 } from '@canton-network/core-wallet-user-rpc-client'
+import type { Wallet } from '@canton-network/core-wallet-store'
 
 export const mockRequest = vi.fn()
 
@@ -32,6 +32,7 @@ export function makeWallet(overrides: Partial<Wallet> = {}): Wallet {
         networkId: 'network1',
         signingProviderId: 'internal',
         rights: [],
+        userId: 'user-1',
         ...overrides,
     }
 }

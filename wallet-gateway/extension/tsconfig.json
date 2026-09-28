@@ -1,12 +1,10 @@
 {
-    "extends": "../../tsconfig.web.json",
+    "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
-        "rootDir": ".",
-        "outDir": "./dist",
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "useDefineForClassFields": false,
-        "noEmit": true
-    },
-    "include": ["src", "esbuild.mts"]
+        "noImplicitOverride": false,
+        "verbatimModuleSyntax": false,
+        "allowImportingTsExtensions": true,
+        "experimentalDecorators": false,
+        "useDefineForClassFields": false
+    }
 }

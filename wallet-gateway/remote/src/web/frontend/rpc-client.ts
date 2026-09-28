@@ -11,6 +11,7 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
+import { detectCurrentOrigin } from './listeners.js'
 
 let isLoggingOut = false
 let userApiPathPromise: Promise<URL> | null = null
@@ -22,7 +23,7 @@ export function resetRpcClientCachesForTests(): void {
 }
 
 const getUserApiPath = async (): Promise<URL> => {
-    const defaultUserPath = new URL(
+    const defaultUserUrl = new URL(
         toRelPath('/api/v0/user'),
         window.location.origin
     )
@@ -33,14 +34,14 @@ const getUserApiPath = async (): Promise<URL> => {
         )
             .then((response) => response.json())
             .then((config) =>
-                config?.userPath ? new URL(config.userPath) : defaultUserPath
+                config?.userApiUrl ? new URL(config.userApiUrl) : defaultUserUrl
             )
             .catch((error) => {
                 console.warn(
-                    'Failed to fetch userPath from config, using default',
+                    'Failed to fetch userApiUrl from config, using default',
                     error
                 )
-                return defaultUserPath
+                return defaultUserUrl
             })
     }
     return userApiPathPromise
@@ -71,14 +72,15 @@ const handleAutoLogout = async (): Promise<void> => {
     }
 
     isLoggingOut = true
+    const currentOrigin = await detectCurrentOrigin()
 
     try {
-        const accessToken = await stateManager.accessToken.get()
+        const accessToken = await stateManager.accessToken.get(currentOrigin)
         if (accessToken) {
             await attemptRemoveSession(accessToken)
         }
     } finally {
-        await stateManager.clearAuthState()
+        await stateManager.clearAuthState(currentOrigin)
         isLoggingOut = false
 
         if (getCurrentRoute(window.location.pathname) !== LOGIN_PAGE_REDIRECT) {

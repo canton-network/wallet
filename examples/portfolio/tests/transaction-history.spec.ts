@@ -5,6 +5,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test'
 import { fundValidatorOperator } from './fund-validator'
 import {
     createWalletGateway,
+    connectToLocalNet,
     fillAndSubmitTransfer,
     gotoConnect,
     gotoDashboard,
@@ -131,7 +132,7 @@ test('shows taps, direct transfers, and transfer offers for both parties', async
     const wg = createWalletGateway(dappPage)
 
     await gotoConnect(dappPage)
-    await wg.connect({ network: 'LocalNet' })
+    await connectToLocalNet(wg)
 
     const alice = await wg.createWalletIfNotExists({
         partyHint: aliceHint,

@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthContext } from '@canton-network/core-wallet-auth'
-import { Methods } from './rpc-gen/index.js'
-import { Error as RpcError } from './rpc-gen/typings.js'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { Methods } from './rpc-gen/index.js'
+import type { Error as RpcError } from './rpc-gen/typings.js'
 import nacl from 'tweetnacl'
 import naclUtil from 'tweetnacl-util'
 import { SigningProvider } from './config/schema.js'

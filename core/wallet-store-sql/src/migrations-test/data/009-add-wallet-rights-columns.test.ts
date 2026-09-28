@@ -6,9 +6,9 @@ import {
     UserLevelRight,
 } from '@canton-network/core-wallet-store'
 import { expect, test } from 'vitest'
-import { Kysely, sql } from 'kysely'
+import { type Kysely, sql } from 'kysely'
 
-import { DB } from '../../schema'
+import type { DB } from '../../schema'
 
 import {
     columnNames,

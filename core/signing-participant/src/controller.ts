@@ -3,21 +3,21 @@
 
 import {
     buildController,
-    CreateKeyResult,
-    GetConfigurationResult,
-    GetKeysResult,
-    GetTransactionResult,
-    GetTransactionsResult,
+    type CreateKeyResult,
+    type GetConfigurationResult,
+    type GetKeysResult,
+    type GetTransactionResult,
+    type GetTransactionsResult,
     PartyMode,
-    SetConfigurationResult,
-    SigningDriverInterface,
+    type SetConfigurationResult,
+    type SigningDriverInterface,
     SigningProvider,
-    SignMessageResult,
-    SignTransactionParams,
-    SignTransactionResult,
-    SubscribeTransactionsResult,
+    type SignMessageResult,
+    type SignTransactionParams,
+    type SignTransactionResult,
+    type SubscribeTransactionsResult,
 } from '@canton-network/core-signing-lib'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { randomUUID } from 'node:crypto'
 
 export class ParticipantSigningDriver implements SigningDriverInterface {
@@ -34,6 +34,7 @@ export class ParticipantSigningDriver implements SigningDriverInterface {
                 return Promise.resolve({
                     txId: params.internalTxId || randomUUID(),
                     status: 'signed',
+                    signature: 'none',
                 })
             },
             signMessage: async (): Promise<SignMessageResult> => {

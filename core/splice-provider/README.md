@@ -82,7 +82,7 @@ flowchart TB
 ## Provider interface
 
 ```ts
-import { RequestArgs, UnknownRpcTypes } from '@canton-network/core-types'
+import type { RequestArgs, UnknownRpcTypes } from '@canton-network/core-types'
 
 export type EventListener<T> = (...args: T[]) => void
 

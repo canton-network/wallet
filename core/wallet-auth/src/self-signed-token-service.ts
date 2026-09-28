@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@canton-network/core-types'
-import { ClientCredentials } from './auth-service.js'
+import type { Logger } from '@canton-network/core-types'
+import type { ClientCredentials } from './auth-service.js'
 import { SignJWT } from 'jose'
 
 export class SelfSignedTokenService {
@@ -10,7 +10,8 @@ export class SelfSignedTokenService {
         logger: Logger,
         credentials: ClientCredentials,
         issuer: string,
-        expirySeconds: number = 3600
+        expirySeconds: number = 3600,
+        keyId?: string
     ): Promise<string> {
         const secret = new TextEncoder().encode(credentials.clientSecret)
         const now = Math.floor(Date.now() / 1000)
@@ -22,10 +23,13 @@ export class SelfSignedTokenService {
             exp: now + expirySeconds,
             iss: issuer,
         })
-            .setProtectedHeader({ alg: 'HS256' })
+            .setProtectedHeader({
+                alg: 'HS256',
+                ...(keyId ? { kid: keyId } : {}),
+            })
             .sign(secret)
 
-        logger.info(`Generated self-signed JWT token: ${jwt}`)
+        logger.debug('Generated self-signed JWT token')
         return jwt
     }
 }

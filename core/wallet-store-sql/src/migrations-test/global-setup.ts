@@ -3,7 +3,7 @@
 
 import {
     PostgreSqlContainer,
-    StartedPostgreSqlContainer,
+    type StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql'
 
 let container: StartedPostgreSqlContainer | undefined

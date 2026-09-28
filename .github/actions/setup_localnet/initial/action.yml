@@ -24,12 +24,12 @@ runs:
         - name: Download Localnet
           if: steps.localnet-cache.outputs.cache-hit != 'true'
           shell: bash
-          run: yarn script:fetch:localnet --network=${{ inputs.network }}
+          run: pnpm script:fetch:localnet --network=${{ inputs.network }}
 
         - name: Pull Localnet
           if: steps.localnet-cache.outputs.cache-hit != 'true'
           shell: bash
-          run: yarn pull:localnet
+          run: pnpm pull:localnet
 
         - name: Save Docker images to cache
           if: ${{ steps.localnet-cache.outputs.cache-hit != 'true' }}

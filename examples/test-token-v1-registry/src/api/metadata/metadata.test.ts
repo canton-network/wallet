@@ -6,7 +6,7 @@ import { getRegistryInfo } from './getRegistryInfo'
 import { getInstrument } from './getInstrument'
 import { listInstruments } from './listInstruments'
 import { instruments, supportedApis } from './common'
-import { expressContext, RequestType } from '../../__test__/mocks'
+import { expressContext, type RequestType } from '../../__test__/mocks'
 import { APIError } from '../common'
 
 const { req, res, next } = expressContext
@@ -17,10 +17,18 @@ vi.mock('../../common/operator', () => ({
     },
 }))
 
+vi.mock('../../common/state', () => ({
+    RegistryState: {
+        instance: {
+            operator: {
+                party: 'admin',
+            },
+        },
+    },
+}))
+
 describe('Metadata', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     it('should get registry info', () => {
         getRegistryInfo({} as RequestType<typeof getRegistryInfo>, res, next)

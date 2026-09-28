@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, type MockedObject } from 'vitest'
-import { Logger } from '@canton-network/core-types'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type { Logger } from '@canton-network/core-types'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export const mockLogger: MockedObject<Logger> = {
     debug: vi.fn(),

@@ -3,9 +3,9 @@
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { pino } from 'pino'
-import { Network } from '@canton-network/core-wallet-store'
+import type { Network } from '@canton-network/core-wallet-store'
 import { sink } from 'pino-test'
-import {
+import type {
     AccessTokenProvider,
     AuthContext,
 } from '@canton-network/core-wallet-auth'

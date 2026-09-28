@@ -3,9 +3,9 @@ import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
-import { KeyPair } from '@canton-network/core-signing-lib'
+import type { KeyPair } from '@canton-network/core-signing-lib'
 import { ASSET_CONFIG } from './utils/index.js'
-import { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
@@ -425,3 +425,6 @@ await sdk.token.utxos
 await sdk.token.holdings({ partyId: recipient.partyId }).then((allHoldings) => {
     logger.info(allHoldings, 'List holding transactions (Bob)')
 })
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

@@ -187,3 +187,6 @@ const bobWalletViewAfterRevokeRights = await bobSdk.party.list()
 if (bobWalletViewAfterRevokeRights?.find((p) => p === aliceExternal.partyId)) {
     throw new Error('bob user can see alice party even after revoking rights')
 }
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Kysely } from 'kysely'
+import type { Kysely } from 'kysely'
 import { StoreSql } from './store-sql.js'
-import { Logger } from 'pino'
-import { DB, StoreConfig } from './schema'
+import type { Logger } from 'pino'
+import type { DB, StoreConfig } from './schema'
 
 export async function bootstrap(
     db: Kysely<DB>,

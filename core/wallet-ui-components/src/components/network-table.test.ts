@@ -25,4 +25,25 @@ describe('network-table', () => {
         expect(el).toBeInstanceOf(NetworkTable)
         expect(el.shadowRoot!.querySelectorAll('network-card')).toHaveLength(1)
     })
+
+    it('marks activeSession from session status, not session presence', async () => {
+        const network = makePublicNetwork({ id: 'net-1' })
+        const el = await fixture<NetworkTable>(
+            html`<network-table
+                .networks=${[network]}
+                .activeSessions=${[
+                    {
+                        id: 'sess-1',
+                        network,
+                        status: 'disconnected',
+                        accessToken: 'token',
+                    } as never,
+                ]}
+            ></network-table>`
+        )
+
+        const card = el.shadowRoot!.querySelector('network-card') as
+            (HTMLElement & { activeSession: boolean }) | null
+        expect(card?.activeSession).toBe(false)
+    })
 })

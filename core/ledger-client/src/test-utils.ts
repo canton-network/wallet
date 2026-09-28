@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, type MockedObject } from 'vitest'
-import { Logger } from 'pino'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type { Logger } from 'pino'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import { LedgerClient } from './ledger-client.js'
 
 export const BASE_URL = new URL('https://ledger.example/')
@@ -30,7 +30,7 @@ export function createAccessTokenProvider(
 
 export function createLedgerClient(
     accessTokenProvider = createAccessTokenProvider('ledger-token'),
-    version?: '3.4' | '3.5'
+    version?: '3.5'
 ) {
     return new LedgerClient({
         baseUrl: BASE_URL,

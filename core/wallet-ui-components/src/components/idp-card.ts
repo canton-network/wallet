@@ -4,7 +4,7 @@
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
-import { Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
 
 /** Emitted when the user clicks an IDP card to review it */
@@ -128,7 +128,10 @@ export class IdpCard extends BaseElement {
         }
 
         return html`
-            <article class="wg-card idp-card" @click=${this._onClick}>
+            <article
+                class="wg-card idp-card${this.readonly ? ' readonly' : ''}"
+                @click=${this._onClick}
+            >
                 <p class="card-title">${this.idp.id}</p>
 
                 <div class="meta">
@@ -137,17 +140,25 @@ export class IdpCard extends BaseElement {
                         <p class="meta-value">${this.idp.type}</p>
                     </div>
 
-                    <div class="meta-row meta-row--copy">
-                        <p class="meta-title">Issuer</p>
-                        <p class="meta-value" title=${this.idp.issuer}>
-                            ${this.idp.issuer}
-                        </p>
-                        <wg-copy-button
-                            .value=${this.idp.issuer}
-                            label="Copy issuer URL"
-                        ></wg-copy-button>
-                    </div>
-
+                    ${
+                        'issuer' in this.idp
+                            ? html`
+                                  <div class="meta-row meta-row--copy">
+                                      <p class="meta-title">Issuer</p>
+                                      <p
+                                          class="meta-value"
+                                          title=${this.idp.issuer}
+                                      >
+                                          ${this.idp.issuer}
+                                      </p>
+                                      <wg-copy-button
+                                          .value=${this.idp.issuer}
+                                          label="Copy issuer URL"
+                                      ></wg-copy-button>
+                                  </div>
+                              `
+                            : ''
+                    }
                     ${
                         'configUrl' in this.idp && this.idp.configUrl
                             ? html`

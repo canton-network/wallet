@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext } from 'react'
 
 interface ThemeContextType {
     isDarkMode: boolean
@@ -8,11 +8,3 @@ interface ThemeContextType {
 export const ThemeContext = createContext<ThemeContextType | undefined>(
     undefined
 )
-
-export const useTheme = () => {
-    const context = useContext(ThemeContext)
-    if (!context) {
-        throw new Error('useTheme must be used within a AppThemeProvider')
-    }
-    return context
-}

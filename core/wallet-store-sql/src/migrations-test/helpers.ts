@@ -3,12 +3,12 @@
 
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe } from 'vitest'
-import { Kysely, sql } from 'kysely'
+import { type Kysely, sql } from 'kysely'
 import pg from 'pg'
 
 import { connection } from '../store-sql.js'
 import { migrator } from '../migrator.js'
-import { DB } from '../schema.js'
+import type { DB } from '../schema.js'
 import { PG_ENV } from './global-setup.js'
 import { isPostgres } from '../utils'
 

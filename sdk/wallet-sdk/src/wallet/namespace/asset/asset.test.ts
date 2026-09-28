@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi, MockedObject } from 'vitest'
-import { AssetContext, AssetNamespace } from './index.js'
-import { Logger } from '@canton-network/core-types'
+import { describe, it, expect, vi, type MockedObject } from 'vitest'
+import { type AssetContext, AssetNamespace } from './index.js'
+import type { Logger } from '@canton-network/core-types'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { SDKErrorHandler } from '../../error/handler.js'
 import { SDKLogger } from '../../logger/logger'

@@ -1,21 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { pino, Logger } from 'pino'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
-import { AuthContext, Idp } from '@canton-network/core-wallet-auth'
+import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
-    Network as StoreNetwork,
+    type Network as StoreNetwork,
     PartyLevelRight,
-    Session,
-    Wallet,
+    type Session,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '../notification/NotificationService.js'
-import { dappController, DappControllerDeps } from './controller.js'
+import { dappController, type DappControllerDeps } from './controller.js'
+import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -107,8 +108,9 @@ const auth: AuthContext = {
 
 const session: Session = {
     id: 'session-1',
+    origin: 'dapp-1',
     network: 'network1',
-    accessToken: 'session-token',
+    accessToken: 'access-token-1',
 }
 
 const primaryWallet: Wallet = {
@@ -120,6 +122,7 @@ const primaryWallet: Wallet = {
     publicKey: 'wallet-public-key',
     namespace: 'namespace',
     networkId: 'network1',
+    userId: 'user-1',
     rights: [PartyLevelRight.CanActAs],
 }
 
@@ -131,7 +134,7 @@ async function createStore(
     const { withSession = true, withWallet = true } = options
     const store = new StoreInternal(
         { idps: [idp], networks: [storeNetwork] },
-        logger,
+        getLogger('mock'),
         context
     )
     if (context && withSession) {
@@ -160,6 +163,7 @@ function createController(
         logger,
         requestOrigin,
         deps || { signingDrivers: {} },
+        'HASHING_SCHEME_VERSION_V3',
         context
     )
 }
@@ -182,10 +186,6 @@ describe('dappController', () => {
             cantonVersion: '3.4',
         })
         mockUuidV4.mockReset()
-    })
-
-    afterEach(() => {
-        vi.clearAllMocks()
     })
 
     describe('connect', () => {
@@ -229,7 +229,7 @@ describe('dappController', () => {
 
         it('connects and emits statusChanged and connected', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -308,7 +308,7 @@ describe('dappController', () => {
 
         it('removes the session and emits statusChanged', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -319,7 +319,7 @@ describe('dappController', () => {
 
             await controller.disconnect()
 
-            await expect(store.getSession()).resolves.toBeUndefined()
+            await expect(store.listSessions()).resolves.toHaveLength(0)
             expect(emitSpy).toHaveBeenCalledWith(
                 'statusChanged',
                 expect.objectContaining({
@@ -599,7 +599,7 @@ describe('dappController', () => {
             })
             const store = await createStore(logger, auth)
             const setTransactionSpy = vi.spyOn(store, 'setTransaction')
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,
@@ -667,7 +667,7 @@ describe('dappController', () => {
             }
             const store = new StoreInternal(
                 { idps: [idp], networks: [networkWithoutSync] },
-                logger,
+                getLogger('mock'),
                 auth
             )
             await store.setSession(session)
@@ -738,7 +738,7 @@ describe('dappController', () => {
             mockUuidV4.mockReturnValueOnce('message-id')
             const store = await createStore(logger, auth)
             const setMessageSpy = vi.spyOn(store, 'setMessageRaw')
-            const notifier = notificationService.getNotifier(auth.userId)
+            const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
                 store,

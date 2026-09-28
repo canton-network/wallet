@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import type { Logger } from '@logtape/logtape'
 import {
-    AuthContext,
-    UserId,
-    AuthAware,
+    type AuthContext,
+    type UserId,
+    type AuthAware,
     assertConnected,
-    Idp,
+    type Idp,
 } from '@canton-network/core-wallet-auth'
-import {
+import type {
     Store,
     Wallet,
     PartyId,
@@ -24,14 +24,16 @@ import {
     MessageRawStatusUpdate,
     ApiKey,
     ListTransactionsOptions,
+    WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
-import { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
+import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
+import type { AccessToken } from '@canton-network/core-types'
 
 interface UserStorage {
     wallets: Array<Wallet>
     transactions: Map<string, Transaction>
     messageRaws: Map<string, MessageRaw>
-    session: Session | undefined
+    sessions: Map<AccessToken, Session>
     apiKeys: Map<string, ApiKey>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
@@ -57,7 +59,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         authContext?: AuthContext,
         userStorage?: Memory
     ) {
-        this.logger = logger.child({ component: 'StoreInternal' })
+        this.logger = logger.getChild('StoreInternal')
         this.systemStorage = config
         this.authContext = authContext
         this.userStorage = userStorage || new Map()
@@ -79,7 +81,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             wallets: [],
             transactions: new Map<string, Transaction>(),
             messageRaws: new Map<string, MessageRaw>(),
-            session: undefined,
+            sessions: new Map<AccessToken, Session>(),
             apiKeys: new Map<string, ApiKey>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
@@ -129,6 +131,24 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             ...filter,
             networkIds: [network.id],
         })
+    }
+
+    async getWallet(partyId: PartyId): Promise<Wallet | null> {
+        const userId = this.assertConnected()
+        const network = await this.getCurrentNetwork()
+        const constraint: WalletUniqueConstraint = {
+            partyId,
+            networkId: network.id,
+            userId,
+        }
+        return (
+            this.getStorage().wallets.find(
+                (wallet) =>
+                    constraint.networkId === wallet.networkId &&
+                    constraint.partyId === wallet.partyId &&
+                    constraint.userId === wallet.userId
+            ) ?? null
+        )
     }
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {
@@ -240,19 +260,23 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     // Session methods
-    async getSession(): Promise<Session | undefined> {
-        return this.getStorage().session
+    async getSession(accessToken: AccessToken): Promise<Session | undefined> {
+        return this.getStorage().sessions.get(accessToken)
+    }
+
+    async listSessions(): Promise<Array<Session>> {
+        return Array.from(this.getStorage().sessions.values())
     }
 
     async setSession(session: Session): Promise<void> {
         const storage = this.getStorage()
-        storage.session = session
+        storage.sessions.set(session.accessToken, session)
         this.updateStorage(storage)
     }
 
-    async removeSession(): Promise<void> {
+    async removeSession(accessToken: AccessToken): Promise<void> {
         const storage = this.getStorage()
-        storage.session = undefined
+        storage.sessions.delete(accessToken)
         this.updateStorage(storage)
     }
 
@@ -309,7 +333,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const session = this.getStorage().session
+        const accessToken = this.authContext?.accessToken
+        if (!accessToken) {
+            throw new Error('No access token found in auth context')
+        }
+
+        const session = this.getStorage().sessions.get(accessToken)
         if (!session) {
             throw new Error('No session found')
         }
@@ -328,6 +357,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async listNetworks(): Promise<Array<Network>> {
         return this.systemStorage.networks
+    }
+
+    async getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined> {
+        return this.systemStorage.networks.find(
+            (network) =>
+                network.auth.method === 'self_signed' &&
+                network.id === networkId
+        )
     }
 
     async updateNetwork(network: Network): Promise<void> {
@@ -362,6 +401,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const payload = updates.payload ?? existing.payload
         const signedAt = updates.signedAt ?? existing.signedAt
         const externalTxId = updates.externalTxId ?? existing.externalTxId
+        const failureReason = updates.failureReason ?? existing.failureReason
 
         return {
             id: existing.id,
@@ -376,6 +416,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             }),
             ...(signedAt !== undefined && { signedAt }),
             ...(externalTxId !== undefined && { externalTxId }),
+            ...(failureReason !== undefined && { failureReason }),
         }
     }
 
@@ -391,24 +432,34 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async setTransactionSigned(
         transactionId: string,
         signedAt: Date,
-        externalTxId?: string
-    ): Promise<void> {
-        await this.setTransactionStatus(transactionId, 'signed', {
-            signedAt,
-            ...(externalTxId !== undefined && { externalTxId }),
-        })
+        externalTxId?: string,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean> {
+        return await this.setTransactionStatus(
+            transactionId,
+            'signed',
+            {
+                signedAt,
+                ...(externalTxId !== undefined && { externalTxId }),
+            },
+            opts
+        )
     }
 
     async setTransactionStatus(
         transactionId: string,
         status: Transaction['status'],
-        updates: TransactionStatusUpdate = {}
-    ): Promise<void> {
+        updates: TransactionStatusUpdate = {},
+        opts?: { expectedStatus?: Transaction['status'] }
+    ): Promise<boolean> {
         this.assertConnected()
         const storage = this.getStorage()
         const existing = storage.transactions.get(transactionId)
         if (!existing) {
             throw new Error(`Transaction not found with id: ${transactionId}`)
+        }
+        if (opts?.expectedStatus && existing.status !== opts.expectedStatus) {
+            return false
         }
 
         const updated = this.mergeTransactionStatusUpdate(
@@ -419,6 +470,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
         storage.transactions.set(transactionId, updated)
         this.updateStorage(storage)
+        return true
     }
 
     async getTransaction(
@@ -433,7 +485,8 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async listAllPendingTransactions(): Promise<Array<Transaction>> {
         const storage = this.getStorage()
         return Array.from(storage.transactions.values()).filter(
-            (tx) => tx.status === 'pending'
+            (tx) =>
+                tx.status === 'pending' || tx.status === 'awaiting-signature'
         )
     }
 

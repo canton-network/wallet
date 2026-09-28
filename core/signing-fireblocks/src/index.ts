@@ -6,12 +6,12 @@
 import {
     buildController,
     PartyMode,
-    SigningDriverInterface,
+    type SigningDriverInterface,
     SigningProvider,
-    SignMessageResult,
+    type SignMessageResult,
 } from '@canton-network/core-signing-lib'
 
-import {
+import type {
     SignTransactionParams,
     SignTransactionResult,
     GetTransactionParams,
@@ -28,10 +28,11 @@ import {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
-import { FireblocksHandler, FireblocksApiKeyInfo } from './fireblocks.js'
+import type { FireblocksApiKeyInfo } from './fireblocks.js'
+import { FireblocksHandler } from './fireblocks.js'
 import _ from 'lodash'
 import { z } from 'zod'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 export interface FireblocksConfig {
     defaultKeyInfo?: FireblocksApiKeyInfo
@@ -68,6 +69,18 @@ const createFireblocksHandler = (
     )
 }
 
+function toBase64(hexString: string): string
+function toBase64(hexString?: string | undefined): string | undefined
+function toBase64(hexString?: string | undefined): string | undefined {
+    return hexString && Buffer.from(hexString, 'hex').toString('base64')
+}
+
+function toHex(base64String: string): string
+function toHex(base64String?: string | undefined): string | undefined
+function toHex(base64String?: string | undefined): string | undefined {
+    return base64String && Buffer.from(base64String, 'base64').toString('hex')
+}
+
 export default class FireblocksSigningDriver implements SigningDriverInterface {
     private fireblocks: FireblocksHandler
     private config: FireblocksConfig
@@ -86,17 +99,24 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 // TODO: validate transaction here
 
                 try {
+                    const hexKeyIdentifier = params.keyIdentifier.publicKey
+                        ? {
+                              publicKey: toHex(params.keyIdentifier.publicKey),
+                          }
+                        : params.keyIdentifier
+
                     const tx = await this.fireblocks.signTransaction(
                         userId,
-                        params.txHash,
-                        params.keyIdentifier,
+                        toHex(params.txHash),
+                        hexKeyIdentifier,
                         params.internalTxId
                     )
+
                     return {
                         txId: tx.txId,
                         status: tx.status,
-                        signature: tx.signature,
-                        publicKey: tx.publicKey,
+                        signature: toBase64(tx.signature),
+                        publicKey: toBase64(tx.publicKey),
                     }
                 } catch (error) {
                     return {
@@ -127,8 +147,8 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     return {
                         txId: tx.txId,
                         status: tx.status,
-                        signature: tx.signature,
-                        publicKey: tx.publicKey,
+                        signature: toBase64(tx.signature),
+                        publicKey: toBase64(tx.publicKey),
                     } as GetTransactionResult
                 } else {
                     return {
@@ -156,8 +176,8 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                             transactions.push({
                                 txId: tx.txId,
                                 status: tx.status,
-                                signature: tx.signature,
-                                publicKey: tx.publicKey,
+                                signature: toBase64(tx.signature),
+                                publicKey: toBase64(tx.publicKey),
                             })
                         }
                         if (
@@ -188,7 +208,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         keys: keys.map((k) => ({
                             id: k.derivationPath.join('-'),
                             name: k.name,
-                            publicKey: k.publicKey,
+                            publicKey: toBase64(k.publicKey),
                         })),
                     }
                 } catch (error) {

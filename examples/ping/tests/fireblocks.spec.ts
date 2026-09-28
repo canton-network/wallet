@@ -3,11 +3,9 @@
 
 import {
     test,
-    expect,
-    WalletGateway,
-    MOCK_FIREBLOCKS_VAULT_NAME,
+    type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -16,43 +14,11 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-    toMockEndpoint,
-    isLocalhost,
+} from './ping-test-helpers.js'
+import {
+    MOCK_FIREBLOCKS_VAULT_NAME,
+    setMockFireblocksTransactionState,
 } from './external-signing-test-helpers.js'
-
-const fireblocksApiPath = process.env.FIREBLOCKS_API_PATH
-
-async function setMockFireblocksTransactionState(
-    txId: string,
-    status: 'signed' | 'rejected' | 'failed'
-): Promise<void> {
-    const isMockedApi =
-        fireblocksApiPath && isLocalhost(new URL(fireblocksApiPath))
-    if (!isMockedApi) {
-        return
-    }
-    const setResponse = await fetch(
-        toMockEndpoint(fireblocksApiPath, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ txId, status }),
-        }
-    )
-    expect(setResponse.ok).toBeTruthy()
-
-    const updated = (await setResponse.json()) as {
-        signedMessages?: unknown[]
-        status?: string
-    }
-    if (status === 'signed') {
-        expect(updated.signedMessages?.length).toBeGreaterThan(0)
-    } else {
-        expect(updated.status).toBe(
-            status === 'rejected' ? 'REJECTED' : 'FAILED'
-        )
-    }
-}
 
 test.describe('Fireblocks external signing', () => {
     test.describe.configure({ mode: 'serial' })
@@ -95,13 +61,13 @@ test.describe('Fireblocks external signing', () => {
             submission.externalTxId,
             'signed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
-
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
             'signed'
         )
+        await wg.executeSignedTransaction({ waitForClose: false })
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -111,9 +77,11 @@ test.describe('Fireblocks external signing', () => {
     })
 
     test('rejects a transaction in the wallet UI', async () => {
-        await wg.rejectTransaction(() => clickCreatePingContract(dappPage), {
-            waitForClose: true,
-        })
+        const { commandId } = await wg.rejectTransaction(
+            () => clickCreatePingContract(dappPage),
+            { waitForClose: true }
+        )
+        await wg.expectActivityRemoved(commandId)
     })
 
     test('fails when Fireblocks rejects signing', async () => {
@@ -125,8 +93,6 @@ test.describe('Fireblocks external signing', () => {
             submission.externalTxId,
             'rejected'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
-
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -144,7 +110,6 @@ test.describe('Fireblocks external signing', () => {
             submission.externalTxId,
             'failed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,

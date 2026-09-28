@@ -8,16 +8,20 @@ import '@canton-network/core-wallet-ui-components'
 import {
     BaseElement,
     handleErrorToast,
-    LoginConnectEvent,
-    WgLoginForm,
+    type LoginConnectEvent,
+    type WgLoginForm,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
-import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    PublicNetwork,
+    Idp,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '../state-manager'
 import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
 import { setLocationHref } from '../navigation.js'
+import { detectCurrentOrigin } from '../listeners.js'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -58,22 +62,27 @@ export class LoginUI extends BaseElement {
     accessor idps: Idp[] = []
 
     @state()
+    accessor loading = true
+
+    @state()
     accessor connecting = false
 
     @state()
     accessor connectingMessage = 'Connecting...'
 
     private async loadNetworks() {
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get()
+            await stateManager.accessToken.get(currentOrigin)
         )
         const response = await userClient.request({ method: 'listNetworks' })
         return response.networks
     }
 
     private async loadIdps() {
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get()
+            await stateManager.accessToken.get(currentOrigin)
         )
         const response = await userClient.request({ method: 'listIdps' })
         return response.idps
@@ -82,10 +91,18 @@ export class LoginUI extends BaseElement {
     async connectedCallback() {
         super.connectedCallback()
         try {
-            this.networks = await this.loadNetworks()
-            this.idps = await this.loadIdps()
+            // Connecting needs both, so fetch them together and publish them update once both are resolved
+
+            const [networks, idps] = await Promise.all([
+                this.loadNetworks(),
+                this.loadIdps(),
+            ])
+            this.networks = networks
+            this.idps = idps
         } catch (e) {
             handleErrorToast(e)
+        } finally {
+            this.loading = false
         }
     }
 
@@ -100,16 +117,21 @@ export class LoginUI extends BaseElement {
     }
 
     private async handleConnect(e: LoginConnectEvent) {
-        const { selectedNetwork, selectedIdp, clientId } = e
+        const { selectedNetwork, selectedIdp, clientId, clientSecret } = e
 
         this.connecting = true
         this.connectingMessage = `Connecting to ${selectedNetwork.name}...`
-        stateManager.networkId.set(selectedNetwork.id)
+        const currentOrigin = await detectCurrentOrigin()
+        stateManager.networkId.set(selectedNetwork.id, currentOrigin)
 
         try {
             if (selectedIdp.type === 'self_signed') {
-                await this.selfSign(selectedNetwork.id, clientId)
-                redirectToIntendedOrDefault()
+                await this.selfSign(
+                    selectedNetwork.id,
+                    clientId ?? '',
+                    clientSecret ?? ''
+                )
+                await redirectToIntendedOrDefault()
                 return
             }
 
@@ -159,6 +181,7 @@ export class LoginUI extends BaseElement {
                     return
                 }
 
+                // TODO self_issued flow login here
                 await this.showLoginError(
                     'This authentication method is not valid.'
                 )
@@ -179,20 +202,26 @@ export class LoginUI extends BaseElement {
         }
     }
 
-    protected async selfSign(networkId: string, clientId: string) {
+    protected async selfSign(
+        networkId: string,
+        clientId: string,
+        clientSecret: string
+    ) {
+        const currentOrigin = await detectCurrentOrigin()
         const userClient = await createUserClient(
-            await stateManager.accessToken.get()
+            await stateManager.accessToken.get(currentOrigin)
         )
         const { accessToken } = await userClient.request({
             method: 'selfSignedAccessToken',
-            params: { networkId, clientId },
+            params: { networkId, clientId, clientSecret },
         })
 
         const payload = JSON.parse(atob(accessToken.split('.')[1]))
         stateManager.expirationDate.set(
-            new Date(payload.exp * 1000).toISOString()
+            new Date(payload.exp * 1000).toISOString(),
+            currentOrigin
         )
-        await stateManager.accessToken.set(accessToken)
+        await stateManager.accessToken.set(accessToken, currentOrigin)
 
         await addUserSession(accessToken, networkId)
     }
@@ -208,6 +237,7 @@ export class LoginUI extends BaseElement {
             <wg-login-form
                 .networks=${this.networks}
                 .idps=${this.idps}
+                .loading=${this.loading}
                 .connecting=${this.connecting}
                 @login-connect=${this.handleConnect}
             ></wg-login-form>

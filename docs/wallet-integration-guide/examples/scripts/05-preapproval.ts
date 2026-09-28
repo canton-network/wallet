@@ -1,4 +1,5 @@
-import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { HoldingView } from '@canton-network/core-token-standard'
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import {
@@ -125,7 +126,7 @@ logger.info({ sentValue }, 'Executed transfer from Alice to Bob with value:')
 const aliceUtxos = await sdk.token.utxos.list({ partyId: alice.partyId })
 const bobUtxos = await sdk.token.utxos.list({ partyId: bob.partyId })
 
-const partyAmuletValue = (utxos: PrettyContract<Holding>[]) =>
+const partyAmuletValue = (utxos: PrettyContract<HoldingView>[]) =>
     utxos.reduce(
         (acc, utxo) => acc + parseFloat(utxo.interfaceViewValue.amount),
         0
@@ -245,3 +246,6 @@ const renewedPreapprovalStillActive = preapprovalACS.some(
 if (cancelled === null && !renewedPreapprovalStillActive) {
     logger.info(`Successfully cancelled`)
 }
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

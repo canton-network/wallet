@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
+import type {
     SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { AuthAware } from '@canton-network/core-wallet-auth'
-import { Store } from '@canton-network/core-wallet-store'
-import express from 'express'
-import { Logger } from 'pino'
-import { KernelInfo } from '../config/Config.js'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
+import type { Store } from '@canton-network/core-wallet-store'
+import type express from 'express'
+import type { Logger } from 'pino'
+import type { KernelInfo } from '../config/Config.js'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
-import { NotificationService } from '../notification/NotificationService.js'
+import type { NotificationService } from '../notification/NotificationService.js'
 import { userController } from './controller.js'
-import { Methods } from './rpc-gen/index.js'
+import type { Methods } from './rpc-gen/index.js'
+import type { HASHING_SCHEME_VERSION } from '@canton-network/core-wallet-services'
 
 export const user = (
     route: string,
@@ -24,6 +25,7 @@ export const user = (
     notificationService: NotificationService,
     drivers: Partial<Record<SigningProvider, SigningDriverInterface>>,
     store: Store & AuthAware<Store>,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION,
     adminUserId?: string
 ) => {
     app.use(route, (req, res, next) =>
@@ -36,6 +38,7 @@ export const user = (
                 req.authContext,
                 drivers,
                 logger,
+                hashingSchemeVersion,
                 adminUserId
             ),
             logger,

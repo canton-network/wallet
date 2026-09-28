@@ -3,26 +3,26 @@
 
 import { describe, expect, test, beforeEach, afterEach } from 'vitest'
 
-import {
+import type {
     AuthContext,
     AuthorizationCodeAuth,
     Idp,
 } from '@canton-network/core-wallet-auth'
 import {
-    LedgerApi,
-    MessageRaw,
-    Network,
+    type LedgerApi,
+    type MessageRaw,
+    type Network,
     PartyLevelRight,
-    Session,
-    Transaction,
+    type Session,
+    type Transaction,
     UserLevelRight,
-    Wallet,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
-import { Kysely } from 'kysely'
-import { Logger, pino } from 'pino'
+import type { Kysely } from 'kysely'
+import { type Logger, pino } from 'pino'
 import { sink } from 'pino-test'
 import { migrator } from './migrator'
-import { DB } from './schema'
+import type { DB } from './schema'
 import { connection, StoreSql } from './store-sql'
 
 const authContextMock: AuthContext = {
@@ -86,7 +86,7 @@ function addTx(id: string, createdAt: Date | undefined) {
         preparedTransactionHash: 'hash-1',
         payload: { amount: 100 },
         origin: 'https://safe.example',
-        createdAt: createdAt,
+        ...(createdAt ? { createdAt } : {}),
     }
     return initial
 }
@@ -108,6 +108,7 @@ implementations.forEach(([name, StoreImpl]) => {
         test('should add and retrieve wallets', async () => {
             const wallet: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint',
@@ -122,13 +123,19 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet)
             const wallets = await store.getWallets()
             expect(wallets).toHaveLength(1)
+            expect(await store.getWallet('party1')).toMatchObject({
+                partyId: 'party1',
+                networkId: 'network1',
+            })
+            expect(await store.getWallet('missing')).toBeNull()
         })
 
         test('should filter wallets', async () => {
@@ -149,6 +156,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint1',
@@ -160,6 +168,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party2',
                 status: 'allocated',
                 hint: 'hint2',
@@ -171,6 +180,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet3: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party3',
                 status: 'allocated',
                 hint: 'hint3',
@@ -187,8 +197,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network2)
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet1)
@@ -215,11 +226,17 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(getWalletsByNetworkId).toHaveLength(2)
             expect(getWalletsBySigningProviderId).toHaveLength(3)
             expect(getWalletsByNetworkIdAndSigningProviderId).toHaveLength(2)
+            expect(await store.getWallet('party1')).toMatchObject({
+                partyId: 'party1',
+                networkId: 'network1',
+            })
+            expect(await store.getWallet('party3')).toBeNull()
         })
 
         test('should set and get primary wallet', async () => {
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint1',
@@ -231,6 +248,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party2',
                 status: 'allocated',
                 hint: 'hint2',
@@ -246,8 +264,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Set session so getCurrentNetwork() works
             const session: Session = {
                 id: 'sess-123',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet1)
@@ -261,6 +280,7 @@ implementations.forEach(([name, StoreImpl]) => {
         test('should persist wallet rights and update rights-only changes', async () => {
             const wallet: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party-rights',
                 status: 'allocated',
                 hint: 'rights',
@@ -278,8 +298,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-rights',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
             await store.addWallet(wallet)
 
@@ -300,17 +321,18 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             const session: Session = {
                 id: 'sess-123',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
-            const result = await store.getSession()
+            const result = await store.getSession('test-access-token')
             expect(result).toEqual({
                 ...session,
                 userId: authContextMock.userId,
             })
-            await store.removeSession()
-            const removed = await store.getSession()
+            await store.removeSession('test-access-token')
+            const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
         })
 
@@ -364,6 +386,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace',
                 status: 'allocated',
                 hint: 'party1',
@@ -375,6 +398,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace', // Same party ID
                 status: 'allocated',
                 hint: 'party1',
@@ -390,8 +414,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network2)
             const session: Session = {
                 id: 'session1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session)
             await store.addWallet(wallet1)
@@ -426,6 +451,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1',
                 status: 'allocated',
                 hint: 'hint1',
@@ -437,6 +463,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party2',
                 status: 'allocated',
                 hint: 'hint2',
@@ -448,6 +475,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet3: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party3',
                 status: 'allocated',
                 hint: 'hint3',
@@ -459,6 +487,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet4: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party4',
                 status: 'allocated',
                 hint: 'hint4',
@@ -476,8 +505,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Set session for network1
             const session1: Session = {
                 id: 'sess-1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session1)
             await store.addWallet(wallet1)
@@ -490,8 +520,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Switch to network2
             const session2: Session = {
                 id: 'sess-2',
+                origin: 'dapp-1',
                 network: 'network2',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session2)
             await store.addWallet(wallet3)
@@ -511,6 +542,7 @@ implementations.forEach(([name, StoreImpl]) => {
         test('addWallet should upsert when same party exists on different network', async () => {
             const wallet1: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace',
                 status: 'allocated',
                 hint: 'party1',
@@ -522,6 +554,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             const wallet2: Wallet = {
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party1::namespace', // Same party ID
                 status: 'allocated',
                 hint: 'party1',
@@ -555,8 +588,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Set session for network1
             const session1: Session = {
                 id: 'sess-1',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session1)
             await store.addWallet(wallet1)
@@ -564,8 +598,9 @@ implementations.forEach(([name, StoreImpl]) => {
             // Switch to network2 and add same party
             const session2: Session = {
                 id: 'sess-2',
+                origin: 'dapp-1',
                 network: 'network2',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             }
             await store.setSession(session2)
             await store.addWallet(wallet2) // Should not throw, should create new entry
@@ -593,8 +628,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             const initial: Transaction = {
@@ -645,8 +681,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -686,8 +723,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -726,8 +764,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-immutable',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             for (let i = 0; i < 10; i++) {
@@ -749,12 +788,14 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-cascade-wallet',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.addWallet({
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party-cascade-1',
                 status: 'allocated',
                 hint: 'hint',
@@ -786,12 +827,14 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-cascade-network',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.addWallet({
                 primary: false,
+                userId: authContextMock.userId,
                 partyId: 'party-cascade-2',
                 status: 'allocated',
                 hint: 'hint',
@@ -841,7 +884,9 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.getIdp('idp1')).toEqual(idp)
             await store.updateIdp({ ...idp, issuer: 'https://issuer-updated' })
             expect(
-                (await store.listIdps()).find((i) => i.id === 'idp1')?.issuer
+                (await store.listIdps()).find(
+                    (i): i is typeof idp => i.id === 'idp1'
+                )?.issuer
             ).toBe('https://issuer-updated')
 
             await expect(store.addIdp(idp)).rejects.toThrow(
@@ -856,14 +901,52 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.listIdps()).toHaveLength(1)
         })
 
+        test('should store a null issuer for self_issued idps', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const selfIssuedIdp = {
+                id: 'self-issued',
+                type: 'self_issued' as const,
+            }
+
+            await store.addIdp(selfIssuedIdp)
+
+            expect(
+                await store.getIdp(selfIssuedIdp.id),
+                "Doesn't throw if issuer is missing for self_issued"
+            ).toEqual(selfIssuedIdp)
+        })
+
+        test('should clear issuer and config URL when changing an idp to self_issued', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const id = 'changed-to-self-issued'
+
+            await store.addIdp({
+                id,
+                type: 'oauth',
+                issuer: 'https://issuer.example',
+                configUrl:
+                    'https://issuer.example/.well-known/openid-configuration',
+            })
+            await store.updateIdp({ id, type: 'self_issued' })
+
+            expect(
+                await db
+                    .selectFrom('idps')
+                    .select(['issuer', 'configUrl'])
+                    .where('id', '=', id)
+                    .executeTakeFirstOrThrow()
+            ).toEqual({ issuer: null, configUrl: null })
+        })
+
         test('should set and read user level rights for the current network', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-user-rights',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.setUserRights('network1', [
@@ -883,8 +966,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-messages',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             const message: MessageRaw = {
@@ -919,8 +1003,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-msg-mismatch',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await expect(
@@ -943,8 +1028,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-tx-lookup',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await store.setTransaction({
@@ -989,8 +1075,9 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network)
             await store.setSession({
                 id: 'session-missing-updates',
+                origin: 'dapp-1',
                 network: 'network1',
-                accessToken: 'token',
+                accessToken: 'test-access-token',
             })
 
             await expect(

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { SigningWorker } from './signing-worker.js'
@@ -30,11 +30,18 @@ vi.mock('@canton-network/core-wallet-auth', async () => {
     }
 })
 
-vi.mock('../ledger/transaction-service.js', () => ({
-    TransactionService: vi.fn(function TransactionServiceMock() {
-        return { signAndExecute: mocks.signAndExecute }
-    }),
-}))
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
+    return {
+        ...actual,
+        TransactionService: vi.fn(function TransactionServiceMock() {
+            return { signAndExecute: mocks.signAndExecute }
+        }),
+    }
+})
 
 const idp: Idp = {
     id: 'idp1',
@@ -110,6 +117,7 @@ function createWorker(
 ) {
     const scopedStore = {
         setSession: vi.fn().mockResolvedValue(undefined),
+        getSession: vi.fn().mockResolvedValue({ id: 'session-1' }),
         getPrimaryWallet: vi.fn().mockResolvedValue(wallet),
         getAllWallets: vi.fn().mockResolvedValue([wallet, aliceWallet]),
         getTransaction: vi.fn().mockResolvedValue(pendingTransaction),
@@ -120,6 +128,7 @@ function createWorker(
             .mockResolvedValue([pendingTransaction]),
         getIdp: vi.fn().mockResolvedValue(idp),
         getNetwork: vi.fn().mockResolvedValue(m2mNetwork),
+        getSession: vi.fn().mockResolvedValue({ id: 'session-1' }),
         withAuthContext: vi.fn().mockReturnValue(scopedStore),
         ...storeOverrides,
     }
@@ -134,6 +143,7 @@ function createWorker(
                 getNotifier: vi.fn(() => ({ emit: vi.fn() })),
             } as never,
             logger,
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
         }),
         store,
         scopedStore,
@@ -141,8 +151,6 @@ function createWorker(
 }
 
 describe('SigningWorker', () => {
-    afterEach(() => vi.clearAllMocks())
-
     it('completes pending external transactions with a primary wallet', async () => {
         const { worker } = createWorker()
 

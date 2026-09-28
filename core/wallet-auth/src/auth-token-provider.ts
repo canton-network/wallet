@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@canton-network/core-types'
-import {
+import type { Logger } from '@canton-network/core-types'
+import type {
     AccessTokenProvider,
     AuthContext,
     ClientCredentials,
@@ -10,7 +10,7 @@ import {
 import { jwtExpired, jwtUserEmail, jwtUserId } from './auth-utils'
 import { clientCredentialsService } from './client-credentials-service'
 import { SelfSignedTokenService } from './self-signed-token-service'
-import { Auth, Idp } from './config/schema'
+import type { Auth, Idp } from './config/schema'
 
 export type TokenProviderConfig =
     | {
@@ -21,6 +21,7 @@ export type TokenProviderConfig =
           method: 'self_signed'
           issuer: string
           credentials: ClientCredentials
+          keyId?: string
       }
     | {
           method: 'client_credentials'
@@ -111,7 +112,9 @@ export class AuthTokenProvider implements AccessTokenProvider {
                 return SelfSignedTokenService.fetchToken(
                     this.logger,
                     this.config.credentials,
-                    this.config.issuer
+                    this.config.issuer,
+                    undefined,
+                    this.config.keyId
                 )
             case 'client_credentials':
                 return clientCredentialsService(

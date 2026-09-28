@@ -26,7 +26,7 @@ jobs:
             mainnet_splice_version: ${{ steps.version.outputs.mainnet_splice_version }}
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - name: Resolve version config outputs
               id: version
@@ -44,29 +44,25 @@ jobs:
         needs: version-config
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/initial
+            - uses: ./.github/actions/setup_pnpm/initial
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
                   save_cache: 'true'
 
             - name: Build project
-              run: yarn build:all
+              run: pnpm build:all
 
             - name: Upload build artifacts
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: build-dist-${{ github.run_id }}
                   path: |
-                      .yarn/cache/
-                      .yarn/unplugged/
-                      .yarn/install-state.gz
-                      .pnp.cjs
-                      .pnp.loader.mjs
-                      core/**/dist/
-                      sdk/**/dist/
-                      wallet-gateway/**/dist/
+                      core/*/dist/
+                      sdk/*/dist/
+                      wallet-gateway/*/dist/
+                      examples/*/dist/
                       damljs
                       .nx/cache
                       .nx/workspace-data
@@ -84,9 +80,9 @@ jobs:
                 instance: [canton, localnet]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -107,11 +103,11 @@ jobs:
         needs: build
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - name: Setup Python
               id: setup-python
-              uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+              uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
               with:
                   python-version-file: .python-version
 
@@ -149,45 +145,45 @@ jobs:
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Validate current PR title with commitlint
-              run: echo "$TITLE" | yarn commitlint --verbose
+              run: echo "$TITLE" | pnpm commitlint --verbose
               env:
                   TITLE: ${{ github.event.pull_request.title }}
 
             - name: check package.json names
-              run: yarn script:cleancoding
+              run: pnpm script:cleancoding
 
             - name: run typechecking
-              run: yarn nx run-many -t typecheck --parallel
+              run: pnpm nx run-many -t typecheck --parallel
 
             - name: check open-rpc specs titles
-              run: yarn script:openrpc:titles
+              run: pnpm script:openrpc:titles
 
             - name: prettier code
-              run: yarn run prettier . --check
+              run: pnpm prettier . --check
 
             - name: eslint code
-              run: yarn nx run-many -t lint --parallel
+              run: pnpm nx run-many -t lint --parallel
 
             - name: check wg schema docs
-              run: yarn docs:update-wg-config
+              run: pnpm docs:update-wg-config
 
     test-unit:
         runs-on: ubuntu-latest
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -195,13 +191,13 @@ jobs:
 
             - name: Run all unit tests
               run: |
-                  yarn nx run-many -t test:coverage \
+                  pnpm nx run-many -t test:coverage \
                     --parallel
 
             - name: Coverage summary
               run: |
                   echo "::group::Unit test coverage summary"
-                  yarn script:coverage:report
+                  pnpm script:coverage:report
                   echo "::endgroup::"
 
     check-migration-lock:
@@ -212,15 +208,15 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
 
             - name: Check migration lock files
               run: |
-                  yarn nx affected -t migrations:check-lock \
+                  pnpm nx affected -t migrations:check-lock \
                     --base=origin/${{ github.base_ref }} \
                     --head=HEAD \
                     --parallel
@@ -232,15 +228,15 @@ jobs:
         needs: build
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
 
             - name: Run affected migration tests
               run: |
-                  yarn nx affected -t test:migrations \
+                  pnpm nx affected -t test:migrations \
                     --base=origin/${{ github.base_ref }} \
                     --head=HEAD \
                     --parallel=1
@@ -256,9 +252,9 @@ jobs:
                 db: [sqlite, postgres]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -321,7 +317,7 @@ jobs:
                     export DFNS_PRIVATE_KEY="${{ vars.DFNS_PRIVATE_KEY }}"
                     export DFNS_AUTH_TOKEN="${{ vars.DFNS_AUTH_TOKEN }}"
                   fi
-                  yarn pm2 start ecosystem.ci.config.js --env development
+                  pnpm pm2 start ecosystem.ci.config.js --env development
 
             - uses: ./.github/actions/setup_playwright
 
@@ -332,11 +328,11 @@ jobs:
                     export FIREBLOCKS_API_PATH="${{ vars.FIREBLOCKS_API_PATH }}"
                     export DFNS_BASE_URL="${{ vars.DFNS_BASE_URL }}"
                   fi
-                  yarn nx playwright:e2e @canton-network/example-ping
+                  pnpm nx playwright:e2e @canton-network/example-ping
 
             - name: Collect remote PM2 logs
               if: ${{ !cancelled() }}
-              run: yarn pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
+              run: pnpm pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
@@ -369,6 +365,51 @@ jobs:
                   fi
                   echo "test-ping-e2e passed"
 
+    extension-e2e:
+        name: extension-e2e (devnet)
+        runs-on: ubuntu-latest
+        needs: [version-config, build, hydrate-canton-caches]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+            - uses: ./.github/actions/setup_pnpm/artifacts
+              with:
+                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+
+            - uses: ./.github/actions/setup_canton/artifacts
+              with:
+                  network: devnet
+                  canton_version: ${{ needs.version-config.outputs.devnet_canton_version }}
+
+            - uses: ./.github/actions/setup_playwright
+
+            - name: Build extension
+              run: pnpm --filter @canton-network/wallet-gateway-extension build
+
+            - name: Run extension e2e
+              run: pnpm --filter @canton-network/wallet-gateway-extension e2e
+
+            - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              if: ${{ !cancelled() }}
+              with:
+                  name: wallet-gateway-extension-playwright-report
+                  path: wallet-gateway/extension/playwright-report/
+                  retention-days: 5
+
+    test-extension-e2e:
+        runs-on: ubuntu-latest
+        needs: extension-e2e
+        if: always()
+        steps:
+            - name: Report extension e2e execution
+              run: |
+                  if [ "${{ needs.extension-e2e.result }}" != "success" ]; then
+                    echo "extension-e2e did not succeed"
+                    exit 1
+                  fi
+                  echo "test-extension-e2e passed"
+
     portfolio-e2e:
         name: portfolio-e2e (${{ matrix.network }})
         runs-on: ubuntu-latest
@@ -379,9 +420,9 @@ jobs:
                 network: [devnet, mainnet]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -389,18 +430,19 @@ jobs:
               with:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  multi_sync: 'true'
 
             - name: Start remote WK
-              run: yarn pm2 start ecosystem.ci.config.js --env development
+              run: pnpm pm2 start ecosystem.ci.config.js --env development
 
             - uses: ./.github/actions/setup_playwright
 
             - name: Run example e2e
-              run: yarn nx playwright:e2e @canton-network/example-portfolio
+              run: pnpm nx playwright:e2e @canton-network/example-portfolio
 
             - name: Collect remote PM2 logs
               if: ${{ !cancelled() }}
-              run: yarn pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
+              run: pnpm pm2 logs remote --raw --nostream --lines 10000 > "wallet-gateway-remote.log" 2>&1 || true
 
             - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               if: ${{ !cancelled() }}
@@ -440,9 +482,9 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -450,17 +492,14 @@ jobs:
               with:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  multi_sync: 'true'
 
             - uses: ./.github/actions/check_resources
 
             - name: Test example snippets (${{ matrix.network }})
-              run: yarn nx snippets docs-wallet-integration-guide-examples
+              run: pnpm nx snippets docs-wallet-integration-guide-examples
 
             - uses: ./.github/actions/check_resources
-
-            - name: Stop Localnet (${{ matrix.network }})
-              if: always()
-              run: yarn stop:localnet -- --network=${{ matrix.network }}
 
             - name: Save container logs
               if: failure()
@@ -471,6 +510,10 @@ jobs:
                   for c in $(docker ps -a --format '{{.Names}}'); do
                     docker logs "$c" &> "logs/$c.log" || true
                   done
+
+            - name: Stop Localnet (${{ matrix.network }})
+              if: always()
+              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
             - name: Upload logs as artifacts
               if: failure()
@@ -490,9 +533,9 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
@@ -500,19 +543,27 @@ jobs:
               with:
                   network: ${{ matrix.network }}
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  multi_sync: 'true'
+
+            - name: Restore DPM cache
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      ~/.dpm
+                  key: dpm-${{ runner.os }}-${{ needs.version-config.outputs.daml_release_version }}
+
+            - name: Rebuild DAML-dependent packages
+              run: |
+                  pnpm run --filter @canton-network/core-splice-codegen build
 
             - uses: ./.github/actions/check_resources
 
             - name: Test example scripts (${{ matrix.network }})
               env:
                   MAX_IO_LISTENERS: '50'
-              run: yarn script:test:examples
+              run: pnpm script:test:examples
 
             - uses: ./.github/actions/check_resources
-
-            - name: Stop Localnet (${{ matrix.network }})
-              if: always()
-              run: yarn stop:localnet -- --network=${{ matrix.network }}
 
             - name: Save container logs
               if: failure()
@@ -523,6 +574,10 @@ jobs:
                   for c in $(docker ps -a --format '{{.Names}}'); do
                     docker logs "$c" &> "logs/$c.log" || true
                   done
+
+            - name: Stop Localnet (${{ matrix.network }})
+              if: always()
+              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
 
             - name: Upload logs as artifacts
               if: failure()
@@ -558,11 +613,11 @@ jobs:
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - uses: ./.github/actions/setup_yarn/artifacts
+            - uses: ./.github/actions/setup_pnpm/artifacts
               with:
                   daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Validate SDK package install
-              run: yarn script:validate:package
+              run: pnpm script:validate:package

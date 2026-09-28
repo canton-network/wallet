@@ -326,3 +326,6 @@ await onlineSDK.ledger.execute(signedAcceptTransferHash, {
 })
 
 onlineLogger.info('Accepted transfer instruction')
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

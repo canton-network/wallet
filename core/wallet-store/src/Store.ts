@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Idp } from '@canton-network/core-wallet-auth'
-import { Network } from './config/schema'
+import type { Network } from './config/schema'
 
 export enum AddressType {
     PaperAddress = 'PaperAddress',
@@ -39,18 +39,6 @@ export enum UserLevelRight {
     CanExecuteAsAnyParty = 'CanExecuteAsAnyParty',
 }
 
-export interface UpdateWallet {
-    partyId: PartyId
-    networkId?: string
-    status?: WalletStatus
-    externalTxId?: string
-    topologyTransactions?: string
-    disabled?: boolean
-    reason?: string
-    primary?: boolean
-    rights?: PartyLevelRight[]
-}
-
 export type WalletStatus = 'initialized' | 'allocated' | 'removed'
 
 export interface Wallet {
@@ -67,13 +55,41 @@ export interface Wallet {
     disabled?: boolean
     reason?: string
     rights: PartyLevelRight[]
+    userId: string
     // hosted: [network]
 }
+
+export type WalletUniqueConstraint = Pick<
+    Wallet,
+    'networkId' | 'partyId' | 'userId'
+>
+
+export type UpdateWallet =
+    // Required items
+    Pick<Wallet, 'partyId'> &
+        // Optional items
+        Partial<
+            Pick<
+                Wallet,
+                | 'networkId'
+                | 'status'
+                | 'externalTxId'
+                | 'topologyTransactions'
+                | 'disabled'
+                | 'reason'
+                | 'primary'
+                | 'rights'
+                | 'signingProviderId'
+                | 'publicKey'
+                | 'namespace'
+            >
+        >
 
 // Session management
 
 export interface Session {
     id: string
+    origin: string
     network: string
     accessToken: string
     userId?: string
@@ -81,7 +97,7 @@ export interface Session {
 
 export interface Transaction {
     id: string
-    status: 'pending' | 'signed' | 'executed' | 'failed'
+    status: 'pending' | 'signed' | 'executed' | 'failed' | 'awaiting-signature'
     commandId: string
     preparedTransaction: string
     preparedTransactionHash: string
@@ -92,12 +108,14 @@ export interface Transaction {
     externalTxId?: string
     userId?: string
     networkId?: string
+    failureReason?: string
 }
 
 export interface TransactionStatusUpdate {
     payload?: unknown
     signedAt?: Date
     externalTxId?: string
+    failureReason?: string
 }
 
 export interface ListTransactionsOptions {
@@ -140,6 +158,7 @@ export interface ApiKey {
 export interface Store {
     // Wallet methods
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
+    getWallet(partyId: PartyId): Promise<Wallet | null>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>
@@ -153,9 +172,27 @@ export interface Store {
     ): Promise<void>
 
     // Session methods
-    getSession(): Promise<Session | undefined>
+    /**
+     * getSession is keyed by the accessToken, which is unique per session. It retrieves the session associated with the provided accessToken.
+     * @param accessToken The access token associated with the session to retrieve.
+     * @returns A Promise that resolves to the Session object if found, or undefined if no session exists for the given accessToken.
+     */
+    getSession(accessToken: string): Promise<Session | undefined>
+
+    /**
+     * listSessions retrieves all active sessions for the authenticated user.
+     * @returns A Promise that resolves to an array of Session objects representing the active sessions.
+     */
+    listSessions(): Promise<Array<Session>>
+
     setSession(session: Session): Promise<void>
-    removeSession(): Promise<void>
+
+    /**
+     * removeSession is keyed by the accessToken, which is unique per session. It removes the session associated with the provided accessToken.
+     * @param accessToken The access token associated with the session to remove.
+     * @returns A Promise that resolves when the session has been removed.
+     */
+    removeSession(accessToken: string): Promise<void>
 
     // IDP methods
     getIdp(idpId: string): Promise<Idp>
@@ -167,6 +204,15 @@ export interface Store {
     // Network methods
     getNetwork(networkId: string): Promise<Network>
     getCurrentNetwork(): Promise<Network>
+    /**
+     * Looks up a self_signed network without scoping to the authenticated user,
+     * because this runs during token verification, before there is one.
+     * Returns undefined for unknown networks and for networks using any other
+     * auth method.
+     */
+    getNetworkForTokenVerification(
+        networkId: string
+    ): Promise<Network | undefined>
     listNetworks(): Promise<Array<Network>>
     updateNetwork(network: Network): Promise<void>
     addNetwork(network: Network): Promise<void>
@@ -177,13 +223,15 @@ export interface Store {
     setTransactionSigned(
         transactionId: string,
         signedAt: Date,
-        externalTxId?: string
-    ): Promise<void>
+        externalTxId?: string,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean>
     setTransactionStatus(
         transactionId: string,
         status: Transaction['status'],
-        updates?: TransactionStatusUpdate
-    ): Promise<void>
+        updates?: TransactionStatusUpdate,
+        opts?: { expectedStatus: Transaction['status'] }
+    ): Promise<boolean>
     getTransaction(transactionId: string): Promise<Transaction | undefined>
     getLatestTransactionByCommandId(
         commandId: string

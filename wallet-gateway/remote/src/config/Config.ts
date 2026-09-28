@@ -115,6 +115,17 @@ const bootstrapFromEnv = bootstrapConfigSchema.extend({
     ),
 })
 
+const hashingSchemeSchema = z
+    .object({
+        version: z
+            .enum(['HASHING_SCHEME_VERSION_V2', 'HASHING_SCHEME_VERSION_V3'])
+            .meta({
+                description:
+                    'Hashing scheme version for the ledger. If omitted, defaults to HASHING_SCHEME_VERSION_V3',
+            }),
+    })
+    .optional()
+
 // Includes secrets for networks as env vars, rather than defined explicitly
 export const rawConfigSchema = z.object({
     kernel: kernelInfoSchema,
@@ -123,6 +134,7 @@ export const rawConfigSchema = z.object({
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema,
     bootstrap: bootstrapFromEnv,
+    hashingScheme: hashingSchemeSchema,
 })
 
 export const configSchema = z.object({
@@ -132,6 +144,7 @@ export const configSchema = z.object({
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema,
     bootstrap: bootstrapConfigSchema,
+    hashingScheme: hashingSchemeSchema,
 })
 
 export type KernelInfo = z.infer<typeof kernelInfoSchema>

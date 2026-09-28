@@ -79,6 +79,7 @@ vi.mock('./state-manager.js', () => ({
             clear: vi.fn(),
         },
         clearAuthState: mockClearAuthState,
+        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', () => ({
@@ -127,7 +128,7 @@ describe('rpc-client', () => {
     it('createUserClient uses userPath from gateway config', async () => {
         const customUserPath = `${window.location.origin}/api/v0/custom-user`
         fetchMock.mockResolvedValue(
-            new Response(JSON.stringify({ userPath: customUserPath }), {
+            new Response(JSON.stringify({ userApiUrl: customUserPath }), {
                 status: 200,
             })
         )

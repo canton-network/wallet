@@ -4,7 +4,7 @@
 import { expect, test } from 'vitest'
 
 import { ParticipantSigningDriver } from './controller.js'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 const TEST_TRANSACTION = 'test-tx'
 const TEST_TRANSACTION_HASH =

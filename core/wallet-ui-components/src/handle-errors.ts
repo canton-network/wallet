@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ErrorResponse } from '@canton-network/core-types'
+import {
+    ErrorResponse,
+    isCip103ErrorCode,
+    CIP103_ERROR_MESSAGES,
+} from '@canton-network/core-types'
 
 type ToastElement = HTMLElement & {
     title: string
@@ -27,34 +31,26 @@ export function handleErrorToast(e: unknown, fallback?: FallbackType) {
 
     // TODO: if an API call fails in the frontend, it loses the structured error info and falls back to Unexpected.
     // See line 242 in core/types/src/index.ts (class HttpTransport)
-    if (ErrorResponse.safeParse(e).success) {
-        const parsed: ErrorResponse = ErrorResponse.parse(e)
-        code = parsed.error.code
-        message = parsed.error.message
+    const parsed = ErrorResponse.safeParse(e)
+    if (parsed.success) {
+        code = parsed.data.error.code
+        message = parsed.data.error.message
     }
 
-    switch (code) {
-        case -32600:
-            toast.title = 'Invalid Request'
-            break
-        case -32601:
-            toast.title = 'Method Not Found'
-            break
-        case -32602:
-            toast.title = 'Invalid Parameters'
-            break
-        case -32603:
-            toast.title = 'Internal Error'
-            break
-        case 413:
-            toast.title = 'Payload Too Large'
-            break
-        case 429:
-            toast.title = 'Too Many Requests'
-            break
-        default:
-            toast.title = fallback?.title || 'Unexpected Error'
-            break
+    if (isCip103ErrorCode(code)) {
+        toast.title = CIP103_ERROR_MESSAGES[code]
+    } else {
+        switch (code) {
+            case 413:
+                toast.title = 'Payload Too Large'
+                break
+            case 429:
+                toast.title = 'Too Many Requests'
+                break
+            default:
+                toast.title = fallback?.title || 'Unexpected Error'
+                break
+        }
     }
 
     toast.message =

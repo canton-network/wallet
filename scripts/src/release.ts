@@ -196,7 +196,7 @@ program
 
             if (oldHash !== newHash) {
                 console.log('Running retag to update tag references...')
-                await cmd(`yarn script:retag ${oldHash} ${newHash}`)
+                await cmd(`pnpm script:retag ${oldHash} ${newHash}`)
                 console.log('Tags updated successfully')
             } else {
                 console.log('Hashes are identical, no retagging needed')
@@ -208,7 +208,7 @@ program
     .parseAsync(process.argv)
 
 async function runRelease(dryRun: boolean, groups: string[]): Promise<void> {
-    let releaseCmd = `yarn nx release --skip-publish`
+    let releaseCmd = `pnpm nx release --skip-publish`
 
     if (dryRun === false) {
         const proceedDryRun = await confirm({

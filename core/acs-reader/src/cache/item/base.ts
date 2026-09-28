@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ACEvent, ACSState, PaginatedACSState } from '../../types'
-import { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { ACEvent, ACSState, PaginatedACSState } from '../../types'
+import type { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import pino from 'pino'
 import {
-    ResolvedAcsOptions,
+    type ResolvedAcsOptions,
     AcsService,
-    PaginatedResolvedAcsOptions,
+    type PaginatedResolvedAcsOptions,
 } from '../../service'
 
 export const logger = pino({ name: 'acs-reader/cache' })

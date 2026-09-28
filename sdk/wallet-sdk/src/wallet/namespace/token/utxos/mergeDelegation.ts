@@ -1,18 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TokenNamespaceConfig } from '../../../sdk.js'
-import { Metadata } from '@canton-network/core-token-standard'
-import {
+import type { TokenNamespaceConfig } from '../../../sdk.js'
+import type { HoldingView, Metadata } from '@canton-network/core-token-standard'
+import type {
     DisclosedContract,
     ExerciseCommand,
 } from '@canton-network/core-token-standard-service'
-import { Holding, PrettyContract } from '@canton-network/core-tx-parser'
-import { PartyId } from '@canton-network/core-types'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { PartyId } from '@canton-network/core-types'
 import { LedgerNamespace } from '../../ledger/index.js'
-import { UtxoNamespace } from './index.js'
+import type { UtxoNamespace } from './index.js'
 import { resolveProviderParty } from '../utils.js'
-import { WrappedCommand } from '@canton-network/core-ledger-client-types'
+import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 
 export class MergeDelegationNamespace {
     private readonly ledger: LedgerNamespace
@@ -103,7 +103,7 @@ export class MergeDelegationNamespace {
         party: PartyId
         synchronizerId?: string
         nodeLimit?: number
-        inputUtxos?: PrettyContract<Holding>[]
+        inputUtxos?: PrettyContract<HoldingView>[]
         validatorParty?: PartyId
     }) {
         const providerParty = resolveProviderParty(

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect } from 'vitest'
-import { Ops } from './index.js'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import type { Ops } from './index.js'
+import type { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 
 const MOCK_LEDGER_VERSION = 'example-ledger-version'
 const MOCK_IDP_CONFIG = {
@@ -148,7 +148,7 @@ describe('LedgerProvider', () => {
             accessTokenProvider: tokenProvider,
         })
 
-        expect(async () => {
+        await expect(async () => {
             await provider.request<Ops.DeleteV2IdpsIdpId>({
                 method: 'ledgerApi',
                 params: {
@@ -169,7 +169,7 @@ describe('LedgerProvider', () => {
             accessTokenProvider: tokenProvider,
         })
 
-        expect(async () => {
+        await expect(async () => {
             /* eslint-disable @typescript-eslint/no-explicit-any -- for testing invalid methods*/
             await provider.request({
                 method: 'notexists',
