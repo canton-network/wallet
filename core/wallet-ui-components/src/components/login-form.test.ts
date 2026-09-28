@@ -268,7 +268,7 @@ describe('wg-login-form', () => {
             identityProviderId: 'idp-1',
             authMethod: 'self_issued',
         })
-        const idp = makeIdp({ id: 'idp-1', type: 'self_signed' })
+        const idp = makeIdp({ id: 'idp-1', type: 'self_issued' })
         const el = await fixture<WgLoginForm>(
             html`<wg-login-form
                 .networks=${[network]}

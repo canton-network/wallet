@@ -585,7 +585,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     },
                                                     "audience": {
                                                         "type": "string",
-                                                        "description": "Participant ID. Unlike other auth methods without a prefix \"https://daml.com/jwt/aud/participant/\"."
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -704,7 +704,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     },
                                                     "audience": {
                                                         "type": "string",
-                                                        "description": "Participant ID. Unlike other auth methods without a prefix \"https://daml.com/jwt/aud/participant/\"."
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -829,7 +829,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     },
                                                     "audience": {
                                                         "type": "string",
-                                                        "description": "Participant ID. Unlike other auth methods without a prefix \"https://daml.com/jwt/aud/participant/\"."
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -948,7 +948,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     },
                                                     "audience": {
                                                         "type": "string",
-                                                        "description": "Participant ID. Unlike other auth methods without a prefix \"https://daml.com/jwt/aud/participant/\"."
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -1073,7 +1073,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     },
                                                     "audience": {
                                                         "type": "string",
-                                                        "description": "Participant ID. Unlike other auth methods without a prefix \"https://daml.com/jwt/aud/participant/\"."
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -1192,7 +1192,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     },
                                                     "audience": {
                                                         "type": "string",
-                                                        "description": "Participant ID. Unlike other auth methods without a prefix \"https://daml.com/jwt/aud/participant/\"."
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
                                                     },
                                                     "scope": {
                                                         "type": "string"

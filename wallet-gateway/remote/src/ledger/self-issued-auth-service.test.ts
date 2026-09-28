@@ -129,21 +129,26 @@ describe('SelfIssuedAuthService', () => {
     }
 
     describe('getOnboardingState', () => {
-        it('reports an onboarded ledger user and the stored wallets', async () => {
-            const wallet = createWallet()
+        it('reports an onboarded ledger user and auth-party wallets only', async () => {
+            const authWallet = createWallet({ isAuthParty: true })
+            const otherWallet = createWallet({
+                partyId: 'bob::ns',
+                hint: 'bob',
+                isAuthParty: false,
+            })
             ledgerClient.get.mockResolvedValue({
                 user: {
                     id: 'alice',
-                    primaryParty: wallet.partyId,
+                    primaryParty: authWallet.partyId,
                     primaryPartyAuthentication: true,
                 },
             })
-            store.getWallets.mockResolvedValue([wallet])
+            store.getWallets.mockResolvedValue([authWallet, otherWallet])
 
             await expect(createService().getOnboardingState()).resolves.toEqual(
                 {
                     userOnboarded: true,
-                    wallets: [wallet],
+                    wallets: [authWallet],
                 }
             )
         })
