@@ -364,6 +364,12 @@ export type Disabled = boolean
  *
  */
 export type Reason = string
+/**
+ *
+ * Whether the party authenticates the user with self-issued tokens.
+ *
+ */
+export type IsAuthParty = boolean
 export type PartyLevelRight = any
 /**
  *
@@ -389,14 +395,15 @@ export interface Wallet {
     topologyTransactions?: TopologyTransactions
     disabled?: Disabled
     reason?: Reason
+    isAuthParty?: IsAuthParty
     rights: Rights
 }
 /**
  *
- * Whether the ledger user already exists.
+ * Whether the ledger user already has a primary party or primary party authentication set.
  *
  */
-export type UserExists = boolean
+export type UserOnboarded = boolean
 /**
  *
  * Wallets stored for the user on the selected network.
@@ -747,7 +754,7 @@ export interface AddSelfIssuedSessionResult {
     sessionId: SessionId
 }
 export interface GetSelfIssuedOnboardingResult {
-    userExists: UserExists
+    userOnboarded: UserOnboarded
     wallets: Wallets
 }
 export interface CreateSelfIssuedWalletResult {

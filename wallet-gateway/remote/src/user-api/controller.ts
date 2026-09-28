@@ -456,7 +456,7 @@ export const userController = (
             }
 
             const network = await authAwareStore.getNetwork(params.networkId)
-            if ((network.auth as { method: string }).method !== 'self_issued') {
+            if (network.auth.method !== 'self_issued') {
                 throw new Error(
                     'Network does not use self_issued authentication'
                 )

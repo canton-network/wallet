@@ -34,8 +34,17 @@ export type PartyParams = {
 }
 
 export type SelfIssuedOnboardingState = {
-    userExists: boolean
+    userOnboarded: boolean
     wallets: Wallet[]
+}
+
+type LedgerUser = {
+    primaryParty?: string
+    primaryPartyAuthentication?: boolean
+}
+
+function isOnboarded(user: LedgerUser | null): boolean {
+    return !!user && (!!user.primaryParty || !!user.primaryPartyAuthentication)
 }
 
 const ACCESS_TOKEN_TTL_SECONDS = 10 * 60
@@ -53,7 +62,7 @@ export class SelfIssuedAuthService {
     async getOnboardingState(): Promise<SelfIssuedOnboardingState> {
         const user = await this.getExistingUser()
         return {
-            userExists: user !== null,
+            userOnboarded: isOnboarded(user),
             wallets: await this.store.getWallets(),
         }
     }
@@ -87,22 +96,27 @@ export class SelfIssuedAuthService {
             )
         }
 
-        if (await this.getExistingUser()) {
+        const existingUser = await this.getExistingUser()
+        if (isOnboarded(existingUser)) {
             throw new Error(
                 'Selecting an existing self-issued user is not implemented yet.'
             )
         }
 
-        await this.ledgerClient.post('/v2/users', {
-            user: {
-                id: username,
-                isDeactivated: false,
-                identityProviderId: '',
-            },
-            rights: [],
-        })
+        // If user already exists but has on primaryPartyAuth and primaryParty set, it means either:
+        // - onboarding flow was interrupted before a wallet was allocated, but after user was created
+        // - the user was created outside of onboarding flow
+        if (!existingUser) {
+            await this.ledgerClient.post('/v2/users', {
+                user: {
+                    id: username,
+                    isDeactivated: false,
+                    identityProviderId: '',
+                },
+                rights: [],
+            })
+        }
 
-        // TODO handle case when this fails, but user is already created
         const wallet = await this.walletAllocator.createWallet(
             this.authContext(),
             partyHint,

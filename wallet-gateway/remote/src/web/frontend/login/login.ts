@@ -131,7 +131,7 @@ export class LoginUI extends BaseElement {
         stateManager.networkId.set(selectedNetwork.id, currentOrigin)
 
         try {
-            if ((selectedNetwork.authMethod as string) === 'self_issued') {
+            if (selectedNetwork.authMethod === 'self_issued') {
                 const onboardingUsername = username?.trim()
                 if (!onboardingUsername) {
                     await this.showLoginError('Username is required.')

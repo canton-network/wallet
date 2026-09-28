@@ -226,7 +226,7 @@ export class WgLoginForm extends BaseElement {
 
         if (
             idp.type === 'self_signed' &&
-            (this.selectedNetwork.authMethod as string) !== 'self_issued'
+            this.selectedNetwork.authMethod !== 'self_issued'
         ) {
             clientId =
                 (
@@ -252,7 +252,7 @@ export class WgLoginForm extends BaseElement {
                 )?.value ?? ''
         }
 
-        if ((this.selectedNetwork.authMethod as string) === 'self_issued') {
+        if (this.selectedNetwork.authMethod === 'self_issued') {
             username =
                 (
                     this.renderRoot.querySelector(
@@ -293,7 +293,7 @@ export class WgLoginForm extends BaseElement {
         const renderAuthSpecificInputs = () => {
             if (
                 this.selectedIdp?.type === 'self_issued' ||
-                (this.selectedNetwork?.authMethod as string) === 'self_issued'
+                this.selectedNetwork?.authMethod === 'self_issued'
             ) {
                 return html`
                     <label

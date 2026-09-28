@@ -79,7 +79,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 method: 'getSelfIssuedOnboarding',
                 params: { sessionId: this.sessionId },
             })
-            if (state.userExists) {
+            if (state.userOnboarded) {
                 throw new Error(
                     'Selecting an existing self-issued user is not implemented yet.'
                 )

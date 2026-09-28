@@ -374,10 +374,10 @@
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "userExists": {
-                            "title": "userExists",
+                        "userOnboarded": {
+                            "title": "userOnboarded",
                             "type": "boolean",
-                            "description": "Whether the ledger user already exists."
+                            "description": "Whether the ledger user already has a primary party or primary party authentication set."
                         },
                         "wallets": {
                             "title": "wallets",
@@ -388,7 +388,7 @@
                             "description": "Wallets stored for the user on the selected network."
                         }
                     },
-                    "required": ["userExists", "wallets"]
+                    "required": ["userOnboarded", "wallets"]
                 }
             },
             "description": "Returns the ledger-user and wallet state needed to select the self-issued onboarding path."
@@ -1926,6 +1926,11 @@
                         "title": "reason",
                         "type": "string",
                         "description": "Reason for the wallet state, e.g., 'no signing provider matched'."
+                    },
+                    "isAuthParty": {
+                        "title": "isAuthParty",
+                        "type": "boolean",
+                        "description": "Whether the party authenticates the user with self-issued tokens."
                     },
                     "rights": {
                         "title": "rights",

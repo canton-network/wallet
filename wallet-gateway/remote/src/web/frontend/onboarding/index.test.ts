@@ -89,7 +89,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
 
     it('renders the create-party form without the primary-wallet option', async () => {
         mockRequest.mockResolvedValue({
-            userExists: false,
+            userOnboarded: false,
             wallets: [],
         })
         const element = await fixture<UserUiSelfIssuedOnboarding>(
@@ -112,7 +112,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
             status: 'allocated',
         })
         mockRequest
-            .mockResolvedValueOnce({ userExists: false, wallets: [] })
+            .mockResolvedValueOnce({ userOnboarded: false, wallets: [] })
             .mockResolvedValueOnce({ wallet: initializedWallet })
             .mockResolvedValueOnce({
                 wallet: { ...initializedWallet, isAuthParty: true },
@@ -173,7 +173,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
             status: 'initialized',
         })
         mockRequest
-            .mockResolvedValueOnce({ userExists: false, wallets: [] })
+            .mockResolvedValueOnce({ userOnboarded: false, wallets: [] })
             .mockResolvedValueOnce({ wallet: pendingWallet })
             .mockResolvedValueOnce({
                 wallet: {
@@ -231,7 +231,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
 
     it('rejects existing users until wallet selection is implemented', async () => {
         mockRequest.mockResolvedValue({
-            userExists: true,
+            userOnboarded: true,
             wallets: [makeWallet()],
         })
 

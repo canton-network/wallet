@@ -126,15 +126,32 @@ describe('SelfIssuedAuthService', () => {
     }
 
     describe('getOnboardingState', () => {
-        it('returns whether the ledger user exists and the stored wallets', async () => {
+        it('reports an onboarded ledger user and the stored wallets', async () => {
             const wallet = createWallet()
-            ledgerClient.get.mockResolvedValue({ user: { id: 'alice' } })
+            ledgerClient.get.mockResolvedValue({
+                user: {
+                    id: 'alice',
+                    primaryParty: wallet.partyId,
+                    primaryPartyAuthentication: true,
+                },
+            })
             store.getWallets.mockResolvedValue([wallet])
 
             await expect(createService().getOnboardingState()).resolves.toEqual(
                 {
-                    userExists: true,
+                    userOnboarded: true,
                     wallets: [wallet],
+                }
+            )
+        })
+
+        it('does not report a ledger user without a primary party as onboarded', async () => {
+            ledgerClient.get.mockResolvedValue({ user: { id: 'alice' } })
+
+            await expect(createService().getOnboardingState()).resolves.toEqual(
+                {
+                    userOnboarded: false,
+                    wallets: [],
                 }
             )
         })
@@ -148,7 +165,7 @@ describe('SelfIssuedAuthService', () => {
 
             await expect(createService().getOnboardingState()).resolves.toEqual(
                 {
-                    userExists: false,
+                    userOnboarded: false,
                     wallets: [],
                 }
             )
@@ -204,8 +221,31 @@ describe('SelfIssuedAuthService', () => {
             expect(ledgerClient.patch).not.toHaveBeenCalled()
         })
 
-        it('rejects an existing ledger user', async () => {
+        it('continues an interrupted onboarding for a user without a primary party', async () => {
+            const pendingWallet = createWallet()
             ledgerClient.get.mockResolvedValue({ user: { id: 'alice' } })
+            walletAllocator.createWallet.mockResolvedValue(pendingWallet)
+
+            const wallet = await createService().createWallet({
+                partyHint: 'my-party',
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+            })
+
+            expect(ledgerClient.post).not.toHaveBeenCalled()
+            expect(walletAllocator.createWallet).toHaveBeenCalled()
+            expect(wallet).toEqual(pendingWallet)
+        })
+
+        it.each([
+            [
+                'primary party authentication',
+                { primaryPartyAuthentication: true },
+            ],
+            ['a primary party', { primaryParty: 'alice::ns' }],
+        ])('rejects an existing ledger user with %s', async (_, userFields) => {
+            ledgerClient.get.mockResolvedValue({
+                user: { id: 'alice', ...userFields },
+            })
 
             await expect(
                 createService().createWallet({
