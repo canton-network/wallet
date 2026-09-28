@@ -49,7 +49,7 @@ const selfIssuedAuthSchema = z.object({
     method: z.literal('self_issued'),
     audience: z.string().meta({
         description:
-            'Participant ID. Unlike other auth methods without a prefix "https://daml.com/jwt/aud/participant/".',
+            'Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods).',
     }),
     scope: z.string(),
 })

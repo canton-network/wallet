@@ -103,7 +103,7 @@ export class SelfIssuedAuthService {
             )
         }
 
-        // If user already exists but has on primaryPartyAuth and primaryParty set, it means either:
+        // If user already exists but has no primaryPartyAuth and primaryParty set, it means either:
         // - onboarding flow was interrupted before a wallet was allocated, but after user was created
         // - the user was created outside of onboarding flow
         if (!existingUser) {

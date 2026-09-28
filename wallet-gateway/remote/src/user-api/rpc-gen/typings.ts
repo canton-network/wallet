@@ -34,7 +34,7 @@ export type Scope = string
 export type ClientId = string
 /**
  *
- * Participant ID. Unlike other auth methods without a prefix "https://daml.com/jwt/aud/participant/".
+ * Bare participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods).
  *
  */
 export type Audience = string
