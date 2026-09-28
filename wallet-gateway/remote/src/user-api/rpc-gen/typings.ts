@@ -405,10 +405,10 @@ export interface Wallet {
 export type UserOnboarded = boolean
 /**
  *
- * Wallets stored for the user on the selected network.
+ * Wallets stored for the user on the selected network that can be used for authentication.
  *
  */
-export type Wallets = Wallet[]
+export type AuthPartyWallets = Wallet[]
 type AlwaysTrue = any
 /**
  *
@@ -754,7 +754,7 @@ export interface AddSelfIssuedSessionResult {
 }
 export interface GetSelfIssuedOnboardingResult {
     userOnboarded: UserOnboarded
-    wallets: Wallets
+    wallets: AuthPartyWallets
 }
 export interface CreateSelfIssuedWalletResult {
     wallet: Wallet

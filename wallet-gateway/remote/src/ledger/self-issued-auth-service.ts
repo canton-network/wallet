@@ -63,7 +63,9 @@ export class SelfIssuedAuthService {
         const user = await this.getExistingUser()
         return {
             userOnboarded: isOnboarded(user),
-            wallets: await this.store.getWallets(),
+            wallets: await this.store
+                .getWallets()
+                .filter((wallet) => wallet.isAuthParty),
         }
     }
 
