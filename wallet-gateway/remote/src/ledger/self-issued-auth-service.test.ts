@@ -62,8 +62,7 @@ describe('SelfIssuedAuthService', () => {
         getWallets: ReturnType<typeof vi.fn>
         updateWallet: ReturnType<typeof vi.fn>
         getCurrentNetwork: ReturnType<typeof vi.fn>
-        getOnboardingSession: ReturnType<typeof vi.fn>
-        setSession: ReturnType<typeof vi.fn>
+        upgradeOnboardingSession: ReturnType<typeof vi.fn>
     }
     let signMessage: ReturnType<typeof vi.fn>
     let walletAllocator: {
@@ -86,13 +85,17 @@ describe('SelfIssuedAuthService', () => {
             getWallets: vi.fn().mockResolvedValue([]),
             updateWallet: vi.fn().mockResolvedValue(undefined),
             getCurrentNetwork: vi.fn().mockResolvedValue(network),
-            getOnboardingSession: vi.fn().mockResolvedValue({
-                id: 'onboarding-session',
-                origin: 'https://app.example',
-                network: 'network-1',
-                userId: 'alice',
-            }),
-            setSession: vi.fn().mockResolvedValue(undefined),
+            upgradeOnboardingSession: vi
+                .fn()
+                .mockImplementation(
+                    async (id: string, accessToken: string) => ({
+                        id,
+                        origin: 'https://app.example',
+                        network: 'network-1',
+                        userId: 'alice',
+                        accessToken,
+                    })
+                ),
         }
         walletAllocator = {
             createWallet: vi.fn(),
@@ -305,11 +308,10 @@ describe('SelfIssuedAuthService', () => {
             await service.allocateParty({
                 partyId: pendingWallet.partyId,
             })
-            const wallet = (
+            const { wallet, accessToken, session } =
                 await service.connectSession({
                     partyId: pendingWallet.partyId,
                 })
-            ).wallet
 
             expect(walletAllocator.allocateParty).toHaveBeenCalledWith(
                 {
@@ -345,17 +347,11 @@ describe('SelfIssuedAuthService', () => {
             })
             expect(wallet.status).toBe('allocated')
             expect(wallet.isAuthParty).toBe(true)
-            expect(store.getOnboardingSession).toHaveBeenCalledWith(
-                'onboarding-session'
+            expect(store.upgradeOnboardingSession).toHaveBeenCalledWith(
+                'onboarding-session',
+                accessToken
             )
-            expect(store.setSession).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    id: 'onboarding-session',
-                    origin: 'https://app.example',
-                    network: 'network-1',
-                    accessToken: expect.any(String),
-                })
-            )
+            expect(session.id).toBe('onboarding-session')
         })
 
         it('patches the ledger user when the wallet is already allocated', async () => {
@@ -398,7 +394,7 @@ describe('SelfIssuedAuthService', () => {
                 },
             })
             expect(payload.exp).toBe(Math.floor(Date.now() / 1000) + 10 * 60)
-            expect(store.setSession).toHaveBeenCalledOnce()
+            expect(store.upgradeOnboardingSession).toHaveBeenCalledOnce()
         })
 
         it('keeps the tokenless session when the participant rejects the token', async () => {
@@ -417,7 +413,7 @@ describe('SelfIssuedAuthService', () => {
             ).rejects.toThrow(
                 'Self-issued token was rejected by the participant'
             )
-            expect(store.setSession).not.toHaveBeenCalled()
+            expect(store.upgradeOnboardingSession).not.toHaveBeenCalled()
         })
 
         it('does not patch the ledger user when allocateParty leaves the wallet unallocated', async () => {
@@ -432,7 +428,7 @@ describe('SelfIssuedAuthService', () => {
             expect(store.updateWallet).not.toHaveBeenCalled()
             expect(wallet.status).toBe('initialized')
             expect(signMessage).not.toHaveBeenCalled()
-            expect(store.setSession).not.toHaveBeenCalled()
+            expect(store.upgradeOnboardingSession).not.toHaveBeenCalled()
         })
 
         it('throws when the wallet is missing', async () => {

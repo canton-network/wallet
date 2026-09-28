@@ -417,6 +417,63 @@ implementations.forEach(([name, StoreImpl]) => {
             ).resolves.toBeUndefined()
         })
 
+        test('should keep a logged-in session when a tokenless session starts at the same origin', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const baseSession = {
+                origin: 'https://example.com',
+                network: 'network1',
+            }
+            await store.setSession({
+                ...baseSession,
+                id: 'authenticated-session',
+                accessToken: authContextMock.accessToken,
+            })
+            await store.setSession({
+                ...baseSession,
+                id: 'onboarding-session',
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
+        })
+
+        test('should upgrade an onboarding session in place', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.setSession({
+                id: 'old-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'old-token',
+            })
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+
+            await expect(
+                store.upgradeOnboardingSession(
+                    'onboarding-session',
+                    'new-token'
+                )
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    network: 'network1',
+                    accessToken: 'new-token',
+                })
+            )
+            await expect(store.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    accessToken: 'new-token',
+                }),
+            ])
+            await expect(
+                store.upgradeOnboardingSession('onboarding-session', 'other')
+            ).rejects.toThrow('Onboarding session not found')
+        })
+
         test('should add, list, get, update, and remove networks', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.addIdp(idp)

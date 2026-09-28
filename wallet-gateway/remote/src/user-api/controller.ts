@@ -138,6 +138,37 @@ export const userController = (
         }
     }
 
+    async function emitSessionConnected(
+        sessionId: string,
+        network: Network,
+        { userId, accessToken }: { userId: string; accessToken: string },
+        ledgerClient: LedgerClient
+    ) {
+        const status = await networkStatus(ledgerClient)
+        const statusEvent: StatusEvent = {
+            provider: provider,
+            connection: {
+                isConnected: status.isConnected,
+                reason: status.reason ? status.reason : 'OK',
+                isNetworkConnected: status.isConnected,
+                networkReason: status.reason ? status.reason : 'OK',
+            },
+            network: {
+                networkId: network.id,
+                ledgerApi: network.ledgerApi.baseUrl,
+                accessToken: accessToken,
+            },
+            session: {
+                accessToken: accessToken,
+                userId: userId,
+            },
+        }
+        const notifier = notificationService.getNotifier(sessionId)
+        notifier.emit('statusChanged', statusEvent)
+        notifier.emit('connected', statusEvent)
+        return status
+    }
+
     async function getIdpForAuth(network: Network, auth: Auth) {
         return await store.getIdp(
             resolveAuthIdentityProviderId(auth, network.identityProviderId)
@@ -532,9 +563,10 @@ export const userController = (
                 drivers,
                 logger
             )
-            const { wallet, accessToken } = await service.connectSession({
-                partyId: params.partyId,
-            })
+            const { wallet, accessToken, session } =
+                await service.connectSession({
+                    partyId: params.partyId,
+                })
             const connectedContext = {
                 userId: onboardingSession.userId,
                 accessToken,
@@ -574,7 +606,13 @@ export const userController = (
                 partyAllocator
             )
             await syncService.syncWallets()
-            return { wallet, accessToken }
+            await emitSessionConnected(
+                session.id,
+                network,
+                connectedContext,
+                ledgerClient
+            )
+            return { wallet, accessToken, sessionId: session.id }
         },
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams
@@ -1016,8 +1054,6 @@ export const userController = (
                     accessToken: connectedContext.accessToken || '',
                 })
 
-                const notifier = notificationService.getNotifier(newSessionId)
-
                 const ledgerClient = new LedgerClient({
                     baseUrl: new URL(network.ledgerApi.baseUrl),
                     logger,
@@ -1026,27 +1062,12 @@ export const userController = (
                         logger
                     ),
                 })
-                const status = await networkStatus(ledgerClient)
-                const statusEvent: StatusEvent = {
-                    provider: provider,
-                    connection: {
-                        isConnected: status.isConnected,
-                        reason: status.reason ? status.reason : 'OK',
-                        isNetworkConnected: status.isConnected,
-                        networkReason: status.reason ? status.reason : 'OK',
-                    },
-                    network: {
-                        networkId: network.id,
-                        ledgerApi: network.ledgerApi.baseUrl,
-                        accessToken: accessToken,
-                    },
-                    session: {
-                        accessToken: accessToken,
-                        userId: userId,
-                    },
-                }
-                notifier.emit('statusChanged', statusEvent)
-                notifier.emit('connected', statusEvent)
+                const status = await emitSessionConnected(
+                    newSessionId,
+                    network,
+                    connectedContext,
+                    ledgerClient
+                )
 
                 // Only bootstrap wallets the first time a session is created.
                 // Session creation must remain successful when the ledger or

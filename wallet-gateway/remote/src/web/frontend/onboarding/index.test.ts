@@ -15,22 +15,20 @@ const {
     mockCreateUserClient,
     handleErrorToast,
     showToast,
-    addUserSession,
+    shareUserSession,
     redirectToIntendedOrDefault,
     accessTokenSet,
     onboardingSessionIdGet,
     onboardingSessionIdClear,
-    networkIdGet,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
     showToast: vi.fn(),
-    addUserSession: vi.fn(),
+    shareUserSession: vi.fn(),
     redirectToIntendedOrDefault: vi.fn(),
     accessTokenSet: vi.fn(),
     onboardingSessionIdGet: vi.fn(),
     onboardingSessionIdClear: vi.fn(),
-    networkIdGet: vi.fn(),
 }))
 
 vi.mock('../rpc-client.js', () => ({
@@ -38,14 +36,13 @@ vi.mock('../rpc-client.js', () => ({
 }))
 vi.mock('../utils.js', () => ({ showToast }))
 vi.mock('../index.js', () => ({
-    addUserSession,
+    shareUserSession,
     redirectToIntendedOrDefault,
 }))
 vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { set: accessTokenSet },
         expirationDate: { set: vi.fn() },
-        networkId: { get: networkIdGet },
         onboardingSessionId: {
             get: onboardingSessionIdGet,
             clear: onboardingSessionIdClear,
@@ -74,7 +71,6 @@ const accessToken = `header.${btoa(JSON.stringify({ exp: 2_000_000_000 }))}.sig`
 describe('UserUiSelfIssuedOnboarding', () => {
     beforeEach(() => {
         onboardingSessionIdGet.mockReturnValue('onboarding-session-1')
-        networkIdGet.mockReturnValue('network-1')
         mockRequest.mockReset()
         mockCreateUserClient.mockReset()
         handleErrorToast.mockReset()
@@ -117,6 +113,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
             .mockResolvedValueOnce({
                 wallet: { ...initializedWallet, isAuthParty: true },
                 accessToken,
+                sessionId: 'onboarding-session-1',
             })
 
         const element = await fixture<UserUiSelfIssuedOnboarding>(
@@ -164,7 +161,11 @@ describe('UserUiSelfIssuedOnboarding', () => {
         expect(onboardingSessionIdClear).toHaveBeenCalledWith(
             'https://app.example'
         )
-        expect(addUserSession).toHaveBeenCalledWith(accessToken, 'network-1')
+        expect(shareUserSession).toHaveBeenCalledWith(
+            accessToken,
+            'onboarding-session-1',
+            'https://app.example'
+        )
     })
 
     it('lets the user finalize a pending external signing request', async () => {
@@ -188,6 +189,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
                     isAuthParty: true,
                 },
                 accessToken,
+                sessionId: 'onboarding-session-1',
             })
 
         const element = await fixture<UserUiSelfIssuedOnboarding>(

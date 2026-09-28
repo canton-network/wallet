@@ -204,6 +204,15 @@ export interface Store {
      */
     getOnboardingSession(sessionId: string): Promise<Session | undefined>
 
+    /**
+     * Sets the access token on the authenticated user's tokenless onboarding session,
+     * keeping its id, and removes the user's other sessions for the same origin.
+     */
+    upgradeOnboardingSession(
+        sessionId: string,
+        accessToken: string
+    ): Promise<Session>
+
     // IDP methods
     getIdp(idpId: string): Promise<Idp>
     listIdps(): Promise<Array<Idp>>

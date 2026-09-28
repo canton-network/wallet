@@ -526,12 +526,17 @@
                             "title": "accessToken",
                             "type": "string",
                             "description": "Self-issued access token added to the session."
+                        },
+                        "sessionId": {
+                            "title": "sessionId",
+                            "type": "string",
+                            "description": "Onboarding session id required by the remaining self-issued onboarding methods."
                         }
                     },
-                    "required": ["wallet", "accessToken"]
+                    "required": ["wallet", "accessToken", "sessionId"]
                 }
             },
-            "description": "Configures the selected wallet as the authentication party, mints a token, and stores it in the session."
+            "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the onboarding session with it."
         },
         {
             "name": "allocatePartyForWallet",

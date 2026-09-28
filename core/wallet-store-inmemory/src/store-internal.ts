@@ -275,12 +275,11 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const userId = this.assertConnected()
         const storage = this.getStorage()
         for (const [id, existingSession] of storage.sessions) {
-            if (
-                existingSession.origin === session.origin ||
-                (!session.accessToken &&
-                    !existingSession.accessToken &&
-                    existingSession.network === session.network)
-            ) {
+            const replaced = session.accessToken
+                ? existingSession.origin === session.origin
+                : !existingSession.accessToken &&
+                  existingSession.network === session.network
+            if (replaced) {
                 storage.sessions.delete(id)
             }
         }
@@ -308,6 +307,30 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             }
         }
         return undefined
+    }
+
+    async upgradeOnboardingSession(
+        sessionId: string,
+        accessToken: AccessToken
+    ): Promise<Session> {
+        const storage = this.getStorage()
+        const onboardingSession = storage.sessions.get(sessionId)
+        if (!onboardingSession || onboardingSession.accessToken) {
+            throw new Error('Onboarding session not found')
+        }
+
+        for (const [id, session] of storage.sessions) {
+            if (
+                id !== sessionId &&
+                session.origin === onboardingSession.origin
+            ) {
+                storage.sessions.delete(id)
+            }
+        }
+        const upgraded = { ...onboardingSession, accessToken }
+        storage.sessions.set(sessionId, upgraded)
+        this.updateStorage(storage)
+        return upgraded
     }
 
     // IDP methods

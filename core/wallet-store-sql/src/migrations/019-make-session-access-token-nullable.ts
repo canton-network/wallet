@@ -12,6 +12,15 @@ export async function up(db: Kysely<DB>): Promise<void> {
             .alterColumn('accessToken', (col) => col.dropNotNull())
             .execute()
 
+        await sql`DROP INDEX IF EXISTS sessions_one_session_per_origin_user`.execute(
+            db
+        )
+        await sql`
+            CREATE UNIQUE INDEX sessions_one_session_per_origin_user
+            ON sessions(network, user_id, origin)
+            WHERE access_token IS NOT NULL
+        `.execute(db)
+
         await sql`
             CREATE UNIQUE INDEX sessions_one_onboarding_session_per_user_network
             ON sessions(network, user_id)
@@ -43,10 +52,11 @@ export async function up(db: Kysely<DB>): Promise<void> {
             .renameTo('sessions')
             .execute()
 
-        // Unchanged since migration 015 (recreated after SQLite table rebuild).
+        // Tokenless onboarding sessions don't count towards one session per origin.
         await sql`
             CREATE UNIQUE INDEX IF NOT EXISTS sessions_one_session_per_origin_user
             ON sessions(network, user_id, origin)
+            WHERE access_token IS NOT NULL
         `.execute(trx)
 
         await sql`
@@ -70,6 +80,13 @@ export async function down(db: Kysely<DB>): Promise<void> {
         await db.schema
             .dropIndex('sessions_one_onboarding_session_per_user_network')
             .execute()
+        await sql`DROP INDEX IF EXISTS sessions_one_session_per_origin_user`.execute(
+            db
+        )
+        await sql`
+            CREATE UNIQUE INDEX sessions_one_session_per_origin_user
+            ON sessions(network, user_id, origin)
+        `.execute(db)
         await db.schema
             .alterTable('sessions')
             .alterColumn('accessToken', (col) => col.setNotNull())

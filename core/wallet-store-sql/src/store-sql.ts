@@ -450,13 +450,12 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .where('userId', '=', userId)
                 .where((eb) =>
                     session.accessToken
-                        ? eb('origin', '=', session.origin)
-                        : eb.or([
-                              eb('origin', '=', session.origin),
-                              eb.and([
-                                  eb('accessToken', 'is', null),
-                                  eb('network', '=', session.network),
-                              ]),
+                        ? // Regular session - one user can have only one session per origin
+                          eb('origin', '=', session.origin)
+                        : // Self_issued onboarding session - one user can have only one onboarding session per network
+                          eb.and([
+                              eb('accessToken', 'is', null),
+                              eb('network', '=', session.network),
                           ])
                 )
                 .execute()
@@ -485,6 +484,40 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .where('accessToken', 'is', null)
             .executeTakeFirst()
         return row ? toSession(row) : undefined
+    }
+
+    async upgradeOnboardingSession(
+        sessionId: string,
+        accessToken: AccessToken
+    ): Promise<Session> {
+        const userId = this.assertConnected()
+
+        return this.db.transaction().execute(async (trx) => {
+            const row = await trx
+                .selectFrom('sessions')
+                .selectAll()
+                .where('id', '=', sessionId)
+                .where('userId', '=', userId)
+                .where('accessToken', 'is', null)
+                .executeTakeFirst()
+            if (!row) {
+                throw new Error('Onboarding session not found')
+            }
+
+            await trx
+                .deleteFrom('sessions')
+                .where('userId', '=', userId)
+                .where('origin', '=', row.origin)
+                .where('id', '!=', sessionId)
+                .execute()
+            await trx
+                .updateTable('sessions')
+                .set({ accessToken })
+                .where('id', '=', sessionId)
+                .execute()
+
+            return toSession({ ...row, accessToken })
+        })
     }
 
     async removeSession(accessToken: string): Promise<void> {

@@ -433,6 +433,39 @@ implementations.forEach(([name, StoreImpl]) => {
             ])
         })
 
+        test('should upgrade an onboarding session in place', async () => {
+            await store.setSession({
+                id: 'old-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'old-token',
+            })
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+            await expect(store.listSessions()).resolves.toHaveLength(2)
+
+            await store.upgradeOnboardingSession(
+                'onboarding-session',
+                'new-token'
+            )
+
+            await expect(store.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    accessToken: 'new-token',
+                }),
+            ])
+            await expect(store.getSession('new-token')).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
+            await expect(
+                store.upgradeOnboardingSession('onboarding-session', 'other')
+            ).rejects.toThrow('Onboarding session not found')
+        })
+
         test('should add, list, get, update, and remove networks', async () => {
             const idp: Idp = {
                 id: 'idp1',

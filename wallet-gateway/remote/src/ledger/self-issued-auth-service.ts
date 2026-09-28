@@ -12,7 +12,7 @@ import {
     SelfIssuedTokenService,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { Session, Store, Wallet } from '@canton-network/core-wallet-store'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import type { Logger } from 'pino'
@@ -155,7 +155,7 @@ export class SelfIssuedAuthService {
 
     async connectSession(
         params: PartyParams
-    ): Promise<{ wallet: Wallet; accessToken: string }> {
+    ): Promise<{ wallet: Wallet; accessToken: string; session: Session }> {
         const username = this.session.userId
         const wallet = await this.requireWallet(params.partyId)
         if (wallet.status !== 'allocated') {
@@ -186,6 +186,10 @@ export class SelfIssuedAuthService {
         })
         const authPartyWallet = await this.requireWallet(wallet.partyId)
         const accessToken = await this.mintAccessToken(authPartyWallet)
+        const session = await this.store.upgradeOnboardingSession(
+            this.session.sessionId,
+            accessToken
+        )
 
         this.logger.info(
             {
@@ -198,7 +202,7 @@ export class SelfIssuedAuthService {
             'Established self-issued session'
         )
 
-        return { wallet: authPartyWallet, accessToken }
+        return { wallet: authPartyWallet, accessToken, session }
     }
 
     private async requireWallet(partyId: string): Promise<Wallet> {
@@ -239,7 +243,7 @@ export class SelfIssuedAuthService {
             }
         )
 
-        // TODO with other signing providers this will be async
+        // TODO(#2495) with other signing providers this will be async
         const result = await driver.signMessage({
             message: signingInput,
             keyIdentifier: { publicKey: wallet.publicKey },
@@ -273,18 +277,6 @@ export class SelfIssuedAuthService {
             )
         }
 
-        const onboardingSession = await this.store.getOnboardingSession(
-            this.session.sessionId
-        )
-        if (!onboardingSession) {
-            throw new Error('Onboarding session not found')
-        }
-        await this.store.setSession({
-            id: onboardingSession.id,
-            origin: onboardingSession.origin,
-            network: network.id,
-            accessToken: token,
-        })
         return token
     }
 

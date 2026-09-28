@@ -14,7 +14,7 @@ import { createUserClient } from '../rpc-client.js'
 import { showToast } from '../utils.js'
 import { stateManager } from '../state-manager.js'
 import { detectCurrentOrigin } from '../listeners.js'
-import { addUserSession, redirectToIntendedOrDefault } from '../index.js'
+import { redirectToIntendedOrDefault, shareUserSession } from '../index.js'
 
 import '@canton-network/core-wallet-ui-components'
 
@@ -29,7 +29,6 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
 
     private origin: string | undefined
     private sessionId: string | undefined
-    private networkId: string | undefined
 
     private readonly signingProviders = [SigningProvider.WALLET_KERNEL]
 
@@ -67,9 +66,8 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         super.connectedCallback()
         this.origin = await detectCurrentOrigin()
         this.sessionId = stateManager.onboardingSessionId.get(this.origin)
-        this.networkId = stateManager.networkId.get(this.origin)
         this.sessionLoaded = true
-        if (!this.sessionId || !this.networkId) {
+        if (!this.sessionId) {
             return
         }
 
@@ -110,7 +108,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 },
             })
 
-            await this.completeLogin(result.accessToken)
+            await this.completeLogin(result.accessToken, result.sessionId)
         } catch (error) {
             handleErrorToast(error)
         } finally {
@@ -118,8 +116,11 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         }
     }
 
-    private async completeLogin(accessToken: string): Promise<void> {
-        if (!this.networkId || !this.origin) {
+    private async completeLogin(
+        accessToken: string,
+        sessionId: string
+    ): Promise<void> {
+        if (!this.origin) {
             return
         }
         const currentOrigin = this.origin
@@ -135,7 +136,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
             )
         }
         await stateManager.accessToken.set(accessToken, currentOrigin)
-        await addUserSession(accessToken, this.networkId)
+        shareUserSession(accessToken, sessionId, currentOrigin)
         await redirectToIntendedOrDefault()
     }
 
@@ -210,7 +211,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     }
 
     protected render() {
-        const missingConfiguration = !this.sessionId || !this.networkId
+        const missingConfiguration = !this.sessionId
 
         return html`
             <section class="onboarding-card">

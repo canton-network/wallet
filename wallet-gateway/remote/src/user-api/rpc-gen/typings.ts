@@ -765,6 +765,7 @@ export interface AllocateSelfIssuedWalletResult {
 export interface ConnectSelfIssuedSessionResult {
     wallet: Wallet
     accessToken: AccessToken
+    sessionId: SessionId
 }
 export interface AllocatePartyForWalletResult {
     wallet: Wallet

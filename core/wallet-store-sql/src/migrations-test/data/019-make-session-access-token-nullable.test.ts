@@ -36,10 +36,11 @@ forEachDialect('migration 019 - nullable session access token', ({ getDb }) => {
         )
         expect(accessTokenColumn?.nullable).toBe(true)
 
+        // Same user, network and origin as the logged-in session.
         await insertSession(db, {
             id: 'onboarding-session',
             network: 'network-1',
-            userId: 'bob',
+            userId: 'alice',
             origin: 'https://example.com',
         })
 
