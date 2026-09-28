@@ -227,7 +227,18 @@ test('instrument mapping preserves registry and SDK fields', () => {
             name: 'Amulet',
             symbol: 'AMT',
             decimals: 10,
-            supportedApis: {},
+            supportedApis: {
+                'splice-api-token-transfer-instruction-v2': 1,
+                'splice-api-token-allocation-v1': 1,
+                'splice-api-token-holding-v2': 1,
+                'splice-api-token-allocation-instruction-v2': 1,
+                'splice-api-token-metadata-v1': 1,
+                'splice-api-token-allocation-v2': 1,
+                'splice-api-token-transfer-events-v2': 1,
+                'splice-api-token-transfer-instruction-v1': 1,
+                'splice-api-token-holding-v1': 1,
+                'splice-api-token-allocation-instruction-v1': 1,
+            },
         },
         admin: 'DSO::1220admin' as PartyId,
         registryUrl: LOCAL_REGISTRY_URL,
@@ -241,6 +252,13 @@ test('instrument mapping preserves registry and SDK fields', () => {
         name: 'Amulet',
         symbol: 'AMT',
         decimals: 10,
+        capabilities: {
+            allocation: ['v1', 'v2'],
+            allocationInstruction: ['v1', 'v2'],
+            allocationRequest: [],
+            holding: ['v1', 'v2'],
+            transferInstruction: ['v1', 'v2'],
+        },
     })
 })
 
