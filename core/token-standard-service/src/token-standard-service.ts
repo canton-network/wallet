@@ -126,11 +126,12 @@ export function resolveCapabilities(opts: {
     }
 
     for (const key of Object.keys(supportedApis)) {
-        const match = key.match(/^splice-api-token-(.+)-(v\d+)$/)
+        const match = key.match(
+            /^splice-api-token-(?<capabilityName>.+)-(?<version>v\d+)$/
+        )
 
-        if (match) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const [_, capabilityName, version] = match
+        if (match?.groups) {
+            const { capabilityName, version } = match.groups
             const targetKey = KEY_MAPPING[capabilityName]
 
             if (targetKey && supportedApis[key] === 1) {
