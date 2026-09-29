@@ -84,6 +84,11 @@ type CreateTransferChoiceArgs = {
 
 type ApiVersion = 'v1' | 'v2'
 type SupportedVersions = ApiVersion[]
+const SUPPORTED_VERSIONS: readonly ApiVersion[] = ['v1', 'v2'] as const
+
+function isApiVersion(v: string): v is ApiVersion {
+    return (SUPPORTED_VERSIONS as readonly string[]).includes(v)
+}
 
 export interface AssetCapabilities {
     holding: SupportedVersions
@@ -134,8 +139,12 @@ export function resolveCapabilities(opts: {
             const { capabilityName, version } = match.groups
             const targetKey = KEY_MAPPING[capabilityName]
 
-            if (targetKey && supportedApis[key] === 1) {
-                resolvedCapabilities[targetKey].push(version as 'v1' | 'v2')
+            if (
+                targetKey &&
+                supportedApis[key] === 1 &&
+                isApiVersion(version)
+            ) {
+                resolvedCapabilities[targetKey].push(version)
             }
         }
     }
@@ -1434,7 +1443,7 @@ export class TokenStandardService {
         this.transfer = new TransferService(this.core, this.logger)
     }
 
-    async resolveCapabilitiesFromRegsitryByInstrumentId(
+    async resolveCapabilitiesFromRegistryByInstrumentId(
         registryUrl: string,
         instrumentId: string
     ): Promise<AssetCapabilities> {
@@ -1457,7 +1466,7 @@ export class TokenStandardService {
 
             const client = this.core.getTokenStandardClient(registryUrl)
 
-            return client.get(
+            return await client.get(
                 '/registry/metadata/v1/instruments/{instrumentId}',
                 params
             )
