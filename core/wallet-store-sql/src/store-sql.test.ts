@@ -368,7 +368,7 @@ implementations.forEach(([name, StoreImpl]) => {
             ).rejects.toThrow('No session found')
         })
 
-        test('should keep one tokenless session per user and network', async () => {
+        test('should keep every tokenless session', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.setSession({
                 id: 'onboarding-1',
@@ -378,16 +378,20 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.setSession({
                 id: 'onboarding-2',
                 origin: 'https://b.example',
-                network: 'network2',
+                network: 'network1',
             })
             await store.setSession({
                 id: 'onboarding-3',
-                origin: 'https://c.example',
+                origin: 'https://a.example',
                 network: 'network1',
             })
 
             const ids = (await store.listSessions()).map((s) => s.id).sort()
-            expect(ids).toEqual(['onboarding-2', 'onboarding-3'])
+            expect(ids).toEqual([
+                'onboarding-1',
+                'onboarding-2',
+                'onboarding-3',
+            ])
         })
 
         test('should replace a tokenless session when authentication completes', async () => {

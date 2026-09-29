@@ -410,6 +410,31 @@ implementations.forEach(([name, StoreImpl]) => {
             ).rejects.toThrow('No session found')
         })
 
+        test('should not replace tokenless session on same origins', async () => {
+            await store.setSession({
+                id: 'onboarding-1',
+                origin: 'https://a.example',
+                network: 'network1',
+            })
+            await store.setSession({
+                id: 'onboarding-2',
+                origin: 'https://b.example',
+                network: 'network1',
+            })
+            await store.setSession({
+                id: 'onboarding-3',
+                origin: 'https://a.example',
+                network: 'network1',
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual([
+                'onboarding-1',
+                'onboarding-2',
+                'onboarding-3',
+            ])
+        })
+
         test('should replace a tokenless session when authentication completes', async () => {
             const baseSession = {
                 origin: 'https://example.com',

@@ -43,6 +43,18 @@ forEachDialect('migration 019 - nullable session access token', ({ getDb }) => {
             userId: 'alice',
             origin: 'https://example.com',
         })
+        await insertSession(db, {
+            id: 'onboarding-other-origin',
+            network: 'network-1',
+            userId: 'alice',
+            origin: 'https://other.example',
+        })
+        await insertSession(db, {
+            id: 'onboarding-duplicate-origin',
+            network: 'network-1',
+            userId: 'alice',
+            origin: 'https://example.com',
+        })
 
         const sessions = await sql<{
             id: string
@@ -57,6 +69,8 @@ forEachDialect('migration 019 - nullable session access token', ({ getDb }) => {
                 id: 'existing-session',
                 accessToken: 'existing-token',
             },
+            { id: 'onboarding-duplicate-origin', accessToken: null },
+            { id: 'onboarding-other-origin', accessToken: null },
             { id: 'onboarding-session', accessToken: null },
         ])
         expect(
@@ -77,9 +91,9 @@ forEachDialect('migration 019 - nullable session access token', ({ getDb }) => {
             await indexExists(
                 db,
                 'sessions',
-                'sessions_one_onboarding_session_per_user_network'
+                'sessions_one_onboarding_session_per_origin_user'
             )
-        ).toBe(true)
+        ).toBe(false)
     })
 
     test('removes tokenless sessions and restores the non-null constraint on down', async () => {
@@ -115,7 +129,7 @@ forEachDialect('migration 019 - nullable session access token', ({ getDb }) => {
             await indexExists(
                 db,
                 'sessions',
-                'sessions_one_onboarding_session_per_user_network'
+                'sessions_one_onboarding_session_per_origin_user'
             )
         ).toBe(false)
     })
