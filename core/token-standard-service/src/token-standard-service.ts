@@ -106,7 +106,7 @@ const KEY_MAPPING: Record<string, keyof AssetCapabilities> = {
     'allocation-request': 'allocationRequest',
 }
 
-export type InstrumentInfo = {
+export type AssetBody = {
     id: string
     displayName: string
     symbol: string
@@ -1536,7 +1536,7 @@ export class TokenStandardService {
         }))
     }
 
-    async registriesToAssets(registryUrls: URL[]): Promise<InstrumentInfo[]> {
+    async registriesToAssets(registryUrls: URL[]): Promise<AssetBody[]> {
         const allInstruments: {
             id: string
             displayName: string
