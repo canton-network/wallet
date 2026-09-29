@@ -7,7 +7,7 @@ This package provides a signing driver for integrating the Wallet Gateway with [
 This package is part of the Wallet Gateway monorepo and is typically installed as a workspace dependency.
 
 ```bash
-yarn add @canton-network/core-signing-blockdaemon
+pnpm add @canton-network/core-signing-blockdaemon
 ```
 
 ## Usage
@@ -76,7 +76,7 @@ When running the Wallet Gateway (Remote), the Blockdaemon signing driver is conf
 Example usage:
 
 ```bash
-BLOCKDAEMON_API_URL="https://api.blockdaemon.com/..." BLOCKDAEMON_API_KEY="your-api-key" yarn start
+BLOCKDAEMON_API_URL="https://api.blockdaemon.com/..." BLOCKDAEMON_API_KEY="your-api-key" pnpm start
 ```
 
 ## License

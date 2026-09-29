@@ -5,7 +5,7 @@
 // Support event-driven notifications. We represent a notifier with a generic interface to support node and browser implementations.
 
 import EventEmitter from 'events'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 type EventListener = (...args: unknown[]) => void
 export interface Notifier {

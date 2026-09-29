@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { NextFunction, Request, Response } from 'express'
-import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { vi } from 'vitest'
 
 const execute = vi.fn().mockResolvedValue({
@@ -37,6 +37,57 @@ const sdk = {
     },
 }
 
+const instantiate = vi.fn().mockImplementation(() => {
+    state.RegistryState.instance = {
+        reset,
+        port: 5634,
+        synchronizerId: 'sync',
+        operator: {
+            party: 'some-party',
+            keys: {
+                publicKey: 'publicKey',
+                privateKey: 'privateKey',
+            },
+        },
+        sdk,
+    }
+})
+const reset = vi.fn().mockImplementation(() => {
+    state.RegistryState.instance = {
+        reset,
+        port: 5634,
+        synchronizerId: '',
+        operator: {
+            party: '',
+            keys: {
+                publicKey: '',
+                privateKey: '',
+            },
+        },
+        sdk,
+    }
+})
+
+const state = {
+    RegistryState: {
+        instantiate,
+        instance: {
+            reset,
+            port: 5634,
+            synchronizerId: '',
+            operator: {
+                party: '',
+                keys: {
+                    publicKey: '',
+                    privateKey: '',
+                },
+            },
+            sdk,
+        },
+    },
+    defaultConfig: {},
+}
+
 const req = {
     params: {},
     query: {},
@@ -58,6 +109,7 @@ export const mock = {
     sign,
     execute,
     create,
+    state,
 }
 
 export type RequestType<

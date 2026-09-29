@@ -2,23 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Router } from 'express'
-import {
-    getTransferFactory,
-    getTransferFactoryChoiceArgumentsSchema,
-} from './getTransferFactory'
+import { getTransferFactory } from './getTransferFactory'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
-import { OffLedger } from '@canton-network/core-token-standard'
+import type { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z, { ZodType } from 'zod'
+import z, { type ZodType } from 'zod'
 import { choiceContextRequestSchema } from '../common'
 
 const pathSchema = z.object({
     transferInstructionId: z.string(),
 })
 
-const transferInstructionAPIRouter = Router()
+const transferInstructionAPIRouter: Router = Router()
 
 const openAPIRouter =
     createExpressOpenApiRouter<OffLedger.TransferInstructionV1.paths>(
@@ -27,7 +24,7 @@ const openAPIRouter =
 
 openAPIRouter.post('/registry/transfer-instruction/v1/transfer-factory', {
     bodySchema: z.object({
-        choiceArguments: getTransferFactoryChoiceArgumentsSchema,
+        choiceArguments: z.record(z.string(), z.unknown()),
         excludeDebugFields: z.boolean(),
     }) as unknown as ZodType<
         OffLedger.TransferInstructionV1.operations['getTransferFactory']['requestBody']['content']['application/json']

@@ -1,9 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, Page } from '@playwright/test'
-import { WalletGateway } from '@canton-network/core-wallet-test-utils'
+import { test, expect, type Page } from '@playwright/test'
+import type {
+    GatewayUserApi,
+    WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
 import {
+    createGatewayApi,
+    connectGateway,
     createWalletGateway,
     expectOffersBadgeCount,
     expectTransferOfferGone,
@@ -20,16 +25,13 @@ import {
     tap,
 } from './utils'
 
-// Transfer tests share wallet gateway state (primary wallet) with the backend,
-// so they must run serially to avoid races on which wallet is primary.
-test.describe.configure({ mode: 'serial' })
-
 // Transfer tests involve multiple ledger transactions (tap + transfer + accept/reject/withdraw),
 // so give them more time than the default 30s.
 test.setTimeout(120_000)
 
 interface TransferTestContext {
     wg: WalletGateway
+    api: GatewayUserApi
     alice: string
     bob: string
 }
@@ -38,28 +40,74 @@ const setupTransferTest = async (page: Page): Promise<TransferTestContext> => {
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(page)
 
-    await gotoConnect(page)
-    await wg.connect({ network: 'LocalNet' })
-
-    const alice = await wg.createWalletIfNotExists({
+    // Wallets are scaffolding here, so they are created through the wallet's
+    // API. They exist before the dApp connects, so the dashboard already opens
+    // on alice.
+    const api = await createGatewayApi()
+    const alice = await api.createWallet({
         partyHint: `alice-${rnd}`,
         signingProvider: 'participant',
+        primary: true,
     })
-    const bob = await wg.createWalletIfNotExists({
+    const bob = await api.createWallet({
         partyHint: `bob-${rnd}`,
         signingProvider: 'participant',
     })
 
-    await wg.setPrimaryWallet(alice)
+    await gotoConnect(page)
+    await connectGateway(page, wg)
+
     await setupRegistry(page)
     await gotoDashboard(page)
 
-    return { wg, alice, bob }
+    return { wg, api, alice, bob }
 }
 
 test.describe('dashboard transfer flow', () => {
+    test('rejected approval returns the transfer form to a recoverable state', async ({
+        page: dappPage,
+    }) => {
+        const { wg, bob } = await setupTransferTest(dappPage)
+
+        await tap(dappPage, wg, '200')
+        await openTransferDialog(dappPage)
+
+        const dialog = dappPage.getByRole('dialog')
+        await dialog
+            .getByRole('textbox', { name: 'Recipient Address' })
+            .fill(bob)
+        await dialog.getByRole('combobox', { name: 'Select asset' }).click()
+        await dappPage.getByRole('option', { name: /AMT/ }).click()
+        await dialog.getByRole('spinbutton', { name: 'Amount' }).fill('25')
+        await dialog
+            .getByRole('textbox', { name: 'Description' })
+            .fill(`rejected approval test ${Date.now()}`)
+
+        const submitButton = dialog.getByRole('button', {
+            name: 'Make Transfer',
+        })
+        await wg.rejectTransaction(() => submitButton.click())
+
+        await expect(dialog.getByRole('alert')).toContainText(
+            'Transfer failed: The transaction was not completed. You can try again.',
+            { timeout: 15000 }
+        )
+        await expect(
+            dialog.getByRole('heading', { name: 'Transfer Summary' })
+        ).not.toBeVisible()
+        await expect(
+            dialog.getByRole('button', { name: 'Close transfer dialog' })
+        ).toBeEnabled()
+        await expect(submitButton).toBeEnabled()
+
+        await wg.approveTransaction(() => submitButton.click())
+        await expect(
+            dialog.getByRole('heading', { name: 'Transfer Summary' })
+        ).toBeVisible({ timeout: 15000 })
+    })
+
     test('two step transfer - accept', async ({ page: dappPage }) => {
-        const { wg, alice, bob } = await setupTransferTest(dappPage)
+        const { wg, api, alice, bob } = await setupTransferTest(dappPage)
 
         // Alice: tap and create transfer.
         await tap(dappPage, wg, '1234')
@@ -84,7 +132,7 @@ test.describe('dashboard transfer flow', () => {
         await expectOffersBadgeCount(dappPage, 1)
 
         // Switch to bob to see the pending transfer as receiver.
-        await switchWallet(dappPage, wg, bob)
+        await switchWallet(api, bob)
         await gotoDashboard(dappPage)
 
         // Bob's incoming offer is counted on the sidebar badge.
@@ -106,12 +154,12 @@ test.describe('dashboard transfer flow', () => {
         await expectOffersBadgeCount(dappPage, 0)
 
         // Verify alice's balance decreased.
-        await switchWallet(dappPage, wg, alice)
+        await switchWallet(api, alice)
         await expectWalletBalance(dappPage, alice, '913')
     })
 
     test('two step transfer - rejection', async ({ page: dappPage }) => {
-        const { wg, alice, bob } = await setupTransferTest(dappPage)
+        const { wg, api, alice, bob } = await setupTransferTest(dappPage)
 
         // Alice: tap and create transfer.
         await tap(dappPage, wg, '500')
@@ -125,7 +173,7 @@ test.describe('dashboard transfer flow', () => {
         })
 
         // Switch to bob to see the pending transfer as receiver.
-        await switchWallet(dappPage, wg, bob)
+        await switchWallet(api, bob)
         await gotoDashboard(dappPage)
 
         const dialog = await openTransferOfferDialog(dappPage, {
@@ -142,18 +190,18 @@ test.describe('dashboard transfer flow', () => {
         await expectTransferOfferGone(dappPage, { amount: '100', message })
 
         // Verify alice's balance is restored after rejection.
-        await switchWallet(dappPage, wg, alice)
+        await switchWallet(api, alice)
         await expectWalletBalance(dappPage, alice, '500')
 
         // Verify bob has no holdings.
-        await switchWallet(dappPage, wg, bob)
+        await switchWallet(api, bob)
         await expectWalletHasNoAssets(dappPage, bob)
     })
 
     test('two step transfer - withdrawal by sender', async ({
         page: dappPage,
     }) => {
-        const { wg, alice, bob } = await setupTransferTest(dappPage)
+        const { wg, api, alice, bob } = await setupTransferTest(dappPage)
 
         // Alice: tap and create transfer.
         await tap(dappPage, wg, '500')
@@ -168,7 +216,7 @@ test.describe('dashboard transfer flow', () => {
 
         // Re-assert alice as primary wallet and wait for the outgoing transfer
         // to load on Offers.
-        await switchWallet(dappPage, wg, alice)
+        await switchWallet(api, alice)
         await gotoOffers(dappPage)
         const loadedDialog = await openTransferOfferDialog(dappPage, {
             amount: '100',
@@ -199,12 +247,12 @@ test.describe('dashboard transfer flow', () => {
         await expectWalletBalance(dappPage, alice, '500')
 
         // Verify bob has no holdings.
-        await switchWallet(dappPage, wg, bob)
+        await switchWallet(api, bob)
         await expectWalletHasNoAssets(dappPage, bob)
     })
 
     test('transfer detail dialog', async ({ page: dappPage }) => {
-        const { wg, bob } = await setupTransferTest(dappPage)
+        const { wg, api, bob } = await setupTransferTest(dappPage)
 
         // Alice: tap and create transfer.
         await tap(dappPage, wg, '800')
@@ -218,7 +266,7 @@ test.describe('dashboard transfer flow', () => {
         })
 
         // Switch to bob (receiver) to see the transfer.
-        await switchWallet(dappPage, wg, bob)
+        await switchWallet(api, bob)
         await gotoDashboard(dappPage)
 
         const dialog = await openTransferOfferDialog(dappPage, {

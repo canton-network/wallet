@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PublicKey } from '@canton-network/core-signing-lib'
+import type { PublicKey } from '@canton-network/core-signing-lib'
 import { v4 } from 'uuid'
-import { SDKContext } from '../../../sdk.js'
-import { ParticipantEndpointConfig } from './types.js'
+import type { SDKContext } from '../../../sdk.js'
+import type { ParticipantEndpointConfig } from './types.js'
 import { PreparedPartyCreationService } from './prepared.js'
-import { CreatePartyOptions } from './types.js'
-import { SDKLogger } from '../../../logger/index.js'
-import { LedgerProvider, Ops } from '@canton-network/core-provider-ledger'
+import type { CreatePartyOptions } from './types.js'
+import type { SDKLogger } from '../../../logger/index.js'
+import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 
 export class ExternalPartyNamespace {
@@ -75,36 +75,13 @@ export class ExternalPartyNamespace {
                 logger: this.logger,
             },
             partyCreationPromise,
-            options
+            options,
+            publicKey
         )
     }
 
-    private async resolveSynchronizerId() {
-        const connectedSynchronizers =
-            await this.ctx.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-                {
-                    method: 'ledgerApi',
-                    params: {
-                        resource: '/v2/state/connected-synchronizers',
-                        requestMethod: 'get',
-                        query: {},
-                    },
-                }
-            )
-
-        if (!connectedSynchronizers.connectedSynchronizers?.[0]) {
-            throw new Error('No connected synchronizers found')
-        }
-
-        const synchronizerId =
-            connectedSynchronizers.connectedSynchronizers[0].synchronizerId
-        if (connectedSynchronizers.connectedSynchronizers.length > 1) {
-            this.logger.warn(
-                `Found ${connectedSynchronizers.connectedSynchronizers.length} synchronizers, defaulting to ${synchronizerId}`
-            )
-        }
-
-        return synchronizerId
+    private resolveSynchronizerId() {
+        return Promise.resolve(this.ctx.defaultSynchronizerId)
     }
 
     /**

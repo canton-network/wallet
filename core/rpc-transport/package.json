@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-rpc-transport",
-    "version": "1.8.0",
+    "version": "1.12.1",
     "type": "module",
     "description": "RPC transport implementations",
     "license": "Apache-2.0",
@@ -19,22 +19,22 @@
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "test": "vitest run --project node --project browser",
         "test:coverage": "vitest run --project node --project browser --coverage"
     },
     "dependencies": {
-        "@canton-network/core-types": "workspace:^",
-        "uuid": "^14.0.1"
+        "@canton-network/core-types": "catalog:",
+        "uuid": "catalog:"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"

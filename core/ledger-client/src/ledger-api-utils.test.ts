@@ -11,7 +11,7 @@ import {
     promiseWithTimeout,
     retryable,
 } from './ledger-api-utils.js'
-import { LedgerClient } from './ledger-client.js'
+import type { LedgerClient } from './ledger-client.js'
 import { grpcError, mockLogger } from './test-utils.js'
 
 const cantonError = { code: 'NOT_FOUND', cause: 'missing', errorCategory: 1 }

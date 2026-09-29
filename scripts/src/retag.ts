@@ -18,7 +18,7 @@ const exec = promisify(ex)
  */
 async function main() {
     if (process.argv.length < 4) {
-        console.error('Usage: yarn script:retag <fake-sha> <real-sha>')
+        console.error('Usage: pnpm script:retag <fake-sha> <real-sha>')
         process.exit(1)
     }
 

@@ -13,14 +13,14 @@ const SCHEMA_PATH = `${repoRoot}/docs/wallet-gateway/configuration/schema.md`
 
 async function main() {
     // first build
-    await ex(`yarn nx build @canton-network/wallet-gateway-remote`, {
+    await ex(`pnpm nx build @canton-network/wallet-gateway-remote`, {
         cwd: repoRoot,
     })
 
     const existing = await readFile(SCHEMA_PATH, { encoding: 'utf-8' })
 
     const { stdout } = await ex(
-        `yarn workspace @canton-network/wallet-gateway-remote run tsx ./src/index.ts --config-schema`
+        `pnpm --filter @canton-network/wallet-gateway-remote exec tsx ./src/index.ts --config-schema`
     )
 
     if (stdout) {
@@ -42,7 +42,7 @@ ${stdout}
         if (existing.replace(/\s/g, '') !== contents.replace(/\s/g, '')) {
             console.warn(
                 warn(
-                    'Contents were outdated. If you see this in CI, run `yarn docs:update-wg-config` and commit the results'
+                    'Contents were outdated. If you see this in CI, run `pnpm docs:update-wg-config` and commit the results'
                 )
             )
             // set exit code to non-zero, so that CI will fail if the docs are out-of-date

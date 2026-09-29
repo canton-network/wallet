@@ -1059,6 +1059,23 @@ export interface paths {
         patch?: never
         trace?: never
     }
+    '/v0/admin/sv/voteresults/count': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        get?: never
+        put?: never
+        /** @description Count all vote results matching the request filters. */
+        post: operations['countVoteRequestResults']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
     '/v0/admin/sv/previous-sv-reward-weight': {
         parameters: {
             query?: never
@@ -1163,28 +1180,6 @@ export interface paths {
         get: operations['getAmuletConfigForRound']
         put?: never
         post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/transactions': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description **Deprecated with known bugs that will not be fixed, use /v2/updates instead**.
-         *
-         *     Lists transactions, by default in ascending order, paged, from ledger begin or optionally starting after a provided event id.
-         */
-        post: operations['listTransactionHistory']
         delete?: never
         options?: never
         head?: never
@@ -1685,69 +1680,6 @@ export interface components {
             publicUrl: string
             /** @description The sequencer's operating SV name. */
             svName: string
-        }
-        TransactionHistoryRequest: {
-            /**
-             * @description Note that all transactions carry some monotonically-increasing event_id.
-             *     Omit this page_end_event_id to start reading the first page, from the beginning or the end of the ledger, depending on the sort_order column.
-             *     A subsequent request can fill the page_end_event_id with the last event_id of the TransactionHistoryResponse to continue reading in the same sort_order.
-             *     The transaction with event_id == page_end_event_id will be skipped in the next response, making it possible to continuously read pages in the same sort_order.
-             */
-            page_end_event_id?: string
-            /**
-             * @description Sort order for the transactions. For ascending order, from beginning to the end of the ledger, use "asc".
-             *     For descending order, from end to beginning of the ledger, use "desc".
-             *     "asc" is used if the sort_order is omitted.
-             * @enum {string}
-             */
-            sort_order?: 'asc' | 'desc'
-            /**
-             * Format: int64
-             * @description The maximum number of transactions returned for this request.
-             */
-            page_size: number
-        }
-        TransactionHistoryResponse: {
-            transactions: components['schemas']['TransactionHistoryResponseItem'][]
-        }
-        TransactionHistoryResponseItem: {
-            /**
-             * @description Describes the type of activity that occurred.
-             *     Determines if the data for the transaction should be read
-             *     from the `transfer`, `mint`, or `tap` property.
-             * @enum {string}
-             */
-            transaction_type:
-                | 'transfer'
-                | 'mint'
-                | 'devnet_tap'
-                | 'abort_transfer_instruction'
-            /** @description The event id. */
-            event_id: string
-            /**
-             * @description The ledger offset of the event.
-             *     Note that this field may not be the same across nodes, and therefore should not be compared between SVs.
-             */
-            offset?: string
-            /**
-             * Format: date-time
-             * @description The effective date of the event.
-             */
-            date: string
-            /** @description The id of the domain through which this transaction was sequenced. */
-            domain_id: string
-            /**
-             * Format: int64
-             * @description The round for which this transaction was registered.
-             */
-            round?: number
-            /** @description A (batch) transfer from sender to receivers. */
-            transfer?: components['schemas']['Transfer']
-            /** @description The DSO mints amulet for the cases where the DSO rules allow for that. */
-            mint?: components['schemas']['AmuletAmount']
-            /** @description A tap creates a Amulet, only used for development purposes, and enabled only on DevNet. */
-            tap?: components['schemas']['AmuletAmount']
-            abort_transfer_instruction?: components['schemas']['AbortTransferInstruction']
         }
         UpdateHistoryRequestAfter: {
             /**
@@ -3218,6 +3150,24 @@ export interface components {
              */
             next_page_token?: number
         }
+        /**
+         * @description Filters for counting vote results. Same semantics as the corresponding
+         *     fields on `ListVoteResultsRequest`.
+         */
+        CountVoteResultsRequest: {
+            actionName?: string
+            accepted?: boolean
+            requester?: string
+            effectiveFrom?: string
+            effectiveTo?: string
+        }
+        CountVoteResultsResponse: {
+            /**
+             * Format: int64
+             * @description Total number of vote results matching the request filters.
+             */
+            count: number
+        }
         PreviousSvRewardWeightRequest: {
             svParty: string
             /** @description Only consider reward weight changes that took effect strictly before this time. */
@@ -4624,6 +4574,30 @@ export interface operations {
             }
         }
     }
+    countVoteRequestResults: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody: {
+            content: {
+                'application/json': components['schemas']['CountVoteResultsRequest']
+            }
+        }
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['CountVoteResultsResponse']
+                }
+            }
+        }
+    }
     getPreviousSvRewardWeight: {
         parameters: {
             query?: never
@@ -4763,33 +4737,6 @@ export interface operations {
                 }
             }
             404: components['responses']['404']
-        }
-    }
-    listTransactionHistory: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['TransactionHistoryRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['TransactionHistoryResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-            500: components['responses']['500']
         }
     }
     getUpdateHistory: {

@@ -4,12 +4,12 @@
 import { getRegistryInfo } from './getRegistryInfo'
 import { listInstruments } from './listInstruments'
 import { getInstrument } from './getInstrument'
-import { OffLedger } from '@canton-network/core-token-standard'
+import type { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
 import { Router } from 'express'
 import z from 'zod'
 
-const metadataAPIRouter = Router()
+const metadataAPIRouter: Router = Router()
 
 const openAPIRouter =
     createExpressOpenApiRouter<OffLedger.MetadataV1.paths>(metadataAPIRouter)

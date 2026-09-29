@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
+import { describe, it, vi, beforeEach, expect, type Mock } from 'vitest'
 import {
     AmuletNamespace,
-    AmuletNamespaceConfig,
+    type AmuletNamespaceConfig,
     fetchAmulet,
 } from './namespace'
 import * as mock from '../../__test__/mocks'
@@ -84,7 +84,6 @@ describe('AmuletNamespace', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         amuletNamespace = new AmuletNamespace(config)
@@ -296,7 +295,6 @@ describe('AmuletNamespace with no validator party', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         amuletNamespace = new AmuletNamespace(configNoValidator)

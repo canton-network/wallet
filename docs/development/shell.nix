@@ -11,7 +11,7 @@ in
 pkgs.mkShell rec {
   buildInputs = [
     java
-    pkgs.corepack # This provides yarn.
+    pkgs.pnpm
     pkgs.nodejs_24
     pkgs.typescript-language-server
   ];

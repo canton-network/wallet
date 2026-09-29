@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Splice } from '@daml.js/token-standard-models-1.0.0'
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 
 export * from './interface-ids.const.js'
 

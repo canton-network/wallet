@@ -3,11 +3,11 @@
 
 import {
     assertConnected,
-    AuthContext,
+    type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import buildController from './rpc-gen/index.js'
-import {
+import type {
     ConnectResult,
     LedgerApiParams,
     LedgerApiResult,
@@ -19,12 +19,12 @@ import {
     StatusEvent,
     Wallet,
 } from './rpc-gen/typings.js'
-import { Store, Transaction } from '@canton-network/core-wallet-store'
+import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import {
     LedgerClient,
-    GetEndpoint,
-    PostEndpoint,
-    PrepareSubmissionResponse,
+    type GetEndpoint,
+    type PostEndpoint,
+    type PrepareSubmissionResponse,
     isValidGetEndpoint,
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
@@ -32,12 +32,17 @@ import { v4 } from 'uuid'
 import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
-import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
+import { networkStatus } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
-import { TransactionService } from '../ledger/transaction-service.js'
 
-import { SigningDrivers } from '../signing/signing-drivers.js'
 import { rpcErrors } from '@canton-network/core-rpc-errors'
+import {
+    TransactionService,
+    ledgerPrepareParams,
+    logDynamically,
+    HASHING_SCHEME_VERSION,
+    SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
@@ -52,6 +57,7 @@ export const dappController = (
     _logger: Logger,
     origin: string | null,
     deps: DappControllerDeps,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION,
     context?: AuthContext
 ) => {
     const logger = _logger.child({ component: 'dapp-controller' })
@@ -311,7 +317,8 @@ export const dappController = (
                 actAs,
                 synchronizerId,
                 params,
-                ledgerClient
+                ledgerClient,
+                hashingSchemeVersion
             )
 
             logDynamically(
@@ -374,7 +381,8 @@ export const dappController = (
                     store,
                     logger,
                     deps!.signingDrivers,
-                    notifier
+                    notifier,
+                    hashingSchemeVersion
                 )
                 try {
                     await transactionService.signAndExecute(
@@ -540,10 +548,17 @@ async function prepareSubmission(
     partyIds: string[],
     synchronizerId: string,
     params: PrepareExecuteParams,
-    ledgerClient: LedgerClient
+    ledgerClient: LedgerClient,
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(userId, partyIds, synchronizerId, params)
+        ledgerPrepareParams({
+            userId,
+            partyIds,
+            synchronizerId,
+            params,
+            hashingSchemeVersion,
+        })
     )
 }

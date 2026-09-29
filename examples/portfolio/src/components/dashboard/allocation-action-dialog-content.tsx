@@ -535,27 +535,27 @@ function getInsufficientLegIds(
     item: AllocationActionItem,
     availableHoldings: AggregatedHolding[]
 ) {
-    return new Set(
-        item.transferLegs
-            .filter((leg) => {
-                if (
-                    !isSenderOfLeg(item.currentPartyId, leg) ||
-                    leg.allocations.length
-                ) {
-                    return false
-                }
+    return item.transferLegs.reduce((insufficientLegIds, leg) => {
+        if (
+            !isSenderOfLeg(item.currentPartyId, leg) ||
+            leg.allocations.length
+        ) {
+            return insufficientLegIds
+        }
 
-                const availableAmount =
-                    availableHoldings.find(
-                        (holding) =>
-                            getInstrumentKey(holding.instrumentId) ===
-                            getInstrumentKey(leg.transferLeg.instrumentId)
-                    )?.availableAmount ?? '0'
+        const availableAmount =
+            availableHoldings.find(
+                (holding) =>
+                    getInstrumentKey(holding.instrumentId) ===
+                    getInstrumentKey(leg.transferLeg.instrumentId)
+            )?.availableAmount ?? '0'
 
-                return new Decimal(availableAmount).lt(leg.transferLeg.amount)
-            })
-            .map((leg) => leg.transferLegId)
-    )
+        if (new Decimal(availableAmount).lt(leg.transferLeg.amount)) {
+            insufficientLegIds.add(leg.transferLegId)
+        }
+
+        return insufficientLegIds
+    }, new Set<string>())
 }
 
 function getAmountColor(isSender: boolean, isReceiver: boolean) {

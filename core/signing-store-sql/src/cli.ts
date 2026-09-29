@@ -6,7 +6,7 @@ import { connection } from './store-sql.js'
 import { migrator } from './migrator.js'
 import { pino } from 'pino'
 import { bootstrap } from './bootstrap.js'
-import { StoreConfig } from './schema.js'
+import type { StoreConfig } from './schema.js'
 
 const logger = pino({ name: 'main', level: 'debug' })
 

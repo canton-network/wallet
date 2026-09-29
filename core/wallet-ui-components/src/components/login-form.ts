@@ -1,11 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, PropertyValues } from 'lit'
+import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import './back-link.js'
 import { BaseElement } from '../internal/base-element.js'
-import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    PublicNetwork,
+    Idp,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { chevronDownIcon } from '../icons'
 import cantonLogo from '../../images/logos/canton-logo.png'
 
@@ -14,7 +17,9 @@ export class LoginConnectEvent extends Event {
     constructor(
         public selectedNetwork: PublicNetwork,
         public selectedIdp: Idp,
-        public clientId: string
+        public clientId?: string,
+        public clientSecret?: string,
+        public username?: string
     ) {
         super('login-connect', { bubbles: true, composed: true })
     }
@@ -39,11 +44,13 @@ export class WgLoginForm extends BaseElement {
     /** Available identity providers */
     @property({ type: Array }) idps: Idp[] = []
 
+    /** Locks form until idps and networks are loaded */
+    @property({ type: Boolean }) loading = false
+
     @property({ type: Boolean }) connecting = false
     @property({ type: String }) backHref = '/'
 
     @state() accessor selectedNetwork: PublicNetwork | null = null
-    @state() accessor selectedIdp: Idp | null = null
     @state() accessor message: string | null = null
     @state() accessor messageType: 'error' | 'info' | null = null
 
@@ -97,7 +104,7 @@ export class WgLoginForm extends BaseElement {
             }
 
             .network-select,
-            .client-id-input {
+            .login-input {
                 width: 100%;
                 border: 1px solid #d4d4d8;
                 border-radius: 4px;
@@ -110,7 +117,7 @@ export class WgLoginForm extends BaseElement {
             }
 
             .network-select:focus,
-            .client-id-input:focus {
+            .login-input:focus {
                 border-color: var(--wg-input-border-focus);
                 box-shadow: 0 0 0 3px rgba(var(--wg-accent-rgb), 0.12);
             }
@@ -139,20 +146,39 @@ export class WgLoginForm extends BaseElement {
     protected updated(changedProperties: PropertyValues<this>) {
         super.updated(changedProperties)
 
-        if (changedProperties.has('networks') && !this.selectedNetwork) {
-            const index = this.networks.findIndex(
-                (network) => network.authMethod !== 'client_credentials'
-            )
-
-            if (index >= 0) {
-                this.selectedNetwork = this.networks[index]
-                this.selectedIdp =
-                    this.idps.find(
-                        (idp) =>
-                            idp.id === this.selectedNetwork?.identityProviderId
-                    ) ?? null
-            }
+        if (
+            changedProperties.has('networks') ||
+            changedProperties.has('idps')
+        ) {
+            this.selectedNetwork = this.reconcileSelectedNetwork()
         }
+    }
+
+    get selectedIdp(): Idp | null {
+        return (
+            this.idps.find(
+                (idp) => idp.id === this.selectedNetwork?.identityProviderId
+            ) ?? null
+        )
+    }
+
+    private isSelectable(network: PublicNetwork): boolean {
+        return network.authMethod !== 'client_credentials'
+    }
+
+    // If no network is selected - select first available
+    // If network selected, validate that it is in currently available networks
+    private reconcileSelectedNetwork(): PublicNetwork | null {
+        const selectedId = this.selectedNetwork?.id
+        const current = this.networks.find(
+            (network) => network.id === selectedId
+        )
+
+        if (current && this.isSelectable(current)) {
+            return current
+        }
+
+        return this.networks.find(this.isSelectable) ?? null
     }
 
     private get selectedNetworkIndex() {
@@ -171,18 +197,9 @@ export class WgLoginForm extends BaseElement {
         const raw = (e.target as HTMLSelectElement).value
         const index = Number.parseInt(raw, 10)
 
-        if (Number.isNaN(index)) {
-            this.selectedNetwork = null
-            this.selectedIdp = null
-            this.message = null
-            return
-        }
-
-        this.selectedNetwork = this.networks[index] ?? null
-        this.selectedIdp =
-            this.idps.find(
-                (idp) => idp.id === this.selectedNetwork?.identityProviderId
-            ) ?? null
+        this.selectedNetwork = Number.isNaN(index)
+            ? null
+            : (this.networks[index] ?? null)
         this.message = null
     }
 
@@ -195,10 +212,7 @@ export class WgLoginForm extends BaseElement {
             return
         }
 
-        const idp = this.idps.find(
-            (candidate) =>
-                candidate.id === this.selectedNetwork?.identityProviderId
-        )
+        const idp = this.selectedIdp
 
         if (!idp) {
             this.messageType = 'error'
@@ -206,16 +220,49 @@ export class WgLoginForm extends BaseElement {
             return
         }
 
-        const clientId =
-            (
-                this.renderRoot.querySelector(
-                    '#client-id'
-                ) as HTMLInputElement | null
-            )?.value || this.selectedNetwork.clientId
+        let clientId: string | undefined
+        let clientSecret: string | undefined
+        let username: string | undefined
+
+        if (idp.type === 'self_signed') {
+            clientId =
+                (
+                    this.renderRoot.querySelector(
+                        '#client-id'
+                    ) as HTMLInputElement | null
+                )?.value || this.selectedNetwork.clientId
+
+            clientSecret =
+                (
+                    this.renderRoot.querySelector(
+                        '#client-secret'
+                    ) as HTMLInputElement | null
+                )?.value ?? ''
+        }
+
+        if (idp.type === 'self_issued') {
+            username =
+                (
+                    this.renderRoot.querySelector(
+                        '#username'
+                    ) as HTMLInputElement | null
+                )?.value ?? ''
+        }
 
         this.dispatchEvent(
-            new LoginConnectEvent(this.selectedNetwork, idp, clientId || '')
+            new LoginConnectEvent(
+                this.selectedNetwork,
+                idp,
+                clientId,
+                clientSecret,
+                username
+            )
         )
+    }
+
+    private handleSubmit(e: Event) {
+        e.preventDefault()
+        this.handleConnect()
     }
 
     /** Set a status message on the form (e.g. "Redirecting...") */
@@ -231,8 +278,59 @@ export class WgLoginForm extends BaseElement {
     }
 
     protected render() {
+        const renderAuthSpecificInputs = () => {
+            switch (this.selectedIdp?.type) {
+                case 'self_issued':
+                    return html`
+                        <label
+                            class="form-label fw-semibold text-body mt-3 mb-2"
+                            for="username"
+                            >Username</label
+                        >
+                        <input
+                            id="username"
+                            class="login-input form-control"
+                            type="text"
+                            autocomplete="username"
+                            required
+                            ?disabled=${this.connecting}
+                        />
+                    `
+                case 'self_signed':
+                    return html`
+                        <label
+                            class="form-label fw-semibold text-body mt-3 mb-2"
+                            for="client-id"
+                            >Client ID</label
+                        >
+                        <input
+                            id="client-id"
+                            class="login-input form-control"
+                            type="text"
+                            autocomplete="username"
+                            .value=${this.selectedNetwork?.clientId || ''}
+                            ?disabled=${this.connecting}
+                        />
+                        <label
+                            class="form-label fw-semibold text-body mt-3 mb-2"
+                            for="client-secret"
+                            >Client Secret</label
+                        >
+                        <input
+                            id="client-secret"
+                            class="login-input form-control"
+                            type="password"
+                            autocomplete="current-password"
+                            ?disabled=${this.connecting}
+                        />
+                    `
+                default:
+                    return nothing
+            }
+        }
+
         return html`
-            <main class="screen">
+            <form class="screen" @submit=${this.handleSubmit}>
                 <div class="top-bar">
                     <img class="top-logo" src=${cantonLogo} alt="Canton logo" />
                 </div>
@@ -255,7 +353,7 @@ export class WgLoginForm extends BaseElement {
                             class="network-select form-select"
                             .value=${this.selectedNetworkIndex}
                             @change=${this.handleChange}
-                            ?disabled=${this.connecting}
+                            ?disabled=${this.loading || this.connecting}
                         >
                             <option value="">Select network</option>
                             ${this.networks.map(
@@ -274,24 +372,7 @@ export class WgLoginForm extends BaseElement {
                         <span class="select-chevron">${chevronDownIcon}</span>
                     </div>
 
-                    ${
-                        this.selectedIdp?.type === 'self_signed'
-                            ? html`
-                                  <label
-                                      class="form-label fw-semibold text-body mt-3 mb-2"
-                                      for="client-id"
-                                      >Client ID</label
-                                  >
-                                  <input
-                                      id="client-id"
-                                      class="client-id-input form-control"
-                                      type="text"
-                                      .value=${this.selectedNetwork?.clientId || ''}
-                                      ?disabled=${this.connecting}
-                                  />
-                              `
-                            : null
-                    }
+                    ${renderAuthSpecificInputs()}
                     ${
                         this.message
                             ? html`<div
@@ -308,9 +389,11 @@ export class WgLoginForm extends BaseElement {
                                   class="form-text text-body-secondary mt-2 mb-0"
                               >
                                   ${
-                                      this.selectedNetwork
-                                          ? `Selected: ${this.selectedNetwork.name}`
-                                          : 'Choose a network to continue.'
+                                      this.loading
+                                          ? 'Loading networks...'
+                                          : this.selectedNetwork
+                                            ? `Selected: ${this.selectedNetwork.name}`
+                                            : 'Choose a network to continue.'
                                   }
                               </p>`
                     }
@@ -318,14 +401,18 @@ export class WgLoginForm extends BaseElement {
 
                 <div class="footer">
                     <button
+                        type="submit"
                         class="connect-btn btn btn-primary w-100 rounded-pill"
-                        @click=${this.handleConnect}
-                        ?disabled=${this.connecting || !this.selectedNetwork}
+                        ?disabled=${
+                            this.loading ||
+                            this.connecting ||
+                            !this.selectedNetwork
+                        }
                     >
                         ${this.connecting ? 'Connecting…' : 'Connect'}
                     </button>
                 </div>
-            </main>
+            </form>
         `
     }
 }

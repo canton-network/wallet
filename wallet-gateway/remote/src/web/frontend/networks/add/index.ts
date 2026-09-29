@@ -5,7 +5,7 @@ import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
-    NetworkEditSaveEvent,
+    type NetworkEditSaveEvent,
     chevronLeftIcon,
     handleErrorToast,
     toRelHref,

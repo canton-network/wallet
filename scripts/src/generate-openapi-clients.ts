@@ -2,25 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    cleanupStaleVersionedFiles,
     downloadAndUnpackTarball,
     downloadToFile,
     ensureDir,
     getRepoRoot,
+    getSupportedCantonVersions,
     info,
-    Network,
+    LEDGER_CLIENTS_PATH,
+    type Network,
     getNetworkArg,
+    pruneVersionedFiles,
     SPLICE_SPEC_PATH,
-    success,
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
+    warn,
+    success,
 } from './lib/utils.js'
 import * as fs from 'fs'
 import generateSchema, { astToString } from 'openapi-typescript'
 import * as path from 'path'
 import crypto from 'crypto'
 import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.js'
-import jsYaml from 'js-yaml'
+import { load as loadYaml } from 'js-yaml'
 
 /**
  * OpenAPI specification details.
@@ -113,8 +118,7 @@ async function generateOpenApiClient(spec: OpenApiSpec) {
         }
 
         if (generatePaths) {
-            const parsedSpec = jsYaml.load(specs) as
-                MinimalParsedSpec | undefined
+            const parsedSpec = loadYaml(specs) as MinimalParsedSpec | undefined
             const apiPaths = parsedSpec?.paths || {}
             const getRoutes = Object.keys(apiPaths).filter(
                 (p) => apiPaths[p] && 'get' in apiPaths[p]
@@ -197,18 +201,78 @@ const getSpecs = (
         input: `api-specs/splice/${spliceVersion}/transfer-instruction-v1.yaml`,
         output: 'core/token-standard/src/generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.ts',
     },
+    //splice v2 specs
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-instruction-v2.yaml`,
+        output: 'core/token-standard-v2/src/generated-clients/splice-api-token-allocation-instruction-v2/allocation-instruction-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/allocation-v2.yaml`,
+        output: 'core/token-standard-v2/src/generated-clients/splice-api-token-allocation-v2/allocation-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/transfer-instruction-v2.yaml`,
+        output: 'core/token-standard-v2/src/generated-clients/splice-api-token-transfer-instruction-v2/transfer-instruction-v2.ts',
+    },
+    {
+        input: `api-specs/splice/${spliceVersion}/token-metadata-v1.yaml`,
+        output: 'core/token-standard-v2/src/generated-clients/splice-api-token-metadata-v1/token-metadata-v1.ts',
+    },
 ]
+
+/**
+ * Delete the generated ledger clients whose Canton version is no longer supported.
+ *
+ * The version is part of the filename, so a bump writes a new set of files next to the old one
+ * instead of replacing it. Deleting the old set breaks the imports in ledger-client-types, and that
+ * is the point: the compile error is what tells you to repoint them.
+ *
+ * The kept set spans every network. This run only generated the one given by --network, so keeping
+ * just that version would delete the other network's client.
+ */
+function pruneStaleLedgerClients(): void {
+    const removed = pruneVersionedFiles(
+        LEDGER_CLIENTS_PATH,
+        /^openapi-(\d+\.\d+\.\d+)(?:-[a-z-]+)?\.ts$/,
+        getSupportedCantonVersions()
+    )
+
+    if (removed.length === 0) return
+
+    console.log(
+        warn(
+            `Removed ${removed.length} stale OpenAPI client(s):\n  ${removed.join('\n  ')}\n` +
+                'Repoint the imports of core/ledger-client-types/src/index.ts at the current versions.'
+        )
+    )
+}
 
 async function main(network: Network = 'devnet') {
     const updateHash = hasFlag('updateHash')
 
+    // The ledger-api spec is the only one whose output filename embeds the Canton
+    // version; the others overwrite a fixed filename in place. Remove any versioned
+    // output that no longer matches a currently supported Canton version (across all
+    // networks, not just the one being generated for here) before writing new ones,
+    // so version bumps don't leave stale clients behind (#1380).
+    cleanupStaleVersionedFiles(
+        path.join(root, 'core/ledger-client-types/src/generated-clients'),
+        'openapi',
+        Object.values(SUPPORTED_VERSIONS).map(
+            (v) => v.canton.version.split('-')[0]
+        )
+    )
+
     await fetchSpliceSpecs(updateHash, network)
-    Promise.all(
+    // Awaited, not chained, so the prune runs only once every file is written.
+    await Promise.all(
         getSpecs(
             SUPPORTED_VERSIONS[network].splice.version,
             SUPPORTED_VERSIONS[network].canton.version.split('-')[0]
         ).map(generateOpenApiClient)
-    ).then(() => {
+    ).then(async () => {
+        pruneStaleLedgerClients()
+
         console.log(
             success('Generated fresh TypeScript clients for all OpenAPI specs')
         )

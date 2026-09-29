@@ -3,10 +3,10 @@
 
 import type { SDKContext } from '../../init/types/context.js'
 
-import { SDKLogger } from '../../logger/logger.js'
-import { CreateUserParams, GrantOrRevokeRightsParams } from './types.js'
-import { Ops } from '@canton-network/core-provider-ledger'
-import { UserRights } from './types.js'
+import type { SDKLogger } from '../../logger/logger.js'
+import type { CreateUserParams, GrantOrRevokeRightsParams } from './types.js'
+import type { Ops } from '@canton-network/core-provider-ledger'
+import type { UserRights } from './types.js'
 
 export class UserNamespace {
     private readonly logger: SDKLogger

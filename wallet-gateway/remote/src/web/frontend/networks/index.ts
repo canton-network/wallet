@@ -6,13 +6,13 @@ import { customElement, state } from 'lit/decorators.js'
 
 import {
     BaseElement,
-    NetworkCardReviewEvent,
-    PageChangeEvent,
+    type NetworkCardReviewEvent,
+    type PageChangeEvent,
     handleErrorToast,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 
-import {
+import type {
     PublicNetwork,
     Session,
 } from '@canton-network/core-wallet-user-rpc-client'
@@ -158,7 +158,9 @@ export class UserUiNetworks extends BaseElement {
                                   return html`
                                       <network-card
                                           .network=${network}
-                                          .activeSession=${!!session}
+                                          .activeSession=${
+                                              session?.status === 'connected'
+                                          }
                                           .accessToken=${session?.accessToken ?? ''}
                                           .readonly=${!this.isAdmin}
                                           @network-review=${this._onReview}

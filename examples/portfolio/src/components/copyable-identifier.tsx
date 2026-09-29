@@ -4,6 +4,13 @@ import type { SxProps, Theme } from '@mui/material/styles'
 import { normalizeSx } from '@components/ui/utils'
 import { CopyIconButton } from './ui/CopyIconButton'
 
+const truncate = (str: string, len: number) => {
+    if (str.length <= len) {
+        return str
+    }
+    return `${str.slice(0, len)}...`
+}
+
 interface CopyableIdentifierProps {
     value: string
     maxLength?: number
@@ -15,13 +22,6 @@ export const CopyableIdentifier: React.FC<CopyableIdentifierProps> = ({
     maxLength = 8,
     sx,
 }) => {
-    const truncate = (str: string, len: number) => {
-        if (str.length <= len) {
-            return str
-        }
-        return `${str.slice(0, len)}...`
-    }
-
     const formatPartyId = (val: string) => {
         const parts = val.split('::')
         const prefix = parts[0] || ''

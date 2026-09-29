@@ -4,7 +4,7 @@
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
-    ApiKeyGenerateEvent,
+    type ApiKeyGenerateEvent,
     BaseElement,
     chevronLeftIcon,
     handleErrorToast,
@@ -15,7 +15,7 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
-import { GeneratedApiKey } from '@canton-network/core-wallet-user-rpc-client'
+import type { GeneratedApiKey } from '@canton-network/core-wallet-user-rpc-client'
 import { detectCurrentOrigin } from '../../listeners.js'
 
 @customElement('user-ui-add-api-key')

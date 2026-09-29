@@ -11,12 +11,14 @@ const {
     mockAccessTokenSet,
     mockExpirationDateSet,
     mockNetworkIdGet,
+    mockHandleErrorToast,
 } = vi.hoisted(() => ({
     mockRedirectToIntendedOrDefault: vi.fn(),
     mockAddUserSession: vi.fn().mockResolvedValue(undefined),
     mockAccessTokenSet: vi.fn(),
     mockExpirationDateSet: vi.fn(),
     mockNetworkIdGet: vi.fn(() => 'net-1'),
+    mockHandleErrorToast: vi.fn(),
 }))
 
 vi.mock('../index.js', () => ({
@@ -31,6 +33,13 @@ vi.mock('../state-manager.js', () => ({
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
+vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-ui-components')
+        >()
+    return { ...actual, handleErrorToast: mockHandleErrorToast }
+})
 
 import './index.js'
 import { LoginCallback } from './index.js'
@@ -91,16 +100,38 @@ function expectNoAuthSideEffects() {
     expect(mockRedirectToIntendedOrDefault).not.toHaveBeenCalled()
 }
 
+async function expectRecoverableError(el: LoginCallback) {
+    await waitUntil(() => mockHandleErrorToast.mock.calls.length > 0)
+    await el.updateComplete
+
+    expect(el.shadowRoot?.querySelector('wg-loading-state')).toBeNull()
+
+    const errorPage = el.shadowRoot?.querySelector('wg-error-page') as
+        | (HTMLElement & {
+              title: string
+              message: string
+              backHref: string
+          })
+        | null
+
+    expect(errorPage?.title).toBe('Login failed')
+    expect(errorPage?.message).toBe(
+        'We could not complete your login. Return to network selection and try again.'
+    )
+    expect(errorPage?.backHref).toBe('/login')
+}
+
 describe('LoginCallback', () => {
     let el: LoginCallback
     const componentFixture = html`<login-callback></login-callback>`
 
     beforeEach(() => {
         mockRedirectToIntendedOrDefault.mockReset()
-        mockAddUserSession.mockClear()
+        mockAddUserSession.mockReset().mockResolvedValue(undefined)
         mockAccessTokenSet.mockReset()
         mockExpirationDateSet.mockReset()
         mockNetworkIdGet.mockReturnValue('net-1')
+        mockHandleErrorToast.mockReset()
         sessionStorage.clear()
         setCallbackUrl()
     })
@@ -113,6 +144,13 @@ describe('LoginCallback', () => {
     })
 
     it('renders the loading state', async () => {
+        setCallbackUrl('auth-code', oauthState)
+        sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(() => new Promise<Response>(() => {}))
+        )
+
         el = await fixture<LoginCallback>(componentFixture)
 
         const loadingState = el.shadowRoot?.querySelector(
@@ -123,35 +161,39 @@ describe('LoginCallback', () => {
         expect(loadingState?.text).toBe('Logging in...')
     })
 
-    it('does nothing when both code and state are missing', async () => {
+    it('shows a recoverable error when both code and state are missing', async () => {
         el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
+        await expectRecoverableError(el)
     })
 
-    it('does nothing when only the authorization code is present', async () => {
+    it('shows a recoverable error when only the authorization code is present', async () => {
         setCallbackUrl('auth-code-only')
         el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
+        await expectRecoverableError(el)
     })
 
-    it('does nothing when only the state parameter is present', async () => {
+    it('shows a recoverable error when only the state parameter is present', async () => {
         setCallbackUrl(undefined, oauthState)
         el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
+        await expectRecoverableError(el)
     })
 
-    it('does nothing when the PKCE verifier is missing from session storage', async () => {
+    it('shows a recoverable error when the PKCE verifier is missing', async () => {
         setCallbackUrl('auth-code', oauthState)
         stubOAuthFetch(tokenWithExpiry())
         el = await fixture<LoginCallback>(componentFixture)
 
         expectNoAuthSideEffects()
+        await expectRecoverableError(el)
     })
 
-    it('does nothing when the token endpoint returns no access_token', async () => {
+    it('shows a recoverable error when the token endpoint returns no access token', async () => {
         setCallbackUrl('auth-code', oauthState)
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
         stubOAuthFetch()
@@ -165,6 +207,7 @@ describe('LoginCallback', () => {
         )
 
         expectNoAuthSideEffects()
+        await expectRecoverableError(el)
     })
 
     it('uses an empty network id when none is stored in state', async () => {
@@ -203,5 +246,19 @@ describe('LoginCallback', () => {
         await waitUntil(
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
         )
+    })
+
+    it('shows a recoverable error when adding the user session fails', async () => {
+        const error = new Error('addSession failed')
+        mockAddUserSession.mockRejectedValueOnce(error)
+        setCallbackUrl('auth-code', oauthState)
+        sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
+        stubOAuthFetch(tokenWithExpiry())
+
+        el = await fixture<LoginCallback>(componentFixture)
+
+        await expectRecoverableError(el)
+        expect(mockHandleErrorToast).toHaveBeenCalledWith(error)
+        expect(mockRedirectToIntendedOrDefault).not.toHaveBeenCalled()
     })
 })

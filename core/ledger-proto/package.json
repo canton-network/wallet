@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-ledger-proto",
-    "version": "1.7.0",
+    "version": "1.11.1",
     "type": "module",
     "description": "Provides TypeScript protobuf bindings for Canton",
     "license": "Apache-2.0",
@@ -19,25 +19,25 @@
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "test": "vitest run --project node --project browser --passWithNoTests",
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@swc/core": "^1.15.43",
-        "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
-        "esbuild-plugin-replace": "^1.4.0",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "@swc/core": "catalog:",
+        "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "esbuild-plugin-replace": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
-        "@protobuf-ts/runtime": "^2.11.1",
-        "@protobuf-ts/runtime-rpc": "^2.11.1"
+        "@protobuf-ts/runtime": "catalog:",
+        "@protobuf-ts/runtime-rpc": "catalog:"
     },
     "files": [
         "dist/**"

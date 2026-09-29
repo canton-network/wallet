@@ -7,14 +7,17 @@ import FireblocksSigningDriver from './index.js'
 
 import {
     isRpcError,
-    Transaction,
+    type Transaction,
     CC_COIN_TYPE,
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
 import { PublicKeyInformationAlgorithmEnum } from '@fireblocks/ts-sdk'
-import { AuthContext } from '@canton-network/core-wallet-auth'
-import { FireblocksApiKeyInfo, FireblocksTransaction } from './fireblocks.js'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type {
+    FireblocksApiKeyInfo,
+    FireblocksTransaction,
+} from './fireblocks.js'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'
@@ -35,7 +38,7 @@ const TEST_KEY: Key = {
 const FAKE_TRANSACTION: FireblocksTransaction = {
     txId: TEST_TRANSACTION_HASH,
     status: 'signed',
-    signature: 'test-signature',
+    signature: 'deadbeef',
     publicKey: TEST_FIREBLOCKS_PUBLIC_KEY,
     derivationPath: TEST_FIREBLOCKS_DERIVATION_PATH,
 }
@@ -85,7 +88,7 @@ function mockHandlerDefaults() {
     fireblocksHandlerMock.signTransaction.mockResolvedValue({
         txId: TEST_TRANSACTION_HASH,
         status: 'signed',
-        signature: 'test-signature',
+        signature: 'deadbeef',
         publicKey: TEST_FIREBLOCKS_PUBLIC_KEY,
     })
 }
@@ -131,7 +134,6 @@ async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
 
 describe('FireblocksSigningDriver', () => {
     beforeEach(() => {
-        vi.clearAllMocks()
         mockHandlerDefaults()
     })
 
@@ -225,11 +227,14 @@ describe('FireblocksSigningDriver', () => {
         })
         throwWhenRpcError(result)
 
+        // the fireblocks driver should return the signature + publicKey in base64 format
         expect(result).toEqual({
             txId: TEST_TRANSACTION_HASH,
             status: 'signed',
-            signature: 'test-signature',
-            publicKey: TEST_FIREBLOCKS_PUBLIC_KEY,
+            signature: Buffer.from('deadbeef', 'hex').toString('base64'),
+            publicKey: Buffer.from(TEST_FIREBLOCKS_PUBLIC_KEY, 'hex').toString(
+                'base64'
+            ),
         })
     })
 

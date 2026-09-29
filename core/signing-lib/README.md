@@ -17,6 +17,10 @@ The `controller` function should be an implementation of `buildController` from 
 
 To see a simple example of a signing driver, see [core/singing-internal](../signing-internal).
 
+### Data Encodings
+
+When implementing a signing driver, note that the Wallet Gateway expects all keys and signatures to be base64-encoded. If the signing provider represents keys in some other format (i.e. hex-encoded strings), then the driver is responsible for converting between the formats. This provides a consistent and predictible interface to the Wallet Gateway.
+
 ### Important Note
 
 Other than the optional `internalTxId` parameter in `signTransaction`, ALL instances of `txId` refer to the TransactionID given by the **signing provider**, not the Wallet Gateway.

@@ -18,6 +18,7 @@ globalThis.fetch = async (input, init) => {
         return new Response(
             JSON.stringify({
                 userPath: `${window.location.origin}/api/v0/user`,
+                dappApiUrl: `${window.location.origin}/api/v0/dapp`,
             }),
             { status: 200, headers: { 'Content-Type': 'application/json' } }
         )

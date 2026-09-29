@@ -5,7 +5,7 @@ import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import './custom-toast.js'
-import { Toast } from './custom-toast'
+import type { Toast } from './custom-toast'
 describe('custom-toast', () => {
     beforeEach(() => {
         vi.useFakeTimers()

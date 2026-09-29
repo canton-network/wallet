@@ -37,14 +37,14 @@ The **dApp API** is a JSON-RPC 2.0 interface specified by **CIP-103**.
 You can call it directly (e.g. over HTTP or SSE) from your frontend or backend.
 In practice, most developers use the **dApp SDK**, which implements the same protocol and adds a simpler API, multi-transport support (HTTP for remote Gateways, `postMessage` for browser-extension wallets), and an EIP-1193–style provider interface via `getConnectedProvider()` after `connect()`.
 The dApp API lets your frontend connect to a wallet, list accounts, prepare and execute transactions, and receive real-time updates; all of this requires a valid session (JWT).
-See [APIs](../wallet-gateway/apis/index.md) and the [dApp SDK](../dapp-sdk/overview.md) documentation.
+See the [dApp API reference](../wallet-gateway/reference/dapp-api.md) and the [dApp SDK](../dapp-sdk/overview.md) documentation.
 
 ## User API and User UI
 
 The **User API** is for users and automation: sessions, networks, identity providers, wallets, and transaction signing.
 The **User UI** (served by the Wallet Gateway) is a web interface that uses the User API so users can log in, create and manage wallets, approve dApp transactions, and change settings.
 For custom integrations or scripts, you can call the User API directly instead of using the User UI.
-See [Usage](../wallet-gateway/usage/index.md) and [APIs](../wallet-gateway/apis/index.md).
+See [Party management](../wallet-gateway/use/party-management.md) and the [User API reference](../wallet-gateway/reference/user-api.md).
 
 ## Discovery and Connection Flow
 
@@ -55,6 +55,6 @@ See [Usage](../wallet-gateway/usage/index.md) and [APIs](../wallet-gateway/apis/
 
 ## Where to Go Next
 
-- **Building a dApp?** → Start with the [dApp SDK Quickstart](../dapp-sdk/quickstart.md), then use the [APIs](../wallet-gateway/apis/index.md) (dApp API) as needed.
-- **Running or configuring the Wallet Gateway?** → Start with [Getting Started](../wallet-gateway/getting-started/index.md), then [Configuration](../wallet-gateway/configuration/index.md), [Signing Providers](../wallet-gateway/signing-providers/index.md), and [APIs](../wallet-gateway/apis/index.md) (User API).
-- **Using the User UI or User API?** → See [Usage](../wallet-gateway/usage/index.md) for typical workflows and when to use which interface.
+- **Building a dApp?** → Start with the [dApp SDK Quickstart](../dapp-sdk/quickstart.md), then use the [dApp API reference](../wallet-gateway/reference/dapp-api.md) as needed.
+- **Running or configuring the Wallet Gateway?** → Start with the [Wallet Gateway Quickstart](../wallet-gateway/quickstart.md), then [Configure the Wallet Gateway](../wallet-gateway/operate/configure.md), [Signing providers](../wallet-gateway/operate/signing-providers.md), and the [User API reference](../wallet-gateway/reference/user-api.md).
+- **Using the User UI or User API?** → See [Party management](../wallet-gateway/use/party-management.md) and [Automate with the User API](../wallet-gateway/automation/automate-with-user-api.md).

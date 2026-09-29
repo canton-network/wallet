@@ -9,8 +9,5 @@ export default defineConfig({
         include: ['**/*.test.ts'],
         setupFiles: ['./snippets/setupTests.ts'],
         testTimeout: 120_000,
-        deps: {
-            inline: ['jose'],
-        },
     },
 })

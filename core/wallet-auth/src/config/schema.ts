@@ -17,6 +17,10 @@ const authorizationCodeAuthSchema = z
 
 const clientCredentialsAuthSchema = z.object({
     method: z.literal('client_credentials'),
+    identityProviderId: z.string().optional().meta({
+        description:
+            "Overrides the network's identity provider for client credentials token acquisition.",
+    }),
     audience: z.string(),
     scope: z.string(),
     clientId: z.string(),
@@ -32,8 +36,18 @@ const selfSignedAuthSchema = z.object({
     clientSecret: z.string(),
 })
 
+const selfIssuedAuthSchema = z.object({
+    method: z.literal('self_issued'),
+    audience: z.string(),
+    scope: z.string(),
+})
+
 const clientCredentialsEnvAuthSchema = z.object({
     method: z.literal('client_credentials'),
+    identityProviderId: z.string().optional().meta({
+        description:
+            "Overrides the network's identity provider for client credentials token acquisition.",
+    }),
     audience: z.string(),
     scope: z.string(),
     clientId: z.string(),
@@ -53,12 +67,14 @@ export const authSchema = z.discriminatedUnion('method', [
     authorizationCodeAuthSchema,
     clientCredentialsAuthSchema,
     selfSignedAuthSchema,
+    selfIssuedAuthSchema,
 ])
 
 export const authFromEnvSchema = z.discriminatedUnion('method', [
     authorizationCodeAuthSchema,
     clientCredentialsEnvAuthSchema,
     selfSignedEnvAuthSchema,
+    selfIssuedAuthSchema,
 ])
 
 export type Auth = z.infer<typeof authSchema>
@@ -66,6 +82,16 @@ export type AuthFromEnv = z.infer<typeof authFromEnvSchema>
 export type AuthorizationCodeAuth = z.infer<typeof authorizationCodeAuthSchema>
 export type ClientCredentialsAuth = z.infer<typeof clientCredentialsAuthSchema>
 export type SelfSignedAuth = z.infer<typeof selfSignedAuthSchema>
+export type SelfIssuedAuth = z.infer<typeof selfIssuedAuthSchema>
+
+export function resolveAuthIdentityProviderId(
+    auth: Auth,
+    networkIdentityProviderId: string
+): string {
+    return auth.method === 'client_credentials'
+        ? (auth.identityProviderId ?? networkIdentityProviderId)
+        : networkIdentityProviderId
+}
 
 export const idpSchema = z.discriminatedUnion('type', [
     z.object({
@@ -73,6 +99,12 @@ export const idpSchema = z.discriminatedUnion('type', [
         type: z.literal('self_signed'),
         issuer: z.string(),
     }),
+    z
+        .object({
+            id: z.string(),
+            type: z.literal('self_issued'),
+        })
+        .strict(),
     z.object({
         id: z.string(),
         type: z.literal('oauth'),

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
     Alert,
     Box,
@@ -72,17 +72,16 @@ export function TransactionHistoryContent({
 }: TransactionHistoryContentProps) {
     const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null)
     const canAutoLoadMore = hasNextPage && !isFetchingNextPage && !isLoading
-    const { ref: sentinelRef, inView } = useInView({
+    const { ref: sentinelRef } = useInView({
         root: scrollRoot,
         rootMargin: '120px 0px',
         skip: !scrollRoot || !canAutoLoadMore,
+        onChange: (inView) => {
+            if (inView && canAutoLoadMore) {
+                onLoadMore()
+            }
+        },
     })
-
-    useEffect(() => {
-        if (inView && canAutoLoadMore) {
-            onLoadMore()
-        }
-    }, [inView, canAutoLoadMore, onLoadMore])
 
     if (isError) {
         return (

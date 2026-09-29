@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
@@ -239,19 +239,31 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         setError,
     })
 
+    const contextValue = useMemo(
+        () => ({
+            initialized,
+            status: connectionStatus,
+            accounts,
+            error,
+            sessionTokenVersion,
+            connect,
+            open,
+            disconnect,
+        }),
+        [
+            initialized,
+            connectionStatus,
+            accounts,
+            error,
+            sessionTokenVersion,
+            connect,
+            open,
+            disconnect,
+        ]
+    )
+
     return (
-        <ConnectionContext.Provider
-            value={{
-                initialized,
-                status: connectionStatus,
-                accounts,
-                error,
-                sessionTokenVersion,
-                connect,
-                open,
-                disconnect,
-            }}
-        >
+        <ConnectionContext.Provider value={contextValue}>
             {children}
         </ConnectionContext.Provider>
     )

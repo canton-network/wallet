@@ -86,12 +86,15 @@ describe('reader', () => {
     const expectLedgerEndCalled = () => {
         expect(ledgerProvider.request).toHaveBeenCalledWith({
             method: 'ledgerApi',
-            params: { resource: '/v2/state/ledger-end', requestMethod: 'get' },
+            params: {
+                resource: '/v2/state/ledger-end',
+                requestMethod: 'get',
+                query: {},
+            },
         })
     }
 
     beforeEach(() => {
-        vi.clearAllMocks()
         mockService.getActiveContracts.mockResolvedValue(mockActiveContracts)
         mockService.getPaginatedActiveContracts.mockResolvedValue({
             activeContracts: mockActiveContracts,

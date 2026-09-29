@@ -146,3 +146,6 @@ await sdk.ledger
 //         `Member traffic difference is ${difference}, expected ${ccAmount} `
 //     )
 // }
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

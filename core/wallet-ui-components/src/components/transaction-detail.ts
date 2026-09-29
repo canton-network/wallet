@@ -9,7 +9,6 @@ import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { chevronDownIcon } from '../icons/index.js'
 import {
     formatActivityDate,
-    getActivityAmount,
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
@@ -54,6 +53,8 @@ export class WgTransactionDetail extends BaseElement {
     @property({ type: Boolean }) isApproving = false
 
     @property({ type: Boolean }) isDeleting = false
+
+    @property({ type: Boolean }) isSigning = false
 
     // Disables action buttons regardless of status
     @property({ type: Boolean }) disabled = false
@@ -260,7 +261,12 @@ export class WgTransactionDetail extends BaseElement {
     ]
 
     private get isApproveDisabled() {
-        return this.disabled || this.isApproving || this.isDeleting
+        return (
+            this.disabled ||
+            this.isApproving ||
+            this.isDeleting ||
+            this.isSigning
+        )
     }
 
     private get isDeleteDisabled() {
@@ -368,7 +374,6 @@ export class WgTransactionDetail extends BaseElement {
 
     protected render() {
         const activityType = getActivityType(this.parsed)
-        const amount = getActivityAmount(this.parsed)
         const decoded = this.parsed?.jsonString || 'N/A'
 
         return html`
@@ -399,7 +404,6 @@ export class WgTransactionDetail extends BaseElement {
                     'Created at',
                     formatActivityDate(this.createdAt)
                 )}
-                ${this.renderInlineField('Amount', amount)}
                 ${this.renderSignatories()}
                 ${this.renderCopyableValue(
                     'Template',
@@ -512,7 +516,7 @@ export class WgTransactionDetail extends BaseElement {
                         )}
                 >
                     ${
-                        this.isApproving
+                        this.isApproving || this.isSigning
                             ? html`<div
                                   class="spinner-border spinner-border-sm"
                               ></div>`

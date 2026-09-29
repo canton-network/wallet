@@ -3,9 +3,9 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as mock from '../../__test__/mocks'
-import { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { SignedTransaction } from '../transactions/signed'
-import { SDKContext } from '../../sdk'
+import type { SDKContext } from '../../sdk'
 
 const defaultSignedTransactionResponse = {
     preparedTransaction: 'txn',
@@ -77,8 +77,6 @@ describe('Ledger Namespace', () => {
     let ledger: LedgerNamespaceType
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         v4.mockReturnValue('uuid')
 
         ledger = new LedgerNamespace(ctx)
@@ -102,6 +100,7 @@ describe('Ledger Namespace', () => {
             params: {
                 resource: '/v2/state/ledger-end',
                 requestMethod: 'get',
+                query: {},
             },
         })
         expect(result).toBe(150)

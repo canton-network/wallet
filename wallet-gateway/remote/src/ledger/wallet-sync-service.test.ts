@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { pino, Logger } from 'pino'
+import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
 import {
     SigningProvider,
-    SigningDriverInterface,
-    GetKeysResult,
+    type SigningDriverInterface,
+    type GetKeysResult,
 } from '@canton-network/core-signing-lib'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { ParticipantSigningDriver } from '@canton-network/core-signing-participant'
@@ -16,22 +16,23 @@ import {
     connection,
     migrator,
 } from '@canton-network/core-signing-store-sql'
-import {
+import type {
     AccessTokenProvider,
     AuthContext,
 } from '@canton-network/core-wallet-auth'
-import { LedgerClient } from '@canton-network/core-ledger-client'
+import type { LedgerClient } from '@canton-network/core-ledger-client'
 import {
-    Wallet,
-    Network,
-    Store,
+    type Wallet,
+    type Network,
+    type Store,
     PartyLevelRight,
-    WalletStatus,
+    type WalletStatus,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import { WalletSyncService } from './wallet-sync-service.js'
 import { PartyAllocationService } from './party-allocation-service.js'
+import { getLogger } from '@logtape/logtape'
 
 type AsyncFn = () => Promise<unknown>
 
@@ -301,6 +302,7 @@ describe('WalletSyncService - multi-network features', () => {
         publicKey: 'publicKey',
         namespace: 'namespace',
         networkId,
+        userId: 'user-1',
         disabled,
         rights: [PartyLevelRight.CanActAs],
     })
@@ -321,7 +323,7 @@ describe('WalletSyncService - multi-network features', () => {
                 idps: [],
                 networks: [],
             },
-            mockLogger,
+            getLogger('mock'),
             authContext
         )
 

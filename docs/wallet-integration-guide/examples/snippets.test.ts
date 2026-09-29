@@ -1,7 +1,6 @@
 import { test, expect, describe } from 'vitest'
 import { readdirSync, readFileSync } from 'fs'
-import path, { dirname } from 'path'
-import { fileURLToPath } from 'url'
+import path from 'path'
 
 const snippets = readdirSync('./snippets').filter(
     (f) =>
@@ -11,8 +10,7 @@ const snippets = readdirSync('./snippets').filter(
 
 describe('testing doc snippets', () => {
     for (const filename of snippets) {
-        const __dirname = dirname(fileURLToPath(import.meta.url))
-        const fullpath = path.join(__dirname, './snippets', filename)
+        const fullpath = path.join(import.meta.dirname, './snippets', filename)
 
         test(
             filename,
@@ -21,7 +19,7 @@ describe('testing doc snippets', () => {
                 expect(fn).toBeDefined()
 
                 const result = await fn()
-                // Run `yarn snippets-update` to update snapshots for new changes
+                // Run `pnpm snippets-update` to update snapshots for new changes
                 expect(result).toMatchSnapshot()
             },
             120_000

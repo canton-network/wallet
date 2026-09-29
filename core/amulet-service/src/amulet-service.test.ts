@@ -18,8 +18,6 @@ describe('AmuletService (Forwarding Layer)', () => {
     let mockScanProxyClient: any
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         mockTokenStandard = {}
         mockScanClient = Object.create(ScanClient.prototype)
         mockScanProxyClient = Object.create(ScanProxyClient.prototype)

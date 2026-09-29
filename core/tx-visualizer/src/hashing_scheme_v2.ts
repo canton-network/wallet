@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    DamlTransaction,
-    DamlTransaction_Node,
-    DamlTransaction_NodeSeed,
+    type DamlTransaction,
+    type DamlTransaction_Node,
+    type DamlTransaction_NodeSeed,
+    type Metadata,
     HashingSchemeVersion,
-    Metadata,
-    Metadata_InputContract,
-    PreparedTransaction,
+    type Metadata_InputContract,
+    type PreparedTransaction,
 } from '@canton-network/core-ledger-proto'
-import {
+import type {
     Create,
     Exercise,
     Fetch,
     Rollback,
 } from '@canton-network/core-ledger-proto'
-import {
+import type {
     GenMap_Entry,
     Identifier,
     RecordField,

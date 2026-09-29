@@ -60,7 +60,7 @@ logger.info('Preparing multi hosted party...')
 
 const participantEndpoints = [
     {
-        url: new URL('http://127.0.0.1:3975'),
+        url: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
         tokenProviderConfig: TOKEN_PROVIDER_CONFIG_DEFAULT,
     },
 ]
@@ -132,3 +132,6 @@ logger.info(
     observingPingResult,
     'Successfully validated observing party allocation via Canton.Internal.Ping'
 )
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

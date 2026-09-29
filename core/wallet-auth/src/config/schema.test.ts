@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import { authSchema, idpSchema } from './schema'
+import { authSchema, idpSchema, resolveAuthIdentityProviderId } from './schema'
 
 describe('schemas', () => {
     it('should properly parse the idp schema', () => {
@@ -13,6 +13,19 @@ describe('schemas', () => {
         }
 
         expect(idpSchema.safeParse(validIdpSelfSigned).success).toBe(true)
+
+        const validIdpSelfIssued = {
+            id: 'test1',
+            type: 'self_issued',
+        }
+
+        expect(idpSchema.safeParse(validIdpSelfIssued).success).toBe(true)
+        expect(
+            idpSchema.safeParse({
+                ...validIdpSelfIssued,
+                issuer: null,
+            }).success
+        ).toBe(false)
 
         const validIdpClientOauth = {
             id: 'test1',
@@ -48,8 +61,16 @@ describe('schemas', () => {
         }
         expect(authSchema.safeParse(validAuthSelfSigned).success).toBe(true)
 
+        const validAuthSelfIssued = {
+            method: 'self_issued',
+            audience: 'https://canton.network.global',
+            scope: '',
+        }
+        expect(authSchema.safeParse(validAuthSelfIssued).success).toBe(true)
+
         const validAuthClientCredentials = {
             method: 'client_credentials',
+            identityProviderId: 'machine-idp',
             clientId: 'ledger-api-user',
             clientSecret: 'unsafe',
             audience: 'https://canton.network.global',
@@ -58,6 +79,21 @@ describe('schemas', () => {
         expect(authSchema.safeParse(validAuthClientCredentials).success).toBe(
             true
         )
+        expect(
+            resolveAuthIdentityProviderId(
+                authSchema.parse(validAuthClientCredentials),
+                'network-idp'
+            )
+        ).toBe('machine-idp')
+        expect(
+            resolveAuthIdentityProviderId(
+                authSchema.parse({
+                    ...validAuthClientCredentials,
+                    identityProviderId: undefined,
+                }),
+                'network-idp'
+            )
+        ).toBe('network-idp')
 
         const validAuthCode = {
             method: 'authorization_code',

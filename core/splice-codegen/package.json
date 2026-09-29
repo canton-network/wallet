@@ -1,0 +1,68 @@
+{
+    "name": "@canton-network/core-splice-codegen",
+    "version": "1.2.4",
+    "type": "module",
+    "description": "daml codegen js for default packages",
+    "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "license": "Apache-2.0",
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "browser": "./dist/index.browser.js",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "pnpm --workspace-root generate:codegen && pnpm clean && rollup -c && pnpm clean:types-tmp",
+        "dev": "rollup -c -w",
+        "clean:types-tmp": "rm -rf dist/types",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@canton-network/core-ledger-client-types": "catalog:",
+        "@canton-network/core-token-standard": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/wallet-sdk": "catalog:",
+        "@daml/types": "catalog:",
+        "@mojotech/json-type-validation": "catalog:",
+        "lodash": "catalog:",
+        "openapi-fetch": "catalog:",
+        "uuid": "catalog:",
+        "zod": "catalog:"
+    },
+    "devDependencies": {
+        "@rollup/plugin-alias": "catalog:",
+        "@rollup/plugin-commonjs": "catalog:",
+        "@rollup/plugin-json": "catalog:",
+        "@rollup/plugin-node-resolve": "catalog:",
+        "@rollup/plugin-typescript": "catalog:",
+        "@types/node": "catalog:",
+        "playwright": "catalog:",
+        "rollup": "catalog:",
+        "rollup-plugin-dts": "catalog:",
+        "tslib": "catalog:",
+        "typescript": "catalog:"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/splice-codegen"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/splice-codegen#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}

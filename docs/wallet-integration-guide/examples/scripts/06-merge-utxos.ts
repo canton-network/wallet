@@ -77,3 +77,6 @@ if (utxosAliceMerged.length === 1) {
 } else {
     throw new Error(`utxos not successfully merged`)
 }
+
+// Forcefully exit to prevent floating ledger retries from crashing the event loop
+process.exit(0)

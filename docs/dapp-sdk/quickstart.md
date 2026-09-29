@@ -15,12 +15,6 @@ SDK. You do not need the Provider API to build a dApp.
 npm install @canton-network/dapp-sdk
 ```
 
-### yarn
-
-```shell
-yarn add @canton-network/dapp-sdk
-```
-
 ### pnpm
 
 ```shell

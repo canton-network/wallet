@@ -14,6 +14,7 @@ export class AppLayout extends BaseElement {
     @property({ type: String }) networkName = 'No network connected'
     @property({ type: Boolean }) networkConnected = false
     @property({ type: String }) currentPage = ''
+    @property({ type: String }) dappApiUrl = ''
 
     static styles = [
         BaseElement.styles,
@@ -21,6 +22,7 @@ export class AppLayout extends BaseElement {
             :host {
                 display: block;
                 width: 100%;
+                min-width: 320px;
             }
         `,
     ]
@@ -63,6 +65,7 @@ export class AppLayout extends BaseElement {
                 .networkName=${this.networkName}
                 .networkConnected=${this.networkConnected}
                 .currentPage=${this.currentPage}
+                .dappApiUrl=${this.dappApiUrl}
             ></app-header>
             <div class="container" id="mainContent">
                 <slot></slot>

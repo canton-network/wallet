@@ -24,25 +24,16 @@ export default defineConfig({
                     name: 'node',
                     environment: 'node',
                     include: ['src/**/*.test.ts'],
-                    deps: {
-                        inline: ['camelcase-keys', 'map-obj'],
-                    },
                 },
             }),
             defineProject({
                 test: {
                     name: 'browser',
                     include: ['src/**/*.test.ts'],
-                    deps: {
-                        inline: ['camelcase-keys', 'map-obj'],
-                    },
                     browser: {
                         enabled: true,
-                        provider: playwright({
-                            trace: 'off',
-                            screenshot: 'off',
-                            video: 'off',
-                        }),
+                        provider: playwright(),
+                        trace: 'off',
                         instances: [{ browser: 'chromium' }],
                         headless: true,
                     },

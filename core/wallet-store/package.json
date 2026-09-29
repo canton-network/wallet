@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-store",
-    "version": "1.9.0",
+    "version": "1.13.1",
     "type": "module",
     "description": "The Store API provides persistency for the Wallet Gateway",
     "license": "Apache-2.0",
@@ -10,22 +10,22 @@
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "tsc -b --clean; rm -rf dist",
         "test": "vitest run --project node --project browser --passWithNoTests",
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "dependencies": {
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "zod": "^4.4.3"
+        "@canton-network/core-wallet-auth": "catalog:",
+        "zod": "catalog:"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.10"
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"

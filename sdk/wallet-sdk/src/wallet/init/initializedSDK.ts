@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import {
+    AuthTokenProvider,
+    type AccessTokenProvider,
+} from '@canton-network/core-wallet-auth'
 import { parseAssets, ParsedURL } from '../namespace/utils/url.js'
 import { KeysNamespace } from '../namespace/keys/index.js'
 import { LedgerNamespace } from '../namespace/ledger/index.js'
@@ -9,9 +12,13 @@ import { PartyNamespace } from '../namespace/party/index.js'
 import { UserNamespace } from '../namespace/user/index.js'
 import { TokenNamespace } from '../namespace/token/index.js'
 import { AssetNamespace } from '../namespace/asset/index.js'
-import { OfflineSDKContext, SDKContext, getValidatorParty } from '../sdk.js'
-import { SDKUtilsNamespace } from '../namespace/utils/index.js'
 import {
+    type OfflineSDKContext,
+    type SDKContext,
+    getValidatorParty,
+} from '../sdk.js'
+import { SDKUtilsNamespace } from '../namespace/utils/index.js'
+import type {
     AmuletConfig,
     AssetConfig,
     BasicSDKInterface,
@@ -20,15 +27,40 @@ import {
     ExtendedSDKOptions,
     OfflineSDKInterface,
     PluginConstructor,
+    PluginRegistration,
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
+    RegistryAuth,
 } from './types/index.js'
 import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletNamespace } from '../namespace/amulet/namespace.js'
 import { EventsNamespace } from '../namespace/events/index.js'
+
+const noAuthProvider: AccessTokenProvider = {
+    async getAccessToken() {
+        return ''
+    },
+    async getAuthContext() {
+        return { accessToken: '', userId: '' }
+    },
+}
+
+const resolveAuth = (
+    registryAuth: RegistryAuth | undefined,
+    auth: AuthTokenProvider,
+    logger: SDKContext['logger']
+): AccessTokenProvider => {
+    if (registryAuth === 'none') {
+        return noAuthProvider
+    }
+    if (registryAuth) {
+        return new AuthTokenProvider(registryAuth, logger)
+    }
+    return auth
+}
 
 const createNamespace: {
     [K in keyof ExtendedSDKOptions]: (
@@ -55,7 +87,7 @@ const createNamespace: {
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
-            auth,
+            resolveAuth(config.registryAuth, auth, ctx.logger),
             false
         )
 
@@ -87,7 +119,7 @@ const createNamespace: {
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
-            auth,
+            resolveAuth(config.registryAuth, auth, ctx.logger),
             false
         )
 
@@ -115,7 +147,7 @@ const createNamespace: {
         const tokenStandardService = new TokenStandardService(
             ctx.ledgerProvider,
             ctx.logger,
-            auth,
+            resolveAuth(config.registryAuth, auth, ctx.logger),
             false
         )
 
@@ -131,6 +163,7 @@ const createNamespace: {
                     config.registries.map((registry) => registry.toString())
                 )
             ),
+            commonCtx: ctx,
         })
     },
     events: async (ctx: SDKContext, config: EventsConfig) => {
@@ -176,14 +209,26 @@ export class InitializedSDK<
          * @deprecated `Record<string, PluginConstructor>` is deprecated. Use `PluginConstructor[]` instead.
          */
         P extends PluginConstructor[] | Record<string, PluginConstructor>,
-    >(plugins: P): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
-        if (plugins instanceof Array) {
-            for (const name in plugins) {
-                const plugin = new plugins[name]({
+    >(
+        plugins: PluginRegistration<P>
+    ): SDKInterface<CurrentlyExtended> & RegisteredPlugins<P> {
+        if (Array.isArray(plugins)) {
+            for (const pluginConstructor of plugins as PluginConstructor[]) {
+                const plugin = new pluginConstructor({
                     ...this.ctx,
                     namespace: this,
                 })
-                Object.defineProperty(this, name, {
+                if (!plugin.name || typeof plugin.name !== 'string') {
+                    throw new Error(
+                        'Plugin must define a valid non-empty string name.'
+                    )
+                }
+                if (plugin.name in this) {
+                    throw new Error(
+                        `Plugin with name ${plugin.name} collides with an existing property on the SDK instance.`
+                    )
+                }
+                Object.defineProperty(this, plugin.name, {
                     value: plugin,
                     writable: false,
                     enumerable: true,
@@ -199,6 +244,11 @@ export class InitializedSDK<
                     ...this.ctx,
                     namespace: this,
                 })
+                if (name in this) {
+                    throw new Error(
+                        `Plugin with name ${name} collides with an existing property on the SDK instance.`
+                    )
+                }
                 Object.defineProperty(this, name, {
                     value: plugin,
                     writable: false,

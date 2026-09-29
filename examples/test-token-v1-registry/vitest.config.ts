@@ -2,19 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig, defineProject } from 'vitest/config'
-import { playwright } from '@vitest/browser-playwright'
 
 export default defineConfig({
     test: {
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: [
-                'src/index.ts',
-                'src/router.ts',
-                'src/scripts/**',
-                'src/api/*/index.ts',
-                'src/common/vetDaml.ts', // for dev-mode only
-            ],
+            exclude: ['src/api/**/index.ts', 'src/common/sdk.ts'],
             provider: 'v8',
             reporter: ['text', 'html', 'lcov', 'json-summary'],
             thresholds: {
@@ -32,22 +25,6 @@ export default defineConfig({
                     name: 'node',
                     environment: 'node',
                     include: ['src/**/*.test.ts'],
-                },
-            }),
-            defineProject({
-                test: {
-                    name: 'browser',
-                    include: ['src/**/*.test.ts'],
-                    browser: {
-                        enabled: true,
-                        provider: playwright({
-                            trace: 'off',
-                            screenshot: 'off',
-                            video: 'off',
-                        }),
-                        instances: [{ browser: 'chromium' }],
-                        headless: true,
-                    },
                 },
             }),
         ],

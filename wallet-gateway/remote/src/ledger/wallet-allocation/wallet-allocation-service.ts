@@ -1,24 +1,28 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthContext, UserId } from '@canton-network/core-wallet-auth'
-import { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { AuthContext, UserId } from '@canton-network/core-wallet-auth'
+import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import {
-    SigningDriverInterface,
+    type Error as SigningProviderError,
+    type Keys,
+    type SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { Logger } from 'pino'
-import { PartyAllocationService } from '../party-allocation-service.js'
-import {
+import type { Logger } from 'pino'
+import type { PartyAllocationService } from '../party-allocation-service.js'
+import type {
+    KeyName,
     PartyHint,
     Primary,
-    VaultName,
 } from '../../user-api/rpc-gen/typings.js'
 import { ParticipantWalletAllocator } from './signing-providers/participant-wallet-allocator.js'
 import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.js'
 import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.js'
 import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.js'
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
+import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
+import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.js'
 
 export interface WalletAllocator {
     createWallet(
@@ -26,14 +30,25 @@ export interface WalletAllocator {
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary,
-        vaultName?: VaultName | undefined
+        vaultName?: KeyName | undefined
     ): Promise<Wallet>
     allocateParty(
         userId: UserId,
         email: string | undefined,
         existingWallet: Wallet
     ): Promise<void>
-    getVaults?(userId: UserId): Promise<{ vaults: string[] }>
+    getKeys(userId: UserId): Promise<Keys | null | void>
+}
+
+export function handleSigningProviderError<T extends object>(
+    result: SigningProviderError | T
+): T {
+    if ('error' in result) {
+        throw new Error(
+            `Error from signing driver: ${result.error_description}`
+        )
+    }
+    return result
 }
 
 export class WalletAllocationService {
@@ -42,6 +57,30 @@ export class WalletAllocationService {
     private readonly fireblocksAllocator?: FireblocksWalletAllocator
     private readonly blockdaemonAllocator?: BlockdaemonWalletAllocator
     private readonly dfnsAllocator?: DfnsWalletAllocator
+    private readonly securosysAllocator?: SecurosysWalletAllocator
+    private readonly bitgoAllocator?: BitGoWalletAllocator
+
+    private getAllocator(
+        signingProviderId: string
+    ): WalletAllocator | undefined {
+        switch (signingProviderId) {
+            case SigningProvider.BLOCKDAEMON:
+                return this.blockdaemonAllocator
+            case SigningProvider.DFNS:
+                return this.dfnsAllocator
+            case SigningProvider.FIREBLOCKS:
+                return this.fireblocksAllocator
+            case SigningProvider.SECUROSYS:
+                return this.securosysAllocator
+            case SigningProvider.BITGO:
+                return this.bitgoAllocator
+            case SigningProvider.WALLET_KERNEL:
+                return this.kernelAllocator
+            case SigningProvider.PARTICIPANT:
+            default:
+                return this.participantAllocator
+        }
+    }
 
     constructor(
         store: Store,
@@ -96,6 +135,26 @@ export class WalletAllocationService {
                 dfnsDriver
             )
         }
+
+        const securosysDriver = signingDrivers[SigningProvider.SECUROSYS]
+        if (securosysDriver) {
+            this.securosysAllocator = new SecurosysWalletAllocator(
+                store,
+                logger,
+                partyAllocator,
+                securosysDriver
+            )
+        }
+
+        const bitgoDriver = signingDrivers[SigningProvider.BITGO]
+        if (bitgoDriver) {
+            this.bitgoAllocator = new BitGoWalletAllocator(
+                store,
+                logger,
+                partyAllocator,
+                bitgoDriver
+            )
+        }
     }
 
     public async createWallet(
@@ -103,7 +162,7 @@ export class WalletAllocationService {
         partyHint: PartyHint,
         primary: Primary,
         signingProviderId: SigningProvider,
-        vaultName?: VaultName | undefined
+        keyName?: KeyName | undefined
     ): Promise<Wallet> {
         switch (signingProviderId) {
             case SigningProvider.PARTICIPANT:
@@ -129,9 +188,9 @@ export class WalletAllocationService {
                 if (!this.fireblocksAllocator) {
                     throw new Error('Fireblocks signing driver not available')
                 }
-                if (!vaultName) {
+                if (!keyName) {
                     throw new Error(
-                        'vaultName is required for creating a wallet with Fireblocks'
+                        'keyName is required for creating a wallet with Fireblocks'
                     )
                 }
                 return this.fireblocksAllocator.createWallet(
@@ -139,7 +198,7 @@ export class WalletAllocationService {
                     authContext.email,
                     partyHint,
                     primary,
-                    vaultName
+                    keyName
                 )
             case SigningProvider.BLOCKDAEMON:
                 if (!this.blockdaemonAllocator) {
@@ -161,6 +220,26 @@ export class WalletAllocationService {
                     throw new Error('Dfns signing driver not available')
                 }
                 return this.dfnsAllocator.createWallet(
+                    authContext.userId,
+                    authContext.email,
+                    partyHint,
+                    primary
+                )
+            case SigningProvider.SECUROSYS:
+                if (!this.securosysAllocator) {
+                    throw new Error('Securosys signing driver not available')
+                }
+                return this.securosysAllocator.createWallet(
+                    authContext.userId,
+                    authContext.email,
+                    partyHint,
+                    primary
+                )
+            case SigningProvider.BITGO:
+                if (!this.bitgoAllocator) {
+                    throw new Error('BitGo signing driver not available')
+                }
+                return this.bitgoAllocator.createWallet(
                     authContext.userId,
                     authContext.email,
                     partyHint,
@@ -228,6 +307,24 @@ export class WalletAllocationService {
                     authContext.email,
                     existingWallet
                 )
+            case SigningProvider.SECUROSYS:
+                if (!this.securosysAllocator) {
+                    throw new Error('Securosys signing driver not available')
+                }
+                return this.securosysAllocator.allocateParty(
+                    authContext.userId,
+                    authContext.email,
+                    existingWallet
+                )
+            case SigningProvider.BITGO:
+                if (!this.bitgoAllocator) {
+                    throw new Error('BitGo signing driver not available')
+                }
+                return this.bitgoAllocator.allocateParty(
+                    authContext.userId,
+                    authContext.email,
+                    existingWallet
+                )
             default:
                 throw new Error(
                     `Unsupported signing provider: ${signingProviderId}`
@@ -235,20 +332,16 @@ export class WalletAllocationService {
         }
     }
 
-    public async getVaults(
+    public async getKeys(
         authContext: AuthContext,
         signingProviderId: SigningProvider
-    ): Promise<{ vaults: string[] }> {
-        switch (signingProviderId) {
-            case SigningProvider.FIREBLOCKS:
-                if (!this.fireblocksAllocator) {
-                    throw new Error('Fireblocks signing driver not available')
-                }
-                return this.fireblocksAllocator.getVaults(authContext.userId)
-            default:
-                throw new Error(
-                    `Signing provider ${signingProviderId} does not support listing vaults`
-                )
+    ) {
+        const allocator = this.getAllocator(signingProviderId)
+        if (!allocator) {
+            throw new Error(
+                `Could not find signing driver for ${signingProviderId}`
+            )
         }
+        return allocator.getKeys(authContext.userId)
     }
 }

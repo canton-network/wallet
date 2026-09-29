@@ -168,7 +168,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "type": "object",
             "properties": {
                 "connection": {
-                    "oneOf": [
+                    "anyOf": [
                         {
                             "type": "object",
                             "properties": {
@@ -195,37 +195,74 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "additionalProperties": false
                         },
                         {
-                            "type": "object",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "const": "postgres"
+                            "anyOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "password": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "password",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 },
-                                "host": {
-                                    "type": "string"
-                                },
-                                "port": {
-                                    "type": "number"
-                                },
-                                "user": {
-                                    "type": "string"
-                                },
-                                "password": {
-                                    "type": "string"
-                                },
-                                "database": {
-                                    "type": "string"
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "passwordEnv": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "passwordEnv",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 }
-                            },
-                            "required": [
-                                "type",
-                                "host",
-                                "port",
-                                "user",
-                                "password",
-                                "database"
-                            ],
-                            "additionalProperties": {}
+                            ]
                         }
                     ]
                 }
@@ -237,7 +274,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "type": "object",
             "properties": {
                 "connection": {
-                    "oneOf": [
+                    "anyOf": [
                         {
                             "type": "object",
                             "properties": {
@@ -264,37 +301,74 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "additionalProperties": false
                         },
                         {
-                            "type": "object",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "const": "postgres"
+                            "anyOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "password": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "password",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 },
-                                "host": {
-                                    "type": "string"
-                                },
-                                "port": {
-                                    "type": "number"
-                                },
-                                "user": {
-                                    "type": "string"
-                                },
-                                "password": {
-                                    "type": "string"
-                                },
-                                "database": {
-                                    "type": "string"
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "const": "postgres"
+                                        },
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "number"
+                                        },
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "passwordEnv": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "host",
+                                        "port",
+                                        "user",
+                                        "passwordEnv",
+                                        "database"
+                                    ],
+                                    "additionalProperties": {}
                                 }
-                            },
-                            "required": [
-                                "type",
-                                "host",
-                                "port",
-                                "user",
-                                "password",
-                                "database"
-                            ],
-                            "additionalProperties": {}
+                            ]
                         }
                     ]
                 }
@@ -324,6 +398,20 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     }
                                 },
                                 "required": ["id", "type", "issuer"],
+                                "additionalProperties": false
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "const": "self_issued"
+                                    }
+                                },
+                                "required": ["id", "type"],
                                 "additionalProperties": false
                             },
                             {
@@ -372,6 +460,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "synchronizerId": {
                                 "type": "string",
                                 "minLength": 10,
+                                "format": "includes",
                                 "pattern": "::"
                             },
                             "identityProviderId": {
@@ -425,6 +514,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -477,6 +570,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -517,6 +631,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -569,6 +687,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -613,6 +752,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -665,6 +808,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -705,6 +869,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -757,6 +925,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -801,6 +990,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -853,6 +1046,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
                                                 ],
                                                 "additionalProperties": false
                                             }
@@ -893,6 +1107,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
+                                                    },
                                                     "audience": {
                                                         "type": "string"
                                                     },
@@ -947,6 +1165,27 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "clientSecretEnv"
                                                 ],
                                                 "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
+                                                ],
+                                                "additionalProperties": false
                                             }
                                         ]
                                     }
@@ -966,6 +1205,21 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 }
             },
             "required": ["idps", "networks"],
+            "additionalProperties": false
+        },
+        "hashingScheme": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "enum": [
+                        "HASHING_SCHEME_VERSION_V2",
+                        "HASHING_SCHEME_VERSION_V3"
+                    ],
+                    "description": "Hashing scheme version for the ledger. If omitted, defaults to HASHING_SCHEME_VERSION_V3"
+                }
+            },
+            "required": ["version"],
             "additionalProperties": false
         }
     },

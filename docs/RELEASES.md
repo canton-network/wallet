@@ -2,8 +2,8 @@
 
 This repository is a monorepo of independently versioned Javascript packages. We use Conventional Commits to track changes to individual packages over time. When it comes time to publish updates to NPM, a maintainer runs through the following process from the repo root:
 
-1. Run `yarn script:release` to sanity check the new update versions via a dry-run
-2. Run `yarn script:release --no-dry-run` if all looks good. This will
+1. Run `pnpm script:release` to sanity check the new update versions via a dry-run
+2. Run `pnpm script:release --no-dry-run` if all looks good. This will
     - create and push new git tags for each package.
     - create new GH releases with changelogs.
     - create a commit containing the version bumps in all affected package.

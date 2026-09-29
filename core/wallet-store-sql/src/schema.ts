@@ -1,18 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { authSchema, Idp, UserId } from '@canton-network/core-wallet-auth'
 import {
-    Wallet,
-    Transaction,
-    Session,
-    Network,
-    WalletStatus,
-    UpdateWallet,
+    authSchema,
+    type Idp,
+    type UserId,
+} from '@canton-network/core-wallet-auth'
+import {
+    type Wallet,
+    type Transaction,
+    type Session,
+    type Network,
+    type WalletStatus,
+    type UpdateWallet,
     PartyLevelRight,
     UserLevelRight,
-    MessageRaw,
-    ApiKey,
+    type MessageRaw,
+    type ApiKey,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
@@ -22,9 +26,9 @@ interface MigrationTable {
 
 interface IdpTable {
     id: string
-    type: 'oauth' | 'self_signed'
-    issuer: string
-    configUrl: string | undefined
+    type: 'oauth' | 'self_signed' | 'self_issued'
+    issuer: string | null
+    configUrl: string | null
 }
 
 interface NetworkTable {
@@ -150,6 +154,9 @@ export const toIdp = (table: IdpTable): Idp => {
             if (!table.configUrl) {
                 throw new Error(`Missing configUrl for oauth IdP: ${table.id}`)
             }
+            if (table.issuer === null) {
+                throw new Error(`Missing issuer for oauth IdP: ${table.id}`)
+            }
 
             return {
                 id: table.id,
@@ -159,10 +166,20 @@ export const toIdp = (table: IdpTable): Idp => {
             }
         }
         case 'self_signed':
+            if (table.issuer === null) {
+                throw new Error(
+                    `Missing issuer for self_signed IdP: ${table.id}`
+                )
+            }
             return {
                 id: table.id,
                 type: table.type,
                 issuer: table.issuer,
+            }
+        case 'self_issued':
+            return {
+                id: table.id,
+                type: table.type,
             }
     }
 }
@@ -181,7 +198,14 @@ export const fromIdp = (idp: Idp): IdpTable => {
                 id: idp.id,
                 type: idp.type,
                 issuer: idp.issuer,
-                configUrl: undefined,
+                configUrl: null,
+            }
+        case 'self_issued':
+            return {
+                id: idp.id,
+                type: idp.type,
+                issuer: null,
+                configUrl: null,
             }
     }
 }
@@ -276,6 +300,9 @@ export const toWalletUpdateProperties = (
         disabled,
         reason,
         primary,
+        signingProviderId,
+        publicKey,
+        namespace,
     } = params
     return {
         ...(status !== undefined && { status }),
@@ -284,6 +311,9 @@ export const toWalletUpdateProperties = (
         ...(primary !== undefined && { primary: primary ? 1 : 0 }),
         ...(disabled !== undefined && { disabled: disabled ? 1 : 0 }),
         ...(reason !== undefined && { reason }),
+        ...(signingProviderId !== undefined && { signingProviderId }),
+        ...(publicKey !== undefined && { publicKey }),
+        ...(namespace !== undefined && { namespace }),
     }
 }
 
@@ -304,6 +334,7 @@ export const toWallet = (table: WalletTable): Wallet => {
         networkId: table.networkId,
         signingProviderId: table.signingProviderId,
         disabled: table.disabled === 1,
+        userId: table.userId,
         ...(table.externalTxId !== null && {
             externalTxId: table.externalTxId,
         }),

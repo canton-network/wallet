@@ -1,76 +1,75 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
-import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
+import type { UserId } from '@canton-network/core-wallet-auth'
+import type {
+    Store,
+    UpdateWallet,
+    Wallet,
+} from '@canton-network/core-wallet-store'
 import {
-    Error as SigningError,
-    SigningDriverInterface,
+    type SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { Logger } from 'pino'
-import { PartyAllocationService } from '../../party-allocation-service.js'
-import {
+import type { Logger } from 'pino'
+import type { PartyAllocationService } from '../../party-allocation-service.js'
+import type {
+    KeyName,
     PartyHint,
     Primary,
-    VaultName,
 } from '../../../user-api/rpc-gen/typings.js'
-import type { WalletAllocator } from '../wallet-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-
-function handleSigningError<T extends object>(result: SigningError | T): T {
-    if ('error' in result) {
-        throw new Error(
-            `Error from signing driver: ${result.error_description}`
-        )
-    }
-    return result
-}
+import {
+    handleSigningProviderError,
+    type WalletAllocator,
+} from '../wallet-allocation-service.js'
 
 export class FireblocksWalletAllocator implements WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
         private partyAllocator: PartyAllocationService,
-        private signingDriver: SigningDriverInterface
+        protected signingDriver: SigningDriverInterface
     ) {}
+
+    async getKeys(userId: UserId) {
+        if (!this.signingDriver) return null
+        const driver = this.signingDriver.controller(userId)
+        return await driver.getKeys().then(handleSigningProviderError)
+    }
 
     async createWallet(
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary = false,
-        vaultName: VaultName
+        keyName: KeyName
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
 
-        const keys = await driver.getKeys().then(handleSigningError)
-        const key = keys?.keys?.find((k) => k.name === vaultName)
+        const keys = await driver.getKeys().then(handleSigningProviderError)
+        const key = keys?.keys?.find((k) => k.name === keyName)
         if (!key) throw new Error('Fireblocks key not found')
-        const formattedPublicKey = Buffer.from(key.publicKey, 'hex').toString(
-            'base64'
-        )
 
-        const namespace =
-            this.partyAllocator.createFingerprintFromKey(formattedPublicKey)
+        const namespace = this.partyAllocator.createFingerprintFromKey(
+            key.publicKey
+        )
         const transactions =
             await this.partyAllocator.generateTopologyTransactions(
                 partyHint,
-                formattedPublicKey
+                key.publicKey
             )
         const topologyTransactions = transactions.topologyTransactions ?? []
 
         const { status, txId } = await driver
             .signTransaction({
                 tx: '',
-                txHash: Buffer.from(transactions.multiHash, 'base64').toString(
-                    'hex'
-                ),
+                txHash: transactions.multiHash,
                 keyIdentifier: {
                     publicKey: key.publicKey,
                 },
             })
-            .then(handleSigningError)
+            .then(handleSigningProviderError)
 
         const network = await this.store.getCurrentNetwork()
         const walletBase: Omit<Wallet, 'status'> = {
@@ -79,6 +78,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
             namespace,
             signingProviderId: SigningProvider.FIREBLOCKS,
             networkId: network.id,
+            userId,
             primary,
             publicKey: key.publicKey,
             externalTxId: txId,
@@ -93,7 +93,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                     userId,
                     txId,
                 })
-                .then(handleSigningError)
+                .then(handleSigningProviderError)
             if (!signature) {
                 throw new Error(
                     'Transaction signed but no signature found in result'
@@ -103,7 +103,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 await this.partyAllocator.allocatePartyWithExistingWallet(
                     namespace,
                     topologyTransactions,
-                    Buffer.from(signature, 'hex').toString('base64'),
+                    signature,
                     userId
                 )
             wallet = {
@@ -155,7 +155,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 userId,
                 txId: existingWallet.externalTxId,
             })
-            .then(handleSigningError)
+            .then(handleSigningProviderError)
 
         let walletUpdate: UpdateWallet = {
             partyId: existingWallet.partyId,
@@ -171,7 +171,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 await this.partyAllocator.allocatePartyWithExistingWallet(
                     existingWallet.namespace,
                     existingWallet.topologyTransactions.split(', '),
-                    Buffer.from(signature, 'hex').toString('base64'),
+                    signature,
                     userId
                 )
             walletUpdate = {
@@ -200,11 +200,5 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         }
 
         return this.store.updateWallet(walletUpdate)
-    }
-
-    async getVaults(userId: UserId): Promise<{ vaults: string[] }> {
-        const driver = this.signingDriver.controller(userId)
-        const keys = await driver.getKeys().then(handleSigningError)
-        return { vaults: keys?.keys?.map((key) => key.name) ?? [] }
     }
 }

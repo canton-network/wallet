@@ -1,5 +1,5 @@
-import { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
-import { TokenNamespace } from '@canton-network/wallet-sdk'
+import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { TokenNamespace } from '@canton-network/wallet-sdk'
 
 export const partiesUtxos = async (args: {
     token: TokenNamespace

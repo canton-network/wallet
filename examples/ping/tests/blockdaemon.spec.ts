@@ -3,10 +3,9 @@
 
 import {
     test,
-    expect,
-    WalletGateway,
+    type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -15,50 +14,8 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-    toMockEndpoint,
-    isLocalhost,
-} from './external-signing-test-helpers.js'
-
-const blockdaemonApiUrl = process.env.BLOCKDAEMON_API_URL
-
-async function setMockBlockdaemonTransactionState(
-    txId: string,
-    status: 'signed' | 'rejected' | 'failed'
-): Promise<void> {
-    const isMockedApi =
-        blockdaemonApiUrl && isLocalhost(new URL(blockdaemonApiUrl))
-    if (!isMockedApi) {
-        return
-    }
-    const promoteResponse = await fetch(
-        toMockEndpoint(blockdaemonApiUrl, '/_admin/setTransactionState'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                txId,
-                status,
-            }),
-        }
-    )
-    expect(promoteResponse.ok).toBeTruthy()
-
-    const txResponse = await fetch(
-        toMockEndpoint(blockdaemonApiUrl, '/getTransaction'),
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ txId }),
-        }
-    )
-    expect(txResponse.ok).toBeTruthy()
-    const tx = (await txResponse.json()) as {
-        txId: string
-        status: string
-    }
-    expect(tx.txId).toBe(txId)
-    expect(tx.status).toBe(status)
-}
+} from './ping-test-helpers.js'
+import { setMockBlockdaemonTransactionState } from './external-signing-test-helpers.js'
 
 test.describe('Blockdaemon external signing', () => {
     test.describe.configure({ mode: 'serial' })
@@ -100,13 +57,14 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'signed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
             'signed'
         )
+        await wg.executeSignedTransaction({ waitForClose: false })
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
@@ -116,9 +74,12 @@ test.describe('Blockdaemon external signing', () => {
     })
 
     test('rejects a transaction in the wallet UI', async () => {
-        await wg.rejectTransaction(() => clickCreatePingContract(dappPage), {
-            waitForClose: true,
-        })
+        const { commandId } = await wg.rejectTransaction(
+            () => clickCreatePingContract(dappPage),
+            { waitForClose: true }
+        )
+
+        await wg.expectActivityRemoved(commandId)
     })
 
     test('fails when Blockdaemon rejects signing', async () => {
@@ -130,7 +91,6 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'rejected'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,
@@ -149,7 +109,6 @@ test.describe('Blockdaemon external signing', () => {
             submission.externalTxId,
             'failed'
         )
-        await wg.executeSignedTransaction({ waitForClose: false })
 
         await expectTxStatusInDappEvents(
             dappPage,

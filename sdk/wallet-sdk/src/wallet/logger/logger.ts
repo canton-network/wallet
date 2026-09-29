@@ -4,10 +4,10 @@
 import ConsoleLogAdapter from './adapter/console.js'
 import PinoLogAdapter from './adapter/pino.js'
 import {
-    AllowedLogAdapters,
-    LogAdapter,
-    LogContext,
-    LoggerMethods,
+    type AllowedLogAdapters,
+    type LogAdapter,
+    type LogContext,
+    type LoggerMethods,
     logLevels,
 } from './types.js'
 

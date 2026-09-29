@@ -25,7 +25,7 @@ npm install @canton-network/core-wallet-ui-components --save
 or
 
 ```sh
-yarn add @canton-network/core-wallet-ui-components
+pnpm add @canton-network/core-wallet-ui-components
 ```
 
 ## Run
@@ -33,13 +33,13 @@ yarn add @canton-network/core-wallet-ui-components
 To build the package, run:
 
 ```sh
-yarn build
+pnpm build
 ```
 
 To start a local web development server for interactive testing and development, run:
 
 ```sh
-yarn dev
+pnpm dev
 ```
 
 ## Usage

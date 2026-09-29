@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync, existsSync } from 'fs'
-import { Config, RawConfig, rawConfigSchema } from './Config.js'
+import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
 import { Env } from '../env.js'
+import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
 
 export class ConfigUtils {
     static loadConfigFile(filePath: string): Config {
@@ -72,7 +73,7 @@ type NetworkAuth = NonNullable<
 // The Wallet Gateway can accept adminAuth secrets from environment variables.
 // However, the store expects strings. This function resolves the config from env vars
 function resolveRawNetworkAuth(n: RawNetworkAuth): NetworkAuth {
-    if (n.method === 'authorization_code') {
+    if (n.method === 'authorization_code' || n.method === 'self_issued') {
         return n
     }
 
@@ -84,6 +85,26 @@ function resolveRawNetworkAuth(n: RawNetworkAuth): NetworkAuth {
         return {
             ...rest,
             clientSecret,
+        }
+    }
+}
+
+function resolvePostgressPassword(s: RawConfig['store']): Config['store'] {
+    if (s.connection.type !== 'postgres') {
+        return s
+    }
+
+    if ('password' in s.connection) {
+        return s
+    } else {
+        const { passwordEnv, ...rest } = s.connection
+        const password = Env.get(passwordEnv, { required: true })
+        return {
+            ...s,
+            connection: {
+                ...rest,
+                password,
+            },
         }
     }
 }
@@ -103,8 +124,16 @@ function resolveRawConfig(rawConfig: RawConfig): Config {
         }
     })
 
+    const store: Config['store'] = resolvePostgressPassword(rawConfig.store)
+
+    const signingStore: Config['signingStore'] = resolvePostgressPassword(
+        rawConfig.signingStore
+    )
+
     return {
         ...rawConfig,
+        store,
+        signingStore,
         bootstrap: {
             ...rawConfig.bootstrap,
             networks,
@@ -126,18 +155,33 @@ function validateNetworkToIdpMapping(
     config: Config
 ): { networkId: string; idpId: string } | undefined {
     for (const network of config.bootstrap.networks) {
-        const idp = config.bootstrap.idps.find(
-            (idp) => idp.id === network.identityProviderId
-        )
+        const authConfigurations = [
+            network.auth,
+            network.adminAuth,
+            network.serviceAccountAuth,
+        ].filter((auth) => auth !== undefined)
+        const idpIds = new Set([
+            network.identityProviderId,
+            ...authConfigurations.flatMap((auth) =>
+                auth.method === 'client_credentials' && auth.identityProviderId
+                    ? [auth.identityProviderId]
+                    : []
+            ),
+        ])
 
-        if (typeof idp === 'undefined') {
-            return { networkId: network.id, idpId: network.identityProviderId }
+        for (const idpId of idpIds) {
+            const idp = config.bootstrap.idps.find((idp) => idp.id === idpId)
+
+            if (typeof idp === 'undefined') {
+                return { networkId: network.id, idpId }
+            }
         }
     }
 }
 
 const SUPPORTED_IDP_METHODS = {
     self_signed: ['self_signed'],
+    self_issued: ['self_issued'],
     oauth: ['authorization_code', 'client_credentials'],
 }
 
@@ -145,14 +189,39 @@ function validateNetworkAuthMethods(
     config: Config
 ): { networkId: string; invalidAuthMethod: string } | undefined {
     for (const network of config.bootstrap.networks) {
-        const idp = config.bootstrap.idps.find(
-            (idp) => idp.id === network.identityProviderId
+        const networkAuthIdpId = resolveAuthIdentityProviderId(
+            network.auth,
+            network.identityProviderId
+        )
+        const networkAuthIdp = config.bootstrap.idps.find(
+            (idp) => idp.id === networkAuthIdpId
         )!
 
-        if (!SUPPORTED_IDP_METHODS[idp.type].includes(network.auth.method)) {
+        if (
+            !SUPPORTED_IDP_METHODS[networkAuthIdp.type].includes(
+                network.auth.method
+            )
+        ) {
             return {
                 networkId: network.id,
                 invalidAuthMethod: network.auth.method,
+            }
+        }
+
+        for (const auth of [network.adminAuth, network.serviceAccountAuth]) {
+            if (
+                auth?.method === 'client_credentials' &&
+                auth.identityProviderId
+            ) {
+                const idp = config.bootstrap.idps.find(
+                    (idp) => idp.id === auth.identityProviderId
+                )!
+                if (idp.type !== 'oauth') {
+                    return {
+                        networkId: network.id,
+                        invalidAuthMethod: auth.method,
+                    }
+                }
             }
         }
     }

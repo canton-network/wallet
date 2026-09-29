@@ -1,18 +1,26 @@
-import { JSContractEntry } from '@canton-network/core-ledger-client'
+import type { JSContractEntry } from '@canton-network/core-ledger-client'
 import {
-    TokenProviderConfig,
+    type TokenProviderConfig,
     localNetStaticConfig,
-} from '@canton-network/wallet-sdk'
-import {
-    TokenConfig,
-    AmuletConfig,
-    AssetConfig,
+    type TokenConfig,
+    type AmuletConfig,
+    type AssetConfig,
 } from '@canton-network/wallet-sdk'
 
+export {
+    logAllContracts,
+    type ContractReadSpec as ContractSpec,
+} from './acs-logger.js'
 export function getActiveContractCid(entry: JSContractEntry) {
     if ('JsActiveContract' in entry) {
         return entry.JsActiveContract.createdEvent.contractId
     }
+}
+
+/** Maps the two synchronizer roles used in multi-synchronizer setups. */
+export type KnownSynchronizers = {
+    globalSynchronizerId: string
+    appSynchronizerId: string
 }
 
 export const TOKEN_PROVIDER_CONFIG_DEFAULT: TokenProviderConfig = {

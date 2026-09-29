@@ -59,15 +59,13 @@ export const useWalletSdk = () => {
                     scanApiUrl: deriveScanApiUrl(amulet.registry),
                     registryUrl: amulet.registry,
                     auth,
+                    registryAuth: 'none',
                 },
                 token: {
                     validatorUrl: token.validatorUrl,
                     registries: sdkRegistryUrls,
                     auth,
-                },
-                asset: {
-                    registries: sdkRegistryUrls,
-                    auth,
+                    registryAuth: 'none',
                 },
             })
 
@@ -83,7 +81,10 @@ export const useWalletSdk = () => {
             walletSdkQuery.error instanceof Error
                 ? walletSdkQuery.error.message
                 : walletSdkQuery.error
-                  ? String(walletSdkQuery.error)
+                  ? JSON.stringify(
+                        walletSdkQuery.error,
+                        Object.getOwnPropertyNames(walletSdkQuery.error)
+                    )
                   : undefined,
         refresh: () => {
             void walletSdkQuery.refetch()

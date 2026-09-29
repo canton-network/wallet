@@ -1,35 +1,38 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
-import { Store, UpdateWallet, Wallet } from '@canton-network/core-wallet-store'
+import type { UserId } from '@canton-network/core-wallet-auth'
+import type {
+    Store,
+    UpdateWallet,
+    Wallet,
+} from '@canton-network/core-wallet-store'
 import {
-    Error as SigningError,
-    SigningDriverInterface,
+    type SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { Logger } from 'pino'
-import { PartyAllocationService } from '../../party-allocation-service.js'
-import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
-import type { WalletAllocator } from '../wallet-allocation-service.js'
+import type { Logger } from 'pino'
+import type { PartyAllocationService } from '../../party-allocation-service.js'
+import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-
-function handleSigningError<T extends object>(result: SigningError | T): T {
-    if ('error' in result) {
-        throw new Error(
-            `Error from signing driver: ${result.error_description}`
-        )
-    }
-    return result
-}
+import {
+    handleSigningProviderError,
+    type WalletAllocator,
+} from '../wallet-allocation-service.js'
 
 export class BlockdaemonWalletAllocator implements WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
         private partyAllocator: PartyAllocationService,
-        private signingDriver: SigningDriverInterface
+        protected signingDriver: SigningDriverInterface
     ) {}
+
+    async getKeys(userId: UserId) {
+        if (!this.signingDriver) return null
+        const driver = this.signingDriver.controller(userId)
+        return await driver.getKeys().then(handleSigningProviderError)
+    }
 
     async createWallet(
         userId: UserId,
@@ -76,7 +79,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                 },
                 internalTxId,
             })
-            .then(handleSigningError)
+            .then(handleSigningProviderError)
 
         const network = await this.store.getCurrentNetwork()
         const walletBase: Omit<Wallet, 'status'> = {
@@ -85,6 +88,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
             namespace,
             signingProviderId: SigningProvider.BLOCKDAEMON,
             networkId: network.id,
+            userId,
             primary,
             publicKey: key.publicKey,
             externalTxId: txId,
@@ -99,7 +103,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                     userId,
                     txId,
                 })
-                .then(handleSigningError)
+                .then(handleSigningProviderError)
             if (!signature) {
                 throw new Error(
                     'Transaction signed but no signature found in result'
@@ -159,7 +163,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
             .getTransaction({
                 txId: existingWallet.externalTxId,
             })
-            .then(handleSigningError)
+            .then(handleSigningProviderError)
 
         let walletUpdate: UpdateWallet = {
             partyId: existingWallet.partyId,

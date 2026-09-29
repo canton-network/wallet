@@ -60,7 +60,7 @@ const centrallyExcludedProjects = new Set<string>(
 )
 
 function nxJson(command: string): unknown {
-    const stdout = execSync(`yarn ${command}`, {
+    const stdout = execSync(`pnpm ${command}`, {
         cwd: repoRoot,
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'inherit'],

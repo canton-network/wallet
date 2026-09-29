@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { UserId } from '@canton-network/core-wallet-auth'
-import { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { UserId } from '@canton-network/core-wallet-auth'
+import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import { Logger } from 'pino'
-import { PartyAllocationService } from '../../party-allocation-service.js'
-import { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
+import type { Logger } from 'pino'
+import type { PartyAllocationService } from '../../party-allocation-service.js'
+import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import type { WalletAllocator } from '../wallet-allocation-service.js'
 
 export class ParticipantWalletAllocator implements WalletAllocator {
@@ -15,6 +15,10 @@ export class ParticipantWalletAllocator implements WalletAllocator {
         private logger: Logger,
         private partyAllocator: PartyAllocationService
     ) {}
+
+    async getKeys() {
+        throw new Error('Method not implemented')
+    }
 
     async createWallet(
         userId: UserId,
@@ -30,6 +34,7 @@ export class ParticipantWalletAllocator implements WalletAllocator {
             namespace: party.namespace,
             signingProviderId: SigningProvider.PARTICIPANT,
             networkId: network.id,
+            userId,
             status: 'allocated',
             primary,
             publicKey: party.namespace,

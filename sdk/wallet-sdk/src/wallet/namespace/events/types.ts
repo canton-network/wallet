@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { PartyId } from '@canton-network/core-types'
+import type { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import type { PartyId } from '@canton-network/core-types'
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { SDKContext } from '../../init/types/context.js'
-import { ParsedURL } from '../utils/url.js'
+import type { ParsedURL } from '../utils/url.js'
 
 export type UpdatesOptions = {
     beginOffset?: number

@@ -7,7 +7,6 @@ import type { PreparedCommand } from '@canton-network/wallet-sdk'
 import { utilityOperatorQueryOptions } from './query-options'
 import { queryKeys } from './query-keys'
 import type { WalletSdk } from './useWalletSdk'
-import { WalletSDKUtilitiesPluginName } from '@lib/utilities-wallet-sdk-plugin'
 import { submitViaProvider } from '@lib/submit'
 import type { PreapprovalRow } from '../types/preapprovals'
 
@@ -77,31 +76,26 @@ export function useTogglePreapproval({
             }
 
             if (enabled) {
-                const preparedCommand = sdk[
-                    WalletSDKUtilitiesPluginName
-                ].preapprovalTransfer.create({
-                    receiver: primaryParty,
-                    operator,
-                    instrumentAdmin: row.registryPartyId,
-                    instrumentAllowances: [{ id: row.instrument.id }],
-                })
+                const preparedCommand =
+                    sdk.utilities.preapprovalTransfer.create({
+                        receiver: primaryParty,
+                        operator,
+                        instrumentAdmin: row.registryPartyId,
+                        instrumentAllowances: [{ id: row.instrument.id }],
+                    })
 
                 await submitPreapprovalCommand(preparedCommand, primaryParty)
-                await sdk[
-                    WalletSDKUtilitiesPluginName
-                ].preapprovalTransfer.fetchStatus(args)
+                await sdk.utilities.preapprovalTransfer.fetchStatus(args)
                 return
             }
 
             const preparedCommand =
-                await sdk[
-                    WalletSDKUtilitiesPluginName
-                ].preapprovalTransfer.cancel(args)
+                await sdk.utilities.preapprovalTransfer.cancel(args)
 
             await submitPreapprovalCommand(preparedCommand, primaryParty)
-            await sdk[
-                WalletSDKUtilitiesPluginName
-            ].preapprovalTransfer.fetchStatus(args, { cancelled: true })
+            await sdk.utilities.preapprovalTransfer.fetchStatus(args, {
+                cancelled: true,
+            })
         },
         onSuccess: async (_data, variables) => {
             await queryClient.invalidateQueries({

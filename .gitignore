@@ -37,10 +37,12 @@ generated/
 
 storybook-static
 
-# unit tests output
+# tests output
 coverage/
 __screenshots__/
 .vitest-attachments/
+playwright-report/
+test-results/
 
 
 **/target/

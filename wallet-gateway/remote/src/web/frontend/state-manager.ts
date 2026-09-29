@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AllowedRoute } from '@canton-network/core-wallet-ui-components'
+import type { AllowedRoute } from '@canton-network/core-wallet-ui-components'
 import {
     encryptString,
     destroyTokenKey,

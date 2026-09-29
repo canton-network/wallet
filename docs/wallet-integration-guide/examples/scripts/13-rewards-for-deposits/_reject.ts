@@ -1,4 +1,4 @@
-import { RewardsForDepositsTestScriptParameters } from './types.js'
+import type { RewardsForDepositsTestScriptParameters } from './types.js'
 
 export default async (args: RewardsForDepositsTestScriptParameters) => {
     const {
