@@ -101,7 +101,7 @@ export class SelfIssuedAuthService {
         const existingUser = await this.getExistingUser()
         if (isOnboarded(existingUser)) {
             throw new Error(
-                'Selecting an existing self-issued user is not implemented yet.'
+                'An authentication party is already configured for this user.'
             )
         }
 
@@ -166,6 +166,46 @@ export class SelfIssuedAuthService {
             )
         }
 
+        const existingUser = await this.getExistingUser()
+        const authPartyWallet = isOnboarded(existingUser)
+            ? this.requireExistingAuthParty(wallet, existingUser?.primaryParty)
+            : await this.setUserAuthParty(username, wallet)
+        const accessToken = await this.mintAccessToken(authPartyWallet)
+        const session = await this.store.upgradeOnboardingSession(
+            this.session.sessionId,
+            accessToken
+        )
+
+        this.logger.info(
+            {
+                username,
+                partyId: authPartyWallet.partyId,
+                status: authPartyWallet.status,
+                signingProviderId: authPartyWallet.signingProviderId,
+                isAuthParty: authPartyWallet.isAuthParty,
+            },
+            'Established self-issued session'
+        )
+
+        return { wallet: authPartyWallet, accessToken, session }
+    }
+
+    private requireExistingAuthParty(
+        wallet: Wallet,
+        userPrimaryParty: string | undefined
+    ): Wallet {
+        if (!wallet.isAuthParty || userPrimaryParty !== wallet.partyId) {
+            throw new Error(
+                `Party ${wallet.partyId} is not the authentication party for this user`
+            )
+        }
+        return wallet
+    }
+
+    private async setUserAuthParty(
+        username: string,
+        wallet: Wallet
+    ): Promise<Wallet> {
         await this.ledgerClient.patch(
             '/v2/users/{user-id}',
             {
@@ -186,25 +226,7 @@ export class SelfIssuedAuthService {
             networkId: wallet.networkId,
             isAuthParty: true,
         })
-        const authPartyWallet = await this.requireWallet(wallet.partyId)
-        const accessToken = await this.mintAccessToken(authPartyWallet)
-        const session = await this.store.upgradeOnboardingSession(
-            this.session.sessionId,
-            accessToken
-        )
-
-        this.logger.info(
-            {
-                username,
-                partyId: authPartyWallet.partyId,
-                status: authPartyWallet.status,
-                signingProviderId: authPartyWallet.signingProviderId,
-                isAuthParty: authPartyWallet.isAuthParty,
-            },
-            'Established self-issued session'
-        )
-
-        return { wallet: authPartyWallet, accessToken, session }
+        return this.requireWallet(wallet.partyId)
     }
 
     private async requireWallet(partyId: string): Promise<Wallet> {
