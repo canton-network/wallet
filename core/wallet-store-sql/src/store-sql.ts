@@ -445,21 +445,21 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         }
 
         await this.db.transaction().execute(async (trx) => {
-            const deleted = await trx
-                .deleteFrom('sessions')
-                .where('userId', '=', userId)
-                .where((eb) =>
-                    session.accessToken
-                        ? // Regular session - one user can have only one session per origin
-                          eb('origin', '=', session.origin)
-                        : // Self_issued onboarding session - one user can have only one onboarding session per network
-                          eb.and([
-                              eb('accessToken', 'is', null),
-                              eb('network', '=', session.network),
-                          ])
-                )
-                .execute()
-            this.logger.debug(deleted, 'Deleted old session')
+            if (session.accessToken) {
+                // Regular session - one user can have only one session per origin.
+                // Tokenless sessions are not replaced by duplicates.
+                const deleted = await trx
+                    .deleteFrom('sessions')
+                    .where((eb) =>
+                        eb.and([
+                            eb('userId', '=', userId),
+                            eb('origin', '=', session.origin),
+                            eb('accessToken', 'is not', null),
+                        ])
+                    )
+                    .execute()
+                this.logger.debug(deleted, 'Deleted old session')
+            }
 
             const inserted = await trx
                 .insertInto('sessions')

@@ -274,13 +274,14 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async setSession(session: Session): Promise<void> {
         const userId = this.assertConnected()
         const storage = this.getStorage()
-        for (const [id, existingSession] of storage.sessions) {
-            const replaced = session.accessToken
-                ? existingSession.origin === session.origin
-                : !existingSession.accessToken &&
-                  existingSession.network === session.network
-            if (replaced) {
-                storage.sessions.delete(id)
+        if (session.accessToken) {
+            for (const [id, existingSession] of storage.sessions) {
+                if (
+                    existingSession.origin === session.origin &&
+                    existingSession.accessToken
+                ) {
+                    storage.sessions.delete(id)
+                }
             }
         }
         storage.sessions.set(session.id, { ...session, userId })
