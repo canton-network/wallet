@@ -62,6 +62,9 @@ export class SelfIssuedAuthService {
     async getOnboardingState(): Promise<SelfIssuedOnboardingState> {
         const user = await this.getExistingUser()
         return {
+            // TODO let's have 2 separate fields for user existing on ledger and having primaryPartyAuth
+            // userExists: '',
+            // primaryPartyAuth: isOnboarded(user),
             userOnboarded: isOnboarded(user),
             wallets: (await this.store.getWallets()).filter(
                 (wallet) => wallet.isAuthParty

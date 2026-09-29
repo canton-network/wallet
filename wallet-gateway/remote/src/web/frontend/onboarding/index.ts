@@ -6,6 +6,7 @@ import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
     handleErrorToast,
+    WalletCardSelectEvent,
     type WalletCreateEvent,
 } from '@canton-network/core-wallet-ui-components'
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
@@ -24,7 +25,6 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     @state() private accessor submitting = false
     @state() private accessor wallet: Wallet | undefined
     @state() private accessor authWallets: Wallet[] = []
-    @state() private accessor selectedPartyId: string | undefined
     @state() private accessor onboardingReady = false
     @state() private accessor onboardingError: string | undefined
     @state() private accessor sessionLoaded = false
@@ -89,7 +89,6 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                     return
                 }
                 this.authWallets = wallets
-                this.selectedPartyId = wallets[0]?.partyId
             }
             this.onboardingReady = true
         } catch (error) {
@@ -219,13 +218,8 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         }
     }
 
-    private connectSelectedParty(): void {
-        const wallet = this.authWallets.find(
-            (candidate) => candidate.partyId === this.selectedPartyId
-        )
-        if (wallet) {
-            void this.connectSession(wallet)
-        }
+    private selectAuthParty(event: WalletCardSelectEvent): void {
+        void this.connectSession(event.wallet)
     }
 
     protected render() {
@@ -274,41 +268,18 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                     selectingExistingParty
                         ? html`
                               <div class="status-actions">
-                                  <div>
-                                      ${this.authWallets.map(
-                                          (wallet) => html`
-                                              <label>
-                                                  <input
-                                                      type="radio"
-                                                      name="auth-party"
-                                                      .checked=${
-                                                          this
-                                                              .selectedPartyId ===
-                                                          wallet.partyId
-                                                      }
-                                                      @change=${() => {
-                                                          this.selectedPartyId =
-                                                              wallet.partyId
-                                                      }}
-                                                  />
-                                                  <span>${wallet.hint}</span>
-                                                  <span>${wallet.partyId}</span>
-                                              </label>
-                                          `
-                                      )}
-                                  </div>
-                                  <button
-                                      class="btn btn-primary rounded-pill w-100"
-                                      type="button"
-                                      ?disabled=${this.submitting}
-                                      @click=${this.connectSelectedParty}
-                                  >
-                                      ${
-                                          this.submitting
-                                              ? 'Connecting...'
-                                              : 'Connect'
-                                      }
-                                  </button>
+                                  ${this.authWallets.map(
+                                      (wallet) => html`
+                                          <wg-wallet-card
+                                              .wallet=${wallet}
+                                              .selectLabel=${'Select'}
+                                              ?loading=${this.submitting}
+                                              @wallet-select=${
+                                                  this.selectAuthParty
+                                              }
+                                          ></wg-wallet-card>
+                                      `
+                                  )}
                               </div>
                           `
                         : nothing
