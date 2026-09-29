@@ -454,6 +454,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                         eb.and([
                             eb('userId', '=', userId),
                             eb('origin', '=', session.origin),
+                            eb('accessToken', 'is not', null),
                         ])
                     )
                     .execute()

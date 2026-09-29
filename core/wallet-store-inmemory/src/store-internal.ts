@@ -276,7 +276,10 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const storage = this.getStorage()
         if (session.accessToken) {
             for (const [id, existingSession] of storage.sessions) {
-                if (existingSession.origin === session.origin) {
+                if (
+                    existingSession.origin === session.origin &&
+                    existingSession.accessToken
+                ) {
                     storage.sessions.delete(id)
                 }
             }

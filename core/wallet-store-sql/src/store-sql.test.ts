@@ -394,7 +394,7 @@ implementations.forEach(([name, StoreImpl]) => {
             ])
         })
 
-        test('should replace a tokenless session when authentication completes', async () => {
+        test('should keep a tokenless session when a logged-in session is created at the same origin', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             const baseSession = {
                 origin: 'https://example.com',
@@ -410,15 +410,13 @@ implementations.forEach(([name, StoreImpl]) => {
                 accessToken: authContextMock.accessToken,
             })
 
-            await expect(store.listSessions()).resolves.toEqual([
-                expect.objectContaining({
-                    id: 'authenticated-session',
-                    accessToken: authContextMock.accessToken,
-                }),
-            ])
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
             await expect(
                 store.getOnboardingSession('onboarding-session')
-            ).resolves.toBeUndefined()
+            ).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
         })
 
         test('should keep a logged-in session when a tokenless session starts at the same origin', async () => {
