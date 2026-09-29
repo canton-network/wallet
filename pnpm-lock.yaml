@@ -2553,9 +2553,21 @@ importers:
 
   core/wallet-test-utils:
     dependencies:
+      '@canton-network/core-ledger-client':
+        specifier: 'catalog:'
+        version: link:../ledger-client
+      '@canton-network/core-rpc-transport':
+        specifier: 'catalog:'
+        version: link:../rpc-transport
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
+      '@canton-network/core-wallet-auth':
+        specifier: 'catalog:'
+        version: link:../wallet-auth
+      '@canton-network/core-wallet-user-rpc-client':
+        specifier: 'catalog:'
+        version: link:../wallet-user-rpc-client
       '@canton-network/wallet-sdk':
         specifier: 'catalog:'
         version: link:../../sdk/wallet-sdk

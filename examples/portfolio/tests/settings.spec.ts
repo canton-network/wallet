@@ -6,8 +6,9 @@ import type { PartyId } from '@canton-network/core-types'
 import { toPortfolioInstrument } from '../src/types/instruments'
 import { normalizeRegistryUrl } from '../src/utils/registry'
 import {
+    createGatewayApi,
+    connectGateway,
     createWalletGateway,
-    connectToLocalNet,
     expectWalletBalance,
     gotoConnect,
     setupRegistry,
@@ -25,10 +26,7 @@ const connectToSettings = async (page: Page) => {
     const wg = createWalletGateway(page)
 
     await gotoConnect(page)
-    await connectToLocalNet(wg)
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
-        timeout: 15000,
-    })
+    await connectGateway(page, wg)
     await page.goto('http://localhost:8081/dashboard/settings')
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
 
@@ -250,14 +248,16 @@ test('tap via settings page', async ({ page: dappPage }) => {
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(dappPage)
 
-    await gotoConnect(dappPage)
-    await connectToLocalNet(wg)
-
-    const alice = await wg.createWalletIfNotExists({
+    // Scaffolding: this test is about the tap flow, not about creating wallets.
+    const api = await createGatewayApi()
+    const alice = await api.createWallet({
         partyHint: `alice-${rnd}`,
         signingProvider: 'participant',
+        primary: true,
     })
-    await wg.setPrimaryWallet(alice)
+
+    await gotoConnect(dappPage)
+    await connectGateway(dappPage, wg)
 
     await setupRegistry(dappPage)
     await tap(dappPage, wg, '5000.123456789')
