@@ -68,7 +68,7 @@ export class TokenNamespace {
         return parseAssets(
             this.tokenContext.commonCtx,
             await this.tokenContext.tokenStandardService.registriesToAssets(
-                this.tokenContext.registryUrls.map((url) => url.href)
+                this.tokenContext.registryUrls
             )
         )
     }

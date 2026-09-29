@@ -45,7 +45,7 @@ export class AmuletNamespace {
             return parseAssets(
                 this.sdkContext.commonCtx,
                 await this.sdkContext.tokenStandardService.registriesToAssets([
-                    this.sdkContext.registry.href,
+                    this.sdkContext.registry,
                 ])
             )[0]
         } else {
@@ -68,7 +68,7 @@ export class AmuletNamespace {
                 new Decimal(amount).toFixed(10),
                 amulet.admin,
                 amulet.id,
-                amulet.registryUrl.toString()
+                amulet.registryUrl
             )
 
         this.sdkContext.commonCtx.logger.info(tapCommand)
@@ -226,7 +226,7 @@ export async function fetchAmulet(
         ? parseAssets(
               amuletCtx.commonCtx,
               await amuletCtx.tokenStandardService.registriesToAssets([
-                  amuletCtx.registry.href,
+                  amuletCtx.registry,
               ])
           )[0]
         : amuletCtx.registry
