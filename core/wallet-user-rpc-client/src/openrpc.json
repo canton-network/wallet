@@ -374,8 +374,13 @@
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "userOnboarded": {
-                            "title": "userOnboarded",
+                        "userExists": {
+                            "title": "userExists",
+                            "type": "boolean",
+                            "description": "Whether a ledger user with this id already exists."
+                        },
+                        "primaryPartyAuth": {
+                            "title": "primaryPartyAuth",
                             "type": "boolean",
                             "description": "Whether the ledger user already has a primary party or primary party authentication set."
                         },
@@ -388,7 +393,7 @@
                             "description": "Wallets stored for the user on the selected network that can be used for authentication."
                         }
                     },
-                    "required": ["userOnboarded", "wallets"]
+                    "required": ["userExists", "primaryPartyAuth", "wallets"]
                 }
             },
             "description": "Returns the ledger-user and wallet state needed to select the self-issued onboarding path."

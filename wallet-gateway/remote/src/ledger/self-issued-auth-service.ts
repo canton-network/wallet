@@ -34,7 +34,8 @@ export type PartyParams = {
 }
 
 export type SelfIssuedOnboardingState = {
-    userOnboarded: boolean
+    userExists: boolean
+    primaryPartyAuth: boolean
     wallets: Wallet[]
 }
 
@@ -44,7 +45,7 @@ type LedgerUser = {
 }
 
 function isOnboarded(user: LedgerUser | null): boolean {
-    return !!user && (!!user.primaryParty || !!user.primaryPartyAuthentication)
+    return !!user && !!user.primaryParty && !!user.primaryPartyAuthentication
 }
 
 const ACCESS_TOKEN_TTL_SECONDS = 10 * 60
@@ -62,10 +63,8 @@ export class SelfIssuedAuthService {
     async getOnboardingState(): Promise<SelfIssuedOnboardingState> {
         const user = await this.getExistingUser()
         return {
-            // TODO let's have 2 separate fields for user existing on ledger and having primaryPartyAuth
-            // userExists: '',
-            // primaryPartyAuth: isOnboarded(user),
-            userOnboarded: isOnboarded(user),
+            userExists: user !== null,
+            primaryPartyAuth: isOnboarded(user),
             wallets: (await this.store.getWallets()).filter(
                 (wallet) => wallet.isAuthParty
             ),

@@ -79,7 +79,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 method: 'getSelfIssuedOnboarding',
                 params: { sessionId: this.sessionId },
             })
-            if (state.userOnboarded) {
+            if (state.primaryPartyAuth) {
                 const wallets = state.wallets.filter(
                     (wallet) => wallet.status === 'allocated'
                 )
