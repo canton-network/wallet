@@ -38,6 +38,7 @@ import type {
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
+    TrafficConfig,
     RegistryAuth,
 } from './types/index.ts'
 
@@ -169,7 +170,28 @@ const createNamespace: {
             websocketURL: new ParsedURL(ctx, config.websocketURL),
         })
     },
-    traffic: async (ctx: SDKContext) => new TrafficAccountNamespace(ctx),
+    traffic: async (ctx: SDKContext, config: TrafficConfig) => {
+        const auth = new AuthTokenProvider(config.auth)
+        const tokenStandardService = new TokenStandardService(
+            ctx.ledgerProvider,
+            resolveAuth(config.registryAuth, auth),
+            false
+        )
+
+        // `InitializedSDK` has already built a `TrafficAccountNamespace` from `ctx`
+        // alone; this replaces it with one that also holds a registry, which is
+        // the only thing `purchaseTraffic` was missing. Note this is the *same*
+        // class, unlike amulet/token/asset/events, whose classes exist only
+        // once extended -- so `getTraffic` and `topUpTraffic` behave the same
+        // either side of `extend`, and `purchaseTraffic` keeps one signature
+        // instead of one per state.
+        return new TrafficAccountNamespace(ctx, {
+            tokenStandardService,
+            registryUrls: config.registries.map(
+                (input) => new ParsedURL(ctx, input)
+            ),
+        })
+    },
 }
 
 export class InitializedSDK<
@@ -178,12 +200,14 @@ export class InitializedSDK<
     public readonly keys = new KeysNamespace()
     public readonly ledger: LedgerNamespace
     public readonly party: PartyNamespace
+    public readonly traffic: TrafficAccountNamespace
     public readonly user: UserNamespace
     public readonly utils: SDKUtilsNamespace
 
     constructor(protected ctx: SDKContext) {
         this.ledger = new LedgerNamespace(ctx)
         this.party = new PartyNamespace(ctx)
+        this.traffic = new TrafficAccountNamespace(ctx)
         this.user = new UserNamespace(ctx)
         this.utils = new SDKUtilsNamespace({
             logger: ctx.logger,
@@ -282,9 +306,6 @@ export class ExtendedInitializedSDK<
         : never
     declare readonly events: ExtendedItems extends 'events'
         ? EventsNamespace
-        : never
-    declare readonly traffic: ExtendedItems extends 'traffic'
-        ? TrafficAccountNamespace
         : never
 
     private constructor(
