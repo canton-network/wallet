@@ -50,6 +50,7 @@ export type ActivityStatus =
 // but on local it accumulates quickly.
 const MAX_PAGES_TO_SEARCH = 50
 
+// TODO is it possible to take it from some type that would automatically adjust to what signing drivers we have
 export type SigningProviderName =
     'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' | 'fireblocks'
 
@@ -165,6 +166,96 @@ export class WalletGateway {
                 popup.getByTestId('network-status-connected'),
                 `the wallet gateway should report itself connected to ${args.network}`
             ).toBeVisible()
+        })
+    }
+
+    async connectToSelfIssuedNetwork(args: {
+        network: string
+        username: string
+        customURL?: string
+    }): Promise<void> {
+        await test.step(`wallet gateway: connect to ${args.network}`, async () => {
+            const dapp = this.requireDapp()
+            const connectButton = dapp.connectButton(dapp.dappPage)
+            await expect(
+                connectButton,
+                'the dApp should offer a way to connect a wallet'
+            ).toBeVisible()
+
+            const pickerPopup = await openWalletPicker(
+                dapp.dappPage,
+                connectButton
+            )
+
+            await this.selectFromWalletPicker(pickerPopup, args.customURL)
+
+            const popup = await this.waitForConnectFormPopup(pickerPopup)
+            const selectNetwork = popup.getByLabel('Select a network')
+            await expect(
+                selectNetwork,
+                'the wallet gateway has a network select'
+            ).toBeVisible()
+            await selectNetwork.selectOption({ label: args.network })
+            const usernameInput = popup.getByLabel('Username')
+            await expect(
+                usernameInput,
+                'self-issued login should ask for a username'
+            ).toBeVisible()
+            await usernameInput.fill(args.username)
+            const confirmConnectButton = popup.getByRole('button', {
+                name: 'Connect',
+            })
+            await confirmConnectButton.click()
+
+            // TODO make the check more generic so we can use this method for both onboarding and select wallet flows and handle differences with other methods
+            await expect(
+                popup.getByRole('heading', {
+                    name: 'Create authentication party',
+                }),
+                'self-issued login should open the create auth party form'
+            ).toBeVisible()
+            const form = popup.locator('wg-wallet-create-form')
+            await expect(
+                form,
+                'a new self-issued user should see the party creation form'
+            ).toBeVisible()
+            await expect(form.getByLabel('Party ID Hint')).toBeVisible()
+            await expect(form.getByLabel('Signing Provider')).toBeVisible()
+        })
+    }
+
+    async submitSelfIssuedOnboarding(args: {
+        expectedNetwork: string
+        partyHint: string
+        signingProvider: SigningProviderName
+    }): Promise<string> {
+        return test.step(`wallet gateway: submit self-issued onboarding for ${args.partyHint}`, async () => {
+            const popup = await this.page()
+            const form = popup.locator('wg-wallet-create-form')
+            await form.getByLabel('Party ID Hint').fill(args.partyHint)
+            await form
+                .getByLabel('Signing Provider')
+                .selectOption(args.signingProvider)
+            await form.locator('button[type="submit"]').click()
+
+            await expect(
+                popup.getByTestId('network-status-connected'),
+                `the wallet gateway should report itself connected to ${args.expectedNetwork}`
+            ).toBeVisible()
+
+            const wallet = popup
+                .locator(`wg-wallet-card[party-id*="${args.partyHint}"]`)
+                .first()
+            await expect(
+                wallet,
+                `the parties page should list ${args.partyHint}`
+            ).toBeVisible()
+            const partyId = await wallet.getAttribute('party-id')
+            if (!partyId) {
+                // Assures typescript it's a string
+                throw new Error(`did not find partyID for ${args.partyHint}`)
+            }
+            return partyId
         })
     }
 
