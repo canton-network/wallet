@@ -13,18 +13,14 @@ import {
     type HoldingView,
     type AllocationFactory_Allocate,
     type AllocationSpecification,
-    type Transfer,
-    type ExtraArgs,
     type Metadata,
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
     type Holding,
     type Beneficiaries,
     type OffLedger,
 } from '@canton-network/core-token-standard'
-import {
-    EventFilterBySetup,
-    type LedgerCommonSchemas,
-} from '@canton-network/core-ledger-client-types'
+import { TokenStandardClient as TokenStandardClientV2 } from '@canton-network/core-token-standard-v2'
+import { EventFilterBySetup } from '@canton-network/core-ledger-client-types'
 import type { ContractId, Logger, PartyId } from '@canton-network/core-types'
 import { ACSReader, type AcsOptions } from '@canton-network/core-acs-reader'
 import {
@@ -37,6 +33,7 @@ import {
     type PrettyTransactions,
     type Transaction,
     type TransferObject,
+    JsActiveContract,
 } from '@canton-network/core-tx-parser'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import type {
@@ -44,47 +41,27 @@ import type {
     Ops,
 } from '@canton-network/core-provider-ledger'
 import { Decimal } from 'decimal.js'
-
-const REQUESTED_AT_SKEW_MS = 60_000
-
-export type ExerciseCommand = LedgerCommonSchemas['ExerciseCommand']
-export type DisclosedContract = LedgerCommonSchemas['DisclosedContract']
-const EMPTY_META: Metadata = { values: {} }
-
-type JsGetActiveContractsResponse =
-    LedgerCommonSchemas['JsGetActiveContractsResponse']
-type JsGetUpdatesResponse = Ops.PostV2Updates['ledgerApi']['result'][number]
-type JsGetUpdateResponse = LedgerCommonSchemas['JsGetUpdateResponse']
-type OffsetCheckpoint2 = LedgerCommonSchemas['OffsetCheckpoint2']
-type JsTransaction = LedgerCommonSchemas['JsTransaction']
-type UpdateFormat = LedgerCommonSchemas['UpdateFormat']
-
-type JsActiveContract = LedgerCommonSchemas['JsActiveContract']
-
-type OffsetCheckpointUpdate = {
-    update: { OffsetCheckpoint: OffsetCheckpoint2 }
-}
-type TransactionUpdate = {
-    update: { Transaction: { value: JsTransaction } }
-}
-
-type JsActiveContractEntryResponse = JsGetActiveContractsResponse & {
-    contractEntry: {
-        JsActiveContract: {
-            createdEvent: LedgerCommonSchemas['CreatedEvent']
-        }
-    }
-}
-
-type CreateTransferChoiceArgs = {
-    expectedAdmin: PartyId
-    transfer: Transfer
-    extraArgs: ExtraArgs
-}
-
-type ApiVersion = 'v1' | 'v2'
-type SupportedVersions = ApiVersion[]
-const SUPPORTED_VERSIONS: readonly ApiVersion[] = ['v1', 'v2'] as const
+import {
+    type ApiVersion,
+    AssetCapabilities,
+    type CreateTransferChoiceArgs,
+    type DisclosedContract,
+    EMPTY_META,
+    type ExerciseCommand,
+    type GenericTokenStandardClient,
+    type InstrumentInfo,
+    type JsActiveContractEntryResponse,
+    type JsGetActiveContractsResponse,
+    type JsGetUpdateResponse,
+    type JsGetUpdatesResponse,
+    type JsTransaction,
+    KEY_MAPPING,
+    type OffsetCheckpointUpdate,
+    REQUESTED_AT_SKEW_MS,
+    SUPPORTED_VERSIONS,
+    type TransactionUpdate,
+    type UpdateFormat,
+} from './types.js'
 
 function isApiVersion(v: string): v is ApiVersion {
     return (SUPPORTED_VERSIONS as readonly string[]).includes(v)
@@ -163,6 +140,27 @@ export class CoreService {
         private accessTokenProvider: AccessTokenProvider,
         private readonly isMasterUser: boolean
     ) {}
+
+    getTokenStandardClientWithVersion(
+        registryUrl: URL,
+        version: ApiVersion
+    ): GenericTokenStandardClient {
+        if (!isApiVersion(version)) {
+            throw new Error(`Unsupported token standard api version.`)
+        }
+
+        return version === 'v2'
+            ? new TokenStandardClientV2(
+                  registryUrl.href,
+                  this.logger,
+                  this.accessTokenProvider
+              )
+            : new TokenStandardClient(
+                  registryUrl.href,
+                  this.logger,
+                  this.accessTokenProvider
+              )
+    }
 
     getTokenStandardClient(registryUrl: URL): TokenStandardClient {
         return new TokenStandardClient(
