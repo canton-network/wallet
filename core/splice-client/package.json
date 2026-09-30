@@ -31,6 +31,7 @@
         "zod": "catalog:"
     },
     "devDependencies": {
+        "@types/node": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "playwright": "catalog:",
