@@ -36,6 +36,7 @@ import { useReportSigning } from './hooks/useReportSigning.ts'
 import { useReportImport } from './hooks/useReportImport.ts'
 import { TEST_CASE_COUNT } from '../suite.ts'
 import { cases } from '../tests/index.ts'
+import { describeError } from '../tests/helpers.ts'
 import { lightTheme, darkTheme } from './theme.ts'
 
 function SummaryStat({ value, label }: { value: number; label: string }) {
@@ -106,7 +107,7 @@ export function App() {
         try {
             await suiteRun.run(JSON.parse(configText), only)
         } catch (caught) {
-            setError(caught instanceof Error ? caught.message : String(caught))
+            setError(describeError(caught))
         }
     }
 

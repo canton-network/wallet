@@ -83,6 +83,7 @@ export const walletSchema = z.object({
 export function describeError(error: unknown): string {
     if (error instanceof z.ZodError) return z.prettifyError(error)
     if (error instanceof Error) return error.message
+    if (typeof error !== 'object' || error === null) return String(error)
     return JSON.stringify(error, Object.getOwnPropertyNames(error))
 }
 
@@ -112,6 +113,17 @@ export function requireCondition(
     if (!condition) throw new Error(message)
 }
 
+export function isWalletError(
+    error: unknown
+): error is { code: Cip103ErrorCode } {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        isCip103ErrorCode(error.code)
+    )
+}
+
 export async function expectRejection(
     operation: Promise<unknown>,
     codes: readonly Cip103ErrorCode[] = USER_REJECTED_CODES
@@ -119,13 +131,7 @@ export async function expectRejection(
     try {
         await operation
     } catch (error) {
-        if (
-            typeof error !== 'object' ||
-            error === null ||
-            !('code' in error && isCip103ErrorCode(error.code))
-        ) {
-            throw error
-        }
+        if (!isWalletError(error)) throw error
         requireCondition(
             codes.some((expected) => error.code === expected),
             `Expected wallet error code ${codes.join(' or ')}, received ${String(error.code)}`

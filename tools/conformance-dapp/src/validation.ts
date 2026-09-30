@@ -4,6 +4,8 @@
 import { z } from 'zod'
 import {
     SignatureSchema,
+    decodeBase64,
+    decodeHex,
     reportHash,
     type Report,
     type Signature,
@@ -55,24 +57,6 @@ const ViewerReportSchema = z.object({
 
 export function validateReport(value: unknown): asserts value is Report {
     ViewerReportSchema.parse(value)
-}
-
-function decodeBase64(value: string): Uint8Array<ArrayBuffer> {
-    const encoded = value.trim()
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(encoded))
-        throw new Error('Invalid Base64 value')
-    const decoded = atob(encoded)
-    if (btoa(decoded).replace(/=+$/, '') !== encoded.replace(/=+$/, ''))
-        throw new Error('Invalid Base64 value')
-    return Uint8Array.from(decoded, (character) => character.charCodeAt(0))
-}
-
-function decodeHex(value: string): Uint8Array<ArrayBuffer> {
-    if (value.length % 2 !== 0 || !/^[a-f0-9]*$/i.test(value))
-        throw new Error('Invalid hex value')
-    return Uint8Array.from({ length: value.length / 2 }, (_, index) =>
-        parseInt(value.slice(index * 2, index * 2 + 2), 16)
-    )
 }
 
 async function importPublicKey(value: string): Promise<CryptoKey> {

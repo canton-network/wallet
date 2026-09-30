@@ -176,9 +176,9 @@ describe('Conformance harness', () => {
             publicKeyPath,
             ecKey.export({ type: 'spki', format: 'pem' })
         )
-        await expect(
-            verifyArtifactSignature(report, signature, publicKeyPath)
-        ).rejects.toThrow('Ed25519 public key')
+        expect(
+            await verifyArtifactSignature(report, signature, publicKeyPath)
+        ).toBe(false)
     })
 
     it('loads config sections relative to the config file and rejects missing/unknown ones', async () => {

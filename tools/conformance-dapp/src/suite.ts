@@ -15,20 +15,17 @@ import {
     type TestProvider,
 } from '@canton-network/core-provider-conformance'
 import type { dappAPI } from '@canton-network/dapp-sdk'
-import { isCip103ErrorCode } from '@canton-network/core-types'
-import { describeError, requireCondition } from './tests/helpers.ts'
+import {
+    describeError,
+    isWalletError,
+    requireCondition,
+} from './tests/helpers.ts'
 import { cases } from './tests/index.ts'
 import type { TestRuntime } from './tests/types.ts'
 
 export const TEST_CASE_COUNT = cases.length
 
 type StatusResult = dappAPI.RpcTypes['status']['result']
-
-const isWalletError = (error: unknown) =>
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    isCip103ErrorCode(error.code)
 
 export async function runSuite(options: {
     config: Config
@@ -76,10 +73,7 @@ export async function runSuite(options: {
                     testId: testCase.id,
                     timestamp: Date.now(),
                     method: observation.method,
-                    error:
-                        error instanceof Error
-                            ? error.message
-                            : 'Observation redaction failed',
+                    error: describeError(error),
                 }
             }
             observations.push(entry)

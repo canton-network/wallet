@@ -7,6 +7,7 @@ import { ConfigSchema, type Config } from '../../config.ts'
 import { createSession } from '../../session.ts'
 import { runSuite } from '../../suite.ts'
 import { cases } from '../../tests/index.ts'
+import { describeError } from '../../tests/helpers.ts'
 import type {
     Report,
     Signature,
@@ -205,9 +206,7 @@ export function useSuiteRun(options: {
             await options.signIfConfigured(next)
             return next
         } catch (caught) {
-            options.setError(
-                caught instanceof Error ? caught.message : String(caught)
-            )
+            options.setError(describeError(caught))
             throw caught
         } finally {
             controller.abort(new Error('Run finished'))

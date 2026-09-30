@@ -11,6 +11,7 @@ import {
     type Report,
     type Signature,
 } from '../../report.ts'
+import { describeError } from '../../tests/helpers.ts'
 
 /**
  * The signature is never embedded in the report; it is handed back as its own
@@ -73,11 +74,7 @@ export function useReportSigning(options: {
                 throw new Error('Signing wallet did not connect')
             setSignature(await signReportWithWallet(report, sdk))
         } catch (caught) {
-            options.setError(
-                caught && typeof caught === 'object' && 'message' in caught
-                    ? String(caught.message)
-                    : String(caught)
-            )
+            options.setError(describeError(caught))
         } finally {
             signingActiveRef.current = false
             setSigning(false)

@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { validateReport } from '../../validation.ts'
+import { describeError } from '../../tests/helpers.ts'
 import {
     redact,
     DiagnosticsSchema,
@@ -64,9 +65,7 @@ export function useReportImport(options: {
             options.setObservations(importedObservations)
             options.setDiagnosticsError(warning)
         } catch (caught) {
-            options.setError(
-                caught instanceof Error ? caught.message : String(caught)
-            )
+            options.setError(describeError(caught))
         } finally {
             importingActiveRef.current = false
             setImporting(false)
