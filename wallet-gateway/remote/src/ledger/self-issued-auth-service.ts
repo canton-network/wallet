@@ -103,7 +103,7 @@ export class SelfIssuedAuthService {
         const existingUser = await this.getExistingUser()
         if (isOnboarded(existingUser)) {
             throw new Error(
-                'An authentication party is already configured for this user.'
+                'Primary party authentication is already configured for this user.'
             )
         }
 
