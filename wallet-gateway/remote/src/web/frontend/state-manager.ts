@@ -144,12 +144,31 @@ export class StateManager {
         clear: (origin: string) => this.clearWithStorage('sessionId', origin),
     }
 
+    onboardingSessionId = {
+        get: (origin: string) =>
+            this.getWithStorage('onboardingSessionId', origin, sessionStorage),
+        set: (sessionId: string, origin: string) =>
+            this.setWithStorage(
+                'onboardingSessionId',
+                sessionId,
+                origin,
+                sessionStorage
+            ),
+        clear: (origin: string) =>
+            this.clearWithStorage(
+                'onboardingSessionId',
+                origin,
+                sessionStorage
+            ),
+    }
+
     async clearAuthState(origin: string): Promise<void> {
         await this.accessToken.clear(origin)
         this.networkId.clear(origin)
         this.expirationDate.clear(origin)
         this.intendedPage.clear(origin)
         this.sessionId.clear(origin)
+        this.onboardingSessionId.clear(origin)
     }
 
     async revokeAccessToken(origin: string): Promise<void> {

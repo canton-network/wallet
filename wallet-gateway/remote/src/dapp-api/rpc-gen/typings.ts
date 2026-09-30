@@ -364,8 +364,15 @@ export interface Wallet {
     topologyTransactions?: TopologyTransactions
     disabled?: Disabled
     reason?: Reason
+    isAuthParty?: IsAuthParty
     rights: Rights
 }
+/**
+ *
+ * Whether the party authenticates the user with self-issued tokens.
+ *
+ */
+export type IsAuthParty = boolean
 export type PartyLevelRight = any
 /**
  *
