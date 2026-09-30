@@ -106,40 +106,15 @@ jobs:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - name: Setup Python
-              id: setup-python
-              uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+            - name: Setup uv
+              uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
-                  python-version-file: .python-version
-
-            - name: Install and configure Poetry
-              uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
-              with:
-                  version: 2.1.3
-
-            # load cached venv if cache exists
-            - name: Load cached venv
-              id: cached-poetry-dependencies
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: docs/wallet-integration-guide/.venv
-                  key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('docs/wallet-integration-guide/poetry.lock') }}
-
-            # install dependencies if cache does not exist
-            - name: Install dependencies
-              if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-              working-directory: docs/wallet-integration-guide
-              run: poetry install --no-interaction --no-root
-
-            - name: Save venv cache
-              uses: ./.github/actions/save_cache_if_absent
-              with:
-                  path: docs/wallet-integration-guide/.venv
-                  key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('docs/wallet-integration-guide/poetry.lock') }}
+                  enable-cache: true
+                  cache-dependency-glob: docs/wallet-integration-guide/uv.lock
 
             - name: Build docs
               working-directory: docs/wallet-integration-guide
-              run: poetry run sphinx-build -c . src build --fail-on-warning
+              run: uv run --locked --no-dev sphinx-build -c . src build --fail-on-warning
 
     test-static:
         runs-on: ubuntu-latest
