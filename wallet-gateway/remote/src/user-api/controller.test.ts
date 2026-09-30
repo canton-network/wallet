@@ -73,7 +73,6 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
         ...actual,
         LedgerClient: vi.fn(function LedgerClientMock() {
             return {
-                get: ledgerMocks.get,
                 getWithRetry: ledgerMocks.getWithRetry,
                 postWithRetry: ledgerMocks.postWithRetry,
                 getSynchronizerId: ledgerMocks.getSynchronizerId,
