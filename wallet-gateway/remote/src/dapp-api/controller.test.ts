@@ -14,7 +14,7 @@ import {
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
-import { NotificationService } from '../notification/NotificationService.js'
+import { NotificationService } from '@canton-network/core-wallet-services'
 import { dappController, type DappControllerDeps } from './controller.js'
 import { getLogger } from '@logtape/logtape'
 

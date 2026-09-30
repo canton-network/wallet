@@ -29,7 +29,6 @@ import {
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
 import { v4 } from 'uuid'
-import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
 import { networkStatus } from '../utils.js'
@@ -41,6 +40,7 @@ import {
     ledgerPrepareParams,
     logDynamically,
     HASHING_SCHEME_VERSION,
+    type NotificationService,
     SigningDrivers,
 } from '@canton-network/core-wallet-services'
 
