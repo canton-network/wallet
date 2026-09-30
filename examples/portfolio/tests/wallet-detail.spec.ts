@@ -3,8 +3,9 @@
 
 import { test, expect } from '@playwright/test'
 import {
+    createGatewayApi,
+    connectGateway,
     createWalletGateway,
-    connectToLocalNet,
     gotoConnect,
     gotoDashboard,
     setupRegistry,
@@ -21,16 +22,19 @@ test('wallet detail page - assets and transaction history', async ({
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(dappPage)
 
-    await gotoConnect(dappPage)
-    await connectToLocalNet(wg)
-
+    // Scaffolding: the wallet just has to exist and be primary, so it is
+    // created through the wallet's API instead of its UI.
+    const api = await createGatewayApi()
     const aliceHint = `alice-${rnd}`
-    const alice = await wg.createWalletIfNotExists({
+    await api.createWallet({
         partyHint: aliceHint,
         signingProvider: 'participant',
+        primary: true,
     })
 
-    await wg.setPrimaryWallet(alice)
+    await gotoConnect(dappPage)
+    await connectGateway(dappPage, wg)
+
     await setupRegistry(dappPage)
     await tap(dappPage, wg, '2000')
     await gotoDashboard(dappPage)

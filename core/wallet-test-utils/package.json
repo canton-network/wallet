@@ -1,7 +1,7 @@
 {
     "name": "@canton-network/core-wallet-test-utils",
     "private": true,
-    "version": "1.12.4",
+    "version": "1.13.0",
     "type": "module",
     "description": "Utilities for writing (E2E) tests for the wallet gateway",
     "sideEffects": false,
@@ -17,7 +17,11 @@
         }
     },
     "dependencies": {
+        "@canton-network/core-ledger-client": "catalog:",
+        "@canton-network/core-rpc-transport": "catalog:",
         "@canton-network/core-types": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-wallet-user-rpc-client": "catalog:",
         "@canton-network/wallet-sdk": "catalog:",
         "@playwright/test": "catalog:",
         "pino": "catalog:",

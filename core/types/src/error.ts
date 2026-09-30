@@ -16,6 +16,12 @@ export const CIP103_ERROR_CODES = {
     MethodNotFound: -32601,
     InvalidParams: -32602,
     InternalError: -32603,
+    InvalidInput: -32000,
+    ResourceNotFound: -32001,
+    ResourceUnavailable: -32002,
+    TransactionRejected: -32003,
+    MethodNotSupported: -32004,
+    LimitExceeded: -32005,
 } as const satisfies Record<string, number>
 
 export type Cip103ErrorCode =
@@ -32,6 +38,12 @@ export const CIP103_ERROR_MESSAGES = {
     [CIP103_ERROR_CODES.MethodNotFound]: 'Method Not Found',
     [CIP103_ERROR_CODES.InvalidParams]: 'Invalid Parameters',
     [CIP103_ERROR_CODES.InternalError]: 'Internal Error',
+    [CIP103_ERROR_CODES.InvalidInput]: 'Invalid Input',
+    [CIP103_ERROR_CODES.ResourceNotFound]: 'Resource Not Found',
+    [CIP103_ERROR_CODES.ResourceUnavailable]: 'Resource Unavailable',
+    [CIP103_ERROR_CODES.TransactionRejected]: 'Transaction Rejected',
+    [CIP103_ERROR_CODES.MethodNotSupported]: 'Method Not Supported',
+    [CIP103_ERROR_CODES.LimitExceeded]: 'Limit Exceeded',
 } as const satisfies Record<Cip103ErrorCode, string>
 
 export function isCip103ErrorCode(code: unknown): code is Cip103ErrorCode {
