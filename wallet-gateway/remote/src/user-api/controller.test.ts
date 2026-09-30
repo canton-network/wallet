@@ -73,6 +73,7 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
         ...actual,
         LedgerClient: vi.fn(function LedgerClientMock() {
             return {
+                get: ledgerMocks.get,
                 getWithRetry: ledgerMocks.getWithRetry,
                 postWithRetry: ledgerMocks.postWithRetry,
                 getSynchronizerId: ledgerMocks.getSynchronizerId,
@@ -81,11 +82,17 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     }
 })
 
-vi.mock('../utils.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../utils.js')>()
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
     return {
         ...actual,
         networkStatus: mockNetworkStatus,
+        TransactionService: vi.fn(function TransactionServiceMock() {
+            return transactionServiceMocks
+        }),
     }
 })
 
@@ -104,19 +111,6 @@ vi.mock('../ledger/wallet-sync-service.js', () => ({
 vi.mock('../ledger/party-allocation-service.js', () => ({
     PartyAllocationService: vi.fn(),
 }))
-
-vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
-    const actual =
-        await importOriginal<
-            typeof import('@canton-network/core-wallet-services')
-        >()
-    return {
-        ...actual,
-        TransactionService: vi.fn(function TransactionServiceMock() {
-            return transactionServiceMocks
-        }),
-    }
-})
 
 const kernelInfo: KernelInfo = {
     id: 'kernel-test',
