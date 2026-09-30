@@ -186,6 +186,9 @@ async function fetchViaNodeHttp(
  * custom `Host` header. Localnet nginx routes on the `scan.localhost` vhost, so
  * in Node we dial `127.0.0.1` via `node:http` while preserving that Host header.
  * Browsers already treat `*.localhost` as loopback, so they use global fetch.
+ *
+ * Opt in by passing it to the Scan client:
+ * `new ScanClient(url, logger, auth, { fetch: fetchScanApiUrl })`
  */
 export function fetchScanApiUrl(
     input: RequestInfo | URL,

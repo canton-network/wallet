@@ -48,11 +48,17 @@ export type GetResponse<Path extends GetEndpoint> = paths[Path] extends {
     ? Res
     : never
 
+export type ScanClientOptions = {
+    // Custom fetch implementation used for all Scan API requests. Defaults to the global fetch.
+    fetch?: typeof fetch
+}
+
 export class ScanClient {
     private readonly client: Client<paths>
     private readonly logger: Logger
     private readonly accessTokenProvider: AccessTokenProvider
     private readonly baseUrlHref: string
+    private readonly fetchFn: typeof fetch | undefined
 
     private static amuletRulesCache = new Map<string, ScanTypes['Contract']>()
 
@@ -73,11 +79,13 @@ export class ScanClient {
     constructor(
         baseUrl: URL,
         logger: Logger,
-        accessTokenProvider: AccessTokenProvider
+        accessTokenProvider: AccessTokenProvider,
+        options: ScanClientOptions = {}
     ) {
         this.logger = logger
         this.baseUrlHref = baseUrl.href
         this.accessTokenProvider = accessTokenProvider
+        this.fetchFn = options.fetch
 
         this.logger.debug({ baseUrl }, 'ScanClient initialized')
         this.client = createClient<paths>({
@@ -86,7 +94,8 @@ export class ScanClient {
                 const accessToken =
                     await this.accessTokenProvider.getAccessToken()
 
-                return fetch(url, {
+                const fetchFn = this.fetchFn ?? fetch
+                return fetchFn(url, {
                     ...options,
                     headers: {
                         ...(options.headers || {}),
