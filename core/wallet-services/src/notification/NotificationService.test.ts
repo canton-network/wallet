@@ -8,11 +8,14 @@ import {
 } from './NotificationService.js'
 
 describe('NotificationService', () => {
-    let logger: NotificationLogger & { debug: ReturnType<typeof vi.fn> }
+    let logger: NotificationLogger & {
+        debug: ReturnType<typeof vi.fn>
+        error: ReturnType<typeof vi.fn>
+    }
     let service: NotificationService
 
     beforeEach(() => {
-        logger = { debug: vi.fn() }
+        logger = { debug: vi.fn(), error: vi.fn() }
         service = new NotificationService(logger)
     })
 
@@ -137,6 +140,31 @@ describe('NotificationService', () => {
         notifier.emit('logout')
         expect(first).toHaveBeenCalledTimes(2)
         expect(second).toHaveBeenCalledTimes(1)
+    })
+
+    it('logs a throwing listener and still invokes the remaining listeners', () => {
+        const notifier = service.getNotifier('user-1')
+        const error = new Error('boom')
+        const failing = vi.fn(() => {
+            throw error
+        })
+        const next = vi.fn()
+        notifier.on('txChanged', failing)
+        notifier.on('txChanged', next)
+
+        let result: boolean | undefined
+        expect(() => {
+            result = notifier.emit('txChanged', { id: 1 })
+        }).not.toThrow()
+
+        expect(result).toBe(true)
+        expect(failing).toHaveBeenCalledTimes(1)
+        expect(next).toHaveBeenCalledWith({ id: 1 })
+        expect(logger.error).toHaveBeenCalledTimes(1)
+        expect(logger.error).toHaveBeenCalledWith(
+            { event: 'txChanged', err: error },
+            'Notifier listener failed for event: txChanged for user-1'
+        )
     })
 
     it('keeps listeners isolated between notifiers', () => {
