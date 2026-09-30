@@ -46,8 +46,11 @@ export const SignatureSchema = z.strictObject({
 })
 export type Signature = z.infer<typeof SignatureSchema>
 
-export function serializeReport(report: Report): string {
-    return `${JSON.stringify(exportReport(report, 'report'), null, 2)}\n`
+export function serializeReport(
+    report: Report,
+    variant: 'report' | 'report+diagnostics' = 'report'
+): string {
+    return `${JSON.stringify(exportReport(report, variant), null, 2)}\n`
 }
 
 export async function sha256(text: string): Promise<string> {

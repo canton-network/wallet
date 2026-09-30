@@ -14,6 +14,7 @@ import {
     signReport,
     runPassed,
     exportReport,
+    serializeReport,
     type Report,
 } from './report.ts'
 
@@ -75,6 +76,9 @@ describe('shared report validation', () => {
         expect(plain.extra).not.toHaveProperty('diagnostics')
         expect(withLogs.extra).toHaveProperty('diagnostics')
         expect(original.extra).toHaveProperty('diagnostics')
+        expect(
+            JSON.parse(serializeReport(original, 'report+diagnostics')).extra
+        ).toHaveProperty('diagnostics')
         expect(plain.results).toStrictEqual(withLogs.results)
         expect(await reportHash(plain)).toBe(await reportHash(withLogs))
         expect(await reportHash(original)).toBe(await reportHash(withLogs))

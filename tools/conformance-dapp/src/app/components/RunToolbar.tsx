@@ -4,7 +4,7 @@
 import Box from '@mui/material/Box'
 import DownloadIcon from '@mui/icons-material/Download'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
-import { exportReport, serializeReport, type Report } from '../../report.ts'
+import { serializeReport, type Report } from '../../report.ts'
 import { DownloadJsonButton } from './DownloadJsonButton.tsx'
 import { FileUploadButton } from './FileUploadButton.tsx'
 
@@ -41,10 +41,7 @@ export function RunToolbar({
                 title="Download report with unsigned diagnostic logs"
                 data-testid="download-report-diagnostics"
                 disabled={!diagnosticsAvailable || busy}
-                data={
-                    report &&
-                    serializeReport(exportReport(report, 'report+diagnostics'))
-                }
+                data={report && serializeReport(report, 'report+diagnostics')}
                 filename="cip103-ctrf-diagnostics.json"
                 startIcon={<DownloadIcon />}
             >
