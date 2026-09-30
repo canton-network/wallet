@@ -7,7 +7,4 @@ import { base } from '../../tsdown.base.ts'
 export default defineConfig({
     ...base,
     entry: ['src/index.ts'],
-    deps: {
-        neverBundle: ['node:http', 'node:https'],
-    },
 })
