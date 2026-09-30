@@ -58,7 +58,6 @@ import type {
 } from './rpc-gen/typings.js'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
-import type { NotificationService } from '../notification/NotificationService.js'
 import {
     assertConnected,
     type AuthContext,
@@ -94,6 +93,7 @@ import {
     logDynamically,
     networkStatus,
     type HASHING_SCHEME_VERSION,
+    type NotificationService,
     type SigningDrivers,
 } from '@canton-network/core-wallet-services'
 
