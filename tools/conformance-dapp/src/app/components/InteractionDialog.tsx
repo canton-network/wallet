@@ -8,18 +8,21 @@ import DialogActions from '@mui/material/DialogActions'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import type { Interaction } from '@canton-network/core-provider-conformance'
+import type React from 'react'
 
-export function InteractionDialog({
-    interaction,
-    finish,
-    fail,
-    cancel,
-}: {
+interface InteractionDialogProps {
     interaction: Interaction
     finish: () => void
     fail: () => void
     cancel: () => void
-}) {
+}
+
+export const InteractionDialog: React.FC<InteractionDialogProps> = ({
+    interaction,
+    finish,
+    fail,
+    cancel,
+}) => {
     return (
         <Dialog
             open

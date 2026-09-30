@@ -6,24 +6,27 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import DownloadIcon from '@mui/icons-material/Download'
+import type React from 'react'
 import type { Signature } from '../../report.ts'
 import { DownloadJsonButton } from './DownloadJsonButton.tsx'
 
-export function ReportSigningPanel({
-    running,
-    signing,
-    importing,
-    hash,
-    signature,
-    onSignWithWallet,
-}: {
+interface ReportSigningPanelProps {
     running: boolean
     signing: boolean
     importing: boolean
     hash: string
     signature: Signature | undefined
     onSignWithWallet: () => void
-}) {
+}
+
+export const ReportSigningPanel: React.FC<ReportSigningPanelProps> = ({
+    running,
+    signing,
+    importing,
+    hash,
+    signature,
+    onSignWithWallet,
+}) => {
     const busy = running || signing || importing
     return (
         <Box

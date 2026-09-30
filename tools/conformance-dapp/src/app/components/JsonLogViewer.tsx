@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { useTheme } from '@mui/material/styles'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import type React from 'react'
 import type { Observation } from '../../report.ts'
 
 const TOKEN_PATTERN =
@@ -17,7 +18,7 @@ function tokenKind(token: string): 'key' | 'string' | 'literal' | 'number' {
     return /^(true|false|null)$/.test(token) ? 'literal' : 'number'
 }
 
-function JsonValue({ value }: { value: unknown }) {
+const JsonValue: React.FC<{ value: unknown }> = ({ value }) => {
     const { palette } = useTheme()
     const dark = palette.mode === 'dark'
     const colors = {
@@ -60,7 +61,9 @@ function JsonValue({ value }: { value: unknown }) {
     )
 }
 
-function ObservationEntry({ observation }: { observation: Observation }) {
+const ObservationEntry: React.FC<{ observation: Observation }> = ({
+    observation,
+}) => {
     const isRequest =
         observation.result === undefined &&
         observation.error === undefined &&
@@ -120,15 +123,17 @@ function ObservationEntry({ observation }: { observation: Observation }) {
     )
 }
 
-export function JsonLogViewer({
-    id,
-    testId,
-    observations,
-}: {
+interface JsonLogViewerProps {
     id: string
     testId: string
     observations: Observation[]
-}) {
+}
+
+export const JsonLogViewer: React.FC<JsonLogViewerProps> = ({
+    id,
+    testId,
+    observations,
+}) => {
     return (
         <Box
             id={id}

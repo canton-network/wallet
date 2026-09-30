@@ -9,17 +9,20 @@ import DialogActions from '@mui/material/DialogActions'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
+import type React from 'react'
 import type { PendingRequest } from '../hooks/useSuiteRun.ts'
 
-export function WaitingDialog({
-    pending,
-    fail,
-    cancel,
-}: {
+interface WaitingDialogProps {
     pending: PendingRequest
     fail: () => void
     cancel: () => void
-}) {
+}
+
+export const WaitingDialog: React.FC<WaitingDialogProps> = ({
+    pending,
+    fail,
+    cancel,
+}) => {
     return (
         <Dialog
             open

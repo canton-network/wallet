@@ -4,25 +4,28 @@
 import Box from '@mui/material/Box'
 import DownloadIcon from '@mui/icons-material/Download'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
+import type React from 'react'
 import { serializeReport, type Report } from '../../report.ts'
 import { DownloadJsonButton } from './DownloadJsonButton.tsx'
 import { FileUploadButton } from './FileUploadButton.tsx'
 
-export function RunToolbar({
-    running,
-    signing,
-    importing,
-    report,
-    diagnosticsAvailable,
-    onImportReport,
-}: {
+interface RunToolbarProps {
     running: boolean
     signing: boolean
     importing: boolean
     report: Report | undefined
     diagnosticsAvailable: boolean
     onImportReport: (file: File) => void
-}) {
+}
+
+export const RunToolbar: React.FC<RunToolbarProps> = ({
+    running,
+    signing,
+    importing,
+    report,
+    diagnosticsAvailable,
+    onImportReport,
+}) => {
     const busy = running || signing || importing
 
     return (

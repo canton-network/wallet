@@ -10,18 +10,11 @@ import Typography from '@mui/material/Typography'
 import FastForwardIcon from '@mui/icons-material/FastForward'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import StopIcon from '@mui/icons-material/Stop'
+import type React from 'react'
 import type { Config } from '../../config.ts'
 import { groups } from '../../tests/index.ts'
 
-export function TestSelectionPanel({
-    running,
-    current,
-    runDisabled,
-    onRun,
-    onCancel,
-    toggleTest,
-    toggleGroup,
-}: {
+interface TestSelectionPanelProps {
     running: boolean
     current: Config | undefined
     runDisabled: boolean
@@ -29,7 +22,17 @@ export function TestSelectionPanel({
     onCancel: () => void
     toggleTest: (id: string, enabled: boolean) => void
     toggleGroup: (ids: string[], enabled: boolean) => void
-}) {
+}
+
+export const TestSelectionPanel: React.FC<TestSelectionPanelProps> = ({
+    running,
+    current,
+    runDisabled,
+    onRun,
+    onCancel,
+    toggleTest,
+    toggleGroup,
+}) => {
     return (
         <>
             <Button

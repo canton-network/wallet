@@ -27,17 +27,19 @@ function selectTestId(testId: string): NativeSelectInputProps {
     return { 'data-testid': testId } as NativeSelectInputProps
 }
 
-export function ProviderConfigPanel({
-    running,
-    current,
-    updateConfig,
-    onImportConfig,
-}: {
+interface ProviderConfigPanelProps {
     running: boolean
     current: Config | undefined
     updateConfig: (update: (config: Config) => Config) => void
     onImportConfig: (file: File) => Promise<void>
-}) {
+}
+
+export const ProviderConfigPanel: React.FC<ProviderConfigPanelProps> = ({
+    running,
+    current,
+    updateConfig,
+    onImportConfig,
+}) => {
     return (
         <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>

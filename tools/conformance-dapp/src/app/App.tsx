@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useRef, useState } from 'react'
+import type React from 'react'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -39,7 +40,10 @@ import { cases } from '../tests/index.ts'
 import { describeError } from '../tests/helpers.ts'
 import { lightTheme, darkTheme } from './theme.ts'
 
-function SummaryStat({ value, label }: { value: number; label: string }) {
+const SummaryStat: React.FC<{ value: number; label: string }> = ({
+    value,
+    label,
+}) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="h5">{value}</Typography>
@@ -50,7 +54,7 @@ function SummaryStat({ value, label }: { value: number; label: string }) {
     )
 }
 
-export function App() {
+export const App: React.FC = () => {
     const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
     const [darkOverride, setDarkOverride] = useState<boolean>()
     const dark = darkOverride ?? prefersDark

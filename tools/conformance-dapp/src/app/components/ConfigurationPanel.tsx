@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Dispatch, SetStateAction } from 'react'
+import type React from 'react'
 import { z } from 'zod'
 import Box from '@mui/material/Box'
 import { ConfigSchema, type Config } from '../../config.ts'
@@ -9,7 +9,21 @@ import { TestSelectionPanel } from './TestSelectionPanel.tsx'
 import { ProviderConfigPanel } from './ProviderConfigPanel.tsx'
 import { SigningKeyPanel } from './SigningKeyPanel.tsx'
 
-export function ConfigurationPanel({
+interface ConfigurationPanelProps {
+    configText: string
+    setConfigText: React.Dispatch<React.SetStateAction<string>>
+    setError: React.Dispatch<React.SetStateAction<string>>
+    running: boolean
+    runDisabled: boolean
+    onRun: (only?: string[]) => void
+    onCancel: () => void
+    current: Config | undefined
+    privateKey: string
+    onImportKey: (file: File) => Promise<void>
+    onClearKey: () => void
+}
+
+export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
     configText,
     setConfigText,
     setError,
@@ -21,19 +35,7 @@ export function ConfigurationPanel({
     privateKey,
     onImportKey,
     onClearKey,
-}: {
-    configText: string
-    setConfigText: Dispatch<SetStateAction<string>>
-    setError: Dispatch<SetStateAction<string>>
-    running: boolean
-    runDisabled: boolean
-    onRun: (only?: string[]) => void
-    onCancel: () => void
-    current: Config | undefined
-    privateKey: string
-    onImportKey: (file: File) => Promise<void>
-    onClearKey: () => void
-}) {
+}) => {
     function updateConfig(update: (config: Config) => Config) {
         const config = ConfigSchema.safeParse(JSON.parse(configText))
         if (config.success) {

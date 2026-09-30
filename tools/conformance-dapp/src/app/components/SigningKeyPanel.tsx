@@ -4,19 +4,22 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import KeyIcon from '@mui/icons-material/Key'
+import type React from 'react'
 import { FileUploadButton } from './FileUploadButton.tsx'
 
-export function SigningKeyPanel({
-    running,
-    privateKey,
-    onImportKey,
-    onClearKey,
-}: {
+interface SigningKeyPanelProps {
     running: boolean
     privateKey: string
     onImportKey: (file: File) => Promise<void>
     onClearKey: () => void
-}) {
+}
+
+export const SigningKeyPanel: React.FC<SigningKeyPanelProps> = ({
+    running,
+    privateKey,
+    onImportKey,
+    onClearKey,
+}) => {
     return (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             <FileUploadButton

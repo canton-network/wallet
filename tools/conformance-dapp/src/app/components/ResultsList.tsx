@@ -17,6 +17,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ReplayIcon from '@mui/icons-material/Replay'
 import { alpha, type Theme } from '@mui/material/styles'
 import { useState } from 'react'
+import type React from 'react'
 import type { Report, TestResult, Observation } from '../../report.ts'
 import { groups } from '../../tests/index.ts'
 import type { Case } from '../../tests/types.ts'
@@ -38,7 +39,10 @@ function statusColor(theme: Theme, status: string): string {
     return theme.palette.text.secondary
 }
 
-function StatusChip({ status, label }: { status: string; label: string }) {
+const StatusChip: React.FC<{ status: string; label: string }> = ({
+    status,
+    label,
+}) => {
     return (
         <Chip
             size="small"
@@ -57,17 +61,7 @@ function StatusChip({ status, label }: { status: string; label: string }) {
     )
 }
 
-export function ResultsList({
-    running,
-    runningCase,
-    runDisabled,
-    onRerun,
-    results,
-    observations,
-    report,
-    diagnosticsAvailable,
-    diagnosticsError,
-}: {
+interface ResultsListProps {
     running: boolean
     runningCase: Case | undefined
     runDisabled: boolean
@@ -77,7 +71,19 @@ export function ResultsList({
     report: Report | undefined
     diagnosticsAvailable: boolean
     diagnosticsError: string
-}) {
+}
+
+export const ResultsList: React.FC<ResultsListProps> = ({
+    running,
+    runningCase,
+    runDisabled,
+    onRerun,
+    results,
+    observations,
+    report,
+    diagnosticsAvailable,
+    diagnosticsError,
+}) => {
     const [openLogs, setOpenLogs] = useState<ReadonlySet<string>>(new Set())
     const toggleLogs = (key: string) =>
         setOpenLogs((previous) => {
