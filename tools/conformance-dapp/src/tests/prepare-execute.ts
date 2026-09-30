@@ -127,13 +127,13 @@ function watchTransaction(runtime: TestRuntime, commandId: string) {
     const final = new Promise<typeof statuses>((resolve, reject) => {
         runtime.onEvent('txChanged', (value) => {
             const event = txChangedEventSchema.safeParse(value)
-            if (!event.success) return reject(event.error)
-            if (event.data.commandId !== commandId) return
+            if (event.success && event.data.commandId !== commandId) return
             runtime.observe({
                 method: 'prepareExecute',
                 event: 'txChanged',
                 result: value,
             })
+            if (!event.success) return reject(event.error)
             statuses.push(event.data.status)
             if (
                 event.data.status === 'executed' ||
