@@ -78,6 +78,26 @@ async function verifySelfSignedToken(
     }
 }
 
+// TODO(#2456) verify self-issued token (signature, aud, scope, exp, wallet)
+async function verifySelfIssuedToken(
+    jwt: string,
+    decoded: ReturnType<typeof decodeJwt>
+): Promise<AuthContext | undefined> {
+    const daml = decoded['daml.com']
+    const usr =
+        daml && typeof daml === 'object' && 'usr' in daml
+            ? (daml as { usr?: unknown }).usr
+            : undefined
+    if (typeof usr !== 'string' || usr.length === 0) {
+        return undefined
+    }
+
+    return {
+        userId: usr,
+        accessToken: jwt,
+    }
+}
+
 /**
  * Creates an AuthService that verifies JWT tokens, using a remote JWK set for
  * oauth identity providers and the network's secret for self_signed ones.
@@ -102,8 +122,11 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => ({
                 return undefined
             }
 
+            if (iss === decoded.sub) {
+                return await verifySelfIssuedToken(jwt, decoded)
+            }
+
             const idps = await store.listIdps()
-            // TODO(#2456) validate self_issued token
             const idp = idps.find(
                 (i): i is Exclude<Idp, { type: 'self_issued' }> =>
                     i.type !== 'self_issued' && i.issuer === iss
