@@ -4,7 +4,11 @@
 import { describe, expect, it } from 'vitest'
 import { generateKeyPairSync, sign } from 'node:crypto'
 import { validateStrict } from 'ctrf'
-import { validateReport, verifyReportSignature } from './validation.ts'
+import {
+    validateReport,
+    verifyMessageSignature,
+    verifyReportSignature,
+} from './validation.ts'
 import {
     reportHash,
     signReport,
@@ -186,4 +190,45 @@ describe('shared report validation', () => {
             false
         )
     })
+    it.each(['der', 'ieee-p1363'] as const)(
+        'verifies P-256 signatures against a Base64 or PEM SPKI key (%s)',
+        async (dsaEncoding) => {
+            const { privateKey, publicKey } = generateKeyPairSync('ec', {
+                namedCurve: 'P-256',
+            })
+            const der = publicKey.export({ type: 'spki', format: 'der' })
+            const pem = publicKey
+                .export({ type: 'spki', format: 'pem' })
+                .toString()
+            const original = report()
+            const hash = await reportHash(original)
+            const value = sign('sha256', Buffer.from(hash), {
+                key: privateKey,
+                dsaEncoding,
+            }).toString('base64')
+            for (const key of [der.toString('base64'), pem]) {
+                expect(await verifyMessageSignature(hash, value, key)).toBe(
+                    true
+                )
+                const hex = Buffer.from(value, 'base64').toString('hex')
+                expect(await verifyMessageSignature(hash, hex, key)).toBe(true)
+                expect(await verifyMessageSignature('other', value, key)).toBe(
+                    false
+                )
+            }
+            const signature = {
+                algorithm: 'ECDSA-P256' as const,
+                sha256: hash,
+                value,
+                publicKey: der.toString('base64'),
+            }
+            expect(await verifyReportSignature(original, signature)).toBe(true)
+            expect(
+                await verifyReportSignature(original, {
+                    ...signature,
+                    algorithm: 'Ed25519',
+                })
+            ).toBe(false)
+        }
+    )
 })

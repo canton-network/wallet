@@ -231,7 +231,7 @@ produces a separate `.sig` file (by default `<report>.sig`) alongside it:
 {
     "algorithm": "Ed25519",
     "sha256": "<64 lowercase hex characters>",
-    "value": "<Base64 Ed25519 signature>"
+    "value": "<Base64 signature>"
 }
 ```
 
@@ -283,8 +283,8 @@ After a run, select **Sign with wallet** to choose a signing wallet through the
 SDK picker, including discovered extensions or a remote wallet URL. This selection
 is independent of the wallet under test. The signer is assumed compliant; no test
 hooks are invoked. Its `signMessage` request contains only the displayed digest.
-The returned signature has `algorithm: "Ed25519"` and the
-primary account's `partyId`, `networkId`, and unchanged `publicKey` from
+The returned signature has `algorithm` `"Ed25519"` or `"ECDSA-P256"`, matching
+the primary account's key, and that account's `partyId`, `networkId`, and unchanged `publicKey` from
 `sdk.listAccounts()`. Wallet and key-file signatures use the same `.sig` schema, with
 optional `partyId`, `networkId`, and `publicKey` metadata. Signing
 requires exactly one primary account. Select **Download signature** to save
@@ -292,12 +292,14 @@ the current signature; a successful signature replaces the previous one shown
 in the UI (the report itself is never touched), and a rejected wallet attempt
 leaves it unchanged.
 
-Wallet signatures are assumed to be Base64-encoded Ed25519 signatures of the
-UTF-8 digest string, without additional prefixes or hashing. The CLI's
+Wallet signatures are assumed to be Base64- or hex-encoded Ed25519 or ECDSA P-256/SHA-256
+(raw `r||s` or DER) signatures of the UTF-8 digest string, without additional
+prefixes or hashing. The `algorithm` must match the verification key. The CLI's
 `verify.publicKey` field verifies both wallet and key-file signatures using a supplied
-trusted Ed25519 public key in PEM format, overriding any embedded key.
+trusted Ed25519 or P-256 public key in PEM format, overriding any embedded key.
 Without that field, an embedded `publicKey` is used automatically. Supported
-embedded encodings are raw 32-byte hexadecimal or Base64 Ed25519 keys and public-key PEMs.
+embedded encodings are raw 32-byte hexadecimal or Base64 Ed25519 keys, and
+Ed25519 or P-256 SPKI keys in Base64 or PEM.
 Other encodings fail explicitly. Wallets using other signing conventions will
 not verify with this verifier.
 

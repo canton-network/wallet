@@ -704,7 +704,7 @@ describe('Conformance suite', () => {
             networkId: 'testnet',
             status: 'allocated' as const,
             hint: 'alice',
-            publicKey: 'separate-public-key',
+            publicKey: walletPublicKey,
             namespace: 'fingerprint',
             signingProviderId: 'signer',
         }

@@ -4,6 +4,7 @@
 import type { CTRFReport, Test } from 'ctrf'
 import type { DappSDK } from '@canton-network/dapp-sdk'
 import { z } from 'zod'
+import { publicKeyAlgorithm } from './validation.ts'
 
 export type Report = CTRFReport
 export type TestResult = Test
@@ -36,7 +37,7 @@ export function exportReport(
 const SENSITIVE_KEY_PATTERN = /token|authorization|cookie|secret|privatekey/i
 
 export const SignatureSchema = z.strictObject({
-    algorithm: z.literal('Ed25519'),
+    algorithm: z.enum(['Ed25519', 'ECDSA-P256']),
     sha256: z.string().regex(/^[a-f0-9]{64}$/, 'must be a SHA-256 hex digest'),
     value: z.string().min(1),
     partyId: z.string().min(1).optional(),
@@ -103,10 +104,11 @@ export async function signReportWithWallet(
     if (primaryAccounts.length !== 1)
         throw new Error('Signing requires exactly one primary wallet account')
     const { partyId, networkId, publicKey } = primaryAccounts[0]
+    const algorithm = await publicKeyAlgorithm(publicKey)
     const hash = await reportHash(report)
     const { signature } = await sdk.signMessage({ message: hash })
     return SignatureSchema.parse({
-        algorithm: 'Ed25519',
+        algorithm,
         sha256: hash,
         partyId,
         networkId,
