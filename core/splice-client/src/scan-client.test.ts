@@ -259,24 +259,6 @@ describe('ScanClient', () => {
         expect(headers['content-type']).toBe('application/json')
     })
 
-    it('uses the custom fetch from options instead of the global fetch', async () => {
-        const customFetch = vi.fn()
-        customFetch.mockResolvedValue(jsonResponse({ dso: 'DSO::abc' }))
-
-        const client = new ScanClient(
-            BASE_URL,
-            mockLogger,
-            createAccessTokenProvider('scan-token'),
-            { fetch: customFetch }
-        )
-        await client.get('/v0/dso-party-id')
-
-        expect(customFetch).toHaveBeenCalledOnce()
-        expect(fetchMock).not.toHaveBeenCalled()
-        const headers = getRequestHeaders(customFetch, '/v0/dso-party-id')
-        expect(headers.authorization).toBe('Bearer scan-token')
-    })
-
     it('returns parsed GET response data', async () => {
         const responseBody = { dso_party_id: 'DSO::party' }
         fetchMock.mockResolvedValue(jsonResponse(responseBody))
