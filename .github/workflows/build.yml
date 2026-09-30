@@ -322,6 +322,8 @@ jobs:
             - uses: ./.github/actions/setup_playwright
 
             - name: Run example e2e
+              env:
+                  NETWORK: ${{ matrix.network }}
               run: |
                   if [ "$CI_SECRET_DEPENDENCY" = "true" ]; then
                     export BLOCKDAEMON_API_URL="${{ vars.BLOCKDAEMON_API_URL }}"

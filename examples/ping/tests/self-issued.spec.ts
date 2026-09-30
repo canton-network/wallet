@@ -69,6 +69,12 @@ test('self-issued onboarding creates an authentication party, executes a ping, t
 }: {
     page: Page
 }) => {
+    // TODO: remove this skip, and the NETWORK env on the ping-e2e job, once Canton 3.6 is in mainnet.
+    test.skip(
+        process.env.NETWORK === 'mainnet',
+        'self-issued auth requires Canton 3.6, which mainnet does not run yet'
+    )
+
     const wg = createPingDappWalletGateway(dappPage)
     const username = `self-issued-${Date.now()}`
     const partyHint = `auth-${Date.now()}`
