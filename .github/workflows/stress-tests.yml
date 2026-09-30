@@ -15,7 +15,7 @@ on:
                 default: devnet
 jobs:
     version-config:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         outputs:
             daml_release_version: ${{ steps.version.outputs.daml_release_version }}
             devnet_canton_version: ${{ steps.version.outputs.devnet_canton_version }}
@@ -40,7 +40,7 @@ jobs:
                   echo "mainnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.splice.version')" >> "$GITHUB_OUTPUT"
 
     stress-tests:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         timeout-minutes: 120
         needs: [version-config]
 

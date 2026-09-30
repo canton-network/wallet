@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
     version-config:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         outputs:
             daml_release_version: ${{ steps.version.outputs.daml_release_version }}
             devnet_canton_version: ${{ steps.version.outputs.devnet_canton_version }}
@@ -40,7 +40,7 @@ jobs:
                   echo "mainnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.splice.version')" >> "$GITHUB_OUTPUT"
 
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: version-config
         steps:
             - name: Checkout
@@ -72,7 +72,7 @@ jobs:
 
     hydrate-canton-caches:
         name: hydrate-canton-caches (${{ matrix.network }}, ${{ matrix.instance }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         strategy:
             fail-fast: false
@@ -100,7 +100,7 @@ jobs:
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
     build-docs:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: build
         steps:
             - name: Checkout
@@ -117,7 +117,7 @@ jobs:
               run: uv run --locked --no-dev sphinx-build -c . src build --fail-on-warning
 
     test-static:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout
@@ -151,7 +151,7 @@ jobs:
               run: pnpm docs:update-wg-config
 
     test-unit:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout
@@ -181,7 +181,7 @@ jobs:
         # affected SQL store package that defines a `migrations:check-lock`
         # script. Catches accidental migration edits
         needs: build
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -200,7 +200,7 @@ jobs:
     test-migrations:
         # Runs SQL migration tests for any affected package that defines a
         # `test:migrations` script
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: build
         steps:
             - name: Checkout
@@ -219,7 +219,7 @@ jobs:
 
     ping-e2e:
         name: ping-e2e (${{ matrix.network }}, ${{ matrix.db }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -338,7 +338,7 @@ jobs:
               run: docker rm -f wk-postgres || true
 
     test-ping-e2e:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: ping-e2e
         if: always()
         steps:
@@ -352,7 +352,7 @@ jobs:
 
     extension-e2e:
         name: extension-e2e (devnet)
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build, hydrate-canton-caches]
         steps:
             - name: Checkout
@@ -383,7 +383,7 @@ jobs:
                   retention-days: 5
 
     test-extension-e2e:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: extension-e2e
         if: always()
         steps:
@@ -397,7 +397,7 @@ jobs:
 
     portfolio-e2e:
         name: portfolio-e2e (${{ matrix.network }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -453,7 +453,7 @@ jobs:
                   retention-days: 5
 
     test-portfolio-e2e:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: portfolio-e2e
         if: always()
         steps:
@@ -467,7 +467,7 @@ jobs:
 
     wallet-sdk-snippets-e2e:
         name: wallet-sdk-snippets-e2e (${{ matrix.network }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -527,7 +527,7 @@ jobs:
 
     wallet-sdk-scripts-e2e:
         name: wallet-sdk-scripts-e2e (${{ matrix.network }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -600,7 +600,7 @@ jobs:
 
     test-wallet-sdk-e2e:
         name: test-wallet-sdk-e2e
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [wallet-sdk-snippets-e2e, wallet-sdk-scripts-e2e, wallet-sdk-pkg]
         if: always()
         steps:
@@ -621,7 +621,7 @@ jobs:
                   echo "all wallet-sdk-e2e jobs passed"
 
     wallet-sdk-pkg:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout
