@@ -9,63 +9,63 @@ import {
 } from '@canton-network/core-types'
 
 const userUrl = z.url()
-export const providerSchema = z.strictObject({
+export const providerSchema = z.object({
     id: z.string().min(1),
     version: z.string().optional(),
     providerType: z.enum(['browser', 'desktop', 'mobile', 'remote']),
     url: z.string().optional(),
     userUrl: userUrl.optional(),
 })
-export const connectResultSchema = z.strictObject({
+export const connectResultSchema = z.object({
     isConnected: z.boolean(),
     isNetworkConnected: z.boolean(),
     reason: z.string().optional(),
     networkReason: z.string().optional(),
     userUrl: userUrl.optional(),
 })
-export const networkSchema = z.strictObject({
+export const networkSchema = z.object({
     networkId: z.string().min(1),
     ledgerApi: z.url().optional(),
     accessToken: z.string().optional(),
 })
-export const statusEventSchema = z.strictObject({
+export const statusEventSchema = z.object({
     provider: providerSchema,
     connection: connectResultSchema,
     network: networkSchema.optional(),
     session: z
-        .strictObject({
+        .object({
             accessToken: z.string().min(1),
             userId: z.string().min(1),
         })
         .optional(),
 })
-export const signMessageResultSchema = z.strictObject({
+export const signMessageResultSchema = z.object({
     signature: z.string().min(1),
 })
 
 const commandId = z.string().min(1)
 export const txChangedEventSchema = z.discriminatedUnion('status', [
-    z.strictObject({ status: z.literal('pending'), commandId }),
-    z.strictObject({
+    z.object({ status: z.literal('pending'), commandId }),
+    z.object({
         status: z.literal('signed'),
         commandId,
-        payload: z.strictObject({
+        payload: z.object({
             signature: z.string().min(1),
             signedBy: z.string().min(1),
             party: z.string().min(1),
         }),
     }),
-    z.strictObject({
+    z.object({
         status: z.literal('executed'),
         commandId,
-        payload: z.strictObject({
+        payload: z.object({
             updateId: z.string().min(1),
             completionOffset: z.number().int(),
         }),
     }),
-    z.strictObject({ status: z.literal('failed'), commandId }),
+    z.object({ status: z.literal('failed'), commandId }),
 ])
-export const walletSchema = z.strictObject({
+export const walletSchema = z.object({
     primary: z.boolean(),
     partyId: z.string().min(1),
     status: z.enum(['initialized', 'allocated', 'removed']),
@@ -81,6 +81,7 @@ export const walletSchema = z.strictObject({
 })
 
 export function describeError(error: unknown): string {
+    if (error instanceof z.ZodError) return z.prettifyError(error)
     if (error instanceof Error) return error.message
     return JSON.stringify(error, Object.getOwnPropertyNames(error))
 }
