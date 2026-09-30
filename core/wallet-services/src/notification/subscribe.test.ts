@@ -20,7 +20,7 @@ describe('subscribeNotifications', () => {
     let sink: ReturnType<typeof fakeSink>
 
     beforeEach(() => {
-        service = new NotificationService({ debug: vi.fn() })
+        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
         sink = fakeSink()
     })
 
@@ -118,6 +118,22 @@ describe('subscribeNotifications', () => {
 
         // unsubscribing after a logout teardown is a no-op
         expect(() => unsubscribe()).not.toThrow()
+    })
+
+    it('keeps delivering to other subscribers when one sink fails', () => {
+        const otherSink = fakeSink()
+        sink.send.mockImplementation(() => {
+            throw new Error('write failed')
+        })
+        subscribeNotifications(service, subscriber, sink)
+        subscribeNotifications(service, subscriber, otherSink)
+
+        expect(() =>
+            service.getNotifier('session-1').emit('txChanged', { id: 1 })
+        ).not.toThrow()
+
+        expect(sink.send).toHaveBeenCalledTimes(1)
+        expect(otherSink.send).toHaveBeenCalledWith('txChanged', [{ id: 1 }])
     })
 
     it('closes every subscriber of the session on logout', () => {

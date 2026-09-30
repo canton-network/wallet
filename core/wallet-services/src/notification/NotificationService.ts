@@ -23,6 +23,7 @@ export interface Notifier {
  */
 export interface NotificationLogger {
     debug(obj: object, msg: string): void
+    error(obj: object, msg: string): void
 }
 
 export interface INotificationService {
@@ -37,6 +38,11 @@ export interface INotificationService {
  * - `removeListener` removes the most recently added matching listener
  * - listeners added/removed during an emit do not affect that emit
  * - `emit` returns whether any listener was registered for the event
+ *
+ * If a listener throws, `emit` logs the error and calls the remaining
+ * listeners. Node's EventEmitter would stop and rethrow instead. This way one
+ * client with a broken transport doesn't stop other clients from getting the
+ * event, and the error doesn't reach the code that called `emit`.
  */
 class LoggingNotifier implements Notifier {
     private listeners: Map<string, NotificationListener[]> = new Map()
@@ -67,7 +73,14 @@ class LoggingNotifier implements Notifier {
         }
 
         for (const listener of [...listeners]) {
-            listener(...args)
+            try {
+                listener(...args)
+            } catch (err) {
+                this.logger.error(
+                    { event, err },
+                    `Notifier listener failed for event: ${event} for ${this.notifierId}`
+                )
+            }
         }
         return true
     }
