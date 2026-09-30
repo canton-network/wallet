@@ -1,53 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect } from '@canton-network/core-wallet-test-utils'
+import {
+    test,
+    expect,
+    type WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
 import {
     createPingDappWalletGateway,
     DAPP_URL,
     expectDappConnected,
+    expectDappDisconnected,
     GATEWAY_NAME,
     SELF_ISSUED_NETWORK,
 } from './ping-test-helpers.js'
 
-test('self-issued onboarding creates an authentication party and executes a ping', async ({
-    page: dappPage,
-}: {
-    page: Page
-}) => {
-    const wg = createPingDappWalletGateway(dappPage)
-    const username = `self-issued-${Date.now()}`
-    const partyHint = `auth-${Date.now()}`
-
-    await test.step('open the ping dApp', async () => {
-        await dappPage.goto(DAPP_URL)
-        await expect(dappPage).toHaveTitle(/Example dApp/)
-    })
-
-    await wg.connectToSelfIssuedNetwork({
-        network: SELF_ISSUED_NETWORK,
-        username,
-    })
-
-    const partyId = await wg.submitSelfIssuedOnboarding({
-        expectedNetwork: SELF_ISSUED_NETWORK,
-        partyHint,
-        signingProvider: 'wallet-kernel',
-    })
-
-    await expectDappConnected(dappPage, GATEWAY_NAME)
-
-    await wg.setPrimaryWallet(partyId)
-
-    await test.step('the dApp lists the authentication party under Accounts', async () => {
-        await dappPage.getByRole('button', { name: 'Accounts' }).click()
-        await expect(
-            dappPage.getByText(`${partyHint}::`).filter({ visible: true }),
-            `the Accounts tab should list ${partyHint}`
-        ).toHaveCount(1)
-    })
-
+async function executePing(wg: WalletGateway, dappPage: Page): Promise<void> {
     const { commandId } =
         await test.step('create a Ping contract and approve it in the wallet', async () => {
             await dappPage
@@ -93,4 +62,71 @@ test('self-issued onboarding creates an authentication party and executes a ping
     await test.step('the wallet lists the transaction as executed', async () => {
         await wg.expectActivityWithStatus(commandId, 'executed')
     })
+}
+
+test('self-issued onboarding creates an authentication party, executes a ping, then reconnects as that user and executes another', async ({
+    page: dappPage,
+}: {
+    page: Page
+}) => {
+    const wg = createPingDappWalletGateway(dappPage)
+    const username = `self-issued-${Date.now()}`
+    const partyHint = `auth-${Date.now()}`
+
+    await test.step('open the ping dApp', async () => {
+        await dappPage.goto(DAPP_URL)
+        await expect(dappPage).toHaveTitle(/Example dApp/)
+    })
+
+    await wg.connectToSelfIssuedNetwork({
+        network: SELF_ISSUED_NETWORK,
+        username,
+    })
+
+    const partyId = await wg.submitSelfIssuedOnboarding({
+        expectedNetwork: SELF_ISSUED_NETWORK,
+        partyHint,
+        signingProvider: 'wallet-kernel',
+    })
+
+    await expectDappConnected(dappPage, GATEWAY_NAME)
+
+    await wg.setPrimaryWallet(partyId)
+
+    await test.step('the dApp lists the authentication party under Accounts', async () => {
+        await dappPage.getByRole('button', { name: 'Accounts' }).click()
+        await expect(
+            dappPage.getByText(`${partyHint}::`).filter({ visible: true }),
+            `the Accounts tab should list ${partyHint}`
+        ).toHaveCount(1)
+    })
+
+    await executePing(wg, dappPage)
+
+    await test.step('logging out ends the session', async () => {
+        await wg.logoutFromPopup()
+        await expectDappDisconnected(dappPage)
+    })
+
+    await wg.connectToSelfIssuedNetwork({
+        network: SELF_ISSUED_NETWORK,
+        username,
+    })
+
+    await wg.selectSelfIssuedAuthenticationParty({
+        expectedNetwork: SELF_ISSUED_NETWORK,
+        partyId,
+    })
+
+    await expectDappConnected(dappPage, GATEWAY_NAME)
+
+    await test.step('the dApp lists the existing authentication party under Accounts', async () => {
+        await dappPage.getByRole('button', { name: 'Accounts' }).click()
+        await expect(
+            dappPage.getByText(partyId).filter({ visible: true }),
+            `the Accounts tab should list ${partyId}`
+        ).toHaveCount(1)
+    })
+
+    await executePing(wg, dappPage)
 })

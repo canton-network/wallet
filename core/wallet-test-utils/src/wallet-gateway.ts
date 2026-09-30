@@ -207,20 +207,14 @@ export class WalletGateway {
             })
             await confirmConnectButton.click()
 
-            // TODO make the check more generic so we can use this method for both onboarding and select wallet flows and handle differences with other methods
             await expect(
-                popup.getByRole('heading', {
-                    name: 'Create authentication party',
-                }),
-                'self-issued login should open the create auth party form'
-            ).toBeVisible()
-            const form = popup.locator('wg-wallet-create-form')
+                popup,
+                'self-issued login should open authentication-party onboarding'
+            ).toHaveURL(/\/onboarding\/?/)
             await expect(
-                form,
-                'a new self-issued user should see the party creation form'
-            ).toBeVisible()
-            await expect(form.getByLabel('Party ID Hint')).toBeVisible()
-            await expect(form.getByLabel('Signing Provider')).toBeVisible()
+                popup.getByText('No onboarding session found'),
+                'onboarding should have a session from the login step'
+            ).toHaveCount(0)
         })
     }
 
@@ -231,7 +225,15 @@ export class WalletGateway {
     }): Promise<string> {
         return test.step(`wallet gateway: submit self-issued onboarding for ${args.partyHint}`, async () => {
             const popup = await this.page()
+            await expect(
+                popup.getByRole('heading', {
+                    name: 'Create authentication party',
+                }),
+                'a new self-issued user should be asked to create an authentication party'
+            ).toBeVisible()
             const form = popup.locator('wg-wallet-create-form')
+            await expect(form.getByLabel('Party ID Hint')).toBeVisible()
+            await expect(form.getByLabel('Signing Provider')).toBeVisible()
             await form.getByLabel('Party ID Hint').fill(args.partyHint)
             await form
                 .getByLabel('Signing Provider')
@@ -256,6 +258,40 @@ export class WalletGateway {
                 throw new Error(`did not find partyID for ${args.partyHint}`)
             }
             return partyId
+        })
+    }
+
+    async selectSelfIssuedAuthenticationParty(args: {
+        expectedNetwork: string
+        partyId: string
+    }): Promise<void> {
+        await test.step(`wallet gateway: select authentication party ${args.partyId}`, async () => {
+            const popup = await this.page()
+            await expect(
+                popup.getByRole('heading', {
+                    name: 'Connect authentication party',
+                }),
+                'an existing self-issued user should choose a stored authentication party'
+            ).toBeVisible()
+            await expect(
+                popup.getByText(
+                    'Choose the party that authenticates this account.'
+                )
+            ).toBeVisible()
+
+            const wallet = popup.locator(
+                `wg-wallet-card[party-id="${args.partyId}"]`
+            )
+            await expect(
+                wallet,
+                `onboarding should list the stored party ${args.partyId}`
+            ).toBeVisible()
+            await wallet.getByRole('button', { name: 'Select' }).click()
+
+            await expect(
+                popup.getByTestId('network-status-connected'),
+                `the wallet gateway should report itself connected to ${args.expectedNetwork}`
+            ).toBeVisible()
         })
     }
 
