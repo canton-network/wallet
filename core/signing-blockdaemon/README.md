@@ -12,7 +12,7 @@ pnpm add @canton-network/core-signing-blockdaemon
 
 ## Usage
 
-The `BlockdaemonSigningDriver` is designed to be used within the Wallet Gateway's signing architecture. It requires a configuration object containing the `baseUrl` and `apiKey` for the Blockdaemon service.
+The `BlockdaemonSigningDriver` is designed to be used within the Wallet Gateway's signing architecture. It requires a configuration object containing the `baseUrl` and `apiKey` for the Blockdaemon service. `caip2` selects the Canton network.
 
 ### Initialization
 
@@ -24,6 +24,9 @@ import BlockdaemonSigningDriver, {
 const config: BlockdaemonConfig = {
     baseUrl: 'https://api.blockdaemon.com/...', // Replace with actual Blockdaemon API URL
     apiKey: 'your-api-key',
+    // Optional. One of 'canton:devnet' | 'canton:testnet' | 'canton:mainnet'.
+    // Omitted values stay at the client default, 'canton:devnet'.
+    caip2: 'canton:testnet',
 }
 
 const driver = new BlockdaemonSigningDriver(config)
@@ -61,10 +64,11 @@ signingController.registerDriver(driver)
 
 The driver accepts a `BlockdaemonConfig` object:
 
-| Property  | Type     | Description                                   |
-| :-------- | :------- | :-------------------------------------------- |
-| `baseUrl` | `string` | The base URL for the Blockdaemon Signing API. |
-| `apiKey`  | `string` | The API key for authentication.               |
+| Property  | Type          | Description                                                                                                                          |
+| :-------- | :------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
+| `baseUrl` | `string`      | The base URL for the Blockdaemon Signing API.                                                                                        |
+| `apiKey`  | `string`      | The API key for authentication.                                                                                                      |
+| `caip2`   | `CantonCaip2` | Canton network sent as `caip2` on each request. `canton:devnet`, `canton:testnet`, or `canton:mainnet`. Defaults to `canton:devnet`. |
 
 ### Wallet Gateway Configuration
 
@@ -72,11 +76,15 @@ When running the Wallet Gateway (Remote), the Blockdaemon signing driver is conf
 
 - `BLOCKDAEMON_API_URL`: The base URL for the Blockdaemon API. Defaults to `http://localhost:5080/api/cwp/canton` if not set.
 - `BLOCKDAEMON_API_KEY`: The API key for authenticating with Blockdaemon.
+- `BLOCKDAEMON_CAIP2`: Canton network for the driver (`canton:devnet`, `canton:testnet`, or `canton:mainnet`). The gateway uses `canton:testnet` when this variable is unset. Omitting `caip2` from `BlockdaemonConfig` leaves the SDK client on `canton:devnet`.
 
 Example usage:
 
 ```bash
-BLOCKDAEMON_API_URL="https://api.blockdaemon.com/..." BLOCKDAEMON_API_KEY="your-api-key" pnpm start
+BLOCKDAEMON_API_URL="https://api.blockdaemon.com/..." \
+BLOCKDAEMON_API_KEY="your-api-key" \
+BLOCKDAEMON_CAIP2="canton:testnet" \
+pnpm start
 ```
 
 ## License

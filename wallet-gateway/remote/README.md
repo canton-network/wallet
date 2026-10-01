@@ -63,12 +63,13 @@ The JSON-RPC API specs from `api-specs/` are generated into strongly-typed metho
 
 # Blockdaemon
 
-1. Create a system user in the Blockdaemon dashboard and save the API key displayed after successful creation.
+1. Create a system user in the Blockdaemon dashboard and save the API key displayed after successful creation. See [`@canton-network/core-signing-blockdaemon`](../../core/signing-blockdaemon/README.md).
 
 2. set the environment variables
 
 - `BLOCKDAEMON_API_URL` - The base URL for the Blockdaemon API
 - `BLOCKDAEMON_API_KEY` - Your Blockdaemon API key
+- `BLOCKDAEMON_CAIP2` - Canton network (`canton:devnet`, `canton:testnet`, or `canton:mainnet`). Defaults to `canton:testnet` when unset.
 
 ## Securosys
 
