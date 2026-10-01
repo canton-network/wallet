@@ -49,7 +49,7 @@ import {
     EMPTY_META,
     type ExerciseCommand,
     type GenericTokenStandardClient,
-    type InstrumentInfo,
+    type AssetBody,
     type JsActiveContractEntryResponse,
     type JsGetActiveContractsResponse,
     type JsGetUpdateResponse,
@@ -65,31 +65,6 @@ import {
 
 function isApiVersion(v: string): v is ApiVersion {
     return (SUPPORTED_VERSIONS as readonly string[]).includes(v)
-}
-
-export interface AssetCapabilities {
-    holding: SupportedVersions
-    transferInstruction: SupportedVersions
-    allocation: SupportedVersions
-    allocationInstruction: SupportedVersions
-    allocationRequest: SupportedVersions
-}
-
-const KEY_MAPPING: Record<string, keyof AssetCapabilities> = {
-    holding: 'holding',
-    'transfer-instruction': 'transferInstruction',
-    allocation: 'allocation',
-    'allocation-instruction': 'allocationInstruction',
-    'allocation-request': 'allocationRequest',
-}
-
-export type AssetBody = {
-    id: string
-    displayName: string
-    symbol: string
-    registryUrl: URL
-    admin: PartyId
-    capabilities: AssetCapabilities
 }
 
 export function resolveCapabilities(opts: {

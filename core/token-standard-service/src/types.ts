@@ -72,11 +72,11 @@ export const KEY_MAPPING: Record<string, keyof AssetCapabilities> = {
     'allocation-request': 'allocationRequest',
 }
 
-export type InstrumentInfo = {
+export type AssetBody = {
     id: string
     displayName: string
     symbol: string
-    registryUrl: string
+    registryUrl: URL
     admin: PartyId
     capabilities: AssetCapabilities
 }
