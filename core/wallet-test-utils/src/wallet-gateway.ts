@@ -50,13 +50,18 @@ export type ActivityStatus =
 // but on local it accumulates quickly.
 const MAX_PAGES_TO_SEARCH = 50
 
-// TODO is it possible to take it from some type that would automatically adjust to what signing drivers we have
 export type SigningProviderName =
-    'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' | 'fireblocks'
+    | 'participant'
+    | 'wallet-kernel'
+    | 'blockdaemon'
+    | 'dfns'
+    | 'fireblocks'
+    | 'securosys'
+    | 'bitgo'
 
-export type ExternalSigningProvider = Extract<
+export type ExternalSigningProvider = Omit<
     SigningProviderName,
-    'blockdaemon' | 'dfns' | 'fireblocks'
+    'participant' | 'wallet-kernel'
 >
 
 // isPopup: true - WG opened in popup by dApp
