@@ -189,7 +189,7 @@ export const dappController = (
                             commandId,
                             actAs,
                         },
-                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V2',
+                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
                     })
                 )
 
