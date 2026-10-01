@@ -242,6 +242,4 @@ async function runRelease(dryRun: boolean, groups: string[]): Promise<void> {
 
     const ghToken = (await cmdCapture('gh auth token')).trim()
     await cmd(`GITHUB_TOKEN=${ghToken} ${releaseCmd}`)
-
-    await cmd(releaseCmd)
 }
