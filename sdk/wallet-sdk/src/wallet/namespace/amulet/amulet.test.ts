@@ -129,7 +129,7 @@ describe('AmuletNamespace', () => {
                 new Decimal('10000').toFixed(10),
                 config.registry.admin,
                 config.registry.id,
-                config.registry.registryUrl.toString()
+                config.registry.registryUrl
             )
             expect(result).toStrictEqual([{ ExerciseCommand: tapCommand }, []])
         })

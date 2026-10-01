@@ -67,6 +67,7 @@ vi.mock('@canton-network/core-splice-client', async (importOriginal) => {
 
 vi.mock('@canton-network/core-token-standard-service', () => ({
     TokenStandardService,
+    resolveCapabilities: vi.fn(),
 }))
 
 vi.mock('@canton-network/core-amulet-service', () => ({

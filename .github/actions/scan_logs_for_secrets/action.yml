@@ -1,0 +1,69 @@
+name: Scan logs for secrets
+description: >
+    Scan collected CI logs for leaked credentials before they are uploaded as
+    workflow artifacts. Artifacts of a public repository can be downloaded by
+    anyone, so a credential printed into a log becomes public the moment the log
+    is uploaded, and deleting it afterwards does not undo the exposure. Fails the
+    job when something is found, so that the value is removed at the source
+    instead of being published on every subsequent run.
+
+inputs:
+    path:
+        description: 'Log file, or directory containing log files, to scan.'
+        required: true
+
+runs:
+    using: composite
+    steps:
+        - name: Install gitleaks
+          shell: bash
+          env:
+              # Pinned by version and checksum: a release asset replaced upstream
+              # must not silently end up being executed on the runner.
+              GITLEAKS_VERSION: '8.30.1'
+              GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
+          run: |
+              set -euo pipefail
+
+              INSTALL_DIR="${RUNNER_TEMP}/gitleaks"
+
+              # A job may collect logs at more than one point, so only download once.
+              if [[ ! -x "${INSTALL_DIR}/gitleaks" ]]; then
+                  mkdir -p "${INSTALL_DIR}"
+                  TARBALL="${INSTALL_DIR}/gitleaks.tar.gz"
+
+                  curl --silent --show-error --location --retry 3 \
+                      "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+                      --output "${TARBALL}"
+
+                  echo "${GITLEAKS_SHA256}  ${TARBALL}" | sha256sum --check --status
+
+                  tar -xzf "${TARBALL}" -C "${INSTALL_DIR}" gitleaks
+              fi
+
+              echo "${INSTALL_DIR}" >> "${GITHUB_PATH}"
+
+        - name: Scan ${{ inputs.path }} for secrets
+          shell: bash
+          env:
+              SCAN_PATH: ${{ inputs.path }}
+          run: |
+              set -euo pipefail
+
+              # Log collection runs conditionally, so the target legitimately may not
+              # exist. gitleaks exits 1 on a missing path just like it does on a
+              # finding, which would fail the job for the wrong reason.
+              if [[ ! -e "${SCAN_PATH}" ]]; then
+                  echo "::notice::${SCAN_PATH} does not exist, nothing to scan."
+                  exit 0
+              fi
+
+              # --redact keeps the matched value out of the job output, which is public
+              # on this repository; the finding still reports file, line and rule, which
+              # is what is needed to locate the offending code.
+              if gitleaks dir "${SCAN_PATH}" --redact --verbose --no-banner --no-color; then
+                  echo "No secrets found in ${SCAN_PATH}."
+              else
+                  echo "::error::Potential credentials found in ${SCAN_PATH}; the logs were not uploaded. Remove the value at the source (or redact it in the logger) rather than ignoring this check."
+                  exit 1
+              fi

@@ -246,7 +246,7 @@ export abstract class AmuletServiceBase {
         amount: string,
         instrumentAdmin: string, // TODO (#907): replace with registry call
         instrumentId: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const now = new Date()
         const tomorrow = new Date(now)
