@@ -88,9 +88,23 @@ export class DappSDK {
     private dynamicAdapterIds = new Set<string>()
     private configuredAdapters: DappSDKConnectOptions | undefined
 
-    constructor(options?: { walletPicker?: WalletPickerFn | undefined }) {
+    constructor(options?: {
+        walletPicker?: WalletPickerFn | undefined
+        /**
+         * Extra CSS applied to the default wallet picker popup (e.g. to
+         * override the `--wg-theme-*` custom properties for a custom theme).
+         * Ignored if a custom `walletPicker` is supplied instead.
+         */
+        walletPickerStylesheet?: string | undefined
+    }) {
         this.walletPicker =
-            options?.walletPicker ?? (pickWallet as WalletPickerFn)
+            options?.walletPicker ??
+            ((entries: WalletPickerEntry[]) =>
+                pickWallet(entries, {
+                    ...(options?.walletPickerStylesheet !== undefined
+                        ? { stylesheet: options.walletPickerStylesheet }
+                        : {}),
+                }))
     }
 
     private async registerAdapters(
