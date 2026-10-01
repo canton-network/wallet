@@ -111,7 +111,7 @@ const testTokenV2CompatTarget = findPackageDirByPrefix(
 )
 
 if (testTokenV2CompatTarget) {
-    allDamlJsPackages[TEST_TOKEN_V2_COMPAT_ALIAS] = testTokenCompatTarget
+    allDamlJsPackages[TEST_TOKEN_V2_COMPAT_ALIAS] = testTokenV2CompatTarget
 }
 
 function buildPathsMap(packageDirs) {
