@@ -2151,6 +2151,9 @@ importers:
       '@rollup/plugin-typescript':
         specifier: 'catalog:'
         version: 12.3.0(rollup@4.63.4)(tslib@2.8.1)(typescript@5.9.3)
+      playwright:
+        specifier: 'catalog:'
+        version: 1.63.0
       rollup:
         specifier: 'catalog:'
         version: 4.63.4
