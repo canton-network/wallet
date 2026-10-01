@@ -248,7 +248,8 @@ describe('Conformance suite', () => {
 
     function fakeWallet(
         connected = false,
-        signMessage: (message: string) => string = signWithWallet
+        signMessage: (message: string) => string = signWithWallet,
+        signedParty: string | null = fakeAccount.partyId
     ) {
         let resolveRequest: (value: unknown) => void
         let rejectRequest: (error: unknown) => void
@@ -324,8 +325,19 @@ describe('Conformance suite', () => {
                         ),
                     })
                 if (method === 'prepareExecute') {
+                    const { commandId } = params as { commandId: string }
+                    if (signedParty !== null)
+                        provider.emit('txChanged', {
+                            commandId,
+                            status: 'signed',
+                            payload: {
+                                signature: 'tx-signature',
+                                signedBy: fakeAccount.namespace,
+                                party: signedParty,
+                            },
+                        })
                     provider.emit('txChanged', {
-                        commandId: (params as { commandId: string }).commandId,
+                        commandId,
                         status: 'executed',
                         payload: { updateId: 'update', completionOffset: 1 },
                     })
@@ -443,6 +455,28 @@ describe('Conformance suite', () => {
                 (test) => test.testId === 'signMessage.approve'
             )?.message
         ).toMatch(/does not verify against the account public key/)
+    })
+
+    it.each([
+        ['no signed event', null, /No signed txChanged event/],
+        ['a foreign party', 'other-party', /names party other-party/],
+    ])('an approved transaction with %s fails', async (_, party, message) => {
+        const { wrapper } = fakeWallet(true, signWithWallet, party)
+        const report = await runSuite({
+            config: {
+                ...defaultConfig,
+                disabledTests: cases
+                    .map((testCase) => testCase.id)
+                    .filter((id) => id !== 'prepareExecute.approve'),
+            },
+            provider: wrapper,
+        })
+        expect(report.results.summary).toMatchObject({ passed: 0, failed: 1 })
+        expect(
+            report.results.tests.find(
+                (test) => test.testId === 'prepareExecute.approve'
+            )?.message
+        ).toMatch(message)
     })
 
     it.each([

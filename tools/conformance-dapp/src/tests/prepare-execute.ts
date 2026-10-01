@@ -8,10 +8,11 @@ import {
     txChangedEventSchema,
 } from './helpers.ts'
 import type { Case, RequestArgs, TestRuntime } from './types.ts'
-import type {
-    PrepareExecuteParams,
-    TxChangedEvent,
-} from '@canton-network/dapp-sdk'
+import type { PrepareExecuteParams } from '@canton-network/dapp-sdk'
+import type { z } from 'zod'
+
+type TxEvent = z.infer<typeof txChangedEventSchema>
+type SignedTxEvent = Extract<TxEvent, { status: 'signed' }>
 
 const category = 'Prepare & execute'
 
@@ -54,7 +55,10 @@ export const cases: Case[] = [
         category,
         run: async (runtime) => {
             await runtime.ensureConnected()
-            const params = await pingParams(runtime)
+            const account = await runtime.request({
+                method: 'getPrimaryAccount',
+            })
+            const params = pingParams(account.partyId)
             const tx = watchTransaction(runtime, params.commandId)
             await expectRejection(
                 runtime.runInteraction('reject', {
@@ -63,7 +67,8 @@ export const cases: Case[] = [
                 })
             )
             // A wallet need not emit anything after a rejection; the race only surfaces a malformed event.
-            const statuses = await Promise.race([tx.final, tx.statuses])
+            const events = await Promise.race([tx.final, tx.events])
+            const statuses = events.map((event) => event.status)
             requireCondition(
                 !statuses.includes('executed'),
                 'A rejected transaction was executed anyway'
@@ -80,14 +85,18 @@ export const cases: Case[] = [
         category,
         run: async (runtime) => {
             await runtime.ensureConnected()
-            const params = await pingParams(runtime)
+            const account = await runtime.request({
+                method: 'getPrimaryAccount',
+            })
+            const params = pingParams(account.partyId)
             const tx = watchTransaction(runtime, params.commandId)
             const result = await runtime.runInteraction('approve', {
                 method: 'prepareExecute',
                 params,
             })
             requireCondition(result === null, 'prepareExecute must return null')
-            const statuses = await tx.final
+            const events = await tx.final
+            const statuses = events.map((event) => event.status)
             const status = statuses.at(-1)
             requireCondition(
                 !statuses.includes('failed'),
@@ -97,12 +106,22 @@ export const cases: Case[] = [
                 status === 'executed',
                 `Expected an executed transaction, received ${status}`
             )
+            const signed = events.find(
+                (event): event is SignedTxEvent => event.status === 'signed'
+            )
+            requireCondition(
+                signed,
+                'No signed txChanged event was emitted before execution'
+            )
+            requireCondition(
+                signed.payload.party === account.partyId,
+                `Signed txChanged event names party ${signed.payload.party}, expected ${account.partyId}`
+            )
         },
     },
 ]
 
-async function pingParams(runtime: TestRuntime) {
-    const account = await runtime.request({ method: 'getPrimaryAccount' })
+function pingParams(partyId: string) {
     const commandId = crypto.randomUUID()
     return {
         commandId,
@@ -113,8 +132,8 @@ async function pingParams(runtime: TestRuntime) {
                         '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
                     createArguments: {
                         id: commandId,
-                        initiator: account.partyId,
-                        responder: account.partyId,
+                        initiator: partyId,
+                        responder: partyId,
                     },
                 },
             },
@@ -123,8 +142,8 @@ async function pingParams(runtime: TestRuntime) {
 }
 
 function watchTransaction(runtime: TestRuntime, commandId: string) {
-    const statuses: TxChangedEvent['status'][] = []
-    const final = new Promise<typeof statuses>((resolve, reject) => {
+    const events: TxEvent[] = []
+    const final = new Promise<typeof events>((resolve, reject) => {
         runtime.onEvent('txChanged', (value) => {
             const event = txChangedEventSchema.safeParse(value)
             if (event.success && event.data.commandId !== commandId) return
@@ -134,13 +153,13 @@ function watchTransaction(runtime: TestRuntime, commandId: string) {
                 result: value,
             })
             if (!event.success) return reject(event.error)
-            statuses.push(event.data.status)
+            events.push(event.data)
             if (
                 event.data.status === 'executed' ||
                 event.data.status === 'failed'
             )
-                resolve(statuses)
+                resolve(events)
         })
     })
-    return { final, statuses }
+    return { final, events }
 }
