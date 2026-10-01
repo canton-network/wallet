@@ -154,14 +154,13 @@ async function verifySelfIssuedToken(
         return undefined
     }
 
-    // Present once pawel/self-issued-onboarding lands `Wallet.isAuthParty`.
-    // if (isAuthParty(wallet) === false) {
-    //     logger.warn(
-    //         { userId, partyId },
-    //         'Wallet is not an auth party for self-issued tokens'
-    //     )
-    //     return undefined
-    // }
+    if (!wallet.isAuthParty) {
+        logger.warn(
+            { userId, partyId },
+            'Wallet is not an auth party for self-issued tokens'
+        )
+        return undefined
+    }
 
     let network
     try {
