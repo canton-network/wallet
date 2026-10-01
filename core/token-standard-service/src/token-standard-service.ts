@@ -27,6 +27,7 @@ import {
     Holding as HoldingV2,
     type OffLedger as OffLedgerV2,
     TRANSFER_FACTORY_INTERFACE_ID_V2,
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
 import { EventFilterBySetup } from '@canton-network/core-ledger-client-types'
 import type { ContractId, Logger, PartyId } from '@canton-network/core-types'
@@ -1572,6 +1573,36 @@ class TransferServiceV2 {
             choiceArgument: choiceArgs,
         }
         return [exercise, choiceContext.disclosedContracts]
+    }
+
+    async createInstructionChoiceAccept(
+        transferInstructionCid: string,
+        actors: PartyId[],
+        registryUrl: URL
+    ) {
+        const ctx = await this.core.getTokenStandardClientV2(registryUrl).post(
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept',
+            {
+                excludeDebugFields: true,
+            },
+            { path: { transferInstructionId: transferInstructionCid } }
+        )
+
+        return [
+            {
+                templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+                contractId: transferInstructionCid,
+                choice: 'accept', //TODO: double check choice name
+                choiceArgument: {
+                    actors,
+                    extraArgs: {
+                        context: ctx.choiceContextData,
+                        meta: EMPTY_META,
+                    },
+                },
+            },
+            ctx.disclosedContracts ?? [],
+        ]
     }
 }
 
