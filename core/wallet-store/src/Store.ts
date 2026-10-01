@@ -54,6 +54,7 @@ export interface Wallet {
     topologyTransactions?: string
     disabled?: boolean
     reason?: string
+    isAuthParty?: boolean
     rights: PartyLevelRight[]
     userId: string
     // hosted: [network]
@@ -82,6 +83,7 @@ export type UpdateWallet =
                 | 'signingProviderId'
                 | 'publicKey'
                 | 'namespace'
+                | 'isAuthParty'
             >
         >
 
@@ -91,7 +93,8 @@ export interface Session {
     id: string
     origin: string
     network: string
-    accessToken: string
+    /** Absent only while self-issued onboarding is in progress. */
+    accessToken?: string
     userId?: string
 }
 
@@ -205,6 +208,22 @@ export interface Store {
      * @returns A Promise that resolves when the session has been removed.
      */
     removeSession(accessToken: string): Promise<void>
+
+    /**
+     * Looks up a tokenless self-issued onboarding session by id without scoping
+     * to the authenticated user, because the session is what identifies the user.
+     * Returns undefined once the session has been upgraded with an access token.
+     */
+    getOnboardingSession(sessionId: string): Promise<Session | undefined>
+
+    /**
+     * Sets the access token on the authenticated user's tokenless onboarding session,
+     * keeping its id, and removes the user's other sessions for the same origin.
+     */
+    upgradeOnboardingSession(
+        sessionId: string,
+        accessToken: string
+    ): Promise<Session>
 
     // IDP methods
     getIdp(idpId: string): Promise<Idp>

@@ -33,6 +33,11 @@ export type IdentityProviderId = string
 export type AuthorizationCodeAuthMethod = 'authorization_code'
 export type Scope = string
 export type ClientId = string
+/**
+ *
+ * Bare participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods).
+ *
+ */
 export type Audience = string
 /**
  *
@@ -207,6 +212,24 @@ export type SigningProviderId = string
 export type KeyName = string
 /**
  *
+ * User id used while onboarding.
+ *
+ */
+export type Username = string
+/**
+ *
+ * The origin (dApp URL) that initiated this transaction request.
+ *
+ */
+export type Origin = string
+/**
+ *
+ * Onboarding session id required by the remaining self-issued onboarding methods.
+ *
+ */
+export type SessionId = string
+/**
+ *
  * The party ID corresponding to the wallet.
  *
  */
@@ -244,12 +267,6 @@ export type TransactionId = string
  *
  */
 export type MessageId = string
-/**
- *
- * The origin (dApp URL) that initiated this transaction request.
- *
- */
-export type Origin = string
 /**
  *
  * Limit of transactions to return.
@@ -347,6 +364,12 @@ export type Disabled = boolean
  *
  */
 export type Reason = string
+/**
+ *
+ * Whether the party authenticates the user with self-issued tokens.
+ *
+ */
+export type IsAuthParty = boolean
 export type PartyLevelRight = any
 /**
  *
@@ -372,8 +395,21 @@ export interface Wallet {
     topologyTransactions?: TopologyTransactions
     disabled?: Disabled
     reason?: Reason
+    isAuthParty?: IsAuthParty
     rights: Rights
 }
+/**
+ *
+ * Whether the ledger user already has a primary party or primary party authentication set.
+ *
+ */
+export type UserOnboarded = boolean
+/**
+ *
+ * Wallets stored for the user on the selected network that can be used for authentication.
+ *
+ */
+export type AuthPartyWallets = Wallet[]
 type AlwaysTrue = any
 /**
  *
@@ -613,6 +649,27 @@ export interface CreateWalletParams {
     signingProviderId: SigningProviderId
     keyName?: KeyName
 }
+export interface AddSelfIssuedSessionParams {
+    username: Username
+    networkId: NetworkId
+    origin: Origin
+}
+export interface GetSelfIssuedOnboardingParams {
+    sessionId: SessionId
+}
+export interface CreateSelfIssuedWalletParams {
+    sessionId: SessionId
+    partyHint: PartyHint
+    signingProviderId: SigningProviderId
+}
+export interface AllocateSelfIssuedWalletParams {
+    sessionId: SessionId
+    partyId: PartyId
+}
+export interface ConnectSelfIssuedSessionParams {
+    sessionId: SessionId
+    partyId: PartyId
+}
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
 }
@@ -692,6 +749,24 @@ export interface ListIdpsResult {
 }
 export interface CreateWalletResult {
     wallet: Wallet
+}
+export interface AddSelfIssuedSessionResult {
+    sessionId: SessionId
+}
+export interface GetSelfIssuedOnboardingResult {
+    userOnboarded: UserOnboarded
+    wallets: AuthPartyWallets
+}
+export interface CreateSelfIssuedWalletResult {
+    wallet: Wallet
+}
+export interface AllocateSelfIssuedWalletResult {
+    wallet: Wallet
+}
+export interface ConnectSelfIssuedSessionResult {
+    wallet: Wallet
+    accessToken: AccessToken
+    sessionId: SessionId
 }
 export interface AllocatePartyForWalletResult {
     wallet: Wallet
@@ -808,6 +883,21 @@ export type ListIdps = () => Promise<ListIdpsResult>
 export type CreateWallet = (
     params: CreateWalletParams
 ) => Promise<CreateWalletResult>
+export type AddSelfIssuedSession = (
+    params: AddSelfIssuedSessionParams
+) => Promise<AddSelfIssuedSessionResult>
+export type GetSelfIssuedOnboarding = (
+    params: GetSelfIssuedOnboardingParams
+) => Promise<GetSelfIssuedOnboardingResult>
+export type CreateSelfIssuedWallet = (
+    params: CreateSelfIssuedWalletParams
+) => Promise<CreateSelfIssuedWalletResult>
+export type AllocateSelfIssuedWallet = (
+    params: AllocateSelfIssuedWalletParams
+) => Promise<AllocateSelfIssuedWalletResult>
+export type ConnectSelfIssuedSession = (
+    params: ConnectSelfIssuedSessionParams
+) => Promise<ConnectSelfIssuedSessionResult>
 export type AllocatePartyForWallet = (
     params: AllocatePartyForWalletParams
 ) => Promise<AllocatePartyForWalletResult>
@@ -913,6 +1003,31 @@ export type RpcTypes = {
     createWallet: {
         params: Params<CreateWallet>
         result: Result<CreateWallet>
+    }
+
+    addSelfIssuedSession: {
+        params: Params<AddSelfIssuedSession>
+        result: Result<AddSelfIssuedSession>
+    }
+
+    getSelfIssuedOnboarding: {
+        params: Params<GetSelfIssuedOnboarding>
+        result: Result<GetSelfIssuedOnboarding>
+    }
+
+    createSelfIssuedWallet: {
+        params: Params<CreateSelfIssuedWallet>
+        result: Result<CreateSelfIssuedWallet>
+    }
+
+    allocateSelfIssuedWallet: {
+        params: Params<AllocateSelfIssuedWallet>
+        result: Result<AllocateSelfIssuedWallet>
+    }
+
+    connectSelfIssuedSession: {
+        params: Params<ConnectSelfIssuedSession>
+        result: Result<ConnectSelfIssuedSession>
     }
 
     allocatePartyForWallet: {

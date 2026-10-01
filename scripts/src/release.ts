@@ -103,6 +103,7 @@ const options = [
     'dapp-sdk',
     'wallet-gateway',
     'example-portfolio',
+    'tool-conformance',
 ]
 
 program

@@ -12,8 +12,12 @@ import type { Store } from '@canton-network/core-wallet-store'
 
 describe('sessionHandler', () => {
     const getSession = vi.fn()
+    const getOnboardingSession = vi.fn()
     const withAuthContext = vi.fn(() => ({ getSession }))
-    const store = { withAuthContext } as unknown as Store & AuthAware<Store>
+    const store = {
+        withAuthContext,
+        getOnboardingSession,
+    } as unknown as Store & AuthAware<Store>
     const logger = pino({ level: 'silent' }, sink())
 
     const allowedPaths = {
@@ -32,6 +36,7 @@ describe('sessionHandler', () => {
 
     beforeEach(() => {
         getSession.mockReset()
+        getOnboardingSession.mockReset()
         withAuthContext.mockClear()
         withAuthContext.mockReturnValue({ getSession })
         next = vi.fn() as NextFunction
@@ -43,7 +48,11 @@ describe('sessionHandler', () => {
         partial: Partial<Request> & {
             method?: string
             baseUrl?: string
-            body?: { method?: string; id?: number }
+            body?: {
+                method?: string
+                id?: number
+                params?: Record<string, unknown>
+            }
             authContext?: AuthContext
         }
     ): Request {
@@ -184,6 +193,78 @@ describe('sessionHandler', () => {
 
         expect(withAuthContext).toHaveBeenCalledWith(authContext)
         expect(status).toHaveBeenCalledWith(401)
+    })
+
+    describe('onboarding methods', () => {
+        const onboardingPaths = {
+            '/api/v0/user': ['createSelfIssuedWallet'],
+        }
+
+        it('sets a tokenless auth context from the onboarding session', async () => {
+            getOnboardingSession.mockResolvedValue({
+                id: 'onboarding-1',
+                network: 'network1',
+                origin: 'https://app.example',
+                userId: 'alice',
+            })
+            const req = makeReq({
+                authContext: undefined,
+                body: {
+                    method: 'createSelfIssuedWallet',
+                    params: { sessionId: 'onboarding-1' },
+                },
+            })
+            const middleware = sessionHandler(
+                store,
+                allowedPaths,
+                logger,
+                onboardingPaths
+            )
+
+            await middleware(req, makeRes(), next)
+
+            expect(getOnboardingSession).toHaveBeenCalledWith('onboarding-1')
+            expect(req.authContext).toEqual({
+                userId: 'alice',
+                accessToken: '',
+                sessionId: 'onboarding-1',
+            })
+            expect(next).toHaveBeenCalledOnce()
+            expect(status).not.toHaveBeenCalled()
+        })
+
+        it.each([
+            ['is missing', undefined],
+            ['is unknown or already has a token', 'onboarding-1'],
+        ])('returns 401 when the session id %s', async (_, sessionId) => {
+            getOnboardingSession.mockResolvedValue(undefined)
+            const req = makeReq({
+                authContext: undefined,
+                body: {
+                    method: 'createSelfIssuedWallet',
+                    params: sessionId ? { sessionId } : {},
+                },
+            })
+            const middleware = sessionHandler(
+                store,
+                allowedPaths,
+                logger,
+                onboardingPaths
+            )
+
+            await middleware(req, makeRes(), next)
+
+            expect(next).not.toHaveBeenCalled()
+            expect(status).toHaveBeenCalledWith(401)
+            expect(json).toHaveBeenCalledWith({
+                jsonrpc: '2.0',
+                id: null,
+                error: {
+                    code: providerErrors.unauthorized().code,
+                    message: 'No onboarding session found',
+                },
+            })
+        })
     })
 
     it('requires a session when the RPC method is not on the path allow list', async () => {

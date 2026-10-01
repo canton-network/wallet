@@ -19,14 +19,28 @@ export default defineConfig({
         timeout: 15_000,
     },
     testDir: './tests',
+    /* Funds the validator and creates the per-worker ledger users. Runs once. */
+    globalSetup: './tests/global-setup.ts',
     /* Run tests in files in parallel */
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
     /* Retry on CI only */
     retries: process.env.CI ? 2 : 0,
-    /* Opt out of parallel tests on CI. */
-    workers: 1,
+    /*
+     * One spec file per worker (fullyParallel is false above).
+     *
+     * These tests mostly wait on the ledger instead of using CPU, so a couple
+     * running at once costs almost no extra CPU.
+     *
+     * Do not raise this without measuring. At 4 workers Canton alone takes 3
+     * cores and ledger waits double, which makes the run slower and flakier
+     * than at 2, and CI runners have 4 cores in total. PW_WORKERS overrides it.
+     *
+     * Only safe because each worker connects to the gateway as its own user and
+     * so does not share a primary wallet. See tests/utils.ts.
+     */
+    workers: Number(process.env.PW_WORKERS ?? 2),
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: 'html',
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

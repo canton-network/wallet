@@ -404,10 +404,140 @@ implementations.forEach(([name, StoreImpl]) => {
             }
             await store.setSession(session)
             const result = await store.getSession('test-access-token')
-            expect(result).toEqual(session)
+            expect(result).toEqual({
+                ...session,
+                userId: authContextMock.userId,
+            })
             await store.removeSession('test-access-token')
             const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
+        })
+
+        test('should resolve the current network from a tokenless session', async () => {
+            const network: Network = {
+                id: 'network1',
+                name: 'testnet',
+                description: 'Test Network',
+                identityProviderId: 'idp1',
+                ledgerApi: { baseUrl: 'http://api' },
+                auth: {
+                    method: 'authorization_code',
+                    clientId: 'cid',
+                    scope: 'scope',
+                    audience: 'aud',
+                },
+            }
+            const onboardingStore = new StoreInternal(
+                { idps: [oauthIdp()], networks: [network] },
+                getLogger('mock'),
+                {
+                    userId: authContextMock.userId,
+                    accessToken: '',
+                    sessionId: 'onboarding-session',
+                }
+            )
+            await onboardingStore.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: network.id,
+            })
+
+            await expect(onboardingStore.getCurrentNetwork()).resolves.toEqual(
+                network
+            )
+            await expect(
+                onboardingStore.getOnboardingSession('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    userId: authContextMock.userId,
+                })
+            )
+            await expect(
+                onboardingStore
+                    .withAuthContext({
+                        userId: authContextMock.userId,
+                        accessToken: '',
+                    })
+                    .getCurrentNetwork()
+            ).rejects.toThrow('No session found')
+        })
+
+        test('should not replace tokenless session on same origins', async () => {
+            await store.setSession({
+                id: 'onboarding-1',
+                origin: 'https://a.example',
+                network: 'network1',
+            })
+            await store.setSession({
+                id: 'onboarding-2',
+                origin: 'https://b.example',
+                network: 'network1',
+            })
+            await store.setSession({
+                id: 'onboarding-3',
+                origin: 'https://a.example',
+                network: 'network1',
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual([
+                'onboarding-1',
+                'onboarding-2',
+                'onboarding-3',
+            ])
+        })
+
+        test('should keep a tokenless session when a logged-in session is created at the same origin', async () => {
+            const baseSession = {
+                origin: 'https://example.com',
+                network: 'network1',
+            }
+            await store.setSession({
+                ...baseSession,
+                id: 'onboarding-session',
+            })
+            await store.setSession({
+                ...baseSession,
+                id: 'authenticated-session',
+                accessToken: authContextMock.accessToken,
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
+        })
+
+        test('should upgrade an onboarding session in place', async () => {
+            await store.setSession({
+                id: 'old-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'old-token',
+            })
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+            await expect(store.listSessions()).resolves.toHaveLength(2)
+
+            await store.upgradeOnboardingSession(
+                'onboarding-session',
+                'new-token'
+            )
+
+            await expect(store.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    accessToken: 'new-token',
+                }),
+            ])
+            await expect(store.getSession('new-token')).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
+            await expect(
+                store.upgradeOnboardingSession('onboarding-session', 'other')
+            ).rejects.toThrow('Onboarding session not found')
         })
 
         test('should add, list, get, update, and remove networks', async () => {

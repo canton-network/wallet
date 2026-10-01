@@ -1,0 +1,281 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+export interface paths {
+    '/registry/metadata/v1/info': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * @description Get information about the registry.
+         *     The response includes the standards supported by the registry.
+         */
+        get: operations['getRegistryInfo']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
+    '/registry/metadata/v1/instruments': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** @description List all instruments managed by this instrument admin. */
+        get: operations['listInstruments']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
+    '/registry/metadata/v1/instruments/{instrumentId}': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** @description Retrieve an instrument's metadata. */
+        get: operations['getInstrument']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
+}
+export type webhooks = Record<string, never>
+export interface components {
+    schemas: {
+        GetRegistryInfoResponse: {
+            /** @description The Daml party representing the registry app */
+            adminId: string
+            /** @description The token standard APIs supported by the registry. Note that this only includes the registry-wide APIs. Use the instrument lookup endpoints to see which APIs are supported for a given instrument */
+            supportedApis: components['schemas']['SupportedApis']
+        }
+        Instrument: {
+            /** @description The unique identifier assigned by the admin to the instrument. */
+            id: string
+            /** @description The display name for the instrument recommended by the instrument admin. This is not necessarily unique. */
+            name: string
+            /** @description The symbol for the instrument recommended by the instrument admin. This is not necessarily unique. */
+            symbol: string
+            /** @description Decimal encoded current total supply of the instrument. */
+            totalSupply?: string
+            /**
+             * Format: date-time
+             * @description The timestamp when the total supply was last computed.
+             */
+            totalSupplyAsOf?: string
+            /**
+             * Format: int8
+             * @description The number of decimal places used by the instrument.
+             *
+             *     Must be a number between 0 and 10, as the Daml interfaces represent holding amounts as
+             *     `Decimal` values, which use 10 decimal places and are precise for 38 digits.
+             *     Setting this to 0 means that the instrument can only be held in whole units.
+             *
+             *     This number SHOULD be used for display purposes in a wallet to decide how many
+             *     decimal places to show and accept when displaying or entering amounts.
+             * @default 10
+             */
+            decimals: number
+            /**
+             * @description Indicates whether the instrument is currently paused. A paused instrument cannot be
+             *     transferred or allocated.
+             * @default false
+             */
+            paused: boolean
+            pauseInfo?: components['schemas']['PauseInfo']
+            supportedApis: components['schemas']['SupportedApis']
+            /**
+             * @deprecated
+             * @description Informs wallets whether the instrument supports non-basic accounts
+             *     and the wallet should thus show input fields for both the account
+             *     provider and the account id in input forms for transfers and allocations.
+             *
+             *     Note that wallets should always show non-null account providers and
+             *     account ids when displaying transfers and allocations.
+             *
+             *     This property is deprecated in favor of the more fine-grained
+             *     `accountInputFieldsToShow` property.
+             * @default false
+             */
+            showAccountInputFields: boolean
+            /**
+             * @description Fine-grained control for account input field display in wallets.
+             *
+             *     If set, then wallets should only display the specified input
+             *     field(s) in transfer and allocation input forms
+             *     *independently* of the `showAccountInputFields` property.
+             *
+             *     Note that wallets should always show non-null account providers and
+             *     account ids when displaying transfers and allocations.
+             */
+            accountInputFieldsToShow?: components['schemas']['AccountInputFieldsToShow']
+        }
+        ListInstrumentsResponse: {
+            instruments: components['schemas']['Instrument'][]
+            /** @description The token for the next page of results, to be used as the lastInstrumentId for the next page. */
+            nextPageToken?: string
+        }
+        ErrorResponse: {
+            error: string
+        }
+        /**
+         * @description Map from token standard API name to the minor version of the API supported, e.g.,
+         *     splice-api-token-metadata-v1 -> 1 where the `1` corresponds to the minor version.
+         */
+        SupportedApis: {
+            [key: string]: number
+        }
+        /** @description Additional information about the instrument pause state. */
+        PauseInfo: {
+            /** @description Why the instrument is paused. */
+            reason?: string
+            /**
+             * Format: date-time
+             * @description Timestamp (exclusive) until which the instrument is paused, if known.
+             */
+            until?: string
+        }
+        /** @description Which account input field(s) wallets should show in forms. */
+        AccountInputFieldsToShow: components['schemas']['AccountInputFieldToShow'][]
+        /**
+         * @description Which single account input field wallets should show in forms.
+         * @enum {string}
+         */
+        AccountInputFieldToShow: 'provider' | 'accountId'
+    }
+    responses: {
+        /** @description bad request */
+        400: {
+            headers: {
+                [name: string]: unknown
+            }
+            content: {
+                'application/json': components['schemas']['ErrorResponse']
+            }
+        }
+        /** @description not found */
+        404: {
+            headers: {
+                [name: string]: unknown
+            }
+            content: {
+                'application/json': components['schemas']['ErrorResponse']
+            }
+        }
+        /** @description conflict */
+        409: {
+            headers: {
+                [name: string]: unknown
+            }
+            content: {
+                'application/json': components['schemas']['ErrorResponse']
+            }
+        }
+        /** @description Internal server error */
+        500: {
+            headers: {
+                [name: string]: unknown
+            }
+            content: {
+                'application/json': components['schemas']['ErrorResponse']
+            }
+        }
+    }
+    parameters: never
+    requestBodies: never
+    headers: never
+    pathItems: never
+}
+export type $defs = Record<string, never>
+export interface operations {
+    getRegistryInfo: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['GetRegistryInfoResponse']
+                }
+            }
+            404: components['responses']['404']
+            500: components['responses']['500']
+        }
+    }
+    listInstruments: {
+        parameters: {
+            query?: {
+                /** @description Number of instruments per page. */
+                pageSize?: number
+                /** @description The `nextPageToken` received from the response for the previous page. */
+                pageToken?: string
+            }
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['ListInstrumentsResponse']
+                }
+            }
+            404: components['responses']['404']
+            500: components['responses']['500']
+        }
+    }
+    getInstrument: {
+        parameters: {
+            query?: never
+            header?: never
+            path: {
+                instrumentId: string
+            }
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['Instrument']
+                }
+            }
+            404: components['responses']['404']
+            500: components['responses']['500']
+        }
+    }
+}
