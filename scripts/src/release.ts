@@ -9,9 +9,16 @@ import { confirm } from '@inquirer/prompts'
 import { select } from 'inquirer-select-pro'
 
 // This helper passes through the underlying command's input/output to console
-async function cmd(command: string): Promise<void> {
+async function cmd(
+    command: string,
+    envOverrides?: NodeJS.ProcessEnv
+): Promise<void> {
     const [bin, ...args] = command.split(' ')
-    const child = spawn(bin, args, { stdio: 'inherit', shell: true })
+    const child = spawn(bin, args, {
+        stdio: 'inherit',
+        shell: true,
+        env: { ...process.env, ...envOverrides },
+    })
 
     await new Promise<void>((resolve, reject) => {
         child.on('close', (code) => {
@@ -241,5 +248,5 @@ async function runRelease(dryRun: boolean, groups: string[]): Promise<void> {
     }
 
     const ghToken = (await cmdCapture('gh auth token')).trim()
-    await cmd(`GITHUB_TOKEN=${ghToken} ${releaseCmd}`)
+    await cmd(releaseCmd, { GITHUB_TOKEN: ghToken })
 }
