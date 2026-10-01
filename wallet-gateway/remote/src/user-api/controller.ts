@@ -953,6 +953,16 @@ export const userController = (
                 )
             }
             await store.removeMessageRaw(message.id)
+
+            const session = await store.getSession(authContext.accessToken)
+            if (session) {
+                notificationService
+                    .getNotifier(session.id)
+                    .emit('messageSignature', {
+                        status: 'failed',
+                        messageId: message.id,
+                    } satisfies MessageSignatureEvent)
+            }
             return null
         },
         execute: async (executeParams: ExecuteParams) => {
