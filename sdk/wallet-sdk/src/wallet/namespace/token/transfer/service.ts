@@ -76,12 +76,6 @@ export class TransferNamespace {
             new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
         )
 
-        if (!asset || asset === undefined) {
-            throw new Error(
-                `Asset with id ${params.instrumentId} not found in asset list for registry URL: ${params.registryUrl.toString()}`
-            )
-        }
-
         const [transferCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.transfer.createTransfer(
                 params.sender,
