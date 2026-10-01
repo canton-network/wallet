@@ -1848,6 +1848,9 @@ importers:
       '@canton-network/core-token-standard':
         specifier: 'catalog:'
         version: link:../token-standard
+      '@canton-network/core-token-standard-v2':
+        specifier: 'catalog:'
+        version: link:../token-standard-v2
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
@@ -3046,6 +3049,9 @@ importers:
       '@canton-network/core-token-standard':
         specifier: 'catalog:'
         version: link:../../core/token-standard
+      '@canton-network/core-token-standard-v2':
+        specifier: 'catalog:'
+        version: link:../../core/token-standard-v2
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../../core/types

@@ -27,6 +27,7 @@
     "dependencies": {
         "@canton-network/core-ledger-client-types": "catalog:",
         "@canton-network/core-token-standard": "catalog:",
+        "@canton-network/core-token-standard-v2": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
         "@canton-network/wallet-sdk": "catalog:",
