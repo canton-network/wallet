@@ -28,7 +28,13 @@ import {
     SignParams,
     type SignResult,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { UserId } from '@canton-network/core-wallet-dapp-rpc-client'
+import type {
+    TxChangedExecutedEvent,
+    TxChangedFailedEvent,
+    TxChangedPendingEvent,
+    TxChangedSignedEvent,
+    UserId,
+} from '@canton-network/core-wallet-dapp-rpc-client'
 import {
     ledgerPrepareParams,
     logDynamically,
@@ -315,7 +321,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        return this.applySigningResult(tx, signingResult)
+        return this.applySigningResult(tx, signingResult, wallet)
     }
 
     private async getSigningResult(
@@ -354,7 +360,8 @@ export class TransactionService {
         signingResult: Exclude<
             GetTransactionResult | SignTransactionResult,
             SigningError
-        >
+        >,
+        wallet: Wallet
     ): Promise<{
         status: Transaction['status']
         externalTxId?: string
@@ -380,10 +387,17 @@ export class TransactionService {
 
             this.notifier.emit('txChanged', {
                 ...tx,
+                ...{
+                    signedAt: now,
+                    externalTxId: signingResult.txId,
+                },
                 status: 'signed',
-                signedAt: now,
-                externalTxId: signingResult.txId,
-            })
+                payload: {
+                    signature: signingResult.signature,
+                    signedBy: wallet.namespace,
+                    party: wallet.partyId,
+                },
+            } satisfies TxChangedSignedEvent)
 
             return { status: 'signed', externalTxId: signingResult.txId }
         }
@@ -407,11 +421,24 @@ export class TransactionService {
 
         // dApp reports pending for anything not yet signed
         // awaiting-signature can be a gateway UI internal distinction for polling
-        this.notifier.emit('txChanged', {
-            ...tx,
-            status: status === 'awaiting-signature' ? 'pending' : status,
-            externalTxId: signingResult.txId,
-        })
+        this.notifier.emit(
+            'txChanged',
+            status === 'awaiting-signature'
+                ? ({
+                      ...tx,
+                      ...{
+                          externalTxId: signingResult.txId,
+                      },
+                      status: 'pending',
+                  } satisfies TxChangedPendingEvent)
+                : ({
+                      ...tx,
+                      ...{
+                          externalTxId: signingResult.txId,
+                      },
+                      status: status,
+                  } satisfies TxChangedFailedEvent)
+        )
 
         return {
             status,
@@ -461,7 +488,7 @@ export class TransactionService {
             debug: { signingResult, tx },
         })
 
-        const applied = await this.applySigningResult(tx, signingResult)
+        const applied = await this.applySigningResult(tx, signingResult, wallet)
 
         if (applied.status !== 'signed' && signingResult.status === 'signed') {
             throw new Error(
@@ -521,7 +548,7 @@ export class TransactionService {
                 debug: { result, transaction, executeParams, userId },
             })
 
-            const executedTx: Transaction = {
+            const executedTx = {
                 id: transaction.id,
                 commandId,
                 status: 'executed',
@@ -535,11 +562,14 @@ export class TransactionService {
                 ...(transaction.signedAt && {
                     signedAt: transaction.signedAt,
                 }),
-            }
+            } satisfies Transaction
             await this.store.setTransactionStatus(transaction.id, 'executed', {
                 payload: result,
             })
-            this.notifier.emit('txChanged', executedTx)
+            this.notifier.emit(
+                'txChanged',
+                executedTx satisfies TxChangedExecutedEvent
+            )
 
             return result
         } catch (err) {
@@ -556,7 +586,7 @@ export class TransactionService {
             this.notifier.emit('txChanged', {
                 ...transaction,
                 status: 'failed',
-            })
+            } satisfies TxChangedFailedEvent)
 
             throw new Error(`Ledger rejected submission ${failureReason}`, {
                 cause: err,
@@ -668,7 +698,7 @@ export class TransactionService {
                 debug: { result, transaction, executeParams, userId },
             })
 
-            const executedTx: Transaction = {
+            const executedTx = {
                 id: transaction.id,
                 commandId,
                 status: 'executed',
@@ -682,11 +712,14 @@ export class TransactionService {
                 ...(transaction.signedAt && {
                     signedAt: transaction.signedAt,
                 }),
-            }
+            } satisfies Transaction
             await this.store.setTransactionStatus(transaction.id, 'executed', {
                 payload: result,
             })
-            this.notifier.emit('txChanged', executedTx)
+            this.notifier.emit(
+                'txChanged',
+                executedTx satisfies TxChangedExecutedEvent
+            )
 
             return result
         } catch (err) {
@@ -703,7 +736,7 @@ export class TransactionService {
             this.notifier.emit(`txChanged`, {
                 ...transaction,
                 status: 'failed',
-            })
+            } satisfies TxChangedFailedEvent)
 
             throw new Error(`Ledger rejected submission ${failureReason}`, {
                 cause: err,
