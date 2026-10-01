@@ -3,21 +3,11 @@
 
 import type {
     TokenStandardService,
-    AssetCapabilities,
+    AssetBody,
 } from '@canton-network/core-token-standard-service'
-import type { PartyId } from '@canton-network/core-types'
 import type { SDKErrorHandler } from '../../error/index.js'
 import { ParsedURL, type URLInput } from '../utils/url.js'
 import type { SDKContext } from '@/wallet/sdk.js'
-
-export type AssetBody = {
-    id: string
-    displayName: string
-    symbol: string
-    registryUrl: URL
-    admin: PartyId
-    capabilities: AssetCapabilities
-}
 
 export type AssetContext = {
     tokenStandardService: TokenStandardService

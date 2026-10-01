@@ -106,11 +106,11 @@ const KEY_MAPPING: Record<string, keyof AssetCapabilities> = {
     'allocation-request': 'allocationRequest',
 }
 
-export type InstrumentInfo = {
+export type AssetBody = {
     id: string
     displayName: string
     symbol: string
-    registryUrl: string
+    registryUrl: URL
     admin: PartyId
     capabilities: AssetCapabilities
 }
@@ -164,9 +164,9 @@ export class CoreService {
         private readonly isMasterUser: boolean
     ) {}
 
-    getTokenStandardClient(registryUrl: string): TokenStandardClient {
+    getTokenStandardClient(registryUrl: URL): TokenStandardClient {
         return new TokenStandardClient(
-            registryUrl,
+            registryUrl.href,
             this.logger,
             this.accessTokenProvider
         )
@@ -576,7 +576,7 @@ class AllocationService {
     }
 
     async fetchAllocationFactoryChoiceContext(
-        registryUrl: string,
+        registryUrl: URL,
         choiceArgs: AllocationFactory_Allocate,
         excludeDebugFields: boolean = true
     ): Promise<
@@ -611,7 +611,7 @@ class AllocationService {
     async createAllocationInstruction(
         allocationSpecification: AllocationSpecification,
         expectedAdmin: PartyId,
-        registryUrl: string,
+        registryUrl: URL,
         inputUtxos?: string[],
         requestedAt?: string,
         prefetchedRegistryChoiceContext?: {
@@ -671,7 +671,7 @@ class AllocationService {
 
     async fetchExecuteTransferChoiceContext(
         allocationId: string,
-        registryUrl: string
+        registryUrl: URL
     ) {
         return this.core.getTokenStandardClient(registryUrl).post(
             '/registry/allocations/v1/{allocationId}/choice-contexts/execute-transfer',
@@ -700,7 +700,7 @@ class AllocationService {
 
     async createExecuteTransferAllocation(
         allocationCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -721,7 +721,7 @@ class AllocationService {
 
     async fetchWithdrawAllocationChoiceContext(
         allocationCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<
         OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     > {
@@ -748,7 +748,7 @@ class AllocationService {
 
     async createWithdrawAllocation(
         allocationCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -769,7 +769,7 @@ class AllocationService {
 
     async fetchCancelAllocationChoiceContext(
         allocationCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<
         OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     > {
@@ -796,7 +796,7 @@ class AllocationService {
 
     async createCancelAllocation(
         allocationCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -949,7 +949,7 @@ class TransferService {
     }
 
     async fetchTransferFactoryChoiceContext(
-        registryUrl: string,
+        registryUrl: URL,
         choiceArgs: CreateTransferChoiceArgs,
         excludeDebugFields: boolean = true
     ): Promise<
@@ -989,7 +989,7 @@ class TransferService {
         amount: string,
         instrumentAdmin: PartyId, // TODO (#907): replace with registry call
         instrumentId: string,
-        registryUrl: string,
+        registryUrl: URL,
         inputUtxos?: string[],
         memo?: string,
         expiryDate?: Date,
@@ -1041,7 +1041,7 @@ class TransferService {
 
     async fetchAcceptTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
@@ -1103,7 +1103,7 @@ class TransferService {
         const [acceptTransferInstructionContext, disclosedContracts] =
             await this.createAcceptTransferInstruction(
                 transferInstructionCid,
-                registryUrl.href
+                registryUrl
             )
 
         const choiceArgs = {
@@ -1136,7 +1136,7 @@ class TransferService {
         const [rejectTransferInstructionContext, disclosedContracts] =
             await this.createRejectTransferInstruction(
                 transferInstructionCid,
-                registryUrl.href
+                registryUrl
             )
 
         const choiceArgs = {
@@ -1169,7 +1169,7 @@ class TransferService {
         const [withdrawTransferInstructionContext, disclosedContracts] =
             await this.createWithdrawTransferInstruction(
                 transferInstructionCid,
-                registryUrl.href
+                registryUrl
             )
 
         const sumOfWeights: number = beneficiaries.reduce(
@@ -1203,7 +1203,7 @@ class TransferService {
 
     async createAcceptTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -1230,7 +1230,7 @@ class TransferService {
 
     async fetchRejectTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
@@ -1284,7 +1284,7 @@ class TransferService {
 
     async createRejectTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -1311,7 +1311,7 @@ class TransferService {
 
     async fetchWithdrawTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
@@ -1366,7 +1366,7 @@ class TransferService {
 
     async createWithdrawTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -1393,7 +1393,7 @@ class TransferService {
 
     async createTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         instructionChoice: 'Accept' | 'Reject' | 'Withdraw',
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
@@ -1444,7 +1444,7 @@ export class TokenStandardService {
     }
 
     async resolveCapabilitiesFromRegistryByInstrumentId(
-        registryUrl: string,
+        registryUrl: URL,
         instrumentId: string
     ): Promise<AssetCapabilities> {
         const metadataInfo = await this.getInstrumentById(
@@ -1456,7 +1456,7 @@ export class TokenStandardService {
         })
     }
 
-    async getInstrumentById(registryUrl: string, instrumentId: string) {
+    async getInstrumentById(registryUrl: URL, instrumentId: string) {
         try {
             const params: Record<string, unknown> = {
                 path: {
@@ -1479,7 +1479,7 @@ export class TokenStandardService {
         }
     }
 
-    async getInstrumentAdmin(registryUrl: string): Promise<string> {
+    async getInstrumentAdmin(registryUrl: URL): Promise<string> {
         const client = this.core.getTokenStandardClient(registryUrl)
 
         const info = await client.get('/registry/metadata/v1/info')
@@ -1488,7 +1488,7 @@ export class TokenStandardService {
     }
 
     async listInstruments(
-        registryUrl: string,
+        registryUrl: URL,
         pageSize?: number,
         pageToken?: string
     ) {
@@ -1501,12 +1501,12 @@ export class TokenStandardService {
         })
     }
 
-    async instrumentsToAsset(registryUrl: string): Promise<
+    async instrumentsToAsset(registryUrl: URL): Promise<
         {
             id: string
             displayName: string
             symbol: string
-            registryUrl: string
+            registryUrl: URL
             admin: PartyId
             capabilities: AssetCapabilities
         }[]
@@ -1536,14 +1536,12 @@ export class TokenStandardService {
         }))
     }
 
-    async registriesToAssets(
-        registryUrls: string[]
-    ): Promise<InstrumentInfo[]> {
+    async registriesToAssets(registryUrls: URL[]): Promise<AssetBody[]> {
         const allInstruments: {
             id: string
             displayName: string
             symbol: string
-            registryUrl: string
+            registryUrl: URL
             admin: PartyId
             capabilities: AssetCapabilities
         }[] = []
@@ -1733,7 +1731,7 @@ export class TokenStandardService {
         amount: string,
         instrumentAdmin: PartyId, // TODO (#907): replace with registry call
         instrumentId: string,
-        registryUrl: string,
+        registryUrl: URL,
         featuredAppRightCid: string,
         proxyCid: string,
         beneficiaries: Beneficiaries[],
@@ -1788,7 +1786,7 @@ export class TokenStandardService {
         exchangeParty: PartyId,
         proxyCid: string,
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         featuredAppRightCid: string
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const [acceptTransferInstructionContext, disclosedContracts] =

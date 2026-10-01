@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { AssetBody } from '../../asset/index.js'
 import type {
     AllocationSpecification,
     OffLedger,
 } from '@canton-network/core-token-standard'
+import { AssetBody } from '@canton-network/core-token-standard-service'
 
 export type AllocationInstructionCreateParams = {
     allocationSpecification: AllocationSpecification

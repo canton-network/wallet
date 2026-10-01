@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
     version-config:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         outputs:
             daml_release_version: ${{ steps.version.outputs.daml_release_version }}
             devnet_canton_version: ${{ steps.version.outputs.devnet_canton_version }}
@@ -40,7 +40,7 @@ jobs:
                   echo "mainnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.splice.version')" >> "$GITHUB_OUTPUT"
 
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: version-config
         steps:
             - name: Checkout
@@ -72,7 +72,7 @@ jobs:
 
     hydrate-canton-caches:
         name: hydrate-canton-caches (${{ matrix.network }}, ${{ matrix.instance }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         strategy:
             fail-fast: false
@@ -100,49 +100,24 @@ jobs:
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
     build-docs:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: build
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-            - name: Setup Python
-              id: setup-python
-              uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+            - name: Setup uv
+              uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
-                  python-version-file: .python-version
-
-            - name: Install and configure Poetry
-              uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
-              with:
-                  version: 2.1.3
-
-            # load cached venv if cache exists
-            - name: Load cached venv
-              id: cached-poetry-dependencies
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: docs/wallet-integration-guide/.venv
-                  key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('docs/wallet-integration-guide/poetry.lock') }}
-
-            # install dependencies if cache does not exist
-            - name: Install dependencies
-              if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-              working-directory: docs/wallet-integration-guide
-              run: poetry install --no-interaction --no-root
-
-            - name: Save venv cache
-              uses: ./.github/actions/save_cache_if_absent
-              with:
-                  path: docs/wallet-integration-guide/.venv
-                  key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('docs/wallet-integration-guide/poetry.lock') }}
+                  enable-cache: true
+                  cache-dependency-glob: docs/wallet-integration-guide/uv.lock
 
             - name: Build docs
               working-directory: docs/wallet-integration-guide
-              run: poetry run sphinx-build -c . src build --fail-on-warning
+              run: uv run --locked --no-dev sphinx-build -c . src build --fail-on-warning
 
     test-static:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout
@@ -176,7 +151,7 @@ jobs:
               run: pnpm docs:update-wg-config
 
     test-unit:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout
@@ -206,7 +181,7 @@ jobs:
         # affected SQL store package that defines a `migrations:check-lock`
         # script. Catches accidental migration edits
         needs: build
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -225,7 +200,7 @@ jobs:
     test-migrations:
         # Runs SQL migration tests for any affected package that defines a
         # `test:migrations` script
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: build
         steps:
             - name: Checkout
@@ -244,7 +219,7 @@ jobs:
 
     ping-e2e:
         name: ping-e2e (${{ matrix.network }}, ${{ matrix.db }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -363,7 +338,7 @@ jobs:
               run: docker rm -f wk-postgres || true
 
     test-ping-e2e:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: ping-e2e
         if: always()
         steps:
@@ -377,7 +352,7 @@ jobs:
 
     extension-e2e:
         name: extension-e2e (devnet)
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build, hydrate-canton-caches]
         steps:
             - name: Checkout
@@ -408,7 +383,7 @@ jobs:
                   retention-days: 5
 
     test-extension-e2e:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: extension-e2e
         if: always()
         steps:
@@ -422,7 +397,7 @@ jobs:
 
     portfolio-e2e:
         name: portfolio-e2e (${{ matrix.network }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -478,7 +453,7 @@ jobs:
                   retention-days: 5
 
     test-portfolio-e2e:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: portfolio-e2e
         if: always()
         steps:
@@ -492,7 +467,7 @@ jobs:
 
     wallet-sdk-snippets-e2e:
         name: wallet-sdk-snippets-e2e (${{ matrix.network }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -552,7 +527,7 @@ jobs:
 
     wallet-sdk-scripts-e2e:
         name: wallet-sdk-scripts-e2e (${{ matrix.network }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, hydrate-canton-caches]
         strategy:
             fail-fast: false
@@ -625,7 +600,7 @@ jobs:
 
     test-wallet-sdk-e2e:
         name: test-wallet-sdk-e2e
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [wallet-sdk-snippets-e2e, wallet-sdk-scripts-e2e, wallet-sdk-pkg]
         if: always()
         steps:
@@ -646,7 +621,7 @@ jobs:
                   echo "all wallet-sdk-e2e jobs passed"
 
     wallet-sdk-pkg:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout
