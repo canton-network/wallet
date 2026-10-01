@@ -87,7 +87,7 @@ export function describeError(error: unknown): string {
     return JSON.stringify(error, Object.getOwnPropertyNames(error))
 }
 
-// Error codes are only loossely specified in CIP-103, so the suite allows multiple codes for the same logical error.
+// Error codes are only loosely specified in CIP-103, so the suite allows multiple codes for the same logical error.
 export const INVALID_PARAMS_CODES = [
     CIP103_ERROR_CODES.InvalidParams,
     CIP103_ERROR_CODES.InvalidInput,
