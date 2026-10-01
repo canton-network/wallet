@@ -10,6 +10,7 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG_SIMPLE,
     TOKEN_NAMESPACE_CONFIG_SIMPLE,
+    localNetGlobalSynchronizer,
 } from './utils/index.js'
 
 const logger = pino({ name: 'v1-16-preapproval', level: 'info' })
@@ -17,6 +18,7 @@ const logger = pino({ name: 'v1-16-preapproval', level: 'info' })
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+    synchronizerId: localNetGlobalSynchronizer,
     token: TOKEN_NAMESPACE_CONFIG_SIMPLE,
     amulet: AMULET_NAMESPACE_CONFIG_SIMPLE,
 })
