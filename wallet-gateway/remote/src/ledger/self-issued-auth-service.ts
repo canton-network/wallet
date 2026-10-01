@@ -12,7 +12,12 @@ import {
     SelfIssuedTokenService,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import type { Session, Store, Wallet } from '@canton-network/core-wallet-store'
+import type {
+    Network,
+    Session,
+    Store,
+    Wallet,
+} from '@canton-network/core-wallet-store'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import type { Logger } from 'pino'
@@ -48,6 +53,73 @@ function isOnboarded(user: LedgerUser | null): boolean {
     return !!user && !!user.primaryParty && !!user.primaryPartyAuthentication
 }
 
+const SELF_ISSUED_LOGIN_UNAVAILABLE =
+    'Self-issued login is not available for this user.'
+
+async function fetchLedgerUser(
+    ledgerClient: LedgerClient,
+    userId: string
+): Promise<LedgerUser | null> {
+    try {
+        const response = await ledgerClient.get('/v2/users/{user-id}', {
+            path: { 'user-id': userId },
+        })
+        return response.user ?? null
+    } catch (error) {
+        if (isJsCantonError(error) && error.code === 'USER_NOT_FOUND') {
+            return null
+        }
+        throw error
+    }
+}
+
+export async function assertSelfIssuedOnboardingAllowed(
+    store: Store & AuthAware<Store>,
+    network: Network,
+    username: string,
+    logger: Logger
+): Promise<void> {
+    if (!network.adminAuth) {
+        throw new Error('No admin auth configured')
+    }
+    const adminIdp = await store.getIdp(
+        resolveAuthIdentityProviderId(
+            network.adminAuth,
+            network.identityProviderId
+        )
+    )
+    const ledgerClient = new LedgerClient({
+        baseUrl: new URL(network.ledgerApi.baseUrl),
+        logger,
+        accessTokenProvider: AuthTokenProvider.fromGatewayConfig(
+            adminIdp,
+            network.adminAuth,
+            logger
+        ),
+    })
+    const user = await fetchLedgerUser(ledgerClient, username)
+    if (!user) {
+        return
+    }
+    const primaryParty = user.primaryParty
+    const hasAuthWallet =
+        !!primaryParty &&
+        !!user.primaryPartyAuthentication &&
+        (
+            await store
+                .withAuthContext({ userId: username, accessToken: '' })
+                .getAllWallets({ networkIds: [network.id] })
+        ).some(
+            (wallet) =>
+                wallet.isAuthParty &&
+                wallet.userId === username &&
+                wallet.partyId === primaryParty
+        )
+    if (!hasAuthWallet) {
+        throw new Error(SELF_ISSUED_LOGIN_UNAVAILABLE)
+    }
+}
+
 const ACCESS_TOKEN_TTL_SECONDS = 10 * 60
 
 export class SelfIssuedAuthService {
@@ -72,20 +144,7 @@ export class SelfIssuedAuthService {
     }
 
     private async getExistingUser() {
-        try {
-            const response = await this.ledgerClient.get(
-                '/v2/users/{user-id}',
-                {
-                    path: { 'user-id': this.session.userId },
-                }
-            )
-            return response.user ?? null
-        } catch (error) {
-            if (isJsCantonError(error) && error.code === 'USER_NOT_FOUND') {
-                return null
-            }
-            throw error
-        }
+        return fetchLedgerUser(this.ledgerClient, this.session.userId)
     }
 
     async createWallet(params: CreatePartyParams): Promise<Wallet> {
