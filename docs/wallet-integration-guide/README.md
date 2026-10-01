@@ -1,15 +1,8 @@
 To preview the docs:
 
-Run this once from the `docs/wallet-integration-guide` directory:
+This project uses [uv](https://docs.astral.sh/uv/getting-started/installation/) for dependency management:
 
-```sh
-poetry install
-poetry env use 3.13
-poetry update package
-```
-
-Run this to start the docs server:
-
-```sh
-poetry run sphinx-autobuild -c . src build -W
+```bash
+cd docs/wallet-integration-guide
+uv run sphinx-autobuild -c . src build -W
 ```
