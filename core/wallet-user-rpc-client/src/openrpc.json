@@ -382,7 +382,7 @@
                         "primaryPartyAuth": {
                             "title": "primaryPartyAuth",
                             "type": "boolean",
-                            "description": "Whether the ledger user already has a primary party or primary party authentication set."
+                            "description": "Whether the ledger user already has a primary party and primary party authentication set."
                         },
                         "wallets": {
                             "title": "authPartyWallets",

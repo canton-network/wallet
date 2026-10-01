@@ -406,7 +406,7 @@ export interface Wallet {
 export type UserExists = boolean
 /**
  *
- * Whether the ledger user already has a primary party or primary party authentication set.
+ * Whether the ledger user already has a primary party and primary party authentication set.
  *
  */
 export type PrimaryPartyAuth = boolean
