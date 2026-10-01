@@ -2129,12 +2129,21 @@ importers:
 
   core/traffic-purchase:
     dependencies:
+      '@canton-network/core-types':
+        specifier: 'catalog:'
+        version: link:../types
+      '@canton-network/core-wallet-auth':
+        specifier: 'catalog:'
+        version: link:../wallet-auth
       '@daml/types':
         specifier: 'catalog:'
         version: 3.5.3
       '@mojotech/json-type-validation':
         specifier: 'catalog:'
         version: 3.1.0
+      openapi-fetch:
+        specifier: 'catalog:'
+        version: 0.17.0
     devDependencies:
       '@rollup/plugin-alias':
         specifier: 'catalog:'
