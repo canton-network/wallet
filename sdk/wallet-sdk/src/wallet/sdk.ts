@@ -33,6 +33,10 @@ import type { DappLedgerRpc } from '@canton-network/core-provider-dapp'
 import type { SDKContext } from './index.js'
 import { resolveSdkSynchronizerId } from './init/synchronizer.js'
 import { ValidatorInternalClient } from '@canton-network/core-splice-client'
+export {
+    resolveCapabilities,
+    type AssetBody,
+} from '@canton-network/core-token-standard-service'
 export { findAsset } from './namespace/asset/index.js'
 export type * from './namespace/asset/index.js'
 export type * from './namespace/token/index.js'

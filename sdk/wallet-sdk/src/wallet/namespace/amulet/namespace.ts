@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { AssetBody } from '../../sdk.js'
 import type { SDKContext } from '../../init/types/context.js'
 import type { PreparedCommand } from '../transactions/types.js'
 import type {
@@ -11,7 +10,7 @@ import type {
     LookupFeaturedAppRightsOptions,
 } from './types.js'
 import type { AmuletService } from '@canton-network/core-amulet-service'
-import type { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { AssetBody, TokenStandardService } from '@canton-network/core-token-standard-service'
 import { requireSynchronizerId } from '../../init/synchronizer.js'
 import { TrafficNamespace } from './traffic.js'
 import { LedgerNamespace } from '../ledger/namespace.js'
@@ -46,7 +45,7 @@ export class AmuletNamespace {
             return parseAssets(
                 this.sdkContext.commonCtx,
                 await this.sdkContext.tokenStandardService.registriesToAssets([
-                    this.sdkContext.registry.href,
+                    this.sdkContext.registry,
                 ])
             )[0]
         } else {
@@ -69,7 +68,7 @@ export class AmuletNamespace {
                 new Decimal(amount).toFixed(10),
                 amulet.admin,
                 amulet.id,
-                amulet.registryUrl.toString()
+                amulet.registryUrl
             )
 
         this.sdkContext.commonCtx.logger.info(tapCommand)
@@ -229,7 +228,7 @@ export async function fetchAmulet(
         ? parseAssets(
               amuletCtx.commonCtx,
               await amuletCtx.tokenStandardService.registriesToAssets([
-                  amuletCtx.registry.href,
+                  amuletCtx.registry,
               ])
           )[0]
         : amuletCtx.registry

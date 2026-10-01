@@ -36,7 +36,7 @@ Edit `main.py` and set:
 This project uses [uv](https://docs.astral.sh/uv/getting-started/installation/) for dependency management:
 
 ```bash
-cd examples/service-account
+cd examples/automation
 uv run main.py
 ```
 

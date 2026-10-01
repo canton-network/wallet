@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
     version-config:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         outputs:
             daml_release_version: ${{ steps.version.outputs.daml_release_version }}
             devnet_canton_version: ${{ steps.version.outputs.devnet_canton_version }}
@@ -41,7 +41,7 @@ jobs:
                   echo "mainnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.splice.version')" >> "$GITHUB_OUTPUT"
 
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: version-config
         steps:
             - name: Checkout
@@ -64,6 +64,7 @@ jobs:
                       sdk/*/dist/
                       wallet-gateway/*/dist/
                       examples/*/dist/
+                      tools/*/dist/
                       damljs
                       .nx/cache
                       .nx/workspace-data
@@ -72,7 +73,7 @@ jobs:
 
     hydrate-canton-caches:
         name: hydrate-canton-caches (${{ matrix.network }}, ${{ matrix.instance }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         strategy:
             fail-fast: false
@@ -100,7 +101,7 @@ jobs:
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
     test-unit:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout

@@ -33,7 +33,6 @@ export class TransferNamespace {
             await this.sdkContext.tokenStandardService.transfer.createAcceptTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -45,7 +44,6 @@ export class TransferNamespace {
             await this.sdkContext.tokenStandardService.transfer.createWithdrawTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -57,7 +55,6 @@ export class TransferNamespace {
             await this.sdkContext.tokenStandardService.transfer.createRejectTransferInstruction(
                 params.transferInstructionCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
             )
         return [{ ExerciseCommand }, disclosedContracts]
     }
@@ -68,7 +65,7 @@ export class TransferNamespace {
         const assets = parseAssets(
             this.sdkContext.commonCtx,
             await this.sdkContext.tokenStandardService.registriesToAssets(
-                this.sdkContext.registryUrls.map((url) => url.href)
+                this.sdkContext.registryUrls
             )
         )
 
@@ -92,7 +89,7 @@ export class TransferNamespace {
                 params.amount,
                 asset.admin,
                 asset.id,
-                asset.registryUrl.href,
+                asset.registryUrl,
                 params.inputUtxos,
                 params.memo,
                 params.expirationDate,
