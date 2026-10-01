@@ -11,6 +11,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AddNetworkParams",
                         "type": "object",
@@ -37,6 +38,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveNetworkParams",
                         "type": "object",
@@ -88,6 +90,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetNetworkParams",
                         "type": "object",
@@ -124,6 +127,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SelfSignedAccessTokenParams",
                         "type": "object",
@@ -173,6 +177,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AddIdpParams",
                         "type": "object",
@@ -199,6 +204,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveIdpParams",
                         "type": "object",
@@ -248,6 +254,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "CreateWalletParams",
                         "type": "object",
@@ -304,6 +311,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AddSelfIssuedSessionParams",
                         "type": "object",
@@ -352,6 +360,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetSelfIssuedOnboardingParams",
                         "type": "object",
@@ -403,6 +412,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "CreateSelfIssuedWalletParams",
                         "type": "object",
@@ -454,6 +464,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AllocateSelfIssuedWalletParams",
                         "type": "object",
@@ -496,6 +507,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ConnectSelfIssuedSessionParams",
                         "type": "object",
@@ -548,6 +560,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AllocatePartyForWalletParams",
                         "type": "object",
@@ -585,6 +598,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SetPrimaryWalletParams",
                         "type": "object",
@@ -613,6 +627,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveWalletParams",
                         "type": "object",
@@ -643,6 +658,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ListWalletsParams",
                         "type": "object",
@@ -738,6 +754,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SignParams",
                         "type": "object",
@@ -867,6 +884,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SignMessageParams",
                         "type": "object",
@@ -913,6 +931,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetMessageToSignParams",
                         "type": "object",
@@ -969,6 +988,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "DeleteMessageToSignParams",
                         "type": "object",
@@ -995,6 +1015,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ExecuteParams",
                         "type": "object",
@@ -1028,6 +1049,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AddSessionParams",
                         "type": "object",
@@ -1094,6 +1116,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetTransactionParams",
                         "type": "object",
@@ -1121,6 +1144,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetTransactionStatusParams",
                         "type": "object",
@@ -1152,6 +1176,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ListTransactionsParams",
                         "type": "object",
@@ -1205,6 +1230,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "DeleteTransactionParams",
                         "type": "object",
@@ -1258,6 +1284,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GenerateApiKeyParams",
                         "type": "object",
@@ -1310,6 +1337,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveApiKeyParams",
                         "type": "object",
@@ -1338,6 +1366,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ListSigningProviderKeysParams",
                         "type": "object",
@@ -1396,6 +1425,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetWalletParams",
                         "type": "object",
@@ -1432,6 +1462,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "changeSigningProviderParams",
                         "type": "object",
