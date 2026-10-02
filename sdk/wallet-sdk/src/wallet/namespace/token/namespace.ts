@@ -13,6 +13,7 @@ import type { PrettyTransactions } from '@canton-network/core-tx-parser'
 import type { SDKContext } from '../../init/types/context.js'
 import { type ParsedURL, parseAssets } from '../utils/url.js'
 import { findAsset } from '../asset/index.js'
+import { TokenV2Namespace } from './v2/namespace.js'
 
 export type TokenNamespaceConfig = {
     tokenStandardService: TokenStandardService
@@ -25,12 +26,19 @@ export class TokenNamespace {
     public readonly allocation: AllocationNamespace
     public readonly transfer: TransferNamespace
     public readonly utxos: UtxoNamespace
+
+    public readonly v1: {
+        readonly transfer: TransferNamespace
+        readonly allocation: AllocationNamespace
+    }
+    public readonly v2: TokenV2Namespace
     constructor(private readonly tokenContext: TokenNamespaceConfig) {
         this.allocation = new AllocationNamespace(tokenContext)
         this.transfer = new TransferNamespace(tokenContext)
         this.utxos = new UtxoNamespace(tokenContext, this.transfer)
+        this.v1 = { transfer: this.transfer, allocation: this.allocation }
+        this.v2 = new TokenV2Namespace(tokenContext)
     }
-
     /**
      * Lists all holdings for a specified party
      * @returns A promise that resolves to an array of holdings

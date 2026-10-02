@@ -5,7 +5,7 @@ export default async (args: TransferTestScriptParameters) => {
     const { sdk, sender, receiver, senderKeys, receiverKeys, logger } = args
 
     const [transferCommand, transferDisclosedContracts] =
-        await sdk.token.transfer.createV2({
+        await sdk.token.v2.transfer.create({
             sender: sender.partyId,
             recipient: receiver.partyId,
             instrumentId: 'Amulet',
@@ -30,7 +30,7 @@ export default async (args: TransferTestScriptParameters) => {
         { sender, receiver },
         'Submitted transfer command from Sender to Receiver'
     )
-    const receiverPendingTransfers = await sdk.token.transfer.pendingV2(
+    const receiverPendingTransfers = await sdk.token.v2.transfer.pending(
         receiver.partyId
     )
     logger.info(
@@ -46,7 +46,7 @@ export default async (args: TransferTestScriptParameters) => {
      * curl -s http://localhost:2000/api/validator/v0/scan-proxy/registry/metadata/v1/instruments
      */
     const [acceptCommand, acceptDisclosedContracts] =
-        await sdk.token.transfer.acceptV2(
+        await sdk.token.v2.transfer.accept(
             receiverPendingTransfers[0].contractId,
             [receiver.partyId],
             localNetStaticConfig.LOCALNET_REGISTRY_API_URL
