@@ -12,6 +12,10 @@ import type { PreparedCommand } from '../../transactions/types.js'
 import { ProxyDelegationNamespace } from './proxyDelegation.js'
 import { findAsset } from '../../asset/index.js'
 import { parseAssets, ParsedURL } from '../../utils/url.js'
+import {
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+    TransferInstructionView as TransferInstructionViewV2,
+} from '@canton-network/core-token-standard-v2'
 
 export class TransferNamespace {
     public readonly delegatedProxy: ProxyDelegationNamespace
@@ -22,6 +26,13 @@ export class TransferNamespace {
     async pending(partyId: PartyId) {
         return await this.sdkContext.tokenStandardService.listContractsByInterface<TransferInstructionView>(
             TRANSFER_INSTRUCTION_INTERFACE_ID,
+            partyId
+        )
+    }
+
+    async pendingV2(partyId: PartyId) {
+        return await this.sdkContext.tokenStandardService.listContractsByInterface<TransferInstructionViewV2>(
+            TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
             partyId
         )
     }
@@ -57,6 +68,42 @@ export class TransferNamespace {
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
             )
         return [{ ExerciseCommand }, disclosedContracts]
+    }
+
+    async createV2(
+        params: TransferParams
+    ): Promise<PreparedCommand<'ExerciseCommand'>> {
+        const assets = parseAssets(
+            this.sdkContext.commonCtx,
+            await this.sdkContext.tokenStandardService.registriesToAssets(
+                this.sdkContext.registryUrls
+            )
+        )
+
+        const asset = findAsset(
+            assets,
+            params.instrumentId,
+            this.sdkContext.commonCtx.error,
+            new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
+        )
+
+        const [transferCommand, disclosedContracts] =
+            await this.sdkContext.tokenStandardService.v2.transfer.createTransfer(
+                {
+                    sender: this.sdkContext.tokenStandardService.core.toBasicAccount(
+                        params.sender
+                    ),
+                    receiver:
+                        this.sdkContext.tokenStandardService.core.toBasicAccount(
+                            params.recipient
+                        ),
+                    amount: params.amount,
+                    instrumentAdmin: asset.admin,
+                    instrumentId: asset.id,
+                },
+                asset.registryUrl
+            )
+        return [{ ExerciseCommand: transferCommand }, disclosedContracts]
     }
 
     async create(
