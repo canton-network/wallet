@@ -4,7 +4,7 @@
 import { Metadata } from '@canton-network/core-token-standard'
 import type { ContractId, Logger, PartyId } from '@canton-network/core-types'
 import Decimal from 'decimal.js'
-import { CoreService, TokenStandardService } from '../token-standard-service'
+import { TokenStandardService } from '../token-standard-service'
 import {
     type DisclosedContract,
     EMPTY_META,
@@ -19,6 +19,7 @@ import {
     TRANSFER_FACTORY_INTERFACE_ID_V2,
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
+import { CoreService } from '../core-service.js'
 
 export class TransferServiceV2 {
     constructor(
