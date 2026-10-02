@@ -28,7 +28,7 @@ export class TransferNamespace {
         registryUrl: URL
     ): Promise<PreparedCommand> {
         const [ExerciseCommand, disclosedContracts] =
-            await this.sdkContext.tokenStandardService.v2.transfer.createInstructionChoiceAccept(
+            await this.sdkContext.tokenStandardService.v2.transfer.acceptTransferInstruction(
                 cid,
                 actors,
                 new ParsedURL(this.sdkContext.commonCtx, registryUrl)
