@@ -162,6 +162,59 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.getWallet('missing')).toBeNull()
         })
 
+        test('should look up a wallet by user and party without a session', async () => {
+            const idp: Idp = {
+                id: 'idp1',
+                type: 'oauth' as const,
+                issuer: 'http://auth',
+                configUrl: 'http://auth/.well-known/openid-configuration',
+            }
+            const network: Network = {
+                id: 'network1',
+                name: 'testnet',
+                synchronizerId: 'sync1::fingerprint',
+                description: 'Test Network',
+                identityProviderId: 'idp1',
+                ledgerApi: { baseUrl: 'http://api' },
+                auth: {
+                    method: 'authorization_code',
+                    clientId: 'cid',
+                    scope: 'scope',
+                    audience: 'aud',
+                },
+            }
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+
+            const wallet: Wallet = {
+                primary: false,
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                status: 'allocated',
+                hint: 'hint',
+                signingProviderId: 'internal',
+                publicKey: 'publicKey',
+                namespace: 'namespace',
+                networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
+            }
+            await store.addWallet(wallet)
+
+            await expect(
+                store.getWalletByUserParty(authContextMock.userId, 'party1')
+            ).resolves.toMatchObject({
+                partyId: 'party1',
+                userId: authContextMock.userId,
+                networkId: 'network1',
+            })
+            await expect(
+                store.getWalletByUserParty(authContextMock.userId, 'missing')
+            ).resolves.toBeUndefined()
+            await expect(
+                store.getWalletByUserParty('other-user', 'party1')
+            ).resolves.toBeUndefined()
+        })
+
         test('should filter wallets', async () => {
             const idp: Idp = {
                 id: 'idp1',

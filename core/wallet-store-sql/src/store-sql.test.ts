@@ -138,6 +138,47 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.getWallet('missing')).toBeNull()
         })
 
+        test('should look up a wallet by user and party without a session', async () => {
+            const wallet: Wallet = {
+                primary: false,
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                status: 'allocated',
+                hint: 'hint',
+                signingProviderId: 'internal',
+                publicKey: 'publicKey',
+                namespace: 'namespace',
+                networkId: 'network1',
+                rights: [PartyLevelRight.CanActAs],
+            }
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            const session: Session = {
+                id: 'session1',
+                origin: 'dapp-1',
+                network: 'network1',
+                accessToken: 'test-access-token',
+            }
+            await store.setSession(session)
+            await store.addWallet(wallet)
+            await store.removeSession(session.accessToken)
+
+            await expect(
+                store.getWalletByUserParty(authContextMock.userId, 'party1')
+            ).resolves.toMatchObject({
+                partyId: 'party1',
+                userId: authContextMock.userId,
+                networkId: 'network1',
+            })
+            await expect(
+                store.getWalletByUserParty(authContextMock.userId, 'missing')
+            ).resolves.toBeUndefined()
+            await expect(
+                store.getWalletByUserParty('other-user', 'party1')
+            ).resolves.toBeUndefined()
+        })
+
         test('should filter wallets', async () => {
             const auth2: AuthorizationCodeAuth = {
                 method: 'authorization_code',

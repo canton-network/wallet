@@ -173,6 +173,23 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         }
     }
 
+    async getWalletByUserParty(
+        userId: string,
+        partyId: PartyId
+    ): Promise<Wallet | undefined> {
+        // TODO: also filter by networkId so network.auth.method === 'self_issued'
+        // and network.auth.audience can select the network when the same party
+        // exists on more than one.
+        const row = await this.db
+            .selectFrom('wallets')
+            .selectAll()
+            .where('userId', '=', userId)
+            .where('partyId', '=', partyId)
+            .executeTakeFirst()
+
+        return row ? toWallet(row) : undefined
+    }
+
     async getPrimaryWallet(): Promise<Wallet | undefined> {
         const wallets = await this.getWallets()
         return wallets.find((w) => w.primary === true)
