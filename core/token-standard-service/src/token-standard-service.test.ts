@@ -629,14 +629,23 @@ describe('TransferService', () => {
             },
             extraArgs: { context: { values: {} }, meta: { values: {} } },
         }
-        const ctx = makeChoiceContext()
+        const ctx = makeChoiceContext({
+            disclosedContracts: makeChoiceContext().disclosedContracts.map(
+                (contract) => ({
+                    ...contract,
+                    debugPackageName: 'pkg',
+                    debugPayload: {},
+                    debugCreatedAt: '2026-01-01T00:00:00Z',
+                })
+            ),
+        })
         const [exercise, dc] = await service.transfer.createTransferFromContext(
             'id1',
             choiceArgs as any,
             ctx as any
         )
         expect(exercise.choice).toBe('TransferFactory_Transfer')
-        expect(dc).toBe(ctx.disclosedContracts)
+        expect(dc).toStrictEqual(makeChoiceContext().disclosedContracts)
         expect(exercise.choiceArgument).toStrictEqual({
             expectedAdmin:
                 'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e',

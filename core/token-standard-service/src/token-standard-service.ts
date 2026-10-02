@@ -51,6 +51,20 @@ export type ExerciseCommand = LedgerCommonSchemas['ExerciseCommand']
 export type DisclosedContract = LedgerCommonSchemas['DisclosedContract']
 const EMPTY_META: Metadata = { values: {} }
 
+// Registries may return debug fields, which the Ledger and dApp APIs reject.
+export function toLedgerDisclosedContracts(
+    contracts: readonly DisclosedContract[] = []
+): DisclosedContract[] {
+    return contracts.map(
+        ({ templateId, contractId, createdEventBlob, synchronizerId }) => ({
+            createdEventBlob,
+            ...(templateId !== undefined && { templateId }),
+            ...(contractId !== undefined && { contractId }),
+            ...(synchronizerId !== undefined && { synchronizerId }),
+        })
+    )
+}
+
 type JsGetActiveContractsResponse =
     LedgerCommonSchemas['JsGetActiveContractsResponse']
 type JsGetUpdatesResponse = Ops.PostV2Updates['ledgerApi']['result'][number]
@@ -605,7 +619,10 @@ class AllocationService {
             choice: 'AllocationFactory_Allocate',
             choiceArgument: choiceArgs,
         }
-        return [exercise, choiceContext.disclosedContracts]
+        return [
+            exercise,
+            toLedgerDisclosedContracts(choiceContext.disclosedContracts),
+        ]
     }
 
     async createAllocationInstruction(
@@ -666,7 +683,10 @@ class AllocationService {
                 },
             },
         }
-        return [exercise, choiceContext.disclosedContracts ?? []]
+        return [
+            exercise,
+            toLedgerDisclosedContracts(choiceContext.disclosedContracts),
+        ]
     }
 
     async fetchExecuteTransferChoiceContext(
@@ -979,7 +999,10 @@ class TransferService {
             choice: 'TransferFactory_Transfer',
             choiceArgument: choiceArgs,
         }
-        return [exercise, choiceContext.disclosedContracts]
+        return [
+            exercise,
+            toLedgerDisclosedContracts(choiceContext.disclosedContracts),
+        ]
     }
 
     // TODO: use named parameters
@@ -1083,7 +1106,10 @@ class TransferService {
                     },
                 },
             }
-            return [exercise, choiceContext.disclosedContracts]
+            return [
+                exercise,
+                toLedgerDisclosedContracts(choiceContext.disclosedContracts),
+            ]
         } catch (e) {
             this.logger.error(
                 'Failed to create accept transfer instruction:',
@@ -1272,7 +1298,10 @@ class TransferService {
                     },
                 },
             }
-            return [exercise, choiceContext.disclosedContracts]
+            return [
+                exercise,
+                toLedgerDisclosedContracts(choiceContext.disclosedContracts),
+            ]
         } catch (e) {
             this.logger.error(
                 'Failed to create reject transfer instruction:',
@@ -1354,7 +1383,10 @@ class TransferService {
                     },
                 },
             }
-            return [exercise, choiceContext.disclosedContracts]
+            return [
+                exercise,
+                toLedgerDisclosedContracts(choiceContext.disclosedContracts),
+            ]
         } catch (e) {
             this.logger.error(
                 'Failed to create withdraw transfer instruction:',

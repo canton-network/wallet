@@ -10,6 +10,7 @@ import type {
     ExerciseCommand,
     TokenStandardService,
 } from '@canton-network/core-token-standard-service'
+import { toLedgerDisclosedContracts } from '@canton-network/core-token-standard-service'
 import type { PartyId } from '@canton-network/core-types'
 import Decimal from 'decimal.js'
 
@@ -272,12 +273,14 @@ export abstract class AmuletServiceBase {
             },
         }
 
-        const disclosedContracts = (
-            await this.tokenStandard.transfer.fetchTransferFactoryChoiceContext(
-                registryUrl,
-                choiceArgs
-            )
-        ).choiceContext.disclosedContracts
+        const disclosedContracts = toLedgerDisclosedContracts(
+            (
+                await this.tokenStandard.transfer.fetchTransferFactoryChoiceContext(
+                    registryUrl,
+                    choiceArgs
+                )
+            ).choiceContext.disclosedContracts
+        )
 
         const amuletRules = await this.getAmuletRules()
         if (!amuletRules) {
