@@ -12,10 +12,6 @@ import type { PreparedCommand } from '../../transactions/types.js'
 import { ProxyDelegationNamespace } from './proxyDelegation.js'
 import { findAsset } from '../../asset/index.js'
 import { parseAssets, ParsedURL } from '../../utils/url.js'
-import {
-    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
-    TransferInstructionView as TransferInstructionViewV2,
-} from '@canton-network/core-token-standard-v2'
 
 export class TransferNamespace {
     public readonly delegatedProxy: ProxyDelegationNamespace
@@ -28,27 +24,6 @@ export class TransferNamespace {
             TRANSFER_INSTRUCTION_INTERFACE_ID,
             partyId
         )
-    }
-
-    async pendingV2(partyId: PartyId) {
-        return await this.sdkContext.tokenStandardService.listContractsByInterface<TransferInstructionViewV2>(
-            TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
-            partyId
-        )
-    }
-
-    async acceptV2(
-        cid: string,
-        actors: PartyId[],
-        registryUrl: URL
-    ): Promise<PreparedCommand> {
-        const [ExerciseCommand, disclosedContracts] =
-            await this.sdkContext.tokenStandardService.v2.transfer.createInstructionChoiceAccept(
-                cid,
-                actors,
-                new ParsedURL(this.sdkContext.commonCtx, registryUrl)
-            )
-        return [{ ExerciseCommand }, disclosedContracts]
     }
 
     async accept(
