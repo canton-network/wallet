@@ -40,6 +40,7 @@
         "@canton-network/core-provider-ledger": "catalog:",
         "@canton-network/core-splice-client": "catalog:",
         "@canton-network/core-token-standard": "catalog:",
+        "@canton-network/core-token-standard-v2": "catalog:",
         "@canton-network/core-tx-parser": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",

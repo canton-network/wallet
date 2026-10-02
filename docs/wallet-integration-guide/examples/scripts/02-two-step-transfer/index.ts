@@ -1,6 +1,7 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import _accept from './_accept.js'
+import _acceptV2 from './_acceptV2.js'
 import type { TransferTestScriptParameters } from './types.js'
 import _reject from './_reject.js'
 import _withdraw from './_withdraw.js'
@@ -81,6 +82,9 @@ await _reject(transferTestScriptParameters)
 await _withdraw(transferTestScriptParameters)
 
 await _expire(transferTestScriptParameters)
+
+//TODO: works on localnet versions 0.8.3+ (not on mainnet in CI), figure out how to optionally run this in CI
+// await _acceptV2(transferTestScriptParameters)
 
 // Forcefully exit to prevent floating ledger retries from crashing the event loop
 process.exit(0)
