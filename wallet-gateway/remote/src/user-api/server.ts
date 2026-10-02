@@ -14,6 +14,7 @@ import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
 import type { NotificationService } from '../notification/NotificationService.js'
 import { userController } from './controller.js'
 import type { Methods } from './rpc-gen/index.js'
+import { paramSchemas } from './rpc-gen/schemas.js'
 import type { HASHING_SCHEME_VERSION } from '@canton-network/core-wallet-services'
 
 export const user = (
@@ -42,6 +43,7 @@ export const user = (
                 adminUserId
             ),
             logger,
+            paramSchemas,
         })(req, res, next)
     )
 
