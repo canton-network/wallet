@@ -13,7 +13,11 @@
         "tls": false,
         "dappPath": "/api/v0/dapp",
         "userPath": "/api/v0/user",
-        "allowedOrigins": ["http://localhost:8080", "http://localhost:8081"],
+        "allowedOrigins": [
+            "http://localhost:8080",
+            "http://localhost:8081",
+            "http://localhost:8082"
+        ],
         "admin": "operator"
     },
     "store": {
@@ -212,7 +216,7 @@
                 "identityProviderId": "idp-self-issued",
                 "auth": {
                     "method": "self_issued",
-                    "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
+                    "audience": "participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "scope": "openid daml_ledger_api offline_access"
                 },
                 "adminAuth": {

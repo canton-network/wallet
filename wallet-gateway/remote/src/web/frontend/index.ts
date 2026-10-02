@@ -434,6 +434,14 @@ export const addUserSession = async (token: string, networkId: string) => {
         },
     })
 
-    stateManager.sessionId.set(session.id, currentOrigin)
-    shareConnection(token, session.id)
+    shareUserSession(token, session.id, currentOrigin)
+}
+
+export const shareUserSession = (
+    token: string,
+    sessionId: string,
+    origin: string
+) => {
+    stateManager.sessionId.set(sessionId, origin)
+    shareConnection(token, sessionId)
 }

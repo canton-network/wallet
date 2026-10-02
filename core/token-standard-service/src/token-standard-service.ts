@@ -82,6 +82,80 @@ type CreateTransferChoiceArgs = {
     extraArgs: ExtraArgs
 }
 
+type ApiVersion = 'v1' | 'v2'
+type SupportedVersions = ApiVersion[]
+const SUPPORTED_VERSIONS: readonly ApiVersion[] = ['v1', 'v2'] as const
+
+function isApiVersion(v: string): v is ApiVersion {
+    return (SUPPORTED_VERSIONS as readonly string[]).includes(v)
+}
+
+export interface AssetCapabilities {
+    holding: SupportedVersions
+    transferInstruction: SupportedVersions
+    allocation: SupportedVersions
+    allocationInstruction: SupportedVersions
+    allocationRequest: SupportedVersions
+}
+
+const KEY_MAPPING: Record<string, keyof AssetCapabilities> = {
+    holding: 'holding',
+    'transfer-instruction': 'transferInstruction',
+    allocation: 'allocation',
+    'allocation-instruction': 'allocationInstruction',
+    'allocation-request': 'allocationRequest',
+}
+
+export type AssetBody = {
+    id: string
+    displayName: string
+    symbol: string
+    registryUrl: URL
+    admin: PartyId
+    capabilities: AssetCapabilities
+}
+
+export function resolveCapabilities(opts: {
+    supportedApis: {
+        [key: string]: number
+    }
+}): AssetCapabilities {
+    const supportedApis = opts.supportedApis
+
+    const resolvedCapabilities: AssetCapabilities = {
+        holding: [],
+        transferInstruction: [],
+        allocation: [],
+        allocationInstruction: [],
+        allocationRequest: [],
+    }
+
+    for (const key of Object.keys(supportedApis)) {
+        const match = key.match(
+            /^splice-api-token-(?<capabilityName>.+)-(?<version>v\d+)$/
+        )
+
+        if (match?.groups) {
+            const { capabilityName, version } = match.groups
+            const targetKey = KEY_MAPPING[capabilityName]
+
+            if (
+                targetKey &&
+                supportedApis[key] === 1 &&
+                isApiVersion(version)
+            ) {
+                resolvedCapabilities[targetKey].push(version)
+            }
+        }
+    }
+
+    for (const key in resolvedCapabilities) {
+        resolvedCapabilities[key as keyof AssetCapabilities].sort()
+    }
+
+    return resolvedCapabilities
+}
+
 export class CoreService {
     constructor(
         private ledgerProvider: AbstractLedgerProvider,
@@ -90,9 +164,9 @@ export class CoreService {
         private readonly isMasterUser: boolean
     ) {}
 
-    getTokenStandardClient(registryUrl: string): TokenStandardClient {
+    getTokenStandardClient(registryUrl: URL): TokenStandardClient {
         return new TokenStandardClient(
-            registryUrl,
+            registryUrl.href,
             this.logger,
             this.accessTokenProvider
         )
@@ -502,7 +576,7 @@ class AllocationService {
     }
 
     async fetchAllocationFactoryChoiceContext(
-        registryUrl: string,
+        registryUrl: URL,
         choiceArgs: AllocationFactory_Allocate,
         excludeDebugFields: boolean = true
     ): Promise<
@@ -537,7 +611,7 @@ class AllocationService {
     async createAllocationInstruction(
         allocationSpecification: AllocationSpecification,
         expectedAdmin: PartyId,
-        registryUrl: string,
+        registryUrl: URL,
         inputUtxos?: string[],
         requestedAt?: string,
         prefetchedRegistryChoiceContext?: {
@@ -597,7 +671,7 @@ class AllocationService {
 
     async fetchExecuteTransferChoiceContext(
         allocationId: string,
-        registryUrl: string
+        registryUrl: URL
     ) {
         return this.core.getTokenStandardClient(registryUrl).post(
             '/registry/allocations/v1/{allocationId}/choice-contexts/execute-transfer',
@@ -626,7 +700,7 @@ class AllocationService {
 
     async createExecuteTransferAllocation(
         allocationCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -647,7 +721,7 @@ class AllocationService {
 
     async fetchWithdrawAllocationChoiceContext(
         allocationCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<
         OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     > {
@@ -674,7 +748,7 @@ class AllocationService {
 
     async createWithdrawAllocation(
         allocationCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -695,7 +769,7 @@ class AllocationService {
 
     async fetchCancelAllocationChoiceContext(
         allocationCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<
         OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     > {
@@ -722,7 +796,7 @@ class AllocationService {
 
     async createCancelAllocation(
         allocationCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.AllocationInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -875,7 +949,7 @@ class TransferService {
     }
 
     async fetchTransferFactoryChoiceContext(
-        registryUrl: string,
+        registryUrl: URL,
         choiceArgs: CreateTransferChoiceArgs,
         excludeDebugFields: boolean = true
     ): Promise<
@@ -915,7 +989,7 @@ class TransferService {
         amount: string,
         instrumentAdmin: PartyId, // TODO (#907): replace with registry call
         instrumentId: string,
-        registryUrl: string,
+        registryUrl: URL,
         inputUtxos?: string[],
         memo?: string,
         expiryDate?: Date,
@@ -967,7 +1041,7 @@ class TransferService {
 
     async fetchAcceptTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
@@ -1029,7 +1103,7 @@ class TransferService {
         const [acceptTransferInstructionContext, disclosedContracts] =
             await this.createAcceptTransferInstruction(
                 transferInstructionCid,
-                registryUrl.href
+                registryUrl
             )
 
         const choiceArgs = {
@@ -1062,7 +1136,7 @@ class TransferService {
         const [rejectTransferInstructionContext, disclosedContracts] =
             await this.createRejectTransferInstruction(
                 transferInstructionCid,
-                registryUrl.href
+                registryUrl
             )
 
         const choiceArgs = {
@@ -1095,7 +1169,7 @@ class TransferService {
         const [withdrawTransferInstructionContext, disclosedContracts] =
             await this.createWithdrawTransferInstruction(
                 transferInstructionCid,
-                registryUrl.href
+                registryUrl
             )
 
         const sumOfWeights: number = beneficiaries.reduce(
@@ -1129,7 +1203,7 @@ class TransferService {
 
     async createAcceptTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -1156,7 +1230,7 @@ class TransferService {
 
     async fetchRejectTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
@@ -1210,7 +1284,7 @@ class TransferService {
 
     async createRejectTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -1237,7 +1311,7 @@ class TransferService {
 
     async fetchWithdrawTransferInstructionChoiceContext(
         transferInstructionCid: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<{
         choiceContextData: unknown
         disclosedContracts: DisclosedContract[]
@@ -1292,7 +1366,7 @@ class TransferService {
 
     async createWithdrawTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         if (prefetchedRegistryChoiceContext) {
@@ -1319,7 +1393,7 @@ class TransferService {
 
     async createTransferInstruction(
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         instructionChoice: 'Accept' | 'Reject' | 'Withdraw',
         prefetchedRegistryChoiceContext?: OffLedger.TransferInstructionV1.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
@@ -1369,7 +1443,20 @@ export class TokenStandardService {
         this.transfer = new TransferService(this.core, this.logger)
     }
 
-    async getInstrumentById(registryUrl: string, instrumentId: string) {
+    async resolveCapabilitiesFromRegistryByInstrumentId(
+        registryUrl: URL,
+        instrumentId: string
+    ): Promise<AssetCapabilities> {
+        const metadataInfo = await this.getInstrumentById(
+            registryUrl,
+            instrumentId
+        )
+        return resolveCapabilities({
+            supportedApis: metadataInfo.supportedApis,
+        })
+    }
+
+    async getInstrumentById(registryUrl: URL, instrumentId: string) {
         try {
             const params: Record<string, unknown> = {
                 path: {
@@ -1379,7 +1466,7 @@ export class TokenStandardService {
 
             const client = this.core.getTokenStandardClient(registryUrl)
 
-            return client.get(
+            return await client.get(
                 '/registry/metadata/v1/instruments/{instrumentId}',
                 params
             )
@@ -1392,7 +1479,7 @@ export class TokenStandardService {
         }
     }
 
-    async getInstrumentAdmin(registryUrl: string): Promise<string> {
+    async getInstrumentAdmin(registryUrl: URL): Promise<string> {
         const client = this.core.getTokenStandardClient(registryUrl)
 
         const info = await client.get('/registry/metadata/v1/info')
@@ -1401,7 +1488,7 @@ export class TokenStandardService {
     }
 
     async listInstruments(
-        registryUrl: string,
+        registryUrl: URL,
         pageSize?: number,
         pageToken?: string
     ) {
@@ -1414,7 +1501,16 @@ export class TokenStandardService {
         })
     }
 
-    async instrumentsToAsset(registryUrl: string) {
+    async instrumentsToAsset(registryUrl: URL): Promise<
+        {
+            id: string
+            displayName: string
+            symbol: string
+            registryUrl: URL
+            admin: PartyId
+            capabilities: AssetCapabilities
+        }[]
+    > {
         let instrumentsResponse = await this.listInstruments(registryUrl)
         const instruments = [...instrumentsResponse.instruments]
 
@@ -1427,22 +1523,27 @@ export class TokenStandardService {
             instruments.push(...instrumentsResponse.instruments)
         }
         const instrumentAdmin = await this.getInstrumentAdmin(registryUrl)
+
         return instruments.map((instrument) => ({
             id: instrument.id,
             displayName: instrument.name,
             symbol: instrument.symbol,
             registryUrl,
             admin: instrumentAdmin,
+            capabilities: resolveCapabilities({
+                supportedApis: instrument.supportedApis,
+            }),
         }))
     }
 
-    async registriesToAssets(registryUrls: string[]) {
+    async registriesToAssets(registryUrls: URL[]): Promise<AssetBody[]> {
         const allInstruments: {
             id: string
             displayName: string
             symbol: string
-            registryUrl: string
+            registryUrl: URL
             admin: PartyId
+            capabilities: AssetCapabilities
         }[] = []
         for (const registryUrl of registryUrls) {
             const instruments = await this.instrumentsToAsset(registryUrl)
@@ -1630,7 +1731,7 @@ export class TokenStandardService {
         amount: string,
         instrumentAdmin: PartyId, // TODO (#907): replace with registry call
         instrumentId: string,
-        registryUrl: string,
+        registryUrl: URL,
         featuredAppRightCid: string,
         proxyCid: string,
         beneficiaries: Beneficiaries[],
@@ -1685,7 +1786,7 @@ export class TokenStandardService {
         exchangeParty: PartyId,
         proxyCid: string,
         transferInstructionCid: string,
-        registryUrl: string,
+        registryUrl: URL,
         featuredAppRightCid: string
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const [acceptTransferInstructionContext, disclosedContracts] =

@@ -135,9 +135,11 @@ describe('schema mappers', () => {
             const table = fromWallet(wallet, 'user-1')
             expect(table.primary).toBe(1)
             expect(table.disabled).toBe(1)
+            expect(table.isAuthParty).toBe(0)
             expect(toWallet(table)).toMatchObject({
                 primary: true,
                 disabled: true,
+                isAuthParty: false,
                 reason: 'disabled',
                 externalTxId: 'ext-tx-id',
                 topologyTransactions: 'topo',
@@ -148,10 +150,12 @@ describe('schema mappers', () => {
                     partyId: 'party::ns',
                     primary: false,
                     disabled: false,
+                    isAuthParty: true,
                 })
             ).toEqual({
                 primary: 0,
                 disabled: 0,
+                isAuthParty: 1,
             })
         })
 
