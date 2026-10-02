@@ -131,6 +131,22 @@ export class StateManager {
     }
 
     currentOrigin = {
+        poll: async (intervalMs = 100): Promise<string> => {
+            if (!window.opener) {
+                this.currentOrigin.set(window.origin)
+                return window.origin
+            }
+
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    const currentOrigin = this.currentOrigin.get()
+                    if (currentOrigin) {
+                        clearInterval(interval)
+                        resolve(currentOrigin)
+                    }
+                }, intervalMs)
+            })
+        },
         get: () => this.getWithStorage('origin', 'current', sessionStorage),
         set: (origin: string) =>
             this.setWithStorage('origin', origin, 'current', sessionStorage),

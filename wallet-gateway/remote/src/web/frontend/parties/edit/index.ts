@@ -13,8 +13,8 @@ import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import { WALLET_STATUS_CODE } from '../index'
-import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../../listeners.js'
+import { Wallet } from '@canton-network/core-wallet-user-rpc-client'
+
 import { UserUiAddOrEditParty } from '../common.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
@@ -42,7 +42,7 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
 
     override async connectedCallback() {
         super.connectedCallback()
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         this.userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )

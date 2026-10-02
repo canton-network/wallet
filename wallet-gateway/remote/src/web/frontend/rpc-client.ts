@@ -11,7 +11,6 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import { detectCurrentOrigin } from './listeners.js'
 
 let isLoggingOut = false
 let userApiPathPromise: Promise<URL> | null = null
@@ -72,7 +71,7 @@ const handleAutoLogout = async (): Promise<void> => {
     }
 
     isLoggingOut = true
-    const currentOrigin = await detectCurrentOrigin()
+    const currentOrigin = await stateManager.currentOrigin.poll()
 
     try {
         const accessToken = await stateManager.accessToken.get(currentOrigin)

@@ -31,6 +31,7 @@
         "@canton-network/core-wallet-store-inmemory": "catalog:",
         "@canton-network/core-wallet-ui-components": "catalog:",
         "@canton-network/core-wallet-user-rpc-client": "catalog:",
+        "@canton-network/core-origin-manager": "catalog:",
         "@logtape/adaptor-pino": "catalog:",
         "@logtape/logtape": "catalog:",
         "@webext-core/proxy-service": "catalog:",
