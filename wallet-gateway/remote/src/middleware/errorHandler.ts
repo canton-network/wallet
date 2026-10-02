@@ -9,6 +9,73 @@ import {
     toHttpErrorCode,
 } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
+import { isJsCantonError } from '@canton-network/core-ledger-client'
+
+// Mirrors ErrorCategory.asInt from com.digitalasset.base.error (Canton's
+// error category taxonomy). Kept in sync with that source rather than
+// re-derived, since the numeric values are part of Canton's wire contract.
+//
+// view source at: https://github.com/digital-asset/canton/blob/2fcea1a4826fd63b6a9ea554c13cb685ae8f2ee2/base/errors/src/main/scala/com/digitalasset/base/error/ErrorCategory.scala#L1
+enum CantonErrorCategory {
+    TransientServerFailure = 1,
+    ContentionOnSharedResources = 2,
+    DeadlineExceededRequestStateUnknown = 3,
+    SystemInternalAssumptionViolated = 4,
+    SecurityAlert = 5,
+    AuthInterceptorInvalidAuthenticationCredentials = 6,
+    InsufficientPermission = 7,
+    InvalidIndependentOfSystemState = 8,
+    InvalidGivenCurrentSystemStateOther = 9,
+    InvalidGivenCurrentSystemStateResourceExists = 10,
+    InvalidGivenCurrentSystemStateResourceMissing = 11,
+    InvalidGivenCurrentSystemStateSeekAfterEnd = 12,
+    BackgroundProcessDegradationWarning = 13,
+    InternalUnsupportedOperation = 14,
+}
+
+// Canton error categories that Canton itself does not log at ERROR (see
+// ErrorCategory.logLevel in com.digitalasset.base.error). Of the 14 defined
+// categories, only SystemInternalAssumptionViolated and
+// InternalUnsupportedOperation represent genuine system faults; the rest are
+// expected client-, contention-, or state-dependent outcomes that Canton
+// logs at INFO or WARN. We collapse Canton's INFO/WARN into our own `info`
+// here, and treat anything outside this set (including category numbers we
+// don't yet know about) as `error`.
+const NON_CRITICAL_CANTON_ERROR_CATEGORIES = new Set<CantonErrorCategory>([
+    CantonErrorCategory.TransientServerFailure,
+    CantonErrorCategory.ContentionOnSharedResources,
+    CantonErrorCategory.DeadlineExceededRequestStateUnknown,
+    CantonErrorCategory.SecurityAlert,
+    CantonErrorCategory.AuthInterceptorInvalidAuthenticationCredentials,
+    CantonErrorCategory.InsufficientPermission,
+    CantonErrorCategory.InvalidIndependentOfSystemState,
+    CantonErrorCategory.InvalidGivenCurrentSystemStateOther,
+    CantonErrorCategory.InvalidGivenCurrentSystemStateResourceExists,
+    CantonErrorCategory.InvalidGivenCurrentSystemStateResourceMissing,
+    CantonErrorCategory.InvalidGivenCurrentSystemStateSeekAfterEnd,
+    CantonErrorCategory.BackgroundProcessDegradationWarning,
+    // SystemInternalAssumptionViolated and InternalUnsupportedOperation are
+    // excluded - Canton logs both at ERROR as genuine system faults.
+])
+
+/**
+ * Determines the level an error thrown from an RPC method should be logged
+ * at: `info` for an expected, client/business-caused rejection, `error` for
+ * an unexpected system fault (including anything we can't classify).
+ */
+export const errorLogLevel = (error: unknown): 'info' | 'error' => {
+    if (error instanceof JsonRpcError) {
+        return toHttpErrorCode(error.code) < 500 ? 'info' : 'error'
+    }
+
+    if (isJsCantonError(error)) {
+        return NON_CRITICAL_CANTON_ERROR_CATEGORIES.has(error.errorCategory)
+            ? 'info'
+            : 'error'
+    }
+
+    return 'error'
+}
 
 const isPayloadTooLargeError = (err: unknown): boolean => {
     if (typeof err !== 'object' || err === null) {
