@@ -1602,7 +1602,7 @@ class TransferServiceV2 {
         transferInstructionCid: string,
         actors: PartyId[],
         registryUrl: URL
-    ) {
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const ctx = await this.core.getTokenStandardClientV2(registryUrl).post(
             '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept',
             {
