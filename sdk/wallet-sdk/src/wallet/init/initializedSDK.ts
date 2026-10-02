@@ -197,6 +197,11 @@ const createNamespace: {
             registryUrls: config.registries.map(
                 (input) => new ParsedURL(ctx, input)
             ),
+            paymasterAuth: resolveAuth(
+                config.paymasterAuth ?? 'none',
+                auth,
+                ctx.logger
+            ),
         })
     },
 }
