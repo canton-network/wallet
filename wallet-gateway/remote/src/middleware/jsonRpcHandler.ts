@@ -15,10 +15,34 @@ import {
 } from '@canton-network/core-types'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import { isJsCantonError } from '@canton-network/core-ledger-client'
+import { z } from 'zod'
 
 interface JsonRpcHttpOptions<T> {
     logger: Logger
     controller: T
+    paramSchemas: Record<string, z.ZodType>
+}
+
+// Bounds the error payload, as issue count and messages (e.g. unrecognized keys) scale with the input.
+const MAX_ISSUES = 10
+const MAX_ISSUE_MESSAGE_LENGTH = 200
+
+function validateParams(
+    schema: z.ZodType,
+    params: unknown
+): ReturnType<typeof rpcErrors.invalidParams> | undefined {
+    const result = schema.safeParse(params)
+    if (result.success) return undefined
+
+    const issues = result.error.issues.slice(0, MAX_ISSUES).map((issue) => ({
+        ...issue,
+        message: issue.message.slice(0, MAX_ISSUE_MESSAGE_LENGTH),
+    }))
+    const { formErrors, fieldErrors } = z.flattenError(new z.ZodError(issues))
+    return rpcErrors.invalidParams({
+        message: 'Invalid params',
+        data: { formErrors, fieldErrors },
+    })
 }
 
 /**
@@ -88,6 +112,7 @@ export const jsonRpcHandler =
     <T extends Record<string, (...args: any[]) => any>>({
         controller,
         logger: _logger,
+        paramSchemas,
     }: JsonRpcHttpOptions<T>) => {
         const logger = _logger.child({ component: 'json-rpc-http' })
 
@@ -133,22 +158,35 @@ export const jsonRpcHandler =
                     `RPC request: Method called ${method}`
                 )
 
-                const methodFn = controller[method as keyof T] as (
-                    params?: Params
-                ) => Returns
-                if (!methodFn) {
+                const methodFn = Object.hasOwn(controller, method)
+                    ? (controller[method] as (params?: Params) => Returns)
+                    : undefined
+                const schema = Object.hasOwn(paramSchemas, method)
+                    ? paramSchemas[method]
+                    : undefined
+                if (!methodFn || !schema) {
                     const [status, response] = handleRpcError(
                         rpcErrors.methodNotFound({
                             message: `Method ${method} not found`,
                         }),
-                        null,
+                        id,
                         method
                     )
 
                     return res.status(status).json(response)
                 }
 
-                // TODO: validate params match the expected schema for the method
+                const invalidParams = validateParams(schema, params)
+                if (invalidParams) {
+                    const [status, response] = handleRpcError(
+                        invalidParams,
+                        id,
+                        method
+                    )
+                    logger.warn({ response }, 'RPC request: Invalid params')
+                    return res.status(status).json(response)
+                }
+
                 methodFn(params as Params)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .then((result: any) => {
