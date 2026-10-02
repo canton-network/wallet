@@ -51,8 +51,11 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     }
 })
 
-vi.mock('../utils.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../utils.js')>()
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
     return {
         ...actual,
         networkStatus: mockNetworkStatus,

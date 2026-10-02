@@ -5,6 +5,7 @@
     "description": "Browser CIP-103 conformance dApp, suite, and report helpers",
     "license": "Apache-2.0",
     "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "sideEffects": false,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
