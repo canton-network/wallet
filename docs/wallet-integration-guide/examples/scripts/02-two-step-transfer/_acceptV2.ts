@@ -45,42 +45,43 @@ export default async (args: TransferTestScriptParameters) => {
      *
      * curl -s http://localhost:2000/api/validator/v0/scan-proxy/registry/metadata/v1/instruments
      */
-    // const [acceptCommand, acceptDisclosedContracts] =
-    //     await sdk.token.transfer.accept({
-    //         transferInstructionCid: receiverPendingTransfers[0].contractId,
-    //         registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
-    //     })
+    const [acceptCommand, acceptDisclosedContracts] =
+        await sdk.token.transfer.acceptV2(
+            receiverPendingTransfers[0].contractId,
+            [receiver.partyId],
+            localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+        )
 
-    // await sdk.ledger
-    //     .prepare({
-    //         partyId: receiver.partyId,
-    //         commands: acceptCommand,
-    //         disclosedContracts: acceptDisclosedContracts,
-    //     })
-    //     .sign(receiverKeys.privateKey)
-    //     .execute({ partyId: receiver.partyId })
-    // logger.info('Receiver accepted the transfer instruction')
+    await sdk.ledger
+        .prepare({
+            partyId: receiver.partyId,
+            commands: acceptCommand,
+            disclosedContracts: acceptDisclosedContracts,
+        })
+        .sign(receiverKeys.privateKey)
+        .execute({ partyId: receiver.partyId })
+    logger.info('Receiver accepted the transfer instruction')
 
-    // const receiverUtxos = await sdk.token.utxos.list({
-    //     partyId: receiver.partyId,
-    // })
-    // logger.info(
-    //     receiverUtxos,
-    //     'Receiver UTXOs after accepting transfer instruction'
-    // )
+    const receiverUtxos = await sdk.token.utxos.list({
+        partyId: receiver.partyId,
+    })
+    logger.info(
+        receiverUtxos,
+        'Receiver UTXOs after accepting transfer instruction'
+    )
 
-    // const receiverAmuletUtxos = receiverUtxos.filter((utxo) => {
-    //     return (
-    //         utxo.interfaceViewValue.amount === '2000.0000000000' &&
-    //         utxo.interfaceViewValue.instrumentId.id === 'Amulet'
-    //     )
-    // })
+    const receiverAmuletUtxos = receiverUtxos.filter((utxo) => {
+        return (
+            utxo.interfaceViewValue.amount === '2000.0000000000' &&
+            utxo.interfaceViewValue.instrumentId.id === 'Amulet'
+        )
+    })
 
-    // if (receiverAmuletUtxos.length === 0) {
-    //     throw new Error(
-    //         'No Amulet UTXOs found for Receiver after accepting transfer instruction'
-    //     )
-    // }
+    if (receiverAmuletUtxos.length === 0) {
+        throw new Error(
+            'No Amulet UTXOs found for Receiver after accepting transfer instruction'
+        )
+    }
 
-    // logger.info('Two step transfer process completed successfully')
+    logger.info('Two step transfer process completed successfully')
 }

@@ -37,6 +37,20 @@ export class TransferNamespace {
         )
     }
 
+    async acceptV2(
+        cid: string,
+        actors: PartyId[],
+        registryUrl: URL
+    ): Promise<PreparedCommand> {
+        const [ExerciseCommand, disclosedContracts] =
+            await this.sdkContext.tokenStandardService.v2.transfer.createInstructionChoiceAccept(
+                cid,
+                actors,
+                new ParsedURL(this.sdkContext.commonCtx, registryUrl)
+            )
+        return [{ ExerciseCommand }, disclosedContracts]
+    }
+
     async accept(
         params: TransferAllocationChoiceParams
     ): Promise<PreparedCommand> {
