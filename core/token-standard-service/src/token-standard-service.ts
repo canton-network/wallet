@@ -162,6 +162,15 @@ export class CoreService {
         )
     }
 
+    // basic conversion fyunction for testing
+    toBasicAccount(partyId: PartyId): Account {
+        return {
+            owner: partyId,
+            provider: null,
+            id: '',
+        }
+    }
+
     private isSameAccount(a: Account, b: Account) {
         return a.id === b.id && a.owner === b.owner && a.provider === b.provider
     }
@@ -181,7 +190,7 @@ export class CoreService {
         const now = new Date()
         const holdings = (
             await this.listContractsByInterface<HoldingViewV2>(
-                '#token-standard-models-v2:Splice.Api.Token.HoldingV2:Holding',
+                '#splice-api-token-holding-v2:Splice.Api.Token.HoldingV2:Holding',
                 party
             )
         ).filter(
@@ -1526,7 +1535,7 @@ class TransferServiceV2 {
             factoryId: string
             choiceContext: OffLedgerV2.TransferInstructionV2.components['schemas']['ChoiceContext']
         }
-    ) {
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const choiceArgs = await this.buildTransferChoiceArgs(args)
         const { factoryId, choiceContext } =
             prefetched ??
@@ -1539,11 +1548,6 @@ class TransferServiceV2 {
                     >,
                     excludeDebugFields: true,
                 }))
-
-        choiceArgs.extraArgs.context = {
-            ...choiceContext,
-            values: choiceContext.choiceContextData.values ?? {},
-        }
 
         return [
             {

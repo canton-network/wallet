@@ -3363,6 +3363,9 @@ importers:
       '@canton-network/core-token-standard-service':
         specifier: 'catalog:'
         version: link:../../core/token-standard-service
+      '@canton-network/core-token-standard-v2':
+        specifier: 'catalog:'
+        version: link:../../core/token-standard-v2
       '@canton-network/core-tx-parser':
         specifier: 'catalog:'
         version: link:../../core/tx-parser

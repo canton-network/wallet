@@ -140,6 +140,7 @@ export class AuthTokenProvider implements AccessTokenProvider {
             }
 
             this.cachedToken = newToken
+            console.log(this.cachedToken)
             return newToken
         }
     }
