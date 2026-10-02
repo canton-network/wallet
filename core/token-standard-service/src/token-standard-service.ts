@@ -1490,6 +1490,19 @@ class TransferServiceV2 {
                 // continueUntilCompletion: continueUntilCompletion ?? false,
             })
 
+        /*
+            declare type Transfer = {
+              sender: Account;
+              receiver: Account;
+              amount: damlTypes.Numeric;
+              instrumentId: InstrumentId;
+              requestedAt: damlTypes.Time;
+              executeBefore: damlTypes.Time;
+              inputHoldingCids: damlTypes.ContractId<Holding>[];
+              meta: Metadata;
+            };
+            
+            */
         return {
             //TODO: find a better way to flatmap party ids
             actors:
@@ -1549,20 +1562,26 @@ class TransferServiceV2 {
                     excludeDebugFields: true,
                 }))
 
-        return [
-            {
-                templateId: TRANSFER_FACTORY_INTERFACE_ID_V2,
-                contractId: factoryId,
-                choice: 'TransferFactory_Transfer',
-                choiceArgument: choiceArgs,
-            },
-            choiceContext.disclosedContracts,
-        ]
+        // return [
+        //     {
+        //         templateId: TRANSFER_FACTORY_INTERFACE_ID_V2,
+        //         contractId: factoryId,
+        //         choice: 'TransferFactory_Transfer',
+        //         choiceArgument: choiceArgs,
+        //     },
+        //     choiceContext.disclosedContracts,
+        // ]
+
+        return this.createTransferFromContext(
+            factoryId,
+            choiceArgs,
+            choiceContext
+        )
     }
 
     async createTransferFromContext(
         factoryId: string,
-        choiceArgs: CreateTransferChoiceArgs,
+        choiceArgs: TransferFactory_TransferV2,
         choiceContext: OffLedgerV2.TransferInstructionV2.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         this.logger.debug('Creating transfer from pre-fetched context...')
@@ -1596,7 +1615,7 @@ class TransferServiceV2 {
             {
                 templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
                 contractId: transferInstructionCid,
-                choice: 'accept', //TODO: double check choice name
+                choice: 'TransferInstruction_Accept', //TODO: double check choice name
                 choiceArgument: {
                     actors,
                     extraArgs: {

@@ -17,8 +17,6 @@ export default async (args: TransferTestScriptParameters) => {
 
     logger.info('Transfer command created, ready for signing and execution')
 
-    logger.info(transferCommand)
-    logger.info(transferDisclosedContracts)
     await sdk.ledger
         .prepare({
             partyId: sender.partyId,
@@ -28,17 +26,17 @@ export default async (args: TransferTestScriptParameters) => {
         .sign(senderKeys.privateKey)
         .execute({ partyId: sender.partyId })
 
-    // logger.info(
-    //     { sender, receiver },
-    //     'Submitted transfer command from Sender to Receiver'
-    // )
-    // const receiverPendingTransfers = await sdk.token.transfer.pendingV2(
-    //     receiver.partyId
-    // )
-    // logger.info(
-    //     receiverPendingTransfers,
-    //     'Receiver pending transfer instructions'
-    // )
+    logger.info(
+        { sender, receiver },
+        'Submitted transfer command from Sender to Receiver'
+    )
+    const receiverPendingTransfers = await sdk.token.transfer.pendingV2(
+        receiver.partyId
+    )
+    logger.info(
+        receiverPendingTransfers,
+        'Receiver pending transfer instructions'
+    )
 
     /**
      * /api/validator/v0/scan-proxy/registry/transfer-instruction/v1/transfer-factory
