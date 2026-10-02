@@ -281,11 +281,7 @@
                                 "description": "Name of signing provider's key to use for getting keys."
                             }
                         },
-                        "required": [
-                            "partyHint",
-                            "networkId",
-                            "signingProviderId"
-                        ]
+                        "required": ["partyHint", "signingProviderId"]
                     }
                 }
             ],
