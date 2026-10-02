@@ -19,18 +19,21 @@ export default defineConfig({
         },
         environment: 'node',
         include: ['src/**/*.test.ts'],
+        exclude: ['src/**/*.integration.test.ts'],
         projects: [
             defineProject({
                 test: {
                     name: 'node',
                     environment: 'node',
                     include: ['src/**/*.test.ts'],
+                    exclude: ['src/**/*.integration.test.ts'],
                 },
             }),
             defineProject({
                 test: {
                     name: 'browser',
                     include: ['src/**/*.test.ts'],
+                    exclude: ['src/**/*.integration.test.ts'],
                     browser: {
                         enabled: true,
                         provider: playwright(),
