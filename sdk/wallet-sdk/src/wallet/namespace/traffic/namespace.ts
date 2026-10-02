@@ -326,7 +326,7 @@ export class TrafficAccountNamespace {
             params,
             terms,
             instrumentId,
-            asset.registryUrl.href,
+            asset.registryUrl,
             holdingCids,
             assetAmount,
             executeBefore
@@ -537,7 +537,7 @@ export class TrafficAccountNamespace {
         const assets = parseAssets(
             this.ctx,
             await purchaseCtx.tokenStandardService.registriesToAssets(
-                purchaseCtx.registryUrls.map((url) => url.href)
+                purchaseCtx.registryUrls
             )
         )
 
@@ -708,7 +708,7 @@ export class TrafficAccountNamespace {
         // Parsed rather than trusted: this figure goes straight into
         // `assetNeededFor`, and `'1e6'` would otherwise become a real transfer
         // request for an amount nobody asked for.
-        return this.computeDecimal(() =>
+        return this.rethrowAsBadRequest(() =>
             damlDecimal(servedRate.conversionRate, 'the conversion rate')
         )
     }
@@ -912,7 +912,7 @@ export class TrafficAccountNamespace {
         params: PurchaseTrafficParams,
         terms: PaymasterTerms,
         instrumentId: InstrumentId,
-        registryUrl: string,
+        registryUrl: URL,
         holdingCids: ContractIdString[],
         assetAmount: Numeric,
         executeBefore: Date
