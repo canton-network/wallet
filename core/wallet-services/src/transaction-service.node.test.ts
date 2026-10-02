@@ -236,6 +236,11 @@ describe('TransactionService', () => {
                     expect.objectContaining({
                         id: pendingTransaction.id,
                         status: 'signed',
+                        payload: {
+                            signature: 'none',
+                            signedBy: wallet.namespace,
+                            party: wallet.partyId,
+                        },
                     })
                 )
             })
@@ -281,6 +286,11 @@ describe('TransactionService', () => {
                     expect.objectContaining({
                         id: pendingTransaction.id,
                         status: 'signed',
+                        payload: {
+                            signature: 'kernel-signature',
+                            signedBy: wallet.namespace,
+                            party: wallet.partyId,
+                        },
                     })
                 )
                 expect(result).toEqual({

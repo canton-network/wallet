@@ -11,7 +11,7 @@ permissions:
     contents: read
 jobs:
     release:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         permissions:
             contents: read
             actions: write
@@ -58,6 +58,7 @@ jobs:
                     --filter "./sdk/**" \
                     --filter "./wallet-gateway/**" \
                     --filter "./examples/**" \
+                    --filter "./tools/**" \
                     exec bash -c '
                       PKG_NAME=$(node -p "require(\"./package.json\").name")
                       PKG_VER=$(node -p "require(\"./package.json\").version")

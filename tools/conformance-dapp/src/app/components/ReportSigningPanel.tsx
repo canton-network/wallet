@@ -1,0 +1,72 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import DownloadIcon from '@mui/icons-material/Download'
+import type React from 'react'
+import type { Signature } from '../../report.ts'
+import { DownloadJsonButton } from './DownloadJsonButton.tsx'
+
+interface ReportSigningPanelProps {
+    running: boolean
+    signing: boolean
+    importing: boolean
+    hash: string
+    signature: Signature | undefined
+    onSignWithWallet: () => void
+}
+
+export const ReportSigningPanel: React.FC<ReportSigningPanelProps> = ({
+    running,
+    signing,
+    importing,
+    hash,
+    signature,
+    onSignWithWallet,
+}) => {
+    const busy = running || signing || importing
+    return (
+        <Box
+            sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto auto',
+                alignItems: 'center',
+                gap: 2,
+            }}
+        >
+            <Box>
+                <Typography variant="caption" color="textSecondary">
+                    Report SHA-256
+                </Typography>
+                <Typography
+                    variant="caption"
+                    component="code"
+                    data-testid="result-hash"
+                    sx={{ display: 'block', overflowWrap: 'anywhere' }}
+                >
+                    {hash}
+                </Typography>
+            </Box>
+            <Button
+                data-testid="sign-with-wallet"
+                disabled={busy}
+                startIcon={<AccountBalanceWalletIcon />}
+                onClick={onSignWithWallet}
+            >
+                {signing ? 'Signing with wallet...' : 'Sign with wallet'}
+            </Button>
+            <DownloadJsonButton
+                data-testid="download-signature"
+                disabled={busy}
+                data={signature}
+                filename="cip103-ctrf.json.sig"
+                startIcon={<DownloadIcon />}
+            >
+                Download signature
+            </DownloadJsonButton>
+        </Box>
+    )
+}

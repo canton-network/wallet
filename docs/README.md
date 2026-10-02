@@ -100,10 +100,11 @@ For **wallet providers, exchanges, and custodians** integrating directly with th
 
 **Preview locally:**
 
+This project uses [uv](https://docs.astral.sh/uv/getting-started/installation/) for dependency management:
+
 ```bash
 cd docs/wallet-integration-guide
-poetry install
-poetry run sphinx-autobuild -c . src build -W
+uv run sphinx-autobuild -c . src build -W
 ```
 
 The guide includes runnable TypeScript examples under [`wallet-integration-guide/examples/`](wallet-integration-guide/examples/).

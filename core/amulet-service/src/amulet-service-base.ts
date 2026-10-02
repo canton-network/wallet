@@ -143,6 +143,19 @@ export abstract class AmuletServiceBase {
         ]
     }
 
+    async cancelFeaturedAppRight(
+        contractId: string,
+        templateId: string
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const exercise: ExerciseCommand = {
+            templateId,
+            contractId,
+            choice: 'FeaturedAppRight_Cancel',
+            choiceArgument: {},
+        }
+        return [exercise, []]
+    }
+
     async cancelTransferPreapproval(
         contractId: string,
         templateId: string,
@@ -233,7 +246,7 @@ export abstract class AmuletServiceBase {
         amount: string,
         instrumentAdmin: string, // TODO (#907): replace with registry call
         instrumentId: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const now = new Date()
         const tomorrow = new Date(now)

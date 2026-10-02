@@ -5,6 +5,7 @@ Typed wrappers around generated DAML JS packages used by Splice examples and SDK
 This package currently exposes two modules:
 
 - `TestToken` (from `@daml.js/test-token-v1`)
+- `TestTokenV2` (from `@daml.js/test-token-v2`)
 - `OTCTrade` (from `@daml.js/otc-trade`)
 
 ## Installation
@@ -28,7 +29,7 @@ pnpm --filter @canton-network/core-splice-codegen build
 ## Regenerating DAML Codegen Inputs
 
 This package depends on generated DAML JS artifacts under
-`damljs/test-token-v1`.
+`damljs/test-token-v1` and `damljs/test-token-v2`.
 
 To refresh those artifacts, run:
 

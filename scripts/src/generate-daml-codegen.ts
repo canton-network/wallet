@@ -11,6 +11,7 @@ import { execSync } from 'child_process'
 const defaultDarFiles = [
     'splice-test-token-v1-1.0.0',
     'splice-token-test-trading-app-1.0.0',
+    'splice-test-token-v2-1.0.0',
 ]
 
 const codegenOutputDir = (darFile: string) =>

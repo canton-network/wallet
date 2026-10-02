@@ -4,12 +4,15 @@
 import { AllocationNamespace } from './allocation/index.js'
 import { UtxoNamespace } from './utxos/index.js'
 import { TransferNamespace } from './transfer/index.js'
-import type { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type {
+    AssetBody,
+    TokenStandardService,
+} from '@canton-network/core-token-standard-service'
 import type { PartyId } from '@canton-network/core-types'
 import type { PrettyTransactions } from '@canton-network/core-tx-parser'
 import type { SDKContext } from '../../init/types/context.js'
 import { type ParsedURL, parseAssets } from '../utils/url.js'
-import { findAsset, type AssetBody } from '../asset/index.js'
+import { findAsset } from '../asset/index.js'
 
 export type TokenNamespaceConfig = {
     tokenStandardService: TokenStandardService
@@ -68,7 +71,7 @@ export class TokenNamespace {
         return parseAssets(
             this.tokenContext.commonCtx,
             await this.tokenContext.tokenStandardService.registriesToAssets(
-                this.tokenContext.registryUrls.map((url) => url.href)
+                this.tokenContext.registryUrls
             )
         )
     }
