@@ -6,6 +6,7 @@ import type * as openrpcgen from '@open-rpc/generator'
 import * as fs from 'fs'
 import lodash from 'lodash'
 import { execSync } from 'child_process'
+import { assertSingleParam } from './assert-single-param'
 const { template } = lodash
 
 const onlyHandleTS = ({ language }: openrpcgen.components.IComponent) => {
@@ -51,7 +52,20 @@ const generatedTypingsTemplate = template(
 `
 )
 
-const hooks: openrpcgen.components.IHooks = {
+export const controllerTemplates = [
+    {
+        path: 'index.ts',
+        template: methodMappingTemplate,
+    },
+    {
+        path: 'typings.ts',
+        template: generatedTypingsTemplate,
+    },
+]
+
+// Named exports only: the generator CLI loads components via `(await import(path)).default`, i.e. module.exports.
+export const hooks: openrpcgen.components.IHooks = {
+    beforeCompileTemplate: [assertSingleParam],
     afterCompileTemplate: [
         async (dest, _, component): Promise<void> => {
             onlyHandleTS(component)
@@ -68,22 +82,9 @@ const hooks: openrpcgen.components.IHooks = {
         },
     ],
     templateFiles: {
-        typescript: [
-            {
-                path: 'index.ts',
-                template: methodMappingTemplate,
-            },
-            {
-                path: 'typings.ts',
-                template: generatedTypingsTemplate,
-            },
-        ],
+        typescript: controllerTemplates,
     },
 }
 
-// note: cant use ESM export because the generator CLI uses commonjs
-module.exports = {
-    hooks,
-    staticPath: () => path.join(__dirname, '../../templates/controller/'),
-    openRPCPath: undefined,
-}
+export const staticPath = () =>
+    path.join(__dirname, '../../templates/controller/')
