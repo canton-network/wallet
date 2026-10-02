@@ -38,13 +38,6 @@ export default async (args: TransferTestScriptParameters) => {
         'Receiver pending transfer instructions'
     )
 
-    /**
-     * /api/validator/v0/scan-proxy/registry/transfer-instruction/v1/transfer-factory
-     * /api/validator/v0/scan-proxy/registry/transfer-instruction/v2/transfer-factory
-     *
-     *
-     * curl -s http://localhost:2000/api/validator/v0/scan-proxy/registry/metadata/v1/instruments
-     */
     const [acceptCommand, acceptDisclosedContracts] =
         await sdk.token.v2.transfer.accept(
             receiverPendingTransfers[0].contractId,
