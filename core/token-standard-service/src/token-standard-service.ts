@@ -23,11 +23,6 @@ import {
     Account,
     TokenStandardClient as TokenStandardClientV2,
     HoldingView as HoldingViewV2,
-    TransferFactory_Transfer as TransferFactory_TransferV2,
-    Holding as HoldingV2,
-    type OffLedger as OffLedgerV2,
-    TRANSFER_FACTORY_INTERFACE_ID_V2,
-    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
 import { EventFilterBySetup } from '@canton-network/core-ledger-client-types'
 import type { ContractId, Logger, PartyId } from '@canton-network/core-types'
@@ -71,6 +66,7 @@ import {
     type TransactionUpdate,
     type UpdateFormat,
 } from './types.js'
+import { TransferServiceV2 } from './v2/transfer-service.js'
 
 function isApiVersion(v: string): v is ApiVersion {
     return (SUPPORTED_VERSIONS as readonly string[]).includes(v)
@@ -162,7 +158,6 @@ export class CoreService {
         )
     }
 
-    // basic conversion fyunction for testing
     toBasicAccount(partyId: PartyId): Account {
         return {
             owner: partyId,
@@ -181,6 +176,9 @@ export class CoreService {
         instrumentId: string
         inputUtxos?: string[]
         amount?: Decimal
+        limit?: number
+        offset?: number
+        continueUntilCompletion?: boolean
     }) {
         if (opts.inputUtxos?.length) return opts.inputUtxos
 
@@ -191,7 +189,10 @@ export class CoreService {
         const holdings = (
             await this.listContractsByInterface<HoldingViewV2>(
                 '#splice-api-token-holding-v2:Splice.Api.Token.HoldingV2:Holding',
-                party
+                party,
+                opts.limit,
+                opts.offset,
+                opts.continueUntilCompletion ?? false
             )
         ).filter(
             (h) =>
@@ -1456,176 +1457,6 @@ class TransferService {
                     prefetchedRegistryChoiceContext
                 )
         }
-    }
-}
-
-class TransferServiceV2 {
-    constructor(
-        private core: CoreService,
-        private readonly logger: Logger
-    ) {}
-
-    public async buildTransferChoiceArgs(
-        opts: {
-            sender: Account
-            receiver: Account
-            amount: string
-            instrumentAdmin: PartyId
-            instrumentId: string
-            inputUtxos?: string[]
-            memo?: string
-            expiryDate?: Date
-            meta?: Metadata
-            actors?: PartyId[]
-        }
-        // continueUntilCompletion?: boolean
-    ): Promise<TransferFactory_TransferV2> {
-        const inputHoldingCids: string[] =
-            await this.core.getInputHoldingCidsForAccount({
-                account: opts.sender,
-                instrumentAdmin: opts.instrumentAdmin,
-                instrumentId: opts.instrumentId,
-                inputUtxos: opts.inputUtxos ?? [],
-                amount: new Decimal(opts.amount),
-                // continueUntilCompletion: continueUntilCompletion ?? false,
-            })
-
-        /*
-            declare type Transfer = {
-              sender: Account;
-              receiver: Account;
-              amount: damlTypes.Numeric;
-              instrumentId: InstrumentId;
-              requestedAt: damlTypes.Time;
-              executeBefore: damlTypes.Time;
-              inputHoldingCids: damlTypes.ContractId<Holding>[];
-              meta: Metadata;
-            };
-            
-            */
-        return {
-            //TODO: find a better way to flatmap party ids
-            actors:
-                opts.actors ??
-                [opts.sender.owner, opts.sender.provider].flatMap((partyId) =>
-                    partyId != null ? [partyId] : []
-                ),
-            transfer: {
-                sender: opts.sender,
-                receiver: opts.receiver,
-                amount: opts.amount,
-                instrumentId: {
-                    admin: opts.instrumentAdmin,
-                    id: opts.instrumentId,
-                },
-                requestedAt: new Date(
-                    Date.now() - REQUESTED_AT_SKEW_MS
-                ).toISOString(),
-                executeBefore: (
-                    opts.expiryDate ??
-                    new Date(Date.now() + 24 * 60 * 60 * 1000)
-                ).toISOString(),
-                inputHoldingCids:
-                    inputHoldingCids as unknown as ContractId<HoldingV2>[],
-                meta: {
-                    values: {
-                        [TokenStandardService.MEMO_KEY]: opts.memo || '',
-                        ...opts.meta?.values,
-                    },
-                },
-            },
-            extraArgs: {
-                context: { values: {} },
-                meta: { values: {} },
-            },
-        }
-    }
-
-    async createTransfer(
-        args: Parameters<TransferServiceV2['buildTransferChoiceArgs']>[0],
-        registryUrl: URL,
-        prefetched?: {
-            factoryId: string
-            choiceContext: OffLedgerV2.TransferInstructionV2.components['schemas']['ChoiceContext']
-        }
-    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
-        const choiceArgs = await this.buildTransferChoiceArgs(args)
-        const { factoryId, choiceContext } =
-            prefetched ??
-            (await this.core
-                .getTokenStandardClientV2(registryUrl)
-                .post('/registry/transfer-instruction/v2/transfer-factory', {
-                    choiceArguments: choiceArgs as unknown as Record<
-                        string,
-                        never
-                    >,
-                    excludeDebugFields: true,
-                }))
-
-        // return [
-        //     {
-        //         templateId: TRANSFER_FACTORY_INTERFACE_ID_V2,
-        //         contractId: factoryId,
-        //         choice: 'TransferFactory_Transfer',
-        //         choiceArgument: choiceArgs,
-        //     },
-        //     choiceContext.disclosedContracts,
-        // ]
-
-        return this.createTransferFromContext(
-            factoryId,
-            choiceArgs,
-            choiceContext
-        )
-    }
-
-    async createTransferFromContext(
-        factoryId: string,
-        choiceArgs: TransferFactory_TransferV2,
-        choiceContext: OffLedgerV2.TransferInstructionV2.components['schemas']['ChoiceContext']
-    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
-        this.logger.debug('Creating transfer from pre-fetched context...')
-        choiceArgs.extraArgs.context = {
-            ...choiceContext.choiceContextData,
-            values: choiceContext.choiceContextData?.values ?? {},
-        }
-        const exercise: ExerciseCommand = {
-            templateId: TRANSFER_FACTORY_INTERFACE_ID_V2,
-            contractId: factoryId,
-            choice: 'TransferFactory_Transfer',
-            choiceArgument: choiceArgs,
-        }
-        return [exercise, choiceContext.disclosedContracts]
-    }
-
-    async createInstructionChoiceAccept(
-        transferInstructionCid: string,
-        actors: PartyId[],
-        registryUrl: URL
-    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
-        const ctx = await this.core.getTokenStandardClientV2(registryUrl).post(
-            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept',
-            {
-                excludeDebugFields: true,
-            },
-            { path: { transferInstructionId: transferInstructionCid } }
-        )
-
-        return [
-            {
-                templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
-                contractId: transferInstructionCid,
-                choice: 'TransferInstruction_Accept', //TODO: double check choice name
-                choiceArgument: {
-                    actors,
-                    extraArgs: {
-                        context: ctx.choiceContextData,
-                        meta: EMPTY_META,
-                    },
-                },
-            },
-            ctx.disclosedContracts ?? [],
-        ]
     }
 }
 
