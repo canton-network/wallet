@@ -123,3 +123,29 @@ Uses authentication party to and the user to prepare access token and calls sign
 If the ledger user does not yet have primary-party authentication, the user is patched: `primary_party` becomes this party id and `primary_party_authentication` becomes true. The wallet is updated with `isAuthParty`.
 If the user already has primary-party authentication, nothing is patched. The wallet must already be `isAuthParty` and its party id must equal the user's primary party.
 If the participant rejects the token, the session stays tokenless and the call fails. If the participant accepts it, that token is stored on the same session id, other sessions for this user and origin are removed, wallets are synced, and the response includes `wallet`, `accessToken`, and `sessionId`.
+
+## Wallet Gateway UI
+
+Network selection page shows a username field when the selected network uses `self_issued` auth.
+Clicking connect calls `addSelfIssuedSession` method, it stores the returned session id in the browser, and redirects to `/onboarding`.
+The method may refuse adding session if at least one of those is not fulfilled:
+
+- User has `primary_party_authentication` true
+- User has `primary_party`
+- There is a wallet with `primary_party_auth` true that matches `user_id` and `user.primary_party`
+
+The onboarding page calls `getSelfIssuedOnboarding` with that session id. Based on the response either onboarding form or wallet selection view is rendered.
+
+### Onboarding
+
+The page contains wallet creation form with party hint and signing provider inputs.
+Currently only `wallet-kernel` signing provider is available, other signing providers will be added in future once their drivers support method `signMessage` required for signing access token.
+Submit calls `createSelfIssuedWallet`.
+If the returned wallet is already allocated, the page calls `connectSelfIssuedSession` and the user lands on the normal logged-in UI.
+If the signature is still pending, the page stays on onboarding and a later action calls `allocateSelfIssuedWallet`, then `connectSelfIssuedSession` once the party is allocated.
+
+### Selecting an existing party
+
+Renders wallets of the user that have `is_auth_party`. At the moment only one wallet is possible, in future steps the view will allow changing authenticating party.
+Clicking select on wallet calls `connectSelfIssuedSession` for that party, stores returned access token in browser storage, and then opens the logged-in UI.
+If primary-party authentication is set but no allocated authentication-party wallet is stored, the page shows an error and does not offer the create form.
