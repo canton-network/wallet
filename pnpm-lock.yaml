@@ -3552,6 +3552,9 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../../core/wallet-auth
+      '@canton-network/core-wallet-services':
+        specifier: 'catalog:'
+        version: link:../../core/wallet-services
       '@canton-network/core-wallet-store':
         specifier: 'catalog:'
         version: link:../../core/wallet-store
@@ -3592,6 +3595,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       web-ext:
         specifier: 'catalog:'
         version: 10.7.0(express@5.2.1(supports-color@10.2.2))(jiti@2.7.0)(supports-color@10.2.2)

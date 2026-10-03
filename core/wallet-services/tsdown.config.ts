@@ -6,5 +6,11 @@ import { base } from '../../tsdown.base.ts'
 
 export default defineConfig({
     ...base,
-    entry: ['src/index.ts'],
+    entry: {
+        index: 'src/index.ts',
+        // Runtime-agnostic notification core, importable without the
+        // Node-only dependencies of the rest of the package (e.g. by the
+        // browser extension).
+        'notification/index': 'src/notification/index.ts',
+    },
 })
