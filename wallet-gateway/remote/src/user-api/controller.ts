@@ -78,6 +78,7 @@ import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import { networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
 import {
+    assertSelfIssuedOnboardingAllowed,
     createSelfIssuedAuthService,
     type SelfIssuedOnboardingSession,
 } from '../ledger/self-issued-auth-service.js'
@@ -498,6 +499,12 @@ export const userController = (
                 userId: username,
                 accessToken: '',
             })
+            await assertSelfIssuedOnboardingAllowed(
+                authAwareStore,
+                network,
+                username,
+                logger
+            )
             const sessionId = v4()
             await onboardingStore.setSession({
                 id: sessionId,
