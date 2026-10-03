@@ -14,6 +14,7 @@
         "zip": "wxt zip",
         "zip:firefox": "wxt zip -b firefox",
         "compile": "tsc --noEmit",
+        "test": "vitest run",
         "e2e": "playwright test",
         "e2e:ui": "playwright test --ui",
         "postinstall": "wxt prepare"
@@ -27,6 +28,7 @@
         "@canton-network/core-tx-visualizer": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-wallet-services": "catalog:",
         "@canton-network/core-wallet-store": "catalog:",
         "@canton-network/core-wallet-store-inmemory": "catalog:",
         "@canton-network/core-wallet-ui-components": "catalog:",
@@ -42,6 +44,7 @@
         "@playwright/test": "catalog:",
         "@wxt-dev/module-react": "catalog:",
         "typescript": "catalog:",
+        "vitest": "catalog:",
         "web-ext": "catalog:",
         "wxt": "^0.21.3"
     },

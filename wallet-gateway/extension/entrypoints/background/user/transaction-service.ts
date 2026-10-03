@@ -8,6 +8,7 @@ import {
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { Notifier } from '@canton-network/core-wallet-services/notification'
 import type {
     Store,
     Transaction,
@@ -25,7 +26,9 @@ export class TransactionService {
     constructor(
         private store: Store,
         private logger: Logger,
-        private signingDriver: SigningDriverInterface
+        private signingDriver: SigningDriverInterface,
+        /** Notifier of the session the transactions belong to. */
+        private notifier: Notifier
     ) {}
 
     public async sign(
@@ -121,6 +124,7 @@ export class TransactionService {
 
         const now = new Date()
         await this.store.setTransactionSigned(tx.id, now)
+        this.emitTxChanged({ ...tx, status: 'signed', signedAt: now })
 
         this.logger.info(
             { transactionId: tx.id },
@@ -144,34 +148,49 @@ export class TransactionService {
         const { partyId, signature, signedBy } = executeParams
         const { commandId } = transaction
 
-        const result = await ledgerClient.postWithRetry(
-            '/v2/interactive-submission/executeAndWait',
-            {
-                userId,
-                preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-                submissionId: commandId,
-                deduplicationPeriod: {
-                    Empty: {},
-                },
-                partySignatures: {
-                    signatures: [
-                        {
-                            party: partyId,
-                            signatures: [
-                                {
-                                    signature,
-                                    signedBy,
-                                    format: 'SIGNATURE_FORMAT_CONCAT',
-                                    signingAlgorithmSpec:
-                                        'SIGNING_ALGORITHM_SPEC_ED25519',
-                                },
-                            ],
-                        },
-                    ],
-                },
-            } as Types['JsExecuteSubmissionAndWaitRequest']
-        )
+        const request = {
+            userId,
+            preparedTransaction: transaction.preparedTransaction,
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            submissionId: commandId,
+            deduplicationPeriod: {
+                Empty: {},
+            },
+            partySignatures: {
+                signatures: [
+                    {
+                        party: partyId,
+                        signatures: [
+                            {
+                                signature,
+                                signedBy,
+                                format: 'SIGNATURE_FORMAT_CONCAT',
+                                signingAlgorithmSpec:
+                                    'SIGNING_ALGORITHM_SPEC_ED25519',
+                            },
+                        ],
+                    },
+                ],
+            },
+        } as Types['JsExecuteSubmissionAndWaitRequest']
+
+        let result: ExecuteResult
+        try {
+            result = await ledgerClient.postWithRetry(
+                '/v2/interactive-submission/executeAndWait',
+                request
+            )
+        } catch (err) {
+            this.logger.error(
+                { err, transactionId: transaction.id },
+                'Ledger rejected submission'
+            )
+            await this.store.setTransactionStatus(transaction.id, 'failed', {
+                failureReason: err instanceof Error ? err.message : String(err),
+            })
+            this.emitTxChanged({ ...transaction, status: 'failed' })
+            throw err
+        }
 
         this.logger.info(
             { transactionId: transaction.id },
@@ -181,7 +200,16 @@ export class TransactionService {
         await this.store.setTransactionStatus(transaction.id, 'executed', {
             payload: result,
         })
+        this.emitTxChanged({
+            ...transaction,
+            status: 'executed',
+            payload: result,
+        })
 
         return result
+    }
+
+    private emitTxChanged(transaction: Transaction): void {
+        this.notifier.emit('txChanged', transaction)
     }
 }
