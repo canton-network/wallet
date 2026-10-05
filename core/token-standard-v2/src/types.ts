@@ -81,13 +81,15 @@ export type {
     SettlementFactory_PublicFetch,
     SettlementFactory_SettleBatch,
     SettlementFactoryView,
-    SettlementFactory,
     FinalizedAllocation,
     TransferLegSide,
 } from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/AllocationV2/module.js'
 
 // Export companion object as value (needed for accessing choice names at runtime)
-export { Allocation } from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/AllocationV2/module.js'
+export {
+    Allocation,
+    SettlementFactory,
+} from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/AllocationV2/module.js'
 
 export {
     EventLog,
