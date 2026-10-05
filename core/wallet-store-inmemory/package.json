@@ -15,6 +15,7 @@
         "clean": "tsc -b --clean; rm -rf dist"
     },
     "dependencies": {
+        "@canton-network/core-rpc-errors": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
         "@canton-network/core-wallet-store": "catalog:",

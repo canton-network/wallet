@@ -2480,6 +2480,9 @@ importers:
 
   core/wallet-store-inmemory:
     dependencies:
+      '@canton-network/core-rpc-errors':
+        specifier: 'catalog:'
+        version: link:../rpc-errors
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
