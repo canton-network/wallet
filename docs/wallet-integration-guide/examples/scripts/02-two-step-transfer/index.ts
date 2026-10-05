@@ -1,7 +1,6 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
 import _accept from './_accept.js'
-import _acceptV2 from './_acceptV2.js'
 import type { TransferTestScriptParameters } from './types.js'
 import _reject from './_reject.js'
 import _withdraw from './_withdraw.js'
