@@ -1,10 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { readFileSync } from 'node:fs'
 import { defineConfig, defineProject } from 'vitest/config'
 import { playwright } from '@vitest/browser-playwright'
 
+const sdkVersion = JSON.parse(
+    readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+).version as string
+
 export default defineConfig({
+    define: {
+        __DAPP_SDK_VERSION__: JSON.stringify(sdkVersion),
+    },
     test: {
         globalSetup: ['./vitest.global-setup.ts'],
         coverage: {
