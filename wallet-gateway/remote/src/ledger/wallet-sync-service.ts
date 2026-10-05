@@ -455,8 +455,12 @@ export class WalletSyncService {
         const updatedWallets: Wallet[] = []
 
         for (const wallet of existingAllocatedWallets) {
-            const nextRights = rightsByParty.get(wallet.partyId)
-            if (!nextRights) continue
+            // Absent from the snapshot means the user has no rights for that party.
+            // Wallet rights will be set to empty for both syncRights and syncWallets, but status/disabled are updated only by syncWallets.
+            const nextRights = [
+                ...(rightsByParty.get(wallet.partyId) ??
+                    WalletSyncService.EMPTY_RIGHTS),
+            ]
             if (this.sameRights(wallet.rights, nextRights)) continue
 
             await this.store.updateWallet({
