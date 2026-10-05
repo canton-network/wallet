@@ -7,15 +7,18 @@ import type { PartyId } from '@canton-network/core-types'
 import { generateCommand, TestTokenHoldingView } from '../common'
 
 import {
+    Allocation,
     AllocationFactory,
+    AllocationInstruction,
     EventLog,
     HoldingView,
     SettlementFactory,
     TransferFactory,
+    TransferInstruction,
 } from '@canton-network/core-token-standard-v2'
 import {
     Transfer,
-    Allocation,
+    Allocation as AllocationT,
     AccountConfig,
 } from '@daml.js/test-token-v2/Splice/Testing/Tokens/TestTokenV2'
 import { WrappedCommand } from '@canton-network/core-ledger-client-types'
@@ -23,16 +26,19 @@ import { Token } from '@daml.js/test-token-v2/Splice/Testing/Tokens/TestTokenV2/
 import {
     AllocationFactory as AllocationFactoryV1,
     TransferFactory as TransferFactoryV1,
+    TransferInstruction as TransferInstructionV1,
+    AllocationInstruction as AllocationInstructionV1,
+    Allocation as AllocationV1,
 } from '@canton-network/core-token-standard'
 
 const commands = {
     create: {
         v1: {
-            allocation: generateCommand.create<Allocation.TokenAllocationV1>(
+            allocation: generateCommand.create<AllocationT.TokenAllocationV1>(
                 TestTokenV2.Allocation.TokenAllocationV1.templateId
             ),
             allocationInstruction:
-                generateCommand.create<Allocation.TokenAllocationInstructionV1>(
+                generateCommand.create<AllocationT.TokenAllocationInstructionV1>(
                     TestTokenV2.Allocation.TokenAllocationInstructionV1
                         .templateId
                 ),
@@ -43,15 +49,18 @@ const commands = {
         transferOffer: generateCommand.create<Transfer.TokenTransferOffer>(
             TestTokenV2.Transfer.TokenTransferOffer.templateId
         ),
-        allocation: generateCommand.create<Allocation.TokenAllocationV2>(
+        allocation: generateCommand.create<AllocationT.TokenAllocationV2>(
             TestTokenV2.Allocation.TokenAllocationV2.templateId
         ),
         allocationInstruction:
-            generateCommand.create<Allocation.TokenAllocationInstructionV2>(
+            generateCommand.create<AllocationT.TokenAllocationInstructionV2>(
                 TestTokenV2.Allocation.TokenAllocationInstructionV2.templateId
             ),
         accountConfig: generateCommand.create<AccountConfig.AccountConfig>(
             TestTokenV2.AccountConfig.AccountConfig.templateId
+        ),
+        accountProposal: generateCommand.create<AccountConfig.AccountProposal>(
+            TestTokenV2.AccountConfig.AccountProposal.templateId
         ),
         token: (
             holding: TestTokenHoldingView<HoldingView>
@@ -121,6 +130,129 @@ const commands = {
             settlementFactory_PublicFetch: generateCommand.exercise(
                 TestTokenV2.TokenRules.templateId,
                 SettlementFactory.SettlementFactory_PublicFetch.choiceName
+            ),
+        },
+        accountConfig: {
+            authorizeTransferInstructionAction: generateCommand.exercise(
+                TestTokenV2.AccountConfig.AccountConfig.templateId,
+                TestTokenV2.AccountConfig.AccountConfig
+                    .AuthorizeTransferInstructionAction.choiceName
+            ),
+            authorizeAllocationAction: generateCommand.exercise(
+                TestTokenV2.AccountConfig.AccountConfig.templateId,
+                TestTokenV2.AccountConfig.AccountConfig
+                    .AuthorizeAllocationAction.choiceName
+            ),
+            authorizeAllocationInstructionAction: generateCommand.exercise(
+                TestTokenV2.AccountConfig.AccountConfig.templateId,
+                TestTokenV2.AccountConfig.AccountConfig
+                    .AuthorizeAllocationInstructionAction.choiceName
+            ),
+        },
+        accountPropposal: {
+            accept: generateCommand.exercise(
+                TestTokenV2.AccountConfig.AccountProposal.templateId,
+                TestTokenV2.AccountConfig.AccountProposal.AccountProposal_Accept
+                    .choiceName
+            ),
+            reject: generateCommand.exercise(
+                TestTokenV2.AccountConfig.AccountProposal.templateId,
+                TestTokenV2.AccountConfig.AccountProposal.AccountProposal_Reject
+                    .choiceName
+            ),
+            withdraw: generateCommand.exercise(
+                TestTokenV2.AccountConfig.AccountProposal.templateId,
+                TestTokenV2.AccountConfig.AccountProposal
+                    .AccountProposal_Withdraw.choiceName
+            ),
+        },
+        allocationInstruction: {
+            v1: {
+                withdraw: generateCommand.exercise(
+                    TestTokenV2.Allocation.TokenAllocationInstructionV1
+                        .templateId,
+                    AllocationInstructionV1.AllocationInstruction_Withdraw
+                        .choiceName
+                ),
+                update: generateCommand.exercise(
+                    TestTokenV2.Allocation.TokenAllocationInstructionV1
+                        .templateId,
+                    AllocationInstructionV1.AllocationInstruction_Update
+                        .choiceName
+                ),
+            },
+            accept: generateCommand.exercise(
+                TestTokenV2.Allocation.TokenAllocationInstructionV2.templateId,
+                AllocationInstruction.AllocationInstruction_Accept.choiceName
+            ),
+            withdraw: generateCommand.exercise(
+                TestTokenV2.Allocation.TokenAllocationInstructionV2.templateId,
+                AllocationInstruction.AllocationInstruction_Withdraw.choiceName
+            ),
+        },
+        allocation: {
+            v1: {
+                executeTransfer: generateCommand.exercise(
+                    TestTokenV2.Allocation.TokenAllocationV1.templateId,
+                    AllocationV1.Allocation_ExecuteTransfer.choiceName
+                ),
+                cancel: generateCommand.exercise(
+                    TestTokenV2.Allocation.TokenAllocationV1.templateId,
+                    AllocationV1.Allocation_Cancel.choiceName
+                ),
+                withdraw: generateCommand.exercise(
+                    TestTokenV2.Allocation.TokenAllocationV1.templateId,
+                    AllocationV1.Allocation_Withdraw.choiceName
+                ),
+            },
+            settle: generateCommand.exercise(
+                TestTokenV2.Allocation.TokenAllocationV2.templateId,
+                Allocation.Allocation_Settle.choiceName
+            ),
+            withdraw: generateCommand.exercise(
+                TestTokenV2.Allocation.TokenAllocationV2.templateId,
+                Allocation.Allocation_Withdraw.choiceName
+            ),
+            cancel: generateCommand.exercise(
+                TestTokenV2.Allocation.TokenAllocationV2.templateId,
+                Allocation.Allocation_Cancel.choiceName
+            ),
+        },
+        transferOffer: {
+            v1: {
+                transferInstruction_Accept: generateCommand.exercise(
+                    TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                    TransferInstructionV1.TransferInstruction_Accept.choiceName
+                ),
+                transferInstruction_Reject: generateCommand.exercise(
+                    TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                    TransferInstructionV1.TransferInstruction_Reject.choiceName
+                ),
+                transferInstruction_Withdraw: generateCommand.exercise(
+                    TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                    TransferInstructionV1.TransferInstruction_Withdraw
+                        .choiceName
+                ),
+                transferInstruction_Update: generateCommand.exercise(
+                    TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                    TransferInstructionV1.TransferInstruction_Update.choiceName
+                ),
+            },
+            transferInstruction_Accept: generateCommand.exercise(
+                TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                TransferInstruction.TransferInstruction_Accept.choiceName
+            ),
+            transferInstruction_Reject: generateCommand.exercise(
+                TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                TransferInstruction.TransferInstruction_Reject.choiceName
+            ),
+            TransferInstruction_Withdraw: generateCommand.exercise(
+                TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                TransferInstruction.TransferInstruction_Withdraw.choiceName
+            ),
+            eventLog_HoldingsChange: generateCommand.exercise(
+                TestTokenV2.Transfer.TokenTransferOffer.templateId,
+                EventLog.EventLog_HoldingsChange.choiceName
             ),
         },
     },
