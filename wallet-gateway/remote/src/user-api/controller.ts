@@ -583,30 +583,13 @@ export const userController = (
                     logger
                 ),
             })
-            const syncService = new WalletSyncService(
-                scopedStore,
-                ledgerClient,
-                connectedContext,
-                logger
-            )
-            // TODO should I move it to create and allocate instead?
-            await syncService.syncRights()
-            const wallets = await scopedStore.getWallets()
-            const walletWithUpdatedRights = wallets.find(
-                (w) =>
-                    w.partyId === wallet.partyId && w.networkId === network.id
-            )
             await emitSessionConnected(
                 session.id,
                 network,
                 connectedContext,
                 ledgerClient
             )
-            return {
-                wallet: walletWithUpdatedRights ?? wallet,
-                accessToken,
-                sessionId: session.id,
-            }
+            return { wallet, accessToken, sessionId: session.id }
         },
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams
