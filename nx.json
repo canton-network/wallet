@@ -6,7 +6,11 @@
             "default",
             "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
             "!{projectRoot}/.storybook/**/*",
-            "!{projectRoot}/tsconfig.storybook.json"
+            "!{projectRoot}/tsconfig.storybook.json",
+            "!{projectRoot}/**/*.@(spec|test).@(ts|tsx)",
+            "!{projectRoot}/**/__tests__/**/*",
+            "!{projectRoot}/vitest.*.ts",
+            "!{workspaceRoot}/vitest.base.ts"
         ],
         "sharedGlobals": ["{workspaceRoot}/vitest.base.ts"]
     },
@@ -58,6 +62,11 @@
         },
         "build": {
             "dependsOn": ["^build"],
+            "inputs": [
+                "production",
+                "^production",
+                "{workspaceRoot}/tsdown.base.ts"
+            ],
             "outputs": ["{projectRoot}/dist"],
             "cache": true
         },
