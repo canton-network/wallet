@@ -6,7 +6,13 @@ import { TestTokenID, TestTokenV2 } from './dar'
 import type { PartyId } from '@canton-network/core-types'
 import { generateCommand, TestTokenHoldingView } from '../common'
 
-import { HoldingView } from '@canton-network/core-token-standard-v2'
+import {
+    AllocationFactory,
+    EventLog,
+    HoldingView,
+    SettlementFactory,
+    TransferFactory,
+} from '@canton-network/core-token-standard-v2'
 import {
     Transfer,
     Allocation,
@@ -14,6 +20,10 @@ import {
 } from '@daml.js/test-token-v2/Splice/Testing/Tokens/TestTokenV2'
 import { WrappedCommand } from '@canton-network/core-ledger-client-types'
 import { Token } from '@daml.js/test-token-v2/Splice/Testing/Tokens/TestTokenV2/Holding'
+import {
+    AllocationFactory as AllocationFactoryV1,
+    TransferFactory as TransferFactoryV1,
+} from '@canton-network/core-token-standard'
 
 const commands = {
     create: {
@@ -62,9 +72,55 @@ const commands = {
     },
     exercise: {
         rules: {
+            v1: {
+                transferFactory_Transfer: generateCommand.exercise(
+                    TestTokenV2.TokenRules.templateId,
+                    TransferFactoryV1.TransferFactory_Transfer.choiceName
+                ),
+                transferFactory_PublicFetch: generateCommand.exercise(
+                    TestTokenV2.TokenRules.templateId,
+                    TransferFactoryV1.TransferFactory_PublicFetch.choiceName
+                ),
+                allocationFactory_Allocate: generateCommand.exercise(
+                    TestTokenV2.TokenRules.templateId,
+                    AllocationFactoryV1.AllocationFactory_Allocate.choiceName
+                ),
+                allocationFactory_PublicFetch: generateCommand.exercise(
+                    TestTokenV2.TokenRules.templateId,
+                    AllocationFactoryV1.AllocationFactory_PublicFetch.choiceName
+                ),
+            },
+            transferFactory_Transfer: generateCommand.exercise(
+                TestTokenV2.TokenRules.templateId,
+                TransferFactory.TransferFactory_Transfer.choiceName
+            ),
+            transferFactory_PublicFetch: generateCommand.exercise(
+                TestTokenV2.TokenRules.templateId,
+                TransferFactory.TransferFactory_PublicFetch.choiceName
+            ),
+            allocationFactory_Allocate: generateCommand.exercise(
+                TestTokenV2.TokenRules.templateId,
+                AllocationFactory.AllocationFactory_Allocate.choiceName
+            ),
+            allocationFactory_PublicFetch: generateCommand.exercise(
+                TestTokenV2.TokenRules.templateId,
+                AllocationFactory.AllocationFactory_PublicFetch.choiceName
+            ),
+            eventLog_HoldingsChange: generateCommand.exercise(
+                TestTokenV2.TokenRules.templateId,
+                EventLog.EventLog_HoldingsChange.choiceName
+            ),
             offerMint: generateCommand.exercise(
                 TestTokenV2.TokenRules.templateId,
                 TestTokenV2.TokenRules.TokenRules_OfferMint.choiceName
+            ),
+            settlementFactory_SettleBatch: generateCommand.exercise(
+                TestTokenV2.TokenRules.templateId,
+                SettlementFactory.SettlementFactory_SettleBatch.choiceName
+            ),
+            settlementFactory_PublicFetch: generateCommand.exercise(
+                TestTokenV2.TokenRules.templateId,
+                SettlementFactory.SettlementFactory_PublicFetch.choiceName
             ),
         },
     },
