@@ -171,7 +171,7 @@ export class TransferServiceV2 {
         registryUrl: URL
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const ctx = await this.core.getTokenStandardClientV2(registryUrl).post(
-            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/reject',
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/withdraw',
             {
                 excludeDebugFields: true,
             },
