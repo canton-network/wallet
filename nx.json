@@ -67,7 +67,7 @@
                 "^production",
                 "{workspaceRoot}/tsdown.base.ts"
             ],
-            "outputs": ["{projectRoot}/dist"],
+            "outputs": ["{projectRoot}/dist", "{projectRoot}/*.tsbuildinfo"],
             "cache": true
         },
         "test": {

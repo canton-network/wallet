@@ -92,6 +92,12 @@
     },
     "nx": {
         "targets": {
+            "build": {
+                "outputs": [
+                    "{projectRoot}/dist",
+                    "{projectRoot}/src/web/frontend/dist"
+                ]
+            },
             "start": {
                 "dependsOn": [
                     "^build",
