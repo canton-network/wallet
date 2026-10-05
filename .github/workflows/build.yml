@@ -564,7 +564,7 @@ jobs:
             - name: Test example scripts (${{ matrix.network }})
               env:
                   MAX_IO_LISTENERS: '50'
-              run: pnpm script:test:examples
+              run: pnpm script:test:examples --network=${{ matrix.network }}
 
             - uses: ./.github/actions/check_resources
 
