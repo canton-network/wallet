@@ -59,7 +59,7 @@ export type SigningProviderName =
     | 'securosys'
     | 'bitgo'
 
-export type ExternalSigningProvider = Omit<
+export type ExternalSigningProvider = Exclude<
     SigningProviderName,
     'participant' | 'wallet-kernel'
 >
