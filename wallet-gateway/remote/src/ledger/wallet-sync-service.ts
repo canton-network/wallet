@@ -588,10 +588,16 @@ export class WalletSyncService {
             }
 
             const newWallets = newParticipantWallets
-            const updatedRaw = [
-                ...updatedToInitialized,
-                ...rightsUpdatedWallets,
-            ]
+            // This assures wallet is not returned twice in updated if it had both rights change and status or disabled change.
+            // status/disabled updated wallets taking precedence over rights updated assure most recent wallet data in response.
+            const nonRightsUpdatesPartyIds = new Set([
+                ...updatedToInitialized.map((wallet) => wallet.partyId),
+                ...updatedToDisabled.map((wallet) => wallet.partyId),
+            ])
+            const rightsOnly = rightsUpdatedWallets.filter(
+                (wallet) => !nonRightsUpdatesPartyIds.has(wallet.partyId)
+            )
+            const updatedRaw = [...updatedToInitialized, ...rightsOnly]
 
             const added = newWallets.filter((wallet) => !wallet.disabled)
             const updated = updatedRaw.filter((wallet) => !wallet.disabled)
