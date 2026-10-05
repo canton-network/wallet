@@ -37,6 +37,8 @@ export function coverage(overrides: CoverageOverrides = {}): CoverageConfig {
         include: ['src/**/*.ts'],
         ...(exclude && { exclude }),
         reporter: ['text', 'html', 'lcov', 'json-summary'],
+        // @nx/vitest infers the cached test outputs from this
+        reportsDirectory: './coverage',
         ...(thresholds !== false && {
             thresholds: { ...defaultThresholds, ...thresholds },
         }),

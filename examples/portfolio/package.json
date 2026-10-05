@@ -68,15 +68,6 @@
     "publishConfig": {
         "access": "public"
     },
-    "nx": {
-        "targets": {
-            "playwright:e2e": {
-                "dependsOn": [
-                    "^build"
-                ]
-            }
-        }
-    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/canton-network/wallet.git",

@@ -54,8 +54,8 @@
             },
             "playwright:e2e": {
                 "dependsOn": [
-                    "build",
-                    "^build"
+                    "^build",
+                    "build"
                 ]
             }
         }

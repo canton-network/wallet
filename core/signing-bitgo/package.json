@@ -17,9 +17,7 @@
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
-        "clean": "rm -rf ./dist",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage"
+        "clean": "rm -rf ./dist"
     },
     "dependencies": {
         "@bitgo/sdk-lib-mpc": "catalog:",
