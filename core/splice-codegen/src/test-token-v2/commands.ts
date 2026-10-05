@@ -9,21 +9,39 @@ import { generateCommand, TestTokenHoldingView } from '../common'
 import { HoldingView } from '@canton-network/core-token-standard-v2'
 import {
     Transfer,
-    Allocation as AllocationT,
+    Allocation,
+    AccountConfig,
 } from '@daml.js/test-token-v2/Splice/Testing/Tokens/TestTokenV2'
 import { WrappedCommand } from '@canton-network/core-ledger-client-types'
 import { Token } from '@daml.js/test-token-v2/Splice/Testing/Tokens/TestTokenV2/Holding'
 
 const commands = {
     create: {
+        v1: {
+            allocation: generateCommand.create<Allocation.TokenAllocationV1>(
+                TestTokenV2.Allocation.TokenAllocationV1.templateId
+            ),
+            allocationInstruction:
+                generateCommand.create<Allocation.TokenAllocationInstructionV1>(
+                    TestTokenV2.Allocation.TokenAllocationInstructionV1
+                        .templateId
+                ),
+        },
         rules: generateCommand.create<{ admin: PartyId }>(
             TestTokenV2.TokenRules.templateId
         ),
         transferOffer: generateCommand.create<Transfer.TokenTransferOffer>(
             TestTokenV2.Transfer.TokenTransferOffer.templateId
         ),
-        allocation: generateCommand.create<AllocationT.TokenAllocationV2>(
+        allocation: generateCommand.create<Allocation.TokenAllocationV2>(
             TestTokenV2.Allocation.TokenAllocationV2.templateId
+        ),
+        allocationInstruction:
+            generateCommand.create<Allocation.TokenAllocationInstructionV2>(
+                TestTokenV2.Allocation.TokenAllocationInstructionV2.templateId
+            ),
+        accountConfig: generateCommand.create<AccountConfig.AccountConfig>(
+            TestTokenV2.AccountConfig.AccountConfig.templateId
         ),
         token: (
             holding: TestTokenHoldingView<HoldingView>
