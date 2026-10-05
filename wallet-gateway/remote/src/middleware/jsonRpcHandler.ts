@@ -15,6 +15,7 @@ import {
 } from '@canton-network/core-types'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import { isJsCantonError } from '@canton-network/core-ledger-client'
+import { errorLogLevel } from './errorHandler.js'
 
 interface JsonRpcHttpOptions<T> {
     logger: Logger
@@ -167,7 +168,7 @@ export const jsonRpcHandler =
                         )
 
                         // Full error with callstack in logs, sanitized version in response
-                        logger.error(
+                        logger[errorLogLevel(error)](
                             { err: error, response },
                             'RPC response: error with response'
                         )
