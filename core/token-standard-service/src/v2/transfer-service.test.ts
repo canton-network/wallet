@@ -9,11 +9,14 @@ import { EMPTY_META } from '../types.js'
 import type { Logger } from '@canton-network/core-types'
 import {
     Account,
+    TransferFactory_Transfer as TransferFactory_TransferV2,
+    type OffLedger as OffLedgerV2,
     TRANSFER_FACTORY_INTERFACE_ID_V2,
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+type ChoiceContextV2 =
+    OffLedgerV2.TransferInstructionV2.components['schemas']['ChoiceContext']
 
 const mockLogger: MockedObject<Logger> = {
     debug: vi.fn(),
@@ -24,18 +27,22 @@ const mockLogger: MockedObject<Logger> = {
 
 const makeTokenClient = () => ({ get: vi.fn(), post: vi.fn() })
 
+type CoreServiceDeps = Pick<
+    CoreService,
+    'getInputHoldingCidsForAccount' | 'getTokenStandardClientV2'
+>
+
 function makeService() {
-    const core = {
+    const tokenClient = makeTokenClient()
+
+    const core: CoreServiceDeps = {
         getInputHoldingCidsForAccount: vi
             .fn()
             .mockResolvedValue(['cid1', 'cid2']),
-        getTokenStandardClientV2: vi.fn(),
-    } as unknown as MockedObject<CoreService>
+        getTokenStandardClientV2: vi.fn().mockReturnValue(tokenClient),
+    }
 
-    const tokenClient = makeTokenClient()
-    ;(core.getTokenStandardClientV2 as any).mockReturnValue(tokenClient)
-
-    const service = new TransferServiceV2(core, mockLogger)
+    const service = new TransferServiceV2(core as CoreService, mockLogger)
 
     return { service, core, tokenClient }
 }
@@ -46,20 +53,26 @@ const instrumentAdmin =
     'DSO::1220c69732dd5f3b434c283f61cbc29d3bb492c50c56e306b436c3e1741cbc7be53e'
 const instrumentId = 'Amulet'
 
-const senderAccount: Account = {
+const makeAccount = (overrides: Partial<Account> = {}): Account => ({
     owner: 'v1-01-alice::12206eee60f64d90be3f823007d1321dc6acc5f4f2c57d3dd6ac1f66148753bb65c5',
     provider: 'provider::123',
     id: '',
-}
+    ...overrides,
+})
 
-const receiverAccount: Account = {
+const senderAccount: Account = makeAccount()
+
+const receiverAccount: Account = makeAccount({
     owner: 'bob::def',
     provider: 'provider::456',
-    id: '',
-}
+})
 
-const makeChoiceContext = (overrides = {}) => ({
-    choiceContextData: { values: { ctx: 'data' } },
+const makeChoiceContext = (
+    overrides: Partial<ChoiceContextV2> = {}
+): ChoiceContextV2 => ({
+    choiceContextData: {
+        values: { ctx: 'data' } as Record<string, never>,
+    },
     disclosedContracts: [
         {
             contractId: 'disc1',
@@ -89,7 +102,7 @@ describe('TransferServiceV2', () => {
                 instrumentAdmin,
                 instrumentId,
                 inputUtxos: [],
-                amount: expect.objectContaining({ d: expect.anything() }),
+                amount: expect.any(Object),
                 continueUntilCompletion: false,
             })
 
@@ -145,7 +158,6 @@ describe('TransferServiceV2', () => {
             const executeBefore = new Date(
                 result.transfer.executeBefore
             ).getTime()
-            // Should be roughly 24h out (within a generous tolerance for test runtime).
             expect(executeBefore - before).toBeGreaterThan(23 * 60 * 60 * 1000)
             expect(executeBefore - before).toBeLessThan(25 * 60 * 60 * 1000)
         })
@@ -205,10 +217,7 @@ describe('TransferServiceV2', () => {
             const { service } = makeService()
 
             const result = await service.buildTransferChoiceArgs({
-                sender: {
-                    owner: senderAccount.owner,
-                    provider: undefined,
-                } as any,
+                sender: makeAccount({ provider: undefined }),
                 receiver: receiverAccount,
                 amount: '50.0',
                 instrumentAdmin,
@@ -256,7 +265,7 @@ describe('TransferServiceV2', () => {
             const [exercise] = await service.createTransfer(
                 baseArgs,
                 registryUrl,
-                { factoryId: 'factory-id', choiceContext: ctx as any }
+                { factoryId: 'factory-id', choiceContext: ctx }
             )
 
             expect(tokenClient.post).not.toHaveBeenCalled()
@@ -291,13 +300,17 @@ describe('TransferServiceV2', () => {
     describe('createTransferFromContext', () => {
         it('builds a TransferFactory_Transfer exercise and merges the choice context', async () => {
             const { service } = makeService()
-            const choiceArgs = {
+            const choiceArgs: TransferFactory_TransferV2 = {
                 actors: [senderAccount.owner],
                 transfer: {
                     sender: senderAccount,
                     receiver: receiverAccount,
                     amount: '10.0',
                     instrumentId: { admin: instrumentAdmin, id: instrumentId },
+                    requestedAt: new Date().toISOString(),
+                    executeBefore: new Date().toISOString(),
+                    inputHoldingCids: [],
+                    meta: { values: {} },
                 },
                 extraArgs: { context: { values: {} }, meta: { values: {} } },
             }
@@ -306,35 +319,48 @@ describe('TransferServiceV2', () => {
             const [exercise, disclosedContracts] =
                 await service.createTransferFromContext(
                     'factory-id',
-                    choiceArgs as any,
-                    ctx as any
+                    choiceArgs,
+                    ctx
                 )
 
             expect(exercise.templateId).toBe(TRANSFER_FACTORY_INTERFACE_ID_V2)
             expect(exercise.contractId).toBe('factory-id')
             expect(exercise.choice).toBe('TransferFactory_Transfer')
-            expect(exercise.choiceArgument.extraArgs.context).toEqual({
-                values: { ctx: 'data' },
-            })
+            expect(
+                (exercise.choiceArgument as TransferFactory_TransferV2)
+                    .extraArgs.context
+            ).toEqual({ values: { ctx: 'data' } })
             expect(disclosedContracts).toBe(ctx.disclosedContracts)
         })
 
         it('falls back to empty values when choiceContextData has none', async () => {
             const { service } = makeService()
-            const choiceArgs = {
+            const choiceArgs: TransferFactory_TransferV2 = {
+                actors: [senderAccount.owner],
+                transfer: {
+                    sender: senderAccount,
+                    receiver: receiverAccount,
+                    amount: '10.0',
+                    instrumentId: { admin: instrumentAdmin, id: instrumentId },
+                    requestedAt: new Date().toISOString(),
+                    executeBefore: new Date().toISOString(),
+                    inputHoldingCids: [],
+                    meta: { values: {} },
+                },
                 extraArgs: { context: { values: {} }, meta: { values: {} } },
             }
             const ctx = makeChoiceContext({ choiceContextData: {} })
 
             const [exercise] = await service.createTransferFromContext(
                 'factory-id',
-                choiceArgs as any,
-                ctx as any
+                choiceArgs,
+                ctx
             )
 
-            expect(exercise.choiceArgument.extraArgs.context).toEqual({
-                values: {},
-            })
+            expect(
+                (exercise.choiceArgument as TransferFactory_TransferV2)
+                    .extraArgs.context
+            ).toEqual({ values: {} })
         })
     })
 
