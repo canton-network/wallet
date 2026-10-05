@@ -249,7 +249,10 @@ describe('Conformance suite', () => {
     function fakeWallet(
         connected = false,
         signMessage: (message: string) => string = signWithWallet,
-        signedParty: string | null = fakeAccount.partyId
+        signedParty: string | null = fakeAccount.partyId,
+        // `null` mimics an async wallet that resolves the request and only reports the rejection via events.
+        rejection: unknown = { code: 4001, message: 'Rejected' },
+        emitMessageSignature = true
     ) {
         let resolveRequest: (value: unknown) => void
         let rejectRequest: (error: unknown) => void
@@ -308,7 +311,19 @@ describe('Conformance suite', () => {
             provider,
             async ({ method, decision, params }) => {
                 if (decision === 'reject') {
-                    rejectRequest({ code: 4001, message: 'Rejected' })
+                    if (method === 'signMessage' && emitMessageSignature)
+                        provider.emit('messageSignature', {
+                            messageId: 'message',
+                            status: 'failed',
+                        })
+                    if (method === 'prepareExecute')
+                        provider.emit('txChanged', {
+                            commandId: (params as { commandId: string })
+                                .commandId,
+                            status: 'failed',
+                        })
+                    if (rejection === null) resolveRequest(null)
+                    else rejectRequest(rejection)
                     return
                 }
                 if (method === 'connect') {
@@ -318,12 +333,18 @@ describe('Conformance suite', () => {
                         isNetworkConnected: true,
                     })
                 }
-                if (method === 'signMessage')
-                    resolveRequest({
-                        signature: signMessage(
-                            (params as { message: string }).message
-                        ),
-                    })
+                if (method === 'signMessage') {
+                    const signature = signMessage(
+                        (params as { message: string }).message
+                    )
+                    if (emitMessageSignature)
+                        provider.emit('messageSignature', {
+                            messageId: 'message',
+                            status: 'signed',
+                            signature,
+                        })
+                    resolveRequest({ signature })
+                }
                 if (method === 'prepareExecute') {
                     const { commandId } = params as { commandId: string }
                     if (signedParty !== null)
@@ -436,6 +457,37 @@ describe('Conformance suite', () => {
     )
 
     it.each([
+        ['emits', true],
+        ['does not emit', false],
+    ])(
+        'message signing passes when the wallet %s messageSignature events',
+        async (_, emitMessageSignature) => {
+            const { wrapper } = fakeWallet(
+                true,
+                signWithWallet,
+                fakeAccount.partyId,
+                undefined,
+                emitMessageSignature
+            )
+            const testIds = ['signMessage.reject', 'signMessage.approve']
+            const report = await runSuite({
+                config: {
+                    ...defaultConfig,
+                    timeoutMs: 1000,
+                    disabledTests: cases
+                        .map((testCase) => testCase.id)
+                        .filter((id) => !testIds.includes(id)),
+                },
+                provider: wrapper,
+            })
+            expect(report.results.summary).toMatchObject({
+                passed: 2,
+                failed: 0,
+            })
+        }
+    )
+
+    it.each([
         ['signed by a different key', signWithWallet('another message')],
         ['not a signature at all', 'signed-by-fake-wallet'],
     ])('a message signature %s fails', async (_, signature) => {
@@ -456,6 +508,49 @@ describe('Conformance suite', () => {
             )?.message
         ).toMatch(/does not verify against the account public key/)
     })
+
+    it.each([
+        [
+            'rejected with code 4001',
+            { code: 4001, message: 'Rejected' },
+            'passed',
+        ],
+        [
+            'rejected with code -32003',
+            { code: -32003, message: 'Rejected' },
+            'passed',
+        ],
+        [
+            'rejected with code -32603',
+            { code: -32603, message: 'Rejected' },
+            'failed',
+        ],
+        ['resolved by an async wallet', null, 'passed'],
+    ] as const)(
+        'a transaction %s is %s',
+        async (_, rejection, expectedStatus) => {
+            const { wrapper } = fakeWallet(
+                true,
+                signWithWallet,
+                null,
+                rejection
+            )
+            const report = await runSuite({
+                config: {
+                    ...defaultConfig,
+                    disabledTests: cases
+                        .map((testCase) => testCase.id)
+                        .filter((id) => id !== 'prepareExecute.reject'),
+                },
+                provider: wrapper,
+            })
+            expect(
+                report.results.tests.find(
+                    (test) => test.testId === 'prepareExecute.reject'
+                )?.status
+            ).toBe(expectedStatus)
+        }
+    )
 
     it.each([
         ['no signed event', null, /No signed txChanged event/],

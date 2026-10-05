@@ -100,6 +100,11 @@ export const UNKNOWN_METHOD_CODES = [
 export const USER_REJECTED_CODES = [
     CIP103_ERROR_CODES.UserRejectedRequest,
 ] as const
+// A wallet may only learn that the transaction failed, not that the user rejected it.
+export const REJECTED_TRANSACTION_CODES = [
+    CIP103_ERROR_CODES.UserRejectedRequest,
+    CIP103_ERROR_CODES.TransactionRejected,
+] as const
 export const UNAUTHORIZED_CODES = [CIP103_ERROR_CODES.Unauthorized] as const
 export const NO_NETWORK_CODES = [
     CIP103_ERROR_CODES.ChainDisconnected,
