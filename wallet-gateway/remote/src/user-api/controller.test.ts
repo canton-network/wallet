@@ -845,9 +845,13 @@ describe('userController', () => {
             expect(result.messages[0]?.id).toBe('msg-1')
         })
 
-        it('deletes a pending message owned by the user', async () => {
+        it('deletes a pending message owned by the user and emits a failed event', async () => {
             const store = await storeWithMessage()
             const removeSpy = vi.spyOn(store, 'removeMessageRaw')
+            const emitSpy = vi.spyOn(
+                notificationService.getNotifier(session.id),
+                'emit'
+            )
             const controller = createController(
                 store,
                 notificationService,
@@ -858,6 +862,16 @@ describe('userController', () => {
             await controller.deleteMessageToSign({ messageId: 'msg-1' })
 
             expect(removeSpy).toHaveBeenCalledWith('msg-1')
+            expect(emitSpy).toHaveBeenCalledExactlyOnceWith(
+                'messageSignature',
+                {
+                    status: 'failed',
+                    messageId: 'msg-1',
+                }
+            )
+            expect(removeSpy.mock.invocationCallOrder[0]).toBeLessThan(
+                emitSpy.mock.invocationCallOrder[0]!
+            )
         })
 
         it('rejects delete when the message is not pending', async () => {

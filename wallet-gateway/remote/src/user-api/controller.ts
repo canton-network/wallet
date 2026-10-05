@@ -68,6 +68,7 @@ import {
     AuthTokenProvider,
     idpSchema,
     resolveAuthIdentityProviderId,
+    assertIsConnected,
 } from '@canton-network/core-wallet-auth'
 import type { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
@@ -121,8 +122,8 @@ export const userController = (
     }
 
     function assertAdmin(): void {
-        const userId = assertConnected(authContext).userId
-        if (!adminUserId || userId !== adminUserId) {
+        assertIsConnected(authContext)
+        if (!adminUserId || authContext.userId !== adminUserId) {
             throw new Error(
                 'Unauthorized: only the admin user can perform this operation'
             )
@@ -232,9 +233,9 @@ export const userController = (
 
     return buildController({
         getUser: async (): Promise<GetUserResult> => {
-            const userId = assertConnected(authContext).userId
+            assertIsConnected(authContext)
             return {
-                userId,
+                userId: authContext.userId,
                 isAdmin: isAdmin(),
             }
         },
@@ -411,7 +412,7 @@ export const userController = (
         createWallet: async (params: CreateWalletParams) => {
             const { signingProviderId, primary, partyHint } = params
 
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
             const network = await store.getCurrentNetwork()
             if (network === undefined) {
                 throw new Error('No network session found')
@@ -447,7 +448,7 @@ export const userController = (
             }
 
             const wallet = await walletAllocationService.createWallet(
-                connectedContext,
+                authContext,
                 partyHint,
                 primary ?? false,
                 signingProviderId as SigningProvider,
@@ -476,7 +477,7 @@ export const userController = (
             // Notify about the change and return the new wallet
             const wallets = await store.getWallets()
             notificationService
-                .getNotifier(connectedContext.userId)
+                .getNotifier(authContext.userId)
                 .emit('accountsChanged', wallets)
 
             return { wallet }
@@ -624,7 +625,7 @@ export const userController = (
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams
         ) => {
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
 
             const network = await store.getCurrentNetwork()
             if (!network) {
@@ -671,7 +672,7 @@ export const userController = (
             }
 
             await walletAllocationService.allocateParty(
-                connectedContext,
+                authContext,
                 existingWallet,
                 signingProviderId
             )
@@ -704,7 +705,7 @@ export const userController = (
             )!
 
             notificationService
-                .getNotifier(connectedContext.userId)
+                .getNotifier(authContext.userId)
                 .emit('accountsChanged', wallets)
 
             return { wallet }
@@ -742,9 +743,9 @@ export const userController = (
                 )
             }
 
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
 
-            const session = await store.getSession(connectedContext.accessToken)
+            const session = await store.getSession(authContext.accessToken)
             if (!session) {
                 throw new Error('No active session found')
             }
@@ -760,11 +761,11 @@ export const userController = (
 
             logDynamically(logger, 'signing transaction with params', {
                 info: { transactionId: signParams.transactionId },
-                debug: { signParams, wallet, connectedContext },
+                debug: { signParams, wallet, authContext },
             })
 
             const response = await transactionService.sign(
-                connectedContext,
+                authContext,
                 wallet,
                 signParams
             )
@@ -791,16 +792,15 @@ export const userController = (
                 )
             }
 
-            const userId = assertConnected(authContext).userId
+            assertIsConnected(authContext)
+            const userId = authContext.userId
             if (pending.userId !== userId) {
                 throw new Error(
                     `Message signing request ${pending.id} is not owned by user ${userId}`
                 )
             }
 
-            const session = await store.getSession(
-                assertConnected(authContext).accessToken
-            )
+            const session = await store.getSession(authContext.accessToken)
             if (!session) {
                 throw new Error('No active session found')
             }
@@ -952,13 +952,24 @@ export const userController = (
                     `Cannot delete message with status '${message.status}'. Only pending messages can be deleted.`
                 )
             }
-            const userId = assertConnected(authContext).userId
+            assertIsConnected(authContext)
+            const userId = authContext.userId
             if (message.userId !== userId) {
                 throw new Error(
                     `Message signing request ${message.id} is not owned by user ${userId}`
                 )
             }
             await store.removeMessageRaw(message.id)
+
+            const session = await store.getSession(authContext.accessToken)
+            if (session) {
+                notificationService
+                    .getNotifier(session.id)
+                    .emit('messageSignature', {
+                        status: 'failed',
+                        messageId: message.id,
+                    } satisfies MessageSignatureEvent)
+            }
             return null
         },
         execute: async (executeParams: ExecuteParams) => {
@@ -979,18 +990,15 @@ export const userController = (
                 throw new Error('No transaction found')
             }
 
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
             const accessTokenProvider: AuthTokenProvider =
-                AuthTokenProvider.fromToken(
-                    connectedContext.accessToken,
-                    logger
-                )
+                AuthTokenProvider.fromToken(authContext.accessToken, logger)
 
             if (network === undefined) {
                 throw new Error('No network session found')
             }
 
-            const session = await store.getSession(connectedContext.accessToken)
+            const session = await store.getSession(authContext.accessToken)
             if (!session) {
                 throw new Error('No active session found')
             }
@@ -1016,17 +1024,17 @@ export const userController = (
                     executeParams,
                     transaction,
                     wallet,
-                    userId: connectedContext.userId,
+                    userId: authContext.userId,
                 },
             })
 
             const response = await transactionService.execute(
-                connectedContext.userId,
+                authContext.userId,
                 wallet,
                 transaction,
                 executeParams,
                 ledgerClient,
-                connectedContext,
+                authContext,
                 network
             )
 
@@ -1041,8 +1049,8 @@ export const userController = (
             params: AddSessionParams
         ): Promise<AddSessionResult> {
             try {
-                const connectedContext = assertConnected(authContext)
-                const { userId, accessToken } = connectedContext
+                assertIsConnected(authContext)
+                const { accessToken } = authContext
 
                 const newSessionId = v4()
 
@@ -1058,7 +1066,7 @@ export const userController = (
                     id: newSessionId,
                     origin: params.origin,
                     network: params.networkId,
-                    accessToken: connectedContext.accessToken || '',
+                    accessToken: accessToken || '',
                 })
 
                 const ledgerClient = new LedgerClient({
@@ -1072,7 +1080,7 @@ export const userController = (
                 const status = await emitSessionConnected(
                     newSessionId,
                     network,
-                    connectedContext,
+                    authContext,
                     ledgerClient
                 )
 
@@ -1115,7 +1123,7 @@ export const userController = (
                             const service = new WalletSyncService(
                                 store,
                                 ledgerClient,
-                                connectedContext,
+                                authContext,
                                 logger,
                                 drivers,
                                 partyAllocator
@@ -1568,8 +1576,8 @@ export const userController = (
                 )
             }
 
-            const connectedContext = assertConnected(authContext)
-            const session = await store.getSession(connectedContext.accessToken)
+            assertIsConnected(authContext)
+            const session = await store.getSession(authContext.accessToken)
             if (!session) {
                 throw new Error('No active session found')
             }
@@ -1584,7 +1592,7 @@ export const userController = (
             )
 
             const result = await transactionService.refreshTransaction(
-                connectedContext,
+                authContext,
                 wallet,
                 tx.id
             )
