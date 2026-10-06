@@ -86,7 +86,19 @@ export type {
 } from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/AllocationV2/module.js'
 
 // Export companion object as value (needed for accessing choice names at runtime)
-export { Allocation } from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/AllocationV2/module.js'
+export {
+    Allocation,
+    SettlementFactory,
+} from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/AllocationV2/module.js'
+
+export {
+    EventLog,
+    EventLogView,
+    EventLog_HoldingsChange,
+    EventLog_HoldingsChangeResult,
+} from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/TransferEventsV2/module.js'
+
+export type { EventLogInterface } from '@daml.js/token-standard-models-v2-1.0.0/lib/Splice/Api/Token/TransferEventsV2/module.js'
 
 export type {
     ExtraArgs,

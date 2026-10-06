@@ -399,10 +399,16 @@ export interface Wallet {
 }
 /**
  *
- * Whether the ledger user already has a primary party or primary party authentication set.
+ * Whether a ledger user with this id already exists.
  *
  */
-export type UserOnboarded = boolean
+export type UserExists = boolean
+/**
+ *
+ * Whether the ledger user already has a primary party and primary party authentication set.
+ *
+ */
+export type PrimaryPartyAuth = boolean
 /**
  *
  * Wallets stored for the user on the selected network that can be used for authentication.
@@ -753,7 +759,8 @@ export interface AddSelfIssuedSessionResult {
     sessionId: SessionId
 }
 export interface GetSelfIssuedOnboardingResult {
-    userOnboarded: UserOnboarded
+    userExists: UserExists
+    primaryPartyAuth: PrimaryPartyAuth
     wallets: AuthPartyWallets
 }
 export interface CreateSelfIssuedWalletResult {

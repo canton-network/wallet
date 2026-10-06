@@ -59,6 +59,42 @@ export class TransferNamespace {
         return [{ ExerciseCommand }, disclosedContracts]
     }
 
+    async createV2(
+        params: TransferParams
+    ): Promise<PreparedCommand<'ExerciseCommand'>> {
+        const assets = parseAssets(
+            this.sdkContext.commonCtx,
+            await this.sdkContext.tokenStandardService.registriesToAssets(
+                this.sdkContext.registryUrls
+            )
+        )
+
+        const asset = findAsset(
+            assets,
+            params.instrumentId,
+            this.sdkContext.commonCtx.error,
+            new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
+        )
+
+        const [transferCommand, disclosedContracts] =
+            await this.sdkContext.tokenStandardService.v2.transfer.createTransfer(
+                {
+                    sender: this.sdkContext.tokenStandardService.core.toBasicAccount(
+                        params.sender
+                    ),
+                    receiver:
+                        this.sdkContext.tokenStandardService.core.toBasicAccount(
+                            params.recipient
+                        ),
+                    amount: params.amount,
+                    instrumentAdmin: asset.admin,
+                    instrumentId: asset.id,
+                },
+                asset.registryUrl
+            )
+        return [{ ExerciseCommand: transferCommand }, disclosedContracts]
+    }
+
     async create(
         params: TransferParams
     ): Promise<PreparedCommand<'ExerciseCommand'>> {

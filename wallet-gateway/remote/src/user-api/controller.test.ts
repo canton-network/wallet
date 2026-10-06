@@ -21,6 +21,7 @@ import { userController } from './controller.js'
 import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
+    get: vi.fn(),
     getWithRetry: vi.fn(),
     postWithRetry: vi.fn(),
     getSynchronizerId: vi.fn(),
@@ -74,6 +75,7 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
         ...actual,
         LedgerClient: vi.fn(function LedgerClientMock() {
             return {
+                get: ledgerMocks.get,
                 getWithRetry: ledgerMocks.getWithRetry,
                 postWithRetry: ledgerMocks.postWithRetry,
                 getSynchronizerId: ledgerMocks.getSynchronizerId,
@@ -252,6 +254,12 @@ describe('userController', () => {
     beforeEach(() => {
         logger = pino({ level: 'silent' }, sink())
         notificationService = new NotificationService(logger)
+        ledgerMocks.get.mockReset()
+        ledgerMocks.get.mockRejectedValue({
+            code: 'USER_NOT_FOUND',
+            cause: 'missing',
+            errorCategory: 11,
+        })
         ledgerMocks.getWithRetry.mockReset()
         ledgerMocks.getWithRetry.mockResolvedValue({ rights: [] })
         ledgerMocks.postWithRetry.mockReset()
@@ -325,6 +333,36 @@ describe('userController', () => {
                     .withAuthContext({ userId: 'alice', accessToken: '' })
                     .getCurrentNetwork()
             ).rejects.toThrow('No session found')
+        })
+
+        it('does not create a session for an existing user without an authentication party', async () => {
+            const selfIssuedNetwork = {
+                ...storeNetwork,
+                id: 'self-issued-network',
+                auth: { method: 'self_issued' },
+            } as unknown as StoreNetwork
+            const store = new StoreInternal(
+                { idps: [idp], networks: [selfIssuedNetwork] },
+                getLogger('mock')
+            )
+            ledgerMocks.get.mockResolvedValue({
+                user: { id: 'alice', primaryParty: 'alice::ns' },
+            })
+
+            await expect(
+                createController(
+                    store,
+                    notificationService,
+                    logger,
+                    undefined
+                ).addSelfIssuedSession({
+                    username: 'alice',
+                    networkId: selfIssuedNetwork.id,
+                    origin: 'https://example.com',
+                })
+            ).rejects.toThrow(
+                'Self-issued login is not available for this user.'
+            )
         })
     })
 

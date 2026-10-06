@@ -160,18 +160,34 @@ describe('SelfIssuedAuthService', () => {
 
             await expect(createService().getOnboardingState()).resolves.toEqual(
                 {
-                    userOnboarded: true,
+                    userExists: true,
+                    primaryPartyAuth: true,
                     wallets: [authWallet],
                 }
             )
         })
 
-        it('does not report a ledger user without a primary party as onboarded', async () => {
+        it('reports an existing ledger user that is not an authentication party', async () => {
             ledgerClient.get.mockResolvedValue({ user: { id: 'alice' } })
 
             await expect(createService().getOnboardingState()).resolves.toEqual(
                 {
-                    userOnboarded: false,
+                    userExists: true,
+                    primaryPartyAuth: false,
+                    wallets: [],
+                }
+            )
+        })
+
+        it('reports primary party without the authentication flag not primaryPartyAuth', async () => {
+            ledgerClient.get.mockResolvedValue({
+                user: { id: 'alice', primaryParty: 'alice::ns' },
+            })
+
+            await expect(createService().getOnboardingState()).resolves.toEqual(
+                {
+                    userExists: true,
+                    primaryPartyAuth: false,
                     wallets: [],
                 }
             )
@@ -186,7 +202,8 @@ describe('SelfIssuedAuthService', () => {
 
             await expect(createService().getOnboardingState()).resolves.toEqual(
                 {
-                    userOnboarded: false,
+                    userExists: false,
+                    primaryPartyAuth: false,
                     wallets: [],
                 }
             )
@@ -277,15 +294,13 @@ describe('SelfIssuedAuthService', () => {
             expect(wallet).toEqual(walletWithRights)
         })
 
-        it.each([
-            [
-                'primary party authentication',
-                { primaryPartyAuthentication: true },
-            ],
-            ['a primary party', { primaryParty: 'alice::ns' }],
-        ])('rejects an existing ledger user with %s', async (_, userFields) => {
+        it('rejects when primary party authentication is already configured', async () => {
             ledgerClient.get.mockResolvedValue({
-                user: { id: 'alice', ...userFields },
+                user: {
+                    id: 'alice',
+                    primaryParty: 'alice::ns',
+                    primaryPartyAuthentication: true,
+                },
             })
 
             await expect(
@@ -294,11 +309,35 @@ describe('SelfIssuedAuthService', () => {
                     signingProviderId: SigningProvider.WALLET_KERNEL,
                 })
             ).rejects.toThrow(
-                'Selecting an existing self-issued user is not implemented yet.'
+                'Primary party authentication is already configured for this user.'
             )
             expect(ledgerClient.post).not.toHaveBeenCalled()
             expect(walletAllocator.createWallet).not.toHaveBeenCalled()
         })
+
+        it.each([
+            [
+                'only primary party authentication',
+                { primaryPartyAuthentication: true },
+            ],
+            ['only a primary party', { primaryParty: 'alice::ns' }],
+        ])(
+            'allows createWallet when the ledger user has %s',
+            async (_, userFields) => {
+                const pendingWallet = createWallet()
+                ledgerClient.get.mockResolvedValue({
+                    user: { id: 'alice', ...userFields },
+                })
+                walletAllocator.createWallet.mockResolvedValue(pendingWallet)
+
+                await expect(
+                    createService().createWallet({
+                        partyHint: 'my-party',
+                        signingProviderId: SigningProvider.WALLET_KERNEL,
+                    })
+                ).resolves.toEqual(pendingWallet)
+            }
+        )
 
         it('rejects participant onboarding', async () => {
             await expect(
@@ -435,6 +474,64 @@ describe('SelfIssuedAuthService', () => {
             })
             expect(payload.exp).toBe(Math.floor(Date.now() / 1000) + 10 * 60)
             expect(store.upgradeOnboardingSession).toHaveBeenCalledOnce()
+        })
+
+        it('connects an existing auth party without changing the ledger user', async () => {
+            const authPartyWallet = createWallet({
+                status: 'allocated',
+                isAuthParty: true,
+            })
+            ledgerClient.get.mockResolvedValue({
+                user: {
+                    id: 'alice',
+                    primaryParty: authPartyWallet.partyId,
+                    primaryPartyAuthentication: true,
+                },
+            })
+            store.getWallet.mockResolvedValue(authPartyWallet)
+
+            const { wallet } = await createService().connectSession({
+                partyId: authPartyWallet.partyId,
+            })
+
+            expect(wallet).toEqual(authPartyWallet)
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(store.updateWallet).not.toHaveBeenCalled()
+            expect(signMessage).toHaveBeenCalledOnce()
+            expect(store.upgradeOnboardingSession).toHaveBeenCalledOnce()
+        })
+
+        it.each([
+            [
+                'not marked as the auth party',
+                createWallet({ status: 'allocated' }),
+            ],
+            [
+                'a different party',
+                createWallet({
+                    status: 'allocated',
+                    partyId: 'other::ns',
+                    isAuthParty: true,
+                }),
+            ],
+        ])('rejects connecting %s for an onboarded user', async (_, wallet) => {
+            ledgerClient.get.mockResolvedValue({
+                user: {
+                    id: 'alice',
+                    primaryParty: 'alice::ns',
+                    primaryPartyAuthentication: true,
+                },
+            })
+            store.getWallet.mockResolvedValue(wallet)
+
+            await expect(
+                createService().connectSession({ partyId: wallet.partyId })
+            ).rejects.toThrow(
+                `Party ${wallet.partyId} is not the authentication party for this user`
+            )
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(signMessage).not.toHaveBeenCalled()
+            expect(store.upgradeOnboardingSession).not.toHaveBeenCalled()
         })
 
         it('keeps the tokenless session when the participant rejects the token', async () => {
