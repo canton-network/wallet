@@ -19,7 +19,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
         type: 'object',
         description:
             'Structure representing the request for prepare and execute calls',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             commandId: {
                 title: 'CommandId',
@@ -41,7 +41,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                         {
                             title: 'CreateCommand',
                             type: 'object',
-                            additionalProperties: false,
+                            additionalProperties: { type: 'null' },
                             required: ['CreateCommand'],
                             properties: {
                                 CreateCommand: {
@@ -56,7 +56,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                         {
                             title: 'ExerciseCommand',
                             type: 'object',
-                            additionalProperties: false,
+                            additionalProperties: { type: 'null' },
                             required: ['ExerciseCommand'],
                             properties: {
                                 ExerciseCommand: {
@@ -71,7 +71,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                         {
                             title: 'CreateAndExerciseCommand',
                             type: 'object',
-                            additionalProperties: false,
+                            additionalProperties: { type: 'null' },
                             required: ['CreateAndExerciseCommand'],
                             properties: {
                                 CreateAndExerciseCommand: {
@@ -86,7 +86,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                         {
                             title: 'ExerciseByKeyCommand',
                             type: 'object',
-                            additionalProperties: false,
+                            additionalProperties: { type: 'null' },
                             required: ['ExerciseByKeyCommand'],
                             properties: {
                                 ExerciseByKeyCommand: {
@@ -125,7 +125,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                     type: 'object',
                     description:
                         'Structure representing a disclosed contract for transaction execution',
-                    additionalProperties: false,
+                    additionalProperties: { type: 'null' },
                     properties: {
                         templateId: {
                             title: 'templateId',
@@ -175,7 +175,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
         title: 'signMessageParams',
         type: 'object',
         description: 'Request to sign a message.',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             message: {
                 title: 'message',
@@ -189,7 +189,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
         title: 'ledgerApiParams',
         type: 'object',
         description: 'Ledger API request structure',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             requestMethod: {
                 title: 'requestMethod',

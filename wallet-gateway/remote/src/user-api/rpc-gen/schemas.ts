@@ -12,12 +12,12 @@ export const paramSchemas: Record<string, z.ZodType> = {
     addNetwork: z.fromJSONSchema({
         title: 'AddNetworkParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             network: {
                 title: 'Network',
                 type: 'object',
-                additionalProperties: false,
+                additionalProperties: { type: 'null' },
                 description: 'Structure representing the Networks',
                 properties: {
                     id: {
@@ -53,7 +53,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'AuthorizationCodeAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Authorization code authentication configuration',
                                 properties: {
@@ -84,7 +84,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'ClientCredentialsAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Client credentials authentication configuration',
                                 properties: {
@@ -126,7 +126,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'SelfSignedAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Self-signed authentication configuration',
                                 properties: {
@@ -164,7 +164,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'SelfIssuedAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Self-issued authentication configuration',
                                 properties: {
@@ -193,7 +193,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'AuthorizationCodeAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Authorization code authentication configuration',
                                 properties: {
@@ -224,7 +224,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'ClientCredentialsAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Client credentials authentication configuration',
                                 properties: {
@@ -266,7 +266,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'SelfSignedAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Self-signed authentication configuration',
                                 properties: {
@@ -304,7 +304,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'SelfIssuedAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Self-issued authentication configuration',
                                 properties: {
@@ -333,7 +333,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'AuthorizationCodeAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Authorization code authentication configuration',
                                 properties: {
@@ -364,7 +364,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'ClientCredentialsAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Client credentials authentication configuration',
                                 properties: {
@@ -406,7 +406,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'SelfSignedAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Self-signed authentication configuration',
                                 properties: {
@@ -444,7 +444,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                             {
                                 title: 'SelfIssuedAuth',
                                 type: 'object',
-                                additionalProperties: false,
+                                additionalProperties: { type: 'null' },
                                 description:
                                     'Self-issued authentication configuration',
                                 properties: {
@@ -486,7 +486,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     removeNetwork: z.fromJSONSchema({
         title: 'RemoveNetworkParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             networkName: {
                 title: 'networkName',
@@ -500,7 +500,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     getNetwork: z.fromJSONSchema({
         title: 'GetNetworkParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             networkId: {
                 title: 'networkId',
@@ -513,7 +513,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     selfSignedAccessToken: z.fromJSONSchema({
         title: 'SelfSignedAccessTokenParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             networkId: {
                 title: 'networkId',
@@ -537,7 +537,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     addIdp: z.fromJSONSchema({
         title: 'AddIdpParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             idp: {
                 title: 'Idp',
@@ -546,7 +546,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                     {
                         title: 'OauthIdp',
                         type: 'object',
-                        additionalProperties: false,
+                        additionalProperties: { type: 'null' },
                         properties: {
                             id: {
                                 title: 'id',
@@ -576,7 +576,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                     {
                         title: 'SelfSignedIdp',
                         type: 'object',
-                        additionalProperties: false,
+                        additionalProperties: { type: 'null' },
                         properties: {
                             id: {
                                 title: 'id',
@@ -600,7 +600,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                     {
                         title: 'SelfIssuedIdp',
                         type: 'object',
-                        additionalProperties: false,
+                        additionalProperties: { type: 'null' },
                         properties: {
                             id: {
                                 title: 'id',
@@ -624,7 +624,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     removeIdp: z.fromJSONSchema({
         title: 'RemoveIdpParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             identityProviderId: {
                 title: 'identityProviderId',
@@ -638,7 +638,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     createWallet: z.fromJSONSchema({
         title: 'CreateWalletParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             primary: {
                 title: 'primary',
@@ -668,7 +668,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     addSelfIssuedSession: z.fromJSONSchema({
         title: 'AddSelfIssuedSessionParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             username: {
                 title: 'username',
@@ -691,7 +691,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     getSelfIssuedOnboarding: z.fromJSONSchema({
         title: 'GetSelfIssuedOnboardingParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             sessionId: {
                 title: 'sessionId',
@@ -705,7 +705,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     createSelfIssuedWallet: z.fromJSONSchema({
         title: 'CreateSelfIssuedWalletParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             sessionId: {
                 title: 'sessionId',
@@ -730,7 +730,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     allocateSelfIssuedWallet: z.fromJSONSchema({
         title: 'AllocateSelfIssuedWalletParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             sessionId: {
                 title: 'sessionId',
@@ -749,7 +749,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     connectSelfIssuedSession: z.fromJSONSchema({
         title: 'ConnectSelfIssuedSessionParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             sessionId: {
                 title: 'sessionId',
@@ -768,7 +768,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     allocatePartyForWallet: z.fromJSONSchema({
         title: 'AllocatePartyForWalletParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             partyId: {
                 title: 'partyId',
@@ -782,7 +782,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     setPrimaryWallet: z.fromJSONSchema({
         title: 'SetPrimaryWalletParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             partyId: {
                 title: 'partyId',
@@ -795,7 +795,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     removeWallet: z.fromJSONSchema({
         title: 'RemoveWalletParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             partyId: {
                 title: 'partyId',
@@ -808,13 +808,13 @@ export const paramSchemas: Record<string, z.ZodType> = {
     listWallets: z.fromJSONSchema({
         title: 'ListWalletsParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             filter: {
                 title: 'WalletFilter',
                 type: 'object',
                 description: 'Filter for the wallets to be returned.',
-                additionalProperties: false,
+                additionalProperties: { type: 'null' },
                 properties: {
                     networkIds: {
                         title: 'networkIds',
@@ -838,7 +838,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     sign: z.fromJSONSchema({
         title: 'SignParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             transactionId: {
                 title: 'transactionId',
@@ -853,7 +853,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     signMessage: z.fromJSONSchema({
         title: 'SignMessageParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             messageId: {
                 title: 'MessageId',
@@ -874,7 +874,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     getMessageToSign: z.fromJSONSchema({
         title: 'GetMessageToSignParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             messageId: {
                 title: 'MessageId',
@@ -890,7 +890,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     deleteMessageToSign: z.fromJSONSchema({
         title: 'DeleteMessageToSignParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             messageId: {
                 title: 'MessageId',
@@ -905,7 +905,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     execute: z.fromJSONSchema({
         title: 'ExecuteParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             partyId: { title: 'partyId', type: 'string' },
             transactionId: {
@@ -920,7 +920,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     addSession: z.fromJSONSchema({
         title: 'AddSessionParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             origin: {
                 title: 'origin',
@@ -940,7 +940,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     getTransaction: z.fromJSONSchema({
         title: 'GetTransactionParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             transactionId: {
                 title: 'transactionId',
@@ -954,7 +954,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     getTransactionStatus: z.fromJSONSchema({
         title: 'GetTransactionStatusParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             transactionId: {
                 title: 'transactionId',
@@ -973,7 +973,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     listTransactions: z.fromJSONSchema({
         title: 'ListTransactionsParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             limit: {
                 title: 'limit',
@@ -990,7 +990,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     deleteTransaction: z.fromJSONSchema({
         title: 'DeleteTransactionParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             transactionId: {
                 title: 'transactionId',
@@ -1005,7 +1005,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     generateApiKey: z.fromJSONSchema({
         title: 'GenerateApiKeyParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             name: {
                 title: 'name',
@@ -1019,7 +1019,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     removeApiKey: z.fromJSONSchema({
         title: 'RemoveApiKeyParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             id: {
                 title: 'id',
@@ -1032,7 +1032,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     listSigningProviderKeys: z.fromJSONSchema({
         title: 'ListSigningProviderKeysParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             signingProviderId: {
                 title: 'signingProviderId',
@@ -1046,7 +1046,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     getWallet: z.fromJSONSchema({
         title: 'GetWalletParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             partyId: {
                 title: 'partyId',
@@ -1059,7 +1059,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
     changeSigningProvider: z.fromJSONSchema({
         title: 'changeSigningProviderParams',
         type: 'object',
-        additionalProperties: false,
+        additionalProperties: { type: 'null' },
         properties: {
             signingProviderId: {
                 title: 'signingProviderId',

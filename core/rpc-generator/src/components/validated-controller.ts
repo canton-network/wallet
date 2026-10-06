@@ -6,6 +6,20 @@ import lodash from 'lodash'
 import { controllerTemplates, hooks as controllerHooks } from './controller'
 const { template } = lodash
 
+// Unknown keys are still rejected unless null (e.g. registry debug fields serialized as null).
+const allowNullExtras = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(allowNullExtras)
+    if (typeof value !== 'object' || value === null) return value
+    return Object.fromEntries(
+        Object.entries(value).map(([key, sub]) => [
+            key,
+            key === 'additionalProperties' && sub === false
+                ? { type: 'null' }
+                : allowNullExtras(sub),
+        ])
+    )
+}
+
 // Controller that also emits zod param validators; the target package must depend on zod.
 // openrpcDocument still has cross-file $refs; methodTypings holds the dereferenced document.
 const paramSchemasTemplate = template(
@@ -20,9 +34,10 @@ import { z } from 'zod'
 const noParams = z.union([z.undefined(), z.tuple([]), z.strictObject({})])
 
 export const paramSchemas: Record<string, z.ZodType> = {
-<% methodTypings.openrpcDocument.methods.forEach(({ name, params: [param] }) => { %>  <%= JSON.stringify(name) %>: <%= param ? 'z.fromJSONSchema(' + JSON.stringify(param.schema) + ')' + (param.required ? '' : '.optional()') : 'noParams' %>,
+<% methodTypings.openrpcDocument.methods.forEach(({ name, params: [param] }) => { %>  <%= JSON.stringify(name) %>: <%= param ? 'z.fromJSONSchema(' + JSON.stringify(allowNullExtras(param.schema)) + ')' + (param.required ? '' : '.optional()') : 'noParams' %>,
 <% }); %>}
-`
+`,
+    { imports: { allowNullExtras } }
 )
 
 export const hooks: openrpcgen.components.IHooks = {
