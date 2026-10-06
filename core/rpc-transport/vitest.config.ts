@@ -7,10 +7,6 @@ import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 export default defineConfig({
     test: {
         coverage: coverage({ thresholds: false }),
-        projects: [
-            // don't test parts that rely on window in node env
-            nodeProject({ exclude: ['src/**/*.browser.test.ts'] }),
-            browserProject(),
-        ],
+        projects: [nodeProject(), browserProject()],
     },
 })

@@ -3,6 +3,7 @@
 
 import { playwright } from '@vitest/browser-playwright'
 import {
+    configDefaults,
     defineProject,
     type TestProjectInlineConfiguration,
     type TestUserConfig,
@@ -45,22 +46,37 @@ export function coverage(overrides: CoverageOverrides = {}): CoverageConfig {
     }
 }
 
-export function nodeProject(test: ProjectTestConfig = {}) {
+/** Runs `*.test.ts` and `*.node.test.ts`, skips `*.browser.test.ts` */
+export function nodeProject({ exclude = [], ...test }: ProjectTestConfig = {}) {
     return defineProject({
         test: {
             name: 'node',
             environment: 'node',
             include: ['src/**/*.test.ts'],
+            exclude: [
+                ...configDefaults.exclude,
+                '**/*.browser.test.ts',
+                ...exclude,
+            ],
             ...test,
         },
     })
 }
 
-export function browserProject(test: ProjectTestConfig = {}) {
+/** Runs `*.test.ts` and `*.browser.test.ts`, skips `*.node.test.ts` */
+export function browserProject({
+    exclude = [],
+    ...test
+}: ProjectTestConfig = {}) {
     return defineProject({
         test: {
             name: 'browser',
             include: ['src/**/*.test.ts'],
+            exclude: [
+                ...configDefaults.exclude,
+                '**/*.node.test.ts',
+                ...exclude,
+            ],
             browser: {
                 enabled: true,
                 provider: playwright(),
