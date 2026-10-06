@@ -3111,6 +3111,76 @@ importers:
         specifier: 'catalog:'
         version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  examples/test-token-v2-registry:
+    dependencies:
+      '@canton-network/core-splice-codegen':
+        specifier: 'catalog:'
+        version: link:../../core/splice-codegen
+      '@canton-network/core-token-standard':
+        specifier: 'catalog:'
+        version: link:../../core/token-standard
+      '@canton-network/core-token-standard-v2':
+        specifier: 'catalog:'
+        version: link:../../core/token-standard-v2
+      '@canton-network/core-types':
+        specifier: 'catalog:'
+        version: link:../../core/types
+      '@canton-network/example-test-token-v2-registry':
+        specifier: 'catalog:'
+        version: 'link:'
+      '@canton-network/wallet-sdk':
+        specifier: 'catalog:'
+        version: link:../../sdk/wallet-sdk
+      cors:
+        specifier: 'catalog:'
+        version: 2.8.6
+      express:
+        specifier: 'catalog:'
+        version: 5.2.1(supports-color@10.2.2)
+      openapi-ts-router:
+        specifier: 'catalog:'
+        version: 0.4.1(@types/express@5.0.6)(express@5.2.1(supports-color@10.2.2))
+      openapi-typescript-helpers:
+        specifier: 'catalog:'
+        version: 0.1.0
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@5.9.3)
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
+    devDependencies:
+      '@types/cors':
+        specifier: 'catalog:'
+        version: 2.8.19
+      '@types/express':
+        specifier: 'catalog:'
+        version: 5.0.6
+      '@types/lodash':
+        specifier: 'catalog:'
+        version: 4.17.25
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.8
+      '@vitest/browser-playwright':
+        specifier: 'catalog:'
+        version: 5.0.1(playwright@1.63.0)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.1)
+      '@vitest/coverage-v8':
+        specifier: 'catalog:'
+        version: 5.0.1(@vitest/browser@5.0.1)(vitest@5.0.1)
+      playwright:
+        specifier: 'catalog:'
+        version: 1.63.0
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.15
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
   examples/walletconnect:
     dependencies:
       '@emotion/react':
