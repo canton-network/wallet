@@ -535,6 +535,80 @@ export class WalletSyncService {
         )
     }
 
+    // Discover only auth party by id for self-issued auth login.
+    // It's less network intensive than full wallet sync and doesn't allow altering existing wallets before user proves they can sign the self issued token.
+    async syncAuthParty(partyId: string): Promise<Wallet | undefined> {
+        this.logger.info({ partyId }, 'Starting auth party sync...')
+        try {
+            this.requirePartyAllocator()
+            const network = await this.store.getCurrentNetwork()
+            const existing = (await this.store.getWallets()).find(
+                (wallet) => wallet.partyId === partyId
+            )
+            if (existing) {
+                await this.store.setAuthPartyWallet(partyId)
+                return (
+                    (await this.store.getWallets()).find(
+                        (wallet) => wallet.partyId === partyId
+                    ) ?? existing
+                )
+            }
+
+            const [hint, namespace] = partyId.split('::')
+            if (!hint || !namespace) return undefined
+
+            const participantNamespace = await this.getParticipantNamespace()
+            if (namespace === participantNamespace) {
+                this.logger.info(
+                    { partyId },
+                    'Auth party uses the participant namespace, skipping'
+                )
+                return undefined
+            }
+
+            // TODO consider whether creating a disabled wallet with NO_SIGNING_PROVIDER_MATCHED makes sense here
+            const resolved = await this.resolveSigningProvider(
+                namespace,
+                participantNamespace
+            )
+            if (
+                !resolved.matched ||
+                resolved.signingProviderId === SigningProvider.PARTICIPANT
+            ) {
+                this.logger.info(
+                    { partyId },
+                    'No signing provider matched auth party, skipping'
+                )
+                return undefined
+            }
+
+            const { rightsByParty } = await this.getRightsSnapshot()
+            const wallet: Wallet = {
+                primary: false,
+                status: 'allocated',
+                partyId,
+                hint,
+                publicKey: resolved.publicKey,
+                namespace,
+                networkId: network.id,
+                signingProviderId: resolved.signingProviderId,
+                userId: this.authContext.userId,
+                rights:
+                    rightsByParty.get(partyId) ??
+                    WalletSyncService.EMPTY_RIGHTS,
+                isAuthParty: true,
+            }
+            await this.store.addWallet(wallet)
+            await this.store.setAuthPartyWallet(partyId)
+            return (await this.store.getWallets()).find(
+                (stored) => stored.partyId === partyId
+            )
+        } catch (err) {
+            this.logger.error({ err, partyId }, 'Auth party sync failed.')
+            throw err
+        }
+    }
+
     async syncRights(): Promise<Wallet[]> {
         this.logger.info('Starting rights sync...')
         try {
