@@ -130,7 +130,8 @@ async function ed25519KeyFromWalletPublicKey(publicKey: string) {
 
 /**
  * Verifies a self-issued token (iss === sub) against the party's wallet
- * public key. The wallet is found via daml.com.usr (userId) and sub (partyId).
+ * public key. The wallet is found via daml.com.usr, sub, and aud
+ * (exactly one self_issued network).
  */
 async function verifySelfIssuedToken(
     jwt: string,
@@ -145,7 +146,11 @@ async function verifySelfIssuedToken(
         return undefined
     }
 
-    const wallet = await store.getWalletByUserParty(userId, partyId)
+    const wallet = await store.getWalletByJwt(
+        userId,
+        partyId,
+        normalizeAudienceClaim(payload.aud)
+    )
     if (!wallet) {
         logger.warn(
             { userId, partyId },
@@ -158,30 +163,6 @@ async function verifySelfIssuedToken(
         logger.warn(
             { userId, partyId },
             'Wallet is not an auth party for self-issued tokens'
-        )
-        return undefined
-    }
-
-    let network
-    try {
-        network = await store.getNetwork(wallet.networkId)
-    } catch {
-        logger.warn(
-            { networkId: wallet.networkId },
-            'No network found for self-issued wallet'
-        )
-        return undefined
-    }
-
-    const tokenAudiences = normalizeAudienceClaim(payload.aud)
-    if (!tokenAudiences.includes(network.auth.audience)) {
-        logger.warn(
-            {
-                tokenAudiences,
-                expectedAudience: network.auth.audience,
-                networkId: network.id,
-            },
-            'Self-issued JWT audience does not match the wallet network'
         )
         return undefined
     }

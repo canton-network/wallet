@@ -30,6 +30,10 @@ import type {
     WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
 import {
+    assertUniqueSelfIssuedAudience,
+    resolveSelfIssuedNetworkByAudiences,
+} from '@canton-network/core-wallet-store'
+import {
     CamelCasePlugin,
     Kysely,
     PostgresDialect,
@@ -173,18 +177,25 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         }
     }
 
-    async getWalletByUserParty(
+    async getWalletByJwt(
         userId: string,
-        partyId: PartyId
+        partyId: PartyId,
+        audiences: string[]
     ): Promise<Wallet | undefined> {
-        // TODO: also filter by networkId so network.auth.method === 'self_issued'
-        // and network.auth.audience can select the network when the same party
-        // exists on more than one.
+        const networks = (
+            await this.db.selectFrom('networks').selectAll().execute()
+        ).map(toNetwork)
+        const network = resolveSelfIssuedNetworkByAudiences(networks, audiences)
+        if (!network) {
+            return undefined
+        }
+
         const row = await this.db
             .selectFrom('wallets')
             .selectAll()
             .where('userId', '=', userId)
             .where('partyId', '=', partyId)
+            .where('networkId', '=', network.id)
             .executeTakeFirst()
 
         return row ? toWallet(row) : undefined
@@ -728,6 +739,11 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         // todo: check and compare idpId of existing network
         this.assertConnected()
         await this.db.transaction().execute(async (trx) => {
+            const existing = (
+                await trx.selectFrom('networks').selectAll().execute()
+            ).map(toNetwork)
+            assertUniqueSelfIssuedAudience(existing, network, network.id)
+
             // we do not set a userId for now and leave all networks global when updating
             const networkEntry = fromNetwork(network, undefined)
             this.logger.info(networkEntry, 'Updating network table')
@@ -760,12 +776,17 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .executeTakeFirst()
             if (networkAlreadyExists) {
                 throw new Error(`Network ${network.id} already exists`)
-            } else {
-                await trx
-                    .insertInto('networks')
-                    .values(fromNetwork(network, userId))
-                    .execute()
             }
+
+            const existing = (
+                await trx.selectFrom('networks').selectAll().execute()
+            ).map(toNetwork)
+            assertUniqueSelfIssuedAudience(existing, network)
+
+            await trx
+                .insertInto('networks')
+                .values(fromNetwork(network, userId))
+                .execute()
         })
     }
 

@@ -163,16 +163,15 @@ export interface Store {
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
     getWallet(partyId: PartyId): Promise<Wallet | null>
     /**
-     * Looks up a wallet by user and party without an authenticated session,
-     * because this runs during self-issued token verification, before there is one.
-     *
-     * TODO: also take networkId so we can require
-     * `network.auth.method === 'self_issued'` and match `network.auth.audience`.
-     * userId+partyId can collide across networks until that lands.
+     * Looks up a wallet for self-issued JWT verification, before there is a session.
+     * Resolves exactly one `self_issued` network whose audience is in `audiences`,
+     * then the wallet by userId, partyId, and that networkId.
+     * Throws if more than one self-issued network matches.
      */
-    getWalletByUserParty(
+    getWalletByJwt(
         userId: string,
-        partyId: PartyId
+        partyId: PartyId,
+        audiences: string[]
     ): Promise<Wallet | undefined>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>

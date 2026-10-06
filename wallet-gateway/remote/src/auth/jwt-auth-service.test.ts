@@ -1033,5 +1033,54 @@ describe('jwtAuthService', () => {
 
             await expect(service.verifyToken(token)).resolves.toBeUndefined()
         })
+
+        it('selects the wallet on the self-issued network matching the token audience', async () => {
+            const { publicKey, privateKey } = await generateKeyPair('EdDSA')
+            const otherAudience = 'other-self-issued-audience'
+            const otherNetworkId = 'network-self-issued-2'
+            await store.addNetwork(
+                createSelfIssuedNetwork(otherNetworkId, otherAudience)
+            )
+            await store.addWallet(
+                selfIssuedWallet(await rawEd25519PublicKeyBase64(publicKey), {
+                    networkId: otherNetworkId,
+                    primary: false,
+                })
+            )
+
+            const service = jwtAuthService(store, mockLogger)
+            const token = await eddsaBearerToken(
+                selfIssuedClaims({ aud: otherAudience }),
+                privateKey
+            )
+
+            await expect(service.verifyToken(token)).resolves.toEqual({
+                userId: SELF_ISSUED_USER_ID,
+                accessToken: token.split(' ')[1],
+            })
+        })
+
+        it('returns undefined when multiple self-issued networks share the token audience', async () => {
+            const collidingStore = new StoreInternal(
+                {
+                    idps: [],
+                    networks: [
+                        createSelfIssuedNetwork('n1', SELF_ISSUED_AUDIENCE),
+                        createSelfIssuedNetwork('n2', SELF_ISSUED_AUDIENCE),
+                    ],
+                },
+                getLogger('mock'),
+                authContext
+            )
+            await collidingStore.addWallet(selfIssuedWallet(walletPublicKey))
+
+            const service = jwtAuthService(collidingStore, mockLogger)
+            const token = await eddsaBearerToken(
+                selfIssuedClaims(),
+                ed25519PrivateKey
+            )
+
+            await expect(service.verifyToken(token)).resolves.toBeUndefined()
+        })
     })
 })
