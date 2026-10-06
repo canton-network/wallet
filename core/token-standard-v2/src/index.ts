@@ -7,4 +7,4 @@ export * from './interface-ids.const.js'
 
 export * as OffLedger from './generated-clients/index.js'
 
-export * from '@daml.js/token-standard-models-v2-1.0.0'
+export * from './models/index.js'
