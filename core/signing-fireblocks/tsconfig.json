@@ -3,7 +3,8 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src",
-        "exactOptionalPropertyTypes": false
+        "exactOptionalPropertyTypes": false,
+        "types": ["fs-extra", "lodash", "node"]
     },
     "include": ["src"]
 }

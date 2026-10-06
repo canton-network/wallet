@@ -4,7 +4,7 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "moduleResolution": "bundler",
-        "baseUrl": ".",
+        "types": ["node"],
         "paths": {
             "@daml.js/test-token-v1": [
                 "../../damljs/splice-test-token-v1/splice-test-token-v1-1.0.0/lib/index.d.ts"

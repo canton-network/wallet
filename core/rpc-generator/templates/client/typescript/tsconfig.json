@@ -2,7 +2,8 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "dist",
-        "rootDir": "src"
+        "rootDir": "src",
+        "types": ["isomorphic-fetch", "json-schema", "lodash", "ws"]
     },
     "include": ["src"]
 }
