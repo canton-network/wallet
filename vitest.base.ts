@@ -27,8 +27,7 @@ const defaultThresholds: Thresholds = {
 
 export interface CoverageOverrides {
     exclude?: string[]
-    /** `false` reports coverage without enforcing any thresholds */
-    thresholds?: Partial<Thresholds> | false
+    thresholds?: Partial<Thresholds>
 }
 
 export function coverage(overrides: CoverageOverrides = {}): CoverageConfig {
@@ -40,9 +39,7 @@ export function coverage(overrides: CoverageOverrides = {}): CoverageConfig {
         reporter: ['text', 'html', 'lcov', 'json-summary'],
         // @nx/vitest infers the cached test outputs from this
         reportsDirectory: './coverage',
-        ...(thresholds !== false && {
-            thresholds: { ...defaultThresholds, ...thresholds },
-        }),
+        thresholds: { ...defaultThresholds, ...thresholds },
     }
 }
 

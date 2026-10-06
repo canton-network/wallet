@@ -6,7 +6,10 @@ import { coverage, nodeProject } from '../../vitest.base.ts'
 
 export default defineConfig({
     test: {
-        coverage: coverage({ thresholds: false }),
+        coverage: coverage({
+            // current levels, raise as coverage improves
+            thresholds: { lines: 65, functions: 65, statements: 65 },
+        }),
         projects: [nodeProject()],
     },
 })

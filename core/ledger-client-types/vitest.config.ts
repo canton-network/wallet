@@ -8,7 +8,7 @@ export default defineConfig({
     test: {
         coverage: coverage({
             exclude: ['src/generated-clients/**/*.ts'],
-            thresholds: false,
+            thresholds: { lines: 75, statements: 75 },
         }),
         projects: [nodeProject(), browserProject()],
     },

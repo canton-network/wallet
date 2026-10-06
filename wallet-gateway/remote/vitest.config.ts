@@ -14,7 +14,12 @@ export default defineConfig({
                 'src/web/frontend/**/test-helpers.ts',
                 'src/**/rpc-gen/**',
             ],
-            thresholds: false,
+            thresholds: {
+                lines: 75,
+                functions: 75,
+                statements: 75,
+                branches: 65,
+            },
         }),
         projects: [
             nodeProject({
