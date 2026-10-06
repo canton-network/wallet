@@ -19,4 +19,3 @@ declare global {
 // Present on any page that loads the SDK, so a customer bundle can be
 // identified from the console without a change in the dapp.
 globalThis.__CANTON_DAPP_SDK__ = DAPP_SDK_BUILD
-console.info(`@canton-network/dapp-sdk ${SDK_VERSION}`)
