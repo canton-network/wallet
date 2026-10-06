@@ -22,11 +22,9 @@
         "zod": "catalog:"
     },
     "scripts": {
-        "test": "vitest run --project node --project browser",
-        "test:coverage": "vitest run --project node --project browser --coverage",
         "build": "tsdown --onSuccess \"tsc\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\""
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
         "@vitest/browser-playwright": "catalog:",

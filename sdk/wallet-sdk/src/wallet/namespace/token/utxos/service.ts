@@ -72,7 +72,7 @@ export class UtxoNamespace {
             const assets = parseAssets(
                 this.sdkContext.commonCtx,
                 await this.sdkContext.tokenStandardService.registriesToAssets(
-                    this.sdkContext.registryUrls.map((url) => url.href)
+                    this.sdkContext.registryUrls
                 )
             )
 

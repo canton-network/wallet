@@ -24,7 +24,7 @@
         "build:all:serial": "nx run-many -t build --parallel=1",
         "clean:all": "nx run-many -t clean --parallel && pnpm nx reset",
         "test:all": "nx run-many -t test --parallel",
-        "test-coverage:all": "nx run-many -t test:coverage --parallel",
+        "test-coverage:all": "nx run-many -t test --parallel -c coverage",
         "script:coverage:report": "tsx ./scripts/src/coverage-report.ts",
         "postinstall": "husky",
         "docs:update-wg-config": "tsx ./scripts/src/docs-update-wg-config.ts",
@@ -33,7 +33,6 @@
         "script:generate:openapi": "tsx ./scripts/src/generate-openapi-clients.ts",
         "script:generate:asyncapi": "tsx ./scripts/src/generate-asyncapi-clients.ts",
         "script:generate:protobufs": "tsx ./scripts/src/generate-protobufs.ts",
-        "script:generate:ledgerapi": "tsx ./scripts/src/generate-ledgerapi-types.ts",
         "script:fetch:canton": "tsx ./scripts/src/fetch-canton.ts",
         "script:fetch:splice": "tsx ./scripts/src/fetch-splice.ts",
         "script:fetch:localnet": "tsx ./scripts/src/fetch-localnet.ts",
@@ -62,6 +61,7 @@
         "@nx/eslint-plugin": "catalog:",
         "@nx/playwright": "catalog:",
         "@nx/storybook": "catalog:",
+        "@nx/vitest": "catalog:",
         "@nx/web": "catalog:",
         "@open-rpc/generator": "catalog:",
         "@playwright/test": "catalog:",
@@ -72,6 +72,8 @@
         "@swc/helpers": "catalog:",
         "@types/node": "catalog:",
         "@typescript-eslint/parser": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "commitlint": "catalog:",
         "eslint": "catalog:",
         "eslint-plugin-headers": "catalog:",
@@ -94,7 +96,8 @@
         "tsx": "catalog:",
         "typescript": "catalog:",
         "typescript-eslint": "catalog:",
-        "vite": "catalog:"
+        "vite": "catalog:",
+        "vitest": "catalog:"
     },
     "lint-staged": {
         "*": "pnpm prettier --config .prettierrc --write --ignore-unknown",

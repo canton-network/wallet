@@ -117,10 +117,12 @@ jobs:
 
             - name: Run all unit tests
               run: |
-                  pnpm nx run-many -t test:coverage \
-                    --parallel
+                  pnpm nx run-many -t test \
+                    --parallel \
+                    -c coverage
 
             - name: Coverage summary
+              if: ${{ !cancelled() }}
               run: |
                   echo "::group::Unit test coverage summary"
                   pnpm script:coverage:report

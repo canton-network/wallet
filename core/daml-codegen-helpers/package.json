@@ -20,16 +20,12 @@
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "test": "vitest run --project node --project browser --passWithNoTests",
-        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
         "@types/node": "catalog:",
-        "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:"
+        "typescript": "catalog:"
     },
     "files": [
         "dist/**"

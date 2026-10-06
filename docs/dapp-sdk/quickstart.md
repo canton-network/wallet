@@ -65,7 +65,8 @@ await sdk.prepareExecute({
     commands: [
         {
             CreateCommand: {
-                templateId: '#AdminWorkflows:Canton.Internal.Ping:Ping',
+                templateId:
+                    '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
                 createArguments: {
                     id: `ping-${Date.now()}`,
                     initiator: account.partyId,

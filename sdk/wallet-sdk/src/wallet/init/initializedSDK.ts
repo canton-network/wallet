@@ -160,7 +160,7 @@ const createNamespace: {
             list: parseAssets(
                 ctx,
                 await tokenStandardService.registriesToAssets(
-                    config.registries.map((registry) => registry.toString())
+                    config.registries.map((c) => new ParsedURL(ctx, c))
                 )
             ),
             commonCtx: ctx,
