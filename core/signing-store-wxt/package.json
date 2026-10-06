@@ -20,9 +20,7 @@
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run",
-        "test:coverage": "vitest run --coverage"
+        "clean": "tsc -b --clean; rm -rf dist"
     },
     "dependencies": {
         "@canton-network/core-ledger-client": "catalog:",
@@ -34,6 +32,7 @@
     },
     "devDependencies": {
         "@swc/core": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",

@@ -44,7 +44,7 @@
         "@wxt-dev/module-react": "catalog:",
         "typescript": "catalog:",
         "web-ext": "catalog:",
-        "wxt": "^0.21.3"
+        "wxt": "catalog:"
     },
     "nx": {
         "targets": {
@@ -55,8 +55,8 @@
             },
             "playwright:e2e": {
                 "dependsOn": [
-                    "build",
-                    "^build"
+                    "^build",
+                    "build"
                 ]
             }
         }

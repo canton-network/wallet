@@ -19,7 +19,6 @@
         "build": "tsc -p tsconfig.app.json && vite build && vite build --config vite.lib.config.ts && tsc -p tsconfig.types.json",
         "dev": "vite",
         "typecheck": "tsc -p tsconfig.types.json --noEmit --emitDeclarationOnly false && tsc -p tsconfig.app.json",
-        "test": "vitest run --project node",
         "clean": "tsc -b --clean; rm -rf dist"
     },
     "dependencies": {
@@ -42,6 +41,7 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "eslint": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:",

@@ -51,5 +51,12 @@
     "homepage": "https://github.com/canton-network/wallet",
     "bugs": {
         "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "nx": {
+        "targets": {
+            "build": {
+                "outputs": ["{projectRoot}/dist", "{projectRoot}/docs"]
+            }
+        }
     }
 }
