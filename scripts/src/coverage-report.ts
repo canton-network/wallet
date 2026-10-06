@@ -22,10 +22,6 @@ interface NxGraph {
     graph: { nodes: Record<string, { data: { root: string } }> }
 }
 
-interface CoverageReportConfig {
-    excludedProjects?: string[]
-}
-
 type CoverageResult =
     | {
           status: 'measured'
@@ -33,7 +29,6 @@ type CoverageResult =
           linesTotal: number
           linesCovered: number
       }
-    | { status: 'excluded' }
     | { status: 'missing' }
 
 interface PackageCoverage {
@@ -44,20 +39,6 @@ interface PackageCoverage {
 const repoRoot = getRepoRoot()
 const base = getArgValue('base')
 const head = getArgValue('head')
-
-const coverageReportConfigPath = join(
-    repoRoot,
-    'scripts/src/coverage-report.config.json'
-)
-const centrallyExcludedProjects = new Set<string>(
-    existsSync(coverageReportConfigPath)
-        ? ((
-              JSON.parse(
-                  readFileSync(coverageReportConfigPath, 'utf8')
-              ) as CoverageReportConfig
-          ).excludedProjects ?? [])
-        : []
-)
 
 function nxJson(command: string): unknown {
     const stdout = execSync(`pnpm ${command}`, {
@@ -86,18 +67,7 @@ function getProjectRoots(): Map<string, string> {
     )
 }
 
-function isCoverageExcluded(projectName: string): boolean {
-    return centrallyExcludedProjects.has(projectName)
-}
-
-function readLineCoverage(
-    projectName: string,
-    projectRoot: string
-): CoverageResult {
-    if (isCoverageExcluded(projectName)) {
-        return { status: 'excluded' }
-    }
-
+function readLineCoverage(projectRoot: string): CoverageResult {
     const summaryPath = join(
         repoRoot,
         projectRoot,
@@ -124,8 +94,6 @@ function formatCoverage(result: CoverageResult): string {
     switch (result.status) {
         case 'measured':
             return `${result.linesPct.toFixed(2)}%`
-        case 'excluded':
-            return 'N/A'
         case 'missing':
             return 'No coverage info'
     }
@@ -217,7 +185,7 @@ const projectRoots = getProjectRoots()
 const entries: PackageCoverage[] = projects
     .map((name) => ({
         name,
-        result: readLineCoverage(name, projectRoots.get(name) ?? ''),
+        result: readLineCoverage(projectRoots.get(name) ?? ''),
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 

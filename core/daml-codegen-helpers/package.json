@@ -24,10 +24,8 @@
     },
     "devDependencies": {
         "@types/node": "catalog:",
-        "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:"
+        "typescript": "catalog:"
     },
     "files": [
         "dist/**"

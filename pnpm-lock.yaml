@@ -1002,18 +1002,12 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.8
-      '@vitest/coverage-v8':
-        specifier: 'catalog:'
-        version: 5.0.1(@vitest/browser@5.0.1)(vitest@5.0.1)
       tsdown:
         specifier: 'catalog:'
         version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   core/eslint-config:
     dependencies:
@@ -1158,12 +1152,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.8
-      '@vitest/browser-playwright':
-        specifier: 'catalog:'
-        version: 5.0.1(playwright@1.63.0)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.1)
-      '@vitest/coverage-v8':
-        specifier: 'catalog:'
-        version: 5.0.1(@vitest/browser@5.0.1)(vitest@5.0.1)
       esbuild-plugin-replace:
         specifier: 'catalog:'
         version: 1.4.0
@@ -1176,9 +1164,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   core/origin-manager:
     dependencies:
@@ -1368,15 +1353,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.8
-      '@vitest/coverage-v8':
-        specifier: 'catalog:'
-        version: 5.0.1(@vitest/browser@5.0.1)(vitest@5.0.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   core/rpc-transport:
     dependencies:
@@ -2489,12 +2468,6 @@ importers:
         specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
-      '@vitest/browser-playwright':
-        specifier: 'catalog:'
-        version: 5.0.1(playwright@1.63.0)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.1)
-      '@vitest/coverage-v8':
-        specifier: 'catalog:'
-        version: 5.0.1(@vitest/browser@5.0.1)(vitest@5.0.1)
       playwright:
         specifier: 'catalog:'
         version: 1.63.0
@@ -2504,9 +2477,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   core/wallet-store-inmemory:
     dependencies:
@@ -2648,18 +2618,12 @@ importers:
         specifier: 'catalog:'
         version: 14.0.2
     devDependencies:
-      '@vitest/coverage-v8':
-        specifier: 'catalog:'
-        version: 5.0.1(@vitest/browser@5.0.1)(vitest@5.0.1)
       tsdown:
         specifier: 'catalog:'
         version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 5.0.1(@types/node@25.9.8)(@vitest/browser-playwright@5.0.1)(@vitest/coverage-v8@5.0.1)(@vitest/ui@5.0.1)(vite@7.3.6(@types/node@25.9.8)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   core/wallet-ui-components:
     dependencies:

@@ -142,10 +142,7 @@
         {
             "plugin": "@nx/vitest",
             "include": ["**/vitest.config.ts"],
-            "exclude": [
-                "core/*-rpc-client/**/*",
-                "docs/wallet-integration-guide/examples/**/*"
-            ],
+            "exclude": ["docs/wallet-integration-guide/examples/**/*"],
             "options": {
                 "testTargetName": "test",
                 "testMode": "run"
