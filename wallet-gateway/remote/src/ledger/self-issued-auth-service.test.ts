@@ -6,13 +6,24 @@ import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
-import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import {
+    PartyLevelRight,
+    type Store,
+    type Wallet,
+} from '@canton-network/core-wallet-store'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import type { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
 import { SelfIssuedAuthService } from './self-issued-auth-service'
 
-const { probeGet } = vi.hoisted(() => ({
+const { probeGet, syncRights } = vi.hoisted(() => ({
     probeGet: vi.fn(),
+    syncRights: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('./wallet-sync-service.js', () => ({
+    WalletSyncService: vi.fn(function WalletSyncServiceMock() {
+        return { syncRights }
+    }),
 }))
 
 vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
@@ -80,6 +91,8 @@ describe('SelfIssuedAuthService', () => {
             signature: Buffer.from('sig-bytes').toString('base64'),
         })
         probeGet.mockResolvedValue({ userId: 'alice' })
+        syncRights.mockReset()
+        syncRights.mockResolvedValue([])
         store = {
             getWallet: vi.fn(),
             getWallets: vi.fn().mockResolvedValue([]),
@@ -244,6 +257,7 @@ describe('SelfIssuedAuthService', () => {
             )
             expect(wallet).toEqual(pendingWallet)
             expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(syncRights).not.toHaveBeenCalled()
         })
 
         it('continues an interrupted onboarding for a user without a primary party', async () => {
@@ -259,6 +273,25 @@ describe('SelfIssuedAuthService', () => {
             expect(ledgerClient.post).not.toHaveBeenCalled()
             expect(walletAllocator.createWallet).toHaveBeenCalled()
             expect(wallet).toEqual(pendingWallet)
+            expect(syncRights).not.toHaveBeenCalled()
+        })
+
+        it('syncs rights when the created wallet is allocated', async () => {
+            const allocatedWallet = createWallet({ status: 'allocated' })
+            const walletWithRights = createWallet({
+                status: 'allocated',
+                rights: [PartyLevelRight.CanActAs],
+            })
+            walletAllocator.createWallet.mockResolvedValue(allocatedWallet)
+            store.getWallet.mockResolvedValue(walletWithRights)
+
+            const wallet = await createService().createWallet({
+                partyHint: 'my-party',
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+            })
+
+            expect(syncRights).toHaveBeenCalledOnce()
+            expect(wallet).toEqual(walletWithRights)
         })
 
         it('rejects when primary party authentication is already configured', async () => {
@@ -346,6 +379,7 @@ describe('SelfIssuedAuthService', () => {
                 .mockResolvedValueOnce(pendingWallet)
                 .mockResolvedValueOnce(allocatedWallet)
                 .mockResolvedValueOnce(allocatedWallet)
+                .mockResolvedValueOnce(allocatedWallet)
                 .mockResolvedValueOnce(authPartyWallet)
 
             const service = createService()
@@ -357,6 +391,7 @@ describe('SelfIssuedAuthService', () => {
                     partyId: pendingWallet.partyId,
                 })
 
+            expect(syncRights).toHaveBeenCalledOnce()
             expect(walletAllocator.allocateParty).toHaveBeenCalledWith(
                 {
                     userId: 'alice',
@@ -518,6 +553,25 @@ describe('SelfIssuedAuthService', () => {
             expect(store.upgradeOnboardingSession).not.toHaveBeenCalled()
         })
 
+        it('syncs rights when allocateParty finds the wallet already allocated', async () => {
+            const allocatedWallet = createWallet({ status: 'allocated' })
+            const walletWithRights = createWallet({
+                status: 'allocated',
+                rights: [PartyLevelRight.CanActAs],
+            })
+            store.getWallet
+                .mockResolvedValueOnce(allocatedWallet)
+                .mockResolvedValueOnce(walletWithRights)
+
+            const wallet = await createService().allocateParty({
+                partyId: allocatedWallet.partyId,
+            })
+
+            expect(walletAllocator.allocateParty).not.toHaveBeenCalled()
+            expect(syncRights).toHaveBeenCalledOnce()
+            expect(wallet).toEqual(walletWithRights)
+        })
+
         it('does not patch the ledger user when allocateParty leaves the wallet unallocated', async () => {
             store.getWallet.mockResolvedValue(createWallet())
 
@@ -526,6 +580,8 @@ describe('SelfIssuedAuthService', () => {
             })
 
             expect(walletAllocator.allocateParty).toHaveBeenCalled()
+            // Signing is still pending, so there are no party rights to copy yet.
+            expect(syncRights).not.toHaveBeenCalled()
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(store.updateWallet).not.toHaveBeenCalled()
             expect(wallet.status).toBe('initialized')

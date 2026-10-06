@@ -22,6 +22,7 @@ import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import type { Logger } from 'pino'
 import { PartyAllocationService } from './party-allocation-service.js'
+import { WalletSyncService } from './wallet-sync-service.js'
 import { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
 
 export type SelfIssuedOnboardingSession = {
@@ -198,22 +199,21 @@ export class SelfIssuedAuthService {
             'Created self-issued authentication party'
         )
 
-        return wallet
+        return this.toWalletWithSyncedRights(wallet)
     }
 
     async allocateParty(params: PartyParams): Promise<Wallet> {
-        const wallet = await this.requireWallet(params.partyId)
-        if (wallet.status === 'allocated') {
-            return wallet
+        let wallet = await this.requireWallet(params.partyId)
+        if (wallet.status !== 'allocated') {
+            await this.walletAllocator.allocateParty(
+                this.authContext(),
+                wallet,
+                wallet.signingProviderId as SigningProvider
+            )
+            wallet = await this.requireWallet(params.partyId)
         }
 
-        await this.walletAllocator.allocateParty(
-            this.authContext(),
-            wallet,
-            wallet.signingProviderId as SigningProvider
-        )
-
-        return this.requireWallet(params.partyId)
+        return this.toWalletWithSyncedRights(wallet)
     }
 
     async connectSession(
@@ -287,6 +287,21 @@ export class SelfIssuedAuthService {
             networkId: wallet.networkId,
             isAuthParty: true,
         })
+        return this.requireWallet(wallet.partyId)
+    }
+
+    private async toWalletWithSyncedRights(wallet: Wallet): Promise<Wallet> {
+        if (wallet.status !== 'allocated') {
+            return wallet
+        }
+
+        await new WalletSyncService(
+            this.store,
+            this.ledgerClient,
+            this.authContext(),
+            this.logger
+        ).syncRights()
+
         return this.requireWallet(wallet.partyId)
     }
 

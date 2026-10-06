@@ -455,7 +455,6 @@ export const userController = (
                 params.keyName
             )
 
-            // TODO(#1493) separate rights sync from wallets sync
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
@@ -468,11 +467,9 @@ export const userController = (
                 store,
                 ledgerClient,
                 authContext!,
-                logger,
-                drivers,
-                partyAllocator
+                logger
             )
-            await service.syncWallets()
+            await service.syncRights()
 
             // Notify about the change and return the new wallet
             const wallets = await store.getWallets()
@@ -480,7 +477,11 @@ export const userController = (
                 .getNotifier(authContext.userId)
                 .emit('accountsChanged', wallets)
 
-            return { wallet }
+            const walletWithUpdatedRights = wallets.find(
+                (w) =>
+                    w.partyId === wallet.partyId && w.networkId === network.id
+            )
+            return { wallet: walletWithUpdatedRights ?? wallet }
         },
         addSelfIssuedSession: async (params: AddSelfIssuedSessionParams) => {
             const username = params.username.trim()
@@ -581,22 +582,6 @@ export const userController = (
             }
             const scopedStore = authAwareStore.withAuthContext(connectedContext)
             const network = await scopedStore.getCurrentNetwork()
-            if (!network.adminAuth) {
-                throw new Error('No admin auth configured')
-            }
-            const idp = await getIdpForAuth(network, network.adminAuth)
-            const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
-                idp,
-                network.adminAuth,
-                logger
-            )
-            const partyAllocator = new PartyAllocationService({
-                synchronizerId: network.synchronizerId,
-                accessTokenProvider: adminTokenProvider,
-                httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
-            })
-            // TODO(#1493) separate rights sync from wallets sync
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
@@ -605,15 +590,6 @@ export const userController = (
                     logger
                 ),
             })
-            const syncService = new WalletSyncService(
-                scopedStore,
-                ledgerClient,
-                connectedContext,
-                logger,
-                drivers,
-                partyAllocator
-            )
-            await syncService.syncWallets()
             await emitSessionConnected(
                 session.id,
                 network,
@@ -677,7 +653,6 @@ export const userController = (
                 signingProviderId
             )
 
-            // TODO(#1493) separate rights sync from wallets sync
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
@@ -690,11 +665,9 @@ export const userController = (
                 store,
                 ledgerClient,
                 authContext!,
-                logger,
-                drivers,
-                partyAllocator
+                logger
             )
-            await service.syncWallets()
+            await service.syncRights()
 
             // Notify about the change and return the updated wallet
             const wallets = await store.getWallets()

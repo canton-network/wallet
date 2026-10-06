@@ -50,6 +50,7 @@ const walletSyncMocks = vi.hoisted(() => ({
         updated: [],
         disabled: [],
     }),
+    syncRights: vi.fn().mockResolvedValue([]),
     isWalletSyncNeeded: vi.fn().mockResolvedValue(false),
 }))
 
@@ -277,6 +278,8 @@ describe('userController', () => {
             updated: [],
             disabled: [],
         })
+        walletSyncMocks.syncRights.mockReset()
+        walletSyncMocks.syncRights.mockResolvedValue([])
         walletSyncMocks.isWalletSyncNeeded.mockReset()
         walletSyncMocks.isWalletSyncNeeded.mockResolvedValue(false)
         transactionServiceMocks.sign.mockReset()
@@ -1643,8 +1646,19 @@ describe('userController', () => {
                 ...primaryWallet,
                 partyId: 'party::new',
                 primary: false,
+                rights: [],
             }
-            walletAllocationMocks.createWallet.mockResolvedValue(newWallet)
+            walletAllocationMocks.createWallet.mockImplementation(async () => {
+                await store.addWallet(newWallet)
+                return newWallet
+            })
+            walletSyncMocks.syncRights.mockImplementation(async () => {
+                await store.updateWallet({
+                    partyId: newWallet.partyId,
+                    rights: [PartyLevelRight.CanActAs],
+                })
+                return []
+            })
             const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
@@ -1668,12 +1682,16 @@ describe('userController', () => {
                 SigningProvider.WALLET_KERNEL,
                 undefined
             )
-            expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
+            expect(walletSyncMocks.syncRights).toHaveBeenCalledOnce()
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
             expect(emitSpy).toHaveBeenCalledWith(
                 'accountsChanged',
                 expect.any(Array)
             )
-            expect(result.wallet).toEqual(newWallet)
+            expect(result.wallet).toMatchObject({
+                partyId: 'party::new',
+                rights: [PartyLevelRight.CanActAs],
+            })
         })
 
         it('passes auth context to wallet allocation service', async () => {
@@ -1742,6 +1760,17 @@ describe('userController', () => {
                 walletKernelDriver
             )
 
+            walletSyncMocks.syncRights.mockImplementation(async () => {
+                await store.updateWallet({
+                    partyId: primaryWallet.partyId,
+                    rights: [
+                        PartyLevelRight.CanActAs,
+                        PartyLevelRight.CanReadAs,
+                    ],
+                })
+                return []
+            })
+
             const result = await controller.allocatePartyForWallet({
                 partyId: primaryWallet.partyId,
             })
@@ -1751,7 +1780,8 @@ describe('userController', () => {
                 primaryWallet,
                 SigningProvider.WALLET_KERNEL
             )
-            expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
+            expect(walletSyncMocks.syncRights).toHaveBeenCalledOnce()
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
             expect(emitSpy).toHaveBeenCalledWith(
                 'accountsChanged',
                 expect.any(Array)
@@ -1759,6 +1789,7 @@ describe('userController', () => {
             expect(result.wallet).toMatchObject({
                 partyId: primaryWallet.partyId,
                 networkId: storeNetwork.id,
+                rights: [PartyLevelRight.CanActAs, PartyLevelRight.CanReadAs],
             })
         })
 
