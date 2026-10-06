@@ -12,7 +12,9 @@
         "strict": true,
         "skipLibCheck": true,
         "rootDir": "${configDir}/src",
-        "outDir": "${configDir}/dist"
+        "outDir": "${configDir}/dist",
+        "verbatimModuleSyntax": true,
+        "isolatedModules": true
     },
     "include": ["${configDir}/src"],
     "exclude": [

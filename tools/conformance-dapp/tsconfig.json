@@ -4,7 +4,6 @@
         "jsx": "react-jsx",
         "types": ["node", "react", "react-dom"],
         "erasableSyntaxOnly": true,
-        "verbatimModuleSyntax": true,
         "rewriteRelativeImportExtensions": true,
         "resolveJsonModule": true
     },

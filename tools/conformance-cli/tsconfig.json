@@ -4,7 +4,6 @@
         "lib": ["ESNext", "DOM"],
         "types": ["express", "node"],
         "erasableSyntaxOnly": true,
-        "verbatimModuleSyntax": true,
         "rewriteRelativeImportExtensions": true
     },
     "include": ["src/**/*.ts"]
