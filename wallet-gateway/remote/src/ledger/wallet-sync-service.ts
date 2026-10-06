@@ -4,6 +4,7 @@
 import {
     type LedgerClient,
     defaultRetryableOptions,
+    isJsCantonError,
 } from '@canton-network/core-ledger-client'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
@@ -257,6 +258,32 @@ export class WalletSyncService {
         }
     }
 
+    private async getUserAuthParty(network: {
+        auth: { method: string }
+    }): Promise<string | null> {
+        if (network.auth.method !== 'self_issued') return null
+
+        try {
+            const response = await this.ledgerClient.get(
+                '/v2/users/{user-id}',
+                {
+                    path: { 'user-id': this.authContext.userId },
+                }
+            )
+            // TODO should I check that user.identityProvider === ''?
+            const { primaryPartyAuthentication, primaryParty } = response.user
+            return primaryPartyAuthentication && primaryParty
+                ? primaryParty
+                : null
+        } catch (error) {
+            if (isJsCantonError(error) && error.code === 'USER_NOT_FOUND') {
+                return null
+            } else {
+                throw error
+            }
+        }
+    }
+
     async isWalletSyncNeeded(): Promise<boolean> {
         try {
             const network = await this.store.getCurrentNetwork()
@@ -305,10 +332,20 @@ export class WalletSyncService {
                     (right) => !nextUserRights.includes(right)
                 )
 
+            const authParty = await this.getUserAuthParty(network)
+            const hasAuthPartyFlagMismatch =
+                network.auth.method === 'self_issued' &&
+                existingWallets.some(
+                    (wallet) =>
+                        Boolean(wallet.isAuthParty) !==
+                        (wallet.partyId === authParty)
+                )
+
             return (
                 hasWalletsWithoutParty ||
                 hasChangedRights ||
-                hasChangedUserRights
+                hasChangedUserRights ||
+                hasAuthPartyFlagMismatch
             )
         } catch (err) {
             this.logger.error({ err }, 'Error checking if sync is needed')
@@ -587,7 +624,14 @@ export class WalletSyncService {
                 )
             }
 
+            // On self-issued auth networks set wallet.isAuthParty to true for a party that is in user.primaryParty, if every other setting of user enables primary party authentication
+            if (network.auth.method === 'self_issued') {
+                const authParty = await this.getUserAuthParty(network)
+                await this.store.setAuthPartyWallet(authParty ?? null)
+            }
+
             const newWallets = newParticipantWallets
+            // TODO more than one step may update a single wallet in db and returned entries for the sync report can various fields changed. Consider returning only party ids to get rid of complexity o determining which one is the current state of wallet.
             // This assures wallet is not returned twice in updated if it had both rights change and status or disabled change.
             // status/disabled updated wallets taking precedence over rights updated assure most recent wallet data in response.
             const nonRightsUpdatesPartyIds = new Set([

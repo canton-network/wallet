@@ -103,6 +103,7 @@ export async function assertSelfIssuedOnboardingAllowed(
         return
     }
     const primaryParty = user.primaryParty
+    // TODO should I check that user.identityProvider === ''?
     const hasAuthWallet =
         !!primaryParty &&
         !!user.primaryPartyAuthentication &&
