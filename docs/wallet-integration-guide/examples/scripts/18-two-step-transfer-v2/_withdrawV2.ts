@@ -2,7 +2,7 @@ import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { TransferTestScriptParameters } from './types.js'
 
 export default async (args: TransferTestScriptParameters) => {
-    const { sdk, sender, receiver, senderKeys, receiverKeys, logger } = args
+    const { sdk, sender, receiver, senderKeys, logger } = args
 
     const [transferCommand, transferDisclosedContracts] =
         await sdk.token.v2.transfer.create({
