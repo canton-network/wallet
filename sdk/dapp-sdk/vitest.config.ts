@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync } from 'node:fs'
-import { defineConfig, defineProject } from 'vitest/config'
-import { playwright } from '@vitest/browser-playwright'
+import { defineConfig } from 'vitest/config'
+import { browserProject, coverage } from '../../vitest.base.ts'
 
 const sdkVersion = JSON.parse(
     readFileSync(new URL('./package.json', import.meta.url), 'utf8')
@@ -15,50 +15,22 @@ export default defineConfig({
     },
     test: {
         globalSetup: ['./vitest.global-setup.ts'],
-        coverage: {
-            include: ['src/**/*.ts'],
+        coverage: coverage({
             exclude: [
                 'src/integration-test/**',
                 'src/dapp-api/rpc-gen/**',
                 'src/test-utils.ts',
             ],
-            provider: 'v8',
-            reporter: ['text', 'html', 'lcov', 'json-summary'],
-            thresholds: {
-                lines: 80,
-                functions: 80,
-                branches: 70,
-                statements: 80,
-            },
-        },
-        environment: 'node',
+        }),
         projects: [
-            defineProject({
-                test: {
-                    name: 'browser-unit',
-                    include: ['src/**/*.test.ts'],
-                    exclude: ['src/integration-test/*.test.ts'],
-                    browser: {
-                        enabled: true,
-                        provider: playwright(),
-                        trace: 'off',
-                        instances: [{ browser: 'chromium' }],
-                        headless: true,
-                    },
-                },
+            browserProject({
+                name: 'browser-unit',
+                exclude: ['src/integration-test/*.test.ts'],
             }),
-            defineProject({
-                test: {
-                    name: 'browser-integration',
-                    include: ['src/integration-test/*.test.ts'],
-                    browser: {
-                        enabled: true,
-                        provider: playwright(),
-                        trace: 'off',
-                        instances: [{ browser: 'chromium' }],
-                        headless: true,
-                    },
-                },
+            // run separately by `test:coverage` so integration tests don't count towards coverage
+            browserProject({
+                name: 'browser-integration',
+                include: ['src/integration-test/*.test.ts'],
             }),
         ],
     },
