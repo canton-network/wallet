@@ -277,6 +277,64 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(primary?.primary).toBe(true)
         })
 
+        test('should set the auth party for selected wallet and remove for others', async () => {
+            const createAuthWallet = (
+                partyId: string,
+                networkId: string,
+                isAuthParty = false
+            ): Wallet => ({
+                primary: false,
+                userId: authContextMock.userId,
+                partyId,
+                status: 'allocated',
+                hint: partyId,
+                signingProviderId: 'wallet-kernel',
+                publicKey: 'publicKey',
+                namespace: 'namespace',
+                networkId,
+                rights: [PartyLevelRight.CanActAs],
+                isAuthParty,
+            })
+            const network2: Network = { ...network, id: 'network2' }
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.addNetwork(network2)
+            await store.setSession({
+                id: 'sess-auth',
+                origin: 'dapp-1',
+                network: 'network1',
+                accessToken: 'test-access-token',
+            })
+            await store.addWallet(createAuthWallet('party1', 'network1', true))
+            await store.addWallet(createAuthWallet('party2', 'network1'))
+            await store.addWallet(createAuthWallet('party3', 'network2', true))
+
+            await store.setAuthPartyWallet('party2')
+
+            const wallets = await store.getWallets()
+            expect(
+                wallets.find((wallet) => wallet.partyId === 'party1')
+                    ?.isAuthParty
+            ).toBe(false)
+            expect(
+                wallets.find((wallet) => wallet.partyId === 'party2')
+                    ?.isAuthParty
+            ).toBe(true)
+            expect(
+                (await store.getAllWallets({ networkIds: ['network2'] })).find(
+                    (wallet) => wallet.partyId === 'party3'
+                )?.isAuthParty
+            ).toBe(true)
+
+            await store.setAuthPartyWallet(null)
+            expect(
+                (await store.getWallets()).every(
+                    (wallet) => !wallet.isAuthParty
+                )
+            ).toBe(true)
+        })
+
         test('should persist wallet rights and update rights-only changes', async () => {
             const wallet: Wallet = {
                 primary: false,

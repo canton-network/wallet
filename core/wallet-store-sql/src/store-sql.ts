@@ -221,6 +221,39 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         })
     }
 
+    async setAuthPartyWallet(partyId: PartyId | null): Promise<void> {
+        const network = await this.getCurrentNetwork()
+        const userId = this.assertConnected()
+
+        await this.db.transaction().execute(async (trx) => {
+            await trx
+                .updateTable('wallets')
+                .set({ isAuthParty: 0 })
+                .where((eb) =>
+                    eb.and([
+                        eb('networkId', '=', network.id),
+                        eb('userId', '=', userId),
+                        eb('isAuthParty', '=', 1),
+                    ])
+                )
+                .execute()
+
+            if (partyId === null) return
+
+            await trx
+                .updateTable('wallets')
+                .set({ isAuthParty: 1 })
+                .where((eb) =>
+                    eb.and([
+                        eb('partyId', '=', partyId),
+                        eb('networkId', '=', network.id),
+                        eb('userId', '=', userId),
+                    ])
+                )
+                .execute()
+        })
+    }
+
     async addWallet(wallet: Wallet): Promise<void> {
         this.logger.info('Adding wallet')
         const userId = this.assertConnected()
