@@ -19,7 +19,7 @@ export default defineConfig({
                 name: 'browser-unit',
                 exclude: ['src/integration-test/*.test.ts'],
             }),
-            // runs via the `test:integration` target so it doesn't count towards coverage
+            // run separately by `test:coverage` so integration tests don't count towards coverage
             browserProject({
                 name: 'browser-integration',
                 include: ['src/integration-test/*.test.ts'],
