@@ -71,6 +71,8 @@
         "@swc/helpers": "catalog:",
         "@types/node": "catalog:",
         "@typescript-eslint/parser": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "commitlint": "catalog:",
         "eslint": "catalog:",
         "eslint-plugin-headers": "catalog:",
@@ -93,7 +95,8 @@
         "tsx": "catalog:",
         "typescript": "catalog:",
         "typescript-eslint": "catalog:",
-        "vite": "catalog:"
+        "vite": "catalog:",
+        "vitest": "catalog:"
     },
     "lint-staged": {
         "*": "pnpm prettier --config .prettierrc --write --ignore-unknown",

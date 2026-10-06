@@ -237,7 +237,7 @@ curl -s -X POST "https://gateway.example.com/api/v0/dapp" \
     "params": {
       "commands": [{
         "CreateCommand": {
-          "templateId": "#AdminWorkflows:Canton.Internal.Ping:Ping",
+          "templateId": "#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping",
           "createArguments": {
             "id": "automation-ping-1",
             "initiator": "my-party::fingerprint",

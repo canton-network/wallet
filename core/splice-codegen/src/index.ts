@@ -3,5 +3,6 @@
 
 export { module as TestToken } from './test-token'
 export { module as OTCTrade } from './otc-trade'
+export { module as TestTokenV2 } from './test-token-v2'
 export type * from './test-token/types'
 export type * from './otc-trade/types'

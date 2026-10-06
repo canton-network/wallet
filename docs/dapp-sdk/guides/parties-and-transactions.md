@@ -88,7 +88,7 @@ await sdk.prepareExecute({
 
 > [!NOTE]
 > For a first end-to-end test you can use the built-in `Ping` template
-> (`#AdminWorkflows:Canton.Internal.Ping:Ping`) to prove the round-trip works. For a real
+> (`#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping`) to prove the round-trip works. For a real
 > dApp, submit commands from your own Daml package.
 
 ## Track a transaction
