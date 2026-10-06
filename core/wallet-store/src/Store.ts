@@ -165,6 +165,8 @@ export interface Store {
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>
+    /** Sets isAuthParty true for selected wallet and sets to false for others. Null sets to false for all wallets */
+    setAuthPartyWallet(partyId: PartyId | null): Promise<void>
     addWallet(wallet: Wallet): Promise<void>
     updateWallet(params: UpdateWallet): Promise<void>
     removeWallet(partyId: PartyId): Promise<void>

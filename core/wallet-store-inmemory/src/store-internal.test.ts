@@ -342,6 +342,49 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(primary?.primary).toBe(true)
         })
 
+        test('should set the auth party for selected wallet and remove for others', async () => {
+            await store.addIdp(oauthIdp())
+            await store.addNetwork(baseNetwork())
+            await store.addNetwork(baseNetwork('network2'))
+            await store.setSession({
+                id: 'sess-auth',
+                origin: 'dapp-1',
+                network: 'network1',
+                accessToken: 'test-access-token',
+            })
+            await store.addWallet(
+                baseWallet('party1', 'network1', { isAuthParty: true })
+            )
+            await store.addWallet(baseWallet('party2'))
+            await store.addWallet(
+                baseWallet('party3', 'network2', { isAuthParty: true })
+            )
+
+            await store.setAuthPartyWallet('party2')
+
+            const wallets = await store.getWallets()
+            expect(
+                wallets.find((wallet) => wallet.partyId === 'party1')
+                    ?.isAuthParty
+            ).toBe(false)
+            expect(
+                wallets.find((wallet) => wallet.partyId === 'party2')
+                    ?.isAuthParty
+            ).toBe(true)
+            expect(
+                (await store.getAllWallets({ networkIds: ['network2'] })).find(
+                    (wallet) => wallet.partyId === 'party3'
+                )?.isAuthParty
+            ).toBe(true)
+
+            await store.setAuthPartyWallet(null)
+            expect(
+                (await store.getWallets()).every(
+                    (wallet) => !wallet.isAuthParty
+                )
+            ).toBe(true)
+        })
+
         test('should set and get session', async () => {
             const session: Session = {
                 id: 'sess-123',

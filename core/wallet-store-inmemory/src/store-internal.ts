@@ -184,6 +184,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.updateStorage(storage)
     }
 
+    async setAuthPartyWallet(partyId: PartyId | null): Promise<void> {
+        const network = await this.getCurrentNetwork()
+        const storage = this.getStorage()
+        storage.wallets = storage.wallets.map((wallet) => {
+            if (wallet.networkId !== network.id) return wallet
+            return { ...wallet, isAuthParty: wallet.partyId === partyId }
+        })
+        this.updateStorage(storage)
+    }
+
     async addWallet(wallet: Wallet): Promise<void> {
         const storage = this.getStorage()
         if (
