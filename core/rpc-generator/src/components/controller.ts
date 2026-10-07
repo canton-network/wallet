@@ -52,17 +52,6 @@ const generatedTypingsTemplate = template(
 `
 )
 
-export const controllerTemplates = [
-    {
-        path: 'index.ts',
-        template: methodMappingTemplate,
-    },
-    {
-        path: 'typings.ts',
-        template: generatedTypingsTemplate,
-    },
-]
-
 const hooks: openrpcgen.components.IHooks = {
     beforeCompileTemplate: [validateOpenRpc],
     afterCompileTemplate: [
@@ -81,7 +70,16 @@ const hooks: openrpcgen.components.IHooks = {
         },
     ],
     templateFiles: {
-        typescript: controllerTemplates,
+        typescript: [
+            {
+                path: 'index.ts',
+                template: methodMappingTemplate,
+            },
+            {
+                path: 'typings.ts',
+                template: generatedTypingsTemplate,
+            },
+        ],
     },
 }
 

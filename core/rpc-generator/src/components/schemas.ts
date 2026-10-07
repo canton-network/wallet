@@ -1,9 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import * as path from 'path'
 import type { components } from '@open-rpc/generator'
+import { execSync } from 'child_process'
 import lodash from 'lodash'
-import controller, { controllerTemplates } from './controller.js'
+import { validateOpenRpc } from './validate-openrpc.js'
 const { template } = lodash
 
 // Unknown keys are still rejected unless null (e.g. fields the Scan app returns as null).
@@ -20,7 +22,6 @@ const allowNullExtras = (value: unknown): unknown => {
     )
 }
 
-// Controller that also emits zod param validators; the target package must depend on zod.
 // openrpcDocument still has cross-file $refs; methodTypings holds the dereferenced document.
 const paramSchemasTemplate = template(
     `// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
@@ -41,14 +42,28 @@ export const paramSchemas: Record<string, z.ZodType> = {
 )
 
 const hooks: components.IHooks = {
-    ...controller.hooks,
+    beforeCompileTemplate: [validateOpenRpc],
+    afterCompileTemplate: [
+        async (dest): Promise<void> => {
+            execSync(`pnpm eslint --fix ${dest}`)
+            execSync(
+                `pnpm prettier --write --no-error-on-unmatched-pattern ${dest}/**/*`
+            )
+        },
+    ],
     templateFiles: {
         typescript: [
-            ...controllerTemplates,
-            { path: 'schemas.ts', template: paramSchemasTemplate },
+            {
+                path: 'schemas.ts',
+                template: paramSchemasTemplate,
+            },
         ],
     },
 }
 
 // The generator CLI loads components via `(await import(path)).default`.
-export default { hooks, staticPath: controller.staticPath }
+export default {
+    hooks,
+    staticPath: () =>
+        path.join(import.meta.dirname, '../../templates/schemas/'),
+}
