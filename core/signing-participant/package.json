@@ -4,6 +4,7 @@
     "type": "module",
     "description": "Wallet Gateway driver for Canton participant internal parties",
     "license": "Apache-2.0",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/types/index.d.ts",

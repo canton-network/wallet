@@ -5,6 +5,7 @@
     "description": "RPC transport implementations",
     "license": "Apache-2.0",
     "author": "Digital Asset (Switzerland) GmbH and/or its affiliates",
+    "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",

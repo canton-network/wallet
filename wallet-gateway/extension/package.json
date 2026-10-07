@@ -27,6 +27,7 @@
         "@canton-network/core-tx-visualizer": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-wallet-services": "catalog:",
         "@canton-network/core-wallet-store": "catalog:",
         "@canton-network/core-wallet-store-inmemory": "catalog:",
         "@canton-network/core-wallet-ui-components": "catalog:",

@@ -5,6 +5,7 @@
     "description": "CLI and Playwright harness for the CIP-103 conformance dApp",
     "license": "Apache-2.0",
     "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "sideEffects": false,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "bin": {
