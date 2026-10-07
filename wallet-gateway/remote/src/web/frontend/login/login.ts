@@ -140,7 +140,7 @@ export class LoginUI extends BaseElement {
 
                 const userClient = await createUserClient()
                 const { sessionId } = await userClient.request({
-                    method: 'addSelfIssuedSession',
+                    method: 'startSelfIssuedLoginSession',
                     params: {
                         username: onboardingUsername,
                         networkId: selectedNetwork.id,

@@ -395,15 +395,15 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'listIdps',
             'getUser',
             'selfSignedAccessToken',
-            'addSelfIssuedSession',
+            'startSelfIssuedLoginSession',
         ],
     }
     const onboardingPaths = {
         [config.server.userPath]: [
-            'getSelfIssuedOnboarding',
+            'getSelfIssuedLoginMode',
             'createSelfIssuedWallet',
             'allocateSelfIssuedWallet',
-            'connectSelfIssuedSession',
+            'completeSelfIssuedLogin',
         ],
     }
 

@@ -399,22 +399,10 @@ export interface Wallet {
 }
 /**
  *
- * Whether a ledger user with this id already exists.
+ * create when there is no ledger user yet. select when the user already authenticates with a primary party.
  *
  */
-export type UserExists = boolean
-/**
- *
- * Whether the ledger user already has a primary party and primary party authentication set.
- *
- */
-export type PrimaryPartyAuth = boolean
-/**
- *
- * Wallets stored for the user on the selected network that can be used for authentication.
- *
- */
-export type AuthPartyWallets = Wallet[]
+export type SelfIssuedLoginMode = 'create' | 'select'
 type AlwaysTrue = any
 /**
  *
@@ -654,12 +642,12 @@ export interface CreateWalletParams {
     signingProviderId: SigningProviderId
     keyName?: KeyName
 }
-export interface AddSelfIssuedSessionParams {
+export interface StartSelfIssuedLoginSessionParams {
     username: Username
     networkId: NetworkId
     origin: Origin
 }
-export interface GetSelfIssuedOnboardingParams {
+export interface GetSelfIssuedLoginModeParams {
     sessionId: SessionId
 }
 export interface CreateSelfIssuedWalletParams {
@@ -671,7 +659,7 @@ export interface AllocateSelfIssuedWalletParams {
     sessionId: SessionId
     partyId: PartyId
 }
-export interface ConnectSelfIssuedSessionParams {
+export interface CompleteSelfIssuedLoginParams {
     sessionId: SessionId
     partyId: PartyId
 }
@@ -755,13 +743,12 @@ export interface ListIdpsResult {
 export interface CreateWalletResult {
     wallet: Wallet
 }
-export interface AddSelfIssuedSessionResult {
+export interface StartSelfIssuedLoginSessionResult {
     sessionId: SessionId
 }
-export interface GetSelfIssuedOnboardingResult {
-    userExists: UserExists
-    primaryPartyAuth: PrimaryPartyAuth
-    wallets: AuthPartyWallets
+export interface GetSelfIssuedLoginModeResult {
+    mode: SelfIssuedLoginMode
+    wallet?: Wallet
 }
 export interface CreateSelfIssuedWalletResult {
     wallet: Wallet
@@ -769,7 +756,7 @@ export interface CreateSelfIssuedWalletResult {
 export interface AllocateSelfIssuedWalletResult {
     wallet: Wallet
 }
-export interface ConnectSelfIssuedSessionResult {
+export interface CompleteSelfIssuedLoginResult {
     wallet: Wallet
     accessToken: AccessToken
     sessionId: SessionId
@@ -889,21 +876,21 @@ export type ListIdps = () => Promise<ListIdpsResult>
 export type CreateWallet = (
     params: CreateWalletParams
 ) => Promise<CreateWalletResult>
-export type AddSelfIssuedSession = (
-    params: AddSelfIssuedSessionParams
-) => Promise<AddSelfIssuedSessionResult>
-export type GetSelfIssuedOnboarding = (
-    params: GetSelfIssuedOnboardingParams
-) => Promise<GetSelfIssuedOnboardingResult>
+export type StartSelfIssuedLoginSession = (
+    params: StartSelfIssuedLoginSessionParams
+) => Promise<StartSelfIssuedLoginSessionResult>
+export type GetSelfIssuedLoginMode = (
+    params: GetSelfIssuedLoginModeParams
+) => Promise<GetSelfIssuedLoginModeResult>
 export type CreateSelfIssuedWallet = (
     params: CreateSelfIssuedWalletParams
 ) => Promise<CreateSelfIssuedWalletResult>
 export type AllocateSelfIssuedWallet = (
     params: AllocateSelfIssuedWalletParams
 ) => Promise<AllocateSelfIssuedWalletResult>
-export type ConnectSelfIssuedSession = (
-    params: ConnectSelfIssuedSessionParams
-) => Promise<ConnectSelfIssuedSessionResult>
+export type CompleteSelfIssuedLogin = (
+    params: CompleteSelfIssuedLoginParams
+) => Promise<CompleteSelfIssuedLoginResult>
 export type AllocatePartyForWallet = (
     params: AllocatePartyForWalletParams
 ) => Promise<AllocatePartyForWalletResult>

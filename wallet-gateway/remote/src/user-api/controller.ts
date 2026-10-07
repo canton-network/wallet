@@ -25,11 +25,11 @@ import type {
     AddIdpParams,
     RemoveIdpParams,
     CreateWalletParams,
-    AddSelfIssuedSessionParams,
-    GetSelfIssuedOnboardingParams,
+    StartSelfIssuedLoginSessionParams,
+    GetSelfIssuedLoginModeParams,
     CreateSelfIssuedWalletParams,
     AllocateSelfIssuedWalletParams,
-    ConnectSelfIssuedSessionParams,
+    CompleteSelfIssuedLoginParams,
     AllocatePartyForWalletParams,
     GetTransactionResult,
     GetTransactionParams,
@@ -77,9 +77,9 @@ import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allo
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import { v4 } from 'uuid'
 import {
-    assertSelfIssuedOnboardingAllowed,
+    assertLoginAllowed,
     createSelfIssuedAuthService,
-    type SelfIssuedOnboardingSession,
+    type SelfIssuedLoginSession,
 } from '../ledger/self-issued-auth-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
@@ -130,7 +130,7 @@ export const userController = (
         }
     }
 
-    function requireOnboardingSession(): SelfIssuedOnboardingSession {
+    function requireOnboardingSession(): SelfIssuedLoginSession {
         if (!authContext || authContext.isApiKey || !authContext.sessionId) {
             throw new Error('No onboarding session found')
         }
@@ -483,7 +483,9 @@ export const userController = (
             )
             return { wallet: walletWithUpdatedRights ?? wallet }
         },
-        addSelfIssuedSession: async (params: AddSelfIssuedSessionParams) => {
+        startSelfIssuedLoginSession: async (
+            params: StartSelfIssuedLoginSessionParams
+        ) => {
             const username = params.username.trim()
             if (!username) {
                 throw new Error('username is required')
@@ -500,12 +502,7 @@ export const userController = (
                 userId: username,
                 accessToken: '',
             })
-            await assertSelfIssuedOnboardingAllowed(
-                authAwareStore,
-                network,
-                username,
-                logger
-            )
+            await assertLoginAllowed(authAwareStore, network, username, logger)
             const sessionId = v4()
             await onboardingStore.setSession({
                 id: sessionId,
@@ -515,8 +512,8 @@ export const userController = (
 
             return { sessionId }
         },
-        getSelfIssuedOnboarding: async (
-            _params: GetSelfIssuedOnboardingParams
+        getSelfIssuedLoginMode: async (
+            _params: GetSelfIssuedLoginModeParams
         ) => {
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
@@ -524,7 +521,7 @@ export const userController = (
                 drivers,
                 logger
             )
-            return service.getOnboardingState()
+            return service.getLoginMode()
         },
         createSelfIssuedWallet: async (
             params: CreateSelfIssuedWalletParams
@@ -557,13 +554,11 @@ export const userController = (
                 drivers,
                 logger
             )
-            const allocated = await service.allocateParty({
-                partyId: params.partyId,
-            })
+            const allocated = await service.allocateParty(params.partyId)
             return { wallet: allocated }
         },
-        connectSelfIssuedSession: async (
-            params: ConnectSelfIssuedSessionParams
+        completeSelfIssuedLogin: async (
+            params: CompleteSelfIssuedLoginParams
         ) => {
             const onboardingSession = requireOnboardingSession()
             const service = await createSelfIssuedAuthService(
@@ -573,9 +568,7 @@ export const userController = (
                 logger
             )
             const { wallet, accessToken, session } =
-                await service.connectSession({
-                    partyId: params.partyId,
-                })
+                await service.completeLogin(params.partyId)
             const connectedContext = {
                 userId: onboardingSession.userId,
                 accessToken,
