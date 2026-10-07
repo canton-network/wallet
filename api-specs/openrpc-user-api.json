@@ -360,7 +360,7 @@
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by startSelfIssuedLoginSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             }
                         },
                         "required": ["sessionId"]
@@ -403,7 +403,7 @@
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by startSelfIssuedLoginSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             },
                             "partyHint": {
                                 "title": "partyHint",
@@ -454,7 +454,7 @@
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by startSelfIssuedLoginSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             },
                             "partyId": {
                                 "title": "partyId",
@@ -496,7 +496,7 @@
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by startSelfIssuedLoginSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             },
                             "partyId": {
                                 "title": "partyId",
@@ -534,6 +534,34 @@
                 }
             },
             "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the onboarding session with it."
+        },
+        {
+            "name": "removeSelfIssuedLoginSession",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "RemoveSelfIssuedLoginSessionParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
+                            }
+                        },
+                        "required": ["sessionId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/Null"
+                }
+            },
+            "description": "Deletes the tokenless self-issued login session. A session that already has an access token is left in place."
         },
         {
             "name": "allocatePartyForWallet",

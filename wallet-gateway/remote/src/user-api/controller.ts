@@ -30,6 +30,7 @@ import type {
     CreateSelfIssuedWalletParams,
     AllocateSelfIssuedWalletParams,
     CompleteSelfIssuedLoginParams,
+    RemoveSelfIssuedLoginSessionParams,
     AllocatePartyForWalletParams,
     GetTransactionResult,
     GetTransactionParams,
@@ -590,6 +591,19 @@ export const userController = (
                 ledgerClient
             )
             return { wallet, accessToken, sessionId: session.id }
+        },
+        removeSelfIssuedLoginSession: async (
+            _params: RemoveSelfIssuedLoginSessionParams
+        ): Promise<Null> => {
+            const session = requireOnboardingSession()
+            await authAwareStore
+                .withAuthContext({
+                    userId: session.userId,
+                    accessToken: '',
+                    sessionId: session.sessionId,
+                })
+                .removeSelfIssuedLoginSession(session.sessionId)
+            return null
         },
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams

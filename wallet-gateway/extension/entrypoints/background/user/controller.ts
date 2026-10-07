@@ -205,6 +205,11 @@ export const userController = (
         completeSelfIssuedLogin: async () => {
             throw new Error('Function completeSelfIssuedLogin not implemented.')
         },
+        removeSelfIssuedLoginSession: async () => {
+            throw new Error(
+                'Function removeSelfIssuedLoginSession not implemented.'
+            )
+        },
         allocatePartyForWallet: async () => {
             throw new Error('Function allocatePartyForWallet not implemented.')
         },

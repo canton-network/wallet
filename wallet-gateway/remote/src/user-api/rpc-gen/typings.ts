@@ -663,6 +663,9 @@ export interface CompleteSelfIssuedLoginParams {
     sessionId: SessionId
     partyId: PartyId
 }
+export interface RemoveSelfIssuedLoginSessionParams {
+    sessionId: SessionId
+}
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
 }
@@ -891,6 +894,9 @@ export type AllocateSelfIssuedWallet = (
 export type CompleteSelfIssuedLogin = (
     params: CompleteSelfIssuedLoginParams
 ) => Promise<CompleteSelfIssuedLoginResult>
+export type RemoveSelfIssuedLoginSession = (
+    params: RemoveSelfIssuedLoginSessionParams
+) => Promise<Null>
 export type AllocatePartyForWallet = (
     params: AllocatePartyForWalletParams
 ) => Promise<AllocatePartyForWalletResult>

@@ -5,7 +5,9 @@ import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
+    chevronLeftIcon,
     handleErrorToast,
+    toRelHref,
     WalletCardSelectEvent,
     type WalletCreateEvent,
 } from '@canton-network/core-wallet-ui-components'
@@ -16,6 +18,8 @@ import { showToast } from '../utils.js'
 import { stateManager } from '../state-manager.js'
 import { detectCurrentOrigin } from '../listeners.js'
 import { redirectToIntendedOrDefault, shareUserSession } from '../index.js'
+import { LOGIN_PAGE_REDIRECT } from '../constants.js'
+import { setLocationHref } from '../navigation.js'
 
 import '@canton-network/core-wallet-ui-components'
 
@@ -51,14 +55,11 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
             }
 
-            .description,
-            .status-message {
-                color: var(--wg-text-secondary);
-            }
-
-            .status-actions {
+            .page-header {
                 display: flex;
-                flex-direction: column;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: var(--wg-space-4);
                 gap: var(--wg-space-3);
             }
         `,
@@ -214,20 +215,62 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         void this.connectSession(event.wallet)
     }
 
+    private async goBack(): Promise<void> {
+        if (this.submitting) {
+            return
+        }
+
+        this.submitting = true
+        try {
+            if (this.sessionId) {
+                const client = await createUserClient()
+                await client.request({
+                    method: 'removeSelfIssuedLoginSession',
+                    params: { sessionId: this.sessionId },
+                })
+                if (this.origin) {
+                    stateManager.onboardingSessionId.clear(this.origin)
+                }
+            }
+            setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
+        } catch (error) {
+            handleErrorToast(error)
+        } finally {
+            this.submitting = false
+        }
+    }
+
     protected render() {
         const missingConfiguration = !this.sessionId
         const selectingExistingParty = this.authWallets.length > 0
 
         return html`
             <section class="onboarding-card">
-                <h1 class="h4 fw-semibold mb-2">
+                <div class="page-header">
+                    <h1 class="h4 fw-semibold mb-0">
+                        ${
+                            selectingExistingParty
+                                ? 'Select authentication party'
+                                : 'Create authentication party'
+                        }
+                    </h1>
                     ${
-                        selectingExistingParty
-                            ? 'Connect authentication party'
-                            : 'Create authentication party'
+                        this.sessionLoaded
+                            ? html`
+                                  <button
+                                      class="btn btn-link btn-sm text-body text-decoration-none p-0 d-inline-flex align-items-center gap-1"
+                                      type="button"
+                                      ?disabled=${this.submitting}
+                                      @click=${this.goBack}
+                                  >
+                                      ${chevronLeftIcon}
+                                      <span>Back</span>
+                                  </button>
+                              `
+                            : nothing
                     }
-                </h1>
-                <p class="description mb-4">
+                </div>
+                <p class="text-body-secondary mb-4">
                     ${
                         selectingExistingParty
                             ? 'Choose the party that authenticates this account.'
@@ -259,7 +302,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                     this.onboardingReady &&
                     selectingExistingParty
                         ? html`
-                              <div class="status-actions">
+                              <div class="d-flex flex-column gap-3">
                                   ${this.authWallets.map(
                                       (wallet) => html`
                                           <wg-wallet-card
@@ -282,8 +325,8 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                     this.wallet &&
                     !selectingExistingParty
                         ? html`
-                              <div class="status-actions">
-                                  <p class="status-message mb-0">
+                              <div class="d-flex flex-column gap-3">
+                                  <p class="text-body-secondary mb-0">
                                       The party is waiting for signing-provider
                                       approval.
                                   </p>

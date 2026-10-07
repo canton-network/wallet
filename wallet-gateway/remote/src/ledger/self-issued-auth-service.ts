@@ -225,7 +225,7 @@ export class SelfIssuedAuthService {
             ? this.requireExistingAuthParty(wallet, existingUser?.primaryParty)
             : await this.setUserAuthParty(username, wallet)
         const accessToken = await this.mintAccessToken(authPartyWallet)
-        const session = await this.store.upgradeOnboardingSession(
+        const session = await this.store.upgradeSelfIssuedLoginSession(
             this.session.sessionId,
             accessToken
         )

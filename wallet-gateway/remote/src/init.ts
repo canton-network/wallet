@@ -404,6 +404,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'createSelfIssuedWallet',
             'allocateSelfIssuedWallet',
             'completeSelfIssuedLogin',
+            'removeSelfIssuedLoginSession',
         ],
     }
 

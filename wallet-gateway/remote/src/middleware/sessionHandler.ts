@@ -52,7 +52,7 @@ export function sessionHandler(
             const sessionId = req.body.params?.sessionId
             const session =
                 typeof sessionId === 'string' && sessionId
-                    ? await store.getOnboardingSession(sessionId)
+                    ? await store.getSelfIssuedLoginSession(sessionId)
                     : undefined
             if (!session?.userId) {
                 logger.debug('No onboarding session found')
