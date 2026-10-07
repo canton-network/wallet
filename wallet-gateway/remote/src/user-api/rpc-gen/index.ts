@@ -15,6 +15,7 @@ import type { GetSelfIssuedLoginMode } from './typings.js'
 import type { CreateSelfIssuedWallet } from './typings.js'
 import type { AllocateSelfIssuedWallet } from './typings.js'
 import type { CompleteSelfIssuedLogin } from './typings.js'
+import type { RemoveSelfIssuedLoginSession } from './typings.js'
 import type { AllocatePartyForWallet } from './typings.js'
 import type { SetPrimaryWallet } from './typings.js'
 import type { RemoveWallet } from './typings.js'
@@ -57,6 +58,7 @@ export type Methods = {
     createSelfIssuedWallet: CreateSelfIssuedWallet
     allocateSelfIssuedWallet: AllocateSelfIssuedWallet
     completeSelfIssuedLogin: CompleteSelfIssuedLogin
+    removeSelfIssuedLoginSession: RemoveSelfIssuedLoginSession
     allocatePartyForWallet: AllocatePartyForWallet
     setPrimaryWallet: SetPrimaryWallet
     removeWallet: RemoveWallet
@@ -101,6 +103,7 @@ function buildController(methods: Methods) {
         createSelfIssuedWallet: methods.createSelfIssuedWallet,
         allocateSelfIssuedWallet: methods.allocateSelfIssuedWallet,
         completeSelfIssuedLogin: methods.completeSelfIssuedLogin,
+        removeSelfIssuedLoginSession: methods.removeSelfIssuedLoginSession,
         allocatePartyForWallet: methods.allocatePartyForWallet,
         setPrimaryWallet: methods.setPrimaryWallet,
         removeWallet: methods.removeWallet,

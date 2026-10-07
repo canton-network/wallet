@@ -274,7 +274,7 @@ export class WalletGateway {
             const popup = await this.page()
             await expect(
                 popup.getByRole('heading', {
-                    name: 'Connect authentication party',
+                    name: 'Select authentication party',
                 }),
                 'an existing self-issued user should choose a stored authentication party'
             ).toBeVisible()
