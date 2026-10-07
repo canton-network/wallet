@@ -61,14 +61,5 @@
         "tweetnacl": "catalog:",
         "tweetnacl-util": "catalog:",
         "uuid": "^14.0.1"
-    },
-    "nx": {
-        "targets": {
-            "snippets": {
-                "dependsOn": [
-                    "^build"
-                ]
-            }
-        }
     }
 }

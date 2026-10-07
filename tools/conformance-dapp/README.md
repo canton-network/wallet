@@ -23,7 +23,7 @@ changing the UI.
 ```sh
 pnpm exec nx run @canton-network/tool-conformance-dapp:build
 pnpm --filter @canton-network/tool-conformance-dapp dev
-pnpm --filter @canton-network/tool-conformance-dapp test
+pnpm nx test @canton-network/tool-conformance-dapp
 ```
 
 Browser and CLI integration tests live in

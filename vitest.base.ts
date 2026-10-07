@@ -3,6 +3,7 @@
 
 import { playwright } from '@vitest/browser-playwright'
 import {
+    configDefaults,
     defineProject,
     type TestProjectInlineConfiguration,
     type TestUserConfig,
@@ -26,8 +27,7 @@ const defaultThresholds: Thresholds = {
 
 export interface CoverageOverrides {
     exclude?: string[]
-    /** `false` reports coverage without enforcing any thresholds */
-    thresholds?: Partial<Thresholds> | false
+    thresholds?: Partial<Thresholds>
 }
 
 export function coverage(overrides: CoverageOverrides = {}): CoverageConfig {
@@ -37,28 +37,43 @@ export function coverage(overrides: CoverageOverrides = {}): CoverageConfig {
         include: ['src/**/*.ts'],
         ...(exclude && { exclude }),
         reporter: ['text', 'html', 'lcov', 'json-summary'],
-        ...(thresholds !== false && {
-            thresholds: { ...defaultThresholds, ...thresholds },
-        }),
+        // @nx/vitest infers the cached test outputs from this
+        reportsDirectory: './coverage',
+        thresholds: { ...defaultThresholds, ...thresholds },
     }
 }
 
-export function nodeProject(test: ProjectTestConfig = {}) {
+/** Runs `*.test.ts` and `*.node.test.ts`, skips `*.browser.test.ts` */
+export function nodeProject({ exclude = [], ...test }: ProjectTestConfig = {}) {
     return defineProject({
         test: {
             name: 'node',
             environment: 'node',
             include: ['src/**/*.test.ts'],
+            exclude: [
+                ...configDefaults.exclude,
+                '**/*.browser.test.ts',
+                ...exclude,
+            ],
             ...test,
         },
     })
 }
 
-export function browserProject(test: ProjectTestConfig = {}) {
+/** Runs `*.test.ts` and `*.browser.test.ts`, skips `*.node.test.ts` */
+export function browserProject({
+    exclude = [],
+    ...test
+}: ProjectTestConfig = {}) {
     return defineProject({
         test: {
             name: 'browser',
             include: ['src/**/*.test.ts'],
+            exclude: [
+                ...configDefaults.exclude,
+                '**/*.node.test.ts',
+                ...exclude,
+            ],
             browser: {
                 enabled: true,
                 provider: playwright(),
