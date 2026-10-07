@@ -114,8 +114,11 @@ export class SelfIssuedAuthService {
 
     async getLoginMode(): Promise<GetSelfIssuedLoginModeResult> {
         const user = await this.getExistingUser()
-        if (!canUserUseSelfIssuedAuth(user)) {
+        if (!user) {
             return { mode: 'create' }
+        }
+        if (!canUserUseSelfIssuedAuth(user)) {
+            throw new Error(SELF_ISSUED_LOGIN_UNAVAILABLE)
         }
         const wallet = await this.syncAuthParty(user.primaryParty)
         if (
