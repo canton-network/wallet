@@ -241,11 +241,91 @@ export class UserUiSelfIssuedLogin extends BaseElement {
         }
     }
 
+    private renderAlert(message: string) {
+        return html`
+            <div class="alert alert-danger mb-0" role="alert">${message}</div>
+        `
+    }
+
+    private renderPartySelect() {
+        return html`
+            <div class="d-flex flex-column gap-3">
+                ${this.authWallets.map(
+                    (wallet) => html`
+                        <wg-wallet-card
+                            .wallet=${wallet}
+                            .selectLabel=${'Select'}
+                            ?loading=${this.submitting}
+                            @wallet-select=${this.selectAuthParty}
+                        ></wg-wallet-card>
+                    `
+                )}
+            </div>
+        `
+    }
+
+    private renderPendingApproval() {
+        const wallet = this.wallet
+        if (!wallet) return nothing
+
+        return html`
+            <div class="d-flex flex-column gap-3">
+                <p class="text-body-secondary mb-0">
+                    The party is waiting for signing-provider approval.
+                </p>
+                <button
+                    class="btn btn-primary rounded-pill w-100"
+                    type="button"
+                    ?disabled=${this.submitting}
+                    @click=${() => this.allocateParty(wallet)}
+                >
+                    ${
+                        this.submitting
+                            ? 'Checking approval...'
+                            : 'Complete onboarding'
+                    }
+                </button>
+            </div>
+        `
+    }
+
+    private renderCreateForm() {
+        return html`
+            <wg-wallet-create-form
+                .signingProviders=${this.signingProviders}
+                .showPrimary=${false}
+                .submitLabel=${'Create party'}
+                ?submitting=${this.submitting}
+                @wallet-create=${this.createWallet}
+            ></wg-wallet-create-form>
+        `
+    }
+
+    private renderBody() {
+        if (!this.sessionLoaded) return nothing
+        if (!this.sessionId) {
+            return this.renderAlert(
+                'No self-issued login session found. Start from the login page.'
+            )
+        }
+        if (this.onboardingError) return this.renderAlert(this.onboardingError)
+        if (!this.onboardingReady) return nothing
+
+        if (this.loginMode === 'select') {
+            return this.authWallets.length === 0
+                ? this.renderAlert(
+                      'No wallet was found for the authentication party.'
+                  )
+                : this.renderPartySelect()
+        }
+
+        return this.wallet
+            ? this.renderPendingApproval()
+            : this.renderCreateForm()
+    }
+
     protected render() {
-        const missingConfiguration = !this.sessionId
         const selectingExistingParty = this.loginMode === 'select'
-        const authPartyMissing =
-            selectingExistingParty && this.authWallets.length === 0
 
         return html`
             <section class="onboarding-card">
@@ -280,106 +360,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                             : 'Create the party that will authenticate your wallet gateway account.'
                     }
                 </p>
-                <!-- TODO simplify those conditional renders -->
-                ${
-                    this.sessionLoaded && missingConfiguration
-                        ? html`
-                              <div class="alert alert-danger mb-0" role="alert">
-                                  No self-issued login session found. Start from
-                                  the login page.
-                              </div>
-                          `
-                        : nothing
-                }
-                ${
-                    !missingConfiguration && this.onboardingError
-                        ? html`
-                              <div class="alert alert-danger mb-0" role="alert">
-                                  ${this.onboardingError}
-                              </div>
-                          `
-                        : nothing
-                }
-                ${
-                    !missingConfiguration &&
-                    this.onboardingReady &&
-                    authPartyMissing
-                        ? html`
-                              <div class="alert alert-danger mb-0" role="alert">
-                                  No wallet was found for the authentication
-                                  party.
-                              </div>
-                          `
-                        : nothing
-                }
-                ${
-                    !missingConfiguration &&
-                    this.onboardingReady &&
-                    selectingExistingParty &&
-                    !authPartyMissing
-                        ? html`
-                              <div class="d-flex flex-column gap-3">
-                                  ${this.authWallets.map(
-                                      (wallet) => html`
-                                          <wg-wallet-card
-                                              .wallet=${wallet}
-                                              .selectLabel=${'Select'}
-                                              ?loading=${this.submitting}
-                                              @wallet-select=${
-                                                  this.selectAuthParty
-                                              }
-                                          ></wg-wallet-card>
-                                      `
-                                  )}
-                              </div>
-                          `
-                        : nothing
-                }
-                ${
-                    !missingConfiguration &&
-                    this.onboardingReady &&
-                    this.wallet &&
-                    !selectingExistingParty
-                        ? html`
-                              <div class="d-flex flex-column gap-3">
-                                  <p class="text-body-secondary mb-0">
-                                      The party is waiting for signing-provider
-                                      approval.
-                                  </p>
-                                  <button
-                                      class="btn btn-primary rounded-pill w-100"
-                                      type="button"
-                                      ?disabled=${this.submitting}
-                                      @click=${() =>
-                                          this.wallet &&
-                                          this.allocateParty(this.wallet)}
-                                  >
-                                      ${
-                                          this.submitting
-                                              ? 'Checking approval...'
-                                              : 'Complete onboarding'
-                                      }
-                                  </button>
-                              </div>
-                          `
-                        : nothing
-                }
-                ${
-                    !missingConfiguration &&
-                    this.onboardingReady &&
-                    !this.wallet &&
-                    !selectingExistingParty
-                        ? html`
-                              <wg-wallet-create-form
-                                  .signingProviders=${this.signingProviders}
-                                  .showPrimary=${false}
-                                  .submitLabel=${'Create party'}
-                                  ?submitting=${this.submitting}
-                                  @wallet-create=${this.createWallet}
-                              ></wg-wallet-create-form>
-                          `
-                        : nothing
-                }
+                ${this.renderBody()}
             </section>
         `
     }
