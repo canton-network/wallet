@@ -2911,6 +2911,9 @@ importers:
       '@canton-network/core-token-standard':
         specifier: 'catalog:'
         version: link:../../../core/token-standard
+      '@canton-network/core-token-standard-v2':
+        specifier: 'catalog:'
+        version: link:../../../core/token-standard-v2
       '@canton-network/core-tx-parser':
         specifier: 'catalog:'
         version: link:../../../core/tx-parser

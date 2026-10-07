@@ -11,6 +11,74 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
 } from './utils/index.js'
+import { PartyId } from '@canton-network/core-types'
+import { Account } from '@canton-network/core-token-standard-v2'
+
+function toBasicAccount(partyId: PartyId): Account {
+    return {
+        owner: partyId,
+        provider: null,
+        id: '',
+    }
+}
+
+function makeTransferLeg(
+    legId: string,
+    // side: 'ReceiverSide' | 'SenderSide',
+    sender: PartyId,
+    receiver: PartyId,
+    amount: number,
+    instrumentId: string
+) {
+    return {
+        tranderLegId: legId,
+        sender: toBasicAccount(sender),
+        receiver: toBasicAccount(receiver),
+        amount: amount,
+        instrumentId: instrumentId,
+        meta: { values: {} },
+    }
+}
+
+function makeTestTrade(
+    dso: PartyId,
+    venue: PartyId,
+    alice: PartyId,
+    aliceTransferAmount: number,
+    bob: PartyId,
+    bobTransferAmount: number,
+    instrumentId: string
+) {
+    const aliceTransferLeg = makeTransferLeg(
+        'leg0',
+        bob,
+        alice,
+        aliceTransferAmount,
+        instrumentId
+    )
+    const bobTransferLeg = makeTransferLeg(
+        'leg1',
+        bob,
+        alice,
+        bobTransferAmount,
+        instrumentId
+    )
+    const aliceleg = {
+        dso,
+        aliceTransferLeg,
+    }
+
+    const bobLeg = {
+        dso,
+        bobTransferLeg,
+    }
+    return {
+        venue,
+        tradeLegs: [aliceleg, bobLeg],
+        createdAt: new Date().toISOString(),
+        settleAt: new Date().toISOString(), //TODO: change to + 1 hr or something
+    }
+}
 
 const logger = pino({ name: 'v1-token-standard-allocation', level: 'info' })
 
@@ -27,7 +95,7 @@ const sdk = await SDK.create({
     asset: ASSET_CONFIG,
 })
 
-// This example needs uploaded .dar for splice-token-test-trading-app
+// This example needs uploaded .dar for splice-token-test-trading-app-v2
 // It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script
 // Adjust if to your .localnet location
 const PATH_TO_LOCALNET = '../../../../.localnet'
@@ -74,9 +142,9 @@ const allocatedParties = await Promise.all(
 
 const partyInfo: Map<string, PartyInfo> = new Map(allocatedParties)
 
-const sender = partyInfo.get('v1-04-alice')!
-const recipient = partyInfo.get('v1-04-bob')!
-const venue = partyInfo.get('v1-04-venue')!
+const sender = partyInfo.get('v1-19-alice')!
+const recipient = partyInfo.get('v1-19-bob')!
+const venue = partyInfo.get('v1-19-venue')!
 
 // Mint holdings for alice
 
@@ -110,10 +178,60 @@ await sdk.ledger
 
 //Alice creates OTCTradeProposal
 
-// const amuletAsset = await sdk.asset.find(
-//     'Amulet',
-//     localNetStaticConfig.LOCALNET_REGISTRY_API_URL
-// )
+const amuletAsset = await sdk.asset.find(
+    'Amulet',
+    localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+)
+
+const settlement = {
+    exectors: [sender.partyId],
+    id: 'test-id',
+    cid: '', // optional contract id
+    meta: { values: {} },
+}
+
+/**
+ * const transferLegs = {
+    leg0: {
+        sender: sender.partyId,
+        receiver: recipient.partyId,
+        amount: '100',
+        instrumentId: { admin: amuletAsset.admin, id: 'Amulet' },
+        meta: { values: {} },
+    },
+    leg1: {
+        sender: recipient.partyId,
+        receiver: sender.partyId,
+        amount: '20',
+        instrumentId: { admin: amuletAsset.admin, id: 'Amulet' },
+        meta: { values: {} },
+    },
+}
+
+ */
+
+const allocationSpecification1 = {
+    admin: sender.partyId,
+    authorizer: toBasicAccount(sender.partyId),
+    transferLegSides: '',
+    settlementDeadline: '',
+    nextIterationFunding: '',
+    commited: true,
+    meta: { values: {} },
+}
+
+const createProposal = {
+    CreateCommand: {
+        templateId:
+            '#splice-token-test-trading-app-v2:Splice.Testing.Apps.TradingAppV2:OTCTradeAllocationRequest',
+        createArguments: {
+            settlement: settlement,
+            requestedAt: '', //iso date string,
+            settleAt: '', //iso date string?
+            allocations: [allocationSpecification1],
+        },
+    },
+}
 
 // const transferLegs = {
 //     leg0: {
