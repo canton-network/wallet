@@ -10,7 +10,8 @@
         "emitDecoratorMetadata": true,
         "useDefineForClassFields": false,
         "module": "esnext",
-        "moduleResolution": "bundler"
+        "moduleResolution": "bundler",
+        "types": ["bootstrap", "fs-extra"]
     },
     "include": ["src"],
     "exclude": ["**/*.stories.ts", "**/*.stories.js"]
