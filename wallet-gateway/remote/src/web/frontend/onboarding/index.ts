@@ -29,6 +29,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     @state() private accessor submitting = false
     @state() private accessor wallet: Wallet | undefined
     @state() private accessor authWallets: Wallet[] = []
+    @state() private accessor loginMode: 'create' | 'select' | undefined
     @state() private accessor onboardingReady = false
     @state() private accessor onboardingError: string | undefined
     @state() private accessor sessionLoaded = false
@@ -80,6 +81,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 method: 'getSelfIssuedLoginMode',
                 params: { sessionId: this.sessionId },
             })
+            this.loginMode = state.mode
             if (state.mode === 'select' && state.wallet) {
                 this.authWallets = [state.wallet]
             }
@@ -242,7 +244,9 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
 
     protected render() {
         const missingConfiguration = !this.sessionId
-        const selectingExistingParty = this.authWallets.length > 0
+        const selectingExistingParty = this.loginMode === 'select'
+        const authPartyMissing =
+            selectingExistingParty && this.authWallets.length === 0
 
         return html`
             <section class="onboarding-card">
@@ -277,7 +281,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                             : 'Create the party that will authenticate your wallet gateway account.'
                     }
                 </p>
-
+                <!-- TODO simplify those conditional renders -->
                 ${
                     this.sessionLoaded && missingConfiguration
                         ? html`
@@ -300,7 +304,20 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
                 ${
                     !missingConfiguration &&
                     this.onboardingReady &&
-                    selectingExistingParty
+                    authPartyMissing
+                        ? html`
+                              <div class="alert alert-danger mb-0" role="alert">
+                                  No wallet was found for the authentication
+                                  party.
+                              </div>
+                          `
+                        : nothing
+                }
+                ${
+                    !missingConfiguration &&
+                    this.onboardingReady &&
+                    selectingExistingParty &&
+                    !authPartyMissing
                         ? html`
                               <div class="d-flex flex-column gap-3">
                                   ${this.authWallets.map(
