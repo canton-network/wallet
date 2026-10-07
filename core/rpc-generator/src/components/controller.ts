@@ -6,7 +6,7 @@ import type * as openrpcgen from '@open-rpc/generator'
 import * as fs from 'fs'
 import lodash from 'lodash'
 import { execSync } from 'child_process'
-import { assertSingleParam } from './assert-single-param'
+import { validateOpenRpc } from './validate-openrpc.js'
 const { template } = lodash
 
 const onlyHandleTS = ({ language }: openrpcgen.components.IComponent) => {
@@ -63,9 +63,8 @@ export const controllerTemplates = [
     },
 ]
 
-// Named exports only: the generator CLI loads components via `(await import(path)).default`, i.e. module.exports.
-export const hooks: openrpcgen.components.IHooks = {
-    beforeCompileTemplate: [assertSingleParam],
+const hooks: openrpcgen.components.IHooks = {
+    beforeCompileTemplate: [validateOpenRpc],
     afterCompileTemplate: [
         async (dest, _, component): Promise<void> => {
             onlyHandleTS(component)
@@ -86,5 +85,9 @@ export const hooks: openrpcgen.components.IHooks = {
     },
 }
 
-export const staticPath = () =>
-    path.join(__dirname, '../../templates/controller/')
+// The generator CLI loads components via `(await import(path)).default`.
+export default {
+    hooks,
+    staticPath: () =>
+        path.join(import.meta.dirname, '../../templates/controller/'),
+}

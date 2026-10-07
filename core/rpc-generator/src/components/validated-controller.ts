@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type * as openrpcgen from '@open-rpc/generator'
+import type { components } from '@open-rpc/generator'
 import lodash from 'lodash'
-import { controllerTemplates, hooks as controllerHooks } from './controller'
+import controller, { controllerTemplates } from './controller.js'
 const { template } = lodash
 
-// Unknown keys are still rejected unless null (e.g. registry debug fields serialized as null).
+// Unknown keys are still rejected unless null (e.g. fields the Scan app returns as null).
 const allowNullExtras = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(allowNullExtras)
     if (typeof value !== 'object' || value === null) return value
@@ -40,8 +40,8 @@ export const paramSchemas: Record<string, z.ZodType> = {
     { imports: { allowNullExtras } }
 )
 
-export const hooks: openrpcgen.components.IHooks = {
-    ...controllerHooks,
+const hooks: components.IHooks = {
+    ...controller.hooks,
     templateFiles: {
         typescript: [
             ...controllerTemplates,
@@ -50,4 +50,5 @@ export const hooks: openrpcgen.components.IHooks = {
     },
 }
 
-export { staticPath } from './controller'
+// The generator CLI loads components via `(await import(path)).default`.
+export default { hooks, staticPath: controller.staticPath }
