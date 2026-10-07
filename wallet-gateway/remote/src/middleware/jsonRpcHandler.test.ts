@@ -138,6 +138,15 @@ describe('jsonRpcHandler', () => {
             expect(resolve).toHaveBeenCalledWith({ message: 'hi' })
         })
 
+        it('passes the parsed params, without properties the schema does not describe', async () => {
+            await call(
+                { message: 'hi', extra: true },
+                { resolve: z.object({ message: z.string() }) }
+            )
+
+            expect(resolve).toHaveBeenCalledWith({ message: 'hi' })
+        })
+
         it('reports flattened field and form errors', async () => {
             const res = await call({ message: 42, extra: true })
 

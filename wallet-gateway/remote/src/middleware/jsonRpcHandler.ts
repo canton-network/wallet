@@ -31,19 +31,21 @@ const MAX_ISSUE_MESSAGE_LENGTH = 200
 function validateParams(
     schema: z.ZodType,
     params: unknown
-): ReturnType<typeof rpcErrors.invalidParams> | undefined {
+): { data: unknown } | { error: ReturnType<typeof rpcErrors.invalidParams> } {
     const result = schema.safeParse(params)
-    if (result.success) return undefined
+    if (result.success) return { data: result.data }
 
     const issues = result.error.issues.slice(0, MAX_ISSUES).map((issue) => ({
         ...issue,
         message: issue.message.slice(0, MAX_ISSUE_MESSAGE_LENGTH),
     }))
     const { formErrors, fieldErrors } = z.flattenError(new z.ZodError(issues))
-    return rpcErrors.invalidParams({
-        message: 'Invalid params',
-        data: { formErrors, fieldErrors },
-    })
+    return {
+        error: rpcErrors.invalidParams({
+            message: 'Invalid params',
+            data: { formErrors, fieldErrors },
+        }),
+    }
 }
 
 /**
@@ -177,10 +179,12 @@ export const jsonRpcHandler =
                     return res.status(status).json(response)
                 }
 
-                const invalidParams = validateParams(schema, params)
-                if (invalidParams) {
+                // The controller only sees the parsed params, so anything the
+                // schema does not describe never reaches it.
+                const validated = validateParams(schema, params)
+                if ('error' in validated) {
                     const [status, response] = handleRpcError(
-                        invalidParams,
+                        validated.error,
                         id,
                         method
                     )
@@ -188,7 +192,7 @@ export const jsonRpcHandler =
                     return res.status(status).json(response)
                 }
 
-                methodFn(params as Params)
+                methodFn(validated.data as Params)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .then((result: any) => {
                         const response = jsonRpcResponse(id, { result })
