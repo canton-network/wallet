@@ -9,6 +9,7 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store,
     Wallet,
@@ -399,7 +400,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
               ? sessions.get(onboardingSessionId)
               : undefined
         if (!session || (!context?.accessToken && session.accessToken)) {
-            throw new Error('No session found')
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
         const networkId = session.network
         if (!networkId) {

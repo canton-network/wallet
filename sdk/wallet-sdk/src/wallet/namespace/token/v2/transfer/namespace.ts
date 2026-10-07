@@ -36,6 +36,33 @@ export class TransferNamespace {
         return [{ ExerciseCommand }, disclosedContracts]
     }
 
+    async reject(
+        cid: string,
+        actors: PartyId[],
+        registryUrl: URL
+    ): Promise<PreparedCommand> {
+        const [ExerciseCommand, disclosedContracts] =
+            await this.sdkContext.tokenStandardService.v2.transfer.rejectTransferInstruction(
+                cid,
+                actors,
+                new ParsedURL(this.sdkContext.commonCtx, registryUrl)
+            )
+        return [{ ExerciseCommand }, disclosedContracts]
+    }
+
+    async withdraw(
+        cid: string,
+        actors: PartyId[],
+        registryUrl: URL
+    ): Promise<PreparedCommand> {
+        const [ExerciseCommand, disclosedContracts] =
+            await this.sdkContext.tokenStandardService.v2.transfer.withdrawTransferInstruction(
+                cid,
+                actors,
+                new ParsedURL(this.sdkContext.commonCtx, registryUrl)
+            )
+        return [{ ExerciseCommand }, disclosedContracts]
+    }
     async create(
         params: TransferParams
     ): Promise<PreparedCommand<'ExerciseCommand'>> {

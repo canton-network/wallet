@@ -19,6 +19,7 @@ import {
     SignatureSchema,
 } from './report.ts'
 import { WrappingTestProvider } from '@canton-network/core-provider-conformance'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import {
     createProvider,
     type Provider,
@@ -225,6 +226,22 @@ describe('Conformance suite', () => {
         for (const value of ['plain text', 42, false, null, undefined]) {
             expect(redact(value)).toBe(value)
         }
+    })
+
+    it('redact keeps the name, message and code of errors', () => {
+        expect(
+            redact(
+                providerErrors.userRejectedRequest({
+                    message: 'Rejected',
+                    data: { secret: 'x' },
+                })
+            )
+        ).toStrictEqual({
+            name: 'Error',
+            message: 'Rejected',
+            code: 4001,
+            data: { secret: '*****' },
+        })
     })
 
     it('redact rejects non-string sensitive values without exposing them', () => {

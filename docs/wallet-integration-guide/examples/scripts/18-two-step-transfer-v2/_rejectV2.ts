@@ -38,8 +38,8 @@ export default async (args: TransferTestScriptParameters) => {
         'Receiver pending transfer instructions'
     )
 
-    const [acceptCommand, acceptDisclosedContracts] =
-        await sdk.token.v2.transfer.accept(
+    const [rejectCommand, rejectDisclosedContracts] =
+        await sdk.token.v2.transfer.reject(
             receiverPendingTransfers[0].contractId,
             [receiver.partyId],
             localNetStaticConfig.LOCALNET_REGISTRY_API_URL
@@ -48,33 +48,18 @@ export default async (args: TransferTestScriptParameters) => {
     await sdk.ledger
         .prepare({
             partyId: receiver.partyId,
-            commands: acceptCommand,
-            disclosedContracts: acceptDisclosedContracts,
+            commands: rejectCommand,
+            disclosedContracts: rejectDisclosedContracts,
         })
         .sign(receiverKeys.privateKey)
         .execute({ partyId: receiver.partyId })
-    logger.info('Receiver accepted the transfer instruction')
+    logger.info('Receiver rejected the transfer instruction')
 
-    const receiverUtxos = await sdk.token.utxos.list({
-        partyId: receiver.partyId,
-    })
-    logger.info(
-        receiverUtxos,
-        'Receiver UTXOs after accepting transfer instruction'
+    const pendingTransferAfterReject = await sdk.token.v2.transfer.pending(
+        receiver.partyId
     )
+    if (pendingTransferAfterReject.length)
+        throw Error('pendingTransferAfterReject is not empty')
 
-    const receiverAmuletUtxos = receiverUtxos.filter((utxo) => {
-        return (
-            utxo.interfaceViewValue.amount === '2000.0000000000' &&
-            utxo.interfaceViewValue.instrumentId.id === 'Amulet'
-        )
-    })
-
-    if (receiverAmuletUtxos.length === 0) {
-        throw new Error(
-            'No Amulet UTXOs found for Receiver after accepting transfer instruction'
-        )
-    }
-
-    logger.info('Two step transfer process completed successfully')
+    logger.info('Successfully rejected the submitted transfer')
 }

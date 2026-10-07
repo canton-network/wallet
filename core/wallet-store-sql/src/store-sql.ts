@@ -9,6 +9,7 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store as BaseStore,
     Wallet,
@@ -638,7 +639,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 ? this.authContext.sessionId
                 : undefined
         if (!token && !onboardingSessionId) {
-            throw new Error('No session found')
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
 
         const sessionRow = await this.db
@@ -655,7 +656,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
             .executeTakeFirst()
         if (!sessionRow) {
-            throw new Error('No session found')
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
 
         const session = toSession(sessionRow)

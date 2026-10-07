@@ -135,6 +135,66 @@ export class TransferServiceV2 {
         return [exercise, choiceContext.disclosedContracts]
     }
 
+    async rejectTransferInstruction(
+        transferInstructionCid: string,
+        actors: PartyId[],
+        registryUrl: URL
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const ctx = await this.core.getTokenStandardClientV2(registryUrl).post(
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/reject',
+            {
+                excludeDebugFields: true,
+            },
+            { path: { transferInstructionId: transferInstructionCid } }
+        )
+
+        return [
+            {
+                templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+                contractId: transferInstructionCid,
+                choice: 'TransferInstruction_Reject',
+                choiceArgument: {
+                    actors,
+                    extraArgs: {
+                        context: ctx.choiceContextData,
+                        meta: EMPTY_META,
+                    },
+                },
+            },
+            ctx.disclosedContracts ?? [],
+        ]
+    }
+
+    async withdrawTransferInstruction(
+        transferInstructionCid: string,
+        actors: PartyId[],
+        registryUrl: URL
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const ctx = await this.core.getTokenStandardClientV2(registryUrl).post(
+            '/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/withdraw',
+            {
+                excludeDebugFields: true,
+            },
+            { path: { transferInstructionId: transferInstructionCid } }
+        )
+
+        return [
+            {
+                templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+                contractId: transferInstructionCid,
+                choice: 'TransferInstruction_Withdraw',
+                choiceArgument: {
+                    actors,
+                    extraArgs: {
+                        context: ctx.choiceContextData,
+                        meta: EMPTY_META,
+                    },
+                },
+            },
+            ctx.disclosedContracts ?? [],
+        ]
+    }
+
     async acceptTransferInstruction(
         transferInstructionCid: string,
         actors: PartyId[],

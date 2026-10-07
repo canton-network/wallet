@@ -1359,6 +1359,9 @@ importers:
 
   core/rpc-transport:
     dependencies:
+      '@canton-network/core-rpc-errors':
+        specifier: 'catalog:'
+        version: link:../rpc-errors
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
@@ -2480,6 +2483,9 @@ importers:
 
   core/wallet-store-inmemory:
     dependencies:
+      '@canton-network/core-rpc-errors':
+        specifier: 'catalog:'
+        version: link:../rpc-errors
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
@@ -2587,6 +2593,9 @@ importers:
       '@canton-network/core-ledger-client':
         specifier: 'catalog:'
         version: link:../ledger-client
+      '@canton-network/core-rpc-errors':
+        specifier: 'catalog:'
+        version: link:../rpc-errors
       '@canton-network/core-rpc-transport':
         specifier: 'catalog:'
         version: link:../rpc-transport
@@ -2627,6 +2636,9 @@ importers:
 
   core/wallet-ui-components:
     dependencies:
+      '@canton-network/core-rpc-errors':
+        specifier: 'catalog:'
+        version: link:../rpc-errors
       '@canton-network/core-tx-visualizer':
         specifier: 'catalog:'
         version: link:../tx-visualizer
@@ -3248,6 +3260,9 @@ importers:
       '@canton-network/core-provider-dapp':
         specifier: 'catalog:'
         version: link:../../core/provider-dapp
+      '@canton-network/core-rpc-errors':
+        specifier: 'catalog:'
+        version: link:../../core/rpc-errors
       '@canton-network/core-rpc-transport':
         specifier: 'catalog:'
         version: link:../../core/rpc-transport
@@ -3455,6 +3470,9 @@ importers:
       '@canton-network/core-provider-conformance':
         specifier: 'catalog:'
         version: link:../../core/provider-conformance
+      '@canton-network/core-rpc-errors':
+        specifier: 'catalog:'
+        version: link:../../core/rpc-errors
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../../core/types
