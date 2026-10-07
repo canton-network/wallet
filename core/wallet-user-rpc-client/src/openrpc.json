@@ -703,26 +703,29 @@
                     "properties": {
                         "added": {
                             "title": "SyncWalletsResultAdded",
-                            "description": "Non-disabled wallets added in this syncWallets call.",
+                            "description": "Party ids of non-disabled wallets added in this syncWallets call.",
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/Wallet"
+                                "title": "partyId",
+                                "type": "string"
                             }
                         },
                         "updated": {
                             "title": "SyncWalletsResultUpdated",
-                            "description": "Existing wallets that either got downgraded to status initialized or their rights changed in this syncWallets call.",
+                            "description": "Party ids of existing wallets whose status became initialized, whose rights changed, or whose isAuthParty flag changed in this syncWallets call.",
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/Wallet"
+                                "title": "partyId",
+                                "type": "string"
                             }
                         },
                         "disabled": {
                             "title": "SyncWalletsResultDisabled",
-                            "description": "Either wallets added in this iteration that are disabled, or existing wallet that were updated to be disabled in this syncWallets call.",
+                            "description": "Party ids of wallets added disabled, or existing wallets disabled, in this syncWallets call.",
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/Wallet"
+                                "title": "partyId",
+                                "type": "string"
                             }
                         }
                     },

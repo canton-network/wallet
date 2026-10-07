@@ -406,22 +406,22 @@ export type SelfIssuedLoginMode = 'create' | 'select'
 type AlwaysTrue = any
 /**
  *
- * Non-disabled wallets added in this syncWallets call.
+ * Party ids of non-disabled wallets added in this syncWallets call.
  *
  */
-export type SyncWalletsResultAdded = Wallet[]
+export type SyncWalletsResultAdded = PartyId[]
 /**
  *
- * Existing wallets that either got downgraded to status initialized or their rights changed in this syncWallets call.
+ * Party ids of existing wallets whose status became initialized, whose rights changed, or whose isAuthParty flag changed in this syncWallets call.
  *
  */
-export type SyncWalletsResultUpdated = Wallet[]
+export type SyncWalletsResultUpdated = PartyId[]
 /**
  *
- * Either wallets added in this iteration that are disabled, or existing wallet that were updated to be disabled in this syncWallets call.
+ * Party ids of wallets added disabled, or existing wallets disabled, in this syncWallets call.
  *
  */
-export type SyncWalletsResultDisabled = Wallet[]
+export type SyncWalletsResultDisabled = PartyId[]
 /**
  *
  * Whether wallet sync is needed. Returns true if there are disabled wallets or parties on the ledger that aren't in the store.

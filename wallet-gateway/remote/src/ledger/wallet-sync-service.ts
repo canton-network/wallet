@@ -568,7 +568,6 @@ export class WalletSyncService {
                 return undefined
             }
 
-            // TODO consider whether creating a disabled wallet with NO_SIGNING_PROVIDER_MATCHED makes sense here
             const resolved = await this.resolveSigningProvider(
                 namespace,
                 participantNamespace
@@ -625,6 +624,62 @@ export class WalletSyncService {
         } catch (err) {
             this.logger.error({ err }, 'Rights sync failed.')
             throw err
+        }
+    }
+
+    private generateSyncReport(
+        newWallets: Wallet[],
+        updatedToInitialized: Wallet[],
+        updatedToDisabled: Wallet[],
+        rightsUpdatedWallets: Wallet[],
+        existingWallets: Wallet[],
+        walletsAfterAuthParty?: Wallet[]
+    ): SyncWalletsResult {
+        const added = new Set<string>()
+        const updated = new Set<string>()
+        const disabled = new Set<string>()
+
+        for (const wallet of newWallets) {
+            if (wallet.disabled) disabled.add(wallet.partyId)
+            else added.add(wallet.partyId)
+        }
+        for (const wallet of updatedToDisabled) {
+            disabled.add(wallet.partyId)
+        }
+        for (const wallet of updatedToInitialized) {
+            if (!disabled.has(wallet.partyId)) updated.add(wallet.partyId)
+        }
+        for (const wallet of rightsUpdatedWallets) {
+            if (added.has(wallet.partyId) || disabled.has(wallet.partyId)) {
+                continue
+            }
+            if (wallet.disabled) disabled.add(wallet.partyId)
+            else updated.add(wallet.partyId)
+        }
+
+        const authPartyBefore = new Map(
+            existingWallets.map((wallet) => [
+                wallet.partyId,
+                Boolean(wallet.isAuthParty),
+            ])
+        )
+        for (const wallet of walletsAfterAuthParty ?? []) {
+            if (
+                Boolean(wallet.isAuthParty) ===
+                (authPartyBefore.get(wallet.partyId) ?? false)
+            ) {
+                continue
+            }
+            if (added.has(wallet.partyId) || disabled.has(wallet.partyId)) {
+                continue
+            }
+            updated.add(wallet.partyId)
+        }
+
+        return {
+            added: [...added],
+            updated: [...updated],
+            disabled: [...disabled],
         }
     }
 
@@ -701,46 +756,25 @@ export class WalletSyncService {
             }
 
             // On self-issued auth networks set wallet.isAuthParty to true for a party that is in user.primaryParty, if every other setting of user enables primary party authentication
+            let walletsAfterAuthParty: Wallet[] | undefined
             if (network.auth.method === 'self_issued') {
                 const authParty = await this.getUserAuthParty(network)
                 await this.store.setAuthPartyWallet(authParty ?? null)
+                walletsAfterAuthParty = await this.store.getWallets()
             }
 
-            const newWallets = newParticipantWallets
-            // TODO more than one step may update a single wallet in db and returned entries for the sync report can various fields changed. Consider returning only party ids to get rid of complexity o determining which one is the current state of wallet.
-            // This assures wallet is not returned twice in updated if it had both rights change and status or disabled change.
-            // status/disabled updated wallets taking precedence over rights updated assure most recent wallet data in response.
-            const nonRightsUpdatesPartyIds = new Set([
-                ...updatedToInitialized.map((wallet) => wallet.partyId),
-                ...updatedToDisabled.map((wallet) => wallet.partyId),
-            ])
-            const rightsOnly = rightsUpdatedWallets.filter(
-                (wallet) => !nonRightsUpdatesPartyIds.has(wallet.partyId)
-            )
-            const updatedRaw = [...updatedToInitialized, ...rightsOnly]
-
-            const added = newWallets.filter((wallet) => !wallet.disabled)
-            const updated = updatedRaw.filter((wallet) => !wallet.disabled)
-            const disabled = [
-                ...newWallets.filter((wallet) => wallet.disabled),
-                ...updatedRaw.filter((wallet) => wallet.disabled),
-                ...updatedToDisabled,
-            ]
-
-            this.logger.info(
-                {
-                    added,
-                    updated,
-                    disabled,
-                },
-                'Wallet sync completed.'
+            const report = this.generateSyncReport(
+                newParticipantWallets,
+                updatedToInitialized,
+                updatedToDisabled,
+                rightsUpdatedWallets,
+                existingWallets,
+                walletsAfterAuthParty
             )
 
-            return {
-                added,
-                updated,
-                disabled,
-            }
+            this.logger.info(report, 'Wallet sync completed.')
+
+            return report
         } catch (err) {
             this.logger.error({ err }, 'Wallet sync failed.')
             throw err

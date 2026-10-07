@@ -636,10 +636,7 @@ describe('WalletSyncService - multi-network features', () => {
         const syncResult = await service.syncWallets()
 
         expect(mockLedgerGet).toHaveBeenCalledTimes(2) // Once for rights, once for participantId
-        expect(syncResult.added.length).toBe(1)
-        expect(syncResult.added[0].partyId).toBe('party1::namespace')
-        expect(syncResult.added[0].networkId).toBe('network2')
-        expect(syncResult.added[0].disabled).toBe(false)
+        expect(syncResult.added).toEqual(['party1::namespace'])
 
         const network2Wallets = await store.getAllWallets({
             networkIds: ['network2'],
@@ -776,15 +773,9 @@ describe('WalletSyncService - multi-network features', () => {
                 (w) => w.partyId === 'party1::namespace'
             )
             expect(party1Wallet?.status).toBe('initialized')
-            expect(result.added.length).toBe(1)
-            expect(result.updated.length).toBe(1)
-            expect(result.disabled.length).toBe(0)
-            expect(result.added[0].partyId).toBe('party2::namespace')
-            expect(result.updated[0]).toMatchObject({
-                partyId: 'party1::namespace',
-                status: 'initialized',
-                rights: [],
-            })
+            expect(result.added).toEqual(['party2::namespace'])
+            expect(result.updated).toEqual(['party1::namespace'])
+            expect(result.disabled).toEqual([])
         })
 
         it('syncWallets skips wallet when status is already initialized', async () => {
@@ -827,10 +818,9 @@ describe('WalletSyncService - multi-network features', () => {
                 (w) => w.partyId === 'party1::namespace'
             )
             expect(party1Wallet?.status).toBe('initialized')
-            expect(result.added.length).toBe(1)
-            expect(result.disabled.length).toBe(0)
-            expect(result.updated.length).toBe(0)
-            expect(result.added[0].partyId).toBe('party2::namespace')
+            expect(result.added).toEqual(['party2::namespace'])
+            expect(result.disabled).toEqual([])
+            expect(result.updated).toEqual([])
         })
 
         it('syncWallets marks multiple wallets as initialized when user has no rights to those parties', async () => {
@@ -889,10 +879,12 @@ describe('WalletSyncService - multi-network features', () => {
                     rights: [],
                 })
             )
-            expect(result.added.length).toBe(1)
-            expect(result.disabled.length).toBe(0)
-            expect(result.updated.length).toBe(2)
-            expect(result.added[0].partyId).toBe('party3::namespace')
+            expect(result.added).toEqual(['party3::namespace'])
+            expect(result.disabled).toEqual([])
+            expect(result.updated).toEqual([
+                'party1::namespace',
+                'party2::namespace',
+            ])
         })
 
         it('syncWallets disables participant wallet user has no rights to the party', async () => {
@@ -940,11 +932,9 @@ describe('WalletSyncService - multi-network features', () => {
             )
             expect(party1Wallet?.disabled).toBe(true)
             expect(party1Wallet?.reason).toBe('participant namespace changed')
-            expect(result.added.length).toBe(1)
-            expect(result.updated.length).toBe(0)
-            expect(result.disabled.length).toBe(1)
-            expect(result.added[0].partyId).toBe('party2::namespace')
-            expect(result.disabled[0].partyId).toBe('party1::namespace')
+            expect(result.added).toEqual(['party2::namespace'])
+            expect(result.updated).toEqual([])
+            expect(result.disabled).toEqual(['party1::namespace'])
         })
 
         it('syncWallets reports proper changes while adding a wallet when there are disabled wallets', async () => {
@@ -991,10 +981,9 @@ describe('WalletSyncService - multi-network features', () => {
                 (w) => w.partyId === 'party1::namespace'
             )
             expect(party1Wallet?.disabled).toBe(true)
-            expect(result.added.length).toBe(1)
-            expect(result.added[0].partyId).toBe('party2::namespace')
-            expect(result.updated.length).toBe(0)
-            expect(result.disabled.length).toBe(0)
+            expect(result.added).toEqual(['party2::namespace'])
+            expect(result.updated).toEqual([])
+            expect(result.disabled).toEqual([])
         })
 
         it('syncWallets reports proper changes while adding a disabled wallet when there are disabled wallets', async () => {
@@ -1051,12 +1040,9 @@ describe('WalletSyncService - multi-network features', () => {
             expect(party1Wallet?.reason).toBe(
                 WALLET_DISABLED_REASON.NO_SIGNING_PROVIDER_MATCHED
             )
-            expect(result.added.length).toBe(0)
-            expect(result.updated.length).toBe(0)
-            expect(result.disabled.length).toBe(1)
-            expect(result.disabled[0].partyId).toBe(
-                'party2::unknown-namespace-123'
-            )
+            expect(result.added).toEqual([])
+            expect(result.updated).toEqual([])
+            expect(result.disabled).toEqual(['party2::unknown-namespace-123'])
         })
     })
 
@@ -1131,24 +1117,16 @@ describe('WalletSyncService - multi-network features', () => {
             })
             const result = await service.syncWallets()
 
-            expect(result.updated).toEqual(
-                expect.arrayContaining([
-                    expect.objectContaining({
-                        partyId: 'party1::namespace',
-                        rights: [PartyLevelRight.CanReadAs],
-                    }),
-                ])
-            )
+            expect(result.updated).toEqual([
+                'party3::namespace',
+                'party1::namespace',
+            ])
             const wallets = await store.getWallets()
             const updatedWallet = wallets.find(
                 (w) => w.partyId === 'party1::namespace'
             )
             expect(updatedWallet?.rights).toEqual([PartyLevelRight.CanReadAs])
-            // party2 wallet added
-            expect(result.added.length).toBe(1)
-            // party1 wallet updated rights
-            // party3 wallet updated to initialized (no rights)
-            expect(result.updated.length).toBe(2)
+            expect(result.added).toEqual(['party2::namespace'])
         })
 
         it('syncWallets reports a reinitialized wallet once when its rights are also cleared', async () => {
@@ -1179,17 +1157,9 @@ describe('WalletSyncService - multi-network features', () => {
             const result = await service.syncWallets()
             const wallets = await store.getWallets()
 
-            expect(result.added.map((wallet) => wallet.partyId)).toEqual([
-                'party2::namespace',
-            ])
+            expect(result.added).toEqual(['party2::namespace'])
             expect(result.disabled).toEqual([])
-            expect(result.updated).toEqual([
-                expect.objectContaining({
-                    partyId: 'party1::namespace',
-                    status: 'initialized',
-                    rights: [],
-                }),
-            ])
+            expect(result.updated).toEqual(['party1::namespace'])
             expect(
                 wallets.find((w) => w.partyId === 'party1::namespace')
             ).toMatchObject({
@@ -1398,9 +1368,15 @@ describe('WalletSyncService - multi-network features', () => {
                 },
             })
 
-            await service.syncWallets()
+            const result = await service.syncWallets()
 
             const wallets = await store.getWallets()
+            expect(result.updated).toEqual([
+                'party1::namespace',
+                'party2::namespace',
+            ])
+            expect(result.added).toEqual([])
+            expect(result.disabled).toEqual([])
             expect(
                 wallets.find((wallet) => wallet.partyId === 'party1::namespace')
                     ?.isAuthParty
@@ -1441,8 +1417,9 @@ describe('WalletSyncService - multi-network features', () => {
                 },
             })
 
-            await service.syncWallets()
+            const result = await service.syncWallets()
 
+            expect(result.updated).toEqual(['party1::namespace'])
             expect(
                 (await store.getWallets()).every(
                     (wallet) => !wallet.isAuthParty
@@ -1468,8 +1445,9 @@ describe('WalletSyncService - multi-network features', () => {
                 },
             })
 
-            await service.syncWallets()
+            const result = await service.syncWallets()
 
+            expect(result.updated).toEqual(['party1::namespace'])
             expect(
                 (await store.getWallets()).every(
                     (wallet) => !wallet.isAuthParty

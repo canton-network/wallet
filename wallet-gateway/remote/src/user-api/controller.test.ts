@@ -1955,19 +1955,10 @@ describe('userController', () => {
             const store = await createStore(logger, auth)
             const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
-            const addedWallet: Wallet = {
-                ...primaryWallet,
-                partyId: 'party::added',
-            }
-            const disabledWallet: Wallet = {
-                ...primaryWallet,
-                partyId: 'party::disabled',
-                status: 'removed',
-            }
             const syncResult = {
-                added: [addedWallet],
+                added: ['party::added'],
                 updated: [],
-                disabled: [disabledWallet],
+                disabled: ['party::disabled'],
             }
             walletSyncMocks.syncWallets.mockResolvedValue(syncResult)
             const controller = createController(
@@ -1993,7 +1984,7 @@ describe('userController', () => {
             const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             walletSyncMocks.syncWallets.mockResolvedValue({
-                added: [{ ...primaryWallet, partyId: 'party::added' }],
+                added: ['party::added'],
                 updated: [],
                 disabled: [],
             })
