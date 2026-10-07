@@ -10,8 +10,6 @@ import {
     type AllocationSpecification,
     type Holding,
     type OffLedger,
-    AllocationRequest,
-    AllocationInstruction,
 } from '@canton-network/core-token-standard'
 import type { ContractId, Logger, PartyId } from '@canton-network/core-types'
 import {
@@ -319,8 +317,7 @@ export class AllocationService {
         const exercise: ExerciseCommand = {
             templateId: ALLOCATION_INSTRUCTION_INTERFACE_ID,
             contractId: allocationInstructionCid,
-            choice: AllocationInstruction.AllocationInstruction_Withdraw
-                .choiceName,
+            choice: 'AllocationInstruction_Withdraw',
             choiceArgument: {
                 extraArgs: {
                     context: { values: {} },
@@ -340,8 +337,7 @@ export class AllocationService {
         const exercise: ExerciseCommand = {
             templateId: ALLOCATION_INSTRUCTION_INTERFACE_ID,
             contractId: allocationInstructionCid,
-            choice: AllocationInstruction.AllocationInstruction_Update
-                .choiceName,
+            choice: 'AllocationInstruction_Update',
             choiceArgument: {
                 extraActors,
                 extraArgs: {
@@ -360,7 +356,7 @@ export class AllocationService {
         const exercise: ExerciseCommand = {
             templateId: ALLOCATION_REQUEST_INTERFACE_ID,
             contractId: allocationRequestCid,
-            choice: AllocationRequest.AllocationRequest_Reject.choiceName,
+            choice: 'AllocationRequest_Reject',
             choiceArgument: {
                 actor,
                 extraArgs: {
@@ -378,7 +374,7 @@ export class AllocationService {
         const exercise: ExerciseCommand = {
             templateId: ALLOCATION_REQUEST_INTERFACE_ID,
             contractId: allocationRequestCid,
-            choice: AllocationRequest.AllocationRequest_Withdraw.choiceName,
+            choice: 'AllocationRequest_Withdraw',
             choiceArgument: {
                 extraArgs: {
                     context: { values: {} },
