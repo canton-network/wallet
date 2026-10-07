@@ -506,15 +506,9 @@ catalogs:
     '@types/fs-extra':
       specifier: ^11.0.4
       version: 11.0.4
-    '@types/isomorphic-fetch':
-      specifier: ^0.0.39
-      version: 0.0.39
     '@types/js-yaml':
       specifier: ^4.0.9
       version: 4.0.9
-    '@types/json-schema':
-      specifier: 7.0.15
-      version: 7.0.15
     '@types/lodash':
       specifier: ^4.17.24
       version: 4.17.25
@@ -539,9 +533,6 @@ catalogs:
     '@types/tar-fs':
       specifier: ^2.0.4
       version: 2.0.4
-    '@types/ws':
-      specifier: ^8.18.1
-      version: 8.18.2
     '@typescript-eslint/parser':
       specifier: ^8.70.0
       version: 8.71.1
@@ -2436,25 +2427,10 @@ importers:
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
-      lodash:
-        specifier: 'catalog:'
-        version: 4.18.1
     devDependencies:
       '@canton-network/core-eslint-config':
         specifier: 'catalog:'
         version: link:../eslint-config
-      '@types/isomorphic-fetch':
-        specifier: 'catalog:'
-        version: 0.0.39
-      '@types/json-schema':
-        specifier: 'catalog:'
-        version: 7.0.15
-      '@types/lodash':
-        specifier: 'catalog:'
-        version: 4.17.25
-      '@types/ws':
-        specifier: 'catalog:'
-        version: 8.18.2
       eslint:
         specifier: 'catalog:'
         version: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
@@ -2479,25 +2455,10 @@ importers:
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
-      lodash:
-        specifier: 'catalog:'
-        version: 4.18.1
     devDependencies:
       '@canton-network/core-eslint-config':
         specifier: 'catalog:'
         version: link:../eslint-config
-      '@types/isomorphic-fetch':
-        specifier: 'catalog:'
-        version: 0.0.39
-      '@types/json-schema':
-        specifier: 'catalog:'
-        version: 7.0.15
-      '@types/lodash':
-        specifier: 'catalog:'
-        version: 4.17.25
-      '@types/ws':
-        specifier: 'catalog:'
-        version: 8.18.2
       eslint:
         specifier: 'catalog:'
         version: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
@@ -2853,25 +2814,10 @@ importers:
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
-      lodash:
-        specifier: 'catalog:'
-        version: 4.18.1
     devDependencies:
       '@canton-network/core-eslint-config':
         specifier: 'catalog:'
         version: link:../eslint-config
-      '@types/isomorphic-fetch':
-        specifier: 'catalog:'
-        version: 0.0.39
-      '@types/json-schema':
-        specifier: 'catalog:'
-        version: 7.0.15
-      '@types/lodash':
-        specifier: 'catalog:'
-        version: 4.17.25
-      '@types/ws':
-        specifier: 'catalog:'
-        version: 8.18.2
       eslint:
         specifier: 'catalog:'
         version: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
@@ -7540,9 +7486,6 @@ packages:
   '@types/http-errors@2.0.5':
     resolution: {integrity: sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg==}
 
-  '@types/isomorphic-fetch@0.0.39':
-    resolution: {integrity: sha512-I0gou/ZdA1vMG7t7gMzL7VYu2xAKU78rW9U1l10MI0nn77pEHq3tQqHQ8hMmXdMpBlkxZOorjI4sO594Z3kKJw==}
-
   '@types/js-yaml@4.0.9':
     resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
@@ -7648,9 +7591,6 @@ packages:
 
   '@types/wrap-ansi@3.0.0':
     resolution: {integrity: sha512-ltIpx+kM7g/MLRZfkbL7EsCEjfzCcScLpkg37eXEtx5kmrAKBkTJwd1GIAjDSL8wTpM6Hzn5YO4pSb91BEwu1g==}
-
-  '@types/ws@8.18.2':
-    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
 
   '@typescript-eslint/eslint-plugin@8.71.1':
     resolution: {integrity: sha512-nNlBf6HuotqMgZvSkWD5hNdemiBIxQ2NmrlgfcUIeZRs+BbakjscCQRq/Hb74EFVnFiSWWdL12JruqwBy3ERDw==}
@@ -16619,8 +16559,6 @@ snapshots:
 
   '@types/http-errors@2.0.5': {}
 
-  '@types/isomorphic-fetch@0.0.39': {}
-
   '@types/js-yaml@4.0.9': {}
 
   '@types/json-schema@7.0.15': {}
@@ -16738,10 +16676,6 @@ snapshots:
   '@types/unist@3.0.3': {}
 
   '@types/wrap-ansi@3.0.0': {}
-
-  '@types/ws@8.18.2':
-    dependencies:
-      '@types/node': 25.9.9
 
   '@typescript-eslint/eslint-plugin@8.71.1(@typescript-eslint/parser@8.71.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)':
     dependencies:
