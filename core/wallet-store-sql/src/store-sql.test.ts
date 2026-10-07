@@ -394,7 +394,7 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(removed).toBeUndefined()
         })
 
-        test('should resolve the current network from a tokenless session id', async () => {
+        test('resolves the current network from a tokenless self-issued login session', async () => {
             const onboardingContext: AuthContext = {
                 userId: authContextMock.userId,
                 accessToken: '',
@@ -411,7 +411,7 @@ implementations.forEach(([name, StoreImpl]) => {
 
             await expect(store.getCurrentNetwork()).resolves.toEqual(network)
             await expect(
-                store.getOnboardingSession('onboarding-session')
+                store.getSelfIssuedLoginSession('onboarding-session')
             ).resolves.toEqual(
                 expect.objectContaining({
                     id: 'onboarding-session',
@@ -426,7 +426,7 @@ implementations.forEach(([name, StoreImpl]) => {
             ).rejects.toThrow('No session found')
         })
 
-        test('should keep every tokenless session', async () => {
+        test('keeps every tokenless self-issued login session, including several for one origin', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.setSession({
                 id: 'onboarding-1',
@@ -452,7 +452,7 @@ implementations.forEach(([name, StoreImpl]) => {
             ])
         })
 
-        test('should keep a tokenless session when a logged-in session is created at the same origin', async () => {
+        test('keeps a tokenless self-issued login session when a logged-in session is created for the same origin', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             const baseSession = {
                 origin: 'https://example.com',
@@ -471,13 +471,13 @@ implementations.forEach(([name, StoreImpl]) => {
             const ids = (await store.listSessions()).map((s) => s.id).sort()
             expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
             await expect(
-                store.getOnboardingSession('onboarding-session')
+                store.getSelfIssuedLoginSession('onboarding-session')
             ).resolves.toEqual(
                 expect.objectContaining({ id: 'onboarding-session' })
             )
         })
 
-        test('should keep a logged-in session when a tokenless session starts at the same origin', async () => {
+        test('keeps a logged-in session when a tokenless self-issued login session starts for the same origin', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             const baseSession = {
                 origin: 'https://example.com',
@@ -497,7 +497,7 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
         })
 
-        test('should upgrade an onboarding session in place', async () => {
+        test('upgrades a tokenless self-issued login session in place and refuses a second upgrade', async () => {
             const store = new StoreImpl(db, pino(sink()), authContextMock)
             await store.setSession({
                 id: 'old-session',
@@ -512,7 +512,7 @@ implementations.forEach(([name, StoreImpl]) => {
             })
 
             await expect(
-                store.upgradeOnboardingSession(
+                store.upgradeSelfIssuedLoginSession(
                     'onboarding-session',
                     'new-token'
                 )
@@ -530,8 +530,33 @@ implementations.forEach(([name, StoreImpl]) => {
                 }),
             ])
             await expect(
-                store.upgradeOnboardingSession('onboarding-session', 'other')
-            ).rejects.toThrow('Onboarding session not found')
+                store.upgradeSelfIssuedLoginSession(
+                    'onboarding-session',
+                    'other'
+                )
+            ).rejects.toThrow('Self-issued login session not found')
+        })
+
+        test('deletes a tokenless self-issued login session and leaves one that already has an access token', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.setSession({
+                id: 'tokenless-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+            await store.removeSelfIssuedLoginSession('tokenless-session')
+            await expect(store.listSessions()).resolves.toEqual([])
+
+            await store.setSession({
+                id: 'logged-in-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'kept-token',
+            })
+            await store.removeSelfIssuedLoginSession('logged-in-session')
+            await expect(store.getSession('kept-token')).resolves.toEqual(
+                expect.objectContaining({ id: 'logged-in-session' })
+            )
         })
 
         test('should add, list, get, update, and remove networks', async () => {
