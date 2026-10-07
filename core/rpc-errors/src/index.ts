@@ -3,7 +3,12 @@
 
 import { errorCodes } from '@metamask/rpc-errors'
 
-export { rpcErrors, providerErrors, JsonRpcError } from '@metamask/rpc-errors'
+export {
+    rpcErrors,
+    errorCodes,
+    providerErrors,
+    JsonRpcError,
+} from '@metamask/rpc-errors'
 
 export const toHttpErrorCode = (rpcCode: number): number => {
     const errorMap = {
