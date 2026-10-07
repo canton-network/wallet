@@ -186,7 +186,7 @@ describe('LoginUI', () => {
             if (method === 'selfSignedAccessToken') {
                 return { accessToken: defaultAccessToken }
             }
-            if (method === 'addSelfIssuedSession') {
+            if (method === 'startSelfIssuedLoginSession') {
                 return { sessionId: 'onboarding-session-1' }
             }
             return undefined
@@ -235,7 +235,7 @@ describe('LoginUI', () => {
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
 
-    it('creates a tokenless session before self-issued onboarding', async () => {
+    it('starts a self-issued login session and opens the onboarding page', async () => {
         await waitUntil(() => el.networks.length === 1)
         const network = makePublicNetwork({
             id: 'self-issued-network',
@@ -253,7 +253,7 @@ describe('LoginUI', () => {
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
         expect(mockRequest).toHaveBeenCalledWith({
-            method: 'addSelfIssuedSession',
+            method: 'startSelfIssuedLoginSession',
             params: {
                 username: 'alice',
                 networkId: 'self-issued-network',
