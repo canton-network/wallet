@@ -264,8 +264,9 @@ export class WalletSyncService {
         if (network.auth.method !== 'self_issued') return null
 
         try {
-            const response = await this.ledgerClient.get(
+            const response = await this.ledgerClient.getWithRetry(
                 '/v2/users/{user-id}',
+                defaultRetryableOptions,
                 {
                     path: { 'user-id': this.authContext.userId },
                 }
