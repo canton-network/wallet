@@ -25,7 +25,7 @@ import type { Logger } from 'pino'
 import { PartyAllocationService } from './party-allocation-service.js'
 import { WalletSyncService } from './wallet-sync-service.js'
 import { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
-import { GetSelfIssuedLoginModeResult } from '../user-api/rpc-gen/typings'
+import { GetSelfIssuedLoginModeResult } from '../user-api/rpc-gen/typings.js'
 
 export type SelfIssuedLoginSession = {
     userId: string
@@ -377,11 +377,13 @@ export class SelfIssuedAuthService {
     }
 
     private authContext(): AuthContext {
-        return toOnboardingAuthContext(this.session)
+        return toSelfIssuedLoginAuthContext(this.session)
     }
 }
 
-function toOnboardingAuthContext(session: SelfIssuedLoginSession): AuthContext {
+function toSelfIssuedLoginAuthContext(
+    session: SelfIssuedLoginSession
+): AuthContext {
     return {
         userId: session.userId,
         accessToken: '',
@@ -396,7 +398,7 @@ export async function createSelfIssuedAuthService(
     logger: Logger
 ): Promise<SelfIssuedAuthService> {
     const scopedStore = bootstrapStore.withAuthContext(
-        toOnboardingAuthContext(session)
+        toSelfIssuedLoginAuthContext(session)
     )
     const network = await scopedStore.getCurrentNetwork()
     if (network.auth.method !== 'self_issued') {

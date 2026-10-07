@@ -388,7 +388,7 @@
                     "required": ["mode"]
                 }
             },
-            "description": "Returns the ledger-user and wallet state needed to select the self-issued onboarding path."
+            "description": "Returns the ledger-user and wallet state needed to select the self-issued login path."
         },
         {
             "name": "createSelfIssuedWallet",
@@ -533,7 +533,7 @@
                     "required": ["wallet", "accessToken", "sessionId"]
                 }
             },
-            "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the onboarding session with it."
+            "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the self-issued login session with it."
         },
         {
             "name": "removeSelfIssuedLoginSession",

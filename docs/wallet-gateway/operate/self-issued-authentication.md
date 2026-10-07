@@ -134,7 +134,7 @@ Deletes the tokenless session. A session that already has an access token is una
 ## Wallet Gateway UI
 
 Network selection page shows a username field when the selected network uses `self_issued` auth.
-Clicking connect calls `startSelfIssuedLoginSession` method, it stores the returned session id in the browser, and redirects to `/onboarding`.
+Clicking connect calls `startSelfIssuedLoginSession` method, it stores the returned session id in the browser, and redirects to `/self-issued-login`.
 The method allows the session when the ledger user does not exist, or when the user has no `identityProviderId`, `primary_party_authentication` true, and `primary_party` set. Otherwise it refuses.
 
 The onboarding page calls `getSelfIssuedLoginMode` with that session id. Based on the response either onboarding form or wallet selection view is rendered.

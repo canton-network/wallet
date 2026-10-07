@@ -147,11 +147,14 @@ export class LoginUI extends BaseElement {
                         origin: currentOrigin,
                     },
                 })
-                stateManager.onboardingSessionId.set(sessionId, currentOrigin)
+                stateManager.selfIssuedLoginSessionId.set(
+                    sessionId,
+                    currentOrigin
+                )
 
                 setLocationHref(
                     new URL(
-                        toRelHref('/onboarding'),
+                        toRelHref('/self-issued-login'),
                         window.location.origin
                     ).toString()
                 )

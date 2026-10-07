@@ -398,7 +398,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'startSelfIssuedLoginSession',
         ],
     }
-    const onboardingPaths = {
+    const selfIssuedLoginPaths = {
         [config.server.userPath]: [
             'getSelfIssuedLoginMode',
             'createSelfIssuedWallet',
@@ -421,7 +421,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             store,
             allowedPaths,
             logger.child({ component: 'SessionHandler' }),
-            onboardingPaths
+            selfIssuedLoginPaths
         ),
     ]
 

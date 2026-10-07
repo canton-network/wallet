@@ -196,7 +196,7 @@ describe('sessionHandler', () => {
     })
 
     describe('self-issued login methods', () => {
-        const onboardingPaths = {
+        const selfIssuedLoginPaths = {
             '/api/v0/user': ['createSelfIssuedWallet'],
         }
 
@@ -218,7 +218,7 @@ describe('sessionHandler', () => {
                 store,
                 allowedPaths,
                 logger,
-                onboardingPaths
+                selfIssuedLoginPaths
             )
 
             await middleware(req, makeRes(), next)
@@ -253,7 +253,7 @@ describe('sessionHandler', () => {
                     store,
                     allowedPaths,
                     logger,
-                    onboardingPaths
+                    selfIssuedLoginPaths
                 )
 
                 await middleware(req, makeRes(), next)
@@ -265,7 +265,7 @@ describe('sessionHandler', () => {
                     id: null,
                     error: {
                         code: providerErrors.unauthorized().code,
-                        message: 'No onboarding session found',
+                        message: 'No self-issued login session found',
                     },
                 })
             }

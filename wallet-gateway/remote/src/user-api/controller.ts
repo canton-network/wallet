@@ -131,9 +131,9 @@ export const userController = (
         }
     }
 
-    function requireOnboardingSession(): SelfIssuedLoginSession {
+    function requireSelfIssuedLoginSession(): SelfIssuedLoginSession {
         if (!authContext || authContext.isApiKey || !authContext.sessionId) {
-            throw new Error('No onboarding session found')
+            throw new Error('No self-issued login session found')
         }
         return {
             userId: authContext.userId,
@@ -518,7 +518,7 @@ export const userController = (
         ) => {
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                requireOnboardingSession(),
+                requireSelfIssuedLoginSession(),
                 drivers,
                 logger
             )
@@ -536,7 +536,7 @@ export const userController = (
 
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                requireOnboardingSession(),
+                requireSelfIssuedLoginSession(),
                 drivers,
                 logger
             )
@@ -551,7 +551,7 @@ export const userController = (
         ) => {
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                requireOnboardingSession(),
+                requireSelfIssuedLoginSession(),
                 drivers,
                 logger
             )
@@ -561,17 +561,17 @@ export const userController = (
         completeSelfIssuedLogin: async (
             params: CompleteSelfIssuedLoginParams
         ) => {
-            const onboardingSession = requireOnboardingSession()
+            const selfIssuedLoginSession = requireSelfIssuedLoginSession()
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                onboardingSession,
+                selfIssuedLoginSession,
                 drivers,
                 logger
             )
             const { wallet, accessToken, session } =
                 await service.completeLogin(params.partyId)
             const connectedContext = {
-                userId: onboardingSession.userId,
+                userId: selfIssuedLoginSession.userId,
                 accessToken,
             }
             const scopedStore = authAwareStore.withAuthContext(connectedContext)
@@ -595,7 +595,7 @@ export const userController = (
         removeSelfIssuedLoginSession: async (
             _params: RemoveSelfIssuedLoginSessionParams
         ): Promise<Null> => {
-            const session = requireOnboardingSession()
+            const session = requireSelfIssuedLoginSession()
             await authAwareStore
                 .withAuthContext({
                     userId: session.userId,
