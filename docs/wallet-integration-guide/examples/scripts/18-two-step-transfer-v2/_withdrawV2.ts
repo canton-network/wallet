@@ -2,7 +2,7 @@ import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { TransferTestScriptParameters } from './types.js'
 
 export default async (args: TransferTestScriptParameters) => {
-    const { sdk, sender, receiver, senderKeys, receiverKeys, logger } = args
+    const { sdk, sender, receiver, senderKeys, logger } = args
 
     const [transferCommand, transferDisclosedContracts] =
         await sdk.token.v2.transfer.create({
@@ -33,48 +33,36 @@ export default async (args: TransferTestScriptParameters) => {
     const receiverPendingTransfers = await sdk.token.v2.transfer.pending(
         receiver.partyId
     )
+    if (!receiverPendingTransfers.length)
+        throw Error('receiverPendingTransfers is empty')
+
     logger.info(
         receiverPendingTransfers,
         'Receiver pending transfer instructions'
     )
 
-    const [acceptCommand, acceptDisclosedContracts] =
-        await sdk.token.v2.transfer.accept(
+    const [withdrawCommand, withdrawDisclosedContracts] =
+        await sdk.token.v2.transfer.withdraw(
             receiverPendingTransfers[0].contractId,
-            [receiver.partyId],
+            [sender.partyId],
             localNetStaticConfig.LOCALNET_REGISTRY_API_URL
         )
 
     await sdk.ledger
         .prepare({
-            partyId: receiver.partyId,
-            commands: acceptCommand,
-            disclosedContracts: acceptDisclosedContracts,
+            partyId: sender.partyId,
+            commands: withdrawCommand,
+            disclosedContracts: withdrawDisclosedContracts,
         })
-        .sign(receiverKeys.privateKey)
-        .execute({ partyId: receiver.partyId })
-    logger.info('Receiver accepted the transfer instruction')
+        .sign(senderKeys.privateKey)
+        .execute({ partyId: sender.partyId })
+    logger.info('Sender withdrew the transfer instruction')
 
-    const receiverUtxos = await sdk.token.utxos.list({
-        partyId: receiver.partyId,
-    })
-    logger.info(
-        receiverUtxos,
-        'Receiver UTXOs after accepting transfer instruction'
+    const pendingTransferAfterWithdraw = await sdk.token.v2.transfer.pending(
+        receiver.partyId
     )
+    if (pendingTransferAfterWithdraw.length)
+        throw Error('pendingTransferAfterReject is not empty')
 
-    const receiverAmuletUtxos = receiverUtxos.filter((utxo) => {
-        return (
-            utxo.interfaceViewValue.amount === '2000.0000000000' &&
-            utxo.interfaceViewValue.instrumentId.id === 'Amulet'
-        )
-    })
-
-    if (receiverAmuletUtxos.length === 0) {
-        throw new Error(
-            'No Amulet UTXOs found for Receiver after accepting transfer instruction'
-        )
-    }
-
-    logger.info('Two step transfer process completed successfully')
+    logger.info('Successfully withdrawn the submitted transfer')
 }
