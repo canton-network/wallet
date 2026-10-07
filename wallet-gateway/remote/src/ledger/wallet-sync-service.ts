@@ -542,6 +542,9 @@ export class WalletSyncService {
         try {
             this.requirePartyAllocator()
             const network = await this.store.getCurrentNetwork()
+            if (network.auth.method !== 'self_issued') {
+                return undefined
+            }
             const existing = (await this.store.getWallets()).find(
                 (wallet) => wallet.partyId === partyId
             )

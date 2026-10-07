@@ -76,19 +76,11 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         try {
             const client = await createUserClient()
             const state = await client.request({
-                method: 'getSelfIssuedOnboarding',
+                method: 'getSelfIssuedLoginMode',
                 params: { sessionId: this.sessionId },
             })
-            if (state.primaryPartyAuth) {
-                const wallets = state.wallets.filter(
-                    (wallet) => wallet.status === 'allocated'
-                )
-                if (wallets.length === 0) {
-                    this.onboardingError =
-                        'No authentication party wallet is stored for this user.'
-                    return
-                }
-                this.authWallets = wallets
+            if (state.mode === 'select' && state.wallet) {
+                this.authWallets = [state.wallet]
             }
             this.onboardingReady = true
         } catch (error) {
@@ -109,7 +101,7 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
         try {
             const client = await createUserClient()
             const result = await client.request({
-                method: 'connectSelfIssuedSession',
+                method: 'completeSelfIssuedLogin',
                 params: {
                     sessionId: this.sessionId,
                     partyId: wallet.partyId,
