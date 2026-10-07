@@ -31,9 +31,10 @@ const sdk = await SDK.create({
 // It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script
 // Adjust if to your .localnet location
 const PATH_TO_LOCALNET = '../../../../.localnet'
-const PATH_TO_DAR_IN_LOCALNET = '/dars/splice-token-test-trading-app-1.0.0.dar'
+const PATH_TO_DAR_IN_LOCALNET =
+    '/dars/splice-token-test-trading-app-v2-1.0.0.dar'
 const TRADING_APP_PACKAGE_ID =
-    'e5c9847d5a88d3b8d65436f01765fc5ba142cc58529692e2dacdd865d9939f71'
+    '20d42271cbd760c26c08401e4d1eec624458f5b48c73ae44c87c754e35621f5d'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
@@ -49,7 +50,7 @@ await sdk.ledger.dar.upload(darBytes, TRADING_APP_PACKAGE_ID)
 
 //allocate parties
 const allocatedParties = await Promise.all(
-    ['v1-04-alice', 'v1-04-bob', 'v1-04-venue'].map(async (partyHint) => {
+    ['v1-19-alice', 'v1-19-bob', 'v1-04-venue'].map(async (partyHint) => {
         const partyKeys = sdk.keys.generate()
         const party = await sdk.party.external
             .create(partyKeys.publicKey, {
@@ -109,322 +110,322 @@ await sdk.ledger
 
 //Alice creates OTCTradeProposal
 
-const amuletAsset = await sdk.asset.find(
-    'Amulet',
-    localNetStaticConfig.LOCALNET_REGISTRY_API_URL
-)
+// const amuletAsset = await sdk.asset.find(
+//     'Amulet',
+//     localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+// )
 
-const transferLegs = {
-    leg0: {
-        sender: sender.partyId,
-        receiver: recipient.partyId,
-        amount: '100',
-        instrumentId: { admin: amuletAsset.admin, id: 'Amulet' },
-        meta: { values: {} },
-    },
-    leg1: {
-        sender: recipient.partyId,
-        receiver: sender.partyId,
-        amount: '20',
-        instrumentId: { admin: amuletAsset.admin, id: 'Amulet' },
-        meta: { values: {} },
-    },
-}
+// const transferLegs = {
+//     leg0: {
+//         sender: sender.partyId,
+//         receiver: recipient.partyId,
+//         amount: '100',
+//         instrumentId: { admin: amuletAsset.admin, id: 'Amulet' },
+//         meta: { values: {} },
+//     },
+//     leg1: {
+//         sender: recipient.partyId,
+//         receiver: sender.partyId,
+//         amount: '20',
+//         instrumentId: { admin: amuletAsset.admin, id: 'Amulet' },
+//         meta: { values: {} },
+//     },
+// }
 
-const createProposal = {
-    CreateCommand: {
-        templateId:
-            '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
-        createArguments: {
-            venue: venue.partyId,
-            tradeCid: null,
-            transferLegs,
-            approvers: [sender.partyId],
-        },
-    },
-}
+// const createProposal = {
+//     CreateCommand: {
+//         templateId:
+//             '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
+//         createArguments: {
+//             venue: venue.partyId,
+//             tradeCid: null,
+//             transferLegs,
+//             approvers: [sender.partyId],
+//         },
+//     },
+// }
 
-await sdk.ledger
-    .prepare({
-        partyId: sender.partyId,
-        commands: createProposal,
-        disclosedContracts: [],
-    })
-    .sign(sender.keyPair.privateKey)
-    .execute({ partyId: sender.partyId })
+// await sdk.ledger
+//     .prepare({
+//         partyId: sender.partyId,
+//         commands: createProposal,
+//         disclosedContracts: [],
+//     })
+//     .sign(sender.keyPair.privateKey)
+//     .execute({ partyId: sender.partyId })
 
-logger.info(
-    'OTC Trade Proposal created by Alice, ready for Bob to accept OTCTradeProposal'
-)
+// logger.info(
+//     'OTC Trade Proposal created by Alice, ready for Bob to accept OTCTradeProposal'
+// )
 
-// Bob accepts OTCTradeProposal
+// // Bob accepts OTCTradeProposal
 
-const activeTradeProposals = await sdk.ledger.acsReader.readJsContracts({
-    templateIds: [
-        '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
-    ],
-    parties: [recipient.partyId],
-    filterByParty: true,
-})
+// const activeTradeProposals = await sdk.ledger.acsReader.readJsContracts({
+//     templateIds: [
+//         '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
+//     ],
+//     parties: [recipient.partyId],
+//     filterByParty: true,
+// })
 
-const otcpCid = activeTradeProposals[0].contractId
+// const otcpCid = activeTradeProposals[0].contractId
 
-if (otcpCid === undefined) {
-    throw new Error('Unexpected lack of OTCTradeProposal contract')
-}
-const acceptCmd = [
-    {
-        ExerciseCommand: {
-            templateId:
-                '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
-            contractId: otcpCid,
-            choice: 'OTCTradeProposal_Accept',
-            choiceArgument: { approver: recipient.partyId },
-        },
-    },
-]
+// if (otcpCid === undefined) {
+//     throw new Error('Unexpected lack of OTCTradeProposal contract')
+// }
+// const acceptCmd = [
+//     {
+//         ExerciseCommand: {
+//             templateId:
+//                 '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
+//             contractId: otcpCid,
+//             choice: 'OTCTradeProposal_Accept',
+//             choiceArgument: { approver: recipient.partyId },
+//         },
+//     },
+// ]
 
-await sdk.ledger
-    .prepare({
-        partyId: recipient.partyId,
-        commands: acceptCmd,
-        disclosedContracts: [],
-    })
-    .sign(recipient.keyPair.privateKey)
-    .execute({ partyId: recipient.partyId })
+// await sdk.ledger
+//     .prepare({
+//         partyId: recipient.partyId,
+//         commands: acceptCmd,
+//         disclosedContracts: [],
+//     })
+//     .sign(recipient.keyPair.privateKey)
+//     .execute({ partyId: recipient.partyId })
 
-logger.info('Bob accepted OTCTradeProposal')
+// logger.info('Bob accepted OTCTradeProposal')
 
-//Venue initiates settlement of OTCTradeProposal
+// //Venue initiates settlement of OTCTradeProposal
 
-const activeTradeProposals2 = await sdk.ledger.acsReader.readJsContracts({
-    templateIds: [
-        '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
-    ],
-    parties: [venue.partyId],
-    filterByParty: true,
-})
+// const activeTradeProposals2 = await sdk.ledger.acsReader.readJsContracts({
+//     templateIds: [
+//         '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
+//     ],
+//     parties: [venue.partyId],
+//     filterByParty: true,
+// })
 
-const now = new Date()
-const prepareUntil = new Date(now.getTime() + 60 * 60 * 1000).toISOString()
-const settleBefore = new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString()
+// const now = new Date()
+// const prepareUntil = new Date(now.getTime() + 60 * 60 * 1000).toISOString()
+// const settleBefore = new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString()
 
-const otcpCid2 = activeTradeProposals2[0].contractId
+// const otcpCid2 = activeTradeProposals2[0].contractId
 
-const initiateSettlementCmd = [
-    {
-        ExerciseCommand: {
-            templateId:
-                '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
-            contractId: otcpCid2,
-            choice: 'OTCTradeProposal_InitiateSettlement',
-            choiceArgument: { prepareUntil, settleBefore },
-        },
-    },
-]
+// const initiateSettlementCmd = [
+//     {
+//         ExerciseCommand: {
+//             templateId:
+//                 '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTradeProposal',
+//             contractId: otcpCid2,
+//             choice: 'OTCTradeProposal_InitiateSettlement',
+//             choiceArgument: { prepareUntil, settleBefore },
+//         },
+//     },
+// ]
 
-await sdk.ledger
-    .prepare({
-        partyId: venue.partyId,
-        commands: initiateSettlementCmd,
-        disclosedContracts: [],
-    })
-    .sign(venue.keyPair.privateKey)
-    .execute({ partyId: venue.partyId })
+// await sdk.ledger
+//     .prepare({
+//         partyId: venue.partyId,
+//         commands: initiateSettlementCmd,
+//         disclosedContracts: [],
+//     })
+//     .sign(venue.keyPair.privateKey)
+//     .execute({ partyId: venue.partyId })
 
-logger.info('Venue initated settlement of OTCTradeProposal')
+// logger.info('Venue initated settlement of OTCTradeProposal')
 
-const otcTrades = await sdk.ledger.acsReader.readJsContracts({
-    templateIds: [
-        '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade',
-    ],
-    parties: [venue.partyId],
-    filterByParty: true,
-})
+// const otcTrades = await sdk.ledger.acsReader.readJsContracts({
+//     templateIds: [
+//         '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade',
+//     ],
+//     parties: [venue.partyId],
+//     filterByParty: true,
+// })
 
-const otcTradeCid = otcTrades[0].contractId
-if (!otcTradeCid) throw new Error('OTCTrade not found for venue')
+// const otcTradeCid = otcTrades[0].contractId
+// if (!otcTradeCid) throw new Error('OTCTrade not found for venue')
 
-logger.info({ otcTradeCid }, `OtcTrades were found`)
+// logger.info({ otcTradeCid }, `OtcTrades were found`)
 
-const pendingAllocationRequestsAlice =
-    await sdk.token.allocation.request.pending(sender.partyId)
+// const pendingAllocationRequestsAlice =
+//     await sdk.token.allocation.request.pending(sender.partyId)
 
-const allocationRequestViewAlice =
-    pendingAllocationRequestsAlice?.[0].interfaceViewValue!
+// const allocationRequestViewAlice =
+//     pendingAllocationRequestsAlice?.[0].interfaceViewValue!
 
-const legIdAlice = Object.keys(allocationRequestViewAlice.transferLegs).find(
-    (key) =>
-        allocationRequestViewAlice.transferLegs[key].sender === sender.partyId
-)!
-if (!legIdAlice) throw new Error(`No leg found for Alice`)
+// const legIdAlice = Object.keys(allocationRequestViewAlice.transferLegs).find(
+//     (key) =>
+//         allocationRequestViewAlice.transferLegs[key].sender === sender.partyId
+// )!
+// if (!legIdAlice) throw new Error(`No leg found for Alice`)
 
-const legAlice = allocationRequestViewAlice.transferLegs[legIdAlice]
+// const legAlice = allocationRequestViewAlice.transferLegs[legIdAlice]
 
-const specAlice = {
-    settlement: allocationRequestViewAlice.settlement,
-    transferLegId: legIdAlice,
-    transferLeg: legAlice,
-}
+// const specAlice = {
+//     settlement: allocationRequestViewAlice.settlement,
+//     transferLegId: legIdAlice,
+//     transferLeg: legAlice,
+// }
 
-//TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
+// //TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
 
-const [allocateCmdAlice, allocateDisclosedAlice] =
-    await sdk.token.allocation.instruction.create({
-        allocationSpecification: specAlice,
-        asset: amuletAsset,
-    })
+// const [allocateCmdAlice, allocateDisclosedAlice] =
+//     await sdk.token.allocation.instruction.create({
+//         allocationSpecification: specAlice,
+//         asset: amuletAsset,
+//     })
 
-await sdk.ledger
-    .prepare({
-        partyId: sender.partyId,
-        commands: allocateCmdAlice,
-        disclosedContracts: allocateDisclosedAlice,
-    })
-    .sign(sender.keyPair.privateKey)
-    .execute({ partyId: sender.partyId })
+// await sdk.ledger
+//     .prepare({
+//         partyId: sender.partyId,
+//         commands: allocateCmdAlice,
+//         disclosedContracts: allocateDisclosedAlice,
+//     })
+//     .sign(sender.keyPair.privateKey)
+//     .execute({ partyId: sender.partyId })
 
-logger.info('Alice created Allocation for her TransferLeg')
+// logger.info('Alice created Allocation for her TransferLeg')
 
-const pendingAllocationRequestsBob = await sdk.token.allocation.request.pending(
-    recipient.partyId
-)
+// const pendingAllocationRequestsBob = await sdk.token.allocation.request.pending(
+//     recipient.partyId
+// )
 
-const allocationRequestViewBob =
-    pendingAllocationRequestsBob?.[0].interfaceViewValue!
+// const allocationRequestViewBob =
+//     pendingAllocationRequestsBob?.[0].interfaceViewValue!
 
-const legIdBob = Object.keys(allocationRequestViewAlice.transferLegs).find(
-    (key) =>
-        allocationRequestViewAlice.transferLegs[key].sender ===
-        recipient!.partyId
-)!
-if (!legIdBob) throw new Error(`No leg found for Bob`)
+// const legIdBob = Object.keys(allocationRequestViewAlice.transferLegs).find(
+//     (key) =>
+//         allocationRequestViewAlice.transferLegs[key].sender ===
+//         recipient!.partyId
+// )!
+// if (!legIdBob) throw new Error(`No leg found for Bob`)
 
-const legBob = allocationRequestViewAlice.transferLegs[legIdBob]
+// const legBob = allocationRequestViewAlice.transferLegs[legIdBob]
 
-const specBob = {
-    settlement: allocationRequestViewBob.settlement,
-    transferLegId: legIdBob,
-    transferLeg: legBob,
-}
+// const specBob = {
+//     settlement: allocationRequestViewBob.settlement,
+//     transferLegId: legIdBob,
+//     transferLeg: legBob,
+// }
 
-//TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
+// //TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
 
-const [allocateCmdBob, allocateDisclosedBlice] =
-    await sdk.token.allocation.instruction.create({
-        allocationSpecification: specBob,
-        asset: amuletAsset,
-    })
+// const [allocateCmdBob, allocateDisclosedBlice] =
+//     await sdk.token.allocation.instruction.create({
+//         allocationSpecification: specBob,
+//         asset: amuletAsset,
+//     })
 
-await sdk.ledger
-    .prepare({
-        partyId: recipient.partyId,
-        commands: allocateCmdBob,
-        disclosedContracts: allocateDisclosedBlice,
-    })
-    .sign(recipient.keyPair.privateKey)
-    .execute({ partyId: recipient.partyId })
+// await sdk.ledger
+//     .prepare({
+//         partyId: recipient.partyId,
+//         commands: allocateCmdBob,
+//         disclosedContracts: allocateDisclosedBlice,
+//     })
+//     .sign(recipient.keyPair.privateKey)
+//     .execute({ partyId: recipient.partyId })
 
-logger.info('Bob created Allocation for his TransferLeg')
+// logger.info('Bob created Allocation for his TransferLeg')
 
-// Once the legs have been allocated, venue settles the trade triggering transfer of holdings
+// // Once the legs have been allocated, venue settles the trade triggering transfer of holdings
 
-const allocationsVenue = await sdk.token.allocation.pending(venue.partyId)
+// const allocationsVenue = await sdk.token.allocation.pending(venue.partyId)
 
-const settlementRefId = allocationRequestViewAlice.settlement.settlementRef.id
-const relevantAllocations = allocationsVenue.filter(
-    (a) =>
-        a.interfaceViewValue.allocation.settlement.executor ===
-            venue!.partyId &&
-        a.interfaceViewValue.allocation.settlement.settlementRef.id ===
-            settlementRefId
-)
+// const settlementRefId = allocationRequestViewAlice.settlement.settlementRef.id
+// const relevantAllocations = allocationsVenue.filter(
+//     (a) =>
+//         a.interfaceViewValue.allocation.settlement.executor ===
+//             venue!.partyId &&
+//         a.interfaceViewValue.allocation.settlement.settlementRef.id ===
+//             settlementRefId
+// )
 
-if (relevantAllocations.length === 0)
-    throw new Error('No matching allocations for this trade')
+// if (relevantAllocations.length === 0)
+//     throw new Error('No matching allocations for this trade')
 
-const allocationEntries = await Promise.all(
-    relevantAllocations.map(async (a) => {
-        const cid = a.contractId
-        const choiceContext = await sdk.token.allocation.context.execute({
-            allocationCid: cid,
-            registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
-        })
+// const allocationEntries = await Promise.all(
+//     relevantAllocations.map(async (a) => {
+//         const cid = a.contractId
+//         const choiceContext = await sdk.token.allocation.context.execute({
+//             allocationCid: cid,
+//             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+//         })
 
-        return {
-            cid,
-            legId: a.interfaceViewValue.allocation.transferLegId,
-            extraArgs: {
-                context: {
-                    values: choiceContext.choiceContextData?.values ?? {},
-                },
-                meta: { values: {} },
-            },
-            disclosedContracts: choiceContext.disclosedContracts ?? [],
-        }
-    })
-)
+//         return {
+//             cid,
+//             legId: a.interfaceViewValue.allocation.transferLegId,
+//             extraArgs: {
+//                 context: {
+//                     values: choiceContext.choiceContextData?.values ?? {},
+//                 },
+//                 meta: { values: {} },
+//             },
+//             disclosedContracts: choiceContext.disclosedContracts ?? [],
+//         }
+//     })
+// )
 
-const allocationsWithContext: Record<string, { _1: string; _2: any }> =
-    Object.fromEntries(
-        allocationEntries.map((e) => [e.legId, { _1: e.cid, _2: e.extraArgs }])
-    )
+// const allocationsWithContext: Record<string, { _1: string; _2: any }> =
+//     Object.fromEntries(
+//         allocationEntries.map((e) => [e.legId, { _1: e.cid, _2: e.extraArgs }])
+//     )
 
-const uniqueDisclosedContracts = Array.from(
-    new Map(
-        allocationEntries
-            .flatMap((e) => e.disclosedContracts)
-            .map((d: any) => [d.contractId, d])
-    ).values()
-)
+// const uniqueDisclosedContracts = Array.from(
+//     new Map(
+//         allocationEntries
+//             .flatMap((e) => e.disclosedContracts)
+//             .map((d: any) => [d.contractId, d])
+//     ).values()
+// )
 
-const settleCmd = [
-    {
-        ExerciseCommand: {
-            templateId:
-                '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade',
-            contractId: otcTradeCid,
-            choice: 'OTCTrade_Settle',
-            choiceArgument: { allocationsWithContext },
-        },
-    },
-]
+// const settleCmd = [
+//     {
+//         ExerciseCommand: {
+//             templateId:
+//                 '#splice-token-test-trading-app:Splice.Testing.Apps.TradingApp:OTCTrade',
+//             contractId: otcTradeCid,
+//             choice: 'OTCTrade_Settle',
+//             choiceArgument: { allocationsWithContext },
+//         },
+//     },
+// ]
 
-await sdk.ledger
-    .prepare({
-        partyId: venue.partyId,
-        commands: settleCmd,
-        disclosedContracts: uniqueDisclosedContracts,
-    })
-    .sign(venue.keyPair.privateKey)
-    .execute({ partyId: venue.partyId })
+// await sdk.ledger
+//     .prepare({
+//         partyId: venue.partyId,
+//         commands: settleCmd,
+//         disclosedContracts: uniqueDisclosedContracts,
+//     })
+//     .sign(venue.keyPair.privateKey)
+//     .execute({ partyId: venue.partyId })
 
-logger.info(
-    'Venue settled the OTCTrade, holdings are transfered to Alice and Bob'
-)
+// logger.info(
+//     'Venue settled the OTCTrade, holdings are transfered to Alice and Bob'
+// )
 
-await sdk.token.utxos
-    .list({
-        partyId: sender.partyId,
-    })
-    .then((transactions) => {
-        logger.info(
-            transactions,
-            'Token Standard Holding Transactions (Alice):'
-        )
-    })
+// await sdk.token.utxos
+//     .list({
+//         partyId: sender.partyId,
+//     })
+//     .then((transactions) => {
+//         logger.info(
+//             transactions,
+//             'Token Standard Holding Transactions (Alice):'
+//         )
+//     })
 
-await sdk.token.utxos
-    .list({
-        partyId: recipient.partyId,
-    })
-    .then((transactions) => {
-        logger.info(transactions, 'Token Standard Holding Transactions (Bob):')
-    })
+// await sdk.token.utxos
+//     .list({
+//         partyId: recipient.partyId,
+//     })
+//     .then((transactions) => {
+//         logger.info(transactions, 'Token Standard Holding Transactions (Bob):')
+//     })
 
-await sdk.token.holdings({ partyId: recipient.partyId }).then((allHoldings) => {
-    logger.info(allHoldings, 'List holding transactions (Bob)')
-})
+// await sdk.token.holdings({ partyId: recipient.partyId }).then((allHoldings) => {
+//     logger.info(allHoldings, 'List holding transactions (Bob)')
+// })
 
-// Forcefully exit to prevent floating ledger retries from crashing the event loop
-process.exit(0)
+// // Forcefully exit to prevent floating ledger retries from crashing the event loop
+// process.exit(0)
