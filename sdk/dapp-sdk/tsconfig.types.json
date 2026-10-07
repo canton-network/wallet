@@ -8,7 +8,8 @@
         "outDir": "./dist",
         "moduleResolution": "bundler",
         "noEmit": false,
-        "composite": false
+        "composite": false,
+        "types": ["node", "qrcode"]
     },
     "files": ["src/index.ts"],
     "exclude": ["**/*.test.*", "**/*.spec.*", "**/__tests__/**"]

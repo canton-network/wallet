@@ -9,7 +9,8 @@
         "moduleResolution": "bundler",
         "noEmit": false,
         "composite": false,
-        "exactOptionalPropertyTypes": false
+        "exactOptionalPropertyTypes": false,
+        "types": ["lodash", "node"]
     },
     "include": ["src/**/*.ts", "src/**/*.d.ts"],
     "exclude": ["**/*.test.*", "**/*.spec.*", "**/__tests__/**"]

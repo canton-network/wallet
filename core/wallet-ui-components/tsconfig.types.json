@@ -7,7 +7,8 @@
         "declarationMap": true,
         "rootDir": "./src",
         "outDir": "./dist",
-        "composite": false
+        "composite": false,
+        "types": ["bootstrap", "fs-extra"]
     },
     "include": ["src/**/*.ts"]
 }
