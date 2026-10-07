@@ -103,7 +103,7 @@
         "*": "pnpm prettier --config .prettierrc --write --ignore-unknown",
         "*.{ts,tsx,js,jsx,mjs,cjs}": "pnpm eslint --fix"
     },
-    "packageManager": "pnpm@12.4.1",
+    "packageManager": "pnpm@12.10.1",
     "dependencies": {
         "@nx/js": "catalog:",
         "nx": "catalog:"
