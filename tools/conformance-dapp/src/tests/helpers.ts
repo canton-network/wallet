@@ -138,8 +138,8 @@ export async function expectRejection(
     } catch (error) {
         if (!isWalletError(error)) throw error
         requireCondition(
-            codes.some((expected) => error.code === expected),
-            `Expected wallet error code ${codes.join(' or ')}, received ${String(error.code)}`
+            codes.includes(error.code),
+            `Expected wallet error code ${codes.join(' or ')}, received ${error.code}`
         )
         return
     }

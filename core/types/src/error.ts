@@ -52,3 +52,69 @@ export function isCip103ErrorCode(code: unknown): code is Cip103ErrorCode {
         (Object.values(CIP103_ERROR_CODES) as number[]).includes(code)
     )
 }
+
+/** The error CIP-103 providers reject `request` with (EIP-1193 `ProviderRpcError`). */
+export class ProviderRpcError extends Error {
+    override readonly name = 'ProviderRpcError'
+    readonly code: Cip103ErrorCode
+    readonly data?: unknown
+
+    constructor(
+        code: Cip103ErrorCode,
+        message: string,
+        data?: unknown,
+        options?: ErrorOptions
+    ) {
+        super(message, options)
+        this.code = code
+        this.data = data
+    }
+
+    /** Serializes to the JSON-RPC error object, since `message` is not enumerable. */
+    toJSON(): { code: Cip103ErrorCode; message: string; data?: unknown } {
+        return { code: this.code, message: this.message, data: this.data }
+    }
+}
+
+function hasNumericCode(
+    value: unknown
+): value is { code: number; message?: unknown; data?: unknown } {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        'code' in value &&
+        typeof value.code === 'number'
+    )
+}
+
+/** Normalizes JSON-RPC error objects, full JSON-RPC responses and arbitrary throws, keeping the original as `cause`. */
+export function toProviderRpcError(error: unknown): ProviderRpcError {
+    if (error instanceof ProviderRpcError) return error
+    const rpcError =
+        typeof error === 'object' &&
+        error !== null &&
+        !('code' in error) &&
+        'error' in error
+            ? error.error
+            : error
+    if (hasNumericCode(rpcError)) {
+        const { message, data } = rpcError
+        const code = isCip103ErrorCode(rpcError.code)
+            ? rpcError.code
+            : CIP103_ERROR_CODES.InternalError
+        return new ProviderRpcError(
+            code,
+            typeof message === 'string' && message !== ''
+                ? message
+                : CIP103_ERROR_MESSAGES[code],
+            data,
+            { cause: error }
+        )
+    }
+    return new ProviderRpcError(
+        CIP103_ERROR_CODES.InternalError,
+        error instanceof Error ? error.message : String(error),
+        undefined,
+        { cause: error }
+    )
+}

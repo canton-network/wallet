@@ -22,7 +22,12 @@ import type {
 import * as storage from '../storage'
 import type { StatusEvent } from '@canton-network/core-wallet-dapp-remote-rpc-client'
 import { clearAllLocalState } from '../util'
-import { WalletEvent } from '@canton-network/core-types'
+import {
+    CIP103_ERROR_CODES,
+    ProviderRpcError,
+    toProviderRpcError,
+    WalletEvent,
+} from '@canton-network/core-types'
 import { DappAsyncProvider } from '@canton-network/core-provider-dapp'
 import { dappSDKController } from '../sdk-controller'
 
@@ -145,7 +150,17 @@ export class RemoteAdapter implements ProviderAdapter {
 class RemoteMappedProvider implements Provider<DappRpcTypes> {
     constructor(private readonly remoteProvider: DappAsyncProvider) {}
 
-    request<M extends keyof DappRpcTypes>(
+    async request<M extends keyof DappRpcTypes>(
+        args: RequestArgs<DappRpcTypes, M>
+    ): Promise<DappRpcTypes[M]['result']> {
+        try {
+            return await this.dispatch(args)
+        } catch (error) {
+            throw toProviderRpcError(error)
+        }
+    }
+
+    private dispatch<M extends keyof DappRpcTypes>(
         args: RequestArgs<DappRpcTypes, M>
     ): Promise<DappRpcTypes[M]['result']> {
         const controller = dappSDKController(this.remoteProvider)
@@ -194,7 +209,10 @@ class RemoteMappedProvider implements Provider<DappRpcTypes> {
                     DappRpcTypes[M]['result']
                 >
             default:
-                throw new Error('Unsupported method')
+                throw new ProviderRpcError(
+                    CIP103_ERROR_CODES.UnsupportedMethod,
+                    `Unsupported method: ${String(args.method)}`
+                )
         }
     }
 

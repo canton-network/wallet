@@ -9,6 +9,8 @@ import type {
 } from '@canton-network/core-splice-provider'
 import {
     CIP103_ERROR_CODES,
+    ProviderRpcError,
+    toProviderRpcError,
     type RequestArgs,
 } from '@canton-network/core-types'
 import type {
@@ -203,6 +205,16 @@ export class WalletConnectAdapter
     async request<M extends keyof DappRpcTypes>(
         args: RequestArgs<DappRpcTypes, M>
     ): Promise<DappRpcTypes[M]['result']> {
+        try {
+            return await this.handleRequest(args)
+        } catch (error) {
+            throw toProviderRpcError(error)
+        }
+    }
+
+    private async handleRequest<M extends keyof DappRpcTypes>(
+        args: RequestArgs<DappRpcTypes, M>
+    ): Promise<DappRpcTypes[M]['result']> {
         if (args.method === 'connect') {
             if (!this.session) {
                 await this.establishSession()
@@ -241,7 +253,10 @@ export class WalletConnectAdapter
         }
 
         if (!this.session) {
-            throw new Error('WalletConnect session not established')
+            throw new ProviderRpcError(
+                CIP103_ERROR_CODES.Unauthorized,
+                'WalletConnect session not established'
+            )
         }
 
         // Both prepareExecute and prepareExecuteAndWait map to
@@ -315,33 +330,19 @@ export class WalletConnectAdapter
         params?: unknown
     ): Promise<T> {
         if (!this.signClient || !this.session) {
-            throw new Error('WalletConnect session not established')
+            throw new ProviderRpcError(
+                CIP103_ERROR_CODES.Unauthorized,
+                'WalletConnect session not established'
+            )
         }
-        try {
-            return (await this.signClient.request({
-                topic: this.session.topic,
-                chainId: this.chainId,
-                request: {
-                    method: `canton_${method}`,
-                    params: params ?? {},
-                },
-            })) as T
-        } catch (err: unknown) {
-            const errObj = typeof err === 'object' && err !== null ? err : {}
-            const message =
-                err instanceof Error
-                    ? err.message
-                    : 'message' in errObj &&
-                        typeof (errObj as { message: unknown }).message ===
-                            'string'
-                      ? (errObj as { message: string }).message
-                      : String(err)
-            const code =
-                'code' in errObj
-                    ? (errObj as { code: number }).code
-                    : CIP103_ERROR_CODES.InternalError
-            throw new Error(`RPC error: ${code} - ${message}`, { cause: err })
-        }
+        return (await this.signClient.request({
+            topic: this.session.topic,
+            chainId: this.chainId,
+            request: {
+                method: `canton_${method}`,
+                params: params ?? {},
+            },
+        })) as T
     }
 
     // ── Private: session lifecycle ──────────────────────────────────
