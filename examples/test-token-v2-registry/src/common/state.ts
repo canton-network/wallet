@@ -3,7 +3,7 @@
 
 import type { SDKInterface } from '@canton-network/wallet-sdk'
 import defaultSdk from './defaultSdk'
-import { DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT } from '@canton-network/core-token-standard-v2'
+import { DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT } from '@canton-network/example-test-token-v1-registry'
 
 export interface RegistryConfig {
     sdk: SDKInterface

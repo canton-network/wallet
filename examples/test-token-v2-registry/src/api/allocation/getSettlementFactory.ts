@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
-import { emptyChoiceContext } from '../common'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 
 /**
@@ -11,5 +10,6 @@ import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 export const getSettlementFactory: TExpressOpenApiRequestHandler<
     OffLedger.AllocationV2.paths['/registry/allocation/v2/settlement-factory']['post']
 > = (_req, res) => {
-    res.json(emptyChoiceContext)
+    // @ts-expect-error this is a dummy to be changed later
+    res.json({})
 }

@@ -37,7 +37,7 @@
         "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/example-test-token-v2-registry": "catalog:",
+        "@canton-network/example-test-token-v1-registry": "catalog:",
         "@canton-network/core-splice-codegen": "catalog:",
         "@canton-network/core-token-standard": "catalog:",
         "@canton-network/core-token-standard-v2": "catalog:",
