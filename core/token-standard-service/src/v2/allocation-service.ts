@@ -20,7 +20,6 @@ import Decimal from 'decimal.js'
 
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
-type Prepared = [ExerciseCommand, DisclosedContract[]]
 
 const EMPTY_EXTRA_ARGS = () => ({
     context: { values: {} },
@@ -114,7 +113,7 @@ export class AllocationService {
             factoryId: string
             choiceContext: AllocationChoiceContextV2
         }
-    ): Promise<Prepared> {
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const choiceArgs = await this.buildAllocateChoiceArgs(args)
 
         const { factoryId, choiceContext } =

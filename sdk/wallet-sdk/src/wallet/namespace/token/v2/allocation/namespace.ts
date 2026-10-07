@@ -8,10 +8,23 @@ import {
     AllocationInstructionView,
     AllocationView,
     AllocationRequestView,
+    SettlementInfo,
+    AllocationSpecification,
 } from '@canton-network/core-token-standard-v2'
 import { TokenNamespaceConfig } from '../../namespace'
 import type { PartyId } from '@canton-network/core-types'
 import { PrettyContract } from '@canton-network/core-tx-parser'
+import { PreparedCommand } from '../../../transactions/types.js'
+
+type AllocatonInstrictonCreateParamsV2 = {
+    settlement: SettlementInfo
+    spec: AllocationSpecification
+    admin: PartyId
+    actors?: PartyId[]
+    inputUtxos?: string[]
+    excludeCids?: ReadonlySet<string>
+    requestedAt?: string
+}
 
 export class AllocationNamespace {
     constructor(private readonly sdkContext: TokenNamespaceConfig) {}
@@ -34,6 +47,18 @@ export class AllocationNamespace {
                 partyId,
                 ALLOCATION_INSTRUCTION_INTERFACE_ID_V2
             )
+        },
+
+        create: async (
+            params: AllocatonInstrictonCreateParamsV2,
+            registryURL: URL
+        ): Promise<PreparedCommand> => {
+            const [command, disclosedConctracts] =
+                await this.sdkContext.tokenStandardService.v2.allocation.createAllocation(
+                    params,
+                    registryURL
+                )
+            return [{ ExerciseCommand: command }, disclosedConctracts]
         },
     }
 
