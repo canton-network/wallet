@@ -74,8 +74,17 @@ export const errorLogLevel = (error: unknown): 'info' | 'error' => {
             case errorCodes.rpc.methodNotSupported:
             case errorCodes.rpc.parse:
             case errorCodes.provider.unauthorized:
+            case errorCodes.provider.unsupportedMethod:
             case errorCodes.provider.userRejectedRequest:
                 return 'info'
+            case errorCodes.rpc.internal:
+            case errorCodes.rpc.limitExceeded:
+            case errorCodes.rpc.resourceNotFound:
+            case errorCodes.rpc.resourceUnavailable:
+            case errorCodes.rpc.transactionRejected:
+            case errorCodes.provider.chainDisconnected:
+            case errorCodes.provider.disconnected:
+                return 'error'
             default:
                 return 'error'
         }
