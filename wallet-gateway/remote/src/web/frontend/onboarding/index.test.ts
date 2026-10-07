@@ -285,9 +285,7 @@ describe('UserUiSelfIssuedOnboarding', () => {
             element.shadowRoot
                 ?.querySelector('[role="alert"]')
                 ?.textContent?.replace(/\s+/g, ' ')
-        ).toContain(
-            'No wallet was found for the authentication party. Refresh the page to try again.'
-        )
+        ).toContain('No wallet was found for the authentication party.')
         expect(element.shadowRoot?.querySelector('wg-wallet-card')).toBeNull()
         expect(
             element.shadowRoot?.querySelector('wg-wallet-create-form')
