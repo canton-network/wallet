@@ -9,6 +9,7 @@ import {
     type Holding,
     type Beneficiaries,
     type OffLedger,
+    TransferInstruction,
 } from '@canton-network/core-token-standard'
 import type { ContractId, Logger, PartyId } from '@canton-network/core-types'
 import { Decimal } from 'decimal.js'
@@ -205,7 +206,8 @@ export class TransferService {
             const exercise: ExerciseCommand = {
                 templateId: TRANSFER_INSTRUCTION_INTERFACE_ID,
                 contractId: transferInstructionCid,
-                choice: 'TransferInstruction_Accept',
+                choice: TransferInstruction.TransferInstruction_Accept
+                    .choiceName,
                 choiceArgument: {
                     extraArgs: {
                         context: choiceContext.choiceContextData,
@@ -394,7 +396,8 @@ export class TransferService {
             const exercise: ExerciseCommand = {
                 templateId: TRANSFER_INSTRUCTION_INTERFACE_ID,
                 contractId: transferInstructionCid,
-                choice: 'TransferInstruction_Reject',
+                choice: TransferInstruction.TransferInstruction_Reject
+                    .choiceName,
                 choiceArgument: {
                     extraArgs: {
                         context: choiceContext.choiceContextData,
@@ -476,7 +479,8 @@ export class TransferService {
             const exercise: ExerciseCommand = {
                 templateId: TRANSFER_INSTRUCTION_INTERFACE_ID,
                 contractId: transferInstructionCid,
-                choice: 'TransferInstruction_Withdraw',
+                choice: TransferInstruction.TransferInstruction_Withdraw
+                    .choiceName,
                 choiceArgument: {
                     extraArgs: {
                         context: choiceContext.choiceContextData,

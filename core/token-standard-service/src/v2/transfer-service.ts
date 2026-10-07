@@ -18,6 +18,7 @@ import {
     type OffLedger as OffLedgerV2,
     TRANSFER_FACTORY_INTERFACE_ID_V2,
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+    TransferInstruction,
 } from '@canton-network/core-token-standard-v2'
 import { CoreService } from '../core-service.js'
 
@@ -152,7 +153,8 @@ export class TransferServiceV2 {
             {
                 templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
                 contractId: transferInstructionCid,
-                choice: 'TransferInstruction_Reject',
+                choice: TransferInstruction.TransferInstruction_Reject
+                    .choiceName,
                 choiceArgument: {
                     actors,
                     extraArgs: {
@@ -182,7 +184,8 @@ export class TransferServiceV2 {
             {
                 templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
                 contractId: transferInstructionCid,
-                choice: 'TransferInstruction_Withdraw',
+                choice: TransferInstruction.TransferInstruction_Withdraw
+                    .choiceName,
                 choiceArgument: {
                     actors,
                     extraArgs: {
@@ -212,7 +215,8 @@ export class TransferServiceV2 {
             {
                 templateId: TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
                 contractId: transferInstructionCid,
-                choice: 'TransferInstruction_Accept', //TODO: double check choice name
+                choice: TransferInstruction.TransferInstruction_Accept
+                    .choiceName,
                 choiceArgument: {
                     actors,
                     extraArgs: {
