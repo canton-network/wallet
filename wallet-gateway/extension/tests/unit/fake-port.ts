@@ -3,6 +3,7 @@
 
 import type { Browser } from 'wxt/browser'
 import { vi } from 'vitest'
+import { NOTIFICATIONS_PORT_NAME } from '@/utils/notifications.js'
 
 type Listener<T extends unknown[]> = (...args: T) => void
 
@@ -21,7 +22,7 @@ function fakeEvent<T extends unknown[]>() {
  * not fire `onDisconnect` on the same end; use `remoteDisconnect()` to
  * simulate the other end going away.
  */
-export function fakePort(name = 'splice-notifications') {
+export function fakePort(name = NOTIFICATIONS_PORT_NAME) {
     const onMessage = fakeEvent<[unknown]>()
     const onDisconnect = fakeEvent<[unknown]>()
     const fake = {

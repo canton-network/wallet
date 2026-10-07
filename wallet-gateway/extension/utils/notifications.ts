@@ -7,7 +7,7 @@ import type { DappNotificationEvent } from '@canton-network/core-wallet-services
  * Name of the `runtime.Port` the content script opens to the background script
  * to receive dApp notifications (CIP-103 events).
  */
-export const NOTIFICATIONS_PORT_NAME = 'splice-notifications'
+export const NOTIFICATIONS_PORT_NAME = 'wg-dapp-notifications'
 
 /**
  * A notification sent from the background script to the content script over the
