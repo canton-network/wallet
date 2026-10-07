@@ -23,7 +23,6 @@ import { setLocationHref } from '../navigation.js'
 
 import '@canton-network/core-wallet-ui-components'
 
-// TODO I probably want to rename that component, or have 2 separate one for only onboarding and one for only selecting existing
 @customElement('user-ui-self-issued-login')
 export class UserUiSelfIssuedLogin extends BaseElement {
     @state() private accessor submitting = false
