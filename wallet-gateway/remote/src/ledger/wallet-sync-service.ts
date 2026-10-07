@@ -18,6 +18,7 @@ import {
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
+import { canUserUseSelfIssuedAuth } from './self-issued-auth-service.js'
 import type { PartyAllocationService } from './party-allocation-service.js'
 import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
@@ -271,11 +272,8 @@ export class WalletSyncService {
                     path: { 'user-id': this.authContext.userId },
                 }
             )
-            // TODO should I check that user.identityProvider === ''?
-            const { primaryPartyAuthentication, primaryParty } = response.user
-            return primaryPartyAuthentication && primaryParty
-                ? primaryParty
-                : null
+            const user = response.user ?? null
+            return canUserUseSelfIssuedAuth(user) ? user.primaryParty : null
         } catch (error) {
             if (isJsCantonError(error) && error.code === 'USER_NOT_FOUND') {
                 return null

@@ -37,7 +37,7 @@ export type CreatePartyParams = {
     signingProviderId: SigningProvider
 }
 
-function canUserUseSelfIssuedAuth(
+export function canUserUseSelfIssuedAuth(
     user: UserSchema | null
 ): user is UserSchema & { primaryParty: string } {
     return (
