@@ -12,7 +12,8 @@ import type {
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import type { Provider } from '@canton-network/core-splice-provider'
 import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
-import { CIP103_ERROR_CODES, WalletEvent } from '@canton-network/core-types'
+import { WalletEvent } from '@canton-network/core-types'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import type { PrepareExecuteParams } from '../index'
 import { DappSDK } from '../sdk'
 import { RemoteAdapter } from '../adapter'
@@ -809,7 +810,7 @@ describe('dApp SDK - async', () => {
             // from `waitPromise` isn't reported as unhandled while we set up
             // the SSE push below.
             const assertion = expect(waitPromise).rejects.toMatchObject({
-                code: CIP103_ERROR_CODES.TransactionRejected,
+                code: errorCodes.rpc.transactionRejected,
             })
 
             await waitForTxWaitListener(provider, baseline)

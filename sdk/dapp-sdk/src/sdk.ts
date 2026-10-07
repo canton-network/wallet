@@ -41,10 +41,7 @@ import type {
     SignMessageParams,
     SignMessageResult,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import {
-    CIP103_ERROR_CODES,
-    ProviderRpcError,
-} from '@canton-network/core-types'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import { DappClient } from './client'
 import { ExtensionAdapter } from './adapter/extension-adapter'
 import {
@@ -84,8 +81,8 @@ function normalizeConnectOptions(
 }
 
 /**
- * Wallet requests reject with a `ProviderRpcError` whose `code` is one of
- * `CIP103_ERROR_CODES`; branch on `code`, not on `message`.
+ * Wallet requests reject with a `JsonRpcError` whose `code` is one of the CIP-103
+ * `errorCodes`; branch on `code`, not on `message`.
  */
 export class DappSDK {
     private readonly RECENT_GATEWAYS_KEY = 'splice_wallet_picker_recent'
@@ -279,8 +276,7 @@ export class DappSDK {
 
     private requireClient(): DappClient {
         if (!this.client)
-            throw new ProviderRpcError(
-                CIP103_ERROR_CODES.Unauthorized,
+            throw providerErrors.unauthorized(
                 'Not connected — call connect() first'
             )
         return this.client
@@ -530,8 +526,8 @@ export class DappSDK {
     }
 
     /**
-     * @throws `ProviderRpcError` with `UserRejectedRequest` or `TransactionRejected` if the
-     * transaction is declined or fails, and `ResourceUnavailable` if no outcome arrives in time.
+     * @throws `JsonRpcError` with `userRejectedRequest` or `transactionRejected` if the
+     * transaction is declined or fails, and `resourceUnavailable` if no outcome arrives in time.
      */
     async prepareExecuteAndWait(
         params: PrepareExecuteParams
@@ -540,8 +536,8 @@ export class DappSDK {
     }
 
     /**
-     * @throws `ProviderRpcError` with `UserRejectedRequest` or `TransactionRejected` if signing
-     * is declined or fails, and `ResourceUnavailable` if no signature arrives in time.
+     * @throws `JsonRpcError` with `userRejectedRequest` or `transactionRejected` if signing
+     * is declined or fails, and `resourceUnavailable` if no signature arrives in time.
      */
     async signMessage(params: SignMessageParams): Promise<SignMessageResult> {
         return this.requireClient().signMessage(params)

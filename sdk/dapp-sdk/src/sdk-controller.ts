@@ -14,10 +14,7 @@ import type {
     SignMessageResult,
     Wallet,
 } from './dapp-api/rpc-gen/typings'
-import {
-    CIP103_ERROR_CODES,
-    ProviderRpcError,
-} from '@canton-network/core-types'
+import { rpcErrors } from '@canton-network/core-rpc-errors'
 import { popup } from '@canton-network/core-wallet-ui-components'
 import type * as dappAsyncAPI from '@canton-network/core-wallet-dapp-remote-rpc-client'
 
@@ -28,12 +25,7 @@ const withTimeout = (
 ) =>
     setTimeout(() => {
         console.warn(`SDK: ${details}`)
-        reject(
-            new ProviderRpcError(
-                CIP103_ERROR_CODES.ResourceUnavailable,
-                details
-            )
-        )
+        reject(rpcErrors.resourceUnavailable(details))
     }, timeoutMs)
 
 export const dappSDKController = (provider: DappAsyncProvider) =>
@@ -116,8 +108,7 @@ export const dappSDKController = (provider: DappAsyncProvider) =>
                             provider.removeListener('txChanged', listener)
                             clearTimeout(timeout)
                             reject(
-                                new ProviderRpcError(
-                                    CIP103_ERROR_CODES.TransactionRejected,
+                                rpcErrors.transactionRejected(
                                     `Transaction with commandId ${event.commandId} failed to execute.`
                                 )
                             )
@@ -194,8 +185,7 @@ export const dappSDKController = (provider: DappAsyncProvider) =>
                     if (event.status === 'failed') {
                         // The event cannot tell a user rejection from a signing failure.
                         reject(
-                            new ProviderRpcError(
-                                CIP103_ERROR_CODES.TransactionRejected,
+                            rpcErrors.transactionRejected(
                                 `Message signing failed for messageId ${event.messageId}.`
                             )
                         )

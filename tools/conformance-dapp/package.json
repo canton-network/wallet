@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "@canton-network/core-provider-conformance": "catalog:",
+        "@canton-network/core-rpc-errors": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-ui-components": "catalog:",
         "@canton-network/dapp-sdk": "catalog:",

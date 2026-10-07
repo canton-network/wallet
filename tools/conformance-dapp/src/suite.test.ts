@@ -19,7 +19,7 @@ import {
     SignatureSchema,
 } from './report.ts'
 import { WrappingTestProvider } from '@canton-network/core-provider-conformance'
-import { ProviderRpcError } from '@canton-network/core-types'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import {
     createProvider,
     type Provider,
@@ -230,9 +230,14 @@ describe('Conformance suite', () => {
 
     it('redact keeps the name, message and code of errors', () => {
         expect(
-            redact(new ProviderRpcError(4001, 'Rejected', { secret: 'x' }))
+            redact(
+                providerErrors.userRejectedRequest({
+                    message: 'Rejected',
+                    data: { secret: 'x' },
+                })
+            )
         ).toStrictEqual({
-            name: 'ProviderRpcError',
+            name: 'Error',
             message: 'Rejected',
             code: 4001,
             data: { secret: '*****' },
@@ -535,15 +540,6 @@ describe('Conformance suite', () => {
         [
             'rejected with code -32603',
             { code: -32603, message: 'Rejected' },
-            'failed',
-        ],
-        [
-            'rejected with a JSON-RPC response envelope',
-            {
-                jsonrpc: '2.0',
-                id: '1',
-                error: { code: 4001, message: 'Rejected' },
-            },
             'failed',
         ],
         ['resolved by an async wallet', null, 'passed'],

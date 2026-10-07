@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventListener } from '@canton-network/core-splice-provider'
 import type { StatusEvent } from '@canton-network/core-wallet-dapp-rpc-client'
-import { ProviderRpcError } from '@canton-network/core-types'
+import { JsonRpcError } from '@canton-network/core-rpc-errors'
 import { WALLETCONNECT_ICON } from '../assets'
 import {
     WalletConnectAdapter,
@@ -281,7 +281,7 @@ describe('WalletConnectAdapter', () => {
         )
 
         const pending = adapter.request({ method: 'listAccounts' })
-        await expect(pending).rejects.toBeInstanceOf(ProviderRpcError)
+        await expect(pending).rejects.toBeInstanceOf(JsonRpcError)
         await expect(pending).rejects.toMatchObject({
             code: 4001,
             message: 'User rejected',

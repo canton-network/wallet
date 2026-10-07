@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "@canton-network/core-provider-dapp": "catalog:",
+        "@canton-network/core-rpc-errors": "catalog:",
         "@canton-network/core-rpc-transport": "catalog:",
         "@canton-network/core-splice-provider": "catalog:",
         "@canton-network/core-types": "catalog:",

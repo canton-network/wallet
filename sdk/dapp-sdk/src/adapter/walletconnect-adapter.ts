@@ -7,12 +7,12 @@ import type {
     Provider,
     EventListener,
 } from '@canton-network/core-splice-provider'
+import type { RequestArgs } from '@canton-network/core-types'
 import {
-    CIP103_ERROR_CODES,
-    ProviderRpcError,
-    toProviderRpcError,
-    type RequestArgs,
-} from '@canton-network/core-types'
+    errorCodes,
+    providerErrors,
+    toJsonRpcError,
+} from '@canton-network/core-rpc-errors'
 import type {
     RpcTypes as DappRpcTypes,
     Provider as ProviderInfo,
@@ -205,16 +205,6 @@ export class WalletConnectAdapter
     async request<M extends keyof DappRpcTypes>(
         args: RequestArgs<DappRpcTypes, M>
     ): Promise<DappRpcTypes[M]['result']> {
-        try {
-            return await this.handleRequest(args)
-        } catch (error) {
-            throw toProviderRpcError(error)
-        }
-    }
-
-    private async handleRequest<M extends keyof DappRpcTypes>(
-        args: RequestArgs<DappRpcTypes, M>
-    ): Promise<DappRpcTypes[M]['result']> {
         if (args.method === 'connect') {
             if (!this.session) {
                 await this.establishSession()
@@ -253,8 +243,7 @@ export class WalletConnectAdapter
         }
 
         if (!this.session) {
-            throw new ProviderRpcError(
-                CIP103_ERROR_CODES.Unauthorized,
+            throw providerErrors.unauthorized(
                 'WalletConnect session not established'
             )
         }
@@ -330,19 +319,22 @@ export class WalletConnectAdapter
         params?: unknown
     ): Promise<T> {
         if (!this.signClient || !this.session) {
-            throw new ProviderRpcError(
-                CIP103_ERROR_CODES.Unauthorized,
+            throw providerErrors.unauthorized(
                 'WalletConnect session not established'
             )
         }
-        return (await this.signClient.request({
-            topic: this.session.topic,
-            chainId: this.chainId,
-            request: {
-                method: `canton_${method}`,
-                params: params ?? {},
-            },
-        })) as T
+        try {
+            return (await this.signClient.request({
+                topic: this.session.topic,
+                chainId: this.chainId,
+                request: {
+                    method: `canton_${method}`,
+                    params: params ?? {},
+                },
+            })) as T
+        } catch (error) {
+            throw toJsonRpcError(error)
+        }
     }
 
     // ── Private: session lifecycle ──────────────────────────────────
@@ -470,7 +462,7 @@ export class WalletConnectAdapter
                     signature: '',
                     error: {
                         message: err.message,
-                        code: CIP103_ERROR_CODES.InternalError,
+                        code: errorCodes.rpc.internal,
                     },
                 })
             }

@@ -723,17 +723,7 @@ export class WalletJSONRPCRemoteDAppAPI {
         args: RequestArgs<RpcTypes, M>
     ): Promise<RpcTypes[M]['result']> {
         const response = await this.transport.submit(args as RequestPayload)
-
-        if ('error' in response) {
-            throw new Error(
-                'RPC error: ' +
-                    response.error.code +
-                    ' - ' +
-                    response.error.message
-            )
-        } else {
-            return response.result as RpcTypes[M]['result']
-        }
+        return response.result as RpcTypes[M]['result']
     }
 }
 export default WalletJSONRPCRemoteDAppAPI

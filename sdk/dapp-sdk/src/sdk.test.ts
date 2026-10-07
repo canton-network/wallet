@@ -15,10 +15,7 @@ import type {
     Provider,
 } from '@canton-network/core-splice-provider'
 import type { ProviderAdapter } from '@canton-network/core-wallet-discovery'
-import {
-    CIP103_ERROR_CODES,
-    ProviderRpcError,
-} from '@canton-network/core-types'
+import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
 import type {
     AccountsChangedEvent,
     ConnectResult,
@@ -346,9 +343,9 @@ describe('DappSDK', () => {
                 () => sdk.open(),
             ]) {
                 const pending = call()
-                await expect(pending).rejects.toBeInstanceOf(ProviderRpcError)
+                await expect(pending).rejects.toBeInstanceOf(JsonRpcError)
                 await expect(pending).rejects.toMatchObject({
-                    code: CIP103_ERROR_CODES.Unauthorized,
+                    code: errorCodes.provider.unauthorized,
                     message: 'Not connected — call connect() first',
                 })
             }

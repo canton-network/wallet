@@ -10,7 +10,6 @@ import { HttpTransport } from '@canton-network/core-rpc-transport'
 import {
     isSpliceMessageEvent,
     type RequestArgs,
-    toProviderRpcError,
     WalletEvent,
 } from '@canton-network/core-types'
 
@@ -165,10 +164,6 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
     public async request<M extends keyof DappAsyncRpcTypes>(
         args: RequestArgs<DappAsyncRpcTypes, M>
     ): Promise<DappAsyncRpcTypes[M]['result']> {
-        try {
-            return await this.client.request<M>(args)
-        } catch (error) {
-            throw toProviderRpcError(error)
-        }
+        return await this.client.request<M>(args)
     }
 }
