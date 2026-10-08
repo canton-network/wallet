@@ -3,7 +3,7 @@
 
 import allocationInstructionAPIRouter from './api/allocation-instruction/index.js'
 import allocationAPIRouter from './api/allocation/index.js'
-import { APIError } from './api/common'
+import { APIError } from './api/common.js'
 import metadataAPIRouter from './api/metadata/index.js'
 import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
 import utilitiesAPIRouter from './api/utilities/index.js'
@@ -22,15 +22,9 @@ import {
     type RegistryConfig,
     RegistryState,
     defaultConfig,
-    DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT,
 } from './common/state.js'
 
-export {
-    RegistryState,
-    defaultConfig,
-    DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT,
-    type RegistryConfig,
-}
+export { RegistryState, defaultConfig, type RegistryConfig }
 
 let server: Server
 
