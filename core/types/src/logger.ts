@@ -12,13 +12,8 @@ interface ConditionalLogger extends Logger {
     with: (properties: Record<string, unknown>) => ConditionalLogger
 }
 
-export const getLoggerConditional = (
-    category?: string | readonly string[] | undefined
-): ConditionalLogger => {
-    const logger = getLogger(category)
-
-    return {
-        ...logger,
+const wrap = (logger: Logger): ConditionalLogger => {
+    const extras = {
         conditional: (
             message: string,
             base: Record<string, unknown>,
@@ -31,5 +26,20 @@ export const getLoggerConditional = (
                 logger.info(message, base)
             }
         },
-    } as ConditionalLogger
+        with: (properties: Record<string, unknown>) =>
+            wrap(logger.with(properties)),
+    }
+
+    // Logger uses private fields, so methods must be bound to the real instance
+    return new Proxy(logger, {
+        get(target, prop) {
+            if (prop in extras) return extras[prop as keyof typeof extras]
+            const value = Reflect.get(target, prop, target)
+            return typeof value === 'function' ? value.bind(target) : value
+        },
+    }) as ConditionalLogger
 }
+
+export const getLoggerConditional = (
+    category?: string | readonly string[] | undefined
+): ConditionalLogger => wrap(getLogger(category))

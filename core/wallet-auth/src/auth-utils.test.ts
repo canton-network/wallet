@@ -157,7 +157,7 @@ describe('Auth Utils', () => {
                 },
                 loggers: [
                     {
-                        category: ['my-lib'],
+                        category: ['core'],
                         lowestLevel: 'debug',
                         sinks: ['recorder'],
                     },
@@ -293,7 +293,7 @@ describe('Auth Utils', () => {
             expect(email).toBeUndefined()
 
             recorder.assertLogged({
-                category: ['my-lib'],
+                category: ['core', 'wallet-auth', 'resolveUserEmail'],
                 level: 'warning',
                 message: 'Failed to resolve user email from OIDC userinfo',
             })
