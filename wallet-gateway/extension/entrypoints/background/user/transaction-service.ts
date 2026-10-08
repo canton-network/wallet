@@ -21,6 +21,13 @@ import type {
     SignResultSigned,
 } from './rpc-gen/typings.js'
 
+// The extension signs first and passes the signature along to execute, but the
+// shared API's ExecuteParams no longer declares these fields.
+export type ExecuteParamsWithSignature = ExecuteParams & {
+    signature: string
+    signedBy: string
+}
+
 export class TransactionService {
     constructor(
         private store: Store,
@@ -141,7 +148,8 @@ export class TransactionService {
         transaction: Transaction,
         ledgerClient: LedgerClient
     ): Promise<ExecuteResult> {
-        const { partyId, signature, signedBy } = executeParams
+        const { partyId, signature, signedBy } =
+            executeParams as ExecuteParamsWithSignature
         const { commandId } = transaction
 
         const result = await ledgerClient.postWithRetry(

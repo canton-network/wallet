@@ -17,6 +17,7 @@ import type {
     SignResult,
     Wallet,
 } from '@canton-network/core-wallet-user-rpc-client'
+import type { ExecuteParamsWithSignature } from '@/entrypoints/background/user/transaction-service'
 import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
 import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
 import { stateManager } from '@/utils/legacy-frontend/state-manager'
@@ -258,7 +259,7 @@ export class ApproveUi extends BaseElement {
                         signedBy: result.signedBy,
                         transactionId: this.transactionId,
                         partyId: this.partyId,
-                    },
+                    } as ExecuteParamsWithSignature,
                 })
                 showToast('', 'Activity executed successfully', 'success')
                 this.goHome()

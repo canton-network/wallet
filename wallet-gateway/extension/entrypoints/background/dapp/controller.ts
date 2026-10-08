@@ -221,6 +221,7 @@ export const dappController = (
         status: async () => ({
             provider: {
                 id: 'browser:ext:canton-wallet',
+                providerType: 'browser',
             },
             connection: {
                 isConnected: true,
