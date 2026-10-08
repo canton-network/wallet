@@ -10,6 +10,10 @@ import {
     OffLedger,
     SettlementInfo,
     ALLOCATION_FACTORY_INTERFACE_ID_V2,
+    SettlementFactory_SettleBatch as SettlementFactory_SettleBatchV2,
+    ALLOCATION_INTERFACE_ID_V2,
+    ALLOCATION_REQUEST_INTERFACE_ID_V2,
+    ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
 import {
     DisclosedContract,
@@ -138,6 +142,99 @@ export class AllocationService {
         )
     }
 
+    async fetchAllocationChoiceContext(
+        action: 'withdraw' | 'cancel',
+        allocationCid: string,
+        registryUrl: URL
+    ): Promise<AllocationChoiceContextV2> {
+        return this.core.getTokenStandardClientV2(registryUrl).post(
+            `/registry/allocations/v2/{allocationId}/choice-contexts/${action}`,
+            {
+                excludeDebugFields: true,
+            },
+            { path: { allocation: allocationCid } }
+        )
+    }
+
+    async createAllocationChoiceFromContext(
+        action: 'withdraw' | 'cancel',
+        allocationCid: string,
+        actors: PartyId[],
+        ctx: AllocationChoiceContextV2
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        return [
+            {
+                templateId: ALLOCATION_INTERFACE_ID_V2,
+                contractId: allocationCid,
+                choice:
+                    action == 'withdraw'
+                        ? 'Allocation_Withdraw'
+                        : 'Allocation_Cancel',
+                choiceArgument: {
+                    actors,
+                    extraArgs: {
+                        context: ctx.choiceContextData,
+                        meta: { values: {} },
+                    },
+                },
+            },
+            ctx.disclosedContracts ?? [],
+        ]
+    }
+
+    async createAllocationChoice(
+        action: 'withdraw' | 'cancel',
+        allocationCid: string,
+        actors: PartyId[],
+        registryUrl: URL,
+        prefetched?: AllocationChoiceContextV2
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const ctx =
+            prefetched ??
+            (await this.fetchAllocationChoiceContext(
+                action,
+                allocationCid,
+                registryUrl
+            ))
+
+        return this.createAllocationChoiceFromContext(
+            action,
+            allocationCid,
+            actors,
+            ctx
+        )
+    }
+
+    createAllocationRequestChoice(
+        action: 'withdraw' | 'reject',
+        allocationRequestCid: string,
+        actors: PartyId[]
+    ): [ExerciseCommand, DisclosedContract[]] {
+        const exercise: ExerciseCommand = {
+            templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+            contractId: allocationRequestCid,
+            choice:
+                action === 'reject'
+                    ? 'AllocationRequest_Reject'
+                    : 'AllocationRequest_Withdraw',
+            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS }, //TODO: look at choice args in codegen
+        }
+        return [exercise, []]
+    }
+
+    createWithdrawAllocationInstruction(
+        withdrawCid: string,
+        actors: PartyId[]
+    ): [ExerciseCommand, DisclosedContract[]] {
+        const exercise: ExerciseCommand = {
+            templateId: ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
+            contractId: withdrawCid,
+            choice: 'AllocationInstruction_Withdraw',
+            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS }, //TODO: look at choice args in codegen
+        }
+        return [exercise, []]
+    }
+
     async createAllocationFromContext(
         factoryId: string,
         choiceArgs: AllocationFactory_Allocate,
@@ -155,5 +252,17 @@ export class AllocationService {
             choiceArgument: choiceArgs,
         }
         return [exercise, choiceContext.disclosedContracts]
+    }
+
+    async fetchSettlementFactory(
+        args: SettlementFactory_SettleBatchV2,
+        registryUrl: URL
+    ) {
+        return this.core
+            .getTokenStandardClientV2(registryUrl)
+            .post('/registry/allocation/v2/settlement-factory', {
+                choiceArguments: args as unknown as Record<string, never>,
+                excludeDebugFields: true,
+            })
     }
 }
