@@ -14,6 +14,7 @@ import {
     ALLOCATION_INTERFACE_ID_V2,
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
+    AllocationRequestView as AllocationRequestViewV2,
 } from '@canton-network/core-token-standard-v2'
 import {
     DisclosedContract,
@@ -166,7 +167,7 @@ export class AllocationService {
                 templateId: ALLOCATION_INTERFACE_ID_V2,
                 contractId: allocationCid,
                 choice:
-                    action == 'withdraw'
+                    action === 'withdraw'
                         ? 'Allocation_Withdraw'
                         : 'Allocation_Cancel',
                 choiceArgument: {
@@ -263,5 +264,53 @@ export class AllocationService {
                 choiceArguments: args as unknown as Record<string, never>,
                 excludeDebugFields: true,
             })
+    }
+
+    async createAllocationsForRequest(opts: {
+        requestCid: string
+        request: AllocationRequestViewV2
+        registry: (admin: PartyId) => Promise<URL>
+        actors?: PartyId[]
+    }) {
+        const used = new Set<string>()
+        const results: [ExerciseCommand, DisclosedContract[]][] = []
+
+        for (const spec of opts.request.allocations) {
+            const [cmd, dcs] = await this.createAllocation(
+                {
+                    settlement: opts.request.settlement,
+                    spec,
+                    admin: spec.admin,
+                    actors: opts.actors ?? [], //TODO: check if actors should be empty
+                    excludeCids: used,
+                },
+                await opts.registry(spec.admin)
+            )
+            ;(
+                cmd.choiceArgument as AllocationFactory_Allocate
+            ).inputHoldingCids.forEach(
+                (c) => used.add(c as unknown as string),
+                results.push([cmd, dcs])
+            )
+        }
+
+        results.push([
+            {
+                templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+                contractId: opts.requestCid,
+                choice: 'AllocationRequest_Accept',
+                choiceArgument: {
+                    actors: opts.actors ?? [],
+                    extraArgs: EMPTY_EXTRA_ARGS(),
+                },
+            },
+            [],
+        ])
+
+        const dcs = new Map(
+            results.flatMap(([, d]) => d).map((d) => [d.contractId, d])
+        )
+
+        return [results.map(([c]) => c), [...dcs.values()]]
     }
 }
