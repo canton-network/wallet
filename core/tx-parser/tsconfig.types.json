@@ -8,7 +8,8 @@
         "outDir": "./dist",
         "moduleResolution": "bundler",
         "noEmit": false,
-        "composite": false
+        "composite": false,
+        "types": ["node"]
     },
     "include": ["src/**/*.ts", "src/**/*.d.ts"],
     "exclude": ["**/*.test.*", "**/*.spec.*", "**/__tests__/**"]

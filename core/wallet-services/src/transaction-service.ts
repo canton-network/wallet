@@ -16,11 +16,8 @@ import {
     type Methods as SigningController,
     type SignTransactionParams,
 } from '@canton-network/core-signing-lib'
-import {
-    type SigningDrivers,
-    Notifier,
-    HASHING_SCHEME_VERSION,
-} from './types.js'
+import { type SigningDrivers, HASHING_SCHEME_VERSION } from './types.js'
+import type { Notifier } from './notification/index.js'
 import {
     ExecuteParams,
     ExecuteResult,

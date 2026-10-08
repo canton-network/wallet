@@ -18,6 +18,7 @@
     },
     "dependencies": {
         "@canton-network/core-ledger-client": "catalog:",
+        "@canton-network/core-rpc-errors": "catalog:",
         "@canton-network/core-rpc-transport": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",

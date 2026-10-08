@@ -4,7 +4,6 @@
 import { z } from 'zod'
 
 export * from './crypto.js'
-export * from './error.js'
 export * from './logger.js'
 
 // This creates a "branded type" since AccessToken is an alias for string,

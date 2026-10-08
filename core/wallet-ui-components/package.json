@@ -43,6 +43,7 @@
         "vitest": "catalog:"
     },
     "dependencies": {
+        "@canton-network/core-rpc-errors": "catalog:",
         "@canton-network/core-tx-visualizer": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",

@@ -143,9 +143,7 @@ catalog:
     '@types/cors': ^2.8.19
     '@types/express': ^5.0.6
     '@types/fs-extra': ^11.0.4
-    '@types/isomorphic-fetch': ^0.0.39
     '@types/js-yaml': ^4.0.9
-    '@types/json-schema': 7.0.15
     '@types/lodash': ^4.17.24
     '@types/node': ^25.9.4
     '@types/pg': ^8.20.0
@@ -154,7 +152,6 @@ catalog:
     '@types/react': ^19.2.17
     '@types/supertest': ^7.2.0
     '@types/tar-fs': ^2.0.4
-    '@types/ws': ^8.18.1
     '@typescript-eslint/parser': ^8.70.0
     '@vitejs/plugin-react': ^5.2.0
     '@vitest/browser-playwright': ^5.0.1
@@ -230,7 +227,7 @@ catalog:
     typedoc: ^0.28.20
     typescript-eslint: ^8.70.0
     typescript-lru-cache: ^2.0.0
-    typescript: ^5.9.3
+    typescript: ^6.0.3
     umzug: ^3.8.3
     undici: ^7.24.5
     vite-express: ^0.22.1

@@ -4,7 +4,6 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "moduleResolution": "bundler",
-        "baseUrl": ".",
         "paths": {
             "@daml.js/*": ["../../damljs/token-standard-models/*"]
         }
