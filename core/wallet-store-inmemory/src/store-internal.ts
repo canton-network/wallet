@@ -27,6 +27,10 @@ import type {
     ListTransactionsOptions,
     WalletUniqueConstraint,
 } from '@canton-network/core-wallet-store'
+import {
+    assertUniqueSelfIssuedAudience,
+    resolveSelfIssuedNetworkByAudiences,
+} from '@canton-network/core-wallet-store'
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import type { AccessToken } from '@canton-network/core-types'
 
@@ -151,6 +155,29 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                     constraint.userId === wallet.userId
             ) ?? null
         )
+    }
+
+    async getWalletByJwt(
+        userId: string,
+        partyId: PartyId,
+        audiences: string[]
+    ): Promise<Wallet | undefined> {
+        const network = resolveSelfIssuedNetworkByAudiences(
+            this.systemStorage.networks,
+            audiences
+        )
+        if (!network) {
+            return undefined
+        }
+
+        return this.userStorage
+            .get(userId)
+            ?.wallets.find(
+                (wallet) =>
+                    wallet.userId === userId &&
+                    wallet.partyId === partyId &&
+                    wallet.networkId === network.id
+            )
     }
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {
@@ -431,6 +458,11 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async updateNetwork(network: Network): Promise<void> {
         this.assertConnected()
+        assertUniqueSelfIssuedAudience(
+            this.systemStorage.networks,
+            network,
+            network.id
+        )
         this.removeNetwork(network.id) // Ensure no duplicates
         this.systemStorage.networks.push(network)
     }
@@ -441,9 +473,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         )
         if (networkAlreadyExists) {
             throw new Error(`Network ${network.id} already exists`)
-        } else {
-            this.systemStorage.networks.push(network)
         }
+        assertUniqueSelfIssuedAudience(this.systemStorage.networks, network)
+        this.systemStorage.networks.push(network)
     }
 
     async removeNetwork(networkId: string): Promise<void> {
