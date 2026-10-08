@@ -32,6 +32,32 @@ vi.mock('@canton-network/core-signing-securosys', () => ({
     default: providerConstructors.securosys,
 }))
 
+const signingProviderEnvVars = [
+    'FIREBLOCKS_API_KEY',
+    'FIREBLOCKS_SECRET',
+    'FIREBLOCKS_API_PATH',
+    'BLOCKDAEMON_API_KEY',
+    'BLOCKDAEMON_API_URL',
+    'BLOCKDAEMON_CAIP2',
+    'DFNS_ORG_ID',
+    'DFNS_BASE_URL',
+    'DFNS_CRED_ID',
+    'DFNS_PRIVATE_KEY',
+    'DFNS_AUTH_TOKEN',
+    'SECUROSYS_TSB_BASE_URL',
+    'SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY',
+    'SECUROSYS_TSB_KEY_OPERATION_API_KEY',
+    'SECUROSYS_TSB_BEARER_TOKEN',
+    'SECUROSYS_TSB_MTLS_P12_PATH',
+    'SECUROSYS_TSB_MTLS_P12_PASSWORD',
+    'SECUROSYS_TSB_KEY_PASSWORD',
+    'SECUROSYS_TSB_SIGNATURE_ALGORITHM',
+    'BITGO_ACCESS_TOKEN',
+    'BITGO_API_URL',
+    'BITGO_ENTERPRISE_ID',
+    'BITGO_COIN',
+]
+
 describe('registerSigningProviders', () => {
     const signingStore = {} as SigningStoreSql
     const logger = {
@@ -44,6 +70,11 @@ describe('registerSigningProviders', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
+        // Local .env can already define these. unstubAllEnvs restores
+        // that inherited value, so absence tests must start from an empty stub.
+        for (const envVar of signingProviderEnvVars) {
+            vi.stubEnv(envVar, '')
+        }
     })
 
     afterEach(() => vi.unstubAllEnvs())
