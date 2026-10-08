@@ -203,14 +203,12 @@ export const userController = (
 
         const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
             idp,
-            network.adminAuth,
-            logger
+            network.adminAuth
         )
         const partyAllocator = new PartyAllocationService({
             synchronizerId: network.synchronizerId,
             accessTokenProvider: adminAccessTokenProvider,
             httpLedgerUrl: network.ledgerApi.baseUrl,
-            logger,
         })
         const walletAllocationService = new WalletAllocationService(
             store,
@@ -369,20 +367,17 @@ export const userController = (
                 )
             }
 
-            const accessToken = await new AuthTokenProvider(
-                {
-                    method: 'self_signed',
-                    issuer: idp.issuer,
-                    keyId: network.id,
-                    credentials: {
-                        clientId: params.clientId,
-                        clientSecret: auth.clientSecret,
-                        scope: auth.scope,
-                        audience: auth.audience,
-                    },
+            const accessToken = await new AuthTokenProvider({
+                method: 'self_signed',
+                issuer: idp.issuer,
+                keyId: network.id,
+                credentials: {
+                    clientId: params.clientId,
+                    clientSecret: auth.clientSecret,
+                    scope: auth.scope,
+                    audience: auth.audience,
                 },
-                logger
-            ).getAccessToken()
+            }).getAccessToken()
 
             return { accessToken }
         },
@@ -424,15 +419,13 @@ export const userController = (
 
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                logger
+                network.adminAuth
             )
 
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
             const walletAllocationService = new WalletAllocationService(
                 store,
@@ -457,10 +450,8 @@ export const userController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    authContext!.accessToken,
-                    logger
+                    authContext!.accessToken
                 ),
             })
             const service = new WalletSyncService(
@@ -503,8 +494,7 @@ export const userController = (
             await assertSelfIssuedOnboardingAllowed(
                 authAwareStore,
                 network,
-                username,
-                logger
+                username
             )
             const sessionId = v4()
             await onboardingStore.setSession({
@@ -584,11 +574,7 @@ export const userController = (
             const network = await scopedStore.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    accessToken,
-                    logger
-                ),
+                accessTokenProvider: AuthTokenProvider.fromToken(accessToken),
             })
             await emitSessionConnected(
                 session.id,
@@ -623,14 +609,12 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                logger
+                network.adminAuth
             )
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
             const walletAllocationService = new WalletAllocationService(
                 store,
@@ -655,10 +639,8 @@ export const userController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    authContext!.accessToken,
-                    logger
+                    authContext!.accessToken
                 ),
             })
             const service = new WalletSyncService(
@@ -726,7 +708,6 @@ export const userController = (
 
             const transactionService = new TransactionService(
                 store,
-                logger,
                 drivers,
                 notifier,
                 hashingSchemeVersion
@@ -965,7 +946,7 @@ export const userController = (
 
             assertIsConnected(authContext)
             const accessTokenProvider: AuthTokenProvider =
-                AuthTokenProvider.fromToken(authContext.accessToken, logger)
+                AuthTokenProvider.fromToken(authContext.accessToken)
 
             if (network === undefined) {
                 throw new Error('No network session found')
@@ -979,13 +960,11 @@ export const userController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider,
             })
 
             const transactionService = new TransactionService(
                 store,
-                logger,
                 drivers,
                 notifier,
                 hashingSchemeVersion
@@ -1044,11 +1023,8 @@ export const userController = (
 
                 const ledgerClient = new LedgerClient({
                     baseUrl: new URL(network.ledgerApi.baseUrl),
-                    logger,
-                    accessTokenProvider: AuthTokenProvider.fromToken(
-                        accessToken,
-                        logger
-                    ),
+                    accessTokenProvider:
+                        AuthTokenProvider.fromToken(accessToken),
                 })
                 const status = await emitSessionConnected(
                     newSessionId,
@@ -1083,14 +1059,12 @@ export const userController = (
                             const adminAccessTokenProvider =
                                 AuthTokenProvider.fromGatewayConfig(
                                     adminIdp,
-                                    network.adminAuth,
-                                    logger
+                                    network.adminAuth
                                 )
                             const partyAllocator = new PartyAllocationService({
                                 synchronizerId: network.synchronizerId,
                                 accessTokenProvider: adminAccessTokenProvider,
                                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                                logger,
                             })
 
                             const service = new WalletSyncService(
@@ -1168,10 +1142,8 @@ export const userController = (
             const network = await store.getNetwork(session.network)
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    authContext!.accessToken,
-                    logger
+                    authContext!.accessToken
                 ),
             })
             const idp = await store.getIdp(network.identityProviderId)
@@ -1200,8 +1172,7 @@ export const userController = (
             const { userId } = assertConnected(authContext)
 
             const userAccessTokenProvider = AuthTokenProvider.fromToken(
-                authContext!.accessToken,
-                logger
+                authContext!.accessToken
             )
 
             if (!network.adminAuth) {
@@ -1210,22 +1181,16 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
-                AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
+                AuthTokenProvider.fromGatewayConfig(idp, network.adminAuth)
 
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminAccessTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
 
             const userLedger = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: userAccessTokenProvider,
             })
 
@@ -1257,8 +1222,7 @@ export const userController = (
             assertConnected(authContext)
 
             const userAccessTokenProvider = AuthTokenProvider.fromToken(
-                authContext!.accessToken,
-                logger
+                authContext!.accessToken
             )
 
             if (!network.adminAuth) {
@@ -1267,22 +1231,16 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
-                AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
+                AuthTokenProvider.fromGatewayConfig(idp, network.adminAuth)
 
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminAccessTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
 
             const userLedger = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: userAccessTokenProvider,
             })
 
@@ -1481,14 +1439,12 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                logger
+                network.adminAuth
             )
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
             const normalizedKey =
                 partyAllocator.normalizePublicKeyToBase64(publicKey)
@@ -1558,7 +1514,6 @@ export const userController = (
 
             const transactionService = new TransactionService(
                 store,
-                logger,
                 drivers,
                 notifier,
                 hashingSchemeVersion

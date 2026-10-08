@@ -55,6 +55,8 @@
         "@canton-network/core-wallet-auth": "catalog:",
         "@canton-network/example-test-token-v1-registry": "catalog:",
         "@canton-network/wallet-sdk": "catalog:",
+        "@logtape/logtape": "catalog:",
+        "@logtape/adaptor-pino": "catalog:",
         "bip39": "catalog:",
         "decimal.js": "catalog:",
         "pino": "10.3.1",

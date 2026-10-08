@@ -3,8 +3,8 @@
 
 import type { paths } from './generated-clients/validator-internal'
 import createClient, { type Client } from 'openapi-fetch'
-import type { Logger } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { getLogger } from '@logtape/logtape'
 
 // A conditional type that filters the set of OpenAPI path names to those that actually have a defined POST operation.
 // Any path without a POST is excluded via the `never` branch of the conditional
@@ -47,18 +47,18 @@ export type GetResponse<Path extends GetEndpoint> = paths[Path] extends {
     : never
 
 export class ValidatorInternalClient {
+    private logger = getLogger([
+        'core',
+        'splice-client',
+        'ValidatorInternalClient',
+    ])
+
     private readonly client: Client<paths>
-    private readonly logger: Logger
     private accessTokenProvider: AccessTokenProvider
 
-    constructor(
-        baseUrl: URL,
-        logger: Logger,
-        accessTokenProvider: AccessTokenProvider
-    ) {
+    constructor(baseUrl: URL, accessTokenProvider: AccessTokenProvider) {
         this.accessTokenProvider = accessTokenProvider
-        this.logger = logger
-        this.logger.debug({ baseUrl }, 'ValidatorInternalClient initialized')
+        this.logger.debug('ValidatorInternalClient initialized', { baseUrl })
         this.client = createClient<paths>({
             baseUrl: baseUrl.href,
             fetch: async (url: RequestInfo, options: RequestInit = {}) => {
@@ -89,9 +89,13 @@ export class ValidatorInternalClient {
     ): Promise<PostResponse<Path>> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
         const options = { body, params } as any
-        this.logger.debug({ requestBody: body }, `POST ${path}`)
+        this.logger.trace('POST {path}', { path, requestBody: body })
         const resp = await this.client.POST(path, options)
-        this.logger.debug({ requestBody: body, response: resp }, `POST ${path}`)
+        this.logger.debug('POST {path}', {
+            path,
+            requestBody: body,
+            response: resp,
+        })
         return this.valueOrError(resp)
     }
 
@@ -106,10 +110,11 @@ export class ValidatorInternalClient {
         const options = { params } as any
 
         const resp = await this.client.GET(path, options)
-        this.logger.debug(
-            { path: path, params: params, response: resp },
-            `GET ${path}`
-        )
+        this.logger.debug('GET {path}', {
+            path: path,
+            params: params,
+            response: resp,
+        })
         return this.valueOrError(resp)
     }
 

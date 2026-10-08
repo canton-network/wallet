@@ -37,9 +37,9 @@
         "@canton-network/core-ledger-client-types": "catalog:",
         "@canton-network/core-provider-ledger": "catalog:",
         "@canton-network/core-types": "catalog:",
+        "@logtape/logtape": "catalog:",
         "dayjs": "catalog:",
         "openapi-fetch": "catalog:",
-        "pino": "catalog:",
         "typescript-lru-cache": "catalog:"
     },
     "files": [

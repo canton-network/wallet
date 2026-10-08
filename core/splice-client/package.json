@@ -25,6 +25,7 @@
     "dependencies": {
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
+        "@logtape/logtape": "catalog:",
         "openapi-fetch": "catalog:",
         "uuid": "catalog:",
         "zod": "catalog:"

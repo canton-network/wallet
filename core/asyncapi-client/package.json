@@ -37,7 +37,7 @@
         "@canton-network/core-ledger-client-types": "catalog:",
         "@canton-network/core-types": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
-        "pino": "catalog:"
+        "@logtape/logtape": "catalog:"
     },
     "files": [
         "dist/**"

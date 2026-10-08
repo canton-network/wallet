@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
 import {
     type AuthContext,
     type UserId,
@@ -35,21 +34,23 @@ import {
     type SigningKeyTable,
     type StoreConfig,
 } from './schema.js'
+import { getLogger } from '@logtape/logtape'
 
 export class StoreSql implements SigningDriverStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
+    private logger = getLogger(['core', 'signing-store-sql', 'StoreSql']).with({
+        userId: () => this.authContext?.userId,
+    })
 
     constructor(
         private db: Kysely<DB>,
-        private logger: Logger,
         authContext?: AuthContext
     ) {
-        this.logger = logger.child({ component: 'StoreSql' })
         this.authContext = authContext
     }
 
     withAuthContext(context?: AuthContext): StoreSql {
-        return new StoreSql(this.db, this.logger, context)
+        return new StoreSql(this.db, context)
     }
 
     private assertConnected(): UserId {

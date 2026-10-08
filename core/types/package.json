@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "@daml/types": "catalog:",
+        "@logtape/logtape": "catalog:",
         "uuid": "catalog:",
         "zod": "catalog:"
     },
