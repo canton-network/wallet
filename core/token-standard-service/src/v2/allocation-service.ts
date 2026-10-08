@@ -266,12 +266,74 @@ export class AllocationService {
             })
     }
 
+    // async createAllocationsForRequest(opts: {
+    //     requestCid: string
+    //     request: AllocationRequestViewV2
+    //     registry: (admin: PartyId) => Promise<URL>
+    //     actors?: PartyId[]
+    // }): Promise<[ExerciseCommand, DisclosedContract[]]> {
+    //     const used = new Set<string>()
+    //     const results: [ExerciseCommand, DisclosedContract[]][] = []
+
+    //     for (const spec of opts.request.allocations) {
+    //         const [cmd, dcs] = await this.createAllocation(
+    //             {
+    //                 settlement: opts.request.settlement,
+    //                 spec,
+    //                 admin: spec.admin,
+    //                 actors: opts.actors ?? [], //TODO: check if actors should be empty
+    //                 excludeCids: used,
+    //             },
+    //             await opts.registry(spec.admin))
+
+    //         for (const cid of (cmd.choiceArgument as AllocationFactory_Allocate)
+    //             .inputHoldingCids) {
+    //             used.add(cid as unknown as string)
+    //         }
+    //         results.push([cmd, dcs])
+    //     }
+
+    //     const acceptActors =
+    //         opts.actors ??
+    //         [
+    //             ...new Set(
+    //                 opts.request.allocations.flatMap((s) =>
+    //                     s.authorizer.owner ? [s.authorizer.owner] : []
+    //                 )
+    //             ),
+    //         ].slice(0, 1)
+
+    //     if (acceptActors.length === 0) {
+    //         throw new Error(
+    //             `Cannot accept allocation requests. No actors given and no authorizer has an owner`
+    //         )
+    //     }
+
+    //     results.push([
+    //         {
+    //             templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+    //             contractId: opts.requestCid,
+    //             choice: 'AllocationRequest_Accept',
+    //             choiceArgument: {
+    //                 actors: acceptActors,
+    //                 extraArgs: EMPTY_EXTRA_ARGS(),
+    //             },
+    //         },
+    //         [],
+    //     ])
+
+    //     const dcs = new Map<string, DisclosedContract>(
+    //         results.flatMap(([, d]) => d).map((d) => [d.contractId, d])
+    //     )
+    //     return [results.map(([c] => c), [...dcs.values()])]
+    // }
+
     async createAllocationsForRequest(opts: {
         requestCid: string
         request: AllocationRequestViewV2
         registry: (admin: PartyId) => Promise<URL>
         actors?: PartyId[]
-    }) {
+    }): Promise<[ExerciseCommand[], DisclosedContract[]]> {
         const used = new Set<string>()
         const results: [ExerciseCommand, DisclosedContract[]][] = []
 
@@ -286,11 +348,27 @@ export class AllocationService {
                 },
                 await opts.registry(spec.admin)
             )
-            ;(
-                cmd.choiceArgument as AllocationFactory_Allocate
-            ).inputHoldingCids.forEach(
-                (c) => used.add(c as unknown as string),
-                results.push([cmd, dcs])
+
+            for (const cid of (cmd.choiceArgument as AllocationFactory_Allocate)
+                .inputHoldingCids) {
+                used.add(cid as unknown as string)
+            }
+            results.push([cmd, dcs])
+        }
+
+        const acceptActors =
+            opts.actors ??
+            [
+                ...new Set(
+                    opts.request.allocations.flatMap((s) =>
+                        s.authorizer.owner ? [s.authorizer.owner] : []
+                    )
+                ),
+            ].slice(0, 1)
+
+        if (acceptActors.length === 0) {
+            throw new Error(
+                `Cannot accept allocation requests. No actors given and no authorizer has an owner`
             )
         }
 
@@ -300,15 +378,21 @@ export class AllocationService {
                 contractId: opts.requestCid,
                 choice: 'AllocationRequest_Accept',
                 choiceArgument: {
-                    actors: opts.actors ?? [],
+                    actors: acceptActors,
                     extraArgs: EMPTY_EXTRA_ARGS(),
                 },
             },
             [],
         ])
 
-        const dcs = new Map(
-            results.flatMap(([, d]) => d).map((d) => [d.contractId, d])
+        const dcs = new Map<string, DisclosedContract>(
+            results
+                .flatMap(([, d]) => d)
+                .filter(
+                    (d): d is DisclosedContract & { contractId: string } =>
+                        d.contractId !== undefined
+                )
+                .map((d) => [d.contractId, d])
         )
 
         return [results.map(([c]) => c), [...dcs.values()]]
