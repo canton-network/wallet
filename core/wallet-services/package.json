@@ -32,7 +32,6 @@
     "dependencies": {
         "@canton-network/core-ledger-client": "catalog:",
         "@canton-network/core-signing-lib": "catalog:",
-        "@canton-network/core-signing-securosys": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
         "@canton-network/core-wallet-dapp-rpc-client": "catalog:",
         "@canton-network/core-wallet-store": "catalog:",
