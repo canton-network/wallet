@@ -6,6 +6,7 @@ import {
     type AuthAware,
     type AuthContext,
     AuthTokenProvider,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
 import type { Logger } from 'pino'
 import type { Store } from '@canton-network/core-wallet-store'
@@ -82,7 +83,6 @@ export function apiKeyAuth(
             })
 
             const network = await authStore.getNetwork(matchingKey.networkId)
-            const idp = await authStore.getIdp(network.identityProviderId)
 
             if (!network.serviceAccountAuth) {
                 logger.debug(
@@ -116,6 +116,12 @@ export function apiKeyAuth(
                 )
             }
 
+            const idp = await authStore.getIdp(
+                resolveAuthIdentityProviderId(
+                    network.serviceAccountAuth,
+                    network.identityProviderId
+                )
+            )
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.serviceAccountAuth,

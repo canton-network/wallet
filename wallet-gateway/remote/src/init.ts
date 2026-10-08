@@ -19,7 +19,6 @@ import {
 } from '@canton-network/core-signing-store-sql'
 import { ConfigUtils } from './config/ConfigUtils.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { SigningDrivers } from './signing/signing-drivers.js'
 import { ParticipantSigningDriver } from '@canton-network/core-signing-participant'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import DfnsSigningProvider from '@canton-network/core-signing-dfns'
@@ -45,13 +44,16 @@ import { deriveUrls } from './config/ConfigUtils.js'
 import { existsSync } from 'fs'
 import { GATEWAY_VERSION } from './version.js'
 import { sessionHandler } from './middleware/sessionHandler.js'
-import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
-import type { HASHING_SCHEME_VERSION } from './env.js'
 import { Env } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { securityHeaders } from './middleware/securityHeaders.js'
+import {
+    type HASHING_SCHEME_VERSION,
+    NotificationService,
+    type SigningDrivers,
+} from '@canton-network/core-wallet-services'
 import { errorHandler } from './middleware/errorHandler.js'
 
 let isReady = false
@@ -393,6 +395,15 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'listIdps',
             'getUser',
             'selfSignedAccessToken',
+            'addSelfIssuedSession',
+        ],
+    }
+    const onboardingPaths = {
+        [config.server.userPath]: [
+            'getSelfIssuedOnboarding',
+            'createSelfIssuedWallet',
+            'allocateSelfIssuedWallet',
+            'connectSelfIssuedSession',
         ],
     }
 
@@ -408,7 +419,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         sessionHandler(
             store,
             allowedPaths,
-            logger.child({ component: 'SessionHandler' })
+            logger.child({ component: 'SessionHandler' }),
+            onboardingPaths
         ),
     ]
 

@@ -1,9 +1,10 @@
 {
     "name": "@canton-network/core-wallet-test-utils",
     "private": true,
-    "version": "1.12.4",
+    "version": "1.13.0",
     "type": "module",
     "description": "Utilities for writing (E2E) tests for the wallet gateway",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,27 +17,28 @@
         }
     },
     "dependencies": {
-        "@canton-network/core-types": "workspace:^",
-        "@canton-network/wallet-sdk": "workspace:^",
-        "@playwright/test": "^1.63.0",
-        "pino": "^10.3.1",
-        "tweetnacl": "^1.0.3",
-        "tweetnacl-util": "^0.15.1",
-        "uuid": "^14.0.1"
+        "@canton-network/core-ledger-client": "catalog:",
+        "@canton-network/core-rpc-errors": "catalog:",
+        "@canton-network/core-rpc-transport": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-wallet-user-rpc-client": "catalog:",
+        "@canton-network/wallet-sdk": "catalog:",
+        "@playwright/test": "catalog:",
+        "pino": "catalog:",
+        "tweetnacl": "catalog:",
+        "tweetnacl-util": "catalog:",
+        "uuid": "catalog:"
     },
     "devDependencies": {
-        "@vitest/coverage-v8": "^5.0.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^5.0.1"
+        "tsdown": "catalog:",
+        "typescript": "catalog:"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "test": "vitest run --project node --passWithNoTests",
-        "test:coverage": "vitest run --project node --coverage --passWithNoTests"
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "files": [
         "dist/**"

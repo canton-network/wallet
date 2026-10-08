@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, type MockedObject } from 'vitest'
-import { CoreService, TokenStandardService } from './token-standard-service.js'
+import { TokenStandardService } from './token-standard-service.js'
+import { CoreService } from './core-service.js'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
-import type { HoldingView } from '@canton-network/core-token-standard'
+import { type HoldingView } from '@canton-network/core-token-standard'
 import { Decimal } from 'decimal.js'
 import type { Logger } from '@canton-network/core-types'
 import rawTransactions from './test-data/mock/txs.json'
@@ -69,7 +70,7 @@ function makeService(isMasterUser = false) {
     return { service, getTokenStandardClient, provider, tokenClient }
 }
 
-const registryUrl = 'https://fake/registry'
+const registryUrl = new URL('https://fake/registry')
 
 const makeChoiceContext = (overrides = {}) => ({
     choiceContextData: { values: { ctx: 'data' } },
@@ -863,15 +864,29 @@ describe('Token standard service', () => {
                 admin: 'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
                 displayName: 'TestTokenExt',
                 id: 'TestTokenExt',
-                registryUrl: 'https://fake/registry',
+                registryUrl: new URL('https://fake/registry'),
                 symbol: 'TestTokenExt',
+                capabilities: {
+                    allocation: ['v1'],
+                    allocationInstruction: ['v1'],
+                    allocationRequest: ['v1'],
+                    holding: ['v1'],
+                    transferInstruction: ['v1'],
+                },
             },
             {
                 admin: 'auth0_007c6643538f2eadd3e573dd05b9::12205bcc106efa0eaa7f18dc491e5c6f5fb9b0cc68dc110ae66f4ed6467475d7c78e',
                 displayName: 'TestToken',
                 id: 'TestToken',
-                registryUrl: 'https://fake/registry',
+                registryUrl: new URL('https://fake/registry'),
                 symbol: 'TestToken',
+                capabilities: {
+                    allocation: ['v1'],
+                    allocationInstruction: ['v1'],
+                    allocationRequest: ['v1'],
+                    holding: ['v1'],
+                    transferInstruction: ['v1'],
+                },
             },
         ])
     })
@@ -919,6 +934,18 @@ describe('Token standard service', () => {
                         id: 'first-token',
                         name: 'First Token',
                         symbol: 'FIRST',
+                        supportedApis: {
+                            'splice-api-token-transfer-instruction-v2': 1,
+                            'splice-api-token-allocation-v1': 1,
+                            'splice-api-token-holding-v2': 1,
+                            'splice-api-token-allocation-instruction-v2': 1,
+                            'splice-api-token-metadata-v1': 1,
+                            'splice-api-token-allocation-v2': 1,
+                            'splice-api-token-transfer-events-v2': 1,
+                            'splice-api-token-transfer-instruction-v1': 1,
+                            'splice-api-token-holding-v1': 1,
+                            'splice-api-token-allocation-instruction-v1': 1,
+                        },
                     },
                 ],
                 nextPageToken: 'page-2',
@@ -929,6 +956,18 @@ describe('Token standard service', () => {
                         id: 'second-token',
                         name: 'Second Token',
                         symbol: 'SECOND',
+                        supportedApis: {
+                            'splice-api-token-transfer-instruction-v2': 1,
+                            'splice-api-token-allocation-v1': 1,
+                            'splice-api-token-holding-v2': 1,
+                            'splice-api-token-allocation-instruction-v2': 1,
+                            'splice-api-token-metadata-v1': 1,
+                            'splice-api-token-allocation-v2': 1,
+                            'splice-api-token-transfer-events-v2': 1,
+                            'splice-api-token-transfer-instruction-v1': 1,
+                            'splice-api-token-holding-v1': 1,
+                            'splice-api-token-allocation-instruction-v1': 1,
+                        },
                     },
                 ],
             })
@@ -953,6 +992,13 @@ describe('Token standard service', () => {
                 id: 'first-token',
                 registryUrl,
                 symbol: 'FIRST',
+                capabilities: {
+                    allocation: ['v1', 'v2'],
+                    allocationInstruction: ['v1', 'v2'],
+                    allocationRequest: [],
+                    holding: ['v1', 'v2'],
+                    transferInstruction: ['v1', 'v2'],
+                },
             },
             {
                 admin: 'admin-id',
@@ -960,6 +1006,13 @@ describe('Token standard service', () => {
                 id: 'second-token',
                 registryUrl,
                 symbol: 'SECOND',
+                capabilities: {
+                    allocation: ['v1', 'v2'],
+                    allocationInstruction: ['v1', 'v2'],
+                    holding: ['v1', 'v2'],
+                    transferInstruction: ['v1', 'v2'],
+                    allocationRequest: [],
+                },
             },
         ])
     })
@@ -1208,6 +1261,13 @@ describe('Token standard service', () => {
                 id: 'USDCx',
                 registryUrl: 'http://registry1.com',
                 symbol: 'USDCx',
+                capabilities: {
+                    allocation: ['v1'],
+                    allocationInstruction: ['v1'],
+                    allocationRequest: ['v1'],
+                    holding: ['v1'],
+                    transferInstruction: ['v1'],
+                },
             },
             {
                 admin: 'admin-b',
@@ -1215,6 +1275,13 @@ describe('Token standard service', () => {
                 id: 'TestTokenExt',
                 registryUrl: 'http://registry2.com',
                 symbol: 'TestTokenExt',
+                capabilities: {
+                    allocation: ['v1'],
+                    allocationInstruction: ['v1'],
+                    allocationRequest: ['v1'],
+                    holding: ['v1'],
+                    transferInstruction: ['v1'],
+                },
             },
             {
                 admin: 'admin-b',
@@ -1222,6 +1289,13 @@ describe('Token standard service', () => {
                 id: 'TestToken',
                 registryUrl: 'http://registry2.com',
                 symbol: 'TestToken',
+                capabilities: {
+                    allocation: ['v1'],
+                    allocationInstruction: ['v1'],
+                    allocationRequest: ['v1'],
+                    holding: ['v1'],
+                    transferInstruction: ['v1'],
+                },
             },
         ])
     })

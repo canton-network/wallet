@@ -9,6 +9,7 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store,
     Wallet,
@@ -33,7 +34,8 @@ interface UserStorage {
     wallets: Array<Wallet>
     transactions: Map<string, Transaction>
     messageRaws: Map<string, MessageRaw>
-    sessions: Map<AccessToken, Session>
+    /** Keyed by session id. */
+    sessions: Map<string, Session>
     apiKeys: Map<string, ApiKey>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
@@ -81,7 +83,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             wallets: [],
             transactions: new Map<string, Transaction>(),
             messageRaws: new Map<string, MessageRaw>(),
-            sessions: new Map<AccessToken, Session>(),
+            sessions: new Map<string, Session>(),
             apiKeys: new Map<string, ApiKey>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
@@ -261,7 +263,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     // Session methods
     async getSession(accessToken: AccessToken): Promise<Session | undefined> {
-        return this.getStorage().sessions.get(accessToken)
+        return Array.from(this.getStorage().sessions.values()).find(
+            (session) => session.accessToken === accessToken
+        )
     }
 
     async listSessions(): Promise<Array<Session>> {
@@ -269,15 +273,66 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async setSession(session: Session): Promise<void> {
+        const userId = this.assertConnected()
         const storage = this.getStorage()
-        storage.sessions.set(session.accessToken, session)
+        if (session.accessToken) {
+            for (const [id, existingSession] of storage.sessions) {
+                if (
+                    existingSession.origin === session.origin &&
+                    existingSession.accessToken
+                ) {
+                    storage.sessions.delete(id)
+                }
+            }
+        }
+        storage.sessions.set(session.id, { ...session, userId })
         this.updateStorage(storage)
     }
 
     async removeSession(accessToken: AccessToken): Promise<void> {
         const storage = this.getStorage()
-        storage.sessions.delete(accessToken)
+        for (const [id, session] of storage.sessions) {
+            if (session.accessToken === accessToken) {
+                storage.sessions.delete(id)
+            }
+        }
         this.updateStorage(storage)
+    }
+
+    async getOnboardingSession(
+        sessionId: string
+    ): Promise<Session | undefined> {
+        for (const storage of this.userStorage.values()) {
+            const session = storage.sessions.get(sessionId)
+            if (session && !session.accessToken) {
+                return session
+            }
+        }
+        return undefined
+    }
+
+    async upgradeOnboardingSession(
+        sessionId: string,
+        accessToken: AccessToken
+    ): Promise<Session> {
+        const storage = this.getStorage()
+        const onboardingSession = storage.sessions.get(sessionId)
+        if (!onboardingSession || onboardingSession.accessToken) {
+            throw new Error('Onboarding session not found')
+        }
+
+        for (const [id, session] of storage.sessions) {
+            if (
+                id !== sessionId &&
+                session.origin === onboardingSession.origin
+            ) {
+                storage.sessions.delete(id)
+            }
+        }
+        const upgraded = { ...onboardingSession, accessToken }
+        storage.sessions.set(sessionId, upgraded)
+        this.updateStorage(storage)
+        return upgraded
     }
 
     // IDP methods
@@ -333,14 +388,19 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const accessToken = this.authContext?.accessToken
-        if (!accessToken) {
-            throw new Error('No access token found in auth context')
-        }
-
-        const session = this.getStorage().sessions.get(accessToken)
-        if (!session) {
-            throw new Error('No session found')
+        const context = this.authContext
+        const onboardingSessionId =
+            context && !context.isApiKey ? context.sessionId : undefined
+        const sessions = this.getStorage().sessions
+        const session = context?.accessToken
+            ? Array.from(sessions.values()).find(
+                  (s) => s.accessToken === context.accessToken
+              )
+            : onboardingSessionId
+              ? sessions.get(onboardingSessionId)
+              : undefined
+        if (!session || (!context?.accessToken && session.accessToken)) {
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
         const networkId = session.network
         if (!networkId) {

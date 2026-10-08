@@ -188,7 +188,7 @@ describe('allocation namespace namespace', () => {
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationInstructionParams.allocationSpecification,
                 defaultAllocationInstructionParams.asset.admin,
-                defaultAllocationInstructionParams.asset.registryUrl.href,
+                defaultAllocationInstructionParams.asset.registryUrl,
                 undefined,
                 undefined,
                 undefined
@@ -347,7 +347,7 @@ describe('allocation namespace namespace', () => {
             await allocation.context.execute(defaultAllocationContextParams)
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationContextParams.allocationCid,
-                expectedTokenStandardParamsUrl.href
+                expectedTokenStandardParamsUrl
             )
         })
 
@@ -359,7 +359,7 @@ describe('allocation namespace namespace', () => {
             await allocation.context.withdraw(defaultAllocationContextParams)
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationContextParams.allocationCid,
-                expectedTokenStandardParamsUrl.href
+                expectedTokenStandardParamsUrl
             )
         })
 
@@ -370,7 +370,7 @@ describe('allocation namespace namespace', () => {
             await allocation.context.cancel(defaultAllocationContextParams)
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationContextParams.allocationCid,
-                expectedTokenStandardParamsUrl.href
+                expectedTokenStandardParamsUrl
             )
         })
     })

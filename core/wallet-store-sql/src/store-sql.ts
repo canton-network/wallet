@@ -9,6 +9,7 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store as BaseStore,
     Wallet,
@@ -445,23 +446,78 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         }
 
         await this.db.transaction().execute(async (trx) => {
-            const deleted = await trx
-                .deleteFrom('sessions')
-                .where((eb) =>
-                    eb.and([
-                        eb('userId', '=', userId),
-                        eb('origin', '=', session.origin),
-                    ])
-                )
-                .execute()
-            this.logger.debug(deleted, 'Deleted old session')
+            if (session.accessToken) {
+                // Regular session - one user can have only one session per origin.
+                // Tokenless sessions are not replaced by duplicates.
+                const deleted = await trx
+                    .deleteFrom('sessions')
+                    .where((eb) =>
+                        eb.and([
+                            eb('userId', '=', userId),
+                            eb('origin', '=', session.origin),
+                            eb('accessToken', 'is not', null),
+                        ])
+                    )
+                    .execute()
+                this.logger.debug(deleted, 'Deleted old session')
+            }
 
             const inserted = await trx
                 .insertInto('sessions')
-                .values({ ...session, userId })
+                .values({
+                    ...session,
+                    accessToken: session.accessToken ?? null,
+                    userId,
+                })
                 .execute()
 
             this.logger.debug(inserted, 'Inserted new session')
+        })
+    }
+
+    async getOnboardingSession(
+        sessionId: string
+    ): Promise<Session | undefined> {
+        const row = await this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('id', '=', sessionId)
+            .where('accessToken', 'is', null)
+            .executeTakeFirst()
+        return row ? toSession(row) : undefined
+    }
+
+    async upgradeOnboardingSession(
+        sessionId: string,
+        accessToken: AccessToken
+    ): Promise<Session> {
+        const userId = this.assertConnected()
+
+        return this.db.transaction().execute(async (trx) => {
+            const row = await trx
+                .selectFrom('sessions')
+                .selectAll()
+                .where('id', '=', sessionId)
+                .where('userId', '=', userId)
+                .where('accessToken', 'is', null)
+                .executeTakeFirst()
+            if (!row) {
+                throw new Error('Onboarding session not found')
+            }
+
+            await trx
+                .deleteFrom('sessions')
+                .where('userId', '=', userId)
+                .where('origin', '=', row.origin)
+                .where('id', '!=', sessionId)
+                .execute()
+            await trx
+                .updateTable('sessions')
+                .set({ accessToken })
+                .where('id', '=', sessionId)
+                .execute()
+
+            return toSession({ ...row, accessToken })
         })
     }
 
@@ -576,16 +632,34 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async getCurrentNetwork(): Promise<Network> {
-        const token = this.authContext?.accessToken as AccessToken
-
-        if (!token) {
-            throw new Error('No access token found in auth context')
+        const userId = this.assertConnected()
+        const token = this.authContext?.accessToken
+        const onboardingSessionId =
+            this.authContext && !this.authContext.isApiKey
+                ? this.authContext.sessionId
+                : undefined
+        if (!token && !onboardingSessionId) {
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
 
-        const session = await this.getSession(token)
-        if (!session) {
-            throw new Error('No session found')
+        const sessionRow = await this.db
+            .selectFrom('sessions')
+            .selectAll()
+            .where('userId', '=', userId)
+            .where((eb) =>
+                token
+                    ? eb('accessToken', '=', token)
+                    : eb.and([
+                          eb('id', '=', onboardingSessionId!),
+                          eb('accessToken', 'is', null),
+                      ])
+            )
+            .executeTakeFirst()
+        if (!sessionRow) {
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
+
+        const session = toSession(sessionRow)
         const networkId = session.network
         if (!networkId) {
             throw new Error('No current network set in session')

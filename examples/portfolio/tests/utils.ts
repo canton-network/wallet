@@ -1,11 +1,96 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, type Page } from '@playwright/test'
-import { WalletGateway } from '@canton-network/core-wallet-test-utils'
+import { expect, type Page, test } from '@playwright/test'
+import {
+    GatewayUserApi,
+    WalletGateway,
+} from '@canton-network/core-wallet-test-utils'
 
 const BASE_URL = 'http://localhost:8081'
-const LOCALNET_CLIENT_SECRET = 'unsafe'
+
+// Gateway and LocalNet network the dApp uses in dev and CI. The gateway's
+// config for that network authenticates with the `ledger-api-user` client id,
+// and a user with that same id exists on the participant.
+export const GATEWAY_URL = 'http://localhost:3030'
+export const LOCALNET_NETWORK_ID = 'canton:localnet'
+export const LOCALNET_CLIENT_ID = 'ledger-api-user'
+// The gateway only mints a self-signed token when this matches the network's
+// configured secret. Any client id is accepted, so it does not tie the token
+// to one user.
+export const LOCALNET_CLIENT_SECRET = 'unsafe'
+// Participant behind that network.
+export const LOCALNET_LEDGER_API_URL = 'http://localhost:2975'
+
+/**
+ * Gateway user id for a worker.
+ *
+ * Wallets and the primary wallet are scoped per gateway user, so giving each
+ * worker its own user keeps parallel tests from stepping on each other.
+ *
+ * Worker 0 reuses LOCALNET_CLIENT_ID, which already has a user on the
+ * participant, so a single-worker run needs nothing created up front.
+ */
+export const gatewayUserForWorker = (index: number): string =>
+    index === 0 ? LOCALNET_CLIENT_ID : `${LOCALNET_CLIENT_ID}-w${index}`
+
+/**
+ * Gateway user id for the worker running the current test.
+ *
+ * `parallelIndex` and not `workerIndex`: it never exceeds the worker count and
+ * is reused when a worker restarts, so retries do not keep creating new users.
+ */
+const workerClientId = (): string =>
+    gatewayUserForWorker(test.info().parallelIndex)
+
+/**
+ * Open a gateway User API session, to set up wallets by calling the wallet
+ * instead of driving its web UI.
+ *
+ * These tests assert on the dApp. Creating wallets is just scaffolding, and
+ * doing it through the wallet UI costs a page load per call.
+ */
+export const createGatewayApi = async (): Promise<GatewayUserApi> => {
+    const api = new GatewayUserApi({
+        baseUrl: GATEWAY_URL,
+        networkId: LOCALNET_NETWORK_ID,
+        clientId: workerClientId(),
+        clientSecret: LOCALNET_CLIENT_SECRET,
+        // Not the dApp origin: sessions are per (user, origin) and a new one
+        // replaces the old, so the dApp's connect would kill this session.
+        origin: `http://portfolio-e2e-setup-w${test.info().parallelIndex}`,
+    })
+    await api.connect()
+    return api
+}
+
+/**
+ * Connect the dApp to the gateway as this worker's user, and wait until the
+ * dApp itself is connected.
+ *
+ * Must use the same client id as `createGatewayApi`. The dApp only sees wallets
+ * belonging to the user it connected as.
+ *
+ * `wg.connect` returns when the gateway popup reports the connection, but the
+ * dApp still has to store the session and redirect to the dashboard. Navigating
+ * elsewhere before that lands cuts the connect short, so wait for the dashboard
+ * heading, which only renders with an active session.
+ */
+export const connectGateway = async (
+    page: Page,
+    wg: WalletGateway
+): Promise<void> => {
+    await wg.connect({
+        network: 'LocalNet',
+        credentials: {
+            clientId: workerClientId(),
+            clientSecret: LOCALNET_CLIENT_SECRET,
+        },
+    })
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
+        timeout: 15000,
+    })
+}
 
 export const createWalletGateway = (dappPage: Page): WalletGateway =>
     new WalletGateway({
@@ -18,12 +103,6 @@ export const createWalletGateway = (dappPage: Page): WalletGateway =>
             page.getByRole('button', {
                 name: 'Connect Wallet',
             }),
-    })
-
-export const connectToLocalNet = (wg: WalletGateway): Promise<void> =>
-    wg.connect({
-        network: 'LocalNet',
-        credentials: { clientSecret: LOCALNET_CLIENT_SECRET },
     })
 
 export const gotoConnect = async (page: Page): Promise<void> => {
@@ -225,20 +304,16 @@ export const expectOffersBadgeCount = async (
     await expect(badge).toHaveText(String(count), { timeout: 15000 })
 }
 
+/**
+ * Make `partyId` the primary wallet, by calling the wallet instead of clicking
+ * its UI. The gateway emits `accountsChanged` either way, so the dApp reacts
+ * the same.
+ */
 export const switchWallet = async (
-    page: Page,
-    wg: WalletGateway,
+    api: GatewayUserApi,
     partyId: string
 ): Promise<void> => {
-    await expect(
-        page.getByRole('button', { name: 'Wallet Gateway' })
-    ).toBeVisible()
-
-    if (!(await wg.isPopupOpen())) {
-        await wg.openPopup()
-    }
-
-    await wg.setPrimaryWallet(partyId)
+    await api.setPrimaryWallet(partyId)
 }
 
 export const expectWalletBalance = async (

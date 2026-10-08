@@ -300,6 +300,250 @@
             "description": "Creates a new wallet and party with the given hint."
         },
         {
+            "name": "addSelfIssuedSession",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "AddSelfIssuedSessionParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "username": {
+                                "title": "username",
+                                "type": "string",
+                                "description": "User id used while onboarding."
+                            },
+                            "networkId": {
+                                "title": "networkId",
+                                "type": "string",
+                                "description": "Self-issued network to onboard on."
+                            },
+                            "origin": {
+                                "title": "origin",
+                                "type": "string",
+                                "description": "Origin starting the onboarding flow."
+                            }
+                        },
+                        "required": ["username", "networkId", "origin"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "AddSelfIssuedSessionResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "sessionId": {
+                            "title": "sessionId",
+                            "type": "string",
+                            "description": "Onboarding session id required by the remaining self-issued onboarding methods."
+                        }
+                    },
+                    "required": ["sessionId"]
+                }
+            },
+            "description": "Creates a tokenless session used during self-issued token creation process."
+        },
+        {
+            "name": "getSelfIssuedOnboarding",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GetSelfIssuedOnboardingParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                            }
+                        },
+                        "required": ["sessionId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetSelfIssuedOnboardingResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "userExists": {
+                            "title": "userExists",
+                            "type": "boolean",
+                            "description": "Whether a ledger user with this id already exists."
+                        },
+                        "primaryPartyAuth": {
+                            "title": "primaryPartyAuth",
+                            "type": "boolean",
+                            "description": "Whether the ledger user already has a primary party and primary party authentication set."
+                        },
+                        "wallets": {
+                            "title": "authPartyWallets",
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/components/schemas/Wallet"
+                            },
+                            "description": "Wallets stored for the user on the selected network that can be used for authentication."
+                        }
+                    },
+                    "required": ["userExists", "primaryPartyAuth", "wallets"]
+                }
+            },
+            "description": "Returns the ledger-user and wallet state needed to select the self-issued onboarding path."
+        },
+        {
+            "name": "createSelfIssuedWallet",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "CreateSelfIssuedWalletParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                            },
+                            "partyHint": {
+                                "title": "partyHint",
+                                "type": "string",
+                                "description": "The party hint and name of the wallet."
+                            },
+                            "signingProviderId": {
+                                "title": "signingProviderId",
+                                "type": "string",
+                                "description": "Signing provider used to hold keys of the authentication party."
+                            }
+                        },
+                        "required": [
+                            "sessionId",
+                            "partyHint",
+                            "signingProviderId"
+                        ]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "CreateSelfIssuedWalletResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "wallet": {
+                            "description": "The created wallet, possibly awaiting party allocation.",
+                            "$ref": "#/components/schemas/Wallet"
+                        }
+                    },
+                    "required": ["wallet"]
+                }
+            },
+            "description": "Creates a ledger user and topology transactions signing request."
+        },
+        {
+            "name": "allocateSelfIssuedWallet",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "AllocateSelfIssuedWalletParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "Party id of the wallet awaiting allocation."
+                            }
+                        },
+                        "required": ["sessionId", "partyId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "AllocateSelfIssuedWalletResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "wallet": {
+                            "description": "The wallet after polling allocation and granting user rights.",
+                            "$ref": "#/components/schemas/Wallet"
+                        }
+                    },
+                    "required": ["wallet"]
+                }
+            },
+            "description": "Polls the signing provider, allocates the party, and grants ledger-user rights when signing is complete."
+        },
+        {
+            "name": "connectSelfIssuedSession",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "ConnectSelfIssuedSessionParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                            },
+                            "partyId": {
+                                "title": "partyId",
+                                "type": "string",
+                                "description": "Allocated party selected for authentication."
+                            }
+                        },
+                        "required": ["sessionId", "partyId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ConnectSelfIssuedSessionResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "wallet": {
+                            "description": "Wallet configured as the user's authentication party.",
+                            "$ref": "#/components/schemas/Wallet"
+                        },
+                        "accessToken": {
+                            "title": "accessToken",
+                            "type": "string",
+                            "description": "Self-issued access token added to the session."
+                        },
+                        "sessionId": {
+                            "title": "sessionId",
+                            "type": "string",
+                            "description": "Onboarding session id required by the remaining self-issued onboarding methods."
+                        }
+                    },
+                    "required": ["wallet", "accessToken", "sessionId"]
+                }
+            },
+            "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the onboarding session with it."
+        },
+        {
             "name": "allocatePartyForWallet",
             "params": [
                 {
@@ -1387,9 +1631,8 @@
                     "ledgerApi"
                 ]
             },
-            "Idp": {
-                "title": "Idp",
-                "description": "Structure representing the Identity Providers",
+            "OauthIdp": {
+                "title": "OauthIdp",
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
@@ -1399,9 +1642,10 @@
                         "description": "ID of the identity provider"
                     },
                     "type": {
-                        "title": "type",
-                        "enum": ["oauth", "self_signed"],
-                        "description": "Type of identity provider (oauth / self_signed)"
+                        "title": "oauthIdpType",
+                        "type": "string",
+                        "enum": ["oauth"],
+                        "description": "OAuth identity provider"
                     },
                     "issuer": {
                         "title": "issuer",
@@ -1414,17 +1658,145 @@
                         "description": "The configuration URL for the identity provider."
                     }
                 },
-                "required": ["id", "type", "issuer"]
+                "required": ["id", "type", "issuer", "configUrl"]
             },
-            "Auth": {
-                "title": "auth",
+            "SelfSignedIdp": {
+                "title": "SelfSignedIdp",
                 "type": "object",
-                "description": "Represents the type of auth for a specified network",
                 "additionalProperties": false,
                 "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "ID of the identity provider"
+                    },
+                    "type": {
+                        "title": "selfSignedIdpType",
+                        "type": "string",
+                        "enum": ["self_signed"],
+                        "description": "Self-signed identity provider"
+                    },
+                    "issuer": {
+                        "title": "issuer",
+                        "type": "string",
+                        "description": "Issuer of identity provider"
+                    }
+                },
+                "required": ["id", "type", "issuer"]
+            },
+            "SelfIssuedIdp": {
+                "title": "SelfIssuedIdp",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "id": {
+                        "title": "id",
+                        "type": "string",
+                        "description": "ID of the identity provider"
+                    },
+                    "type": {
+                        "title": "selfIssuedIdpType",
+                        "type": "string",
+                        "enum": ["self_issued"],
+                        "description": "Self-issued identity provider"
+                    }
+                },
+                "required": ["id", "type"]
+            },
+            "Idp": {
+                "title": "Idp",
+                "description": "Structure representing an identity provider",
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/OauthIdp"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfSignedIdp"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfIssuedIdp"
+                    }
+                ]
+            },
+            "AuthorizationCodeAuth": {
+                "title": "AuthorizationCodeAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Authorization code authentication configuration",
+                "properties": {
                     "method": {
-                        "title": "method",
+                        "title": "authorizationCodeAuthMethod",
+                        "type": "string",
+                        "enum": ["authorization_code"]
+                    },
+                    "scope": {
+                        "title": "scope",
                         "type": "string"
+                    },
+                    "clientId": {
+                        "title": "clientId",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string",
+                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                    }
+                },
+                "required": ["method", "audience", "scope", "clientId"]
+            },
+            "ClientCredentialsAuth": {
+                "title": "ClientCredentialsAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Client credentials authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "clientCredentialsAuthMethod",
+                        "type": "string",
+                        "enum": ["client_credentials"]
+                    },
+                    "identityProviderId": {
+                        "title": "clientCredentialsIdentityProviderId",
+                        "type": "string",
+                        "description": "Overrides the network's identity provider for client credentials token acquisition"
+                    },
+                    "scope": {
+                        "title": "scope",
+                        "type": "string"
+                    },
+                    "clientId": {
+                        "title": "clientId",
+                        "type": "string"
+                    },
+                    "clientSecret": {
+                        "title": "clientSecret",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string",
+                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                    }
+                },
+                "required": [
+                    "method",
+                    "audience",
+                    "scope",
+                    "clientId",
+                    "clientSecret"
+                ]
+            },
+            "SelfSignedAuth": {
+                "title": "SelfSignedAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Self-signed authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "selfSignedAuthMethod",
+                        "type": "string",
+                        "enum": ["self_signed"]
                     },
                     "scope": {
                         "title": "scope",
@@ -1444,10 +1816,59 @@
                     },
                     "audience": {
                         "title": "audience",
-                        "type": "string"
+                        "type": "string",
+                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                     }
                 },
-                "required": ["method", "audience", "scope", "clientId"]
+                "required": [
+                    "method",
+                    "audience",
+                    "scope",
+                    "clientId",
+                    "clientSecret",
+                    "issuer"
+                ]
+            },
+            "SelfIssuedAuth": {
+                "title": "SelfIssuedAuth",
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Self-issued authentication configuration",
+                "properties": {
+                    "method": {
+                        "title": "selfIssuedAuthMethod",
+                        "type": "string",
+                        "enum": ["self_issued"]
+                    },
+                    "scope": {
+                        "title": "scope",
+                        "type": "string"
+                    },
+                    "audience": {
+                        "title": "audience",
+                        "type": "string",
+                        "description": "Bare participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                    }
+                },
+                "required": ["method", "audience", "scope"]
+            },
+            "Auth": {
+                "title": "Auth",
+                "description": "Authentication configuration for a network",
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/AuthorizationCodeAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/ClientCredentialsAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfSignedAuth"
+                    },
+                    {
+                        "$ref": "#/components/schemas/SelfIssuedAuth"
+                    }
+                ]
             },
             "Wallet": {
                 "title": "Wallet",
@@ -1515,6 +1936,11 @@
                         "title": "reason",
                         "type": "string",
                         "description": "Reason for the wallet state, e.g., 'no signing provider matched'."
+                    },
+                    "isAuthParty": {
+                        "title": "isAuthParty",
+                        "type": "boolean",
+                        "description": "Whether the party authenticates the user with self-issued tokens."
                     },
                     "rights": {
                         "title": "rights",
