@@ -1172,7 +1172,6 @@
             "params": [
                 {
                     "name": "params",
-                    "required": true,
                     "schema": {
                         "title": "ListTransactionsParams",
                         "type": "object",

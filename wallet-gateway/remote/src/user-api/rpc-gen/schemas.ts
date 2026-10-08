@@ -970,23 +970,25 @@ export const paramSchemas: Record<string, z.ZodType> = {
         },
         required: ['transactionId'],
     }),
-    listTransactions: z.fromJSONSchema({
-        title: 'ListTransactionsParams',
-        type: 'object',
-        additionalProperties: { type: 'null' },
-        properties: {
-            limit: {
-                title: 'limit',
-                type: 'integer',
-                description: 'Limit of transactions to return.',
+    listTransactions: z
+        .fromJSONSchema({
+            title: 'ListTransactionsParams',
+            type: 'object',
+            additionalProperties: { type: 'null' },
+            properties: {
+                limit: {
+                    title: 'limit',
+                    type: 'integer',
+                    description: 'Limit of transactions to return.',
+                },
+                cursor: {
+                    title: 'cursor',
+                    type: ['string'],
+                    description: 'Cursor for next page of results.',
+                },
             },
-            cursor: {
-                title: 'cursor',
-                type: ['string'],
-                description: 'Cursor for next page of results.',
-            },
-        },
-    }),
+        })
+        .optional(),
     deleteTransaction: z.fromJSONSchema({
         title: 'DeleteTransactionParams',
         type: 'object',
