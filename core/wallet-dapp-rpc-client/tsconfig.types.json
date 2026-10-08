@@ -9,7 +9,7 @@
         "moduleResolution": "bundler",
         "noEmit": false,
         "composite": false,
-        "types": ["isomorphic-fetch", "json-schema", "lodash", "ws"]
+        "types": []
     },
     "files": ["src/index.ts"],
     "exclude": ["**/*.test.*", "**/*.spec.*", "**/__tests__/**"]
