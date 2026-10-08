@@ -83,7 +83,6 @@ export class AllocationService {
                     instrumentAdmin: admin,
                     instrumentId,
                     amount,
-                    // excludeCids: used,
                 })
 
                 cids.forEach((c) => used.add(c))
@@ -152,7 +151,7 @@ export class AllocationService {
             {
                 excludeDebugFields: true,
             },
-            { path: { allocation: allocationCid } }
+            { path: { allocationId: allocationCid } }
         )
     }
 
@@ -217,7 +216,7 @@ export class AllocationService {
                 action === 'reject'
                     ? 'AllocationRequest_Reject'
                     : 'AllocationRequest_Withdraw',
-            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS }, //TODO: look at choice args in codegen
+            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS() }, //TODO: look at choice args in codegen
         }
         return [exercise, []]
     }
@@ -230,7 +229,7 @@ export class AllocationService {
             templateId: ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
             contractId: withdrawCid,
             choice: 'AllocationInstruction_Withdraw',
-            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS }, //TODO: look at choice args in codegen
+            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS() }, //TODO: look at choice args in codegen
         }
         return [exercise, []]
     }
@@ -238,7 +237,7 @@ export class AllocationService {
     async createAllocationFromContext(
         factoryId: string,
         choiceArgs: AllocationFactory_Allocate,
-        choiceContext: OffLedger.TransferInstructionV2.components['schemas']['ChoiceContext']
+        choiceContext: OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         this.logger.debug('Creating transfer from pre-fetched context...')
         choiceArgs.extraArgs.context = {
