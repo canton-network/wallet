@@ -77,6 +77,7 @@ catalog:
     '@canton-network/core-wallet-user-rpc-client': workspace:^
     '@canton-network/dapp-sdk': workspace:^
     '@canton-network/example-test-token-v1-registry': workspace:^
+    '@canton-network/example-test-token-v2-registry': workspace:^
     '@canton-network/tool-conformance-dapp': workspace:^
     '@canton-network/wallet-sdk': workspace:^
     '@commander-js/extra-typings': ^14.0.0
