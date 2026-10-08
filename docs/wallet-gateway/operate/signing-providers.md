@@ -48,6 +48,8 @@ Omit a provider to leave it unregistered. An empty `"signingProviders": {}` regi
 | [Fireblocks](#fireblocks)   | Fireblocks (HSM-backed)               | Compliance-sensitive, high-security production.      |
 | [Blockdaemon](#blockdaemon) | Blockdaemon infrastructure            | Managed, cloud-native deployments.                   |
 | [DFNS](#dfns)               | DFNS (MPC)                            | Programmable custody with policy controls.           |
+| [Securosys](#securosys)     | Securosys TSB (HSM-backed)            |                                                      |
+| [BitGo](#bitgo)             | BitGo (MPC)                           |                                                      |
 
 > [!WARNING]
 > The internal provider stores private keys in the Wallet Gateway's signing store database. Do not
@@ -144,10 +146,45 @@ the following config fields and environment variables:
 | `DFNS_PRIVATE_KEY`   | yes      | Service account private key (PEM). Override name with `privateKeyEnv`. |
 | `DFNS_AUTH_TOKEN`    | yes      | Service account auth token. Override name with `authTokenEnv`.         |
 
-DFNS creates and activates Canton wallets directly through its validator integration: it
-provisions a Canton-formatted key, registers the party on the network, and returns the wallet
-ready for use. When signing, DFNS broadcasts the transaction to Canton in a single step and
-returns the update ID.
+## Securosys
 
-> [!NOTE]
-> Only `Canton` and `CantonTestnet` network wallets are supported.
+HSM-backed key management and signing through Securosys TSB (Transaction Security Broker).
+See the [Securosys signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-securosys)
+for authentication modes (API keys, bearer token, and/or mTLS).
+
+| Config field                                        | Required | Description                                                                                                    |
+| --------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| `signingProviders.securosys`                        | yes      | Include this object to opt in. Requires `baseUrl`.                                                             |
+| `signingProviders.securosys.baseUrl`                | yes      | TSB service URL.                                                                                               |
+| `signingProviders.securosys.mtlsP12Path`            | no       | Path to a PKCS#12 client certificate when TSB requires mTLS.                                                   |
+| `signingProviders.securosys.signatureAlgorithm`     | no       | TSB signature algorithm. Defaults to `EDDSA`.                                                                  |
+| `signingProviders.securosys.keyManagementApiKeyEnv` | no       | Name of the env var that holds the key-management API key. Defaults to `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY`. |
+| `signingProviders.securosys.keyOperationApiKeyEnv`  | no       | Name of the env var that holds the key-operation API key. Defaults to `SECUROSYS_TSB_KEY_OPERATION_API_KEY`.   |
+| `signingProviders.securosys.bearerTokenEnv`         | no       | Name of the env var that holds the bearer token. Defaults to `SECUROSYS_TSB_BEARER_TOKEN`.                     |
+| `signingProviders.securosys.mtlsP12PasswordEnv`     | no       | Name of the env var that holds the PKCS#12 password. Defaults to `SECUROSYS_TSB_MTLS_P12_PASSWORD`.            |
+| `signingProviders.securosys.keyPasswordEnv`         | no       | Name of the env var that holds the TSB key password. Defaults to `SECUROSYS_TSB_KEY_PASSWORD`.                 |
+
+| Environment variable                   | Required | Description                                                                                       |
+| -------------------------------------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY` | no       | API key for TSB key-management endpoints. Override name with `keyManagementApiKeyEnv`.            |
+| `SECUROSYS_TSB_KEY_OPERATION_API_KEY`  | no       | API key for TSB signing and request-status endpoints. Override name with `keyOperationApiKeyEnv`. |
+| `SECUROSYS_TSB_BEARER_TOKEN`           | no       | Bearer access token for access-token auth. Override name with `bearerTokenEnv`.                   |
+| `SECUROSYS_TSB_MTLS_P12_PASSWORD`      | no       | Password for the PKCS#12 client certificate. Override name with `mtlsP12PasswordEnv`.             |
+| `SECUROSYS_TSB_KEY_PASSWORD`           | no       | TSB key password used for key attributes and signing. Override name with `keyPasswordEnv`.        |
+
+## BitGo
+
+MPC custodial signing through BitGo.
+See the [BitGo signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-bitgo).
+
+| Config field                            | Required | Description                                                                                                      |
+| --------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `signingProviders.bitgo`                | yes      | Include this object to opt in.                                                                                   |
+| `signingProviders.bitgo.baseUrl`        | no       | API base URL. Defaults to `https://app.bitgo.com`. Use `https://app.bitgo-test.com` for testnet.                 |
+| `signingProviders.bitgo.enterpriseId`   | no       | Enterprise ID. Required for wallet creation and restart-safe transaction lookup.                                 |
+| `signingProviders.bitgo.coin`           | no       | Canton coin identifier. Auto-detected from the API URL when omitted (`tcanton` for testnet, `canton` otherwise). |
+| `signingProviders.bitgo.accessTokenEnv` | no       | Name of the env var that holds the access token. Defaults to `BITGO_ACCESS_TOKEN`.                               |
+
+| Environment variable | Required | Description                                              |
+| -------------------- | -------- | -------------------------------------------------------- |
+| `BITGO_ACCESS_TOKEN` | yes      | BitGo access token. Override name with `accessTokenEnv`. |
