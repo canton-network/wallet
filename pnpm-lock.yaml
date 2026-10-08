@@ -210,8 +210,11 @@ catalogs:
       specifier: ^2.3.1
       version: 2.3.11
     '@logtape/logtape':
-      specifier: ^2.3.1
-      version: 2.3.11
+      specifier: ^2.4.0
+      version: 2.4.0
+    '@logtape/testing':
+      specifier: ^2.4.0
+      version: 2.4.0
     '@metamask/rpc-errors':
       specifier: ^7.0.3
       version: 7.0.3
@@ -861,15 +864,15 @@ importers:
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       dayjs:
         specifier: 'catalog:'
         version: 1.11.23
       openapi-fetch:
         specifier: 'catalog:'
         version: 0.17.0
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       typescript-lru-cache:
         specifier: 'catalog:'
         version: 2.0.0
@@ -919,6 +922,9 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       dayjs:
         specifier: 'catalog:'
         version: 1.11.23
@@ -928,9 +934,6 @@ importers:
       openapi-fetch:
         specifier: 'catalog:'
         version: 0.17.0
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -968,9 +971,9 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
-      pino:
+      '@logtape/logtape':
         specifier: 'catalog:'
-        version: 10.3.1
+        version: 2.4.0
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1059,19 +1062,22 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       dayjs:
         specifier: 'catalog:'
         version: 1.11.23
       openapi-fetch:
         specifier: 'catalog:'
         version: 0.17.0
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       typescript-lru-cache:
         specifier: 'catalog:'
         version: 2.0.0
     devDependencies:
+      '@logtape/testing':
+        specifier: 'catalog:'
+        version: 2.4.0(@logtape/logtape@2.4.0)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.9
@@ -1108,9 +1114,6 @@ importers:
       openapi-fetch:
         specifier: 'catalog:'
         version: 0.17.0
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1287,9 +1290,6 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
     devDependencies:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
@@ -1455,12 +1455,12 @@ importers:
       '@dfns/sdk-keysigner':
         specifier: 'catalog:'
         version: 0.8.31(@dfns/sdk@0.8.31)
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       lodash:
         specifier: 'catalog:'
         version: 4.18.1
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       zod:
         specifier: 'catalog:'
         version: 4.6.5
@@ -1495,6 +1495,9 @@ importers:
       '@fireblocks/ts-sdk':
         specifier: 'catalog:'
         version: 13.0.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       async-mutex:
         specifier: 'catalog:'
         version: 0.5.0
@@ -1504,9 +1507,6 @@ importers:
       lodash:
         specifier: 'catalog:'
         version: 4.18.1
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       tweetnacl:
         specifier: 'catalog:'
         version: 1.0.3
@@ -1550,15 +1550,15 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       fs-extra:
         specifier: 'catalog:'
         version: 11.4.1
       lodash:
         specifier: 'catalog:'
         version: 4.18.1
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
     devDependencies:
       '@types/fs-extra':
         specifier: 'catalog:'
@@ -1710,6 +1710,9 @@ importers:
       '@canton-network/core-wallet-store':
         specifier: 'catalog:'
         version: link:../wallet-store
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       better-sqlite3:
         specifier: 'catalog:'
         version: 12.11.1
@@ -1722,9 +1725,6 @@ importers:
       pg:
         specifier: 'catalog:'
         version: 8.23.1
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       umzug:
         specifier: 'catalog:'
         version: 3.8.3(@types/node@25.9.9)
@@ -1808,6 +1808,9 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       openapi-fetch:
         specifier: 'catalog:'
         version: 0.17.0
@@ -2031,6 +2034,9 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       dayjs:
         specifier: 'catalog:'
         version: 1.11.23
@@ -2040,9 +2046,6 @@ importers:
       openapi-fetch:
         specifier: 'catalog:'
         version: 0.17.0
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       typescript-lru-cache:
         specifier: 'catalog:'
         version: 2.0.0
@@ -2153,6 +2156,9 @@ importers:
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       bignumber.js:
         specifier: 'catalog:'
         version: 10.0.2
@@ -2162,9 +2168,6 @@ importers:
       openapi-fetch:
         specifier: 'catalog:'
         version: 0.17.0
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -2227,6 +2230,9 @@ importers:
       '@daml/types':
         specifier: 'catalog:'
         version: 3.5.3
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       uuid:
         specifier: 'catalog:'
         version: 14.0.2
@@ -2261,6 +2267,9 @@ importers:
       '@canton-network/core-types':
         specifier: 'catalog:'
         version: link:../types
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       jose:
         specifier: 'catalog:'
         version: 5.10.0
@@ -2268,6 +2277,9 @@ importers:
         specifier: 'catalog:'
         version: 4.6.5
     devDependencies:
+      '@logtape/testing':
+        specifier: 'catalog:'
+        version: 2.4.0(@logtape/logtape@2.4.0)
       '@vitest/browser-playwright':
         specifier: 'catalog:'
         version: 5.0.3(playwright@1.63.0)(vite@7.3.6(@types/node@25.9.9)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.3)
@@ -2429,7 +2441,7 @@ importers:
         version: link:../wallet-user-rpc-client
       '@logtape/logtape':
         specifier: 'catalog:'
-        version: 2.3.11
+        version: 2.4.0
       pino:
         specifier: 'catalog:'
         version: 10.3.1
@@ -2491,7 +2503,7 @@ importers:
         version: link:../wallet-store
       '@logtape/logtape':
         specifier: 'catalog:'
-        version: 2.3.11
+        version: 2.4.0
       zod:
         specifier: 'catalog:'
         version: 4.6.5
@@ -2532,6 +2544,9 @@ importers:
       '@canton-network/core-wallet-store':
         specifier: 'catalog:'
         version: link:../wallet-store
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       better-sqlite3:
         specifier: 'catalog:'
         version: 12.11.1
@@ -2544,9 +2559,6 @@ importers:
       pg:
         specifier: 'catalog:'
         version: 8.23.1
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       umzug:
         specifier: 'catalog:'
         version: 3.8.3(@types/node@25.9.9)
@@ -2566,9 +2578,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 5.0.3(@vitest/browser@5.0.3)(vitest@5.0.3)
-      pino-test:
-        specifier: 'catalog:'
-        version: 1.1.0
       tsdown:
         specifier: 'catalog:'
         version: 0.22.14(@volar/typescript@2.4.28(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@5.9.3)
@@ -2602,12 +2611,15 @@ importers:
       '@canton-network/wallet-sdk':
         specifier: 'catalog:'
         version: link:../../sdk/wallet-sdk
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
+      '@logtape/testing':
+        specifier: 'catalog:'
+        version: 2.4.0(@logtape/logtape@2.4.0)
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
-      pino:
-        specifier: 'catalog:'
-        version: 10.3.1
       tweetnacl:
         specifier: 'catalog:'
         version: 1.0.3
@@ -2776,6 +2788,12 @@ importers:
       '@canton-network/wallet-sdk':
         specifier: 'catalog:'
         version: link:../../../sdk/wallet-sdk
+      '@logtape/adaptor-pino':
+        specifier: 'catalog:'
+        version: 2.3.11(@logtape/logtape@2.4.0)(pino@10.3.1)
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.0
       bip39:
         specifier: 'catalog:'
         version: 3.1.0
@@ -3563,10 +3581,10 @@ importers:
         version: link:../../core/wallet-user-rpc-client
       '@logtape/adaptor-pino':
         specifier: 'catalog:'
-        version: 2.3.11(@logtape/logtape@2.3.11)(pino@10.3.1)
+        version: 2.3.11(@logtape/logtape@2.4.0)(pino@10.3.1)
       '@logtape/logtape':
         specifier: 'catalog:'
-        version: 2.3.11
+        version: 2.4.0
       '@webext-core/proxy-service':
         specifier: 'catalog:'
         version: 3.0.2(@webext-core/messaging@4.0.0)
@@ -3666,10 +3684,10 @@ importers:
         version: 14.0.0(commander@14.0.3)
       '@logtape/adaptor-pino':
         specifier: 'catalog:'
-        version: 2.3.11(@logtape/logtape@2.3.11)(pino@10.3.1)
+        version: 2.3.11(@logtape/logtape@2.4.0)(pino@10.3.1)
       '@logtape/logtape':
         specifier: 'catalog:'
-        version: 2.3.11
+        version: 2.4.0
       commander:
         specifier: 'catalog:'
         version: 14.0.3
@@ -5336,8 +5354,13 @@ packages:
       '@logtape/logtape': ^2.3.11
       pino: ^9.7.0 || ^10.0.0
 
-  '@logtape/logtape@2.3.11':
-    resolution: {integrity: sha512-T7T+IShQBxofHCs7J1kVMZPLLHYAXAOqPEc/xwzd6/2q8va/D/t/HP7uCeJzTQOywpXF1tbyz15O4VHT8NF2hw==}
+  '@logtape/logtape@2.4.0':
+    resolution: {integrity: sha512-xhvG/NwfBXs+a+oJxl6xOmqA4zX8giP1brvd5lVbL3qUHUkZfVt+4QE/+9p/Vf76JNwe/upH3XYTNItocKQ8Qg==}
+
+  '@logtape/testing@2.4.0':
+    resolution: {integrity: sha512-syPTrkBObk3jpczkiEa9/WdrH6ac6qwmLREhtlWFahTHIX0aB8PJDtCMxolsB8LzofZwtU+PudUzMzxkrL/T6g==}
+    peerDependencies:
+      '@logtape/logtape': ^2.4.0
 
   '@mapbox/node-pre-gyp@2.0.3':
     resolution: {integrity: sha512-uwPAhccfFJlsfCxMYTwOdVfOz3xqyj8xYL3zJj8f0pb30tLohnnFPhLuqp4/qoEz8sNxe4SESZedcBojRefIzg==}
@@ -14403,12 +14426,16 @@ snapshots:
     dependencies:
       '@lit-labs/ssr-dom-shim': 1.6.0
 
-  '@logtape/adaptor-pino@2.3.11(@logtape/logtape@2.3.11)(pino@10.3.1)':
+  '@logtape/adaptor-pino@2.3.11(@logtape/logtape@2.4.0)(pino@10.3.1)':
     dependencies:
-      '@logtape/logtape': 2.3.11
+      '@logtape/logtape': 2.4.0
       pino: 10.3.1
 
-  '@logtape/logtape@2.3.11': {}
+  '@logtape/logtape@2.4.0': {}
+
+  '@logtape/testing@2.4.0(@logtape/logtape@2.4.0)':
+    dependencies:
+      '@logtape/logtape': 2.4.0
 
   '@mapbox/node-pre-gyp@2.0.3(supports-color@10.2.2)':
     dependencies:

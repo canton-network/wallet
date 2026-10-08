@@ -178,8 +178,7 @@ export class SignedPartyCreationService {
             const defaultLedgerProvider = new LedgerProvider({
                 baseUrl: endpoint.url,
                 accessTokenProvider: new AuthTokenProvider(
-                    endpoint.tokenProviderConfig,
-                    this.ctx.logger
+                    endpoint.tokenProviderConfig
                 ),
             })
 

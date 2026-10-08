@@ -9,7 +9,7 @@ import {
 } from '@canton-network/core-token-standard'
 import { HoldingView as HoldingViewV2 } from '@canton-network/core-token-standard-v2'
 import { EventFilterBySetup } from '@canton-network/core-ledger-client-types'
-import type { Logger, PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     TokenStandardTransactionInterfaces,
     type PrettyContract,
@@ -39,6 +39,7 @@ import { TransferServiceV2 } from './v2/transfer-service.js'
 import { TransferService } from './v1/transfer-service.js'
 import { AllocationService } from './v1/allocation-service.js'
 import { CoreService } from './core-service.js'
+import { getLogger } from '@logtape/logtape'
 
 export function isApiVersion(v: string): v is ApiVersion {
     return (SUPPORTED_VERSIONS as readonly string[]).includes(v)
@@ -88,6 +89,12 @@ export function resolveCapabilities(opts: {
 export class TokenStandardService {
     static readonly MEMO_KEY = 'splice.lfdecentralizedtrust.org/reason'
 
+    private logger = getLogger([
+        'core',
+        'token-standard-service',
+        'TokenStandardService',
+    ])
+
     readonly core: CoreService
     readonly allocation: AllocationService
     readonly transfer: TransferService
@@ -97,20 +104,18 @@ export class TokenStandardService {
 
     constructor(
         private ledgerProvider: AbstractLedgerProvider,
-        private logger: Logger,
         private accessTokenProvider: AccessTokenProvider,
         private readonly isMasterUser: boolean
     ) {
         this.core = new CoreService(
             ledgerProvider,
-            logger,
             accessTokenProvider,
             isMasterUser
         )
-        this.allocation = new AllocationService(this.core, this.logger)
-        this.transfer = new TransferService(this.core, this.logger)
+        this.allocation = new AllocationService(this.core)
+        this.transfer = new TransferService(this.core)
         this.v2 = {
-            transfer: new TransferServiceV2(this.core, this.logger),
+            transfer: new TransferServiceV2(this.core),
         }
     }
 
@@ -142,7 +147,10 @@ export class TokenStandardService {
                 params
             )
         } catch (e) {
-            this.logger.error(e)
+            this.logger.warn(
+                'An error occurred while fetching the instrument by ID.',
+                { error: e }
+            )
             throw new Error(
                 `Instrument id ${instrumentId} does not exist for this instrument admin.`,
                 { cause: e }
@@ -274,7 +282,7 @@ export class TokenStandardService {
                     })
                 ).offset!
 
-            this.logger.debug(afterOffsetOrLatest, 'Using offset')
+            this.logger.debug('Using offset', { afterOffsetOrLatest })
             const updatesResponse: JsGetUpdatesResponse[] =
                 await this.ledgerProvider.request<Ops.PostV2Updates>({
                     method: 'ledgerApi',
@@ -308,7 +316,9 @@ export class TokenStandardService {
                 // this.ledgerProvider
             )
         } catch (err) {
-            this.logger.error('Failed to list holding transactions.', err)
+            this.logger.warn('Failed to list holding transactions.', {
+                error: err,
+            })
             throw err
         }
     }

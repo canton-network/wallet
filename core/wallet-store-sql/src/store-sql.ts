@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
+import { getLogger } from '@logtape/logtape'
 import {
     type AuthContext,
     type UserId,
@@ -60,19 +60,18 @@ import pg from 'pg'
 import type { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
+    private logger = getLogger(['core', 'wallet-store-sql', 'StoreSql'])
     authContext: AuthContext | undefined
 
     constructor(
         private db: Kysely<DB>,
-        private logger: Logger,
         authContext?: AuthContext
     ) {
-        this.logger = logger.child({ component: 'StoreSql' })
         this.authContext = authContext
     }
 
     withAuthContext(context?: AuthContext): StoreSql {
-        return new StoreSql(this.db, this.logger, context)
+        return new StoreSql(this.db, context)
     }
 
     private assertConnected(): UserId {
@@ -458,7 +457,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                         ])
                     )
                     .execute()
-                this.logger.debug(deleted, 'Deleted old session')
+                this.logger.info('Deleted old session', { deleted })
             }
 
             const inserted = await trx
@@ -470,7 +469,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 })
                 .execute()
 
-            this.logger.debug(inserted, 'Inserted new session')
+            this.logger.info('Inserted new session', { inserted })
         })
     }
 
@@ -575,7 +574,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         // todo: check and compare userid of existing idp
         await this.db.transaction().execute(async (trx) => {
             const idpEntry = fromIdp(idp)
-            this.logger.info(idpEntry, 'Updating idp table')
+            this.logger.info('Updating idp table', { idpEntry })
             await trx
                 .updateTable('idps')
                 .set(idpEntry)
@@ -713,7 +712,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         await this.db.transaction().execute(async (trx) => {
             // we do not set a userId for now and leave all networks global when updating
             const networkEntry = fromNetwork(network, undefined)
-            this.logger.info(networkEntry, 'Updating network table')
+            this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')
                 .set(networkEntry)

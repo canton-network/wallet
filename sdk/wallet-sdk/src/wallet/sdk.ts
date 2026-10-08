@@ -77,10 +77,7 @@ export class SDK {
             'ledgerProvider' in options
                 ? (options.ledgerProvider as AbstractLedgerProvider)
                 : (() => {
-                      authTokenProvider = new AuthTokenProvider(
-                          options.auth,
-                          logger
-                      )
+                      authTokenProvider = new AuthTokenProvider(options.auth)
 
                       return new LedgerProvider({
                           baseUrl: options.ledgerClientUrl,
@@ -212,18 +209,10 @@ async function getDefaultSynchronizerId(
 
 export async function getValidatorParty(
     validatorUrl: URL,
-    auth: AuthTokenProvider | TokenProviderConfig,
-    sdkLogger?: SDKLogger
+    auth: AuthTokenProvider | TokenProviderConfig
 ) {
-    const logger = sdkLogger ?? new SDKLogger('pino')
     const validatorAuth =
-        auth instanceof AuthTokenProvider
-            ? auth
-            : new AuthTokenProvider(auth, logger)
-    const validator = new ValidatorInternalClient(
-        validatorUrl,
-        logger,
-        validatorAuth
-    )
+        auth instanceof AuthTokenProvider ? auth : new AuthTokenProvider(auth)
+    const validator = new ValidatorInternalClient(validatorUrl, validatorAuth)
     return (await validator.get('/v0/validator-user')).party_id
 }

@@ -26,9 +26,9 @@
         "@canton-network/core-signing-lib": "catalog:",
         "@canton-network/core-signing-store-sql": "catalog:",
         "@canton-network/core-wallet-auth": "catalog:",
+        "@logtape/logtape": "catalog:",
         "fs-extra": "catalog:",
-        "lodash": "catalog:",
-        "pino": "catalog:"
+        "lodash": "catalog:"
     },
     "devDependencies": {
         "@types/fs-extra": "catalog:",

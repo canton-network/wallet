@@ -9,7 +9,8 @@ import {
     getRequestMethod,
     grpcError,
     jsonResponse,
-    mockLogger,
+    initializeLogRecorder,
+    assertLevel,
 } from './test-utils.js'
 import { isValidGetEndpoint, isValidPostEndpoint } from './ledger-client.js'
 
@@ -31,15 +32,17 @@ describe('LedgerClient', () => {
     })
 
     describe('parseSupportedVersions', () => {
-        it('matches, defaults, or throws for version strings', () => {
+        it('matches, defaults, or throws for version strings', async () => {
             const client = createLedgerClient(undefined, '3.5')
+            const recorder = await initializeLogRecorder()
 
             expect(() => client.parseSupportedVersions(undefined)).toThrow(
                 'Client version missing from response'
             )
             expect(client.parseSupportedVersions('3.5.1')).toBe('3.5')
             expect(client.parseSupportedVersions('9.9.9')).toBe('3.5')
-            expect(mockLogger.warn).toHaveBeenCalled()
+
+            await assertLevel(recorder, 'warning')
         })
     })
 
@@ -265,6 +268,7 @@ describe('LedgerClient', () => {
 
     describe('getSynchronizerId', () => {
         it('caches synchronizer id and warns when multiple exist', async () => {
+            const recorder = await initializeLogRecorder()
             fetchMock
                 .mockResolvedValueOnce(versionResponse())
                 .mockResolvedValueOnce(
@@ -279,7 +283,7 @@ describe('LedgerClient', () => {
             const client = createLedgerClient()
             expect(await client.getSynchronizerId()).toBe('sync-primary')
             expect(await client.getSynchronizerId()).toBe('sync-primary')
-            expect(mockLogger.warn).toHaveBeenCalled()
+            assertLevel(recorder, 'warning')
             expect(fetchMock).toHaveBeenCalledTimes(2)
         })
 
