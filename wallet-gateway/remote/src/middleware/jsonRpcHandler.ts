@@ -24,9 +24,12 @@ interface JsonRpcHttpOptions<T> {
     paramSchemas: Record<string, z.ZodType>
 }
 
-// Bounds the error payload, as issue count and messages (e.g. unrecognized keys) scale with the input.
+// Bounds the error payload, as issue count, messages (e.g. unrecognized keys)
+// and field names (issue paths, which flattenError turns into fieldErrors keys)
+// all scale with the input.
 const MAX_ISSUES = 10
 const MAX_ISSUE_MESSAGE_LENGTH = 200
+const MAX_FIELD_NAME_LENGTH = 100
 
 function validateParams(
     schema: z.ZodType,
@@ -37,6 +40,11 @@ function validateParams(
 
     const issues = result.error.issues.slice(0, MAX_ISSUES).map((issue) => ({
         ...issue,
+        path: issue.path.map((segment) =>
+            typeof segment === 'string'
+                ? segment.slice(0, MAX_FIELD_NAME_LENGTH)
+                : segment
+        ),
         message: issue.message.slice(0, MAX_ISSUE_MESSAGE_LENGTH),
     }))
     const { formErrors, fieldErrors } = z.flattenError(new z.ZodError(issues))

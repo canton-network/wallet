@@ -194,6 +194,21 @@ describe('jsonRpcHandler', () => {
             expect(formError!.length).toBe(200)
         })
 
+        it('truncates long field names of the generated schema, which rejects unknown properties that are not null', async () => {
+            const res = await call(
+                { message: 'hi', ['x'.repeat(10_000)]: true },
+                { resolve: dappParamSchemas.signMessage! }
+            )
+
+            const { data } = errorPayload(
+                (res.json as ReturnType<typeof vi.fn>).mock
+                    .calls[0]![0] as JsonRpcResponse
+            )
+            expect(
+                Object.keys((data as { fieldErrors: object }).fieldErrors)
+            ).toEqual(['x'.repeat(100)])
+        })
+
         it('passes missing params through when the param is optional', async () => {
             await call(undefined, {
                 resolve: paramSchemas.resolve.optional(),
