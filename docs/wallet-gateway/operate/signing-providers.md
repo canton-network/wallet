@@ -14,7 +14,7 @@ Gateway to submit.
 
 ## Configuration
 
-List each provider you want under `signingProviders`. Presence of the key opts the provider in.
+List each provider you want to use under `signingProviders`. Presence of the key opts the provider in.
 Non-secret settings come from the config object. Secret values stay in the environment, `*Env`
 fields name those variables (each defaults to the name in the environment-variable tables
 below).
