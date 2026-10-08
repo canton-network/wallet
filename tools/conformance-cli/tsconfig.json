@@ -5,6 +5,5 @@
         "types": ["express", "node"],
         "erasableSyntaxOnly": true,
         "rewriteRelativeImportExtensions": true
-    },
-    "include": ["src/**/*.ts"]
+    }
 }

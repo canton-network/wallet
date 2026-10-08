@@ -3,6 +3,5 @@
     "compilerOptions": {
         "exactOptionalPropertyTypes": false,
         "types": ["node"]
-    },
-    "include": ["src/**/*.ts"]
+    }
 }
