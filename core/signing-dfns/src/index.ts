@@ -12,6 +12,7 @@ import {
 import type {
     SignTransactionParams,
     SignTransactionResult,
+    SignMessageParams,
     GetTransactionParams,
     GetTransactionResult,
     GetTransactionsResult,
@@ -279,10 +280,50 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
             ): Promise<SubscribeTransactionsResult> => {
                 return Promise.resolve({} as SubscribeTransactionsResult)
             },
-            // TODO remove comment below and write a test once implemented
-            // v8 ignore next -- @preserve
-            signMessage: function (): Promise<SignMessageResult> {
-                throw new Error('Function not implemented.')
+            signMessage: async (
+                params: SignMessageParams
+            ): Promise<SignMessageResult> => {
+                try {
+                    if (!params.message) {
+                        return {
+                            error: 'bad_arguments',
+                            error_description:
+                                'message is required to sign with Dfns.',
+                        }
+                    }
+
+                    // TODO why is keyIdentifier optional in the type?
+                    const keyId = await this.resolveKeyId(params.keyIdentifier)
+                    if (!keyId) {
+                        return {
+                            error: 'key_not_found',
+                            error_description:
+                                'No Dfns key found for the provided key identifier.',
+                        }
+                    }
+
+                    const signingResult = await this.dfns.signMessage(
+                        keyId,
+                        params.message
+                    )
+                    // TODO I don't think I should return error if it's pending.
+                    if (
+                        signingResult.status !== 'signed' ||
+                        !signingResult.signature
+                    ) {
+                        return {
+                            error: 'signing_error',
+                            error_description: `Dfns signing returned ${signingResult.status} for signature ${signingResult.id} without a signature.`,
+                        }
+                    }
+
+                    return { signature: signingResult.signature }
+                } catch (error) {
+                    return {
+                        error: 'signing_error',
+                        error_description: (error as Error).message,
+                    }
+                }
             },
         })
 }

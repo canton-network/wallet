@@ -224,6 +224,20 @@ export class DfnsHandler {
         return this.submitSignatureRequest(keyId, body)
     }
 
+    /**
+     * Sign an arbitrary UTF-8 string with raw ed25519.
+     */
+    public async signMessage(
+        keyId: string,
+        message: string
+    ): Promise<DfnsSignature> {
+        const messageHex = Buffer.from(message, 'utf8').toString('hex')
+        return this.submitSignatureRequest(keyId, {
+            kind: 'Message',
+            message: messageHex,
+        })
+    }
+
     private async submitSignatureRequest(
         keyId: string,
         body: Parameters<DfnsApiClient['keys']['generateSignature']>[0]['body']

@@ -32,7 +32,10 @@ export class UserUiSelfIssuedOnboarding extends BaseElement {
     private origin: string | undefined
     private sessionId: string | undefined
 
-    private readonly signingProviders = [SigningProvider.WALLET_KERNEL]
+    private readonly signingProviders = [
+        SigningProvider.WALLET_KERNEL,
+        SigningProvider.DFNS,
+    ]
 
     static styles = [
         BaseElement.styles,

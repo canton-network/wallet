@@ -810,15 +810,18 @@ export const userController = (
                 )
             }
 
-            // TODO: support other signing providers
-            if (wallet.signingProviderId !== SigningProvider.WALLET_KERNEL) {
+            // TODO: support other signing providers, let's keep list of signing providers supporting signMessage centrally, OR maybe let's just let it fail on driver level
+            if (
+                ![SigningProvider.WALLET_KERNEL, SigningProvider.DFNS].includes(
+                    wallet.signingProviderId
+                )
+            ) {
                 return await emitFailedAndPersist(
                     `signMessage is only supported for ${SigningProvider.WALLET_KERNEL} wallets, got ${wallet.signingProviderId}`
                 )
             }
 
-            const driver =
-                drivers[SigningProvider.WALLET_KERNEL]?.controller(userId)
+            const driver = drivers[wallet.signingProviderId]?.controller(userId)
             if (!driver) {
                 return await emitFailedAndPersist(
                     'Wallet Kernel signing driver not available'
