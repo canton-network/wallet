@@ -8,7 +8,8 @@ import metadataAPIRouter from './api/metadata/index.js'
 import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
 import utilitiesAPIRouter from './api/utilities/index.js'
 import cors from 'cors'
-import express, {
+import express from 'express'
+import type {
     ErrorRequestHandler,
     NextFunction,
     Request,
@@ -16,8 +17,12 @@ import express, {
 } from 'express'
 import { TestToken } from '@canton-network/core-splice-codegen'
 import defaultSdk from './common/defaultSdk.js'
-import { Server } from 'http'
-import { RegistryConfig, RegistryState, defaultConfig } from './common/state.js'
+import type { Server } from 'http'
+import {
+    type RegistryConfig,
+    RegistryState,
+    defaultConfig,
+} from './common/state.js'
 
 export { RegistryState, defaultConfig, type RegistryConfig }
 

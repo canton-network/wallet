@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { LedgerClient } from '@canton-network/core-ledger-client'
 import buildController from './rpc-gen/index.js'
-import {
+import type {
     AddNetworkParams,
     RemoveNetworkParams,
     ExecuteParams,
@@ -25,6 +25,11 @@ import {
     AddIdpParams,
     RemoveIdpParams,
     CreateWalletParams,
+    AddSelfIssuedSessionParams,
+    GetSelfIssuedOnboardingParams,
+    CreateSelfIssuedWalletParams,
+    AllocateSelfIssuedWalletParams,
+    ConnectSelfIssuedSessionParams,
     AllocatePartyForWalletParams,
     GetTransactionResult,
     GetTransactionParams,
@@ -49,28 +54,34 @@ import {
     GetWalletResult,
     ListSigningProviderKeysParams,
     ListSigningProviderKeysResult,
+    GetTransactionStatusParams,
+    GetTransactionStatusResult,
 } from './rpc-gen/typings.js'
-import { Store, Network } from '@canton-network/core-wallet-store'
-import { Logger } from 'pino'
-import { NotificationService } from '../notification/NotificationService.js'
+import type { Store, Network } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
 import {
     assertConnected,
-    AuthContext,
+    type AuthContext,
+    type AuthAware,
     authSchema,
-    Auth,
+    type Auth,
     AuthTokenProvider,
     idpSchema,
+    resolveAuthIdentityProviderId,
+    assertIsConnected,
 } from '@canton-network/core-wallet-auth'
-import { KernelInfo } from '../config/Config.js'
+import type { KernelInfo } from '../config/Config.js'
 import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
-import type { SigningDrivers } from '../signing/signing-drivers.js'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import { logDynamically, networkStatus } from '../utils.js'
 import { v4 } from 'uuid'
-import { TransactionService } from '../ledger/transaction-service.js'
-import { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
+import {
+    assertSelfIssuedOnboardingAllowed,
+    createSelfIssuedAuthService,
+    type SelfIssuedOnboardingSession,
+} from '../ledger/self-issued-auth-service.js'
+import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
     MessageSignatureEvent,
     TxChangedFailedEvent,
@@ -78,7 +89,14 @@ import type {
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import crypto from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import {
+    TransactionService,
+    logDynamically,
+    networkStatus,
+    type HASHING_SCHEME_VERSION,
+    type NotificationService,
+    type SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export const userController = (
     kernelInfo: KernelInfo,
@@ -105,12 +123,59 @@ export const userController = (
     }
 
     function assertAdmin(): void {
-        const userId = assertConnected(authContext).userId
-        if (!adminUserId || userId !== adminUserId) {
+        assertIsConnected(authContext)
+        if (!adminUserId || authContext.userId !== adminUserId) {
             throw new Error(
                 'Unauthorized: only the admin user can perform this operation'
             )
         }
+    }
+
+    function requireOnboardingSession(): SelfIssuedOnboardingSession {
+        if (!authContext || authContext.isApiKey || !authContext.sessionId) {
+            throw new Error('No onboarding session found')
+        }
+        return {
+            userId: authContext.userId,
+            sessionId: authContext.sessionId,
+        }
+    }
+
+    async function emitSessionConnected(
+        sessionId: string,
+        network: Network,
+        { userId, accessToken }: { userId: string; accessToken: string },
+        ledgerClient: LedgerClient
+    ) {
+        const status = await networkStatus(ledgerClient)
+        const statusEvent: StatusEvent = {
+            provider: provider,
+            connection: {
+                isConnected: status.isConnected,
+                reason: status.reason ? status.reason : 'OK',
+                isNetworkConnected: status.isConnected,
+                networkReason: status.reason ? status.reason : 'OK',
+            },
+            network: {
+                networkId: network.id,
+                ledgerApi: network.ledgerApi.baseUrl,
+                accessToken: accessToken,
+            },
+            session: {
+                accessToken: accessToken,
+                userId: userId,
+            },
+        }
+        const notifier = notificationService.getNotifier(sessionId)
+        notifier.emit('statusChanged', statusEvent)
+        notifier.emit('connected', statusEvent)
+        return status
+    }
+
+    async function getIdpForAuth(network: Network, auth: Auth) {
+        return await store.getIdp(
+            resolveAuthIdentityProviderId(auth, network.identityProviderId)
+        )
     }
 
     /**
@@ -126,15 +191,16 @@ export const userController = (
         return rest
     }
 
+    const authAwareStore = store as Store & AuthAware<Store>
+
     const getSigningProviderKeys = async (
         params: ListSigningProviderKeysParams
     ) => {
         const network = await store.getCurrentNetwork()
-        const idp = await store.getIdp(network.identityProviderId)
-
         if (!network.adminAuth) {
             throw new Error('No admin auth configured')
         }
+        const idp = await getIdpForAuth(network, network.adminAuth)
 
         const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
             idp,
@@ -168,9 +234,9 @@ export const userController = (
 
     return buildController({
         getUser: async (): Promise<GetUserResult> => {
-            const userId = assertConnected(authContext).userId
+            assertIsConnected(authContext)
             return {
-                userId,
+                userId: authContext.userId,
                 isAdmin: isAdmin(),
             }
         },
@@ -200,6 +266,31 @@ export const userController = (
                 adminAuth,
                 serviceAccountAuth,
                 ledgerApi,
+            }
+
+            const referencedIdentityProviderIds = new Set([
+                newNetwork.identityProviderId,
+                ...[
+                    newNetwork.auth,
+                    newNetwork.adminAuth,
+                    newNetwork.serviceAccountAuth,
+                ].flatMap((auth) =>
+                    auth?.method === 'client_credentials' &&
+                    auth.identityProviderId
+                        ? [auth.identityProviderId]
+                        : []
+                ),
+            ])
+            const configuredIdentityProviderIds = new Set(
+                (await store.listIdps()).map((idp) => idp.id)
+            )
+            const missingIdentityProviderId = [
+                ...referencedIdentityProviderIds,
+            ].find((id) => !configuredIdentityProviderIds.has(id))
+            if (missingIdentityProviderId) {
+                throw new Error(
+                    `Identity provider "${missingIdentityProviderId}" not found`
+                )
             }
 
             // TODO: Add an explicit updateNetwork method to the User API spec and controller
@@ -249,7 +340,17 @@ export const userController = (
                 )
             }
 
-            if (params.clientSecret !== auth.clientSecret) {
+            const clientSecretMatch = crypto.timingSafeEqual(
+                crypto
+                    .createHash('sha256')
+                    .update(params.clientSecret, 'utf8')
+                    .digest(),
+                crypto
+                    .createHash('sha256')
+                    .update(auth.clientSecret, 'utf8')
+                    .digest()
+            )
+            if (!clientSecretMatch) {
                 throw providerErrors.unauthorized({
                     message: 'Invalid client secret',
                 })
@@ -273,6 +374,7 @@ export const userController = (
                 {
                     method: 'self_signed',
                     issuer: idp.issuer,
+                    keyId: network.id,
                     credentials: {
                         clientId: params.clientId,
                         clientSecret: auth.clientSecret,
@@ -311,15 +413,15 @@ export const userController = (
         createWallet: async (params: CreateWalletParams) => {
             const { signingProviderId, primary, partyHint } = params
 
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
             const network = await store.getCurrentNetwork()
             if (network === undefined) {
                 throw new Error('No network session found')
             }
-            const idp = await store.getIdp(network.identityProviderId)
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
@@ -347,14 +449,13 @@ export const userController = (
             }
 
             const wallet = await walletAllocationService.createWallet(
-                connectedContext,
+                authContext,
                 partyHint,
                 primary ?? false,
                 signingProviderId as SigningProvider,
                 params.keyName
             )
 
-            // Sync wallets (TODO: separate rights sync from wallet sync as we only need rights sync here)
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
@@ -367,24 +468,141 @@ export const userController = (
                 store,
                 ledgerClient,
                 authContext!,
-                logger,
-                drivers,
-                partyAllocator
+                logger
             )
-            await service.syncWallets()
+            await service.syncRights()
 
             // Notify about the change and return the new wallet
             const wallets = await store.getWallets()
             notificationService
-                .getNotifier(connectedContext.userId)
+                .getNotifier(authContext.userId)
                 .emit('accountsChanged', wallets)
 
+            const walletWithUpdatedRights = wallets.find(
+                (w) =>
+                    w.partyId === wallet.partyId && w.networkId === network.id
+            )
+            return { wallet: walletWithUpdatedRights ?? wallet }
+        },
+        addSelfIssuedSession: async (params: AddSelfIssuedSessionParams) => {
+            const username = params.username.trim()
+            if (!username) {
+                throw new Error('username is required')
+            }
+
+            const network = await authAwareStore.getNetwork(params.networkId)
+            if (network.auth.method !== 'self_issued') {
+                throw new Error(
+                    'Network does not use self_issued authentication'
+                )
+            }
+
+            const onboardingStore = authAwareStore.withAuthContext({
+                userId: username,
+                accessToken: '',
+            })
+            await assertSelfIssuedOnboardingAllowed(
+                authAwareStore,
+                network,
+                username,
+                logger
+            )
+            const sessionId = v4()
+            await onboardingStore.setSession({
+                id: sessionId,
+                origin: params.origin,
+                network: network.id,
+            })
+
+            return { sessionId }
+        },
+        getSelfIssuedOnboarding: async (
+            _params: GetSelfIssuedOnboardingParams
+        ) => {
+            const service = await createSelfIssuedAuthService(
+                authAwareStore,
+                requireOnboardingSession(),
+                drivers,
+                logger
+            )
+            return service.getOnboardingState()
+        },
+        createSelfIssuedWallet: async (
+            params: CreateSelfIssuedWalletParams
+        ) => {
+            const { signingProviderId } = params
+            if (!drivers[signingProviderId as SigningProvider]) {
+                throw new Error(
+                    `Signing provider ${signingProviderId} not supported`
+                )
+            }
+
+            const service = await createSelfIssuedAuthService(
+                authAwareStore,
+                requireOnboardingSession(),
+                drivers,
+                logger
+            )
+            const wallet = await service.createWallet({
+                partyHint: params.partyHint,
+                signingProviderId: signingProviderId as SigningProvider,
+            })
             return { wallet }
+        },
+        allocateSelfIssuedWallet: async (
+            params: AllocateSelfIssuedWalletParams
+        ) => {
+            const service = await createSelfIssuedAuthService(
+                authAwareStore,
+                requireOnboardingSession(),
+                drivers,
+                logger
+            )
+            const allocated = await service.allocateParty({
+                partyId: params.partyId,
+            })
+            return { wallet: allocated }
+        },
+        connectSelfIssuedSession: async (
+            params: ConnectSelfIssuedSessionParams
+        ) => {
+            const onboardingSession = requireOnboardingSession()
+            const service = await createSelfIssuedAuthService(
+                authAwareStore,
+                onboardingSession,
+                drivers,
+                logger
+            )
+            const { wallet, accessToken, session } =
+                await service.connectSession({
+                    partyId: params.partyId,
+                })
+            const connectedContext = {
+                userId: onboardingSession.userId,
+                accessToken,
+            }
+            const scopedStore = authAwareStore.withAuthContext(connectedContext)
+            const network = await scopedStore.getCurrentNetwork()
+            const ledgerClient = new LedgerClient({
+                baseUrl: new URL(network.ledgerApi.baseUrl),
+                logger,
+                accessTokenProvider: AuthTokenProvider.fromToken(
+                    accessToken,
+                    logger
+                ),
+            })
+            await emitSessionConnected(
+                session.id,
+                network,
+                connectedContext,
+                ledgerClient
+            )
+            return { wallet, accessToken, sessionId: session.id }
         },
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams
         ) => {
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
 
             const network = await store.getCurrentNetwork()
             if (!network) {
@@ -403,7 +621,7 @@ export const userController = (
                 throw new Error(`Wallet not found for party ${params.partyId}`)
             }
 
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await getIdpForAuth(network, network.adminAuth)
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -431,12 +649,11 @@ export const userController = (
             }
 
             await walletAllocationService.allocateParty(
-                connectedContext,
+                authContext,
                 existingWallet,
                 signingProviderId
             )
 
-            // Sync wallets (TODO: separate rights sync from wallet sync as we only need rights sync here)
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
@@ -449,11 +666,9 @@ export const userController = (
                 store,
                 ledgerClient,
                 authContext!,
-                logger,
-                drivers,
-                partyAllocator
+                logger
             )
-            await service.syncWallets()
+            await service.syncRights()
 
             // Notify about the change and return the updated wallet
             const wallets = await store.getWallets()
@@ -464,7 +679,7 @@ export const userController = (
             )!
 
             notificationService
-                .getNotifier(connectedContext.userId)
+                .getNotifier(authContext.userId)
                 .emit('accountsChanged', wallets)
 
             return { wallet }
@@ -497,12 +712,14 @@ export const userController = (
             const wallet = wallets.find((w) => w.partyId === signParams.partyId)
 
             if (wallet === undefined) {
-                throw new Error('No primary wallet found')
+                throw new Error(
+                    `No wallet found for partyId ${signParams.partyId}`
+                )
             }
 
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
 
-            const session = await store.getSession(connectedContext.accessToken)
+            const session = await store.getSession(authContext.accessToken)
             if (!session) {
                 throw new Error('No active session found')
             }
@@ -518,11 +735,11 @@ export const userController = (
 
             logDynamically(logger, 'signing transaction with params', {
                 info: { transactionId: signParams.transactionId },
-                debug: { signParams, wallet, connectedContext },
+                debug: { signParams, wallet, authContext },
             })
 
             const response = await transactionService.sign(
-                connectedContext,
+                authContext,
                 wallet,
                 signParams
             )
@@ -549,16 +766,15 @@ export const userController = (
                 )
             }
 
-            const userId = assertConnected(authContext).userId
+            assertIsConnected(authContext)
+            const userId = authContext.userId
             if (pending.userId !== userId) {
                 throw new Error(
                     `Message signing request ${pending.id} is not owned by user ${userId}`
                 )
             }
 
-            const session = await store.getSession(
-                assertConnected(authContext).accessToken
-            )
+            const session = await store.getSession(authContext.accessToken)
             if (!session) {
                 throw new Error('No active session found')
             }
@@ -710,13 +926,24 @@ export const userController = (
                     `Cannot delete message with status '${message.status}'. Only pending messages can be deleted.`
                 )
             }
-            const userId = assertConnected(authContext).userId
+            assertIsConnected(authContext)
+            const userId = authContext.userId
             if (message.userId !== userId) {
                 throw new Error(
                     `Message signing request ${message.id} is not owned by user ${userId}`
                 )
             }
             await store.removeMessageRaw(message.id)
+
+            const session = await store.getSession(authContext.accessToken)
+            if (session) {
+                notificationService
+                    .getNotifier(session.id)
+                    .emit('messageSignature', {
+                        status: 'failed',
+                        messageId: message.id,
+                    } satisfies MessageSignatureEvent)
+            }
             return null
         },
         execute: async (executeParams: ExecuteParams) => {
@@ -737,18 +964,15 @@ export const userController = (
                 throw new Error('No transaction found')
             }
 
-            const connectedContext = assertConnected(authContext)
+            assertIsConnected(authContext)
             const accessTokenProvider: AuthTokenProvider =
-                AuthTokenProvider.fromToken(
-                    connectedContext.accessToken,
-                    logger
-                )
+                AuthTokenProvider.fromToken(authContext.accessToken, logger)
 
             if (network === undefined) {
                 throw new Error('No network session found')
             }
 
-            const session = await store.getSession(connectedContext.accessToken)
+            const session = await store.getSession(authContext.accessToken)
             if (!session) {
                 throw new Error('No active session found')
             }
@@ -774,16 +998,17 @@ export const userController = (
                     executeParams,
                     transaction,
                     wallet,
-                    userId: connectedContext.userId,
+                    userId: authContext.userId,
                 },
             })
 
             const response = await transactionService.execute(
-                connectedContext.userId,
+                authContext.userId,
                 wallet,
                 transaction,
                 executeParams,
                 ledgerClient,
+                authContext,
                 network
             )
 
@@ -798,8 +1023,8 @@ export const userController = (
             params: AddSessionParams
         ): Promise<AddSessionResult> {
             try {
-                const connectedContext = assertConnected(authContext)
-                const { userId, accessToken } = connectedContext
+                assertIsConnected(authContext)
+                const { accessToken } = authContext
 
                 const newSessionId = v4()
 
@@ -815,10 +1040,8 @@ export const userController = (
                     id: newSessionId,
                     origin: params.origin,
                     network: params.networkId,
-                    accessToken: connectedContext.accessToken || '',
+                    accessToken: accessToken || '',
                 })
-
-                const notifier = notificationService.getNotifier(newSessionId)
 
                 const ledgerClient = new LedgerClient({
                     baseUrl: new URL(network.ledgerApi.baseUrl),
@@ -828,27 +1051,12 @@ export const userController = (
                         logger
                     ),
                 })
-                const status = await networkStatus(ledgerClient)
-                const statusEvent: StatusEvent = {
-                    provider: provider,
-                    connection: {
-                        isConnected: status.isConnected,
-                        reason: status.reason ? status.reason : 'OK',
-                        isNetworkConnected: status.isConnected,
-                        networkReason: status.reason ? status.reason : 'OK',
-                    },
-                    network: {
-                        networkId: network.id,
-                        ledgerApi: network.ledgerApi.baseUrl,
-                        accessToken: accessToken,
-                    },
-                    session: {
-                        accessToken: accessToken,
-                        userId: userId,
-                    },
-                }
-                notifier.emit('statusChanged', statusEvent)
-                notifier.emit('connected', statusEvent)
+                const status = await emitSessionConnected(
+                    newSessionId,
+                    network,
+                    authContext,
+                    ledgerClient
+                )
 
                 // Only bootstrap wallets the first time a session is created.
                 // Session creation must remain successful when the ledger or
@@ -869,9 +1077,13 @@ export const userController = (
                                 throw new Error('No admin auth configured')
                             }
 
+                            const adminIdp = await getIdpForAuth(
+                                network,
+                                network.adminAuth
+                            )
                             const adminAccessTokenProvider =
                                 AuthTokenProvider.fromGatewayConfig(
-                                    idp,
+                                    adminIdp,
                                     network.adminAuth,
                                     logger
                                 )
@@ -885,7 +1097,7 @@ export const userController = (
                             const service = new WalletSyncService(
                                 store,
                                 ledgerClient,
-                                connectedContext,
+                                authContext,
                                 logger,
                                 drivers,
                                 partyAllocator
@@ -993,11 +1205,10 @@ export const userController = (
                 logger
             )
 
-            const idp = await store.getIdp(network.identityProviderId)
-
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
                 AuthTokenProvider.fromGatewayConfig(
@@ -1051,11 +1262,10 @@ export const userController = (
                 logger
             )
 
-            const idp = await store.getIdp(network.identityProviderId)
-
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
+            const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
                 AuthTokenProvider.fromGatewayConfig(
@@ -1168,7 +1378,10 @@ export const userController = (
                     `Transaction not found with id: ${params.transactionId}`
                 )
             }
-            if (transaction.status !== 'pending') {
+            if (
+                transaction.status !== 'pending' &&
+                transaction.status !== 'awaiting-signature'
+            ) {
                 throw new Error(
                     `Cannot delete transaction with status '${transaction.status}'. Only pending transactions can be deleted.`
                 )
@@ -1270,7 +1483,7 @@ export const userController = (
             if (!network.adminAuth) {
                 throw new Error('No admin auth configured')
             }
-            const idp = await store.getIdp(network.identityProviderId)
+            const idp = await getIdpForAuth(network, network.adminAuth)
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
                 network.adminAuth,
@@ -1307,33 +1520,105 @@ export const userController = (
         ): Promise<GetWalletResult> => {
             return await store.getWallet(params.partyId)
         },
+        getTransactionStatus: async (
+            params: GetTransactionStatusParams
+        ): Promise<GetTransactionStatusResult> => {
+            const tx = await store.getTransaction(params.transactionId)
+            if (!tx)
+                throw new Error(
+                    `Transaction with txId: ${params.transactionId} not found in store`
+                )
+
+            //no externalTxId means nothing sent to signing provider, so no need to poll
+            if (!tx.externalTxId || tx.status !== 'awaiting-signature') {
+                return {
+                    status: tx.status,
+                    ...(tx.externalTxId && { externalTxId: tx.externalTxId }),
+                    ...(tx.failureReason && {
+                        failureReason: tx.failureReason,
+                    }),
+                }
+            }
+
+            const wallet = params.partyId
+                ? (await store.getWallets()).find(
+                      (x) => x.partyId === params.partyId
+                  )
+                : await store.getPrimaryWallet()
+
+            if (!wallet) {
+                throw new Error(
+                    params.partyId
+                        ? `No wallet found for partyId: ${params.partyId}`
+                        : `No primary wallet found`
+                )
+            }
+
+            assertIsConnected(authContext)
+            const session = await store.getSession(authContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
+
+            const transactionService = new TransactionService(
+                store,
+                logger,
+                drivers,
+                notifier,
+                hashingSchemeVersion
+            )
+
+            const result = await transactionService.refreshTransaction(
+                authContext,
+                wallet,
+                tx.id
+            )
+            logDynamically(logger, `refreshed transaction status`, {
+                info: { transactionId: tx.id, status: result.status },
+                debug: { result },
+            })
+            return result
+        },
     })
 }
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
-    const base = {
-        method: auth.method,
-        audience: auth.audience,
-        scope: auth.scope,
-        clientId: auth.clientId,
+    switch (auth.method) {
+        case 'authorization_code':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+            }
+        case 'client_credentials':
+            return {
+                method: auth.method,
+                ...(auth.identityProviderId
+                    ? { identityProviderId: auth.identityProviderId }
+                    : {}),
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+                clientSecret: auth.clientSecret,
+            }
+        case 'self_signed':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+                clientId: auth.clientId,
+                clientSecret: auth.clientSecret,
+                issuer: auth.issuer,
+            }
+        case 'self_issued':
+            return {
+                method: auth.method,
+                audience: auth.audience,
+                scope: auth.scope,
+            }
     }
-
-    if (auth.method === 'self_signed') {
-        return {
-            ...base,
-            issuer: auth.issuer,
-            clientSecret: auth.clientSecret,
-        }
-    }
-
-    if (auth.method === 'client_credentials') {
-        return {
-            ...base,
-            clientSecret: auth.clientSecret,
-        }
-    }
-
-    return base
 }
 
 function toNetworkDto(network: Network): ApiNetwork {
@@ -1366,7 +1651,7 @@ function toPublicNetwork(network: Network): PublicNetwork {
         ledgerApi: network.ledgerApi.baseUrl,
         authMethod: auth.method,
         ...(auth.method !== 'client_credentials' && {
-            clientId: auth.clientId,
+            ...('clientId' in auth ? { clientId: auth.clientId } : {}),
             scope: auth.scope,
             audience: auth.audience,
         }),

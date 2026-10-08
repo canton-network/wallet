@@ -1,21 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { pino, Logger } from 'pino'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
-import { AuthContext, Idp } from '@canton-network/core-wallet-auth'
+import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
-    Network as StoreNetwork,
+    type Network as StoreNetwork,
     PartyLevelRight,
-    Session,
-    Wallet,
+    type Session,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
-import { NotificationService } from '../notification/NotificationService.js'
-import { dappController, DappControllerDeps } from './controller.js'
+import { NotificationService } from '@canton-network/core-wallet-services'
+import { dappController, type DappControllerDeps } from './controller.js'
 import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
@@ -51,8 +51,11 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     }
 })
 
-vi.mock('../utils.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../utils.js')>()
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
     return {
         ...actual,
         networkStatus: mockNetworkStatus,
@@ -186,10 +189,6 @@ describe('dappController', () => {
             cantonVersion: '3.4',
         })
         mockUuidV4.mockReset()
-    })
-
-    afterEach(() => {
-        vi.clearAllMocks()
     })
 
     describe('connect', () => {
@@ -577,7 +576,7 @@ describe('dappController', () => {
 
             await expect(
                 controller.prepareExecute(prepareParams as never)
-            ).rejects.toThrow('Unauthenticated context')
+            ).rejects.toMatchObject({ code: 4100 })
         })
 
         it('throws when there is no primary wallet', async () => {
@@ -695,6 +694,23 @@ describe('dappController', () => {
         })
     })
 
+    it.each(['listAccounts', 'getPrimaryAccount', 'getActiveNetwork'] as const)(
+        '%s rejects with Unauthorized when auth context is missing',
+        async (method) => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            await expect(controller[method]()).rejects.toMatchObject({
+                code: 4100,
+            })
+        }
+    )
+
     describe('signMessage', () => {
         it('throws when message is missing', async () => {
             const store = await createStore(logger, auth)
@@ -721,7 +737,7 @@ describe('dappController', () => {
 
             await expect(
                 controller.signMessage({ message: 'hello' })
-            ).rejects.toThrow('Unauthenticated context')
+            ).rejects.toMatchObject({ code: 4100 })
         })
 
         it('throws when there is no primary wallet', async () => {
@@ -832,21 +848,6 @@ describe('dappController', () => {
                 networkId: storeNetwork.id,
                 ledgerApi: storeNetwork.ledgerApi.baseUrl,
                 accessToken: auth.accessToken,
-            })
-        })
-
-        it('returns the active network without access token when unauthenticated', async () => {
-            const store = await createStore(logger, auth)
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                undefined
-            )
-
-            await expect(controller.getActiveNetwork()).resolves.toEqual({
-                networkId: storeNetwork.id,
-                ledgerApi: storeNetwork.ledgerApi.baseUrl,
             })
         })
     })

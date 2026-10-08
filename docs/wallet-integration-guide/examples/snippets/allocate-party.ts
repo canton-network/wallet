@@ -1,6 +1,6 @@
 import {
     SDK,
-    TokenProviderConfig,
+    type TokenProviderConfig,
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
 

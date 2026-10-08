@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
-import { localNetStaticConfig } from '@canton-network/wallet-sdk'
+import {
+    localNetStaticConfig,
+    resolveCapabilities,
+} from '@canton-network/wallet-sdk'
 import type { MultiSyncSetup } from './_setup.js'
 import { ALICE_AMULET_TAP_AMOUNT } from './_constants.js'
 
@@ -68,6 +71,20 @@ export async function allocateAmuletForAlice(
                 symbol: 'CC',
                 registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
                 admin: amuletAdmin,
+                capabilities: resolveCapabilities({
+                    supportedApis: {
+                        'splice-api-token-transfer-instruction-v2': 1,
+                        'splice-api-token-allocation-v1': 1,
+                        'splice-api-token-holding-v2': 1,
+                        'splice-api-token-allocation-instruction-v2': 1,
+                        'splice-api-token-metadata-v1': 1,
+                        'splice-api-token-allocation-v2': 1,
+                        'splice-api-token-transfer-events-v2': 1,
+                        'splice-api-token-transfer-instruction-v1': 1,
+                        'splice-api-token-holding-v1': 1,
+                        'splice-api-token-allocation-instruction-v1': 1,
+                    },
+                }),
             },
             inputUtxos: [amuletHoldingCid],
             requestedAt: new Date().toISOString(),

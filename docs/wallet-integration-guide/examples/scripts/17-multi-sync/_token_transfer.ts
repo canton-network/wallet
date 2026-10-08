@@ -15,15 +15,12 @@ export async function aliceTransferToCharlie(
 ): Promise<void> {
     const { aliceSdk, charlieSdk, alice, charlie, appSynchronizerId } = setup
 
-    // Resolve the TestToken registry URL from the SDK's configured registries
-    // (`token.find`) instead of threading it through the setup object.
+    // Resolve the TestToken registry URL from the SDK's configured registries (`token.find`) instead of threading it through the setup object.
     const { registryUrl: testTokenRegistryUrl } = await aliceSdk.token.find(
         TestToken.DAR.TestTokenID
     )
 
-    // The settlement is submitted by TradingApp, so Alice's resulting Token
-    // holding propagates to her participant (app-user) asynchronously. Poll app-user until it
-    // becomes visible instead of reading once (cross-participant read-after-write).
+    // Poll app-user until it becomes visible instead of reading once (cross-participant read-after-write).
     const deadline = Date.now() + TOKEN_POLL_TIMEOUT_MS
     let aliceToken
     while (!aliceToken) {

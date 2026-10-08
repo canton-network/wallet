@@ -12,7 +12,7 @@ A minimal dApp demonstrating the core [`@canton-network/dapp-sdk`](https://www.n
 
 ## Prerequisites
 
-- Node.js 20+
+- See [`docs/CONTRIBUTING.md`](../../docs/CONTRIBUTING.md) for development environment setup.
 - A running [Wallet Gateway](../../docs/wallet-gateway/quickstart.md) (default: `http://localhost:3030`)
 
 ## Running

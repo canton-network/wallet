@@ -18,8 +18,6 @@ describe('AmuletService (Forwarding Layer)', () => {
     let mockScanProxyClient: any
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         mockTokenStandard = {}
         mockScanClient = Object.create(ScanClient.prototype)
         mockScanProxyClient = Object.create(ScanProxyClient.prototype)
@@ -159,6 +157,16 @@ describe('AmuletService (Forwarding Layer)', () => {
                 mockImplInstance.selfGrantFeatureAppRight
             ).toHaveBeenCalledWith('alice::123', 'sync:123')
             expect(result).toBe(true)
+        })
+
+        it('should correctly forward cancelFeaturedAppRight', async () => {
+            mockImplInstance.cancelFeaturedAppRight.mockResolvedValue(null)
+
+            await service.cancelFeaturedAppRight('cid1', 'tid1')
+
+            expect(
+                mockImplInstance.cancelFeaturedAppRight
+            ).toHaveBeenCalledWith('cid1', 'tid1')
         })
 
         it('should correctly forward isDevNet', async () => {

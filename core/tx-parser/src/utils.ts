@@ -3,12 +3,12 @@
 
 import { AllKnownMetaKeys, matchInterfaceIds } from './constants.js'
 
-import { TransferInstructionView } from './types.js'
+import type { TransferInstructionView } from './types.js'
 import {
-    HoldingView,
+    type HoldingView,
     HOLDING_INTERFACE_ID,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
-    Metadata,
+    type Metadata,
 } from '@canton-network/core-token-standard'
 
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'

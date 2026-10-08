@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import type { AmuletNamespaceConfig } from '../../sdk.js'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { PreapprovalParties } from './types.js'
+import type { PreapprovalParties } from './types.js'
 import { LedgerNamespace } from '../ledger/namespace.js'
 import { fetchAmulet } from './namespace.js'
-import { SDKLogger } from '../../logger/logger.js'
+import type { SDKLogger } from '../../logger/logger.js'
 import { resolveProviderParty } from './utils.js'
 
 const EMPTY_COMMAND_RESULT = [null, []] as const

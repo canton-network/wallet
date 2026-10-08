@@ -6,8 +6,9 @@ import type { PartyId } from '@canton-network/core-types'
 import { toPortfolioInstrument } from '../src/types/instruments'
 import { normalizeRegistryUrl } from '../src/utils/registry'
 import {
+    createGatewayApi,
+    connectGateway,
     createWalletGateway,
-    connectToLocalNet,
     expectWalletBalance,
     gotoConnect,
     setupRegistry,
@@ -25,10 +26,7 @@ const connectToSettings = async (page: Page) => {
     const wg = createWalletGateway(page)
 
     await gotoConnect(page)
-    await connectToLocalNet(wg)
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
-        timeout: 15000,
-    })
+    await connectGateway(page, wg)
     await page.goto('http://localhost:8081/dashboard/settings')
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
 
@@ -229,7 +227,18 @@ test('instrument mapping preserves registry and SDK fields', () => {
             name: 'Amulet',
             symbol: 'AMT',
             decimals: 10,
-            supportedApis: {},
+            supportedApis: {
+                'splice-api-token-transfer-instruction-v2': 1,
+                'splice-api-token-allocation-v1': 1,
+                'splice-api-token-holding-v2': 1,
+                'splice-api-token-allocation-instruction-v2': 1,
+                'splice-api-token-metadata-v1': 1,
+                'splice-api-token-allocation-v2': 1,
+                'splice-api-token-transfer-events-v2': 1,
+                'splice-api-token-transfer-instruction-v1': 1,
+                'splice-api-token-holding-v1': 1,
+                'splice-api-token-allocation-instruction-v1': 1,
+            },
         },
         admin: 'DSO::1220admin' as PartyId,
         registryUrl: LOCAL_REGISTRY_URL,
@@ -243,6 +252,13 @@ test('instrument mapping preserves registry and SDK fields', () => {
         name: 'Amulet',
         symbol: 'AMT',
         decimals: 10,
+        capabilities: {
+            allocation: ['v1', 'v2'],
+            allocationInstruction: ['v1', 'v2'],
+            allocationRequest: [],
+            holding: ['v1', 'v2'],
+            transferInstruction: ['v1', 'v2'],
+        },
     })
 })
 
@@ -250,14 +266,16 @@ test('tap via settings page', async ({ page: dappPage }) => {
     const rnd = Math.floor(Math.random() * 100000)
     const wg = createWalletGateway(dappPage)
 
-    await gotoConnect(dappPage)
-    await connectToLocalNet(wg)
-
-    const alice = await wg.createWalletIfNotExists({
+    // Scaffolding: this test is about the tap flow, not about creating wallets.
+    const api = await createGatewayApi()
+    const alice = await api.createWallet({
         partyHint: `alice-${rnd}`,
         signingProvider: 'participant',
+        primary: true,
     })
-    await wg.setPrimaryWallet(alice)
+
+    await gotoConnect(dappPage)
+    await connectGateway(dappPage, wg)
 
     await setupRegistry(dappPage)
     await tap(dappPage, wg, '5000.123456789')

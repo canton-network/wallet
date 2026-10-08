@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { NextFunction, Request, Response } from 'express'
-import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { vi } from 'vitest'
 
 const execute = vi.fn().mockResolvedValue({

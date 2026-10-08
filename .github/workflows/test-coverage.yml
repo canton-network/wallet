@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
     version-config:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         outputs:
             daml_release_version: ${{ steps.version.outputs.daml_release_version }}
             devnet_canton_version: ${{ steps.version.outputs.devnet_canton_version }}
@@ -27,7 +27,7 @@ jobs:
             mainnet_splice_version: ${{ steps.version.outputs.mainnet_splice_version }}
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - name: Resolve version config outputs
               id: version
@@ -41,11 +41,11 @@ jobs:
                   echo "mainnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.splice.version')" >> "$GITHUB_OUTPUT"
 
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: version-config
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/initial
               with:
@@ -60,9 +60,11 @@ jobs:
               with:
                   name: build-dist-${{ github.run_id }}
                   path: |
-                      core/**/dist/
-                      sdk/**/dist/
-                      wallet-gateway/**/dist/
+                      core/*/dist/
+                      sdk/*/dist/
+                      wallet-gateway/*/dist/
+                      examples/*/dist/
+                      tools/*/dist/
                       damljs
                       .nx/cache
                       .nx/workspace-data
@@ -71,7 +73,7 @@ jobs:
 
     hydrate-canton-caches:
         name: hydrate-canton-caches (${{ matrix.network }}, ${{ matrix.instance }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         strategy:
             fail-fast: false
@@ -80,7 +82,7 @@ jobs:
                 instance: [canton, localnet]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
               with:
@@ -99,11 +101,11 @@ jobs:
                   splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
 
     test-unit:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs: [version-config, build]
         steps:
             - name: Checkout
-              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
 
@@ -115,10 +117,12 @@ jobs:
 
             - name: Run all unit tests
               run: |
-                  pnpm nx run-many -t test:coverage \
-                    --parallel
+                  pnpm nx run-many -t test \
+                    --parallel \
+                    -c coverage
 
             - name: Coverage summary
+              if: ${{ !cancelled() }}
               run: |
                   echo "::group::Unit test coverage summary"
                   pnpm script:coverage:report

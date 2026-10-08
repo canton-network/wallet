@@ -43,8 +43,6 @@ describe('cache - paginated item', () => {
     let cache: PaginatedACSCache
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         getPaginatedActiveContracts.mockResolvedValue({
             activeContracts: [
                 {

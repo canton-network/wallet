@@ -1,24 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID,
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
-    AllocationInstructionView,
-    AllocationRequestView,
-    AllocationView,
+    type AllocationInstructionView,
+    type AllocationRequestView,
+    type AllocationView,
 } from '@canton-network/core-token-standard'
-import { PrettyContract } from '@canton-network/core-tx-parser'
-import { PreparedCommand } from '../../transactions/types.js'
-import {
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { PreparedCommand } from '../../transactions/types.js'
+import type {
     AllocationParams,
     AllocationInstructionCreateParams,
     AllocationContextParams,
     AllocationScanParams,
 } from './types.js'
-import { TokenNamespaceConfig } from '../../../sdk.js'
+import type { TokenNamespaceConfig } from '../../../sdk.js'
 import { ParsedURL } from '../../utils/url.js'
 
 export class AllocationNamespace {
@@ -105,7 +105,7 @@ export class AllocationNamespace {
         const [command, disclosedConctracts] =
             await this.sdkContext.tokenStandardService.allocation.createExecuteTransferAllocation(
                 params.allocationCid,
-                params.asset.registryUrl.href,
+                params.asset.registryUrl,
                 params.prefetchedRegistryChoiceContext
             )
 
@@ -116,7 +116,7 @@ export class AllocationNamespace {
         const [command, disclosedConctracts] =
             await this.sdkContext.tokenStandardService.allocation.createWithdrawAllocation(
                 params.allocationCid,
-                params.asset.registryUrl.href,
+                params.asset.registryUrl,
                 params.prefetchedRegistryChoiceContext
             )
 
@@ -127,7 +127,7 @@ export class AllocationNamespace {
         const [command, disclosedConctracts] =
             await this.sdkContext.tokenStandardService.allocation.createCancelAllocation(
                 params.allocationCid,
-                params.asset.registryUrl.href,
+                params.asset.registryUrl,
                 params.prefetchedRegistryChoiceContext
             )
 
@@ -139,21 +139,18 @@ export class AllocationNamespace {
             return this.sdkContext.tokenStandardService.allocation.fetchExecuteTransferChoiceContext(
                 params.allocationCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
             )
         },
         withdraw: async (params: AllocationContextParams) => {
             return this.sdkContext.tokenStandardService.allocation.fetchWithdrawAllocationChoiceContext(
                 params.allocationCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
             )
         },
         cancel: async (params: AllocationContextParams) => {
             return this.sdkContext.tokenStandardService.allocation.fetchCancelAllocationChoiceContext(
                 params.allocationCid,
                 new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-                    .href
             )
         },
     }
@@ -186,7 +183,7 @@ export class AllocationNamespace {
                     await this.sdkContext.tokenStandardService.allocation.createAllocationInstruction(
                         params.allocationSpecification,
                         params.asset.admin,
-                        params.asset.registryUrl.href,
+                        params.asset.registryUrl,
                         params.inputUtxos,
                         params.requestedAt,
                         params.prefetchedRegistryChoiceContext

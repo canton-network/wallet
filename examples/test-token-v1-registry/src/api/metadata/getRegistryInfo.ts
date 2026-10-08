@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { supportedApis } from './common'
-import { OffLedger } from '@canton-network/core-token-standard'
-import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+import type { OffLedger } from '@canton-network/core-token-standard'
+import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { RegistryState } from '../../common/state'
 
 /**

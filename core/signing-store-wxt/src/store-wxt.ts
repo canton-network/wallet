@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
+import type {
     SigningDriverConfig,
     SigningDriverStatus,
     SigningDriverStore,
     SigningKey,
     SigningTransaction,
 } from '@canton-network/core-signing-lib'
-import { UserId } from '@canton-network/core-wallet-auth'
+import type { UserId } from '@canton-network/core-wallet-auth'
 import {
     toSigningKey,
     fromSigningKey,
@@ -19,9 +19,9 @@ import {
 } from './schemas.js'
 import {
     signingKeysItem,
-    SigningKeyRecord,
+    type SigningKeyRecord,
     signingTransactionsItem,
-    SigningTransactionRecord,
+    type SigningTransactionRecord,
     signingDriverConfigItem,
 } from './items.js'
 

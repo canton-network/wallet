@@ -18,7 +18,7 @@ import {
     SenderMetaKey,
     TxKindMetaKey,
 } from './constants.js'
-import {
+import type {
     Holding as HoldingWithContractId,
     HoldingsChangeSummary,
     HoldingsChange,
@@ -37,15 +37,15 @@ import {
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
 import BigNumber from 'bignumber.js'
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     HOLDING_INTERFACE_ID,
-    HoldingView,
-    Lock,
+    type HoldingView,
+    type Lock,
     TRANSFER_INSTRUCTION_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
 
-import {
+import type {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'

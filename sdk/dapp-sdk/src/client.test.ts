@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
 import { popup } from '@canton-network/core-wallet-ui-components'
 import type {
@@ -32,10 +32,6 @@ const ledgerApiParams: LedgerApiParams = {
 }
 
 describe('DappClient', () => {
-    afterEach(() => {
-        vi.clearAllMocks()
-    })
-
     it('exposes the underlying provider', () => {
         const mock = makeMockProvider()
         const client = new DappClient(mock)

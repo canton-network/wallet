@@ -10,7 +10,7 @@ import {
     info,
     error,
     LEDGER_CLIENTS_PATH,
-    Network,
+    type Network,
     pruneVersionedFiles,
     SUPPORTED_VERSIONS,
     getNetworkArg,

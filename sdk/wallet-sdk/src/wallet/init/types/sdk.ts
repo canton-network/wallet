@@ -1,25 +1,25 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TokenProviderConfig } from '@canton-network/core-wallet-auth'
-import { AllowedLogAdapters } from '../../logger/types.js'
-import { KeysNamespace } from '../../namespace/keys/index.js'
-import { LedgerNamespace } from '../../namespace/ledger/index.js'
-import { PartyNamespace } from '../../namespace/party/index.js'
-import { UserNamespace } from '../../namespace/user/index.js'
-import { SDKUtilsNamespace } from '../../namespace/utils/index.js'
-import { AmuletNamespace } from '../../namespace/amulet/namespace.js'
+import type { TokenProviderConfig } from '@canton-network/core-wallet-auth'
+import type { AllowedLogAdapters } from '../../logger/types.js'
+import type { KeysNamespace } from '../../namespace/keys/index.js'
+import type { LedgerNamespace } from '../../namespace/ledger/index.js'
+import type { PartyNamespace } from '../../namespace/party/index.js'
+import type { UserNamespace } from '../../namespace/user/index.js'
+import type { SDKUtilsNamespace } from '../../namespace/utils/index.js'
+import type { AmuletNamespace } from '../../namespace/amulet/namespace.js'
 import type { AssetNamespace, TokenNamespace } from '../../sdk.js'
-import { EventsNamespace } from '../../namespace/events/namespace.js'
-import {
+import type { EventsNamespace } from '../../namespace/events/namespace.js'
+import type {
     AmuletConfig,
     AssetConfig,
     EventsConfig,
     TokenConfig,
 } from './config.js'
-import { Provider } from '@canton-network/core-splice-provider'
-import { LedgerTypes } from '@canton-network/core-ledger-client-types'
-import { SDKPlugin, SDKPluginContext } from '../plugin.js'
+import type { Provider } from '@canton-network/core-splice-provider'
+import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
+import type { SDKPlugin, SDKPluginContext } from '../plugin.js'
 
 // SDK OPTIONS
 

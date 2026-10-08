@@ -1,7 +1,7 @@
 import pino from 'pino'
 import {
-    CompletionEvent,
-    UpdateEvent,
+    type CompletionEvent,
+    type UpdateEvent,
     localNetStaticConfig,
     SDK,
 } from '@canton-network/wallet-sdk'
@@ -52,7 +52,7 @@ logger.info('Preparing multi hosted party...')
 
 const participantEndpoints = [
     {
-        url: new URL('http://127.0.0.1:3975'),
+        url: localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
         tokenProviderConfig: TOKEN_PROVIDER_CONFIG_DEFAULT,
     },
 ]
@@ -71,7 +71,7 @@ logger.info(charlie, 'Multi hosted party allocated successfully')
 const commandsCompletionsEvents: CompletionEvent[] = []
 const commandsCompletionsController = new AbortController()
 logger.info('subscribing to command completions')
-const subscribeToCommandsMultiHostedParty = (async () => {
+const subscribeToCommandsMultiHostedParty = async () => {
     try {
         const stream = sdk.events.completions({
             beginOffset: 0,
@@ -88,9 +88,9 @@ const subscribeToCommandsMultiHostedParty = (async () => {
     } catch (err) {
         if (!commandsCompletionsController.signal.aborted) throw err
     }
-})()
+}
 
-subscribeToCommandsMultiHostedParty
+subscribeToCommandsMultiHostedParty()
 logger.info('subscribed to command completion')
 
 const charliePingCommand = sdk.utils.ping.create([
@@ -131,7 +131,7 @@ logger.info(
 const updateEvents: UpdateEvent[] = []
 const updatesController = new AbortController()
 
-const subscribeToPingUpdates = (async () => {
+const subscribeToPingUpdates = async () => {
     try {
         const stream = sdk.events.updates({
             partyId: observingCharlie.partyId,
@@ -146,9 +146,9 @@ const subscribeToPingUpdates = (async () => {
     } catch (err) {
         if (!updatesController.signal.aborted) throw err
     }
-})()
+}
 
-subscribeToPingUpdates
+subscribeToPingUpdates()
 
 const observingConradPingCommand = sdk.utils.ping.create([
     {

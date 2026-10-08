@@ -10,6 +10,11 @@ import type { AddIdp } from './typings.js'
 import type { RemoveIdp } from './typings.js'
 import type { ListIdps } from './typings.js'
 import type { CreateWallet } from './typings.js'
+import type { AddSelfIssuedSession } from './typings.js'
+import type { GetSelfIssuedOnboarding } from './typings.js'
+import type { CreateSelfIssuedWallet } from './typings.js'
+import type { AllocateSelfIssuedWallet } from './typings.js'
+import type { ConnectSelfIssuedSession } from './typings.js'
 import type { AllocatePartyForWallet } from './typings.js'
 import type { SetPrimaryWallet } from './typings.js'
 import type { RemoveWallet } from './typings.js'
@@ -26,6 +31,7 @@ import type { AddSession } from './typings.js'
 import type { RemoveSession } from './typings.js'
 import type { ListSessions } from './typings.js'
 import type { GetTransaction } from './typings.js'
+import type { GetTransactionStatus } from './typings.js'
 import type { ListTransactions } from './typings.js'
 import type { DeleteTransaction } from './typings.js'
 import type { GetUser } from './typings.js'
@@ -47,6 +53,11 @@ export type Methods = {
     removeIdp: RemoveIdp
     listIdps: ListIdps
     createWallet: CreateWallet
+    addSelfIssuedSession: AddSelfIssuedSession
+    getSelfIssuedOnboarding: GetSelfIssuedOnboarding
+    createSelfIssuedWallet: CreateSelfIssuedWallet
+    allocateSelfIssuedWallet: AllocateSelfIssuedWallet
+    connectSelfIssuedSession: ConnectSelfIssuedSession
     allocatePartyForWallet: AllocatePartyForWallet
     setPrimaryWallet: SetPrimaryWallet
     removeWallet: RemoveWallet
@@ -63,6 +74,7 @@ export type Methods = {
     removeSession: RemoveSession
     listSessions: ListSessions
     getTransaction: GetTransaction
+    getTransactionStatus: GetTransactionStatus
     listTransactions: ListTransactions
     deleteTransaction: DeleteTransaction
     getUser: GetUser
@@ -86,6 +98,11 @@ function buildController(methods: Methods) {
         removeIdp: methods.removeIdp,
         listIdps: methods.listIdps,
         createWallet: methods.createWallet,
+        addSelfIssuedSession: methods.addSelfIssuedSession,
+        getSelfIssuedOnboarding: methods.getSelfIssuedOnboarding,
+        createSelfIssuedWallet: methods.createSelfIssuedWallet,
+        allocateSelfIssuedWallet: methods.allocateSelfIssuedWallet,
+        connectSelfIssuedSession: methods.connectSelfIssuedSession,
         allocatePartyForWallet: methods.allocatePartyForWallet,
         setPrimaryWallet: methods.setPrimaryWallet,
         removeWallet: methods.removeWallet,
@@ -102,6 +119,7 @@ function buildController(methods: Methods) {
         removeSession: methods.removeSession,
         listSessions: methods.listSessions,
         getTransaction: methods.getTransaction,
+        getTransactionStatus: methods.getTransactionStatus,
         listTransactions: methods.listTransactions,
         deleteTransaction: methods.deleteTransaction,
         getUser: methods.getUser,

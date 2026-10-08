@@ -7,15 +7,15 @@ import { expect, test } from 'vitest'
 import { InternalSigningDriver } from './controller.js'
 import {
     createKeyPair,
-    Error as RpcError,
+    type Error as RpcError,
     isRpcError,
-    Key,
-    Methods,
-    Transaction,
+    type Key,
+    type Methods,
+    type Transaction,
 } from '@canton-network/core-signing-lib'
 import nacl from 'tweetnacl'
 import naclUtil from 'tweetnacl-util'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
     StoreSql,
     connection,

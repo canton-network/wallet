@@ -4,8 +4,8 @@
 import { TestToken } from '@canton-network/core-splice-codegen'
 import z from 'zod'
 import { APIError } from '../common'
-import { OffLedger } from '@canton-network/core-token-standard'
-import { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+import type { OffLedger } from '@canton-network/core-token-standard'
+import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 import { RegistryState } from '../../common/state'
 
 export const getTransferFactoryChoiceArgumentsSchema = z.looseObject({

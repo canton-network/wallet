@@ -148,6 +148,7 @@ A network's `auth` (and optional `adminAuth`) uses one of three methods.
 {
     "auth": {
         "method": "client_credentials",
+        "identityProviderId": "machine-token-idp",
         "audience": "https://canton.network.global",
         "scope": "openid daml_ledger_api offline_access",
         "clientId": "my-service-client",
@@ -155,6 +156,10 @@ A network's `auth` (and optional `adminAuth`) uses one of three methods.
     }
 }
 ```
+
+`identityProviderId` is optional. When set, the Wallet Gateway uses that OAuth IDP to discover
+the token endpoint instead of the network's top-level identity provider. This is useful when user
+authentication uses a different IDP than admin authentication.
 
 ### self_signed
 
@@ -213,6 +218,7 @@ execute straight through. End users still sign in with the network's normal `aut
 {
     "serviceAccountAuth": {
         "method": "client_credentials",
+        "identityProviderId": "machine-token-idp",
         "clientId": "wallet-gateway-automation",
         "clientSecretEnv": "WG_SERVICE_ACCOUNT_CLIENT_SECRET",
         "audience": "https://canton.network.global",

@@ -1,13 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ScanProxyClient, ScanTypes } from '@canton-network/core-splice-client'
-import {
+import type {
+    ScanProxyClient,
+    ScanTypes,
+} from '@canton-network/core-splice-client'
+import type {
     DisclosedContract,
     ExerciseCommand,
     TokenStandardService,
 } from '@canton-network/core-token-standard-service'
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import Decimal from 'decimal.js'
 
 // TODO: This appears in a couple of places, either move it somewhere more
@@ -140,6 +143,19 @@ export abstract class AmuletServiceBase {
         ]
     }
 
+    async cancelFeaturedAppRight(
+        contractId: string,
+        templateId: string
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const exercise: ExerciseCommand = {
+            templateId,
+            contractId,
+            choice: 'FeaturedAppRight_Cancel',
+            choiceArgument: {},
+        }
+        return [exercise, []]
+    }
+
     async cancelTransferPreapproval(
         contractId: string,
         templateId: string,
@@ -230,7 +246,7 @@ export abstract class AmuletServiceBase {
         amount: string,
         instrumentAdmin: string, // TODO (#907): replace with registry call
         instrumentId: string,
-        registryUrl: string
+        registryUrl: URL
     ): Promise<[ExerciseCommand, DisclosedContract[]]> {
         const now = new Date()
         const tomorrow = new Date(now)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMemo } from 'react'
-import * as sdk from '@canton-network/dapp-sdk'
+import type * as sdk from '@canton-network/dapp-sdk'
 import { useConnection } from '../contexts/ConnectionContext'
 
 export const useAccounts = (): sdk.dappAPI.Wallet[] => useConnection().accounts

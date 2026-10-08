@@ -3,9 +3,9 @@
 
 import { Router } from 'express'
 import { getAllocationFactory } from './getAllocationFactory'
-import { OffLedger } from '@canton-network/core-token-standard'
+import type { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z, { ZodType } from 'zod'
+import z, { type ZodType } from 'zod'
 
 const allocationInstructionAPIRouter: Router = Router()
 

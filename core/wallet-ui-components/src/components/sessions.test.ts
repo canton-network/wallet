@@ -7,7 +7,7 @@ import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
 import './copy-button.js'
 import './sessions.js'
-import { WgCopyButton } from './copy-button.js'
+import type { WgCopyButton } from './copy-button.js'
 import { makeIdp } from './fixtures.js'
 import { WgSessions } from './sessions.js'
 

@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
 import type { Key, Transaction } from '@canton-network/core-signing-lib'
 import SecurosysSigningDriver, { SECUROSYS_SIGNING_PROVIDER } from './index.js'
-import { SigningAPIClient } from './signing-api-sdk.js'
+import type { SigningAPIClient } from './signing-api-sdk.js'
 
 describe('SecurosysSigningDriver constructor', () => {
     it('uses the securosys provider string', () => {
@@ -38,8 +38,6 @@ describe('SecurosysSigningDriver', () => {
     let mockClient: Mocked<SigningAPIClient>
 
     beforeEach(() => {
-        vi.clearAllMocks()
-
         mockClient = {
             signTransaction: vi.fn(),
             getTransaction: vi.fn(),

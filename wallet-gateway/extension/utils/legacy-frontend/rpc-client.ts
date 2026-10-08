@@ -1,9 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { RpcTransport } from '@canton-network/core-rpc-transport'
+import type { RpcTransport } from '@canton-network/core-rpc-transport'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
-import { RequestPayload, ResponsePayload } from '@canton-network/core-types'
+import type {
+    RequestPayload,
+    SuccessResponse,
+} from '@canton-network/core-types'
 import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
 import { createProxyService } from '@webext-core/proxy-service'
 
@@ -29,7 +32,7 @@ class ExtensionTransport implements RpcTransport {
         this.service = createProxyService(USER_RPC_KEY)
     }
 
-    submit(request: RequestPayload): Promise<ResponsePayload> {
+    submit(request: RequestPayload): Promise<SuccessResponse> {
         const { method, params } = request
         const fn = this.service[method as keyof UserRpcMethods]
         if (!fn) {

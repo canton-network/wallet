@@ -5,7 +5,7 @@ import { html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { chevronDownIcon } from '../icons/index.js'
 import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
-import {
+import type {
     KeyName,
     PartyHint,
     SigningProviderId,
@@ -33,6 +33,7 @@ export class WgWalletCreateForm extends WgWalletForm {
     }
 
     @property({ type: Array }) keySigningProviders: string[] = []
+    @property({ type: Boolean }) showPrimary = true
 
     @state() accessor partyHint = ''
     @property() accessor selectedSigningProvider = ''
@@ -215,20 +216,27 @@ export class WgWalletCreateForm extends WgWalletForm {
                       `
                     : nothing
             }
-
-            <div class="primary-row mb-0">
-                <input
-                    id="primary"
-                    type="checkbox"
-                    .checked=${this.isPrimaryValue}
-                    @change=${this.onPrimaryChange}
-                    class="form-check-input"
-                    ?disabled=${this.submitting}
-                />
-                <label for="primary" class="form-check-label primary-label"
-                    >Set as primary wallet</label
-                >
-            </div>
+            ${
+                this.showPrimary
+                    ? html`
+                          <div class="primary-row mb-0">
+                              <input
+                                  id="primary"
+                                  type="checkbox"
+                                  .checked=${this.isPrimaryValue}
+                                  @change=${this.onPrimaryChange}
+                                  class="form-check-input"
+                                  ?disabled=${this.submitting}
+                              />
+                              <label
+                                  for="primary"
+                                  class="form-check-label primary-label"
+                                  >Set as primary wallet</label
+                              >
+                          </div>
+                      `
+                    : nothing
+            }
         `
     }
 }

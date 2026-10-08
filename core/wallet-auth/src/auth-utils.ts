@@ -2,19 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { decodeJwt } from 'jose'
-import { AuthContext } from './auth-service'
+import type { AuthContext } from './auth-service'
 import { providerErrors } from '@canton-network/core-rpc-errors'
-import { Logger } from '@canton-network/core-types'
-import { Idp } from './config/schema.js'
+import type { Logger } from '@canton-network/core-types'
+import type { Idp } from './config/schema.js'
 
-export function assertConnected(
+export function assertIsConnected(
     authContext: AuthContext | undefined
-): AuthContext {
+): asserts authContext is AuthContext {
     if (!authContext) {
         throw providerErrors.unauthorized({
             message: 'User is not connected',
         })
     }
+}
+
+export function assertConnected(
+    authContext: AuthContext | undefined
+): AuthContext {
+    assertIsConnected(authContext)
     return authContext
 }
 

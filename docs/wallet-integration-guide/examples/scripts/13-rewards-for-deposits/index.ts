@@ -8,7 +8,7 @@ import {
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fs from 'node:fs/promises'
-import { RewardsForDepositsTestScriptParameters } from './types.js'
+import type { RewardsForDepositsTestScriptParameters } from './types.js'
 import _accept from './_accept.js'
 import _withdraw from './_withdraw.js'
 import _reject from './_reject.js'

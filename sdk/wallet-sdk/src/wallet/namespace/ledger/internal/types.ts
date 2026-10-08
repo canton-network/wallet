@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Ops } from '@canton-network/core-provider-ledger'
+import type { Ops } from '@canton-network/core-provider-ledger'
 
 type AllowedOperation =
     Ops.PostV2CommandsSubmitAndWait | Ops.PostV2InteractiveSubmissionPrepare

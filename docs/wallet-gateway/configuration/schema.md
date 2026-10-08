@@ -42,7 +42,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     ]
                 }
             },
-            "required": ["id", "clientType"]
+            "required": ["id", "clientType"],
+            "additionalProperties": false
         },
         "server": {
             "type": "object",
@@ -129,9 +130,22 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "exclusiveMinimum": 0,
                             "maximum": 9007199254740991
                         }
-                    }
+                    },
+                    "required": ["pollInterval"],
+                    "additionalProperties": false
                 }
-            }
+            },
+            "required": [
+                "port",
+                "dappPath",
+                "userPath",
+                "allowedOrigins",
+                "requestSizeLimit",
+                "requestRateLimit",
+                "trustProxy",
+                "signingWorker"
+            ],
+            "additionalProperties": false
         },
         "logging": {
             "type": "object",
@@ -147,6 +161,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     "enum": ["json", "pretty"]
                 }
             },
+            "additionalProperties": false,
             "description": "Optional logging configuration. If omitted, defaults will be used."
         },
         "store": {
@@ -162,7 +177,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     "const": "memory"
                                 }
                             },
-                            "required": ["type"]
+                            "required": ["type"],
+                            "additionalProperties": false
                         },
                         {
                             "type": "object",
@@ -175,7 +191,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     "type": "string"
                                 }
                             },
-                            "required": ["type", "database"]
+                            "required": ["type", "database"],
+                            "additionalProperties": false
                         },
                         {
                             "anyOf": [
@@ -250,7 +267,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     ]
                 }
             },
-            "required": ["connection"]
+            "required": ["connection"],
+            "additionalProperties": false
         },
         "signingStore": {
             "type": "object",
@@ -265,7 +283,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     "const": "memory"
                                 }
                             },
-                            "required": ["type"]
+                            "required": ["type"],
+                            "additionalProperties": false
                         },
                         {
                             "type": "object",
@@ -278,7 +297,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     "type": "string"
                                 }
                             },
-                            "required": ["type", "database"]
+                            "required": ["type", "database"],
+                            "additionalProperties": false
                         },
                         {
                             "anyOf": [
@@ -353,147 +373,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     ]
                 }
             },
-            "required": ["connection"]
-        },
-        "signingProviders": {
-            "type": "object",
-            "properties": {
-                "walletKernel": {
-                    "description": "Include this object to opt in the Wallet Kernel internal signing provider. Requires signingStore.",
-                    "type": "object",
-                    "properties": {}
-                },
-                "participant": {
-                    "description": "Include this object to opt in the participant signing provider.",
-                    "type": "object",
-                    "properties": {}
-                },
-                "fireblocks": {
-                    "description": "Include this object to opt in Fireblocks. Secrets are read from the environment variables named by apiKeyEnv and secretEnv.",
-                    "type": "object",
-                    "properties": {
-                        "apiPath": {
-                            "description": "Fireblocks API URL. Defaults to https://api.fireblocks.io/v1.",
-                            "type": "string"
-                        },
-                        "apiKeyEnv": {
-                            "description": "Name of the environment variable that holds the Fireblocks API key. Defaults to FIREBLOCKS_API_KEY. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        },
-                        "secretEnv": {
-                            "description": "Name of the environment variable that holds the Fireblocks API secret. Defaults to FIREBLOCKS_SECRET. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        }
-                    }
-                },
-                "blockdaemon": {
-                    "description": "Include this object to opt in Blockdaemon. The API key is read from the environment variable named by apiKeyEnv.",
-                    "type": "object",
-                    "properties": {
-                        "baseUrl": {
-                            "description": "Blockdaemon API URL. Defaults to http://localhost:5080/api/cwp/canton.",
-                            "type": "string"
-                        },
-                        "caip2": {
-                            "description": "Blockdaemon CAIP-2 network identifier. Defaults to canton:testnet.",
-                            "type": "string"
-                        },
-                        "apiKeyEnv": {
-                            "description": "Name of the environment variable that holds the Blockdaemon API key. Defaults to BLOCKDAEMON_API_KEY. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        }
-                    }
-                },
-                "dfns": {
-                    "description": "Include this object to opt in Dfns. Requires orgId and credId. Secrets are read from the environment variables named by privateKeyEnv and authTokenEnv.",
-                    "type": "object",
-                    "properties": {
-                        "orgId": {
-                            "type": "string",
-                            "description": "Dfns organization ID."
-                        },
-                        "baseUrl": {
-                            "description": "Dfns API URL. Defaults to https://api.dfns.io.",
-                            "type": "string"
-                        },
-                        "credId": {
-                            "type": "string",
-                            "description": "Dfns service account credential ID."
-                        },
-                        "privateKeyEnv": {
-                            "description": "Name of the environment variable that holds the Dfns service account private key. Defaults to DFNS_PRIVATE_KEY. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        },
-                        "authTokenEnv": {
-                            "description": "Name of the environment variable that holds the Dfns service account auth token. Defaults to DFNS_AUTH_TOKEN. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["orgId", "credId"]
-                },
-                "securosys": {
-                    "description": "Include this object to opt in Securosys. Requires baseUrl. Secrets are read from the environment variables named by the *Env fields.",
-                    "type": "object",
-                    "properties": {
-                        "baseUrl": {
-                            "type": "string",
-                            "description": "Securosys TSB service URL."
-                        },
-                        "mtlsP12Path": {
-                            "description": "Path to a PKCS#12 client certificate when TSB requires mTLS.",
-                            "type": "string"
-                        },
-                        "signatureAlgorithm": {
-                            "description": "Securosys TSB signature algorithm. Defaults to EDDSA.",
-                            "type": "string"
-                        },
-                        "keyManagementApiKeyEnv": {
-                            "description": "Name of the environment variable that holds the Securosys key-management API key. Defaults to SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        },
-                        "keyOperationApiKeyEnv": {
-                            "description": "Name of the environment variable that holds the Securosys key-operation API key. Defaults to SECUROSYS_TSB_KEY_OPERATION_API_KEY. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        },
-                        "bearerTokenEnv": {
-                            "description": "Name of the environment variable that holds the Securosys bearer token. Defaults to SECUROSYS_TSB_BEARER_TOKEN. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        },
-                        "mtlsP12PasswordEnv": {
-                            "description": "Name of the environment variable that holds the Securosys PKCS#12 password. Defaults to SECUROSYS_TSB_MTLS_P12_PASSWORD. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        },
-                        "keyPasswordEnv": {
-                            "description": "Name of the environment variable that holds the Securosys key password. Defaults to SECUROSYS_TSB_KEY_PASSWORD. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        }
-                    },
-                    "required": ["baseUrl"]
-                },
-                "bitgo": {
-                    "description": "Include this object to opt in BitGo. The access token is read from the environment variable named by accessTokenEnv.",
-                    "type": "object",
-                    "properties": {
-                        "baseUrl": {
-                            "description": "BitGo API base URL. Defaults to https://app.bitgo.com.",
-                            "type": "string"
-                        },
-                        "enterpriseId": {
-                            "description": "BitGo enterprise ID. Required for wallet creation.",
-                            "type": "string"
-                        },
-                        "coin": {
-                            "description": "BitGo Canton coin identifier. Auto-detected from the API URL when omitted.",
-                            "type": "string"
-                        },
-                        "accessTokenEnv": {
-                            "description": "Name of the environment variable that holds the BitGo access token. Defaults to BITGO_ACCESS_TOKEN. The secret value stays in the environment and is never stored in the config file.",
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "description": "Explicit signing provider configuration. When omitted, the Wallet Gateway uses legacy discovery: every provider is available if its required environment variables are set. When present, only listed providers are registered; non-secret settings come from this object, and secrets are read from environment variables named by the *Env fields."
+            "required": ["connection"],
+            "additionalProperties": false
         },
         "bootstrap": {
             "type": "object",
@@ -516,7 +397,22 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                         "type": "string"
                                     }
                                 },
-                                "required": ["id", "type", "issuer"]
+                                "required": ["id", "type", "issuer"],
+                                "additionalProperties": false
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "const": "self_issued"
+                                    }
+                                },
+                                "required": ["id", "type"],
+                                "additionalProperties": false
                             },
                             {
                                 "type": "object",
@@ -541,7 +437,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                     "type",
                                     "issuer",
                                     "configUrl"
-                                ]
+                                ],
+                                "additionalProperties": false
                             }
                         ]
                     }
@@ -563,6 +460,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "synchronizerId": {
                                 "type": "string",
                                 "minLength": 10,
+                                "format": "includes",
                                 "pattern": "::"
                             },
                             "identityProviderId": {
@@ -576,7 +474,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                         "format": "uri"
                                     }
                                 },
-                                "required": ["baseUrl"]
+                                "required": ["baseUrl"],
+                                "additionalProperties": false
                             },
                             "auth": {
                                 "anyOf": [
@@ -590,7 +489,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "const": "authorization_code"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -605,6 +505,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId"
                                                 ],
+                                                "additionalProperties": false,
                                                 "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
                                             },
                                             {
@@ -614,8 +515,13 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
-                                                    "audience": {
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
                                                         "type": "string"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -633,7 +539,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
                                             },
                                             {
                                                 "type": "object",
@@ -646,7 +553,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -665,7 +573,30 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
+                                                ],
+                                                "additionalProperties": false
                                             }
                                         ]
                                     },
@@ -679,7 +610,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "const": "authorization_code"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -694,6 +626,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId"
                                                 ],
+                                                "additionalProperties": false,
                                                 "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
                                             },
                                             {
@@ -702,6 +635,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "method": {
                                                         "type": "string",
                                                         "const": "client_credentials"
+                                                    },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
                                                     },
                                                     "audience": {
                                                         "type": "string"
@@ -722,7 +659,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
                                             },
                                             {
                                                 "type": "object",
@@ -754,7 +692,30 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
+                                                ],
+                                                "additionalProperties": false
                                             }
                                         ]
                                     }
@@ -772,7 +733,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "const": "authorization_code"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -787,6 +749,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId"
                                                 ],
+                                                "additionalProperties": false,
                                                 "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
                                             },
                                             {
@@ -796,8 +759,13 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
-                                                    "audience": {
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
                                                         "type": "string"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -815,7 +783,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
                                             },
                                             {
                                                 "type": "object",
@@ -828,7 +797,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -847,7 +817,30 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
+                                                ],
+                                                "additionalProperties": false
                                             }
                                         ]
                                     },
@@ -861,7 +854,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "const": "authorization_code"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -876,6 +870,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId"
                                                 ],
+                                                "additionalProperties": false,
                                                 "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
                                             },
                                             {
@@ -884,6 +879,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "method": {
                                                         "type": "string",
                                                         "const": "client_credentials"
+                                                    },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
                                                     },
                                                     "audience": {
                                                         "type": "string"
@@ -904,7 +903,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
                                             },
                                             {
                                                 "type": "object",
@@ -936,7 +936,30 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
+                                                ],
+                                                "additionalProperties": false
                                             }
                                         ]
                                     }
@@ -954,7 +977,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "const": "authorization_code"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -969,6 +993,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId"
                                                 ],
+                                                "additionalProperties": false,
                                                 "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
                                             },
                                             {
@@ -978,8 +1003,13 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string",
                                                         "const": "client_credentials"
                                                     },
-                                                    "audience": {
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
                                                         "type": "string"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -997,7 +1027,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
                                             },
                                             {
                                                 "type": "object",
@@ -1010,7 +1041,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -1029,7 +1061,30 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecret"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
+                                                ],
+                                                "additionalProperties": false
                                             }
                                         ]
                                     },
@@ -1043,7 +1098,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "const": "authorization_code"
                                                     },
                                                     "audience": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
                                                     },
                                                     "scope": {
                                                         "type": "string"
@@ -1058,6 +1114,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId"
                                                 ],
+                                                "additionalProperties": false,
                                                 "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
                                             },
                                             {
@@ -1066,6 +1123,10 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "method": {
                                                         "type": "string",
                                                         "const": "client_credentials"
+                                                    },
+                                                    "identityProviderId": {
+                                                        "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                        "type": "string"
                                                     },
                                                     "audience": {
                                                         "type": "string"
@@ -1086,7 +1147,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
                                             },
                                             {
                                                 "type": "object",
@@ -1118,7 +1180,30 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                     "scope",
                                                     "clientId",
                                                     "clientSecretEnv"
-                                                ]
+                                                ],
+                                                "additionalProperties": false
+                                            },
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "method": {
+                                                        "type": "string",
+                                                        "const": "self_issued"
+                                                    },
+                                                    "audience": {
+                                                        "type": "string",
+                                                        "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "method",
+                                                    "audience",
+                                                    "scope"
+                                                ],
+                                                "additionalProperties": false
                                             }
                                         ]
                                     }
@@ -1132,11 +1217,13 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "identityProviderId",
                             "ledgerApi",
                             "auth"
-                        ]
+                        ],
+                        "additionalProperties": false
                     }
                 }
             },
-            "required": ["idps", "networks"]
+            "required": ["idps", "networks"],
+            "additionalProperties": false
         },
         "hashingScheme": {
             "type": "object",
@@ -1150,9 +1237,11 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     "description": "Hashing scheme version for the ledger. If omitted, defaults to HASHING_SCHEME_VERSION_V3"
                 }
             },
-            "required": ["version"]
+            "required": ["version"],
+            "additionalProperties": false
         }
     },
-    "required": ["kernel", "store", "bootstrap"]
+    "required": ["kernel", "server", "store", "signingStore", "bootstrap"],
+    "additionalProperties": false
 }
 ```

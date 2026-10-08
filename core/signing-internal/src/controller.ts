@@ -6,17 +6,17 @@
 import {
     buildController,
     PartyMode,
-    SigningDriverInterface,
+    type SigningDriverInterface,
     SigningProvider,
     signTransactionHash,
     signMessage,
     createKeyPair,
-    SigningDriverStore,
-    SigningTransaction,
-    SigningKey,
+    type SigningDriverStore,
+    type SigningTransaction,
+    type SigningKey,
 } from '@canton-network/core-signing-lib'
 
-import {
+import type {
     SignTransactionParams,
     SignTransactionResult,
     GetTransactionParams,
@@ -35,7 +35,7 @@ import {
     SignMessageParams,
     SignMessageResult,
 } from '@canton-network/core-signing-lib'
-import { AuthContext } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 interface InternalKey {
     id: string

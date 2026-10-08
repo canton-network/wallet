@@ -5,13 +5,18 @@ import { TestTokenID, TestTokenV1 } from './dar'
 import {
     Allocation,
     AllocationFactory,
+    HoldingView,
     TransferFactory,
     TransferInstruction,
 } from '@canton-network/core-token-standard'
-import { PartyId } from '@canton-network/core-types'
-import { WrappedCommand } from '@canton-network/core-ledger-client-types'
-import { generateCommand } from 'src/common'
-import { Token, TokenAllocation, TokenRules, TokenTransferOffer } from './types'
+import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
+import { generateCommand, TestTokenHoldingView } from '../common'
+import type {
+    Token,
+    TokenAllocation,
+    TokenRules,
+    TokenTransferOffer,
+} from './types'
 
 const commands = {
     create: {
@@ -24,18 +29,18 @@ const commands = {
         rules: generateCommand.create<TokenRules>(
             TestTokenV1.TokenRules.templateId
         ),
-        token: (params: {
-            owner: PartyId
-            admin: PartyId
-            amount: string
-        }): WrappedCommand<'CreateCommand'> =>
+        token: (
+            holding: TestTokenHoldingView<HoldingView>
+        ): WrappedCommand<'CreateCommand'> =>
             generateCommand.create<Token>(TestTokenV1.Token.templateId)({
                 holding: {
-                    owner: params.owner,
-                    instrumentId: { admin: params.admin, id: TestTokenID },
-                    amount: params.amount,
                     lock: null,
                     meta: { values: {} },
+                    ...holding,
+                    instrumentId: {
+                        id: TestTokenID,
+                        ...holding.instrumentId,
+                    },
                 },
             }),
     },

@@ -1,11 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import {
+    ScanClient,
+    type ScanProxyClient,
+} from '@canton-network/core-splice-client'
+import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { AmuletServiceScanOnly } from './amulet-service-scan.js'
 import { AmuletServiceScanProxy } from './amulet-service-scan-proxy.js'
-import { AmuletServiceBase } from './amulet-service-base.js'
+import type { AmuletServiceBase } from './amulet-service-base.js'
 
 export class AmuletService {
     private readonly serviceImpl: AmuletServiceBase
@@ -70,6 +73,12 @@ export class AmuletService {
         ...args: Parameters<AmuletServiceBase['selfGrantFeatureAppRight']>
     ) {
         return this.serviceImpl.selfGrantFeatureAppRight(...args)
+    }
+
+    async cancelFeaturedAppRight(
+        ...args: Parameters<AmuletServiceBase['cancelFeaturedAppRight']>
+    ) {
+        return this.serviceImpl.cancelFeaturedAppRight(...args)
     }
 
     async isDevNet(...args: Parameters<AmuletServiceBase['isDevNet']>) {

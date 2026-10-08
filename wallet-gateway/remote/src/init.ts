@@ -4,7 +4,7 @@
 import { dapp } from './dapp-api/server.js'
 import { user } from './user-api/server.js'
 import { web } from './web/server.js'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
     StoreSql,
     bootstrap,
@@ -20,24 +20,26 @@ import {
 import { ConfigUtils } from './config/ConfigUtils.js'
 import { jwtAuthService } from './auth/jwt-auth-service.js'
 import express from 'express'
-import { CliOptions } from './index.js'
+import type { CliOptions } from './index.js'
 import { jwtAuth } from './middleware/jwtAuth.js'
 import {
     authenticatedRateLimiter,
     preAuthIpRateLimiter,
     rateLimiter,
 } from './middleware/rateLimit.js'
-import { Config } from './config/Config.js'
+import type { Config } from './config/Config.js'
 import { deriveUrls } from './config/ConfigUtils.js'
 import { existsSync } from 'fs'
 import { GATEWAY_VERSION } from './version.js'
 import { sessionHandler } from './middleware/sessionHandler.js'
-import { NotificationService } from './notification/NotificationService.js'
 import { sql } from 'kysely'
-import { HASHING_SCHEME_VERSION } from './env.js'
 import { SigningWorker } from './signing/signing-worker.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { securityHeaders } from './middleware/securityHeaders.js'
+import {
+    type HASHING_SCHEME_VERSION,
+    NotificationService,
+} from '@canton-network/core-wallet-services'
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
 
@@ -284,6 +286,15 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'listIdps',
             'getUser',
             'selfSignedAccessToken',
+            'addSelfIssuedSession',
+        ],
+    }
+    const onboardingPaths = {
+        [config.server.userPath]: [
+            'getSelfIssuedOnboarding',
+            'createSelfIssuedWallet',
+            'allocateSelfIssuedWallet',
+            'connectSelfIssuedSession',
         ],
     }
 
@@ -299,7 +310,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         sessionHandler(
             store,
             allowedPaths,
-            logger.child({ component: 'SessionHandler' })
+            logger.child({ component: 'SessionHandler' }),
+            onboardingPaths
         ),
     ]
 

@@ -3,8 +3,8 @@
 
 import {
     createKeyPair,
-    KeyPair,
-    PublicKey,
+    type KeyPair,
+    type PublicKey,
 } from '@canton-network/core-signing-lib'
 import { base64ToBytes, bytesToHex } from '../utils/encoding'
 

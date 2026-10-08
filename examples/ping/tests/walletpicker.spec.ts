@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { test, expect } from '@canton-network/core-wallet-test-utils'
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import {
     connectPingDapp,
     createPingDappWalletGateway,

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { randomUUID } from 'node:crypto'
-import { Kysely, sql } from 'kysely'
-import { DB } from '../schema.js'
+import { type Kysely, sql } from 'kysely'
+import type { DB } from '../schema.js'
 import { isPostgres } from '../utils.js'
 
 export async function up(db: Kysely<DB>): Promise<void> {

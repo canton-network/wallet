@@ -3,7 +3,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Metadata, HoldingView } from '@canton-network/core-token-standard'
+import type { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined

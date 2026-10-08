@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { packageId } from './dar'
-import { vetDarFactory } from 'src/common'
+import { vetDarFactory } from '../common'
 
 export const vetDar = vetDarFactory(
     '../../../.localnet/dars/splice-test-token-v1-1.0.0.dar',

@@ -3,10 +3,10 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import * as mock from '../../../__test__/mocks'
-import { TokenNamespaceConfig } from '../index'
+import type { TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
 import { AllocationNamespace } from './service'
-import {
+import type {
     AllocationContextParams,
     AllocationInstructionCreateParams,
 } from './types'
@@ -71,7 +71,6 @@ describe('allocation namespace namespace', () => {
     ]
 
     beforeEach(() => {
-        vi.clearAllMocks()
         allocation = new AllocationNamespace(config)
     })
 
@@ -189,7 +188,7 @@ describe('allocation namespace namespace', () => {
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationInstructionParams.allocationSpecification,
                 defaultAllocationInstructionParams.asset.admin,
-                defaultAllocationInstructionParams.asset.registryUrl.href,
+                defaultAllocationInstructionParams.asset.registryUrl,
                 undefined,
                 undefined,
                 undefined
@@ -348,7 +347,7 @@ describe('allocation namespace namespace', () => {
             await allocation.context.execute(defaultAllocationContextParams)
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationContextParams.allocationCid,
-                expectedTokenStandardParamsUrl.href
+                expectedTokenStandardParamsUrl
             )
         })
 
@@ -360,7 +359,7 @@ describe('allocation namespace namespace', () => {
             await allocation.context.withdraw(defaultAllocationContextParams)
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationContextParams.allocationCid,
-                expectedTokenStandardParamsUrl.href
+                expectedTokenStandardParamsUrl
             )
         })
 
@@ -371,7 +370,7 @@ describe('allocation namespace namespace', () => {
             await allocation.context.cancel(defaultAllocationContextParams)
             expect(spy).toHaveBeenCalledExactlyOnceWith(
                 defaultAllocationContextParams.allocationCid,
-                expectedTokenStandardParamsUrl.href
+                expectedTokenStandardParamsUrl
             )
         })
     })

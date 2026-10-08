@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect, Mock } from 'vitest'
+import { describe, it, vi, beforeEach, expect, type Mock } from 'vitest'
 import {
     AmuletNamespace,
-    AmuletNamespaceConfig,
+    type AmuletNamespaceConfig,
     fetchAmulet,
 } from './namespace'
 import * as mock from '../../__test__/mocks'
@@ -36,6 +36,7 @@ const mockTokenStandard = {
 const mockAmuletService = {
     createTap: vi.fn(),
     selfGrantFeatureAppRight: vi.fn(),
+    cancelFeaturedAppRight: vi.fn(),
     getTransferPreApprovalByParty: vi.fn(),
     getFeaturedAppsByParty: vi.fn(),
     cancelTransferPreapproval: vi.fn(),
@@ -83,7 +84,6 @@ describe('AmuletNamespace', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         amuletNamespace = new AmuletNamespace(config)
@@ -129,7 +129,7 @@ describe('AmuletNamespace', () => {
                 new Decimal('10000').toFixed(10),
                 config.registry.admin,
                 config.registry.id,
-                config.registry.registryUrl.toString()
+                config.registry.registryUrl
             )
             expect(result).toStrictEqual([{ ExerciseCommand: tapCommand }, []])
         })
@@ -218,6 +218,75 @@ describe('AmuletNamespace', () => {
                 expect(mockSubmit).not.toHaveBeenCalled()
             })
         })
+
+        describe('revoke sequence execution', () => {
+            it('skip revoking featured rights if none are found', async () => {
+                vi.mocked(
+                    mockAmuletService.getFeaturedAppsByParty
+                ).mockResolvedValue(undefined)
+
+                const result = await amuletNamespace.featuredApp.revoke()
+
+                expect(result).toBe(true)
+                expect(mockSubmit).not.toHaveBeenCalled()
+            })
+
+            it('should submit cancel and wait until rights are gone', async () => {
+                const featuredRight = {
+                    template_id: 'Splice.Amulet:FeaturedAppRight',
+                    contract_id: 'right-cid-123',
+                    payload: {},
+                    created_event_blob: 'blob',
+                    created_at: '2026-01-01T00:00:00Z',
+                }
+                vi.mocked(mockAmuletService.getFeaturedAppsByParty)
+                    .mockResolvedValueOnce(featuredRight)
+                    .mockResolvedValueOnce(featuredRight)
+                    .mockResolvedValue(undefined)
+                vi.mocked(
+                    mockAmuletService.cancelFeaturedAppRight
+                ).mockResolvedValue([
+                    {
+                        templateId: featuredRight.template_id,
+                        contractId: featuredRight.contract_id,
+                        choice: 'FeaturedAppRight_Cancel',
+                        choiceArgument: {},
+                    },
+                    [],
+                ])
+
+                const trackingPromise = amuletNamespace.featuredApp.revoke({
+                    maxRetries: 3,
+                    delayMs: 10,
+                })
+
+                await vi.runAllTimersAsync()
+                const result = await trackingPromise
+
+                expect(result).toBe(true)
+                expect(
+                    mockAmuletService.cancelFeaturedAppRight
+                ).toHaveBeenCalledWith(
+                    featuredRight.contract_id,
+                    featuredRight.template_id
+                )
+                expect(mockSubmit).toHaveBeenCalledWith({
+                    commands: [
+                        {
+                            ExerciseCommand: {
+                                templateId: featuredRight.template_id,
+                                contractId: featuredRight.contract_id,
+                                choice: 'FeaturedAppRight_Cancel',
+                                choiceArgument: {},
+                            },
+                        },
+                    ],
+                    disclosedContracts: [],
+                    synchronizerId: config.commonCtx.defaultSynchronizerId,
+                    actAs: [config.validatorParty],
+                })
+            })
+        })
     })
 })
 
@@ -226,7 +295,6 @@ describe('AmuletNamespace with no validator party', () => {
     let mockSubmit: Mock
 
     beforeEach(() => {
-        vi.clearAllMocks()
         vi.useFakeTimers()
 
         amuletNamespace = new AmuletNamespace(configNoValidator)
@@ -330,6 +398,21 @@ describe('AmuletNamespace with no validator party', () => {
                 })
 
                 expect(result).toStrictEqual(mockRightPayload)
+                expect(mockSubmit).not.toHaveBeenCalled()
+            })
+        })
+
+        describe('revoke sequence execution', () => {
+            it('skip revoking featured rights if none are found', async () => {
+                vi.mocked(
+                    mockAmuletService.getFeaturedAppsByParty
+                ).mockResolvedValue(undefined)
+
+                const result = await amuletNamespace.featuredApp.revoke({
+                    validatorParty: 'providerParty::123',
+                })
+
+                expect(result).toBe(true)
                 expect(mockSubmit).not.toHaveBeenCalled()
             })
         })

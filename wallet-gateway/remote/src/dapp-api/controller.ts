@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    assertConnected,
-    AuthContext,
+    assertIsConnected,
+    type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import buildController from './rpc-gen/index.js'
-import {
+import type {
     ConnectResult,
     LedgerApiParams,
     LedgerApiResult,
@@ -19,26 +19,30 @@ import {
     StatusEvent,
     Wallet,
 } from './rpc-gen/typings.js'
-import { Store, Transaction } from '@canton-network/core-wallet-store'
+import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import {
     LedgerClient,
-    GetEndpoint,
-    PostEndpoint,
-    PrepareSubmissionResponse,
+    type GetEndpoint,
+    type PostEndpoint,
+    type PrepareSubmissionResponse,
     isValidGetEndpoint,
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
 import { v4 } from 'uuid'
-import { NotificationService } from '../notification/NotificationService.js'
 import { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import { Logger } from 'pino'
-import { networkStatus, ledgerPrepareParams, logDynamically } from '../utils.js'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
-import { TransactionService } from '../ledger/transaction-service.js'
 
-import { SigningDrivers } from '../signing/signing-drivers.js'
-import { rpcErrors } from '@canton-network/core-rpc-errors'
-import { HASHING_SCHEME_VERSION } from '../env.js'
+import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
+import {
+    networkStatus,
+    TransactionService,
+    ledgerPrepareParams,
+    logDynamically,
+    HASHING_SCHEME_VERSION,
+    type NotificationService,
+    SigningDrivers,
+} from '@canton-network/core-wallet-services'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
@@ -69,6 +73,16 @@ export const dappController = (
                 )
             }
         }
+    }
+
+    async function getActiveSession(context: AuthContext) {
+        const session = await store.getSession(context.accessToken)
+        if (!session) {
+            throw providerErrors.unauthorized({
+                message: 'No active session found',
+            })
+        }
+        return session
     }
 
     return buildController({
@@ -184,12 +198,14 @@ export const dappController = (
             } satisfies ConnectResult
         },
         ledgerApi: async (params: LedgerApiParams) => {
+            assertIsConnected(context)
+
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    assertConnected(context).accessToken,
+                    context.accessToken,
                     logger
                 ),
             })
@@ -230,13 +246,11 @@ export const dappController = (
             return result
         },
         prepareExecute: async (params: PrepareExecuteParams) => {
+            assertIsConnected(context)
+
             const primaryWallet = await store.getPrimaryWallet()
             const wallets = await store.getWallets()
             const network = await store.getCurrentNetwork()
-
-            if (context === undefined) {
-                throw new Error('Unauthenticated context')
-            }
 
             // determine user ID
             const gatewayUserId = context.userId
@@ -244,7 +258,7 @@ export const dappController = (
             const accessTokenProvider: AuthTokenProvider =
                 AuthTokenProvider.fromToken(context.accessToken, logger)
 
-            if (context?.isApiKey) {
+            if (context.isApiKey) {
                 logger.info(
                     'Authenticated with API Key, fetching m2m token for ledger access'
                 )
@@ -278,10 +292,7 @@ export const dappController = (
                 accessTokenProvider,
             })
 
-            const session = await store.getSession(context.accessToken)
-            if (!session) {
-                throw new Error('No active session found')
-            }
+            const session = await getActiveSession(context)
             const notifier = notificationService.getNotifier(session.id)
 
             const commandId = params.commandId || v4()
@@ -462,14 +473,18 @@ export const dappController = (
             }
         },
         listAccounts: async () => {
+            assertIsConnected(context)
+
             return await store.getWallets()
         },
         getActiveNetwork: async (): Promise<Network> => {
+            assertIsConnected(context)
+
             const network: StoreNetwork = await store.getCurrentNetwork()
             return {
                 networkId: network.id,
                 ledgerApi: network.ledgerApi.baseUrl,
-                ...(context?.accessToken
+                ...(context.accessToken
                     ? { accessToken: context.accessToken }
                     : {}),
             }
@@ -477,21 +492,18 @@ export const dappController = (
         signMessage: async (
             params: SignMessageParams
         ): Promise<SignMessageResult> => {
+            assertIsConnected(context)
+
             if (!params?.message) throw new Error('Message is required')
 
             const wallet = await store.getPrimaryWallet()
-
-            if (context === undefined) {
-                throw new Error('Unauthenticated context')
-            }
 
             if (wallet === undefined) {
                 throw new Error('No primary wallet found')
             }
 
-            const session = await store.getSession(context.accessToken)
-            const sessionId = session!.id
-            const notifier = notificationService.getNotifier(sessionId)
+            const session = await getActiveSession(context)
+            const notifier = notificationService.getNotifier(session.id)
             const messageId = v4()
             await store.setMessageRaw({
                 id: messageId,
@@ -515,6 +527,8 @@ export const dappController = (
             }
         },
         getPrimaryAccount: async function (): Promise<Wallet> {
+            assertIsConnected(context)
+
             const wallet = await store.getPrimaryWallet()
             if (!wallet) {
                 throw new Error('No primary wallet found')
@@ -549,12 +563,12 @@ async function prepareSubmission(
 ): Promise<PrepareSubmissionResponse> {
     return await ledgerClient.postWithRetry(
         '/v2/interactive-submission/prepare',
-        ledgerPrepareParams(
+        ledgerPrepareParams({
             userId,
             partyIds,
             synchronizerId,
             params,
-            hashingSchemeVersion
-        )
+            hashingSchemeVersion,
+        })
     )
 }

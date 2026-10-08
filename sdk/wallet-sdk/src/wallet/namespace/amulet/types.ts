@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 
 export type PreapprovalParties = {
     receiver: PartyId
@@ -24,6 +24,7 @@ export interface FeaturedAppService {
     grant: (
         options?: GrantFeaturedAppRightsOptions
     ) => Promise<FeaturedAppRight | undefined>
+    revoke: (options?: RevokeFeaturedAppRightsOptions) => Promise<boolean>
 }
 
 export type FeaturedAppRight = {
@@ -41,6 +42,13 @@ export type LookupFeaturedAppRightsOptions = {
 }
 
 export type GrantFeaturedAppRightsOptions = {
+    synchronizerId?: string
+    maxRetries?: number
+    delayMs?: number
+    validatorParty?: PartyId
+}
+
+export type RevokeFeaturedAppRightsOptions = {
     synchronizerId?: string
     maxRetries?: number
     delayMs?: number

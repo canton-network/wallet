@@ -6,13 +6,13 @@ import { customElement, state } from 'lit/decorators.js'
 
 import {
     BaseElement,
-    IdpCardReviewEvent,
-    PageChangeEvent,
+    type IdpCardReviewEvent,
+    type PageChangeEvent,
     handleErrorToast,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 
-import { Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 
 import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'

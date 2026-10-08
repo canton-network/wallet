@@ -9,7 +9,7 @@ This example is a small **Vite + React** app that runs a **WalletConnect v2 Wall
 
 ## Prerequisites
 
-- **Node/pnpm**: use the repo’s normal toolchain (workspace/pnpm).
+- See [`docs/CONTRIBUTING.md`](../../docs/CONTRIBUTING.md) for development environment setup.
 - **WalletConnect Cloud project**: you need a `VITE_WC_PROJECT_ID`.
 
 ## Configure

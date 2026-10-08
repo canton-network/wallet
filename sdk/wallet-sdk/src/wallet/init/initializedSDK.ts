@@ -12,9 +12,13 @@ import { PartyNamespace } from '../namespace/party/index.js'
 import { UserNamespace } from '../namespace/user/index.js'
 import { TokenNamespace } from '../namespace/token/index.js'
 import { AssetNamespace } from '../namespace/asset/index.js'
-import { OfflineSDKContext, SDKContext, getValidatorParty } from '../sdk.js'
-import { SDKUtilsNamespace } from '../namespace/utils/index.js'
 import {
+    type OfflineSDKContext,
+    type SDKContext,
+    getValidatorParty,
+} from '../sdk.js'
+import { SDKUtilsNamespace } from '../namespace/utils/index.js'
+import type {
     AmuletConfig,
     AssetConfig,
     BasicSDKInterface,
@@ -156,7 +160,7 @@ const createNamespace: {
             list: parseAssets(
                 ctx,
                 await tokenStandardService.registriesToAssets(
-                    config.registries.map((registry) => registry.toString())
+                    config.registries.map((c) => new ParsedURL(ctx, c))
                 )
             ),
             commonCtx: ctx,

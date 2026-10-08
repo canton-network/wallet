@@ -4,7 +4,7 @@
 import { html } from 'lit'
 import { customElement } from 'lit/decorators.js'
 import {
-    WalletCreateEvent,
+    type WalletCreateEvent,
     handleErrorToast,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
@@ -13,7 +13,7 @@ import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import { WALLET_STATUS_CODE } from '../index'
-import { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
+import type { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
 import { detectCurrentOrigin } from '../../listeners.js'
 import { UserUiAddOrEditParty } from '../common.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'

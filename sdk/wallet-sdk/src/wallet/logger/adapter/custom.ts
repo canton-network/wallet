@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LogAdapter } from '../types'
+import type { LogAdapter } from '../types'
 import { SDKLogger } from '../logger' // eslint-disable-line @typescript-eslint/no-unused-vars -- for JSDoc only
 
 /**

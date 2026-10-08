@@ -15,9 +15,9 @@ import SecurosysSigningProvider, {
 } from '@canton-network/core-signing-securosys'
 import { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import { Logger } from 'pino'
+import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import type { SigningProvidersConfig } from './config/Config.js'
 import { Env } from './env.js'
-import type { SigningDrivers } from './signing/signing-drivers.js'
 
 const DEFAULT_FIREBLOCKS_API_PATH = 'https://api.fireblocks.io/v1'
 const DEFAULT_BLOCKDAEMON_BASE_URL = 'http://localhost:5080/api/cwp/canton'

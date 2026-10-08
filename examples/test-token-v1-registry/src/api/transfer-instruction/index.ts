@@ -6,9 +6,9 @@ import { getTransferFactory } from './getTransferFactory'
 import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
-import { OffLedger } from '@canton-network/core-token-standard'
+import type { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z, { ZodType } from 'zod'
+import z, { type ZodType } from 'zod'
 import { choiceContextRequestSchema } from '../common'
 
 const pathSchema = z.object({

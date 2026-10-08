@@ -73,7 +73,6 @@ function createDriver(
 
 describe('BitGoSigningDriver', () => {
     beforeEach(() => {
-        vi.clearAllMocks()
         // Sensible defaults — individual tests override as needed.
         handlerMock.createKey.mockResolvedValue({
             id: WALLET_ID,

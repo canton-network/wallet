@@ -5,14 +5,14 @@ import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
 import {
-    ApiKeyCardRevokeEvent,
+    type ApiKeyCardRevokeEvent,
     BaseElement,
     handleErrorToast,
-    PageChangeEvent,
+    type PageChangeEvent,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 
-import { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
+import type { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
 
 import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'

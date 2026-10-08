@@ -10,7 +10,7 @@ import { useWalletSdk, type WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
 import { logger } from '@lib/logger'
 import { TransactionHistoryService } from '@services/transaction-history-service'
-import { toUniquePortfolioHoldings } from '@utils/holdings'
+import { toOwnedHoldings, toUniquePortfolioHoldings } from '@utils/holdings'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -96,7 +96,10 @@ export const holdingsQueryOptions = ({
                 includeLocked: true,
             })
 
-            return toUniquePortfolioHoldings(contracts)
+            return toOwnedHoldings(
+                toUniquePortfolioHoldings(contracts),
+                partyId
+            )
         },
     })
 

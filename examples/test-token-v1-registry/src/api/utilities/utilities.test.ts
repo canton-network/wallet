@@ -18,9 +18,7 @@ vi.mock('../../common/state', () => ({
 }))
 
 describe('Utilities', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     it('should get the utility operator party', () => {
         getUtilityOperator({} as never, res)

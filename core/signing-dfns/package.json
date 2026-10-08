@@ -1,9 +1,10 @@
 {
     "name": "@canton-network/core-signing-dfns",
-    "version": "0.13.0",
+    "version": "0.14.0",
     "type": "module",
     "description": "Dfns signing driver for Canton Network Wallet Gateway",
     "license": "Apache-2.0",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -19,26 +20,24 @@
         "build": "tsdown && tsc -p tsconfig.types.json",
         "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.types.json\"",
         "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage"
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "dependencies": {
-        "@canton-network/core-signing-lib": "workspace:^",
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "@dfns/sdk": "^0.8.24",
-        "@dfns/sdk-keysigner": "^0.8.24",
-        "lodash": "^4.18.1",
-        "pino": "^10.3.1",
-        "zod": "^4.4.3"
+        "@canton-network/core-signing-lib": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@dfns/sdk": "catalog:",
+        "@dfns/sdk-keysigner": "catalog:",
+        "lodash": "catalog:",
+        "pino": "catalog:",
+        "zod": "catalog:"
     },
     "devDependencies": {
-        "@types/lodash": "^4.17.24",
-        "@types/node": "^25.9.4",
-        "@vitest/coverage-v8": "^4.1.11",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@types/lodash": "catalog:",
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"

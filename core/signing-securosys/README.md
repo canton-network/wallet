@@ -125,14 +125,7 @@ Run the wallet monorepo commands from the wallet repository root:
 cd /path/to/wallet
 ```
 
-Use Node.js 20+ for the wallet toolchain.
-Install pnpm v11 and the wallet dependencies:
-
-```bash
-# corepack installation is recommended
-corepack enable pnpm
-pnpm install
-```
+See [`docs/CONTRIBUTING.md`](../../docs/CONTRIBUTING.md) for development environment setup.
 
 Download the Playwright browsers required by the wallet browser tests:
 
@@ -246,13 +239,13 @@ pnpm workspace @canton-network/core-signing-securosys build
 Run only this signing driver's tests:
 
 ```bash
-pnpm workspace @canton-network/core-signing-securosys test
+pnpm nx test @canton-network/core-signing-securosys
 ```
 
 Run this signing driver's tests with coverage:
 
 ```bash
-pnpm workspace @canton-network/core-signing-securosys test:coverage
+pnpm nx test @canton-network/core-signing-securosys -c coverage
 ```
 
 Build the remote Wallet Gateway:
@@ -264,19 +257,19 @@ pnpm workspace @canton-network/wallet-gateway-remote build
 Run the remote Wallet Gateway transaction-signing tests:
 
 ```bash
-pnpm workspace @canton-network/wallet-gateway-remote test src/ledger/transaction-service.test.ts
+pnpm nx test @canton-network/wallet-gateway-remote -- src/ledger/transaction-service.test.ts
 ```
 
 Run the wallet allocation tests:
 
 ```bash
-pnpm workspace @canton-network/wallet-gateway-remote test src/ledger/wallet-allocation/wallet-allocation-service.test.ts
+pnpm nx test @canton-network/wallet-gateway-remote -- src/ledger/wallet-allocation/wallet-allocation-service.test.ts
 ```
 
 Run the shared signing-library tests:
 
 ```bash
-pnpm workspace @canton-network/core-signing-lib test
+pnpm nx test @canton-network/core-signing-lib
 ```
 
 Build the full wallet monorepo serially:

@@ -5,7 +5,7 @@ import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import './form-input.js'
-import { FormInput, FormInputChangedEvent } from './form-input.js'
+import { type FormInput, FormInputChangedEvent } from './form-input.js'
 
 describe('form-input', () => {
     afterEach(() => {

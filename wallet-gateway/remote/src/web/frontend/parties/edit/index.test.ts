@@ -101,7 +101,6 @@ describe('UserUiEditParty', () => {
         urlSearchParamsGetMock.mockRestore()
         // make sure toast is gone from DOM
         document.body.innerHTML = ''
-        vi.clearAllMocks()
     })
 
     it('renders edit party header and form', async () => {

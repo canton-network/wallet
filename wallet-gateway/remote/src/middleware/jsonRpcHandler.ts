@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { NextFunction, Request, Response } from 'express'
-import { Logger } from 'pino'
+import type { NextFunction, Request, Response } from 'express'
+import type { Logger } from 'pino'
 import {
     JsonRpcError,
     rpcErrors,
@@ -11,10 +11,11 @@ import {
 import {
     ErrorResponse,
     JsonRpcRequest,
-    JsonRpcResponse,
+    type JsonRpcResponse,
 } from '@canton-network/core-types'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import { isJsCantonError } from '@canton-network/core-ledger-client'
+import { errorLogLevel } from './errorHandler.js'
 
 interface JsonRpcHttpOptions<T> {
     logger: Logger
@@ -167,7 +168,7 @@ export const jsonRpcHandler =
                         )
 
                         // Full error with callstack in logs, sanitized version in response
-                        logger.error(
+                        logger[errorLogLevel(error)](
                             { err: error, response },
                             'RPC response: error with response'
                         )

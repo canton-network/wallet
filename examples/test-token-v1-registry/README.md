@@ -51,9 +51,7 @@ flowchart LR
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 11.x
-- dependencies installed at repository root
+- See [`docs/CONTRIBUTING.md`](../../docs/CONTRIBUTING.md) for development environment setup.
 - local Canton/localnet setup if you want full end-to-end behavior
 
 ### Installation
@@ -112,13 +110,13 @@ examples/test-token-v1-registry/
 Run tests:
 
 ```bash
-pnpm --filter @canton-network/example-test-token-v1-registry test
+pnpm nx test @canton-network/example-test-token-v1-registry
 ```
 
 Run tests with coverage:
 
 ```bash
-pnpm --filter @canton-network/example-test-token-v1-registry test:coverage
+pnpm nx test @canton-network/example-test-token-v1-registry -c coverage
 ```
 
 Notes:

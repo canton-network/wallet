@@ -3,7 +3,7 @@
 
 import { z } from 'zod'
 
-export { base64ToBytes, fingerprintPublicKey } from './crypto.js'
+export * from './crypto.js'
 
 /**
  * Logger

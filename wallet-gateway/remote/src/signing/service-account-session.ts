@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 import {
-    AuthAware,
-    AuthContext,
+    type AuthAware,
+    type AuthContext,
     AuthTokenProvider,
+    resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import { Network, Store } from '@canton-network/core-wallet-store'
+import type { Network, Store } from '@canton-network/core-wallet-store'
 
 export type AccessTokenProviderFactory = (
     network: Network
@@ -47,7 +48,12 @@ export async function resolveAutomationRunContext(
         return undefined
     }
 
-    const idp = await bootstrapStore.getIdp(network.identityProviderId)
+    const idp = await bootstrapStore.getIdp(
+        resolveAuthIdentityProviderId(
+            network.serviceAccountAuth,
+            network.identityProviderId
+        )
+    )
     const provider = AuthTokenProvider.fromGatewayConfig(
         idp,
         network.serviceAccountAuth,

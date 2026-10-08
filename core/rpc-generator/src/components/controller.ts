@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as path from 'path'
-import * as openrpcgen from '@open-rpc/generator'
+import type * as openrpcgen from '@open-rpc/generator'
 import * as fs from 'fs'
 import lodash from 'lodash'
 import { execSync } from 'child_process'

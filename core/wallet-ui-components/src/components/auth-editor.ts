@@ -9,11 +9,12 @@ import type {
     Auth,
     AuthorizationCodeAuth,
     ClientCredentialsAuth,
+    SelfIssuedAuth,
     SelfSignedAuth,
-} from '@canton-network/core-wallet-auth'
+} from '@canton-network/core-wallet-user-rpc-client'
 
 export type AuthMethod =
-    'authorization_code' | 'client_credentials' | 'self_signed'
+    'authorization_code' | 'client_credentials' | 'self_signed' | 'self_issued'
 
 type EditorMode = 'none' | 'view' | 'edit' | 'add' | 'pending-remove'
 
@@ -34,6 +35,7 @@ export class AuthEditor extends BaseElement {
         'authorization_code',
         'client_credentials',
         'self_signed',
+        'self_issued',
     ]
     @property({ type: Boolean }) accessor optional = false
     @property({ type: String }) accessor emptyText = 'No auth configured.'
@@ -218,6 +220,14 @@ export class AuthEditor extends BaseElement {
             } satisfies ClientCredentialsAuth
         }
 
+        if (method === 'self_issued') {
+            return {
+                method,
+                audience: '',
+                scope: '',
+            } satisfies SelfIssuedAuth
+        }
+
         return {
             method: 'self_signed',
             clientId: '',
@@ -235,10 +245,16 @@ export class AuthEditor extends BaseElement {
     private _getSummary(auth: Auth): Array<{ key: string; value: string }> {
         const rows: Array<{ key: string; value: string }> = [
             { key: 'Method', value: auth.method },
-            { key: 'Client Id', value: auth.clientId ?? '' },
             { key: 'Audience', value: auth.audience ?? '' },
             { key: 'Scope', value: auth.scope ?? '' },
         ]
+
+        if ('clientId' in auth) {
+            rows.splice(1, 0, {
+                key: 'Client Id',
+                value: auth.clientId ?? '',
+            })
+        }
 
         if ('issuer' in auth) {
             rows.push({ key: 'Issuer', value: auth.issuer ?? '' })
@@ -247,6 +263,13 @@ export class AuthEditor extends BaseElement {
             rows.push({
                 key: 'Client Secret',
                 value: this._maskSecret(auth.clientSecret),
+            })
+        }
+
+        if (auth.method === 'client_credentials' && auth.identityProviderId) {
+            rows.push({
+                key: 'Identity Provider Id',
+                value: auth.identityProviderId,
             })
         }
         return rows
@@ -359,7 +382,10 @@ export class AuthEditor extends BaseElement {
             case 'authorization_code':
                 this._emit({
                     method: 'authorization_code',
-                    clientId: this.auth?.clientId ?? '',
+                    clientId:
+                        this.auth && 'clientId' in this.auth
+                            ? this.auth.clientId
+                            : '',
                     audience: this.auth?.audience ?? '',
                     scope: this.auth?.scope ?? '',
                 } satisfies AuthorizationCodeAuth)
@@ -368,7 +394,10 @@ export class AuthEditor extends BaseElement {
             case 'self_signed':
                 this._emit({
                     method: 'self_signed',
-                    clientId: this.auth?.clientId ?? '',
+                    clientId:
+                        this.auth && 'clientId' in this.auth
+                            ? this.auth.clientId
+                            : '',
                     audience: this.auth?.audience ?? '',
                     scope: this.auth?.scope ?? '',
                     issuer: (this.auth as SelfSignedAuth)?.issuer ?? '',
@@ -377,10 +406,25 @@ export class AuthEditor extends BaseElement {
                 } satisfies SelfSignedAuth)
                 break
 
+            case 'self_issued':
+                this._emit({
+                    method: 'self_issued',
+                    audience: this.auth?.audience ?? '',
+                    scope: this.auth?.scope ?? '',
+                } satisfies SelfIssuedAuth)
+                break
+
             case 'client_credentials':
                 this._emit({
                     method: 'client_credentials',
-                    clientId: this.auth?.clientId ?? '',
+                    ...(this.auth?.method === 'client_credentials' &&
+                    this.auth.identityProviderId
+                        ? { identityProviderId: this.auth.identityProviderId }
+                        : {}),
+                    clientId:
+                        this.auth && 'clientId' in this.auth
+                            ? this.auth.clientId
+                            : '',
                     audience: this.auth?.audience ?? '',
                     scope: this.auth?.scope ?? '',
                     clientSecret:
@@ -406,6 +450,27 @@ export class AuthEditor extends BaseElement {
                 .value=${(authObj as SelfSignedAuth).issuer}
                 @change=${(e: Event) => {
                     authObj.issuer = (e.target as HTMLInputElement).value
+                    this._emit(authObj)
+                }}
+            />
+        </div>`
+    }
+
+    _renderClientIdInput(
+        authObj: AuthorizationCodeAuth | ClientCredentialsAuth | SelfSignedAuth
+    ) {
+        return html` <div class="field-group d-flex flex-column">
+            <label class="form-label field-label mb-0">
+                Client Id <span class="required">*</span>
+            </label>
+            <input
+                class="form-control field-control"
+                data-test-id="auth-editor-client-id-input"
+                type="text"
+                required
+                .value=${authObj.clientId}
+                @change=${(e: Event) => {
+                    authObj.clientId = (e.target as HTMLInputElement).value
                     this._emit(authObj)
                 }}
             />
@@ -445,6 +510,32 @@ export class AuthEditor extends BaseElement {
                       </p>`
                     : nothing
             }
+        </div>`
+    }
+
+    _renderIdentityProviderIdInput(authObj: ClientCredentialsAuth) {
+        return html` <div class="field-group d-flex flex-column">
+            <label class="form-label field-label mb-0">
+                Identity Provider Id Override
+            </label>
+            <input
+                class="form-control field-control"
+                data-test-id="auth-editor-identity-provider-id-input"
+                type="text"
+                .value=${authObj.identityProviderId ?? ''}
+                @change=${(e: Event) => {
+                    const value = (e.target as HTMLInputElement).value.trim()
+                    if (value) {
+                        authObj.identityProviderId = value
+                    } else {
+                        delete authObj.identityProviderId
+                    }
+                    this._emit(authObj)
+                }}
+            />
+            <p class="field-help mb-0">
+                Optional. Uses the network identity provider when empty.
+            </p>
         </div>`
     }
 
@@ -494,26 +585,19 @@ export class AuthEditor extends BaseElement {
                                   </option>`
                                 : nothing
                         }
+                        ${
+                            this.allowedMethods.includes('self_issued')
+                                ? html`<option
+                                      value="self_issued"
+                                      ?selected=${method === 'self_issued'}
+                                  >
+                                      self_issued
+                                  </option>`
+                                : nothing
+                        }
                     </select>
                     <span class="select-chevron">${chevronDownIcon}</span>
                 </div>
-            </div>
-
-            <div class="field-group d-flex flex-column">
-                <label class="form-label field-label mb-0">
-                    Client Id <span class="required">*</span>
-                </label>
-                <input
-                    class="form-control field-control"
-                    data-test-id="auth-editor-client-id-input"
-                    type="text"
-                    required
-                    .value=${authObj.clientId}
-                    @change=${(e: Event) => {
-                        authObj.clientId = (e.target as HTMLInputElement).value
-                        this._emit(authObj)
-                    }}
-                />
             </div>
 
             <div class="field-group d-flex flex-column">
@@ -552,16 +636,22 @@ export class AuthEditor extends BaseElement {
         `
 
         if (method === 'authorization_code') {
+            return html`${commonFields} ${this._renderClientIdInput(authObj)}`
+        }
+
+        if (method === 'self_issued') {
             return commonFields
         }
 
         if (method === 'client_credentials') {
-            return html` ${commonFields}
+            return html`${commonFields} ${this._renderClientIdInput(authObj)}
+            ${this._renderIdentityProviderIdInput(authObj)}
             ${this._renderClientSecretInput(authObj)}`
         }
 
         if (method === 'self_signed') {
-            return html` ${commonFields} ${this._renderIssuerInput(authObj)}
+            return html`${commonFields} ${this._renderClientIdInput(authObj)}
+            ${this._renderIssuerInput(authObj)}
             ${this._renderClientSecretInput(authObj)}`
         }
 

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    PrivateKey,
+    type PrivateKey,
     signTransactionHash,
 } from '@canton-network/core-signing-lib'
 import { SignedTransaction } from './signed.js'
 import type { SDKContext } from '../../init/types/context.js'
-import { Ops } from '@canton-network/core-provider-ledger'
+import type { Ops } from '@canton-network/core-provider-ledger'
 import { decodePreparedTransaction } from '@canton-network/core-tx-visualizer'
-import { LedgerNamespace } from '../ledger/index.js'
+import type { LedgerNamespace } from '../ledger/index.js'
 
 export class PreparedTransaction {
     constructor(

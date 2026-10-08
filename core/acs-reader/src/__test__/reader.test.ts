@@ -95,7 +95,6 @@ describe('reader', () => {
     }
 
     beforeEach(() => {
-        vi.clearAllMocks()
         mockService.getActiveContracts.mockResolvedValue(mockActiveContracts)
         mockService.getPaginatedActiveContracts.mockResolvedValue({
             activeContracts: mockActiveContracts,

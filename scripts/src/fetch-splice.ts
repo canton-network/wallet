@@ -10,7 +10,7 @@ import {
     error,
     SPLICE_PATH,
     downloadAndUnpackTarball,
-    Network,
+    type Network,
     getNetworkArg,
     SUPPORTED_VERSIONS,
     setSpliceHash,

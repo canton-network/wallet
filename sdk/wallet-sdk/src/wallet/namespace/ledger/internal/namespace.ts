@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SDKContext } from '../../../sdk.js'
+import type { SDKContext } from '../../../sdk.js'
 import { v4 } from 'uuid'
-import { Ops } from '@canton-network/core-provider-ledger'
-import { InternalOperationParams, ReassignParams } from './types.js'
+import type { Ops } from '@canton-network/core-provider-ledger'
+import type { InternalOperationParams, ReassignParams } from './types.js'
 
 export class InternalLedgerNamespace {
     constructor(private readonly ctx: SDKContext) {}

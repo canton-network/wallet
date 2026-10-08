@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WrappedCommand } from '@canton-network/core-ledger-client-types'
-import { vetDarFactory } from './common'
+import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
+import type { vetDarFactory } from './common'
 
 export type SpliceWrappedCommand = WrappedCommand<
     'CreateCommand' | 'ExerciseCommand'

@@ -8,12 +8,15 @@ import '@canton-network/core-wallet-ui-components'
 import {
     BaseElement,
     handleErrorToast,
-    LoginConnectEvent,
-    WgLoginForm,
+    type LoginConnectEvent,
+    type WgLoginForm,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
 import { createUserClient } from '../rpc-client'
-import { PublicNetwork, Idp } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    PublicNetwork,
+    Idp,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from '../state-manager'
 import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
@@ -114,7 +117,13 @@ export class LoginUI extends BaseElement {
     }
 
     private async handleConnect(e: LoginConnectEvent) {
-        const { selectedNetwork, selectedIdp, clientId, clientSecret } = e
+        const {
+            selectedNetwork,
+            selectedIdp,
+            clientId,
+            clientSecret,
+            username,
+        } = e
 
         this.connecting = true
         this.connectingMessage = `Connecting to ${selectedNetwork.name}...`
@@ -122,6 +131,33 @@ export class LoginUI extends BaseElement {
         stateManager.networkId.set(selectedNetwork.id, currentOrigin)
 
         try {
+            if (selectedNetwork.authMethod === 'self_issued') {
+                const onboardingUsername = username?.trim()
+                if (!onboardingUsername) {
+                    await this.showLoginError('Username is required.')
+                    return
+                }
+
+                const userClient = await createUserClient()
+                const { sessionId } = await userClient.request({
+                    method: 'addSelfIssuedSession',
+                    params: {
+                        username: onboardingUsername,
+                        networkId: selectedNetwork.id,
+                        origin: currentOrigin,
+                    },
+                })
+                stateManager.onboardingSessionId.set(sessionId, currentOrigin)
+
+                setLocationHref(
+                    new URL(
+                        toRelHref('/onboarding'),
+                        window.location.origin
+                    ).toString()
+                )
+                return
+            }
+
             if (selectedIdp.type === 'self_signed') {
                 await this.selfSign(
                     selectedNetwork.id,

@@ -3,26 +3,26 @@
 
 import { describe, expect, test, beforeEach, afterEach } from 'vitest'
 
-import {
+import type {
     AuthContext,
     AuthorizationCodeAuth,
     Idp,
 } from '@canton-network/core-wallet-auth'
 import {
-    LedgerApi,
-    MessageRaw,
-    Network,
+    type LedgerApi,
+    type MessageRaw,
+    type Network,
     PartyLevelRight,
-    Session,
-    Transaction,
+    type Session,
+    type Transaction,
     UserLevelRight,
-    Wallet,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
-import { Kysely } from 'kysely'
-import { Logger, pino } from 'pino'
+import type { Kysely } from 'kysely'
+import { type Logger, pino } from 'pino'
 import { sink } from 'pino-test'
 import { migrator } from './migrator'
-import { DB } from './schema'
+import type { DB } from './schema'
 import { connection, StoreSql } from './store-sql'
 
 const authContextMock: AuthContext = {
@@ -334,6 +334,146 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.removeSession('test-access-token')
             const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
+        })
+
+        test('should resolve the current network from a tokenless session id', async () => {
+            const onboardingContext: AuthContext = {
+                userId: authContextMock.userId,
+                accessToken: '',
+                sessionId: 'onboarding-session',
+            }
+            const store = new StoreImpl(db, pino(sink()), onboardingContext)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: network.id,
+            })
+
+            await expect(store.getCurrentNetwork()).resolves.toEqual(network)
+            await expect(
+                store.getOnboardingSession('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    userId: onboardingContext.userId,
+                })
+            )
+            await expect(
+                new StoreImpl(db, pino(sink()), {
+                    userId: authContextMock.userId,
+                    accessToken: '',
+                }).getCurrentNetwork()
+            ).rejects.toThrow('No session found')
+        })
+
+        test('should keep every tokenless session', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.setSession({
+                id: 'onboarding-1',
+                origin: 'https://a.example',
+                network: 'network1',
+            })
+            await store.setSession({
+                id: 'onboarding-2',
+                origin: 'https://b.example',
+                network: 'network1',
+            })
+            await store.setSession({
+                id: 'onboarding-3',
+                origin: 'https://a.example',
+                network: 'network1',
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual([
+                'onboarding-1',
+                'onboarding-2',
+                'onboarding-3',
+            ])
+        })
+
+        test('should keep a tokenless session when a logged-in session is created at the same origin', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const baseSession = {
+                origin: 'https://example.com',
+                network: 'network1',
+            }
+            await store.setSession({
+                ...baseSession,
+                id: 'onboarding-session',
+            })
+            await store.setSession({
+                ...baseSession,
+                id: 'authenticated-session',
+                accessToken: authContextMock.accessToken,
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
+            await expect(
+                store.getOnboardingSession('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
+        })
+
+        test('should keep a logged-in session when a tokenless session starts at the same origin', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const baseSession = {
+                origin: 'https://example.com',
+                network: 'network1',
+            }
+            await store.setSession({
+                ...baseSession,
+                id: 'authenticated-session',
+                accessToken: authContextMock.accessToken,
+            })
+            await store.setSession({
+                ...baseSession,
+                id: 'onboarding-session',
+            })
+
+            const ids = (await store.listSessions()).map((s) => s.id).sort()
+            expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
+        })
+
+        test('should upgrade an onboarding session in place', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            await store.setSession({
+                id: 'old-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'old-token',
+            })
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+
+            await expect(
+                store.upgradeOnboardingSession(
+                    'onboarding-session',
+                    'new-token'
+                )
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    network: 'network1',
+                    accessToken: 'new-token',
+                })
+            )
+            await expect(store.listSessions()).resolves.toEqual([
+                expect.objectContaining({
+                    id: 'onboarding-session',
+                    accessToken: 'new-token',
+                }),
+            ])
+            await expect(
+                store.upgradeOnboardingSession('onboarding-session', 'other')
+            ).rejects.toThrow('Onboarding session not found')
         })
 
         test('should add, list, get, update, and remove networks', async () => {
@@ -884,7 +1024,9 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(await store.getIdp('idp1')).toEqual(idp)
             await store.updateIdp({ ...idp, issuer: 'https://issuer-updated' })
             expect(
-                (await store.listIdps()).find((i) => i.id === 'idp1')?.issuer
+                (await store.listIdps()).find(
+                    (i): i is typeof idp => i.id === 'idp1'
+                )?.issuer
             ).toBe('https://issuer-updated')
 
             await expect(store.addIdp(idp)).rejects.toThrow(
@@ -897,6 +1039,43 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.removeNetwork('network1')
             await store.removeIdp('idp1')
             expect(await store.listIdps()).toHaveLength(1)
+        })
+
+        test('should store a null issuer for self_issued idps', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const selfIssuedIdp = {
+                id: 'self-issued',
+                type: 'self_issued' as const,
+            }
+
+            await store.addIdp(selfIssuedIdp)
+
+            expect(
+                await store.getIdp(selfIssuedIdp.id),
+                "Doesn't throw if issuer is missing for self_issued"
+            ).toEqual(selfIssuedIdp)
+        })
+
+        test('should clear issuer and config URL when changing an idp to self_issued', async () => {
+            const store = new StoreImpl(db, pino(sink()), authContextMock)
+            const id = 'changed-to-self-issued'
+
+            await store.addIdp({
+                id,
+                type: 'oauth',
+                issuer: 'https://issuer.example',
+                configUrl:
+                    'https://issuer.example/.well-known/openid-configuration',
+            })
+            await store.updateIdp({ id, type: 'self_issued' })
+
+            expect(
+                await db
+                    .selectFrom('idps')
+                    .select(['issuer', 'configUrl'])
+                    .where('id', '=', id)
+                    .executeTakeFirstOrThrow()
+            ).toEqual({ issuer: null, configUrl: null })
         })
 
         test('should set and read user level rights for the current network', async () => {

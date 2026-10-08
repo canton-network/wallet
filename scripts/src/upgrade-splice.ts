@@ -11,8 +11,8 @@ import {
     getRepoRoot,
     VERSIONS_CONFIG_PATH,
     getArgValue,
-    Network,
-    SupportedVersions,
+    type Network,
+    type SupportedVersions,
 } from './lib/utils.js'
 
 async function getNetworkInput(): Promise<Network> {
@@ -115,11 +115,6 @@ async function main() {
         // Reload latest version-config in case Step 2 changed hashes
         const versionConfigRaw = fs.readFileSync(VERSIONS_CONFIG_PATH, 'utf8')
         const versionConfig = JSON.parse(versionConfigRaw)
-
-        // Update DAML_RELEASE_VERSION, but only when upgrading for devnet
-        if (network === 'devnet') {
-            versionConfig.DAML_RELEASE_VERSION = damlRelease
-        }
 
         // Update SUPPORTED_VERSIONS.*.canton.version (match on major.minor)
         const majorMinor = damlRelease

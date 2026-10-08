@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    GenerateTransactionResponse,
+    type GenerateTransactionResponse,
     LedgerClient,
 } from '@canton-network/core-ledger-client'
 import { createHash } from 'node:crypto'
-import { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import { Logger } from 'pino'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import type { Logger } from 'pino'
 
 export type AllocatedParty = {
     partyId: string

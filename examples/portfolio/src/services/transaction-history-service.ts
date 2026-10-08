@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Logger } from 'pino'
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import { type LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 import {
@@ -10,7 +10,7 @@ import {
     TokenStandardTransactionInterfaces,
 } from '@canton-network/core-tx-parser'
 import { type Transaction } from '@canton-network/core-tx-parser'
-import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
+import type { LedgerProvider, Ops } from '@canton-network/core-provider-ledger'
 
 type FiltersByParty = LedgerCommonSchemas['Map_Filters']
 

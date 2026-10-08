@@ -30,8 +30,10 @@ export async function mintAndTransferTokenToBob(
             commands: [
                 TestToken.commands.create.token({
                     owner: tokenAdmin.partyId,
-                    admin: tokenAdmin.partyId,
                     amount: BOB_TOKEN_MINT_AMOUNT,
+                    instrumentId: {
+                        admin: tokenAdmin.partyId,
+                    },
                 }),
             ],
             disclosedContracts: [],
@@ -52,7 +54,6 @@ export async function mintAndTransferTokenToBob(
 
     // TokenAdmin offers the freshly-minted TestToken to Bob. The transfer factory
     // and choice context come from the registry's transfer-instruction-v1 API
-    // (the TestToken registry is also resolved via the metadata-v1 API).
     const [transferCommand, transferDisclosed] =
         await tokenAdminSdk.token.transfer.create({
             sender: tokenAdmin.partyId,

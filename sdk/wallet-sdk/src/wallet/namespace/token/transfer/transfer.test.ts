@@ -3,12 +3,12 @@
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import * as mock from '../../../__test__/mocks'
-import { TokenNamespaceConfig } from '../index'
+import type { TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
-import { TransferNamespace } from './service'
-import { ProxyDelegationCommandArgs } from './proxyDelegation'
+import { TransferNamespace } from './namespace'
+import type { ProxyDelegationCommandArgs } from './proxyDelegation'
 import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
-import { TransferAllocationChoiceParams, TransferParams } from './types'
+import type { TransferAllocationChoiceParams, TransferParams } from './types'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const { ctx, mockLogger } = mock
 
@@ -59,7 +59,6 @@ describe('token transfer namespace', () => {
 
     let transfer: TransferNamespace
     beforeEach(() => {
-        vi.clearAllMocks()
         transfer = new TransferNamespace(config)
     })
 
@@ -87,7 +86,7 @@ describe('token transfer namespace', () => {
         await transfer.accept(defualtTransferAllocationParams)
         expect(spy).toHaveBeenCalledExactlyOnceWith(
             defualtTransferAllocationParams.transferInstructionCid,
-            parsedRegistryUrl.href
+            parsedRegistryUrl
         )
     })
 
@@ -97,7 +96,7 @@ describe('token transfer namespace', () => {
         await transfer.withdraw(defualtTransferAllocationParams)
         expect(spy).toHaveBeenCalledExactlyOnceWith(
             defualtTransferAllocationParams.transferInstructionCid,
-            parsedRegistryUrl.href
+            parsedRegistryUrl
         )
     })
 
@@ -107,7 +106,7 @@ describe('token transfer namespace', () => {
         await transfer.reject(defualtTransferAllocationParams)
         expect(spy).toHaveBeenCalledExactlyOnceWith(
             defualtTransferAllocationParams.transferInstructionCid,
-            parsedRegistryUrl.href
+            parsedRegistryUrl
         )
     })
 
@@ -139,14 +138,14 @@ describe('token transfer namespace', () => {
         ])
         spy2.mockResolvedValue(mockCreateCommandResponse)
         await transfer.create(defaultTransferParams)
-        expect(spy1).toHaveBeenCalledExactlyOnceWith([parsedRegistryUrl.href])
+        expect(spy1).toHaveBeenCalledExactlyOnceWith([parsedRegistryUrl])
         expect(spy2).toHaveBeenCalledExactlyOnceWith(
             defaultTransferParams.sender,
             defaultTransferParams.recipient,
             defaultTransferParams.amount,
             'admin-a',
             'Amulet',
-            parsedRegistryUrl.href,
+            parsedRegistryUrl,
             undefined,
             undefined,
             undefined,

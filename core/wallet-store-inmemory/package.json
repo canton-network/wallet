@@ -1,34 +1,34 @@
 {
     "name": "@canton-network/core-wallet-store-inmemory",
-    "version": "1.14.0",
+    "version": "1.15.0",
     "type": "module",
     "description": "In-memory implementation of the Store API",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
     "license": "Apache-2.0",
+    "sideEffects": false,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
         "build": "tsdown --onSuccess \"tsc\"",
         "dev": "tsdown --watch --onSuccess \"tsc\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage"
+        "clean": "tsc -b --clean; rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-types": "workspace:^",
-        "@canton-network/core-wallet-auth": "workspace:^",
-        "@canton-network/core-wallet-store": "workspace:^",
-        "@logtape/logtape": "^2.3.1",
-        "zod": "^4.4.3"
+        "@canton-network/core-rpc-errors": "catalog:",
+        "@canton-network/core-types": "catalog:",
+        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-wallet-store": "catalog:",
+        "@logtape/logtape": "catalog:",
+        "zod": "catalog:"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.11",
-        "@vitest/coverage-v8": "^4.1.11",
-        "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
-        "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"

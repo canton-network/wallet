@@ -8,7 +8,7 @@ import {
     expect,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
-import { BrowserContext, Page } from '@playwright/test'
+import type { BrowserContext, Page } from '@playwright/test'
 import {
     connectWalletGateway,
     createPingDappWalletGateway,

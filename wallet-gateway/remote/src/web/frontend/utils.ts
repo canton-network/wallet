@@ -3,7 +3,7 @@
 
 import {
     Toast,
-    ToastMessageType,
+    type ToastMessageType,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 

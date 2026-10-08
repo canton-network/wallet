@@ -9,9 +9,16 @@ import { confirm } from '@inquirer/prompts'
 import { select } from 'inquirer-select-pro'
 
 // This helper passes through the underlying command's input/output to console
-async function cmd(command: string): Promise<void> {
+async function cmd(
+    command: string,
+    envOverrides?: NodeJS.ProcessEnv
+): Promise<void> {
     const [bin, ...args] = command.split(' ')
-    const child = spawn(bin, args, { stdio: 'inherit', shell: true })
+    const child = spawn(bin, args, {
+        stdio: 'inherit',
+        shell: true,
+        env: { ...process.env, ...envOverrides },
+    })
 
     await new Promise<void>((resolve, reject) => {
         child.on('close', (code) => {
@@ -103,6 +110,7 @@ const options = [
     'dapp-sdk',
     'wallet-gateway',
     'example-portfolio',
+    'tool-conformance',
 ]
 
 program
@@ -110,11 +118,23 @@ program
     .option('--no-dry-run', 'Perform a real release')
     .option('--core', 'Include core packages in release (default: true)')
     .option('--no-core', 'Exclude core packages from release')
-    .action(async ({ dryRun = true, core = true }) => {
+    .option(
+        '--preid <preid>',
+        'Prerelease identifier to use (implies version specifier "prerelease"). Defaults to "backport" when releasing from a backport/** branch.'
+    )
+    .action(async ({ dryRun = true, core = true, preid }) => {
         console.log('Checking gh CLI authentication...')
         await checkGhAuth()
 
         const baseBranch = await getBaseBranch()
+
+        if (!preid && baseBranch.startsWith('backport/')) {
+            preid = 'backport'
+            console.log(
+                `Detected backport branch; defaulting to --preid=${preid}`
+            )
+        }
+
         console.log(
             `Checking out ${baseBranch} branch and pulling latest changes...`
         )
@@ -150,7 +170,7 @@ program
             await cmd(`git push --set-upstream origin ${releaseBranch}`)
         }
 
-        await runRelease(dryRun, groups)
+        await runRelease(dryRun, groups, preid)
 
         if (!dryRun) {
             console.log('Getting current commit hash...')
@@ -207,8 +227,16 @@ program
     })
     .parseAsync(process.argv)
 
-async function runRelease(dryRun: boolean, groups: string[]): Promise<void> {
+async function runRelease(
+    dryRun: boolean,
+    groups: string[],
+    preid?: string
+): Promise<void> {
     let releaseCmd = `pnpm nx release --skip-publish`
+
+    if (preid) {
+        releaseCmd += ` --specifier=prerelease --preid='${preid}'`
+    }
 
     if (dryRun === false) {
         const proceedDryRun = await confirm({
@@ -240,7 +268,5 @@ async function runRelease(dryRun: boolean, groups: string[]): Promise<void> {
     }
 
     const ghToken = (await cmdCapture('gh auth token')).trim()
-    await cmd(`GITHUB_TOKEN=${ghToken} ${releaseCmd}`)
-
-    await cmd(releaseCmd)
+    await cmd(releaseCmd, { GITHUB_TOKEN: ghToken })
 }

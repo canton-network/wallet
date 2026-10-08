@@ -1,5 +1,5 @@
-import { PrettyContract } from '@canton-network/core-tx-parser'
-import { HoldingView } from '@canton-network/core-token-standard'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
+import type { HoldingView } from '@canton-network/core-token-standard'
 import {
     getValidatorParty,
     localNetStaticConfig,
@@ -333,6 +333,32 @@ if (!featuredAppRights) {
         'Featured app rights for validator operator party'
     )
 }
+
+const revoked = await sdk.amulet.featuredApp.revoke({
+    validatorParty: validatorParty,
+})
+
+if (!revoked) {
+    throw new Error(
+        'Failed to revoke featured app rights for validator operator party'
+    )
+}
+
+const rightsAfterRevoke = await sdk.amulet.featuredApp.rights({
+    partyId: validatorParty,
+    maxRetries: 1,
+    delayMs: 0,
+})
+
+if (rightsAfterRevoke) {
+    throw new Error(
+        'Featured app rights still present after revoke for validator operator party'
+    )
+}
+
+logger.info(
+    'Successfully revoked featured app rights for validator operator party'
+)
 
 // Forcefully exit to prevent floating ledger retries from crashing the event loop
 process.exit(0)

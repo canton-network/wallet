@@ -1,8 +1,8 @@
-import { PrivateKey } from '@canton-network/core-signing-lib'
-import { PartyId } from '@canton-network/core-types'
-import { SDKInterface } from '@canton-network/wallet-sdk'
+import type { PrivateKey } from '@canton-network/core-signing-lib'
+import type { PartyId } from '@canton-network/core-types'
+import type { SDKInterface } from '@canton-network/wallet-sdk'
 import Decimal from 'decimal.js'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 export async function batchTap(
     totalTaps: number,

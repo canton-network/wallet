@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, test, it, describe } from 'vitest'
-import { PreparedTransaction, Value } from '@canton-network/core-ledger-proto'
+import {
+    PreparedTransaction,
+    type Value,
+} from '@canton-network/core-ledger-proto'
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,
@@ -12,7 +15,7 @@ import {
     decodePreparedTransaction,
     decodeTopologyTransaction,
     hashPreparedTransaction,
-    ParsedTransactionInfo,
+    type ParsedTransactionInfo,
     parsePreparedTransaction,
     validateAuthorizedPartyIds,
 } from './index.js'

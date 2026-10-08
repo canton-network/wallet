@@ -25,9 +25,7 @@ vi.mock('@canton-network/wallet-sdk', async (importOriginal) => {
 })
 
 describe('defaultSdk', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     it('should create a default instance of wallet-sdk', async () => {
         await import('./defaultSdk')

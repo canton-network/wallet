@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { EXTENDED_SDK_OPTION_KEYS, SDKPlugin, SDKPluginContext } from '../'
+import { EXTENDED_SDK_OPTION_KEYS, SDKPlugin, type SDKPluginContext } from '../'
 import * as mock from '../../__test__/mocks'
 import { SDK } from '../..'
 
@@ -33,9 +33,7 @@ const createTestSDK = async () => {
 }
 
 describe('plugin', () => {
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
+    beforeEach(() => {})
 
     EXTENDED_SDK_OPTION_KEYS.forEach((key) => {
         it(`should throw error if ${key} is used as a name`, () => {
