@@ -65,6 +65,7 @@
         "@open-rpc/generator": "catalog:",
         "@playwright/test": "catalog:",
         "@protobuf-ts/plugin": "catalog:",
+        "@rollup/plugin-swc": "catalog:",
         "@storybook/web-components-vite": "catalog:",
         "@swc-node/register": "catalog:",
         "@swc/core": "catalog:",

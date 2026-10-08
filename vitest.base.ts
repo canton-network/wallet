@@ -11,6 +11,10 @@ import {
 
 type CoverageConfig = NonNullable<TestUserConfig['coverage']>
 type ProjectTestConfig = NonNullable<TestProjectInlineConfiguration['test']>
+type ProjectOptions = ProjectTestConfig & {
+    /** Vite plugins for this project, e.g. a decorator transform */
+    plugins?: TestProjectInlineConfiguration['plugins']
+}
 type Thresholds = {
     lines: number
     functions: number
@@ -44,8 +48,13 @@ export function coverage(overrides: CoverageOverrides = {}): CoverageConfig {
 }
 
 /** Runs `*.test.ts` and `*.node.test.ts`, skips `*.browser.test.ts` */
-export function nodeProject({ exclude = [], ...test }: ProjectTestConfig = {}) {
+export function nodeProject({
+    plugins,
+    exclude = [],
+    ...test
+}: ProjectOptions = {}) {
     return defineProject({
+        plugins,
         test: {
             name: 'node',
             environment: 'node',
@@ -62,10 +71,12 @@ export function nodeProject({ exclude = [], ...test }: ProjectTestConfig = {}) {
 
 /** Runs `*.test.ts` and `*.browser.test.ts`, skips `*.node.test.ts` */
 export function browserProject({
+    plugins,
     exclude = [],
     ...test
-}: ProjectTestConfig = {}) {
+}: ProjectOptions = {}) {
     return defineProject({
+        plugins,
         test: {
             name: 'browser',
             include: ['src/**/*.test.ts'],

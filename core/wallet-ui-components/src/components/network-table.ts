@@ -12,9 +12,9 @@ import { BaseElement } from '../internal/base-element'
 
 @customElement('network-table')
 export class NetworkTable extends BaseElement {
-    @property({ type: Array }) networks: PublicNetwork[] = []
-    @property({ type: Array }) activeSessions: Session[] = []
-    @property({ type: Boolean }) readonly = false
+    @property({ type: Array }) accessor networks: PublicNetwork[] = []
+    @property({ type: Array }) accessor activeSessions: Session[] = []
+    @property({ type: Boolean }) accessor readonly = false
 
     static styles = [BaseElement.styles]
 

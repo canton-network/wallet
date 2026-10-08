@@ -30,8 +30,8 @@ export class WgWalletCreateForm extends WgWalletForm {
     protected readonly submittingMessage = 'Creating party, please wait...'
     protected readonly submitDisabled = false
 
-    @property({ type: Array }) keySigningProviders: string[] = []
-    @property({ type: Boolean }) showPrimary = true
+    @property({ type: Array }) accessor keySigningProviders: string[] = []
+    @property({ type: Boolean }) accessor showPrimary = true
 
     @state() accessor partyHint = ''
     @property() accessor selectedSigningProvider = ''
