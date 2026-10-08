@@ -217,7 +217,7 @@ export class AllocationService {
                 action === 'reject'
                     ? 'AllocationRequest_Reject'
                     : 'AllocationRequest_Withdraw',
-            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS() }, //TODO: look at choice args in codegen
+            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS() },
         }
         return [exercise, []]
     }
@@ -230,7 +230,7 @@ export class AllocationService {
             templateId: ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
             contractId: withdrawCid,
             choice: 'AllocationInstruction_Withdraw',
-            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS() }, //TODO: look at choice args in codegen
+            choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS() },
         }
         return [exercise, []]
     }
