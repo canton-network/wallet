@@ -88,7 +88,9 @@ const program = new Command()
         })
 
         // install pino loger for logtape
-        install(logger)
+        install(logger, {
+            category: { separator: '.', decorator: '[]' },
+        })
 
         // Initialize the database with the provided config
         initialize(opts, logger)
