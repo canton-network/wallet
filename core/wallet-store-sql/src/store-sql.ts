@@ -1072,12 +1072,14 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
         const signature = updates.signature ?? existing.signature
+        const externalTxId = updates.externalTxId ?? existing.externalTxId
 
         return {
             ...existing,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),
+            ...(externalTxId !== undefined && { externalTxId }),
         }
     }
 

@@ -116,6 +116,7 @@ interface MessageRawTable {
     createdAt: string
     signedAt: string | null
     signature: string | null
+    externalTxId: string | null
 }
 
 interface SessionTable {
@@ -438,6 +439,7 @@ export const fromMessageRaw = (
         createdAt: message.createdAt.toISOString(),
         signedAt: message.signedAt?.toISOString() || null,
         signature: message.signature ?? null,
+        externalTxId: message.externalTxId || null,
     }
 }
 
@@ -458,6 +460,9 @@ export const toMessageRaw = (table: MessageRawTable): MessageRaw => {
     }
     if (table.signature) {
         result.signature = table.signature
+    }
+    if (table.externalTxId) {
+        result.externalTxId = table.externalTxId
     }
 
     return result

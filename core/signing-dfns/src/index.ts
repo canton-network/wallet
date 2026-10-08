@@ -292,6 +292,12 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
                         }
                     }
 
+                    if (!params.keyIdentifier) {
+                        return {
+                            error: 'key_not_found',
+                            error_description: 'keyIdentifier is required.',
+                        }
+                    }
                     // TODO why is keyIdentifier optional in the type?
                     const keyId = await this.resolveKeyId(params.keyIdentifier)
                     if (!keyId) {
