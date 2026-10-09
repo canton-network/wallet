@@ -65,7 +65,7 @@
                     "schema": {
                         "title": "SignMessageParams",
                         "type": "object",
-                        "additionalProperties": false,
+                        "additionalProperties": true,
                         "properties": {
                             "message": {
                                 "title": "message",
@@ -77,7 +77,7 @@
                                 "description": "Identifier for the key to use for signing. At least one of publicKey or id must be provided."
                             }
                         },
-                        "required": ["message"]
+                        "required": ["message", "keyIdentifier"]
                     }
                 }
             ],
@@ -424,7 +424,7 @@
                     "keys": {
                         "title": "keysList",
                         "type": "array",
-                        "description": "List of keys availabile at the Wallet Provider",
+                        "description": "List of keys available at the Wallet Provider",
                         "items": {
                             "$ref": "#/components/schemas/Key"
                         }

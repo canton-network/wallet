@@ -16,6 +16,7 @@ import {
     type SetConfigurationResult,
     type SigningDriverInterface,
     type SigningProvider,
+    type SignMessageParams,
     type SignMessageResult,
     type SignTransactionParams,
     type SignTransactionResult,
@@ -97,11 +98,46 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 }
             },
 
-            signMessage: async (): Promise<SignMessageResult> => {
-                return {
-                    error: 'not_allowed',
-                    error_description:
-                        'Signing messages is not supported by the Securosys TSB signing driver.',
+            signMessage: async (
+                params: SignMessageParams
+            ): Promise<SignMessageResult> => {
+                try {
+                    if (!params.message) {
+                        return {
+                            error: 'bad_arguments',
+                            error_description:
+                                'message is required to sign with Securosys.',
+                        }
+                    }
+                    if (
+                        params.keyIdentifier?.id === undefined &&
+                        params.keyIdentifier?.publicKey === undefined
+                    ) {
+                        return {
+                            error: 'key_not_found',
+                            error_description:
+                                'The provided key identifier must include an id or publicKey.',
+                        }
+                    }
+
+                    const tx = await this.client.signMessage({
+                        message: params.message,
+                        keyIdentifier: params.keyIdentifier,
+                        ...(userId !== undefined && { userIdentifier: userId }),
+                    })
+
+                    return {
+                        txId: tx.txId,
+                        status: tx.status,
+                        ...(tx.signature !== undefined && {
+                            signature: tx.signature,
+                        }),
+                    }
+                } catch (error) {
+                    return {
+                        error: 'signing_error',
+                        error_description: (error as Error).message,
+                    }
                 }
             },
 

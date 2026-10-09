@@ -153,7 +153,7 @@ export interface Key {
 }
 /**
  *
- * List of keys availabile at the Wallet Provider
+ * List of keys available at the Wallet Provider
  *
  */
 export type KeysList = Key[]
@@ -169,7 +169,8 @@ export interface SignTransactionParams {
 }
 export interface SignMessageParams {
     message: Message
-    keyIdentifier?: KeyIdentifier
+    keyIdentifier: KeyIdentifier
+    [k: string]: any
 }
 export interface GetTransactionParams {
     txId: TxId
