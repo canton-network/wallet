@@ -11,10 +11,8 @@ import type {
     RevokeFeaturedAppRightsOptions,
 } from './types.js'
 import type { AmuletService } from '@canton-network/core-amulet-service'
-import type {
-    AssetBody,
-    TokenStandardService,
-} from '@canton-network/core-token-standard-service'
+import type { AssetBody, TokenStandardService } from '@canton-network/core-token-standard-service'
+import { requireSynchronizerId } from '../../init/synchronizer.js'
 import { TrafficNamespace } from './traffic.js'
 import { LedgerNamespace } from '../ledger/namespace.js'
 import { PreapprovalNamespace } from './preapproval.js'
@@ -107,9 +105,10 @@ export class AmuletNamespace {
             'tapInternal',
             options?.partyId
         )
-        const synchronizerId =
-            options?.synchronizerId ??
-            this.sdkContext.commonCtx.defaultSynchronizerId
+        const synchronizerId = await requireSynchronizerId(
+            this.sdkContext.commonCtx,
+            options?.synchronizerId
+        )
         const [tapCommand, disclosedContracts] = await this.tap(partyId, amount)
 
         return await this.ledger.internal.submit({
@@ -155,9 +154,10 @@ export class AmuletNamespace {
         if (featuredAppRights) {
             return featuredAppRights
         }
-        const synchronizerId =
-            options.synchronizerId ??
-            this.sdkContext.commonCtx.defaultSynchronizerId
+        const synchronizerId = await requireSynchronizerId(
+            this.sdkContext.commonCtx,
+            options.synchronizerId
+        )
 
         const [featuredAppCommand, dc] =
             await this.sdkContext.amuletService.selfGrantFeatureAppRight(
