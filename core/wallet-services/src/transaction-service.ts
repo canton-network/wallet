@@ -547,24 +547,7 @@ export class TransactionService {
 
             return await this.markExecuted(transaction, result)
         } catch (err) {
-            const failureReason = this.extractLedgerError(err)
-
-            this.logger.error(
-                { err, transactionId: transaction.id },
-                'Ledger rejected submission'
-            )
-
-            await this.store.setTransactionStatus(transaction.id, 'failed', {
-                failureReason,
-            })
-            this.notifier.emit('txChanged', {
-                ...transaction,
-                status: 'failed',
-            } satisfies TxChangedFailedEvent)
-
-            throw new Error(`Ledger rejected submission ${failureReason}`, {
-                cause: err,
-            })
+            return await this.handleSubmitFailure(transaction, err)
         }
     }
 
@@ -674,24 +657,7 @@ export class TransactionService {
 
             return await this.markExecuted(transaction, result)
         } catch (err) {
-            const failureReason = this.extractLedgerError(err)
-            this.logger.error(
-                { err: err, transactionId: transaction.id },
-                `Ledger rejected the submission`
-            )
-
-            await this.store.setTransactionStatus(transaction.id, 'failed', {
-                failureReason: failureReason,
-            })
-
-            this.notifier.emit(`txChanged`, {
-                ...transaction,
-                status: 'failed',
-            } satisfies TxChangedFailedEvent)
-
-            throw new Error(`Ledger rejected submission ${failureReason}`, {
-                cause: err,
-            })
+            return await this.handleSubmitFailure(transaction, err)
         }
     }
 
@@ -735,5 +701,28 @@ export class TransactionService {
         )
 
         return result
+    }
+
+    private async handleSubmitFailure(
+        transaction: Transaction,
+        err: unknown
+    ): Promise<ExecuteResult> {
+        const failureReason = this.extractLedgerError(err)
+        this.logger.error(
+            { err, transactionId: transaction.id },
+            'Ledger rejected submission'
+        )
+
+        await this.store.setTransactionStatus(transaction.id, 'failed', {
+            failureReason,
+        })
+        this.notifier.emit('txChanged', {
+            ...transaction,
+            status: 'failed',
+        } satisfies TxChangedFailedEvent)
+
+        throw new Error(`Ledger rejected submission ${failureReason}`, {
+            cause: err,
+        })
     }
 }
