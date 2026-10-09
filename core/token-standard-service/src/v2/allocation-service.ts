@@ -27,6 +27,16 @@ import type { ContractId } from '@daml/types'
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
 
+type CreateAllocateChoiceArgs = {
+    settlement: SettlementInfo
+    spec: AllocationSpecification
+    admin: PartyId
+    actors?: PartyId[] | undefined
+    inputUtxos?: string[]
+    excludeCids?: ReadonlySet<string>
+    requestedAt?: string
+}
+
 const EMPTY_EXTRA_ARGS = () => ({
     context: { values: {} },
     meta: { values: {} },
@@ -63,15 +73,9 @@ export class AllocationService {
         return needs
     }
 
-    async buildAllocateChoiceArgs(opts: {
-        settlement: SettlementInfo
-        spec: AllocationSpecification
-        admin: PartyId
-        actors?: PartyId[] | undefined
-        inputUtxos?: string[]
-        excludeCids?: ReadonlySet<string>
-        requestedAt?: string
-    }): Promise<AllocationFactory_Allocate> {
+    async buildAllocateChoiceArgs(
+        opts: CreateAllocateChoiceArgs
+    ): Promise<AllocationFactory_Allocate> {
         const { spec, admin } = opts
         let inputHoldingCids = opts.inputUtxos ?? []
         if (!opts.inputUtxos?.length) {
@@ -112,7 +116,7 @@ export class AllocationService {
     }
 
     async createAllocation(
-        args: Parameters<AllocationService['buildAllocateChoiceArgs']>[0],
+        args: CreateAllocateChoiceArgs,
         registryUrl: URL,
         prefetched?: {
             factoryId: string
