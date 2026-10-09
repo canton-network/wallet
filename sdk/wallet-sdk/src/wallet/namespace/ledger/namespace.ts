@@ -114,7 +114,7 @@ export class LedgerNamespace {
     /**
      * Performs the execute step of the interactive submission flow.
      * @param signed The signed transaction to be executed, which includes the signature and the original prepare response from the ledger.
-     * @param options The options for executing the transaction, including userId, partyId, and an optional submissionId.
+     * @param options The options for executing the transaction, including the partyId.
      * @returns The submissionId of the executed transaction.
      */
     public async execute(
@@ -123,7 +123,7 @@ export class LedgerNamespace {
     ): Promise<
         Ops.PostV2InteractiveSubmissionExecuteAndWait['ledgerApi']['result']
     > {
-        const { submissionId, partyId } = options
+        const { partyId } = options
         const signedResponse = await signed.response()
         if (signedResponse.preparedTransaction === undefined) {
             this.sdkContext.error.throw({
@@ -133,7 +133,6 @@ export class LedgerNamespace {
         }
 
         const transaction: string = signedResponse.preparedTransaction
-        const replaceableSubmissionId = submissionId ?? v4()
 
         const fingerprint = partyId.split('::')[1]
 
@@ -142,7 +141,8 @@ export class LedgerNamespace {
             preparedTransaction: transaction,
             hashingSchemeVersion:
                 'HASHING_SCHEME_VERSION_V2' as Ops.PostV2InteractiveSubmissionExecuteAndWait['ledgerApi']['params']['body']['hashingSchemeVersion'],
-            submissionId: replaceableSubmissionId,
+            // required by the ledger API, the ledger client replaces it on every attempt
+            submissionId: v4(),
             deduplicationPeriod: {
                 Empty: {},
             },

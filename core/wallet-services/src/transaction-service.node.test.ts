@@ -87,6 +87,13 @@ const executeParams = {
     partyId: wallet.partyId,
 }
 
+const ledgerRejection = {
+    code: 'INVALID_ARGUMENT',
+    cause: 'bad signature',
+    errorCategory: 8,
+    context: {},
+}
+
 const postWithRetry = vi.fn().mockResolvedValue({ updateId: 'ledger-update-1' })
 const ledgerClient = {
     postWithRetry,
@@ -745,11 +752,7 @@ describe('TransactionService', () => {
                     signature: 'sig',
                 })
 
-                const postWithRetry = vi
-                    .fn()
-                    .mockRejectedValue(
-                        new Error('INVALID_ARGUMENT: bad signature')
-                    )
+                const postWithRetry = vi.fn().mockRejectedValue(ledgerRejection)
                 const store = createStore(signedWithExternal)
 
                 const service = createService(
@@ -778,9 +781,201 @@ describe('TransactionService', () => {
                 expect(store.setTransactionStatus).toHaveBeenCalledWith(
                     pendingTransaction.id,
                     'failed',
-                    { failureReason: 'INVALID_ARGUMENT: bad signature' }
+                    { failureReason: JSON.stringify(ledgerRejection) }
                 )
             })
+
+            describe('when the ledger reports DUPLICATE_COMMAND', () => {
+                const duplicateCommand = {
+                    code: 'DUPLICATE_COMMAND',
+                    cause: 'Command submission already exists.',
+                    errorCategory: 10,
+                    context: { accepted: 'true', completion_offset: '110' },
+                }
+
+                async function executeExternal(
+                    postWithRetry: ReturnType<typeof vi.fn>,
+                    emit = vi.fn()
+                ) {
+                    const store = createStore(signedWithExternal)
+                    const service = createService(
+                        store,
+                        {
+                            [SigningProvider.BITGO]: createDriver({
+                                getTransaction: vi.fn().mockResolvedValue({
+                                    status: 'signed',
+                                    signature: 'sig',
+                                }),
+                            }),
+                        },
+                        { emit } as unknown as Notifier,
+                        logger
+                    )
+                    const result = service.execute(
+                        authContext.userId,
+                        walletWithProvider(SigningProvider.BITGO),
+                        signedWithExternal,
+                        executeParams,
+                        { postWithRetry } as unknown as LedgerClient,
+                        authContext,
+                        network
+                    )
+                    return { store, emit, result }
+                }
+
+                it('marks the transaction executed using the accepted completion', async () => {
+                    const postWithRetry = vi
+                        .fn()
+                        .mockRejectedValueOnce(duplicateCommand)
+                        .mockResolvedValueOnce([
+                            {
+                                completionResponse: {
+                                    Completion: {
+                                        value: {
+                                            userId: authContext.userId,
+                                            commandId: 'cmd-1',
+                                            updateId: 'update-1',
+                                            offset: 110,
+                                        },
+                                    },
+                                },
+                            },
+                        ])
+
+                    const { store, emit, result } =
+                        await executeExternal(postWithRetry)
+
+                    await expect(result).resolves.toEqual({
+                        updateId: 'update-1',
+                        completionOffset: 110,
+                    })
+                    expect(postWithRetry).toHaveBeenLastCalledWith(
+                        '/v2/commands/completions',
+                        expect.objectContaining({ beginExclusive: 109 }),
+                        expect.anything(),
+                        expect.anything()
+                    )
+                    expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                        pendingTransaction.id,
+                        'executed',
+                        {
+                            payload: {
+                                updateId: 'update-1',
+                                completionOffset: 110,
+                            },
+                        }
+                    )
+                    expect(emit).toHaveBeenCalledWith(
+                        'txChanged',
+                        expect.objectContaining({ status: 'executed' })
+                    )
+                })
+
+                it('keeps the transaction signed when the completion cannot be loaded', async () => {
+                    const postWithRetry = vi
+                        .fn()
+                        .mockRejectedValueOnce(duplicateCommand)
+                        .mockRejectedValueOnce('lookup timed out')
+
+                    const { store, result } =
+                        await executeExternal(postWithRetry)
+
+                    await expect(result).rejects.toThrow(
+                        /did not confirm the submission/
+                    )
+                    expect(store.setTransactionStatus).not.toHaveBeenCalledWith(
+                        pendingTransaction.id,
+                        'failed',
+                        expect.anything()
+                    )
+                })
+
+                it('still fails when the duplicate was not accepted', async () => {
+                    const postWithRetry = vi.fn().mockRejectedValue({
+                        ...duplicateCommand,
+                        context: { accepted: 'false' },
+                    })
+
+                    const { store, result } =
+                        await executeExternal(postWithRetry)
+
+                    await expect(result).rejects.toThrow(
+                        /Ledger rejected submission/
+                    )
+                    expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                        pendingTransaction.id,
+                        'failed',
+                        expect.anything()
+                    )
+                })
+            })
+
+            it.each([
+                {
+                    name: 'a proxy timeout response',
+                    error: 'The server was not able to produce a timely response to your request.',
+                },
+                {
+                    name: 'a retryable canton error that ran out of retries',
+                    error: {
+                        code: 'NOT_SEQUENCED_TIMEOUT',
+                        cause: 'timed out',
+                        errorCategory: 4,
+                        context: {},
+                    },
+                },
+            ])(
+                'keeps the transaction signed when the outcome is unknown: $name',
+                async ({ error }) => {
+                    const getTransaction = vi.fn().mockResolvedValue({
+                        status: 'signed',
+                        signature: 'sig',
+                    })
+                    const postWithRetry = vi.fn().mockRejectedValue(error)
+                    const store = createStore(signedWithExternal)
+                    const emit = vi.fn()
+
+                    const service = createService(
+                        store,
+                        {
+                            [SigningProvider.BITGO]: createDriver({
+                                getTransaction,
+                            }),
+                        },
+                        { emit } as unknown as Notifier,
+                        logger
+                    )
+
+                    await expect(
+                        service.execute(
+                            authContext.userId,
+                            walletWithProvider(SigningProvider.BITGO),
+                            signedWithExternal,
+                            executeParams,
+                            { postWithRetry } as unknown as LedgerClient,
+                            authContext,
+                            network
+                        )
+                    ).rejects.toThrow(/did not confirm the submission/)
+
+                    expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                        pendingTransaction.id,
+                        'signed',
+                        {
+                            failureReason: expect.stringContaining(
+                                'may still be processing'
+                            ),
+                        },
+                        { expectedStatus: 'signed' }
+                    )
+                    expect(store.setTransactionStatus).not.toHaveBeenCalledWith(
+                        pendingTransaction.id,
+                        'failed',
+                        expect.anything()
+                    )
+                    expect(emit).not.toHaveBeenCalled()
+                }
+            )
         })
 
         it.each([
@@ -980,7 +1175,7 @@ describe('TransactionService', () => {
 
                             preparedTransaction:
                                 pendingTransaction.preparedTransaction,
-                            submissionId: pendingTransaction.commandId,
+                            submissionId: 'internal-tx-uuid',
                             partySignatures: expect.objectContaining({
                                 signatures: [
                                     expect.objectContaining({

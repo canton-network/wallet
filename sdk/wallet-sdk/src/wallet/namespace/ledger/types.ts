@@ -17,6 +17,11 @@ export type PrepareOptions = {
 }
 
 export type ExecuteOptions = {
+    /**
+     * @deprecated Ignored. The ledger client assigns a fresh submission id to
+     * every submission attempt, since a submission id must never be reused.
+     * Correlate completions by command id instead.
+     */
     submissionId?: string
     partyId: PartyId
 }

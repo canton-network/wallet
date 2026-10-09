@@ -522,7 +522,12 @@ export class WgTransactionDetail extends BaseElement {
                               ></div>`
                             : nothing
                     }
-                    Approve
+                    ${
+                        // signed while signing is the tail of the first approval
+                        this.status === 'signed' && !this.isSigning
+                            ? 'Retry submit'
+                            : 'Approve'
+                    }
                 </button>
             </div>
         `

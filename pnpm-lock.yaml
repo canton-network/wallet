@@ -2535,9 +2535,6 @@ importers:
       pino:
         specifier: 'catalog:'
         version: 10.3.1
-      uuid:
-        specifier: 'catalog:'
-        version: 14.0.2
     devDependencies:
       '@vitest/browser-playwright':
         specifier: 'catalog:'

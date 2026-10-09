@@ -17,6 +17,7 @@ import {
     defaultRetryableOptions,
     retryable,
     type RetryableOptions,
+    withFreshSubmissionId,
 } from './ledger-api-utils.js'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
@@ -551,6 +552,14 @@ export class LedgerClient {
         return synchronizerId
     }
 
+    /**
+     * POSTs with retries on the configured Canton errors.
+     *
+     * A submission id must never be reused, so a `submissionId` in the body is
+     * ignored: every attempt is sent with a freshly generated one. The command id
+     * stays unchanged, which keeps the retries deduplicated by the ledger. Callers
+     * that need to correlate a completion should use the command id.
+     */
     public async postWithRetry<Path extends PostEndpoint>(
         path: Path,
         body: PostRequest<Path>,
@@ -562,7 +571,13 @@ export class LedgerClient {
         additionalOptions?: ExtraPostOpts
     ): Promise<PostResponse<Path>> {
         return await retryable(
-            () => this.post(path, body, params, additionalOptions),
+            () =>
+                this.post(
+                    path,
+                    withFreshSubmissionId(body),
+                    params,
+                    additionalOptions
+                ),
             retryOptions,
             this.logger
         ).catch((e) => {
