@@ -30,6 +30,54 @@ describe('LedgerClient', () => {
         vi.restoreAllMocks()
     })
 
+    describe('postWithRetry', () => {
+        it('uses a fresh submissionId for every attempt', async () => {
+            fetchMock
+                .mockResolvedValueOnce(
+                    jsonResponse(grpcError('SEQUENCER_REQUEST_FAILED'), 503)
+                )
+                .mockResolvedValueOnce(
+                    jsonResponse(grpcError('SEQUENCER_REQUEST_FAILED'), 503)
+                )
+                .mockResolvedValueOnce(
+                    jsonResponse({ updateId: 'u', completionOffset: 1 })
+                )
+
+            const client = createLedgerClient()
+            await client.postWithRetry(
+                '/v2/interactive-submission/executeAndWait',
+                {
+                    userId: 'alice',
+                    preparedTransaction: 'tx',
+                    hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V2',
+                    submissionId: 'caller-provided',
+                    deduplicationPeriod: { Empty: {} },
+                    partySignatures: { signatures: [] },
+                },
+                {
+                    retries: 3,
+                    delayMs: 1,
+                    cantonErrorKeys: ['SEQUENCER_REQUEST_FAILED'],
+                }
+            )
+
+            const submissionIds = await Promise.all(
+                fetchMock.mock.calls
+                    .map(([request]) => request as Request)
+                    .filter((request) =>
+                        request.url.endsWith('/executeAndWait')
+                    )
+                    .map(
+                        async (request) =>
+                            (await request.json()).submissionId as string
+                    )
+            )
+            expect(submissionIds).toHaveLength(3)
+            expect(new Set(submissionIds).size).toBe(3)
+            expect(submissionIds).not.toContain('caller-provided')
+        })
+    })
+
     describe('parseSupportedVersions', () => {
         it('matches, defaults, or throws for version strings', () => {
             const client = createLedgerClient(undefined, '3.5')

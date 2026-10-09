@@ -92,6 +92,19 @@ export async function awaitCompletion(
     }
 }
 
+/**
+ * A submission id identifies one specific submission and must never be reused,
+ * so every attempt of a retried submission needs its own. Requests that carry a
+ * `submissionId` get a fresh one, anything else is returned unchanged (the
+ * ledger generates a new id for requests without one).
+ */
+export function withFreshSubmissionId<T>(body: T): T {
+    if (typeof body === 'object' && body !== null && 'submissionId' in body) {
+        return { ...body, submissionId: crypto.randomUUID() }
+    }
+    return body
+}
+
 export type RetryableOptions = {
     retries: number
     delayMs: number

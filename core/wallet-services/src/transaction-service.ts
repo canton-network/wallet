@@ -566,7 +566,6 @@ export class TransactionService {
         authContext: AuthContext
     ): Promise<ExecuteResult> {
         const { partyId } = executeParams
-        const { commandId } = transaction
         let rawSignature: string
 
         if (transaction.externalTxId) {
@@ -621,7 +620,8 @@ export class TransactionService {
                     userId,
                     preparedTransaction: transaction.preparedTransaction,
                     hashingSchemeVersion: this.hashingSchemeVersion,
-                    submissionId: commandId,
+                    // required by the ledger API, the ledger client replaces it on every attempt
+                    submissionId: crypto.randomUUID(),
                     deduplicationPeriod: {
                         Empty: {},
                     },

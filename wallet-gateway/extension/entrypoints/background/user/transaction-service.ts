@@ -155,13 +155,12 @@ export class TransactionService {
         ledgerClient: LedgerClient
     ): Promise<ExecuteResult> {
         const { partyId, signature, signedBy } = executeParams
-        const { commandId } = transaction
 
         const request: Types['JsExecuteSubmissionAndWaitRequest'] = {
             userId,
             preparedTransaction: transaction.preparedTransaction,
             hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-            submissionId: commandId,
+            submissionId: crypto.randomUUID(),
             deduplicationPeriod: {
                 Empty: {},
             },
