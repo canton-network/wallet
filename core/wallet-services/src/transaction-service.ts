@@ -3,7 +3,9 @@
 
 import type { Logger } from 'pino'
 import {
+    awaitCompletion,
     defaultRetryableOptions,
+    isJsCantonError,
     LedgerClient,
     type Types,
 } from '@canton-network/core-ledger-client'
@@ -553,7 +555,13 @@ export class TransactionService {
 
             return await this.markExecuted(transaction, result)
         } catch (err) {
-            return await this.handleSubmitFailure(transaction, err)
+            return await this.handleSubmitFailure(
+                transaction,
+                err,
+                ledgerClient,
+                userId,
+                partyId
+            )
         }
     }
 
@@ -652,7 +660,13 @@ export class TransactionService {
 
             return await this.markExecuted(transaction, result)
         } catch (err) {
-            return await this.handleSubmitFailure(transaction, err)
+            return await this.handleSubmitFailure(
+                transaction,
+                err,
+                ledgerClient,
+                userId,
+                partyId
+            )
         }
     }
 
@@ -698,10 +712,59 @@ export class TransactionService {
         return result
     }
 
+    /**
+     * A submission that failed with a definitive ledger rejection is final and
+     * marks the transaction `failed`. Anything else (timeouts, proxy errors,
+     * retryable Canton errors that ran out of retries) leaves the outcome
+     * unknown: the transaction may still commit, so it stays `signed` and can be
+     * submitted again. The ledger deduplicates re-submissions by command id and
+     * answers a re-submission of a committed command with `DUPLICATE_COMMAND`
+     * (`accepted: "true"`), which means an earlier attempt succeeded.
+     */
     private async handleSubmitFailure(
         transaction: Transaction,
-        err: unknown
+        err: unknown,
+        ledgerClient: LedgerClient,
+        userId: string,
+        partyId: string
     ): Promise<ExecuteResult> {
+        if (
+            isJsCantonError(err) &&
+            err.code === 'DUPLICATE_COMMAND' &&
+            err.context?.accepted === 'true'
+        ) {
+            this.logger.info(
+                { transactionId: transaction.id, context: err.context },
+                'Ledger already accepted this command, marking transaction executed'
+            )
+            try {
+                // the completion sits at the offset reported by the ledger,
+                // and the stream starts exclusive of the given offset
+                const completion = await awaitCompletion(
+                    ledgerClient,
+                    Number(err.context.completion_offset) - 1,
+                    partyId,
+                    userId,
+                    transaction.commandId,
+                    // the completion is already there, a few polls are plenty
+                    3
+                )
+                if (!completion.updateId) {
+                    throw new Error('Completion has no updateId')
+                }
+                return await this.markExecuted(transaction, {
+                    updateId: completion.updateId,
+                    completionOffset: completion.offset,
+                })
+            } catch (lookupErr) {
+                return await this.keepSigned(transaction, lookupErr)
+            }
+        }
+
+        if (this.isSubmitOutcomeUnknown(err)) {
+            return await this.keepSigned(transaction, err)
+        }
+
         const failureReason = this.extractLedgerError(err)
         this.logger.error(
             { err, transactionId: transaction.id },
@@ -719,5 +782,34 @@ export class TransactionService {
         throw new Error(`Ledger rejected submission ${failureReason}`, {
             cause: err,
         })
+    }
+
+    private async keepSigned(
+        transaction: Transaction,
+        err: unknown
+    ): Promise<never> {
+        this.logger.error(
+            { err, transactionId: transaction.id },
+            'Ledger submission outcome unknown, keeping transaction signed'
+        )
+
+        const failureReason = `Ledger did not confirm the submission, it may still be processing: ${this.extractLedgerError(err)}`
+        await this.store.setTransactionStatus(
+            transaction.id,
+            'signed',
+            { failureReason },
+            { expectedStatus: 'signed' }
+        )
+
+        throw new Error(failureReason, { cause: err })
+    }
+
+    private isSubmitOutcomeUnknown(err: unknown): boolean {
+        if (!isJsCantonError(err)) {
+            return true
+        }
+        return defaultRetryableOptions.cantonErrorKeys.some((key) =>
+            err.code.includes(key)
+        )
     }
 }
