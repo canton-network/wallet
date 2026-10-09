@@ -15,6 +15,7 @@ import type {
     Wallet,
 } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
+import type { TxChangedEvent } from '../dapp/rpc-gen/typings.js'
 import type {
     ExecuteParams,
     ExecuteResult,
@@ -124,7 +125,15 @@ export class TransactionService {
 
         const now = new Date()
         await this.store.setTransactionSigned(tx.id, now)
-        this.emitTxChanged({ ...tx, status: 'signed', signedAt: now })
+        this.emitTxChanged({
+            status: 'signed',
+            commandId: tx.commandId,
+            payload: {
+                signature: signingResult.signature,
+                signedBy: wallet.namespace,
+                party: wallet.partyId,
+            },
+        })
 
         this.logger.info(
             { transactionId: tx.id },
@@ -148,7 +157,7 @@ export class TransactionService {
         const { partyId, signature, signedBy } = executeParams
         const { commandId } = transaction
 
-        const request = {
+        const request: Types['JsExecuteSubmissionAndWaitRequest'] = {
             userId,
             preparedTransaction: transaction.preparedTransaction,
             hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
@@ -172,9 +181,9 @@ export class TransactionService {
                     },
                 ],
             },
-        } as Types['JsExecuteSubmissionAndWaitRequest']
+        }
 
-        let result: ExecuteResult
+        let result
         try {
             result = await ledgerClient.postWithRetry(
                 '/v2/interactive-submission/executeAndWait',
@@ -188,7 +197,10 @@ export class TransactionService {
             await this.store.setTransactionStatus(transaction.id, 'failed', {
                 failureReason: err instanceof Error ? err.message : String(err),
             })
-            this.emitTxChanged({ ...transaction, status: 'failed' })
+            this.emitTxChanged({
+                status: 'failed',
+                commandId: transaction.commandId,
+            })
             throw err
         }
 
@@ -201,15 +213,18 @@ export class TransactionService {
             payload: result,
         })
         this.emitTxChanged({
-            ...transaction,
             status: 'executed',
-            payload: result,
+            commandId: transaction.commandId,
+            payload: {
+                updateId: result.updateId,
+                completionOffset: result.completionOffset,
+            },
         })
 
         return result
     }
 
-    private emitTxChanged(transaction: Transaction): void {
-        this.notifier.emit('txChanged', transaction)
+    private emitTxChanged(event: TxChangedEvent): void {
+        this.notifier.emit('txChanged', event)
     }
 }
