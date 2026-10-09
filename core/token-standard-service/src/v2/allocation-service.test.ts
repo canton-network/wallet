@@ -10,8 +10,12 @@ import type {
     AllocationSpecification,
     AllocationRequestView as AllocationRequestViewV2,
     SettlementInfo,
+    SettlementFactory_SettleBatch as SettlementFactory_SettleBatchV2,
+    TransferLeg,
+    FinalizedAllocation,
     OffLedger,
     Account,
+    TransferLegSide,
 } from '@canton-network/core-token-standard-v2'
 import {
     ALLOCATION_FACTORY_INTERFACE_ID_V2,
@@ -19,10 +23,11 @@ import {
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
+type DisclosedContractV2 =
+    AllocationChoiceContextV2['disclosedContracts'][number]
 
 const mockLogger: MockedObject<Logger> = {
     debug: vi.fn(),
@@ -64,35 +69,48 @@ const makeAccount = (overrides: Partial<Account> = {}): Account => ({
     ...overrides,
 })
 
+const makeLegSide = (
+    overrides: Partial<TransferLegSide> = {}
+): TransferLegSide => ({
+    transferLegId: 'leg-1',
+    side: 'SenderSide',
+    otherside: makeAccount({ owner: 'counterparty::owner', provider: null }),
+    amount: '10',
+    instrumentId,
+    meta: { values: {} },
+    ...overrides,
+})
+
 const makeAllocationSpec = (
     overrides: Partial<AllocationSpecification> = {}
-): AllocationSpecification =>
-    ({
-        admin: instrumentAdmin,
-        authorizer: makeAccount(),
-        transferLegSides: [{ instrumentId, amount: '10', side: 'SenderSide' }],
-        nextIterationFunding: {},
-        ...overrides,
-    }) as AllocationSpecification
+): AllocationSpecification => ({
+    admin: instrumentAdmin,
+    authorizer: makeAccount(),
+    transferLegSides: [makeLegSide()],
+    settlementDeadline: null,
+    nextIterationFunding: {},
+    committed: false,
+    meta: { values: {} },
+    ...overrides,
+})
 
 const makeSettlement = (
     overrides: Partial<SettlementInfo> = {}
-): SettlementInfo =>
-    ({
-        settlementRef: { id: 'settle-1', cid: null },
-        requestedAt: '',
-        allocateBefore: '',
-        settleBefore: '',
-        meta: { values: {} },
-        ...overrides,
-    }) as SettlementInfo
+): SettlementInfo => ({
+    executors: [],
+    id: 'settle-1',
+    cid: null,
+    meta: { values: {} },
+    ...overrides,
+})
 
 const makeChoiceContext = (
     overrides: Partial<AllocationChoiceContextV2> = {}
 ): AllocationChoiceContextV2 => ({
-    choiceContextData: {
-        values: { ctx: 'data' } as Record<string, never>,
-    },
+    choiceContextData: { values: { ctx: 'data' } } as unknown as Record<
+        string,
+        never
+    >,
     disclosedContracts: [
         {
             contractId: 'disc1',
@@ -109,19 +127,23 @@ describe('AllocationService', () => {
         it('adds SenderSide amounts and subtracts ReceiverSide amounts per instrument', () => {
             const spec = makeAllocationSpec({
                 transferLegSides: [
-                    {
+                    makeLegSide({
                         instrumentId: 'amulet',
                         amount: '10',
                         side: 'SenderSide',
-                    },
-                    {
+                    }),
+                    makeLegSide({
                         instrumentId: 'amulet',
                         amount: '4',
                         side: 'ReceiverSide',
-                    },
-                    { instrumentId: 'usdcx', amount: '5', side: 'SenderSide' },
+                    }),
+                    makeLegSide({
+                        instrumentId: 'usdcx',
+                        amount: '5',
+                        side: 'SenderSide',
+                    }),
                 ],
-            } as any)
+            })
 
             const needs = AllocationService.fundingNeeds(spec)
 
@@ -132,14 +154,14 @@ describe('AllocationService', () => {
         it('adds nextIterationFunding amounts on top of transfer leg needs', () => {
             const spec = makeAllocationSpec({
                 transferLegSides: [
-                    {
+                    makeLegSide({
                         instrumentId: 'amulet',
                         amount: '10',
                         side: 'SenderSide',
-                    },
+                    }),
                 ],
                 nextIterationFunding: { amulet: '5', usdcx: '3' },
-            } as any)
+            })
 
             const needs = AllocationService.fundingNeeds(spec)
 
@@ -150,14 +172,14 @@ describe('AllocationService', () => {
         it('drops instruments whose net need is zero or negative', () => {
             const spec = makeAllocationSpec({
                 transferLegSides: [
-                    {
+                    makeLegSide({
                         instrumentId: 'amulet',
                         amount: '10',
                         side: 'ReceiverSide',
-                    },
+                    }),
                 ],
                 nextIterationFunding: { amulet: '10' },
-            } as any)
+            })
 
             const needs = AllocationService.fundingNeeds(spec)
 
@@ -192,14 +214,18 @@ describe('AllocationService', () => {
 
             const spec = makeAllocationSpec({
                 transferLegSides: [
-                    {
+                    makeLegSide({
                         instrumentId: 'amulet',
                         amount: '10',
                         side: 'SenderSide',
-                    },
-                    { instrumentId: 'usdcx', amount: '5', side: 'SenderSide' },
+                    }),
+                    makeLegSide({
+                        instrumentId: 'usdcx',
+                        amount: '5',
+                        side: 'SenderSide',
+                    }),
                 ],
-            } as any)
+            })
 
             const result = await service.buildAllocateChoiceArgs({
                 settlement,
@@ -406,9 +432,11 @@ describe('AllocationService', () => {
 
         it('defaults disclosedContracts to an empty array when absent', async () => {
             const { service } = makeService()
-            const ctx = makeChoiceContext({
-                disclosedContracts: undefined as any,
-            })
+
+            const ctx = {
+                ...makeChoiceContext(),
+                disclosedContracts: undefined,
+            } as unknown as AllocationChoiceContextV2
 
             const [, disclosed] =
                 await service.createAllocationChoiceFromContext(
@@ -572,14 +600,23 @@ describe('AllocationService', () => {
     })
 
     describe('fetchSettlementFactory', () => {
+        const makeSettleBatchArgs = (
+            overrides: Partial<SettlementFactory_SettleBatchV2> = {}
+        ): SettlementFactory_SettleBatchV2 => ({
+            settlement: makeSettlement(),
+            transferLegs: [] as TransferLeg[],
+            allocations: [] as FinalizedAllocation[],
+            actors: [],
+            extraArgs: { context: { values: {} }, meta: { values: {} } },
+            ...overrides,
+        })
+
         it('posts the settlement factory args to the registry', async () => {
             const { service, tokenClient } = makeService()
             tokenClient.post.mockResolvedValue({ factoryId: 'settle-factory' })
 
-            const args = { settlement: makeSettlement() } as any
-
             const result = await service.fetchSettlementFactory(
-                args,
+                makeSettleBatchArgs(),
                 registryUrl
             )
 
@@ -600,16 +637,28 @@ describe('AllocationService', () => {
                 allocations: specs,
             }) as AllocationRequestViewV2
 
+        const makeAllocationCommand = (
+            inputHoldingCids: string[]
+        ): AllocationFactory_AllocateV2 => ({
+            settlement: makeSettlement(),
+            allocation: makeAllocationSpec(),
+            requestedAt: new Date().toISOString(),
+            inputHoldingCids:
+                inputHoldingCids as unknown as AllocationFactory_AllocateV2['inputHoldingCids'],
+            actors: [],
+            extraArgs: { context: { values: {} }, meta: { values: {} } },
+        })
+
         it('creates one allocation command per spec plus an accept command, deduping disclosed contracts', async () => {
             const { service } = makeService()
 
-            const dcA = {
+            const dcA: DisclosedContractV2 = {
                 contractId: 'disc-a',
                 templateId: 't',
                 createdEventBlob: 'b',
                 synchronizerId: 's',
             }
-            const dcShared = {
+            const dcShared: DisclosedContractV2 = {
                 contractId: 'disc-shared',
                 templateId: 't',
                 createdEventBlob: 'b',
@@ -622,9 +671,7 @@ describe('AllocationService', () => {
                         templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
                         contractId: 'factory-1',
                         choice: 'AllocationFactory_Allocate',
-                        choiceArgument: {
-                            inputHoldingCids: ['cid-1'],
-                        } as unknown as AllocationFactory_AllocateV2,
+                        choiceArgument: makeAllocationCommand(['cid-1']),
                     },
                     [dcA, dcShared],
                 ])
@@ -633,9 +680,7 @@ describe('AllocationService', () => {
                         templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
                         contractId: 'factory-2',
                         choice: 'AllocationFactory_Allocate',
-                        choiceArgument: {
-                            inputHoldingCids: ['cid-2'],
-                        } as unknown as AllocationFactory_AllocateV2,
+                        choiceArgument: makeAllocationCommand(['cid-2']),
                     },
                     [dcShared],
                 ])
@@ -665,7 +710,6 @@ describe('AllocationService', () => {
                 choice: 'AllocationRequest_Accept',
             })
 
-            // dcShared appears twice across the two allocations but should be deduped.
             expect(disclosed).toHaveLength(2)
             expect(disclosed.map((d) => d.contractId).sort()).toEqual([
                 'disc-a',
@@ -682,9 +726,7 @@ describe('AllocationService', () => {
                     templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
                     contractId: 'factory-1',
                     choice: 'AllocationFactory_Allocate',
-                    choiceArgument: {
-                        inputHoldingCids: [],
-                    } as unknown as AllocationFactory_AllocateV2,
+                    choiceArgument: makeAllocationCommand([]),
                 },
                 [],
             ])
@@ -711,9 +753,7 @@ describe('AllocationService', () => {
                     templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
                     contractId: 'factory-1',
                     choice: 'AllocationFactory_Allocate',
-                    choiceArgument: {
-                        inputHoldingCids: [],
-                    } as unknown as AllocationFactory_AllocateV2,
+                    choiceArgument: makeAllocationCommand([]),
                 },
                 [],
             ])
@@ -742,9 +782,7 @@ describe('AllocationService', () => {
                     templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
                     contractId: 'factory-1',
                     choice: 'AllocationFactory_Allocate',
-                    choiceArgument: {
-                        inputHoldingCids: [],
-                    } as unknown as AllocationFactory_AllocateV2,
+                    choiceArgument: makeAllocationCommand([]),
                 },
                 [],
             ])
@@ -775,9 +813,7 @@ describe('AllocationService', () => {
                     templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
                     contractId: 'factory-1',
                     choice: 'AllocationFactory_Allocate',
-                    choiceArgument: {
-                        inputHoldingCids: [],
-                    } as unknown as AllocationFactory_AllocateV2,
+                    choiceArgument: makeAllocationCommand([]),
                 },
                 [],
             ])
