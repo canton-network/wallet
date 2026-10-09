@@ -858,20 +858,80 @@ export const userController = (
                 throw new Error(`signMessage failed`)
             }
 
-            await store.setMessageRawStatus(pending.id, 'signed', {
-                signedAt: new Date(),
-                signature: result.signature,
-            })
+            assertIsConnected(authContext)
+            const provider = wallet.signingProviderId as SigningProvider
+            const signingProvider = drivers[provider]
+            if (!signingProvider) {
+                throw new Error(`No driver found for provider ${provider}`)
+            }
+            if (
+                provider === SigningProvider.BLOCKDAEMON &&
+                !authContext.email
+            ) {
+                throw new Error(
+                    'Invalid auth context (missing email) for SigningProvider BlockDaemon'
+                )
+            }
 
+            const controllerId =
+                provider === SigningProvider.BLOCKDAEMON
+                    ? authContext.email
+                    : authContext.userId
+            const driver = signingProvider.controller(controllerId)
+            const signingResult = await driver.getTransaction({
+                userId: controllerId,
+                txId: message.externalTxId,
+            })
+            if (isRpcError(signingResult)) {
+                throw new Error(signingResult.error_description)
+            }
+
+            // TODO fix types
             notifier.emit('messageSignature', {
                 status: 'signed',
                 messageId: pending.id,
                 signature: result.signature,
             } satisfies MessageSignatureEvent)
 
+            if (signingResult.status === 'signed' && signingResult.signature) {
+                await store.setMessageRawStatus(message.id, 'signed', {
+                    signedAt: new Date(),
+                    signature: signingResult.signature,
+                    externalTxId: message.externalTxId,
+                })
+                notifier.emit('messageSignature', {
+                    status: 'signed',
+                    messageId: message.id,
+                    signature: signingResult.signature,
+                } satisfies MessageSignatureEvent)
+                return {
+                    status: 'signed',
+                    externalTxId: message.externalTxId,
+                    signature: signingResult.signature,
+                }
+            }
+
+            if (
+                signingResult.status === 'failed' ||
+                signingResult.status === 'rejected'
+            ) {
+                // TODO I think messages could use failure_reason column, just like transactions do
+                await store.setMessageRawStatus(message.id, 'failed', {
+                    externalTxId: message.externalTxId,
+                })
+                notifier.emit('messageSignature', {
+                    status: 'failed',
+                    messageId: message.id,
+                } satisfies MessageSignatureEvent)
+                return {
+                    status: 'failed',
+                    externalTxId: message.externalTxId,
+                }
+            }
+
             return {
-                signature: result.signature,
-                publicKey: wallet.publicKey,
+                status: 'awaiting-signature',
+                externalTxId: message.externalTxId,
             }
         },
         getMessageToSign: async (
@@ -898,6 +958,9 @@ export const userController = (
                         signedAt: message.signedAt.toISOString(),
                     }),
                     ...(message.signature && { signature: message.signature }),
+                    ...(message.externalTxId && {
+                        externalTxId: message.externalTxId,
+                    }),
                 },
             }
         },
@@ -918,6 +981,9 @@ export const userController = (
                         signedAt: message.signedAt.toISOString(),
                     }),
                     ...(message.signature && { signature: message.signature }),
+                    ...(message.externalTxId && {
+                        externalTxId: message.externalTxId,
+                    }),
                 })),
             }
         },
