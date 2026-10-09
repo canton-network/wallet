@@ -94,19 +94,21 @@
                             "title": "SignatureResult",
                             "additionalProperties": false,
                             "properties": {
+                                "status": {
+                                    "$ref": "#/components/schemas/SigningStatus",
+                                    "description": "Status of the message signing request."
+                                },
                                 "signature": {
-                                    "$ref": "#/components/schemas/Signature"
+                                    "$ref": "#/components/schemas/Signature",
+                                    "description": "Signature of the message if it was signed."
                                 },
                                 "txId": {
                                     "title": "txId",
                                     "type": "string",
-                                    "description": "Unique identifier of the signed message given by the Signing Provider. This may not be the same as the internal txId given by the Wallet Gateway."
-                                },
-                                "status": {
-                                    "$ref": "#/components/schemas/SigningStatus"
+                                    "description": "Unique identifier of the signed message given by the Signing Provider. This may not be the same as the internal txId given by the Wallet Gateway. Required when status is pending."
                                 }
                             },
-                            "required": []
+                            "required": ["status"]
                         }
                     ]
                 }

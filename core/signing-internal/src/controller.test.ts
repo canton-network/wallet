@@ -137,7 +137,10 @@ test('signMessage signs a message with a stored key', async () => {
     })
 
     assertNotRpcError(result)
-    expect(result.signature).toBeDefined()
+    expect(result.status).toBe('signed')
+    if (!result.signature) {
+        throw new Error('missing signature')
+    }
     expect(
         nacl.sign.detached.verify(
             new TextEncoder().encode(TEST_MESSAGE),

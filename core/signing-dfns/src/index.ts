@@ -323,7 +323,10 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
                         }
                     }
 
-                    return { signature: signingResult.signature }
+                    return {
+                        status: 'signed',
+                        signature: signingResult.signature,
+                    }
                 } catch (error) {
                     return {
                         error: 'signing_error',

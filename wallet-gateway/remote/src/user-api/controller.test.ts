@@ -908,6 +908,7 @@ describe('userController', () => {
         it('signs a pending WALLET_KERNEL message and emits messageSignature', async () => {
             const store = await storeWithMessage()
             const mockSignMessage = vi.fn().mockResolvedValue({
+                status: 'signed',
                 signature: 'signature',
             })
             const drivers = {

@@ -157,6 +157,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     })
                 }
                 return Promise.resolve({
+                    status: 'signed',
                     signature: signMessage(params.message, key.privateKey),
                 })
             },

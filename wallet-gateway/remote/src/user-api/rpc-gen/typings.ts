@@ -507,6 +507,7 @@ export interface MessageRaw {
     createdAt: CreatedAt
     signedAt?: SignedAt
     signature?: Signature
+    externalTxId?: ExternalTxId
 }
 export type Messages = MessageRaw[]
 export type UserLevelRight = any
@@ -695,6 +696,9 @@ export interface SignMessageParams {
     messageId: MessageId
     partyId?: PartyId
 }
+export interface GetSignMessageStatusParams {
+    messageId: MessageId
+}
 export interface GetMessageToSignParams {
     messageId: MessageId
 }
@@ -802,8 +806,15 @@ export interface IsWalletSyncNeededResult {
 export type SignResult =
     SignResultSigned | SignResultPending | SignResultRejected | SignResultFailed
 export interface SignMessageResult {
-    signature: Signature
+    signature?: Signature
     publicKey: PublicKey
+    status?: Status
+    externalTxId?: ExternalTxId
+}
+export interface GetSignMessageStatusResult {
+    status: Status
+    externalTxId?: ExternalTxId
+    signature?: Signature
 }
 export interface GetMessageToSignResult {
     message: MessageRaw
@@ -920,6 +931,9 @@ export type Sign = (params: SignParams) => Promise<SignResult>
 export type SignMessage = (
     params: SignMessageParams
 ) => Promise<SignMessageResult>
+export type GetSignMessageStatus = (
+    params: GetSignMessageStatusParams
+) => Promise<GetSignMessageStatusResult>
 export type GetMessageToSign = (
     params: GetMessageToSignParams
 ) => Promise<GetMessageToSignResult>

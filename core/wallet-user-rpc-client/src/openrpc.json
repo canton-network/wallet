@@ -895,18 +895,78 @@
                         "signature": {
                             "title": "signature",
                             "type": "string",
-                            "description": "Base64-encoded Ed25519 signature over the message."
+                            "description": "Base64-encoded Ed25519 signature over the message. Absent while the signing provider request is still pending."
                         },
                         "publicKey": {
                             "title": "publicKey",
                             "type": "string",
                             "description": "Base64-encoded Ed25519 public key of the wallet that produced the signature."
+                        },
+                        "status": {
+                            "title": "status",
+                            "type": "string",
+                            "enum": ["signed", "awaiting-signature"]
+                        },
+                        "externalTxId": {
+                            "title": "externalTxId",
+                            "type": "string",
+                            "description": "Signing provider request id, when the signature is not ready yet."
                         }
                     },
-                    "required": ["signature", "publicKey"]
+                    "required": ["publicKey"]
                 }
             },
-            "description": "Signs an arbitrary UTF-8 message with the wallet's private key (Ed25519). The message bytes are signed as-is; callers are expected to embed any application-level domain separation (e.g. EIP-4361 / SIWX text) in the message itself. Only supported for WALLET_KERNEL wallets."
+            "description": "Signs an arbitrary UTF-8 message with the wallet's private key (Ed25519). The message bytes are signed as-is; callers are expected to embed any application-level domain separation (e.g. EIP-4361 / SIWX text) in the message itself. When the signing provider accepts the request asynchronously, the result has status awaiting-signature and externalTxId instead of a signature."
+        },
+        {
+            "name": "getSignMessageStatus",
+            "description": "Polls the signing provider for a message awaiting an external signature and updates the stored message.",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GetSignMessageStatusParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "messageId": {
+                                "$ref": "#/components/schemas/MessageId"
+                            }
+                        },
+                        "required": ["messageId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetSignMessageStatusResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "status": {
+                            "title": "status",
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "awaiting-signature",
+                                "signed",
+                                "failed"
+                            ]
+                        },
+                        "externalTxId": {
+                            "title": "externalTxId",
+                            "type": "string"
+                        },
+                        "signature": {
+                            "title": "signature",
+                            "type": "string",
+                            "description": "Base64-encoded Ed25519 signature, once the provider has signed."
+                        }
+                    },
+                    "required": ["status"]
+                }
+            }
         },
         {
             "name": "getMessageToSign",
@@ -2162,7 +2222,12 @@
                     "status": {
                         "title": "status",
                         "type": "string",
-                        "enum": ["pending", "signed", "failed"]
+                        "enum": [
+                            "pending",
+                            "awaiting-signature",
+                            "signed",
+                            "failed"
+                        ]
                     },
                     "partyId": {
                         "title": "partyId",
@@ -2200,6 +2265,11 @@
                         "title": "signature",
                         "type": "string",
                         "description": "The signature of the message."
+                    },
+                    "externalTxId": {
+                        "title": "externalTxId",
+                        "type": "string",
+                        "description": "Identifier assigned by the signing provider for this message. Absent when the driver returns a signature immediately."
                     }
                 },
                 "required": [

@@ -133,7 +133,9 @@ export interface Transaction {
     metadata?: Metadata
 }
 export interface SignatureResult {
-    signature: Signature
+    status: SigningStatus
+    signature?: Signature
+    txId?: TxId
 }
 /**
  *
