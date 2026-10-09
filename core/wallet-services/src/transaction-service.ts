@@ -523,7 +523,6 @@ export class TransactionService {
         network: Network
     ): Promise<ExecuteResult> {
         const { partyId } = executeParams
-        const { commandId } = transaction
 
         const synchronizerId =
             network.synchronizerId ?? (await ledgerClient.getSynchronizerId())
@@ -546,30 +545,7 @@ export class TransactionService {
                 debug: { result, transaction, executeParams, userId },
             })
 
-            const executedTx = {
-                id: transaction.id,
-                commandId,
-                status: 'executed',
-                preparedTransaction: transaction.preparedTransaction,
-                preparedTransactionHash: transaction.preparedTransactionHash,
-                payload: result,
-                origin: transaction.origin ?? null,
-                ...(transaction.createdAt && {
-                    createdAt: transaction.createdAt,
-                }),
-                ...(transaction.signedAt && {
-                    signedAt: transaction.signedAt,
-                }),
-            } satisfies Transaction
-            await this.store.setTransactionStatus(transaction.id, 'executed', {
-                payload: result,
-            })
-            this.notifier.emit(
-                'txChanged',
-                executedTx satisfies TxChangedExecutedEvent
-            )
-
-            return result
+            return await this.markExecuted(transaction, result)
         } catch (err) {
             const failureReason = this.extractLedgerError(err)
 
@@ -696,30 +672,7 @@ export class TransactionService {
                 debug: { result, transaction, executeParams, userId },
             })
 
-            const executedTx = {
-                id: transaction.id,
-                commandId,
-                status: 'executed',
-                preparedTransaction: transaction.preparedTransaction,
-                preparedTransactionHash: transaction.preparedTransactionHash,
-                payload: result,
-                origin: transaction.origin ?? null,
-                ...(transaction.createdAt && {
-                    createdAt: transaction.createdAt,
-                }),
-                ...(transaction.signedAt && {
-                    signedAt: transaction.signedAt,
-                }),
-            } satisfies Transaction
-            await this.store.setTransactionStatus(transaction.id, 'executed', {
-                payload: result,
-            })
-            this.notifier.emit(
-                'txChanged',
-                executedTx satisfies TxChangedExecutedEvent
-            )
-
-            return result
+            return await this.markExecuted(transaction, result)
         } catch (err) {
             const failureReason = this.extractLedgerError(err)
             this.logger.error(
@@ -752,5 +705,35 @@ export class TransactionService {
         }
 
         return String(error)
+    }
+
+    private async markExecuted(
+        transaction: Transaction,
+        result: TxChangedExecutedEvent['payload']
+    ): Promise<ExecuteResult> {
+        const executedTx = {
+            id: transaction.id,
+            commandId: transaction.commandId,
+            status: 'executed',
+            preparedTransaction: transaction.preparedTransaction,
+            preparedTransactionHash: transaction.preparedTransactionHash,
+            payload: result,
+            origin: transaction.origin ?? null,
+            ...(transaction.createdAt && {
+                createdAt: transaction.createdAt,
+            }),
+            ...(transaction.signedAt && {
+                signedAt: transaction.signedAt,
+            }),
+        } satisfies Transaction
+        await this.store.setTransactionStatus(transaction.id, 'executed', {
+            payload: result,
+        })
+        this.notifier.emit(
+            'txChanged',
+            executedTx satisfies TxChangedExecutedEvent
+        )
+
+        return result
     }
 }
