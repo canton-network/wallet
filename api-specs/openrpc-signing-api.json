@@ -96,9 +96,17 @@
                             "properties": {
                                 "signature": {
                                     "$ref": "#/components/schemas/Signature"
+                                },
+                                "txId": {
+                                    "title": "txId",
+                                    "type": "string",
+                                    "description": "Unique identifier of the signed message given by the Signing Provider. This may not be the same as the internal txId given by the Wallet Gateway."
+                                },
+                                "status": {
+                                    "$ref": "#/components/schemas/SigningStatus"
                                 }
                             },
-                            "required": ["signature"]
+                            "required": []
                         }
                     ]
                 }

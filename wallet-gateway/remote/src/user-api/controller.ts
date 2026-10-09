@@ -55,6 +55,8 @@ import type {
     ListSigningProviderKeysResult,
     GetTransactionStatusParams,
     GetTransactionStatusResult,
+    GetSignMessageStatusParams,
+    GetSignMessageStatusResult,
 } from './rpc-gen/typings.js'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
@@ -812,12 +814,14 @@ export const userController = (
 
             // TODO: support other signing providers, let's keep list of signing providers supporting signMessage centrally, OR maybe let's just let it fail on driver level
             if (
-                ![SigningProvider.WALLET_KERNEL, SigningProvider.DFNS].includes(
-                    wallet.signingProviderId as SigningProvider
-                )
+                ![
+                    SigningProvider.WALLET_KERNEL,
+                    SigningProvider.DFNS,
+                    SigningProvider.SECUROSYS,
+                ].includes(wallet.signingProviderId as SigningProvider)
             ) {
                 return await emitFailedAndPersist(
-                    `signMessage is only supported for ${SigningProvider.WALLET_KERNEL} wallets, got ${wallet.signingProviderId}`
+                    `signMessage is only supported for wallet-kernel, dfns, and securosys wallets, got ${wallet.signingProviderId}`
                 )
             }
 
