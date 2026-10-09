@@ -3,21 +3,22 @@
 
 import { describe, it, expect, vi, type MockedObject } from 'vitest'
 import { AllocationService } from './allocation-service.js'
-import { CoreService } from '../core-service.js'
+import type { CoreService } from '../core-service.js'
 import type { Logger } from '@canton-network/core-types'
-import {
-    Account,
-    AllocationFactory_Allocate,
+import type {
+    AllocationFactory_Allocate as AllocationFactory_AllocateV2,
     AllocationSpecification,
     AllocationRequestView as AllocationRequestViewV2,
     SettlementInfo,
     OffLedger,
+    Account,
+} from '@canton-network/core-token-standard-v2'
+import {
     ALLOCATION_FACTORY_INTERFACE_ID_V2,
     ALLOCATION_INTERFACE_ID_V2,
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type AllocationChoiceContextV2 =
@@ -523,7 +524,7 @@ describe('AllocationService', () => {
     })
 
     describe('createAllocationFromContext', () => {
-        const choiceArgs: AllocationFactory_Allocate = {
+        const choiceArgs: AllocationFactory_AllocateV2 = {
             settlement: makeSettlement(),
             allocation: makeAllocationSpec(),
             requestedAt: new Date().toISOString(),
@@ -547,7 +548,7 @@ describe('AllocationService', () => {
             expect(exercise.contractId).toBe('factory-id')
             expect(exercise.choice).toBe('AllocationFactory_Allocate')
             expect(
-                (exercise.choiceArgument as AllocationFactory_Allocate)
+                (exercise.choiceArgument as AllocationFactory_AllocateV2)
                     .extraArgs.context
             ).toEqual({ values: { ctx: 'data' } })
             expect(disclosed).toBe(ctx.disclosedContracts)
@@ -564,7 +565,7 @@ describe('AllocationService', () => {
             )
 
             expect(
-                (exercise.choiceArgument as AllocationFactory_Allocate)
+                (exercise.choiceArgument as AllocationFactory_AllocateV2)
                     .extraArgs.context
             ).toEqual({ values: {} })
         })
@@ -623,7 +624,7 @@ describe('AllocationService', () => {
                         choice: 'AllocationFactory_Allocate',
                         choiceArgument: {
                             inputHoldingCids: ['cid-1'],
-                        } as unknown as AllocationFactory_Allocate,
+                        } as unknown as AllocationFactory_AllocateV2,
                     },
                     [dcA, dcShared],
                 ])
@@ -634,7 +635,7 @@ describe('AllocationService', () => {
                         choice: 'AllocationFactory_Allocate',
                         choiceArgument: {
                             inputHoldingCids: ['cid-2'],
-                        } as unknown as AllocationFactory_Allocate,
+                        } as unknown as AllocationFactory_AllocateV2,
                     },
                     [dcShared],
                 ])
@@ -683,7 +684,7 @@ describe('AllocationService', () => {
                     choice: 'AllocationFactory_Allocate',
                     choiceArgument: {
                         inputHoldingCids: [],
-                    } as unknown as AllocationFactory_Allocate,
+                    } as unknown as AllocationFactory_AllocateV2,
                 },
                 [],
             ])
@@ -712,7 +713,7 @@ describe('AllocationService', () => {
                     choice: 'AllocationFactory_Allocate',
                     choiceArgument: {
                         inputHoldingCids: [],
-                    } as unknown as AllocationFactory_Allocate,
+                    } as unknown as AllocationFactory_AllocateV2,
                 },
                 [],
             ])
@@ -743,7 +744,7 @@ describe('AllocationService', () => {
                     choice: 'AllocationFactory_Allocate',
                     choiceArgument: {
                         inputHoldingCids: [],
-                    } as unknown as AllocationFactory_Allocate,
+                    } as unknown as AllocationFactory_AllocateV2,
                 },
                 [],
             ])
@@ -776,7 +777,7 @@ describe('AllocationService', () => {
                     choice: 'AllocationFactory_Allocate',
                     choiceArgument: {
                         inputHoldingCids: [],
-                    } as unknown as AllocationFactory_Allocate,
+                    } as unknown as AllocationFactory_AllocateV2,
                 },
                 [],
             ])
