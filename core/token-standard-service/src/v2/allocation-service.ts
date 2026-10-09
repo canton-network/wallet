@@ -21,9 +21,8 @@ import {
     type ExerciseCommand,
 } from '../types'
 import Decimal from 'decimal.js'
-import type { PartyId } from '@canton-network/core-types'
+import type { PartyId, Logger } from '@canton-network/core-types'
 import type { ContractId } from '@daml/types'
-import type { Logger } from 'pino'
 
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
