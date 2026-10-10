@@ -111,7 +111,7 @@ export class WgSessions extends BaseElement {
         `,
     ]
 
-    @property({ type: Array }) sessions: Session[] = []
+    @property({ type: Array }) accessor sessions: Session[] = []
 
     protected render() {
         if (!this.sessions.length) {

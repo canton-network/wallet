@@ -12,7 +12,10 @@
             "!{projectRoot}/vitest.*.ts",
             "!{workspaceRoot}/vitest.base.ts"
         ],
-        "sharedGlobals": ["{workspaceRoot}/vitest.base.ts"]
+        "sharedGlobals": [
+            "{workspaceRoot}/vitest.base.ts",
+            "{workspaceRoot}/vite.decorators.ts"
+        ]
     },
     "release": {
         "version": {

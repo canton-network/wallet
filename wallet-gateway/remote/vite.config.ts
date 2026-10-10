@@ -3,6 +3,7 @@
 
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
+import { standardDecorators } from '../../vite.decorators.js'
 import { resolveRouteInputs } from './src/web/route-inputs.js'
 
 const frontendRoot = resolve(import.meta.dirname, 'src/web/frontend')
@@ -20,6 +21,7 @@ export default defineConfig({
             input: resolveRouteInputs(frontendRoot),
         },
     },
+    plugins: [standardDecorators(resolve(frontendRoot, '**/*.ts'))],
     resolve: {
         alias: {
             '@canton-network/core-wallet-ui-components': resolve(
