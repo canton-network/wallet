@@ -2514,9 +2514,6 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'catalog:'
         version: link:../signing-lib
-      '@canton-network/core-signing-securosys':
-        specifier: 'catalog:'
-        version: link:../signing-securosys
       '@canton-network/core-wallet-auth':
         specifier: 'catalog:'
         version: link:../wallet-auth

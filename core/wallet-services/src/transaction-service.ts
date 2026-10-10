@@ -151,7 +151,7 @@ export class TransactionService {
                     {
                         ...baseSignParams,
                         keyIdentifier: {
-                            id: keyLabelFromPublicKey(wallet.publicKey),
+                            id: wallet.publicKey,
                             publicKey: wallet.publicKey,
                         },
                     }
