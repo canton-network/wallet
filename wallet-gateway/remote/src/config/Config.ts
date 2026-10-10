@@ -115,6 +115,159 @@ const bootstrapFromEnv = bootstrapConfigSchema.extend({
     ),
 })
 
+const secretEnvName = (defaultName: string, purpose: string) =>
+    z
+        .string()
+        .optional()
+        .meta({
+            description: `Name of the environment variable that holds ${purpose}. Defaults to ${defaultName}. The secret value stays in the environment and is never stored in the config file.`,
+        })
+
+export const signingProvidersConfigSchema = z
+    .object({
+        walletKernel: z.object({}).optional().meta({
+            description:
+                'Include this object to opt in the Wallet Kernel internal signing provider. Requires signingStore.',
+        }),
+        participant: z.object({}).optional().meta({
+            description:
+                'Include this object to opt in the participant signing provider.',
+        }),
+        fireblocks: z
+            .object({
+                apiPath: z.string().optional().meta({
+                    description:
+                        'Fireblocks API URL. Defaults to https://api.fireblocks.io/v1.',
+                }),
+                apiKeyEnv: secretEnvName(
+                    'FIREBLOCKS_API_KEY',
+                    'the Fireblocks API key'
+                ),
+                secretEnv: secretEnvName(
+                    'FIREBLOCKS_SECRET',
+                    'the Fireblocks API secret'
+                ),
+            })
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in Fireblocks. Secrets are read from the environment variables named by apiKeyEnv and secretEnv.',
+            }),
+        blockdaemon: z
+            .object({
+                baseUrl: z.string().optional().meta({
+                    description:
+                        'Blockdaemon API URL. Defaults to http://localhost:5080/api/cwp/canton.',
+                }),
+                caip2: z.string().optional().meta({
+                    description:
+                        'Blockdaemon CAIP-2 network identifier. Defaults to canton:testnet.',
+                }),
+                apiKeyEnv: secretEnvName(
+                    'BLOCKDAEMON_API_KEY',
+                    'the Blockdaemon API key'
+                ),
+            })
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in Blockdaemon. The API key is read from the environment variable named by apiKeyEnv.',
+            }),
+        dfns: z
+            .object({
+                orgId: z.string().meta({
+                    description: 'Dfns organization ID.',
+                }),
+                baseUrl: z.string().optional().meta({
+                    description:
+                        'Dfns API URL. Defaults to https://api.dfns.io.',
+                }),
+                credId: z.string().meta({
+                    description: 'Dfns service account credential ID.',
+                }),
+                privateKeyEnv: secretEnvName(
+                    'DFNS_PRIVATE_KEY',
+                    'the Dfns service account private key'
+                ),
+                authTokenEnv: secretEnvName(
+                    'DFNS_AUTH_TOKEN',
+                    'the Dfns service account auth token'
+                ),
+            })
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in Dfns. Requires orgId and credId. Secrets are read from the environment variables named by privateKeyEnv and authTokenEnv.',
+            }),
+        securosys: z
+            .object({
+                baseUrl: z.string().meta({
+                    description: 'Securosys TSB service URL.',
+                }),
+                mtlsP12Path: z.string().optional().meta({
+                    description:
+                        'Path to a PKCS#12 client certificate when TSB requires mTLS.',
+                }),
+                signatureAlgorithm: z.string().optional().meta({
+                    description:
+                        'Securosys TSB signature algorithm. Defaults to EDDSA.',
+                }),
+                keyManagementApiKeyEnv: secretEnvName(
+                    'SECUROSYS_TSB_KEY_MANAGEMENT_API_KEY',
+                    'the Securosys key-management API key'
+                ),
+                keyOperationApiKeyEnv: secretEnvName(
+                    'SECUROSYS_TSB_KEY_OPERATION_API_KEY',
+                    'the Securosys key-operation API key'
+                ),
+                bearerTokenEnv: secretEnvName(
+                    'SECUROSYS_TSB_BEARER_TOKEN',
+                    'the Securosys bearer token'
+                ),
+                mtlsP12PasswordEnv: secretEnvName(
+                    'SECUROSYS_TSB_MTLS_P12_PASSWORD',
+                    'the Securosys PKCS#12 password'
+                ),
+                keyPasswordEnv: secretEnvName(
+                    'SECUROSYS_TSB_KEY_PASSWORD',
+                    'the Securosys key password'
+                ),
+            })
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in Securosys. Requires baseUrl. Secrets are read from the environment variables named by the *Env fields.',
+            }),
+        bitgo: z
+            .object({
+                baseUrl: z.string().optional().meta({
+                    description:
+                        'BitGo API base URL. Defaults to https://app.bitgo.com.',
+                }),
+                enterpriseId: z.string().optional().meta({
+                    description:
+                        'BitGo enterprise ID. Required for wallet creation.',
+                }),
+                coin: z.string().optional().meta({
+                    description:
+                        'BitGo Canton coin identifier. Auto-detected from the API URL when omitted.',
+                }),
+                accessTokenEnv: secretEnvName(
+                    'BITGO_ACCESS_TOKEN',
+                    'the BitGo access token'
+                ),
+            })
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in BitGo. The access token is read from the environment variable named by accessTokenEnv.',
+            }),
+    })
+    .meta({
+        description:
+            'Explicit signing provider configuration. When omitted, the Wallet Gateway uses legacy discovery: every provider is available if its required environment variables are set. When present, only listed providers are registered; non-secret settings come from this object, and secrets are read from environment variables named by the *Env fields.',
+    })
+
 const hashingSchemeSchema = z
     .object({
         version: z
@@ -132,7 +285,8 @@ export const rawConfigSchema = z.object({
     server: z.preprocess((val) => val ?? {}, serverConfigSchema),
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
-    signingStore: signingStoreConfigSchema,
+    signingStore: signingStoreConfigSchema.optional(),
+    signingProviders: signingProvidersConfigSchema.optional(),
     bootstrap: bootstrapFromEnv,
     hashingScheme: hashingSchemeSchema,
 })
@@ -142,12 +296,16 @@ export const configSchema = z.object({
     server: z.preprocess((val) => val ?? {}, serverConfigSchema),
     logging: z.preprocess((val) => val ?? {}, loggingConfigSchema).optional(),
     store: storeConfigSchema,
-    signingStore: signingStoreConfigSchema,
+    signingStore: signingStoreConfigSchema.optional(),
+    signingProviders: signingProvidersConfigSchema.optional(),
     bootstrap: bootstrapConfigSchema,
     hashingScheme: hashingSchemeSchema,
 })
 
 export type KernelInfo = z.infer<typeof kernelInfoSchema>
 export type ServerConfig = z.infer<typeof serverConfigSchema>
+export type SigningProvidersConfig = z.infer<
+    typeof signingProvidersConfigSchema
+>
 export type RawConfig = z.infer<typeof rawConfigSchema>
 export type Config = z.infer<typeof configSchema>
