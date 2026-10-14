@@ -1082,6 +1082,32 @@ describe('jwtAuthService', () => {
                     ).resolves.toMatchObject({ userId: 'oauth-user' })
                 })
 
+                it('fetches discovery and JWKS once across verifications', async () => {
+                    mockJwksResponse(async () =>
+                        Response.json({ keys: [oauthPublicJwk] })
+                    )
+                    const service = jwtAuthService(store, mockLogger)
+
+                    for (let i = 0; i < 3; i++) {
+                        await expect(
+                            service.verifyToken(
+                                await rs256BearerToken(
+                                    oauthClaims({ aud: 'aud-a' }),
+                                    oauthPrivateKey
+                                )
+                            )
+                        ).resolves.toMatchObject({ userId: 'oauth-user' })
+                    }
+
+                    const urls = mockFetch.mock.calls.map(([url]) =>
+                        String(url)
+                    )
+                    expect(urls.filter((u) => u === configUrl)).toHaveLength(1)
+                    expect(
+                        urls.filter((u) => u === OAUTH_JWKS_URI)
+                    ).toHaveLength(1)
+                })
+
                 it('throws IdpUnavailableError when the JWKS is served with a non-200 success status', async () => {
                     mockJwksResponse(async () =>
                         Response.json(
