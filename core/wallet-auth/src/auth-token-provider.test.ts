@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import { SignJWT } from 'jose'
 import { assertConnected, jwtExpired } from './auth-utils.js'
 import {
     AuthTokenProvider,
@@ -10,7 +11,6 @@ import {
 import type { Auth, Idp } from './config/schema.js'
 import { clientCredentialsService } from './client-credentials-service.js'
 import { SelfSignedTokenService } from './self-signed-token-service.js'
-import { SignJWT } from 'jose'
 
 vi.mock('./client-credentials-service.js', () => {
     return {
@@ -24,6 +24,7 @@ describe('AuthTokenProvider', () => {
     afterEach(() => {
         vi.resetAllMocks()
         vi.useRealTimers()
+        AuthTokenProvider.clearSharedProviders()
     })
 
     const configUrl = 'http://idp/.well-known/openid-configuration'
@@ -206,5 +207,104 @@ describe('AuthTokenProvider', () => {
         ).rejects.toThrow(
             'Attempted to refresh a token, but it came back expired.'
         )
+    })
+
+    describe('token reuse', () => {
+        const idp: Idp = {
+            id: 'idp',
+            type: 'oauth',
+            issuer: 'https://idp.example.com',
+            configUrl,
+        }
+        const auth: Auth = {
+            method: 'client_credentials',
+            clientId: 'service-account',
+            clientSecret: 'secret',
+            audience: 'ledger',
+            scope: 'daml_ledger_api',
+        }
+
+        const tokenExpiringIn = (seconds: number) =>
+            new SignJWT({ sub: 'service-account' })
+                .setProtectedHeader({ alg: 'HS256' })
+                .setExpirationTime(Math.floor(Date.now() / 1000) + seconds)
+                .sign(new TextEncoder().encode('secret'))
+
+        const mockTokens = (...tokens: string[]) => {
+            const fetchToken = vi.fn()
+            for (const token of tokens) fetchToken.mockResolvedValueOnce(token)
+            vi.mocked(clientCredentialsService).mockReturnValue({ fetchToken })
+            return fetchToken
+        }
+
+        it('shares one provider per configuration', () => {
+            const a = AuthTokenProvider.fromGatewayConfig(idp, auth)
+            const b = AuthTokenProvider.fromGatewayConfig(
+                { ...idp },
+                { ...auth }
+            )
+            const other = AuthTokenProvider.fromGatewayConfig(idp, {
+                ...auth,
+                clientSecret: 'rotated',
+            })
+
+            expect(b).toBe(a)
+            expect(other).not.toBe(a)
+        })
+
+        it('reuses the token across callers until it expires', async () => {
+            const token = await tokenExpiringIn(3600)
+            const fetchToken = mockTokens(token)
+
+            for (let i = 0; i < 3; i++) {
+                await expect(
+                    AuthTokenProvider.fromGatewayConfig(
+                        idp,
+                        auth
+                    ).getAccessToken()
+                ).resolves.toBe(token)
+            }
+            expect(fetchToken).toHaveBeenCalledOnce()
+        })
+
+        it('refreshes a token shortly before it expires', async () => {
+            const expiring = await tokenExpiringIn(
+                AuthTokenProvider.REFRESH_MARGIN_SECONDS - 5
+            )
+            const fresh = await tokenExpiringIn(3600)
+            const fetchToken = mockTokens(expiring, fresh)
+            const provider = AuthTokenProvider.fromGatewayConfig(idp, auth)
+
+            await expect(provider.getAccessToken()).resolves.toBe(expiring)
+            await expect(provider.getAccessToken()).resolves.toBe(fresh)
+            expect(fetchToken).toHaveBeenCalledTimes(2)
+        })
+
+        it('shares one token request between concurrent callers', async () => {
+            const token = await tokenExpiringIn(3600)
+            const fetchToken = mockTokens(token)
+            const provider = AuthTokenProvider.fromGatewayConfig(idp, auth)
+
+            await expect(
+                Promise.all([
+                    provider.getAccessToken(),
+                    provider.getAccessToken(),
+                ])
+            ).resolves.toEqual([token, token])
+            expect(fetchToken).toHaveBeenCalledOnce()
+        })
+
+        it('does not keep a failed token request', async () => {
+            const token = await tokenExpiringIn(3600)
+            const fetchToken = vi
+                .fn()
+                .mockRejectedValueOnce(new Error('IDP down'))
+                .mockResolvedValueOnce(token)
+            vi.mocked(clientCredentialsService).mockReturnValue({ fetchToken })
+            const provider = AuthTokenProvider.fromGatewayConfig(idp, auth)
+
+            await expect(provider.getAccessToken()).rejects.toThrow('IDP down')
+            await expect(provider.getAccessToken()).resolves.toBe(token)
+        })
     })
 })

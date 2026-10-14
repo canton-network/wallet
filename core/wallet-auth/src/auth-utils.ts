@@ -222,13 +222,17 @@ export async function fetchOidcUserInfo(
  * Determine if a given JWT is still valid based on its expiry time.
  *
  * @param token a base64 encoded JWT token
+ * @param marginSeconds treat the token as expired this many seconds early
  * @returns true if the token is expired, false if not
  */
-export function jwtExpired(token: string): boolean {
+export function jwtExpired(token: string, marginSeconds = 0): boolean {
     try {
         const payload = decodeJwt(token)
         const now = Math.floor(Date.now() / 1000)
-        return typeof payload.exp === 'number' && payload.exp <= now
+        return (
+            typeof payload.exp === 'number' &&
+            payload.exp <= now + marginSeconds
+        )
     } catch {
         return true
     }

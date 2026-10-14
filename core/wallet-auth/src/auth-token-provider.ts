@@ -50,7 +50,21 @@ export class AuthTokenProvider implements AccessTokenProvider {
     ]).with({
         method: lazy(() => this.config.method),
     })
+
+    /**
+     * A cached token is refreshed this many seconds before it expires, so it
+     * doesn't expire while a request using it is still in flight.
+     */
+    static readonly REFRESH_MARGIN_SECONDS = 30
+
+    /** Providers shared by {@link fromGatewayConfig}, keyed by their configuration. */
+    private static readonly sharedProviders = new Map<
+        string,
+        AuthTokenProvider
+    >()
+
     private cachedToken: string | undefined
+    private pendingToken: Promise<string> | undefined
 
     constructor(protected readonly config: TokenProviderConfig) {}
 
@@ -58,7 +72,31 @@ export class AuthTokenProvider implements AccessTokenProvider {
         return new AuthTokenProvider({ method: 'static', token })
     }
 
+    /**
+     * Returns the token provider for an identity provider and auth
+     * configuration. Providers are shared between callers with the same
+     * configuration, so their tokens are reused until shortly before they
+     * expire instead of being fetched from the IDP for every use.
+     */
     static fromGatewayConfig(idp: Idp, auth: Auth): AuthTokenProvider {
+        const key = JSON.stringify([idp, auth])
+        let provider = AuthTokenProvider.sharedProviders.get(key)
+        if (!provider) {
+            provider = AuthTokenProvider.createFromGatewayConfig(idp, auth)
+            AuthTokenProvider.sharedProviders.set(key, provider)
+        }
+        return provider
+    }
+
+    /** Drops all providers shared by {@link fromGatewayConfig}, for tests. */
+    static clearSharedProviders(): void {
+        AuthTokenProvider.sharedProviders.clear()
+    }
+
+    private static createFromGatewayConfig(
+        idp: Idp,
+        auth: Auth
+    ): AuthTokenProvider {
         if (auth.method === 'self_signed') {
             return new AuthTokenProvider({
                 method: auth.method,
@@ -121,19 +159,33 @@ export class AuthTokenProvider implements AccessTokenProvider {
      * @returns A valid JWT token retrieved according to the auth configuration given.
      */
     public async getAccessToken(): Promise<string> {
-        if (this.cachedToken && !jwtExpired(this.cachedToken)) {
+        if (
+            this.cachedToken &&
+            !jwtExpired(
+                this.cachedToken,
+                AuthTokenProvider.REFRESH_MARGIN_SECONDS
+            )
+        ) {
             return this.cachedToken
-        } else {
-            const newToken = await this._fetchToken()
-            if (jwtExpired(newToken)) {
-                throw new Error(
-                    'Attempted to refresh a token, but it came back expired.'
-                )
-            }
-
-            this.cachedToken = newToken
-            return newToken
         }
+
+        // Share one token request between concurrent callers
+        this.pendingToken ??= this.refreshToken().finally(() => {
+            this.pendingToken = undefined
+        })
+        return this.pendingToken
+    }
+
+    private async refreshToken(): Promise<string> {
+        const newToken = await this._fetchToken()
+        if (jwtExpired(newToken)) {
+            throw new Error(
+                'Attempted to refresh a token, but it came back expired.'
+            )
+        }
+
+        this.cachedToken = newToken
+        return newToken
     }
 
     /**
