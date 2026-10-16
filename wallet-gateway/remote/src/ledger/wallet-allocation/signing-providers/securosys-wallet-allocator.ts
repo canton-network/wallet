@@ -19,6 +19,7 @@ import {
     handleSigningProviderError,
     type WalletAllocator,
 } from '../wallet-allocation-service.js'
+import { keyLabelFromPublicKey } from '@canton-network/core-signing-securosys'
 
 export class SecurosysWalletAllocator implements WalletAllocator {
     constructor(
@@ -66,7 +67,10 @@ export class SecurosysWalletAllocator implements WalletAllocator {
             .signTransaction({
                 tx: Buffer.from(txPayload).toString('base64'),
                 txHash: transactions.multiHash,
-                keyIdentifier: { id: key.id, publicKey: key.publicKey },
+                keyIdentifier: {
+                    id: keyLabelFromPublicKey(key.id),
+                    publicKey: key.publicKey,
+                },
                 internalTxId,
             })
             .then(handleSigningProviderError)
