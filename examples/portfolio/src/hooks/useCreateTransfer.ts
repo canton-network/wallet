@@ -7,6 +7,8 @@ import { submitViaProvider } from '@lib/submit'
 import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from './query-keys'
 import { useWalletSdk } from './useWalletSdk'
+import type { AssetBody } from '@canton-network/wallet-sdk'
+import type { TsVersion } from '../types/instruments'
 
 export interface CreateTransferArgs {
     sender: string
@@ -15,6 +17,7 @@ export interface CreateTransferArgs {
     amount: string
     expiry: Date
     memo?: string
+    tsVersion: TsVersion
 }
 
 export const useCreateTransfer = () => {
@@ -45,7 +48,10 @@ export const useCreateTransfer = () => {
                 )
             }
 
-            const preparedCommand = await sdk.token.transfer.create({
+            const asset: AssetBody = await sdk.token.find(args.instrumentId.id)
+            const version = resolveTransferVersion(asset, args.tsVersion)
+
+            const params = {
                 sender: args.sender,
                 recipient: args.receiver,
                 amount: args.amount,
@@ -53,7 +59,12 @@ export const useCreateTransfer = () => {
                 registryUrl: new URL(registryUrl),
                 expirationDate: args.expiry,
                 memo: args.memo,
-            })
+            }
+
+            const preparedCommand =
+                version.used === 'V2'
+                    ? await sdk.token.v2.transfer.create(params)
+                    : await sdk.token.v1.transfer.create(params)
 
             await submitViaProvider(preparedCommand, args.sender)
         },
@@ -71,4 +82,23 @@ export const useCreateTransfer = () => {
             })
         },
     })
+}
+
+export type TransferVersionResult = {
+    requested: TsVersion
+    used: TsVersion
+    fallback: boolean
+}
+
+const resolveTransferVersion = (
+    asset: AssetBody,
+    requested: TsVersion
+): TransferVersionResult => {
+    const used =
+        requested === 'V2' &&
+        asset.capabilities.transferInstruction.includes('v2')
+            ? 'V2'
+            : 'V1'
+
+    return { requested, used, fallback: used !== requested }
 }

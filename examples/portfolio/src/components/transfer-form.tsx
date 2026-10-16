@@ -7,8 +7,12 @@ import {
     Alert,
     Box,
     CircularProgress,
+    FormControlLabel,
+    FormHelperText,
     IconButton,
     InputAdornment,
+    Radio,
+    RadioGroup,
     TextField,
     Typography,
     type SxProps,
@@ -43,6 +47,7 @@ const DESCRIPTION_LIMIT = 280
 
 const createDefaultTransferValues = (): TransferFormData => ({
     instrumentId: null,
+    tsVersion: 'V1',
     amount: '',
     recipient: '',
     memo: '',
@@ -97,7 +102,6 @@ export const TransferForm: React.FC<TransferFormProps> = ({
         () => initialValues ?? createDefaultTransferValues(),
         [initialValues]
     )
-
     const form = useForm({
         defaultValues,
         onSubmit: async ({ value: formData }) => {
@@ -108,30 +112,30 @@ export const TransferForm: React.FC<TransferFormProps> = ({
             const instrumentId = formData.instrumentId
             const expiry = formData.expiry
 
+            const onSuccess = () => {
+                onSubmitted({
+                    sender: primaryParty,
+                    instrumentId,
+                    instrumentSymbol: selectedInstrument?.symbol,
+                    instrumentName: selectedInstrument?.name,
+                    amount: formData.amount,
+                    recipient: formData.recipient.trim(),
+                    memo: formData.memo.trim(),
+                    expiry,
+                    submittedAt: new Date(),
+                })
+            }
             createTransferMutation.mutate(
                 {
                     sender: primaryParty,
+                    tsVersion: formData.tsVersion,
                     receiver: formData.recipient.trim(),
                     instrumentId,
                     amount: formData.amount,
                     expiry,
                     memo: formData.memo.trim() || undefined,
                 },
-                {
-                    onSuccess: () => {
-                        onSubmitted({
-                            sender: primaryParty,
-                            instrumentId,
-                            instrumentSymbol: selectedInstrument?.symbol,
-                            instrumentName: selectedInstrument?.name,
-                            amount: formData.amount,
-                            recipient: formData.recipient.trim(),
-                            memo: formData.memo.trim(),
-                            expiry,
-                            submittedAt: new Date(),
-                        })
-                    },
-                }
+                { onSuccess }
             )
         },
     })
@@ -200,7 +204,47 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                         />
                     )}
                 </FieldBlock>
-
+                <form.Field
+                    name="tsVersion"
+                    validators={{
+                        onChange: ({ value }) =>
+                            value
+                                ? undefined
+                                : 'Token standard version is required',
+                    }}
+                >
+                    {(field) => (
+                        <FieldBlock label="Token Standard Version">
+                            <RadioGroup
+                                row
+                                value={field.state.value}
+                                onChange={(e) =>
+                                    field.handleChange(
+                                        e.target
+                                            .value as TransferFormData['tsVersion']
+                                    )
+                                }
+                            >
+                                <FormControlLabel
+                                    value="V1"
+                                    control={<Radio disabled={disabled} />}
+                                    label="V1"
+                                    sx={{ color: 'text.primary' }}
+                                />
+                                <FormControlLabel
+                                    value="V2"
+                                    control={<Radio disabled={disabled} />}
+                                    label="V2"
+                                    sx={{ color: 'text.primary' }}
+                                />
+                            </RadioGroup>
+                            <FormHelperText error={hasFieldError(field)}>
+                                {getFieldError(field) ??
+                                    'Token standard version to use'}
+                            </FormHelperText>
+                        </FieldBlock>
+                    )}
+                </form.Field>
                 <form.Field
                     name="recipient"
                     validators={{
@@ -342,7 +386,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                 <Typography
                                     sx={{
                                         mt: 1,
-                                        color: 'text.secondary',
+                                        color: 'text.primary',
                                     }}
                                 >
                                     {charactersLeft} characters left
