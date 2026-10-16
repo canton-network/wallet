@@ -187,6 +187,8 @@ Participant-only signing does not require external custody configuration.
 Perform these steps once per Wallet Gateway user and network you automate (or repeat when
 wallets change).
 
+<!-- steps -->
+
 ### Log in and create a session
 
 The automation owner logs into the User UI or calls User API `addSession` with a normal user
@@ -219,6 +221,8 @@ curl -s -X POST "https://gateway.example.com/api/v0/user" \
 ```
 
 Store the returned `apiKey` securely. It cannot be retrieved again.
+
+<!-- /steps -->
 
 ## Submitting transactions
 
@@ -284,7 +288,7 @@ or prolonged `pending`).
 Subscribe to dApp API events for transaction lifecycle updates. Pass the API key as the `token`
 query parameter:
 
-```javascript
+```typescript
 const eventsUrl = new URL('/api/v0/dapp/events', 'https://gateway.example.com')
 eventsUrl.searchParams.set('token', apiKey)
 const es = new EventSource(eventsUrl.toString())
