@@ -5,7 +5,7 @@ import type { SDKContext } from '../../../sdk.js'
 import { v4 } from 'uuid'
 import type { Ops } from '@canton-network/core-provider-ledger'
 import type { InternalOperationParams, ReassignParams } from './types.js'
-import { requireSynchronizerId } from '../../../init/synchronizer.js'
+import { SynchronizerResolver } from '../../../init/synchronizer.js'
 
 export class InternalLedgerNamespace {
     constructor(private readonly ctx: SDKContext) {}
@@ -141,7 +141,7 @@ export class InternalLedgerNamespace {
             commandId = v4(),
             packageIdSelectionPreference = [],
         } = args
-        const synchronizerId = await requireSynchronizerId(
+        const synchronizerId = await SynchronizerResolver.requireSynchronizerId(
             this.ctx,
             args.synchronizerId
         )
@@ -180,7 +180,7 @@ export class InternalLedgerNamespace {
             packageIdSelectionPreference = [],
             verboseHashing = false,
         } = args
-        const synchronizerId = await requireSynchronizerId(
+        const synchronizerId = await SynchronizerResolver.requireSynchronizerId(
             this.ctx,
             args.synchronizerId
         )
