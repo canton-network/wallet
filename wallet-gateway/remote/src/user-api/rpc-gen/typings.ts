@@ -470,6 +470,12 @@ export interface SignResultFailed {
 export type Status = string
 /**
  *
+ * Reason for why the transaction failed.
+ *
+ */
+export type FailureReason = string
+/**
+ *
  * The message to sign.
  *
  */
@@ -496,6 +502,8 @@ export interface MessageRaw {
     createdAt: CreatedAt
     signedAt?: SignedAt
     signature?: Signature
+    externalTxId?: ExternalTxId
+    failureReason?: FailureReason
 }
 export type Messages = MessageRaw[]
 export type UserLevelRight = any
@@ -539,12 +547,6 @@ export type PreparedTransactionHash = string
  *
  */
 export type Payload = string
-/**
- *
- * Reason for why the transaction failed.
- *
- */
-export type FailureReason = string
 export interface Transaction {
     id: TransactionId
     commandId: CommandId
@@ -693,6 +695,9 @@ export interface SignMessageParams {
     messageId: MessageId
     partyId?: PartyId
 }
+export interface GetSignMessageStatusParams {
+    messageId: MessageId
+}
 export interface GetMessageToSignParams {
     messageId: MessageId
 }
@@ -799,8 +804,17 @@ export interface IsWalletSyncNeededResult {
 export type SignResult =
     SignResultSigned | SignResultPending | SignResultRejected | SignResultFailed
 export interface SignMessageResult {
-    signature: Signature
+    signature?: Signature
     publicKey: PublicKey
+    status: Status
+    externalTxId?: ExternalTxId
+    failureReason?: FailureReason
+}
+export interface GetSignMessageStatusResult {
+    status: Status
+    externalTxId?: ExternalTxId
+    signature?: Signature
+    failureReason?: FailureReason
 }
 export interface GetMessageToSignResult {
     message: MessageRaw
@@ -923,6 +937,9 @@ export type Sign = (params: SignParams) => Promise<SignResult>
 export type SignMessage = (
     params: SignMessageParams
 ) => Promise<SignMessageResult>
+export type GetSignMessageStatus = (
+    params: GetSignMessageStatusParams
+) => Promise<GetSignMessageStatusResult>
 export type GetMessageToSign = (
     params: GetMessageToSignParams
 ) => Promise<GetMessageToSignResult>
