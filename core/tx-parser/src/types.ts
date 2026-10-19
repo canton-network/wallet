@@ -5,11 +5,16 @@
 
 import type { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+<<<<<<< HEAD
 import type {
     Account,
     InstrumentId,
 } from '@canton-network/core-token-standard-v2'
 import type { V2LabelDetails } from './v2-events'
+=======
+import type { Account } from '@canton-network/core-token-standard-v2'
+import type { V2LabelDetails } from './token-standard-v2/v2-events'
+>>>>>>> a17fcfff3 (parser changes and utils)
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined
 export type JsActiveContract = LedgerCommonSchemas['JsActiveContract']
