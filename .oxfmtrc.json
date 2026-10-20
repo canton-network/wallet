@@ -9,6 +9,7 @@
     "ignorePatterns": [
         "api-specs/ledger-api",
         "**/routeTree.gen.ts",
-        "core/ledger-client-types/src/generated-clients"
+        "core/ledger-client-types/src/generated-clients",
+        "docs/**/*.mdx"
     ]
 }
