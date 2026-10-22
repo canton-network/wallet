@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export * from './ApiKeyCard'
-<<<<<<< HEAD
 export * from './ApiKeyForm'
 export * from './AppHeader'
 export * from './AppLayout'
@@ -30,5 +29,3 @@ export * from './WalletEditForm'
 export * from './WalletList'
 export * from './WalletPicker'
 export * from './WalletsSync'
-=======
->>>>>>> 260e3a356 (feat(ui-components): add lit-react wrapper for ApiKeyCard)
