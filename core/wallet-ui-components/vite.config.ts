@@ -23,6 +23,7 @@ export default defineConfig({
         rolldownOptions: {
             external: [
                 /^lit($|\/)/,
+                /^@lit\//,
                 'bootstrap',
                 '@popperjs/core',
                 'react',
