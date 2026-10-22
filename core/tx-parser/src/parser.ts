@@ -53,6 +53,16 @@ import type {
     Ops,
     AbstractLedgerProvider,
 } from '@canton-network/core-provider-ledger'
+import {
+    deriveV2Label,
+    explainedCids,
+    extractHoldingsChange,
+    getHoldingViewV2,
+    netChangeCids,
+    sameAccount,
+    toHolding,
+    type V2LabelDetails,
+} from './v2-events.js'
 
 type ArchivedEvent = LedgerCommonSchemas['ArchivedEvent']
 type CreatedEvent = LedgerCommonSchemas['CreatedEvent']

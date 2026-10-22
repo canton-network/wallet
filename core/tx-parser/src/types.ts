@@ -13,8 +13,12 @@ import type {
 import type { V2LabelDetails } from './v2-events'
 =======
 import type { Account } from '@canton-network/core-token-standard-v2'
+<<<<<<< HEAD
 import type { V2LabelDetails } from './token-standard-v2/v2-events'
 >>>>>>> a17fcfff3 (parser changes and utils)
+=======
+import type { V2LabelDetails } from './v2-events'
+>>>>>>> 0537a528d (cleanup)
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined
 export type JsActiveContract = LedgerCommonSchemas['JsActiveContract']
