@@ -29,8 +29,10 @@ interface Build {
 
 /**
  * Keeps the wallet store in the vault item `walletStore`, as one snapshot
- * that every store write replaces. A lock or reset drops the store, and its
- * later writes reject, so it never writes into a vault opened after it.
+ * that each write replaces. Writes run one at a time, and a write resolves
+ * only after a snapshot containing it is in the vault. A lock or reset
+ * closes the store. After that its reads and writes reject, so it can't
+ * show data once the vault is locked or write into a vault opened later.
  */
 export function createWalletStore(
     vault: Pick<Vault, 'ready' | 'status' | 'defineItem' | 'onLock'>
@@ -73,16 +75,31 @@ export function createWalletStore(
                 ? { config: defaultConfig(), memory: new Map() as Memory }
                 : decodeSnapshot(snapshot)
         const store = new StoreInternal(config, logger, undefined, memory)
-        return persistent(store, async () => {
-            assertOpen(build)
-            try {
-                await item.setValue(encodeSnapshot(config, memory))
-            } catch (error) {
-                // Memory now holds a change that isn't on disk, so the next
-                // get() rebuilds from the last snapshot.
-                close(build, 'failed write')
-                throw error
-            }
+        // One queue for every withAuthContext() copy, so a snapshot never
+        // includes another caller's unfinished write.
+        let writes: Promise<unknown> = Promise.resolve()
+        return persistent(store, {
+            assertOpen: () => assertOpen(build),
+            write(change) {
+                const result = writes.then(async () => {
+                    assertOpen(build)
+                    const value = await change()
+                    // Check again in case the vault locked during the change.
+                    assertOpen(build)
+                    try {
+                        await item.setValue(encodeSnapshot(config, memory))
+                    } catch (error) {
+                        // Memory has a change that never reached disk. Close
+                        // the store so queued writes reject and the next
+                        // get() reloads the last saved snapshot.
+                        close(build, 'failed write')
+                        throw error
+                    }
+                    return value
+                })
+                writes = result.catch(() => undefined)
+                return result
+            },
         })
     }
 

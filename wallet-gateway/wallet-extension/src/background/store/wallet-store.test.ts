@@ -8,7 +8,9 @@ import type {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { authContext } from '../auth-context'
 import { createVault, type Vault, VaultLockedError } from '../vault'
+import { loadAuthedStore } from './index'
 import { createWalletStore } from './wallet-store'
 
 const PASSWORD = 'first password 1'
@@ -37,8 +39,8 @@ const wallet = (): Wallet => ({
     userId: CONTEXT.userId,
 })
 
-const transaction = (): Transaction => ({
-    id: 'tx-1',
+const transaction = (id = 'tx-1'): Transaction => ({
+    id,
     status: 'signed',
     commandId: 'command-1',
     preparedTransaction: 'prepared',
@@ -147,6 +149,43 @@ describe('createWalletStore', () => {
         expect(await snapshotIn(vault)).toBeNull()
     })
 
+    it('rejects reads from a store kept from before a lock', async () => {
+        const vault = await createdVault()
+        const unscoped = await createWalletStore(vault).get()
+        const store = unscoped.withAuthContext(CONTEXT)
+        await store.setTransaction(transaction())
+
+        await vault.lock()
+
+        await expect(store.getTransaction('tx-1')).rejects.toThrow(
+            VaultLockedError
+        )
+        expect(() => unscoped.withAuthContext(CONTEXT)).toThrow(
+            VaultLockedError
+        )
+    })
+
+    it('rejects a store that a lock() interrupts while it is scoped', async () => {
+        const vault = await createdVault()
+        const holder = createWalletStore(vault)
+        const loading = Promise.withResolvers<void>()
+        const released = Promise.withResolvers<void>()
+        vi.spyOn(authContext, 'load').mockImplementation(async () => {
+            loading.resolve()
+            await released.promise
+            return CONTEXT
+        })
+        // The same getStore() as in background/index.ts.
+        const getStore = async () => loadAuthedStore(await holder.get())
+
+        const store = getStore()
+        await loading.promise
+        await vault.lock()
+        released.resolve()
+
+        await expect(store).rejects.toThrow(VaultLockedError)
+    })
+
     it('drops writes from a store built before a reset', async () => {
         const vault = await createdVault()
         const holder = createWalletStore(vault)
@@ -219,5 +258,74 @@ describe('createWalletStore', () => {
         const reread = (await holder.get()).withAuthContext(CONTEXT)
         expect(await reread.getAllWallets()).toEqual([])
         expect(await reread.getTransaction('tx-1')).toEqual(transaction())
+    })
+
+    it('rejects a write queued behind a failed write without running it', async () => {
+        const vault = await createdVault()
+        const holder = createWalletStore(vault)
+        const store = (await holder.get()).withAuthContext(CONTEXT)
+        vi.spyOn(fakeBrowser.storage.local, 'set').mockRejectedValueOnce(
+            new Error('quota exceeded')
+        )
+
+        const [failed, queued] = await Promise.allSettled([
+            store.setTransaction(transaction('tx-1')),
+            store.setTransaction(transaction('tx-2')),
+        ])
+
+        expect(failed).toMatchObject({
+            status: 'rejected',
+            reason: { message: 'quota exceeded' },
+        })
+        expect(queued).toMatchObject({
+            status: 'rejected',
+            reason: {
+                message: 'The wallet store was reloaded after a failed write.',
+            },
+        })
+        expect(await snapshotIn(vault)).toBeNull()
+        const reread = (await holder.get()).withAuthContext(CONTEXT)
+        expect(await reread.transactionsCount()).toBe(0)
+    })
+
+    it('keeps a failed removal off disk when the write before it succeeds', async () => {
+        const vault = await createdVault()
+        const holder = createWalletStore(vault)
+        const store = (await holder.get()).withAuthContext(CONTEXT)
+        await store.setTransaction(transaction('keep'))
+        const local = fakeBrowser.storage.local
+        const set = local.set.bind(local)
+        vi.spyOn(local, 'set')
+            .mockImplementationOnce(set)
+            .mockRejectedValueOnce(new Error('quota exceeded'))
+
+        const [added, removed] = await Promise.allSettled([
+            store.setTransaction(transaction('new')),
+            store.removeTransaction('keep'),
+        ])
+
+        expect(added.status).toBe('fulfilled')
+        expect(removed).toMatchObject({
+            status: 'rejected',
+            reason: { message: 'quota exceeded' },
+        })
+        const reread = (await holder.get()).withAuthContext(CONTEXT)
+        expect(await reread.getTransaction('keep')).toEqual(transaction('keep'))
+        expect(await reread.getTransaction('new')).toEqual(transaction('new'))
+    })
+
+    it('does not save a write that throws, and keeps the store open', async () => {
+        const vault = await createdVault()
+        const store = (await createWalletStore(vault).get()).withAuthContext(
+            CONTEXT
+        )
+
+        await expect(
+            store.setTransactionStatus('missing', 'signed')
+        ).rejects.toThrow('Transaction not found')
+        expect(await snapshotIn(vault)).toBeNull()
+
+        await store.setTransaction(transaction())
+        expect(await snapshotIn(vault)).not.toBeNull()
     })
 })

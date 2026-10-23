@@ -73,18 +73,33 @@ const KIND = {
 } as const satisfies Record<keyof Store, 'read' | 'write' | 'unsupported'>
 
 /**
- * Wraps `store` so that each write calls `persist()` after it resolves.
- * A write that throws, a read, or an unsupported method never persists.
+ * Provided by the holder in `wallet-store.ts`, which decides when a store
+ * is closed and saves it after each write.
+ */
+export interface StoreAccess {
+    assertOpen(): void
+    /**
+     * Runs `change` once the writes before it have settled, then saves the
+     * store. Rejects without running `change` once the store is closed.
+     */
+    write<T>(change: () => Promise<T>): Promise<T>
+}
+
+/**
+ * Wraps `store` so its writes go through `access.write()`, and its reads
+ * and `withAuthContext()` fail once the store is closed.
  */
 export function persistent(
     store: StoreInternal,
-    persist: () => Promise<void>
+    access: StoreAccess
 ): WalletStore {
     return new Proxy(store, {
         get(target, prop, receiver) {
             if (prop === 'withAuthContext') {
-                return (context?: AuthContext) =>
-                    persistent(target.withAuthContext(context), persist)
+                return (context?: AuthContext) => {
+                    access.assertOpen()
+                    return persistent(target.withAuthContext(context), access)
+                }
             }
             const value: unknown = Reflect.get(target, prop, receiver)
             const kind = Object.hasOwn(KIND, prop)
@@ -95,11 +110,20 @@ export function persistent(
                     throw rpcErrors.methodNotSupported()
                 }
             }
-            if (kind !== 'write' || typeof value !== 'function') return value
+            if (kind === undefined || typeof value !== 'function') return value
+            // Call with the real store as `this`, so its calls to its own
+            // methods skip the proxy. Otherwise a write that calls another
+            // write would queue behind itself and never finish.
+            const call = async (args: unknown[]): Promise<unknown> =>
+                value.apply(target, args)
+            if (kind === 'write') {
+                return (...args: unknown[]) => access.write(() => call(args))
+            }
             return async (...args: unknown[]) => {
-                // `this` is the target, so internal calls don't persist twice.
-                const result: unknown = await value.apply(target, args)
-                await persist()
+                access.assertOpen()
+                const result = await call(args)
+                // Check again in case the vault locked during the read.
+                access.assertOpen()
                 return result
             }
         },

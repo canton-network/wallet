@@ -10,7 +10,7 @@ import {
 import { describe, expect, it, vi } from 'vitest'
 import { logger } from '@/shared/logger'
 import { defaultConfig } from './default-config'
-import { persistent } from './persistent-store'
+import { persistent, type StoreAccess } from './persistent-store'
 
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 
@@ -26,16 +26,28 @@ const TRANSACTION: Transaction = {
 function setup() {
     const memory: Memory = new Map()
     const inner = new StoreInternal(defaultConfig(), logger, CONTEXT, memory)
-    const persist = vi.fn(async () => {})
-    return { memory, inner, persist, store: persistent(inner, persist) }
+    const access = {
+        assertOpen: vi.fn(),
+        write: vi.fn((change: () => Promise<unknown>) => change()),
+    }
+    // The cast is needed because vi.fn() loses write()'s type parameter.
+    const store = persistent(inner, access as StoreAccess)
+    return { memory, inner, access, store }
+}
+
+const closed = new Error('closed')
+const throwClosed = () => {
+    throw closed
 }
 
 describe('persistent wallet store', () => {
-    it('persists each write once, after it resolves', async () => {
-        const { inner, persist, store } = setup()
-        const persistedStatuses: unknown[] = []
-        persist.mockImplementation(async () => {
-            persistedStatuses.push((await inner.getTransaction('tx-1'))?.status)
+    it('runs each write through write() once', async () => {
+        const { inner, access, store } = setup()
+        const statuses: unknown[] = []
+        access.write.mockImplementation(async (change) => {
+            const result = await change()
+            statuses.push((await inner.getTransaction('tx-1'))?.status)
+            return result
         })
 
         await store.setTransaction(TRANSACTION)
@@ -43,20 +55,43 @@ describe('persistent wallet store', () => {
         // must not count as a second write.
         expect(await store.setTransactionSigned('tx-1', new Date())).toBe(true)
 
-        expect(persistedStatuses).toEqual(['pending', 'signed'])
+        expect(statuses).toEqual(['pending', 'signed'])
     })
 
-    it('does not persist a read', async () => {
-        const { persist, store } = setup()
+    it('does not run a read through write()', async () => {
+        const { access, store } = setup()
 
         await store.listNetworks()
         await store.transactionsCount()
 
-        expect(persist).not.toHaveBeenCalled()
+        expect(access.write).not.toHaveBeenCalled()
     })
 
-    it('persists writes through a withAuthContext() copy', async () => {
-        const { memory, persist, store } = setup()
+    it('checks the store is open before a read and after it resolves', async () => {
+        const { inner, access, store } = setup()
+        const listNetworks = vi.spyOn(inner, 'listNetworks')
+
+        access.assertOpen.mockImplementationOnce(throwClosed)
+        await expect(store.listNetworks()).rejects.toBe(closed)
+        expect(listNetworks).not.toHaveBeenCalled()
+
+        // This time the store closes while the read is pending.
+        access.assertOpen
+            .mockImplementationOnce(() => {})
+            .mockImplementationOnce(throwClosed)
+        await expect(store.listNetworks()).rejects.toBe(closed)
+        expect(listNetworks).toHaveBeenCalledOnce()
+    })
+
+    it('checks the store is open before withAuthContext()', () => {
+        const { access, store } = setup()
+        access.assertOpen.mockImplementation(throwClosed)
+
+        expect(() => store.withAuthContext(CONTEXT)).toThrow(closed)
+    })
+
+    it('runs writes through a withAuthContext() copy', async () => {
+        const { memory, access, store } = setup()
 
         const scoped = store.withAuthContext({
             userId: 'bob',
@@ -64,12 +99,12 @@ describe('persistent wallet store', () => {
         })
         await scoped.setTransaction(TRANSACTION)
 
-        expect(persist).toHaveBeenCalledTimes(1)
+        expect(access.write).toHaveBeenCalledOnce()
         expect(memory.get('bob')?.transactions.has('tx-1')).toBe(true)
     })
 
-    it('rejects the API-key methods without persisting', async () => {
-        const { memory, persist, store } = setup()
+    it('rejects the API-key methods without writing', async () => {
+        const { memory, access, store } = setup()
 
         await expect(
             store.addApiKey({
@@ -86,17 +121,7 @@ describe('persistent wallet store', () => {
             code: errorCodes.rpc.methodNotSupported,
         })
 
-        expect(persist).not.toHaveBeenCalled()
+        expect(access.write).not.toHaveBeenCalled()
         expect(memory.get(CONTEXT.userId)?.apiKeys.size ?? 0).toBe(0)
-    })
-
-    it('does not persist a write that throws', async () => {
-        const { persist, store } = setup()
-
-        await expect(
-            store.setTransactionStatus('missing', 'signed')
-        ).rejects.toThrow('Transaction not found')
-
-        expect(persist).not.toHaveBeenCalled()
     })
 })
