@@ -5,20 +5,8 @@
 
 import type { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-<<<<<<< HEAD
-import type {
-    Account,
-    InstrumentId,
-} from '@canton-network/core-token-standard-v2'
+import type { Account, InstrumentId } from '@canton-network/core-token-standard-v2'
 import type { V2LabelDetails } from './v2-events'
-=======
-import type { Account } from '@canton-network/core-token-standard-v2'
-<<<<<<< HEAD
-import type { V2LabelDetails } from './token-standard-v2/v2-events'
->>>>>>> a17fcfff3 (parser changes and utils)
-=======
-import type { V2LabelDetails } from './v2-events'
->>>>>>> 0537a528d (cleanup)
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined
 export type JsActiveContract = LedgerCommonSchemas['JsActiveContract']
@@ -134,21 +122,13 @@ export interface TokenStandardChoice {
 
 export interface TransferOut extends KnownLabel {
     type: 'TransferOut'
-    receiverAmounts: Array<{
-        receiver: string
-        amount: string
-        instrumentId?: InstrumentId
-    }>
+    receiverAmounts: Array<{ receiver: string; amount: string, instrumentId?: InstrumentId }>
 }
 
 export interface TransferIn extends KnownLabel {
     type: 'TransferIn'
-    sender: string
-    senderAmounts?: Array<{
-        sender: string
-        amount: string
-        instrumentId?: InstrumentId
-    }>
+    sender: string,
+    senderAmounts?: Array<{ sender: string; amount: string, instrumentId?: InstrumentId }>
 }
 
 export interface MergeSplit extends KnownLabel {

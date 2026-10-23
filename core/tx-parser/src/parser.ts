@@ -55,7 +55,7 @@ import type {
 } from '@canton-network/core-provider-ledger'
 import {
     deriveV2Label,
-    explainedCids,
+    holdingCidsOf,
     extractHoldingsChange,
     getHoldingViewV2,
     netChangeCids,
@@ -1080,6 +1080,134 @@ export class TransactionParser {
             )
         }
         return { created, archived }
+    }
+
+    private async collectV2Events(): Promise<{
+        events: EmittedEvent[]
+        explained: Set<string>
+    }> {
+        const views = new Map<string, HoldingViewV2>()
+        const emitted: EmittedEvent[] = []
+        const explained = new Set<string>()
+        let stack: { choice: string; until: number }[] = []
+
+        for (const raw of this.transaction.events ?? []) {
+            const { nodeId, createdEvent, exercisedEvent } =
+                getNodeIdAndEvent(raw)
+            stack = stack.filter((s) => s.until >= nodeId)
+            const parentChoice = stack.at(-1)?.choice ?? 'none (root node)'
+
+            if (createdEvent) {
+                const view = getHoldingViewV2(createdEvent)
+                if (view) views.set(createdEvent.contractId, view)
+            }
+
+            if (!exercisedEvent) continue
+            stack.push({
+                choice: exercisedEvent.choice,
+                until: exercisedEvent.lastDescendantNodeId,
+            })
+
+            const change = extractHoldingsChange(exercisedEvent)
+            if (!change || change.account.owner !== this.partyId) continue
+
+            const { inputs, outputs } = netChangeCids(change)
+            const resolve = (cid: string) => this.resolveV2Holding(cid, views)
+            const ins = (await Promise.all(inputs.map(resolve))).filter(
+                (h): h is Holding => h !== null
+            )
+            const outs = (await Promise.all(outputs.map(resolve))).filter(
+                (h): h is Holding => h !== null
+            )
+
+            if (
+                [...ins, ...outs].some(
+                    (h) =>
+                        h.instrumentId.admin !== change.admin ||
+                        !sameAccount(h.account!, change.account)
+                )
+            ) {
+                console.warn(
+                    `Ignoring EventLog_holdingsChange at node ${nodeId}: holdings do not match admin/account`
+                )
+                continue
+            }
+
+            const lockedHoldingsChange: HoldingsChange = {
+                creates: outs.filter((h) => !!h.lock),
+                archives: ins.filter((h) => !!h.lock),
+            }
+
+            const unlockedHoldingsChange: HoldingsChange = {
+                creates: outs.filter((h) => !h.lock),
+                archives: ins.filter((h) => !h.lock),
+            }
+
+            const lockedHoldingsChangeSummaries = computeSummaries(
+                lockedHoldingsChange,
+                this.partyId
+            )
+            const unlockedHoldingsChangeSummaries = computeSummaries(
+                unlockedHoldingsChange,
+                this.partyId
+            )
+
+            const event: TokenStandardEvent = {
+                label: deriveV2Label({
+                    change,
+                    parentChoice,
+                    tokenStandardChoice: {
+                        name: exercisedEvent.choice,
+                        choiceArgument: exercisedEvent.choiceArgument,
+                        exerciseResult: exercisedEvent.exerciseResult,
+                    },
+                    onlyUnlocks:
+                        lockedHoldingsChange.creates.length === 0 &&
+                        lockedHoldingsChange.archives.length > 0,
+                }),
+                lockedHoldingsChange,
+                lockedHoldingsChangeSummaries,
+                lockedHoldingsChangeSummary:
+                    lockedHoldingsChangeSummaries[0] ??
+                    emptyHoldingsChangeSummary,
+                unlockedHoldingsChange,
+                unlockedHoldingsChangeSummaries,
+                unlockedHoldingsChangeSummary:
+                    unlockedHoldingsChangeSummaries[0] ??
+                    emptyHoldingsChangeSummary,
+                transferInstruction: null,
+            }
+
+            holdingCidsOf(change).forEach((cid: string) => explained.add(cid))
+
+            if (
+                holdingChangesNonEmpty(event) ||
+                change.transferLegSides.length > 0
+            ) {
+                emitted.push({ nodeId, lastNodeId: nodeId, event })
+            }
+        }
+
+        return { events: emitted, explained }
+    }
+
+    private async resolveV2Holding(
+        cid: string,
+        views: Map<string, HoldingViewV2>
+    ): Promise<Holding | null> {
+        const cached = views.get(cid)
+        if (cached) return toHolding(cid, cached)
+
+        const events = await this.fetchContractEvents(cid, [
+            HOLDING_INTERFACE_ID_V2,
+        ])
+
+        const view =
+            events?.created?.createdEvent &&
+            getHoldingViewV2(events.created.createdEvent)
+        if (!view) return null
+        views.set(cid, view)
+        return toHolding(cid, view)
     }
 }
 
