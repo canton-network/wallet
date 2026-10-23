@@ -41,6 +41,14 @@ export interface Vault {
     /** Deletes the vault. Its data is gone. */
     reset(): Promise<void>
     /**
+     * Calls `listener` on every `lock()` and `reset()`, even when the vault
+     * is already locked, so make it idempotent. It runs synchronously, before
+     * `lock()` or `reset()` awaits anything, so you can drop decrypted data
+     * before any queued operation runs. If it throws, the error is logged
+     * and the lock goes ahead. Returns a function that removes the listener.
+     */
+    onLock(listener: () => void): () => void
+    /**
      * An encrypted item. Values must be JSON-serializable; they are stored,
      * and returned, as they look after `JSON.stringify` and `JSON.parse`.
      */
@@ -83,9 +91,9 @@ interface OpenVault {
 /**
  * Creates the vault and starts restoring it from session storage right away.
  *
- * Every operation runs in one queue, after `ready`. `lock()` bumps the
- * generation before its first `await`; an operation called before that
- * keeps no result in memory and doesn't cache a key.
+ * Every operation runs in one queue, after `ready`. `lock()` and `reset()`
+ * bump the generation before their first `await`, so an operation called
+ * before that keeps no result in memory and doesn't cache a key.
  *
  * `iterations` is the PBKDF2 count for new keys. Stored vaults must have at
  * least 600,000, or `iterations` when tests set it lower.
@@ -98,6 +106,7 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
     let open: OpenVault | undefined
     let generation = 0
     let publishedStatus: VaultStatus | undefined
+    const lockListeners = new Set<() => void>()
 
     const ready = restore(generation)
         .catch((error: unknown) => {
@@ -130,6 +139,24 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
             if (rejectIfLocked) assertCurrent(gen)
             return result
         })
+    }
+
+    /**
+     * Keep this synchronous. `lock()` and `reset()` call it before their
+     * first `await`, so operations already in the queue see the new
+     * generation.
+     */
+    function closeNow(): void {
+        generation++
+        open = undefined
+        if (status === 'unlocked') status = 'locked'
+        for (const listener of lockListeners) {
+            try {
+                listener()
+            } catch (error) {
+                log.warn('A lock listener failed: {error}', { error })
+            }
+        }
     }
 
     function assertCurrent(gen: number): void {
@@ -284,10 +311,7 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
             ),
 
         lock: () => {
-            // Before any await: in-flight operations see the new generation.
-            generation++
-            open = undefined
-            if (status === 'unlocked') status = 'locked'
+            closeNow()
             return enqueue(async () => {
                 try {
                     await vaultSessionItem.removeValue()
@@ -318,15 +342,22 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
                 log.info('Vault password changed')
             }),
 
-        reset: () =>
-            run(async () => {
-                open = undefined
-                if (status === 'unlocked') status = 'locked'
+        reset: () => {
+            closeNow()
+            return run(async () => {
                 await vaultSessionItem.removeValue()
                 await vaultItem.removeValue()
                 status = 'uninitialized'
                 log.info('Vault reset')
-            }),
+            })
+        },
+
+        onLock: (listener) => {
+            lockListeners.add(listener)
+            return () => {
+                lockListeners.delete(listener)
+            }
+        },
 
         defineItem<T>(
             key: string,
