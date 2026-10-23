@@ -24,6 +24,12 @@ export default defineConfig({
     plugins: [standardDecorators(resolve(frontendRoot, '**/*.ts'))],
     resolve: {
         alias: {
+            // Must come before the package alias below, which would turn
+            // `/logic` into a path inside the package directory
+            '@canton-network/core-wallet-ui-components/logic': resolve(
+                import.meta.dirname,
+                '../../core/wallet-ui-components/dist/logic/index.js'
+            ),
             '@canton-network/core-wallet-ui-components': resolve(
                 import.meta.dirname,
                 '../../core/wallet-ui-components'
