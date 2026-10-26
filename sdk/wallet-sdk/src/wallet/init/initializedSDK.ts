@@ -9,7 +9,10 @@ import { parseAssets, ParsedURL } from '../namespace/utils/url.js'
 import { KeysNamespace } from '../namespace/keys/index.js'
 import { LedgerNamespace } from '../namespace/ledger/index.js'
 import { PartyNamespace } from '../namespace/party/index.js'
-import { TrafficAccountNamespace } from '../namespace/traffic/index.js'
+import {
+    TrafficAccountNamespace,
+    type TrafficPurchaseContext,
+} from '../namespace/traffic/index.js'
 import { UserNamespace } from '../namespace/user/index.js'
 import { TokenNamespace } from '../namespace/token/index.js'
 import { AssetNamespace } from '../namespace/asset/index.js'
@@ -183,12 +186,14 @@ const createNamespace: {
         // once extended -- so `getTraffic` and `topUpTraffic` behave the same
         // either side of `extend`, and `purchaseTraffic` keeps one signature
         // instead of one per state.
-        return new TrafficAccountNamespace(ctx, {
+        const purchaseCtx: TrafficPurchaseContext = {
+            ...ctx,
             tokenStandardService,
             registryUrls: config.registries.map(
                 (input) => new ParsedURL(ctx, input)
             ),
-        })
+        }
+        return new TrafficAccountNamespace(purchaseCtx)
     },
 }
 
