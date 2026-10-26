@@ -104,7 +104,17 @@
                         "parentChoice": "TransferPreapproval_SendV2"
                     },
                     "type": "TransferIn",
-                    "sender": "aliceValidator::normalized"
+                    "sender": "aliceValidator::normalized",
+                    "senderAmounts": [
+                        {
+                            "amount": "200",
+                            "instrumentId": {
+                                "admin": "dso::normalized",
+                                "id": "Amulet"
+                            },
+                            "sender": "aliceValidator::normalized"
+                        }
+                    ]
                 },
                 "lockedHoldingsChange": { "creates": [], "archives": [] },
                 "lockedHoldingsChangeSummaries": [],
@@ -264,7 +274,11 @@
                     "receiverAmounts": [
                         {
                             "receiver": "aliceValidator::normalized",
-                            "amount": "100"
+                            "amount": "100",
+                            "instrumentId": {
+                                "admin": "dso::normalized",
+                                "id": "Amulet"
+                            }
                         }
                     ]
                 },
@@ -446,7 +460,11 @@
                     "receiverAmounts": [
                         {
                             "receiver": "aliceValidator::normalized",
-                            "amount": "10"
+                            "amount": "10",
+                            "instrumentId": {
+                                "admin": "dso::normalized",
+                                "id": "Amulet"
+                            }
                         }
                     ]
                 },
@@ -2243,7 +2261,14 @@
                     },
                     "type": "TransferOut",
                     "receiverAmounts": [
-                        { "receiver": "bob::normalized", "amount": "1000" }
+                        {
+                            "receiver": "bob::normalized",
+                            "amount": "1000",
+                            "instrumentId": {
+                                "admin": "dso::normalized",
+                                "id": "Amulet"
+                            }
+                        }
                     ]
                 },
                 "lockedHoldingsChange": { "creates": [], "archives": [] },
@@ -3144,7 +3169,17 @@
                         "parentChoice": "TransferInstruction_Accept"
                     },
                     "type": "TransferIn",
-                    "sender": "bob::normalized"
+                    "sender": "bob::normalized",
+                    "senderAmounts": [
+                        {
+                            "amount": "200",
+                            "instrumentId": {
+                                "admin": "dso::normalized",
+                                "id": "Amulet"
+                            },
+                            "sender": "bob::normalized"
+                        }
+                    ]
                 },
                 "lockedHoldingsChange": { "creates": [], "archives": [] },
                 "lockedHoldingsChangeSummaries": [],
@@ -4104,7 +4139,17 @@
                         "parentChoice": "AmuletRules_Transfer"
                     },
                     "type": "TransferIn",
-                    "sender": "charlie::normalized"
+                    "sender": "charlie::normalized",
+                    "senderAmounts": [
+                        {
+                            "amount": "500",
+                            "instrumentId": {
+                                "admin": "dso::normalized",
+                                "id": "Amulet"
+                            },
+                            "sender": "charlie::normalized"
+                        }
+                    ]
                 },
                 "lockedHoldingsChange": { "creates": [], "archives": [] },
                 "lockedHoldingsChangeSummaries": [],

@@ -5,7 +5,10 @@
 
 import type { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { Account } from '@canton-network/core-token-standard-v2'
+import type {
+    Account,
+    InstrumentId,
+} from '@canton-network/core-token-standard-v2'
 import type { V2LabelDetails } from './v2-events'
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined
@@ -122,12 +125,21 @@ export interface TokenStandardChoice {
 
 export interface TransferOut extends KnownLabel {
     type: 'TransferOut'
-    receiverAmounts: Array<{ receiver: string; amount: string }>
+    receiverAmounts: Array<{
+        receiver: string
+        amount: string
+        instrumentId?: InstrumentId
+    }>
 }
 
 export interface TransferIn extends KnownLabel {
     type: 'TransferIn'
     sender: string
+    senderAmounts?: Array<{
+        sender: string
+        amount: string
+        instrumentId?: InstrumentId
+    }>
 }
 
 export interface MergeSplit extends KnownLabel {

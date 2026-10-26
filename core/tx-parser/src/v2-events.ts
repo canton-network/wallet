@@ -169,7 +169,7 @@ export function deriveV2Label(opts: {
     >()
     for (const l of [...transfersOut, ...transfersIn]) {
         const counterparty = l.otherside.owner ?? l.otherside.id
-        const key = `${counterparty}-${l.instrumentId}`
+        const key = JSON.stringify([counterparty, l.instrumentId])
         const entry = net.get(key) ?? {
             counterparty: counterparty,
             instrumentId: l.instrumentId,
@@ -184,6 +184,7 @@ export function deriveV2Label(opts: {
     }
     const outs = [...net.values()].filter((e) => e.amount.gt(0))
     const ins = [...net.values()].filter((e) => e.amount.lt(0))
+    const instrument = (id: string) => ({ admin: change.admin, id })
 
     if (outs.length === 0 && ins.length === 0) {
         return { ...common, type: noTransferType() } as Label
@@ -195,8 +196,8 @@ export function deriveV2Label(opts: {
             type: 'Settlement',
             netTransfers: [...outs, ...ins].map((e) => ({
                 counterparty: e.counterparty,
-                instrumentId: { admin: change.admin, id: e.instrumentId },
                 amount: e.amount.toString(),
+                instrumentId: instrument(e.instrumentId),
             })),
         } as Label
     }
@@ -208,13 +209,12 @@ export function deriveV2Label(opts: {
             receiverAmounts: outs.map((e) => ({
                 receiver: e.counterparty,
                 amount: e.amount.toString(),
+                instrumentId: instrument(e.instrumentId),
             })),
         } as Label
     }
 
-    const senders = [
-        ...new Set(transfersIn.map((l) => l.otherside.owner ?? l.otherside.id)),
-    ]
+    const senders = [...new Set(ins.map((l) => l.counterparty))]
 
     return {
         ...common,
@@ -222,5 +222,10 @@ export function deriveV2Label(opts: {
         burnAmount: '0', //V1 convention has burnt/mint as always 0 for receiving side
         mintAmount: '0',
         sender: senders.length === 1 ? senders[0] : senders.join(','),
+        senderAmounts: ins.map((l) => ({
+            sender: l.counterparty,
+            amount: l.amount.negated().toString(),
+            instrumentId: instrument(l.instrumentId),
+        })),
     } as Label
 }
