@@ -52,9 +52,6 @@ type TransferExtraArgs = TrafficPurchaser_PurchaseCredits['transferExtraArgs']
  * What `purchaseTraffic` needs on top of the base context: a registry to ask how
  * a payment would settle, and a way to read the buyer's holdings.
  *
- * Supplied by `sdk.extend({ traffic: ... })`. The base namespace is built
- * without it, so `getTraffic` and `topUpTraffic` -- which are pure Ledger API
- * calls -- cost a caller no registry configuration.
  */
 export type TrafficPurchaseContext = SDKContext & {
     tokenStandardService: TokenStandardService
@@ -144,23 +141,10 @@ export class TrafficAccountNamespace {
 
     /**
      * Builds the exercise that buys traffic from a paymaster, paying with
-     * token-standard holdings.
+     * token-standard holdings, at the ledger conversion rate.
      *
-     * Prices the purchase, asks the registry how it would settle the payment,
-     * and returns the `TrafficPurchaser_PurchaseCredits` command together with
-     * every contract the submission has to disclose. Nothing is submitted here:
-     * the buyer signs for itself, so the caller drives
-     * `sdk.ledger.prepare(...).sign(key).execute(...)`.
      *
-     * Preparing interprets the transaction, so everything the Daml model refuses
-     * -- an expired rate, a purchase over `maxTrafficPerPurchase`, holdings the
-     * buyer does not own -- is reported by `prepare`, before anything is signed.
-     * Those invariants are therefore deliberately not re-checked here.
      *
-     * The purchase credits the traffic on-ledger: `TrafficPurchaser_PurchaseCredits`
-     * creates a `TrafficCredit` for `targetAccount`, which the paymaster's
-     * participant TEA reads off the transaction tree. The returned
-     * `ContractId TrafficCredit` identifies that credit.
      */
     public async purchaseTraffic(
         params: PurchaseTrafficParams
