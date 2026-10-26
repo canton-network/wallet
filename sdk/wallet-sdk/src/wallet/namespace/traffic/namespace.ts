@@ -35,29 +35,16 @@ import type {
 const DEFAULT_EXECUTE_BEFORE_MS = 10 * 60 * 1000
 
 /**
- * How far in the past the transfer the registry is asked about says it was
- * requested.
+ * Sets the registry request's requestedAt to 60 seconds before now,
+ * allowing for clock differences with the participant.
  *
- * `requestedAt` must not be after the ledger effective time -- Amulet asserts
- * that to the microsecond -- and the clock this runs on is not the
- * participant's. A minute of slack is what splice's own tooling allows, and it
- * is the same figure `core-token-standard-service` uses.
- *
- * The figure only ever reaches the registry: the transfer the ledger settles is
- * built by `TrafficPurchaser_PurchaseCredits` with `requestedAt = getTime`, i.e.
- * the ledger effective time itself, so the assertion cannot fail on the ledger's
- * own figure.
+ * The ledger transfer uses ledger time, so this offset only affects the registry request
  */
 const REQUESTED_AT_SKEW_MS = 60_000
 
 /**
  * The registry's choice context, as the choice expects it.
  *
- * Taken off the model's own choice type rather than from
- * `@canton-network/core-token-standard`: both packages carry their own copy of
- * the generated `AnyValue`, and being recursive the two are not interchangeable
- * to TypeScript even though they describe the same wire format. The one the
- * model was built against is the one that has to typecheck.
  */
 type TransferExtraArgs = TrafficPurchaser_PurchaseCredits['transferExtraArgs']
 
