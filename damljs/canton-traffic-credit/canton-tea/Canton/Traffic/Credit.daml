@@ -3,26 +3,35 @@
 
 -- | Credits traffic to a traffic enforcement (TEA) account.
 --
--- An application that sells traffic (for example a wallet provider) calls
--- `creditTraffic` from within its own purchase logic. The TEA of the
--- participant hosting the paymaster reads the created `TrafficCredit` off the
--- ledger and adds `amount` to the balance of `accountId`. TEA only trusts
--- credits whose `paymaster` is one of its configured top-up paymasters.
+-- An application that sells traffic (for example a wallet provider)
+-- implements `TrafficCreditIssuer` on a contract that the paymaster signs, and
+-- exercises `PublishCredit` on that same contract from within its own
+-- purchase logic. The TEA of the participant hosting the paymaster reads the
+-- exercise off the ledger and adds `trafficAmount` to the balance of
+-- `accountId`. TEA only trusts credits whose acting party is one of its
+-- configured top-up paymasters.
 --
--- This package is the contract between Canton and those applications, so it
--- must stay upgrade compatible (SCU): add fields only as `Optional`, and never
--- remove or rename them.
+-- Exercising `PublishCredit` on a contract that is not otherwise used by the
+-- transaction adds that contract to the transaction and makes the credit more
+-- expensive in traffic.
+--
+-- This package is the contract between Canton and those applications.
+-- Interfaces cannot be upgraded, so a change requires a new interface in a
+-- new package. The package must not contain templates.
 module Canton.Traffic.Credit
   ( AccountId
   , mkAccountId
-  , TrafficCredit
-  , creditTraffic
+  , TrafficCreditIssuerView(..)
+  , TrafficCreditIssuer
+  , PublishCredit(..)
   ) where
 
-import DA.Either (isRight)
+import DA.Foldable (forA_)
 import DA.Text qualified as T
 
--- | The id of a TEA account. Non-empty and at most 255 UTF-16 code units.
+-- | The id of a TEA account. At most 255 characters, matching
+-- `^[A-Za-z0-9@^$.!`\-#+'~_|:() ]+(?:/[A-Za-z0-9@^$.!`\-#+'~_|:() ]+)*$`:
+-- one or more non-empty segments separated by `/`.
 --
 -- The constructor is not exported: create account ids through `mkAccountId`.
 data AccountId = AccountId with
@@ -31,49 +40,51 @@ data AccountId = AccountId with
 
 -- | Validate `value` as a TEA account id.
 mkAccountId : Text -> Either Text AccountId
-mkAccountId value =
-  -- Length in UTF-16 code units, as counted by TEA (Java `String.length`).
-  let len = sum (map (\c -> if c > 0xFFFF then 2 else 1) (T.toCodePoints value))
-  in if len >= 1 && len <= 255
-    then Right AccountId with value
-    else Left ("Account id must be 1 to 255 UTF-16 code units, found " <> show len)
+mkAccountId value
+  | len > 255 = Left ("Account id must be at most 255 characters, found " <> show len)
+  | otherwise = (AccountId with value) <$ forA_ (T.splitOn "/" value) validateSegment
+  where
+    len = T.length value
 
--- | A credit of `amount` traffic bytes to the TEA account `accountId`.
---
--- Signed by the paymaster, so the ledger guarantees the paymaster authorized
--- it. The constructor is not exported: create credits through
--- `creditTraffic`, which archives them in the same transaction, so that
--- credits never accumulate in the active contract set.
-template TrafficCredit
-  with
+-- | Validate one `/`-separated segment of an account id.
+validateSegment : Text -> Either Text ()
+validateSegment segment
+  | segment == "" = Left "Account id segments must not be empty"
+  | T.isPred isSegmentChar segment = Right ()
+  | otherwise =
+      Left ("Account id segments must only contain [A-Za-z0-9@^$.!`#+'~_|:() -], found " <> show segment)
+  where
+    isSegmentChar c = T.isAlphaNum c || c `elem` segmentPunctuation
+
+segmentPunctuation : [Text]
+segmentPunctuation = T.explode "@^$.!`-#+'~_|:() "
+
+-- | The view of a `TrafficCreditIssuer`.
+data TrafficCreditIssuerView = TrafficCreditIssuerView with
     paymaster : Party
       -- ^ The party paying for the traffic. Must be a configured top-up
       -- paymaster of the TEA that ingests the credit.
-    accountId : AccountId
-      -- ^ The TEA account to credit.
-    amount : Int
-      -- ^ Traffic to credit, in bytes.
-  where
-    signatory paymaster
-    -- Revalidate the account id: Ledger API creates and record updates
-    -- bypass `mkAccountId`.
-    ensure amount > 0 && isRight (mkAccountId accountId.value)
+  deriving (Eq, Show)
 
--- | Credit `amount` traffic bytes to `accountId`, paid for by `paymaster`.
---
--- Creates and immediately archives a `TrafficCredit`. TEA still sees the
--- create, because it reads the full transaction tree.
---
--- Requires the authority of `paymaster`, e.g. by being called from a choice
--- on a contract that `paymaster` signs. Any choice that calls this function
--- with the authority of `paymaster` can credit traffic, so such choices must
--- only do so once the traffic has been paid for.
---
--- Returns the id of the credit, which identifies it on the ledger.
--- The credit is already archived, so the id cannot be fetched or exercised.
-creditTraffic : Party -> AccountId -> Int -> Update (ContractId TrafficCredit)
-creditTraffic paymaster accountId amount = do
-  cid <- create TrafficCredit with paymaster; accountId; amount
-  archive cid
-  pure cid
+-- | A contract that can credit traffic paid for by its `paymaster`.
+interface TrafficCreditIssuer where
+  viewtype TrafficCreditIssuerView
 
+  -- | Credit `trafficAmount` traffic bytes to `accountId`.
+  --
+  -- Requires the authority of the paymaster, e.g. by being exercised from a
+  -- choice on the implementing contract that the paymaster signs. Any choice
+  -- that exercises `PublishCredit` with the authority of the paymaster can
+  -- credit traffic, so such choices must only do so once the traffic has been
+  -- paid for.
+  nonconsuming choice PublishCredit : ()
+    with
+      accountId : AccountId
+        -- ^ The TEA account to credit.
+      trafficAmount : Int
+        -- ^ Traffic to credit, in bytes.
+    controller (view this).paymaster
+    do
+      -- Revalidate the account id: Ledger API exercises bypass `mkAccountId`.
+      _ <- either abort pure (mkAccountId accountId.value)
+      assertMsg "trafficAmount must be positive" (trafficAmount > 0)
