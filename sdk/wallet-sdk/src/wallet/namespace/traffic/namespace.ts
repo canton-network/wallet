@@ -412,14 +412,9 @@ export class TrafficAccountNamespace {
     }
 
     /**
-     * Which factory settles the payment, and with what context.
-     *
-     * The transfer the registry is asked about mirrors the one
-     * `TrafficPurchaser_PurchaseCredits` builds, so the context it prices is the
-     * context the choice will use. That is also why the choice arguments are
-     * assembled here rather than through the token-standard service's own
-     * builder, which stamps a memo into `transfer.meta` that the model's
-     * `emptyMetadata` does not carry.
+     * The registry checks the same transfer that `TrafficPurchaser_PurchaseCredits`
+     * will use, so it prices the right context. We build the choice arguments here
+     * because the token-standard builder adds a memo that `emptyMetadata` doesn't include.
      */
     private async resolveTransferFactory(
         params: PurchaseTrafficParams,
