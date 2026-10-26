@@ -20,7 +20,10 @@ import type {
     Store,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import { SigningProvider } from '@canton-network/core-signing-lib'
+import {
+    SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
+    SigningProvider,
+} from '@canton-network/core-signing-lib'
 import {
     SignMessageService,
     type Notifier,
@@ -190,9 +193,13 @@ export class SelfIssuedAuthService {
         if (!partyHint) {
             throw new Error('partyHint is required')
         }
-        if (params.signingProviderId === SigningProvider.PARTICIPANT) {
+        if (
+            !SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS.includes(
+                params.signingProviderId
+            )
+        ) {
             throw new Error(
-                'Signing provider participant is not supported for self-issued onboarding'
+                `Signing provider ${params.signingProviderId} does not support signing self-issued access tokens`
             )
         }
 
