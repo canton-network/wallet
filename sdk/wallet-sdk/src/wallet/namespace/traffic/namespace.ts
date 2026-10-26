@@ -60,20 +60,6 @@ export type TrafficPurchaseContext = SDKContext & {
 }
 
 /**
- * Whether a context carries the registry a purchase needs.
- *
- * A `TrafficPurchaseContext` is an `SDKContext` with a token-standard service
- * and registries, so a context built by `sdk.extend({ traffic })` is told apart
- * from a bare `SDKContext` by those fields -- a type guard, so no cast is needed
- * to read them back off.
- */
-function isTrafficPurchaseContext(
-    context: SDKContext | TrafficPurchaseContext
-): context is TrafficPurchaseContext {
-    return 'tokenStandardService' in context && 'registryUrls' in context
-}
-
-/**
  * Traffic accounting on a Canton participant, and buying traffic on-ledger.
  *
  * The `/v2/traffic/*` endpoints behind `getTraffic`/`topUpTraffic` are only
@@ -83,31 +69,11 @@ function isTrafficPurchaseContext(
 export class TrafficAccountNamespace {
     private readonly logger: SDKLogger
 
-    private readonly purchaseCtx: TrafficPurchaseContext | undefined
-
-    constructor(private readonly ctx: SDKContext) {
-        this.purchaseCtx = isTrafficPurchaseContext(ctx) ? ctx : undefined
+    // The namespace is only built via `sdk.extend({ traffic })`, which always
+    // supplies the registry-bearing context, so it is required here rather than
+    // detected at runtime.
+    constructor(private readonly ctx: TrafficPurchaseContext) {
         this.logger = ctx.logger.child({ namespace: 'TrafficAccountNamespace' })
-    }
-
-    /**
-     * The registry-bearing context, or an `SDKError` when the namespace was
-     * built without one.
-     *
-     * The private purchase helpers read it from here rather than being handed
-     * it, so the single `sdk.extend({ traffic })` requirement lives in one
-     * place instead of threading a parameter through every step.
-     */
-    private requirePurchaseContext(): TrafficPurchaseContext {
-        if (this.purchaseCtx === undefined) {
-            this.ctx.error.throw({
-                message:
-                    'traffic.purchaseTraffic needs a registry to price the payment against. ' +
-                    'Call sdk.extend({ traffic: { registries, auth } }) first.',
-                type: 'SDKOperationUnsupported',
-            })
-        }
-        return this.purchaseCtx
     }
 
     /**
@@ -290,7 +256,7 @@ export class TrafficAccountNamespace {
         instrumentId: string,
         registryUrl: PurchaseTrafficParams['registryUrl']
     ) {
-        const purchaseCtx = this.requirePurchaseContext()
+        const purchaseCtx = this.ctx
         const assets = parseAssets(
             this.ctx,
             await purchaseCtx.tokenStandardService.registriesToAssets(
@@ -313,7 +279,7 @@ export class TrafficAccountNamespace {
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId
     ): Promise<{ holdingCids: ContractIdString[]; assetAmount: Numeric }> {
-        const purchaseCtx = this.requirePurchaseContext()
+        const purchaseCtx = this.ctx
         if (params.trafficAmount !== undefined) {
             const { trafficAmount, conversionRate } = params
 
@@ -386,7 +352,7 @@ export class TrafficAccountNamespace {
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId
     ): Promise<PrettyContract<HoldingView>[]> {
-        const purchaseCtx = this.requirePurchaseContext()
+        const purchaseCtx = this.ctx
         const now = new Date()
         const holdings =
             await purchaseCtx.tokenStandardService.listContractsByInterface<HoldingView>(
@@ -439,7 +405,7 @@ export class TrafficAccountNamespace {
             assetAmount,
             executeBefore,
         } = options
-        const purchaseCtx = this.requirePurchaseContext()
+        const purchaseCtx = this.ctx
         const transfer: Transfer = {
             sender: params.purchaser,
             receiver: params.paymasterReceiver,
