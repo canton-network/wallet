@@ -168,6 +168,7 @@ function getTransactionType(
     }
     if (event.label.type === 'ExpireDust') return 'Dust expired'
 
+    if (event.label.type === 'Settlement') return 'Trade settled'
     if (event.label.type === 'Unlock') return 'Funds unlocked'
     if (event.label.type === 'Lock') return 'Funds locked'
 
@@ -251,6 +252,7 @@ function getTransactionDirection(
     if (event.label.type === 'Burn') return 'sent'
     if (event.label.type === 'Unlock' || event.label.type === 'Lock')
         return 'unknown'
+    if (event.label.type === 'Settlement') return 'unknown'
 
     const summary = getHoldingSummary(event)
     if (!summary?.amountChange) return 'unknown'
@@ -298,6 +300,13 @@ function getCounterparty(
         return receiver ?? null
     }
     if (event.label.type === 'MergeSplit') return 'Self'
+
+    if (event.label.type === 'Settlement') {
+        const parties = [
+            ...new Set(event.label.netTransfers.map((e) => e.counterparty)),
+        ]
+        return parties.length === 1 ? parties[0] : 'Multiple'
+    }
 
     return null
 }
