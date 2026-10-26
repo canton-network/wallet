@@ -272,7 +272,7 @@ export class SelfIssuedAuthService {
         const result = await this.signMessageService.sign(
             this.authContext(),
             message.id,
-            'self-issued-token' // TODO make those kind strings constants
+            'self-issued-token'
         )
         return this.toAccessTokenSignResult(message.id, result)
     }

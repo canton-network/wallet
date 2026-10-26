@@ -167,7 +167,6 @@ export class StateManager {
             ),
     }
 
-    // TODO could I get jwt message signature by session id instead?
     selfIssuedAccessTokenMessageId = {
         get: (origin: string) =>
             this.getWithStorage(

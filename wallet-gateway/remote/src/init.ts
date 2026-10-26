@@ -287,14 +287,12 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'getUser',
             'selfSignedAccessToken',
             'startSelfIssuedLoginSession',
-            // TODO seems safe here, but rethink it
             'listSigningProviders',
         ],
     }
     const selfIssuedLoginPaths = {
         [config.server.userPath]: [
             'getSelfIssuedLoginMode',
-            // TODO make it safe and maybe less repetitive
             'listSelfIssuedSigningProviderKeys',
             'createSelfIssuedWallet',
             'allocateSelfIssuedWallet',
