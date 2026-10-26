@@ -90,6 +90,26 @@ export class TrafficAccountNamespace {
     }
 
     /**
+     * The registry-bearing context, or an `SDKError` when the namespace was
+     * built without one.
+     *
+     * The private purchase helpers read it from here rather than being handed
+     * it, so the single `sdk.extend({ traffic })` requirement lives in one
+     * place instead of threading a parameter through every step.
+     */
+    private requirePurchaseContext(): TrafficPurchaseContext {
+        if (this.purchaseCtx === undefined) {
+            this.ctx.error.throw({
+                message:
+                    'traffic.purchaseTraffic needs a registry to price the payment against. ' +
+                    'Call sdk.extend({ traffic: { registries, auth } }) first.',
+                type: 'SDKOperationUnsupported',
+            })
+        }
+        return this.purchaseCtx
+    }
+
+    /**
      * Current traffic balance of an account.
      *
      * Needs `ActAs` or `ExecuteAs` rights on the party the account id names.
@@ -149,22 +169,11 @@ export class TrafficAccountNamespace {
     public async purchaseTraffic(
         params: PurchaseTrafficParams
     ): Promise<PreparedCommand<'ExerciseCommand'>> {
-        const purchaseCtx = this.purchaseCtx
-        if (purchaseCtx === undefined) {
-            this.ctx.error.throw({
-                message:
-                    'traffic.purchaseTraffic needs a registry to price the payment against. ' +
-                    'Call sdk.extend({ traffic: { registries, auth } }) first.',
-                type: 'SDKOperationUnsupported',
-            })
-        }
-
         const executeBefore =
             params.executeBefore ??
             new Date(Date.now() + DEFAULT_EXECUTE_BEFORE_MS)
 
         const asset = await this.resolveAsset(
-            purchaseCtx,
             params.instrumentId,
             params.registryUrl
         )
@@ -174,7 +183,6 @@ export class TrafficAccountNamespace {
         }
 
         const { holdingCids, assetAmount } = await this.priceThePurchase(
-            purchaseCtx,
             params,
             instrumentId
         )
@@ -191,7 +199,6 @@ export class TrafficAccountNamespace {
         )
 
         const factory = await this.resolveTransferFactory(
-            purchaseCtx,
             params,
             instrumentId,
             asset.registryUrl,
@@ -275,12 +282,12 @@ export class TrafficAccountNamespace {
         }
     }
 
-    /** The instrument's admin and registry, as the configured registries report them. */
+    /** Resolve the instrument's AssetBody. */
     private async resolveAsset(
-        purchaseCtx: TrafficPurchaseContext,
         instrumentId: string,
         registryUrl: PurchaseTrafficParams['registryUrl']
     ) {
+        const purchaseCtx = this.requirePurchaseContext()
         const assets = parseAssets(
             this.ctx,
             await purchaseCtx.tokenStandardService.registriesToAssets(
@@ -305,10 +312,10 @@ export class TrafficAccountNamespace {
      * *amounts* rather than just their ids -- and the rate never enters it.
      */
     private async priceThePurchase(
-        purchaseCtx: TrafficPurchaseContext,
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId
     ): Promise<{ holdingCids: ContractIdString[]; assetAmount: Numeric }> {
+        const purchaseCtx = this.requirePurchaseContext()
         if (params.trafficAmount !== undefined) {
             const { trafficAmount, conversionRate } = params
 
@@ -344,11 +351,7 @@ export class TrafficAccountNamespace {
             return { holdingCids, assetAmount }
         }
 
-        const spendable = await this.spendableHoldings(
-            purchaseCtx,
-            params,
-            instrumentId
-        )
+        const spendable = await this.spendableHoldings(params, instrumentId)
         if (spendable.length === 0) {
             this.ctx.error.throw({
                 message: params.inputUtxos?.length
@@ -382,10 +385,10 @@ export class TrafficAccountNamespace {
      * needed.
      */
     private async spendableHoldings(
-        purchaseCtx: TrafficPurchaseContext,
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId
     ): Promise<PrettyContract<HoldingView>[]> {
+        const purchaseCtx = this.requirePurchaseContext()
         const now = new Date()
         const holdings =
             await purchaseCtx.tokenStandardService.listContractsByInterface<HoldingView>(
@@ -427,7 +430,6 @@ export class TrafficAccountNamespace {
      * `emptyMetadata` does not carry.
      */
     private async resolveTransferFactory(
-        purchaseCtx: TrafficPurchaseContext,
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId,
         registryUrl: URL,
@@ -439,6 +441,7 @@ export class TrafficAccountNamespace {
         contextValues: TransferExtraArgs['context']['values']
         disclosedContracts: LedgerCommonSchemas['DisclosedContract'][]
     }> {
+        const purchaseCtx = this.requirePurchaseContext()
         const transfer: Transfer = {
             sender: params.purchaser,
             receiver: params.paymasterReceiver,
