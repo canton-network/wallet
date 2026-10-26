@@ -31,7 +31,7 @@ import type {
     TrafficAccount,
 } from './types.js'
 
-/** How long a purchase gives the registry to settle, when the caller says nothing. */
+/** Allowed delay of execute after prepare operation */
 const DEFAULT_EXECUTE_BEFORE_MS = 10 * 60 * 1000
 
 /**
