@@ -214,7 +214,7 @@ describe('createWalletStore', () => {
         expect(afterRead).toHaveBeenCalledOnce()
     })
 
-    it('rejects a build that a lock() interrupts and builds again after unlock', async () => {
+    it('rejects a load that a lock() interrupts and loads again after unlock', async () => {
         const vault = await createdVault()
         let locking: Promise<void> | undefined
         const holder = createWalletStore(
@@ -223,7 +223,7 @@ describe('createWalletStore', () => {
             })
         )
 
-        // The hook locks after the read resolves, before the build continues.
+        // The hook locks after the read resolves, before the load continues.
         await expect(holder.get()).rejects.toThrow(VaultLockedError)
         await locking
 

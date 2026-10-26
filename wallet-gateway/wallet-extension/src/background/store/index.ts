@@ -16,7 +16,7 @@ export async function loadAuthedStore(store: WalletStore): Promise<Store> {
     return store.withAuthContext(await authContext.load())
 }
 
-export function initializeSigningStore(): SigningDriverStore {
+export function createSigningStore(): SigningDriverStore {
     // Signing keys are stored for this browser profile and remain available
     // when the user logs out or signs in again.
     return new WxtStore('extension-user')

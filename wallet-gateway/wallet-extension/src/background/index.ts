@@ -16,11 +16,7 @@ import {
     withoutNotificationArgs,
 } from './notifications'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui'
-import {
-    createWalletStore,
-    initializeSigningStore,
-    loadAuthedStore,
-} from './store'
+import { createSigningStore, createWalletStore, loadAuthedStore } from './store'
 import { createVault, type Vault } from './vault'
 import { registerVaultService } from './vault-service'
 
@@ -46,7 +42,7 @@ export function startBackground({
     )
     const walletStore = createWalletStore(vault)
     const getStore = async () => loadAuthedStore(await walletStore.get())
-    const signingDriver = new InternalSigningDriver(initializeSigningStore())
+    const signingDriver = new InternalSigningDriver(createSigningStore())
     const deps = { getStore, signingDriver, notificationService }
 
     registerVaultService(vault)

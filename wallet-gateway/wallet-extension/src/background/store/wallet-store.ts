@@ -23,7 +23,7 @@ export interface WalletStoreHolder {
 type CloseReason = 'lock' | 'failed write'
 
 /** One store built from the vault. A lock or a failed write closes it. */
-interface Build {
+interface Instance {
     closedBy?: CloseReason
 }
 
@@ -41,35 +41,35 @@ export function createWalletStore(
     const item = vault.defineItem<SnapshotV1 | null>('walletStore', {
         fallback: null,
     })
-    let current: { build: Build; store: Promise<WalletStore> } | undefined
+    let current: { instance: Instance; store: Promise<WalletStore> } | undefined
 
-    function close(build: Build, reason: CloseReason): void {
-        build.closedBy ??= reason
-        if (current?.build === build) current = undefined
+    function close(instance: Instance, reason: CloseReason): void {
+        instance.closedBy ??= reason
+        if (current?.instance === instance) current = undefined
     }
 
     vault.onLock(() => {
-        if (current) close(current.build, 'lock')
+        if (current) close(current.instance, 'lock')
     })
 
-    function assertOpen(build: Build): void {
-        if (build.closedBy === 'lock') {
+    function assertOpen(instance: Instance): void {
+        if (instance.closedBy === 'lock') {
             throw new VaultLockedError(
                 'The vault was locked after the wallet store was loaded.'
             )
         }
         // Not VaultLockedError, or the pages would show the unlock page.
-        if (build.closedBy === 'failed write') {
+        if (instance.closedBy === 'failed write') {
             throw new Error(
                 'The wallet store was reloaded after a failed write.'
             )
         }
     }
 
-    async function load(build: Build): Promise<WalletStore> {
+    async function load(instance: Instance): Promise<WalletStore> {
         const snapshot = await item.getValue()
         // The vault may have locked while we were reading.
-        assertOpen(build)
+        assertOpen(instance)
         const { config, memory } =
             snapshot === null
                 ? { config: defaultConfig(), memory: new Map() as Memory }
@@ -79,20 +79,20 @@ export function createWalletStore(
         // includes another caller's unfinished write.
         let writes: Promise<unknown> = Promise.resolve()
         return persistent(store, {
-            assertOpen: () => assertOpen(build),
+            assertOpen: () => assertOpen(instance),
             write(change) {
                 const result = writes.then(async () => {
-                    assertOpen(build)
+                    assertOpen(instance)
                     const value = await change()
                     // Check again in case the vault locked during the change.
-                    assertOpen(build)
+                    assertOpen(instance)
                     try {
                         await item.setValue(encodeSnapshot(config, memory))
                     } catch (error) {
                         // Memory has a change that never reached disk. Close
                         // the store so queued writes reject and the next
                         // get() reloads the last saved snapshot.
-                        close(build, 'failed write')
+                        close(instance, 'failed write')
                         throw error
                     }
                     return value
@@ -104,15 +104,15 @@ export function createWalletStore(
     }
 
     function start(): Promise<WalletStore> {
-        const build: Build = {}
-        const store = load(build).catch((error: unknown) => {
+        const instance: Instance = {}
+        const store = load(instance).catch((error: unknown) => {
             // Let the next get() try again. A corrupt snapshot keeps failing
             // rather than falling back to the defaults.
-            if (current?.build === build) current = undefined
+            if (current?.instance === instance) current = undefined
             throw error
         })
-        // Cache it before anything awaits, so concurrent calls share one build.
-        current = { build, store }
+        // Cache it before anything awaits, so concurrent calls share one instance.
+        current = { instance, store }
         return store
     }
 
