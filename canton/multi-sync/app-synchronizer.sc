@@ -45,10 +45,19 @@ utils.retry_until_true {
 }
 
 val multiSyncFeatureFlag =
-  Seq(SynchronizerTrustCertificate.ParticipantTopologyFeatureFlag.EnableMultiSynchronizer)
+  SynchronizerTrustCertificate.ParticipantTopologyFeatureFlag.EnableMultiSynchronizer
 multiSyncParticipants.foreach { participant =>
   participant.synchronizers.list_connected().map(_.synchronizerId).distinct.foreach { sid =>
-    participant.topology.synchronizer_trust_certificates
-      .propose(participant, sid, featureFlags = multiSyncFeatureFlag)
+    val alreadyEnabled = participant.topology.synchronizer_trust_certificates
+      .list()
+      .exists { cert =>
+        cert.item.participantId == participant.id &&
+          cert.item.synchronizerId == sid &&
+          cert.item.featureFlags.contains(multiSyncFeatureFlag)
+      }
+    if (!alreadyEnabled) {
+      participant.topology.synchronizer_trust_certificates
+        .propose(participant, sid, featureFlags = Seq(multiSyncFeatureFlag))
+    }
   }
 }
