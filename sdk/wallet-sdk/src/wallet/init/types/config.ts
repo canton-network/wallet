@@ -38,13 +38,6 @@ export type EventsConfig = {
     auth: TokenProviderConfig
 }
 
-/**
- * What upgrades the always-present `traffic` namespace so it can buy traffic.
- *
- * `getTraffic` and `topUpTraffic` are plain Ledger API calls and need none of
- * this; `purchaseTraffic` has to ask a registry how it would settle the payment,
- * which is what the registries listed here are for.
- */
 export type TrafficConfig = RegistryAuthConfig & {
     auth: TokenProviderConfig
     registries: URLInput[]
