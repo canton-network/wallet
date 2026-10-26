@@ -41,6 +41,7 @@ export type ClientSecret = string
  */
 export type Issuer = string
 export type Audience = string
+type AlwaysFalse = any
 /**
  *
  * Represents the type of auth for a specified network

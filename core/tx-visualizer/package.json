@@ -24,17 +24,17 @@
         "clean": "tsc -b --clean; rm -rf dist"
     },
     "devDependencies": {
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/browser-playwright": "^4.1.12",
+        "@vitest/coverage-v8": "^4.1.12",
         "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "vitest": "^4.1.12"
     },
     "dependencies": {
         "@canton-network/core-ledger-proto": "workspace:^",
         "@types/node": "^25.9.4",
-        "camelcase-keys": "^10.0.2"
+        "camelcase-keys": "^10.0.3"
     },
     "files": [
         "dist/**"

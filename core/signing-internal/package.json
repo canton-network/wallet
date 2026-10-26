@@ -27,20 +27,20 @@
         "@canton-network/core-signing-lib": "workspace:^",
         "@canton-network/core-signing-store-sql": "workspace:^",
         "@canton-network/core-wallet-auth": "workspace:^",
-        "fs-extra": "^11.3.6",
+        "fs-extra": "^11.4.1",
         "lodash": "^4.18.1",
         "pino": "^10.3.1"
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",
-        "@types/lodash": "^4.17.24",
+        "@types/lodash": "^4.17.27",
         "@types/node": "^25.9.4",
-        "@vitest/coverage-v8": "^4.1.10",
-        "tsdown": "^0.22.9",
+        "@vitest/coverage-v8": "^4.1.12",
+        "tsdown": "^0.22.14",
         "tweetnacl": "^1.0.3",
         "tweetnacl-util": "^0.15.1",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "vitest": "^4.1.12"
     },
     "files": [
         "dist/**"

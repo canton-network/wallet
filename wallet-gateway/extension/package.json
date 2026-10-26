@@ -31,19 +31,19 @@
         "@canton-network/core-wallet-store-inmemory": "workspace:*",
         "@canton-network/core-wallet-ui-components": "workspace:*",
         "@canton-network/core-wallet-user-rpc-client": "workspace:*",
-        "@logtape/adaptor-pino": "^2.3.1",
-        "@logtape/logtape": "^2.3.1",
+        "@logtape/adaptor-pino": "^2.4.2",
+        "@logtape/logtape": "^2.4.2",
         "@webext-core/proxy-service": "^3.0.2",
         "lit": "^3.3.3",
         "pino": "^10.3.1"
     },
     "devDependencies": {
         "@canton-network/core-wallet-test-utils": "workspace:^",
-        "@playwright/test": "^1.61.1",
-        "@wxt-dev/module-react": "^1.1.5",
+        "@playwright/test": "^1.64.1",
+        "@wxt-dev/module-react": "^1.2.2",
         "typescript": "^5.9.3",
-        "web-ext": "^10.5.0",
-        "wxt": "^0.21.3"
+        "web-ext": "^10.8.0",
+        "wxt": "^0.21.4"
     },
     "nx": {
         "targets": {

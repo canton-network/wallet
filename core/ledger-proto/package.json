@@ -25,15 +25,15 @@
         "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
     },
     "devDependencies": {
-        "@swc/core": "^1.15.43",
+        "@swc/core": "^1.16.20",
         "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/browser-playwright": "^4.1.12",
+        "@vitest/coverage-v8": "^4.1.12",
         "esbuild-plugin-replace": "^1.4.0",
         "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "vitest": "^4.1.12"
     },
     "dependencies": {
         "@protobuf-ts/runtime": "^2.11.1",

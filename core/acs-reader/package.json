@@ -26,20 +26,20 @@
     },
     "devDependencies": {
         "@types/node": "^25.9.4",
-        "@vitest/browser-playwright": "^4.1.10",
-        "@vitest/coverage-v8": "^4.1.10",
+        "@vitest/browser-playwright": "^4.1.12",
+        "@vitest/coverage-v8": "^4.1.12",
         "openapi-typescript": "^7.13.0",
         "playwright": "^1.61.1",
-        "tsdown": "^0.22.9",
+        "tsdown": "^0.22.14",
         "typescript": "^5.9.3",
-        "vitest": "^4.1.11"
+        "vitest": "^4.1.12"
     },
     "dependencies": {
         "@canton-network/core-ledger-client-types": "workspace:^",
         "@canton-network/core-provider-ledger": "workspace:^",
         "@canton-network/core-types": "workspace:^",
         "bignumber.js": "^9.3.1",
-        "dayjs": "^1.11.21",
+        "dayjs": "^1.11.23",
         "openapi-fetch": "^0.15.2",
         "pino": "^10.3.1",
         "typescript-lru-cache": "^2.0.0"
