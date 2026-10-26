@@ -198,14 +198,16 @@ export class TrafficAccountNamespace {
             'Pricing a traffic purchase'
         )
 
-        const factory = await this.resolveTransferFactory(
+        const factory = await this.resolveTransferFactory({
             params,
             instrumentId,
-            asset.registryUrl,
-            holdingCids,
+            registryUrl: asset.registryUrl,
+            // The generated contract-id type is branded; a caller only ever has
+            // the plain string the ledger reported.
+            holdingCids: holdingCids as unknown as Transfer['inputHoldingCids'],
             assetAmount,
-            executeBefore
-        )
+            executeBefore,
+        })
 
         const choiceArgument: TrafficPurchaser_PurchaseCredits = {
             purchaser: params.purchaser,
@@ -403,7 +405,7 @@ export class TrafficAccountNamespace {
         )
 
         const requested = params.inputUtxos
-        if  (!Boolean(requested)) {
+        if (requested === undefined || requested.length === 0) {
             return unlockedHoldings
         }
         return unlockedHoldings.filter((holding) =>
@@ -416,18 +418,26 @@ export class TrafficAccountNamespace {
      * will use, so it prices the right context. We build the choice arguments here
      * because the token-standard builder adds a memo that `emptyMetadata` doesn't include.
      */
-    private async resolveTransferFactory(
-        params: PurchaseTrafficParams,
-        instrumentId: InstrumentId,
-        registryUrl: URL,
-        holdingCids: Transfer['inputHoldingCids'],
-        assetAmount: Numeric,
+    private async resolveTransferFactory(options: {
+        params: PurchaseTrafficParams
+        instrumentId: InstrumentId
+        registryUrl: URL
+        holdingCids: Transfer['inputHoldingCids']
+        assetAmount: Numeric
         executeBefore: Date
-    ): Promise<{
+    }): Promise<{
         factoryId: ContractIdString
         contextValues: TransferExtraArgs['context']['values']
         disclosedContracts: LedgerCommonSchemas['DisclosedContract'][]
     }> {
+        const {
+            params,
+            instrumentId,
+            registryUrl,
+            holdingCids,
+            assetAmount,
+            executeBefore,
+        } = options
         const purchaseCtx = this.requirePurchaseContext()
         const transfer: Transfer = {
             sender: params.purchaser,
@@ -438,8 +448,7 @@ export class TrafficAccountNamespace {
                 Date.now() - REQUESTED_AT_SKEW_MS
             ).toISOString(),
             executeBefore: executeBefore.toISOString(),
-            inputHoldingCids:
-                holdingCids as unknown as Transfer['inputHoldingCids'],
+            inputHoldingCids: holdingCids,
             meta: { values: {} },
         }
 
