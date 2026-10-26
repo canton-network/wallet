@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Decimal } from 'decimal.js'
+import { z } from 'zod'
 import type { Ops } from '@canton-network/core-provider-ledger'
 import {
     HOLDING_INTERFACE_ID,
@@ -20,7 +21,7 @@ import type { SDKContext } from '../../init/types/context.js'
 import type { SDKLogger } from '../../logger/logger.js'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { PreparedCommand } from '../transactions/types.js'
-import { dedupeDisclosedContracts } from '../transactions/disclosure.js'
+import { dedupeDisclosedContracts } from '../utils/disclosedContracts.js'
 import { findAsset } from '../asset/index.js'
 import { ParsedURL, parseAssets } from '../utils/url.js'
 import { assetNeededFor, sumAmounts, wholeBytes } from './pricing.js'
@@ -485,24 +486,16 @@ export class TrafficAccountNamespace {
     }
 }
 
-/**
- * The `values` map out of a registry's choice context data.
- *
- * The context is a Daml `ChoiceContext`, i.e. a record with one `values` field,
- * but the registry's OpenAPI spec types it as an opaque object -- repeating the
- * Daml types there would only let them drift. So it is read rather than cast,
- * and a registry that sends no values is treated as sending none rather than as
- * broken.
- */
+const choiceContextSchema = z.object({
+    values: z.record(
+        z.string(),
+        z.custom<TransferExtraArgs['context']['values'][string]>()
+    ),
+})
+
 function contextValuesOf(
     choiceContextData: unknown
 ): TransferExtraArgs['context']['values'] {
-    if (typeof choiceContextData !== 'object' || choiceContextData === null) {
-        return {}
-    }
-    if (!('values' in choiceContextData)) return {}
-
-    const values = choiceContextData.values
-    if (typeof values !== 'object' || values === null) return {}
-    return values as TransferExtraArgs['context']['values']
+    const parsed = choiceContextSchema.safeParse(choiceContextData)
+    return parsed.success ? parsed.data.values : {}
 }
