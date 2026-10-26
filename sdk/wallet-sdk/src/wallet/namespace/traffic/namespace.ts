@@ -403,7 +403,7 @@ export class TrafficAccountNamespace {
         )
 
         const requested = params.inputUtxos
-        if (requested === undefined || requested.length === 0) {
+        if (!Boolean(requested)) {
             return forInstrument
         }
         return forInstrument.filter((holding) =>
