@@ -54,12 +54,8 @@ function assertPositiveRate(rate: Numeric): Decimal {
 }
 
 /**
- * Traffic is measured in whole bytes, so a fractional amount is floored.
- *
- * The model's `requestedTrafficAmount` is an `Int`, so the client floors a
- * figure before offering it and rejects one that was not already whole.
- * Rounding *down* is deliberate: the alternative hands out traffic that was
- * never paid for.
+ * Traffic is measured in whole bytes, so fractional amounts are rounded down.
+ * The model accepts only whole numbers; rounding up could grant unpaid traffic.
  */
 export function wholeBytes(amount: Numeric): Numeric {
     return toDecimal(amount, 'the traffic amount').floor().toFixed()
