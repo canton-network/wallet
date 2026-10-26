@@ -458,8 +458,6 @@ export class TrafficAccountNamespace {
                 {
                     expectedAdmin: instrumentId.admin,
                     transfer,
-                    // Sent empty: filling the context in is the registry's half
-                    // of the exchange.
                     extraArgs: {
                         context: { values: {} },
                         meta: { values: {} },
