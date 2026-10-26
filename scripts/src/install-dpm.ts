@@ -138,7 +138,7 @@ export async function installDPM() {
                 info('Downloading and running DPM installation script...')
             )
             execSync(
-                `curl -sSL https://get.digitalasset.com/install/install.sh | sh -s ${DAML_RELEASE_VERSION}`,
+                `curl -sSL --retry 5 --retry-connrefused --connect-timeout 30 https://get.digitalasset.com/install/install.sh | sh -s ${DAML_RELEASE_VERSION}`,
                 { stdio: 'inherit' }
             )
 

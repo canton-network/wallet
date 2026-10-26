@@ -82,21 +82,42 @@ export function getSupportedCantonVersions(): string[] {
     ]
 }
 
+/** Downloads `url` to `destination`, retrying any failure with exponential backoff. */
+export async function downloadWithRetry(
+    url: string | URL,
+    destination: string,
+    attempts = 5
+) {
+    for (let attempt = 1; ; attempt++) {
+        try {
+            const res = await fetch(url, {
+                signal: AbortSignal.timeout(10 * 60_000),
+            })
+            if (!res.ok || !res.body) {
+                throw new Error(`Failed to download ${url}: HTTP ${res.status}`)
+            }
+            await pipeline(res.body, fs.createWriteStream(destination))
+            return
+        } catch (e) {
+            if (attempt >= attempts) throw e
+            console.warn(
+                warn(
+                    `Download of ${url} failed (${e}), retry ${attempt}/${attempts - 1}`
+                )
+            )
+            await new Promise((r) => setTimeout(r, 2 ** attempt * 1000))
+        }
+    }
+}
+
 export async function downloadToFile(
     url: string | URL,
     directory: string,
     hash?: string
 ) {
     const filename = path.basename(url.toString())
-    const res = await fetch(url)
-    if (!res.ok || !res.body) {
-        throw new Error(`Failed to download: ${url}`)
-    }
     await ensureDir(directory)
-    await pipeline(
-        res.body,
-        fs.createWriteStream(path.join(directory, filename))
-    )
+    await downloadWithRetry(url, path.join(directory, filename))
 
     if (hash) {
         await verifyFileIntegrity(
@@ -172,11 +193,7 @@ export async function downloadAndUnpackTarball(
 
     if (shouldDownload) {
         console.log(info(`Downloading tarball from ${url} to ${tarfile}...`))
-        const res = await fetch(url)
-        if (!res.ok || !res.body) {
-            throw new Error(`Failed to download: ${url}`)
-        }
-        await pipeline(res.body, fs.createWriteStream(tarfile))
+        await downloadWithRetry(url, tarfile)
         console.log(success('Download complete.'))
     }
 
