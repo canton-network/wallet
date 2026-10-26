@@ -1630,19 +1630,19 @@ importers:
         specifier: 7.0.15
         version: 7.0.15
       '@types/lodash':
-        specifier: ^4.17.24
+        specifier: ^4.17.27
         version: 4.17.27
       '@types/ws':
-        specifier: ^8.18.1
+        specifier: ^8.18.2
         version: 8.18.2
       eslint:
-        specifier: ^10.6.0
+        specifier: ^10.13.0
         version: 10.13.0(jiti@2.7.0)(supports-color@10.2.2)
       prettier:
         specifier: 3.9.4
         version: 3.9.4
       tsdown:
-        specifier: ^0.22.9
+        specifier: ^0.22.14
         version: 0.22.14(@volar/typescript@2.4.30(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@5.9.3)
       typedoc:
         specifier: ^0.28.20
@@ -1673,19 +1673,19 @@ importers:
         specifier: 7.0.15
         version: 7.0.15
       '@types/lodash':
-        specifier: ^4.17.24
+        specifier: ^4.17.27
         version: 4.17.27
       '@types/ws':
-        specifier: ^8.18.1
+        specifier: ^8.18.2
         version: 8.18.2
       eslint:
-        specifier: ^10.6.0
+        specifier: ^10.13.0
         version: 10.13.0(jiti@2.7.0)(supports-color@10.2.2)
       prettier:
         specifier: 3.9.4
         version: 3.9.4
       tsdown:
-        specifier: ^0.22.9
+        specifier: ^0.22.14
         version: 0.22.14(@volar/typescript@2.4.30(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@5.9.3)
       typedoc:
         specifier: ^0.28.20
@@ -1986,19 +1986,19 @@ importers:
         specifier: 7.0.15
         version: 7.0.15
       '@types/lodash':
-        specifier: ^4.17.24
+        specifier: ^4.17.27
         version: 4.17.27
       '@types/ws':
-        specifier: ^8.18.1
+        specifier: ^8.18.2
         version: 8.18.2
       eslint:
-        specifier: ^10.6.0
+        specifier: ^10.13.0
         version: 10.13.0(jiti@2.7.0)(supports-color@10.2.2)
       prettier:
         specifier: 3.9.4
         version: 3.9.4
       tsdown:
-        specifier: ^0.22.9
+        specifier: ^0.22.14
         version: 0.22.14(@volar/typescript@2.4.30(typescript@5.9.3))(oxc-resolver@11.24.2)(tsx@4.23.15)(typescript@5.9.3)
       typedoc:
         specifier: ^0.28.20
