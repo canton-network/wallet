@@ -33,10 +33,13 @@ export type TransactionDisplay = {
     date: string
     asset: string
     amount: string | null
+    balanceEffect: BalanceEffect
     direction: TransactionDirection
     counterparty: string | null
     updateId: string
 }
+
+export type BalanceEffect = 'credit' | 'debit' | 'none'
 
 export const FILTER_LABEL_BY_FILTER = {
     all: 'All',
@@ -70,6 +73,20 @@ export function filterTransactionHistoryEntries(
     )
 }
 
+export function formatDisplayAmount(
+    display: TransactionDisplay
+): string | null {
+    if (display.amount === null) return null
+    switch (display.balanceEffect) {
+        case 'debit':
+            return `-${display.amount}`
+        case 'credit':
+            return `+${display.amount}`
+        case 'none':
+            return display.amount
+    }
+}
+
 export function getTransactionDisplay(
     entry: TransactionHistoryEntry,
     walletId: string
@@ -83,6 +100,7 @@ export function getTransactionDisplay(
         asset: getTransactionAsset(event),
         amount: getTransactionAmount(event),
         direction,
+        balanceEffect: getBalanceEffect(event, direction),
         counterparty: getCounterparty(event, walletId),
         updateId: transaction.updateId,
     }
@@ -406,4 +424,18 @@ function isIntermediateUnlock(
                 ...other.lockedHoldingsChange.archives,
             ].some((h) => released.has(h.contractId))
     )
+}
+
+function getBalanceEffect(
+    event: TransactionEvent,
+    direction: TransactionDirection
+): BalanceEffect {
+    const status = event.transferInstruction?.transfer
+        ? event.transferInstruction.status.current?.tag
+        : undefined
+    if (status === 'Pending') return 'none'
+    if (direction === 'sent') return 'debit'
+    if (direction === 'received') return 'credit'
+
+    return 'none'
 }
