@@ -393,17 +393,14 @@ export class TrafficAccountNamespace {
 
         // `CoreService` is internal to core-token-standard-service, so this
         // repeats its instrument filter rather than reaching into the package.
-        const forInstrument = holdings
-            .filter(
-                (holding) => !TokenStandardService.isHoldingLocked(holding, now)
-            )
-            .filter(
-                (holding) =>
-                    holding.interfaceViewValue.instrumentId.id ===
-                        instrumentId.id &&
-                    holding.interfaceViewValue.instrumentId.admin ===
-                        instrumentId.admin
-            )
+        const forInstrument = holdings.filter(
+            (holding) =>
+                !TokenStandardService.isHoldingLocked(holding, now) &&
+                holding.interfaceViewValue.instrumentId.id ===
+                    instrumentId.id &&
+                holding.interfaceViewValue.instrumentId.admin ===
+                    instrumentId.admin
+        )
 
         const requested = params.inputUtxos
         if (requested === undefined || requested.length === 0) {
