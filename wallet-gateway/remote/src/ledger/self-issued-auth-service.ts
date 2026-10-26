@@ -168,8 +168,12 @@ export class SelfIssuedAuthService {
         return fetchLedgerUser(this.ledgerClient, this.session.userId)
     }
 
-    // TODO This should be allowed only for fireblocks at the current state drivers (as it doesn't have createKey)
     async listSigningProviderKeys(signingProviderId: SigningProvider) {
+        if (signingProviderId !== SigningProvider.FIREBLOCKS) {
+            throw new Error(
+                `Signing provider ${signingProviderId} does not support selecting an existing key`
+            )
+        }
         const keys = await this.walletAllocator.getKeys(
             this.authContext(),
             signingProviderId
