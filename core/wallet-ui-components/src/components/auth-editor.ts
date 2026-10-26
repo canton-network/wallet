@@ -14,7 +14,10 @@ import type {
 } from '@canton-network/core-wallet-user-rpc-client'
 
 export type AuthMethod =
-    'authorization_code' | 'client_credentials' | 'self_signed' | 'self_issued'
+    | 'authorization_code'
+    | 'client_credentials'
+    | 'self_signed'
+    | 'self_issued'
 
 type EditorMode = 'none' | 'view' | 'edit' | 'add' | 'pending-remove'
 
@@ -42,9 +45,9 @@ export class AuthEditor extends BaseElement {
     @property({ type: String }) accessor pendingRemoveText =
         'Auth will be removed after submitting this form.'
 
-    @state() private _mode: EditorMode = 'none'
-    @state() private _backup?: Auth
-    @state() private _secretReplacement = ''
+    @state() private accessor _mode: EditorMode = 'none'
+    @state() private accessor _backup: Auth | undefined
+    @state() private accessor _secretReplacement = ''
 
     static styles = [
         BaseElement.styles,
@@ -500,7 +503,7 @@ export class AuthEditor extends BaseElement {
                 }}
             />
             ${
-                // prettier-ignore
+                // oxfmt-ignore
                 this._hasExistingSecret(authObj)
                     ? html`<p
                           class="field-help mb-0"

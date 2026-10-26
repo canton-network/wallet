@@ -14,7 +14,8 @@
         "sharedGlobals": [
             "{workspaceRoot}/vitest.base.ts",
             "{workspaceRoot}/tsdown.base.ts",
-            "{workspaceRoot}/tsconfig.*.json"
+            "{workspaceRoot}/tsconfig.*.json",
+            "{workspaceRoot}/vite.decorators.ts"
         ]
     },
     "release": {
@@ -142,7 +143,7 @@
             }
         },
         {
-            "plugin": "@nx/eslint/plugin",
+            "plugin": "@nx/oxlint",
             "exclude": ["core/*-rpc-client/**/*", "damljs/**/*"],
             "options": {
                 "targetName": "lint"
