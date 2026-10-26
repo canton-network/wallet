@@ -11,7 +11,7 @@ import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
 import type { TokenNamespaceConfig } from '../../../sdk.ts'
 import { LedgerNamespace } from '../../ledger/index.ts'
-import { dedupeDisclosedContracts } from '../../transactions/disclosure.ts'
+import { dedupeDisclosedContracts } from '../../utils/disclosedContracts.ts'
 import { resolveProviderParty } from '../utils.ts'
 import type { UtxoNamespace } from './index.ts'
 
