@@ -420,7 +420,7 @@ export class TrafficAccountNamespace {
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId,
         registryUrl: URL,
-        holdingCids: ContractIdString[],
+        holdingCids: Transfer['inputHoldingCids'],
         assetAmount: Numeric,
         executeBefore: Date
     ): Promise<{
