@@ -14,7 +14,7 @@ import {
     PortNotificationSink,
     withoutNotificationArgs,
 } from './notifications'
-import { initializeWalletStore } from './store'
+import { createTestWalletStore } from './store/test-store'
 import { VaultLockedError } from './vault'
 
 const subscriber = { sessionId: 'session-1', userId: 'user-1' }
@@ -195,7 +195,7 @@ describe('currentSessionSubscriber', () => {
 
     beforeEach(async () => {
         fakeBrowser.reset()
-        store = (await initializeWalletStore()).withAuthContext(context)
+        store = (await createTestWalletStore()).withAuthContext(context)
     })
 
     afterEach(() => {

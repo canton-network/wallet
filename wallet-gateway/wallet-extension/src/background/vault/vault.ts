@@ -45,9 +45,9 @@ export interface Vault {
      * is already locked, so make it idempotent. It runs synchronously, before
      * `lock()` or `reset()` awaits anything, so you can drop decrypted data
      * before any queued operation runs. If it throws, the error is logged
-     * and the lock goes ahead. Returns a function that removes the listener.
+     * and the lock goes ahead.
      */
-    onLock(listener: () => void): () => void
+    onLock(listener: () => void): void
     /**
      * An encrypted item. Values must be JSON-serializable; they are stored,
      * and returned, as they look after `JSON.stringify` and `JSON.parse`.
@@ -354,9 +354,6 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
 
         onLock: (listener) => {
             lockListeners.add(listener)
-            return () => {
-                lockListeners.delete(listener)
-            }
         },
 
         defineItem<T>(

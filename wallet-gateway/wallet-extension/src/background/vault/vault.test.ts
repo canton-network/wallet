@@ -174,17 +174,6 @@ describe('vault', () => {
         expect(vault.status()).toBe('uninitialized')
     })
 
-    it('stops calling an onLock listener after it unsubscribes', async () => {
-        const vault = await createdVault()
-        const listener = vi.fn()
-        const unsubscribe = vault.onLock(listener)
-
-        unsubscribe()
-        await vault.lock()
-
-        expect(listener).not.toHaveBeenCalled()
-    })
-
     it('still locks and calls the other listeners when an onLock listener throws', async () => {
         const vault = await createdVault()
         const other = vi.fn()
