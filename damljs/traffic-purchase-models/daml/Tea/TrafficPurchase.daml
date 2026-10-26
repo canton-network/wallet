@@ -3,7 +3,7 @@
 --
 -- The ledger settles payment and reports how much traffic was bought; Canton's
 -- TEA service holds the resulting balance. Nothing here writes a balance:
--- the `TrafficCredit` created alongside `TrafficPurchasedResult` is read off the
+-- the `PublishCredit` exercise composed into the purchase is read off the
 -- transaction tree by the TEA residing inside PN endpoints.
 --
 -- Payment assets are reached only through the CIP-0056 token standard
@@ -11,7 +11,12 @@
 -- V2 evolution of that standard; this model is on V1 and so cites CIP-0056.)
 module Tea.TrafficPurchase where
 
-import Canton.Traffic.Credit (AccountId, TrafficCredit, creditTraffic)
+import Canton.Traffic.Credit
+  ( AccountId
+  , PublishCredit(..)
+  , TrafficCreditIssuer
+  , TrafficCreditIssuerView(..)
+  )
 import DA.Foldable (forA_)
 import Splice.Api.Token.HoldingV1 (Holding, HoldingView(..), InstrumentId)
 import Splice.Api.Token.MetadataV1 (ExtraArgs, emptyMetadata)
@@ -30,14 +35,11 @@ data PaymentAsset = PaymentAsset with
 
 -- | Outcome of a purchase.
 --
--- The traffic itself is described by the `TrafficCredit` it points at (paymaster,
--- target account and amount); only what that contract does not carry is repeated
--- here. The TEA reads the credit off the transaction tree and adds its `amount`
--- to the balance of its `accountId`.
+-- The traffic itself is credited by the `PublishCredit` exercise composed into
+-- the purchase (paymaster, target account and amount); the TEA reads that
+-- exercise off the transaction tree and adds its `trafficAmount` to the balance
+-- of its `accountId`. Only what that exercise does not carry is repeated here.
 data TrafficPurchasedResult = TrafficPurchasedResult with
-    trafficCredit : ContractId TrafficCredit
-      -- ^ The credit created by this purchase. Already archived, so it
-      -- identifies the credit on the ledger but cannot be fetched or exercised.
     purchaser : Party
       -- ^ The party that paid.
     paymentAsset : PaymentAsset
@@ -163,10 +165,13 @@ template TrafficPurchaser
   where
     signatory paymaster
 
+    interface instance TrafficCreditIssuer for TrafficPurchaser where
+      view = TrafficCreditIssuerView with paymaster
+
     -- | Buy traffic, paying with CIP-56 holdings.
     --
-    -- Settles the payment through the registry's transfer factory, credits the
-    -- traffic to `targetAccount`, and returns the credit's contract id.
+    -- Settles the payment through the registry's transfer factory and credits
+    -- the traffic to `targetAccount` by exercising `PublishCredit`.
     nonconsuming choice TrafficPurchaser_PurchaseCredits : TrafficPurchasedResult
       with
         purchaser : Party
@@ -254,13 +259,15 @@ template TrafficPurchaser
           TransferInstructionResult_Failed ->
             abort "registry rejected the payment transfer"
 
-        -- 5. Credit the traffic. `creditTraffic` needs the paymaster's authority,
-        --    which this choice has because the paymaster signs the contract. It
-        --    only runs once the payment above has completed.
-        trafficCredit <- creditTraffic paymaster targetAccount trafficAmount
+        -- 5. Credit the traffic. `PublishCredit` needs the paymaster's authority,
+        --    which this choice has because the paymaster signs the contract, and
+        --    it is reached through the `TrafficCreditIssuer` interface instance on
+        --    this same contract. It only runs once the payment above has completed.
+        exercise (toInterfaceContractId @TrafficCreditIssuer self) PublishCredit with
+          accountId = targetAccount
+          trafficAmount
 
         pure TrafficPurchasedResult with
-          trafficCredit
           purchaser
           paymentAsset = PaymentAsset with
             instrumentId = validated.instrumentId
