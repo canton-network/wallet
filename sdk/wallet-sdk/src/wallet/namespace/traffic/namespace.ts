@@ -69,7 +69,7 @@ type TransferExtraArgs = TrafficPurchaser_PurchaseCredits['transferExtraArgs']
  * without it, so `getTraffic` and `topUpTraffic` -- which are pure Ledger API
  * calls -- cost a caller no registry configuration.
  */
-export type TrafficPurchaseContext = {
+export type TrafficPurchaseContext = SDKContext & {
     tokenStandardService: TokenStandardService
     registryUrls: ParsedURL[]
 }
