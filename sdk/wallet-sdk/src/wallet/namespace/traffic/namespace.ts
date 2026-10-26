@@ -304,12 +304,7 @@ export class TrafficAccountNamespace {
     }
 
     /**
-     * The holdings to spend and what they cost, in the model's own two branches.
-     *
-     * Asked for a traffic amount, the cost is the asset needed for it at the
-     * stated rate and holdings are selected to cover that. Asked for nothing, the
-     * offered holdings are spent whole, so they have to be read for their
-     * *amounts* rather than just their ids -- and the rate never enters it.
+     * The holdings to spend and cost for a given traffic amount.
      */
     private async priceThePurchase(
         params: PurchaseTrafficParams,
