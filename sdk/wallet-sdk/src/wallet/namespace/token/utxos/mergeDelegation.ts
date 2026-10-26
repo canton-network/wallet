@@ -10,7 +10,7 @@ import type {
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
 import { LedgerNamespace } from '../../ledger/index.js'
-import { dedupeDisclosedContracts } from '../../transactions/disclosure.js'
+import { dedupeDisclosedContracts } from '../../utils/disclosedContracts.js'
 import type { UtxoNamespace } from './index.js'
 import { resolveProviderParty } from '../utils.js'
 import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
