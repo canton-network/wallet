@@ -92,7 +92,6 @@ export type BasicSDKInterface<
     keys: KeysNamespace
     ledger: LedgerNamespace
     party: PartyNamespace
-    traffic: TrafficAccountNamespace
     user: UserNamespace
     utils: SDKUtilsNamespace
     extend: <ExtendedItems extends keyof ExtendedSDKOptions>(
@@ -113,12 +112,6 @@ export type ExtendedFullSDKInterface = Readonly<{
     token: TokenNamespace
     asset: AssetNamespace
     events: EventsNamespace
-    /**
-     * Deliberately the same class as `BasicSDKInterface['traffic']`: extending
-     * hands the namespace a registry rather than a different surface, so the
-     * intersection in `SDKInterface` stays one type and `purchaseTraffic` keeps
-     * one signature. Un-extended, it refuses with `SDKOperationUnsupported`.
-     */
     traffic: TrafficAccountNamespace
 }>
 
