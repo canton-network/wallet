@@ -44,7 +44,7 @@ function toDecimal(value: Numeric, field: string): Decimal {
 }
 
 function assertPositiveRate(rate: Numeric): Decimal {
-    const conversionRate = toDecimal(rate, 'the conversion rate')
+    const conversionRate = toDecimal(rate, 'conversion rate')
     if (conversionRate.lessThanOrEqualTo(0)) {
         throw new Error(
             `Expected the conversion rate to be positive, got "${rate}"`
