@@ -374,7 +374,7 @@ export class TrafficAccountNamespace {
      * The purchaser's unlocked holdings of one instrument, narrowed to the ones
      * the caller named.
      *
-     * Locked holdings are dropped. `ConversionRate_ValidateAssets` does accept a
+     * Locked holdings are ignored. `ConversionRate_ValidateAssets` accepts a
      * lock that has expired, but only the ledger knows the time that is judged
      * against, so offering one risks a rejection for a holding that was never
      * needed.
