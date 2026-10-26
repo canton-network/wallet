@@ -28,19 +28,19 @@ const AMOUNT_COLOR = {
     none: 'text.secondary',
 } as const satisfies Record<BalanceEffect, string>
 
-const AMOUNT_PREFIX = {
-    credit: '+',
-    debit: '-',
-    none: '',
-} as const satisfies Record<BalanceEffect, string>
-
 export function TransactionHistoryRow({
     entry,
     walletId,
 }: TransactionHistoryRowProps) {
     const display = getTransactionDisplay(entry, walletId)
     const amountColor = AMOUNT_COLOR[display.balanceEffect]
-    const amountPrefix = AMOUNT_PREFIX[display.balanceEffect]
+    const amountPrefix =
+        display.direction === 'received'
+            ? '+'
+            : display.direction === 'sent'
+              ? '-'
+              : ''
+
     return (
         <TableRow
             hover
