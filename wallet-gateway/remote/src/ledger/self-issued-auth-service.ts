@@ -400,7 +400,7 @@ export class SelfIssuedAuthService {
         const wallet = await this.requireLoginWallet(message.partyId)
         if (wallet.publicKey !== message.publicKey) {
             throw new Error(
-                `Wallet public key changed for party ${wallet.partyId}; refusing to complete login`
+                `Wallet public key ${wallet.partyId} doesn't match public key used for signing access token. Refusing to complete login.`
             )
         }
         return { message, wallet }

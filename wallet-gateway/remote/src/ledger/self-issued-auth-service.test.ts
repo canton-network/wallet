@@ -8,13 +8,19 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
 import {
     PartyLevelRight,
+    type MessageRaw,
     type Store,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import type { SigningDrivers } from '@canton-network/core-wallet-services'
+import type {
+    SignMessageService,
+    SigningDrivers,
+} from '@canton-network/core-wallet-services'
 import type { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
 import {
+    SELF_ISSUED_LOGIN_EXPIRED,
     SELF_ISSUED_LOGIN_UNAVAILABLE,
+    SELF_ISSUED_TOKEN_REJECTED,
     SelfIssuedAuthService,
 } from './self-issued-auth-service'
 import type { PartyAllocationService } from './party-allocation-service.js'
@@ -45,6 +51,16 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
 })
 
 const publicKey = Buffer.alloc(32, 1).toString('base64')
+const signature = Buffer.from('sig-bytes').toString('base64')
+
+function signingInputExpiringIn(seconds: number): string {
+    const encode = (value: unknown) =>
+        Buffer.from(JSON.stringify(value)).toString('base64url')
+    const exp = Math.floor(Date.now() / 1000) + seconds
+    return `${encode({ alg: 'EdDSA', typ: 'JWT' })}.${encode({ exp })}`
+}
+
+const signingInput = signingInputExpiringIn(10 * 60)
 
 const createWallet = (overrides: Partial<Wallet> = {}): Wallet => ({
     primary: true,
@@ -79,11 +95,18 @@ describe('SelfIssuedAuthService', () => {
         updateWallet: ReturnType<typeof vi.fn>
         getCurrentNetwork: ReturnType<typeof vi.fn>
         upgradeSelfIssuedLoginSession: ReturnType<typeof vi.fn>
+        setMessageRaw: ReturnType<typeof vi.fn>
+        getMessageRaw: ReturnType<typeof vi.fn>
+        setMessageRawStatus: ReturnType<typeof vi.fn>
     }
-    let signMessage: ReturnType<typeof vi.fn>
+    let signMessageService: {
+        sign: ReturnType<typeof vi.fn>
+        refreshMessage: ReturnType<typeof vi.fn>
+    }
     let walletAllocator: {
         createWallet: ReturnType<typeof vi.fn>
         allocateParty: ReturnType<typeof vi.fn>
+        getKeys: ReturnType<typeof vi.fn>
     }
     let ledgerClient: {
         get: ReturnType<typeof vi.fn>
@@ -92,9 +115,14 @@ describe('SelfIssuedAuthService', () => {
     }
 
     beforeEach(() => {
-        signMessage = vi.fn().mockResolvedValue({
-            signature: Buffer.from('sig-bytes').toString('base64'),
-        })
+        signMessageService = {
+            sign: vi.fn().mockResolvedValue({
+                status: 'signed',
+                signature,
+                publicKey,
+            }),
+            refreshMessage: vi.fn(),
+        }
         probeGet.mockResolvedValue({ userId: 'alice' })
         syncRights.mockReset()
         syncRights.mockResolvedValue([])
@@ -115,10 +143,14 @@ describe('SelfIssuedAuthService', () => {
                         accessToken,
                     })
                 ),
+            setMessageRaw: vi.fn().mockResolvedValue(undefined),
+            getMessageRaw: vi.fn(),
+            setMessageRawStatus: vi.fn().mockResolvedValue(undefined),
         }
         walletAllocator = {
             createWallet: vi.fn(),
             allocateParty: vi.fn().mockResolvedValue(undefined),
+            getKeys: vi.fn(),
         }
         ledgerClient = {
             get: vi.fn().mockResolvedValue({}),
@@ -132,21 +164,37 @@ describe('SelfIssuedAuthService', () => {
     })
 
     function createService() {
-        const driver = { controller: () => ({ signMessage }) }
-        const drivers = {
-            [SigningProvider.WALLET_KERNEL]: driver,
-            [SigningProvider.FIREBLOCKS]: driver,
-        } as unknown as SigningDrivers
         return new SelfIssuedAuthService(
             { userId: 'alice', sessionId: 'onboarding-session' },
             store as unknown as Store,
             logger,
             walletAllocator as unknown as WalletAllocationService,
             ledgerClient as unknown as LedgerClient,
-            drivers,
-            {} as PartyAllocationService
+            {} as SigningDrivers,
+            {} as PartyAllocationService,
+            signMessageService as unknown as SignMessageService
         )
     }
+
+    function savedTokenMessage(): MessageRaw {
+        return store.setMessageRaw.mock.calls[0][0] as MessageRaw
+    }
+
+    const selfIssuedTokenMessage = (
+        overrides: Partial<MessageRaw> = {}
+    ): MessageRaw => ({
+        id: 'login-message',
+        kind: 'self-issued-token',
+        status: 'awaiting-signature',
+        userId: 'alice',
+        partyId: 'alice::ns',
+        publicKey,
+        message: signingInput,
+        origin: null,
+        createdAt: new Date(),
+        externalTxId: 'provider-tx',
+        ...overrides,
+    })
 
     describe('getLoginMode', () => {
         it('returns create mode and does not discover a wallet when there is no ledger user', async () => {
@@ -258,8 +306,49 @@ describe('SelfIssuedAuthService', () => {
         })
     })
 
+    describe('listSigningProviderKeys', () => {
+        it('lists the keys of the login session user', async () => {
+            const keys = {
+                keys: [{ id: 'key-1', name: 'vault-1', publicKey }],
+            }
+            walletAllocator.getKeys.mockResolvedValue(keys)
+
+            await expect(
+                createService().listSigningProviderKeys(
+                    SigningProvider.FIREBLOCKS
+                )
+            ).resolves.toEqual(keys)
+            expect(walletAllocator.getKeys).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: 'alice',
+                    sessionId: 'onboarding-session',
+                }),
+                SigningProvider.FIREBLOCKS
+            )
+        })
+
+        it('throws when the signing provider returns no keys', async () => {
+            walletAllocator.getKeys.mockResolvedValue(undefined)
+
+            await expect(
+                createService().listSigningProviderKeys(
+                    SigningProvider.FIREBLOCKS
+                )
+            ).rejects.toThrow('No keys for fireblocks found')
+        })
+
+        it('rejects providers that do not support selecting an existing key', async () => {
+            await expect(
+                createService().listSigningProviderKeys(SigningProvider.DFNS)
+            ).rejects.toThrow(
+                'Signing provider dfns does not support selecting an existing key'
+            )
+            expect(walletAllocator.getKeys).not.toHaveBeenCalled()
+        })
+    })
+
     describe('createWallet', () => {
-        it('creates a ledger user and a wallet signing request', async () => {
+        it('creates a ledger user and a primary wallet signing request', async () => {
             const pendingWallet = createWallet()
             walletAllocator.createWallet.mockResolvedValue(pendingWallet)
 
@@ -287,12 +376,31 @@ describe('SelfIssuedAuthService', () => {
                     sessionId: 'onboarding-session',
                 },
                 'my-party',
-                false,
-                SigningProvider.WALLET_KERNEL
+                true,
+                SigningProvider.WALLET_KERNEL,
+                undefined
             )
             expect(wallet).toEqual(pendingWallet)
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(syncRights).not.toHaveBeenCalled()
+        })
+
+        it('passes the selected key to the wallet allocator', async () => {
+            walletAllocator.createWallet.mockResolvedValue(createWallet())
+
+            await createService().createWallet({
+                partyHint: 'my-party',
+                signingProviderId: SigningProvider.FIREBLOCKS,
+                keyName: 'vault-1',
+            })
+
+            expect(walletAllocator.createWallet).toHaveBeenCalledWith(
+                expect.objectContaining({ userId: 'alice' }),
+                'my-party',
+                true,
+                SigningProvider.FIREBLOCKS,
+                'vault-1'
+            )
         })
 
         it('continues an interrupted onboarding for a user without a primary party', async () => {
@@ -374,14 +482,14 @@ describe('SelfIssuedAuthService', () => {
             }
         )
 
-        it('rejects participant onboarding', async () => {
+        it('rejects a provider that cannot sign messages', async () => {
             await expect(
                 createService().createWallet({
                     partyHint: 'my-party',
-                    signingProviderId: SigningProvider.PARTICIPANT,
+                    signingProviderId: SigningProvider.BITGO,
                 })
             ).rejects.toThrow(
-                'Signing provider participant is not supported for self-issued onboarding'
+                'Signing provider bitgo does not support signing self-issued access tokens'
             )
             expect(walletAllocator.createWallet).not.toHaveBeenCalled()
         })
@@ -470,89 +578,97 @@ describe('SelfIssuedAuthService', () => {
         })
     })
 
-    describe('completeLogin', () => {
-        it('patches the ledger user and upgrades the tokenless session', async () => {
-            const allocatedWallet = createWallet({ status: 'allocated' })
-            const authPartyWallet = createWallet({
-                status: 'allocated',
-                isAuthParty: true,
-            })
-            store.getWallet
-                .mockResolvedValueOnce(allocatedWallet)
-                .mockResolvedValueOnce(authPartyWallet)
-
-            const { wallet, accessToken, session } =
-                await createService().completeLogin(allocatedWallet.partyId)
-
-            expect(ledgerClient.patch).toHaveBeenCalledWith(
-                '/v2/users/{user-id}',
-                {
-                    user: {
-                        id: 'alice',
-                        primaryParty: allocatedWallet.partyId,
-                        primaryPartyAuthentication: true,
-                    },
-                    updateMask: {
-                        paths: [
-                            'primary_party',
-                            'primary_party_authentication',
-                        ],
-                        unknownFields: { fields: {} },
-                    },
-                },
-                { path: { 'user-id': 'alice' } }
+    describe('signAccessToken', () => {
+        it('saves a self-issued-token message and submits it for signing', async () => {
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
             )
-            expect(store.updateWallet).toHaveBeenCalledWith({
-                partyId: allocatedWallet.partyId,
-                networkId: allocatedWallet.networkId,
-                isAuthParty: true,
+
+            const result = await createService().signAccessToken('alice::ns')
+
+            const message = savedTokenMessage()
+            expect(result).toEqual({ messageId: message.id, status: 'signed' })
+            expect(message).toMatchObject({
+                kind: 'self-issued-token',
+                status: 'pending',
+                userId: 'alice',
+                partyId: 'alice::ns',
+                publicKey,
+                origin: null,
             })
-            expect(wallet).toEqual(authPartyWallet)
-            expect(probeGet).toHaveBeenCalledWith('/v2/authenticated-user')
-            const signingInput = signMessage.mock.calls[0][0].message as string
+            expect(signMessageService.sign).toHaveBeenCalledWith(
+                {
+                    userId: 'alice',
+                    accessToken: '',
+                    sessionId: 'onboarding-session',
+                },
+                message.id,
+                'self-issued-token'
+            )
             const payload = JSON.parse(
-                Buffer.from(signingInput.split('.')[1], 'base64url').toString()
+                Buffer.from(
+                    message.message.split('.')[1],
+                    'base64url'
+                ).toString()
             )
             expect(payload).toMatchObject({
                 aud: 'participant-aud',
                 scope: 'daml_ledger_api',
-                iss: allocatedWallet.partyId,
-                sub: allocatedWallet.partyId,
+                iss: 'alice::ns',
+                sub: 'alice::ns',
                 'daml.com': {
                     syn: network.synchronizerId,
                     usr: 'alice',
                 },
             })
-            expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledWith(
-                'onboarding-session',
-                accessToken
-            )
-            expect(session.id).toBe('onboarding-session')
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
         })
 
-        it('logs in an existing auth party without changing the ledger user', async () => {
-            const authPartyWallet = createWallet({
-                status: 'allocated',
-                isAuthParty: true,
-            })
-            ledgerClient.get.mockResolvedValue({
-                user: {
-                    id: 'alice',
-                    primaryParty: authPartyWallet.partyId,
-                    primaryPartyAuthentication: true,
-                },
-            })
-            store.getWallet.mockResolvedValue(authPartyWallet)
-
-            const { wallet } = await createService().completeLogin(
-                authPartyWallet.partyId
+        it('returns awaiting-signature while the provider awaits approval', async () => {
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
             )
+            signMessageService.sign.mockResolvedValue({
+                status: 'awaiting-signature',
+                publicKey,
+                externalTxId: 'provider-tx',
+            })
 
-            expect(wallet).toEqual(authPartyWallet)
-            expect(ledgerClient.patch).not.toHaveBeenCalled()
-            expect(store.updateWallet).not.toHaveBeenCalled()
-            expect(signMessage).toHaveBeenCalledOnce()
-            expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledOnce()
+            const result = await createService().signAccessToken('alice::ns')
+
+            expect(result).toEqual({
+                messageId: savedTokenMessage().id,
+                status: 'awaiting-signature',
+            })
+        })
+
+        it('returns failed with the failure reason when signing fails', async () => {
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            signMessageService.sign.mockResolvedValue({
+                status: 'failed',
+                publicKey,
+                failureReason: 'Signing provider returned status: rejected',
+            })
+
+            const result = await createService().signAccessToken('alice::ns')
+
+            expect(result).toEqual({
+                messageId: savedTokenMessage().id,
+                status: 'failed',
+                failureReason: 'Signing provider returned status: rejected',
+            })
+        })
+
+        it('rejects a wallet that is not allocated', async () => {
+            store.getWallet.mockResolvedValue(createWallet())
+
+            await expect(
+                createService().signAccessToken('alice::ns')
+            ).rejects.toThrow('Wallet for party alice::ns is not allocated')
+            expect(store.setMessageRaw).not.toHaveBeenCalled()
         })
 
         it.each([
@@ -581,33 +697,373 @@ describe('SelfIssuedAuthService', () => {
                 store.getWallet.mockResolvedValue(wallet)
 
                 await expect(
-                    createService().completeLogin(wallet.partyId)
+                    createService().signAccessToken(wallet.partyId)
                 ).rejects.toThrow(
                     `Party ${wallet.partyId} is not the authentication party for this user`
                 )
-                expect(ledgerClient.patch).not.toHaveBeenCalled()
-                expect(signMessage).not.toHaveBeenCalled()
+                expect(store.setMessageRaw).not.toHaveBeenCalled()
+                expect(signMessageService.sign).not.toHaveBeenCalled()
+            }
+        )
+    })
+
+    describe('getAccessTokenSignatureStatus', () => {
+        it('returns signed once the provider has signed the token', async () => {
+            store.getMessageRaw.mockResolvedValue(selfIssuedTokenMessage())
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            signMessageService.refreshMessage.mockResolvedValue({
+                status: 'signed',
+                externalTxId: 'provider-tx',
+                signature,
+            })
+
+            const result =
+                await createService().getAccessTokenSignatureStatus(
+                    'login-message'
+                )
+
+            expect(signMessageService.refreshMessage).toHaveBeenCalledWith(
+                {
+                    userId: 'alice',
+                    accessToken: '',
+                    sessionId: 'onboarding-session',
+                },
+                'login-message',
+                'self-issued-token'
+            )
+            expect(result).toEqual({
+                messageId: 'login-message',
+                status: 'signed',
+            })
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('returns awaiting-signature while the provider awaits approval', async () => {
+            store.getMessageRaw.mockResolvedValue(selfIssuedTokenMessage())
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            signMessageService.refreshMessage.mockResolvedValue({
+                status: 'awaiting-signature',
+                externalTxId: 'provider-tx',
+            })
+
+            await expect(
+                createService().getAccessTokenSignatureStatus('login-message')
+            ).resolves.toEqual({
+                messageId: 'login-message',
+                status: 'awaiting-signature',
+            })
+        })
+
+        it('returns failed with the failure reason when the provider rejected the token', async () => {
+            store.getMessageRaw.mockResolvedValue(selfIssuedTokenMessage())
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            signMessageService.refreshMessage.mockResolvedValue({
+                status: 'failed',
+                failureReason: 'Signing provider returned status: rejected',
+            })
+
+            await expect(
+                createService().getAccessTokenSignatureStatus('login-message')
+            ).resolves.toEqual({
+                messageId: 'login-message',
+                status: 'failed',
+                failureReason: 'Signing provider returned status: rejected',
+            })
+        })
+
+        it('fails an expired request awaiting approval without asking the provider', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ message: signingInputExpiringIn(-1) })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+
+            await expect(
+                createService().getAccessTokenSignatureStatus('login-message')
+            ).resolves.toEqual({
+                messageId: 'login-message',
+                status: 'failed',
+                failureReason: SELF_ISSUED_LOGIN_EXPIRED,
+            })
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+            )
+            expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
+        })
+
+        it('throws when the message was never submitted for signing', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'pending' })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            signMessageService.refreshMessage.mockResolvedValue({
+                status: 'pending',
+            })
+
+            await expect(
+                createService().getAccessTokenSignatureStatus('login-message')
+            ).rejects.toThrow(
+                'Self-issued login request login-message was not submitted for signing'
+            )
+        })
+
+        it('rejects a regular message', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ kind: 'regular' })
+            )
+
+            await expect(
+                createService().getAccessTokenSignatureStatus('login-message')
+            ).rejects.toThrow(
+                'Self-issued login request not found with id: login-message'
+            )
+            expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
+        })
+
+        it('rejects a missing message', async () => {
+            store.getMessageRaw.mockResolvedValue(undefined)
+
+            await expect(
+                createService().getAccessTokenSignatureStatus('login-message')
+            ).rejects.toThrow(
+                'Self-issued login request not found with id: login-message'
+            )
+        })
+
+        it("refuses to complete when the wallet public key doesn't match message public key", async () => {
+            store.getMessageRaw.mockResolvedValue(selfIssuedTokenMessage())
+            store.getWallet.mockResolvedValue(
+                createWallet({
+                    status: 'allocated',
+                    publicKey: Buffer.alloc(32, 2).toString('base64'),
+                })
+            )
+
+            await expect(
+                createService().getAccessTokenSignatureStatus('login-message')
+            ).rejects.toThrow(
+                "Wallet public key alice::ns doesn't match public key used for signing access token. Refusing to complete login."
+            )
+            expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('connectWithSignedAccessToken', () => {
+        const accessToken = `${signingInput}.${Buffer.from(signature, 'base64').toString('base64url')}`
+
+        it('patches the ledger user and upgrades the tokenless session', async () => {
+            const allocatedWallet = createWallet({ status: 'allocated' })
+            const authPartyWallet = createWallet({
+                status: 'allocated',
+                isAuthParty: true,
+            })
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet
+                .mockResolvedValueOnce(allocatedWallet)
+                .mockResolvedValueOnce(authPartyWallet)
+
+            const result =
+                await createService().connectWithSignedAccessToken(
+                    'login-message'
+                )
+
+            expect(ledgerClient.patch).toHaveBeenCalledWith(
+                '/v2/users/{user-id}',
+                {
+                    user: {
+                        id: 'alice',
+                        primaryParty: allocatedWallet.partyId,
+                        primaryPartyAuthentication: true,
+                    },
+                    updateMask: {
+                        paths: [
+                            'primary_party',
+                            'primary_party_authentication',
+                        ],
+                        unknownFields: { fields: {} },
+                    },
+                },
+                { path: { 'user-id': 'alice' } }
+            )
+            expect(store.updateWallet).toHaveBeenCalledWith({
+                partyId: allocatedWallet.partyId,
+                networkId: allocatedWallet.networkId,
+                isAuthParty: true,
+            })
+            expect(probeGet).toHaveBeenCalledWith('/v2/authenticated-user')
+            expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledWith(
+                'onboarding-session',
+                accessToken
+            )
+            expect(result).toMatchObject({
+                status: 'connected',
+                wallet: authPartyWallet,
+                accessToken,
+                session: { id: 'onboarding-session' },
+            })
+            expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
+        })
+
+        it('logs in an existing auth party without changing the ledger user', async () => {
+            const authPartyWallet = createWallet({
+                status: 'allocated',
+                isAuthParty: true,
+            })
+            ledgerClient.get.mockResolvedValue({
+                user: {
+                    id: 'alice',
+                    primaryParty: authPartyWallet.partyId,
+                    primaryPartyAuthentication: true,
+                },
+            })
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(authPartyWallet)
+
+            const result =
+                await createService().connectWithSignedAccessToken(
+                    'login-message'
+                )
+
+            expect(result).toMatchObject({
+                status: 'connected',
+                wallet: authPartyWallet,
+            })
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(store.updateWallet).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledOnce()
+        })
+
+        it('rejects a token that is not signed yet', async () => {
+            store.getMessageRaw.mockResolvedValue(selfIssuedTokenMessage())
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow(
+                'Self-issued login request login-message is not signed'
+            )
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('rejects a regular message', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({
+                    kind: 'regular',
+                    status: 'signed',
+                    signature,
+                })
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow(
+                'Self-issued login request not found with id: login-message'
+            )
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('fails an expired token without changing the ledger user', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({
+                    status: 'signed',
+                    signature,
+                    message: signingInputExpiringIn(-1),
+                })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).resolves.toEqual({
+                status: 'failed',
+                failureReason: SELF_ISSUED_LOGIN_EXPIRED,
+            })
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+            )
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(probeGet).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        describe('when the participant probe fails', () => {
+            beforeEach(() => {
+                store.getMessageRaw.mockResolvedValue(
+                    selfIssuedTokenMessage({ status: 'signed', signature })
+                )
+                store.getWallet
+                    .mockResolvedValueOnce(
+                        createWallet({ status: 'allocated' })
+                    )
+                    .mockResolvedValueOnce(
+                        createWallet({ status: 'allocated', isAuthParty: true })
+                    )
+            })
+
+            it('fails the login when the participant rejects the token', async () => {
+                probeGet.mockRejectedValue({ code: 'UNAUTHENTICATED' })
+
+                await expect(
+                    createService().connectWithSignedAccessToken(
+                        'login-message'
+                    )
+                ).resolves.toEqual({
+                    status: 'failed',
+                    failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                })
+                expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                    'login-message',
+                    'failed',
+                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                )
                 expect(
                     store.upgradeSelfIssuedLoginSession
                 ).not.toHaveBeenCalled()
-            }
-        )
+            })
 
-        it('throws when rejects the token', async () => {
-            const allocatedWallet = createWallet({ status: 'allocated' })
-            store.getWallet
-                .mockResolvedValueOnce(allocatedWallet)
-                .mockResolvedValueOnce(
-                    createWallet({ status: 'allocated', isAuthParty: true })
+            it('fails the login when the participant cannot be reached', async () => {
+                probeGet.mockRejectedValue(new TypeError('fetch failed'))
+
+                await expect(
+                    createService().connectWithSignedAccessToken(
+                        'login-message'
+                    )
+                ).resolves.toEqual({
+                    status: 'failed',
+                    failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                })
+                expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                    'login-message',
+                    'failed',
+                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
                 )
-            probeGet.mockRejectedValue(new Error('UNAUTHENTICATED'))
-
-            await expect(
-                createService().completeLogin(allocatedWallet.partyId)
-            ).rejects.toThrow(
-                'Self-issued token was rejected by the participant'
-            )
-            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+                expect(
+                    store.upgradeSelfIssuedLoginSession
+                ).not.toHaveBeenCalled()
+            })
         })
     })
 })
