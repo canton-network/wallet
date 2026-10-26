@@ -97,7 +97,7 @@ Following user-api methods are used for those flows:
 
 ### `startSelfIssuedLoginSession`
 
-Creates the onboarding session. It's a row is sessions table that has empty `access_token` column. When the flow is finalized, `access_token` is added and the session enables regular Wallet Gateway functions and Ledger api usage.
+Creates the onboarding session. It's a row in sessions table that has empty `access_token` column. When the flow is finalized, `access_token` is added and the session enables regular Wallet Gateway functions and Ledger api usage.
 It returns `session_id` which is added to the request when using methods below to provide a use context, unlike other user-api methods that use request header `Authorization` for session context.
 
 ### `getSelfIssuedLoginMode`
@@ -105,6 +105,10 @@ It returns `session_id` which is added to the request when using methods below t
 Returns `mode` `create` when the ledger user does not exist. Throws when the user exists but cannot use self-issued authentication.
 Returns `mode` `select` when the user has no `identityProviderId`, `primary_party_authentication` true, and `primary_party` set. It then syncs a wallet only for that primary party. `wallet` is included in response when the discovered wallet is allocated and not disabled.
 Used to decide whether onboarding or selecting flow is available.
+
+### `listSelfIssuedSigningProviderKeys`
+
+Lists keys available in a signing provider, so an existing key can be used by the authentication party. Used for signing providers that do not create keys on their own, currently `fireblocks`.
 
 ### `createSelfIssuedWallet`
 
@@ -120,12 +124,24 @@ Finishes party allocation for a wallet created by the method above.
 It polls signing provider API checking for topology transaction signature. If it's signed, it allocates party on the ledger.
 When the wallet is allocated, party rights are synced.
 
-### `completeSelfIssuedLogin`
+### `signSelfIssuedAccessToken`
 
-Uses authentication party to and the user to prepare access token and calls signing provider's method `signMessage` to sign the token.
+Uses authentication party and the user to prepare access token and calls signing provider's method `signMessage` to sign the token.
 If the ledger user does not yet have primary-party authentication, the user is patched: `primary_party` becomes this party id and `primary_party_authentication` becomes true. The wallet is updated with `isAuthParty`.
 If the user already has primary-party authentication, nothing is patched. The wallet must already be `isAuthParty` and its party id must equal the user's primary party.
 If the participant rejects the token, the session stays tokenless and the call fails. If the participant accepts it, that token is stored on the same session id, other sessions for this user and origin are removed, and the response includes `wallet`, `accessToken`, and `sessionId`.
+
+The response `status` is one of:
+
+- `connected` - the signing provider signed the token right away and login is completed (see below). The response includes `wallet`, `accessToken`, and `sessionId`.
+- `awaiting-signature` - the signing provider requires an approval. The response includes `messageId` to pass to `getSignSelfIssuedAccessTokenStatus`.
+- `failed` - signing or login failed and a new token has to be requested. The response includes `messageId` and `failureReason`.
+
+### `getSignSelfIssuedAccessTokenStatus`
+
+Polls signing provider for the signature of the token returned with status `awaiting-signature` by `signSelfIssuedAccessToken`, identified by `messageId`.
+Returns the same response as `signSelfIssuedAccessToken`. When the token is signed, login is completed the same way as described above.
+If the token expires while still awaiting a signature, the request is marked as failed.
 
 ### `removeSelfIssuedLoginSession`
 
@@ -140,16 +156,24 @@ The method allows the session when the ledger user does not exist, or when the u
 The onboarding page calls `getSelfIssuedLoginMode` with that session id. Based on the response either onboarding form or wallet selection view is rendered.
 Back, next to the title, calls `removeSelfIssuedLoginSession`, clears the stored session id, and returns to the login page.
 
-### Onboarding
+### Onboarding a new party and a new user
 
 The page contains wallet creation form with party hint and signing provider inputs.
-Currently only `wallet-kernel` signing provider is available, other signing providers will be added in future once their drivers support method `signMessage` required for signing access token.
+Only configured signing providers supporting `signMessage` are offered: `wallet-kernel`, `dfns`, `fireblocks` and `securosys`. For `fireblocks` the form also lists existing keys using `listSelfIssuedSigningProviderKeys`.
 Submit calls `createSelfIssuedWallet`.
-If the returned wallet is already allocated, the page calls `completeSelfIssuedLogin` and the user lands on the normal logged-in UI.
-If the signature is still pending, the page stays on onboarding and a later action calls `allocateSelfIssuedWallet`, then `completeSelfIssuedLogin` once the party is allocated.
+If the returned wallet is already allocated, the page calls `signSelfIssuedAccessToken` right away.
+If the topology transaction signature is still pending, the page shows that the party creation awaits approval in the signing provider and polls `allocateSelfIssuedWallet` until signing provider returns the signature and then allocates the party, then calls `signSelfIssuedAccessToken`. If the signing provider rejects the transaction, an error is shown and the creation form is rendered again.
 
 ### Selecting an existing party
 
 Renders the wallet returned for the primary party. At the moment only one wallet is possible, in future steps the view will allow changing authenticating party.
-Clicking select on wallet calls `completeSelfIssuedLogin` for that party, stores returned access token in browser storage, and then opens the logged-in UI.
+Clicking select on wallet calls `signSelfIssuedAccessToken` for that party.
 If primary-party authentication is set but no allocated authentication-party wallet is stored, the page shows an error and does not offer the create form.
+
+### Logging in
+
+Both flows end with `signSelfIssuedAccessToken`, the page handles its response as follows:
+
+- `connected` - stores returned access token in browser storage and opens the logged-in UI.
+- `awaiting-signature` - shows that the access token awaits approval in the signing provider and polls `getSignSelfIssuedAccessTokenStatus` until a different status is returned.
+- `failed` - shows `failureReason` with a "Try again" button, which calls `signSelfIssuedAccessToken` again with a new token.
