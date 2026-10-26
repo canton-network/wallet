@@ -142,10 +142,10 @@ describe('TrafficAccountNamespace', () => {
         } as any
 
         it('builds the PurchaseCredits exercise command', async () => {
-            const extended = new TrafficAccountNamespace(
-                mock.ctx,
-                purchaseCtx() as any
-            )
+            const extended = new TrafficAccountNamespace({
+                ...mock.ctx,
+                ...purchaseCtx(),
+            } as any)
 
             const [command, disclosed] = await extended.purchaseTraffic(params)
 
@@ -183,7 +183,10 @@ describe('TrafficAccountNamespace', () => {
                     },
                 ])
 
-            const extended = new TrafficAccountNamespace(mock.ctx, ctx as any)
+            const extended = new TrafficAccountNamespace({
+                ...mock.ctx,
+                ...ctx,
+            } as any)
 
             // Drop the amount fields so the "spend in full" branch is taken.
             const rest = { ...params }

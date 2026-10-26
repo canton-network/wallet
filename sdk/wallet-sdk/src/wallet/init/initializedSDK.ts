@@ -14,7 +14,10 @@ import { EventsNamespace } from '../namespace/events/index.ts'
 import { KeysNamespace } from '../namespace/keys/index.ts'
 import { LedgerNamespace } from '../namespace/ledger/index.ts'
 import { PartyNamespace } from '../namespace/party/index.ts'
-import { TrafficAccountNamespace } from '../namespace/traffic/index.ts'
+import {
+    TrafficAccountNamespace,
+    type TrafficPurchaseContext,
+} from '../namespace/traffic/index.ts'
 import { TokenNamespace } from '../namespace/token/index.ts'
 import { UserNamespace } from '../namespace/user/index.ts'
 import { SDKUtilsNamespace } from '../namespace/utils/index.ts'
@@ -183,12 +186,14 @@ const createNamespace: {
         // once extended -- so `getTraffic` and `topUpTraffic` behave the same
         // either side of `extend`, and `purchaseTraffic` keeps one signature
         // instead of one per state.
-        return new TrafficAccountNamespace(ctx, {
+        const purchaseCtx: TrafficPurchaseContext = {
+            ...ctx,
             tokenStandardService,
             registryUrls: config.registries.map(
                 (input) => new ParsedURL(ctx, input)
             ),
-        })
+        }
+        return new TrafficAccountNamespace(purchaseCtx)
     },
 }
 
