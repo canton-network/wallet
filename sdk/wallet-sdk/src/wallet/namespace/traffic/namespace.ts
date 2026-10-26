@@ -75,6 +75,20 @@ export type TrafficPurchaseContext = SDKContext & {
 }
 
 /**
+ * Whether a context carries the registry a purchase needs.
+ *
+ * A `TrafficPurchaseContext` is an `SDKContext` with a token-standard service
+ * and registries, so a context built by `sdk.extend({ traffic })` is told apart
+ * from a bare `SDKContext` by those fields -- a type guard, so no cast is needed
+ * to read them back off.
+ */
+function isTrafficPurchaseContext(
+    context: SDKContext | TrafficPurchaseContext
+): context is TrafficPurchaseContext {
+    return 'tokenStandardService' in context && 'registryUrls' in context
+}
+
+/**
  * Traffic accounting on a Canton participant, and buying traffic on-ledger.
  *
  * The `/v2/traffic/*` endpoints behind `getTraffic`/`topUpTraffic` are only
@@ -84,10 +98,10 @@ export type TrafficPurchaseContext = SDKContext & {
 export class TrafficAccountNamespace {
     private readonly logger: SDKLogger
 
-    constructor(
-        private readonly ctx: SDKContext,
-        private readonly purchaseCtx?: TrafficPurchaseContext
-    ) {
+    private readonly purchaseCtx: TrafficPurchaseContext | undefined
+
+    constructor(private readonly ctx: SDKContext) {
+        this.purchaseCtx = isTrafficPurchaseContext(ctx) ? ctx : undefined
         this.logger = ctx.logger.child({ namespace: 'TrafficAccountNamespace' })
     }
 
