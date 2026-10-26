@@ -6,12 +6,10 @@ import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-typ
 type DisclosedContract = LedgerCommonSchemas['DisclosedContract']
 
 /**
- * Drops duplicates by contract id.
+ * Removes duplicate disclosures by contract ID.
  *
- * A submission that assembles its disclosures from more than one source -- a
- * registry's choice context, a delegation's own contracts, a counterparty's --
- * can be handed the same contract twice, and the participant rejects a
- * submission that discloses one contract more than once.
+ * The same contract can come from multiple sources, but a submission must
+ * disclose it only once.
  */
 export function dedupeDisclosedContracts(
     disclosures: DisclosedContract[]
