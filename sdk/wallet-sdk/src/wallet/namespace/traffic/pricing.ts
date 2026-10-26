@@ -8,27 +8,12 @@ import type { Numeric } from '@canton-network/core-types'
  * Client-side mirror of the pricing arithmetic in
  * `damljs/traffic-purchase-models/daml/Tea/TrafficPurchase.daml`.
  *
- * This exists because the registry has to be told the exact amount before the
- * ledger computes it. `TrafficPurchaser_PurchaseCredits` works out for itself
- * what the requested traffic costs and hands that figure to
- * `TransferFactory_Transfer`, whose choice context was fetched for a transfer of
- * whatever amount we asked the registry about. Disagreeing by a single unit
- * means a context fetched for a transfer the ledger will not make.
- *
- * So these functions track the model's `assetNeededFor` exactly, including the
- * rounding: the cost is `intToDecimal traffic / rate` quantised to a Daml
- * `Decimal`, and `wholeBytes` floors a traffic figure so a buyer never receives
- * traffic they did not pay for.
- *
- * Amounts stay strings end to end -- `Numeric` is `@daml/types`' alias for
- * exactly that -- because a Daml `Decimal` carries up to 38 digits and a JS
- * `number` cannot hold the ones a real registry can mint. Every such string is
- * base-10 with no exponent (`'1048576'`, `'0.5'`); exponent notation is refused
- * rather than reinterpreted, since the participant rejects it too.
- *
- * The module is deliberately pure -- no SDK context -- so a malformed figure
- * leaves here as a plain `Error`. `TrafficAccountNamespace` translates those into
- * `SDKError`s, so that a caller sees one kind of failure from the namespace.
+ * The registry needs the exact amount before the ledger calculates it.
+ * `TrafficPurchaser_PurchaseCredits` calculates the cost of the requested
+ * traffic and passes that amount to `TransferFactory_Transfer`. The registry's
+ * choice context must therefore be fetched for a transfer of that same amount.
+ * Even a one-unit difference would make the context inconsistent with the
+ * transfer.
  */
 
 /** A Daml `Decimal` carries exactly 10 decimal places. */
