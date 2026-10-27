@@ -17,6 +17,7 @@ import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
+
 import { UserUiAddOrEditParty } from '../common.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
