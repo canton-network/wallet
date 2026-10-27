@@ -26,25 +26,17 @@ const DamlDecimal = Decimal.clone({
     toExpPos: 40,
 })
 
-/**
- * Parses a Daml `Decimal`.
- *
- * Exponent notation is refused rather than reinterpreted: `Decimal` has no such
- * spelling, the participant rejects it, and quietly rewriting it would hide a
- * misplaced decimal point of exactly the kind `maxTrafficPerPurchase` exists to
- * bound.
- */
-function toDecimal(value: Numeric, field: string): Decimal {
+function parseAsDamlDecimal(value: Numeric, fieldName: string): Decimal {
     if (!/^-?\d+(\.\d+)?$/.test(value)) {
         throw new Error(
-            `Expected ${field} to be a decimal number, got "${value}"`
+            `Expected ${fieldName} to be a decimal number, got "${value}"`
         )
     }
     return new DamlDecimal(value)
 }
 
 function assertPositiveRate(rate: Numeric): Decimal {
-    const conversionRate = toDecimal(rate, 'conversion rate')
+    const conversionRate = parseAsDamlDecimal(rate, 'conversion rate')
     if (conversionRate.lessThanOrEqualTo(0)) {
         throw new Error(
             `Expected the conversion rate to be positive, got "${rate}"`
@@ -58,7 +50,7 @@ function assertPositiveRate(rate: Numeric): Decimal {
  * The model accepts only whole numbers; rounding up could grant unpaid traffic.
  */
 export function wholeBytes(amount: Numeric): Numeric {
-    return toDecimal(amount, 'the traffic amount').floor().toFixed()
+    return parseAsDamlDecimal(amount, 'the traffic amount').floor().toFixed()
 }
 
 /**
@@ -66,7 +58,7 @@ export function wholeBytes(amount: Numeric): Numeric {
  * Matches Daml's 10-decimal, half-even rounding.
  */
 export function assetNeededFor(traffic: Numeric, rate: Numeric): Numeric {
-    return toDecimal(traffic, 'traffic amount')
+    return parseAsDamlDecimal(traffic, 'traffic amount')
         .dividedBy(assertPositiveRate(rate))
         .toDecimalPlaces(DAML_DECIMAL_PLACES, Decimal.ROUND_HALF_EVEN)
         .toFixed()
@@ -76,7 +68,7 @@ export function assetNeededFor(traffic: Numeric, rate: Numeric): Numeric {
 export function sumAmounts(amounts: Numeric[]): Numeric {
     return amounts
         .reduce(
-            (total, amount) => total.plus(toDecimal(amount, 'amount')),
+            (total, amount) => total.plus(parseAsDamlDecimal(amount, 'amount')),
             new DamlDecimal(0)
         )
         .toFixed()
