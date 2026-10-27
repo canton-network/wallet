@@ -90,9 +90,7 @@ export async function downloadWithRetry(
 ) {
     for (let attempt = 1; ; attempt++) {
         try {
-            const res = await fetch(url, {
-                signal: AbortSignal.timeout(10 * 60_000),
-            })
+            const res = await fetch(url)
             if (!res.ok || !res.body) {
                 throw new Error(`Failed to download ${url}: HTTP ${res.status}`)
             }
