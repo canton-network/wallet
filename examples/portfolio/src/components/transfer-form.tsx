@@ -8,7 +8,6 @@ import {
     Box,
     CircularProgress,
     FormControlLabel,
-    FormHelperText,
     IconButton,
     InputAdornment,
     Radio,
@@ -230,22 +229,18 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                 }
                             >
                                 <FormControlLabel
-                                    value="v2"
+                                    value="v1"
                                     control={<Radio disabled={disabled} />}
                                     label="v1"
                                     sx={{ color: 'text.primary' }}
                                 />
                                 <FormControlLabel
-                                    value="V2"
+                                    value="v2"
                                     control={<Radio disabled={disabled} />}
-                                    label="V2"
+                                    label="v2"
                                     sx={{ color: 'text.primary' }}
                                 />
                             </RadioGroup>
-                            <FormHelperText error={hasFieldError(field)}>
-                                {getFieldError(field) ??
-                                    'Token standard version to use'}
-                            </FormHelperText>
                         </FieldBlock>
                     )}
                 </form.Field>

@@ -402,7 +402,7 @@ function extractReceiverFromTransferInstruction(event: TokenStandardEvent) {
 /**
  *
  * Used for when a holding is consumed by another event in the same transaction as an internal step
- * for example accepting an offer unlcoks funds and then transfers them
+ * for example accepting an offer unlocks funds and then transfers them
  * this should not show up as a separate row in the transaction history
  */
 function isIntermediateUnlock(
