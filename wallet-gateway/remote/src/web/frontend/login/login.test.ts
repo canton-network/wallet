@@ -67,7 +67,7 @@ vi.mock('../state-manager.js', () => ({
         selfIssuedLoginSessionId: { set: mockOnboardingSessionIdSet },
         currentOrigin: {
             get: vi.fn(),
-            poll: vi.fn().mockResolvedValue('browserext'),
+            poll: vi.fn().mockResolvedValue(window.origin),
             set: vi.fn(),
             clear: vi.fn(),
         },
@@ -245,7 +245,7 @@ describe('LoginUI', () => {
         )
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
-        expect(mockRequest).toHaveBeenCalledWith({
+        expect(mockRequest).toHaveBeenLastCalledWith({
             method: 'startSelfIssuedLoginSession',
             params: {
                 username: 'alice',
