@@ -24,6 +24,7 @@ import {
     switchWallet,
     tap,
     supportsTokenStandardV2,
+    selectTransferVersion,
 } from './utils'
 import type { TokenStandardVersion } from '../src/types/instruments'
 
@@ -87,6 +88,7 @@ for (const version of [
             await openTransferDialog(dappPage)
 
             const dialog = dappPage.getByRole('dialog')
+            await selectTransferVersion(dialog, version)
             await dialog
                 .getByRole('textbox', { name: 'Recipient Address' })
                 .fill(bob)
@@ -129,7 +131,7 @@ for (const version of [
             // Verify alice's holdings on the wallet detail page.
             await expectWalletBalance(dappPage, alice, '1234')
 
-            const message = testMessage('accept transfer test ')
+            const message = testMessage('accept transfer test')
             await gotoDashboard(dappPage)
 
             // No offers yet, so the sidebar badge is hidden.
@@ -179,7 +181,7 @@ for (const version of [
             // Alice: tap and create transfer.
             await tap(dappPage, wg, '500')
 
-            const message = testMessage('reject transfer test ')
+            const message = testMessage('reject transfer test')
             await openTransferDialog(dappPage)
             await fillAndSubmitTransfer(dappPage, wg, {
                 amount: '100',
@@ -222,7 +224,7 @@ for (const version of [
             // Alice: tap and create transfer.
             await tap(dappPage, wg, '500')
 
-            const message = testMessage('withdraw transfer test ')
+            const message = testMessage('withdraw transfer test')
             await openTransferDialog(dappPage)
             await fillAndSubmitTransfer(dappPage, wg, {
                 amount: '100',
@@ -274,7 +276,7 @@ for (const version of [
             // Alice: tap and create transfer.
             await tap(dappPage, wg, '800')
 
-            const message = testMessage('dialog detail test ')
+            const message = testMessage('dialog detail test')
             await openTransferDialog(dappPage)
             await fillAndSubmitTransfer(dappPage, wg, {
                 amount: '200',
