@@ -4,13 +4,13 @@
 /**
  * Stands in for the participant TEA that credits purchased traffic.
  *
- * `TrafficPurchaser_PurchaseCredits` credits the traffic on-ledger by creating
- * (and immediately archiving) a `TrafficCredit` for the target account. The
- * credit is transient, so it never lands in the active contract set, but its
- * created event is in the transaction tree. The real participant TEA reads that
- * event and moves the account; this follows the participant's own update stream
- * and does the same through `topUpTraffic`, which is the smallest thing that
- * applies it off-ledger.
+ * `TrafficPurchaser_PurchaseCredits` credits the traffic on-ledger by exercising
+ * the non-consuming `PublishCredit` choice on a `TrafficCreditIssuer` for the
+ * target account. The choice creates no contract, so nothing lands in the active
+ * contract set, but the exercise is in the transaction tree. The real
+ * participant TEA reads that exercise and moves the account; this follows the
+ * participant's own update stream and does the same through `topUpTraffic`,
+ * which is the smallest thing that applies it off-ledger.
  *
  * It is test-grade on purpose: in-memory state and a poll loop, not a durable
  * subscription with a persisted offset and retries -- a real crediting service
@@ -21,27 +21,27 @@ import {
     AuthTokenProvider,
     type TokenProviderConfig,
 } from '@canton-network/core-wallet-auth'
-import { TrafficCredit } from '@canton-network/core-traffic-purchase'
+import {
+    TrafficCreditIssuer,
+    type PublishCredit,
+} from '@canton-network/core-traffic-purchase'
 import type { PartyId } from '@canton-network/core-types'
 import type { TrafficAccountNamespace } from '../namespace.js'
 
 /**
- * The one template this scan credits, by package *name*: `TrafficCredit`'s
- * templateId is package-name qualified, e.g.
- * `#canton-traffic-credit:Canton.Traffic.Credit:TrafficCredit`. We hand this to
- * the ledger as a `TemplateFilter`, so the stream only ever delivers created
- * events for this exact template from this exact package -- a template that
- * merely shares the `TrafficCredit` name from some other package is never
- * returned. Filtering on the name, not the id, keeps this working across the
- * package upgrades that change the id but not the name.
+ * The interface whose `PublishCredit` exercises this scan reads, by package
+ * *name*: its id is package-name qualified, e.g.
+ * `#canton-traffic-credit:Canton.Traffic.Credit:TrafficCreditIssuer`. An
+ * exercised event carries this as its `interfaceId`, so matching on it keeps
+ * this working across the package upgrades that change the id but not the name.
  */
-const trafficCreditTemplateId = TrafficCredit.templateId
+const trafficCreditIssuerInterfaceId = TrafficCreditIssuer.templateId
 
 /** A credit this scan applied, and what the account came to afterwards. */
 export type AppliedCredit = {
     /** The TEA account the credit named. */
     accountId: string
-    /** Whole bytes credited, i.e. the credit's `amount`. */
+    /** Whole bytes credited, i.e. the exercise's `trafficAmount`. */
     balanceDelta: number
     /** The account balance the participant reported after the credit. */
     balance: number
@@ -188,17 +188,20 @@ export class TrafficScan {
                                         filtersByParty: Object.fromEntries(
                                             this.parties.map((party) => [
                                                 party,
-                                                // Only TrafficCredit creates from
-                                                // the canton-traffic-credit package.
+                                                // Every event the party is privy
+                                                // to: under the ledger-effects
+                                                // shape this delivers the
+                                                // `PublishCredit` exercise, which
+                                                // creates no contract to filter
+                                                // on by template.
                                                 {
                                                     cumulative: [
                                                         {
                                                             identifierFilter: {
-                                                                TemplateFilter:
+                                                                WildcardFilter:
                                                                     {
                                                                         value: {
-                                                                            templateId:
-                                                                                trafficCreditTemplateId,
+                                                                            includeCreatedEventBlob: false,
                                                                         },
                                                                     },
                                                             },
@@ -252,34 +255,45 @@ export class TrafficScan {
         if (
             typeof event !== 'object' ||
             event === null ||
-            !('CreatedEvent' in event)
+            !('ExercisedEvent' in event)
         ) {
             return
         }
 
-        const created = (
+        const exercised = (
             event as {
-                CreatedEvent: {
-                    templateId: string
-                    contractId: string
-                    createArgument?: unknown
+                ExercisedEvent: {
+                    offset: number
+                    nodeId: number
+                    interfaceId?: string
+                    choice: string
+                    choiceArgument?: unknown
                 }
             }
-        ).CreatedEvent
+        ).ExercisedEvent
 
-        if (created.createArgument === undefined) return
+        // Only the credit-issuing choice, and only on the interface this scan
+        // trusts: a choice that merely shares the `PublishCredit` name from some
+        // other interface is not a traffic credit.
+        if (
+            exercised.choice !== 'PublishCredit' ||
+            exercised.interfaceId !== trafficCreditIssuerInterfaceId ||
+            exercised.choiceArgument === undefined
+        ) {
+            return
+        }
 
-        // The credit carries everything the account move needs: whom to credit
-        // (`accountId`) and by how much (`amount`, already whole bytes as an Int).
-        const credit = created.createArgument as TrafficCredit
+        // The argument carries everything the account move needs: whom to credit
+        // (`accountId`) and by how much (`trafficAmount`, whole bytes as an Int).
+        const credit = exercised.choiceArgument as PublishCredit
         const accountId = credit.accountId.value
-        const balanceDelta = Number(credit.amount)
+        const balanceDelta = Number(credit.trafficAmount)
         const account = await this.traffic.topUpTraffic({
             accountId,
             balanceDelta,
-            // The credit's own contract id: unique per credit, so re-seeing the
-            // same created event cannot top the account up twice.
-            deduplicationId: created.contractId,
+            // The exercise's place in the tree is unique per credit, so re-seeing
+            // the same exercise cannot top the account up twice.
+            deduplicationId: `${exercised.offset}:${exercised.nodeId}`,
         })
 
         const applied: AppliedCredit = {
