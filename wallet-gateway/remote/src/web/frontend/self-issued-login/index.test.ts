@@ -49,6 +49,9 @@ vi.mock('../state-manager.js', () => ({
             get: selfIssuedLoginSessionIdGet,
             clear: selfIssuedLoginSessionIdClear,
         },
+        currentOrigin: {
+            poll: vi.fn().mockResolvedValue('https://app.example'),
+        },
     },
 }))
 vi.mock('../navigation.js', () => ({ setLocationHref }))
