@@ -107,6 +107,7 @@ export function useOfferItems(): OfferItemsResult {
         // Normalize transfer instruction contracts into the shared ActionItem shape used by the UI.
         for (const contract of pendingTransfers.data ?? []) {
             const view = contract.interfaceViewValue
+            if (!view?.status) continue
             const transfer = view.transfer
             const tag = view.status.tag
             const memo =
