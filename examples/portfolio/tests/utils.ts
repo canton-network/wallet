@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Locator, type Page, test } from '@playwright/test'
 import {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
+import type { TokenStandardVersion } from '../src/types/instruments'
 
 const BASE_URL = 'http://localhost:8081'
 
@@ -208,10 +209,18 @@ export const openTransferDialog = async (page: Page): Promise<void> => {
 export const fillAndSubmitTransfer = async (
     page: Page,
     wg: WalletGateway,
-    opts: { amount: string; recipient: string; message: string }
+    opts: {
+        amount: string
+        recipient: string
+        message: string
+        version?: TokenStandardVersion
+    }
 ): Promise<void> => {
     const dialog = page.getByRole('dialog')
 
+    if (opts.version) {
+        await selectTransferVersion(dialog, opts.version)
+    }
     await dialog
         .getByRole('textbox', { name: 'Recipient Address' })
         .fill(opts.recipient)
@@ -443,3 +452,21 @@ export const tapAndCreateAllocation = async (
 
 const escapeRegExp = (value: string) =>
     value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+//can only run against splice localnet version 0.8.3+ because lower versions don't have v2 endpoints implemented in scan
+export const supportsTokenStandardV2 = (): boolean => {
+    const version = process.env.SPLICE_VERSION
+    if (!version) return true
+    const [major, minor, patch] = version.split('.').map(Number)
+    return major > 0 || minor > 8 || (minor == 8 && patch >= 3)
+}
+
+export const selectTransferVersion = async (
+    dialog: Locator,
+    version: TokenStandardVersion
+): Promise<void> => {
+    const radio = dialog.getByRole('radio', { name: version, exact: true })
+
+    await radio.check()
+    await expect(radio).toBeChecked()
+}
