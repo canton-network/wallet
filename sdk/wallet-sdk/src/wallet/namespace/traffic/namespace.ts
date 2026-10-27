@@ -69,9 +69,6 @@ export type TrafficPurchaseContext = SDKContext & {
 export class TrafficAccountNamespace {
     private readonly logger: SDKLogger
 
-    // The namespace is only built via `sdk.extend({ traffic })`, which always
-    // supplies the registry-bearing context, so it is required here rather than
-    // detected at runtime.
     constructor(private readonly ctx: TrafficPurchaseContext) {
         this.logger = ctx.logger.child({ namespace: 'TrafficAccountNamespace' })
     }
