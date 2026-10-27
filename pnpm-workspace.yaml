@@ -17,17 +17,16 @@ packages:
     - tools/**
     - wallet-gateway/**
 allowBuilds:
-    '@scarf/scarf': true
     '@swc/core': true
-    better-sqlite3: true
     cbor-extract: true
-    cpu-features: true
+    # Optional ssh2 speedups (testcontainers, SSH unused); ssh2 falls back to Node crypto, build costs ~20s in CI
+    cpu-features: false
     esbuild: true
     nx: true
-    protobufjs: true
+    # Postinstall only prints a version-scheme warning, removed with protobufjs@8
+    protobufjs: false
     secp256k1: true
-    spawn-sync: true
-    ssh2: true
+    ssh2: false
 peerDependencyRules:
     allowedVersions:
         # Project no longer actively maintained
