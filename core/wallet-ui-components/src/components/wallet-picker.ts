@@ -15,6 +15,9 @@ export type {
     WalletPickerResult,
 } from '@canton-network/core-types'
 
+/** A remote gateway the user added by URL, as opposed to one from discovery */
+type CustomGatewayEntry = WalletPickerEntry & { url: string }
+
 const SUBSTITUTABLE_CSS = cssToString([
     BaseElement.styles,
     css`
@@ -208,12 +211,61 @@ const SUBSTITUTABLE_CSS = cssToString([
             min-width: 0;
             font-size: 15px;
             font-weight: 500;
+            line-height: 20px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .wallet-remove-btn {
+        .wallet-info {
+            flex: 1;
+            min-width: 0;
+            min-height: 44px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: 26px;
+            align-items: center;
+            align-content: center;
+            gap: 2px;
+        }
+
+        .wallet-monogram {
+            background: linear-gradient(
+                135deg,
+                hsl(var(--hue) 75% 58%),
+                hsl(calc(var(--hue) + 45) 80% 45%)
+            );
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .wallet-url {
+            font-size: var(--wg-theme-font-size-xs);
+            line-height: 16px;
+            color: var(--wg-theme-text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .wallet-card-editing {
+            cursor: default;
+            border-color: var(--wg-theme-accent-color);
+        }
+
+        .wallet-rename-input {
+            height: 26px;
+            padding: 0 8px;
+            border: 1px solid var(--wg-theme-border-color);
+            border-radius: 6px;
+            background: var(--wg-theme-background-color);
+            color: var(--wg-theme-text-color);
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .wallet-action-btn {
             border: none;
             background: transparent;
             color: var(--wg-theme-text-secondary);
@@ -221,24 +273,29 @@ const SUBSTITUTABLE_CSS = cssToString([
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: color 0.15s ease;
-            flex-shrink: 0;
+            transition:
+                color 0.15s ease,
+                background 0.15s ease;
             padding: 0;
-            width: 16px;
-            height: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+        }
+
+        .wallet-action-btn:hover {
+            color: var(--wg-theme-text-color);
+            background: var(--wg-theme-icon-bg);
         }
 
         .wallet-remove-btn:hover {
             color: var(--wg-theme-error-color);
         }
 
-        .wallet-remove-btn:focus-visible {
+        .wallet-action-btn:focus-visible {
             outline: 2px solid var(--wg-theme-accent-color);
-            outline-offset: 4px;
-            border-radius: 4px;
         }
 
-        .wallet-remove-btn svg {
+        .wallet-action-btn svg {
             width: 16px;
             height: 16px;
         }
@@ -265,7 +322,7 @@ const SUBSTITUTABLE_CSS = cssToString([
             margin-top: 24px;
         }
 
-        .custom-url-label .info-wrap {
+        .info-wrap {
             display: inline-flex;
             align-items: center;
         }
@@ -288,11 +345,8 @@ const SUBSTITUTABLE_CSS = cssToString([
             border-radius: 999px;
         }
 
-        .custom-url-label .info-tooltip {
+        .info-tooltip {
             position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
             z-index: 20;
             width: max-content;
             max-width: min(320px, 90vw);
@@ -314,9 +368,33 @@ const SUBSTITUTABLE_CSS = cssToString([
             transition: opacity 0.12s ease;
         }
 
-        .custom-url-label .info-wrap:hover .info-tooltip {
+        .custom-url-label .info-tooltip {
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .info-wrap:hover .info-tooltip {
             opacity: 1;
             visibility: visible;
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            /* Align the icons with the card padding; the hit area extends into it */
+            margin-right: -8px;
+        }
+
+        .wallet-action {
+            position: relative;
+        }
+
+        .wallet-action .info-tooltip {
+            top: 50%;
+            right: calc(100% + 8px);
+            transform: translateY(-50%);
         }
 
         .custom-url-row {
@@ -464,6 +542,8 @@ const SUBSTITUTABLE_CSS = cssToString([
  *
  * Communication:
  *   - Reads wallet entries from localStorage key `splice_wallet_picker_entries`
+ *   - Reads custom gateways from `splice_wallet_picker_recent`; these can be
+ *     renamed or removed from within the picker
  *   - Posts a WalletPickerResult to window.opener via postMessage on selection
  *
  * States: list → connecting → connected | error
@@ -478,6 +558,7 @@ export class WalletPicker extends HTMLElement {
     private platform: BrowserPlatform | 'unsupported' = 'unsupported'
     private suggestedEntries: WalletPickerSuggestedEntry[] = []
     private recentGateways: { name: string; rpcUrl: string }[] = []
+    private editingRpcUrl: string | null = null
     private state: 'list' | 'connecting' | 'connected' | 'error' = 'list'
     private selectedEntry: WalletPickerEntry | null = null
     private errorMessage = ''
@@ -539,32 +620,33 @@ export class WalletPicker extends HTMLElement {
         return []
     }
 
-    private saveRecentGateway(entry: { name: string; rpcUrl: string }): void {
-        const recent = this.loadRecentGateways().filter(
-            (r) => r.rpcUrl !== entry.rpcUrl
+    private saveRecentGateways(
+        recent: { name: string; rpcUrl: string }[]
+    ): void {
+        this.recentGateways = recent
+
+        if (recent.length === 0) {
+            localStorage.removeItem(this.RECENT_KEY)
+        } else {
+            localStorage.setItem(this.RECENT_KEY, JSON.stringify(recent))
+        }
+    }
+
+    private renameRecentGateway(rpcUrl: string, name: string): void {
+        // An empty name clears the label, falling back to the URL
+        const newName = name.trim() || rpcUrl
+        this.saveRecentGateways(
+            this.loadRecentGateways().map((r) =>
+                r.rpcUrl === rpcUrl ? { ...r, name: newName } : r
+            )
         )
-        recent.unshift(entry)
-        this.recentGateways = recent.slice(0, 5)
-        localStorage.setItem(
-            this.RECENT_KEY,
-            JSON.stringify(this.recentGateways)
-        )
+        this.stopRenaming()
     }
 
     private removeRecentGateway(rpcUrl: string): void {
-        this.recentGateways = this.loadRecentGateways().filter(
-            (r) => r.rpcUrl !== rpcUrl
+        this.saveRecentGateways(
+            this.loadRecentGateways().filter((r) => r.rpcUrl !== rpcUrl)
         )
-
-        if (this.recentGateways.length === 0) {
-            localStorage.removeItem(this.RECENT_KEY)
-        } else {
-            localStorage.setItem(
-                this.RECENT_KEY,
-                JSON.stringify(this.recentGateways)
-            )
-        }
-
         this.render()
     }
 
@@ -644,7 +726,9 @@ export class WalletPicker extends HTMLElement {
         })
     }
 
-    private isRemovableEntry(entry: WalletPickerEntry): boolean {
+    private isCustomGateway(
+        entry: WalletPickerEntry
+    ): entry is CustomGatewayEntry {
         if (entry.type !== 'remote' || !entry.url) {
             return false
         }
@@ -750,16 +834,19 @@ export class WalletPicker extends HTMLElement {
         return header
     }
 
-    private renderWalletCard(entry: WalletPickerEntry): HTMLElement {
-        const card = this.el('div', '', {
-            class: 'wallet-card',
-            role: 'button',
-            tabindex: '0',
-            'aria-label': `Connect to ${entry.name}`,
-        })
-
+    private renderWalletIcon(entry: WalletPickerEntry): HTMLElement {
         const icon = this.el('div', '', { class: 'wallet-icon' })
-        if (entry.icon) {
+        if (!entry.icon && this.isRenamedCustomGateway(entry)) {
+            // Monogram with a hue derived from the URL, so that several
+            // renamed gateways are easy to tell apart at a glance. Scaling by
+            // the golden angle spreads similar URLs across the colour wheel.
+            let charCodeSum = 0
+            for (const char of entry.url) charCodeSum += char.charCodeAt(0)
+            const [initial = ''] = entry.name.trim()
+            icon.className = 'wallet-icon wallet-monogram'
+            icon.style.setProperty('--hue', String(charCodeSum * 137.5))
+            icon.innerText = initial.toUpperCase()
+        } else if (entry.icon) {
             const img = this.el('img', '', { src: entry.icon, alt: entry.name })
             icon.appendChild(img)
         } else {
@@ -768,28 +855,193 @@ export class WalletPicker extends HTMLElement {
                     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
                     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><circle cx="12" cy="10" r="2"/></svg>'
         }
-        card.appendChild(icon)
+        return icon
+    }
 
-        card.appendChild(this.el('span', entry.name, { class: 'wallet-name' }))
+    private isRenamedCustomGateway(
+        entry: WalletPickerEntry
+    ): entry is CustomGatewayEntry {
+        return this.isCustomGateway(entry) && entry.name !== entry.url
+    }
+
+    private renderWalletCard(entry: WalletPickerEntry): HTMLElement {
+        const isCustom = this.isCustomGateway(entry)
+
+        if (isCustom && entry.url === this.editingRpcUrl) {
+            return this.renderRenameCard(entry)
+        }
+
+        const card = this.el('div', '', {
+            class: 'wallet-card',
+            role: 'button',
+            tabindex: '0',
+            'aria-label': isCustom
+                ? `Connect to custom wallet ${entry.name} (${entry.url})`
+                : `Connect to ${entry.name}`,
+        })
+
+        card.appendChild(this.renderWalletIcon(entry))
+
+        if (isCustom) {
+            card.dataset.rpcUrl = entry.url
+            // Custom wallets can be freely renamed, so always show their URL
+            // to prevent impersonating known wallets
+            const info = this.el('div', '', {
+                class: 'wallet-info',
+                title: entry.url,
+            })
+            info.appendChild(
+                this.el('span', entry.name, { class: 'wallet-name' })
+            )
+            if (this.isRenamedCustomGateway(entry)) {
+                info.appendChild(
+                    this.el('span', entry.url, { class: 'wallet-url' })
+                )
+            }
+            card.appendChild(info)
+        } else {
+            card.appendChild(
+                this.el('span', entry.name, { class: 'wallet-name' })
+            )
+        }
+
         card.addEventListener('click', () => this.selectWallet(entry))
 
-        if (this.isRemovableEntry(entry) && entry.url) {
-            const removeButton = this.el('button', '', {
-                class: 'wallet-remove-btn',
-                type: 'button',
-                'aria-label': `Remove custom wallet ${entry.name}`,
-                title: `Remove custom wallet ${entry.name}`,
-            })
-            removeButton.innerHTML =
-                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>'
-            removeButton.addEventListener('click', (event: Event) => {
-                event.stopPropagation()
-                this.removeRecentGateway(entry.url!)
-            })
-            card.appendChild(removeButton)
+        if (isCustom) {
+            card.appendChild(
+                this.renderActions(
+                    this.renderActionButton(
+                        'wallet-rename-btn',
+                        'Rename',
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></svg>',
+                        () => this.startRenaming(entry.url)
+                    ),
+                    this.renderActionButton(
+                        'wallet-remove-btn',
+                        'Remove',
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg>',
+                        () => this.removeRecentGateway(entry.url)
+                    )
+                )
+            )
         }
 
         return card
+    }
+
+    private renderRenameCard(entry: CustomGatewayEntry): HTMLElement {
+        const card = this.el('div', '', {
+            class: 'wallet-card wallet-card-editing',
+        })
+        card.appendChild(this.renderWalletIcon(entry))
+
+        // Same layout as the regular card, with the name swapped for an input
+        // and the URL always shown, so that the card keeps its height
+        const info = this.el('div', '', { class: 'wallet-info' })
+        const input = this.el('input', '', {
+            class: 'wallet-rename-input',
+            type: 'text',
+            placeholder: 'Add a label',
+            maxlength: '64',
+            'aria-label': 'Label',
+        })
+        input.value = this.isRenamedCustomGateway(entry) ? entry.name : ''
+        info.append(
+            input,
+            this.el('span', entry.url, {
+                class: 'wallet-url',
+                title: entry.url,
+            })
+        )
+        card.appendChild(info)
+
+        const save = () => this.renameRecentGateway(entry.url, input.value)
+        const cancel = () => this.stopRenaming()
+
+        input.addEventListener('keydown', (e: KeyboardEvent) => {
+            // Enter and Escape confirm or dismiss input method suggestions
+            if (e.isComposing) return
+            if (e.key === 'Enter') {
+                // Otherwise the key press also clicks the rename button that
+                // receives focus once the rename is saved
+                e.preventDefault()
+                save()
+            }
+            if (e.key === 'Escape') cancel()
+        })
+
+        card.appendChild(
+            this.renderActions(
+                this.renderActionButton(
+                    'wallet-rename-save',
+                    'Save',
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>',
+                    save
+                ),
+                this.renderActionButton(
+                    'wallet-rename-cancel',
+                    'Cancel',
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>',
+                    cancel
+                )
+            )
+        )
+        return card
+    }
+
+    private renderActions(...buttons: HTMLElement[]): HTMLElement {
+        const actions = this.el('div', '', { class: 'wallet-actions' })
+        actions.append(...buttons)
+        return actions
+    }
+
+    private renderActionButton(
+        className: string,
+        label: string,
+        svg: string,
+        onClick: () => void
+    ): HTMLElement {
+        const button = this.el('button', '', {
+            class: `wallet-action-btn ${className}`,
+            type: 'button',
+            'aria-label': label,
+        })
+        button.innerHTML = svg
+        button.addEventListener('click', (event: Event) => {
+            event.stopPropagation()
+            onClick()
+        })
+
+        const wrap = this.el('span', '', { class: 'info-wrap wallet-action' })
+        wrap.append(
+            button,
+            this.el('span', label, {
+                class: 'info-tooltip',
+                role: 'tooltip',
+            })
+        )
+        return wrap
+    }
+
+    private startRenaming(rpcUrl: string): void {
+        this.editingRpcUrl = rpcUrl
+        this.render()
+        this.shadowRoot
+            ?.querySelector<HTMLInputElement>('.wallet-rename-input')
+            ?.focus()
+    }
+
+    private stopRenaming(): void {
+        const rpcUrl = this.editingRpcUrl
+        this.editingRpcUrl = null
+        this.render()
+        // render() replaced the focused input, so return focus to the gateway
+        Array.from(
+            this.shadowRoot?.querySelectorAll<HTMLElement>('.wallet-card') ?? []
+        )
+            .find((card) => card.dataset.rpcUrl === rpcUrl)
+            ?.querySelector<HTMLButtonElement>('.wallet-rename-btn')
+            ?.focus()
     }
 
     private renderSuggestedWalletCard(
