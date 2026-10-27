@@ -8,6 +8,3 @@ export const TEST_TOKEN_REGISTRY_PORT = parseInt(
     process.env['REGISTRY_PORT'] ?? defaultConfig.port.toString(),
     10
 )
-export const TEST_TOKEN_REGISTRY_URL = new URL(
-    `http://localhost:${TEST_TOKEN_REGISTRY_PORT}`
-)
