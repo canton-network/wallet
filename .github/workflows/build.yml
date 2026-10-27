@@ -510,7 +510,7 @@ jobs:
 
             - name: Stop Localnet (${{ matrix.network }})
               if: always()
-              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
+              run: pnpm stop:localnet --network=${{ matrix.network }}
 
             - name: Scan container logs for secrets
               id: scan_snippets_docker_logs
@@ -583,7 +583,7 @@ jobs:
 
             - name: Stop Localnet (${{ matrix.network }})
               if: always()
-              run: pnpm run stop:localnet -- --network=${{ matrix.network }}
+              run: pnpm stop:localnet --network=${{ matrix.network }}
 
             - name: Scan container logs for secrets
               id: scan_scripts_docker_logs
