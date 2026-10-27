@@ -59,8 +59,8 @@ function compareOfferItemsByExpiry(left: ActionItem, right: ActionItem) {
 export function useOfferItems(): OfferItemsResult {
     const primaryParty = usePrimaryAccount()?.partyId
 
-    // Offers combine two independent sources: pending transfer instructions and
-    // allocation requests for the current primary wallet.
+    // Offers combine two independent sources: pending transfer instructions (v1 and v2, merged by contractId) and
+    // v1 allocation requests for the current primary wallet.
     const pendingTransfers = useQuery(
         usePendingTransfersQueryOptions(primaryParty)
     )
@@ -109,7 +109,7 @@ export function useOfferItems(): OfferItemsResult {
             const view = contract.interfaceViewValue
             if (!view?.status) continue
             const transfer = view.transfer
-            const tag = view.status.tag
+            const tag: string | undefined = view.status.tag
             const memo =
                 transfer?.meta?.values?.[TokenStandardService.MEMO_KEY] ?? ''
 
@@ -118,7 +118,10 @@ export function useOfferItems(): OfferItemsResult {
                 contractId: contract.contractId,
                 currentPartyId: primaryParty,
                 tag,
-                type: tag?.startsWith('Transfer') ? 'Transfer' : tag,
+                type:
+                    tag === undefined || tag?.startsWith('Transfer')
+                        ? 'Transfer'
+                        : tag,
                 date: transfer.requestedAt,
                 expiry: transfer.executeBefore,
                 message: memo,
@@ -139,6 +142,7 @@ export function useOfferItems(): OfferItemsResult {
                 existing.versions.push('v2')
                 existing.senderAccount = transfer.sender
                 existing.receiverAccount = transfer.receiver
+                existing.availableActions = view.availableActions
                 continue
             }
 
