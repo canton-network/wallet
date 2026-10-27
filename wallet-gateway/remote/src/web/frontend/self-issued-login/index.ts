@@ -506,6 +506,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                         ? html`<div
                               class="alert alert-warning mb-0"
                               role="status"
+                              data-testid="self-issued-login-poll-warning"
                           >
                               An error occurred while checking the approval
                               status. Retrying...
@@ -539,6 +540,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                               <button
                                   class="btn btn-primary rounded-pill w-100 d-inline-flex align-items-center justify-content-center gap-2"
                                   type="button"
+                                  data-testid="self-issued-login-retry"
                                   ?disabled=${this.submitting}
                                   @click=${() => this.connectSession(wallet)}
                               >
@@ -547,6 +549,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                                           ? html`<span
                                                 class="spinner-border spinner-border-sm"
                                                 aria-hidden="true"
+                                                data-testid="self-issued-login-retry-spinner"
                                             ></span>`
                                           : nothing
                                   }
@@ -631,6 +634,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                                   <button
                                       class="btn btn-link btn-sm text-body text-decoration-none p-0 d-inline-flex align-items-center gap-1"
                                       type="button"
+                                      data-testid="self-issued-login-back"
                                       ?disabled=${this.submitting}
                                       @click=${this.goBack}
                                   >
