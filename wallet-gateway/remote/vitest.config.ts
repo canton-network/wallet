@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vitest/config'
+import { resolve } from 'path'
+import { standardDecorators } from '../../vite.decorators.js'
 import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 
 export default defineConfig({
     test: {
         coverage: coverage({
-            exclude: [
-                'src/**/*.test.ts',
-                'src/**/*.d.ts',
-                'src/web/frontend/dist/**',
-                'src/web/frontend/**/test-helpers.ts',
-                'src/**/rpc-gen/**',
-            ],
+            exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/**/rpc-gen/**'],
             thresholds: {
                 lines: 75,
                 functions: 75,
@@ -27,6 +23,11 @@ export default defineConfig({
                 setupFiles: ['./vitest.setup.ts'],
             }),
             browserProject({
+                plugins: [
+                    standardDecorators(
+                        resolve(import.meta.dirname, 'src/web/frontend/**/*.ts')
+                    ),
+                ],
                 include: ['src/web/frontend/**/*.test.ts'],
                 setupFiles: ['./vitest.setup.browser.ts'],
             }),

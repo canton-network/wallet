@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import * as mock from '../../__test__/mocks'
+import * as mock from '../../__tests__/mocks'
 import { it, describe, beforeEach, vi, expect } from 'vitest'
 import {
     PartyNamespace,
@@ -393,13 +393,18 @@ describe('Party namespace', () => {
 
         describe('external.create.sign', () => {
             it('should sign the prepared party with a signature', async () => {
-                const result = await preparedParty.sign('privateKey')
+                const result = preparedParty.sign('privateKey')
 
                 expect(result).toBeInstanceOf(SignedPartyCreationService)
 
-                expect(signTransactionHashSpy).toHaveBeenCalledExactlyOnceWith(
-                    partyTransaction.multiHash,
-                    'privateKey'
+                // Signing happens once the prepared transaction resolves.
+                await vi.waitFor(() =>
+                    expect(
+                        signTransactionHashSpy
+                    ).toHaveBeenCalledExactlyOnceWith(
+                        partyTransaction.multiHash,
+                        'privateKey'
+                    )
                 )
             })
         })
@@ -658,9 +663,9 @@ describe('Party namespace', () => {
                         ],
                     } satisfies LedgerCommonSchemas['GetPartiesResponse'])
                     // Mock grantRights call - fails to grant rights
-                    .mockResolvedValueOnce({
-                        newlyGrantedRights: undefined,
-                    } satisfies LedgerCommonSchemas['GrantUserRightsResponse'])
+                    .mockResolvedValueOnce(
+                        {} satisfies LedgerCommonSchemas['GrantUserRightsResponse']
+                    )
 
                 await expect(signedParty.execute()).rejects.toThrow(
                     'Failed to grant user rights'

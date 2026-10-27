@@ -13,14 +13,13 @@ import {
     makeIdp,
     makePublicNetwork,
     mockRequest,
-} from '../test-helpers.js'
+} from '../__tests__/test-helpers.js'
 
 const {
     mockCreateUserClient,
     handleErrorToast,
     mockRedirectToIntendedOrDefault,
     mockAddUserSession,
-    mockGetAccessToken,
     mockAccessTokenSet,
     mockExpirationDateSet,
     mockNetworkIdSet,
@@ -32,7 +31,6 @@ const {
     handleErrorToast: vi.fn(),
     mockRedirectToIntendedOrDefault: vi.fn(),
     mockAddUserSession: vi.fn().mockResolvedValue(undefined),
-    mockGetAccessToken: vi.fn(),
     mockAccessTokenSet: vi.fn(),
     mockExpirationDateSet: vi.fn(),
     mockNetworkIdSet: vi.fn(),
@@ -66,17 +64,9 @@ vi.mock('../state-manager.js', () => ({
         },
         expirationDate: { set: mockExpirationDateSet },
         networkId: { set: mockNetworkIdSet, get: mockNetworkIdGet },
-        onboardingSessionId: { set: mockOnboardingSessionIdSet },
+        selfIssuedLoginSessionId: { set: mockOnboardingSessionIdSet },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
-}))
-vi.mock('@canton-network/core-wallet-auth', () => ({
-    AuthTokenProvider: vi.fn().mockImplementation(function AuthTokenProvider() {
-        return {
-            getAccessToken: mockGetAccessToken,
-        }
-    }),
-    ClientCredentials: {},
 }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     const actual =
@@ -166,7 +156,6 @@ describe('LoginUI', () => {
         handleErrorToast.mockReset()
         mockRedirectToIntendedOrDefault.mockReset()
         mockAddUserSession.mockClear()
-        mockGetAccessToken.mockReset()
         mockAccessTokenSet.mockReset()
         mockExpirationDateSet.mockReset()
         mockNetworkIdSet.mockReset()
@@ -174,7 +163,6 @@ describe('LoginUI', () => {
         mockNetworkIdGet.mockReturnValue('net-1')
         mockOnboardingSessionIdSet.mockReset()
         setLocationHref.mockReset()
-        mockGetAccessToken.mockResolvedValue(defaultAccessToken)
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listNetworks') {
@@ -186,7 +174,7 @@ describe('LoginUI', () => {
             if (method === 'selfSignedAccessToken') {
                 return { accessToken: defaultAccessToken }
             }
-            if (method === 'addSelfIssuedSession') {
+            if (method === 'startSelfIssuedLoginSession') {
                 return { sessionId: 'onboarding-session-1' }
             }
             return undefined
@@ -235,7 +223,7 @@ describe('LoginUI', () => {
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
 
-    it('creates a tokenless session before self-issued onboarding', async () => {
+    it('starts a self-issued login session and opens the self-issued login page', async () => {
         await waitUntil(() => el.networks.length === 1)
         const network = makePublicNetwork({
             id: 'self-issued-network',
@@ -253,7 +241,7 @@ describe('LoginUI', () => {
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
         expect(mockRequest).toHaveBeenCalledWith({
-            method: 'addSelfIssuedSession',
+            method: 'startSelfIssuedLoginSession',
             params: {
                 username: 'alice',
                 networkId: 'self-issued-network',
@@ -265,7 +253,7 @@ describe('LoginUI', () => {
             window.location.origin
         )
         const redirectUrl = new URL(setLocationHref.mock.calls[0]![0])
-        expect(redirectUrl.pathname).toBe('/onboarding/')
+        expect(redirectUrl.pathname).toBe('/self-issued-login/')
         expect(redirectUrl.search).toBe('')
     })
 
@@ -300,11 +288,14 @@ describe('LoginUI', () => {
     it('shows loading state while connecting', async () => {
         await waitUntil(() => el.networks.length === 1)
 
-        let resolveToken!: (value: string) => void
-        mockGetAccessToken.mockReturnValue(
-            new Promise((resolve) => {
-                resolveToken = resolve
-            })
+        let resolveToken: ((value: { accessToken: string }) => void) | undefined
+        const defaultRequest = mockRequest.getMockImplementation()!
+        mockRequest.mockImplementation((args) =>
+            args.method === 'selfSignedAccessToken'
+                ? new Promise((resolve) => {
+                      resolveToken = resolve
+                  })
+                : defaultRequest(args)
         )
 
         dispatchConnect(el)
@@ -315,7 +306,8 @@ describe('LoginUI', () => {
             'Connecting to Self Signed Network...'
         )
 
-        resolveToken(defaultAccessToken)
+        await waitUntil(() => resolveToken)
+        resolveToken!({ accessToken: defaultAccessToken })
         await waitUntil(
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
         )
@@ -381,6 +373,7 @@ describe('LoginUI', () => {
         dispatchConnect(
             el,
             selfSignedNetwork,
+            // @ts-expect-error testing handling of unsupported type on purpose
             makeIdp({ id: 'idp-1', type: 'saml' })
         )
 
@@ -423,7 +416,9 @@ describe('LoginUI', () => {
             'net-oauth',
             expect.any(String)
         )
-        expect(vi.mocked(fetch)).toHaveBeenCalledWith(oauthConfigUrl)
+        expect(vi.mocked(fetch)).toHaveBeenCalledWith(oauthConfigUrl, {
+            headers: { Accept: 'application/json' },
+        })
 
         const storedKeys = Object.keys(sessionStorage).filter((key) =>
             key.startsWith('oauth-pkce-')

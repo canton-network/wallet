@@ -1,5 +1,4 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
-import { pino } from 'pino'
 import _accept from './_accept.js'
 import type { TransferTestScriptParameters } from './types.js'
 import _reject from './_reject.js'
@@ -9,13 +8,16 @@ import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    localNetGlobalSynchronizer,
 } from '../utils/index.js'
 
-const logger = pino({ name: 'v1-02-two-step-transfer', level: 'info' })
+import { configureLogging } from '../utils/configure-logging.js'
+const logger = await configureLogging()
 
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+    synchronizerId: localNetGlobalSynchronizer,
     token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
 })

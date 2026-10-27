@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as path from 'path'
-import { move } from 'fs-extra/esm'
 import type { components } from '@open-rpc/generator'
 import * as fs from 'fs'
-import { readFile, writeFile } from 'fs/promises'
-import TOML from '@iarna/toml'
+import { readFile, rename, writeFile } from 'fs/promises'
 import lodash from 'lodash'
 import { execSync } from 'child_process'
 import { validateOpenRpc } from './validate-openrpc.js'
@@ -20,9 +18,9 @@ const tsTemplate =
 import type { RequestArgs, RequestPayload } from '@canton-network/core-types'
 import type { RpcTransport } from '@canton-network/core-rpc-transport'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* oxlint-disable no-unused-vars */
 <%= methodTypings.toString("typescript").replace(/export type AnyOf[A-Za-z0-9]+ =(?:[\\r\\n]|.)*?;/gm, "") %>
-/* eslint-enable @typescript-eslint/no-unused-vars */
+/* oxlint-enable no-unused-vars */
 
 type Params<T> = T extends (...args: infer A) => any ? A extends [] ? never : A[0] : never;
 type Result<T> = T extends (...args: any[]) => Promise<infer R> ? R : never;
@@ -100,15 +98,9 @@ const hooks: components.IHooks = {
     afterCopyStatic: [
         async (dest, frm, component): Promise<void> => {
             if (component.language === 'typescript') {
-                await move(
+                return await rename(
                     path.join(dest, '_package.json'),
-                    path.join(dest, 'package.json'),
-                    { overwrite: true }
-                )
-                return await move(
-                    path.join(dest, '_eslint.config.mjs'),
-                    path.join(dest, 'eslint.config.mjs'),
-                    { overwrite: true }
+                    path.join(dest, 'package.json')
                 )
             }
         },
@@ -119,7 +111,7 @@ const hooks: components.IHooks = {
                 const packagePath = path.join(dest, 'package.json')
                 const fileContents = await readFile(packagePath)
                 const pkg = JSON.parse(fileContents.toString())
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // oxlint-disable-next-line typescript/no-explicit-any
                 const currentVersion = (pkg as any).version
                 versionMap.set(component.name, currentVersion!)
             }
@@ -150,23 +142,8 @@ const hooks: components.IHooks = {
                 }
                 // else - fallback to repository field in template
                 const updatedPkg = JSON.stringify(updatedPkgObj)
-                execSync(`pnpm prettier --write ${dest}/src/**/*`)
+                execSync(`pnpm oxfmt ${dest}/src`)
                 return await writeFile(packagePath, updatedPkg)
-            }
-            if (component.language === 'rust') {
-                const cargoTOMLPath = path.join(dest, 'Cargo.toml')
-                const fileContents = await readFile(cargoTOMLPath)
-                const cargoTOML = TOML.parse(fileContents.toString())
-                const updatedCargo = TOML.stringify({
-                    ...cargoTOML,
-                    package: {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        ...(cargoTOML.package as any),
-                        name: component.name,
-                        version: openrpcDocument.info.version,
-                    },
-                })
-                return await writeFile(cargoTOMLPath, updatedCargo)
             }
         },
     ],

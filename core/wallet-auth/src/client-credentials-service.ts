@@ -1,14 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from '@canton-network/core-types'
-import type { ClientCredentials, OIDCConfig } from './auth-service.js'
+import { getLogger, lazy } from '@logtape/logtape'
+import type { ClientCredentials } from './auth-service.js'
+import {
+    fetchOidcDiscovery,
+    oidcTokenResponseSchema,
+    parseIdpResponse,
+    type OidcDiscovery,
+} from './auth-utils.js'
 
 export class ClientCredentialsService {
-    constructor(
-        private configUrl: string,
-        private logger: Logger | undefined
-    ) {}
+    private logger = getLogger([
+        'core',
+        'wallet-auth',
+        'client-credentials-service',
+    ]).with({ configUrl: lazy(() => this.configUrl) })
+
+    constructor(private configUrl: string) {}
 
     /**
      * Fetches the JWT token (M2M) using client credentials.
@@ -19,26 +28,33 @@ export class ClientCredentialsService {
     async fetchToken(credentials: ClientCredentials): Promise<string> {
         try {
             const oidcConfig = await this.getOIDCConfig(this.configUrl)
-            this.logger?.debug({ oidcConfig }, 'Fetched OIDC config')
+            this.logger.debug('Fetched OIDC config', { oidcConfig })
 
             const res: Response = await this.fetchTokenEndpoint(
                 oidcConfig.token_endpoint,
                 credentials
             )
-            const json = await res.json()
-
-            this.logger?.info(
-                { response: json },
-                `Fetched admin token for clientId: ${credentials.clientId}`
+            const json = parseIdpResponse(
+                oidcTokenResponseSchema,
+                await res.json(),
+                'token endpoint response'
             )
 
-            if (!json.access_token) {
-                throw new Error('No access_token in token endpoint response')
+            if (this.logger.isEnabledFor('debug')) {
+                this.logger.debug(
+                    `Fetched admin token for clientId: {clientId}`,
+                    { clientId: credentials.clientId }
+                )
+            } else {
+                this.logger.info(
+                    `Fetched admin token for clientId: {clientId}`,
+                    { clientId: credentials.clientId, response: json }
+                )
             }
 
             return json.access_token
         } catch (error) {
-            this.logger?.error({ err: error }, 'Failed to fetch admin token')
+            this.logger.warn('Failed to fetch admin token', { error })
             throw error
         }
     }
@@ -62,16 +78,18 @@ export class ClientCredentialsService {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
                 Authorization: `Basic ${password}`,
             },
             body: params.toString(),
         })
 
         if (!res.ok) {
-            this.logger?.error(
-                { status: res.status, statusText: res.statusText },
-                'Token endpoint error'
-            )
+            this.logger.warn('Token endpoint error', {
+                status: res.status,
+                statusText: res.statusText,
+            })
+
             throw new Error(
                 `Token endpoint error: ${res.status} ${res.statusText}`
             )
@@ -80,19 +98,21 @@ export class ClientCredentialsService {
         return res
     }
 
-    async getOIDCConfig(url: string): Promise<OIDCConfig> {
-        const res = await fetch(url)
-        if (!res.ok) {
-            const text = await res.text()
-            this.logger?.error(
-                { status: res.status, statusText: res.statusText, body: text },
-                'Failed to fetch OIDC config'
-            )
-            throw new Error(
-                `OIDC config error: ${res.status} ${res.statusText}`
-            )
+    async getOIDCConfig(url: string) {
+        let config: OidcDiscovery
+        try {
+            config = await fetchOidcDiscovery(url)
+        } catch (error) {
+            this.logger.error('Failed to fetch OIDC config', { error })
+            throw error
         }
-        return res.json()
+        if (!config.token_endpoint) {
+            throw new Error('OIDC config has no token_endpoint')
+        }
+        return {
+            ...config,
+            token_endpoint: config.token_endpoint,
+        } satisfies OidcDiscovery
     }
 }
 
@@ -101,10 +121,7 @@ const toClientPassword = (clientId: string, clientSecret: string): string => {
     return btoa(credentials)
 }
 
-export const clientCredentialsService = (
-    configUrl: string,
-    logger: Logger | undefined
-) => ({
+export const clientCredentialsService = (configUrl: string) => ({
     fetchToken: async (credentials: ClientCredentials) =>
-        new ClientCredentialsService(configUrl, logger).fetchToken(credentials),
+        new ClientCredentialsService(configUrl).fetchToken(credentials),
 })

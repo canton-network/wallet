@@ -28,7 +28,6 @@ import {
     isValidGetEndpoint,
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
-import { v4 } from 'uuid'
 import type { KernelInfo as KernelInfoConfig } from '../config/Config.js'
 import type { Logger } from 'pino'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
@@ -102,10 +101,8 @@ export const dappController = (
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
+                    context.accessToken
                 ),
             })
 
@@ -182,10 +179,8 @@ export const dappController = (
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
+                    context.accessToken
                 ),
             })
             const status = await networkStatus(ledgerClient)
@@ -203,10 +198,8 @@ export const dappController = (
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
+                    context.accessToken
                 ),
             })
 
@@ -256,7 +249,7 @@ export const dappController = (
             const gatewayUserId = context.userId
             let ledgerUserId = context.userId
             const accessTokenProvider: AuthTokenProvider =
-                AuthTokenProvider.fromToken(context.accessToken, logger)
+                AuthTokenProvider.fromToken(context.accessToken)
 
             if (context.isApiKey) {
                 logger.info(
@@ -288,15 +281,14 @@ export const dappController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider,
             })
 
             const session = await getActiveSession(context)
             const notifier = notificationService.getNotifier(session.id)
 
-            const commandId = params.commandId || v4()
-            const transactionId = v4()
+            const commandId = params.commandId || crypto.randomUUID()
+            const transactionId = crypto.randomUUID()
 
             notifier.emit('txChanged', { status: 'pending', commandId })
 
@@ -321,6 +313,7 @@ export const dappController = (
 
             const prepared = await prepareSubmission(
                 ledgerUserId,
+                commandId,
                 actAs,
                 synchronizerId,
                 params,
@@ -349,7 +342,7 @@ export const dappController = (
                 status: 'pending',
                 preparedTransaction: prepared.preparedTransaction,
                 preparedTransactionHash: prepared.preparedTransactionHash,
-                payload: params,
+                payload: { ...params, commandId, actAs },
                 origin: origin || null,
                 createdAt: new Date(),
             }
@@ -386,7 +379,6 @@ export const dappController = (
                 )
                 const transactionService = new TransactionService(
                     store,
-                    logger,
                     deps!.signingDrivers,
                     notifier,
                     hashingSchemeVersion
@@ -444,10 +436,8 @@ export const dappController = (
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    logger
+                    context.accessToken
                 ),
             })
             const status = await networkStatus(ledgerClient)
@@ -504,7 +494,7 @@ export const dappController = (
 
             const session = await getActiveSession(context)
             const notifier = notificationService.getNotifier(session.id)
-            const messageId = v4()
+            const messageId = crypto.randomUUID()
             await store.setMessageRaw({
                 id: messageId,
                 status: 'pending',
@@ -555,7 +545,8 @@ export const dappController = (
 
 async function prepareSubmission(
     userId: string,
-    partyIds: string[],
+    commandId: string,
+    actAs: string[],
     synchronizerId: string,
     params: PrepareExecuteParams,
     ledgerClient: LedgerClient,
@@ -565,7 +556,8 @@ async function prepareSubmission(
         '/v2/interactive-submission/prepare',
         ledgerPrepareParams({
             userId,
-            partyIds,
+            commandId,
+            actAs,
             synchronizerId,
             params,
             hashingSchemeVersion,

@@ -28,12 +28,13 @@ const authContextMock: AuthContext = {
     accessToken: 'test-access-token',
 }
 
-const oauthIdp = (): Idp => ({
-    id: 'idp1',
-    type: 'oauth',
-    issuer: 'http://auth',
-    configUrl: 'http://auth/.well-known/openid-configuration',
-})
+const oauthIdp = () =>
+    ({
+        id: 'idp1',
+        type: 'oauth',
+        issuer: 'http://auth',
+        configUrl: 'http://auth/.well-known/openid-configuration',
+    }) satisfies Idp
 
 const selfIssuedIdp = (): Idp => ({
     id: 'idp-self-issued',
@@ -452,6 +453,49 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(primary?.primary).toBe(true)
         })
 
+        test('should set the auth party for selected wallet and remove for others', async () => {
+            await store.addIdp(oauthIdp())
+            await store.addNetwork(baseNetwork())
+            await store.addNetwork(baseNetwork('network2'))
+            await store.setSession({
+                id: 'sess-auth',
+                origin: 'dapp-1',
+                network: 'network1',
+                accessToken: 'test-access-token',
+            })
+            await store.addWallet(
+                baseWallet('party1', 'network1', { isAuthParty: true })
+            )
+            await store.addWallet(baseWallet('party2'))
+            await store.addWallet(
+                baseWallet('party3', 'network2', { isAuthParty: true })
+            )
+
+            await store.setAuthPartyWallet('party2')
+
+            const wallets = await store.getWallets()
+            expect(
+                wallets.find((wallet) => wallet.partyId === 'party1')
+                    ?.isAuthParty
+            ).toBe(false)
+            expect(
+                wallets.find((wallet) => wallet.partyId === 'party2')
+                    ?.isAuthParty
+            ).toBe(true)
+            expect(
+                (await store.getAllWallets({ networkIds: ['network2'] })).find(
+                    (wallet) => wallet.partyId === 'party3'
+                )?.isAuthParty
+            ).toBe(true)
+
+            await store.setAuthPartyWallet(null)
+            expect(
+                (await store.getWallets()).every(
+                    (wallet) => !wallet.isAuthParty
+                )
+            ).toBe(true)
+        })
+
         test('should set and get session', async () => {
             const session: Session = {
                 id: 'sess-123',
@@ -470,7 +514,7 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(removed).toBeUndefined()
         })
 
-        test('should resolve the current network from a tokenless session', async () => {
+        test('resolves the current network from a tokenless self-issued login session', async () => {
             const network: Network = {
                 id: 'network1',
                 name: 'testnet',
@@ -503,7 +547,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 network
             )
             await expect(
-                onboardingStore.getOnboardingSession('onboarding-session')
+                onboardingStore.getSelfIssuedLoginSession('onboarding-session')
             ).resolves.toEqual(
                 expect.objectContaining({
                     id: 'onboarding-session',
@@ -520,7 +564,7 @@ implementations.forEach(([name, StoreImpl]) => {
             ).rejects.toThrow('No session found')
         })
 
-        test('should not replace tokenless session on same origins', async () => {
+        test('keeps every tokenless self-issued login session, including several for one origin', async () => {
             await store.setSession({
                 id: 'onboarding-1',
                 origin: 'https://a.example',
@@ -545,7 +589,7 @@ implementations.forEach(([name, StoreImpl]) => {
             ])
         })
 
-        test('should keep a tokenless session when a logged-in session is created at the same origin', async () => {
+        test('keeps a tokenless self-issued login session when a logged-in session is created for the same origin', async () => {
             const baseSession = {
                 origin: 'https://example.com',
                 network: 'network1',
@@ -564,7 +608,7 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(ids).toEqual(['authenticated-session', 'onboarding-session'])
         })
 
-        test('should upgrade an onboarding session in place', async () => {
+        test('upgrades a tokenless self-issued login session in place and refuses a second upgrade', async () => {
             await store.setSession({
                 id: 'old-session',
                 origin: 'https://example.com',
@@ -578,7 +622,7 @@ implementations.forEach(([name, StoreImpl]) => {
             })
             await expect(store.listSessions()).resolves.toHaveLength(2)
 
-            await store.upgradeOnboardingSession(
+            await store.upgradeSelfIssuedLoginSession(
                 'onboarding-session',
                 'new-token'
             )
@@ -593,8 +637,32 @@ implementations.forEach(([name, StoreImpl]) => {
                 expect.objectContaining({ id: 'onboarding-session' })
             )
             await expect(
-                store.upgradeOnboardingSession('onboarding-session', 'other')
-            ).rejects.toThrow('Onboarding session not found')
+                store.upgradeSelfIssuedLoginSession(
+                    'onboarding-session',
+                    'other'
+                )
+            ).rejects.toThrow('Self-issued login session not found')
+        })
+
+        test('deletes a tokenless self-issued login session and leaves one that already has an access token', async () => {
+            await store.setSession({
+                id: 'tokenless-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+            await store.removeSelfIssuedLoginSession('tokenless-session')
+            await expect(store.listSessions()).resolves.toEqual([])
+
+            await store.setSession({
+                id: 'logged-in-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'kept-token',
+            })
+            await store.removeSelfIssuedLoginSession('logged-in-session')
+            await expect(store.getSession('kept-token')).resolves.toEqual(
+                expect.objectContaining({ id: 'logged-in-session' })
+            )
         })
 
         test('should add, list, get, update, and remove networks', async () => {
@@ -628,7 +696,7 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(listed).toHaveLength(1)
             expect(listed[0].name).toBe('testnet')
 
-            store.updateNetwork({ ...network, name: 'testnet-updated' })
+            await store.updateNetwork({ ...network, name: 'testnet-updated' })
 
             const fetched = await store.getNetwork('network1')
             expect(fetched.name).toBe('testnet-updated')
@@ -994,12 +1062,40 @@ implementations.forEach(([name, StoreImpl]) => {
             ).toHaveLength(2)
         })
 
+        test('persists and clears transaction failure reason', async () => {
+            await store.setTransaction({
+                id: 'tx-failure-reason',
+                commandId: 'cmd-failure-reason',
+                status: 'signed',
+                preparedTransaction: 'prepared',
+                preparedTransactionHash: 'hash',
+                origin: null,
+            })
+
+            await store.setTransactionStatus('tx-failure-reason', 'signed', {
+                failureReason: 'ledger timeout',
+            })
+            await store.setTransactionStatus('tx-failure-reason', 'signed')
+            expect(
+                (await store.getTransaction('tx-failure-reason'))?.failureReason
+            ).toBe('ledger timeout')
+
+            await store.setTransactionStatus('tx-failure-reason', 'executed', {
+                failureReason: '',
+            })
+            const executed = await store.getTransaction('tx-failure-reason')
+            expect(executed?.status).toBe('executed')
+            expect(executed).not.toHaveProperty('failureReason')
+        })
+
         test('should manage idps', async () => {
             const idp = oauthIdp()
             await store.addIdp(idp)
             expect(await store.getIdp('idp1')).toEqual(idp)
             await store.updateIdp({ ...idp, issuer: 'http://updated' })
-            expect((await store.listIdps())[0]?.issuer).toBe('http://updated')
+            expect((await store.listIdps())[0]).toMatchObject({
+                issuer: 'http://updated',
+            })
             await expect(store.addIdp(idp)).rejects.toThrow(
                 'IdP "idp1" already exists'
             )
@@ -1132,6 +1228,48 @@ implementations.forEach(([name, StoreImpl]) => {
 
             await store.removeMessageRaw('msg-1')
             expect(await store.listMessageRaws()).toHaveLength(0)
+        })
+
+        test('should keep externalTxId across message status updates and persist failureReason', async () => {
+            const base: MessageRaw = {
+                id: 'msg-1',
+                status: 'pending',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: 'hello',
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            }
+
+            await store.setMessageRaw(base)
+            await store.setMessageRawStatus('msg-1', 'awaiting-signature', {
+                externalTxId: 'provider-req-1',
+            })
+            await store.setMessageRawStatus('msg-1', 'signed', {
+                signature: 'sig',
+                signedAt: new Date('2026-01-01T00:01:00.000Z'),
+            })
+
+            const signed = await store.getMessageRaw('msg-1')
+            expect(signed?.status).toBe('signed')
+            expect(signed?.externalTxId).toBe('provider-req-1')
+            expect(signed?.failureReason).toBeUndefined()
+
+            await store.setMessageRaw({ ...base, id: 'msg-2' })
+            await store.setMessageRawStatus('msg-2', 'awaiting-signature', {
+                externalTxId: 'provider-req-2',
+            })
+            await store.setMessageRawStatus('msg-2', 'failed', {
+                failureReason: 'Signing provider returned status: rejected',
+            })
+
+            const failed = await store.getMessageRaw('msg-2')
+            expect(failed?.status).toBe('failed')
+            expect(failed?.externalTxId).toBe('provider-req-2')
+            expect(failed?.failureReason).toBe(
+                'Signing provider returned status: rejected'
+            )
         })
 
         test('should manage api keys', async () => {

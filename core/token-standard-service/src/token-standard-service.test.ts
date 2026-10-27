@@ -1,17 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi, type MockedObject } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { TokenStandardService } from './token-standard-service.js'
 import { CoreService } from './core-service.js'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { HoldingView } from '@canton-network/core-token-standard'
 import { Decimal } from 'decimal.js'
-import type { Logger } from '@canton-network/core-types'
-import rawTransactions from './test-data/mock/txs.json'
-import prettyTransactions from './test-data/expected/txs.json'
+import rawTransactions from './__tests__/data/mock/txs.json'
+import prettyTransactions from './__tests__/data/expected/txs.json'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* oxlint-disable typescript/no-explicit-any */
 const { mockAcsState, mockParseTransaction } = vi.hoisted(() => ({
     mockAcsState: vi.fn().mockResolvedValue([]),
     mockParseTransaction: vi.fn().mockResolvedValue({ offset: 10, events: [] }),
@@ -44,12 +43,6 @@ const accessTokenProvider = {
     getAccessToken: vi.fn().mockResolvedValue('test-token'),
     getAuthContext: vi.fn().mockResolvedValue(''),
 }
-const mockLogger: MockedObject<Logger> = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-} as MockedObject<Logger>
 
 const makeTokenClient = () => ({ get: vi.fn(), post: vi.fn() })
 
@@ -57,7 +50,6 @@ function makeService(isMasterUser = false) {
     const provider = makeProvider()
     const service = new TokenStandardService(
         provider,
-        mockLogger,
         accessTokenProvider,
         isMasterUser
     )
@@ -90,8 +82,8 @@ const makeHolding = (
     amount: string,
     admin: string,
     instrumentId: string,
-    lock?: { expiresAt?: string | null } | null
-) => ({
+    lock: HoldingView['lock'] = null
+): PrettyContract<HoldingView> => ({
     contractId: id,
     interfaceViewValue: {
         owner: 'dummy',
@@ -99,7 +91,7 @@ const makeHolding = (
             admin: admin,
             id: instrumentId,
         },
-        lock: lock ?? null,
+        lock,
         meta: {
             values: {},
         },
@@ -117,6 +109,11 @@ const makeHolding = (
             createdEventBlob: 'blob',
             createdAt: 'time',
             packageName: 'name',
+            createArgument: {},
+            witnessParties: [],
+            signatories: [],
+            representativePackageId: 'package-id',
+            acsDelta: true,
         },
         synchronizerId: 'blah',
         reassignmentCounter: 0,
@@ -156,8 +153,11 @@ describe('CoreService', () => {
 
     it('should fetch only unlocked holdings', async () => {
         const lockedHolding = makeHolding('1', '20', 'admin:123', 'amulet', {
+            holders: [],
             expiresAt: null,
-        }) as any
+            expiresAfter: null,
+            context: null,
+        })
         const unlockedHolding = makeHolding('2', '20', 'admin:123', 'amulet')
         const { service } = makeService()
         vi.spyOn(service.core, 'listContractsByInterface').mockResolvedValue([
@@ -1250,16 +1250,15 @@ describe('Token standard service', () => {
             })
             .mockResolvedValueOnce({ adminId: 'admin-b' })
 
-        const result = await service.registriesToAssets([
-            'http://registry1.com',
-            'http://registry2.com',
-        ])
+        const registry1 = new URL('http://registry1.com')
+        const registry2 = new URL('http://registry2.com')
+        const result = await service.registriesToAssets([registry1, registry2])
         expect(result).toStrictEqual([
             {
                 admin: 'admin-a',
                 displayName: 'USDCx',
                 id: 'USDCx',
-                registryUrl: 'http://registry1.com',
+                registryUrl: registry1,
                 symbol: 'USDCx',
                 capabilities: {
                     allocation: ['v1'],
@@ -1273,7 +1272,7 @@ describe('Token standard service', () => {
                 admin: 'admin-b',
                 displayName: 'TestTokenExt',
                 id: 'TestTokenExt',
-                registryUrl: 'http://registry2.com',
+                registryUrl: registry2,
                 symbol: 'TestTokenExt',
                 capabilities: {
                     allocation: ['v1'],
@@ -1287,7 +1286,7 @@ describe('Token standard service', () => {
                 admin: 'admin-b',
                 displayName: 'TestToken',
                 id: 'TestToken',
-                registryUrl: 'http://registry2.com',
+                registryUrl: registry2,
                 symbol: 'TestToken',
                 capabilities: {
                     allocation: ['v1'],

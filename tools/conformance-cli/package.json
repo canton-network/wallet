@@ -18,13 +18,12 @@
         }
     },
     "scripts": {
-        "build": "vite build && tsc",
-        "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-        "clean": "tsc -b --clean; rm -rf dist",
+        "build": "vite build && tsc -p tsconfig.lib.json",
+        "clean": "rm -rf dist",
         "run": "node src/cli.ts"
     },
     "dependencies": {
-        "@canton-network/tool-conformance-dapp": "catalog:",
+        "@canton-network/tool-conformance-dapp": "workspace:^",
         "commander": "catalog:",
         "ctrf": "catalog:",
         "express": "catalog:",
@@ -32,12 +31,10 @@
         "zod": "catalog:"
     },
     "devDependencies": {
-        "@canton-network/core-eslint-config": "catalog:",
-        "@canton-network/core-wallet-dapp-rpc-client": "catalog:",
+        "@canton-network/core-wallet-dapp-rpc-client": "workspace:",
         "@types/express": "catalog:",
         "@types/node": "catalog:",
         "@vitest/coverage-v8": "catalog:",
-        "eslint": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:"

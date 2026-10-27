@@ -8,11 +8,10 @@ import {
     awaitCompletion,
     defaultRetryableOptions,
     isJsCantonError,
-    promiseWithTimeout,
     retryable,
 } from './ledger-api-utils.js'
 import type { LedgerClient } from './ledger-client.js'
-import { grpcError, mockLogger } from './test-utils.js'
+import { grpcError } from './__tests__/test-utils.js'
 
 const cantonError = { code: 'NOT_FOUND', cause: 'missing', errorCategory: 1 }
 
@@ -67,15 +66,11 @@ describe('ledger-api-utils', () => {
                 return 'ok'
             })
 
-            const result = retryable(
-                fn,
-                {
-                    retries: 2,
-                    delayMs: 1000,
-                    cantonErrorKeys: ['SEQUENCER_REQUEST_FAILED'],
-                },
-                mockLogger
-            )
+            const result = retryable(fn, {
+                retries: 2,
+                delayMs: 1000,
+                cantonErrorKeys: ['SEQUENCER_REQUEST_FAILED'],
+            })
             await vi.advanceTimersByTimeAsync(1000)
 
             await expect(result).resolves.toBe('ok')
@@ -88,28 +83,8 @@ describe('ledger-api-utils', () => {
             })
 
             await expect(
-                retryable(fn, defaultRetryableOptions, mockLogger)
+                retryable(fn, defaultRetryableOptions)
             ).rejects.toMatchObject({ message: 'INVALID_ARGUMENT' })
-        })
-    })
-
-    describe('promiseWithTimeout', () => {
-        beforeEach(() => vi.useFakeTimers())
-        afterEach(() => vi.useRealTimers())
-
-        it('resolves or rejects on timeout', async () => {
-            await expect(
-                promiseWithTimeout(Promise.resolve('done'), 1000, 'timed out')
-            ).resolves.toBe('done')
-
-            const timedOut = promiseWithTimeout(
-                new Promise<string>(() => undefined),
-                1000,
-                'timed out'
-            )
-            const expectation = expect(timedOut).rejects.toBe('timed out')
-            await vi.advanceTimersByTimeAsync(1000)
-            await expectation
         })
     })
 
@@ -149,6 +124,24 @@ describe('ledger-api-utils', () => {
                     'cmd-1'
                 )
             ).rejects.toMatchObject({ code: 9, message: 'failed' })
+        })
+
+        it('gives up after maxAttempts polls without a match', async () => {
+            const client = {
+                postWithRetry: vi.fn().mockResolvedValue([]),
+            } as unknown as LedgerClient
+
+            await expect(
+                awaitCompletion(
+                    client,
+                    10,
+                    'alice::namespace',
+                    'alice',
+                    'cmd-1',
+                    3
+                )
+            ).rejects.toThrow('Completion for cmd-1 not found')
+            expect(client.postWithRetry).toHaveBeenCalledTimes(3)
         })
 
         it('polls with updated ledger end', async () => {

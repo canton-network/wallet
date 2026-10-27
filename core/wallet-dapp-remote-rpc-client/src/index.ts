@@ -5,7 +5,7 @@
 import type { RequestArgs, RequestPayload } from '@canton-network/core-types'
 import type { RpcTransport } from '@canton-network/core-rpc-transport'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* oxlint-disable no-unused-vars */
 /**
  *
  * The unique identifier of the command associated with the transaction.
@@ -21,6 +21,7 @@ type AlwaysTrue = any
 export interface CreateCommandPayload {
     [key: string]: any
 }
+type AlwaysFalse = any
 export interface CreateCommand {
     CreateCommand: CreateCommandPayload
 }
@@ -367,7 +368,7 @@ export interface Wallet {
     disabled?: Disabled
     reason?: Reason
     isAuthParty?: IsAuthParty
-    rights: Rights
+    rights: PartyRights
 }
 /**
  *
@@ -375,13 +376,13 @@ export interface Wallet {
  *
  */
 export type IsAuthParty = boolean
-export type PartyLevelRight = any
+export type PartyLevelRight = 'CanActAs' | 'CanReadAs' | 'CanExecuteAs'
 /**
  *
  * The rights of the wallet.
  *
  */
-export type Rights = PartyLevelRight[]
+export type PartyRights = PartyLevelRight[]
 /**
  *
  * The status of the message signature.
@@ -627,7 +628,7 @@ export type GetPrimaryAccount = () => Promise<Wallet>
 export type ListAccounts = () => Promise<ListAccountsResult>
 export type TxChanged = () => Promise<TxChangedEvent>
 export type MessageSignature = () => Promise<MessageSignatureEvent>
-/* eslint-enable @typescript-eslint/no-unused-vars */
+/* oxlint-enable no-unused-vars */
 
 type Params<T> = T extends (...args: infer A) => any
     ? A extends []

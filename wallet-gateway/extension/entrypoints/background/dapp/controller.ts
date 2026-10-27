@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Disabled unused vars rule to allow for future implementations
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* oxlint-disable no-unused-vars */
 import {
     type INotificationService,
     ledgerPrepareParams,
@@ -59,10 +59,8 @@ export const dappController = (
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    pinoLogger
+                    context.accessToken
                 ),
             })
 
@@ -164,10 +162,8 @@ export const dappController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    pinoLogger
+                    context.accessToken
                 ),
             })
             const commandId = params.commandId || crypto.randomUUID()
@@ -186,13 +182,10 @@ export const dappController = (
                     '/v2/interactive-submission/prepare',
                     ledgerPrepareParams({
                         userId: context.userId,
-                        partyIds: actAs,
+                        commandId,
+                        actAs,
                         synchronizerId,
-                        params: {
-                            ...params,
-                            commandId,
-                            actAs,
-                        },
+                        params,
                         hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
                     })
                 )
@@ -203,7 +196,7 @@ export const dappController = (
                 status: 'pending',
                 preparedTransaction: prepared.preparedTransaction,
                 preparedTransactionHash: prepared.preparedTransactionHash,
-                payload: params,
+                payload: { ...params, commandId, actAs },
                 origin: session.origin || null,
                 createdAt: new Date(),
             }

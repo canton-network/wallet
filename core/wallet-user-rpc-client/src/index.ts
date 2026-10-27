@@ -5,7 +5,7 @@
 import type { RequestArgs, RequestPayload } from '@canton-network/core-types'
 import type { RpcTransport } from '@canton-network/core-rpc-transport'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* oxlint-disable no-unused-vars */
 /**
  *
  * The network ID the wallet corresponds to.
@@ -40,6 +40,7 @@ export type ClientId = string
  *
  */
 export type Audience = string
+type AlwaysFalse = any
 /**
  *
  * Authorization code authentication configuration
@@ -371,13 +372,13 @@ export type Reason = string
  *
  */
 export type IsAuthParty = boolean
-export type PartyLevelRight = any
+export type PartyLevelRight = 'CanActAs' | 'CanReadAs' | 'CanExecuteAs'
 /**
  *
  * The rights of the wallet.
  *
  */
-export type Rights = PartyLevelRight[]
+export type PartyRights = PartyLevelRight[]
 /**
  *
  * Structure representing a wallet
@@ -397,45 +398,33 @@ export interface Wallet {
     disabled?: Disabled
     reason?: Reason
     isAuthParty?: IsAuthParty
-    rights: Rights
+    rights: PartyRights
 }
 /**
  *
- * Whether a ledger user with this id already exists.
+ * create when there is no ledger user yet. select when the user already authenticates with a primary party.
  *
  */
-export type UserExists = boolean
-/**
- *
- * Whether the ledger user already has a primary party and primary party authentication set.
- *
- */
-export type PrimaryPartyAuth = boolean
-/**
- *
- * Wallets stored for the user on the selected network that can be used for authentication.
- *
- */
-export type AuthPartyWallets = Wallet[]
+export type SelfIssuedLoginMode = 'create' | 'select'
 type AlwaysTrue = any
 /**
  *
- * Non-disabled wallets added in this syncWallets call.
+ * Party ids of non-disabled wallets added in this syncWallets call.
  *
  */
-export type SyncWalletsResultAdded = Wallet[]
+export type SyncWalletsResultAdded = PartyId[]
 /**
  *
- * Existing wallets that either got downgraded to status initialized or their rights changed in this syncWallets call.
+ * Party ids of existing wallets whose status became initialized, whose rights changed, or whose isAuthParty flag changed in this syncWallets call.
  *
  */
-export type SyncWalletsResultUpdated = Wallet[]
+export type SyncWalletsResultUpdated = PartyId[]
 /**
  *
- * Either wallets added in this iteration that are disabled, or existing wallet that were updated to be disabled in this syncWallets call.
+ * Party ids of wallets added disabled, or existing wallets disabled, in this syncWallets call.
  *
  */
-export type SyncWalletsResultDisabled = Wallet[]
+export type SyncWalletsResultDisabled = PartyId[]
 /**
  *
  * Whether wallet sync is needed. Returns true if there are disabled wallets or parties on the ledger that aren't in the store.
@@ -483,6 +472,12 @@ export interface SignResultFailed {
 export type Status = string
 /**
  *
+ * Reason for why the transaction failed.
+ *
+ */
+export type FailureReason = string
+/**
+ *
  * The message to sign.
  *
  */
@@ -509,9 +504,17 @@ export interface MessageRaw {
     createdAt: CreatedAt
     signedAt?: SignedAt
     signature?: Signature
+    externalTxId?: ExternalTxId
+    failureReason?: FailureReason
 }
 export type Messages = MessageRaw[]
-export type UserLevelRight = any
+export type UserLevelRight = 'CanReadAsAnyParty' | 'CanExecuteAsAnyParty'
+/**
+ *
+ * The rights of the user for the network.
+ *
+ */
+export type UserRights = UserLevelRight[]
 /**
  *
  * Structure representing the connected network session
@@ -525,7 +528,7 @@ export interface Session {
     accessToken: AccessToken
     status: Status
     reason?: Reason
-    rights: Rights
+    rights: UserRights
 }
 export type Sessions = Session[]
 /**
@@ -552,12 +555,6 @@ export type PreparedTransactionHash = string
  *
  */
 export type Payload = string
-/**
- *
- * Reason for why the transaction failed.
- *
- */
-export type FailureReason = string
 export interface Transaction {
     id: TransactionId
     commandId: CommandId
@@ -613,6 +610,12 @@ export interface ApiKey {
  *
  */
 export type ApiKeys = ApiKey[]
+/**
+ *
+ * The IDs of the available signing providers.
+ *
+ */
+export type SigningProviders = SigningProviderId[]
 export interface Key {
     id: Id
     name: Name
@@ -656,12 +659,12 @@ export interface CreateWalletParams {
     signingProviderId: SigningProviderId
     keyName?: KeyName
 }
-export interface AddSelfIssuedSessionParams {
+export interface StartSelfIssuedLoginSessionParams {
     username: Username
     networkId: NetworkId
     origin: Origin
 }
-export interface GetSelfIssuedOnboardingParams {
+export interface GetSelfIssuedLoginModeParams {
     sessionId: SessionId
 }
 export interface CreateSelfIssuedWalletParams {
@@ -673,9 +676,12 @@ export interface AllocateSelfIssuedWalletParams {
     sessionId: SessionId
     partyId: PartyId
 }
-export interface ConnectSelfIssuedSessionParams {
+export interface CompleteSelfIssuedLoginParams {
     sessionId: SessionId
     partyId: PartyId
+}
+export interface RemoveSelfIssuedLoginSessionParams {
+    sessionId: SessionId
 }
 export interface AllocatePartyForWalletParams {
     partyId: PartyId
@@ -696,6 +702,9 @@ export interface SignParams {
 export interface SignMessageParams {
     messageId: MessageId
     partyId?: PartyId
+}
+export interface GetSignMessageStatusParams {
+    messageId: MessageId
 }
 export interface GetMessageToSignParams {
     messageId: MessageId
@@ -757,13 +766,12 @@ export interface ListIdpsResult {
 export interface CreateWalletResult {
     wallet: Wallet
 }
-export interface AddSelfIssuedSessionResult {
+export interface StartSelfIssuedLoginSessionResult {
     sessionId: SessionId
 }
-export interface GetSelfIssuedOnboardingResult {
-    userExists: UserExists
-    primaryPartyAuth: PrimaryPartyAuth
-    wallets: AuthPartyWallets
+export interface GetSelfIssuedLoginModeResult {
+    mode: SelfIssuedLoginMode
+    wallet?: Wallet
 }
 export interface CreateSelfIssuedWalletResult {
     wallet: Wallet
@@ -771,7 +779,7 @@ export interface CreateSelfIssuedWalletResult {
 export interface AllocateSelfIssuedWalletResult {
     wallet: Wallet
 }
-export interface ConnectSelfIssuedSessionResult {
+export interface CompleteSelfIssuedLoginResult {
     wallet: Wallet
     accessToken: AccessToken
     sessionId: SessionId
@@ -802,10 +810,22 @@ export interface IsWalletSyncNeededResult {
     walletSyncNeeded: WalletSyncNeeded
 }
 export type SignResult =
-    SignResultSigned | SignResultPending | SignResultRejected | SignResultFailed
+    | SignResultSigned
+    | SignResultPending
+    | SignResultRejected
+    | SignResultFailed
 export interface SignMessageResult {
-    signature: Signature
+    signature?: Signature
     publicKey: PublicKey
+    status: Status
+    externalTxId?: ExternalTxId
+    failureReason?: FailureReason
+}
+export interface GetSignMessageStatusResult {
+    status: Status
+    externalTxId?: ExternalTxId
+    signature?: Signature
+    failureReason?: FailureReason
 }
 export interface GetMessageToSignResult {
     message: MessageRaw
@@ -829,7 +849,7 @@ export interface AddSessionResult {
     accessToken: AccessToken
     status: Status
     reason?: Reason
-    rights: Rights
+    rights: UserRights
 }
 export interface ListSessionsResult {
     sessions: Sessions
@@ -868,6 +888,9 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
+export interface ListSigningProvidersResult {
+    signingProviders: SigningProviders
+}
 export interface ListSigningProviderKeysResult {
     keys: Keys
 }
@@ -891,21 +914,24 @@ export type ListIdps = () => Promise<ListIdpsResult>
 export type CreateWallet = (
     params: CreateWalletParams
 ) => Promise<CreateWalletResult>
-export type AddSelfIssuedSession = (
-    params: AddSelfIssuedSessionParams
-) => Promise<AddSelfIssuedSessionResult>
-export type GetSelfIssuedOnboarding = (
-    params: GetSelfIssuedOnboardingParams
-) => Promise<GetSelfIssuedOnboardingResult>
+export type StartSelfIssuedLoginSession = (
+    params: StartSelfIssuedLoginSessionParams
+) => Promise<StartSelfIssuedLoginSessionResult>
+export type GetSelfIssuedLoginMode = (
+    params: GetSelfIssuedLoginModeParams
+) => Promise<GetSelfIssuedLoginModeResult>
 export type CreateSelfIssuedWallet = (
     params: CreateSelfIssuedWalletParams
 ) => Promise<CreateSelfIssuedWalletResult>
 export type AllocateSelfIssuedWallet = (
     params: AllocateSelfIssuedWalletParams
 ) => Promise<AllocateSelfIssuedWalletResult>
-export type ConnectSelfIssuedSession = (
-    params: ConnectSelfIssuedSessionParams
-) => Promise<ConnectSelfIssuedSessionResult>
+export type CompleteSelfIssuedLogin = (
+    params: CompleteSelfIssuedLoginParams
+) => Promise<CompleteSelfIssuedLoginResult>
+export type RemoveSelfIssuedLoginSession = (
+    params: RemoveSelfIssuedLoginSessionParams
+) => Promise<Null>
 export type AllocatePartyForWallet = (
     params: AllocatePartyForWalletParams
 ) => Promise<AllocatePartyForWalletResult>
@@ -922,6 +948,9 @@ export type Sign = (params: SignParams) => Promise<SignResult>
 export type SignMessage = (
     params: SignMessageParams
 ) => Promise<SignMessageResult>
+export type GetSignMessageStatus = (
+    params: GetSignMessageStatusParams
+) => Promise<GetSignMessageStatusResult>
 export type GetMessageToSign = (
     params: GetMessageToSignParams
 ) => Promise<GetMessageToSignResult>
@@ -951,6 +980,7 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListSigningProviders = () => Promise<ListSigningProvidersResult>
 export type ListSigningProviderKeys = (
     params: ListSigningProviderKeysParams
 ) => Promise<ListSigningProviderKeysResult>
@@ -958,7 +988,7 @@ export type GetWallet = (params: GetWalletParams) => Promise<GetWalletResult>
 export type ChangeSigningProvider = (
     params: ChangeSigningProviderParams
 ) => Promise<Null>
-/* eslint-enable @typescript-eslint/no-unused-vars */
+/* oxlint-enable no-unused-vars */
 
 type Params<T> = T extends (...args: infer A) => any
     ? A extends []
@@ -1013,14 +1043,14 @@ export type RpcTypes = {
         result: Result<CreateWallet>
     }
 
-    addSelfIssuedSession: {
-        params: Params<AddSelfIssuedSession>
-        result: Result<AddSelfIssuedSession>
+    startSelfIssuedLoginSession: {
+        params: Params<StartSelfIssuedLoginSession>
+        result: Result<StartSelfIssuedLoginSession>
     }
 
-    getSelfIssuedOnboarding: {
-        params: Params<GetSelfIssuedOnboarding>
-        result: Result<GetSelfIssuedOnboarding>
+    getSelfIssuedLoginMode: {
+        params: Params<GetSelfIssuedLoginMode>
+        result: Result<GetSelfIssuedLoginMode>
     }
 
     createSelfIssuedWallet: {
@@ -1033,9 +1063,14 @@ export type RpcTypes = {
         result: Result<AllocateSelfIssuedWallet>
     }
 
-    connectSelfIssuedSession: {
-        params: Params<ConnectSelfIssuedSession>
-        result: Result<ConnectSelfIssuedSession>
+    completeSelfIssuedLogin: {
+        params: Params<CompleteSelfIssuedLogin>
+        result: Result<CompleteSelfIssuedLogin>
+    }
+
+    removeSelfIssuedLoginSession: {
+        params: Params<RemoveSelfIssuedLoginSession>
+        result: Result<RemoveSelfIssuedLoginSession>
     }
 
     allocatePartyForWallet: {
@@ -1076,6 +1111,11 @@ export type RpcTypes = {
     signMessage: {
         params: Params<SignMessage>
         result: Result<SignMessage>
+    }
+
+    getSignMessageStatus: {
+        params: Params<GetSignMessageStatus>
+        result: Result<GetSignMessageStatus>
     }
 
     getMessageToSign: {
@@ -1151,6 +1191,11 @@ export type RpcTypes = {
     removeApiKey: {
         params: Params<RemoveApiKey>
         result: Result<RemoveApiKey>
+    }
+
+    listSigningProviders: {
+        params: Params<ListSigningProviders>
+        result: Result<ListSigningProviders>
     }
 
     listSigningProviderKeys: {

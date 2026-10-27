@@ -18,21 +18,18 @@ import {
     type SubscribeTransactionsResult,
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
-import { randomUUID } from 'node:crypto'
 
 export class ParticipantSigningDriver implements SigningDriverInterface {
     public partyMode = PartyMode.INTERNAL
     public signingProvider = SigningProvider.PARTICIPANT
 
-    public controller = (
-        _userId: AuthContext['userId'] | undefined // eslint-disable-line @typescript-eslint/no-unused-vars
-    ) =>
+    public controller = (_userId: AuthContext['userId'] | undefined) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
             ): Promise<SignTransactionResult> => {
                 return Promise.resolve({
-                    txId: params.internalTxId || randomUUID(),
+                    txId: params.internalTxId || crypto.randomUUID(),
                     status: 'signed',
                     signature: 'none',
                 })

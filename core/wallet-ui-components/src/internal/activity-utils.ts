@@ -11,7 +11,7 @@ export function getActivityStatusTone(
     if (normalized === 'executed' || normalized === 'signed') {
         return 'success'
     }
-    if (normalized === 'pending') {
+    if (normalized === 'pending' || normalized === 'awaiting-signature') {
         return 'warning'
     }
     if (normalized === 'failed' || normalized === 'rejected') {
@@ -19,6 +19,14 @@ export function getActivityStatusTone(
     }
 
     return 'default'
+}
+
+/** The MUI colour for an activity's status badge */
+export function getActivityStatusColor(
+    status: string
+): 'success' | 'warning' | 'error' | 'default' {
+    const tone = getActivityStatusTone(status)
+    return tone === 'danger' ? 'error' : tone
 }
 
 export function getActivityStatusLabel(status: string): string {

@@ -10,7 +10,7 @@ import {
     makeApiKey,
     mockApiKeysPageFlow,
     mockRequest,
-} from '../test-helpers.js'
+} from '../__tests__/test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
@@ -122,7 +122,8 @@ describe('UserUiApiKeys', () => {
         await waitUntil(() => el.apiKeys.length === 6)
 
         const pagination = el.shadowRoot?.querySelector('wg-pagination') as
-            (HTMLElement & { page: number }) | null
+            | (HTMLElement & { page: number })
+            | null
         pagination?.dispatchEvent(new PageChangeEvent(2))
 
         await waitUntil(() => getApiKeyCards(el)[0]?.apiKey.id === 'api-key-5')

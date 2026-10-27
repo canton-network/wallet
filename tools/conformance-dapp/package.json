@@ -16,17 +16,16 @@
         "./app": "./dist/index.html"
     },
     "scripts": {
-        "build": "tsc -p tsconfig.app.json && vite build && vite build --config vite.lib.config.ts && tsc",
+        "build": "vite build && vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
         "dev": "vite",
-        "typecheck": "tsc --noEmit --emitDeclarationOnly false && tsc -p tsconfig.app.json",
-        "clean": "tsc -b --clean; rm -rf dist"
+        "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-provider-conformance": "catalog:",
-        "@canton-network/core-rpc-errors": "catalog:",
-        "@canton-network/core-types": "catalog:",
-        "@canton-network/core-wallet-ui-components": "catalog:",
-        "@canton-network/dapp-sdk": "catalog:",
+        "@canton-network/core-provider-conformance": "workspace:",
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-ui-components": "workspace:",
+        "@canton-network/dapp-sdk": "workspace:^",
         "@emotion/react": "catalog:",
         "@emotion/styled": "catalog:",
         "@mui/icons-material": "catalog:",
@@ -37,13 +36,11 @@
         "zod": "catalog:"
     },
     "devDependencies": {
-        "@canton-network/core-eslint-config": "catalog:",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",
         "@vitest/coverage-v8": "catalog:",
-        "eslint": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:"

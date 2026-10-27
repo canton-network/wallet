@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import type {
     CreateKeyParams,
@@ -10,6 +9,7 @@ import type {
     Key,
     KeyIdentifier,
     SignTransactionParams,
+    SignMessageParams,
     SigningStatus,
     Transaction,
 } from '@canton-network/core-signing-lib'
@@ -29,7 +29,7 @@ export type TsbSignatureAlgorithm =
     | 'SHA256_WITH_ECDSA'
     | 'SHA512_WITH_ECDSA'
     | 'NONE_WITH_EC_SCHNORR_BIP0340'
-    | string
+    | (string & {})
 
 export interface TsbCreateKeyAttributes {
     encrypt?: boolean
@@ -632,7 +632,7 @@ export class SigningAPIClient {
             signature,
             publicKey: cached?.publicKey,
             metadata: {
-                ...(cachedMetadata ?? {}),
+                ...cachedMetadata,
                 ...compact({
                     tsbStatus: response.status,
                     executionTime: response.executionTime,
@@ -721,11 +721,12 @@ export class SigningAPIClient {
         params: SignTransactionParams
     ): Promise<Transaction> {
         const key = await this.resolveKeyIdentifier(params.keyIdentifier)
+        const extra = params.extraParams ?? {}
         const signatureAlgorithm =
-            params.signatureAlgorithm ?? this.signatureAlgorithm
+            extra.signatureAlgorithm ?? this.signatureAlgorithm
         const metadata = compact({
             internalTxId: params.internalTxId,
-            userIdentifier: params.userIdentifier,
+            userIdentifier: extra.userIdentifier,
             keyIdentifier: params.keyIdentifier,
             signatureAlgorithm,
             signatureType: WALLET_SIGNATURE_TYPE,
@@ -735,19 +736,66 @@ export class SigningAPIClient {
             payload: params.txHash,
             payloadType: WALLET_PAYLOAD_TYPE,
             signKeyName: key.name,
-            keyPassword: params.keyPassword ?? this.keyPassword,
+            keyPassword: extra.keyPassword ?? this.keyPassword,
             metaData:
-                params.metaData ??
+                extra.metaData ??
                 (Object.keys(metadata).length > 0
                     ? encodeJsonBase64(metadata)
                     : undefined),
-            metaDataSignature: params.metaDataSignature,
+            metaDataSignature: extra.metaDataSignature,
             signatureAlgorithm,
             signatureType: WALLET_SIGNATURE_TYPE,
-            context: params.context,
-            auxiliaryRandomData: params.auxiliaryRandomData,
-            taprootTweakData: params.taprootTweakData,
-            merkleRootData: params.merkleRootData,
+            context: extra.context,
+            auxiliaryRandomData: extra.auxiliaryRandomData,
+            taprootTweakData: extra.taprootTweakData,
+            merkleRootData: extra.merkleRootData,
+        })
+
+        const response = await this.post<
+            TsbSignedSignRequest,
+            TsbSignRequestResponse
+        >('/v1/sign', 'key-operation', { signRequest })
+
+        const transaction: Transaction = {
+            txId: response.signRequestId,
+            status: 'pending',
+            publicKey: key.publicKey,
+            metadata,
+        }
+        this.transactionCache.set(transaction.txId, transaction)
+        return transaction
+    }
+
+    public async signMessage(params: SignMessageParams): Promise<Transaction> {
+        const key = await this.resolveKeyIdentifier(params.keyIdentifier)
+        const extra = params.extraParams ?? {}
+        const signatureAlgorithm =
+            extra.signatureAlgorithm ?? this.signatureAlgorithm
+        const metadata = compact({
+            internalTxId: params.internalTxId,
+            userIdentifier: extra.userIdentifier,
+            keyIdentifier: params.keyIdentifier,
+            signatureAlgorithm,
+            signatureType: WALLET_SIGNATURE_TYPE,
+        })
+
+        const signRequest: TsbSignRequest = compact({
+            payload: Buffer.from(params.message, 'utf8').toString('base64'),
+            payloadType: WALLET_PAYLOAD_TYPE,
+            signKeyName: key.name,
+            keyPassword: extra.keyPassword ?? this.keyPassword,
+            metaData:
+                extra.metaData ??
+                (Object.keys(metadata).length > 0
+                    ? encodeJsonBase64(metadata)
+                    : undefined),
+            metaDataSignature: extra.metaDataSignature,
+            signatureAlgorithm,
+            signatureType: WALLET_SIGNATURE_TYPE,
+            context: extra.context,
+            auxiliaryRandomData: extra.auxiliaryRandomData,
+            taprootTweakData: extra.taprootTweakData,
+            merkleRootData: extra.merkleRootData,
         })
 
         const response = await this.post<
@@ -840,7 +888,7 @@ export class SigningAPIClient {
     }
 
     public async createKey(params: CreateKeyParams): Promise<Key> {
-        const temporaryLabel = `wallet-${randomUUID()}`
+        const temporaryLabel = `wallet-${crypto.randomUUID()}`
         const keyPassword = params.keyPassword ?? this.keyPassword
         const request = compact({
             label: temporaryLabel,
@@ -908,7 +956,7 @@ export class SigningAPIClient {
                 ...cached,
                 status: 'rejected',
                 metadata: {
-                    ...(cached.metadata ?? {}),
+                    ...cached.metadata,
                     tsbStatus: 'CANCELLED',
                 },
             })

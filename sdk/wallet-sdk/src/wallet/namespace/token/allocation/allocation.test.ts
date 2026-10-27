@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as mock from '../../../__test__/mocks'
+import * as mock from '../../../__tests__/mocks'
 import type { TokenNamespaceConfig } from '../index'
 import { ParsedURL } from '../../utils/url'
 import { AllocationNamespace } from './service'
@@ -14,7 +14,7 @@ import {
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* oxlint-disable typescript/no-explicit-any */
 
 const { ctx, mockLogger } = mock
 
@@ -51,6 +51,7 @@ const asset = {
     symbol: 'CC',
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
+    capabilities: mock.capabilities,
 }
 
 describe('allocation namespace namespace', () => {

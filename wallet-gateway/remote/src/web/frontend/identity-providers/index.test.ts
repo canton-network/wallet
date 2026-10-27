@@ -10,7 +10,7 @@ import {
     makeIdp,
     mockIdpsPageFlow,
     mockRequest,
-} from '../test-helpers.js'
+} from '../__tests__/test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
@@ -117,7 +117,8 @@ describe('UserUiIdentityProviders', () => {
         await waitUntil(() => el.idps.length === 5)
 
         const pagination = el.shadowRoot?.querySelector('wg-pagination') as
-            (HTMLElement & { page: number }) | null
+            | (HTMLElement & { page: number })
+            | null
         pagination?.dispatchEvent(new PageChangeEvent(2))
 
         await waitUntil(() => getIdpCards(el)[0]?.idp.id === 'idp-5')

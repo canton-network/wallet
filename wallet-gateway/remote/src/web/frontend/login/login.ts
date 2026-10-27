@@ -12,6 +12,10 @@ import {
     type WgLoginForm,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
+import {
+    fetchOidcDiscovery,
+    jwtExpiresAt,
+} from '@canton-network/core-wallet-auth'
 import { createUserClient } from '../rpc-client'
 import type {
     PublicNetwork,
@@ -140,18 +144,21 @@ export class LoginUI extends BaseElement {
 
                 const userClient = await createUserClient()
                 const { sessionId } = await userClient.request({
-                    method: 'addSelfIssuedSession',
+                    method: 'startSelfIssuedLoginSession',
                     params: {
                         username: onboardingUsername,
                         networkId: selectedNetwork.id,
                         origin: currentOrigin,
                     },
                 })
-                stateManager.onboardingSessionId.set(sessionId, currentOrigin)
+                stateManager.selfIssuedLoginSessionId.set(
+                    sessionId,
+                    currentOrigin
+                )
 
                 setLocationHref(
                     new URL(
-                        toRelHref('/onboarding'),
+                        toRelHref('/self-issued-login'),
                         window.location.origin
                     ).toString()
                 )
@@ -175,9 +182,14 @@ export class LoginUI extends BaseElement {
                         window.location.origin
                     ).toString()
 
-                    const config = await fetch(
-                        selectedIdp.configUrl || ''
-                    ).then((res) => res.json())
+                    const config = await fetchOidcDiscovery(
+                        selectedIdp.configUrl
+                    )
+                    if (!config.authorization_endpoint) {
+                        throw new Error(
+                            'OIDC discovery document has no authorization_endpoint'
+                        )
+                    }
 
                     const statePayload = {
                         configUrl: selectedIdp.configUrl,
@@ -248,9 +260,8 @@ export class LoginUI extends BaseElement {
             params: { networkId, clientId, clientSecret },
         })
 
-        const payload = JSON.parse(atob(accessToken.split('.')[1]))
         stateManager.expirationDate.set(
-            new Date(payload.exp * 1000).toISOString(),
+            jwtExpiresAt(accessToken).toISOString(),
             currentOrigin
         )
         await stateManager.accessToken.set(accessToken, currentOrigin)

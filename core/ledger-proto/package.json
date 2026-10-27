@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-ledger-proto",
-    "version": "1.13.0",
+    "version": "1.14.0",
     "type": "module",
     "description": "Provides TypeScript protobuf bindings for Canton",
     "license": "Apache-2.0",
@@ -18,18 +18,21 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist"
+        "clean": "rm -rf dist"
     },
     "devDependencies": {
         "@swc/core": "catalog:",
         "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "esbuild-plugin-replace": "catalog:",
         "playwright": "catalog:",
         "tsdown": "catalog:",
-        "typescript": "catalog:"
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     },
     "dependencies": {
         "@protobuf-ts/runtime": "catalog:",

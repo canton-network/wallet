@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-services",
-    "version": "1.2.0",
+    "version": "2.1.0",
     "type": "module",
     "description": "Services needed to implement a Wallet.",
     "license": "Apache-2.0",
@@ -18,21 +18,22 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist"
+        "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "catalog:",
-        "@canton-network/core-signing-lib": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
-        "@canton-network/core-wallet-dapp-rpc-client": "catalog:",
-        "@canton-network/core-wallet-store": "catalog:",
-        "@canton-network/core-wallet-user-rpc-client": "catalog:",
+        "@canton-network/core-ledger-client": "workspace:",
+        "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
+        "@canton-network/core-wallet-dapp-rpc-client": "workspace:",
+        "@canton-network/core-wallet-store": "workspace:",
+        "@canton-network/core-wallet-user-rpc-client": "workspace:",
         "@logtape/logtape": "catalog:",
-        "pino": "catalog:",
-        "uuid": "catalog:"
+        "@logtape/testing": "catalog:",
+        "pino": "catalog:"
     },
     "devDependencies": {
         "@vitest/browser-playwright": "catalog:",

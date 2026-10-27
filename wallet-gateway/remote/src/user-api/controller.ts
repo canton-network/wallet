@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Disabled unused vars rule to allow for future implementations
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* oxlint-disable no-unused-vars */
 import { LedgerClient } from '@canton-network/core-ledger-client'
 import buildController from './rpc-gen/index.js'
 import type {
@@ -25,11 +25,12 @@ import type {
     AddIdpParams,
     RemoveIdpParams,
     CreateWalletParams,
-    AddSelfIssuedSessionParams,
-    GetSelfIssuedOnboardingParams,
+    StartSelfIssuedLoginSessionParams,
+    GetSelfIssuedLoginModeParams,
     CreateSelfIssuedWalletParams,
     AllocateSelfIssuedWalletParams,
-    ConnectSelfIssuedSessionParams,
+    CompleteSelfIssuedLoginParams,
+    RemoveSelfIssuedLoginSessionParams,
     AllocatePartyForWalletParams,
     GetTransactionResult,
     GetTransactionParams,
@@ -48,6 +49,7 @@ import type {
     ListApiKeysResult,
     RemoveApiKeyParams,
     ListTransactionsParams,
+    ListSigningProvidersResult,
     ChangeSigningProviderParams,
     GetWalletParams,
     GetWalletResult,
@@ -55,6 +57,8 @@ import type {
     ListSigningProviderKeysResult,
     GetTransactionStatusParams,
     GetTransactionStatusResult,
+    GetSignMessageStatusParams,
+    GetSignMessageStatusResult,
 } from './rpc-gen/typings.js'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
@@ -70,15 +74,18 @@ import {
     assertIsConnected,
 } from '@canton-network/core-wallet-auth'
 import type { KernelInfo } from '../config/Config.js'
-import { isRpcError, SigningProvider } from '@canton-network/core-signing-lib'
+import {
+    isRpcError,
+    SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
+    SigningProvider,
+} from '@canton-network/core-signing-lib'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import { v4 } from 'uuid'
 import {
-    assertSelfIssuedOnboardingAllowed,
+    assertLoginAllowed,
     createSelfIssuedAuthService,
-    type SelfIssuedOnboardingSession,
+    type SelfIssuedLoginSession,
 } from '../ledger/self-issued-auth-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type {
@@ -86,7 +93,7 @@ import type {
     TxChangedFailedEvent,
 } from '../dapp-api/rpc-gen/typings.js'
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
-import crypto from 'crypto'
+import { randomBytes, createHash, timingSafeEqual } from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 import {
     TransactionService,
@@ -130,9 +137,9 @@ export const userController = (
         }
     }
 
-    function requireOnboardingSession(): SelfIssuedOnboardingSession {
+    function requireSelfIssuedLoginSession(): SelfIssuedLoginSession {
         if (!authContext || authContext.isApiKey || !authContext.sessionId) {
-            throw new Error('No onboarding session found')
+            throw new Error('No self-issued login session found')
         }
         return {
             userId: authContext.userId,
@@ -203,14 +210,12 @@ export const userController = (
 
         const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
             idp,
-            network.adminAuth,
-            logger
+            network.adminAuth
         )
         const partyAllocator = new PartyAllocationService({
             synchronizerId: network.synchronizerId,
             accessTokenProvider: adminAccessTokenProvider,
             httpLedgerUrl: network.ledgerApi.baseUrl,
-            logger,
         })
         const walletAllocationService = new WalletAllocationService(
             store,
@@ -339,15 +344,11 @@ export const userController = (
                 )
             }
 
-            const clientSecretMatch = crypto.timingSafeEqual(
-                crypto
-                    .createHash('sha256')
+            const clientSecretMatch = timingSafeEqual(
+                createHash('sha256')
                     .update(params.clientSecret, 'utf8')
                     .digest(),
-                crypto
-                    .createHash('sha256')
-                    .update(auth.clientSecret, 'utf8')
-                    .digest()
+                createHash('sha256').update(auth.clientSecret, 'utf8').digest()
             )
             if (!clientSecretMatch) {
                 throw providerErrors.unauthorized({
@@ -369,20 +370,17 @@ export const userController = (
                 )
             }
 
-            const accessToken = await new AuthTokenProvider(
-                {
-                    method: 'self_signed',
-                    issuer: idp.issuer,
-                    keyId: network.id,
-                    credentials: {
-                        clientId: params.clientId,
-                        clientSecret: auth.clientSecret,
-                        scope: auth.scope,
-                        audience: auth.audience,
-                    },
+            const accessToken = await new AuthTokenProvider({
+                method: 'self_signed',
+                issuer: idp.issuer,
+                keyId: network.id,
+                credentials: {
+                    clientId: params.clientId,
+                    clientSecret: auth.clientSecret,
+                    scope: auth.scope,
+                    audience: auth.audience,
                 },
-                logger
-            ).getAccessToken()
+            }).getAccessToken()
 
             return { accessToken }
         },
@@ -424,15 +422,13 @@ export const userController = (
 
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                logger
+                network.adminAuth
             )
 
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
             const walletAllocationService = new WalletAllocationService(
                 store,
@@ -457,10 +453,8 @@ export const userController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    authContext!.accessToken,
-                    logger
+                    authContext!.accessToken
                 ),
             })
             const service = new WalletSyncService(
@@ -483,7 +477,9 @@ export const userController = (
             )
             return { wallet: walletWithUpdatedRights ?? wallet }
         },
-        addSelfIssuedSession: async (params: AddSelfIssuedSessionParams) => {
+        startSelfIssuedLoginSession: async (
+            params: StartSelfIssuedLoginSessionParams
+        ) => {
             const username = params.username.trim()
             if (!username) {
                 throw new Error('username is required')
@@ -500,13 +496,8 @@ export const userController = (
                 userId: username,
                 accessToken: '',
             })
-            await assertSelfIssuedOnboardingAllowed(
-                authAwareStore,
-                network,
-                username,
-                logger
-            )
-            const sessionId = v4()
+            await assertLoginAllowed(authAwareStore, network, username)
+            const sessionId = crypto.randomUUID()
             await onboardingStore.setSession({
                 id: sessionId,
                 origin: params.origin,
@@ -515,16 +506,16 @@ export const userController = (
 
             return { sessionId }
         },
-        getSelfIssuedOnboarding: async (
-            _params: GetSelfIssuedOnboardingParams
+        getSelfIssuedLoginMode: async (
+            _params: GetSelfIssuedLoginModeParams
         ) => {
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                requireOnboardingSession(),
+                requireSelfIssuedLoginSession(),
                 drivers,
                 logger
             )
-            return service.getOnboardingState()
+            return service.getLoginMode()
         },
         createSelfIssuedWallet: async (
             params: CreateSelfIssuedWalletParams
@@ -538,7 +529,7 @@ export const userController = (
 
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                requireOnboardingSession(),
+                requireSelfIssuedLoginSession(),
                 drivers,
                 logger
             )
@@ -553,42 +544,34 @@ export const userController = (
         ) => {
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                requireOnboardingSession(),
+                requireSelfIssuedLoginSession(),
                 drivers,
                 logger
             )
-            const allocated = await service.allocateParty({
-                partyId: params.partyId,
-            })
+            const allocated = await service.allocateParty(params.partyId)
             return { wallet: allocated }
         },
-        connectSelfIssuedSession: async (
-            params: ConnectSelfIssuedSessionParams
+        completeSelfIssuedLogin: async (
+            params: CompleteSelfIssuedLoginParams
         ) => {
-            const onboardingSession = requireOnboardingSession()
+            const selfIssuedLoginSession = requireSelfIssuedLoginSession()
             const service = await createSelfIssuedAuthService(
                 authAwareStore,
-                onboardingSession,
+                selfIssuedLoginSession,
                 drivers,
                 logger
             )
             const { wallet, accessToken, session } =
-                await service.connectSession({
-                    partyId: params.partyId,
-                })
+                await service.completeLogin(params.partyId)
             const connectedContext = {
-                userId: onboardingSession.userId,
+                userId: selfIssuedLoginSession.userId,
                 accessToken,
             }
             const scopedStore = authAwareStore.withAuthContext(connectedContext)
             const network = await scopedStore.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
-                accessTokenProvider: AuthTokenProvider.fromToken(
-                    accessToken,
-                    logger
-                ),
+                accessTokenProvider: AuthTokenProvider.fromToken(accessToken),
             })
             await emitSessionConnected(
                 session.id,
@@ -597,6 +580,19 @@ export const userController = (
                 ledgerClient
             )
             return { wallet, accessToken, sessionId: session.id }
+        },
+        removeSelfIssuedLoginSession: async (
+            _params: RemoveSelfIssuedLoginSessionParams
+        ): Promise<Null> => {
+            const session = requireSelfIssuedLoginSession()
+            await authAwareStore
+                .withAuthContext({
+                    userId: session.userId,
+                    accessToken: '',
+                    sessionId: session.sessionId,
+                })
+                .removeSelfIssuedLoginSession(session.sessionId)
+            return null
         },
         allocatePartyForWallet: async (
             params: AllocatePartyForWalletParams
@@ -623,14 +619,12 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
             const accessTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                logger
+                network.adminAuth
             )
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
             const walletAllocationService = new WalletAllocationService(
                 store,
@@ -655,10 +649,8 @@ export const userController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    authContext!.accessToken,
-                    logger
+                    authContext!.accessToken
                 ),
             })
             const service = new WalletSyncService(
@@ -726,7 +718,6 @@ export const userController = (
 
             const transactionService = new TransactionService(
                 store,
-                logger,
                 drivers,
                 notifier,
                 hashingSchemeVersion
@@ -784,7 +775,9 @@ export const userController = (
             ): Promise<never> => {
                 // Best-effort: make sure listeners see a terminal state.
                 try {
-                    await store.setMessageRawStatus(pending.id, 'failed')
+                    await store.setMessageRawStatus(pending.id, 'failed', {
+                        failureReason: details,
+                    })
                 } catch {
                     // ignore (e.g. record removed concurrently)
                 }
@@ -794,6 +787,12 @@ export const userController = (
                 } satisfies MessageSignatureEvent)
                 // Preserve the original error message for the caller/UI.
                 throw new Error(details)
+            }
+
+            if (!pending.message) {
+                return await emitFailedAndPersist(
+                    `Message request ${pending.id} has an empty message.`
+                )
             }
 
             const wallet = (await store.getWallets()).find(
@@ -809,59 +808,212 @@ export const userController = (
                     `Wallet public key changed for partyId ${pending.partyId}; refusing to sign message request ${pending.id}`
                 )
             }
-
-            // TODO: support other signing providers
-            if (wallet.signingProviderId !== SigningProvider.WALLET_KERNEL) {
+            if (
+                !SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS.includes(
+                    wallet.signingProviderId as SigningProvider
+                )
+            ) {
                 return await emitFailedAndPersist(
-                    `signMessage is only supported for ${SigningProvider.WALLET_KERNEL} wallets, got ${wallet.signingProviderId}`
+                    `signMessage is only supported for ${SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS.join(', ')} wallets, got ${wallet.signingProviderId}`
                 )
             }
 
             const driver =
-                drivers[SigningProvider.WALLET_KERNEL]?.controller(userId)
+                drivers[
+                    wallet.signingProviderId as SigningProvider
+                ]?.controller(userId)
             if (!driver) {
                 return await emitFailedAndPersist(
-                    'Wallet Kernel signing driver not available'
+                    `${wallet.signingProviderId} signing driver not available`
                 )
             }
 
             const result = await driver.signMessage({
                 message: pending.message,
                 keyIdentifier: { publicKey: wallet.publicKey },
+                internalTxId: pending.id,
             })
 
             if (isRpcError(result)) {
-                await store.setMessageRawStatus(pending.id, 'failed')
+                return await emitFailedAndPersist(result.error_description)
+            }
+
+            if (result.status === 'signed') {
+                if (!result.signature) {
+                    return await emitFailedAndPersist(
+                        'No signature returned from signing driver'
+                    )
+                }
+
+                await store.setMessageRawStatus(pending.id, 'signed', {
+                    signedAt: new Date(),
+                    signature: result.signature,
+                    externalTxId: result.txId,
+                })
+
+                notifier.emit('messageSignature', {
+                    status: 'signed',
+                    messageId: pending.id,
+                    signature: result.signature,
+                } satisfies MessageSignatureEvent)
+
+                return {
+                    status: result.status,
+                    signature: result.signature,
+                    publicKey: wallet.publicKey,
+                    ...(result.txId && { externalTxId: result.txId }),
+                }
+            }
+
+            if (result.status === 'pending' && result.txId) {
+                await store.setMessageRawStatus(
+                    pending.id,
+                    'awaiting-signature',
+                    { externalTxId: result.txId }
+                )
+                return {
+                    publicKey: wallet.publicKey,
+                    status: 'awaiting-signature',
+                    externalTxId: result.txId,
+                }
+            }
+
+            if (result.status === 'failed' || result.status === 'rejected') {
+                const failureReason = `Signing provider returned status: ${result.status}`
+                await store.setMessageRawStatus(pending.id, 'failed', {
+                    failureReason,
+                    ...(result.txId && { externalTxId: result.txId }),
+                })
                 notifier.emit('messageSignature', {
                     status: 'failed',
                     messageId: pending.id,
                 } satisfies MessageSignatureEvent)
-                throw new Error(result.error_description)
-            }
-
-            if (!result?.signature) {
-                await store.setMessageRawStatus(pending.id, 'failed')
-                notifier.emit('messageSignature', {
+                return {
+                    publicKey: wallet.publicKey,
                     status: 'failed',
-                    messageId: pending.id,
-                } satisfies MessageSignatureEvent)
-                throw new Error(`signMessage failed`)
+                    failureReason,
+                    ...(result.txId && { externalTxId: result.txId }),
+                }
             }
 
-            await store.setMessageRawStatus(pending.id, 'signed', {
-                signedAt: new Date(),
-                signature: result.signature,
+            return await emitFailedAndPersist(
+                `Signing provider returned status: ${result.status} without a txId`
+            )
+        },
+        getSignMessageStatus: async (
+            params: GetSignMessageStatusParams
+        ): Promise<GetSignMessageStatusResult> => {
+            const message = await store.getMessageRaw(params.messageId)
+            if (!message) {
+                throw new Error(
+                    `Message signing request not found with id: ${params.messageId}`
+                )
+            }
+
+            if (
+                !message.externalTxId ||
+                message.status !== 'awaiting-signature'
+            ) {
+                return {
+                    status: message.status,
+                    ...(message.externalTxId && {
+                        externalTxId: message.externalTxId,
+                    }),
+                    ...(message.signature && { signature: message.signature }),
+                    ...(message.failureReason && {
+                        failureReason: message.failureReason,
+                    }),
+                }
+            }
+
+            const wallet = (await store.getWallets()).find(
+                (w) => w.partyId === message.partyId
+            )
+            if (!wallet) {
+                throw new Error(
+                    `No wallet found for partyId ${message.partyId}`
+                )
+            }
+
+            assertIsConnected(authContext)
+            const provider = wallet.signingProviderId as SigningProvider
+            const signingProvider = drivers[provider]
+            if (!signingProvider) {
+                throw new Error(`No driver found for provider ${provider}`)
+            }
+            if (
+                provider === SigningProvider.BLOCKDAEMON &&
+                !authContext.email
+            ) {
+                throw new Error(
+                    'Invalid auth context (missing email) for SigningProvider BlockDaemon'
+                )
+            }
+
+            const session = await store.getSession(authContext.accessToken)
+            if (!session) {
+                throw new Error('No active session found')
+            }
+            const notifier = notificationService.getNotifier(session.id)
+
+            const controllerId =
+                provider === SigningProvider.BLOCKDAEMON
+                    ? authContext.email
+                    : authContext.userId
+            const signingDriver = signingProvider.controller(controllerId)
+            const signingResult = await signingDriver.getTransaction({
+                userId: controllerId,
+                txId: message.externalTxId,
             })
+            if (isRpcError(signingResult)) {
+                throw new Error(signingResult.error_description)
+            }
 
-            notifier.emit('messageSignature', {
-                status: 'signed',
-                messageId: pending.id,
-                signature: result.signature,
-            } satisfies MessageSignatureEvent)
+            if (signingResult.status === 'signed') {
+                if (!signingResult.signature) {
+                    throw new Error('No signature returned from signing driver')
+                }
+
+                await store.setMessageRawStatus(message.id, 'signed', {
+                    signedAt: new Date(),
+                    signature: signingResult.signature,
+                    externalTxId: message.externalTxId,
+                })
+                notifier.emit('messageSignature', {
+                    status: 'signed',
+                    messageId: message.id,
+                    signature: signingResult.signature,
+                } satisfies MessageSignatureEvent)
+                return {
+                    status: 'signed',
+                    externalTxId: message.externalTxId,
+                    signature: signingResult.signature,
+                }
+            }
+
+            if (
+                signingResult.status === 'failed' ||
+                signingResult.status === 'rejected'
+            ) {
+                const failureReason = `Signing provider returned status: ${signingResult.status}`
+                await store.setMessageRawStatus(message.id, 'failed', {
+                    externalTxId: message.externalTxId,
+                    failureReason,
+                })
+                notifier.emit('messageSignature', {
+                    status: 'failed',
+                    messageId: message.id,
+                } satisfies MessageSignatureEvent)
+                return {
+                    status: 'failed',
+                    externalTxId: message.externalTxId,
+                    failureReason,
+                }
+            }
 
             return {
-                signature: result.signature,
-                publicKey: wallet.publicKey,
+                status: 'awaiting-signature',
+                externalTxId: message.externalTxId,
             }
         },
         getMessageToSign: async (
@@ -888,6 +1040,12 @@ export const userController = (
                         signedAt: message.signedAt.toISOString(),
                     }),
                     ...(message.signature && { signature: message.signature }),
+                    ...(message.externalTxId && {
+                        externalTxId: message.externalTxId,
+                    }),
+                    ...(message.failureReason && {
+                        failureReason: message.failureReason,
+                    }),
                 },
             }
         },
@@ -908,6 +1066,12 @@ export const userController = (
                         signedAt: message.signedAt.toISOString(),
                     }),
                     ...(message.signature && { signature: message.signature }),
+                    ...(message.externalTxId && {
+                        externalTxId: message.externalTxId,
+                    }),
+                    ...(message.failureReason && {
+                        failureReason: message.failureReason,
+                    }),
                 })),
             }
         },
@@ -920,9 +1084,12 @@ export const userController = (
                     `Message signing request not found with id: ${params.messageId}`
                 )
             }
-            if (message.status !== 'pending') {
+            if (
+                message.status !== 'pending' &&
+                message.status !== 'awaiting-signature'
+            ) {
                 throw new Error(
-                    `Cannot delete message with status '${message.status}'. Only pending messages can be deleted.`
+                    `Cannot delete message with status '${message.status}'. Only pending or awaiting-signature messages can be deleted.`
                 )
             }
             assertIsConnected(authContext)
@@ -965,7 +1132,7 @@ export const userController = (
 
             assertIsConnected(authContext)
             const accessTokenProvider: AuthTokenProvider =
-                AuthTokenProvider.fromToken(authContext.accessToken, logger)
+                AuthTokenProvider.fromToken(authContext.accessToken)
 
             if (network === undefined) {
                 throw new Error('No network session found')
@@ -979,13 +1146,11 @@ export const userController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider,
             })
 
             const transactionService = new TransactionService(
                 store,
-                logger,
                 drivers,
                 notifier,
                 hashingSchemeVersion
@@ -1025,7 +1190,7 @@ export const userController = (
                 assertIsConnected(authContext)
                 const { accessToken } = authContext
 
-                const newSessionId = v4()
+                const newSessionId = crypto.randomUUID()
 
                 logger.info(
                     `Adding session with ID ${newSessionId} for network ${params.networkId}`
@@ -1044,11 +1209,8 @@ export const userController = (
 
                 const ledgerClient = new LedgerClient({
                     baseUrl: new URL(network.ledgerApi.baseUrl),
-                    logger,
-                    accessTokenProvider: AuthTokenProvider.fromToken(
-                        accessToken,
-                        logger
-                    ),
+                    accessTokenProvider:
+                        AuthTokenProvider.fromToken(accessToken),
                 })
                 const status = await emitSessionConnected(
                     newSessionId,
@@ -1083,14 +1245,12 @@ export const userController = (
                             const adminAccessTokenProvider =
                                 AuthTokenProvider.fromGatewayConfig(
                                     adminIdp,
-                                    network.adminAuth,
-                                    logger
+                                    network.adminAuth
                                 )
                             const partyAllocator = new PartyAllocationService({
                                 synchronizerId: network.synchronizerId,
                                 accessTokenProvider: adminAccessTokenProvider,
                                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                                logger,
                             })
 
                             const service = new WalletSyncService(
@@ -1168,10 +1328,8 @@ export const userController = (
             const network = await store.getNetwork(session.network)
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    authContext!.accessToken,
-                    logger
+                    authContext!.accessToken
                 ),
             })
             const idp = await store.getIdp(network.identityProviderId)
@@ -1200,8 +1358,7 @@ export const userController = (
             const { userId } = assertConnected(authContext)
 
             const userAccessTokenProvider = AuthTokenProvider.fromToken(
-                authContext!.accessToken,
-                logger
+                authContext!.accessToken
             )
 
             if (!network.adminAuth) {
@@ -1210,22 +1367,16 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
-                AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
+                AuthTokenProvider.fromGatewayConfig(idp, network.adminAuth)
 
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminAccessTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
 
             const userLedger = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: userAccessTokenProvider,
             })
 
@@ -1257,8 +1408,7 @@ export const userController = (
             assertConnected(authContext)
 
             const userAccessTokenProvider = AuthTokenProvider.fromToken(
-                authContext!.accessToken,
-                logger
+                authContext!.accessToken
             )
 
             if (!network.adminAuth) {
@@ -1267,22 +1417,16 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
 
             const adminAccessTokenProvider =
-                AuthTokenProvider.fromGatewayConfig(
-                    idp,
-                    network.adminAuth,
-                    logger
-                )
+                AuthTokenProvider.fromGatewayConfig(idp, network.adminAuth)
 
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminAccessTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
 
             const userLedger = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger,
                 accessTokenProvider: userAccessTokenProvider,
             })
 
@@ -1327,6 +1471,9 @@ export const userController = (
                 ...(transaction.externalTxId && {
                     externalTxId: transaction.externalTxId,
                 }),
+                ...(transaction.failureReason && {
+                    failureReason: transaction.failureReason,
+                }),
             }
         },
         listTransactions: async function (
@@ -1355,6 +1502,9 @@ export const userController = (
                 }),
                 ...(transaction.externalTxId && {
                     externalTxId: transaction.externalTxId,
+                }),
+                ...(transaction.failureReason && {
+                    failureReason: transaction.failureReason,
                 }),
             }))
 
@@ -1405,10 +1555,9 @@ export const userController = (
             const userId = assertConnected(authContext).userId
             const network = await store.getCurrentNetwork()
 
-            const apiKeyId = v4()
-            const generatedApiKey = crypto.randomBytes(32).toString('hex')
-            const hashedApiKey = crypto
-                .createHash('sha256')
+            const apiKeyId = crypto.randomUUID()
+            const generatedApiKey = randomBytes(32).toString('hex')
+            const hashedApiKey = createHash('sha256')
                 .update(generatedApiKey)
                 .digest('hex')
 
@@ -1453,6 +1602,10 @@ export const userController = (
             await store.removeApiKey(params.id)
             return null
         },
+        listSigningProviders:
+            async (): Promise<ListSigningProvidersResult> => ({
+                signingProviders: Object.keys(drivers),
+            }),
         listSigningProviderKeys: async (
             params: ListSigningProviderKeysParams
         ): Promise<ListSigningProviderKeysResult> => {
@@ -1481,14 +1634,12 @@ export const userController = (
             const idp = await getIdpForAuth(network, network.adminAuth)
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                logger
+                network.adminAuth
             )
             const partyAllocator = new PartyAllocationService({
                 synchronizerId: network.synchronizerId,
                 accessTokenProvider: adminTokenProvider,
                 httpLedgerUrl: network.ledgerApi.baseUrl,
-                logger,
             })
             const normalizedKey =
                 partyAllocator.normalizePublicKeyToBase64(publicKey)
@@ -1558,7 +1709,6 @@ export const userController = (
 
             const transactionService = new TransactionService(
                 store,
-                logger,
                 drivers,
                 notifier,
                 hashingSchemeVersion

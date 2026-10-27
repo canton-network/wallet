@@ -11,8 +11,8 @@
     "dependencies": {
         "@emotion/react": "catalog:",
         "@emotion/styled": "catalog:",
-        "@mui/icons-material": "catalog:mui7",
-        "@mui/material": "catalog:mui7",
+        "@mui/icons-material": "catalog:",
+        "@mui/material": "catalog:",
         "@reown/walletkit": "catalog:",
         "@walletconnect/core": "catalog:",
         "@walletconnect/types": "catalog:",
@@ -20,11 +20,9 @@
         "react-dom": "catalog:"
     },
     "devDependencies": {
-        "@canton-network/core-eslint-config": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",
-        "eslint": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:"
     }

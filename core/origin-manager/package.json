@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-origin-manager",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "type": "module",
     "description": "Secure cross-window origin handshake and guarded postMessage helpers.",
     "license": "Apache-2.0",
@@ -23,16 +23,14 @@
         "zod": "catalog:"
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "clean": "tsc -b --clean; rm -rf dist",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "clean": "rm -rf dist",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "typescript": "catalog:",
-        "vite": "catalog:",
-        "vite-plugin-dts": "catalog:",
         "vitest": "catalog:"
     },
     "files": [

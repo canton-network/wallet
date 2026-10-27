@@ -28,7 +28,6 @@ import type {
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import { WALLETCONNECT_ICON } from '../assets'
 import { composeSIWXMessage } from '../util'
-import { v4 as uuidv4 } from 'uuid'
 
 const CANTON_WC_METHODS = [
     'canton_prepareSignExecute',
@@ -133,10 +132,12 @@ export class WalletConnectAdapter
     private readonly projectId: string
     private readonly chainId: string
     private readonly metadata:
-        WalletConnectAdapterConfig['metadata'] | undefined
+        | WalletConnectAdapterConfig['metadata']
+        | undefined
     private readonly onUri: ((uri: string) => void) | undefined
     private readonly onSignInWithCanton:
-        ((result: SignInWithCantonResult) => void) | undefined
+        | ((result: SignInWithCantonResult) => void)
+        | undefined
     private readonly signInWithCanton: WalletConnectAdapterConfig['signInWithCanton']
 
     private signClient: SignClient | null = null
@@ -423,7 +424,7 @@ export class WalletConnectAdapter
         this.session = await approval()
         this.setupSessionEvents()
         if (this.signInWithCanton) {
-            const nonce = this.signInWithCanton.nonce || uuidv4()
+            const nonce = this.signInWithCanton.nonce || crypto.randomUUID()
 
             try {
                 const account = this.session?.namespaces?.canton?.accounts?.[0]

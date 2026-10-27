@@ -53,7 +53,7 @@ export interface SigningWorkerOptions {
  * Although the worker always invokes `signAndExecute`, **retries do not submit a
  * new sign request**. `signAndExecute`branches on the stored transaction's status
  *
- * - **First pass** ( `pending`, no `externalTxId`): calls `sign()` which submits to singing provider
+ * - **First pass** ( `pending`, no `externalTxId`): calls `sign()` which submits to signing provider
  *  via `driver.signTransaction()` and stores the returned `externalTxId` with status `awaiting-signature`
  * - **Subsequent ticks** (`awaiting-signature` with `externalTxId` present): `refreshTransaction()`
  *  which polls the existing requst via `driver.getTransaction()` and updated the stored status
@@ -218,13 +218,8 @@ export class SigningWorker {
             session.id
         )
 
-        const transactionLogger = this.options.logger.child({
-            component: 'TransactionService',
-        })
-
         const transactionService = new TransactionService(
             store,
-            transactionLogger,
             this.options.signingDrivers,
             notifier,
             this.options.hashingSchemeVersion

@@ -7,7 +7,7 @@ import type {
 } from '@canton-network/core-token-standard-service'
 import type { SDKErrorHandler } from '../../error/index.js'
 import { ParsedURL, type URLInput } from '../utils/url.js'
-import type { SDKContext } from '@/wallet/sdk.js'
+import type { SDKContext } from '../../sdk.js'
 
 export type AssetContext = {
     tokenStandardService: TokenStandardService
@@ -25,7 +25,7 @@ export class AssetNamespace {
     }
 
     public async find(id: string, registryUrl?: URLInput): Promise<AssetBody> {
-        return await findAsset(
+        return findAsset(
             this.list,
             id,
             this.ctx.error,

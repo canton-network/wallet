@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
+import { getLogger } from '@logtape/logtape'
 import {
     type AuthContext,
     type UserId,
@@ -65,19 +65,18 @@ import pg from 'pg'
 import type { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
+    private logger = getLogger(['core', 'wallet-store-sql', 'StoreSql'])
     authContext: AuthContext | undefined
 
     constructor(
         private db: Kysely<DB>,
-        private logger: Logger,
         authContext?: AuthContext
     ) {
-        this.logger = logger.child({ component: 'StoreSql' })
         this.authContext = authContext
     }
 
     withAuthContext(context?: AuthContext): StoreSql {
-        return new StoreSql(this.db, this.logger, context)
+        return new StoreSql(this.db, context)
     }
 
     private assertConnected(): UserId {
@@ -239,6 +238,39 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             await trx
                 .updateTable('wallets')
                 .set({ primary: 1 })
+                .where((eb) =>
+                    eb.and([
+                        eb('partyId', '=', partyId),
+                        eb('networkId', '=', network.id),
+                        eb('userId', '=', userId),
+                    ])
+                )
+                .execute()
+        })
+    }
+
+    async setAuthPartyWallet(partyId: PartyId | null): Promise<void> {
+        const network = await this.getCurrentNetwork()
+        const userId = this.assertConnected()
+
+        await this.db.transaction().execute(async (trx) => {
+            await trx
+                .updateTable('wallets')
+                .set({ isAuthParty: 0 })
+                .where((eb) =>
+                    eb.and([
+                        eb('networkId', '=', network.id),
+                        eb('userId', '=', userId),
+                        eb('isAuthParty', '=', 1),
+                    ])
+                )
+                .execute()
+
+            if (partyId === null) return
+
+            await trx
+                .updateTable('wallets')
+                .set({ isAuthParty: 1 })
                 .where((eb) =>
                     eb.and([
                         eb('partyId', '=', partyId),
@@ -487,7 +519,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                         ])
                     )
                     .execute()
-                this.logger.debug(deleted, 'Deleted old session')
+                this.logger.info('Deleted old session', { deleted })
             }
 
             const inserted = await trx
@@ -499,11 +531,11 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 })
                 .execute()
 
-            this.logger.debug(inserted, 'Inserted new session')
+            this.logger.info('Inserted new session', { inserted })
         })
     }
 
-    async getOnboardingSession(
+    async getSelfIssuedLoginSession(
         sessionId: string
     ): Promise<Session | undefined> {
         const row = await this.db
@@ -515,7 +547,17 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return row ? toSession(row) : undefined
     }
 
-    async upgradeOnboardingSession(
+    async removeSelfIssuedLoginSession(sessionId: string): Promise<void> {
+        const userId = this.assertConnected()
+        await this.db
+            .deleteFrom('sessions')
+            .where('id', '=', sessionId)
+            .where('userId', '=', userId)
+            .where('accessToken', 'is', null)
+            .execute()
+    }
+
+    async upgradeSelfIssuedLoginSession(
         sessionId: string,
         accessToken: AccessToken
     ): Promise<Session> {
@@ -530,7 +572,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .where('accessToken', 'is', null)
                 .executeTakeFirst()
             if (!row) {
-                throw new Error('Onboarding session not found')
+                throw new Error('Self-issued login session not found')
             }
 
             await trx
@@ -604,7 +646,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         // todo: check and compare userid of existing idp
         await this.db.transaction().execute(async (trx) => {
             const idpEntry = fromIdp(idp)
-            this.logger.info(idpEntry, 'Updating idp table')
+            this.logger.info('Updating idp table', { idpEntry })
             await trx
                 .updateTable('idps')
                 .set(idpEntry)
@@ -662,11 +704,11 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     async getCurrentNetwork(): Promise<Network> {
         const userId = this.assertConnected()
         const token = this.authContext?.accessToken
-        const onboardingSessionId =
+        const selfIssuedLoginSessionId =
             this.authContext && !this.authContext.isApiKey
                 ? this.authContext.sessionId
                 : undefined
-        if (!token && !onboardingSessionId) {
+        if (!token && !selfIssuedLoginSessionId) {
             throw providerErrors.unauthorized({ message: 'No session found' })
         }
 
@@ -678,7 +720,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 token
                     ? eb('accessToken', '=', token)
                     : eb.and([
-                          eb('id', '=', onboardingSessionId!),
+                          eb('id', '=', selfIssuedLoginSessionId!),
                           eb('accessToken', 'is', null),
                       ])
             )
@@ -747,7 +789,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
             // we do not set a userId for now and leave all networks global when updating
             const networkEntry = fromNetwork(network, undefined)
-            this.logger.info(networkEntry, 'Updating network table')
+            this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')
                 .set(networkEntry)
@@ -837,7 +879,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             }),
             ...(signedAt !== undefined && { signedAt }),
             ...(externalTxId !== undefined && { externalTxId }),
-            ...(failureReason !== undefined && { failureReason }),
+            ...(failureReason && { failureReason }),
         }
     }
 
@@ -1072,12 +1114,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
         const signature = updates.signature ?? existing.signature
+        const externalTxId = updates.externalTxId ?? existing.externalTxId
+        const failureReason = updates.failureReason ?? existing.failureReason
 
         return {
             ...existing,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),
+            ...(externalTxId !== undefined && { externalTxId }),
+            ...(failureReason !== undefined && { failureReason }),
         }
     }
 

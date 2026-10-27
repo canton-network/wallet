@@ -135,7 +135,6 @@ export const userController = (
     const createTransactionService = (store: Store, sessionId: string) =>
         new TransactionService(
             store,
-            pinoLogger,
             signingDrivers,
             notificationService.getNotifier(sessionId),
             'HASHING_SCHEME_VERSION_V3'
@@ -196,12 +195,10 @@ export const userController = (
             )
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                pinoLogger
+                network.adminAuth
             )
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: adminTokenProvider,
             })
             const wallet = await createExtensionWallet({
@@ -221,11 +218,13 @@ export const userController = (
 
             return { wallet }
         },
-        addSelfIssuedSession: async () => {
-            throw new Error('Function addSelfIssuedSession not implemented.')
+        startSelfIssuedLoginSession: async () => {
+            throw new Error(
+                'Function startSelfIssuedLoginSession not implemented.'
+            )
         },
-        getSelfIssuedOnboarding: async () => {
-            throw new Error('Function getSelfIssuedOnboarding not implemented.')
+        getSelfIssuedLoginMode: async () => {
+            throw new Error('Function getSelfIssuedLoginMode not implemented.')
         },
         createSelfIssuedWallet: async () => {
             throw new Error('Function createSelfIssuedWallet not implemented.')
@@ -235,9 +234,12 @@ export const userController = (
                 'Function allocateSelfIssuedWallet not implemented.'
             )
         },
-        connectSelfIssuedSession: async () => {
+        completeSelfIssuedLogin: async () => {
+            throw new Error('Function completeSelfIssuedLogin not implemented.')
+        },
+        removeSelfIssuedLoginSession: async () => {
             throw new Error(
-                'Function connectSelfIssuedSession not implemented.'
+                'Function removeSelfIssuedLoginSession not implemented.'
             )
         },
         allocatePartyForWallet: async () => {
@@ -307,6 +309,9 @@ export const userController = (
         signMessage: async () => {
             throw new Error('Function signMessage not implemented.')
         },
+        getSignMessageStatus: async () => {
+            throw new Error('Function getSignMessageStatus not implemented.')
+        },
         getMessageToSign: async () => {
             throw new Error('Function getMessageToSign not implemented.')
         },
@@ -347,10 +352,8 @@ export const userController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    connectedContext.accessToken,
-                    pinoLogger
+                    connectedContext.accessToken
                 ),
             })
             const transactionService = createTransactionService(
@@ -418,7 +421,7 @@ export const userController = (
 
             // TODO: fill in
             const status = {} as Status
-            const rights = {} as UserLevelRight
+            const rights = [] as UserLevelRight[]
 
             return {
                 id: newSessionId,
@@ -478,7 +481,7 @@ export const userController = (
                             idp,
                             accessToken: context.accessToken,
                             status: {} as Status,
-                            rights: {} as UserLevelRight,
+                            rights: [] as UserLevelRight[],
                         }
                     })
                 ),
@@ -515,6 +518,9 @@ export const userController = (
                 }),
                 ...(transaction.externalTxId && {
                     externalTxId: transaction.externalTxId,
+                }),
+                ...(transaction.failureReason && {
+                    failureReason: transaction.failureReason,
                 }),
             }
         },
@@ -567,6 +573,9 @@ export const userController = (
         getTransactionStatus: async () => {
             throw new Error('Function getTransactionStatus not implemented.')
         },
+        listSigningProviders: async () => ({
+            signingProviders: Object.keys(signingDrivers),
+        }),
         listSigningProviderKeys: async () => {
             throw new Error('Function listSigningProviderKeys not implemented.')
         },

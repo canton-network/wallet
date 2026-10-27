@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { pino } from 'pino'
 import type { Network } from '@canton-network/core-wallet-store'
-import { sink } from 'pino-test'
 import type {
     AccessTokenProvider,
     AuthContext,
@@ -69,11 +67,10 @@ describe('PartyAllocationService', () => {
         },
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     let service: any
 
     beforeEach(async () => {
-        const mockLogger = pino(sink())
         const pas = await import('./party-allocation-service.js')
 
         // Mock AccessTokenProvider
@@ -93,7 +90,6 @@ describe('PartyAllocationService', () => {
             synchronizerId: network.synchronizerId,
             accessTokenProvider: mockAccessTokenProvider,
             httpLedgerUrl: network.ledgerApi.baseUrl,
-            logger: mockLogger,
         })
 
         vi.spyOn(service, 'createFingerprintFromKey').mockReturnValue(

@@ -8,6 +8,8 @@ on:
 # Repository vars (e.g. BLOCKDAEMON_*) are not available to workflows from fork PRs.
 env:
     CI_SECRET_DEPENDENCY: ${{ github.event.pull_request.head.repo.fork == false }}
+    NX_PARALLEL: 100%
+    NX_CACHE_DIRECTORY: .nx/cache
 permissions:
     contents: read
 
@@ -135,14 +137,17 @@ jobs:
             - name: check package.json names
               run: pnpm script:cleancoding
 
+            - name: check dependency specs and catalog
+              run: pnpm script:check-catalog
+
             - name: run typechecking
               run: pnpm nx run-many -t typecheck --parallel
 
-            - name: prettier code
-              run: pnpm prettier . --check
+            - name: format code
+              run: pnpm oxfmt --check
 
-            - name: eslint code
-              run: pnpm nx run-many -t lint --parallel
+            - name: lint code
+              run: pnpm nx run-many -t lint --parallel --format github
 
             - name: check wg schema docs
               run: pnpm docs:update-wg-config
@@ -551,7 +556,7 @@ jobs:
               with:
                   path: |
                       ~/.dpm
-                  key: dpm-${{ runner.os }}-${{ needs.version-config.outputs.daml_release_version }}
+                  key: dpm-v2-${{ runner.os }}-${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Rebuild DAML-dependent packages
               run: |

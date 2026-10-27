@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -13,14 +12,87 @@ import { createCLI } from '@canton-network/core-wallet-store-sql'
 import { createCLI as createSigningCLI } from '@canton-network/core-signing-store-sql'
 import { ConfigUtils } from './config/ConfigUtils.js'
 
-import pino from 'pino'
+import pino, { type Logger } from 'pino'
 import z from 'zod'
 import { rawConfigSchema } from './config/Config.js'
 import exampleConfig from './example-config.js'
 import { GATEWAY_VERSION } from './version.js'
 import { nestedRedact } from './utils.js'
 
-import { install } from '@logtape/adaptor-pino'
+import { getPinoSink } from '@logtape/adaptor-pino'
+import {
+    configure,
+    getAnsiColorFormatter,
+    getConsoleSink,
+} from '@logtape/logtape'
+
+function setupConsoleSink() {
+    void configure({
+        sinks: {
+            console: getConsoleSink({
+                formatter: getAnsiColorFormatter({
+                    timestamp: 'none',
+                }),
+            }),
+        },
+        loggers: [
+            { category: 'core', lowestLevel: 'trace', sinks: ['console'] },
+            {
+                category: ['logtape', 'meta'],
+                lowestLevel: 'warning',
+                sinks: ['console'],
+            },
+        ],
+    })
+}
+
+function setupPinoSink(
+    logFormat: 'json' | 'pretty',
+    logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+): Logger {
+    const logger = pino({
+        name: 'main',
+        redact: {
+            paths: nestedRedact([
+                'accessToken',
+                'access_token',
+                'clientSecret',
+                'jwt',
+            ]),
+            censor: '*****',
+        },
+        level: logLevel,
+        ...(logFormat === 'pretty'
+            ? {
+                  transport: {
+                      target: 'pino-pretty',
+                  },
+              }
+            : {}),
+    })
+
+    void configure({
+        sinks: {
+            pino: getPinoSink(logger, {
+                category: { separator: '.', decorator: '[]' },
+            }),
+        },
+        loggers: [
+            {
+                category: ['logtape', 'meta'],
+                sinks: ['pino'],
+                lowestLevel: 'warning',
+            },
+            {
+                category: [],
+                lowestLevel: logLevel === 'warn' ? 'warning' : logLevel,
+                sinks: ['pino'],
+            },
+        ],
+    })
+
+    return logger
+}
 
 const program = new Command()
     .name('wallet-gateway')
@@ -49,7 +121,12 @@ const program = new Command()
     .action((opts) => {
         if (opts.configSchema) {
             console.log(
-                JSON.stringify(z.toJSONSchema(rawConfigSchema), null, 2)
+                JSON.stringify(
+                    // Describe accepted config input before preprocessors apply defaults.
+                    z.toJSONSchema(rawConfigSchema, { io: 'input' }),
+                    null,
+                    2
+                )
             )
             process.exit(0)
         }
@@ -66,32 +143,10 @@ const program = new Command()
         const logLevel = opts.logLevel ?? configLogging.level ?? 'info'
 
         // Define project-global logger
-        const logger = pino({
-            name: 'main',
-            redact: {
-                paths: nestedRedact([
-                    'accessToken',
-                    'access_token',
-                    'clientSecret',
-                    'jwt',
-                ]),
-                censor: '*****',
-            },
-            level: logLevel,
-            ...(logFormat === 'pretty'
-                ? {
-                      transport: {
-                          target: 'pino-pretty',
-                      },
-                  }
-                : {}),
-        })
-
-        // install pino loger for logtape
-        install(logger)
+        const logger = setupPinoSink(logFormat, logLevel)
 
         // Initialize the database with the provided config
-        initialize(opts, logger)
+        void initialize(opts, logger)
     })
 
 // Parse only the options (without executing commands) to get config path
@@ -112,17 +167,22 @@ let signingDb = new Command('signing-db')
 const hasDb = process.argv.slice(2).includes('db')
 if (hasDb) {
     const config = ConfigUtils.loadConfigFile(options.config)
+    setupConsoleSink()
     db = createCLI(config.store, config.bootstrap) as Command
 }
 
 const hasSigningDb = process.argv.slice(2).includes('signing-db')
+
 if (hasSigningDb) {
     const config = ConfigUtils.loadConfigFile(options.config)
-    signingDb = createSigningCLI(config.signingStore) as Command
+    if (config.signingStore) {
+        setupConsoleSink()
+        signingDb = createSigningCLI(config.signingStore) as Command
+    }
 }
 
 program.addCommand(db.name('db'))
 program.addCommand(signingDb.name('signing-db'))
 
 // Now parse normally for execution/help
-program.parseAsync(process.argv)
+void program.parseAsync(process.argv)

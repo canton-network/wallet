@@ -3,23 +3,20 @@ import {
     SDK,
     LedgerProvider,
 } from '@canton-network/wallet-sdk'
-import { pino } from 'pino'
-import { v4 } from 'uuid'
 import { signTransactionHash } from '@canton-network/core-signing-lib'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    localNetGlobalSynchronizer,
 } from './utils/index.js'
 
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
-const logger = pino({ name: 'v1-10-init-with-provider', level: 'info' })
+import { configureLogging } from './utils/configure-logging.js'
+const logger = await configureLogging()
 
-const authTokenProvider = new AuthTokenProvider(
-    TOKEN_PROVIDER_CONFIG_DEFAULT,
-    logger
-)
+const authTokenProvider = new AuthTokenProvider(TOKEN_PROVIDER_CONFIG_DEFAULT)
 
 const ledgerProvider = new LedgerProvider({
     baseUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
@@ -28,6 +25,7 @@ const ledgerProvider = new LedgerProvider({
 
 const sdkOptions = {
     ledgerProvider,
+    synchronizerId: localNetGlobalSynchronizer,
     token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
 } as const
@@ -73,7 +71,7 @@ const pingCommand = [
             templateId:
                 '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
             createArguments: {
-                id: v4(),
+                id: crypto.randomUUID(),
                 initiator: sender.partyId,
                 responder: sender.partyId,
             },

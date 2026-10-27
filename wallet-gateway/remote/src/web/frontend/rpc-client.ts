@@ -30,7 +30,8 @@ const getUserApiPath = async (): Promise<URL> => {
 
     if (!userApiPathPromise) {
         userApiPathPromise = fetch(
-            toRelPath('/.well-known/wallet-gateway-config')
+            toRelPath('/.well-known/wallet-gateway-config'),
+            { headers: { Accept: 'application/json' } }
         )
             .then((response) => response.json())
             .then((config) =>
@@ -92,7 +93,7 @@ const handleAutoLogout = async (): Promise<void> => {
 class HttpTransportWithAuthInterceptor extends HttpTransport {
     protected async handleErrorResponse(response: Response): Promise<never> {
         if (response.status === 401) {
-            handleAutoLogout()
+            void handleAutoLogout()
         }
         return super.handleErrorResponse(response)
     }

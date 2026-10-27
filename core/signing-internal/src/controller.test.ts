@@ -21,7 +21,6 @@ import {
     connection,
     migrator,
 } from '@canton-network/core-signing-store-sql'
-import { pino } from 'pino'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'
@@ -52,17 +51,14 @@ const nextTurn = () => new Promise<void>((resolve) => setImmediate(resolve))
 
 async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
     const db = connection({
-        connection: {
-            type: 'sqlite',
-            database: 'testInternalStore.sqlite',
-        },
+        connection: { type: 'memory' },
     })
     const umzug = migrator(db)
     const pending = await umzug.pending()
     if (pending.length > 0) {
         await umzug.up()
     }
-    const store = new StoreSql(db, pino({ level: 'silent' }), authContext)
+    const store = new StoreSql(db, authContext)
 
     const signingDriver = new InternalSigningDriver(store)
     const controller = signingDriver.controller(authContext.userId)
@@ -141,7 +137,10 @@ test('signMessage signs a message with a stored key', async () => {
     })
 
     assertNotRpcError(result)
-    expect(result.signature).toBeDefined()
+    expect(result.status).toBe('signed')
+    if (!result.signature) {
+        throw new Error('missing signature')
+    }
     expect(
         nacl.sign.detached.verify(
             new TextEncoder().encode(TEST_MESSAGE),
@@ -149,6 +148,20 @@ test('signMessage signs a message with a stored key', async () => {
             naclUtil.decodeBase64(key.publicKey)
         )
     ).toBe(true)
+})
+
+test('signMessage returns bad_arguments when the message is empty', async () => {
+    const { controller, key } = await setupTest()
+
+    const result = await controller.signMessage({
+        message: '',
+        keyIdentifier: { publicKey: key.publicKey },
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('bad_arguments')
+    }
 })
 
 test('signMessage returns key_not_found when the publicKey is missing', async () => {
