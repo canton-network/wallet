@@ -24,7 +24,7 @@ export class PingPage {
             this.page.getByTestId('connect-wallet')
         )
         const wallet = picker.getByRole('button', {
-            name: /Wallet Gateway/,
+            name: 'Connect to Canton Wallet',
         })
         await expect(wallet).toBeVisible()
         await expect(picker.getByLabel('Install Canton Wallet')).toHaveCount(0)
