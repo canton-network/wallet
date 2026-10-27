@@ -382,7 +382,7 @@ export class TrafficAccountNamespace {
 
         // Only the contracts the plan leaves alone can be disclosed: a created
         // or repriced one has no contract id until the caller's transaction
-        // commits, and `sdk.ledger.disclose` is what resolves those afterwards.
+        // commits.
         const reused = new Set(
             [
                 plan.trafficPurchaser.contractId,
