@@ -26,7 +26,10 @@ export class ParticipantWalletAllocator implements WalletAllocator {
         partyHint: PartyHint,
         primary: Primary = false
     ): Promise<Wallet> {
-        const party = await this.partyAllocator.allocateParty(userId, partyHint)
+        const party = await this.partyAllocator.allocatePartyAndGrantRights(
+            userId,
+            partyHint
+        )
         const network = await this.store.getCurrentNetwork()
         const wallet: Wallet = {
             partyId: party.partyId,
@@ -51,7 +54,7 @@ export class ParticipantWalletAllocator implements WalletAllocator {
         email: string | undefined,
         existingWallet: Wallet
     ): Promise<void> {
-        const party = await this.partyAllocator.allocateParty(
+        const party = await this.partyAllocator.allocatePartyAndGrantRights(
             userId,
             existingWallet.hint
         )

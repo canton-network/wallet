@@ -46,7 +46,7 @@ export class KernelWalletAllocator implements WalletAllocator {
             })
             .then(handleSigningProviderError)
 
-        const party = await this.partyAllocator.allocateParty(
+        const party = await this.partyAllocator.allocatePartyAndGrantRights(
             userId,
             partyHint,
             key.publicKey,
@@ -109,7 +109,7 @@ export class KernelWalletAllocator implements WalletAllocator {
             return result.signature
         }
 
-        const party = await this.partyAllocator.allocateParty(
+        const party = await this.partyAllocator.allocatePartyAndGrantRights(
             userId,
             existingWallet.hint,
             existingWallet.publicKey,
