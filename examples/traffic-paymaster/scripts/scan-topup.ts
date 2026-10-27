@@ -5,21 +5,27 @@
  * Stands in for the participant TEA that credits purchased traffic (adapted
  * from `wallet-sdk`'s own `TrafficScan` test double, which is private to that
  * package). `TrafficPurchaser_PurchaseCredits` credits the traffic on-ledger by
- * creating (and immediately archiving) a `TrafficCredit`; its created event is
- * in the transaction tree even though the contract is transient. This follows
- * the update stream for those created events and applies each with
+ * exercising the non-consuming `PublishCredit` choice on a `TrafficCreditIssuer`;
+ * the exercise is in the transaction tree even though it creates no contract.
+ * This follows the update stream for those exercises and applies each with
  * `topUpTraffic`. Long-running: scans forever until Ctrl+C. For a one-off
  * manual credit instead, see `topup.ts`.
  */
-import { LedgerProvider, localNetStaticConfig } from '@canton-network/wallet-sdk'
+import {
+    LedgerProvider,
+    localNetStaticConfig,
+} from '@canton-network/wallet-sdk'
 import type { Ops } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { TrafficCredit } from '@canton-network/core-traffic-purchase'
+import {
+    TrafficCreditIssuer,
+    type PublishCredit,
+} from '@canton-network/core-traffic-purchase'
 import { createAdminSdk, localNetAuth, type AdminSdk } from './lib.js'
 import { requireEnvVar } from './env-file.js'
 
-const trafficCreditQualifiedName = TrafficCredit.templateId.slice(
-    TrafficCredit.templateId.indexOf(':')
+const trafficCreditIssuerQualifiedName = TrafficCreditIssuer.templateId.slice(
+    TrafficCreditIssuer.templateId.indexOf(':')
 )
 
 async function main() {
@@ -33,14 +39,21 @@ async function main() {
         ),
     })
 
-    let offset = (
-        await ledger.request<Ops.GetV2StateLedgerEnd>({
-            method: 'ledgerApi',
-            params: { resource: '/v2/state/ledger-end', requestMethod: 'get', query: {} },
-        })
-    ).offset ?? 0
+    let offset =
+        (
+            await ledger.request<Ops.GetV2StateLedgerEnd>({
+                method: 'ledgerApi',
+                params: {
+                    resource: '/v2/state/ledger-end',
+                    requestMethod: 'get',
+                    query: {},
+                },
+            })
+        ).offset ?? 0
 
-    console.log(`Scanning purchases for paymaster ${paymaster} from offset ${offset}`)
+    console.log(
+        `Scanning purchases for paymaster ${paymaster} from offset ${offset}`
+    )
     console.log('Leave this running. Ctrl+C to stop.')
 
     let stopped = false
@@ -58,7 +71,8 @@ async function main() {
                     beginExclusive: offset,
                     updateFormat: {
                         includeTransactions: {
-                            transactionShape: 'TRANSACTION_SHAPE_LEDGER_EFFECTS',
+                            transactionShape:
+                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
                             eventFormat: {
                                 filtersByParty: { [paymaster]: {} },
                                 verbose: true,
@@ -75,7 +89,11 @@ async function main() {
             if (!('Transaction' in update)) continue
 
             const transaction = (
-                update as { Transaction: { value: { events: unknown[]; offset: number } } }
+                update as {
+                    Transaction: {
+                        value: { events: unknown[]; offset: number }
+                    }
+                }
             ).Transaction.value
             for (const event of transaction.events) {
                 await applyEvent(admin, event)
@@ -86,35 +104,48 @@ async function main() {
 }
 
 async function applyEvent(admin: AdminSdk, event: unknown): Promise<void> {
-    if (typeof event !== 'object' || event === null || !('CreatedEvent' in event)) {
+    if (
+        typeof event !== 'object' ||
+        event === null ||
+        !('ExercisedEvent' in event)
+    ) {
         return
     }
-    const created = (
+    const exercised = (
         event as {
-            CreatedEvent: {
-                templateId: string
-                contractId: string
-                createArgument?: unknown
+            ExercisedEvent: {
+                offset: number
+                nodeId: number
+                interfaceId?: string
+                choice: string
+                choiceArgument?: unknown
             }
         }
-    ).CreatedEvent
+    ).ExercisedEvent
 
-    if (!created.templateId.endsWith(trafficCreditQualifiedName)) return
-    if (created.createArgument === undefined) return
+    if (exercised.choice !== 'PublishCredit') return
+    if (
+        exercised.interfaceId === undefined ||
+        !exercised.interfaceId.endsWith(trafficCreditIssuerQualifiedName)
+    ) {
+        return
+    }
+    if (exercised.choiceArgument === undefined) return
 
-    const credit = created.createArgument as TrafficCredit
+    const credit = exercised.choiceArgument as PublishCredit
     const accountId = credit.accountId.value
-    const balanceDelta = Number(credit.amount)
+    const balanceDelta = Number(credit.trafficAmount)
+    const deduplicationId = `${exercised.offset}:${exercised.nodeId}`
     const account = await admin.traffic.topUpTraffic({
         accountId,
         balanceDelta,
-        // The credit's own contract id: unique per credit, so re-seeing the
-        // same created event cannot top the account up twice.
-        deduplicationId: created.contractId,
+        // The exercise's place in the tree is unique per credit, so re-seeing
+        // the same exercise cannot top the account up twice.
+        deduplicationId,
     })
     console.log(
         `Credited ${balanceDelta} bytes to ${accountId} ` +
-            `(credit ${created.contractId}); balance is now ${account.balance}`
+            `(exercise ${deduplicationId}); balance is now ${account.balance}`
     )
 }
 

@@ -12,7 +12,8 @@
  *
  * It is the whole of what the API needs, because the SDK already is: the terms
  * come from `traffic.readTrafficSetup` and the disclosures -- the reason the API
- * exists, since only the paymaster can produce them -- from `ledger.disclose`.
+ * exists, since only the paymaster can produce them -- are read off the
+ * paymaster's own ledger state with `ledger.acsReader`.
  *
  * The ledger is read per request rather than at startup, which is both simpler
  * and what a paymaster that reprices has to do anyway: repricing replaces the
@@ -28,7 +29,10 @@ import type {
     TrafficPurchaseDisclosedContract,
     TrafficPurchaserWithDisclosures,
 } from '@canton-network/core-traffic-purchase'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import {
+    ConversionRate,
+    TrafficPurchaser,
+} from '@canton-network/core-traffic-purchase'
 import type { PartyId } from '@canton-network/core-types'
 import type { LedgerNamespace } from '../../ledger/namespace.js'
 import type { TrafficAccountNamespace } from '../namespace.js'
@@ -58,7 +62,7 @@ export class TrafficPaymasterApi {
             TrafficAccountNamespace,
             'readTrafficSetup'
         >,
-        private readonly ledger: Pick<LedgerNamespace, 'disclose'>,
+        private readonly ledger: Pick<LedgerNamespace, 'acsReader'>,
         private readonly paymaster: PartyId,
         server: Server
     ) {
@@ -74,7 +78,7 @@ export class TrafficPaymasterApi {
         /** Reads the paymaster's `TrafficPurchaser` and `ConversionRate`s. */
         traffic: Pick<TrafficAccountNamespace, 'readTrafficSetup'>
         /** Produces the blobs, which only a party that can read them can. */
-        ledger: Pick<LedgerNamespace, 'disclose'>
+        ledger: Pick<LedgerNamespace, 'acsReader'>
         /** The party selling traffic, and sole signatory of both templates. */
         paymaster: PartyId
     }): Promise<TrafficPaymasterApi> {
@@ -200,11 +204,24 @@ export class TrafficPaymasterApi {
     private async disclose(
         contractId: ContractIdString
     ): Promise<TrafficPurchaseDisclosedContract[]> {
-        const disclosed = await this.ledger.disclose({
-            contractIds: [contractId],
-            asParty: this.paymaster,
+        const contracts = await this.ledger.acsReader.raw.readJsContracts({
+            parties: [this.paymaster],
+            templateIds: [
+                TrafficPurchaser.templateId,
+                ConversionRate.templateId,
+            ],
+            filterByParty: true,
         })
-        return disclosed.map(served)
+        const match = contracts.find(
+            (contract) => contract.contractId === contractId
+        )
+        if (match === undefined) {
+            throw new ApiError(
+                404,
+                `${this.paymaster} has no contract ${contractId} to disclose.`
+            )
+        }
+        return [served(match)]
     }
 
     /**
@@ -236,15 +253,20 @@ export class TrafficPaymasterApi {
  * the spec requires all four -- a submission carrying a disclosure without them
  * is rejected -- so they are checked rather than cast.
  */
-function served(
-    contract: LedgerCommonSchemas['DisclosedContract']
-): TrafficPurchaseDisclosedContract {
+function served(contract: {
+    templateId?: string
+    contractId?: string
+    createdEventBlob?: string
+    synchronizerId?: string | null
+}): TrafficPurchaseDisclosedContract {
     const { templateId, contractId, createdEventBlob, synchronizerId } =
         contract
     if (
         templateId === undefined ||
         contractId === undefined ||
-        synchronizerId === undefined
+        createdEventBlob === undefined ||
+        synchronizerId === undefined ||
+        synchronizerId === null
     ) {
         throw new ApiError(
             500,

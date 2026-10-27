@@ -15,6 +15,10 @@ import type {
     ConversionRateWithDisclosures,
     TrafficPurchaserWithDisclosures,
 } from '@canton-network/core-traffic-purchase'
+import {
+    ConversionRate,
+    TrafficPurchaser,
+} from '@canton-network/core-traffic-purchase'
 import type { PartyId } from '@canton-network/core-types'
 import type { AdminSdk } from './lib.js'
 
@@ -100,11 +104,9 @@ export class PaymasterApi {
             // "Internal Server Error" is far easier to diagnose from the real
             // cause printed in this server's own terminal.
             console.error(`Request to ${target} failed:`, error)
-            send(
-                response,
-                error instanceof ApiError ? error.status : 500,
-                { error: error instanceof Error ? error.message : String(error) }
-            )
+            send(response, error instanceof ApiError ? error.status : 500, {
+                error: error instanceof Error ? error.message : String(error),
+            })
         }
     }
 
@@ -127,7 +129,10 @@ export class PaymasterApi {
                 decodeURIComponent(url.pathname.slice(TRAFFIC_PATH.length))
             )
         }
-        throw new ApiError(404, `No traffic-purchase endpoint at ${url.pathname}`)
+        throw new ApiError(
+            404,
+            `No traffic-purchase endpoint at ${url.pathname}`
+        )
     }
 
     private async trafficPurchaser(): Promise<TrafficPurchaserWithDisclosures> {
@@ -167,7 +172,8 @@ export class PaymasterApi {
     private async conversionRate(
         id: string,
         admin: string
-    ): Promise<ConversionRateWithDisclosures> {        const { conversionRates } = await this.traffic.readTrafficSetup(
+    ): Promise<ConversionRateWithDisclosures> {
+        const { conversionRates } = await this.traffic.readTrafficSetup(
             this.paymaster
         )
         const rate = this.theOnly(
@@ -193,25 +199,35 @@ export class PaymasterApi {
     }
 
     private async disclose(forContractId: string) {
-        const disclosed = await this.ledger.disclose({
-            contractIds: [forContractId],
-            asParty: this.paymaster,
+        const contracts = await this.ledger.acsReader.raw.readJsContracts({
+            parties: [this.paymaster],
+            templateIds: [
+                TrafficPurchaser.templateId,
+                ConversionRate.templateId,
+            ],
+            filterByParty: true,
         })
-        return disclosed.map((contract) => {
-            const { templateId, contractId, createdEventBlob, synchronizerId } =
-                contract
-            if (
-                templateId === undefined ||
-                contractId === undefined ||
-                synchronizerId === undefined
-            ) {
-                throw new ApiError(
-                    500,
-                    `Disclosure for ${contractId ?? 'a contract'} is missing fields`
-                )
-            }
-            return { templateId, contractId, createdEventBlob, synchronizerId }
-        })
+        const match = contracts.find(
+            (contract) => contract.contractId === forContractId
+        )
+        if (match === undefined) {
+            throw new ApiError(404, `No contract ${forContractId} to disclose`)
+        }
+        const { templateId, contractId, createdEventBlob, synchronizerId } =
+            match
+        if (
+            templateId === undefined ||
+            contractId === undefined ||
+            createdEventBlob === undefined ||
+            synchronizerId === undefined ||
+            synchronizerId === null
+        ) {
+            throw new ApiError(
+                500,
+                `Disclosure for ${contractId ?? 'a contract'} is missing fields`
+            )
+        }
+        return [{ templateId, contractId, createdEventBlob, synchronizerId }]
     }
 
     private theOnly<T>(found: T[], what: string): T {
