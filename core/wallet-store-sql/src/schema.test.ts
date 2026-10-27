@@ -105,7 +105,7 @@ describe('schema mappers', () => {
         })
 
         test('omits adminAuth when not set on the domain model', () => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // oxlint-disable-next-line no-unused-vars
             const { adminAuth, ...withoutAdmin } = baseNetwork
             const table = fromNetwork(withoutAdmin)
             expect(table.adminAuth).toBeUndefined()
@@ -194,6 +194,7 @@ describe('schema mappers', () => {
                 createdAt,
                 signedAt,
                 externalTxId: 'ext-1',
+                failureReason: 'ledger timeout',
                 networkId: 'net-1',
                 userId: 'user-1',
             }
@@ -220,6 +221,48 @@ describe('schema mappers', () => {
 
             const table = fromMessageRaw(message, 'user-1', 'net-1')
             expect(toMessageRaw(table)).toEqual(message)
+        })
+
+        test('round-trips externalTxId and failureReason', () => {
+            const message: MessageRaw = {
+                id: 'msg-1',
+                status: 'failed',
+                userId: 'user-1',
+                partyId: 'party::ns',
+                publicKey: 'pk',
+                message: 'sign me',
+                origin: null,
+                createdAt: new Date('2026-02-01T12:00:00.000Z'),
+                externalTxId: 'provider-req-1',
+                failureReason: 'Signing provider returned status: rejected',
+            }
+
+            const table = fromMessageRaw(message, 'user-1', 'net-1')
+            expect(table.externalTxId).toBe('provider-req-1')
+            expect(table.failureReason).toBe(
+                'Signing provider returned status: rejected'
+            )
+            expect(toMessageRaw(table)).toEqual(message)
+        })
+
+        test('maps missing externalTxId and failureReason to null and back to absent', () => {
+            const message: MessageRaw = {
+                id: 'msg-1',
+                status: 'pending',
+                userId: 'user-1',
+                partyId: 'party::ns',
+                publicKey: 'pk',
+                message: 'sign me',
+                origin: null,
+                createdAt: new Date('2026-02-01T12:00:00.000Z'),
+            }
+
+            const table = fromMessageRaw(message, 'user-1', 'net-1')
+            expect(table.externalTxId).toBeNull()
+            expect(table.failureReason).toBeNull()
+            const roundTripped = toMessageRaw(table)
+            expect(roundTripped).not.toHaveProperty('externalTxId')
+            expect(roundTripped).not.toHaveProperty('failureReason')
         })
 
         test('throws when message userId does not match', () => {

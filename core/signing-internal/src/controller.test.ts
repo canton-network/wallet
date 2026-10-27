@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 
 // import request from 'supertest'
 import { InternalSigningDriver } from './controller.js'
@@ -21,7 +21,6 @@ import {
     connection,
     migrator,
 } from '@canton-network/core-signing-store-sql'
-import { pino } from 'pino'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'
@@ -45,21 +44,21 @@ interface TestValues {
     signingDriver: InternalSigningDriver
     key: Key
     controller: Methods
+    store: StoreSql
 }
+
+const nextTurn = () => new Promise<void>((resolve) => setImmediate(resolve))
 
 async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
     const db = connection({
-        connection: {
-            type: 'sqlite',
-            database: 'testInternalStore.sqlite',
-        },
+        connection: { type: 'memory' },
     })
     const umzug = migrator(db)
     const pending = await umzug.pending()
     if (pending.length > 0) {
         await umzug.up()
     }
-    const store = new StoreSql(db, pino({ level: 'silent' }), authContext)
+    const store = new StoreSql(db, authContext)
 
     const signingDriver = new InternalSigningDriver(store)
     const controller = signingDriver.controller(authContext.userId)
@@ -69,6 +68,7 @@ async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
         signingDriver,
         key,
         controller,
+        store,
     }
 }
 
@@ -137,7 +137,10 @@ test('signMessage signs a message with a stored key', async () => {
     })
 
     assertNotRpcError(result)
-    expect(result.signature).toBeDefined()
+    expect(result.status).toBe('signed')
+    if (!result.signature) {
+        throw new Error('missing signature')
+    }
     expect(
         nacl.sign.detached.verify(
             new TextEncoder().encode(TEST_MESSAGE),
@@ -145,6 +148,20 @@ test('signMessage signs a message with a stored key', async () => {
             naclUtil.decodeBase64(key.publicKey)
         )
     ).toBe(true)
+})
+
+test('signMessage returns bad_arguments when the message is empty', async () => {
+    const { controller, key } = await setupTest()
+
+    const result = await controller.signMessage({
+        message: '',
+        keyIdentifier: { publicKey: key.publicKey },
+    })
+
+    expect(isRpcError(result)).toBe(true)
+    if (isRpcError(result)) {
+        expect(result.error).toBe('bad_arguments')
+    }
 })
 
 test('signMessage returns key_not_found when the publicKey is missing', async () => {
@@ -238,6 +255,60 @@ test('getTransaction returns a stored transaction', async () => {
     expect(result.txId).toBe(tx.txId)
     expect(result.status).toBe('signed')
     expect(result.publicKey).toBe(key.publicKey)
+})
+
+test('signTransaction resolves only after the signature is persisted', async () => {
+    const { controller, key, store } = await setupTest()
+    const persist = store.setSigningTransaction.bind(store)
+    const writeStarted = Promise.withResolvers<void>()
+    const writeGate = Promise.withResolvers<void>()
+    vi.spyOn(store, 'setSigningTransaction').mockImplementationOnce(
+        async (userId, transaction) => {
+            writeStarted.resolve()
+            await writeGate.promise
+            await persist(userId, transaction)
+        }
+    )
+
+    let settled = false
+    const signing = controller
+        .signTransaction({
+            tx: TEST_TRANSACTION,
+            txHash: TEST_TRANSACTION_HASH,
+            keyIdentifier: { publicKey: key.publicKey },
+        })
+        .finally(() => {
+            settled = true
+        })
+
+    await writeStarted.promise
+    await nextTurn()
+    expect(settled).toBe(false)
+
+    writeGate.resolve()
+    const tx = await signing
+    assertNotRpcError(tx)
+    expect(tx.status).toBe('signed')
+
+    const stored = await controller.getTransaction({ txId: tx.txId })
+    assertNotRpcError(stored)
+    expect(stored.status).toBe('signed')
+    expect(stored.signature).toBe(tx.signature)
+    expect(stored.publicKey).toBe(key.publicKey)
+})
+
+test('signTransaction does not return a signature when persistence fails', async () => {
+    const { controller, key, store } = await setupTest()
+    const writeError = new Error('write failed')
+    vi.spyOn(store, 'setSigningTransaction').mockRejectedValueOnce(writeError)
+
+    await expect(
+        controller.signTransaction({
+            tx: TEST_TRANSACTION,
+            txHash: TEST_TRANSACTION_HASH,
+            keyIdentifier: { publicKey: key.publicKey },
+        })
+    ).rejects.toBe(writeError)
 })
 
 test('getTransaction returns transaction_not_found for an unknown id', async () => {

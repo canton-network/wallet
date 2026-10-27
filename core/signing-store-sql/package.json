@@ -1,43 +1,41 @@
 {
     "name": "@canton-network/core-signing-store-sql",
-    "version": "1.14.0",
+    "version": "2.1.0",
     "type": "module",
     "description": "SQL implementation of the Store API",
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
-    "main": "dist/index.cjs",
+    "sideEffects": false,
+    "main": "dist/index.js",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
-            "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\" && tsc -b tsconfig.migrations.json",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.types.json && tsc -b tsconfig.migrations.json\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\" && tsc -p tsconfig.migrations.json",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json && tsc -p tsconfig.migrations.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage",
+        "clean": "rm -rf dist",
         "test:migrations": "vitest run --project migrations",
         "migrations:check-lock": "tsx ../../scripts/src/check-migration-lock.ts",
         "migrations:update-lock": "tsx ../../scripts/src/check-migration-lock.ts --update"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "catalog:",
-        "@canton-network/core-rpc-errors": "catalog:",
-        "@canton-network/core-signing-lib": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
-        "@canton-network/core-wallet-store": "catalog:",
+        "@canton-network/core-ledger-client": "workspace:",
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
+        "@canton-network/core-wallet-store": "workspace:",
+        "@logtape/logtape": "catalog:",
         "better-sqlite3": "catalog:",
         "commander": "catalog:",
         "kysely": "catalog:",
         "pg": "catalog:",
-        "pino": "catalog:",
         "umzug": "catalog:",
         "zod": "catalog:"
     },
@@ -66,5 +64,14 @@
     "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-store-sql#readme",
     "bugs": {
         "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "nx": {
+        "targets": {
+            "test": {
+                "options": {
+                    "args": "--project=node"
+                }
+            }
+        }
     }
 }

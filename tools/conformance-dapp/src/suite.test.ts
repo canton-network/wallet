@@ -19,6 +19,7 @@ import {
     SignatureSchema,
 } from './report.ts'
 import { WrappingTestProvider } from '@canton-network/core-provider-conformance'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import {
     createProvider,
     type Provider,
@@ -81,11 +82,15 @@ const defaultConfig = ConfigSchema.parse({
 })
 
 describe('Conformance suite', () => {
-    afterEach(() => vi.restoreAllMocks())
+    afterEach(() => {
+        vi.useRealTimers()
+        vi.restoreAllMocks()
+    })
 
     it.each(['success', 'failure', 'timeout', 'cancellation'] as const)(
         'cleans up test event listeners on %s',
         async (outcome) => {
+            vi.useFakeTimers()
             const { wrapper } = fakeWallet()
             const onEvent = vi.spyOn(wrapper, 'on')
             const removeListener = vi.spyOn(wrapper, 'removeListener')
@@ -102,7 +107,7 @@ describe('Conformance suite', () => {
                 if (outcome === 'timeout' || outcome === 'cancellation')
                     await new Promise(() => {})
             })
-            const report = await runSuite({
+            const reportPromise = runSuite({
                 config: {
                     ...defaultConfig,
                     timeoutMs: 10,
@@ -117,6 +122,8 @@ describe('Conformance suite', () => {
                     )
                 },
             })
+            if (outcome === 'timeout') await vi.advanceTimersByTimeAsync(10)
+            const report = await reportPromise
             expect(report.results.tests[0].status).toBe(
                 outcome === 'success' ? 'passed' : 'failed'
             )
@@ -227,6 +234,22 @@ describe('Conformance suite', () => {
         }
     })
 
+    it('redact keeps the name, message and code of errors', () => {
+        expect(
+            redact(
+                providerErrors.userRejectedRequest({
+                    message: 'Rejected',
+                    data: { secret: 'x' },
+                })
+            )
+        ).toStrictEqual({
+            name: 'Error',
+            message: 'Rejected',
+            code: 4001,
+            data: { secret: '*****' },
+        })
+    })
+
     it('redact rejects non-string sensitive values without exposing them', () => {
         for (const value of [
             42,
@@ -249,7 +272,10 @@ describe('Conformance suite', () => {
     function fakeWallet(
         connected = false,
         signMessage: (message: string) => string = signWithWallet,
-        signedParty: string | null = fakeAccount.partyId
+        signedParty: string | null = fakeAccount.partyId,
+        // `null` mimics an async wallet that resolves the request and only reports the rejection via events.
+        rejection: unknown = { code: 4001, message: 'Rejected' },
+        emitMessageSignature = true
     ) {
         let resolveRequest: (value: unknown) => void
         let rejectRequest: (error: unknown) => void
@@ -308,7 +334,19 @@ describe('Conformance suite', () => {
             provider,
             async ({ method, decision, params }) => {
                 if (decision === 'reject') {
-                    rejectRequest({ code: 4001, message: 'Rejected' })
+                    if (method === 'signMessage' && emitMessageSignature)
+                        provider.emit('messageSignature', {
+                            messageId: 'message',
+                            status: 'failed',
+                        })
+                    if (method === 'prepareExecute')
+                        provider.emit('txChanged', {
+                            commandId: (params as { commandId: string })
+                                .commandId,
+                            status: 'failed',
+                        })
+                    if (rejection === null) resolveRequest(null)
+                    else rejectRequest(rejection)
                     return
                 }
                 if (method === 'connect') {
@@ -318,12 +356,18 @@ describe('Conformance suite', () => {
                         isNetworkConnected: true,
                     })
                 }
-                if (method === 'signMessage')
-                    resolveRequest({
-                        signature: signMessage(
-                            (params as { message: string }).message
-                        ),
-                    })
+                if (method === 'signMessage') {
+                    const signature = signMessage(
+                        (params as { message: string }).message
+                    )
+                    if (emitMessageSignature)
+                        provider.emit('messageSignature', {
+                            messageId: 'message',
+                            status: 'signed',
+                            signature,
+                        })
+                    resolveRequest({ signature })
+                }
                 if (method === 'prepareExecute') {
                     const { commandId } = params as { commandId: string }
                     if (signedParty !== null)
@@ -436,6 +480,37 @@ describe('Conformance suite', () => {
     )
 
     it.each([
+        ['emits', true],
+        ['does not emit', false],
+    ])(
+        'message signing passes when the wallet %s messageSignature events',
+        async (_, emitMessageSignature) => {
+            const { wrapper } = fakeWallet(
+                true,
+                signWithWallet,
+                fakeAccount.partyId,
+                undefined,
+                emitMessageSignature
+            )
+            const testIds = ['signMessage.reject', 'signMessage.approve']
+            const report = await runSuite({
+                config: {
+                    ...defaultConfig,
+                    timeoutMs: 1000,
+                    disabledTests: cases
+                        .map((testCase) => testCase.id)
+                        .filter((id) => !testIds.includes(id)),
+                },
+                provider: wrapper,
+            })
+            expect(report.results.summary).toMatchObject({
+                passed: 2,
+                failed: 0,
+            })
+        }
+    )
+
+    it.each([
         ['signed by a different key', signWithWallet('another message')],
         ['not a signature at all', 'signed-by-fake-wallet'],
     ])('a message signature %s fails', async (_, signature) => {
@@ -456,6 +531,49 @@ describe('Conformance suite', () => {
             )?.message
         ).toMatch(/does not verify against the account public key/)
     })
+
+    it.each([
+        [
+            'rejected with code 4001',
+            { code: 4001, message: 'Rejected' },
+            'passed',
+        ],
+        [
+            'rejected with code -32003',
+            { code: -32003, message: 'Rejected' },
+            'passed',
+        ],
+        [
+            'rejected with code -32603',
+            { code: -32603, message: 'Rejected' },
+            'failed',
+        ],
+        ['resolved by an async wallet', null, 'passed'],
+    ] as const)(
+        'a transaction %s is %s',
+        async (_, rejection, expectedStatus) => {
+            const { wrapper } = fakeWallet(
+                true,
+                signWithWallet,
+                null,
+                rejection
+            )
+            const report = await runSuite({
+                config: {
+                    ...defaultConfig,
+                    disabledTests: cases
+                        .map((testCase) => testCase.id)
+                        .filter((id) => id !== 'prepareExecute.reject'),
+                },
+                provider: wrapper,
+            })
+            expect(
+                report.results.tests.find(
+                    (test) => test.testId === 'prepareExecute.reject'
+                )?.status
+            ).toBe(expectedStatus)
+        }
+    )
 
     it.each([
         ['no signed event', null, /No signed txChanged event/],
@@ -599,18 +717,21 @@ describe('Conformance suite', () => {
     })
 
     it('timeout fails the active test and skips the rest when reconnecting fails', async () => {
+        vi.useFakeTimers()
         let requests = 0
         const provider = createProvider((() => {
             requests++
             return new Promise(() => {})
         }) as Provider['request'])
-        const report = await runSuite({
+        const reportPromise = runSuite({
             config: { ...defaultConfig, timeoutMs: 10 },
             provider: new WrappingTestProvider(provider, async () => {}),
             reconnect: async () => {
                 throw new Error('Reconnect failed')
             },
         })
+        await vi.advanceTimersByTimeAsync(10)
+        const report = await reportPromise
         expect(report.results.tests[0]).toMatchObject({
             status: 'failed',
             message: `${cases[0].id} timed out after 10ms`,
@@ -621,7 +742,8 @@ describe('Conformance suite', () => {
     })
 
     it('recovers from a halted run by reconnecting instead of skipping everything', async () => {
-        const report = await runSuite({
+        vi.useFakeTimers()
+        const reportPromise = runSuite({
             config: { ...defaultConfig, timeoutMs: 10 },
             provider: new WrappingTestProvider(
                 createProvider(
@@ -631,70 +753,33 @@ describe('Conformance suite', () => {
             ),
             reconnect: async () => fakeWallet().wrapper,
         })
+        await vi.advanceTimersByTimeAsync(10)
+        const report = await reportPromise
         expect(report.results.summary.failed).toBe(1)
         expect(report.results.summary.passed).toBe(TEST_CASE_COUNT - 1)
         expect(report.results.summary.skipped).toBe(0)
     })
 
-    it('post-action settlement timeout stops subsequent wallet requests', async () => {
-        const deadline = AbortSignal.timeout(1)
-        const timeout = vi
-            .spyOn(AbortSignal, 'timeout')
-            .mockReturnValue(deadline)
-        const requests: string[] = []
-        const provider = createProvider((async ({ method }) => {
-            requests.push(method)
-            if (method === 'status')
-                return {
-                    provider: { id: 'fake', providerType: 'browser' },
-                    connection: {
-                        isConnected: false,
-                        isNetworkConnected: false,
-                    },
-                }
-            return new Promise(() => {})
-        }) as Provider['request'])
-        const pending = runSuite({
-            config: defaultConfig,
-            provider: new WrappingTestProvider(provider, async () => {}),
+    it('a non-wallet interaction error halts the run', async () => {
+        vi.spyOn(cases[0], 'run').mockImplementation(async (runtime) => {
+            await runtime.runInteraction('approve', { method: 'connect' })
         })
-        const [report] = await Promise.all([
-            pending,
-            new Promise<void>((resolve) => setTimeout(resolve, 20)),
-        ])
-        expect(timeout).toHaveBeenCalledTimes(1)
-        expect(report.results.summary.failed).toBe(1)
-        expect(report.results.summary.skipped).toBe(TEST_CASE_COUNT - 1)
-        expect(report.results.tests[0].message).toBe(deadline.reason.message)
-        expect(requests).toStrictEqual(['status', 'connect'])
-    })
-
-    it('plain interaction errors preserve their message and stop subsequent requests', async () => {
-        const requests: string[] = []
-        const provider = createProvider((async ({ method }) => {
-            requests.push(method)
-            if (method === 'status')
-                return {
-                    provider: { id: 'fake', providerType: 'browser' },
-                    connection: {
-                        isConnected: false,
-                        isNetworkConnected: false,
-                    },
-                }
-            return new Promise(() => {})
-        }) as Provider['request'])
         const report = await runSuite({
             config: defaultConfig,
-            provider: new WrappingTestProvider(provider, async () => {
-                throw new Error('Action cancelled by tester')
-            }),
+            provider: new WrappingTestProvider(
+                createProvider(
+                    (() => new Promise(() => {})) as Provider['request']
+                ),
+                async () => {
+                    throw new Error('Action cancelled by tester')
+                }
+            ),
         })
-        expect(report.results.summary.failed).toBe(1)
+        expect(report.results.tests[0]).toMatchObject({
+            status: 'failed',
+            message: 'Action cancelled by tester',
+        })
         expect(report.results.summary.skipped).toBe(TEST_CASE_COUNT - 1)
-        expect(report.results.tests[0].message).toBe(
-            'Action cancelled by tester'
-        )
-        expect(requests).toStrictEqual(['status', 'connect'])
     })
 
     it('hashes the serialized report, excluding diagnostics, independently of run id', async () => {

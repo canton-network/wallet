@@ -3,19 +3,20 @@ import {
     SDK,
     signTransactionHash,
 } from '@canton-network/wallet-sdk'
-import { pino } from 'pino'
-import { v4 } from 'uuid'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
+    localNetGlobalSynchronizer,
 } from './utils/index.js'
+import { configureLogging } from './utils/configure-logging.js'
 
-const logger = pino({ name: 'v1-01-ping-localnet', level: 'info' })
+const logger = await configureLogging()
 
 const sdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+    synchronizerId: localNetGlobalSynchronizer,
     token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
 })
@@ -65,7 +66,7 @@ const pingCommand = [
             templateId:
                 '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
             createArguments: {
-                id: v4(),
+                id: crypto.randomUUID(),
                 initiator: sender.partyId,
                 responder: sender.partyId,
             },

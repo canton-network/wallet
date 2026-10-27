@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import createClient, { type Client } from 'openapi-fetch'
-import type { Logger } from '@canton-network/core-types'
 
 import type { paths as allocationPaths } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.js'
 import type { paths as allocationInstructionPaths } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.js'
 import type { paths as metadataPaths } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.js'
 import type { paths as transferInstructionPaths } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.js'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+
+// TODO: switch to logtape like the other core packages (see #2667)
+type Logger = Pick<Console, 'debug' | 'info' | 'warn' | 'error'>
 
 type paths = allocationPaths &
     metadataPaths &
@@ -74,16 +76,13 @@ export class TokenStandardClient {
                 const accessToken =
                     await this.accessTokenProvider.getAccessToken()
 
-                return fetch(url, {
-                    ...options,
-                    headers: {
-                        ...(options.headers || {}),
-                        ...(accessToken
-                            ? { Authorization: `Bearer ${accessToken}` }
-                            : {}),
-                        'Content-Type': 'application/json',
-                    },
-                })
+                const headers = new Headers(options.headers)
+                if (accessToken) {
+                    headers.set('Authorization', `Bearer ${accessToken}`)
+                }
+                headers.set('Content-Type', 'application/json')
+
+                return fetch(url, { ...options, headers })
             },
         })
     }
@@ -96,7 +95,7 @@ export class TokenStandardClient {
             query?: Record<string, string | number>
         }
     ): Promise<PostResponse<Path>> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
+        // oxlint-disable-next-line typescript/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
         const options = { body, params } as any
         this.logger.debug({ requestBody: body }, `POST ${path}`)
         const resp = await this.client.POST(path, options)
@@ -111,7 +110,7 @@ export class TokenStandardClient {
             query?: Record<string, string | number>
         }
     ): Promise<GetResponse<Path>> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
+        // oxlint-disable-next-line typescript/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
         const options = { params } as any
 
         const resp = await this.client.GET(path, options)

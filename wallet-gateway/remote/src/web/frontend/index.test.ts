@@ -16,7 +16,8 @@ import {
     NOT_FOUND_PAGE_REDIRECT,
     TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
 } from './constants.js'
-import { createMockUserClient, mockRequest } from './test-helpers.js'
+import { createMockUserClient, mockRequest } from './__tests__/test-helpers.js'
+import { rpcErrors } from '@canton-network/core-rpc-errors'
 
 const authState = vi.hoisted(() => ({
     accessToken: undefined as string | undefined,
@@ -143,9 +144,9 @@ vi.mock('./state-manager.js', () => ({
 
 import '@canton-network/core-wallet-ui-components'
 import {
-    UserApp,
-    UserUI,
-    UserUIAuthRedirect,
+    type UserApp,
+    type UserUI,
+    type UserUIAuthRedirect,
     addUserSession,
     redirectToIntendedOrDefault,
     shareConnection,
@@ -331,7 +332,6 @@ describe('UserApp', () => {
     it('copies the dApp API URL to the clipboard', async () => {
         const writeText = vi.fn().mockResolvedValue(undefined)
         vi.stubGlobal('navigator', {
-            ...navigator,
             clipboard: { writeText },
         })
 
@@ -553,6 +553,29 @@ describe('UserUIAuthRedirect', () => {
         expect(authState.accessToken).toBeUndefined()
         expect(setLocationHref).not.toHaveBeenCalled()
     })
+
+    it.each(['/login', '/parties'])(
+        'keeps the session on %s when the gateway cannot verify the token',
+        async (path) => {
+            setValidAuth()
+            mockRequest.mockRejectedValue(
+                rpcErrors.resourceUnavailable({
+                    message:
+                        'Unable to verify the token, identity provider unavailable',
+                })
+            )
+            setPath(path)
+
+            await fixture<UserUIAuthRedirect>(
+                html`<user-ui-auth-redirect></user-ui-auth-redirect>`
+            )
+            await waitUntil(() => document.querySelector('custom-toast'))
+
+            expect(authState.accessToken).toBe('access-token')
+            expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
+            expect(setLocationHref).not.toHaveBeenCalled()
+        }
+    )
 
     it('redirects expired tokens on protected pages to login', async () => {
         authState.accessToken = 'expired-token'

@@ -27,7 +27,6 @@ export const repoRoot = getRepoRoot()
 export const CANTON_PATH = path.join(repoRoot, '.canton')
 export const SPLICE_PATH = path.join(repoRoot, '.splice')
 export const SPLICE_SPEC_PATH = path.join(repoRoot, '.splice-spec')
-export const CANTON_BIN = path.join(CANTON_PATH, 'bin/canton')
 export const CANTON_CONF = path.join(repoRoot, 'canton/canton.conf')
 export const CANTON_BOOTSTRAP = path.join(repoRoot, 'canton/bootstrap.sc')
 export const API_SPECS_PATH = path.join(repoRoot, 'api-specs')
@@ -162,8 +161,8 @@ export async function downloadAndUnpackTarball(
     const currentHash = options?.hash
     const algo = 'sha256'
 
-    ensureDir(path.dirname(tarfile))
-    ensureDir(path.dirname(unpackDir))
+    await ensureDir(path.dirname(tarfile))
+    await ensureDir(path.dirname(unpackDir))
 
     if (fs.existsSync(tarfile) && options?.hash) {
         // File exists, check hash
@@ -285,15 +284,31 @@ export function findJsonKeyPosition(
     return found ?? { line: 1, column: 1 }
 }
 
+// Dependency, VCS and tool directories that never contain files of interest
+const IGNORED_DIRECTORIES = new Set([
+    'node_modules',
+    '.git',
+    '.nx',
+    '.canton',
+    '.splice',
+    '.splice-spec',
+    '.localnet',
+])
+
+/**
+ * Calls `callback` for every file below `directory`. Ignored directories are
+ * skipped instead of traversed, and symlinks are not followed.
+ */
 export function traverseDirectory(
     directory: string,
     callback: (filePath: string) => void
 ): void {
-    const entries = fs.readdirSync(directory)
-    for (const entry of entries) {
-        const fullPath = path.join(directory, entry)
-        if (fs.statSync(fullPath).isDirectory()) {
-            traverseDirectory(fullPath, callback)
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const fullPath = path.join(directory, entry.name)
+        if (entry.isDirectory()) {
+            if (!IGNORED_DIRECTORIES.has(entry.name)) {
+                traverseDirectory(fullPath, callback)
+            }
         } else {
             callback(fullPath)
         }

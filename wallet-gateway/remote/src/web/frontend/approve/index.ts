@@ -310,6 +310,7 @@ export class ApproveUi extends BaseElement {
         } catch (err) {
             console.error(err)
             handleErrorToast(err, { message: 'Error rejecting activity' })
+            await this.updateState()
         } finally {
             this.isDeleting = false
         }
@@ -325,7 +326,7 @@ export class ApproveUi extends BaseElement {
                     : ''
             }
             ${
-                this.failureReason
+                this.failureReason && this.status !== 'executed'
                     ? html`<div class="alert alert-warning" role="alert">
                           ${this.failureReason}
                       </div>`
@@ -345,6 +346,7 @@ export class ApproveUi extends BaseElement {
                 .isApproving=${this.isApproving}
                 .isDeleting=${this.isDeleting}
                 .isSigning=${this.isSigning}
+                .submitFailed=${!!this.failureReason}
                 .disabled=${this.disabled}
                 @transaction-approve=${this.handleApproveAction}
                 @transaction-delete=${this.handleReject}

@@ -10,7 +10,12 @@ import type {
     CreateKeyParams,
 } from '@canton-network/core-signing-lib'
 
-export type CantonCaip2 = 'canton:devnet' | 'canton:testnet' | 'canton:mainnet'
+export const cantonCaip2Values = [
+    'canton:devnet',
+    'canton:testnet',
+    'canton:mainnet',
+] as const
+export type CantonCaip2 = (typeof cantonCaip2Values)[number]
 
 /**
  * A TypeScript SDK client for the Wallet Signing API.
@@ -77,12 +82,11 @@ export class SigningAPIClient {
      * @param params - The transaction signing parameters.
      */
     public async signTransaction(
-        params: SignTransactionParams
+        params: Omit<SignTransactionParams, 'extraParams'> & {
+            userIdentifier?: string | undefined
+        }
     ): Promise<Transaction> {
-        return this.post<SignTransactionParams, Transaction>(
-            '/signTransaction',
-            params
-        )
+        return this.post<typeof params, Transaction>('/signTransaction', params)
     }
 
     /**

@@ -26,6 +26,19 @@ API calls return `401 Unauthorized`.
 - **Session not found**: create a session with `addSession()` first, ensure it has not expired,
   and confirm you are using the correct user context.
 
+API calls return `503 Service Unavailable` with JSON-RPC error `-32002` (resource unavailable).
+
+The Wallet Gateway could not verify the token because the identity provider is unavailable; the
+token itself may be valid, so clients should retry instead of logging the user out. The gateway
+logs the underlying cause.
+
+- **IDP unreachable**: check that the gateway can reach the IDP's `configUrl` and the `jwks_uri`
+  it advertises, and check firewall and proxy rules.
+- **Issuer mismatch**: the `issuer` in the IDP's discovery document must be identical to the
+  `issuer` configured for the identity provider, including scheme, host, and trailing slash.
+- **Malformed responses**: the discovery document and JWKS must be valid JSON. An HTML error page
+  served with status 200 counts as unavailable.
+
 ## Network connection issues
 
 The Wallet Gateway cannot connect to a configured network or Ledger API.
@@ -82,18 +95,23 @@ The Wallet Gateway fails to start with configuration errors.
 
 ## Signing provider issues
 
-Transactions fail with signing errors. Verify the provider's environment variables and
+Transactions fail with signing errors. Verify the provider's configuration, environment variables and
 permissions:
 
-- **Fireblocks**: `FIREBLOCKS_SECRET` and `FIREBLOCKS_API_KEY` set, keys valid with proper
-  permissions, and the Fireblocks API reachable.
+- **Fireblocks**: API key and secret set in the env vars named by
+  `signingProviders.fireblocks.apiKeyEnv` and `secretEnv`, keys valid with proper permissions,
+  and the Fireblocks API reachable.
 - **Participant**: the participant node is running and reachable, the party exists on it, and
   the participant logs show no signing errors.
-- **Blockdaemon**: `BLOCKDAEMON_API_URL` and `BLOCKDAEMON_API_KEY` set, API reachable, and the
-  key has signing permissions.
-- **DFNS**: `DFNS_ORG_ID`, `DFNS_BASE_URL`, `DFNS_CRED_ID`, `DFNS_PRIVATE_KEY`, and
-  `DFNS_AUTH_TOKEN` set, credentials correct, and the service account has wallet-creation and
-  signing permissions.
+- **Blockdaemon**: `signingProviders.blockdaemon.baseUrl` set, API key in the env var named by
+  `signingProviders.blockdaemon.apiKeyEnv`, API reachable, and the key has signing permissions.
+- **DFNS**: `signingProviders.dfns.orgId`, `baseUrl`, and `credId` set. Private key and auth
+  token in the env vars named by `privateKeyEnv` and `authTokenEnv`. Credentials correct, and
+  the service account has wallet-creation and signing permissions.
+- **Securosys**: `signingProviders.securosys.baseUrl` set. Credentials in the env vars named by
+  its `*Env` fields.
+- **BitGo**: `signingProviders.bitgo.baseUrl` set, and the access token in the env var named by
+  `signingProviders.bitgo.accessTokenEnv`.
 
 See [Signing providers](signing-providers.md) for each
 provider's setup.

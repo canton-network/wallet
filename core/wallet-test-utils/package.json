@@ -1,9 +1,10 @@
 {
     "name": "@canton-network/core-wallet-test-utils",
     "private": true,
-    "version": "1.13.0",
+    "version": "1.15.0",
     "type": "module",
     "description": "Utilities for writing (E2E) tests for the wallet gateway",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -13,34 +14,37 @@
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
+        },
+        "./localnet": {
+            "types": "./dist/localnet.d.ts",
+            "import": "./dist/localnet.js",
+            "require": "./dist/localnet.cjs",
+            "default": "./dist/localnet.js"
         }
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "catalog:",
-        "@canton-network/core-rpc-transport": "catalog:",
-        "@canton-network/core-types": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
-        "@canton-network/core-wallet-user-rpc-client": "catalog:",
-        "@canton-network/wallet-sdk": "catalog:",
+        "@canton-network/core-ledger-client": "workspace:",
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-rpc-transport": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
+        "@canton-network/core-wallet-user-rpc-client": "workspace:",
+        "@canton-network/wallet-sdk": "workspace:^",
+        "@logtape/logtape": "catalog:",
+        "@logtape/testing": "catalog:",
         "@playwright/test": "catalog:",
-        "pino": "catalog:",
         "tweetnacl": "catalog:",
-        "tweetnacl-util": "catalog:",
-        "uuid": "catalog:"
+        "tweetnacl-util": "catalog:"
     },
     "devDependencies": {
-        "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:"
+        "typescript": "catalog:"
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "test": "vitest run --project node --passWithNoTests",
-        "test:coverage": "vitest run --project node --coverage --passWithNoTests"
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "clean": "rm -rf dist",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "files": [
         "dist/**"

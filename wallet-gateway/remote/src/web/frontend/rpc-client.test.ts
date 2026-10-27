@@ -141,7 +141,12 @@ describe('rpc-client', () => {
         await createUserClient('test-token')
 
         expect(fetchMock).toHaveBeenCalledWith(
-            '/.well-known/wallet-gateway-config'
+            '/.well-known/wallet-gateway-config',
+            {
+                headers: {
+                    Accept: 'application/json',
+                },
+            }
         )
         expect(HttpTransportSpy).toHaveBeenCalledWith(
             new URL(customUserPath),
@@ -197,7 +202,7 @@ describe('rpc-client', () => {
             mockGetCurrentRoute.mockReturnValue('/parties')
 
             await expect(trigger401OnAuthTransport()).rejects.toMatchObject({
-                error: expect.objectContaining({ code: 401 }),
+                code: 4100,
             })
 
             await waitUntil(() => mockClearAuthState.mock.calls.length > 0)

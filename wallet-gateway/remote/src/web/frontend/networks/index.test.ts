@@ -10,7 +10,7 @@ import {
     makePublicNetwork,
     mockNetworksPageFlow,
     mockRequest,
-} from '../test-helpers.js'
+} from '../__tests__/test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiNetworks } from './index.js'
+import type { UserUiNetworks } from './index.js'
 
 function getNetworkCards(el: UserUiNetworks) {
     return Array.from(
@@ -173,7 +173,8 @@ describe('UserUiNetworks', () => {
         await waitUntil(() => el.networks.length === 4)
 
         const pagination = el.shadowRoot?.querySelector('wg-pagination') as
-            (HTMLElement & { page: number }) | null
+            | (HTMLElement & { page: number })
+            | null
         pagination?.dispatchEvent(new PageChangeEvent(2))
 
         await waitUntil(() => getNetworkCards(el)[0]?.network.id === 'net-4')

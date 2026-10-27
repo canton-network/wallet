@@ -128,7 +128,7 @@ export interface ListTransactionsOptions {
 
 export interface MessageRaw {
     id: string
-    status: 'pending' | 'signed' | 'failed'
+    status: 'pending' | 'awaiting-signature' | 'signed' | 'failed'
     userId: string
     partyId: PartyId
     publicKey: string
@@ -137,11 +137,15 @@ export interface MessageRaw {
     createdAt: Date
     signedAt?: Date
     signature?: string
+    externalTxId?: string
+    failureReason?: string
 }
 
 export interface MessageRawStatusUpdate {
     signedAt?: Date
     signature?: string
+    externalTxId?: string
+    failureReason?: string
 }
 
 // API keys
@@ -162,9 +166,22 @@ export interface Store {
     // Wallet methods
     getWallets(filter?: CurrentNetworkWalletFilter): Promise<Array<Wallet>>
     getWallet(partyId: PartyId): Promise<Wallet | null>
+    /**
+     * Looks up a wallet for self-issued JWT verification, before there is a session.
+     * Resolves exactly one `self_issued` network whose audience is in `audiences`,
+     * then the wallet by userId, partyId, and that networkId.
+     * Throws if more than one self-issued network matches.
+     */
+    getWalletByJwt(
+        userId: string,
+        partyId: PartyId,
+        audiences: string[]
+    ): Promise<Wallet | undefined>
     getAllWallets(filter?: WalletFilter): Promise<Array<Wallet>>
     getPrimaryWallet(): Promise<Wallet | undefined>
     setPrimaryWallet(partyId: PartyId): Promise<void>
+    /** Sets isAuthParty true for selected wallet and sets to false for others. Null sets to false for all wallets */
+    setAuthPartyWallet(partyId: PartyId | null): Promise<void>
     addWallet(wallet: Wallet): Promise<void>
     updateWallet(params: UpdateWallet): Promise<void>
     removeWallet(partyId: PartyId): Promise<void>
@@ -198,17 +215,20 @@ export interface Store {
     removeSession(accessToken: string): Promise<void>
 
     /**
-     * Looks up a tokenless self-issued onboarding session by id without scoping
+     * Looks up a tokenless self-issued login session by id without scoping
      * to the authenticated user, because the session is what identifies the user.
      * Returns undefined once the session has been upgraded with an access token.
      */
-    getOnboardingSession(sessionId: string): Promise<Session | undefined>
+    getSelfIssuedLoginSession(sessionId: string): Promise<Session | undefined>
+
+    /** Deletes a tokenless self-issued login session. */
+    removeSelfIssuedLoginSession(sessionId: string): Promise<void>
 
     /**
-     * Sets the access token on the authenticated user's tokenless onboarding session,
+     * Sets the access token on the authenticated user's tokenless self-issued login session,
      * keeping its id, and removes the user's other sessions for the same origin.
      */
-    upgradeOnboardingSession(
+    upgradeSelfIssuedLoginSession(
         sessionId: string,
         accessToken: string
     ): Promise<Session>

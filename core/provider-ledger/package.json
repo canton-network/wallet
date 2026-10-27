@@ -1,10 +1,11 @@
 {
     "name": "@canton-network/core-provider-ledger",
-    "version": "1.13.0",
+    "version": "1.15.0",
     "type": "module",
     "description": "A Splice Provider implementation for direct ledger access.",
     "license": "Apache-2.0",
     "author": "Alex Matson <alex.matson@digitalasset.com>",
+    "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -17,12 +18,10 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist"
+        "clean": "rm -rf dist"
     },
     "devDependencies": {
         "@vitest/coverage-v8": "catalog:",
@@ -31,12 +30,11 @@
         "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "catalog:",
-        "@canton-network/core-ledger-client-types": "catalog:",
-        "@canton-network/core-splice-provider": "catalog:",
-        "@canton-network/core-types": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
-        "pino": "catalog:"
+        "@canton-network/core-ledger-client": "workspace:",
+        "@canton-network/core-ledger-client-types": "workspace:",
+        "@canton-network/core-splice-provider": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:"
     },
     "files": [
         "dist/**"

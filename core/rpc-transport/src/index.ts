@@ -1,18 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { v4 as uuidv4 } from 'uuid'
 import {
     type RequestPayload,
-    ResponsePayload,
+    type ResponsePayload,
     type JsonRpcRequest,
     type SpliceMessage,
     WalletEvent,
     isSpliceMessageEvent,
-    type SuccessResponse,
+    SuccessResponse,
     ErrorResponse,
     type JsonRpcResponse,
 } from '@canton-network/core-types'
+import {
+    providerErrors,
+    rpcErrors,
+    toJsonRpcError,
+} from '@canton-network/core-rpc-errors'
 
 export const jsonRpcRequest = (
     id: string | number | null,
@@ -37,7 +41,8 @@ export const jsonRpcResponse = (
 }
 
 export interface RpcTransport {
-    submit: (payload: RequestPayload) => Promise<ResponsePayload>
+    /** Rejects with a `JsonRpcError` when the wallet answers with an error. */
+    submit: (payload: RequestPayload) => Promise<SuccessResponse>
 }
 
 /**
@@ -121,7 +126,7 @@ export class WindowTransport implements RpcTransport {
 
     submit = async (payload: RequestPayload) => {
         const message: SpliceMessage = {
-            request: jsonRpcRequest(uuidv4(), payload),
+            request: jsonRpcRequest(crypto.randomUUID(), payload),
             type: WalletEvent.SPLICE_WALLET_REQUEST,
             target: this.options.target,
         }
@@ -140,7 +145,7 @@ export class WindowTransport implements RpcTransport {
 
                 window.removeEventListener('message', listener)
                 if ('error' in event.data.response) {
-                    reject(event.data.response.error)
+                    reject(toJsonRpcError(event.data.response.error))
                 } else {
                     resolve(event.data.response)
                 }
@@ -168,35 +173,48 @@ export class HttpTransport implements RpcTransport {
     protected async handleErrorResponse(response: Response): Promise<never> {
         const body = await response.text()
 
-        // if the response uses the RPC error format, throw it as is
-        let rpcError: unknown
+        let parsedBody: unknown
         try {
-            const parsedBody = JSON.parse(body)
-            if (ErrorResponse.safeParse(parsedBody).success) {
-                rpcError = parsedBody
-            }
+            parsedBody = JSON.parse(body)
         } catch {
-            // ignore JSON parse errors
+            // not JSON, fall back to the HTTP status below
         }
-        if (rpcError !== undefined) {
-            throw rpcError
+        const rpcError = ErrorResponse.safeParse(parsedBody)
+        if (rpcError.success) {
+            throw toJsonRpcError(rpcError.data.error)
         }
 
-        throw {
-            error: {
-                code: response.status,
-                message: response.statusText,
-                data: body,
-            },
+        const details = {
+            message: response.statusText || `HTTP ${response.status}`,
+            data: body,
+        }
+        switch (response.status) {
+            case 400:
+                throw rpcErrors.invalidRequest(details)
+            case 401:
+            case 403:
+                throw providerErrors.unauthorized(details)
+            case 404:
+                throw rpcErrors.resourceNotFound(details)
+            case 413:
+            case 429:
+                throw rpcErrors.limitExceeded(details)
+            case 408:
+            case 502:
+            case 503:
+            case 504:
+                throw rpcErrors.resourceUnavailable(details)
+            default:
+                throw rpcErrors.internal(details)
         }
     }
 
-    async submit(payload: RequestPayload): Promise<ResponsePayload> {
+    async submit(payload: RequestPayload): Promise<SuccessResponse> {
         const request: JsonRpcRequest = {
             jsonrpc: '2.0',
             method: payload.method,
             params: payload.params,
-            id: uuidv4(),
+            id: crypto.randomUUID(),
         }
 
         const header = this.accessToken
@@ -207,9 +225,12 @@ export class HttpTransport implements RpcTransport {
             method: 'POST',
             headers: {
                 ...header,
+                Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(request),
+        }).catch((error: unknown) => {
+            throw toJsonRpcError(error)
         })
 
         if (!response.ok) {
@@ -217,12 +238,11 @@ export class HttpTransport implements RpcTransport {
         }
 
         const json = await response.json()
-        const parsed = ResponsePayload.parse(json)
-
-        if ('error' in parsed) {
-            throw parsed
+        const rpcError = ErrorResponse.safeParse(json)
+        if (rpcError.success) {
+            throw toJsonRpcError(rpcError.data.error)
         }
 
-        return parsed
+        return SuccessResponse.parse(json)
     }
 }

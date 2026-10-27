@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { reset } from '@logtape/logtape'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     createAccessTokenProvider,
@@ -9,29 +10,34 @@ import {
     getRequestMethod,
     grpcError,
     jsonResponse,
-    mockLogger,
-} from './test-utils.js'
+    initializeLogRecorder,
+} from './__tests__/test-utils.js'
 import { isValidGetEndpoint, isValidPostEndpoint } from './ledger-client.js'
 
 function versionResponse(version = '3.5.0') {
     return jsonResponse({ version })
 }
 
+let recorder: Awaited<ReturnType<typeof initializeLogRecorder>>
+
 describe('LedgerClient', () => {
     let fetchMock: ReturnType<typeof vi.fn>
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        recorder = await initializeLogRecorder()
         fetchMock = vi.fn()
         vi.stubGlobal('fetch', fetchMock)
     })
 
-    afterEach(() => {
+    afterEach(async () => {
+        await reset()
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
+        recorder.clear()
     })
 
     describe('parseSupportedVersions', () => {
-        it('matches, defaults, or throws for version strings', () => {
+        it('matches, defaults, or throws for version strings', async () => {
             const client = createLedgerClient(undefined, '3.5')
 
             expect(() => client.parseSupportedVersions(undefined)).toThrow(
@@ -39,7 +45,10 @@ describe('LedgerClient', () => {
             )
             expect(client.parseSupportedVersions('3.5.1')).toBe('3.5')
             expect(client.parseSupportedVersions('9.9.9')).toBe('3.5')
-            expect(mockLogger.warn).toHaveBeenCalled()
+
+            recorder.assertLogged({
+                level: 'warning',
+            })
         })
     })
 
@@ -279,7 +288,9 @@ describe('LedgerClient', () => {
             const client = createLedgerClient()
             expect(await client.getSynchronizerId()).toBe('sync-primary')
             expect(await client.getSynchronizerId()).toBe('sync-primary')
-            expect(mockLogger.warn).toHaveBeenCalled()
+            recorder.assertLogged({
+                level: 'warning',
+            })
             expect(fetchMock).toHaveBeenCalledTimes(2)
         })
 

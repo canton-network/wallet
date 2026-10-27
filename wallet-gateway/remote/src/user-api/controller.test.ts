@@ -16,11 +16,12 @@ import {
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
-import { NotificationService } from '../notification/NotificationService.js'
+import { NotificationService } from '@canton-network/core-wallet-services'
 import { userController } from './controller.js'
 import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
+    get: vi.fn(),
     getWithRetry: vi.fn(),
     postWithRetry: vi.fn(),
     getSynchronizerId: vi.fn(),
@@ -49,6 +50,7 @@ const walletSyncMocks = vi.hoisted(() => ({
         updated: [],
         disabled: [],
     }),
+    syncRights: vi.fn().mockResolvedValue([]),
     isWalletSyncNeeded: vi.fn().mockResolvedValue(false),
 }))
 
@@ -56,13 +58,6 @@ const transactionServiceMocks = vi.hoisted(() => ({
     sign: vi.fn(),
     execute: vi.fn(),
 }))
-
-const mockV4 = vi.hoisted(() => vi.fn(() => crypto.randomUUID()))
-
-vi.mock('uuid', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('uuid')>()
-    return { ...actual, v4: mockV4 }
-})
 
 vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     const actual =
@@ -73,6 +68,7 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
         ...actual,
         LedgerClient: vi.fn(function LedgerClientMock() {
             return {
+                get: ledgerMocks.get,
                 getWithRetry: ledgerMocks.getWithRetry,
                 postWithRetry: ledgerMocks.postWithRetry,
                 getSynchronizerId: ledgerMocks.getSynchronizerId,
@@ -81,11 +77,17 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     }
 })
 
-vi.mock('../utils.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../utils.js')>()
+vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@canton-network/core-wallet-services')
+        >()
     return {
         ...actual,
         networkStatus: mockNetworkStatus,
+        TransactionService: vi.fn(function TransactionServiceMock() {
+            return transactionServiceMocks
+        }),
     }
 })
 
@@ -104,19 +106,6 @@ vi.mock('../ledger/wallet-sync-service.js', () => ({
 vi.mock('../ledger/party-allocation-service.js', () => ({
     PartyAllocationService: vi.fn(),
 }))
-
-vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
-    const actual =
-        await importOriginal<
-            typeof import('@canton-network/core-wallet-services')
-        >()
-    return {
-        ...actual,
-        TransactionService: vi.fn(function TransactionServiceMock() {
-            return transactionServiceMocks
-        }),
-    }
-})
 
 const kernelInfo: KernelInfo = {
     id: 'kernel-test',
@@ -251,6 +240,12 @@ describe('userController', () => {
     beforeEach(() => {
         logger = pino({ level: 'silent' }, sink())
         notificationService = new NotificationService(logger)
+        ledgerMocks.get.mockReset()
+        ledgerMocks.get.mockRejectedValue({
+            code: 'USER_NOT_FOUND',
+            cause: 'missing',
+            errorCategory: 11,
+        })
         ledgerMocks.getWithRetry.mockReset()
         ledgerMocks.getWithRetry.mockResolvedValue({ rights: [] })
         ledgerMocks.postWithRetry.mockReset()
@@ -269,14 +264,16 @@ describe('userController', () => {
             updated: [],
             disabled: [],
         })
+        walletSyncMocks.syncRights.mockReset()
+        walletSyncMocks.syncRights.mockResolvedValue([])
         walletSyncMocks.isWalletSyncNeeded.mockReset()
         walletSyncMocks.isWalletSyncNeeded.mockResolvedValue(false)
         transactionServiceMocks.sign.mockReset()
         transactionServiceMocks.execute.mockReset()
     })
 
-    describe('addSelfIssuedSession', () => {
-        it('creates a tokenless session for the username and network', async () => {
+    describe('startSelfIssuedLoginSession', () => {
+        it('creates a tokenless session that selects the self-issued network', async () => {
             const selfIssuedNetwork = {
                 ...storeNetwork,
                 id: 'self-issued-network',
@@ -293,14 +290,14 @@ describe('userController', () => {
                 undefined
             )
 
-            const { sessionId } = await controller.addSelfIssuedSession({
+            const { sessionId } = await controller.startSelfIssuedLoginSession({
                 username: 'alice',
                 networkId: selfIssuedNetwork.id,
                 origin: 'https://example.com',
             })
 
             await expect(
-                store.getOnboardingSession(sessionId)
+                store.getSelfIssuedLoginSession(sessionId)
             ).resolves.toEqual(
                 expect.objectContaining({
                     id: sessionId,
@@ -322,6 +319,127 @@ describe('userController', () => {
                     .withAuthContext({ userId: 'alice', accessToken: '' })
                     .getCurrentNetwork()
             ).rejects.toThrow('No session found')
+        })
+
+        it('refuses a session when the ledger user exists but cannot use self-issued auth', async () => {
+            const selfIssuedNetwork = {
+                ...storeNetwork,
+                id: 'self-issued-network',
+                auth: { method: 'self_issued' },
+            } as unknown as StoreNetwork
+            const store = new StoreInternal(
+                { idps: [idp], networks: [selfIssuedNetwork] },
+                getLogger('mock')
+            )
+            ledgerMocks.get.mockResolvedValue({
+                user: { id: 'alice', primaryParty: 'alice::ns' },
+            })
+
+            await expect(
+                createController(
+                    store,
+                    notificationService,
+                    logger,
+                    undefined
+                ).startSelfIssuedLoginSession({
+                    username: 'alice',
+                    networkId: selfIssuedNetwork.id,
+                    origin: 'https://example.com',
+                })
+            ).rejects.toThrow(
+                'Self-issued login is not available for this user.'
+            )
+        })
+    })
+
+    describe('listSigningProviders', () => {
+        it('returns the registered signing provider ids', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {
+                    [SigningProvider.PARTICIPANT]: {},
+                    [SigningProvider.FIREBLOCKS]: {},
+                }
+            )
+
+            await expect(controller.listSigningProviders()).resolves.toEqual({
+                signingProviders: [
+                    SigningProvider.PARTICIPANT,
+                    SigningProvider.FIREBLOCKS,
+                ],
+            })
+        })
+    })
+
+    describe('removeSelfIssuedLoginSession', () => {
+        it('deletes the tokenless session and leaves a session that already has an access token', async () => {
+            const selfIssuedNetwork = {
+                ...storeNetwork,
+                id: 'self-issued-network',
+                auth: { method: 'self_issued' },
+            } as unknown as StoreNetwork
+            const store = new StoreInternal(
+                { idps: [idp], networks: [selfIssuedNetwork] },
+                getLogger('mock')
+            )
+            const { sessionId } = await createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            ).startSelfIssuedLoginSession({
+                username: 'alice',
+                networkId: selfIssuedNetwork.id,
+                origin: 'https://example.com',
+            })
+            const loginAuth = {
+                userId: 'alice',
+                accessToken: '',
+                sessionId,
+            }
+
+            await createController(
+                store,
+                notificationService,
+                logger,
+                loginAuth
+            ).removeSelfIssuedLoginSession({ sessionId })
+
+            await expect(
+                store.getSelfIssuedLoginSession(sessionId)
+            ).resolves.toBeUndefined()
+
+            await store.withAuthContext(loginAuth).setSession({
+                id: sessionId,
+                origin: 'https://example.com',
+                network: selfIssuedNetwork.id,
+            })
+            await store
+                .withAuthContext(loginAuth)
+                .upgradeSelfIssuedLoginSession(sessionId, 'access-token')
+
+            await createController(store, notificationService, logger, {
+                ...loginAuth,
+                accessToken: 'access-token',
+            }).removeSelfIssuedLoginSession({ sessionId })
+
+            await expect(
+                store
+                    .withAuthContext({
+                        userId: 'alice',
+                        accessToken: 'access-token',
+                    })
+                    .getSession('access-token')
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    id: sessionId,
+                    accessToken: 'access-token',
+                })
+            )
         })
     })
 
@@ -807,9 +925,41 @@ describe('userController', () => {
             expect(result.messages[0]?.id).toBe('msg-1')
         })
 
-        it('deletes a pending message owned by the user', async () => {
+        it('returns externalTxId and failureReason via getMessageToSign and listMessagesToSign', async () => {
+            const store = await storeWithMessage({
+                ...pendingMessage,
+                status: 'failed',
+                externalTxId: 'provider-req-1',
+                failureReason: 'Signing provider returned status: rejected',
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const expected = {
+                id: 'msg-1',
+                status: 'failed',
+                externalTxId: 'provider-req-1',
+                failureReason: 'Signing provider returned status: rejected',
+            }
+            const single = await controller.getMessageToSign({
+                messageId: 'msg-1',
+            })
+            expect(single.message).toMatchObject(expected)
+            const list = await controller.listMessagesToSign()
+            expect(list.messages[0]).toMatchObject(expected)
+        })
+
+        it('deletes a pending message owned by the user and emits a failed event', async () => {
             const store = await storeWithMessage()
             const removeSpy = vi.spyOn(store, 'removeMessageRaw')
+            const emitSpy = vi.spyOn(
+                notificationService.getNotifier(session.id),
+                'emit'
+            )
             const controller = createController(
                 store,
                 notificationService,
@@ -820,6 +970,34 @@ describe('userController', () => {
             await controller.deleteMessageToSign({ messageId: 'msg-1' })
 
             expect(removeSpy).toHaveBeenCalledWith('msg-1')
+            expect(emitSpy).toHaveBeenCalledExactlyOnceWith(
+                'messageSignature',
+                {
+                    status: 'failed',
+                    messageId: 'msg-1',
+                }
+            )
+            expect(removeSpy.mock.invocationCallOrder[0]).toBeLessThan(
+                emitSpy.mock.invocationCallOrder[0]!
+            )
+        })
+
+        it('deletes a message that is awaiting a signature', async () => {
+            const store = await storeWithMessage({
+                ...pendingMessage,
+                status: 'awaiting-signature',
+                externalTxId: 'provider-req-1',
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await controller.deleteMessageToSign({ messageId: 'msg-1' })
+
+            expect(await store.getMessageRaw('msg-1')).toBeUndefined()
         })
 
         it('rejects delete when the message is not pending', async () => {
@@ -860,6 +1038,7 @@ describe('userController', () => {
         it('signs a pending WALLET_KERNEL message and emits messageSignature', async () => {
             const store = await storeWithMessage()
             const mockSignMessage = vi.fn().mockResolvedValue({
+                status: 'signed',
                 signature: 'signature',
             })
             const drivers = {
@@ -882,10 +1061,12 @@ describe('userController', () => {
             expect(mockSignMessage).toHaveBeenCalledWith({
                 message: 'Sign this',
                 keyIdentifier: { publicKey: primaryWallet.publicKey },
+                internalTxId: 'msg-1',
             })
             expect(result).toEqual({
                 signature: 'signature',
                 publicKey: primaryWallet.publicKey,
+                status: 'signed',
             })
             expect(emitSpy).toHaveBeenCalledWith('messageSignature', {
                 status: 'signed',
@@ -897,16 +1078,79 @@ describe('userController', () => {
             expect(updated?.signature).toBe('signature')
         })
 
-        it('rejects signMessage for non-WALLET_KERNEL wallets', async () => {
+        it("rejects signMessage for wallets whose signingProvider doesn't support signMessage", async () => {
             const store = await createStore(logger, auth)
             await store.removeWallet(primaryWallet.partyId)
             await store.addWallet({
                 ...primaryWallet,
-                signingProviderId: SigningProvider.FIREBLOCKS,
+                signingProviderId: SigningProvider.PARTICIPANT,
             })
             await store.setMessageRaw(pendingMessage)
             const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
+            const participantSignMessage = vi.fn()
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {
+                    [SigningProvider.PARTICIPANT]: {
+                        controller: vi.fn(() => ({
+                            signMessage: participantSignMessage,
+                        })),
+                    },
+                }
+            )
+
+            await expect(
+                controller.signMessage({ messageId: 'msg-1' })
+            ).rejects.toThrow(
+                'signMessage is only supported for wallet-kernel, dfns, fireblocks, securosys wallets, got participant'
+            )
+            expect(participantSignMessage).not.toHaveBeenCalled()
+            const updated = await store.getMessageRaw('msg-1')
+            expect(updated?.status).toBe('failed')
+            expect(emitSpy).toHaveBeenCalledWith('messageSignature', {
+                status: 'failed',
+                messageId: 'msg-1',
+            })
+        })
+
+        it('fails signMessage when no driver is configured for the wallet signing provider', async () => {
+            const store = await storeWithMessage()
+            const emitSpy = vi.spyOn(
+                notificationService.getNotifier(session.id),
+                'emit'
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(
+                controller.signMessage({ messageId: 'msg-1' })
+            ).rejects.toThrow('wallet-kernel signing driver not available')
+            const updated = await store.getMessageRaw('msg-1')
+            expect(updated?.status).toBe('failed')
+            expect(emitSpy).toHaveBeenCalledWith('messageSignature', {
+                status: 'failed',
+                messageId: 'msg-1',
+            })
+        })
+
+        it('refuses to sign an empty message without calling the driver', async () => {
+            const store = await storeWithMessage({
+                ...pendingMessage,
+                message: '',
+            })
+            const mockSignMessage = vi.fn()
+            const emitSpy = vi.spyOn(
+                notificationService.getNotifier(session.id),
+                'emit'
+            )
             const controller = createController(
                 store,
                 notificationService,
@@ -915,7 +1159,7 @@ describe('userController', () => {
                 {
                     [SigningProvider.WALLET_KERNEL]: {
                         controller: vi.fn(() => ({
-                            signMessage: vi.fn(),
+                            signMessage: mockSignMessage,
                         })),
                     },
                 }
@@ -923,10 +1167,463 @@ describe('userController', () => {
 
             await expect(
                 controller.signMessage({ messageId: 'msg-1' })
-            ).rejects.toThrow('only supported for wallet-kernel')
+            ).rejects.toThrow('has an empty message')
+            expect(mockSignMessage).not.toHaveBeenCalled()
+            const updated = await store.getMessageRaw('msg-1')
+            expect(updated?.status).toBe('failed')
             expect(emitSpy).toHaveBeenCalledWith('messageSignature', {
                 status: 'failed',
                 messageId: 'msg-1',
+            })
+        })
+
+        describe('with an asynchronous signing provider', () => {
+            const dfnsWallet: Wallet = {
+                ...primaryWallet,
+                signingProviderId: SigningProvider.DFNS,
+            }
+
+            const awaitingMessage: MessageRaw = {
+                ...pendingMessage,
+                status: 'awaiting-signature',
+                externalTxId: 'dfns-sig-1',
+            }
+
+            async function storeWithDfnsMessage(
+                message: MessageRaw = pendingMessage
+            ): Promise<StoreInternal> {
+                const store = await createStore(logger, auth, {
+                    withWallet: false,
+                })
+                await store.addWallet(dfnsWallet)
+                await store.setMessageRaw(message)
+                return store
+            }
+
+            function dfnsDrivers(driver: {
+                signMessage?: ReturnType<typeof vi.fn>
+                getTransaction?: ReturnType<typeof vi.fn>
+            }) {
+                const controllerFactory = vi.fn(() => driver)
+                return {
+                    controllerFactory,
+                    drivers: {
+                        [SigningProvider.DFNS]: {
+                            controller: controllerFactory,
+                        },
+                    },
+                }
+            }
+
+            describe('signMessage', () => {
+                it('stores awaiting-signature with the provider txId when the driver returns pending', async () => {
+                    const store = await storeWithDfnsMessage()
+                    const signMessage = vi.fn().mockResolvedValue({
+                        status: 'pending',
+                        txId: 'dfns-sig-1',
+                    })
+                    const { drivers, controllerFactory } = dfnsDrivers({
+                        signMessage,
+                    })
+                    const emitSpy = vi.spyOn(
+                        notificationService.getNotifier(session.id),
+                        'emit'
+                    )
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    const result = await controller.signMessage({
+                        messageId: 'msg-1',
+                    })
+
+                    expect(controllerFactory).toHaveBeenCalledWith(auth.userId)
+                    expect(signMessage).toHaveBeenCalledWith({
+                        message: 'Sign this',
+                        keyIdentifier: { publicKey: dfnsWallet.publicKey },
+                        internalTxId: 'msg-1',
+                    })
+                    expect(result).toEqual({
+                        publicKey: dfnsWallet.publicKey,
+                        status: 'awaiting-signature',
+                        externalTxId: 'dfns-sig-1',
+                    })
+                    const updated = await store.getMessageRaw('msg-1')
+                    expect(updated?.status).toBe('awaiting-signature')
+                    expect(updated?.externalTxId).toBe('dfns-sig-1')
+                    expect(updated?.signature).toBeUndefined()
+                    expect(emitSpy).not.toHaveBeenCalledWith(
+                        'messageSignature',
+                        expect.anything()
+                    )
+                })
+
+                it('fails when the driver returns pending without a txId', async () => {
+                    const store = await storeWithDfnsMessage()
+                    const { drivers } = dfnsDrivers({
+                        signMessage: vi
+                            .fn()
+                            .mockResolvedValue({ status: 'pending' }),
+                    })
+                    const emitSpy = vi.spyOn(
+                        notificationService.getNotifier(session.id),
+                        'emit'
+                    )
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    await expect(
+                        controller.signMessage({ messageId: 'msg-1' })
+                    ).rejects.toThrow(
+                        'Signing provider returned status: pending without a txId'
+                    )
+
+                    const updated = await store.getMessageRaw('msg-1')
+                    expect(updated?.status).toBe('failed')
+                    expect(updated?.externalTxId).toBeUndefined()
+                    expect(updated?.failureReason).toBe(
+                        'Signing provider returned status: pending without a txId'
+                    )
+                    expect(emitSpy).toHaveBeenCalledWith('messageSignature', {
+                        status: 'failed',
+                        messageId: 'msg-1',
+                    })
+                })
+
+                it('stores the signature and the provider txId when the driver signs immediately', async () => {
+                    const store = await storeWithDfnsMessage()
+                    const { drivers } = dfnsDrivers({
+                        signMessage: vi.fn().mockResolvedValue({
+                            status: 'signed',
+                            txId: 'dfns-sig-1',
+                            signature: 'dfns-signature',
+                        }),
+                    })
+                    const emitSpy = vi.spyOn(
+                        notificationService.getNotifier(session.id),
+                        'emit'
+                    )
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    const result = await controller.signMessage({
+                        messageId: 'msg-1',
+                    })
+
+                    expect(result).toEqual({
+                        publicKey: dfnsWallet.publicKey,
+                        status: 'signed',
+                        signature: 'dfns-signature',
+                        externalTxId: 'dfns-sig-1',
+                    })
+                    const updated = await store.getMessageRaw('msg-1')
+                    expect(updated?.status).toBe('signed')
+                    expect(updated?.signature).toBe('dfns-signature')
+                    expect(updated?.externalTxId).toBe('dfns-sig-1')
+                    expect(updated?.signedAt).toBeInstanceOf(Date)
+                    expect(emitSpy).toHaveBeenCalledWith('messageSignature', {
+                        status: 'signed',
+                        messageId: 'msg-1',
+                        signature: 'dfns-signature',
+                    })
+                })
+
+                it('fails when the driver returns signed without a signature', async () => {
+                    const store = await storeWithDfnsMessage()
+                    const { drivers } = dfnsDrivers({
+                        signMessage: vi.fn().mockResolvedValue({
+                            status: 'signed',
+                            txId: 'dfns-sig-1',
+                        }),
+                    })
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    await expect(
+                        controller.signMessage({ messageId: 'msg-1' })
+                    ).rejects.toThrow(
+                        'No signature returned from signing driver'
+                    )
+
+                    const updated = await store.getMessageRaw('msg-1')
+                    expect(updated?.status).toBe('failed')
+                    expect(updated?.failureReason).toBe(
+                        'No signature returned from signing driver'
+                    )
+                    expect(updated?.signature).toBeUndefined()
+                })
+
+                it.each(['failed', 'rejected'] as const)(
+                    'stores failed with a failure reason when the driver returns %s',
+                    async (status) => {
+                        const store = await storeWithDfnsMessage()
+                        const { drivers } = dfnsDrivers({
+                            signMessage: vi.fn().mockResolvedValue({
+                                status,
+                                txId: 'dfns-sig-1',
+                            }),
+                        })
+                        const emitSpy = vi.spyOn(
+                            notificationService.getNotifier(session.id),
+                            'emit'
+                        )
+                        const controller = createController(
+                            store,
+                            notificationService,
+                            logger,
+                            auth,
+                            drivers
+                        )
+
+                        const result = await controller.signMessage({
+                            messageId: 'msg-1',
+                        })
+
+                        expect(result).toEqual({
+                            publicKey: dfnsWallet.publicKey,
+                            status: 'failed',
+                            failureReason: `Signing provider returned status: ${status}`,
+                            externalTxId: 'dfns-sig-1',
+                        })
+                        const updated = await store.getMessageRaw('msg-1')
+                        expect(updated?.status).toBe('failed')
+                        expect(updated?.failureReason).toBe(
+                            `Signing provider returned status: ${status}`
+                        )
+                        expect(updated?.externalTxId).toBe('dfns-sig-1')
+                        expect(emitSpy).toHaveBeenCalledWith(
+                            'messageSignature',
+                            { status: 'failed', messageId: 'msg-1' }
+                        )
+                    }
+                )
+
+                it('stores the driver error as the failure reason and throws it', async () => {
+                    const store = await storeWithDfnsMessage()
+                    const { drivers } = dfnsDrivers({
+                        signMessage: vi.fn().mockResolvedValue({
+                            error: 'key_not_found',
+                            error_description:
+                                'No Dfns key found for the provided key identifier.',
+                        }),
+                    })
+                    const emitSpy = vi.spyOn(
+                        notificationService.getNotifier(session.id),
+                        'emit'
+                    )
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    await expect(
+                        controller.signMessage({ messageId: 'msg-1' })
+                    ).rejects.toThrow(
+                        'No Dfns key found for the provided key identifier.'
+                    )
+
+                    const updated = await store.getMessageRaw('msg-1')
+                    expect(updated?.status).toBe('failed')
+                    expect(updated?.failureReason).toBe(
+                        'No Dfns key found for the provided key identifier.'
+                    )
+                    expect(emitSpy).toHaveBeenCalledWith('messageSignature', {
+                        status: 'failed',
+                        messageId: 'msg-1',
+                    })
+                })
+
+                it('rejects signing a message that is already awaiting a signature', async () => {
+                    const store = await storeWithDfnsMessage(awaitingMessage)
+                    const signMessage = vi.fn()
+                    const { drivers } = dfnsDrivers({ signMessage })
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    await expect(
+                        controller.signMessage({ messageId: 'msg-1' })
+                    ).rejects.toThrow(
+                        "Cannot sign message with status 'awaiting-signature'"
+                    )
+                    expect(signMessage).not.toHaveBeenCalled()
+                })
+            })
+
+            describe('getSignMessageStatus', () => {
+                it('throws when the message does not exist', async () => {
+                    const store = await storeWithDfnsMessage()
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth
+                    )
+
+                    await expect(
+                        controller.getSignMessageStatus({
+                            messageId: 'missing',
+                        })
+                    ).rejects.toThrow(
+                        'Message signing request not found with id: missing'
+                    )
+                })
+
+                it('stores the signature and emits signed when the provider has signed', async () => {
+                    const store = await storeWithDfnsMessage(awaitingMessage)
+                    const getTransaction = vi.fn().mockResolvedValue({
+                        txId: 'dfns-sig-1',
+                        status: 'signed',
+                        signature: 'provider-signature',
+                    })
+                    const { drivers, controllerFactory } = dfnsDrivers({
+                        getTransaction,
+                    })
+                    const emitSpy = vi.spyOn(
+                        notificationService.getNotifier(session.id),
+                        'emit'
+                    )
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    const result = await controller.getSignMessageStatus({
+                        messageId: 'msg-1',
+                    })
+
+                    expect(controllerFactory).toHaveBeenCalledWith(auth.userId)
+                    expect(getTransaction).toHaveBeenCalledWith({
+                        userId: auth.userId,
+                        txId: 'dfns-sig-1',
+                    })
+                    expect(result).toEqual({
+                        status: 'signed',
+                        externalTxId: 'dfns-sig-1',
+                        signature: 'provider-signature',
+                    })
+                    const updated = await store.getMessageRaw('msg-1')
+                    expect(updated?.status).toBe('signed')
+                    expect(updated?.signature).toBe('provider-signature')
+                    expect(updated?.externalTxId).toBe('dfns-sig-1')
+                    expect(updated?.signedAt).toBeInstanceOf(Date)
+                    expect(emitSpy).toHaveBeenCalledExactlyOnceWith(
+                        'messageSignature',
+                        {
+                            status: 'signed',
+                            messageId: 'msg-1',
+                            signature: 'provider-signature',
+                        }
+                    )
+                })
+
+                it.each(['failed', 'rejected'] as const)(
+                    'marks the message failed and emits failed when the provider reports %s',
+                    async (providerStatus) => {
+                        const store =
+                            await storeWithDfnsMessage(awaitingMessage)
+                        const { drivers } = dfnsDrivers({
+                            getTransaction: vi.fn().mockResolvedValue({
+                                txId: 'dfns-sig-1',
+                                status: providerStatus,
+                            }),
+                        })
+                        const emitSpy = vi.spyOn(
+                            notificationService.getNotifier(session.id),
+                            'emit'
+                        )
+                        const controller = createController(
+                            store,
+                            notificationService,
+                            logger,
+                            auth,
+                            drivers
+                        )
+
+                        const result = await controller.getSignMessageStatus({
+                            messageId: 'msg-1',
+                        })
+
+                        expect(result).toEqual({
+                            status: 'failed',
+                            externalTxId: 'dfns-sig-1',
+                            failureReason: `Signing provider returned status: ${providerStatus}`,
+                        })
+                        const updated = await store.getMessageRaw('msg-1')
+                        expect(updated?.status).toBe('failed')
+                        expect(updated?.externalTxId).toBe('dfns-sig-1')
+                        expect(updated?.failureReason).toBe(
+                            `Signing provider returned status: ${providerStatus}`
+                        )
+                        expect(updated?.signature).toBeUndefined()
+                        expect(emitSpy).toHaveBeenCalledExactlyOnceWith(
+                            'messageSignature',
+                            { status: 'failed', messageId: 'msg-1' }
+                        )
+                    }
+                )
+
+                it('keeps awaiting-signature when the provider is still pending', async () => {
+                    const store = await storeWithDfnsMessage(awaitingMessage)
+                    const { drivers } = dfnsDrivers({
+                        getTransaction: vi.fn().mockResolvedValue({
+                            txId: 'dfns-sig-1',
+                            status: 'pending',
+                        }),
+                    })
+                    const emitSpy = vi.spyOn(
+                        notificationService.getNotifier(session.id),
+                        'emit'
+                    )
+                    const controller = createController(
+                        store,
+                        notificationService,
+                        logger,
+                        auth,
+                        drivers
+                    )
+
+                    const result = await controller.getSignMessageStatus({
+                        messageId: 'msg-1',
+                    })
+
+                    expect(result).toEqual({
+                        status: 'awaiting-signature',
+                        externalTxId: 'dfns-sig-1',
+                    })
+                    const updated = await store.getMessageRaw('msg-1')
+                    expect(updated?.status).toBe('awaiting-signature')
+                    expect(emitSpy).not.toHaveBeenCalled()
+                })
             })
         })
     })
@@ -936,7 +1633,10 @@ describe('userController', () => {
 
         it('returns transaction details via getTransaction', async () => {
             const store = await createStore(logger, auth)
-            await store.setTransaction(transaction)
+            await store.setTransaction({
+                ...transaction,
+                failureReason: 'ledger timeout',
+            })
             const controller = createController(
                 store,
                 notificationService,
@@ -953,12 +1653,16 @@ describe('userController', () => {
                 commandId: 'cmd-1',
                 status: 'pending',
                 createdAt: transaction.createdAt!.toISOString(),
+                failureReason: 'ledger timeout',
             })
         })
 
         it('lists transactions', async () => {
             const store = await createStore(logger, auth)
-            await store.setTransaction(transaction)
+            await store.setTransaction({
+                ...transaction,
+                failureReason: 'ledger timeout',
+            })
             const controller = createController(
                 store,
                 notificationService,
@@ -969,6 +1673,7 @@ describe('userController', () => {
             const result = await controller.listTransactions({})
             expect(result.transactions).toHaveLength(1)
             expect(result.transactions[0]?.id).toBe('tx-1')
+            expect(result.transactions[0]?.failureReason).toBe('ledger timeout')
         })
 
         it('deletes a pending transaction and emits a failed event', async () => {
@@ -1303,8 +2008,12 @@ describe('userController', () => {
         })
 
         it('addSession creates a session and emits connected', async () => {
-            const newSessionId = '00000000-0000-0000-0000-000000000001'
-            mockV4.mockReturnValueOnce(newSessionId)
+            const newSessionId =
+                '00000000-0000-0000-0000-000000000001' as ReturnType<
+                    typeof crypto.randomUUID
+                >
+
+            vi.spyOn(crypto, 'randomUUID').mockReturnValueOnce(newSessionId)
 
             const authWithValidClaims = createAuthWithAddSessionClaims()
             const store = await createStore(logger, authWithValidClaims, {
@@ -1591,8 +2300,19 @@ describe('userController', () => {
                 ...primaryWallet,
                 partyId: 'party::new',
                 primary: false,
+                rights: [],
             }
-            walletAllocationMocks.createWallet.mockResolvedValue(newWallet)
+            walletAllocationMocks.createWallet.mockImplementation(async () => {
+                await store.addWallet(newWallet)
+                return newWallet
+            })
+            walletSyncMocks.syncRights.mockImplementation(async () => {
+                await store.updateWallet({
+                    partyId: newWallet.partyId,
+                    rights: [PartyLevelRight.CanActAs],
+                })
+                return []
+            })
             const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const controller = createController(
@@ -1616,12 +2336,16 @@ describe('userController', () => {
                 SigningProvider.WALLET_KERNEL,
                 undefined
             )
-            expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
+            expect(walletSyncMocks.syncRights).toHaveBeenCalledOnce()
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
             expect(emitSpy).toHaveBeenCalledWith(
                 'accountsChanged',
                 expect.any(Array)
             )
-            expect(result.wallet).toEqual(newWallet)
+            expect(result.wallet).toMatchObject({
+                partyId: 'party::new',
+                rights: [PartyLevelRight.CanActAs],
+            })
         })
 
         it('passes auth context to wallet allocation service', async () => {
@@ -1690,6 +2414,17 @@ describe('userController', () => {
                 walletKernelDriver
             )
 
+            walletSyncMocks.syncRights.mockImplementation(async () => {
+                await store.updateWallet({
+                    partyId: primaryWallet.partyId,
+                    rights: [
+                        PartyLevelRight.CanActAs,
+                        PartyLevelRight.CanReadAs,
+                    ],
+                })
+                return []
+            })
+
             const result = await controller.allocatePartyForWallet({
                 partyId: primaryWallet.partyId,
             })
@@ -1699,7 +2434,8 @@ describe('userController', () => {
                 primaryWallet,
                 SigningProvider.WALLET_KERNEL
             )
-            expect(walletSyncMocks.syncWallets).toHaveBeenCalled()
+            expect(walletSyncMocks.syncRights).toHaveBeenCalledOnce()
+            expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
             expect(emitSpy).toHaveBeenCalledWith(
                 'accountsChanged',
                 expect.any(Array)
@@ -1707,6 +2443,7 @@ describe('userController', () => {
             expect(result.wallet).toMatchObject({
                 partyId: primaryWallet.partyId,
                 networkId: storeNetwork.id,
+                rights: [PartyLevelRight.CanActAs, PartyLevelRight.CanReadAs],
             })
         })
 
@@ -1811,19 +2548,10 @@ describe('userController', () => {
             const store = await createStore(logger, auth)
             const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
-            const addedWallet: Wallet = {
-                ...primaryWallet,
-                partyId: 'party::added',
-            }
-            const disabledWallet: Wallet = {
-                ...primaryWallet,
-                partyId: 'party::disabled',
-                status: 'removed',
-            }
             const syncResult = {
-                added: [addedWallet],
+                added: ['party::added'],
                 updated: [],
-                disabled: [disabledWallet],
+                disabled: ['party::disabled'],
             }
             walletSyncMocks.syncWallets.mockResolvedValue(syncResult)
             const controller = createController(
@@ -1849,7 +2577,7 @@ describe('userController', () => {
             const notifier = notificationService.getNotifier('session-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             walletSyncMocks.syncWallets.mockResolvedValue({
-                added: [{ ...primaryWallet, partyId: 'party::added' }],
+                added: ['party::added'],
                 updated: [],
                 disabled: [],
             })

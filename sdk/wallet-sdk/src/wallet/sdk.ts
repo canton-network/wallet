@@ -31,6 +31,7 @@ import type {
 import type { AllowedLogAdapters } from './logger/types.js'
 import type { DappLedgerRpc } from '@canton-network/core-provider-dapp'
 import type { SDKContext } from './index.js'
+import { SynchronizerResolver } from './init/synchronizer.js'
 import { ValidatorInternalClient } from '@canton-network/core-splice-client'
 export {
     resolveCapabilities,
@@ -77,10 +78,7 @@ export class SDK {
             'ledgerProvider' in options
                 ? (options.ledgerProvider as AbstractLedgerProvider)
                 : (() => {
-                      authTokenProvider = new AuthTokenProvider(
-                          options.auth,
-                          logger
-                      )
+                      authTokenProvider = new AuthTokenProvider(options.auth)
 
                       return new LedgerProvider({
                           baseUrl: options.ledgerClientUrl,
@@ -126,18 +124,17 @@ export class SDK {
             })
         }
 
-        const defaultSynchronizerId = await getDefaultSynchronizerId(
-            ledgerProvider,
-            logger,
-            error
-        )
-
         const ctx: SDKContext = {
             ledgerProvider,
             userId: userId!,
             logger,
             error,
-            defaultSynchronizerId,
+            defaultSynchronizerId:
+                await SynchronizerResolver.resolveDefaultSynchronizerId(
+                    ledgerProvider,
+                    error,
+                    options.synchronizerId
+                ),
         }
 
         const config = {} as Pick<
@@ -170,60 +167,29 @@ export class SDK {
     }
 }
 
-async function getDefaultSynchronizerId(
-    provider: AbstractLedgerProvider,
-    logger: SDKLogger,
-    error: SDKErrorHandler
-) {
-    const connectedSynchronizers =
-        await provider.request<Ops.GetV2StateConnectedSynchronizers>({
-            method: 'ledgerApi',
-            params: {
-                resource: '/v2/state/connected-synchronizers',
-                requestMethod: 'get',
-                query: {},
-            },
-        })
-
-    const synchronizers = connectedSynchronizers.connectedSynchronizers
-    if (!synchronizers?.[0]) {
-        error.throw({
-            message: 'No connected synchronizers found',
-            type: 'NotFound',
-        })
-    }
-    // TODO #1740 this logic is a temporary workaround to make sdk work with multiple synchronizers and ensure the
-    // the choice of default synchronizer is not random. In subsequent PR we remove this logic from sdk code (and fix existing tests)
-    const defaultEntry =
-        synchronizers.find((s) => s.synchronizerAlias === 'global') ??
-        synchronizers.find((s) => s.synchronizerAlias === 'global-domain') ??
-        synchronizers.find((s) => s.synchronizerAlias !== 'app-synchronizer') ??
-        synchronizers[0]
-
-    const defaultSynchronizerId = defaultEntry.synchronizerId
-    if (synchronizers.length > 1) {
-        logger.warn(
-            `Found ${synchronizers.length} synchronizers, defaulting to ${defaultSynchronizerId}`
-        )
-    }
-
-    return defaultSynchronizerId
-}
-
+export async function getValidatorParty(
+    validatorUrl: URL,
+    auth: AuthTokenProvider | TokenProviderConfig
+): Promise<string>
+/**
+ * @deprecated The sdkLogger argument is no longer used. Configure SDK logging at the application level with @logtape. This argument will be removed in a future release.
+ * @param validatorUrl
+ * @param auth
+ * @param sdkLogger
+ */
 export async function getValidatorParty(
     validatorUrl: URL,
     auth: AuthTokenProvider | TokenProviderConfig,
-    sdkLogger?: SDKLogger
+    sdkLogger: unknown
+): Promise<string>
+export async function getValidatorParty(
+    validatorUrl: URL,
+    auth: AuthTokenProvider | TokenProviderConfig,
+    // oxlint-disable-next-line no-unused-vars
+    sdkLogger?: unknown
 ) {
-    const logger = sdkLogger ?? new SDKLogger('pino')
     const validatorAuth =
-        auth instanceof AuthTokenProvider
-            ? auth
-            : new AuthTokenProvider(auth, logger)
-    const validator = new ValidatorInternalClient(
-        validatorUrl,
-        logger,
-        validatorAuth
-    )
+        auth instanceof AuthTokenProvider ? auth : new AuthTokenProvider(auth)
+    const validator = new ValidatorInternalClient(validatorUrl, validatorAuth)
     return (await validator.get('/v0/validator-user')).party_id
 }

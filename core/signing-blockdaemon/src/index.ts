@@ -25,7 +25,11 @@ import {
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.js'
 
-export { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.js'
+export {
+    SigningAPIClient,
+    cantonCaip2Values,
+    type CantonCaip2,
+} from './signing-api-sdk.js'
 
 export interface BlockdaemonConfig {
     baseUrl: string
@@ -231,7 +235,6 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
             // TODO remove comment below and write a test once / if ever implemented
             // v8 ignore next -- @preserve
             subscribeTransactions: async (
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _params: SubscribeTransactionsParams
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),

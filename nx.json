@@ -6,9 +6,17 @@
             "default",
             "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
             "!{projectRoot}/.storybook/**/*",
-            "!{projectRoot}/tsconfig.storybook.json"
+            "!{projectRoot}/**/*.@(spec|test).@(ts|tsx)",
+            "!{projectRoot}/**/__tests__/**/*",
+            "!{projectRoot}/vitest.*.ts",
+            "!{workspaceRoot}/vitest.base.ts"
         ],
-        "sharedGlobals": []
+        "sharedGlobals": [
+            "{workspaceRoot}/vitest.base.ts",
+            "{workspaceRoot}/tsdown.base.ts",
+            "{workspaceRoot}/tsconfig.*.json",
+            "{workspaceRoot}/vite.decorators.ts"
+        ]
     },
     "release": {
         "version": {
@@ -58,19 +66,27 @@
         },
         "build": {
             "dependsOn": ["^build"],
+            "inputs": ["production", "^production"],
             "outputs": ["{projectRoot}/dist"],
             "cache": true
         },
         "test": {
             "dependsOn": ["^build"],
-            "cache": true
-        },
-        "test:coverage": {
-            "dependsOn": ["^build"],
-            "cache": true
+            "cache": true,
+            "configurations": {
+                "coverage": {
+                    "coverage": true
+                }
+            }
         },
         "test:migrations": {
             "dependsOn": ["^build"],
+            "inputs": ["default", "^production"],
+            "cache": true
+        },
+        "test:integration": {
+            "dependsOn": ["^build"],
+            "inputs": ["default", "^production"],
             "cache": true
         },
         "migrations:check-lock": {
@@ -82,7 +98,9 @@
             ]
         },
         "typecheck": {
-            "dependsOn": ["^build"]
+            "dependsOn": ["^build"],
+            "inputs": ["default", "^production"],
+            "cache": true
         },
         "lint": {
             "cache": true,
@@ -95,9 +113,29 @@
         },
         "start": {
             "dependsOn": ["^build"]
+        },
+        "run": {
+            "dependsOn": ["^build"]
+        },
+        "snippets": {
+            "dependsOn": ["^build"]
+        },
+        "playwright:e2e": {
+            "dependsOn": ["^build"],
+            "cache": false
         }
     },
     "plugins": [
+        {
+            "plugin": "@nx/js/typescript",
+            "options": {
+                "typecheck": {
+                    "targetName": "typecheck",
+                    "configName": "tsconfig.json"
+                },
+                "build": false
+            }
+        },
         {
             "plugin": "@nx/playwright/plugin",
             "options": {
@@ -105,10 +143,19 @@
             }
         },
         {
-            "plugin": "@nx/eslint/plugin",
+            "plugin": "@nx/oxlint",
             "exclude": ["core/*-rpc-client/**/*", "damljs/**/*"],
             "options": {
                 "targetName": "lint"
+            }
+        },
+        {
+            "plugin": "@nx/vitest",
+            "include": ["**/vitest.config.ts"],
+            "exclude": ["docs/wallet-integration-guide/examples/**/*"],
+            "options": {
+                "testTargetName": "test",
+                "testMode": "run"
             }
         },
         {
@@ -121,5 +168,9 @@
             }
         }
     ],
-    "analytics": false
+    "analytics": false,
+    "neverConnectToCloud": true,
+    "sync": {
+        "disabledTaskSyncGenerators": ["@nx/js:typescript-sync"]
+    }
 }

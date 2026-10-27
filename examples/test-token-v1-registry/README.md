@@ -98,7 +98,7 @@ examples/test-token-v1-registry/
     openapi-ts/                       # generated TypeScript types from OpenAPI
     scripts/
       generateTypes.ts                # regenerates openapi-ts bindings
-    __test__/
+    __tests__/
       mocks.ts                        # test mocks
   vitest.config.ts                    # node+browser test projects and coverage
   tsup.config.ts                      # build configuration
@@ -110,13 +110,13 @@ examples/test-token-v1-registry/
 Run tests:
 
 ```bash
-pnpm --filter @canton-network/example-test-token-v1-registry test
+pnpm nx test @canton-network/example-test-token-v1-registry
 ```
 
 Run tests with coverage:
 
 ```bash
-pnpm --filter @canton-network/example-test-token-v1-registry test:coverage
+pnpm nx test @canton-network/example-test-token-v1-registry -c coverage
 ```
 
 Notes:

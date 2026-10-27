@@ -1,15 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { v4 } from 'uuid'
-import { Types } from '@canton-network/core-ledger-client'
+import type { LedgerClient, Types } from '@canton-network/core-ledger-client'
 import type {
     DisclosedContracts,
     Commands,
     PackageIdSelectionPreference,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { Logger } from 'pino'
-import { HASHING_SCHEME_VERSION } from './types.js'
+import type { Logger } from 'pino'
+import type { HASHING_SCHEME_VERSION } from './types.js'
 
 export interface PrepareParams {
     commandId?: string
@@ -22,7 +21,8 @@ export interface PrepareParams {
 
 interface LedgerPrepareParamsArgs {
     userId: string
-    partyIds: string[]
+    commandId: string
+    actAs: string[]
     synchronizerId: string
     params: PrepareParams
     hashingSchemeVersion: HASHING_SCHEME_VERSION
@@ -31,8 +31,14 @@ interface LedgerPrepareParamsArgs {
 export function ledgerPrepareParams(
     args: LedgerPrepareParamsArgs
 ): Types['JsPrepareSubmissionRequest'] {
-    const { userId, partyIds, synchronizerId, params, hashingSchemeVersion } =
-        args
+    const {
+        userId,
+        commandId,
+        actAs,
+        synchronizerId,
+        params,
+        hashingSchemeVersion,
+    } = args
 
     // Map disclosed contracts to ledger api format (which wrongly defines optional fields as mandatory)
     const disclosedContracts =
@@ -43,19 +49,19 @@ export function ledgerPrepareParams(
                 createdEventBlob: d.createdEventBlob,
                 synchronizerId: d.synchronizerId || '',
             }
-        }) || []
+        }) ?? []
 
     return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- because OpenRPC codegen type is incompatible with ledger codegen type
+        // oxlint-disable-next-line typescript/no-explicit-any -- because OpenRPC codegen type is incompatible with ledger codegen type
         commands: params.commands as any,
-        commandId: params.commandId || v4(),
+        commandId,
         userId,
-        actAs: params.actAs || partyIds,
-        readAs: params.readAs || [],
+        actAs,
+        readAs: params.readAs ?? [],
         disclosedContracts,
         synchronizerId,
         verboseHashing: false,
-        packageIdSelectionPreference: params.packageIdSelectionPreference || [],
+        packageIdSelectionPreference: params.packageIdSelectionPreference ?? [],
         hashingSchemeVersion,
     }
 }
@@ -68,6 +74,8 @@ interface DynamicLogParams {
 /**
  * A helper function to enrich log messages with additional data when debug logging is enabled,
  * while keeping logs cleaner at higher log levels.
+ *
+ * TODO: remove when switching to logtape for Wallet Gateway
  */
 export function logDynamically(
     logger: Logger,
@@ -81,6 +89,29 @@ export function logDynamically(
             logger.info(data.info, msg)
         } else {
             logger.info(msg)
+        }
+    }
+}
+
+type NetworkStatus = {
+    isConnected: boolean
+    reason?: string
+    cantonVersion?: string
+}
+
+export async function networkStatus(
+    ledgerClient: LedgerClient
+): Promise<NetworkStatus> {
+    try {
+        const response = await ledgerClient.get('/v2/version')
+        return {
+            isConnected: true,
+            cantonVersion: response.version,
+        }
+    } catch (e) {
+        return {
+            isConnected: false,
+            reason: `Ledger unreachable: ${(e as Error).message}`,
         }
     }
 }

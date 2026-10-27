@@ -11,7 +11,7 @@ import {
     type Mock,
 } from 'vitest'
 import { WebSocketClient } from './websocket-client.js'
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* oxlint-disable typescript/no-explicit-any */
 
 const MOCK_CHANNELS = vi.hoisted(() => ({
     v2_updates: '/v2/updates',
@@ -31,6 +31,7 @@ vi.mock('@canton-network/core-ledger-client-types', () => ({
 
 class MockWebSocket {
     static OPEN = 1
+    static CLOSED = 3
     readyState = MockWebSocket.OPEN
 
     onopen: (() => void) | null = null
@@ -51,6 +52,7 @@ class MockWebSocket {
         this.onerror?.()
     }
     triggerClose(code = 1000, reason = '') {
+        this.readyState = MockWebSocket.CLOSED
         this.onclose?.({ code, reason })
     }
 }
@@ -81,10 +83,13 @@ let wsMock: Mock
 
 describe('Async api service', () => {
     beforeEach(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         wsMock = vi.fn(function (_url: string, _protocols: string[]) {
             lastWsInstance = new MockWebSocket()
             return lastWsInstance
+        })
+        Object.assign(wsMock, {
+            OPEN: MockWebSocket.OPEN,
+            CLOSED: MockWebSocket.CLOSED,
         })
         vi.stubGlobal('WebSocket', wsMock)
     })
@@ -108,7 +113,7 @@ describe('Async api service', () => {
     it('should initiailize the client properly for updates', async () => {
         const { client } = makeClient()
 
-        const gen = client.generate(`wss://ledger/v2/updates`, {
+        const gen = client['generate'](`wss://ledger/v2/updates`, {
             beginExclusive: 0,
             updateFormat: {},
         } as any)
@@ -134,7 +139,10 @@ describe('Async api service', () => {
             beginExclusive: 10,
             updateFormat: {},
         }
-        const gen = client.generate(`wss://ledger/v2/updates`, request as any)
+        const gen = client['generate'](
+            `wss://ledger/v2/updates`,
+            request as any
+        )
 
         const collectPromise = collectAll(gen)
 
@@ -298,7 +306,7 @@ describe('Async api service', () => {
     it('preserves order of messages', async () => {
         const { client } = makeClient()
 
-        const gen = client.generate(`wss://ledger/v2/updates`, {} as any)
+        const gen = client['generate'](`wss://ledger/v2/updates`, {} as any)
 
         const collectPromise = collectAll(gen)
 
@@ -318,10 +326,36 @@ describe('Async api service', () => {
         ])
     })
 
+    it('closes the WebSocket when the consumer stops the stream early', async () => {
+        const { client } = makeClient()
+        const stream = client.streamCompletions({
+            beginExclusive: 0,
+            userId: 'ledger-api-user',
+            parties: ['alice:123'],
+        })
+
+        const completion = { completion: { commandId: 'command-1' } }
+        const consumeFirst = async () => {
+            for await (const message of stream) {
+                expect(message).toEqual(completion)
+                break
+            }
+        }
+        const consumed = consumeFirst()
+        await vi.waitFor(() => expect(wsMock).toHaveBeenCalledOnce())
+        lastWsInstance.triggerOpen()
+        expect(lastWsInstance.close).not.toHaveBeenCalled()
+        lastWsInstance.triggerMessage(completion)
+
+        await consumed
+
+        expect(lastWsInstance.close).toHaveBeenCalledOnce()
+    })
+
     it('throws an error properly on triggerError', async () => {
         const { client } = makeClient()
 
-        const gen = client.generate(`wss://ledger/v2/updates`, {} as any)
+        const gen = client['generate'](`wss://ledger/v2/updates`, {} as any)
 
         const collectPromise = collectAll(gen)
 
@@ -337,7 +371,7 @@ describe('Async api service', () => {
     it('flushes buffered messages before close', async () => {
         const { client } = makeClient()
 
-        const gen = client.generate(`wss://ledger/v2/updates`, {} as any)
+        const gen = client['generate'](`wss://ledger/v2/updates`, {} as any)
 
         const collectPromise = collectAll(gen)
 

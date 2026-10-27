@@ -1,9 +1,10 @@
 {
     "name": "@canton-network/core-signing-lib",
-    "version": "1.13.0",
+    "version": "1.15.0",
     "type": "module",
     "description": "Core library for signing driver implementations",
     "license": "Apache-2.0",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,23 +17,19 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean && rm -rf ./dist",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage"
+        "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-wallet-auth": "catalog:",
-        "fs-extra": "catalog:",
+        "@canton-network/core-wallet-auth": "workspace:",
         "lodash": "catalog:",
         "tweetnacl": "catalog:",
         "tweetnacl-util": "catalog:",
         "zod": "catalog:"
     },
     "devDependencies": {
-        "@types/fs-extra": "catalog:",
         "@types/lodash": "catalog:",
         "@types/node": "catalog:",
         "@vitest/coverage-v8": "catalog:",

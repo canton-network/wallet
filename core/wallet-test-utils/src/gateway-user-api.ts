@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { HttpTransport } from '@canton-network/core-rpc-transport'
+import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 
 /**
@@ -17,7 +18,11 @@ import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 
 /** Signing providers the gateway can allocate a wallet with. */
 export type GatewaySigningProvider =
-    'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' | 'fireblocks'
+    | 'participant'
+    | 'wallet-kernel'
+    | 'blockdaemon'
+    | 'dfns'
+    | 'fireblocks'
 
 export interface GatewayUserApiOptions {
     /** Gateway origin, e.g. http://localhost:3030 */
@@ -43,12 +48,9 @@ export interface GatewayUserApiOptions {
     origin: string
 }
 
-/** Matches the shape HttpTransport throws when the gateway answers 401. */
 const isUnauthorized = (error: unknown): boolean =>
-    typeof error === 'object' &&
-    error !== null &&
-    'error' in error &&
-    (error as { error?: { code?: number } }).error?.code === 401
+    error instanceof JsonRpcError &&
+    error.code === errorCodes.provider.unauthorized
 
 export class GatewayUserApi {
     private readonly url: URL
@@ -122,7 +124,7 @@ export class GatewayUserApi {
     }
 
     /**
-     * Run a call, and on 401 open a new session and try once more: another
+     * Run a call, and on unauthorized error open a new session and try once more: another
      * client of the same gateway user may have replaced our session.
      */
     private async withSession<T>(

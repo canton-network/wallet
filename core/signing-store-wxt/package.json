@@ -1,10 +1,11 @@
 {
     "name": "@canton-network/core-signing-store-wxt",
-    "version": "1.3.0",
+    "version": "1.5.0",
     "type": "module",
     "description": "WXT implementation of the Store API",
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -17,22 +18,21 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run",
-        "test:coverage": "vitest run --coverage"
+        "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "catalog:",
-        "@canton-network/core-rpc-errors": "catalog:",
-        "@canton-network/core-signing-lib": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-ledger-client": "workspace:",
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
         "@wxt-dev/storage": "catalog:",
         "wxt": "catalog:"
     },
     "devDependencies": {
         "@swc/core": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",

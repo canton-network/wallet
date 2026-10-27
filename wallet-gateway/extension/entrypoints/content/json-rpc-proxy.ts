@@ -10,14 +10,15 @@ import {
 } from '@canton-network/core-types'
 
 import { createProxyService } from '@webext-core/proxy-service'
-import { Methods } from '../background/dapp/rpc-gen'
 import { parentOriginManager } from '@/utils/legacy-frontend/origin'
+import type { Methods } from '../background/dapp/rpc-gen'
+import type { NotificationRelay } from './notification-relay'
 
 /**
  * Proxies JSON-RPC requests, responses, between the dApp page (window message events),
  * and the background script (extension runtime messages)
  */
-export function jsonRpcProxy() {
+export function jsonRpcProxy(notificationRelay: NotificationRelay) {
     const runtimeId = browser.runtime?.id
 
     const shouldHandle = (target: string | undefined): boolean => {
@@ -27,7 +28,7 @@ export function jsonRpcProxy() {
     }
 
     window.addEventListener('message', async (event: SpliceMessageEvent) => {
-        logger.info(`Content script received message: ${event.data}`)
+        logger.info('Content script received message', { data: event.data })
 
         const { data: msg, success } = SpliceMessage.safeParse(event.data)
 
@@ -39,6 +40,10 @@ export function jsonRpcProxy() {
         // Forward JSON RPC requests to the background script
         if (msg.type === WalletEvent.SPLICE_WALLET_REQUEST) {
             if (!shouldHandle(msg.target)) return
+            // Requests without an id are JSON-RPC notifications, e.g. the
+            // ones the notification relay posts into this same window. They
+            // must not be proxied back to the background script.
+            if (msg.request.id == null) return
 
             // Proxy the message to the extension background script
             // and wait for the response
@@ -54,6 +59,13 @@ export function jsonRpcProxy() {
             }
 
             parentOriginManager.postMessage(response)
+
+            if ('result' in msgResponse) {
+                notificationRelay.onResponse(
+                    msg.request.method,
+                    msgResponse.result
+                )
+            }
         }
 
         // Forward UI open requests to the background script
@@ -87,7 +99,7 @@ async function processRequest(
         throw new Error(`Method ${method} does not exist.`)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     const result = await fn(params as any)
 
     logger.debug('Sending response: {*}', { id: request.id, result })

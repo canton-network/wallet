@@ -1,9 +1,10 @@
 {
     "name": "@canton-network/core-signing-blockdaemon",
-    "version": "1.13.0",
+    "version": "1.15.0",
     "type": "module",
     "description": "Wallet Gateway signing driver for Blockdaemon",
     "license": "Apache-2.0",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,14 +17,12 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "clean": "rm -rf ./dist",
-        "test": "vitest run --project node --project browser",
-        "test:coverage": "vitest run --project node --project browser --coverage"
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-signing-lib": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:"
+        "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:"
     },
     "devDependencies": {
         "@types/node": "catalog:",

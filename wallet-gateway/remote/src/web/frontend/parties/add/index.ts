@@ -13,7 +13,7 @@ import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import { WALLET_STATUS_CODE } from '../index'
-import { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
+import { type WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
 
 import { UserUiAddOrEditParty } from '../common.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
@@ -64,6 +64,7 @@ export class UserUiAddParty extends UserUiAddOrEditParty {
         return html`
             <wg-wallet-create-form
                 .signingProviders=${this.signingProviders}
+                ?signingProvidersLoading=${this.signingProvidersLoading}
                 .keySigningProviders=${[SigningProvider.FIREBLOCKS]}
                 .selectedSigningProvider=${this.selectedSigningProvider}
                 .publicKeys=${this.publicKeys}

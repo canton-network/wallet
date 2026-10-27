@@ -51,11 +51,17 @@ export type ActivityStatus =
 const MAX_PAGES_TO_SEARCH = 50
 
 export type SigningProviderName =
-    'participant' | 'wallet-kernel' | 'blockdaemon' | 'dfns' | 'fireblocks'
+    | 'participant'
+    | 'wallet-kernel'
+    | 'blockdaemon'
+    | 'dfns'
+    | 'fireblocks'
+    | 'securosys'
+    | 'bitgo'
 
-export type ExternalSigningProvider = Extract<
+export type ExternalSigningProvider = Exclude<
     SigningProviderName,
-    'blockdaemon' | 'dfns' | 'fireblocks'
+    'participant' | 'wallet-kernel'
 >
 
 // isPopup: true - WG opened in popup by dApp
@@ -168,6 +174,137 @@ export class WalletGateway {
         })
     }
 
+    async connectToSelfIssuedNetwork(args: {
+        network: string
+        username: string
+        customURL?: string
+    }): Promise<void> {
+        await test.step(`wallet gateway: connect to ${args.network}`, async () => {
+            const dapp = this.requireDapp()
+            const connectButton = dapp.connectButton(dapp.dappPage)
+            await expect(
+                connectButton,
+                'the dApp should offer a way to connect a wallet'
+            ).toBeVisible()
+
+            const pickerPopup = await openWalletPicker(
+                dapp.dappPage,
+                connectButton
+            )
+
+            await this.selectFromWalletPicker(pickerPopup, args.customURL)
+
+            const popup = await this.waitForConnectFormPopup(pickerPopup)
+            const selectNetwork = popup.getByLabel('Select a network')
+            await expect(
+                selectNetwork,
+                'the wallet gateway has a network select'
+            ).toBeVisible()
+            await selectNetwork.selectOption({ label: args.network })
+            const usernameInput = popup.getByLabel('Username')
+            await expect(
+                usernameInput,
+                'self-issued login should ask for a username'
+            ).toBeVisible()
+            await usernameInput.fill(args.username)
+            const confirmConnectButton = popup.getByRole('button', {
+                name: 'Connect',
+            })
+            await confirmConnectButton.click()
+
+            await expect(
+                popup,
+                'self-issued login should open authentication-party login'
+            ).toHaveURL(/\/self-issued-login\/?/)
+            await expect(
+                popup.getByText('No self-issued login session found'),
+                'onboarding should have a session from the login step'
+            ).toHaveCount(0)
+        })
+    }
+
+    async submitSelfIssuedOnboarding(args: {
+        expectedNetwork: string
+        partyHint: string
+        signingProvider: SigningProviderName
+    }): Promise<string> {
+        return test.step(`wallet gateway: submit self-issued onboarding for ${args.partyHint}`, async () => {
+            const popup = await this.page()
+            await expect(
+                popup.getByRole('heading', {
+                    name: 'Create authentication party',
+                }),
+                'a new self-issued user should be asked to create an authentication party'
+            ).toBeVisible()
+            // Matches both the Lit <wg-wallet-create-form> and the React WalletCreateForm
+            const form = popup.locator(
+                'wg-wallet-create-form, [data-testid="wallet-create-form"]'
+            )
+            await expect(form.getByLabel('Party ID Hint')).toBeVisible()
+            await expect(form.getByLabel('Signing Provider')).toBeVisible()
+            await form.getByLabel('Party ID Hint').fill(args.partyHint)
+            await form
+                .getByLabel('Signing Provider')
+                .selectOption(args.signingProvider)
+            await form.locator('button[type="submit"]').click()
+
+            await expect(
+                popup.getByTestId('network-status-connected'),
+                `the wallet gateway should report itself connected to ${args.expectedNetwork}`
+            ).toBeVisible()
+
+            const wallet = popup
+                .locator(
+                    this.walletCardSelector(`[party-id*="${args.partyHint}"]`)
+                )
+                .first()
+            await expect(
+                wallet,
+                `the parties page should list ${args.partyHint}`
+            ).toBeVisible()
+            const partyId = await wallet.getAttribute('party-id')
+            if (!partyId) {
+                // Assures typescript it's a string
+                throw new Error(`did not find partyID for ${args.partyHint}`)
+            }
+            return partyId
+        })
+    }
+
+    async selectSelfIssuedAuthenticationParty(args: {
+        expectedNetwork: string
+        partyId: string
+    }): Promise<void> {
+        await test.step(`wallet gateway: select authentication party ${args.partyId}`, async () => {
+            const popup = await this.page()
+            await expect(
+                popup.getByRole('heading', {
+                    name: 'Select authentication party',
+                }),
+                'an existing self-issued user should choose a stored authentication party'
+            ).toBeVisible()
+            await expect(
+                popup.getByText(
+                    'Choose the party that authenticates this account.'
+                )
+            ).toBeVisible()
+
+            const wallet = popup.locator(
+                this.walletCardSelector(`[party-id="${args.partyId}"]`)
+            )
+            await expect(
+                wallet,
+                `onboarding should list the stored party ${args.partyId}`
+            ).toBeVisible()
+            await wallet.getByRole('button', { name: 'Select' }).click()
+
+            await expect(
+                popup.getByTestId('network-status-connected'),
+                `the wallet gateway should report itself connected to ${args.expectedNetwork}`
+            ).toBeVisible()
+        })
+    }
+
     async openPopup(): Promise<void> {
         await test.step('wallet gateway: open the popup', async () => {
             const dapp = this.requireDapp()
@@ -201,12 +338,18 @@ export class WalletGateway {
         return this._popup
     }
 
+    // Matches both the Lit <wg-wallet-card> element and the React WalletCard;
+    // both expose the party as a `party-id` attribute
+    private walletCardSelector(partyIdAttribute: string): string {
+        return `wg-wallet-card${partyIdAttribute}, [data-testid="wallet-card"]${partyIdAttribute}`
+    }
+
     async setPrimaryWallet(partyId: string): Promise<void> {
         await test.step(`wallet gateway: make ${partyId} the primary party`, async () => {
             await this.gotoPartiesPage()
 
             const wallet = (await this.page())
-                .locator(`wg-wallet-card[party-id="${partyId}"]`)
+                .locator(this.walletCardSelector(`[party-id="${partyId}"]`))
                 .first()
             await expect(
                 wallet,
@@ -240,7 +383,7 @@ export class WalletGateway {
 
             const pattern = new RegExp(`${args.partyHint}::[0-9a-f]+`)
             const wallets = (await this.page()).locator(
-                `wg-wallet-card[party-id*="${args.partyHint}"]`
+                this.walletCardSelector(`[party-id*="${args.partyHint}"]`)
             )
             const walletsCount = await wallets.count()
 
@@ -311,7 +454,9 @@ export class WalletGateway {
             await this.waitForPartiesPageReady()
 
             const newWallet = (await this.page())
-                .locator(`wg-wallet-card[party-id*="${args.partyHint}"]`)
+                .locator(
+                    this.walletCardSelector(`[party-id*="${args.partyHint}"]`)
+                )
                 .first()
             await expect(
                 newWallet,
@@ -335,7 +480,7 @@ export class WalletGateway {
         await test.step(`wallet gateway: allocate ${partyId}`, async () => {
             await this.gotoPartiesPage()
             const walletCard = (await this.page())
-                .locator(`wg-wallet-card[party-id="${partyId}"]`)
+                .locator(this.walletCardSelector(`[party-id="${partyId}"]`))
                 .first()
             await expect(
                 walletCard,
@@ -362,7 +507,7 @@ export class WalletGateway {
         return test.step(`wallet gateway: read the external tx id of ${partyId}`, async () => {
             await this.gotoPartiesPage()
             const walletCard = (await this.page())
-                .locator(`wg-wallet-card[party-id="${partyId}"]`)
+                .locator(this.walletCardSelector(`[party-id="${partyId}"]`))
                 .first()
             await expect(
                 walletCard,
@@ -370,7 +515,7 @@ export class WalletGateway {
             ).toBeVisible()
 
             const txId = await walletCard
-                .locator('.meta')
+                .locator('[data-test-external-tx-id]')
                 .getAttribute('data-test-external-tx-id')
 
             if (!txId) {
@@ -757,12 +902,16 @@ export class WalletGateway {
         })
     }
 
+    // Matches both the Lit <network-card> element and the React NetworkCard
+    private networkCards(popup: Page): Locator {
+        return popup.locator('network-card, [data-testid="network-card"]')
+    }
+
     async findNetworkCard(networkId: string): Promise<Locator> {
         await this.waitForNetworksPageReady()
         return this.findInPaginatedList(
             `Network card for "${networkId}"`,
-            (popup) =>
-                popup.locator('network-card').filter({ hasText: networkId })
+            (popup) => this.networkCards(popup).filter({ hasText: networkId })
         )
     }
 
@@ -775,16 +924,21 @@ export class WalletGateway {
         const popup = await this.page()
         await this.waitForNetworksPageReady()
 
-        const firstCard = popup.locator('network-card').first()
+        const firstCard = this.networkCards(popup).first()
         await expect(
             firstCard,
             'the networks page should list at least one network'
         ).toBeVisible()
 
-        await expect(
-            firstCard.locator('.net-card.readonly'),
-            'a non-admin should see the network card rendered read-only'
-        ).toBeVisible()
+        // The Lit card marks itself read-only with a class; the React card has
+        // no marker, it just renders without a clickable review control, which
+        // the click assertions below cover
+        if ((await popup.locator('network-card').count()) > 0) {
+            await expect(
+                firstCard.locator('.net-card.readonly'),
+                'a non-admin should see the network card rendered read-only'
+            ).toBeVisible()
+        }
 
         await firstCard.click()
 
@@ -847,12 +1001,16 @@ export class WalletGateway {
         value: string
     ): Promise<void> {
         const popup = await this.page()
-        // The form labels aren't associated with their inputs via `for`, so
-        // locate the input via the field group that contains the label text.
+        // The Lit form's labels aren't associated with their inputs via `for`,
+        // so locate the input via the field group that contains the label text.
+        // The React form's labels are associated, so it is found by its label.
+        // Either way the first match in the page is the network's own field,
+        // ahead of the auth editors' (e.g. "Identity Provider Id Override").
         const input = popup
             .locator(
                 `network-form .field-group:has(> label:has-text("${label}")) input`
             )
+            .or(popup.getByLabel(label))
             .first()
         await expect(
             input,
@@ -869,8 +1027,13 @@ export class WalletGateway {
         options?: { afterPageChange?: () => Promise<void> }
     ): Promise<Locator> {
         const popup = await this.page()
-        const pagination = popup.locator('wg-pagination').first()
-        const rangeLabel = pagination.locator('.pagination span')
+        // Works for both the Lit <wg-pagination> and the React <Pagination>:
+        // both label the container "Pagination" and render the range as
+        // "<start>-<end> of <total>"
+        const pagination = popup
+            .getByLabel('Pagination', { exact: true })
+            .first()
+        const rangeLabel = pagination.getByText(/^\d+-\d+ of \d+$/)
         const nextButton = pagination.getByRole('button', {
             name: 'Next page',
         })
@@ -924,7 +1087,7 @@ export class WalletGateway {
         ).toBeVisible()
 
         await expect(
-            popup.locator('network-card').first(),
+            this.networkCards(popup).first(),
             'the networks page should have finished loading its first network'
         ).toBeVisible()
     }
@@ -991,11 +1154,16 @@ export class WalletGateway {
         })
     }
 
+    // Matches both the Lit <idp-card> element and the React IdpCard
+    private idpCards(popup: Page): Locator {
+        return popup.locator('idp-card, [data-testid="idp-card"]')
+    }
+
     async findIdpCard(idpId: string): Promise<Locator> {
         await this.waitForIdentityProvidersPageReady()
         return this.findInPaginatedList(
             `Identity provider card for "${idpId}"`,
-            (popup) => popup.locator('idp-card').filter({ hasText: idpId })
+            (popup) => this.idpCards(popup).filter({ hasText: idpId })
         )
     }
 
@@ -1004,16 +1172,21 @@ export class WalletGateway {
             const popup = await this.page()
             await this.waitForIdentityProvidersPageReady()
 
-            const firstCard = popup.locator('idp-card').first()
+            const firstCard = this.idpCards(popup).first()
             await expect(
                 firstCard,
                 'the identity providers page should list at least one provider'
             ).toBeVisible()
 
-            await expect(
-                firstCard.locator('.idp-card.readonly'),
-                'a non-admin should see the identity provider card rendered read-only'
-            ).toBeVisible()
+            // The Lit card marks itself read-only with a class; the React card
+            // has no marker, it just renders without a clickable review
+            // control, which the click assertions below cover
+            if ((await popup.locator('idp-card').count()) > 0) {
+                await expect(
+                    firstCard.locator('.idp-card.readonly'),
+                    'a non-admin should see the identity provider card rendered read-only'
+                ).toBeVisible()
+            }
 
             await firstCard.click()
 
@@ -1064,7 +1237,7 @@ export class WalletGateway {
             'the identity providers page should have rendered'
         ).toBeVisible()
         await expect(
-            popup.locator('idp-card').first(),
+            this.idpCards(popup).first(),
             'the identity providers page should have finished loading its first provider'
         ).toBeVisible()
     }
@@ -1076,8 +1249,9 @@ export class WalletGateway {
         await test.step(`wallet gateway: activity for ${commandId} is ${status}`, async () => {
             await this.reopenActivitiesPage()
             const card = await this.findActivityCard(commandId)
+            // The Lit card uses a `status-badge` class, the React card a test id
             await expect(
-                card.locator('.status-badge'),
+                card.locator('.status-badge, [data-testid="activity-status"]'),
                 `the wallet activity for ${commandId} should be ${status}`
             ).toHaveText(status)
         })

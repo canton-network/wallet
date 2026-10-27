@@ -1,10 +1,11 @@
 {
     "name": "@canton-network/core-origin-manager",
-    "version": "1.4.0",
+    "version": "1.6.0",
     "type": "module",
     "description": "Secure cross-window origin handshake and guarded postMessage helpers.",
     "license": "Apache-2.0",
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -22,19 +23,15 @@
         "zod": "catalog:"
     },
     "scripts": {
-        "test": "vitest run --project node --project browser",
-        "test:coverage": "vitest run --project node --project browser --coverage",
-        "build": "tsdown --onSuccess \"tsc\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "yarn pack --out \"$FLATPACK_OUTDIR\""
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "clean": "rm -rf dist",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
-        "@canton-network/core-types": "catalog:",
+        "@canton-network/core-types": "workspace:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "typescript": "catalog:",
-        "vite": "catalog:",
-        "vite-plugin-dts": "catalog:",
         "vitest": "catalog:"
     },
     "files": [

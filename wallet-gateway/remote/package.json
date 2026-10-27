@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
-    "version": "1.11.3",
+    "version": "1.13.0",
     "type": "module",
     "description": "A server-side Wallet Gateway implementation over HTTP",
     "license": "Apache-2.0",
@@ -11,11 +11,9 @@
         "wallet-gateway-remote": "dist/index.js"
     },
     "scripts": {
-        "build": "vite build && tsc -b && tsc -b tsconfig.frontend.json",
-        "clean": "tsc -b --clean && rm -rf ./dist && rm ./*.sqlite || true",
+        "build": "vite build && tsc -p tsconfig.lib.json",
+        "clean": "rm -rf ./dist && rm -f ./*.sqlite",
         "dev": "NODE_ENV=development tsx watch --exclude 'vite.config.ts.timestamp-*.mjs' src/index.ts -c ../test/config.json",
-        "test": "vitest run --project node --project browser",
-        "test:coverage": "vitest run --project node --project browser --coverage",
         "start": "pnpm node dist/index.js -c ../test/config.json",
         "debug": "pnpm node --inspect-brk dist/index.js -c ../test/config.json",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
@@ -37,28 +35,28 @@
         "access": "public"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "catalog:",
-        "@canton-network/core-rpc-errors": "catalog:",
-        "@canton-network/core-rpc-transport": "catalog:",
-        "@canton-network/core-signing-bitgo": "catalog:",
-        "@canton-network/core-signing-blockdaemon": "catalog:",
-        "@canton-network/core-signing-dfns": "catalog:",
-        "@canton-network/core-signing-fireblocks": "catalog:",
-        "@canton-network/core-signing-internal": "catalog:",
-        "@canton-network/core-signing-lib": "catalog:",
-        "@canton-network/core-signing-participant": "catalog:",
-        "@canton-network/core-signing-securosys": "catalog:",
-        "@canton-network/core-signing-store-sql": "catalog:",
-        "@canton-network/core-tx-visualizer": "catalog:",
-        "@canton-network/core-types": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
-        "@canton-network/core-wallet-dapp-rpc-client": "catalog:",
-        "@canton-network/core-wallet-services": "catalog:",
-        "@canton-network/core-wallet-store": "catalog:",
-        "@canton-network/core-wallet-store-sql": "catalog:",
-        "@canton-network/core-wallet-ui-components": "catalog:",
-        "@canton-network/core-wallet-user-rpc-client": "catalog:",
-        "@canton-network/core-origin-manager": "catalog:",
+        "@canton-network/core-ledger-client": "workspace:",
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-rpc-transport": "workspace:",
+        "@canton-network/core-signing-bitgo": "workspace:",
+        "@canton-network/core-signing-blockdaemon": "workspace:",
+        "@canton-network/core-signing-dfns": "workspace:",
+        "@canton-network/core-signing-fireblocks": "workspace:",
+        "@canton-network/core-signing-internal": "workspace:",
+        "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-signing-participant": "workspace:",
+        "@canton-network/core-signing-securosys": "workspace:",
+        "@canton-network/core-signing-store-sql": "workspace:",
+        "@canton-network/core-tx-visualizer": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
+        "@canton-network/core-wallet-dapp-rpc-client": "workspace:",
+        "@canton-network/core-wallet-services": "workspace:",
+        "@canton-network/core-wallet-store": "workspace:",
+        "@canton-network/core-wallet-store-sql": "workspace:",
+        "@canton-network/core-wallet-ui-components": "workspace:",
+        "@canton-network/core-wallet-user-rpc-client": "workspace:",
+        "@canton-network/core-origin-manager": "workspace:",
         "@commander-js/extra-typings": "catalog:",
         "@logtape/adaptor-pino": "catalog:",
         "@logtape/logtape": "catalog:",
@@ -72,13 +70,12 @@
         "lit": "catalog:",
         "pino": "catalog:",
         "pino-pretty": "catalog:",
-        "uuid": "catalog:",
         "vite": "catalog:",
         "vite-express": "catalog:",
         "zod": "catalog:"
     },
     "devDependencies": {
-        "@canton-network/core-wallet-store-inmemory": "catalog:",
+        "@canton-network/core-wallet-store-inmemory": "workspace:",
         "@open-wc/testing-helpers": "catalog:",
         "@types/cors": "catalog:",
         "@types/express": "catalog:",
@@ -95,8 +92,14 @@
     },
     "nx": {
         "targets": {
+            "build": {
+                "outputs": [
+                    "{projectRoot}/dist"
+                ]
+            },
             "start": {
                 "dependsOn": [
+                    "^build",
                     "build"
                 ]
             }

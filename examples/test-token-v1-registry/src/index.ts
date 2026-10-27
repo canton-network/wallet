@@ -22,9 +22,15 @@ import {
     type RegistryConfig,
     RegistryState,
     defaultConfig,
+    DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT,
 } from './common/state.js'
 
-export { RegistryState, defaultConfig, type RegistryConfig }
+export {
+    RegistryState,
+    defaultConfig,
+    DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT,
+    type RegistryConfig,
+}
 
 let server: Server
 
@@ -43,7 +49,6 @@ export const startRegistry = async (config?: Partial<RegistryConfig>) => {
         error: Error,
         _req: Request,
         res: Response,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _next: NextFunction
     ) => {
         if (error instanceof APIError) {
@@ -52,7 +57,11 @@ export const startRegistry = async (config?: Partial<RegistryConfig>) => {
             })
             return
         }
-        res.status(500).send({ ...error, stack: error.stack })
+        res.status(500).send({
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+        })
     }
 
     server = app

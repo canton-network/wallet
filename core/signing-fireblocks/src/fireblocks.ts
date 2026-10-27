@@ -7,7 +7,7 @@ import {
     type TransactionResponse,
     type VaultAccount,
 } from '@fireblocks/ts-sdk'
-import { pino } from 'pino'
+import { getLogger } from '@logtape/logtape'
 import {
     type SigningStatus,
     CC_COIN_TYPE,
@@ -50,9 +50,13 @@ export interface FireblocksApiKeyInfo {
     apiSecret: string
 }
 
-const logger = pino({ name: 'main', level: 'debug' })
-
 export class FireblocksHandler {
+    private logger = getLogger([
+        'core',
+        'signing-fireblocks',
+        'FireblocksHandler',
+    ])
+
     private defaultClient: Fireblocks | undefined = undefined
     private clients: Map<string, Fireblocks> = new Map()
     private coinType: number
@@ -142,7 +146,7 @@ export class FireblocksHandler {
                 }
             }
         } catch (error) {
-            logger.error(error, 'Error fetching vault accounts:')
+            this.logger.error('Error fetching vault accounts', { error })
             throw error
         }
         return keys
@@ -237,9 +241,12 @@ export class FireblocksHandler {
                     )
                 }
             } catch (error) {
-                throw new Error(`Error looking up public key: ${error}`, {
-                    cause: error,
-                })
+                throw new Error(
+                    `Error looking up public key: ${String(error)}`,
+                    {
+                        cause: error,
+                    }
+                )
             }
         }
     }
@@ -310,15 +317,16 @@ export class FireblocksHandler {
                 // there will be no transactions to fetch
             } while (fetchedLength > 0)
         } catch (error) {
-            logger.error(error, 'Error fetching signatures')
+            this.logger.error('Error fetching signatures', { error })
             throw error
         }
     }
     /**
-     * Sign a transaction using a public key
+     * Sign a transaction hash or message using a public key
      * @param userId - id of a user to get respective client and keys
-     * @param txHash - Hash of the transaction to sign
+     * @param txHash - Hex-encoded bytes to sign (transaction hash or message)
      * @param keyIdentifier - The key identifier (must include publicKey)
+     * @param note - Note shown to approvers in Fireblocks
      * @param externalTxId - The transaction ID assigned by the Wallet Gateway
      * @return The transaction object from Fireblocks
      */
@@ -326,6 +334,7 @@ export class FireblocksHandler {
         userId: string | undefined,
         txHash: string,
         keyIdentifier: KeyIdentifier,
+        note: string,
         externalTxId?: string
     ): Promise<FireblocksTransaction> {
         try {
@@ -348,7 +357,7 @@ export class FireblocksHandler {
             const transaction = await client.transactions.createTransaction({
                 transactionRequest: {
                     operation: 'RAW',
-                    note: `Signing transaction with public key ${publicKey}`,
+                    note,
                     externalTxId,
                     extraParameters: {
                         rawMessageData: {
@@ -363,13 +372,15 @@ export class FireblocksHandler {
                     },
                 },
             })
+
+            // If response has status COMPLETED return it as pending.
+            // By the specs create endpoint doesn't return a signature, but doesn't rule out any specific status.
+            // So it's safer to use regular createTransaction and getTransaction flow,
+            // even if it was possible for create to return status COMPLETED.
             let status: SigningStatus = 'pending'
             switch (transaction.data.status) {
                 case 'REJECTED':
                     status = 'rejected'
-                    break
-                case 'COMPLETED':
-                    status = 'signed'
                     break
                 case 'CANCELLED':
                 case 'FAILED':
@@ -385,7 +396,7 @@ export class FireblocksHandler {
                 derivationPath: key.derivationPath,
             }
         } catch (error) {
-            logger.error(error, 'Error signing transaction:')
+            this.logger.error('Error signing transaction', { error })
             throw error
         }
     }

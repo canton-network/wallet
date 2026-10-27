@@ -3,6 +3,7 @@
 
 import type { SDKContext } from '../../../sdk.js'
 import type { Ops } from '@canton-network/core-provider-ledger'
+import { SynchronizerResolver } from '../../../init/synchronizer.js'
 
 export class DarNamespace {
     constructor(private readonly sdkContext: SDKContext) {}
@@ -24,15 +25,18 @@ export class DarNamespace {
         }
 
         try {
+            const targetSynchronizerId =
+                await SynchronizerResolver.requireSynchronizerId(
+                    this.sdkContext,
+                    synchronizerId
+                )
             await this.sdkContext.ledgerProvider.request<Ops.PostV2Packages>({
                 method: 'ledgerApi',
                 params: {
                     resource: '/v2/packages',
                     requestMethod: 'post',
                     query: {
-                        synchronizerId:
-                            synchronizerId ??
-                            this.sdkContext.defaultSynchronizerId,
+                        synchronizerId: targetSynchronizerId,
                         vetAllPackages: vetAllPackages ?? true,
                     },
                     body: darBytes as never,
@@ -41,7 +45,12 @@ export class DarNamespace {
             })
         } catch (e) {
             const code = (e as { code?: string })?.code
-            const message = `${(e as { cause?: unknown })?.cause ?? (e as Error)?.message ?? e}`
+            const detail =
+                (e as { cause?: unknown })?.cause ?? (e as Error)?.message ?? e
+            const message =
+                typeof detail === 'string'
+                    ? detail
+                    : (JSON.stringify(detail) ?? '')
             if (
                 code === 'KNOWN_PACKAGE_VERSION' ||
                 message.includes('same name and version')

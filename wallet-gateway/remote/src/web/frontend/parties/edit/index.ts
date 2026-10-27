@@ -13,7 +13,7 @@ import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import { WALLET_STATUS_CODE } from '../index'
-import { Wallet } from '@canton-network/core-wallet-user-rpc-client'
+import { type Wallet } from '@canton-network/core-wallet-user-rpc-client'
 
 import { UserUiAddOrEditParty } from '../common.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
@@ -85,6 +85,7 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
         return html`
             <wg-wallet-edit-form
                 .signingProviders=${this.signingProviders}
+                ?signingProvidersLoading=${this.signingProvidersLoading}
                 .disabledSigningProviders=${[SigningProvider.PARTICIPANT]}
                 .publicKeys=${this.publicKeys}
                 .selectedSigningProvider=${this.selectedSigningProvider}

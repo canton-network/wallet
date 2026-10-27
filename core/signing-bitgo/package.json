@@ -1,9 +1,10 @@
 {
     "name": "@canton-network/core-signing-bitgo",
-    "version": "1.3.0",
+    "version": "1.5.0",
     "type": "module",
     "description": "Wallet Gateway signing driver for BitGo",
     "license": "Apache-2.0",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,15 +17,13 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "clean": "rm -rf ./dist",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage"
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "clean": "rm -rf dist"
     },
     "dependencies": {
         "@bitgo/sdk-lib-mpc": "catalog:",
-        "@canton-network/core-signing-lib": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
         "zod": "catalog:"
     },
     "devDependencies": {

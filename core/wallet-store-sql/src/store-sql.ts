@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
+import { getLogger } from '@logtape/logtape'
 import {
     type AuthContext,
     type UserId,
@@ -9,6 +9,7 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store as BaseStore,
     Wallet,
@@ -28,6 +29,10 @@ import type {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
+} from '@canton-network/core-wallet-store'
+import {
+    assertUniqueSelfIssuedAudience,
+    resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
 import {
     CamelCasePlugin,
@@ -60,19 +65,18 @@ import pg from 'pg'
 import type { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
+    private logger = getLogger(['core', 'wallet-store-sql', 'StoreSql'])
     authContext: AuthContext | undefined
 
     constructor(
         private db: Kysely<DB>,
-        private logger: Logger,
         authContext?: AuthContext
     ) {
-        this.logger = logger.child({ component: 'StoreSql' })
         this.authContext = authContext
     }
 
     withAuthContext(context?: AuthContext): StoreSql {
-        return new StoreSql(this.db, this.logger, context)
+        return new StoreSql(this.db, context)
     }
 
     private assertConnected(): UserId {
@@ -173,6 +177,30 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         }
     }
 
+    async getWalletByJwt(
+        userId: string,
+        partyId: PartyId,
+        audiences: string[]
+    ): Promise<Wallet | undefined> {
+        const networks = (
+            await this.db.selectFrom('networks').selectAll().execute()
+        ).map(toNetwork)
+        const network = resolveSelfIssuedNetworkByAudiences(networks, audiences)
+        if (!network) {
+            return undefined
+        }
+
+        const row = await this.db
+            .selectFrom('wallets')
+            .selectAll()
+            .where('userId', '=', userId)
+            .where('partyId', '=', partyId)
+            .where('networkId', '=', network.id)
+            .executeTakeFirst()
+
+        return row ? toWallet(row) : undefined
+    }
+
     async getPrimaryWallet(): Promise<Wallet | undefined> {
         const wallets = await this.getWallets()
         return wallets.find((w) => w.primary === true)
@@ -210,6 +238,39 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             await trx
                 .updateTable('wallets')
                 .set({ primary: 1 })
+                .where((eb) =>
+                    eb.and([
+                        eb('partyId', '=', partyId),
+                        eb('networkId', '=', network.id),
+                        eb('userId', '=', userId),
+                    ])
+                )
+                .execute()
+        })
+    }
+
+    async setAuthPartyWallet(partyId: PartyId | null): Promise<void> {
+        const network = await this.getCurrentNetwork()
+        const userId = this.assertConnected()
+
+        await this.db.transaction().execute(async (trx) => {
+            await trx
+                .updateTable('wallets')
+                .set({ isAuthParty: 0 })
+                .where((eb) =>
+                    eb.and([
+                        eb('networkId', '=', network.id),
+                        eb('userId', '=', userId),
+                        eb('isAuthParty', '=', 1),
+                    ])
+                )
+                .execute()
+
+            if (partyId === null) return
+
+            await trx
+                .updateTable('wallets')
+                .set({ isAuthParty: 1 })
                 .where((eb) =>
                     eb.and([
                         eb('partyId', '=', partyId),
@@ -458,7 +519,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                         ])
                     )
                     .execute()
-                this.logger.debug(deleted, 'Deleted old session')
+                this.logger.info('Deleted old session', { deleted })
             }
 
             const inserted = await trx
@@ -470,11 +531,11 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 })
                 .execute()
 
-            this.logger.debug(inserted, 'Inserted new session')
+            this.logger.info('Inserted new session', { inserted })
         })
     }
 
-    async getOnboardingSession(
+    async getSelfIssuedLoginSession(
         sessionId: string
     ): Promise<Session | undefined> {
         const row = await this.db
@@ -486,7 +547,17 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return row ? toSession(row) : undefined
     }
 
-    async upgradeOnboardingSession(
+    async removeSelfIssuedLoginSession(sessionId: string): Promise<void> {
+        const userId = this.assertConnected()
+        await this.db
+            .deleteFrom('sessions')
+            .where('id', '=', sessionId)
+            .where('userId', '=', userId)
+            .where('accessToken', 'is', null)
+            .execute()
+    }
+
+    async upgradeSelfIssuedLoginSession(
         sessionId: string,
         accessToken: AccessToken
     ): Promise<Session> {
@@ -501,7 +572,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .where('accessToken', 'is', null)
                 .executeTakeFirst()
             if (!row) {
-                throw new Error('Onboarding session not found')
+                throw new Error('Self-issued login session not found')
             }
 
             await trx
@@ -575,7 +646,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         // todo: check and compare userid of existing idp
         await this.db.transaction().execute(async (trx) => {
             const idpEntry = fromIdp(idp)
-            this.logger.info(idpEntry, 'Updating idp table')
+            this.logger.info('Updating idp table', { idpEntry })
             await trx
                 .updateTable('idps')
                 .set(idpEntry)
@@ -633,12 +704,12 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     async getCurrentNetwork(): Promise<Network> {
         const userId = this.assertConnected()
         const token = this.authContext?.accessToken
-        const onboardingSessionId =
+        const selfIssuedLoginSessionId =
             this.authContext && !this.authContext.isApiKey
                 ? this.authContext.sessionId
                 : undefined
-        if (!token && !onboardingSessionId) {
-            throw new Error('No session found')
+        if (!token && !selfIssuedLoginSessionId) {
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
 
         const sessionRow = await this.db
@@ -649,13 +720,13 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 token
                     ? eb('accessToken', '=', token)
                     : eb.and([
-                          eb('id', '=', onboardingSessionId!),
+                          eb('id', '=', selfIssuedLoginSessionId!),
                           eb('accessToken', 'is', null),
                       ])
             )
             .executeTakeFirst()
         if (!sessionRow) {
-            throw new Error('No session found')
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
 
         const session = toSession(sessionRow)
@@ -711,9 +782,14 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         // todo: check and compare idpId of existing network
         this.assertConnected()
         await this.db.transaction().execute(async (trx) => {
+            const existing = (
+                await trx.selectFrom('networks').selectAll().execute()
+            ).map(toNetwork)
+            assertUniqueSelfIssuedAudience(existing, network, network.id)
+
             // we do not set a userId for now and leave all networks global when updating
             const networkEntry = fromNetwork(network, undefined)
-            this.logger.info(networkEntry, 'Updating network table')
+            this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')
                 .set(networkEntry)
@@ -743,12 +819,17 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .executeTakeFirst()
             if (networkAlreadyExists) {
                 throw new Error(`Network ${network.id} already exists`)
-            } else {
-                await trx
-                    .insertInto('networks')
-                    .values(fromNetwork(network, userId))
-                    .execute()
             }
+
+            const existing = (
+                await trx.selectFrom('networks').selectAll().execute()
+            ).map(toNetwork)
+            assertUniqueSelfIssuedAudience(existing, network)
+
+            await trx
+                .insertInto('networks')
+                .values(fromNetwork(network, userId))
+                .execute()
         })
     }
 
@@ -798,7 +879,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             }),
             ...(signedAt !== undefined && { signedAt }),
             ...(externalTxId !== undefined && { externalTxId }),
-            ...(failureReason !== undefined && { failureReason }),
+            ...(failureReason && { failureReason }),
         }
     }
 
@@ -1033,12 +1114,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
         const signature = updates.signature ?? existing.signature
+        const externalTxId = updates.externalTxId ?? existing.externalTxId
+        const failureReason = updates.failureReason ?? existing.failureReason
 
         return {
             ...existing,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),
+            ...(externalTxId !== undefined && { externalTxId }),
+            ...(failureReason !== undefined && { failureReason }),
         }
     }
 

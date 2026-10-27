@@ -14,7 +14,7 @@ import {
     makeIdp,
     mockIdpsPageFlow,
     mockRequest,
-} from '../../test-helpers.js'
+} from '../../__tests__/test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
     () => ({
@@ -49,7 +49,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiReviewIdp } from './index.js'
+import type { UserUiReviewIdp } from './index.js'
 
 const idp = makeIdp({ id: 'idp-review' })
 

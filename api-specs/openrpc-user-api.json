@@ -11,6 +11,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AddNetworkParams",
                         "type": "object",
@@ -37,6 +38,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveNetworkParams",
                         "type": "object",
@@ -88,6 +90,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetNetworkParams",
                         "type": "object",
@@ -124,6 +127,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SelfSignedAccessTokenParams",
                         "type": "object",
@@ -173,6 +177,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AddIdpParams",
                         "type": "object",
@@ -199,6 +204,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveIdpParams",
                         "type": "object",
@@ -248,6 +254,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "CreateWalletParams",
                         "type": "object",
@@ -274,11 +281,7 @@
                                 "description": "Name of signing provider's key to use for getting keys."
                             }
                         },
-                        "required": [
-                            "partyHint",
-                            "networkId",
-                            "signingProviderId"
-                        ]
+                        "required": ["partyHint", "signingProviderId"]
                     }
                 }
             ],
@@ -300,12 +303,13 @@
             "description": "Creates a new wallet and party with the given hint."
         },
         {
-            "name": "addSelfIssuedSession",
+            "name": "startSelfIssuedLoginSession",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
-                        "title": "AddSelfIssuedSessionParams",
+                        "title": "StartSelfIssuedLoginSessionParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
@@ -332,7 +336,7 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "AddSelfIssuedSessionResult",
+                    "title": "StartSelfIssuedLoginSessionResult",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -348,19 +352,20 @@
             "description": "Creates a tokenless session used during self-issued token creation process."
         },
         {
-            "name": "getSelfIssuedOnboarding",
+            "name": "getSelfIssuedLoginMode",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
-                        "title": "GetSelfIssuedOnboardingParams",
+                        "title": "GetSelfIssuedLoginModeParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             }
                         },
                         "required": ["sessionId"]
@@ -370,34 +375,32 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "GetSelfIssuedOnboardingResult",
+                    "title": "GetSelfIssuedLoginModeResult",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "userOnboarded": {
-                            "title": "userOnboarded",
-                            "type": "boolean",
-                            "description": "Whether the ledger user already has a primary party or primary party authentication set."
+                        "mode": {
+                            "title": "selfIssuedLoginMode",
+                            "type": "string",
+                            "enum": ["create", "select"],
+                            "description": "create when there is no ledger user yet. select when the user already authenticates with a primary party."
                         },
-                        "wallets": {
-                            "title": "authPartyWallets",
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/components/schemas/Wallet"
-                            },
-                            "description": "Wallets stored for the user on the selected network that can be used for authentication."
+                        "wallet": {
+                            "$ref": "#/components/schemas/Wallet",
+                            "description": "Allocated wallet for the primary party. Present when mode is select and the party was synced."
                         }
                     },
-                    "required": ["userOnboarded", "wallets"]
+                    "required": ["mode"]
                 }
             },
-            "description": "Returns the ledger-user and wallet state needed to select the self-issued onboarding path."
+            "description": "Returns the ledger-user and wallet state needed to select the self-issued login path."
         },
         {
             "name": "createSelfIssuedWallet",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "CreateSelfIssuedWalletParams",
                         "type": "object",
@@ -406,7 +409,7 @@
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             },
                             "partyHint": {
                                 "title": "partyHint",
@@ -449,6 +452,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AllocateSelfIssuedWalletParams",
                         "type": "object",
@@ -457,7 +461,7 @@
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             },
                             "partyId": {
                                 "title": "partyId",
@@ -487,19 +491,20 @@
             "description": "Polls the signing provider, allocates the party, and grants ledger-user rights when signing is complete."
         },
         {
-            "name": "connectSelfIssuedSession",
+            "name": "completeSelfIssuedLogin",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
-                        "title": "ConnectSelfIssuedSessionParams",
+                        "title": "CompleteSelfIssuedLoginParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
                             "sessionId": {
                                 "title": "sessionId",
                                 "type": "string",
-                                "description": "Onboarding session id returned by addSelfIssuedSession."
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                             },
                             "partyId": {
                                 "title": "partyId",
@@ -514,7 +519,7 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "ConnectSelfIssuedSessionResult",
+                    "title": "CompleteSelfIssuedLoginResult",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -536,13 +541,42 @@
                     "required": ["wallet", "accessToken", "sessionId"]
                 }
             },
-            "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the onboarding session with it."
+            "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the self-issued login session with it."
+        },
+        {
+            "name": "removeSelfIssuedLoginSession",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "RemoveSelfIssuedLoginSessionParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
+                            }
+                        },
+                        "required": ["sessionId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/Null"
+                }
+            },
+            "description": "Deletes the tokenless self-issued login session. A session that already has an access token is left in place."
         },
         {
             "name": "allocatePartyForWallet",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AllocatePartyForWalletParams",
                         "type": "object",
@@ -580,6 +614,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SetPrimaryWalletParams",
                         "type": "object",
@@ -608,6 +643,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveWalletParams",
                         "type": "object",
@@ -638,6 +674,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ListWalletsParams",
                         "type": "object",
@@ -678,26 +715,29 @@
                     "properties": {
                         "added": {
                             "title": "SyncWalletsResultAdded",
-                            "description": "Non-disabled wallets added in this syncWallets call.",
+                            "description": "Party ids of non-disabled wallets added in this syncWallets call.",
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/Wallet"
+                                "title": "partyId",
+                                "type": "string"
                             }
                         },
                         "updated": {
                             "title": "SyncWalletsResultUpdated",
-                            "description": "Existing wallets that either got downgraded to status initialized or their rights changed in this syncWallets call.",
+                            "description": "Party ids of existing wallets whose status became initialized, whose rights changed, or whose isAuthParty flag changed in this syncWallets call.",
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/Wallet"
+                                "title": "partyId",
+                                "type": "string"
                             }
                         },
                         "disabled": {
                             "title": "SyncWalletsResultDisabled",
-                            "description": "Either wallets added in this iteration that are disabled, or existing wallet that were updated to be disabled in this syncWallets call.",
+                            "description": "Party ids of wallets added disabled, or existing wallets disabled, in this syncWallets call.",
                             "type": "array",
                             "items": {
-                                "$ref": "#/components/schemas/Wallet"
+                                "title": "partyId",
+                                "type": "string"
                             }
                         }
                     },
@@ -733,6 +773,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SignParams",
                         "type": "object",
@@ -862,6 +903,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "SignMessageParams",
                         "type": "object",
@@ -890,24 +932,96 @@
                         "signature": {
                             "title": "signature",
                             "type": "string",
-                            "description": "Base64-encoded Ed25519 signature over the message."
+                            "description": "Base64-encoded Ed25519 signature over the message. Absent while the signing provider request is still pending."
                         },
                         "publicKey": {
                             "title": "publicKey",
                             "type": "string",
                             "description": "Base64-encoded Ed25519 public key of the wallet that produced the signature."
+                        },
+                        "status": {
+                            "title": "status",
+                            "type": "string",
+                            "enum": ["signed", "awaiting-signature", "failed"]
+                        },
+                        "externalTxId": {
+                            "title": "externalTxId",
+                            "type": "string",
+                            "description": "Signing provider request id."
+                        },
+                        "failureReason": {
+                            "title": "failureReason",
+                            "type": "string",
+                            "description": "Reason for why the message signing failed."
                         }
                     },
-                    "required": ["signature", "publicKey"]
+                    "required": ["publicKey", "status"]
                 }
             },
-            "description": "Signs an arbitrary UTF-8 message with the wallet's private key (Ed25519). The message bytes are signed as-is; callers are expected to embed any application-level domain separation (e.g. EIP-4361 / SIWX text) in the message itself. Only supported for WALLET_KERNEL wallets."
+            "description": "Signs an arbitrary UTF-8 message with the wallet's private key (Ed25519). The message bytes are signed as-is; callers are expected to embed any application-level domain separation (e.g. EIP-4361 / SIWX text) in the message itself. When the signing provider accepts the request asynchronously, the result has status awaiting-signature and externalTxId instead of a signature. When the signing provider rejects or fails the request, the result has status failed and a failureReason."
+        },
+        {
+            "name": "getSignMessageStatus",
+            "description": "Polls the signing provider for a message awaiting an external signature and updates the stored message.",
+            "params": [
+                {
+                    "name": "params",
+                    "schema": {
+                        "title": "GetSignMessageStatusParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "messageId": {
+                                "$ref": "#/components/schemas/MessageId"
+                            }
+                        },
+                        "required": ["messageId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "GetSignMessageStatusResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "status": {
+                            "title": "status",
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "awaiting-signature",
+                                "signed",
+                                "failed"
+                            ]
+                        },
+                        "externalTxId": {
+                            "title": "externalTxId",
+                            "type": "string",
+                            "description": "Signing provider request id."
+                        },
+                        "signature": {
+                            "title": "signature",
+                            "type": "string",
+                            "description": "Base64-encoded Ed25519 signature, once the provider has signed."
+                        },
+                        "failureReason": {
+                            "title": "failureReason",
+                            "type": "string",
+                            "description": "Reason for why the message signing failed."
+                        }
+                    },
+                    "required": ["status"]
+                }
+            }
         },
         {
             "name": "getMessageToSign",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetMessageToSignParams",
                         "type": "object",
@@ -964,6 +1078,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "DeleteMessageToSignParams",
                         "type": "object",
@@ -983,13 +1098,14 @@
                     "$ref": "#/components/schemas/Null"
                 }
             },
-            "description": "Rejects a pending message signing request."
+            "description": "Rejects a message signing request with status pending or awaiting-signature."
         },
         {
             "name": "execute",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ExecuteParams",
                         "type": "object",
@@ -1023,6 +1139,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "AddSessionParams",
                         "type": "object",
@@ -1089,6 +1206,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetTransactionParams",
                         "type": "object",
@@ -1116,6 +1234,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetTransactionStatusParams",
                         "type": "object",
@@ -1200,6 +1319,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "DeleteTransactionParams",
                         "type": "object",
@@ -1253,6 +1373,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GenerateApiKeyParams",
                         "type": "object",
@@ -1305,6 +1426,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "RemoveApiKeyParams",
                         "type": "object",
@@ -1328,11 +1450,37 @@
             }
         },
         {
+            "name": "listSigningProviders",
+            "description": "Lists available signing providers.",
+            "params": [],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ListSigningProvidersResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "signingProviders": {
+                            "title": "signingProviders",
+                            "type": "array",
+                            "items": {
+                                "title": "signingProviderId",
+                                "type": "string"
+                            },
+                            "description": "The IDs of the available signing providers."
+                        }
+                    },
+                    "required": ["signingProviders"]
+                }
+            }
+        },
+        {
             "name": "listSigningProviderKeys",
             "description": "Lists available keys of a signing provider",
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "ListSigningProviderKeysParams",
                         "type": "object",
@@ -1391,6 +1539,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "GetWalletParams",
                         "type": "object",
@@ -1427,6 +1576,7 @@
             "params": [
                 {
                     "name": "params",
+                    "required": true,
                     "schema": {
                         "title": "changeSigningProviderParams",
                         "type": "object",
@@ -1938,11 +2088,12 @@
                         "description": "Whether the party authenticates the user with self-issued tokens."
                     },
                     "rights": {
-                        "title": "rights",
+                        "title": "partyRights",
                         "type": "array",
                         "description": "The rights of the wallet.",
                         "items": {
                             "title": "PartyLevelRight",
+                            "type": "string",
                             "enum": ["CanActAs", "CanReadAs", "CanExecuteAs"]
                         }
                     }
@@ -2024,11 +2175,12 @@
                         "description": "The reason for the current status."
                     },
                     "rights": {
-                        "title": "rights",
+                        "title": "userRights",
                         "type": "array",
                         "description": "The rights of the user for the network.",
                         "items": {
                             "title": "UserLevelRight",
+                            "type": "string",
                             "enum": [
                                 "CanReadAsAnyParty",
                                 "CanExecuteAsAnyParty"
@@ -2157,7 +2309,12 @@
                     "status": {
                         "title": "status",
                         "type": "string",
-                        "enum": ["pending", "signed", "failed"]
+                        "enum": [
+                            "pending",
+                            "awaiting-signature",
+                            "signed",
+                            "failed"
+                        ]
                     },
                     "partyId": {
                         "title": "partyId",
@@ -2195,6 +2352,16 @@
                         "title": "signature",
                         "type": "string",
                         "description": "The signature of the message."
+                    },
+                    "externalTxId": {
+                        "title": "externalTxId",
+                        "type": "string",
+                        "description": "Message signing request ID from signing provider. Present whenever the signing provider assigned one, regardless of status."
+                    },
+                    "failureReason": {
+                        "title": "failureReason",
+                        "type": "string",
+                        "description": "Reason for why the message signing failed."
                     }
                 },
                 "required": [

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PublicKey } from '@canton-network/core-signing-lib'
-import { v4 } from 'uuid'
 import type { SDKContext } from '../../../sdk.js'
 import type { ParticipantEndpointConfig } from './types.js'
 import { PreparedPartyCreationService } from './prepared.js'
@@ -10,6 +9,7 @@ import type { CreatePartyOptions } from './types.js'
 import type { SDKLogger } from '../../../logger/index.js'
 import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
+import { SynchronizerResolver } from '../../../init/synchronizer.js'
 
 export class ExternalPartyNamespace {
     private readonly logger: SDKLogger
@@ -32,7 +32,10 @@ export class ExternalPartyNamespace {
             this.resolveParticipantUids(
                 options?.confirmingParticipantEndpoints ?? []
             ),
-            options?.synchronizerId || this.resolveSynchronizerId(),
+            SynchronizerResolver.requireSynchronizerId(
+                this.ctx,
+                options?.synchronizerId
+            ),
         ]).then(
             ([
                 observingParticipantUids,
@@ -46,7 +49,8 @@ export class ExternalPartyNamespace {
                             resource: '/v2/parties/external/generate-topology',
                             body: {
                                 synchronizer: synchronizerId,
-                                partyHint: options?.partyHint ?? v4(),
+                                partyHint:
+                                    options?.partyHint ?? crypto.randomUUID(),
                                 publicKey: {
                                     format: 'CRYPTO_KEY_FORMAT_RAW',
                                     keyData: publicKey,
@@ -80,10 +84,6 @@ export class ExternalPartyNamespace {
         )
     }
 
-    private resolveSynchronizerId() {
-        return Promise.resolve(this.ctx.defaultSynchronizerId)
-    }
-
     /**
      * Retrieves participant IDs from the given endpoints by querying their ledger API.
      * @param hostingParticipantConfigs - Participant endpoint configurations to query
@@ -96,8 +96,7 @@ export class ExternalPartyNamespace {
             hostingParticipantConfigs?.map((endpoint) => {
                 const provider = new LedgerProvider({
                     accessTokenProvider: new AuthTokenProvider(
-                        endpoint.tokenProviderConfig,
-                        this.logger
+                        endpoint.tokenProviderConfig
                     ),
                     baseUrl: endpoint.url,
                 })

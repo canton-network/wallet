@@ -3,8 +3,8 @@
 
 import type { components, paths } from './generated-clients/scan-proxy'
 import createClient, { type Client } from 'openapi-fetch'
-import type { Logger } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { getLogger } from '@logtape/logtape'
 
 export type ScanProxyTypes = components['schemas']
 
@@ -49,8 +49,8 @@ export type GetResponse<Path extends GetEndpoint> = paths[Path] extends {
     : never
 
 export class ScanProxyClient {
+    private logger = getLogger(['core', 'splice-client', 'ScanProxyClient'])
     private readonly client: Client<paths>
-    private readonly logger: Logger
     private readonly accessTokenProvider: AccessTokenProvider
     private readonly baseUrlHref: string
     // shared caches for all instances of ScanProxyClient
@@ -71,31 +71,23 @@ export class ScanProxyClient {
     // time after surpassing which mining rounds should be refreshed
     private static roundsNextChangeAt = new Map<string, number>()
 
-    constructor(
-        baseUrl: URL,
-        logger: Logger,
-        accessTokenProvider: AccessTokenProvider
-    ) {
+    constructor(baseUrl: URL, accessTokenProvider: AccessTokenProvider) {
         this.baseUrlHref = baseUrl.href
         this.accessTokenProvider = accessTokenProvider
-        this.logger = logger
-        this.logger.debug({ baseUrl }, 'ScanProxyClient initialized')
+        this.logger.debug('ScanProxyClient initialized', { baseUrl })
         this.client = createClient<paths>({
             baseUrl: baseUrl.href,
             fetch: async (url: RequestInfo, options: RequestInit = {}) => {
                 const accessToken =
                     await this.accessTokenProvider.getAccessToken()
 
-                return fetch(url, {
-                    ...options,
-                    headers: {
-                        ...(options.headers || {}),
-                        ...(accessToken
-                            ? { Authorization: `Bearer ${accessToken}` }
-                            : {}),
-                        'Content-Type': 'application/json',
-                    },
-                })
+                const headers = new Headers(options.headers)
+                if (accessToken) {
+                    headers.set('Authorization', `Bearer ${accessToken}`)
+                }
+                headers.set('Content-Type', 'application/json')
+
+                return fetch(url, { ...options, headers })
             },
         })
     }
@@ -108,12 +100,21 @@ export class ScanProxyClient {
             query?: Record<string, string>
         }
     ): Promise<PostResponse<Path>> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
+        // oxlint-disable-next-line typescript/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
         const options = { body, params } as any
-        this.logger.debug({ requestBody: body }, `POST ${path}`)
-        const resp = await this.client.POST(path, options)
-        this.logger.debug({ requestBody: body, response: resp }, `POST ${path}`)
-        return this.valueOrError(resp)
+
+        this.logger.debug('POST {path} request', {
+            path,
+            requestBody: body,
+        })
+
+        const response = await this.client.POST(path, options)
+
+        this.logger.debug('POST {path} response', {
+            path,
+            response,
+        })
+        return this.valueOrError(response)
     }
 
     public async get<Path extends GetEndpoint>(
@@ -123,15 +124,15 @@ export class ScanProxyClient {
             query?: Record<string, string>
         }
     ): Promise<GetResponse<Path>> {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
+        // oxlint-disable-next-line typescript/no-explicit-any -- (cant align this with openapi-fetch generics :shrug:)
         const options = { params } as any
 
-        const resp = await this.client.GET(path, options)
-        this.logger.debug(
-            { path: path, params: params, response: resp },
-            `GET ${path}`
-        )
-        return this.valueOrError(resp)
+        this.logger.debug('GET {path} request', { path, params })
+
+        const response = await this.client.GET(path, options)
+
+        this.logger.debug('GET {path} response', { path, response })
+        return this.valueOrError(response)
     }
 
     private async valueOrError<T>(response: {

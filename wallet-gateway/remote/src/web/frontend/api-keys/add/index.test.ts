@@ -8,7 +8,7 @@ import {
     createMockUserClient,
     mockApiKeysPageFlow,
     mockRequest,
-} from '../../test-helpers.js'
+} from '../../__tests__/test-helpers.js'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
     () => ({
@@ -43,7 +43,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiAddApiKey } from './index.js'
+import type { UserUiAddApiKey } from './index.js'
 import { ApiKeyGenerateEvent } from '@canton-network/core-wallet-ui-components'
 
 describe('UserUiAddApiKey', () => {

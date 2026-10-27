@@ -7,7 +7,7 @@ import {
     SigningProvider,
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
-import type { Store, Network } from '@canton-network/core-wallet-store'
+import type { Store, Network, Session } from '@canton-network/core-wallet-store'
 import type {
     AddSessionParams,
     CreateWalletParams,
@@ -29,7 +29,14 @@ import {
 } from '@canton-network/core-wallet-auth'
 import { AuthService } from '../auth-service.js'
 import { createExtensionWallet } from './create-wallet.js'
-import { TransactionService } from './transaction-service.js'
+import {
+    type INotificationService,
+    LOGOUT_EVENT,
+    type SigningDrivers,
+    TransactionService,
+} from '@canton-network/core-wallet-services'
+import { notifySessionTerminated } from '../status.js'
+import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.js'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     switch (auth.method) {
@@ -106,10 +113,33 @@ function toPublicNetwork(network: Network): PublicNetwork {
     }
 }
 
+async function requireSession(
+    store: Store,
+    accessToken: string
+): Promise<Session> {
+    const session = await store.getSession(accessToken)
+    if (!session) {
+        throw new Error('No active session found')
+    }
+    return session
+}
+
 export const userController = (
     getStore: () => Promise<Store>,
-    signingDriver: SigningDriverInterface
+    signingDriver: SigningDriverInterface,
+    notificationService: INotificationService
 ) => {
+    const signingDrivers: SigningDrivers = {
+        [SigningProvider.WALLET_KERNEL]: signingDriver,
+    }
+    const createTransactionService = (store: Store, sessionId: string) =>
+        new TransactionService(
+            store,
+            signingDrivers,
+            notificationService.getNotifier(sessionId),
+            'HASHING_SCHEME_VERSION_V3'
+        )
+
     return buildController({
         addNetwork: async () => {
             throw new Error('Function addNetwork not implemented.')
@@ -165,12 +195,10 @@ export const userController = (
             )
             const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
                 idp,
-                network.adminAuth,
-                pinoLogger
+                network.adminAuth
             )
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: adminTokenProvider,
             })
             const wallet = await createExtensionWallet({
@@ -184,13 +212,19 @@ export const userController = (
                 synchronizerId: network.synchronizerId,
             })
 
+            notificationService
+                .getNotifier(authContext.userId)
+                .emit('accountsChanged', await store.getWallets())
+
             return { wallet }
         },
-        addSelfIssuedSession: async () => {
-            throw new Error('Function addSelfIssuedSession not implemented.')
+        startSelfIssuedLoginSession: async () => {
+            throw new Error(
+                'Function startSelfIssuedLoginSession not implemented.'
+            )
         },
-        getSelfIssuedOnboarding: async () => {
-            throw new Error('Function getSelfIssuedOnboarding not implemented.')
+        getSelfIssuedLoginMode: async () => {
+            throw new Error('Function getSelfIssuedLoginMode not implemented.')
         },
         createSelfIssuedWallet: async () => {
             throw new Error('Function createSelfIssuedWallet not implemented.')
@@ -200,9 +234,12 @@ export const userController = (
                 'Function allocateSelfIssuedWallet not implemented.'
             )
         },
-        connectSelfIssuedSession: async () => {
+        completeSelfIssuedLogin: async () => {
+            throw new Error('Function completeSelfIssuedLogin not implemented.')
+        },
+        removeSelfIssuedLoginSession: async () => {
             throw new Error(
-                'Function connectSelfIssuedSession not implemented.'
+                'Function removeSelfIssuedLoginSession not implemented.'
             )
         },
         allocatePartyForWallet: async () => {
@@ -244,15 +281,13 @@ export const userController = (
                 throw new Error('No primary wallet found')
             }
 
-            const session = await store.getSession(connectedContext.accessToken)
-            if (!session) {
-                throw new Error('No active session found')
-            }
-
-            const transactionService = new TransactionService(
+            const session = await requireSession(
                 store,
-                pinoLogger,
-                signingDriver
+                connectedContext.accessToken
+            )
+            const transactionService = createTransactionService(
+                store,
+                session.id
             )
 
             pinoLogger.info(
@@ -273,6 +308,9 @@ export const userController = (
         },
         signMessage: async () => {
             throw new Error('Function signMessage not implemented.')
+        },
+        getSignMessageStatus: async () => {
+            throw new Error('Function getSignMessageStatus not implemented.')
         },
         getMessageToSign: async () => {
             throw new Error('Function getMessageToSign not implemented.')
@@ -307,23 +345,20 @@ export const userController = (
                 throw new Error('No network session found')
             }
 
-            const session = await store.getSession(connectedContext.accessToken)
-            if (!session) {
-                throw new Error('No active session found')
-            }
+            const session = await requireSession(
+                store,
+                connectedContext.accessToken
+            )
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    connectedContext.accessToken,
-                    pinoLogger
+                    connectedContext.accessToken
                 ),
             })
-            const transactionService = new TransactionService(
+            const transactionService = createTransactionService(
                 store,
-                pinoLogger,
-                signingDriver
+                session.id
             )
 
             pinoLogger.info(
@@ -335,7 +370,9 @@ export const userController = (
                 wallet,
                 transaction,
                 executeParams,
-                ledgerClient
+                ledgerClient,
+                connectedContext,
+                network
             )
             pinoLogger.info(
                 { transactionId: executeParams.transactionId },
@@ -362,6 +399,13 @@ export const userController = (
             const idp = await store.getIdp(network.identityProviderId)
             // assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
+            // setSession replaces the origin's authenticated sessions; look
+            // them up first so their notification ports can be closed.
+            const replacedSessions = (await store.listSessions()).filter(
+                (session) =>
+                    session.origin === params.origin && session.accessToken
+            )
+
             await store.setSession({
                 id: newSessionId,
                 origin: params.origin,
@@ -369,9 +413,15 @@ export const userController = (
                 accessToken: context.accessToken,
             })
 
+            // The content script reopens its port, bound to the new session,
+            // on the next connected `connect`/`status` response.
+            for (const session of replacedSessions) {
+                notificationService.getNotifier(session.id).emit(LOGOUT_EVENT)
+            }
+
             // TODO: fill in
             const status = {} as Status
-            const rights = {} as UserLevelRight
+            const rights = [] as UserLevelRight[]
 
             return {
                 id: newSessionId,
@@ -390,7 +440,16 @@ export const userController = (
 
             try {
                 const store = await getStore()
+                const session = await store.getSession(context.accessToken)
                 await store.removeSession(context.accessToken)
+
+                if (session) {
+                    notifySessionTerminated(
+                        notificationService,
+                        session.id,
+                        'removed session'
+                    )
+                }
             } finally {
                 await AuthService.clearAuthContext()
             }
@@ -422,7 +481,7 @@ export const userController = (
                             idp,
                             accessToken: context.accessToken,
                             status: {} as Status,
-                            rights: {} as UserLevelRight,
+                            rights: [] as UserLevelRight[],
                         }
                     })
                 ),
@@ -460,6 +519,9 @@ export const userController = (
                 ...(transaction.externalTxId && {
                     externalTxId: transaction.externalTxId,
                 }),
+                ...(transaction.failureReason && {
+                    failureReason: transaction.failureReason,
+                }),
             }
         },
         listTransactions: async () => {
@@ -484,12 +546,16 @@ export const userController = (
                 )
             }
 
-            const session = await store.getSession(connectedContext.accessToken)
-            if (!session) {
-                throw new Error('No active session found')
-            }
+            const session = await requireSession(
+                store,
+                connectedContext.accessToken
+            )
 
             await store.removeTransaction(transaction.id)
+            notificationService.getNotifier(session.id).emit('txChanged', {
+                status: 'failed',
+                commandId: transaction.commandId,
+            } satisfies TxChangedFailedEvent)
             return null
         },
         getUser: async () => {
@@ -504,10 +570,20 @@ export const userController = (
         removeApiKey: async () => {
             throw new Error('Function removeApiKey not implemented.')
         },
-        listSigningProviderVaults: async () => {
-            throw new Error(
-                'Function listSigningProviderVaults not implemented.'
-            )
+        getTransactionStatus: async () => {
+            throw new Error('Function getTransactionStatus not implemented.')
+        },
+        listSigningProviders: async () => ({
+            signingProviders: Object.keys(signingDrivers),
+        }),
+        listSigningProviderKeys: async () => {
+            throw new Error('Function listSigningProviderKeys not implemented.')
+        },
+        getWallet: async () => {
+            throw new Error('Function getWallet not implemented.')
+        },
+        changeSigningProvider: async () => {
+            throw new Error('Function changeSigningProvider not implemented.')
         },
     })
 }

@@ -19,19 +19,25 @@ import {
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import type { PrivateKey, PublicKey } from '@canton-network/core-signing-lib'
 import { ExternalPartyNamespace } from './service.js'
+import { LedgerNamespace } from '../../ledger/index.js'
+import { SynchronizerResolver } from '../../../init/synchronizer.js'
 
 /**
  * Represents a signed party creation, ready to be allocated on the ledger.
  * Contains both the prepared topology transaction and its cryptographic signature.
  */
 export class SignedPartyCreationService {
+    private readonly ledger: LedgerNamespace
+
     constructor(
         private readonly ctx: SDKContext,
         private readonly signedPartyPromise: Promise<ExecuteOptions>,
         private readonly createPartyOptions?: CreatePartyOptions,
         private readonly publicKey?: PublicKey,
         private readonly privateKey?: PrivateKey
-    ) {}
+    ) {
+        this.ledger = new LedgerNamespace(ctx)
+    }
 
     /**
      * Executes the party allocation on the ledger and optionally grants user rights.
@@ -178,8 +184,7 @@ export class SignedPartyCreationService {
             const defaultLedgerProvider = new LedgerProvider({
                 baseUrl: endpoint.url,
                 accessTokenProvider: new AuthTokenProvider(
-                    endpoint.tokenProviderConfig,
-                    this.ctx.logger
+                    endpoint.tokenProviderConfig
                 ),
             })
 
@@ -213,8 +218,10 @@ export class SignedPartyCreationService {
         const ledgerProvider = defaultLedgerProvider ?? this.ctx.ledgerProvider
         try {
             const synchronizerId =
-                this.createPartyOptions?.synchronizerId ??
-                this.ctx.defaultSynchronizerId
+                await SynchronizerResolver.requireSynchronizerId(
+                    this.ctx,
+                    this.createPartyOptions?.synchronizerId
+                )
 
             await this.allocate(
                 ledgerProvider,
@@ -261,17 +268,9 @@ export class SignedPartyCreationService {
     ): Promise<boolean> {
         try {
             if (synchronizerId) {
-                const response =
-                    await this.ctx.ledgerProvider.request<Ops.GetV2StateConnectedSynchronizers>(
-                        {
-                            method: 'ledgerApi',
-                            params: {
-                                resource: '/v2/state/connected-synchronizers',
-                                requestMethod: 'get',
-                                query: { party: partyId },
-                            },
-                        }
-                    )
+                const response = await this.ledger.connectedSynchronizers({
+                    party: partyId,
+                })
                 return (
                     response.connectedSynchronizers?.some(
                         (s) => s.synchronizerId === synchronizerId

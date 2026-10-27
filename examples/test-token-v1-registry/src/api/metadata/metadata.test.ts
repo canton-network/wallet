@@ -6,7 +6,7 @@ import { getRegistryInfo } from './getRegistryInfo'
 import { getInstrument } from './getInstrument'
 import { listInstruments } from './listInstruments'
 import { instruments, supportedApis } from './common'
-import { expressContext, type RequestType } from '../../__test__/mocks'
+import { expressContext, type RequestType } from '../../__tests__/mocks'
 import { APIError } from '../common'
 
 const { req, res, next } = expressContext
@@ -30,8 +30,12 @@ vi.mock('../../common/state', () => ({
 describe('Metadata', () => {
     beforeEach(() => {})
 
-    it('should get registry info', () => {
-        getRegistryInfo({} as RequestType<typeof getRegistryInfo>, res, next)
+    it('should get registry info', async () => {
+        await getRegistryInfo(
+            {} as RequestType<typeof getRegistryInfo>,
+            res,
+            next
+        )
 
         expect(res.json).toHaveBeenCalledWith({
             adminId: 'admin',
@@ -39,8 +43,12 @@ describe('Metadata', () => {
         })
     })
 
-    it('should list instruments', () => {
-        listInstruments({} as RequestType<typeof listInstruments>, res, next)
+    it('should list instruments', async () => {
+        await listInstruments(
+            {} as RequestType<typeof listInstruments>,
+            res,
+            next
+        )
 
         expect(res.json).toHaveBeenCalledWith({
             instruments,
@@ -60,16 +68,18 @@ describe('Metadata', () => {
         ).toThrow(new APIError(404, 'Instrument not found'))
     })
 
-    it('should get existing instrument', () => {
+    it('should get existing instrument', async () => {
+        const instrument = instruments[0]
+        if (!instrument) throw new Error('expected at least one instrument')
         req.params = {
-            instrumentId: instruments[0].id,
+            instrumentId: instrument.id,
         }
-        getInstrument(
+        await getInstrument(
             req as unknown as RequestType<typeof getInstrument>,
             res,
             next
         )
 
-        expect(res.json).toHaveBeenCalledWith(instruments[0])
+        expect(res.json).toHaveBeenCalledWith(instrument)
     })
 })

@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Disabled unused vars rule to allow for future implementations
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
+/* oxlint-disable no-unused-vars */
+import {
+    type INotificationService,
+    ledgerPrepareParams,
+    networkStatus,
+} from '@canton-network/core-wallet-services'
 import {
     LedgerClient,
     type PrepareSubmissionResponse,
@@ -16,24 +20,22 @@ import type {
     LedgerApiParams,
     Network,
     PrepareExecuteParams,
-    Provider,
     SignMessageParams,
     SignMessageResult,
     StatusEvent,
+    TxChangedPendingEvent,
     Wallet,
 } from './rpc-gen/typings.js'
 
 import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import {
-    ledgerPrepareParams,
-    networkStatus,
-} from '@/utils/legacy-backend/utils.js'
 import { enqueueApprovalRequest } from '@/utils/approval-requests.js'
+import { extensionProvider, notifySessionTerminated } from '../status.js'
 
 export const dappController = (
     getStore: () => Promise<Store>,
-    _signingDriver: SigningDriverInterface
+    _signingDriver: SigningDriverInterface,
+    notificationService: INotificationService
 ) =>
     buildController({
         connect: async () => {
@@ -57,25 +59,15 @@ export const dappController = (
             const network = await store.getCurrentNetwork()
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    pinoLogger
+                    context.accessToken
                 ),
             })
 
             const status = await networkStatus(ledgerClient)
 
             logger.info('Dapp connect status: {*}', { status })
-            // NOTE: no notifier yet in extension
-            // const notifier = notificationService.getNotifier(session.id)
-            const provider: Provider = {
-                id: browser.runtime.id,
-                version: 'TODO',
-                providerType: 'browser',
-                url: '...',
-                // userUrl: `${userUrl}/login/`,
-            }
+            const notifier = notificationService.getNotifier(session.id)
             const connection = {
                 isConnected: true,
                 reason: 'OK',
@@ -83,21 +75,23 @@ export const dappController = (
                 networkReason: status.reason ? status.reason : 'OK',
                 // userUrl: `${userUrl}/login/`,
             }
-            // const statusEvent: StatusEvent = {
-            //     provider,
-            //     connection,
-            //     network: {
-            //         networkId: network.id,
-            //         ledgerApi: network.ledgerApi.baseUrl,
-            //         accessToken: context.accessToken,
-            //     },
-            //     session: {
-            //         accessToken: context.accessToken,
-            //         userId: context.userId,
-            //     },
-            // }
-            // notifier.emit('statusChanged', statusEvent)
-            // notifier.emit('connected', statusEvent)
+            const statusEvent: StatusEvent = {
+                provider: extensionProvider,
+                connection,
+                network: {
+                    networkId: network.id,
+                    ledgerApi: network.ledgerApi.baseUrl,
+                    accessToken: context.accessToken,
+                },
+                session: {
+                    accessToken: context.accessToken,
+                    userId: context.userId,
+                },
+            }
+            // NOTE: a dApp only subscribes after a successful `connect`
+            // response, so it may miss these; the response carries the same data.
+            notifier.emit('statusChanged', statusEvent)
+            notifier.emit('connected', statusEvent)
             return connection
         },
         disconnect: async () => {
@@ -109,6 +103,12 @@ export const dappController = (
             if (!session) return null
 
             await store.removeSession(context.accessToken)
+
+            notifySessionTerminated(
+                notificationService,
+                session.id,
+                'disconnect'
+            )
             return null
         },
         isConnected: async () => {
@@ -162,10 +162,8 @@ export const dappController = (
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
-                logger: pinoLogger,
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    context.accessToken,
-                    pinoLogger
+                    context.accessToken
                 ),
             })
             const commandId = params.commandId || crypto.randomUUID()
@@ -182,10 +180,13 @@ export const dappController = (
             const prepared: PrepareSubmissionResponse =
                 await ledgerClient.postWithRetry(
                     '/v2/interactive-submission/prepare',
-                    ledgerPrepareParams(context.userId, actAs, synchronizerId, {
-                        ...params,
+                    ledgerPrepareParams({
+                        userId: context.userId,
                         commandId,
                         actAs,
+                        synchronizerId,
+                        params,
+                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
                     })
                 )
 
@@ -195,12 +196,17 @@ export const dappController = (
                 status: 'pending',
                 preparedTransaction: prepared.preparedTransaction,
                 preparedTransactionHash: prepared.preparedTransactionHash,
-                payload: params,
+                payload: { ...params, commandId, actAs },
                 origin: session.origin || null,
                 createdAt: new Date(),
             }
 
             await store.setTransaction(transaction)
+
+            notificationService.getNotifier(session.id).emit('txChanged', {
+                status: 'pending',
+                commandId,
+            } satisfies TxChangedPendingEvent)
 
             await enqueueApprovalRequest({ transactionId, commandId })
 
@@ -215,9 +221,7 @@ export const dappController = (
             throw new Error('Function prepareExecuteAndWait not implemented.')
         },
         status: async () => ({
-            provider: {
-                id: 'browser:ext:canton-wallet',
-            },
+            provider: extensionProvider,
             connection: {
                 isConnected: true,
                 reason: 'OK',

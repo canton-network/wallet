@@ -3,7 +3,13 @@
 
 import fs from 'fs'
 import path from 'path'
-import { error, getRepoRoot, success } from './lib/utils.js'
+import {
+    error,
+    getRepoRoot,
+    success,
+    SUPPORTED_VERSIONS,
+    getNetworkArg,
+} from './lib/utils.js'
 import child_process from 'child_process'
 
 const maxIoListeners = Number.parseInt(process.env.MAX_IO_LISTENERS ?? '', 10)
@@ -17,11 +23,31 @@ const dir = path.join(
     'docs/wallet-integration-guide/examples/scripts'
 )
 
+const network = getNetworkArg()
+
+const spliceVersion =
+    process.env.SPLICE_VERSION ?? SUPPORTED_VERSIONS[network].splice.version
+console.log(
+    success(
+        `Running examples against ${network} with splice version: ${spliceVersion}`
+    )
+)
+
 // do not run tests from these directory names; full name match
-const EXCEPTIONS_DIR_NAMES = ['stress', '13-rewards-for-deposits']
+const EXCEPTIONS_DIR_NAMES = [
+    'stress',
+    '13-rewards-for-deposits',
+    ...(network === 'mainnet' ? ['18-two-step-transfer-v2'] : []),
+]
 
 // do not run these tests; exceptions can be full filename or just any length subset of its starting characters
-const EXCEPTIONS_FILE_NAMES = ['_', 'utils', 'types.ts', 'upload-dars.ts']
+const EXCEPTIONS_FILE_NAMES = [
+    '_',
+    'utils',
+    'types.ts',
+    'upload-dars.ts',
+    ...(network === 'mainnet' ? ['19-token-standard-allocation-v2.ts'] : []),
+]
 
 function getScriptsRecursive(currentDir: string): string[] {
     return fs.readdirSync(currentDir).flatMap((f) => {
@@ -96,7 +122,7 @@ async function cmd(bin: string, args: string[]): Promise<string> {
 
         // 2. Await BOTH processes concurrently. If pretty crashes, child.stdout.pipe
         // handles the broken pipe gracefully now that we aren't sequentially blocked.
-        Promise.all([
+        void Promise.all([
             new Promise<number>((res) =>
                 child.on('close', (code) => res(code ?? 1))
             ),
@@ -171,5 +197,5 @@ if (failedScripts.length > 0) {
         if (logs) process.stdout.write(logs)
         console.log(error(`=== Failed running script: ${script} ===\n`))
     }
-    process.exit(1)
+    process.exitCode = 1
 }

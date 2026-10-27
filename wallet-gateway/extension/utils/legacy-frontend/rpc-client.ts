@@ -5,7 +5,7 @@ import type { RpcTransport } from '@canton-network/core-rpc-transport'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 import type {
     RequestPayload,
-    ResponsePayload,
+    SuccessResponse,
 } from '@canton-network/core-types'
 import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
 import { createProxyService } from '@webext-core/proxy-service'
@@ -32,22 +32,22 @@ class ExtensionTransport implements RpcTransport {
         this.service = createProxyService(USER_RPC_KEY)
     }
 
-    submit(request: RequestPayload): Promise<ResponsePayload> {
+    submit(request: RequestPayload): Promise<SuccessResponse> {
         const { method, params } = request
         const fn = this.service[method as keyof UserRpcMethods]
         if (!fn) {
             throw new Error(`Method ${method} not found in UserRpcMethods`)
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // oxlint-disable-next-line typescript/no-explicit-any
         const result = fn(params as any)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // oxlint-disable-next-line typescript/no-explicit-any
         return { result } as any
     }
 }
 
 export const createUserClient = async (
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // oxlint-disable-next-line no-unused-vars
     token?: string
 ): Promise<UserApiClient> => {
     return new UserApiClient(new ExtensionTransport())

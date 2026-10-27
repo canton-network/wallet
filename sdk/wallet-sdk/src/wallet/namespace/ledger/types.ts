@@ -10,6 +10,7 @@ import type { AcsOptions } from '@canton-network/core-acs-reader'
 
 export type PrepareOptions = {
     partyId: PartyId
+    // oxlint-disable-next-line typescript/no-redundant-type-constituents
     commands: WrappedCommand | WrappedCommand[] | unknown
     commandId?: string
     synchronizerId?: string
@@ -19,12 +20,6 @@ export type PrepareOptions = {
 export type ExecuteOptions = {
     submissionId?: string
     partyId: PartyId
-}
-
-export type ConnectedSynchronizersOptions = {
-    party?: string
-    participantId?: string
-    identityProviderId?: string
 }
 
 export type AcsRequestOptions = Omit<AcsOptions, 'offset'> & {

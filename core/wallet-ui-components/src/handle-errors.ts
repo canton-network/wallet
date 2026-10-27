@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    ErrorResponse,
-    isCip103ErrorCode,
-    CIP103_ERROR_MESSAGES,
-} from '@canton-network/core-types'
+    getErrorToastContent,
+    type ErrorToastFallback,
+} from './internal/error-toast.js'
 
 type ToastElement = HTMLElement & {
     title: string
@@ -14,50 +13,13 @@ type ToastElement = HTMLElement & {
     buttonText: string
 }
 
-type FallbackType = {
-    message?: string
-    buttonText?: string
-    title?: string
-}
-
-export function handleErrorToast(e: unknown, fallback?: FallbackType) {
+export function handleErrorToast(e: unknown, fallback?: ErrorToastFallback) {
     const toast = document.createElement('custom-toast') as ToastElement
-    let code: number = -1
-    let message = ''
+    const content = getErrorToastContent(e, fallback)
 
-    if (e instanceof Error) {
-        message = e.message
-    }
-
-    // TODO: if an API call fails in the frontend, it loses the structured error info and falls back to Unexpected.
-    // See line 242 in core/types/src/index.ts (class HttpTransport)
-    const parsed = ErrorResponse.safeParse(e)
-    if (parsed.success) {
-        code = parsed.data.error.code
-        message = parsed.data.error.message
-    }
-
-    if (isCip103ErrorCode(code)) {
-        toast.title = CIP103_ERROR_MESSAGES[code]
-    } else {
-        switch (code) {
-            case 413:
-                toast.title = 'Payload Too Large'
-                break
-            case 429:
-                toast.title = 'Too Many Requests'
-                break
-            default:
-                toast.title = fallback?.title || 'Unexpected Error'
-                break
-        }
-    }
-
-    toast.message =
-        message ||
-        fallback?.message ||
-        'Something went wrong. Please try again.'
+    toast.title = content.title
+    toast.message = content.message
     toast.type = 'error'
-    toast.buttonText = fallback?.buttonText || 'Dismiss'
+    toast.buttonText = content.buttonText
     document.body.appendChild(toast)
 }

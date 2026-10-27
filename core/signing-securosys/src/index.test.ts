@@ -1,10 +1,26 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    type Mocked,
+    vi,
+} from 'vitest'
 import type { Key, Transaction } from '@canton-network/core-signing-lib'
 import SecurosysSigningDriver, { SECUROSYS_SIGNING_PROVIDER } from './index.js'
 import type { SigningAPIClient } from './signing-api-sdk.js'
+
+// Raw Ed25519 public key whose base64 form contains '+', '/' and '=' padding,
+// so the derived TSB label differs from the public key.
+const walletPublicKey = Buffer.alloc(32, 0xfb).toString('base64')
+const walletKeyLabel = walletPublicKey
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
 
 describe('SecurosysSigningDriver constructor', () => {
     it('uses the securosys provider string', () => {
@@ -40,6 +56,7 @@ describe('SecurosysSigningDriver', () => {
     beforeEach(() => {
         mockClient = {
             signTransaction: vi.fn(),
+            signMessage: vi.fn(),
             getTransaction: vi.fn(),
             getTransactions: vi.fn(),
             getKeys: vi.fn(),
@@ -85,13 +102,53 @@ describe('SecurosysSigningDriver', () => {
             txHash: 'hash',
             keyIdentifier: { id: 'key-name' },
             internalTxId: 'wallet-tx-id',
-            userIdentifier: userId,
+            extraParams: { userIdentifier: userId },
         })
         expect(result).toEqual({
             txId: 'tsb-request-id',
             status: 'pending',
             publicKey: 'public-key',
             metadata: { tsbStatus: 'PENDING' },
+        })
+    })
+
+    it('signTransaction derives the key label when only a public key is supplied', async () => {
+        mockClient.signTransaction.mockResolvedValue({
+            txId: 'tsb-request-id',
+            status: 'pending',
+        } as Transaction)
+
+        await driver.controller(userId).signTransaction({
+            tx: 'tx',
+            txHash: 'hash',
+            keyIdentifier: { publicKey: walletPublicKey },
+        })
+
+        expect(mockClient.signTransaction).toHaveBeenCalledWith({
+            tx: 'tx',
+            txHash: 'hash',
+            keyIdentifier: { id: walletKeyLabel, publicKey: walletPublicKey },
+            extraParams: { userIdentifier: userId },
+        })
+    })
+
+    it('signTransaction preserves an explicit key id', async () => {
+        mockClient.signTransaction.mockResolvedValue({
+            txId: 'tsb-request-id',
+            status: 'pending',
+        } as Transaction)
+
+        await driver.controller(userId).signTransaction({
+            tx: 'tx',
+            txHash: 'hash',
+            keyIdentifier: { id: 'custom-label', publicKey: walletPublicKey },
+        })
+
+        expect(mockClient.signTransaction).toHaveBeenCalledWith({
+            tx: 'tx',
+            txHash: 'hash',
+            keyIdentifier: { id: 'custom-label', publicKey: walletPublicKey },
+            extraParams: { userIdentifier: userId },
         })
     })
 
@@ -125,16 +182,89 @@ describe('SecurosysSigningDriver', () => {
         })
     })
 
-    it('signMessage is explicitly unsupported', async () => {
+    it('signMessage submits the message and returns pending', async () => {
+        mockClient.signMessage.mockResolvedValue({
+            txId: 'tsb-request-id',
+            status: 'pending',
+            publicKey: 'public-key',
+        } as Transaction)
+
+        const result = await driver.controller(userId).signMessage({
+            message: 'hello',
+            keyIdentifier: { id: 'key' },
+            internalTxId: 'msg-1',
+        })
+
+        expect(mockClient.signMessage).toHaveBeenCalledWith({
+            message: 'hello',
+            keyIdentifier: { id: 'key' },
+            internalTxId: 'msg-1',
+            extraParams: { userIdentifier: userId },
+        })
+        expect(result).toEqual({
+            txId: 'tsb-request-id',
+            status: 'pending',
+        })
+    })
+
+    it('signMessage includes a signature when the client returns one', async () => {
+        mockClient.signMessage.mockResolvedValue({
+            txId: 'tsb-request-id',
+            status: 'signed',
+            signature: 'signature',
+        } as Transaction)
+
         const result = await driver.controller(userId).signMessage({
             message: 'hello',
             keyIdentifier: { id: 'key' },
         })
 
         expect(result).toEqual({
-            error: 'not_allowed',
+            txId: 'tsb-request-id',
+            status: 'signed',
+            signature: 'signature',
+        })
+    })
+
+    it('signMessage requires a message', async () => {
+        const result = await driver.controller(userId).signMessage({
+            message: '',
+            keyIdentifier: { id: 'key' },
+        })
+
+        expect(result).toEqual({
+            error: 'bad_arguments',
             error_description:
-                'Signing messages is not supported by the Securosys TSB signing driver.',
+                'A non-empty message is required to sign with Securosys.',
+        })
+        expect(mockClient.signMessage).not.toHaveBeenCalled()
+    })
+
+    it('signMessage requires id or publicKey', async () => {
+        const result = await driver.controller(userId).signMessage({
+            message: 'hello',
+            keyIdentifier: {} as never,
+        })
+
+        expect(result).toEqual({
+            error: 'key_not_found',
+            error_description:
+                'The provided key identifier must include an id or publicKey.',
+        })
+        expect(mockClient.signMessage).not.toHaveBeenCalled()
+    })
+
+    it('signMessage returns signing_error when the client throws', async () => {
+        mockClient.signMessage.mockRejectedValue(new Error('TSB down'))
+
+        const result = await driver.controller(userId).signMessage({
+            message: 'hello',
+            keyIdentifier: { id: 'key' },
+        })
+
+        expect(result).toEqual({
+            error: 'signing_error',
+            error_description: 'TSB down',
         })
     })
 
@@ -364,5 +494,91 @@ describe('SecurosysSigningDriver', () => {
         await expect(
             driver.controller(userId).subscribeTransactions({} as never)
         ).resolves.toEqual({})
+    })
+})
+
+describe('SecurosysSigningDriver public-key signing against TSB', () => {
+    let fetchMock: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+        fetchMock = vi.fn()
+        vi.stubGlobal('fetch', fetchMock)
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    function jsonResponse(body: unknown): Response {
+        return new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+        })
+    }
+
+    function requestsTo(endpoint: string): RequestInit[] {
+        return fetchMock.mock.calls
+            .filter((call) => String(call[0]).endsWith(endpoint))
+            .map((call) => call[1] as RequestInit)
+    }
+
+    it('looks up the derived label and signs with the matching key', async () => {
+        fetchMock
+            .mockResolvedValueOnce(
+                jsonResponse({
+                    json: { label: walletKeyLabel, publicKey: walletPublicKey },
+                })
+            )
+            .mockResolvedValueOnce(jsonResponse({ signRequestId: 'req-1' }))
+        const driver = new SecurosysSigningDriver({
+            baseUrl: 'http://tsb.example',
+        })
+
+        const result = await driver.controller('wallet-user').signTransaction({
+            tx: 'tx',
+            txHash: 'hash',
+            keyIdentifier: { publicKey: walletPublicKey },
+        })
+
+        expect(result).toMatchObject({
+            txId: 'req-1',
+            status: 'pending',
+            publicKey: walletPublicKey,
+        })
+        expect(requestsTo('/v1/key')).toHaveLength(0)
+        const attributeRequests = requestsTo('/v1/key/attributes')
+        expect(attributeRequests).toHaveLength(1)
+        expect(JSON.parse(attributeRequests[0]!.body as string)).toMatchObject({
+            label: walletKeyLabel,
+        })
+        const signRequests = requestsTo('/v1/sign')
+        expect(signRequests).toHaveLength(1)
+        expect(
+            JSON.parse(signRequests[0]!.body as string).signRequest.signKeyName
+        ).toBe(walletKeyLabel)
+    })
+
+    it('rejects a derived label whose key does not match the supplied public key', async () => {
+        const otherPublicKey = Buffer.alloc(32, 1).toString('base64')
+        fetchMock.mockResolvedValueOnce(
+            jsonResponse({
+                json: { label: walletKeyLabel, publicKey: otherPublicKey },
+            })
+        )
+        const driver = new SecurosysSigningDriver({
+            baseUrl: 'http://tsb.example',
+        })
+
+        const result = await driver.controller('wallet-user').signTransaction({
+            tx: 'tx',
+            txHash: 'hash',
+            keyIdentifier: { publicKey: walletPublicKey },
+        })
+
+        expect(result).toEqual({
+            error: 'signing_error',
+            error_description: `TSB key '${walletKeyLabel}' public key does not match the provided keyIdentifier publicKey`,
+        })
+        expect(requestsTo('/v1/sign')).toHaveLength(0)
     })
 })

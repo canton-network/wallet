@@ -2,19 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { decodeJwt } from 'jose'
-import type { AuthContext } from './auth-service'
+import { z } from 'zod'
+import { IdpUnavailableError, type AuthContext } from './auth-service.js'
 import { providerErrors } from '@canton-network/core-rpc-errors'
-import type { Logger } from '@canton-network/core-types'
-import type { Idp } from './config/schema.js'
 
-export function assertConnected(
+export function assertIsConnected(
     authContext: AuthContext | undefined
-): AuthContext {
+): asserts authContext is AuthContext {
     if (!authContext) {
         throw providerErrors.unauthorized({
             message: 'User is not connected',
         })
     }
+}
+
+export function assertConnected(
+    authContext: AuthContext | undefined
+): AuthContext {
+    assertIsConnected(authContext)
     return authContext
 }
 
@@ -51,62 +56,154 @@ export function jwtUserEmail(token: string): string | undefined {
 }
 
 /**
- * Standard OIDC UserInfo claims as defined by OpenID Connect Core 1.0.
- * https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+ * Extract the expiry from the `exp` claim of a JWT. Throws if `exp` is missing.
+ *
+ * @param token a base64url encoded JWT token
+ * @returns the expiry
  */
-export interface OidcUserInfo {
-    sub: string
-    name?: string
-    given_name?: string
-    family_name?: string
-    middle_name?: string
-    nickname?: string
-    preferred_username?: string
-    profile?: string
-    picture?: string
-    website?: string
-    email?: string
-    email_verified?: boolean
-    gender?: string
-    birthdate?: string
-    zoneinfo?: string
-    locale?: string
-    phone_number?: string
-    phone_number_verified?: boolean
-    updated_at?: number
-    address?: Record<string, string>
-    [key: string]: unknown
+export function jwtExpiresAt(token: string): Date {
+    const { exp } = decodeJwt(token)
+
+    if (typeof exp !== 'number') {
+        throw new Error('token did not contain an expiry field')
+    }
+
+    return new Date(exp * 1000)
 }
 
 /**
- * Fetches user claims from the OIDC UserInfo endpoint.
- * Discovers the endpoint via the OIDC discovery document at configUrl.
- *
- * @param configUrl   - The OIDC discovery document URL (/.well-known/openid-configuration)
- * @param accessToken - The user's bearer access token
- * @returns The UserInfo claims, or undefined if the IDP does not expose a userinfo endpoint
- * @throws If any network request fails
+ * An invalid endpoint is treated as missing, so it only fails the callers
+ * that actually need it
  */
-export async function fetchOidcUserInfo(
-    configUrl: string,
-    accessToken: string
-): Promise<OidcUserInfo | undefined> {
-    const configResponse = await fetch(configUrl)
-    if (!configResponse.ok) {
+const endpointSchema = z
+    .url({ protocol: /^https?$/ })
+    .optional()
+    .catch(undefined)
+
+/**
+ * The parts of the OIDC discovery document (/.well-known/openid-configuration)
+ * we rely on. Every field is optional because IDPs differ in what they expose;
+ * callers must check the fields they need.
+ * https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
+ */
+export const oidcDiscoverySchema = z.looseObject({
+    issuer: z.string().optional(),
+    authorization_endpoint: endpointSchema,
+    token_endpoint: endpointSchema,
+    userinfo_endpoint: endpointSchema,
+    jwks_uri: endpointSchema,
+})
+export type OidcDiscovery = z.infer<typeof oidcDiscoverySchema>
+
+/**
+ * The UserInfo claims we rely on, other standard claims are passed through
+ * untouched. Only `sub` is required by the spec; `email_verified` and friends
+ * are deliberately not validated since IDPs disagree on their type (e.g. the
+ * string "true").
+ * https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+ */
+export const oidcUserInfoSchema = z.looseObject({
+    sub: z.string(),
+    name: z.string().optional(),
+    preferred_username: z.string().optional(),
+    email: z.string().optional(),
+})
+export type OidcUserInfo = z.infer<typeof oidcUserInfoSchema>
+
+/**
+ * The successful response of an OAuth token endpoint.
+ * https://datatracker.ietf.org/doc/html/rfc6749#section-5.1
+ */
+export const oidcTokenResponseSchema = z.looseObject({
+    access_token: z.string().min(1),
+})
+export type OidcTokenResponse = z.infer<typeof oidcTokenResponseSchema>
+
+/**
+ * Validate a JSON response received from an IDP, throwing a readable error
+ * instead of a raw ZodError.
+ */
+export function parseIdpResponse<T extends z.ZodType>(
+    schema: T,
+    data: unknown,
+    description: string
+): z.infer<T> {
+    const result = schema.safeParse(data)
+    if (!result.success) {
         throw new Error(
-            `Failed to fetch OIDC discovery document: ${configResponse.status} ${configResponse.statusText}`
+            `Invalid ${description}: ${z.prettifyError(result.error)}`
+        )
+    }
+    return result.data
+}
+
+/**
+ * Fetches and validates the OIDC discovery document.
+ *
+ * @param configUrl - The OIDC discovery document URL (/.well-known/openid-configuration)
+ * @throws {IdpUnavailableError} If the request fails or the response is not a valid discovery document
+ */
+export async function fetchOidcDiscovery(
+    configUrl: string
+): Promise<OidcDiscovery> {
+    let response: Response
+    try {
+        response = await fetch(configUrl, {
+            headers: { Accept: 'application/json' },
+        })
+    } catch (error) {
+        throw new IdpUnavailableError(
+            `Failed to fetch OIDC discovery document: ${error instanceof Error ? error.message : String(error)}`,
+            { cause: error }
+        )
+    }
+    if (!response.ok) {
+        throw new IdpUnavailableError(
+            `Failed to fetch OIDC discovery document: ${response.status} ${response.statusText}`
         )
     }
 
-    const config = (await configResponse.json()) as {
-        userinfo_endpoint?: string
-    }
-    if (!config.userinfo_endpoint) {
-        return undefined
+    let data: unknown
+    try {
+        data = await response.json()
+    } catch (error) {
+        throw new IdpUnavailableError(
+            `Failed to parse OIDC discovery document: ${error instanceof Error ? error.message : String(error)}`,
+            { cause: error }
+        )
     }
 
-    const userInfoResponse = await fetch(config.userinfo_endpoint, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+    try {
+        return parseIdpResponse(
+            oidcDiscoverySchema,
+            data,
+            'OIDC discovery document'
+        )
+    } catch (error) {
+        throw new IdpUnavailableError(
+            error instanceof Error ? error.message : String(error),
+            { cause: error }
+        )
+    }
+}
+
+/**
+ * Fetches user claims from an OIDC UserInfo endpoint.
+ *
+ * @param userinfoEndpoint - The `userinfo_endpoint` from the discovery document
+ * @param accessToken      - The user's bearer access token
+ * @returns The UserInfo claims
+ * @throws If the request fails or the response is malformed
+ */
+export async function fetchOidcUserInfo(
+    userinfoEndpoint: string,
+    accessToken: string
+): Promise<OidcUserInfo> {
+    const userInfoResponse = await fetch(userinfoEndpoint, {
+        headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+        },
     })
     if (!userInfoResponse.ok) {
         throw new Error(
@@ -114,40 +211,11 @@ export async function fetchOidcUserInfo(
         )
     }
 
-    return (await userInfoResponse.json()) as OidcUserInfo
-}
-
-/**
- * Resolve the user email from the OIDC userinfo endpoint.
- *
- * @param authContext - The authentication context
- * @param idp - The IDP configuration
- * @param logger - The logger
- * @returns The user email, or undefined if the email is not found
- */
-export async function resolveUserEmail(
-    authContext: AuthContext,
-    idp: Idp,
-    logger?: Logger
-): Promise<string | undefined> {
-    if (authContext.email) {
-        return authContext.email
-    }
-
-    try {
-        if (idp.type !== 'oauth') {
-            return undefined
-        }
-
-        const userInfo = await fetchOidcUserInfo(
-            idp.configUrl,
-            authContext.accessToken
-        )
-        return userInfo?.email
-    } catch (error) {
-        logger?.warn(error, 'Failed to resolve user email from OIDC userinfo')
-        return undefined
-    }
+    return parseIdpResponse(
+        oidcUserInfoSchema,
+        await userInfoResponse.json(),
+        'OIDC userinfo response'
+    )
 }
 
 /**

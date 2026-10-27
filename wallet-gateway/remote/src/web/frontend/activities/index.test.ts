@@ -12,7 +12,7 @@ import {
     createMockUserClient,
     makeTransaction,
     mockRequest,
-} from '../test-helpers.js'
+} from '../__tests__/test-helpers.js'
 
 const {
     mockCreateUserClient,
@@ -57,7 +57,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { UserUiActivities } from './index.js'
+import type { UserUiActivities } from './index.js'
 
 function makeTransactions(count: number) {
     return Array.from({ length: count }, (_, i) =>

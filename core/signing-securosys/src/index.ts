@@ -11,11 +11,13 @@ import {
     type GetTransactionResult,
     type GetTransactionsParams,
     type GetTransactionsResult,
+    type KeyIdentifier,
     PartyMode,
     type SetConfigurationParams,
     type SetConfigurationResult,
     type SigningDriverInterface,
     type SigningProvider,
+    type SignMessageParams,
     type SignMessageResult,
     type SignTransactionParams,
     type SignTransactionResult,
@@ -24,6 +26,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
+    keyLabelFromPublicKey,
     SigningAPIClient,
     type SecurosysTSBClientConfig,
     type TsbSignatureAlgorithm,
@@ -60,10 +63,10 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 params: SignTransactionParams
             ): Promise<SignTransactionResult> => {
                 try {
-                    if (
-                        params.keyIdentifier.id === undefined &&
-                        params.keyIdentifier.publicKey === undefined
-                    ) {
+                    const keyIdentifier = withDerivedKeyLabel(
+                        params.keyIdentifier
+                    )
+                    if (!keyIdentifier) {
                         return {
                             error: 'key_not_found',
                             error_description:
@@ -73,7 +76,11 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
 
                     const tx = await this.client.signTransaction({
                         ...params,
-                        userIdentifier: userId,
+                        keyIdentifier,
+                        extraParams: {
+                            ...params.extraParams,
+                            userIdentifier: userId,
+                        },
                     })
 
                     return {
@@ -97,11 +104,48 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 }
             },
 
-            signMessage: async (): Promise<SignMessageResult> => {
-                return {
-                    error: 'not_allowed',
-                    error_description:
-                        'Signing messages is not supported by the Securosys TSB signing driver.',
+            signMessage: async (
+                params: SignMessageParams
+            ): Promise<SignMessageResult> => {
+                try {
+                    if (params.message.length === 0) {
+                        return {
+                            error: 'bad_arguments',
+                            error_description:
+                                'A non-empty message is required to sign with Securosys.',
+                        }
+                    }
+                    if (
+                        params.keyIdentifier?.id === undefined &&
+                        params.keyIdentifier?.publicKey === undefined
+                    ) {
+                        return {
+                            error: 'key_not_found',
+                            error_description:
+                                'The provided key identifier must include an id or publicKey.',
+                        }
+                    }
+
+                    const tx = await this.client.signMessage({
+                        ...params,
+                        extraParams: {
+                            ...params.extraParams,
+                            userIdentifier: userId,
+                        },
+                    })
+
+                    return {
+                        txId: tx.txId,
+                        status: tx.status,
+                        ...(tx.signature !== undefined && {
+                            signature: tx.signature,
+                        }),
+                    }
+                } catch (error) {
+                    return {
+                        error: 'signing_error',
+                        error_description: (error as Error).message,
+                    }
                 }
             },
 
@@ -238,11 +282,31 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
             },
 
             subscribeTransactions: async (
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _params: SubscribeTransactionsParams
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),
         })
+}
+
+/**
+ * Keys created by this driver are labelled from their public key, so derive
+ * the label when the caller supplies only the public key. The public key is
+ * kept so the client still verifies that the resolved key matches it.
+ * Explicit ids are passed through unchanged.
+ */
+function withDerivedKeyLabel(
+    keyIdentifier: KeyIdentifier
+): KeyIdentifier | undefined {
+    if (keyIdentifier.id !== undefined) {
+        return keyIdentifier
+    }
+    if (keyIdentifier.publicKey === undefined) {
+        return undefined
+    }
+    return {
+        ...keyIdentifier,
+        id: keyLabelFromPublicKey(keyIdentifier.publicKey),
+    }
 }
 
 function maskConfiguration(

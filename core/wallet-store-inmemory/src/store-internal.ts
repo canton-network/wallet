@@ -9,6 +9,7 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store,
     Wallet,
@@ -25,6 +26,10 @@ import type {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
+} from '@canton-network/core-wallet-store'
+import {
+    assertUniqueSelfIssuedAudience,
+    resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import type { AccessToken } from '@canton-network/core-types'
@@ -152,6 +157,29 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         )
     }
 
+    async getWalletByJwt(
+        userId: string,
+        partyId: PartyId,
+        audiences: string[]
+    ): Promise<Wallet | undefined> {
+        const network = resolveSelfIssuedNetworkByAudiences(
+            this.systemStorage.networks,
+            audiences
+        )
+        if (!network) {
+            return undefined
+        }
+
+        return this.userStorage
+            .get(userId)
+            ?.wallets.find(
+                (wallet) =>
+                    wallet.userId === userId &&
+                    wallet.partyId === partyId &&
+                    wallet.networkId === network.id
+            )
+    }
+
     async getPrimaryWallet(): Promise<Wallet | undefined> {
         const wallets = await this.getWallets()
         return wallets.find((w) => w.primary === true)
@@ -181,6 +209,24 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             return w
         })
         storage.wallets = wallets
+        this.updateStorage(storage)
+    }
+
+    async setAuthPartyWallet(partyId: PartyId | null): Promise<void> {
+        const network = await this.getCurrentNetwork()
+        const storage = this.getStorage()
+        storage.wallets = storage.wallets.map((wallet) => {
+            if (wallet.networkId !== network.id) return wallet
+            return { ...wallet, isAuthParty: wallet.partyId === partyId }
+        })
+        this.updateStorage(storage)
+    }
+
+    async removeSelfIssuedLoginSession(sessionId: string): Promise<void> {
+        const storage = this.getStorage()
+        const session = storage.sessions.get(sessionId)
+        if (!session || session.accessToken) return
+        storage.sessions.delete(sessionId)
         this.updateStorage(storage)
     }
 
@@ -298,7 +344,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.updateStorage(storage)
     }
 
-    async getOnboardingSession(
+    async getSelfIssuedLoginSession(
         sessionId: string
     ): Promise<Session | undefined> {
         for (const storage of this.userStorage.values()) {
@@ -310,25 +356,25 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return undefined
     }
 
-    async upgradeOnboardingSession(
+    async upgradeSelfIssuedLoginSession(
         sessionId: string,
         accessToken: AccessToken
     ): Promise<Session> {
         const storage = this.getStorage()
-        const onboardingSession = storage.sessions.get(sessionId)
-        if (!onboardingSession || onboardingSession.accessToken) {
-            throw new Error('Onboarding session not found')
+        const selfIssuedLoginSession = storage.sessions.get(sessionId)
+        if (!selfIssuedLoginSession || selfIssuedLoginSession.accessToken) {
+            throw new Error('Self-issued login session not found')
         }
 
         for (const [id, session] of storage.sessions) {
             if (
                 id !== sessionId &&
-                session.origin === onboardingSession.origin
+                session.origin === selfIssuedLoginSession.origin
             ) {
                 storage.sessions.delete(id)
             }
         }
-        const upgraded = { ...onboardingSession, accessToken }
+        const upgraded = { ...selfIssuedLoginSession, accessToken }
         storage.sessions.set(sessionId, upgraded)
         this.updateStorage(storage)
         return upgraded
@@ -388,18 +434,18 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async getCurrentNetwork(): Promise<Network> {
         const context = this.authContext
-        const onboardingSessionId =
+        const selfIssuedLoginSessionId =
             context && !context.isApiKey ? context.sessionId : undefined
         const sessions = this.getStorage().sessions
         const session = context?.accessToken
             ? Array.from(sessions.values()).find(
                   (s) => s.accessToken === context.accessToken
               )
-            : onboardingSessionId
-              ? sessions.get(onboardingSessionId)
+            : selfIssuedLoginSessionId
+              ? sessions.get(selfIssuedLoginSessionId)
               : undefined
         if (!session || (!context?.accessToken && session.accessToken)) {
-            throw new Error('No session found')
+            throw providerErrors.unauthorized({ message: 'No session found' })
         }
         const networkId = session.network
         if (!networkId) {
@@ -430,7 +476,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async updateNetwork(network: Network): Promise<void> {
         this.assertConnected()
-        this.removeNetwork(network.id) // Ensure no duplicates
+        assertUniqueSelfIssuedAudience(
+            this.systemStorage.networks,
+            network,
+            network.id
+        )
+        await this.removeNetwork(network.id) // Ensure no duplicates
         this.systemStorage.networks.push(network)
     }
 
@@ -440,9 +491,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         )
         if (networkAlreadyExists) {
             throw new Error(`Network ${network.id} already exists`)
-        } else {
-            this.systemStorage.networks.push(network)
         }
+        assertUniqueSelfIssuedAudience(this.systemStorage.networks, network)
+        this.systemStorage.networks.push(network)
     }
 
     async removeNetwork(networkId: string): Promise<void> {
@@ -475,7 +526,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             }),
             ...(signedAt !== undefined && { signedAt }),
             ...(externalTxId !== undefined && { externalTxId }),
-            ...(failureReason !== undefined && { failureReason }),
+            ...(failureReason && { failureReason }),
         }
     }
 
@@ -647,12 +698,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
         const signature = updates.signature ?? existing.signature
+        const externalTxId = updates.externalTxId ?? existing.externalTxId
+        const failureReason = updates.failureReason ?? existing.failureReason
 
         return {
             ...existing,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),
+            ...(externalTxId !== undefined && { externalTxId }),
+            ...(failureReason !== undefined && { failureReason }),
         }
     }
 

@@ -139,7 +139,8 @@ export class BitGoHandler {
         this.txStore.set(txId, walletId)
         if (this.txStore.size > 10_000) {
             const oldest = this.txStore.keys().next().value as
-                string | undefined
+                | string
+                | undefined
             if (oldest) this.txStore.delete(oldest)
         }
     }
@@ -180,7 +181,7 @@ export class BitGoHandler {
     async createKey(name: string): Promise<Key> {
         if (!this.enterpriseId)
             throw new Error(
-                'enterpriseId is required to create BitGo custodial wallets (set BITGO_ENTERPRISE_ID).'
+                'enterpriseId is required to create BitGo custodial wallets (set signingProviders.bitgo.enterpriseId).'
             )
         const wallet = await this.request<BitGoWallet>(
             'POST',
@@ -343,7 +344,8 @@ export class BitGoHandler {
             )
             return {
                 signature: parsed?.serializedSignatures?.[0]?.signature as
-                    string | undefined,
+                    | string
+                    | undefined,
                 signedBy: parsed?.signers?.[0] as string | undefined,
             }
         } catch {

@@ -47,7 +47,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.js'
-import { LoginCallback } from './index.js'
+import type { LoginCallback } from './index.js'
 
 const oauthState = {
     configUrl: 'https://idp.example/.well-known/openid-configuration',

@@ -1,24 +1,24 @@
 {
     "name": "@canton-network/core-wallet-store-inmemory",
-    "version": "1.15.0",
+    "version": "1.17.0",
     "type": "module",
     "description": "In-memory implementation of the Store API",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
     "license": "Apache-2.0",
+    "sideEffects": false,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage"
+        "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-types": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
-        "@canton-network/core-wallet-store": "catalog:",
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
+        "@canton-network/core-wallet-store": "workspace:",
         "@logtape/logtape": "catalog:",
         "zod": "catalog:"
     },

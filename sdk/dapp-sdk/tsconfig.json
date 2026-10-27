@@ -1,20 +1,7 @@
 {
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
-        "rootDir": "./src",
-        "outDir": "./dist",
         "resolveJsonModule": true,
-        "esModuleInterop": true,
-        "moduleResolution": "node",
-        "baseUrl": "./",
-        "paths": {
-            "@canton-network/core-wallet-dapp-rpc-client": [
-                "../core/wallet-dapp-rpc-client/src"
-            ],
-            "@canton-network/core-splice-provider": [
-                "../core/splice-provider/src"
-            ]
-        }
-    },
-    "include": ["src", "src/gateways.json"]
+        "types": ["node", "qrcode"]
+    }
 }

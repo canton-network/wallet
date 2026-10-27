@@ -1,10 +1,11 @@
 {
     "name": "@canton-network/core-tx-parser",
-    "version": "1.13.0",
+    "version": "1.15.0",
     "type": "module",
     "description": "Transaction parsing utilities for Canton Network transactions, including parsing of transaction trees and extraction of relevant information from transaction events.",
     "license": "Apache-2.0",
     "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
+    "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -17,12 +18,10 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
-        "dev": "tsdown --watch --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "test": "vitest run --project node --project browser --passWithNoTests",
-        "test:coverage": "vitest run --project node --project browser --coverage --passWithNoTests"
+        "clean": "rm -rf dist"
     },
     "devDependencies": {
         "@types/node": "catalog:",
@@ -35,17 +34,17 @@
         "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client-types": "catalog:",
-        "@canton-network/core-ledger-proto": "catalog:",
-        "@canton-network/core-provider-ledger": "catalog:",
-        "@canton-network/core-splice-client": "catalog:",
-        "@canton-network/core-token-standard": "catalog:",
-        "@canton-network/core-types": "catalog:",
-        "@canton-network/core-wallet-auth": "catalog:",
+        "@canton-network/core-ledger-client-types": "workspace:",
+        "@canton-network/core-ledger-proto": "workspace:",
+        "@canton-network/core-provider-ledger": "workspace:",
+        "@canton-network/core-splice-client": "workspace:",
+        "@canton-network/core-token-standard": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-auth": "workspace:",
+        "@logtape/logtape": "catalog:",
         "bignumber.js": "catalog:",
-        "dayjs": "catalog:",
-        "openapi-fetch": "catalog:",
-        "pino": "catalog:"
+        "openapi-fetch": "catalog:"
     },
     "files": [
         "dist/**"

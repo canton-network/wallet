@@ -5,24 +5,21 @@
     "description": "Example registry backend app for CIP-0056 token.",
     "license": "Apache-2.0",
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
-    "main": "dist/index.cjs",
+    "main": "dist/index.js",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
-            "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
         "dev": "NODE_ENV=development tsx --watch src/index.ts",
-        "clean": "tsc -b --clean; rm -rf dist",
-        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
-        "test": "vitest run --project node",
-        "test:coverage": "vitest run --project node --coverage"
+        "clean": "rm -rf dist",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
         "@types/cors": "catalog:",
@@ -37,11 +34,11 @@
         "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-splice-codegen": "catalog:",
-        "@canton-network/core-token-standard": "catalog:",
-        "@canton-network/core-token-standard-v2": "catalog:",
-        "@canton-network/core-types": "catalog:",
-        "@canton-network/wallet-sdk": "catalog:",
+        "@canton-network/core-splice-codegen": "workspace:",
+        "@canton-network/core-token-standard": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/wallet-sdk": "workspace:^",
         "cors": "catalog:",
         "express": "catalog:",
         "openapi-ts-router": "catalog:",

@@ -29,7 +29,7 @@ import { BitGoHandler, type BitGoConfig } from './bitgo.js'
 
 const BitGoConfigUpdateSchema = z.object({
     accessToken: z.string().min(1).optional(),
-    baseUrl: z.string().url().optional(),
+    baseUrl: z.url().optional(),
     enterpriseId: z.string().min(1).optional(),
     coin: z.string().min(1).optional(),
 })
@@ -48,7 +48,6 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.BITGO
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public controller = (_userId: AuthContext['userId'] | undefined) =>
         buildController({
             signTransaction: async (
@@ -77,8 +76,8 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
                         tx: params.tx,
                         txHash: params.txHash,
                         walletId,
-                        messageStandardType: params.messageStandardType as
-                            string | undefined,
+                        messageStandardType: params.extraParams
+                            ?.messageStandardType as string | undefined,
                     })
                     return {
                         txId: result.txId,
@@ -240,7 +239,6 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
             // TODO: implement once / if subscribeTransactions is required
             // v8 ignore next -- @preserve
             subscribeTransactions: async (
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _params: SubscribeTransactionsParams
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),

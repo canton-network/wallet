@@ -1,11 +1,8 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "emitDeclarationOnly": false,
         "moduleResolution": "nodenext",
-        "module": "nodenext"
-    },
-    "include": ["src"]
+        "module": "nodenext",
+        "types": ["lodash", "node"]
+    }
 }

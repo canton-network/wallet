@@ -4,6 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventListener } from '@canton-network/core-splice-provider'
 import type { StatusEvent } from '@canton-network/core-wallet-dapp-rpc-client'
+import { JsonRpcError } from '@canton-network/core-rpc-errors'
 import { WALLETCONNECT_ICON } from '../assets'
 import {
     WalletConnectAdapter,
@@ -58,9 +59,11 @@ vi.mock('@walletconnect/sign-client', () => ({
     },
 }))
 
-vi.mock('uuid', () => ({
-    v4: vi.fn(() => 'generated-nonce'),
-}))
+beforeEach(() => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+        'request-id' as ReturnType<typeof crypto.randomUUID>
+    )
+})
 
 const makeAdapter = (
     overrides: Partial<
@@ -270,7 +273,7 @@ describe('WalletConnectAdapter', () => {
         })
     })
 
-    it('wraps WalletConnect RPC failures with a readable error', async () => {
+    it('rejects WalletConnect RPC failures with the wallet error code', async () => {
         const adapter = makeAdapter()
 
         await adapter.request({ method: 'connect' })
@@ -279,9 +282,12 @@ describe('WalletConnectAdapter', () => {
             Promise.reject({ code: 4001, message: 'User rejected' })
         )
 
-        await expect(
-            adapter.request({ method: 'listAccounts' })
-        ).rejects.toThrow('RPC error: 4001 - User rejected')
+        const pending = adapter.request({ method: 'listAccounts' })
+        await expect(pending).rejects.toBeInstanceOf(JsonRpcError)
+        await expect(pending).rejects.toMatchObject({
+            code: 4001,
+            message: 'User rejected',
+        })
     })
 
     it('only posts WalletConnect URI to dApp origin, not wildcard', async () => {

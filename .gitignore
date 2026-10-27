@@ -1,6 +1,7 @@
 .idea/
 node_modules/
 dist
+out-tsc
 npm-debug.log
 .env
 .DS_Store
@@ -41,6 +42,7 @@ storybook-static
 coverage/
 __screenshots__/
 .vitest-attachments/
+.vitest/
 playwright-report/
 test-results/
 
@@ -52,3 +54,4 @@ test-results/
 
 # python
 **/__pycache__/
+**/.venv/
