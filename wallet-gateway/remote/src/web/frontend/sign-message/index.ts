@@ -147,7 +147,7 @@ export class UserUiSignMessage extends BaseElement {
         this.polling = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -202,7 +202,7 @@ export class UserUiSignMessage extends BaseElement {
         this.isSigning = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

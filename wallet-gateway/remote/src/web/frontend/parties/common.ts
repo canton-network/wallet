@@ -61,7 +61,7 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         this.signingProviders = []
         this.signingProvidersLoading = true
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
