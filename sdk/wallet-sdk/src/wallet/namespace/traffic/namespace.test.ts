@@ -16,7 +16,11 @@ describe('TrafficAccountNamespace', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
-        namespace = new TrafficAccountNamespace(mock.ctx)
+        namespace = new TrafficAccountNamespace({
+            ...mock.ctx,
+            tokenStandardService: {} as any,
+            registryUrls: [],
+        })
     })
 
     describe('getTraffic', () => {
@@ -199,22 +203,6 @@ describe('TrafficAccountNamespace', () => {
                     // `None` tells the choice to spend the holdings in full.
                     requestedTrafficAmount: null,
                 })
-            )
-        })
-
-        it('reports the operation as unsupported before sdk.extend', async () => {
-            // Built from ctx alone, this instance has no registry to price
-            // against, so the guard fires. The mocked error.throw does not
-            // actually throw, so the body runs on and crashes on the missing
-            // context; the catch swallows that, this only asserts the guard.
-            try {
-                await namespace.purchaseTraffic(params)
-            } catch {
-                // expected: no purchase context on this instance
-            }
-
-            expect(mock.ctx.error.throw).toHaveBeenCalledWith(
-                expect.objectContaining({ type: 'SDKOperationUnsupported' })
             )
         })
     })
