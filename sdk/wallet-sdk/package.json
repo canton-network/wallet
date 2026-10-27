@@ -42,10 +42,8 @@
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "decimal.js": "catalog:",
-        "jose": "catalog:",
         "pino": "catalog:",
-        "pino-pretty": "catalog:",
-        "typescript-lru-cache": "catalog:"
+        "pino-pretty": "catalog:"
     },
     "devDependencies": {
         "@types/node": "catalog:",

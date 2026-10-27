@@ -24,12 +24,10 @@
     },
     "dependencies": {
         "@canton-network/core-signing-lib": "workspace:",
-        "@canton-network/core-signing-store-sql": "workspace:",
-        "@canton-network/core-wallet-auth": "workspace:",
-        "@logtape/logtape": "catalog:",
-        "lodash": "catalog:"
+        "@canton-network/core-wallet-auth": "workspace:"
     },
     "devDependencies": {
+        "@canton-network/core-signing-store-sql": "workspace:",
         "@types/lodash": "catalog:",
         "@types/node": "catalog:",
         "@vitest/coverage-v8": "catalog:",

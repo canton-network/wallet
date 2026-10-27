@@ -59,12 +59,9 @@ catalog:
     '@nx/storybook': 23.3.0
     '@nx/vitest': 23.3.0
     '@open-rpc/generator': ^2.1.1
-    '@open-rpc/meta-schema': ^1.14.9
     '@open-rpc/mock-server': ^1.7.8
-    '@open-rpc/typings': ^1.13.1
     '@open-wc/testing-helpers': ^3.0.1
     '@playwright/test': ^1.64.1
-    '@popperjs/core': ^2.11.8
     '@protobuf-ts/plugin': ^2.11.1
     '@protobuf-ts/runtime': ^2.11.1
     '@protobuf-ts/runtime-rpc': ^2.11.1
@@ -92,7 +89,6 @@ catalog:
     '@types/bootstrap': ^5.2.11
     '@types/cors': ^2.8.19
     '@types/express': ^5.0.6
-    '@types/js-yaml': ^4.0.9
     '@types/lodash': ^4.17.26
     '@types/node': ^25.9.9
     '@types/pg': ^8.23.1
@@ -125,7 +121,6 @@ catalog:
     date-fns: ^4.4.0
     decimal.js: ^10.6.0
     dotenv: ^18.0.9
-    esbuild-plugin-replace: ^2.0.0
     express: ^5.3.0
     express-rate-limit: ^8.7.1
     husky: ^9.1.7
@@ -142,7 +137,6 @@ catalog:
     openapi-fetch: ^0.17.0
     openapi-ts-router: ^0.4.1
     openapi-typescript: ^7.13.0
-    openapi-typescript-helpers: ^0.1.0
     oxfmt: ^0.74.0
     oxlint: ^1.89.0
     pg: ^8.23.1

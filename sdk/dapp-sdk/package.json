@@ -55,7 +55,6 @@
         "@walletconnect/sign-client": "catalog:",
         "@walletconnect/types": "catalog:",
         "playwright": "catalog:",
-        "qrcode": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"

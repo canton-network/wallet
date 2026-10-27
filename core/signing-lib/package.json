@@ -24,7 +24,6 @@
     },
     "dependencies": {
         "@canton-network/core-wallet-auth": "workspace:",
-        "lodash": "catalog:",
         "tweetnacl": "catalog:",
         "tweetnacl-util": "catalog:",
         "zod": "catalog:"

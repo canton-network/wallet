@@ -10,7 +10,6 @@
         "otc-trade": "tsx ./scripts/otc-trade.ts"
     },
     "dependencies": {
-        "@canton-network/core-acs-reader": "workspace:",
         "@canton-network/core-ledger-client-types": "workspace:",
         "@canton-network/core-provider-ledger": "workspace:",
         "@canton-network/core-token-standard": "workspace:",
@@ -27,7 +26,6 @@
         "@mui/material": "catalog:",
         "@mui/system": "catalog:",
         "@mui/x-date-pickers": "catalog:",
-        "@tanstack/devtools-vite": "catalog:",
         "@tanstack/react-devtools": "catalog:",
         "@tanstack/react-form": "catalog:",
         "@tanstack/react-query": "catalog:",
@@ -35,7 +33,6 @@
         "@tanstack/react-router": "catalog:",
         "@tanstack/react-router-devtools": "catalog:",
         "@tanstack/router-core": "catalog:",
-        "@tanstack/router-plugin": "catalog:",
         "date-fns": "catalog:",
         "decimal.js": "catalog:",
         "pino": "catalog:",
@@ -49,6 +46,8 @@
         "@canton-network/core-wallet-test-utils": "workspace:",
         "@inquirer/prompts": "catalog:",
         "@playwright/test": "catalog:",
+        "@tanstack/devtools-vite": "catalog:",
+        "@tanstack/router-plugin": "catalog:",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",

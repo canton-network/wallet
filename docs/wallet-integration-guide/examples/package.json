@@ -35,7 +35,6 @@
         "stress-run-03": "tsx ./scripts/stress/03-acs-cache.ts | pino-pretty"
     },
     "devDependencies": {
-        "@canton-network/core-signing-lib": "workspace:",
         "@canton-network/core-wallet-test-utils": "workspace:",
         "@types/node": "catalog:",
         "@vitest/coverage-v8": "catalog:",
@@ -45,10 +44,8 @@
         "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-amulet-service": "workspace:",
         "@canton-network/core-ledger-client": "workspace:",
         "@canton-network/core-ledger-client-types": "workspace:",
-        "@canton-network/core-ledger-proto": "workspace:",
         "@canton-network/core-signing-lib": "workspace:",
         "@canton-network/core-splice-codegen": "workspace:",
         "@canton-network/core-token-standard": "workspace:",
@@ -63,7 +60,6 @@
         "bip39": "catalog:",
         "decimal.js": "catalog:",
         "pino": "catalog:",
-        "tweetnacl": "catalog:",
         "tweetnacl-util": "catalog:"
     }
 }
