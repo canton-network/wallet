@@ -68,8 +68,11 @@ export const useExerciseTransfer = () => {
                         )
                         break
                     case 'Withdraw':
-                        preparedCommand =
-                            await sdk.token.v1.transfer.withdraw(choiceArgs)
+                        preparedCommand = await sdk.token.v2.transfer.withdraw(
+                            args.contractId,
+                            [args.party],
+                            new URL(registryUrl)
+                        )
                         break
                     default: {
                         const unsupportedChoice: never = args.instructionChoice
