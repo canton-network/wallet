@@ -15,7 +15,7 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
-import { GeneratedApiKey } from '@canton-network/core-wallet-user-rpc-client'
+import type { GeneratedApiKey } from '@canton-network/core-wallet-user-rpc-client'
 
 @customElement('user-ui-add-api-key')
 export class UserUiAddApiKey extends BaseElement {
