@@ -129,8 +129,6 @@ export class TrafficAccountNamespace {
     /**
      * Builds the exercise that buys traffic from a paymaster, paying with
      * token-standard holdings, at the ledger conversion rate.
-    */
-     *
      */
     public async purchaseTraffic(
         params: PurchaseTrafficParams
@@ -225,16 +223,6 @@ export class TrafficAccountNamespace {
         })
     }
 
-    /**
-     * Runs a `pricing.ts` calculation, reporting a malformed figure as an
-     * `SDKError`.
-     *
-     * That module is pure by design -- it holds no SDK context -- so it rejects
-     * a `Decimal` it cannot parse, or a non-positive rate, with a plain `Error`.
-     * Every other failure this namespace produces goes through
-     * `ctx.error.throw`, so the translation belongs here rather than leaving a
-     * caller to handle two kinds of error from one method.
-     */
     private computeDecimal<T>(compute: () => T): T {
         try {
             return compute()
