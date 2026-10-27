@@ -79,8 +79,8 @@ const KIND = {
 export interface StoreAccess {
     assertOpen(): void
     /**
-     * Runs `change` once the writes before it have settled, then saves the
-     * store. Rejects without running `change` once the store is closed.
+     * Runs `change` once for every write, then saves the store.
+     * Rejects without running `change` once the store is closed.
      */
     write<T>(change: () => Promise<T>): Promise<T>
 }

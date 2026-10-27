@@ -53,16 +53,22 @@ export function createWalletStore(
     })
 
     function assertOpen(instance: Instance): void {
-        if (instance.closedBy === 'lock') {
-            throw new VaultLockedError(
-                'The vault was locked after the wallet store was loaded.'
-            )
-        }
-        // Not VaultLockedError, or the pages would show the unlock page.
-        if (instance.closedBy === 'failed write') {
-            throw new Error(
-                'The wallet store was reloaded after a failed write.'
-            )
+        const reason = instance.closedBy
+        switch (reason) {
+            case undefined:
+                return
+            case 'lock':
+                throw new VaultLockedError(
+                    'The vault was locked after the wallet store was loaded.'
+                )
+            case 'failed write':
+                throw new Error(
+                    'The wallet store was reloaded after a failed write.'
+                )
+            default: {
+                const unhandled: never = reason
+                throw new Error(`Unhandled close reason: ${String(unhandled)}`)
+            }
         }
     }
 
