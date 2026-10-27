@@ -25,9 +25,6 @@ async function main() {
     // ship in the splice-node bundle that `script:fetch:localnet` downloads.
     ensureLocalnetDars()
 
-    // The model data-depends on the credit package's DAR, so build it first.
-    runDamlBuild(path.join(repoRoot, 'damljs/canton-traffic-credit'))
-
     const { destDir, packageName, version } = TRAFFIC_PURCHASE_CONFIG
 
     runDamlBuild(destDir)
