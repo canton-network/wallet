@@ -12,6 +12,11 @@ import _rejectV2 from './_rejectV2.js'
 import _withdrawV2 from './_withdrawV2.js'
 
 import { configureLogging } from '../utils/configure-logging.js'
+import {
+    startRegistry,
+    stopRegistry,
+} from '@canton-network/example-test-token-v2-registry'
+import { TEST_TOKEN_REGISTRY_PORT } from './_constants.js'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({
@@ -20,6 +25,11 @@ const sdk = await SDK.create({
     synchronizerId: localNetGlobalSynchronizer,
     token: TOKEN_NAMESPACE_CONFIG,
     amulet: AMULET_NAMESPACE_CONFIG,
+})
+
+await startRegistry({
+    sdk,
+    port: TEST_TOKEN_REGISTRY_PORT,
 })
 
 const senderKeys = sdk.keys.generate()
@@ -84,4 +94,5 @@ await _rejectV2(transferTestScriptParameters)
 await _withdrawV2(transferTestScriptParameters)
 
 // Forcefully exit to prevent floating ledger retries from crashing the event loop
+stopRegistry()
 process.exit(0)
