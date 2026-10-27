@@ -76,6 +76,20 @@ different wallets in the same Wallet Gateway can sign through different provider
 provider you choose: a participant node, an external custody service, or an internal store for
 testing. See [Signing providers](operate/signing-providers.mdx).
 
+## Custody model
+
+The Wallet Gateway does not support a non-custodial front end. Every wallet it manages signs
+through one of the signing providers the operator configures: a participant node, an
+internal store, or an external custody service such as Fireblocks, Blockdaemon, or DFNS. All of
+these are infrastructure you run or contract with, not the end user's own device. So a dApp
+connecting to a Wallet Gateway is always talking to a custodial wallet.
+
+To let users sign with their own keys instead, connect your dApp directly to a non-custodial
+wallet (for example, a browser extension) through the dApp SDK's
+[wallet discovery](https://docs.canton.network/sdks-tools/sdks/dapp-sdk/wallet-provider-integration). That path does not
+involve the Wallet Gateway: the dApp SDK surfaces injected or announced CIP-0103 providers
+alongside any configured Wallet Gateway, and the user picks one when connecting.
+
 ## Transaction lifecycle
 
 Once a dApp is connected, transactions flow through the Wallet Gateway so that approval and
