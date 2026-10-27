@@ -16,7 +16,7 @@ import { toRelHref, toRelPath } from '@/utils/legacy-frontend/routing'
 import { stateManager } from '@/utils/legacy-frontend/state-manager'
 import '@/utils/legacy-frontend'
 import { WALLET_CREATION_STATUS_CODE } from '../parties/index'
-import { type WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
+import type { WalletStatus } from '@canton-network/core-wallet-user-rpc-client'
 import { detectCurrentOrigin } from '@/utils/legacy-frontend/origin'
 
 @customElement('user-ui-add-party')
