@@ -20,6 +20,7 @@ describe('TrafficAccountNamespace', () => {
             ...mock.ctx,
             tokenStandardService: {} as any,
             registryUrls: [],
+            paymasterAuth: {} as any,
         })
     })
 
