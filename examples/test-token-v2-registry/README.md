@@ -82,17 +82,25 @@ examples/test-token-v2-registry/
 
 ## Testing
 
-Run tests:
+Tests run through Nx, which infers the `test` target from `vitest.config.ts`. From the repository root:
 
 ```bash
-pnpm --filter @canton-network/example-test-token-v2-registry test
+pnpm nx test @canton-network/example-test-token-v2-registry
 ```
 
-Run tests with coverage:
+Run tests with coverage (report is written to `coverage/`):
 
 ```bash
-pnpm --filter @canton-network/example-test-token-v2-registry test:coverage
+pnpm nx test @canton-network/example-test-token-v2-registry -c coverage
 ```
+
+Run a single test file:
+
+```bash
+pnpm nx test @canton-network/example-test-token-v2-registry -- src/foo.test.ts
+```
+
+To run tests for every package in the monorepo, use `pnpm test:all` (or `pnpm test-coverage:all` for coverage). Nx builds the required upstream packages first.
 
 Tests are discovered under `src/**/*.test.ts`; coverage thresholds are defined in `vitest.config.ts`.
 
