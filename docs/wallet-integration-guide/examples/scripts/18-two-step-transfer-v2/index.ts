@@ -16,7 +16,7 @@ import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_REGISTRY_PORT } from './_constants.js'
+import { TEST_TOKEN_V1_REGISTRY_PORT } from '../_constants.js'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({
@@ -29,7 +29,7 @@ const sdk = await SDK.create({
 
 await startRegistry({
     sdk,
-    port: TEST_TOKEN_REGISTRY_PORT,
+    port: TEST_TOKEN_V1_REGISTRY_PORT,
 })
 
 const senderKeys = sdk.keys.generate()
@@ -74,6 +74,8 @@ const senderAmuletUtxos = senderUtxos.filter((utxo) => {
 })
 
 if (senderAmuletUtxos.length === 0) {
+    stopRegistry()
+
     throw new Error('No UTXOs found for Sender')
 }
 

@@ -13,6 +13,11 @@ import {
 import type { PartyInfo } from './04-token-standard-allocation.js'
 import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
 import Decimal from 'decimal.js'
+import {
+    startRegistry,
+    stopRegistry,
+} from '@canton-network/example-test-token-v2-registry'
+import { TEST_TOKEN_V2_REGISTRY_PORT } from './_constants.js'
 
 /*
 Used the TokenStandardV2AllocationIntegrationTest: https://github.com/canton-network/splice/blob/main/apps/app/src/test/scala/org/lfdecentralizedtrust/splice/integration/tests/TokenStandardV2AllocationIntegrationTest.scala
@@ -46,6 +51,11 @@ const sdk = await SDK.create({
     token: TOKEN_NAMESPACE_CONFIG_SIMPLE,
     amulet: AMULET_NAMESPACE_CONFIG_SIMPLE,
     asset: ASSET_CONFIG,
+})
+
+await startRegistry({
+    sdk,
+    port: TEST_TOKEN_V2_REGISTRY_PORT,
 })
 
 // This example needs uploaded .dar for splice-token-test-trading-app
@@ -127,6 +137,8 @@ const aliceBalance = aliceUtxosAfterTap.reduce(
     0
 )
 if (aliceBalance < 2_000_000) {
+    stopRegistry()
+
     throw new Error(
         `Expected alice to have at least 2000000 Amulet after tap, got ${aliceBalance}`
     )
@@ -155,6 +167,8 @@ const bobBalance = bobUtxosAfterTap.reduce(
     0
 )
 if (bobBalance < 2_000_000) {
+    stopRegistry()
+
     throw new Error(
         `Expected alice to have at least 2000000 Amulet after tap, got ${bobBalance}`
     )
@@ -231,6 +245,8 @@ const activeTradeProposals = await sdk.ledger.acsReader.readJsContracts({
 const otcpCid = activeTradeProposals[0].contractId
 
 if (otcpCid === undefined) {
+    stopRegistry()
+
     throw new Error('Unexpected lack of OTCTradeProposal contract')
 }
 
@@ -307,12 +323,16 @@ for (const leg of tradeLegs) {
         (ls) => ls.transferLegId === leg.leg.transferLegId
     )
     if (!legSide) {
+        stopRegistry()
+
         throw new Error(`No allocation found for leg ${leg.leg.transferLegId}`)
     }
 
     const actualAmount = new Decimal(legSide.amount)
     const legAmount = new Decimal(leg.leg.amount)
     if (!actualAmount.equals(legAmount)) {
+        stopRegistry()
+
         throw new Error(
             `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount}, expected ${legAmount}`
         )
@@ -422,6 +442,8 @@ const aliceNet = aliceBalanceAfter - aliceBalanceBeforeTrade
 const bobNet = bobBalanceAfter - bobBalanceBeforeTrade
 
 if (aliceNet !== bobSendAmount - aliceSendAmount) {
+    stopRegistry()
+
     throw new Error(
         `Alice's net balance change was ${aliceNet}, expected ${
             bobSendAmount - aliceSendAmount
@@ -429,6 +451,8 @@ if (aliceNet !== bobSendAmount - aliceSendAmount) {
     )
 }
 if (bobNet !== aliceSendAmount - bobSendAmount) {
+    stopRegistry()
+
     throw new Error(
         `Bob's net balance change was ${bobNet}, expected ${
             aliceSendAmount - bobSendAmount
@@ -440,3 +464,4 @@ logger.info(
     { aliceNet, bobNet },
     'Verified settlement produced expected balance changes'
 )
+stopRegistry()
