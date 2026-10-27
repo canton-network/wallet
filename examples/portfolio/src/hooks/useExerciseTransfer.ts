@@ -8,6 +8,8 @@ import { submitViaProvider } from '@lib/submit'
 import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
 import { queryKeys } from './query-keys'
 import { useWalletSdk } from './useWalletSdk'
+import type { TokenStandardVersion } from '../types/instruments'
+import type { Account } from '@canton-network/core-token-standard-v2'
 
 export const useExerciseTransfer = () => {
     const { sdk } = useWalletSdk()
@@ -21,6 +23,7 @@ export const useExerciseTransfer = () => {
             contractId: string
             instrumentId: { admin: string; id: string }
             instructionChoice: 'Accept' | 'Reject' | 'Withdraw'
+            version: TokenStandardVersion
         }) => {
             if (!sdk) {
                 throw new Error('Wallet SDK is not ready')
@@ -48,24 +51,53 @@ export const useExerciseTransfer = () => {
             }
             let preparedCommand: PreparedCommand
 
-            switch (args.instructionChoice) {
-                case 'Accept':
-                    preparedCommand =
-                        await sdk.token.transfer.accept(choiceArgs)
-                    break
-                case 'Reject':
-                    preparedCommand =
-                        await sdk.token.transfer.reject(choiceArgs)
-                    break
-                case 'Withdraw':
-                    preparedCommand =
-                        await sdk.token.transfer.withdraw(choiceArgs)
-                    break
-                default: {
-                    const unsupportedChoice: never = args.instructionChoice
-                    throw new Error(
-                        `Unsupported instruction choice: ${String(unsupportedChoice)}`
-                    )
+            if (args.version === 'v2') {
+                switch (args.instructionChoice) {
+                    case 'Accept':
+                        preparedCommand = await sdk.token.v2.transfer.accept(
+                            args.contractId,
+                            [args.party],
+                            new URL(registryUrl)
+                        )
+                        break
+                    case 'Reject':
+                        preparedCommand = await sdk.token.v2.transfer.reject(
+                            args.contractId,
+                            [args.party],
+                            new URL(registryUrl)
+                        )
+                        break
+                    case 'Withdraw':
+                        preparedCommand =
+                            await sdk.token.v1.transfer.withdraw(choiceArgs)
+                        break
+                    default: {
+                        const unsupportedChoice: never = args.instructionChoice
+                        throw new Error(
+                            `Unsupported instruction choice: ${String(unsupportedChoice)}`
+                        )
+                    }
+                }
+            } else {
+                switch (args.instructionChoice) {
+                    case 'Accept':
+                        preparedCommand =
+                            await sdk.token.v1.transfer.accept(choiceArgs)
+                        break
+                    case 'Reject':
+                        preparedCommand =
+                            await sdk.token.v1.transfer.reject(choiceArgs)
+                        break
+                    case 'Withdraw':
+                        preparedCommand =
+                            await sdk.token.v1.transfer.withdraw(choiceArgs)
+                        break
+                    default: {
+                        const unsupportedChoice: never = args.instructionChoice
+                        throw new Error(
+                            `Unsupported instruction choice: ${String(unsupportedChoice)}`
+                        )
+                    }
                 }
             }
 
@@ -87,4 +119,21 @@ export const useExerciseTransfer = () => {
             })
         },
     })
+}
+
+export function transferActionVersion(item: {
+    versions: TokenStandardVersion[]
+    senderAccount?: Account
+    receiverAccount?: Account
+}): TokenStandardVersion {
+    const isBasicAccount = (a?: Account) =>
+        !a || (a.provider == null && a.id === '')
+    if (!item.versions.includes('v1')) return 'v2'
+    if (!item.versions.includes('v2')) return 'v1'
+    if (
+        !isBasicAccount(item.senderAccount) ||
+        !isBasicAccount(item.receiverAccount)
+    )
+        return 'v2' //non basic accounts can only use v2
+    return 'v1' //default to v1 if both versions are available; will probably switch v2 later
 }

@@ -21,6 +21,7 @@ import {
     useAllocationRequestsQueryOptions,
     useAllocationsQueryOptions,
     usePendingTransfersQueryOptions,
+    usePendingTransfersV2QueryOptions,
 } from './query-options'
 
 export interface OfferItemsResult {
@@ -63,6 +64,10 @@ export function useOfferItems(): OfferItemsResult {
     const pendingTransfers = useQuery(
         usePendingTransfersQueryOptions(primaryParty)
     )
+    const pendingTransfersV2 = useQuery(
+        usePendingTransfersV2QueryOptions(primaryParty)
+    )
+
     const allocationRequests = useQuery(
         useAllocationRequestsQueryOptions(primaryParty)
     )
@@ -98,6 +103,7 @@ export function useOfferItems(): OfferItemsResult {
 
         const offerItems: ActionItem[] = []
 
+        const transfersByCid = new Map<string, TransferActionItem>()
         // Normalize transfer instruction contracts into the shared ActionItem shape used by the UI.
         for (const contract of pendingTransfers.data ?? []) {
             const view = contract.interfaceViewValue
@@ -119,9 +125,46 @@ export function useOfferItems(): OfferItemsResult {
                 receiver: transfer.receiver,
                 instrumentId: transfer.instrumentId,
                 amount: transfer.amount,
+                versions: ['v1'],
             }
-            offerItems.push(transferItem)
+            transfersByCid.set(contract.contractId, transferItem)
         }
+
+        for (const contract of pendingTransfersV2.data ?? []) {
+            const view = contract.interfaceViewValue
+            const transfer = view.transfer
+            const existing = transfersByCid.get(contract.contractId)
+            if (existing) {
+                existing.versions.push('v2')
+                existing.senderAccount = transfer.sender
+                existing.receiverAccount = transfer.receiver
+                continue
+            }
+
+            const transferItem: TransferActionItem = {
+                kind: 'transfer',
+                contractId: contract.contractId,
+                currentPartyId: primaryParty,
+                tag: undefined,
+                type: 'Transfer',
+                date: transfer.requestedAt,
+                expiry: transfer.executeBefore,
+                message:
+                    transfer.meta?.values?.[TokenStandardService.MEMO_KEY] ??
+                    '',
+                sender: transfer.sender.owner ?? '',
+                receiver: transfer.receiver.owner ?? '',
+                instrumentId: transfer.instrumentId,
+                amount: transfer.amount,
+                senderAccount: transfer.sender,
+                receiverAccount: transfer.receiver,
+                availableActions: view.availableActions,
+                versions: ['v2'],
+            }
+            transfersByCid.set(contract.contractId, transferItem)
+        }
+
+        offerItems.push(...transfersByCid.values())
 
         // Normalize allocation requests. Each request can contain multiple transfer legs,
         // but the current party only needs legs where it is either the sender or receiver.
@@ -165,24 +208,23 @@ export function useOfferItems(): OfferItemsResult {
         return [...offerItems].sort(compareOfferItemsByExpiry)
     }, [
         pendingTransfers.data,
+        pendingTransfersV2.data,
         allocationRequests.data,
         groupedAllocations,
         primaryParty,
     ])
 
-    const error =
-        pendingTransfers.error ??
-        allocationRequests.error ??
-        allocations.error ??
-        null
-
+    const queries = [
+        pendingTransfers,
+        pendingTransfersV2,
+        allocations,
+        allocationRequests,
+    ]
+    const error = queries.find((q) => q.error)?.error ?? null
     return {
         items,
-        isLoading:
-            pendingTransfers.isLoading ||
-            allocationRequests.isLoading ||
-            allocations.isLoading,
-        isError: error !== null,
+        isLoading: queries.some((q) => q.isLoading),
+        isError: error != null,
         error,
     }
 }
