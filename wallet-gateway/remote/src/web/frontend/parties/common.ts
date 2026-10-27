@@ -22,7 +22,6 @@ import type {
 import { createUserClient } from '../rpc-client.js'
 import { stateManager } from '../state-manager.js'
 import { showToast } from '../utils.js'
-import { detectCurrentOrigin } from '../listeners.js'
 
 export abstract class UserUiAddOrEditParty extends BaseElement {
     protected abstract get form(): TemplateResult
@@ -70,7 +69,7 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         this.signingProviders = []
         this.signingProvidersLoading = true
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

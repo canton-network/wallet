@@ -15,7 +15,6 @@ import '../index'
 import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
 import { showToast } from '../utils'
 import type { GetSignMessageStatusResult } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-sign-message')
 export class UserUiSignMessage extends BaseElement {
@@ -86,7 +85,7 @@ export class UserUiSignMessage extends BaseElement {
 
     private async updateState() {
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -147,7 +146,7 @@ export class UserUiSignMessage extends BaseElement {
         this.polling = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -205,7 +204,7 @@ export class UserUiSignMessage extends BaseElement {
         this.isSigning = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

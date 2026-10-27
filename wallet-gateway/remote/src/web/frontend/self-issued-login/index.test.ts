@@ -52,9 +52,6 @@ vi.mock('../state-manager.js', () => ({
     },
 }))
 vi.mock('../navigation.js', () => ({ setLocationHref }))
-vi.mock('../listeners.js', () => ({
-    detectCurrentOrigin: vi.fn().mockResolvedValue('https://app.example'),
-}))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     const actual =
         await importOriginal<
