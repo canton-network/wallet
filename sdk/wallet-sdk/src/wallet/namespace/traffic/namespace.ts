@@ -129,8 +129,7 @@ export class TrafficAccountNamespace {
     /**
      * Builds the exercise that buys traffic from a paymaster, paying with
      * token-standard holdings, at the ledger conversion rate.
-     *
-     *
+    */
      *
      */
     public async purchaseTraffic(
