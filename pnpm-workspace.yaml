@@ -43,7 +43,7 @@ catalog:
     '@emotion/styled': ^11.14.1
     '@fireblocks/ts-sdk': ^35.0.0
     '@fontsource/inter': ^5.3.0
-    '@inquirer/prompts': ^8.7.3
+    '@inquirer/prompts': ^8.7.5
     '@logtape/adaptor-pino': ^2.4.1
     '@logtape/logtape': ^2.4.1
     '@logtape/testing': ^2.4.1
@@ -53,11 +53,11 @@ catalog:
     '@mui/material': ^9.5.0
     '@mui/system': ^9.5.0
     '@mui/x-date-pickers': ^9.15.0
-    '@nx/js': 23.3.0
-    '@nx/oxlint': 23.3.0
-    '@nx/playwright': 23.3.0
-    '@nx/storybook': 23.3.0
-    '@nx/vitest': 23.3.0
+    '@nx/js': 23.3.1
+    '@nx/oxlint': 23.3.1
+    '@nx/playwright': 23.3.1
+    '@nx/storybook': 23.3.1
+    '@nx/vitest': 23.3.1
     '@open-rpc/generator': ^2.1.1
     '@open-rpc/meta-schema': ^1.14.9
     '@open-rpc/mock-server': ^1.7.8
@@ -80,7 +80,7 @@ catalog:
     '@tanstack/devtools-vite': ^0.8.5
     '@tanstack/react-devtools': ^0.10.13
     '@tanstack/react-form': ^1.33.5
-    '@tanstack/react-query': ^5.104.3
+    '@tanstack/react-query': ^5.105.0
     '@tanstack/react-query-devtools': ^5.104.3
     '@tanstack/react-router': ^1.170.46
     '@tanstack/react-router-devtools': ^1.167.2
@@ -108,7 +108,7 @@ catalog:
     '@walletconnect/core': ^2.26.0
     '@walletconnect/sign-client': ^2.26.0
     '@walletconnect/types': ^2.26.0
-    '@webext-core/messaging': ^4.0.0
+    '@webext-core/messaging': ^4.0.1
     '@webext-core/proxy-service': ^3.0.2
     '@wxt-dev/module-react': ^1.2.2
     '@wxt-dev/storage': ^1.3.0
@@ -137,7 +137,7 @@ catalog:
     lint-staged: ^17.6.0
     lit: ^3.3.3
     lodash: ^4.18.1
-    nx: 23.3.0
+    nx: 23.3.1
     oauth2-mock-server: ^9.3.0
     openapi-fetch: ^0.17.0
     openapi-ts-router: ^0.4.1
@@ -157,7 +157,7 @@ catalog:
     react-intersection-observer: ^11.0.1
     rolldown: ^1.2.15
     sonner: ^2.0.8
-    storybook: ^10.6.2
+    storybook: ^10.6.4
     supertest: ^7.3.1
     tar-fs: ^3.1.3
     tsdown: ^0.23.2
@@ -174,6 +174,6 @@ catalog:
     vite-plugin-dts: ^5.1.2
     vitest: ^5.0.5
     web-ext: ^10.7.0
-    wxt: ^0.21.4
+    wxt: ^0.21.5
     yoctocolors: ^2.2.0
     zod: ^4.6.7
