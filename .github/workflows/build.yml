@@ -409,6 +409,8 @@ jobs:
             fail-fast: false
             matrix:
                 network: [devnet, mainnet]
+        env:
+            SPLICE_VERSION: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
