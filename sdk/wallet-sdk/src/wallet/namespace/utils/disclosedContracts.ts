@@ -1,9 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-
-type DisclosedContract = LedgerCommonSchemas['DisclosedContract']
+import type { DisclosedContract } from '@canton-network/core-token-standard-service'
 
 /**
  * Removes duplicate disclosures by contract ID.
