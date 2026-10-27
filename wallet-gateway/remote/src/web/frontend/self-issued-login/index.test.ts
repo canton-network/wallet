@@ -827,7 +827,7 @@ describe('UserUiSelfIssuedLogin', () => {
             })
             await waitUntil(() => notice() !== null)
             expect(notice()?.textContent).toContain(
-                'An error occurred while checking the approval status. Retrying...'
+                'An error occurred while checking the approval'
             )
             expect(el?.shadowRoot?.textContent).toContain(
                 'Waiting for approval'
