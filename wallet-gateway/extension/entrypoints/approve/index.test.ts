@@ -3,6 +3,7 @@
 
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
+import { stateManager } from '@/utils/legacy-frontend/state-manager'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const request = vi.fn()
@@ -15,8 +16,8 @@ vi.mock('@canton-network/core-tx-visualizer', () => ({
     parsePreparedTransaction: vi.fn().mockReturnValue({}),
 }))
 vi.mock('@/utils/legacy-frontend', () => ({}))
-vi.mock('@/utils/legacy-frontend/listeners.js', () => ({
-    detectCurrentOrigin: vi.fn().mockResolvedValue('https://dapp.example'),
+vi.mock('@/utils/legacy-frontend/origin', () => ({
+    detectCurrentOrigin: vi.fn().mockReturnValue('browserext'),
 }))
 vi.mock('@/utils/legacy-frontend/state-manager', () => ({
     stateManager: {
@@ -87,6 +88,9 @@ describe('ApproveUi', () => {
 
         await approval['handleApprove']()
 
+        expect(stateManager.accessToken.get).toHaveBeenLastCalledWith(
+            'browserext'
+        )
         const calls = request.mock.calls.map(([payload]) => payload)
         expect(calls.filter(({ method }) => method !== 'listWallets')).toEqual([
             { method: 'getTransaction', params: { transactionId } },
