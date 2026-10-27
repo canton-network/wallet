@@ -68,8 +68,10 @@ const pendingTokenMessage: MessageRaw = {
 function createDriver(options: {
     signMessage?: ReturnType<typeof vi.fn>
     getTransaction?: ReturnType<typeof vi.fn>
+    requiredClaims?: string[]
 }): SigningDriverInterface & { controller: ReturnType<typeof vi.fn> } {
     return {
+        requiredClaims: options.requiredClaims ?? ['sub'],
         controller: vi.fn().mockReturnValue({
             signMessage: options.signMessage ?? vi.fn(),
             getTransaction: options.getTransaction ?? vi.fn(),
@@ -569,9 +571,9 @@ describe('SignMessageService', () => {
                     'regular'
                 )
 
-                expect(driver.controller).toHaveBeenCalledWith(
-                    authContext.userId
-                )
+                expect(driver.controller).toHaveBeenCalledWith({
+                    sub: authContext.userId,
+                })
                 expect(signMessage).toHaveBeenCalledWith({
                     message: 'Sign this',
                     keyIdentifier: { publicKey: dfnsWallet.publicKey },
@@ -864,9 +866,10 @@ describe('SignMessageService', () => {
                 'regular'
             )
 
-            expect(driver.controller).toHaveBeenCalledWith(authContext.userId)
+            expect(driver.controller).toHaveBeenCalledWith({
+                sub: authContext.userId,
+            })
             expect(getTransaction).toHaveBeenCalledWith({
-                userId: authContext.userId,
                 txId: 'dfns-sig-1',
             })
             expect(result).toEqual({

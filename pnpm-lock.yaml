@@ -1152,9 +1152,6 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../signing-lib
-      '@canton-network/core-wallet-auth':
-        specifier: 'workspace:'
-        version: link:../wallet-auth
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -1180,9 +1177,6 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../signing-lib
-      '@canton-network/core-wallet-auth':
-        specifier: 'workspace:'
-        version: link:../wallet-auth
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1205,9 +1199,6 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../signing-lib
-      '@canton-network/core-wallet-auth':
-        specifier: 'workspace:'
-        version: link:../wallet-auth
       '@dfns/sdk':
         specifier: 'catalog:'
         version: 0.8.35
@@ -1248,9 +1239,6 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../signing-lib
-      '@canton-network/core-wallet-auth':
-        specifier: 'workspace:'
-        version: link:../wallet-auth
       '@fireblocks/ts-sdk':
         specifier: 'catalog:'
         version: 36.2.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
@@ -1319,9 +1307,6 @@ importers:
 
   core/signing-lib:
     dependencies:
-      '@canton-network/core-wallet-auth':
-        specifier: 'workspace:'
-        version: link:../wallet-auth
       tweetnacl:
         specifier: 'catalog:'
         version: 1.0.3
@@ -1378,9 +1363,6 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../signing-lib
-      '@canton-network/core-wallet-auth':
-        specifier: 'workspace:'
-        version: link:../wallet-auth
       '@logtape/logtape':
         specifier: 'catalog:'
         version: 2.4.2

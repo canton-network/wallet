@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { UserId } from '@canton-network/core-wallet-auth'
+import type { SigningProvider } from '@canton-network/core-signing-lib'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
 
@@ -10,11 +10,12 @@ import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
 import type { PartyAllocationService } from '../../party-allocation-service.ts'
 import type { WalletAllocator } from '../wallet-allocation-service.ts'
 
-export class ParticipantWalletAllocator implements WalletAllocator {
+export class InternalWalletAllocator implements WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
-        private partyAllocator: PartyAllocationService
+        private partyAllocator: PartyAllocationService,
+        protected signingProvider: SigningProvider
     ) {}
 
     async getKeys() {
@@ -22,20 +23,22 @@ export class ParticipantWalletAllocator implements WalletAllocator {
     }
 
     async createWallet(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false
     ): Promise<Wallet> {
-        const party = await this.partyAllocator.allocateParty(userId, partyHint)
+        const party = await this.partyAllocator.allocateParty(
+            authContext.userId,
+            partyHint
+        )
         const network = await this.store.getCurrentNetwork()
         const wallet: Wallet = {
             partyId: party.partyId,
             hint: party.hint,
             namespace: party.namespace,
-            signingProviderId: SigningProvider.PARTICIPANT,
+            signingProviderId: this.signingProvider,
             networkId: network.id,
-            userId,
+            userId: authContext.userId,
             status: 'allocated',
             primary,
             publicKey: party.namespace,
@@ -48,12 +51,11 @@ export class ParticipantWalletAllocator implements WalletAllocator {
     }
 
     async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet
     ): Promise<void> {
         const party = await this.partyAllocator.allocateParty(
-            userId,
+            authContext.userId,
             existingWallet.hint
         )
         const network = await this.store.getCurrentNetwork()
