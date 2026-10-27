@@ -24,7 +24,6 @@
     "devDependencies": {
         "@types/cors": "catalog:",
         "@types/express": "catalog:",
-        "@types/lodash": "catalog:",
         "@types/node": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",

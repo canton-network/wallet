@@ -40,7 +40,6 @@
         "@storybook/addon-vitest": "catalog:",
         "@storybook/react-vite": "catalog:",
         "@storybook/web-components-vite": "catalog:",
-        "@types/bootstrap": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitest/browser-playwright": "catalog:",

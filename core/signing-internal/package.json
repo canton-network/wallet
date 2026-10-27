@@ -28,7 +28,6 @@
     },
     "devDependencies": {
         "@canton-network/core-signing-store-sql": "workspace:",
-        "@types/lodash": "catalog:",
         "@types/node": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",

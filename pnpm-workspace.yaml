@@ -86,7 +86,6 @@ catalog:
     '@testcontainers/postgresql': ^12.2.1
     '@tony.ganchev/eslint-plugin-header': ^3.4.4
     '@types/better-sqlite3': ^9.6.0
-    '@types/bootstrap': ^5.2.11
     '@types/cors': ^2.8.19
     '@types/express': ^5.0.6
     '@types/lodash': ^4.17.26
