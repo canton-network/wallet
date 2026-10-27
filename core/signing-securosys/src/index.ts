@@ -3,6 +3,7 @@
 
 import {
     buildController,
+    type ClaimsFor,
     type CreateKeyParams,
     type CreateKeyResult,
     type GetConfigurationResult,
@@ -24,7 +25,6 @@ import {
     type SubscribeTransactionsParams,
     type SubscribeTransactionsResult,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { getLogger } from '@logtape/logtape'
 
 import {
@@ -56,7 +56,7 @@ export type SecurosysConfig = SecurosysTSBClientConfig
 
 export const SECUROSYS_SIGNING_PROVIDER = 'securosys' as SigningProvider
 
-export default class SecurosysSigningDriver implements SigningDriverInterface {
+export default class SecurosysSigningDriver implements SigningDriverInterface<'sub'> {
     private client: SigningAPIClient
 
     constructor(config: SecurosysConfig) {
@@ -65,8 +65,9 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SECUROSYS_SIGNING_PROVIDER
+    public requiredClaims = ['sub'] as const
 
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public controller = ({ sub }: ClaimsFor<'sub'>) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -88,7 +89,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         keyIdentifier,
                         extraParams: {
                             ...params.extraParams,
-                            userIdentifier: userId,
+                            userIdentifier: sub,
                         },
                     })
 
@@ -142,7 +143,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...params,
                         extraParams: {
                             ...params.extraParams,
-                            userIdentifier: userId,
+                            userIdentifier: sub,
                         },
                     })
 
@@ -243,7 +244,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                             id: key.id,
                             name: key.name,
                             publicKey: key.publicKey,
-                            userIdentifier: userId,
+                            userIdentifier: sub,
                         })),
                     }
                 } catch (error) {
@@ -260,7 +261,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 try {
                     const key = await this.client.createKey({
                         ...params,
-                        userIdentifier: userId,
+                        userIdentifier: sub,
                     })
                     return {
                         id: key.id,

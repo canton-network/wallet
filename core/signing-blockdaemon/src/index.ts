@@ -22,8 +22,8 @@ import {
     type SubscribeTransactionsParams,
     type SubscribeTransactionsResult,
     type Transaction,
+    type ClaimsFor,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.ts'
 
@@ -72,7 +72,7 @@ function toTransaction(tx: Transaction): Transaction {
     }
 }
 
-export default class BlockdaemonSigningDriver implements SigningDriverInterface {
+export default class BlockdaemonSigningDriver implements SigningDriverInterface<'email'> {
     private client: SigningAPIClient
 
     constructor(config: BlockdaemonConfig) {
@@ -85,8 +85,9 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.BLOCKDAEMON
+    public requiredClaims = ['email'] as const
 
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public controller = ({ email }: ClaimsFor<'email'>) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -106,7 +107,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                         ...(params.internalTxId !== undefined && {
                             internalTxId: params.internalTxId,
                         }),
-                        userIdentifier: userId,
+                        userIdentifier: email,
                     })
                     return toTransaction(tx)
                 } catch (error) {
@@ -150,7 +151,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                         const transactions = await this.client.getTransactions({
                             txIds: params.txIds!,
                             publicKeys: params.publicKeys!,
-                            userIdentifier: userId,
+                            userIdentifier: email,
                         })
                         return {
                             transactions: transactions.map(toTransaction),
@@ -178,7 +179,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                             id: k.id,
                             name: k.name,
                             publicKey: k.publicKey,
-                            userIdentifier: userId,
+                            userIdentifier: email,
                         })),
                     }
                 } catch (error) {
@@ -195,7 +196,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                 try {
                     const key = await this.client.createKey({
                         name: params.name,
-                        userIdentifier: userId,
+                        userIdentifier: email,
                     })
                     return {
                         id: key.id,

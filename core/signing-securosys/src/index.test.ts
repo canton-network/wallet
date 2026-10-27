@@ -23,6 +23,9 @@ const walletKeyLabel = walletPublicKey
     .replace(/\//g, '_')
     .replace(/=+$/, '')
 
+const userId = 'wallet-user'
+const claims = { sub: userId }
+
 describe('SecurosysSigningDriver constructor', () => {
     it('uses the securosys provider string', () => {
         const driver = new SecurosysSigningDriver({
@@ -49,8 +52,6 @@ describe('SecurosysSigningDriver constructor', () => {
 })
 
 describe('SecurosysSigningDriver', () => {
-    const userId = 'wallet-user'
-
     let driver: SecurosysSigningDriver
     let mockClient: Mocked<SigningAPIClient>
 
@@ -91,7 +92,7 @@ describe('SecurosysSigningDriver', () => {
             metadata: { tsbStatus: 'PENDING' },
         } as Transaction)
 
-        const result = await driver.controller(userId).signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { id: 'key-name' },
@@ -119,7 +120,7 @@ describe('SecurosysSigningDriver', () => {
             status: 'pending',
         } as Transaction)
 
-        await driver.controller(userId).signTransaction({
+        await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { publicKey: walletPublicKey },
@@ -139,7 +140,7 @@ describe('SecurosysSigningDriver', () => {
             status: 'pending',
         } as Transaction)
 
-        await driver.controller(userId).signTransaction({
+        await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { id: 'custom-label', publicKey: walletPublicKey },
@@ -154,7 +155,7 @@ describe('SecurosysSigningDriver', () => {
     })
 
     it('signTransaction requires id or publicKey', async () => {
-        const result = await driver.controller(userId).signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: {} as never,
@@ -171,7 +172,7 @@ describe('SecurosysSigningDriver', () => {
     it('signTransaction returns signing_error when the client throws', async () => {
         mockClient.signTransaction.mockRejectedValue(new Error('TSB down'))
 
-        const result = await driver.controller(userId).signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { publicKey: 'pk' },
@@ -197,7 +198,7 @@ describe('SecurosysSigningDriver', () => {
             )
         )
 
-        const result = await driver.controller(userId).signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { publicKey: 'pk' },
@@ -217,7 +218,7 @@ describe('SecurosysSigningDriver', () => {
             publicKey: 'public-key',
         } as Transaction)
 
-        const result = await driver.controller(userId).signMessage({
+        const result = await driver.controller(claims).signMessage({
             message: 'hello',
             keyIdentifier: { id: 'key' },
             internalTxId: 'msg-1',
@@ -242,7 +243,7 @@ describe('SecurosysSigningDriver', () => {
             signature: 'signature',
         } as Transaction)
 
-        const result = await driver.controller(userId).signMessage({
+        const result = await driver.controller(claims).signMessage({
             message: 'hello',
             keyIdentifier: { id: 'key' },
         })
@@ -255,7 +256,7 @@ describe('SecurosysSigningDriver', () => {
     })
 
     it('signMessage requires a message', async () => {
-        const result = await driver.controller(userId).signMessage({
+        const result = await driver.controller(claims).signMessage({
             message: '',
             keyIdentifier: { id: 'key' },
         })
@@ -269,7 +270,7 @@ describe('SecurosysSigningDriver', () => {
     })
 
     it('signMessage requires id or publicKey', async () => {
-        const result = await driver.controller(userId).signMessage({
+        const result = await driver.controller(claims).signMessage({
             message: 'hello',
             keyIdentifier: {} as never,
         })
@@ -285,7 +286,7 @@ describe('SecurosysSigningDriver', () => {
     it('signMessage returns signing_error when the client throws', async () => {
         mockClient.signMessage.mockRejectedValue(new Error('TSB down'))
 
-        const result = await driver.controller(userId).signMessage({
+        const result = await driver.controller(claims).signMessage({
             message: 'hello',
             keyIdentifier: { id: 'key' },
         })
@@ -306,7 +307,7 @@ describe('SecurosysSigningDriver', () => {
         } as Transaction)
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransaction({ txId: 'req-1' })
 
         expect(result).toEqual({
@@ -327,7 +328,7 @@ describe('SecurosysSigningDriver', () => {
         } as Transaction)
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransaction({ txId: 'req-1' })
 
         expect(result).toMatchObject({
@@ -340,7 +341,7 @@ describe('SecurosysSigningDriver', () => {
         mockClient.getTransaction.mockRejectedValue(new Error('not found'))
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransaction({ txId: 'missing' })
 
         expect(result).toEqual({
@@ -350,7 +351,7 @@ describe('SecurosysSigningDriver', () => {
     })
 
     it('getTransactions requires filters', async () => {
-        const result = await driver.controller(userId).getTransactions({})
+        const result = await driver.controller(claims).getTransactions({})
 
         expect(result).toEqual({
             error: 'bad_arguments',
@@ -369,7 +370,7 @@ describe('SecurosysSigningDriver', () => {
         ] as Transaction[])
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransactions({ txIds: ['req-1'] })
 
         expect(mockClient.getTransactions).toHaveBeenCalledWith({
@@ -391,7 +392,7 @@ describe('SecurosysSigningDriver', () => {
         mockClient.getTransactions.mockRejectedValue(new Error('TSB down'))
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransactions({ txIds: ['req-1'] })
 
         expect(result).toEqual({
@@ -409,7 +410,7 @@ describe('SecurosysSigningDriver', () => {
             },
         ] as Key[])
 
-        const result = await driver.controller(userId).getKeys()
+        const result = await driver.controller(claims).getKeys()
 
         expect(result).toEqual({
             keys: [
@@ -426,7 +427,7 @@ describe('SecurosysSigningDriver', () => {
     it('getKeys returns fetch_error when the client throws', async () => {
         mockClient.getKeys.mockRejectedValue(new Error('TSB down'))
 
-        const result = await driver.controller(userId).getKeys()
+        const result = await driver.controller(claims).getKeys()
 
         expect(result).toEqual({
             error: 'fetch_error',
@@ -442,7 +443,7 @@ describe('SecurosysSigningDriver', () => {
         } as Key)
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .createKey({ name: 'new-key' })
 
         expect(mockClient.createKey).toHaveBeenCalledWith({
@@ -460,7 +461,7 @@ describe('SecurosysSigningDriver', () => {
         mockClient.createKey.mockRejectedValue(new Error('TSB down'))
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .createKey({ name: 'new-key' })
 
         expect(result).toEqual({
@@ -470,7 +471,7 @@ describe('SecurosysSigningDriver', () => {
     })
 
     it('getConfiguration masks secrets', async () => {
-        const result = await driver.controller(userId).getConfiguration()
+        const result = await driver.controller(claims).getConfiguration()
 
         expect(result).toMatchObject({
             BaseURL: 'http://localhost:8080',
@@ -511,7 +512,7 @@ describe('SecurosysSigningDriver', () => {
             SignatureAlgorithm: 'SHA256_WITH_ECDSA',
         })
 
-        const result = await driver.controller(userId).setConfiguration(params)
+        const result = await driver.controller(claims).setConfiguration(params)
 
         expect(mockClient.setConfiguration).toHaveBeenCalledWith({
             BaseURL: 'https://tsb.example',
@@ -538,7 +539,7 @@ describe('SecurosysSigningDriver', () => {
 
     it('subscribeTransactions is a no-op', async () => {
         await expect(
-            driver.controller(userId).subscribeTransactions({} as never)
+            driver.controller(claims).subscribeTransactions({} as never)
         ).resolves.toEqual({})
     })
 })
@@ -580,7 +581,7 @@ describe('SecurosysSigningDriver public-key signing against TSB', () => {
             baseUrl: 'http://tsb.example',
         })
 
-        const result = await driver.controller('wallet-user').signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { publicKey: walletPublicKey },
@@ -615,7 +616,7 @@ describe('SecurosysSigningDriver public-key signing against TSB', () => {
             baseUrl: 'http://tsb.example',
         })
 
-        const result = await driver.controller('wallet-user').signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { publicKey: walletPublicKey },

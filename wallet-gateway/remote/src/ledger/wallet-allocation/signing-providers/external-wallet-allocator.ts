@@ -1,12 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    type SigningDriverInterface,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
+import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-import type { UserId } from '@canton-network/core-wallet-auth'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { getSigningController } from '@canton-network/core-wallet-services'
 import type {
     Store,
     UpdateWallet,
@@ -14,14 +12,22 @@ import type {
 } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
 
-import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
+import type {
+    Key,
+    KeyName,
+    PartyHint,
+    Primary,
+} from '../../../user-api/rpc-gen/typings.ts'
 import type { PartyAllocationService } from '../../party-allocation-service.ts'
 import {
     handleSigningProviderError,
     type WalletAllocator,
 } from '../wallet-allocation-service.ts'
+import { finalizeWallet } from './utils.ts'
 
-export class BlockdaemonWalletAllocator implements WalletAllocator {
+type GetOrCreateKeyOptions = { keyName?: KeyName; partyHint: PartyHint }
+
+export class ExternalWalletAllocator implements WalletAllocator {
     constructor(
         private store: Store,
         private logger: Logger,
@@ -29,26 +35,50 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
         protected signingDriver: SigningDriverInterface
     ) {}
 
-    async getKeys(userId: UserId) {
+    async getKeys(authContext: AuthContext) {
         if (!this.signingDriver) return null
-        const driver = this.signingDriver.controller(userId)
+        const driver = getSigningController(this.signingDriver, authContext)
         return await driver.getKeys().then(handleSigningProviderError)
     }
 
-    async createWallet(
-        userId: UserId,
-        email: string | undefined,
-        partyHint: PartyHint,
-        primary: Primary = false
-    ): Promise<Wallet> {
-        const driver = this.signingDriver.controller(email)
+    async getOrCreateKey(
+        authContext: AuthContext,
+        opts: GetOrCreateKeyOptions
+    ): Promise<Key> {
+        const driver = getSigningController(this.signingDriver, authContext)
 
-        const key = await driver.createKey({
-            name: partyHint,
-        })
-        if ('error' in key) {
-            throw new Error(`Failed to create key: ${key.error_description}`)
+        if (opts.keyName) {
+            const keys = await driver.getKeys().then(handleSigningProviderError)
+            const key = keys?.keys?.find((k) => k.name === opts.keyName)
+
+            if (!key) {
+                const message = `Driver did not return a key with name ${opts.keyName}`
+
+                this.logger.warn(message)
+                throw new Error(message)
+            }
+            return key
+        } else {
+            const key = await driver
+                .createKey({ name: opts.partyHint })
+                .then(handleSigningProviderError)
+
+            return key
         }
+    }
+
+    async createWallet(
+        authContext: AuthContext,
+        partyHint: PartyHint,
+        primary: Primary = false,
+        keyName?: KeyName | undefined
+    ): Promise<Wallet> {
+        const driver = getSigningController(this.signingDriver, authContext)
+
+        const key = await this.getOrCreateKey(authContext, {
+            keyName,
+            partyHint,
+        })
 
         const namespace = this.partyAllocator.createFingerprintFromKey(
             key.publicKey
@@ -60,8 +90,8 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
             )
         const topologyTransactions = transactions.topologyTransactions ?? []
         topologyTransactions.forEach((tx, idx) => {
-            this.logger.info(
-                `BLOCKDAEMON: topologyTransaction[${idx}] length=${tx.length} preview=${tx.substring(0, 100)}...`
+            this.logger.debug(
+                `${this.signingDriver.signingProvider}: topologyTransaction[${idx}] length=${tx.length} preview=${tx.substring(0, 100)}...`
             )
         })
 
@@ -75,9 +105,8 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
             .signTransaction({
                 tx: Buffer.from(txPayload).toString('base64'),
                 txHash: transactions.multiHash,
-                keyIdentifier: {
-                    publicKey: key.publicKey,
-                },
+                txPurpose: 'topology',
+                keyIdentifier: { id: key.id, publicKey: key.publicKey },
                 internalTxId,
             })
             .then(handleSigningProviderError)
@@ -87,67 +116,33 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
             partyId: `${partyHint}::${namespace}`,
             hint: partyHint,
             namespace,
-            signingProviderId: SigningProvider.BLOCKDAEMON,
+            signingProviderId: this.signingDriver.signingProvider,
             networkId: network.id,
-            userId,
+            userId: authContext.userId,
             primary,
             publicKey: key.publicKey,
             externalTxId: txId,
             topologyTransactions: topologyTransactions.join(', '),
             rights: [],
         }
-        let wallet: Wallet
 
-        if (status === 'signed') {
-            const { signature } = await driver
-                .getTransaction({
-                    userId,
-                    txId,
-                })
-                .then(handleSigningProviderError)
-            if (!signature) {
-                throw new Error(
-                    'Transaction signed but no signature found in result'
-                )
-            }
-            const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    namespace,
-                    topologyTransactions,
-                    signature,
-                    userId
-                )
-            wallet = {
-                ...walletBase,
-                partyId,
-                status: 'allocated',
-            }
-        } else if (status === 'pending') {
-            wallet = {
-                ...walletBase,
-                status: 'initialized',
-                reason: WALLET_DISABLED_REASON.TOPOLOGY_TRANSACTION_PENDING,
-            }
-        } else {
-            const reason =
-                status === 'rejected'
-                    ? WALLET_DISABLED_REASON.TOPOLOGY_TRANSACTION_REJECTED
-                    : WALLET_DISABLED_REASON.TOPOLOGY_TRANSACTION_FAILED
-            wallet = {
-                ...walletBase,
-                status: 'removed',
-                disabled: true,
-                reason,
-            }
-        }
+        const wallet = await finalizeWallet(
+            walletBase,
+            authContext.userId,
+            status,
+            txId,
+            topologyTransactions,
+            namespace,
+            driver,
+            this.partyAllocator
+        )
 
         await this.store.addWallet(wallet)
         return wallet
     }
 
     async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet
     ): Promise<void> {
         if (
@@ -158,7 +153,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                 'Existing wallet is missing field externalTxId or topologyTransactions'
             )
         }
-        const driver = this.signingDriver.controller(email)
+        const driver = getSigningController(this.signingDriver, authContext)
 
         const { signature, status, metadata } = await driver
             .getTransaction({
@@ -181,7 +176,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                     existingWallet.namespace,
                     existingWallet.topologyTransactions.split(', '),
                     signature,
-                    userId
+                    authContext.userId
                 )
             walletUpdate = {
                 ...walletUpdate,

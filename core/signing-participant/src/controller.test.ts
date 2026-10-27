@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { expect, test } from 'vitest'
 
 import { ParticipantSigningDriver } from './controller.ts'
@@ -9,11 +8,6 @@ import { ParticipantSigningDriver } from './controller.ts'
 const TEST_TRANSACTION = 'test-tx'
 const TEST_TRANSACTION_HASH =
     '88beb0783e394f6128699bad42906374ab64197d260db05bb0cfeeb518ba3ac2'
-
-const authContext: AuthContext = {
-    userId: 'test-user-id',
-    accessToken: 'test-access-token',
-}
 
 test('driver properties', async () => {
     const signingDriver = new ParticipantSigningDriver()
@@ -23,20 +17,16 @@ test('driver properties', async () => {
 
 test('transaction signature', async () => {
     const signingDriver = new ParticipantSigningDriver()
-    const tx = await signingDriver
-        .controller(authContext.userId)
-        .signTransaction({
-            tx: TEST_TRANSACTION,
-            txHash: TEST_TRANSACTION_HASH,
-            keyIdentifier: { publicKey: '' },
-        })
+    const tx = await signingDriver.controller().signTransaction({
+        tx: TEST_TRANSACTION,
+        txHash: TEST_TRANSACTION_HASH,
+        keyIdentifier: { publicKey: '' },
+    })
     expect(tx).toMatchObject({ status: 'signed' })
 })
 
 test('unimplemented controller methods throw "Function not implemented."', () => {
-    const controller = new ParticipantSigningDriver().controller(
-        authContext.userId
-    )
+    const controller = new ParticipantSigningDriver().controller()
     const notImplementedMessage = 'Function not implemented.'
 
     const unimplemented: Array<{

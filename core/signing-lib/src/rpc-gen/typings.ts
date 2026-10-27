@@ -19,6 +19,12 @@ export type Tx = string
 export type TxHash = string
 /**
  *
+ * Purpose of the transaction for context during signing.
+ *
+ */
+export type TxPurpose = 'topology'
+/**
+ *
  * Public key used to sign the transaction.
  *
  */
@@ -181,6 +187,7 @@ export interface Keys {
 export interface SignTransactionParams {
     tx: Tx
     txHash: TxHash
+    txPurpose?: TxPurpose
     keyIdentifier: KeyIdentifier
     internalTxId?: InternalTxId
     extraParams?: ExtraParams

@@ -21,8 +21,7 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-signing-lib": "workspace:",
-        "@canton-network/core-wallet-auth": "workspace:"
+        "@canton-network/core-signing-lib": "workspace:"
     },
     "devDependencies": {
         "@types/node": "catalog:",

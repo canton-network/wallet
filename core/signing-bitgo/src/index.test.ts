@@ -108,7 +108,7 @@ describe('BitGoSigningDriver', () => {
     describe('signMessage', () => {
         it('returns not_allowed', async () => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .signMessage({
                     message: 'test',
                     keyIdentifier: { id: WALLET_ID },
@@ -123,7 +123,7 @@ describe('BitGoSigningDriver', () => {
     describe('createKey', () => {
         it('returns key with derived Ed25519 publicKey', async () => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .createKey({ name: 'my-key' })
             throwWhenRpcError(result)
             expect(result).toEqual({
@@ -143,7 +143,7 @@ describe('BitGoSigningDriver', () => {
                 baseUrl: 'https://app.bitgo-test.com',
                 coin: 'tcanton',
             })
-                .controller(undefined)
+                .controller()
                 .createKey({ name: 'fail' })
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result))
@@ -155,7 +155,7 @@ describe('BitGoSigningDriver', () => {
                 new Error('BitGo API 422')
             )
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .createKey({ name: 'fail' })
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result)) {
@@ -170,7 +170,7 @@ describe('BitGoSigningDriver', () => {
     describe('signTransaction', () => {
         it('returns pending immediately after submit', async () => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .signTransaction({
                     tx: 'base64tx==',
                     txHash: 'base64hash==',
@@ -183,7 +183,7 @@ describe('BitGoSigningDriver', () => {
 
         it('passes walletId from keyIdentifier.id to handler', async () => {
             await createDriver()
-                .controller(undefined)
+                .controller()
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
@@ -194,9 +194,38 @@ describe('BitGoSigningDriver', () => {
             )
         })
 
+        it("maps txPurpose 'topology' to CANTON_SIGN_TOPOLOGY", async () => {
+            await createDriver()
+                .controller()
+                .signTransaction({
+                    tx: 'tx',
+                    txHash: 'hash',
+                    txPurpose: 'topology',
+                    keyIdentifier: { id: WALLET_ID },
+                })
+            expect(handlerMock.signTransaction).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    messageStandardType: 'CANTON_SIGN_TOPOLOGY',
+                })
+            )
+        })
+
+        it('leaves messageStandardType undefined when txPurpose is absent', async () => {
+            await createDriver()
+                .controller()
+                .signTransaction({
+                    tx: 'tx',
+                    txHash: 'hash',
+                    keyIdentifier: { id: WALLET_ID },
+                })
+            expect(handlerMock.signTransaction).toHaveBeenCalledWith(
+                expect.objectContaining({ messageStandardType: undefined })
+            )
+        })
+
         it('resolves Ed25519 publicKey to walletId via keyMap when id is absent', async () => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
@@ -220,7 +249,7 @@ describe('BitGoSigningDriver', () => {
             handlerMock.getKeys.mockResolvedValueOnce([])
             handlerMock.getWalletId.mockReturnValueOnce(undefined)
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
@@ -237,7 +266,7 @@ describe('BitGoSigningDriver', () => {
             handlerMock.getKeys.mockResolvedValueOnce([])
             handlerMock.getWalletId.mockReturnValueOnce(WALLET_ID)
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
@@ -256,7 +285,7 @@ describe('BitGoSigningDriver', () => {
         it('returns key_not_found when keyIdentifier has neither id nor publicKey', async () => {
             handlerMock.getWalletId.mockReturnValueOnce(undefined)
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
@@ -272,7 +301,7 @@ describe('BitGoSigningDriver', () => {
                 new Error('TSS failed')
             )
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
@@ -291,7 +320,7 @@ describe('BitGoSigningDriver', () => {
     describe('getTransaction', () => {
         it('returns txId, status, signature, publicKey, and metadata.signedBy', async () => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransaction({ txId: TX_REQUEST_ID })
             throwWhenRpcError(result)
             expect(result.txId).toBe(TX_REQUEST_ID)
@@ -308,7 +337,7 @@ describe('BitGoSigningDriver', () => {
                 publicKey: WALLET_ID,
             })
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransaction({ txId: TX_REQUEST_ID })
             throwWhenRpcError(result)
             expect(result.signature).toBeUndefined()
@@ -322,7 +351,7 @@ describe('BitGoSigningDriver', () => {
                 failureReason: 'BitGo rejected the signing request (canceled)',
             })
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransaction({ txId: TX_REQUEST_ID })
             throwWhenRpcError(result)
             expect(result.failureReason).toBe(
@@ -333,7 +362,7 @@ describe('BitGoSigningDriver', () => {
         it('returns transaction_not_found when handler returns undefined', async () => {
             handlerMock.getTransaction.mockResolvedValueOnce(undefined)
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransaction({ txId: 'ghost' })
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result))
@@ -345,7 +374,7 @@ describe('BitGoSigningDriver', () => {
                 new Error('network error')
             )
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransaction({ txId: TX_REQUEST_ID })
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result)) expect(result.error).toBe('fetch_error')
@@ -356,16 +385,14 @@ describe('BitGoSigningDriver', () => {
 
     describe('getTransactions', () => {
         it('returns bad_arguments when no filters supplied', async () => {
-            const result = await createDriver()
-                .controller(undefined)
-                .getTransactions({})
+            const result = await createDriver().controller().getTransactions({})
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result)) expect(result.error).toBe('bad_arguments')
         })
 
         it('returns transactions by publicKey (walletId)', async () => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransactions({ publicKeys: [WALLET_ID] })
             throwWhenRpcError(result)
             expect(result.transactions).toHaveLength(1)
@@ -377,7 +404,7 @@ describe('BitGoSigningDriver', () => {
 
         it('returns transactions by txIds', async () => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransactions({ txIds: [TX_REQUEST_ID] })
             throwWhenRpcError(result)
             expect(result.transactions).toHaveLength(1)
@@ -401,7 +428,7 @@ describe('BitGoSigningDriver', () => {
             })
 
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransactions({ txIds: [TX_REQUEST_ID] })
             throwWhenRpcError(result)
             expect(result.transactions).toHaveLength(1)
@@ -423,7 +450,7 @@ describe('BitGoSigningDriver', () => {
             })
 
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransactions({
                     txIds: [TX_REQUEST_ID],
                     publicKeys: [WALLET_ID],
@@ -448,7 +475,7 @@ describe('BitGoSigningDriver', () => {
             })
 
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransactions({
                     txIds: [TX_REQUEST_ID],
                     publicKeys: [WALLET_ID],
@@ -465,7 +492,7 @@ describe('BitGoSigningDriver', () => {
             })
 
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .getTransactions({ txIds: [TX_REQUEST_ID] })
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result)) expect(result.error).toBe('fetch_error')
@@ -476,7 +503,7 @@ describe('BitGoSigningDriver', () => {
 
     describe('getKeys', () => {
         it('returns list of keys', async () => {
-            const result = await createDriver().controller(undefined).getKeys()
+            const result = await createDriver().controller().getKeys()
             throwWhenRpcError(result)
             expect(result.keys).toHaveLength(1)
             expect(result.keys![0]).toEqual({
@@ -488,7 +515,7 @@ describe('BitGoSigningDriver', () => {
 
         it('returns fetch_error when handler throws', async () => {
             handlerMock.getKeys.mockRejectedValueOnce(new Error('auth failed'))
-            const result = await createDriver().controller(undefined).getKeys()
+            const result = await createDriver().controller().getKeys()
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result)) expect(result.error).toBe('fetch_error')
         })
@@ -498,9 +525,7 @@ describe('BitGoSigningDriver', () => {
 
     describe('getConfiguration', () => {
         it('hides access token', async () => {
-            const result = await createDriver()
-                .controller(undefined)
-                .getConfiguration()
+            const result = await createDriver().controller().getConfiguration()
             throwWhenRpcError(result)
             expect((result as Record<string, unknown>).accessToken).toBe(
                 '***HIDDEN***'
@@ -508,9 +533,7 @@ describe('BitGoSigningDriver', () => {
         })
 
         it('returns baseUrl, enterpriseId, and coin', async () => {
-            const result = await createDriver()
-                .controller(undefined)
-                .getConfiguration()
+            const result = await createDriver().controller().getConfiguration()
             throwWhenRpcError(result)
             const config = result as Record<string, unknown>
             expect(config.baseUrl).toBe('https://app.bitgo-test.com')
@@ -520,7 +543,7 @@ describe('BitGoSigningDriver', () => {
 
         it('reflects coin after setConfiguration updates it', async () => {
             const driver = createDriver()
-            const controller = driver.controller(undefined)
+            const controller = driver.controller()
             await controller.setConfiguration({ coin: 'canton' })
             const config = await controller.getConfiguration()
             throwWhenRpcError(config)
@@ -533,7 +556,7 @@ describe('BitGoSigningDriver', () => {
     describe('setConfiguration', () => {
         it('updates baseUrl and returns new config', async () => {
             const driver = createDriver()
-            const controller = driver.controller(undefined)
+            const controller = driver.controller()
 
             await controller.setConfiguration({
                 baseUrl: 'https://app.bitgo.com',
@@ -548,7 +571,7 @@ describe('BitGoSigningDriver', () => {
 
         it('updates enterpriseId', async () => {
             const driver = createDriver()
-            const controller = driver.controller(undefined)
+            const controller = driver.controller()
 
             await controller.setConfiguration({ enterpriseId: 'new-ent' })
 
@@ -565,7 +588,7 @@ describe('BitGoSigningDriver', () => {
                 .calls.length
 
             await createDriver()
-                .controller(undefined)
+                .controller()
                 .setConfiguration({ coin: 'canton' })
             const callsAfter = (BitGoHandler as ReturnType<typeof vi.fn>).mock
                 .calls.length
@@ -575,7 +598,7 @@ describe('BitGoSigningDriver', () => {
 
         it('preserves existing config fields not included in partial update', async () => {
             const driver = createDriver()
-            const controller = driver.controller(undefined)
+            const controller = driver.controller()
             // Update only coin — enterpriseId should remain 'ent-123'
             await controller.setConfiguration({ coin: 'canton' })
             const config = await controller.getConfiguration()
@@ -593,7 +616,7 @@ describe('BitGoSigningDriver', () => {
             ['baseUrl', 'not-a-url'],
         ])('returns bad_arguments for invalid %s', async (field, value) => {
             const result = await createDriver()
-                .controller(undefined)
+                .controller()
                 .setConfiguration({ [field]: value })
             expect(isRpcError(result)).toBe(true)
             if (isRpcError(result)) expect(result.error).toBe('bad_arguments')

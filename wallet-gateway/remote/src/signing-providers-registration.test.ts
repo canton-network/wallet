@@ -10,13 +10,20 @@ import { signingProvidersConfigSchema } from './config/Config.ts'
 import { ServerNotices } from './notices/server-notices.ts'
 import { registerSigningProviders } from './signing-providers-registration.ts'
 
-const providerConstructors = vi.hoisted(() => ({
-    bitgo: vi.fn(),
-    blockdaemon: vi.fn(),
-    dfns: vi.fn(),
-    fireblocks: vi.fn(),
-    securosys: vi.fn(),
-}))
+const providerConstructors = vi.hoisted(() => {
+    const mockDriver = (signingProvider: string) =>
+        vi.fn(function (this: { signingProvider: string }) {
+            this.signingProvider = signingProvider
+        })
+
+    return {
+        bitgo: mockDriver('bitgo'),
+        blockdaemon: mockDriver('blockdaemon'),
+        dfns: mockDriver('dfns'),
+        fireblocks: mockDriver('fireblocks'),
+        securosys: mockDriver('securosys'),
+    }
+})
 
 vi.mock('@canton-network/core-signing-bitgo', () => ({
     default: providerConstructors.bitgo,

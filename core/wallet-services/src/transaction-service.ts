@@ -44,7 +44,11 @@ import { getLogger } from '@logtape/logtape'
 
 import type { Notifier } from './notification/index.ts'
 import type { SigningDrivers, HASHING_SCHEME_VERSION } from './types.ts'
-import { ledgerPrepareParams, type PrepareParams } from './utils.ts'
+import {
+    getSigningController,
+    ledgerPrepareParams,
+    type PrepareParams,
+} from './utils.ts'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -82,8 +86,9 @@ export class TransactionService {
         signParams: SignParams
     ): Promise<SignResult> {
         const signingProvider = wallet.signingProviderId as SigningProvider
-        const driver = this.signingDrivers[signingProvider]?.controller(
-            authContext.userId
+        const driver = getSigningController(
+            this.signingDrivers[signingProvider],
+            authContext
         )
         if (!driver) {
             throw new Error(`No driver found for ${signingProvider}`)
@@ -99,12 +104,11 @@ export class TransactionService {
             keyIdentifier: {
                 publicKey: wallet.publicKey,
             },
+            internalTxId: crypto
+                .randomUUID()
+                .replace(/-/g, '')
+                .substring(0, 16),
         }
-
-        const internalTxId = crypto
-            .randomUUID()
-            .replace(/-/g, '')
-            .substring(0, 16)
 
         /**
          * The ultimate goal is that every signing driver is indistinguishable,
@@ -119,32 +123,14 @@ export class TransactionService {
             case SigningProvider.DFNS:
             case SigningProvider.BITGO:
             case SigningProvider.SECUROSYS:
-            case SigningProvider.FIREBLOCKS: {
+            case SigningProvider.FIREBLOCKS:
+            case SigningProvider.BLOCKDAEMON: {
                 return this.signWithDriver(
                     driver,
                     signingProvider,
                     wallet,
                     tx,
                     baseSignParams
-                )
-            }
-            case SigningProvider.BLOCKDAEMON: {
-                if (!authContext.email) {
-                    throw new Error(
-                        'Email is required for Blockdaemon wallet allocation'
-                    )
-                }
-
-                const blockdaemonDriver = this.signingDrivers[
-                    SigningProvider.BLOCKDAEMON
-                ]?.controller(authContext.email)
-
-                return this.signWithDriver(
-                    blockdaemonDriver!, // we checked the driver existence above, so this is safe
-                    signingProvider,
-                    wallet,
-                    tx,
-                    { ...baseSignParams, internalTxId }
                 )
             }
             default:
@@ -330,23 +316,9 @@ export class TransactionService {
             throw new Error(`No driver found for provider ${provider}`)
         }
 
-        if (provider === SigningProvider.BLOCKDAEMON && !authContext.email) {
-            throw new Error(
-                'Invalid auth context (missing email) for SigningProvider BlockDaemon'
-            )
-        }
+        const driver = getSigningController(signingProvider, authContext)
 
-        const controllerId =
-            provider === SigningProvider.BLOCKDAEMON
-                ? authContext.email
-                : authContext.userId
-
-        const driver = signingProvider.controller(controllerId)
-        const args =
-            provider === SigningProvider.SECUROSYS
-                ? { txId: externalTxId }
-                : { userId: controllerId, txId: externalTxId }
-
+        const args = { txId: externalTxId }
         return driver.getTransaction(args).then(handleSigningError)
     }
 
@@ -617,11 +589,10 @@ export class TransactionService {
 
             rawSignature = signingResult.signature
         } else if (wallet.signingProviderId === SigningProvider.WALLET_KERNEL) {
-            const driver =
-                this.signingDrivers[SigningProvider.WALLET_KERNEL]?.controller(
-                    userId
-                )
-
+            const driver = getSigningController(
+                this.signingDrivers[SigningProvider.WALLET_KERNEL],
+                authContext
+            )
             if (!driver) {
                 throw new Error(`Wallet kernel signing driver not available`)
             }
