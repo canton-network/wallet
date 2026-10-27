@@ -60,7 +60,6 @@ export * from './init/index.ts'
 export type {
     PrepareOptions,
     ExecuteOptions,
-    DiscloseOptions,
 } from './namespace/ledger/index.ts'
 export type * from './namespace/traffic/types.ts'
 export * from './namespace/transactions/prepared.ts'
