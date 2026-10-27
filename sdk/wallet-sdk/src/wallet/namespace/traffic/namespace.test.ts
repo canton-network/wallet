@@ -218,4 +218,141 @@ describe('TrafficAccountNamespace', () => {
             })
         })
     })
+
+    describe('purchaseTraffic error branches', () => {
+        const throwingError = {
+            throw: vi.fn((details: any) => {
+                const error = new Error(details.message)
+                ;(error as any).type = details.type
+                throw error
+            }),
+        } as any
+
+        const purchaseCtx = () => {
+            const tokenStandardService = {
+                registriesToAssets: vi.fn().mockResolvedValue([
+                    {
+                        id: 'Amulet',
+                        admin: 'dso::1',
+                        registryUrl: 'http://example.com',
+                    },
+                ]),
+                core: {
+                    getInputHoldingsCids: vi
+                        .fn()
+                        .mockResolvedValue(['holding-1']),
+                },
+                transfer: {
+                    fetchTransferFactoryChoiceContext: vi
+                        .fn()
+                        .mockResolvedValue({
+                            factoryId: 'factory-1',
+                            transferKind: 'transfer',
+                            choiceContext: {
+                                choiceContextData: { values: {} },
+                                disclosedContracts: [],
+                            },
+                        }),
+                },
+                listContractsByInterface: vi.fn().mockResolvedValue([]),
+            } as any
+            return {
+                tokenStandardService,
+                registryUrls: [new (URL as any)('http://example.com')],
+            }
+        }
+
+        const params = {
+            purchaser: 'buyer::1',
+            trafficPurchaserCid: 'tp-cid',
+            conversionRateCid: 'cr-cid',
+            paymasterReceiver: 'pm::1',
+            instrumentId: 'Amulet',
+            registryUrl: 'http://example.com',
+            targetAccount: 'buyer::1',
+        } as any
+
+        const build = (ctxOverrides: any = {}) =>
+            new TrafficAccountNamespace({
+                ...mock.ctx,
+                error: throwingError,
+                ...purchaseCtx(),
+                ...ctxOverrides,
+            } as any)
+
+        it('rejects a fractional traffic amount', async () => {
+            const extended = build()
+
+            await expect(
+                extended.purchaseTraffic({
+                    ...params,
+                    trafficAmount: '1048576.5',
+                    conversionRate: '1048576',
+                })
+            ).rejects.toThrow('not a whole number of bytes')
+        })
+
+        it('rejects when the buyer owns no spendable holdings', async () => {
+            vi.spyOn(TokenStandardService, 'isHoldingLocked').mockReturnValue(
+                false
+            )
+            const ctx = purchaseCtx()
+            ctx.tokenStandardService.listContractsByInterface = vi
+                .fn()
+                .mockResolvedValue([])
+            const extended = build(ctx)
+
+            await expect(extended.purchaseTraffic(params)).rejects.toThrow(
+                'owns no spendable'
+            )
+        })
+
+        it('rejects when no named holding contracts are spendable', async () => {
+            vi.spyOn(TokenStandardService, 'isHoldingLocked').mockReturnValue(
+                false
+            )
+            const ctx = purchaseCtx()
+            ctx.tokenStandardService.listContractsByInterface = vi
+                .fn()
+                .mockResolvedValue([
+                    {
+                        contractId: 'holding-1',
+                        interfaceViewValue: {
+                            amount: '5',
+                            instrumentId: { id: 'Amulet', admin: 'dso::1' },
+                        },
+                    },
+                ])
+            const extended = build(ctx)
+
+            await expect(
+                extended.purchaseTraffic({
+                    ...params,
+                    inputUtxos: ['other-holding'],
+                })
+            ).rejects.toThrow('None of the holdings named in inputUtxos')
+        })
+
+        it('rejects when the registry would settle the payment as an offer', async () => {
+            const ctx = purchaseCtx()
+            ctx.tokenStandardService.transfer.fetchTransferFactoryChoiceContext =
+                vi.fn().mockResolvedValue({
+                    factoryId: 'factory-1',
+                    transferKind: 'offer',
+                    choiceContext: {
+                        choiceContextData: { values: {} },
+                        disclosedContracts: [],
+                    },
+                })
+            const extended = build(ctx)
+
+            await expect(
+                extended.purchaseTraffic({
+                    ...params,
+                    trafficAmount: '1048576',
+                    conversionRate: '1048576',
+                })
+            ).rejects.toThrow('rather than a transfer')
+        })
+    })
 })
