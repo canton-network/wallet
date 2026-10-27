@@ -37,21 +37,22 @@ export type {
 } from '@daml.js/traffic-purchase-models-1.0.0/lib/Tea/TrafficPurchase/module.js'
 
 /**
- * The account a purchase credits, and the credit it produces.
+ * The TEA account a purchase credits, the issuer interface whose `PublishCredit`
+ * choice credits it, and that choice's argument.
  *
- * These live in the `canton-traffic-credit` package the model now
- * data-depends on: `TrafficPurchaser_PurchaseCredits` names an `AccountId` and
- * returns the `ContractId TrafficCredit` created on-ledger. The codegen emits
- * that package into this model's output closure, so it resolves through the
- * same bindings.
- *
- * `TrafficCredit` is exported as a value so it carries both meanings -- the
- * payload type and the companion holding its template id -- which a scan
- * matching the credit's created event off the transaction tree needs.
+ * These live in the `canton-traffic-credit` package the model data-depends on.
+ * It is interface-only: `TrafficPurchaser_PurchaseCredits` *exercises*
+ * `PublishCredit` on a `TrafficCreditIssuer` rather than creating a contract, so
+ * a scan reads the credit off that exercise's argument (`accountId`,
+ * `trafficAmount`). The interface companion is exported as a value for its
+ * interface id; the choice argument as a type.
  */
-export { TrafficCredit } from '@daml.js/canton-traffic-credit-1.0.0/lib/Canton/Traffic/Credit/module.js'
+export { TrafficCreditIssuer } from '@daml.js/canton-traffic-credit-1.0.0/lib/Canton/Traffic/Credit/module.js'
 
-export type { AccountId } from '@daml.js/canton-traffic-credit-1.0.0/lib/Canton/Traffic/Credit/module.js'
+export type {
+    AccountId,
+    PublishCredit,
+} from '@daml.js/canton-traffic-credit-1.0.0/lib/Canton/Traffic/Credit/module.js'
 
 /** Package id of the DAR these bindings were generated from. */
 export { packageId } from '@daml.js/traffic-purchase-models-1.0.0'
