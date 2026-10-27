@@ -62,15 +62,8 @@ export function wholeBytes(amount: Numeric): Numeric {
 }
 
 /**
- * The asset needed to buy exactly `traffic` bytes at `rate` bytes per unit.
- *
- * Mirrors `assetNeededFor`, which is `intToDecimal traffic / rate`: a plain
- * Daml `Decimal` division, with no rounding of its own beyond the fixed-point
- * arithmetic.
- *
- * Daml `Decimal` is fixed-point with 10 decimal places and banker's rounding,
- * so the division is quantised to 10 places half-even to agree with the ledger
- * to the last place.
+ * Calculates the asset amount needed for `traffic` bytes at `rate` bytes per unit.
+ * Matches Daml's 10-decimal, half-even rounding.
  */
 export function assetNeededFor(traffic: Numeric, rate: Numeric): Numeric {
     return toDecimal(traffic, 'traffic amount')
