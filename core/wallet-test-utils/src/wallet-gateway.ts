@@ -134,6 +134,9 @@ export class WalletGateway {
     async connect(args: {
         network: string
         customURL?: string
+        // Interacts with the open wallet picker, ending with a wallet being
+        // selected. Defaults to selecting customURL or the first wallet.
+        selectWallet?: (pickerPopup: Page) => Promise<void>
         credentials?: LoginCredentials
     }): Promise<void> {
         await test.step(`wallet gateway: connect to ${args.network}`, async () => {
@@ -149,7 +152,11 @@ export class WalletGateway {
                 connectButton
             )
 
-            await this.selectFromWalletPicker(pickerPopup, args.customURL)
+            if (args.selectWallet) {
+                await args.selectWallet(pickerPopup)
+            } else {
+                await this.selectFromWalletPicker(pickerPopup, args.customURL)
+            }
 
             const popup = await this.waitForConnectFormPopup(pickerPopup)
             const selectNetwork = popup.getByLabel('Select a network')

@@ -1,0 +1,41 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    // Generated daml.js code and build output
+    "ignore": ["damljs/**", "**/dist/**"],
+    // Comes from a global grpc-tools install
+    "ignoreBinaries": ["grpc_tools_node_protoc"],
+    "workspaces": {
+        ".": {
+            // Used through binaries knip can't see: scripts/src/generate-rpc.ts
+            // (open-rpc-generator) and scripts/src/generate-protobufs.ts (protoc-gen-ts_proto)
+            "ignoreDependencies": [
+                "@open-rpc/generator",
+                "@protobuf-ts/plugin",
+            ],
+            "commitlint": { "config": [".commitlintrc.js"] },
+        },
+        "core/rpc-generator": {
+            // Loaded by open-rpc-generator through the rpc-generator-config-*.json files
+            "entry": ["src/components/*.ts"],
+        },
+        "core/wallet-ui-components": {
+            "storybook": {
+                "config": [".storybook/main.ts", ".storybook-lit/main.ts"],
+            },
+        },
+        "docs/wallet-integration-guide/examples": {
+            "entry": ["scripts/**/*.ts", "snippets/**/*.ts"],
+        },
+        "wallet-gateway/extension": {
+            // WXT auto-imports
+            "entry": ["utils/**/*.ts"],
+        },
+        "wallet-gateway/remote": {
+            // pino transport target
+            "ignoreDependencies": ["pino-pretty"],
+        },
+        "wallet-gateway/wallet-extension": {
+            "entry": ["src/entrypoints/**/*.{ts,tsx}"],
+        },
+    },
+}

@@ -19,8 +19,7 @@
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/core-wallet-store": "workspace:",
-        "@logtape/logtape": "catalog:",
-        "zod": "catalog:"
+        "@logtape/logtape": "catalog:"
     },
     "devDependencies": {
         "@vitest/browser-playwright": "catalog:",

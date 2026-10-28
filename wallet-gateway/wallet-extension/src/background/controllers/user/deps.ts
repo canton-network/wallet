@@ -10,11 +10,14 @@ import type {
     SigningDrivers,
 } from '@canton-network/core-wallet-services'
 import type { Store } from '@canton-network/core-wallet-store'
+import type { AuthContextStore } from '../../auth-context'
 
 /** What every area module of the user controller gets. */
 export interface UserControllerDeps {
     /** The wallet store, scoped to the signed-in user. */
     getStore: () => Promise<Store>
+    /** The signed-in user's token and user ID. */
+    authContext: AuthContextStore
     /** The wallet-kernel (internal) signing driver. */
     signingDriver: SigningDriverInterface
     notificationService: INotificationService

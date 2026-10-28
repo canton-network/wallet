@@ -19,8 +19,9 @@ src/
 │   │   ├── dapp/     dApp API: controller.ts, the dispatch.ts entry point and rpc-gen/
 │   │   └── user/     user API: one module per area (sessions.ts, wallets.ts, …) and rpc-gen/
 │   ├── vault/        the encrypted vault: crypto, envelope format and the lock/unlock coordinator
+│   ├── store/        the wallet store: the holder that keeps it in the vault, the snapshot format and the default config
 │   ├── vault-service.ts  vault messages for the extension pages
-│   ├── auth-context.ts, store.ts, status.ts, notifications.ts, open-ui.ts
+│   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
 ├── content/          content script code: startContent(), the JSON-RPC proxy and the notification relay
 ├── shared/           code that more than one runtime imports: service keys, ports, storage items, logger
@@ -48,6 +49,8 @@ Chrome stops an idle service worker and starts it again for the next message or 
 
 `background/vault/` keeps data encrypted in `local:vault`. The key comes from the user's password through PBKDF2-SHA-256, and the data is encrypted with AES-256-GCM. While the vault is unlocked, the decrypted data is in the background's memory and the key is cached in `session:vaultSession`. After a service worker restart, `startBackground()` restores the vault from that cached key without the password. Closing the browser, reloading the extension or pressing Lock clears it. Store secrets with `vault.defineItem(key, { fallback })`, which has the same shape as a WXT storage item.
 
+The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet-store)) and the auth context (item `authContext`), which is the signed-in user's access token and user ID. `createAuthContextStore(vault)` in `background/auth-context.ts` reads and writes the auth context, and its methods reject with `VaultLockedError` while the vault is locked. A lock doesn't sign the user out, so after an unlock the same user is signed in again. A reset deletes the token with everything else.
+
 The pages send `vault.getStatus`, `vault.create`, `vault.unlock` and `vault.lock` through `vaultMessenger` (`shared/vault-protocol.ts`). `vault-service.ts` answers them only from `popup.html` and `app.html`. Errors arrive as plain `Error`s, so compare `error.name` with `VaultErrorName`. While the vault isn't unlocked, every user API method rejects with `VaultLockedError`. The dApp dispatcher answers `status`, `isConnected` and `connect` with a not-connected result whose reason is `Locked`, and every other method with error 4100. Its `connect` also opens the unlock page.
 
 The pages and the content script call the background through [`@webext-core/proxy-service`](https://webext-core.aklinker1.dev/proxy-service/installation). `shared/service-keys.ts` defines the keys:
@@ -56,6 +59,10 @@ The pages and the content script call the background through [`@webext-core/prox
 - `DAPP_RPC_KEY` is the dApp dispatcher, for the content script. The content script calls `request(request, location.origin)`. The dispatcher builds the dApp controller for that origin, calls only the controller's own methods (`Object.hasOwn`) and always resolves to a JSON-RPC response. Thrown errors become JSON-RPC errors that keep their code.
 
 The content script answers every dApp request that has an id. When the background can't be reached, for example after an extension reload, it replies with a JSON-RPC error.
+
+### Wallet store
+
+The wallet store holds the networks, IdPs, parties, sessions and transactions. It lives in the vault item `walletStore` as one versioned snapshot, and every store write replaces that snapshot. `createWalletStore(vault)` in `background/store/` builds the store on the first `getStore()` after unlock and drops it on lock. While the vault is locked, `getStore()` rejects with `VaultLockedError`. A new vault starts from `default-config.ts`, so editing that file doesn't change existing installs until their vault is reset.
 
 ### Controllers
 

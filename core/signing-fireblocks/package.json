@@ -28,8 +28,6 @@
         "@logtape/logtape": "catalog:",
         "@fireblocks/ts-sdk": "catalog:",
         "lodash": "catalog:",
-        "tweetnacl": "catalog:",
-        "tweetnacl-util": "catalog:",
         "zod": "catalog:"
     },
     "devDependencies": {

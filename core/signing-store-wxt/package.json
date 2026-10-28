@@ -23,20 +23,17 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "workspace:",
-        "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-signing-lib": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
-        "@wxt-dev/storage": "catalog:",
-        "wxt": "catalog:"
+        "@wxt-dev/storage": "catalog:"
     },
     "devDependencies": {
-        "@swc/core": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",
-        "vitest": "catalog:"
+        "vitest": "catalog:",
+        "wxt": "catalog:"
     },
     "files": [
         "dist/**"

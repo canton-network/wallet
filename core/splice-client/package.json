@@ -23,11 +23,9 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@logtape/logtape": "catalog:",
-        "openapi-fetch": "catalog:",
-        "zod": "catalog:"
+        "openapi-fetch": "catalog:"
     },
     "devDependencies": {
         "@vitest/browser-playwright": "catalog:",

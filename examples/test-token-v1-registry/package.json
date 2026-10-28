@@ -24,11 +24,11 @@
     "devDependencies": {
         "@types/cors": "catalog:",
         "@types/express": "catalog:",
-        "@types/lodash": "catalog:",
         "@types/node": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "playwright": "catalog:",
+        "tsdown": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
@@ -36,14 +36,10 @@
     "dependencies": {
         "@canton-network/core-splice-codegen": "workspace:",
         "@canton-network/core-token-standard": "workspace:",
-        "@canton-network/core-token-standard-v2": "workspace:",
-        "@canton-network/core-types": "workspace:",
         "@canton-network/wallet-sdk": "workspace:^",
         "cors": "catalog:",
         "express": "catalog:",
         "openapi-ts-router": "catalog:",
-        "openapi-typescript-helpers": "catalog:",
-        "tsdown": "catalog:",
         "zod": "catalog:"
     },
     "files": [

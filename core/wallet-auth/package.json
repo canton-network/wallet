@@ -34,7 +34,6 @@
     },
     "dependencies": {
         "@canton-network/core-rpc-errors": "workspace:",
-        "@canton-network/core-types": "workspace:",
         "@logtape/logtape": "catalog:",
         "jose": "catalog:",
         "typescript-lru-cache": "catalog:",

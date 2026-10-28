@@ -28,17 +28,12 @@
         "@canton-network/core-token-standard": "workspace:",
         "@canton-network/core-token-standard-v2": "workspace:",
         "@canton-network/core-types": "workspace:",
-        "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/wallet-sdk": "workspace:^",
         "@daml/types": "catalog:",
-        "@mojotech/json-type-validation": "catalog:",
-        "lodash": "catalog:",
-        "openapi-fetch": "catalog:",
-        "zod": "catalog:"
+        "@mojotech/json-type-validation": "catalog:"
     },
     "devDependencies": {
         "@types/node": "catalog:",
-        "playwright": "catalog:",
         "rolldown": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:"

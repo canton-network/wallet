@@ -11,7 +11,7 @@ import type {
 import type { PartyId } from '@canton-network/core-types'
 import type { PrettyTransactions } from '@canton-network/core-tx-parser'
 import type { SDKContext } from '../../init/types/context.js'
-import { type ParsedURL, parseAssets } from '../utils/url.js'
+import { ParsedURL, type URLInput, parseAssets } from '../utils/url.js'
 import { findAsset } from '../asset/index.js'
 import { TokenV2Namespace } from './v2/namespace.js'
 
@@ -100,13 +100,26 @@ export class TokenNamespace {
      */
     async find(
         instrumentId: string,
-        registryUrl?: ParsedURL
+        registryUrl?: ParsedURL | URLInput
     ): Promise<AssetBody> {
+        let resolvedRegistryUrl: ParsedURL | undefined
+
+        if (registryUrl) {
+            if (registryUrl instanceof ParsedURL) {
+                resolvedRegistryUrl = registryUrl
+            } else {
+                resolvedRegistryUrl = new ParsedURL(
+                    this.tokenContext.commonCtx,
+                    registryUrl
+                )
+            }
+        }
+
         return findAsset(
             await this.assets(),
             instrumentId,
             this.tokenContext.commonCtx.error,
-            registryUrl
+            resolvedRegistryUrl
         )
     }
 }

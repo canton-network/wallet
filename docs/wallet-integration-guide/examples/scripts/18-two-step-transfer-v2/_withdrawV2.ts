@@ -1,5 +1,6 @@
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { TransferTestScriptParameters } from './types.js'
+import { assertV2 } from '../common/_utils.js'
 
 export default async (args: TransferTestScriptParameters) => {
     const { sdk, sender, receiver, senderKeys, logger } = args
@@ -61,8 +62,11 @@ export default async (args: TransferTestScriptParameters) => {
     const pendingTransferAfterWithdraw = await sdk.token.v2.transfer.pending(
         receiver.partyId
     )
-    if (pendingTransferAfterWithdraw.length)
-        throw Error('pendingTransferAfterReject is not empty')
+
+    assertV2(
+        !pendingTransferAfterWithdraw.length,
+        'pendingTransferAfterReject is not empty'
+    )
 
     logger.info('Successfully withdrawn the submitted transfer')
 }

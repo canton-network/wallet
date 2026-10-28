@@ -3,7 +3,7 @@
     "compilerOptions": {
         "exactOptionalPropertyTypes": false,
         "useDefineForClassFields": false,
-        "types": ["cors", "express", "node", "supertest"]
+        "types": ["node"]
     },
     "exclude": ["src/web/frontend"],
     "references": [{ "path": "./tsconfig.frontend.json" }]

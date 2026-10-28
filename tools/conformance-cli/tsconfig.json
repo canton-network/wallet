@@ -2,7 +2,7 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "lib": ["ESNext", "DOM"],
-        "types": ["express", "node"],
+        "types": ["node"],
         "erasableSyntaxOnly": true,
         "rewriteRelativeImportExtensions": true
     }

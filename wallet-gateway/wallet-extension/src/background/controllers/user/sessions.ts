@@ -3,7 +3,6 @@
 
 import { LOGOUT_EVENT } from '@canton-network/core-wallet-services'
 import { logger } from '@/shared/logger'
-import { authContext } from '../../auth-context'
 import { notifySessionTerminated } from '../../status'
 import type { UserControllerDeps } from './deps'
 import { toNetworkDto } from './networks'
@@ -16,6 +15,7 @@ import type {
 
 export const sessions = ({
     getStore,
+    authContext,
     notificationService,
 }: UserControllerDeps): Pick<
     Methods,

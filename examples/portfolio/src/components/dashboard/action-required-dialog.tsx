@@ -14,7 +14,10 @@ import type {
 import { AllocationActionDialogContent } from '@components/dashboard/allocation-action-dialog-content'
 import { TransferOfferActionDialogContent } from '@components/dashboard/transfer-offer-action-dialog-content'
 import { useCreateAllocation } from '@hooks/useCreateAllocation'
-import { useExerciseTransfer } from '@hooks/useExerciseTransfer'
+import {
+    transferActionVersion,
+    useExerciseTransfer,
+} from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
 
 interface ActionRequiredDialogProps {
@@ -71,6 +74,7 @@ export function ActionRequiredDialog({
                 contractId: transferItem.contractId,
                 instrumentId: transferItem.instrumentId,
                 instructionChoice: action,
+                version: transferActionVersion(transferItem),
             },
             {
                 onSuccess: () => {

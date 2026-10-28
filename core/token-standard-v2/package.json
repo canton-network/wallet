@@ -27,13 +27,10 @@
         "@canton-network/core-wallet-auth": "workspace:",
         "@daml/types": "catalog:",
         "@mojotech/json-type-validation": "catalog:",
-        "lodash": "catalog:",
-        "openapi-fetch": "catalog:",
-        "zod": "catalog:"
+        "openapi-fetch": "catalog:"
     },
     "devDependencies": {
         "@types/node": "catalog:",
-        "playwright": "catalog:",
         "rolldown": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:"

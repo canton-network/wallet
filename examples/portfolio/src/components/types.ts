@@ -7,6 +7,11 @@ import type {
     SettlementInfo,
     TransferLeg,
 } from '@canton-network/core-token-standard'
+import type {
+    Account,
+    TransferInstructionView as TransferInstructionViewV2,
+} from '@canton-network/core-token-standard-v2'
+import type { TokenStandardVersion } from '../types/instruments'
 
 interface ActionItemBase {
     contractId: string
@@ -16,7 +21,8 @@ interface ActionItemBase {
 
 export interface TransferActionItem extends ActionItemBase {
     kind: 'transfer'
-    tag: string
+    versions: TokenStandardVersion[]
+    tag: string | undefined
     type: string
     date: string
     message: string
@@ -24,6 +30,9 @@ export interface TransferActionItem extends ActionItemBase {
     receiver: string
     instrumentId: { admin: string; id: string }
     amount: string
+    senderAccount?: Account
+    receiverAccount?: Account
+    availableActions?: TransferInstructionViewV2['availableActions']
 }
 
 export interface TransferLegWithAllocation {

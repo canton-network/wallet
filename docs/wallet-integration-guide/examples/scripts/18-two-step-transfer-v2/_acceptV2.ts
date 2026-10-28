@@ -1,5 +1,6 @@
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { TransferTestScriptParameters } from './types.js'
+import { assertV2 } from '../common/_utils.js'
 
 export default async (args: TransferTestScriptParameters) => {
     const { sdk, sender, receiver, senderKeys, receiverKeys, logger } = args
@@ -70,11 +71,10 @@ export default async (args: TransferTestScriptParameters) => {
         )
     })
 
-    if (receiverAmuletUtxos.length === 0) {
-        throw new Error(
-            'No Amulet UTXOs found for Receiver after accepting transfer instruction'
-        )
-    }
+    assertV2(
+        receiverAmuletUtxos.length > 0,
+        'No Amulet UTXOs found for Receiver after accepting transfer instruction'
+    )
 
     logger.info('Two step transfer process completed successfully')
 }

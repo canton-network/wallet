@@ -26,7 +26,6 @@
         "migrations:update-lock": "tsx ../../scripts/src/check-migration-lock.ts --update"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "workspace:",
         "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
@@ -36,8 +35,7 @@
         "commander": "catalog:",
         "kysely": "catalog:",
         "pg": "catalog:",
-        "umzug": "catalog:",
-        "zod": "catalog:"
+        "umzug": "catalog:"
     },
     "devDependencies": {
         "@testcontainers/postgresql": "catalog:",

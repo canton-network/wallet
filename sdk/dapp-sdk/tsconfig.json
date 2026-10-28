@@ -2,6 +2,6 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "resolveJsonModule": true,
-        "types": ["node", "qrcode"]
+        "types": ["node"]
     }
 }

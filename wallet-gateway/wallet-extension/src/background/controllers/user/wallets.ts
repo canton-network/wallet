@@ -8,7 +8,6 @@ import {
     AuthTokenProvider,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import { authContext } from '../../auth-context'
 import { createExtensionWallet } from './create-wallet'
 import { toSigningDrivers, type UserControllerDeps } from './deps'
 import type { Methods } from './rpc-gen'
@@ -16,6 +15,7 @@ import type { CreateWalletParams } from './rpc-gen/typings'
 
 export const wallets = ({
     getStore,
+    authContext,
     signingDriver,
     notificationService,
 }: UserControllerDeps): Pick<

@@ -18,8 +18,6 @@
         }
     },
     "dependencies": {
-        "tsdown": "catalog:",
-        "tsx": "catalog:",
         "zod": "catalog:"
     },
     "scripts": {
@@ -30,6 +28,7 @@
     "devDependencies": {
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
     },

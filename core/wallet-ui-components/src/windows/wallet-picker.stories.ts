@@ -74,6 +74,10 @@ export const WithManualProviders: StoryObj = {
                 name: 'https://manual-wallet.example/rpc',
                 rpcUrl: 'https://manual-wallet.example/rpc',
             },
+            {
+                name: 'My beloved assets',
+                rpcUrl: 'https://wg.renamed-wallet.example/api/v0/dapp',
+            },
         ])
         return html`
             <div style=${CONTAINER_STYLE}>

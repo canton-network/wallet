@@ -23,6 +23,7 @@
         "clean": "rm -rf dist"
     },
     "devDependencies": {
+        "@types/node": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "camelcase-keys": "catalog:",
@@ -32,8 +33,7 @@
         "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-ledger-proto": "workspace:",
-        "@types/node": "catalog:"
+        "@canton-network/core-ledger-proto": "workspace:"
     },
     "files": [
         "dist/**"

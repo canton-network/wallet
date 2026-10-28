@@ -7,8 +7,11 @@ import {
     Alert,
     Box,
     CircularProgress,
+    FormControlLabel,
     IconButton,
     InputAdornment,
+    Radio,
+    RadioGroup,
     TextField,
     Typography,
     type SxProps,
@@ -47,6 +50,7 @@ const createDefaultTransferValues = (): TransferFormData => ({
     recipient: '',
     memo: '',
     expiry: new Date(Date.now() + SEVEN_DAYS_MS),
+    tokenStandardVersion: 'v1',
 })
 
 const instrumentValidator = z
@@ -116,6 +120,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                     amount: formData.amount,
                     expiry,
                     memo: formData.memo.trim() || undefined,
+                    tokenStandardVersion: formData.tokenStandardVersion,
                 },
                 {
                     onSuccess: () => {
@@ -129,6 +134,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                             memo: formData.memo.trim(),
                             expiry,
                             submittedAt: new Date(),
+                            tokenStandardVersion: formData.tokenStandardVersion,
                         })
                     },
                 }
@@ -200,6 +206,44 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                         />
                     )}
                 </FieldBlock>
+
+                <form.Field
+                    name="tokenStandardVersion"
+                    validators={{
+                        onChange: ({ value }) =>
+                            value
+                                ? undefined
+                                : 'Token standard version is required',
+                    }}
+                >
+                    {(field) => (
+                        <FieldBlock label="Token Standard Version">
+                            <RadioGroup
+                                row
+                                value={field.state.value}
+                                onChange={(e) =>
+                                    field.handleChange(
+                                        e.target
+                                            .value as TransferFormData['tokenStandardVersion']
+                                    )
+                                }
+                            >
+                                <FormControlLabel
+                                    value="v1"
+                                    control={<Radio disabled={disabled} />}
+                                    label="v1"
+                                    sx={{ color: 'text.primary' }}
+                                />
+                                <FormControlLabel
+                                    value="v2"
+                                    control={<Radio disabled={disabled} />}
+                                    label="v2"
+                                    sx={{ color: 'text.primary' }}
+                                />
+                            </RadioGroup>
+                        </FieldBlock>
+                    )}
+                </form.Field>
 
                 <form.Field
                     name="recipient"
