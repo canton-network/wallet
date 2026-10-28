@@ -114,7 +114,25 @@ export const usePendingTransfersQueryOptions = (party: string | undefined) => {
                 throw new Error('Wallet SDK and party are required')
             }
 
-            return await sdk.token.transfer.pending(party)
+            return await sdk.token.v1.transfer.pending(party)
+        },
+    })
+}
+
+export const usePendingTransfersV2QueryOptions = (
+    party: string | undefined
+) => {
+    const { sdk } = useWalletSdk()
+
+    return queryOptions({
+        queryKey: queryKeys.walletConnection.pendingTransfersV2.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+
+            return await sdk.token.v2.transfer.pending(party)
         },
     })
 }
@@ -131,7 +149,7 @@ export const useAllocationRequestsQueryOptions = (
             if (!party || !sdk) {
                 throw new Error('Wallet SDK and party are required')
             }
-            return await sdk.token.allocation.request.pending(party)
+            return await sdk.token.v1.allocation.request.pending(party)
         },
     })
 }
@@ -146,7 +164,7 @@ export const useAllocationsQueryOptions = (party: string | undefined) => {
             if (!party || !sdk) {
                 throw new Error('Wallet SDK and party are required')
             }
-            return await sdk.token.allocation.pending(party)
+            return await sdk.token.v1.allocation.pending(party)
         },
     })
 }
