@@ -26,11 +26,8 @@
         "migrations:update-lock": "tsx ../../scripts/src/check-migration-lock.ts --update"
     },
     "dependencies": {
-        "@canton-network/core-ledger-client": "workspace:",
-        "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-signing-lib": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
-        "@canton-network/core-wallet-store": "workspace:",
         "@logtape/logtape": "catalog:",
         "better-sqlite3": "catalog:",
         "commander": "catalog:",
@@ -40,7 +37,6 @@
         "zod": "catalog:"
     },
     "devDependencies": {
-        "@swc/core": "catalog:",
         "@testcontainers/postgresql": "catalog:",
         "@types/better-sqlite3": "catalog:",
         "@types/pg": "catalog:",

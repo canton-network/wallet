@@ -10,8 +10,6 @@
         "clean": "tsc -b --clean"
     },
     "devDependencies": {
-        "@open-rpc/meta-schema": "catalog:",
-        "@types/js-yaml": "catalog:",
         "@types/node": "catalog:",
         "@types/tar-fs": "catalog:",
         "js-yaml": "catalog:",

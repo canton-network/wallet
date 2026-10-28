@@ -23,7 +23,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { authContext as authContextStorage } from '../../auth-context'
-import { initializeWalletStore } from '../../store'
+import { createTestWalletStore } from '../../store/test-store'
 import { userController } from '.'
 
 const networkId = 'canton:local-oauth'
@@ -47,7 +47,7 @@ describe('userController.addSession', () => {
     beforeEach(async () => {
         vi.spyOn(authContextStorage, 'load').mockResolvedValue(authContext)
         service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
-        const store = await initializeWalletStore()
+        const store = await createTestWalletStore()
         controller = userController({
             getStore: async () => store,
             signingDriver: {} as SigningDriverInterface,
@@ -150,7 +150,7 @@ describe('userController transactions', () => {
             .mockResolvedValue(ledgerResult)
 
         service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
-        store = await initializeWalletStore()
+        store = await createTestWalletStore()
         signingStore = new WxtStore(authContext.userId)
         await signingStore.setSigningKey(authContext.userId, {
             id: 'key-1',

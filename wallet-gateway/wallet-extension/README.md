@@ -19,8 +19,9 @@ src/
 │   │   ├── dapp/     dApp API: controller.ts, the dispatch.ts entry point and rpc-gen/
 │   │   └── user/     user API: one module per area (sessions.ts, wallets.ts, …) and rpc-gen/
 │   ├── vault/        the encrypted vault: crypto, envelope format and the lock/unlock coordinator
+│   ├── store/        the wallet store: the holder that keeps it in the vault, the snapshot format and the default config
 │   ├── vault-service.ts  vault messages for the extension pages
-│   ├── auth-context.ts, store.ts, status.ts, notifications.ts, open-ui.ts
+│   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
 ├── content/          content script code: startContent(), the JSON-RPC proxy and the notification relay
 ├── shared/           code that more than one runtime imports: service keys, ports, storage items, logger
@@ -56,6 +57,10 @@ The pages and the content script call the background through [`@webext-core/prox
 - `DAPP_RPC_KEY` is the dApp dispatcher, for the content script. The content script calls `request(request, location.origin)`. The dispatcher builds the dApp controller for that origin, calls only the controller's own methods (`Object.hasOwn`) and always resolves to a JSON-RPC response. Thrown errors become JSON-RPC errors that keep their code.
 
 The content script answers every dApp request that has an id. When the background can't be reached, for example after an extension reload, it replies with a JSON-RPC error.
+
+### Wallet store
+
+The wallet store holds the networks, IdPs, parties, sessions and transactions. It lives in the vault item `walletStore` as one versioned snapshot, and every store write replaces that snapshot. `createWalletStore(vault)` in `background/store/` builds the store on the first `getStore()` after unlock and drops it on lock. While the vault is locked, `getStore()` rejects with `VaultLockedError`. A new vault starts from `default-config.ts`, so editing that file doesn't change existing installs until their vault is reset.
 
 ### Controllers
 

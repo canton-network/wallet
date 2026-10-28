@@ -23,7 +23,6 @@
     "dependencies": {
         "@canton-network/core-provider-conformance": "workspace:",
         "@canton-network/core-rpc-errors": "workspace:",
-        "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-ui-components": "workspace:",
         "@canton-network/dapp-sdk": "workspace:^",
         "@emotion/react": "catalog:",
@@ -36,6 +35,7 @@
         "zod": "catalog:"
     },
     "devDependencies": {
+        "@canton-network/core-types": "workspace:",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",

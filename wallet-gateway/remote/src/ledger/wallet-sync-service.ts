@@ -23,6 +23,10 @@ import type { PartyAllocationService } from './party-allocation-service.js'
 import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 
+type ProviderKey = { id: string; publicKey: string; fingerprint: string }
+/** Maps provider IDs to their corresponding provider keys */
+type ProviderKeyCache = Map<string, Promise<ProviderKey[]>>
+
 type RightsSnapshot = {
     rightsByParty: Map<string, PartyLevelRight[]>
     rightsByUser: Map<string, Set<UserLevelRight>>
@@ -77,10 +81,60 @@ export class WalletSyncService {
         return extractedNamespace
     }
 
+    // Fetches a provider's keys and their fingerprints. Errors are logged and yield no keys.
+    private async loadProviderKeys(
+        providerId: string,
+        driver: SigningDriverInterface
+    ): Promise<ProviderKey[]> {
+        const partyAllocator = this.requirePartyAllocator()
+        try {
+            const result = await driver
+                .controller(this.authContext?.userId)
+                .getKeys()
+
+            // In case of error getKeys resolve Promise but with error object
+            if ('error' in result) {
+                this.logger.warn(
+                    {
+                        providerId,
+                        error: result.error,
+                        error_description: result.error_description,
+                    },
+                    'Failed to get keys from signing provider'
+                )
+                return []
+            }
+
+            return (result.keys ?? [])
+                .map((key) => {
+                    const normalizedKey =
+                        partyAllocator.normalizePublicKeyToBase64(key.publicKey)
+                    if (!normalizedKey) return undefined
+                    return {
+                        id: key.id,
+                        publicKey: key.publicKey,
+                        fingerprint:
+                            partyAllocator.createFingerprintFromKey(
+                                normalizedKey
+                            ),
+                    }
+                })
+                .filter((key) => key !== undefined)
+        } catch (err) {
+            this.logger.error(
+                { err, providerId },
+                'Error getting keys from signing provider'
+            )
+            return []
+        }
+    }
+
     // Protected for tests
+    // Pass the same keyCache for every party in a sync, so each provider is asked for its keys once.
     protected async resolveSigningProvider(
         partyNamespace: string,
-        participantNamespace: string
+        participantNamespace: string,
+        keyCache: ProviderKeyCache = new Map()
     ): Promise<
         | {
               signingProviderId: SigningProvider.PARTICIPANT
@@ -95,7 +149,6 @@ export class WalletSyncService {
               matched: boolean
           }
     > {
-        const partyAllocator = this.requirePartyAllocator()
         try {
             if (
                 participantNamespace &&
@@ -108,7 +161,6 @@ export class WalletSyncService {
             }
 
             // Get keys from signing providers try to match
-            const userId = this.authContext?.userId
             for (const [providerId, driver] of Object.entries(
                 this.signingDrivers
             )) {
@@ -119,62 +171,30 @@ export class WalletSyncService {
                     continue
                 }
 
-                try {
-                    const controller = driver.controller(userId)
-                    const result = await controller.getKeys()
+                const cachedKeys =
+                    keyCache.get(providerId) ??
+                    this.loadProviderKeys(providerId, driver)
+                keyCache.set(providerId, cachedKeys)
+                const keys = await cachedKeys
 
-                    // In case of error getKeys resolve Promise but with error object
-                    if ('error' in result) {
-                        this.logger.warn(
-                            {
-                                providerId,
-                                error: result.error,
-                                error_description: result.error_description,
-                            },
-                            'Failed to get keys from signing provider'
-                        )
-                        continue
-                    }
-
-                    // Try to match namespace with public keys
-                    if (result.keys) {
-                        for (const key of result.keys) {
-                            const normalizedKey =
-                                partyAllocator.normalizePublicKeyToBase64(
-                                    key.publicKey
-                                )
-                            if (!normalizedKey) continue
-
-                            const keyNamespace =
-                                partyAllocator.createFingerprintFromKey(
-                                    normalizedKey
-                                )
-
-                            if (keyNamespace === partyNamespace) {
-                                this.logger.info(
-                                    {
-                                        namespace: partyNamespace,
-                                        providerId,
-                                        keyId: key.id,
-                                        publicKey: key.publicKey,
-                                    },
-                                    'Matched namespace with signing provider'
-                                )
-                                return {
-                                    signingProviderId:
-                                        providerId as SigningProvider,
-                                    publicKey: key.publicKey,
-                                    matched: true,
-                                }
-                            }
-                        }
-                    }
-                } catch (err) {
-                    this.logger.error(
-                        { err, providerId },
-                        'Error getting keys from signing provider'
+                const key = keys.find(
+                    (key) => key.fingerprint === partyNamespace
+                )
+                if (key) {
+                    this.logger.info(
+                        {
+                            namespace: partyNamespace,
+                            providerId,
+                            keyId: key.id,
+                            publicKey: key.publicKey,
+                        },
+                        'Matched namespace with signing provider'
                     )
-                    // Continue to next signing provider
+                    return {
+                        signingProviderId: providerId as SigningProvider,
+                        publicKey: key.publicKey,
+                        matched: true,
+                    }
                 }
             }
 
@@ -429,12 +449,52 @@ export class WalletSyncService {
         }
     }
 
+    // Retries provider resolution for wallets disabled with NO_SIGNING_PROVIDER_MATCHED,
+    // enabling them in place once a signing provider has their key.
+    private async handleUnmatchedWallets(
+        unmatchedWallets: Wallet[],
+        participantNamespace: string,
+        keyCache: ProviderKeyCache
+    ): Promise<Wallet[]> {
+        const reenabledWallets: Wallet[] = []
+        for (const wallet of unmatchedWallets) {
+            const resolved = await this.resolveSigningProvider(
+                wallet.namespace,
+                participantNamespace,
+                keyCache
+            )
+            if (!resolved.matched) continue
+
+            const update = {
+                signingProviderId: resolved.signingProviderId,
+                publicKey:
+                    'publicKey' in resolved
+                        ? resolved.publicKey
+                        : wallet.namespace,
+                disabled: false,
+                reason: '',
+            }
+            this.logger.info(
+                { wallet: { ...wallet, ...update } },
+                'Wallet sync result, enabling unmatched wallet'
+            )
+            await this.store.updateWallet({
+                partyId: wallet.partyId,
+                networkId: wallet.networkId,
+                ...update,
+            })
+            reenabledWallets.push({ ...wallet, ...update })
+        }
+        return reenabledWallets
+    }
+
     // Creates wallets for parties user has rights to
     private async handlePartiesWithoutWallet(
         newParties: string[],
         networkId: string,
         rightsByParty: Map<string, PartyLevelRight[]>,
-        participantNamespace: string
+        participantNamespace: string,
+        keyCache: ProviderKeyCache
     ): Promise<Wallet[]> {
         this.requirePartyAllocator()
         return await Promise.all(
@@ -444,7 +504,8 @@ export class WalletSyncService {
                 const resolvedSigningProvider =
                     await this.resolveSigningProvider(
                         namespace,
-                        participantNamespace
+                        participantNamespace,
+                        keyCache
                     )
 
                 const isMatched = resolvedSigningProvider.matched
@@ -629,6 +690,7 @@ export class WalletSyncService {
         newWallets,
         updatedToInitialized,
         updatedToDisabled,
+        updatedToEnabled,
         rightsUpdatedWallets,
         existingWallets,
         walletsAfterAuthParty,
@@ -636,6 +698,7 @@ export class WalletSyncService {
         newWallets: Wallet[]
         updatedToInitialized: Wallet[]
         updatedToDisabled: Wallet[]
+        updatedToEnabled: Wallet[]
         rightsUpdatedWallets: Wallet[]
         existingWallets: Wallet[]
         walletsAfterAuthParty?: Wallet[]
@@ -654,8 +717,15 @@ export class WalletSyncService {
         for (const wallet of updatedToInitialized) {
             if (!disabled.has(wallet.partyId)) updated.add(wallet.partyId)
         }
+        for (const wallet of updatedToEnabled) {
+            updated.add(wallet.partyId)
+        }
         for (const wallet of rightsUpdatedWallets) {
-            if (added.has(wallet.partyId) || disabled.has(wallet.partyId)) {
+            if (
+                added.has(wallet.partyId) ||
+                disabled.has(wallet.partyId) ||
+                updated.has(wallet.partyId)
+            ) {
                 continue
             }
             if (wallet.disabled) disabled.add(wallet.partyId)
@@ -737,11 +807,30 @@ export class WalletSyncService {
                 'Wallets without parties'
             )
 
-            const newParticipantWallets = await this.handlePartiesWithoutWallet(
+            // Shared across both resolution passes, so each provider is asked for its keys once per sync
+            const keyCache: ProviderKeyCache = new Map()
+
+            // Wallets no signing provider matched yet are retried every sync, so they
+            // are enabled once a provider (e.g. Blockdaemon) learns about their key
+            const unmatchedWallets = existingAllocatedWallets.filter(
+                (w) =>
+                    w.disabled &&
+                    w.reason ===
+                        WALLET_DISABLED_REASON.NO_SIGNING_PROVIDER_MATCHED &&
+                    rightsByParty.has(w.partyId)
+            )
+            const updatedToEnabled = await this.handleUnmatchedWallets(
+                unmatchedWallets,
+                participantNamespace,
+                keyCache
+            )
+
+            const newWallets = await this.handlePartiesWithoutWallet(
                 newParties,
                 network.id,
                 rightsByParty,
-                participantNamespace
+                participantNamespace,
+                keyCache
             )
 
             // Set primary wallet if none exists, or if primary is on an initialized wallet
@@ -769,9 +858,10 @@ export class WalletSyncService {
             }
 
             const report = this.generateSyncReport({
-                newWallets: newParticipantWallets,
+                newWallets,
                 updatedToInitialized,
                 updatedToDisabled,
+                updatedToEnabled,
                 rightsUpdatedWallets,
                 existingWallets,
                 walletsAfterAuthParty,

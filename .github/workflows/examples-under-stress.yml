@@ -100,7 +100,7 @@ jobs:
 
             - name: Stop localnet (${{ github.event.inputs.network || 'devnet' }})
               if: always()
-              run: pnpm run stop:localnet -- --network=${{ github.event.inputs.network || 'devnet' }}
+              run: pnpm stop:localnet --network=${{ github.event.inputs.network || 'devnet' }}
 
             - name: Scan container logs for secrets
               id: scan_docker_logs

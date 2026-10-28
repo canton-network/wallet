@@ -50,7 +50,6 @@
         "@canton-network/core-tx-visualizer": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
-        "@canton-network/core-wallet-dapp-rpc-client": "workspace:",
         "@canton-network/core-wallet-services": "workspace:",
         "@canton-network/core-wallet-store": "workspace:",
         "@canton-network/core-wallet-store-sql": "workspace:",
@@ -70,7 +69,6 @@
         "lit": "catalog:",
         "pino": "catalog:",
         "pino-pretty": "catalog:",
-        "vite": "catalog:",
         "vite-express": "catalog:",
         "zod": "catalog:"
     },
@@ -88,6 +86,7 @@
         "supertest": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",
+        "vite": "catalog:",
         "vitest": "catalog:"
     },
     "nx": {

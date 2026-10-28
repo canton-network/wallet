@@ -19,7 +19,6 @@
         "zod": "catalog:"
     },
     "devDependencies": {
-        "playwright": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:"
     },

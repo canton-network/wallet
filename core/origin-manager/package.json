@@ -18,8 +18,6 @@
         }
     },
     "dependencies": {
-        "tsdown": "catalog:",
-        "tsx": "catalog:",
         "zod": "catalog:"
     },
     "scripts": {
@@ -31,6 +29,7 @@
         "@canton-network/core-types": "workspace:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
     },

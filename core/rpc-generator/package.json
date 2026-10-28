@@ -8,8 +8,6 @@
     },
     "dependencies": {
         "@open-rpc/generator": "catalog:",
-        "@open-rpc/meta-schema": "catalog:",
-        "@open-rpc/typings": "catalog:",
         "lodash": "catalog:"
     },
     "devDependencies": {
