@@ -42,6 +42,12 @@
         "sonner": "catalog:",
         "zod": "catalog:"
     },
+    "nx": {
+        "implicitDependencies": [
+            "@canton-network/wallet-gateway-remote",
+            "@canton-network/mock-oauth2"
+        ]
+    },
     "devDependencies": {
         "@canton-network/core-wallet-test-utils": "workspace:",
         "@inquirer/prompts": "catalog:",

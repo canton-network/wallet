@@ -15,7 +15,18 @@
             "{workspaceRoot}/vitest.base.ts",
             "{workspaceRoot}/tsdown.base.ts",
             "{workspaceRoot}/tsconfig.*.json",
-            "{workspaceRoot}/vite.decorators.ts"
+            "{workspaceRoot}/vite.decorators.ts",
+            "{workspaceRoot}/scripts/src/lib/version-config.json",
+            "{workspaceRoot}/.nvmrc",
+            "{workspaceRoot}/pnpm-workspace.yaml"
+        ],
+        "e2eGlobals": [
+            "{workspaceRoot}/canton/**/*",
+            "{workspaceRoot}/scripts/**/*",
+            "{workspaceRoot}/ecosystem.ci.config.js",
+            "{workspaceRoot}/wallet-gateway/test/**/*",
+            "{workspaceRoot}/.github/workflows/build.yml",
+            "{workspaceRoot}/.github/actions/**/*"
         ]
     },
     "release": {
@@ -104,6 +115,12 @@
         },
         "lint": {
             "cache": true,
+            "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.oxlintrc.json",
+                "{workspaceRoot}/.gitignore"
+            ],
             "options": {
                 "max-warnings": 0
             }
@@ -118,10 +135,13 @@
             "dependsOn": ["^build"]
         },
         "snippets": {
-            "dependsOn": ["^build"]
+            "dependsOn": ["^build"],
+            "inputs": ["default", "^production", "e2eGlobals"],
+            "cache": false
         },
         "playwright:e2e": {
             "dependsOn": ["^build"],
+            "inputs": ["default", "^production", "e2eGlobals"],
             "cache": false
         }
     },
