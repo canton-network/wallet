@@ -7,7 +7,7 @@ import type {
     JsonRpcResponse,
 } from '@canton-network/core-types'
 import { logger } from '@/shared/logger'
-import { authContext } from '../../auth-context'
+import type { AuthContextStore } from '../../auth-context'
 import type { Vault } from '../../vault'
 import {
     dappController,
@@ -32,7 +32,8 @@ export interface DappDispatcher {
  */
 export function createDappDispatcher(
     deps: DappControllerDeps,
-    vault: Pick<Vault, 'ready' | 'status'>
+    vault: Pick<Vault, 'ready' | 'status'>,
+    authContext: Pick<AuthContextStore, 'load'>
 ): DappDispatcher {
     /** While the vault isn't unlocked, there's no signed-in user. */
     async function requestContext(

@@ -5,9 +5,9 @@ import { NotificationService } from '@canton-network/core-wallet-services'
 import type { Store } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { fakeAuthContext } from '@/__tests__/fake-auth-context'
 import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port'
 import { logger } from '@/shared/logger'
-import { authContext } from './auth-context'
 import {
     currentSessionSubscriber,
     handleNotificationPort,
@@ -193,9 +193,9 @@ describe('currentSessionSubscriber', () => {
     const context = { userId: 'user-1', accessToken: 'token-1' }
     let store: Store
 
-    beforeEach(async () => {
+    beforeEach(() => {
         fakeBrowser.reset()
-        store = (await createTestWalletStore()).withAuthContext(context)
+        store = createTestWalletStore().withAuthContext(context)
     })
 
     afterEach(() => {
@@ -203,38 +203,44 @@ describe('currentSessionSubscriber', () => {
     })
 
     it('resolves nothing when signed out', async () => {
-        const resolve = currentSessionSubscriber(async () => store)
+        const resolve = currentSessionSubscriber(
+            async () => store,
+            fakeAuthContext()
+        )
 
         await expect(resolve()).resolves.toBeUndefined()
     })
 
     it('resolves nothing when the token has no session', async () => {
-        vi.spyOn(authContext, 'load').mockResolvedValue(context)
-        const resolve = currentSessionSubscriber(async () => store)
+        const resolve = currentSessionSubscriber(
+            async () => store,
+            fakeAuthContext(context)
+        )
 
         await expect(resolve()).resolves.toBeUndefined()
     })
 
     it("resolves the token's session and user", async () => {
-        vi.spyOn(authContext, 'load').mockResolvedValue(context)
         await store.setSession({
             id: 'session-1',
             origin: 'browserext',
             network: 'canton:local-oauth',
             accessToken: context.accessToken,
         })
-        const resolve = currentSessionSubscriber(async () => store)
+        const resolve = currentSessionSubscriber(
+            async () => store,
+            fakeAuthContext(context)
+        )
 
         await expect(resolve()).resolves.toEqual(subscriber)
     })
 
     it('resolves nothing, without an error log, while the vault is locked', async () => {
         // The token is stored in plaintext, so it loads even while locked.
-        vi.spyOn(authContext, 'load').mockResolvedValue(context)
         const logError = vi.spyOn(logger, 'error')
         const resolve = currentSessionSubscriber(async () => {
             throw new VaultLockedError()
-        })
+        }, fakeAuthContext(context))
         const port = fakePort()
 
         await expect(resolve()).resolves.toBeUndefined()
@@ -249,10 +255,9 @@ describe('currentSessionSubscriber', () => {
     })
 
     it('still fails on other store errors', async () => {
-        vi.spyOn(authContext, 'load').mockResolvedValue(context)
         const resolve = currentSessionSubscriber(async () => {
             throw new Error('corrupt snapshot')
-        })
+        }, fakeAuthContext(context))
 
         await expect(resolve()).rejects.toThrow('corrupt snapshot')
     })

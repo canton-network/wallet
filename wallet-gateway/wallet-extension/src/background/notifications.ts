@@ -17,7 +17,7 @@ import {
     NOTIFICATIONS_PORT_NAME,
     type NotificationPortMessage,
 } from '@/shared/ports'
-import { authContext } from './auth-context'
+import type { AuthContextStore } from './auth-context'
 import { VaultLockedError } from './vault'
 
 type Port = Browser.runtime.Port
@@ -89,7 +89,8 @@ export type ResolveSubscriber = () => Promise<
  * are subscribed to. While the vault is locked there is none.
  */
 export function currentSessionSubscriber(
-    getStore: () => Promise<Store>
+    getStore: () => Promise<Store>,
+    authContext: Pick<AuthContextStore, 'load'>
 ): ResolveSubscriber {
     return async () => {
         const context = await authContext.load()

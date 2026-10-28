@@ -22,7 +22,7 @@ import {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { authContext as authContextStorage } from '../../auth-context'
+import { fakeAuthContext } from '@/__tests__/fake-auth-context'
 import { createTestWalletStore } from '../../store/test-store'
 import { userController } from '.'
 
@@ -44,12 +44,12 @@ describe('userController.addSession', () => {
         return sink
     }
 
-    beforeEach(async () => {
-        vi.spyOn(authContextStorage, 'load').mockResolvedValue(authContext)
+    beforeEach(() => {
         service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
-        const store = await createTestWalletStore()
+        const store = createTestWalletStore(authContext)
         controller = userController({
             getStore: async () => store,
+            authContext: fakeAuthContext(authContext),
             signingDriver: {} as SigningDriverInterface,
             notificationService: service,
         })
@@ -142,15 +142,13 @@ describe('userController transactions', () => {
 
     beforeEach(async () => {
         fakeBrowser.reset()
-        const loadAuthContext = vi
-            .spyOn(authContextStorage, 'load')
-            .mockResolvedValue(authContext)
+        const authContextStore = fakeAuthContext(authContext)
         postWithRetry = vi
             .spyOn(LedgerClient.prototype, 'postWithRetry')
             .mockResolvedValue(ledgerResult)
 
         service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
-        store = await createTestWalletStore()
+        store = createTestWalletStore(authContext)
         signingStore = new WxtStore(authContext.userId)
         await signingStore.setSigningKey(authContext.userId, {
             id: 'key-1',
@@ -161,6 +159,7 @@ describe('userController transactions', () => {
         })
         controller = userController({
             getStore: async () => store,
+            authContext: authContextStore,
             signingDriver: new InternalSigningDriver(signingStore),
             notificationService: service,
         })
@@ -169,7 +168,7 @@ describe('userController transactions', () => {
             origin: pendingTransaction.origin!,
             networkId,
         })
-        loadAuthContext.mockResolvedValueOnce(otherAuthContext)
+        authContextStore.load.mockResolvedValueOnce(otherAuthContext)
         const otherSession = await controller.addSession({
             origin: 'https://other.example',
             networkId,

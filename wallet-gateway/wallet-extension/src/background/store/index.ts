@@ -5,14 +5,17 @@ import type { SigningDriverStore } from '@canton-network/core-signing-lib'
 import { WxtStore } from '@canton-network/core-signing-store-wxt'
 import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
-import { authContext } from '../auth-context'
+import type { AuthContextStore } from '../auth-context'
 
 export { createWalletStore } from './wallet-store'
 
 export type WalletStore = Store & AuthAware<Store>
 
 /** The wallet store, scoped to the signed-in user (if any). */
-export async function loadAuthedStore(store: WalletStore): Promise<Store> {
+export async function loadAuthedStore(
+    store: WalletStore,
+    authContext: Pick<AuthContextStore, 'load'>
+): Promise<Store> {
     return store.withAuthContext(await authContext.load())
 }
 
