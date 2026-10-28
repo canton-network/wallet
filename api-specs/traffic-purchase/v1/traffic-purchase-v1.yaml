@@ -11,9 +11,8 @@ info:
         `createdEventBlob`s -- only the paymaster can. Without this API those blobs have to travel
         out of band.
 
-        Modelled on splice's own token-standard registry APIs, and meant to sit alongside one: a
-        purchase still asks the *token* registry how the payment would settle. This API only
-        answers for the paymaster's own contracts.
+        Notice: this is only an example. Unlike token standard off-ledger API - there is no CIP nor standardization process for this API.
+        It is not guaranteed to be stable, and may change without notice.
     version: 1.0.0
 paths:
     /registry/traffic-purchase/v1/traffic-purchaser:
