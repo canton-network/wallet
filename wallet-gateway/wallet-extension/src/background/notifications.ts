@@ -18,6 +18,7 @@ import {
     type NotificationPortMessage,
 } from '@/shared/ports'
 import { authContext } from './auth-context'
+import { VaultLockedError } from './vault'
 
 type Port = Browser.runtime.Port
 
@@ -85,7 +86,7 @@ export type ResolveSubscriber = () => Promise<
 
 /**
  * Resolves the signed-in user's current session, which content-script ports
- * are subscribed to.
+ * are subscribed to. While the vault is locked there is none.
  */
 export function currentSessionSubscriber(
     getStore: () => Promise<Store>
@@ -94,7 +95,13 @@ export function currentSessionSubscriber(
         const context = await authContext.load()
         if (!context) return undefined
 
-        const store = await getStore()
+        let store: Store
+        try {
+            store = await getStore()
+        } catch (error) {
+            if (error instanceof VaultLockedError) return undefined
+            throw error
+        }
         const session = await store.getSession(context.accessToken)
         if (!session) return undefined
 

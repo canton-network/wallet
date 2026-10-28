@@ -147,6 +147,48 @@ describe('vault', () => {
         }
     )
 
+    it('calls onLock listeners before the lock() promise settles', async () => {
+        const vault = await createdVault()
+        const listener = vi.fn()
+        vault.onLock(listener)
+
+        const locking = vault.lock()
+
+        expect(listener).toHaveBeenCalledOnce()
+        await locking
+    })
+
+    it('calls onLock listeners on reset() and rejects an item read called before it', async () => {
+        const vault = await createdVault()
+        const secret = vault.defineItem('secret', { fallback: '' })
+        await secret.setValue('s3cret')
+        const listener = vi.fn()
+        vault.onLock(listener)
+
+        const reading = secret.getValue()
+        const resetting = vault.reset()
+
+        expect(listener).toHaveBeenCalledOnce()
+        await expect(reading).rejects.toThrow(VaultLockedError)
+        await resetting
+        expect(vault.status()).toBe('uninitialized')
+    })
+
+    it('still locks and calls the other listeners when an onLock listener throws', async () => {
+        const vault = await createdVault()
+        const other = vi.fn()
+        vault.onLock(() => {
+            throw new Error('listener failure')
+        })
+        vault.onLock(other)
+
+        await vault.lock()
+
+        expect(vault.status()).toBe('locked')
+        expect(other).toHaveBeenCalledOnce()
+        expect((await startVault()).status()).toBe('locked')
+    })
+
     it('opens only with the new password after a password change', async () => {
         const vault = await createdVault()
         const secret = vault.defineItem('secret', { fallback: '' })

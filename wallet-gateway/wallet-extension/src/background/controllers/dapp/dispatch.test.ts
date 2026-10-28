@@ -19,7 +19,8 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { approvalRequestsItem } from '@/shared/storage'
 import type { VaultStatus } from '@/shared/vault-protocol'
 import { authContext as authContextStorage } from '../../auth-context'
-import { initializeWalletStore, type WalletStore } from '../../store'
+import type { WalletStore } from '../../store'
+import { createTestWalletStore } from '../../store/test-store'
 import { createDappDispatcher, type DappDispatcher } from './dispatch'
 
 const origin = 'https://dapp.example'
@@ -48,7 +49,7 @@ describe('createDappDispatcher', () => {
     beforeEach(async () => {
         fakeBrowser.reset()
         service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
-        walletStore = await initializeWalletStore()
+        walletStore = await createTestWalletStore()
         dispatcher = createDappDispatcher(
             {
                 getStore: async () => walletStore,
