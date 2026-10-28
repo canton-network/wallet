@@ -41,7 +41,7 @@ export const gatewayUserForWorker = (index: number): string =>
  * `parallelIndex` and not `workerIndex`: it never exceeds the worker count and
  * is reused when a worker restarts, so retries do not keep creating new users.
  */
-const workerClientId = (): string =>
+export const workerClientId = (): string =>
     gatewayUserForWorker(test.info().parallelIndex)
 
 /**
