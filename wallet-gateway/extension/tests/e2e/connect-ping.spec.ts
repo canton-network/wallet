@@ -38,23 +38,21 @@ test('creates and approves a Ping contract with the Canton Wallet extension', as
         await test.step('open the queued approval through the extension popup', () =>
             extension.openNextApproval())
 
-    if (commandId) {
-        await test.step('approve and execute the Ping contract', async () => {
-            await extension.approvePendingPing(partyId, commandId)
-        })
-    }
+    if (!commandId) throw new Error('no commandId found')
+
+    await test.step('approve and execute the Ping contract', async () => {
+        await extension.approvePendingPing(partyId, commandId)
+    })
 
     await test.step('Ping reports no submission failure', async () => {
         await ping.expectNoSubmissionError()
     })
 
-    if (commandId) {
-        await test.step('Ping receives the transaction lifecycle events', async () => {
-            await ping.expectTxChangedEvents(commandId, [
-                'pending',
-                'signed',
-                'executed',
-            ])
-        })
-    }
+    await test.step('Ping receives the transaction lifecycle events', async () => {
+        await ping.expectTxChangedEvents(commandId, [
+            'pending',
+            'signed',
+            'executed',
+        ])
+    })
 })
