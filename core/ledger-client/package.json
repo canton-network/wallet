@@ -28,7 +28,6 @@
         "@types/node": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
-        "openapi-typescript": "catalog:",
         "playwright": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",
@@ -37,13 +36,10 @@
     "dependencies": {
         "@canton-network/core-ledger-client-types": "workspace:",
         "@canton-network/core-ledger-proto": "workspace:",
-        "@canton-network/core-splice-client": "workspace:",
-        "@canton-network/core-token-standard": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@logtape/logtape": "catalog:",
-        "openapi-fetch": "catalog:",
-        "typescript-lru-cache": "catalog:"
+        "openapi-fetch": "catalog:"
     },
     "files": [
         "dist/**"

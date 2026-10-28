@@ -22,7 +22,7 @@ runs:
                   .localnet/docker-compose/localnet
                   .localnet/dars
                   /tmp/docker-images
-              key: ${{ runner.os }}-localnet-${{ inputs.splice_version }}
+              key: ${{ runner.os }}-localnet-v2-${{ inputs.splice_version }}
               fail-on-cache-miss: true
 
         - name: Load cached Docker images
@@ -35,4 +35,4 @@ runs:
 
         - name: Start Localnet
           shell: bash
-          run: pnpm run start:localnet -- --network=${{ inputs.network }} ${{ inputs.multi_sync == 'false' && '--no-multi-sync' || '' }}
+          run: pnpm start:localnet --network=${{ inputs.network }} ${{ inputs.multi_sync == 'false' && '--no-multi-sync' || '' }}

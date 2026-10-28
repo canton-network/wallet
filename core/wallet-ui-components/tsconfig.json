@@ -2,7 +2,7 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "jsx": "react-jsx",
-        "types": ["bootstrap"]
+        "types": []
     },
     "include": ["src", "*.ts", ".storybook/*.ts", ".storybook-lit/*.ts"]
 }

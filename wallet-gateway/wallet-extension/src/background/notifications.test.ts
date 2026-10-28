@@ -6,6 +6,7 @@ import type { Store } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port'
+import { logger } from '@/shared/logger'
 import { authContext } from './auth-context'
 import {
     currentSessionSubscriber,
@@ -13,7 +14,8 @@ import {
     PortNotificationSink,
     withoutNotificationArgs,
 } from './notifications'
-import { initializeWalletStore } from './store'
+import { createTestWalletStore } from './store/test-store'
+import { VaultLockedError } from './vault'
 
 const subscriber = { sessionId: 'session-1', userId: 'user-1' }
 
@@ -193,7 +195,7 @@ describe('currentSessionSubscriber', () => {
 
     beforeEach(async () => {
         fakeBrowser.reset()
-        store = (await initializeWalletStore()).withAuthContext(context)
+        store = (await createTestWalletStore()).withAuthContext(context)
     })
 
     afterEach(() => {
@@ -224,5 +226,34 @@ describe('currentSessionSubscriber', () => {
         const resolve = currentSessionSubscriber(async () => store)
 
         await expect(resolve()).resolves.toEqual(subscriber)
+    })
+
+    it('resolves nothing, without an error log, while the vault is locked', async () => {
+        // The token is stored in plaintext, so it loads even while locked.
+        vi.spyOn(authContext, 'load').mockResolvedValue(context)
+        const logError = vi.spyOn(logger, 'error')
+        const resolve = currentSessionSubscriber(async () => {
+            throw new VaultLockedError()
+        })
+        const port = fakePort()
+
+        await expect(resolve()).resolves.toBeUndefined()
+        await handleNotificationPort(
+            asPort(port),
+            new NotificationService({ debug: vi.fn(), error: vi.fn() }),
+            resolve
+        )
+
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+        expect(logError).not.toHaveBeenCalled()
+    })
+
+    it('still fails on other store errors', async () => {
+        vi.spyOn(authContext, 'load').mockResolvedValue(context)
+        const resolve = currentSessionSubscriber(async () => {
+            throw new Error('corrupt snapshot')
+        })
+
+        await expect(resolve()).rejects.toThrow('corrupt snapshot')
     })
 })

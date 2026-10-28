@@ -6,7 +6,6 @@ import { createProxyService } from '@webext-core/proxy-service'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
-import { authContextItem } from '@/shared/storage'
 import { VaultErrorName, vaultMessenger } from '@/shared/vault-protocol'
 import { startBackground } from '.'
 import { createVault } from './vault'
@@ -27,17 +26,15 @@ describe('startBackground', () => {
         vaultMessenger.removeAllListeners()
     })
 
-    it('adds every listener before the wallet store has loaded', () => {
-        // The store never loads, so nothing may wait for it.
-        vi.spyOn(authContextItem, 'getValue').mockReturnValue(
-            new Promise(() => {})
-        )
+    it('adds every listener before its first await', () => {
         const onMessage = vi.spyOn(fakeBrowser.runtime.onMessage, 'addListener')
         const onInstalled = vi.spyOn(
             fakeBrowser.runtime.onInstalled,
             'addListener'
         )
 
+        // Nothing awaits between the call and the checks, so only listeners
+        // added synchronously are counted.
         startBackground()
 
         expect(fakeBrowser.runtime.onConnect.addListener).toHaveBeenCalledTimes(

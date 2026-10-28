@@ -35,7 +35,7 @@ import {
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import type { AccessToken } from '@canton-network/core-types'
 
-interface UserStorage {
+export interface UserStorage {
     wallets: Array<Wallet>
     transactions: Map<string, Transaction>
     messageRaws: Map<string, MessageRaw>
@@ -50,7 +50,7 @@ export interface StoreInternalConfig {
     networks: Array<Network>
 }
 
-type Memory = Map<UserId, UserStorage>
+export type Memory = Map<UserId, UserStorage>
 
 // TODO: remove AuthAware and instead provide wrapper in clients
 export class StoreInternal implements Store, AuthAware<StoreInternal> {

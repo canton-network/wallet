@@ -16,19 +16,16 @@ import {
     withoutNotificationArgs,
 } from './notifications'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui'
-import {
-    initializeSigningStore,
-    initializeWalletStore,
-    loadAuthedStore,
-} from './store'
+import { createSigningStore, createWalletStore, loadAuthedStore } from './store'
 import { createVault, type Vault } from './vault'
 import { registerVaultService } from './vault-service'
 
 /**
  * Runs in the service worker. Every listener is added in the first turn,
  * before any `await`, so a message or port connect that wakes the worker is
- * handled. The wallet store loads lazily: `getStore` awaits it. The vault
- * starts restoring right away; the gates await `vault.ready`.
+ * handled. The vault starts restoring right away; the gates await
+ * `vault.ready`. `getStore()` rejects with `VaultLockedError` while the
+ * vault is locked.
  *
  * Tests pass a `vault` with fewer PBKDF2 iterations.
  */
@@ -43,14 +40,9 @@ export function startBackground({
             toNotificationLogger(logger.getChild('notifications'))
         )
     )
-    const walletStore = initializeWalletStore()
-    // Settle the promise now, so a failed load isn't an unhandled rejection
-    // before the first `getStore` call. Each call still sees the failure.
-    walletStore.catch((error: unknown) => {
-        logger.error('Error initializing the wallet store: {error}', { error })
-    })
-    const getStore = async () => loadAuthedStore(await walletStore)
-    const signingDriver = new InternalSigningDriver(initializeSigningStore())
+    const walletStore = createWalletStore(vault)
+    const getStore = async () => loadAuthedStore(await walletStore.get())
+    const signingDriver = new InternalSigningDriver(createSigningStore())
     const deps = { getStore, signingDriver, notificationService }
 
     registerVaultService(vault)
@@ -58,7 +50,7 @@ export function startBackground({
     registerService(
         DAPP_RPC_KEY,
         createDappDispatcher(
-            { getStore: () => walletStore, notificationService },
+            { getStore: () => walletStore.get(), notificationService },
             vault
         )
     )

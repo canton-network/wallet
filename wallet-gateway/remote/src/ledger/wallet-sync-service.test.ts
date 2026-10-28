@@ -1042,6 +1042,165 @@ describe('WalletSyncService - multi-network features', () => {
         })
     })
 
+    describe('Wallet sync - re-enable unmatched wallets', () => {
+        // Builds a service with a wallet-kernel driver holding one key, so a party in that key's namespace can match.
+        const createServiceWithKernelKey = async () => {
+            const db = connection({
+                connection: { type: 'sqlite', database: ':memory:' },
+            })
+            await migrator(db).up()
+            const internalDriver = new InternalSigningDriver(
+                new StoreSql(db, authContext)
+            )
+            const key = await internalDriver
+                .controller(authContext.userId)
+                .createKey({ name: 'test-key' })
+            if ('error' in key) {
+                throw new Error(
+                    `Failed to create key in test: ${key.error_description}`
+                )
+            }
+            const kernelService = new WalletSyncService(
+                store,
+                mockLedgerClient,
+                authContext,
+                mockLogger,
+                { [SigningProvider.WALLET_KERNEL]: internalDriver },
+                partyAllocator
+            )
+            return {
+                kernelService,
+                publicKey: key.publicKey,
+                namespace: partyAllocator.createFingerprintFromKey(
+                    key.publicKey
+                ),
+            }
+        }
+
+        const mockCanActAs = (party: string) =>
+            mockLedgerGets({
+                '/v2/parties/participant-id': {
+                    participantId: 'participant1::namespace',
+                },
+                '/v2/users/{user-id}/rights': {
+                    rights: [{ kind: { CanActAs: { value: { party } } } }],
+                },
+            })
+
+        const addUnmatchedWallet = async (partyId: string) => {
+            await store.addWallet({
+                ...createWallet(partyId, 'network1', true),
+                signingProviderId: SigningProvider.PARTICIPANT,
+                publicKey: partyId.split('::')[1],
+                namespace: partyId.split('::')[1],
+                reason: WALLET_DISABLED_REASON.NO_SIGNING_PROVIDER_MATCHED,
+            })
+        }
+
+        const findWallet = async (partyId: string) =>
+            (await store.getWallets()).find((w) => w.partyId === partyId)
+
+        beforeEach(async () => {
+            await store.addNetwork(createNetwork('network1'))
+            await setSession('network1')
+        })
+
+        it('syncWallets enables an unmatched wallet once a signing provider has its key', async () => {
+            const { kernelService, publicKey, namespace } =
+                await createServiceWithKernelKey()
+            const partyId = `party1::${namespace}`
+            await addUnmatchedWallet(partyId)
+            mockCanActAs(partyId)
+
+            const result = await kernelService.syncWallets()
+
+            const wallet = await findWallet(partyId)
+            expect(wallet).toEqual(
+                expect.objectContaining({
+                    disabled: false,
+                    signingProviderId: SigningProvider.WALLET_KERNEL,
+                    publicKey,
+                })
+            )
+            expect(wallet?.reason).toBeFalsy()
+            expect(result.added).toEqual([])
+            expect(result.updated).toEqual([partyId])
+            expect(result.disabled).toEqual([])
+            expect(await kernelService.isWalletSyncNeeded()).toBe(false)
+        })
+
+        it('syncWallets keeps an unmatched wallet disabled while no signing provider has its key', async () => {
+            const { kernelService } = await createServiceWithKernelKey()
+            const partyId = 'party1::unknown-namespace-123'
+            await addUnmatchedWallet(partyId)
+            mockCanActAs(partyId)
+            const updateWalletSpy = vi.spyOn(store, 'updateWallet')
+
+            const result = await kernelService.syncWallets()
+
+            expect(updateWalletSpy).not.toHaveBeenCalled()
+            const wallet = await findWallet(partyId)
+            expect(wallet?.disabled).toBe(true)
+            expect(wallet?.reason).toBe(
+                WALLET_DISABLED_REASON.NO_SIGNING_PROVIDER_MATCHED
+            )
+            expect(result).toEqual({ added: [], updated: [], disabled: [] })
+        })
+
+        it('syncWallets does not re-enable a wallet disabled for another reason', async () => {
+            const { kernelService, namespace } =
+                await createServiceWithKernelKey()
+            const partyId = `party1::${namespace}`
+            await store.addWallet({
+                ...createWallet(partyId, 'network1', true),
+                reason: WALLET_DISABLED_REASON.PARTICIPANT_NAMESPACE_CHANGED,
+            })
+            mockCanActAs(partyId)
+            const updateWalletSpy = vi.spyOn(store, 'updateWallet')
+
+            await kernelService.syncWallets()
+
+            expect(updateWalletSpy).not.toHaveBeenCalled()
+            expect((await findWallet(partyId))?.disabled).toBe(true)
+        })
+
+        it('syncWallets asks each signing provider for its keys once per sync', async () => {
+            const getKeys = vi.fn<() => Promise<GetKeysResult>>(async () => ({
+                keys: [],
+            }))
+            const driver = {
+                controller: () => ({ getKeys }),
+            } as unknown as SigningDriverInterface
+            const keyService = new WalletSyncService(
+                store,
+                mockLedgerClient,
+                authContext,
+                mockLogger,
+                { [SigningProvider.WALLET_KERNEL]: driver },
+                partyAllocator
+            )
+            await addUnmatchedWallet('party1::unknown-namespace-1')
+            mockLedgerGets({
+                '/v2/parties/participant-id': {
+                    participantId: 'participant1::namespace',
+                },
+                '/v2/users/{user-id}/rights': {
+                    rights: [
+                        'party1::unknown-namespace-1',
+                        'party2::unknown-namespace-2',
+                        'party3::unknown-namespace-3',
+                    ].map((party) => ({
+                        kind: { CanActAs: { value: { party } } },
+                    })),
+                },
+            })
+
+            await keyService.syncWallets()
+
+            expect(getKeys).toHaveBeenCalledOnce()
+        })
+    })
+
     describe('Wallet sync - rights tracking', () => {
         it('isWalletSyncNeeded should return true when wallet rights changed on ledger', async () => {
             const network1 = createNetwork('network1')
