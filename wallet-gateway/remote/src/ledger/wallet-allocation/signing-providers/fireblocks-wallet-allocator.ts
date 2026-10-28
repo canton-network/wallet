@@ -13,14 +13,11 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
 import type { PartyAllocationService } from '../../party-allocation-service.js'
-import type {
-    KeyName,
-    PartyHint,
-    Primary,
-} from '../../../user-api/rpc-gen/typings.js'
+import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import {
     handleSigningProviderError,
+    type WalletAllocationOptions,
     type WalletAllocator,
 } from '../wallet-allocation-service.js'
 
@@ -43,12 +40,12 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary = false,
-        keyName: KeyName
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
 
         const keys = await driver.getKeys().then(handleSigningProviderError)
-        const key = keys?.keys?.find((k) => k.name === keyName)
+        const key = keys?.keys?.find((k) => k.name === options.keyName)
         if (!key) throw new Error('Fireblocks key not found')
 
         const namespace = this.partyAllocator.createFingerprintFromKey(
@@ -100,12 +97,18 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 )
             }
             const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    namespace,
-                    topologyTransactions,
-                    signature,
-                    userId
-                )
+                options.grantRights === false
+                    ? await this.partyAllocator.allocatePartyWithExistingWallet(
+                          namespace,
+                          topologyTransactions,
+                          signature
+                      )
+                    : await this.partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                          namespace,
+                          topologyTransactions,
+                          signature,
+                          userId
+                      )
             wallet = {
                 ...walletBase,
                 partyId,
@@ -137,7 +140,8 @@ export class FireblocksWalletAllocator implements WalletAllocator {
     async allocateParty(
         userId: UserId,
         email: string | undefined,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions
     ): Promise<void> {
         if (
             !existingWallet.externalTxId ||
@@ -168,12 +172,18 @@ export class FireblocksWalletAllocator implements WalletAllocator {
                 )
             }
             const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    existingWallet.namespace,
-                    existingWallet.topologyTransactions.split(', '),
-                    signature,
-                    userId
-                )
+                options.grantRights === false
+                    ? await this.partyAllocator.allocatePartyWithExistingWallet(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature
+                      )
+                    : await this.partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature,
+                          userId
+                      )
             walletUpdate = {
                 ...walletUpdate,
                 partyId,

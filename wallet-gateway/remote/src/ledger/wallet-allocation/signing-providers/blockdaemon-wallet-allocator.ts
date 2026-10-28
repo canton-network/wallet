@@ -17,6 +17,7 @@ import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import {
     handleSigningProviderError,
+    type WalletAllocationOptions,
     type WalletAllocator,
 } from '../wallet-allocation-service.js'
 
@@ -38,7 +39,8 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(email)
 
@@ -110,12 +112,18 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                 )
             }
             const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    namespace,
-                    topologyTransactions,
-                    signature,
-                    userId
-                )
+                options.grantRights === false
+                    ? await this.partyAllocator.allocatePartyWithExistingWallet(
+                          namespace,
+                          topologyTransactions,
+                          signature
+                      )
+                    : await this.partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                          namespace,
+                          topologyTransactions,
+                          signature,
+                          userId
+                      )
             wallet = {
                 ...walletBase,
                 partyId,
@@ -147,7 +155,8 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
     async allocateParty(
         userId: UserId,
         email: string | undefined,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions
     ): Promise<void> {
         if (
             !existingWallet.externalTxId ||
@@ -176,12 +185,18 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
                 )
             }
             const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    existingWallet.namespace,
-                    existingWallet.topologyTransactions.split(', '),
-                    signature,
-                    userId
-                )
+                options.grantRights === false
+                    ? await this.partyAllocator.allocatePartyWithExistingWallet(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature
+                      )
+                    : await this.partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature,
+                          userId
+                      )
             walletUpdate = {
                 ...walletUpdate,
                 partyId,

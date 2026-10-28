@@ -24,18 +24,24 @@ import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.j
 import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
 import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.js'
 
+export type WalletAllocationOptions = {
+    grantRights?: boolean
+    keyName?: KeyName
+}
+
 export interface WalletAllocator {
     createWallet(
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary,
-        vaultName?: KeyName
+        options: WalletAllocationOptions
     ): Promise<Wallet>
     allocateParty(
         userId: UserId,
         email: string | undefined,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions
     ): Promise<void>
     getKeys(userId: UserId): Promise<Keys | null | void>
 }
@@ -162,7 +168,7 @@ export class WalletAllocationService {
         partyHint: PartyHint,
         primary: Primary,
         signingProviderId: SigningProvider,
-        keyName?: KeyName
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         switch (signingProviderId) {
             case SigningProvider.PARTICIPANT:
@@ -170,7 +176,8 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    options
                 )
             case SigningProvider.WALLET_KERNEL:
                 if (!this.kernelAllocator) {
@@ -182,13 +189,14 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    options
                 )
             case SigningProvider.FIREBLOCKS:
                 if (!this.fireblocksAllocator) {
                     throw new Error('Fireblocks signing driver not available')
                 }
-                if (!keyName) {
+                if (!options.keyName) {
                     throw new Error(
                         'keyName is required for creating a wallet with Fireblocks'
                     )
@@ -198,7 +206,7 @@ export class WalletAllocationService {
                     authContext.email,
                     partyHint,
                     primary,
-                    keyName
+                    options
                 )
             case SigningProvider.BLOCKDAEMON:
                 if (!this.blockdaemonAllocator) {
@@ -213,7 +221,8 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    options
                 )
             case SigningProvider.DFNS:
                 if (!this.dfnsAllocator) {
@@ -223,7 +232,8 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    options
                 )
             case SigningProvider.SECUROSYS:
                 if (!this.securosysAllocator) {
@@ -233,7 +243,8 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    options
                 )
             case SigningProvider.BITGO:
                 if (!this.bitgoAllocator) {
@@ -243,7 +254,8 @@ export class WalletAllocationService {
                     authContext.userId,
                     authContext.email,
                     partyHint,
-                    primary
+                    primary,
+                    options
                 )
             default:
                 throw new Error(
@@ -255,14 +267,16 @@ export class WalletAllocationService {
     public async allocateParty(
         authContext: AuthContext,
         existingWallet: Wallet,
-        signingProviderId: SigningProvider
+        signingProviderId: SigningProvider,
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         switch (signingProviderId) {
             case SigningProvider.PARTICIPANT:
                 return this.participantAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
-                    existingWallet
+                    existingWallet,
+                    options
                 )
             case SigningProvider.WALLET_KERNEL:
                 if (!this.kernelAllocator) {
@@ -273,7 +287,8 @@ export class WalletAllocationService {
                 return this.kernelAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
-                    existingWallet
+                    existingWallet,
+                    options
                 )
             case SigningProvider.FIREBLOCKS:
                 if (!this.fireblocksAllocator) {
@@ -282,7 +297,8 @@ export class WalletAllocationService {
                 return this.fireblocksAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
-                    existingWallet
+                    existingWallet,
+                    options
                 )
             case SigningProvider.BLOCKDAEMON:
                 if (!this.blockdaemonAllocator) {
@@ -296,7 +312,8 @@ export class WalletAllocationService {
                 return this.blockdaemonAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
-                    existingWallet
+                    existingWallet,
+                    options
                 )
             case SigningProvider.DFNS:
                 if (!this.dfnsAllocator) {
@@ -305,7 +322,8 @@ export class WalletAllocationService {
                 return this.dfnsAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
-                    existingWallet
+                    existingWallet,
+                    options
                 )
             case SigningProvider.SECUROSYS:
                 if (!this.securosysAllocator) {
@@ -314,7 +332,8 @@ export class WalletAllocationService {
                 return this.securosysAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
-                    existingWallet
+                    existingWallet,
+                    options
                 )
             case SigningProvider.BITGO:
                 if (!this.bitgoAllocator) {
@@ -323,7 +342,8 @@ export class WalletAllocationService {
                 return this.bitgoAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
-                    existingWallet
+                    existingWallet,
+                    options
                 )
             default:
                 throw new Error(

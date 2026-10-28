@@ -229,7 +229,10 @@ export class SelfIssuedAuthService {
             partyHint,
             true,
             params.signingProviderId,
-            params.keyName
+            {
+                keyName: params.keyName,
+                grantRights: false,
+            }
         )
 
         this.logger.info(
@@ -252,7 +255,8 @@ export class SelfIssuedAuthService {
             await this.walletAllocator.allocateParty(
                 this.authContext(),
                 wallet,
-                wallet.signingProviderId as SigningProvider
+                wallet.signingProviderId as SigningProvider,
+                { grantRights: false } // TODO still need to grant it
             )
             wallet = await this.requireWallet(partyId)
         }
