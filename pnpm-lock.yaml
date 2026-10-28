@@ -2213,6 +2213,9 @@ importers:
       '@canton-network/example-test-token-v1-registry':
         specifier: workspace:^
         version: link:../../../examples/test-token-v1-registry
+      '@canton-network/example-test-token-v2-registry':
+        specifier: workspace:^
+        version: link:../../../examples/test-token-v2-registry
       '@canton-network/wallet-sdk':
         specifier: workspace:^
         version: link:../../../sdk/wallet-sdk
