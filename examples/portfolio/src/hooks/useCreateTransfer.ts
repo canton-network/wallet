@@ -47,7 +47,10 @@ export const useCreateTransfer = () => {
                     `Registry for admin ${args.instrumentId.admin} is not reachable`
                 )
             }
-            const asset: AssetBody = await sdk.token.find(args.instrumentId.id)
+            const asset: AssetBody = await sdk.token.find(
+                args.instrumentId.id,
+                registryUrl
+            )
             const version = resolveTransferVersion(
                 asset,
                 args.tokenStandardVersion
