@@ -105,10 +105,10 @@ export class DappSDK {
         if (!adapters?.length) return
 
         const existingIds = new Set(
-            discovery.listAdapters().map((a) => a.providerId as string)
+            discovery.listAdapters().map((a) => a.providerId)
         )
         for (const adapter of adapters) {
-            const id = adapter.providerId as string
+            const id = adapter.providerId
             if (existingIds.has(id)) continue
             if (await adapter.detect()) {
                 discovery.registerAdapter(adapter)
@@ -121,7 +121,7 @@ export class DappSDK {
         discovery: DiscoveryClient
     ): Promise<void> {
         const existingIds = new Set(
-            discovery.listAdapters().map((a) => a.providerId as string)
+            discovery.listAdapters().map((a) => a.providerId)
         )
 
         const announced = await requestAnnouncedProviders()
@@ -193,12 +193,19 @@ export class DappSDK {
 
         const kernelDiscovery = storage.getKernelDiscovery()
         if (kernelDiscovery?.walletType === 'remote' && kernelDiscovery.url) {
-            return [
-                new RemoteAdapter({
-                    name: kernelDiscovery.url,
-                    rpcUrl: kernelDiscovery.url,
-                }),
-            ]
+            const adapter = new RemoteAdapter({
+                name: kernelDiscovery.url,
+                rpcUrl: kernelDiscovery.url,
+            })
+            // A restored custom gateway must stay a dynamic adapter, so that
+            // the wallet picker still treats it as custom (e.g. to rename it)
+            const isDefaultGateway = defaultGatewayList.some(
+                (gateway) => gateway.rpcUrl === kernelDiscovery.url
+            )
+            if (!isDefaultGateway) {
+                this.dynamicAdapterIds.add(adapter.providerId)
+            }
+            return [adapter]
         }
 
         // No config + nothing to restore => default gateways.
@@ -370,11 +377,11 @@ export class DappSDK {
         // Build entries from registered (non-dynamic) adapters
         const entries: WalletPickerEntry[] = discovery
             .listAdapters()
-            .filter((a) => !this.dynamicAdapterIds.has(a.providerId as string))
+            .filter((a) => !this.dynamicAdapterIds.has(a.providerId))
             .map((a) => {
                 const info = a.getInfo()
                 return {
-                    providerId: info.providerId as string,
+                    providerId: info.providerId,
                     name: info.name,
                     type: info.type,
                     description: info.description,
@@ -396,18 +403,20 @@ export class DappSDK {
                 const picked = (event as CustomEvent<WalletPickerEntry>).detail
                 let targetId = picked.providerId
 
-                // Register a dynamic adapter for custom gateway URLs
+                // Register a dynamic adapter for custom gateway URLs. It is
+                // recreated on every pick, so that it carries the name the user
+                // last gave the gateway in the wallet picker.
                 if (picked.type === 'remote' && picked.url) {
-                    const existing = discovery
+                    const isRegistered = discovery
                         .listAdapters()
-                        .find((a) => a.providerId === targetId)
-                    if (!existing) {
+                        .some((a) => a.providerId === targetId)
+                    if (!isRegistered || this.dynamicAdapterIds.has(targetId)) {
                         const adapter = new RemoteAdapter({
                             name: picked.name,
                             rpcUrl: picked.url,
                         })
                         discovery.registerAdapter(adapter)
-                        this.dynamicAdapterIds.add(adapter.providerId as string)
+                        this.dynamicAdapterIds.add(adapter.providerId)
                         targetId = adapter.providerId
                     }
                 }
@@ -445,7 +454,7 @@ export class DappSDK {
                         } else if (info.type === 'browser') {
                             storage.setKernelDiscovery({
                                 walletType: 'extension',
-                                providerId: info.providerId as string,
+                                providerId: info.providerId,
                             })
                         }
                     }
