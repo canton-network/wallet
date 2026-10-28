@@ -211,7 +211,6 @@ export class TrafficAccountNamespace {
                 ? undefined
                 : new TrafficPurchaseClient(
                       new ParsedURL(this.ctx, params.paymasterApiUrl).href,
-                      this.logger,
                       this.ctx.paymasterAuth
                   )
 
