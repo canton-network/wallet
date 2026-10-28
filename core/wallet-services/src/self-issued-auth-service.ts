@@ -21,19 +21,13 @@ import type {
     Wallet,
 } from '@canton-network/core-wallet-store'
 import {
+    type Keys,
     SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import {
-    SignMessageService,
-    type Notifier,
-    type SigningDrivers,
-} from '@canton-network/core-wallet-services'
+import type { GetSelfIssuedLoginModeResult } from '@canton-network/core-wallet-user-rpc-client'
 import type { Logger } from 'pino'
-import { PartyAllocationService } from './party-allocation-service.js'
-import { WalletSyncService } from './wallet-sync-service.js'
-import { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
-import type { GetSelfIssuedLoginModeResult } from '../user-api/rpc-gen/typings.js'
+import type { SignMessageService } from './sign-message-service.js'
 
 export type SelfIssuedLoginSession = {
     userId: string
@@ -58,6 +52,31 @@ export type SignedAccessTokenConnection =
           session: Session
       }
     | { status: 'failed'; failureReason: string }
+
+// TODO once wallet allocation service and wallet sync service are moved to core/wallet-services use imported types
+export interface SelfIssuedWalletAllocationService {
+    getKeys(
+        authContext: AuthContext,
+        signingProviderId: SigningProvider
+    ): Promise<Keys | null | void>
+    createWallet(
+        authContext: AuthContext,
+        partyHint: string,
+        primary: boolean,
+        signingProviderId: SigningProvider,
+        keyName?: string
+    ): Promise<Wallet>
+    allocateParty(
+        authContext: AuthContext,
+        wallet: Wallet,
+        signingProviderId: SigningProvider
+    ): Promise<void>
+}
+
+export interface SelfIssuedWalletSyncService {
+    syncAuthParty(partyId: string): Promise<Wallet | undefined>
+    syncRights(): Promise<unknown>
+}
 
 export function canUserUseSelfIssuedAuth(
     user: UserSchema | null
@@ -125,15 +144,15 @@ export async function assertLoginAllowed(
 }
 
 const ACCESS_TOKEN_TTL_SECONDS = 10 * 60
+
 export class SelfIssuedAuthService {
     constructor(
         private readonly session: SelfIssuedLoginSession,
         private readonly store: Store,
         private readonly logger: Logger,
-        private readonly walletAllocator: WalletAllocationService,
+        private readonly walletAllocator: SelfIssuedWalletAllocationService,
         private readonly ledgerClient: LedgerClient,
-        private readonly drivers: SigningDrivers,
-        private readonly partyAllocator: PartyAllocationService,
+        private readonly walletSyncService: SelfIssuedWalletSyncService,
         private readonly signMessageService: SignMessageService
     ) {}
 
@@ -145,7 +164,9 @@ export class SelfIssuedAuthService {
         if (!canUserUseSelfIssuedAuth(user)) {
             throw new Error(SELF_ISSUED_LOGIN_UNAVAILABLE)
         }
-        const wallet = await this.syncAuthParty(user.primaryParty)
+        const wallet = await this.walletSyncService.syncAuthParty(
+            user.primaryParty
+        )
         if (
             wallet?.partyId === user.primaryParty &&
             wallet.status === 'allocated' &&
@@ -153,18 +174,7 @@ export class SelfIssuedAuthService {
         ) {
             return { mode: 'select', wallet }
         }
-        return { mode: 'select', wallet: undefined }
-    }
-
-    private async syncAuthParty(partyId: string): Promise<Wallet | undefined> {
-        return new WalletSyncService(
-            this.store,
-            this.ledgerClient,
-            this.authContext(),
-            this.logger,
-            this.drivers,
-            this.partyAllocator
-        ).syncAuthParty(partyId)
+        return { mode: 'select' }
     }
 
     private async getExistingUser() {
@@ -458,12 +468,7 @@ export class SelfIssuedAuthService {
             return wallet
         }
 
-        await new WalletSyncService(
-            this.store,
-            this.ledgerClient,
-            this.authContext(),
-            this.logger
-        ).syncRights()
+        await this.walletSyncService.syncRights()
 
         return this.requireWallet(wallet.partyId)
     }
@@ -545,7 +550,7 @@ export class SelfIssuedAuthService {
     }
 }
 
-function toSelfIssuedLoginAuthContext(
+export function toSelfIssuedLoginAuthContext(
     session: SelfIssuedLoginSession
 ): AuthContext {
     return {
@@ -553,66 +558,4 @@ function toSelfIssuedLoginAuthContext(
         accessToken: '',
         sessionId: session.sessionId,
     }
-}
-
-export async function createSelfIssuedAuthService(
-    bootstrapStore: Store & AuthAware<Store>,
-    session: SelfIssuedLoginSession,
-    drivers: SigningDrivers,
-    logger: Logger,
-    notifier: Notifier
-): Promise<SelfIssuedAuthService> {
-    const scopedStore = bootstrapStore.withAuthContext(
-        toSelfIssuedLoginAuthContext(session)
-    )
-    const network = await scopedStore.getCurrentNetwork()
-    if (network.auth.method !== 'self_issued') {
-        throw new Error('Network does not use self_issued authentication')
-    }
-    const idp = await bootstrapStore.getIdp(network.identityProviderId)
-    if (idp.type !== 'self_issued') {
-        throw new Error(
-            'Identity provider is not configured for self_issued authentication'
-        )
-    }
-    if (!network.adminAuth) {
-        throw new Error('No admin auth configured')
-    }
-
-    const adminIdp = await bootstrapStore.getIdp(
-        resolveAuthIdentityProviderId(
-            network.adminAuth,
-            network.identityProviderId
-        )
-    )
-    const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
-        adminIdp,
-        network.adminAuth
-    )
-    const partyAllocator = new PartyAllocationService({
-        synchronizerId: network.synchronizerId,
-        accessTokenProvider: adminTokenProvider,
-        httpLedgerUrl: network.ledgerApi.baseUrl,
-    })
-    const walletAllocationService = new WalletAllocationService(
-        scopedStore,
-        logger,
-        partyAllocator,
-        drivers
-    )
-    const ledgerClient = new LedgerClient({
-        baseUrl: new URL(network.ledgerApi.baseUrl),
-        accessTokenProvider: adminTokenProvider,
-    })
-
-    return new SelfIssuedAuthService(
-        session,
-        scopedStore,
-        logger,
-        walletAllocationService,
-        ledgerClient,
-        drivers,
-        partyAllocator,
-        new SignMessageService(scopedStore, drivers, notifier)
-    )
 }

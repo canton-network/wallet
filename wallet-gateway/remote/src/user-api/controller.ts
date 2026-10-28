@@ -81,28 +81,23 @@ import type { SigningProvider } from '@canton-network/core-signing-lib'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import {
-    assertLoginAllowed,
-    createSelfIssuedAuthService,
-    type AccessTokenSignature,
-    type SelfIssuedAuthService,
-    type SelfIssuedLoginSession,
-} from '../ledger/self-issued-auth-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
-import type {
-    MessageSignatureEvent,
-    TxChangedFailedEvent,
-} from '../dapp-api/rpc-gen/typings.js'
+import type { TxChangedFailedEvent } from '../dapp-api/rpc-gen/typings.js'
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import { randomBytes, createHash, timingSafeEqual } from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 import {
+    assertLoginAllowed,
+    SelfIssuedAuthService,
     SignMessageService,
     TransactionService,
     logDynamically,
     networkStatus,
+    toSelfIssuedLoginAuthContext,
+    type AccessTokenSignature,
     type HASHING_SCHEME_VERSION,
     type NotificationService,
+    type SelfIssuedLoginSession,
     type SigningDrivers,
 } from '@canton-network/core-wallet-services'
 
@@ -149,15 +144,73 @@ export const userController = (
         }
     }
 
-    function selfIssuedAuthService(
+    async function selfIssuedAuthService(
         session: SelfIssuedLoginSession = requireSelfIssuedLoginSession()
-    ) {
-        return createSelfIssuedAuthService(
-            authAwareStore,
-            session,
-            drivers,
+    ): Promise<SelfIssuedAuthService> {
+        const selfIssuedAuthContext = toSelfIssuedLoginAuthContext(session)
+        const scopedStore = authAwareStore.withAuthContext(
+            selfIssuedAuthContext
+        )
+        const network = await scopedStore.getCurrentNetwork()
+        if (network.auth.method !== 'self_issued') {
+            throw new Error('Network does not use self_issued authentication')
+        }
+        const idp = await authAwareStore.getIdp(network.identityProviderId)
+        if (idp.type !== 'self_issued') {
+            throw new Error(
+                'Identity provider is not configured for self_issued authentication'
+            )
+        }
+        if (!network.adminAuth) {
+            throw new Error('No admin auth configured')
+        }
+
+        const adminIdp = await authAwareStore.getIdp(
+            resolveAuthIdentityProviderId(
+                network.adminAuth,
+                network.identityProviderId
+            )
+        )
+        const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
+            adminIdp,
+            network.adminAuth
+        )
+        const partyAllocator = new PartyAllocationService({
+            synchronizerId: network.synchronizerId,
+            accessTokenProvider: adminTokenProvider,
+            httpLedgerUrl: network.ledgerApi.baseUrl,
+        })
+        const walletAllocator = new WalletAllocationService(
+            scopedStore,
             logger,
-            notificationService.getNotifier(session.sessionId)
+            partyAllocator,
+            drivers
+        )
+        const ledgerClient = new LedgerClient({
+            baseUrl: new URL(network.ledgerApi.baseUrl),
+            accessTokenProvider: adminTokenProvider,
+        })
+        const walletSynchronizer = new WalletSyncService(
+            scopedStore,
+            ledgerClient,
+            selfIssuedAuthContext,
+            logger,
+            drivers,
+            partyAllocator
+        )
+
+        return new SelfIssuedAuthService(
+            session,
+            scopedStore,
+            logger,
+            walletAllocator,
+            ledgerClient,
+            walletSynchronizer,
+            new SignMessageService(
+                scopedStore,
+                drivers,
+                notificationService.getNotifier(session.sessionId)
+            )
         )
     }
 

@@ -2,39 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { pino } from 'pino'
-import { sink } from 'pino-test'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
+import type { Logger } from 'pino'
 import {
     PartyLevelRight,
     type MessageRaw,
     type Store,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import type {
-    SignMessageService,
-    SigningDrivers,
-} from '@canton-network/core-wallet-services'
-import type { WalletAllocationService } from './wallet-allocation/wallet-allocation-service.js'
 import {
     SELF_ISSUED_LOGIN_EXPIRED,
     SELF_ISSUED_LOGIN_UNAVAILABLE,
     SELF_ISSUED_TOKEN_REJECTED,
     SelfIssuedAuthService,
-} from './self-issued-auth-service'
-import type { PartyAllocationService } from './party-allocation-service.js'
+    type SelfIssuedWalletAllocationService,
+    type SelfIssuedWalletSyncService,
+} from './self-issued-auth-service.js'
+import type { SignMessageService } from './sign-message-service.js'
+import { decodeBase64, encodeBase64 } from './__tests__/test-utils.js'
 
 const { probeGet, syncRights, syncAuthParty } = vi.hoisted(() => ({
     probeGet: vi.fn(),
     syncRights: vi.fn().mockResolvedValue([]),
     syncAuthParty: vi.fn(),
-}))
-
-vi.mock('./wallet-sync-service.js', () => ({
-    WalletSyncService: vi.fn(function WalletSyncServiceMock() {
-        return { syncRights, syncAuthParty }
-    }),
 }))
 
 vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
@@ -50,12 +41,12 @@ vi.mock('@canton-network/core-ledger-client', async (importOriginal) => {
     }
 })
 
-const publicKey = Buffer.alloc(32, 1).toString('base64')
-const signature = Buffer.from('sig-bytes').toString('base64')
+const publicKey = encodeBase64(new Uint8Array(32).fill(1))
+const signature = encodeBase64('sig-bytes')
 
 function signingInputExpiringIn(seconds: number): string {
     const encode = (value: unknown) =>
-        Buffer.from(JSON.stringify(value)).toString('base64url')
+        encodeBase64(JSON.stringify(value), 'base64url')
     const exp = Math.floor(Date.now() / 1000) + seconds
     return `${encode({ alg: 'EdDSA', typ: 'JWT' })}.${encode({ exp })}`
 }
@@ -88,7 +79,10 @@ const network = {
 }
 
 describe('SelfIssuedAuthService', () => {
-    const logger = pino(sink())
+    const logger = {
+        info: vi.fn(),
+        warn: vi.fn(),
+    } as unknown as Logger
     let store: {
         getWallet: ReturnType<typeof vi.fn>
         getWallets: ReturnType<typeof vi.fn>
@@ -168,10 +162,12 @@ describe('SelfIssuedAuthService', () => {
             { userId: 'alice', sessionId: 'onboarding-session' },
             store as unknown as Store,
             logger,
-            walletAllocator as unknown as WalletAllocationService,
+            walletAllocator as unknown as SelfIssuedWalletAllocationService,
             ledgerClient as unknown as LedgerClient,
-            {} as SigningDrivers,
-            {} as PartyAllocationService,
+            {
+                syncRights,
+                syncAuthParty,
+            } as SelfIssuedWalletSyncService,
             signMessageService as unknown as SignMessageService
         )
     }
@@ -286,7 +282,6 @@ describe('SelfIssuedAuthService', () => {
 
                 await expect(createService().getLoginMode()).resolves.toEqual({
                     mode: 'select',
-                    wallet: undefined,
                 })
             }
         )
@@ -606,10 +601,9 @@ describe('SelfIssuedAuthService', () => {
                 'self-issued-token'
             )
             const payload = JSON.parse(
-                Buffer.from(
-                    message.message.split('.')[1],
-                    'base64url'
-                ).toString()
+                new TextDecoder().decode(
+                    decodeBase64(message.message.split('.')[1], 'base64url')
+                )
             )
             expect(payload).toMatchObject({
                 aud: 'participant-aud',
@@ -847,7 +841,7 @@ describe('SelfIssuedAuthService', () => {
             store.getWallet.mockResolvedValue(
                 createWallet({
                     status: 'allocated',
-                    publicKey: Buffer.alloc(32, 2).toString('base64'),
+                    publicKey: encodeBase64(new Uint8Array(32).fill(2)),
                 })
             )
 
@@ -861,7 +855,7 @@ describe('SelfIssuedAuthService', () => {
     })
 
     describe('connectWithSignedAccessToken', () => {
-        const accessToken = `${signingInput}.${Buffer.from(signature, 'base64').toString('base64url')}`
+        const accessToken = `${signingInput}.${encodeBase64(decodeBase64(signature), 'base64url')}`
 
         it('patches the ledger user and upgrades the tokenless session', async () => {
             const allocatedWallet = createWallet({ status: 'allocated' })

@@ -18,10 +18,10 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import {
     NotificationService,
+    SELF_ISSUED_LOGIN_EXPIRED,
     SignMessageService,
 } from '@canton-network/core-wallet-services'
 import { userController } from './controller.js'
-import { SELF_ISSUED_LOGIN_EXPIRED } from '../ledger/self-issued-auth-service.js'
 import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
@@ -110,6 +110,9 @@ vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
         SignMessageService: vi.fn(function SignMessageServiceMock() {
             return signMessageServiceMocks
         }),
+        SelfIssuedAuthService: vi.fn(function SelfIssuedAuthServiceMock() {
+            return selfIssuedAuthServiceMocks
+        }),
     }
 })
 
@@ -128,19 +131,6 @@ vi.mock('../ledger/wallet-sync-service.js', () => ({
 vi.mock('../ledger/party-allocation-service.js', () => ({
     PartyAllocationService: vi.fn(),
 }))
-
-vi.mock('../ledger/self-issued-auth-service.js', async (importOriginal) => {
-    const actual =
-        await importOriginal<
-            typeof import('../ledger/self-issued-auth-service.js')
-        >()
-    return {
-        ...actual,
-        createSelfIssuedAuthService: vi.fn(
-            async () => selfIssuedAuthServiceMocks
-        ),
-    }
-})
 
 const kernelInfo: KernelInfo = {
     id: 'kernel-test',
@@ -198,6 +188,12 @@ const session: Session = {
     accessToken: 'access-token-1',
 }
 
+const selfIssuedLoginAuth: AuthContext = {
+    userId: regularUserId,
+    accessToken: '',
+    sessionId: session.id,
+}
+
 const pendingTransaction: Transaction = {
     id: 'tx-1',
     commandId: 'cmd-1',
@@ -230,16 +226,53 @@ const participantWallet: Wallet = {
 async function createStore(
     logger: Logger,
     context: AuthContext | undefined,
-    options: { withSession?: boolean; withWallet?: boolean } = {}
+    options: {
+        withSession?: boolean
+        withWallet?: boolean
+        selfIssuedLogin?: boolean
+    } = {}
 ): Promise<StoreInternal> {
-    const { withSession = true, withWallet = true } = options
+    const {
+        withSession = true,
+        withWallet = true,
+        selfIssuedLogin = false,
+    } = options
+    const network: StoreNetwork = selfIssuedLogin
+        ? {
+              ...storeNetwork,
+              identityProviderId: 'self-issued-idp',
+              auth: {
+                  method: 'self_issued',
+                  audience: 'participant-aud',
+                  scope: 'daml_ledger_api',
+              },
+              adminAuth: {
+                  method: 'client_credentials',
+                  identityProviderId: idp.id,
+                  clientId: 'admin-cid',
+                  clientSecret: 'admin-secret',
+                  audience: 'admin-aud',
+                  scope: 'admin-scope',
+              },
+          }
+        : storeNetwork
     const store = new StoreInternal(
-        { idps: [idp], networks: [storeNetwork] },
+        {
+            idps: [
+                idp,
+                ...(selfIssuedLogin
+                    ? [{ id: 'self-issued-idp', type: 'self_issued' as const }]
+                    : []),
+            ],
+            networks: [network],
+        },
         getLogger('mock'),
         context
     )
     if (context && withSession) {
-        await store.setSession(session)
+        await store.setSession(
+            selfIssuedLogin ? { ...session, accessToken: '' } : session
+        )
     }
     if (context && withWallet) {
         await store.addWallet(primaryWallet)
@@ -496,12 +529,6 @@ describe('userController', () => {
     })
 
     describe('signSelfIssuedAccessToken', () => {
-        const loginAuth: AuthContext = {
-            userId: regularUserId,
-            accessToken: '',
-            sessionId: session.id,
-        }
-
         it('throws without a self-issued login session', async () => {
             const store = await createStore(logger, auth)
 
@@ -522,17 +549,21 @@ describe('userController', () => {
         })
 
         it('completes the login when the token is signed immediately', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.signAccessToken.mockResolvedValue({
                 messageId: 'login-message',
                 status: 'signed',
             })
+            // The auth service would store this signed-in session, but it's mocked.
+            await store.setSession({ ...session, id: 'connected-session' })
 
             const result = await createController(
                 store,
                 notificationService,
                 logger,
-                loginAuth
+                selfIssuedLoginAuth
             ).signSelfIssuedAccessToken({
                 sessionId: session.id,
                 partyId: primaryWallet.partyId,
@@ -553,7 +584,9 @@ describe('userController', () => {
         })
 
         it('returns awaiting-signature without completing the login', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.signAccessToken.mockResolvedValue({
                 messageId: 'login-message',
                 status: 'awaiting-signature',
@@ -563,7 +596,7 @@ describe('userController', () => {
                 store,
                 notificationService,
                 logger,
-                loginAuth
+                selfIssuedLoginAuth
             ).signSelfIssuedAccessToken({
                 sessionId: session.id,
                 partyId: primaryWallet.partyId,
@@ -579,7 +612,9 @@ describe('userController', () => {
         })
 
         it('returns failed without completing the login', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.signAccessToken.mockResolvedValue({
                 messageId: 'login-message',
                 status: 'failed',
@@ -590,7 +625,7 @@ describe('userController', () => {
                 store,
                 notificationService,
                 logger,
-                loginAuth
+                selfIssuedLoginAuth
             ).signSelfIssuedAccessToken({
                 sessionId: session.id,
                 partyId: primaryWallet.partyId,
@@ -608,12 +643,6 @@ describe('userController', () => {
     })
 
     describe('getSignSelfIssuedAccessTokenStatus', () => {
-        const loginAuth: AuthContext = {
-            userId: regularUserId,
-            accessToken: '',
-            sessionId: session.id,
-        }
-
         it('throws without a self-issued login session', async () => {
             const store = await createStore(logger, auth)
 
@@ -634,16 +663,20 @@ describe('userController', () => {
         })
 
         it('completes the login once the token is signed', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.getAccessTokenSignatureStatus.mockResolvedValue(
                 { messageId: 'login-message', status: 'signed' }
             )
+            // The auth service would store this signed-in session, but it's mocked.
+            await store.setSession({ ...session, id: 'connected-session' })
 
             const result = await createController(
                 store,
                 notificationService,
                 logger,
-                loginAuth
+                selfIssuedLoginAuth
             ).getSignSelfIssuedAccessTokenStatus({
                 sessionId: session.id,
                 messageId: 'login-message',
@@ -664,7 +697,9 @@ describe('userController', () => {
         })
 
         it('returns awaiting-signature while the provider awaits approval', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.getAccessTokenSignatureStatus.mockResolvedValue(
                 { messageId: 'login-message', status: 'awaiting-signature' }
             )
@@ -673,7 +708,7 @@ describe('userController', () => {
                 store,
                 notificationService,
                 logger,
-                loginAuth
+                selfIssuedLoginAuth
             ).getSignSelfIssuedAccessTokenStatus({
                 sessionId: session.id,
                 messageId: 'login-message',
@@ -689,7 +724,9 @@ describe('userController', () => {
         })
 
         it('returns failed when the provider rejected the token', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.getAccessTokenSignatureStatus.mockResolvedValue(
                 {
                     messageId: 'login-message',
@@ -702,7 +739,7 @@ describe('userController', () => {
                 store,
                 notificationService,
                 logger,
-                loginAuth
+                selfIssuedLoginAuth
             ).getSignSelfIssuedAccessTokenStatus({
                 sessionId: session.id,
                 messageId: 'login-message',
@@ -719,7 +756,9 @@ describe('userController', () => {
         })
 
         it('returns failed when the signed token cannot be used to log in', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.getAccessTokenSignatureStatus.mockResolvedValue(
                 { messageId: 'login-message', status: 'signed' }
             )
@@ -734,7 +773,7 @@ describe('userController', () => {
                 store,
                 notificationService,
                 logger,
-                loginAuth
+                selfIssuedLoginAuth
             ).getSignSelfIssuedAccessTokenStatus({
                 sessionId: session.id,
                 messageId: 'login-message',
@@ -748,7 +787,9 @@ describe('userController', () => {
         })
 
         it('throws when completing the login fails for a retryable reason', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             selfIssuedAuthServiceMocks.getAccessTokenSignatureStatus.mockResolvedValue(
                 { messageId: 'login-message', status: 'signed' }
             )
@@ -761,7 +802,7 @@ describe('userController', () => {
                     store,
                     notificationService,
                     logger,
-                    loginAuth
+                    selfIssuedLoginAuth
                 ).getSignSelfIssuedAccessTokenStatus({
                     sessionId: session.id,
                     messageId: 'login-message',
@@ -771,11 +812,6 @@ describe('userController', () => {
     })
 
     describe('listSelfIssuedSigningProviderKeys', () => {
-        const loginAuth: AuthContext = {
-            userId: regularUserId,
-            accessToken: '',
-            sessionId: session.id,
-        }
         const drivers = { [SigningProvider.FIREBLOCKS]: {} }
 
         it('throws for a signing provider that is not configured', async () => {
@@ -786,7 +822,7 @@ describe('userController', () => {
                     store,
                     notificationService,
                     logger,
-                    loginAuth
+                    selfIssuedLoginAuth
                 ).listSelfIssuedSigningProviderKeys({
                     sessionId: session.id,
                     signingProviderId: SigningProvider.FIREBLOCKS,
@@ -815,7 +851,9 @@ describe('userController', () => {
         })
 
         it('returns the signing provider keys', async () => {
-            const store = await createStore(logger, auth)
+            const store = await createStore(logger, selfIssuedLoginAuth, {
+                selfIssuedLogin: true,
+            })
             const keys = {
                 keys: [{ id: 'key-1', name: 'vault-1', publicKey: 'pk' }],
             }
@@ -828,7 +866,7 @@ describe('userController', () => {
                     store,
                     notificationService,
                     logger,
-                    loginAuth,
+                    selfIssuedLoginAuth,
                     drivers
                 ).listSelfIssuedSigningProviderKeys({
                     sessionId: session.id,

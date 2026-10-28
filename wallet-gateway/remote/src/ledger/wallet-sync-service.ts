@@ -18,7 +18,7 @@ import {
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import { canUserUseSelfIssuedAuth } from './self-issued-auth-service.js'
+import { canUserUseSelfIssuedAuth } from '@canton-network/core-wallet-services'
 import type { PartyAllocationService } from './party-allocation-service.js'
 import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
