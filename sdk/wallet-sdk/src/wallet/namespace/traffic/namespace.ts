@@ -32,7 +32,7 @@ import { dedupeDisclosedContracts } from '../utils/disclosedContracts.ts'
 import { ParsedURL, parseAssets, type URLInput } from '../utils/url.ts'
 import {
     assetNeededFor,
-    damlDecimal,
+    parseAndNormalizeDamlDecimal,
     sumAmounts,
     wholeBytes,
 } from './pricing.ts'
@@ -533,7 +533,10 @@ export class TrafficAccountNamespace {
         // `assetNeededFor`, and `'1e6'` would otherwise become a real transfer
         // request for an amount nobody asked for.
         return this.computeDecimal(() =>
-            damlDecimal(servedRate.conversionRate, 'the conversion rate')
+            parseAndNormalizeDamlDecimal(
+                servedRate.conversionRate,
+                'the conversion rate'
+            )
         )
     }
 
