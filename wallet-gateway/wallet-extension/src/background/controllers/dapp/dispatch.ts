@@ -8,7 +8,7 @@ import type {
 } from '@canton-network/core-types'
 import { logger } from '@/shared/logger'
 import type { AuthContextStore } from '../../auth-context'
-import { type Vault, VaultLockedError } from '../../vault'
+import { type VaultLockState, VaultLockedError } from '../../vault'
 import {
     dappController,
     type DappControllerDeps,
@@ -32,7 +32,7 @@ export interface DappDispatcher {
  */
 export function createDappDispatcher(
     deps: DappControllerDeps,
-    vault: Pick<Vault, 'ready' | 'status'>,
+    vault: VaultLockState,
     authContext: AuthContextStore
 ): DappDispatcher {
     /** While the vault isn't unlocked, there's no signed-in user. */
