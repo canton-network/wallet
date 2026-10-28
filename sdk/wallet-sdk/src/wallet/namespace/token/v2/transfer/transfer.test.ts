@@ -10,7 +10,7 @@ import {
     type Account,
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
-import type { TransferParams } from '../../transfer/types'
+import type { TransferParamsV2 } from '../../transfer/types'
 import type { PartyId } from '@canton-network/core-types'
 
 /* oxlint-disable typescript/no-explicit-any */
@@ -57,7 +57,7 @@ describe('token transfer namespace', () => {
 
     const registryUrl = new URL('http://registry.com')
 
-    const defaultTransferParams: TransferParams = {
+    const defaultTransferParams: TransferParamsV2 = {
         sender: 'alice::abc',
         recipient: 'bob:def',
         amount: '100',

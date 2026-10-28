@@ -7,7 +7,10 @@ import {
     TRANSFER_INSTRUCTION_INTERFACE_ID,
     type TransferInstructionView,
 } from '@canton-network/core-token-standard'
-import type { TransferAllocationChoiceParams, TransferParams } from './types.js'
+import type {
+    TransferAllocationChoiceParams,
+    TransferParamsV1,
+} from './types.js'
 import type { PreparedCommand } from '../../transactions/types.js'
 import { ProxyDelegationNamespace } from './proxyDelegation.js'
 import { findAsset } from '../../asset/index.js'
@@ -59,44 +62,8 @@ export class TransferNamespace {
         return [{ ExerciseCommand }, disclosedContracts]
     }
 
-    async createV2(
-        params: TransferParams
-    ): Promise<PreparedCommand<'ExerciseCommand'>> {
-        const assets = parseAssets(
-            this.sdkContext.commonCtx,
-            await this.sdkContext.tokenStandardService.registriesToAssets(
-                this.sdkContext.registryUrls
-            )
-        )
-
-        const asset = findAsset(
-            assets,
-            params.instrumentId,
-            this.sdkContext.commonCtx.error,
-            new ParsedURL(this.sdkContext.commonCtx, params.registryUrl)
-        )
-
-        const [transferCommand, disclosedContracts] =
-            await this.sdkContext.tokenStandardService.v2.transfer.createTransfer(
-                {
-                    sender: this.sdkContext.tokenStandardService.core.toBasicAccount(
-                        params.sender
-                    ),
-                    receiver:
-                        this.sdkContext.tokenStandardService.core.toBasicAccount(
-                            params.recipient
-                        ),
-                    amount: params.amount,
-                    instrumentAdmin: asset.admin,
-                    instrumentId: asset.id,
-                },
-                asset.registryUrl
-            )
-        return [{ ExerciseCommand: transferCommand }, disclosedContracts]
-    }
-
     async create(
-        params: TransferParams
+        params: TransferParamsV1
     ): Promise<PreparedCommand<'ExerciseCommand'>> {
         const assets = parseAssets(
             this.sdkContext.commonCtx,

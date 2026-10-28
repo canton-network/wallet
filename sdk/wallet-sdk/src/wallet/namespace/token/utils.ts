@@ -3,6 +3,7 @@
 
 import type { PartyId } from '@canton-network/core-types'
 import type { TokenNamespaceConfig } from './namespace.js'
+import type { Account } from '@canton-network/core-token-standard-v2'
 
 export function resolveProviderParty(
     ctx: TokenNamespaceConfig,
@@ -17,4 +18,12 @@ export function resolveProviderParty(
         })
     }
     return providerParty
+}
+
+export function toBasicAccount(partyId: PartyId): Account {
+    return {
+        owner: partyId,
+        provider: null,
+        id: '',
+    }
 }
