@@ -3,14 +3,12 @@
 
 import createClient, { type Client } from 'openapi-fetch'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { getLogger } from '@logtape/logtape'
 
 import type {
     components,
     paths,
 } from './generated-clients/traffic-purchase-v1/traffic-purchase-v1.js'
-
-// TODO: switch to logtape like the other core packages (see #2667)
-type Logger = Pick<Console, 'debug' | 'info' | 'warn' | 'error'>
 
 /** The paymaster's purchaser contract, with the disclosures a purchase needs. */
 export type TrafficPurchaserWithDisclosures =
@@ -28,13 +26,8 @@ export type TrafficPurchaseDisclosedContract =
 export type TrafficPurchaseInstrumentId = components['schemas']['InstrumentId']
 
 /**
- * A paymaster that answered, but not with what was asked for.
+ * Traffic purchase off-ledger API error.
  *
- * Carries the HTTP status, which `TokenStandardClient` does not: a caller has to tell a paymaster
- * that simply does not sell this instrument (404) from one that is misconfigured (401/403) or
- * broken (5xx), and the error body alone does not say which. The body is kept as `unknown` rather
- * than typed as `ErrorResponse` because a server that is failing is exactly the one least likely
- * to honour its own schema.
  */
 export class TrafficPurchaseApiError extends Error {
     constructor(
@@ -66,25 +59,24 @@ export class TrafficPurchaseApiError extends Error {
  * purchase and the `ConversionRate` used to price it. Each read includes the disclosures required
  * for submission. Because the paymaster is the sole signatory of both templates, buyers cannot
  * create these disclosures themselves.
- *
- * Payment details are not handled here. They are provided by the token registry through a
- * separate API.
  */
 export class TrafficPurchaseClient {
     // Private so `rollup-plugin-dts` elides the type rather than inlining the whole of
     // `openapi-fetch` into this package's declaration bundle.
     private readonly client: Client<paths>
-    private readonly logger: Logger
+    private readonly logger = getLogger([
+        'core',
+        'traffic-purchase',
+        'TrafficPurchaseClient',
+    ])
     private readonly accessTokenProvider: AccessTokenProvider
 
     constructor(
         public url: string,
-        logger: Logger,
         accessTokenProvider: AccessTokenProvider
     ) {
         this.accessTokenProvider = accessTokenProvider
-        this.logger = logger
-        this.logger.debug({ url }, 'TrafficPurchaseClient initialized')
+        this.logger.debug('TrafficPurchaseClient initialized', { url })
         this.client = createClient<paths>({
             baseUrl: url,
             fetch: async (url: RequestInfo, options: RequestInit = {}) => {
@@ -109,16 +101,12 @@ export class TrafficPurchaseClient {
     public async getTrafficPurchaser(): Promise<TrafficPurchaserWithDisclosures> {
         const path = '/registry/traffic-purchase/v1/traffic-purchaser'
         const resp = await this.client.GET(path)
-        this.logger.debug({ path, response: resp }, `GET ${path}`)
+        this.logger.debug('GET {path}', { path, response: resp })
         return this.getResponseData(path, resp)
     }
 
     /**
-     * The rate this paymaster sells traffic for one instrument at.
-     *
-     * Takes the `{ admin, id }` pair because that is what keys a rate; splitting it across the
-     * path and the query is this API's business rather than a caller's, which is why it is done
-     * here and not at the call site.
+     * The conversion rate this paymaster sells traffic for one instrument.
      */
     public async getConversionRate(
         instrumentId: TrafficPurchaseInstrumentId
@@ -130,7 +118,7 @@ export class TrafficPurchaseClient {
             query: { admin: instrumentId.admin },
         }
         const resp = await this.client.GET(path, { params })
-        this.logger.debug({ path, params, response: resp }, `GET ${path}`)
+        this.logger.debug('GET {path}', { path, params, response: resp })
         return this.getResponseData(path, resp)
     }
 
