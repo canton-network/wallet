@@ -26,7 +26,6 @@ import { findAsset } from '../asset/index.js'
 import { ParsedURL, parseAssets } from '../utils/url.js'
 import { assetNeededFor, sumAmounts, wholeBytes } from './pricing.js'
 import type {
-    ContractIdString,
     PurchaseTrafficParams,
     TopUpTrafficParams,
     TrafficAccount,
@@ -48,6 +47,12 @@ const REQUESTED_AT_SKEW_MS = 60_000
  *
  */
 type TransferExtraArgs = TrafficPurchaser_PurchaseCredits['transferExtraArgs']
+
+type HoldingCids = TrafficPurchaser_PurchaseCredits['holdingCids']
+
+type ConversionRateCid = TrafficPurchaser_PurchaseCredits['conversionRateCid']
+
+type TransferFactoryCid = TrafficPurchaser_PurchaseCredits['transferFactoryCid']
 
 /**
  * What `purchaseTraffic` needs on top of the base context: a registry to ask how
@@ -163,26 +168,21 @@ export class TrafficAccountNamespace {
             params,
             instrumentId,
             registryUrl: asset.registryUrl,
-            // The generated contract-id type is branded; a caller only ever has
-            // the plain string the ledger reported.
-            holdingCids: holdingCids as unknown as Transfer['inputHoldingCids'],
+            holdingCids,
             assetAmount,
             executeBefore,
         })
+
+        const conversionRateCid = params.conversionRateCid as ConversionRateCid
 
         const choiceArgument: TrafficPurchaser_PurchaseCredits = {
             purchaser: params.purchaser,
             // The model's `AccountId` is an opaque record wrapping the id; the
             // ledger re-validates it (non-empty, at most 255 UTF-16 units).
             targetAccount: { value: params.targetAccount },
-            // The generated contract-id types are branded, and a caller only
-            // ever has the plain string the ledger reported.
-            conversionRateCid:
-                params.conversionRateCid as TrafficPurchaser_PurchaseCredits['conversionRateCid'],
-            holdingCids:
-                holdingCids as unknown as TrafficPurchaser_PurchaseCredits['holdingCids'],
-            transferFactoryCid:
-                factory.factoryId as TrafficPurchaser_PurchaseCredits['transferFactoryCid'],
+            conversionRateCid,
+            holdingCids,
+            transferFactoryCid: factory.factoryId,
             // A Daml `Optional` is the value itself, or null for `None`;
             // `None` is what tells the choice to spend the holdings in full.
             requestedTrafficAmount: params.trafficAmount ?? null,
@@ -262,7 +262,7 @@ export class TrafficAccountNamespace {
     private async priceThePurchase(
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId
-    ): Promise<{ holdingCids: ContractIdString[]; assetAmount: Numeric }> {
+    ): Promise<{ holdingCids: HoldingCids; assetAmount: Numeric }> {
         const purchaseCtx = this.ctx
         if (params.trafficAmount !== undefined) {
             const { trafficAmount, conversionRate } = params
@@ -287,7 +287,7 @@ export class TrafficAccountNamespace {
             // also behaves. The model re-validates ownership, instrument and
             // sufficiency, so `prepare` is what rejects a bad selection.
             const holdingCids =
-                await purchaseCtx.tokenStandardService.core.getInputHoldingsCids(
+                (await purchaseCtx.tokenStandardService.core.getInputHoldingsCids(
                     {
                         sender: params.purchaser,
                         instrumentAdmin: instrumentId.admin,
@@ -295,7 +295,7 @@ export class TrafficAccountNamespace {
                         inputUtxos: params.inputUtxos ?? [],
                         amount: new Decimal(assetAmount),
                     }
-                )
+                )) as HoldingCids
             return { holdingCids, assetAmount }
         }
 
@@ -312,7 +312,9 @@ export class TrafficAccountNamespace {
         }
 
         return {
-            holdingCids: spendable.map((holding) => holding.contractId),
+            holdingCids: spendable.map(
+                (holding) => holding.contractId
+            ) as HoldingCids,
             assetAmount: this.computeDecimal(() =>
                 sumAmounts(
                     spendable.map(
@@ -377,7 +379,7 @@ export class TrafficAccountNamespace {
         assetAmount: Numeric
         executeBefore: Date
     }): Promise<{
-        factoryId: ContractIdString
+        factoryId: TransferFactoryCid
         contextValues: TransferExtraArgs['context']['values']
         disclosedContracts: LedgerCommonSchemas['DisclosedContract'][]
     }> {
@@ -429,7 +431,7 @@ export class TrafficAccountNamespace {
         }
 
         return {
-            factoryId,
+            factoryId: factoryId as TransferFactoryCid,
             contextValues: contextValuesOf(choiceContext.choiceContextData),
             disclosedContracts: choiceContext.disclosedContracts,
         }
