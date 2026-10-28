@@ -27,3 +27,6 @@ export const isReceiverOfLeg = (
 ) => {
     return currentPartyId === leg.transferLeg.receiver
 }
+
+export const formatCharacterCount = (value: string) =>
+    `${value.length.toLocaleString()} ${value.length === 1 ? 'character' : 'characters'}`

@@ -22,6 +22,7 @@ import { useForm } from '@tanstack/react-form'
 import type { AnyFieldApi } from '@tanstack/react-form'
 import { z } from 'zod'
 import { CopyableIdentifier } from '@components/copyable-identifier'
+import { formatCharacterCount } from '@components/utils'
 import { PillButton } from '@components/ui/PillButton'
 import { usePrimaryAccount } from '@hooks/useAccounts'
 import type { useCreateTransfer } from '@hooks/useCreateTransfer'
@@ -42,7 +43,6 @@ interface TransferFormProps {
 }
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
-const DESCRIPTION_LIMIT = 280
 
 const createDefaultTransferValues = (): TransferFormData => ({
     instrumentId: null,
@@ -65,10 +65,6 @@ const recipientValidator = z
     .string()
     .trim()
     .min(1, 'Recipient address is required')
-
-const memoValidator = z
-    .string()
-    .max(DESCRIPTION_LIMIT, `${DESCRIPTION_LIMIT} characters maximum`)
 
 const expiryValidator = z
     .date()
@@ -350,19 +346,8 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                     )}
                 </form.Field>
 
-                <form.Field
-                    name="memo"
-                    validators={{
-                        onChange: memoValidator,
-                        onSubmit: memoValidator,
-                    }}
-                >
+                <form.Field name="memo">
                     {(field) => {
-                        const charactersLeft = Math.max(
-                            0,
-                            DESCRIPTION_LIMIT - field.state.value.length
-                        )
-
                         return (
                             <FieldBlock label="Description">
                                 <TextField
@@ -389,7 +374,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                         color: 'text.secondary',
                                     }}
                                 >
-                                    {charactersLeft} characters left
+                                    {formatCharacterCount(field.state.value)}
                                 </Typography>
                             </FieldBlock>
                         )
