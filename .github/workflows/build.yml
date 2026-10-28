@@ -290,7 +290,7 @@ jobs:
                     export DFNS_PRIVATE_KEY="${{ vars.DFNS_PRIVATE_KEY }}"
                     export DFNS_AUTH_TOKEN="${{ vars.DFNS_AUTH_TOKEN }}"
                   fi
-                  pnpm pm2 start ecosystem.ci.config.js
+                  pnpm start:e2e
 
             - uses: ./.github/actions/setup_playwright
               with:
@@ -436,7 +436,7 @@ jobs:
                   multi_sync: 'true'
 
             - name: Start remote WK
-              run: pnpm pm2 start ecosystem.ci.config.js
+              run: pnpm start:e2e
 
             - uses: ./.github/actions/setup_playwright
 
