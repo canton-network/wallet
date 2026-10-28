@@ -211,7 +211,6 @@ export class TrafficAccountNamespace {
                 ? undefined
                 : new TrafficPurchaseClient(
                       new ParsedURL(this.ctx, params.paymasterApiUrl).href,
-                      this.logger,
                       this.ctx.paymasterAuth
                   )
 
@@ -224,7 +223,7 @@ export class TrafficAccountNamespace {
             this.resolveAsset(params.instrumentId, params.registryUrl),
             paymasterApi === undefined
                 ? undefined
-                : this.withErrorHandling(
+                : this.withPaymasterErrorHandling(
                       () => paymasterApi.getTrafficPurchaser(),
                       `The paymaster at ${paymasterApi.url} is not set up to sell traffic: ` +
                           'it has no TrafficPurchaser.'
@@ -242,7 +241,7 @@ export class TrafficAccountNamespace {
         const servedRate =
             paymasterApi === undefined
                 ? undefined
-                : await this.withErrorHandling(
+                : await this.withPaymasterErrorHandling(
                       () => paymasterApi.getConversionRate(instrumentId),
                       `The paymaster at ${paymasterApi.url} does not sell traffic for ` +
                           `${instrumentId.id} administered by ${instrumentId.admin}.`
@@ -375,7 +374,7 @@ export class TrafficAccountNamespace {
      * @throws {SDKError} `NotFound` for a 404, `Unauthenticated` for a 401,
      * `Unauthorized` for a 403, and `Unexpected` for anything else.
      */
-    private async withErrorHandling<T>(
+    private async withPaymasterErrorHandling<T>(
         read: () => Promise<T>,
         notFoundMessage: string
     ): Promise<T> {
@@ -531,7 +530,7 @@ export class TrafficAccountNamespace {
         // Parsed rather than trusted: this figure goes straight into
         // `assetNeededFor`, and `'1e6'` would otherwise become a real transfer
         // request for an amount nobody asked for.
-        return this.computeDecimal(() =>
+        return this.withErrorHandling(() =>
             parseAndNormalizeDamlDecimal(
                 servedRate.conversionRate,
                 'the conversion rate'
