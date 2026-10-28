@@ -31,7 +31,7 @@ import { findAsset } from '../asset/index.js'
 import { ParsedURL, parseAssets } from '../utils/url.js'
 import {
     assetNeededFor,
-    damlDecimal,
+    parseAndNormalizeDamlDecimal,
     sumAmounts,
     wholeBytes,
 } from './pricing.js'
@@ -531,7 +531,10 @@ export class TrafficAccountNamespace {
         // `assetNeededFor`, and `'1e6'` would otherwise become a real transfer
         // request for an amount nobody asked for.
         return this.computeDecimal(() =>
-            damlDecimal(servedRate.conversionRate, 'the conversion rate')
+            parseAndNormalizeDamlDecimal(
+                servedRate.conversionRate,
+                'the conversion rate'
+            )
         )
     }
 

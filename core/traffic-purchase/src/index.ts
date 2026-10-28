@@ -46,10 +46,6 @@ export { packageId } from '@daml.js/traffic-purchase-models-1.0.0'
 
 /**
  * The paymaster's off-ledger API: the client, and the wire types it speaks.
- *
- * Shipped from the same package as the Daml bindings because the two describe one feature -- the
- * API exists to hand a buyer the contracts these bindings type -- which is also how
- * `@canton-network/core-token-standard` is arranged.
  */
 export * from './traffic-purchase-client.js'
 

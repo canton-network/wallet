@@ -66,13 +66,8 @@ export type PurchaseTrafficAmount =
     | { trafficAmount?: never; conversionRate?: never }
 
 /**
- * How much is being bought, when the rate need not be stated.
+ * How much is being bought, if specified, Empty otherwise).
  *
- * The same two branches as {@link PurchaseTrafficAmount}, except that naming a
- * `trafficAmount` no longer obliges a caller to state the rate: with a
- * `paymasterApiUrl` the paymaster is asked for it. Stating it anyway pins the
- * price the purchase is priced at, which is what a caller buying against a
- * contract it already holds a disclosure for wants.
  */
 export type ResolvablePurchaseTrafficAmount =
     | {
@@ -94,52 +89,27 @@ type PurchaseTrafficCommon = {
      */
     purchaser: PartyId
     /**
-     * The instrument to pay with, by its token-standard instrument id -- the
-     * registry's own symbol for it, e.g. `'Amulet'`, **not** a contract id and
-     * not the `{ admin, id }` pair. It is looked up against the registries the
-     * namespace was extended with, which is where the admin party comes from.
+     * The instrument to pay with, by its token-standard instrument id
      */
     instrumentId: string
     /**
      * Base URL of the *token* registry's off-ledger API, e.g. scan's.
-     *
-     * Distinct from `paymasterApiUrl`: this one is asked how the payment would
-     * settle, that one about the paymaster's own contracts. They are different
-     * servers run by different parties.
      */
     registryUrl: URLInput
     /**
      * The TEA account to credit, as the model's `AccountId`.
-     *
-     * Need not correspond to `purchaser`: a wallet provider may buy on a user's
-     * behalf. Non-empty and at most 255 UTF-16 code units, which the model's
-     * `AccountId` enforces too. As of Canton 3.5 this is a party id
-     * (`hint::fingerprint`), which is why `topUpTraffic` and `getTraffic` take
-     * the same value; Canton intends to decouple the two, so it is a plain
-     * string here, not a `PartyId`.
      */
     targetAccount: string
     /**
      * Contract ids of the `Splice.Api.Token.HoldingV1:Holding` contracts to
      * spend. Must be owned by `purchaser` and of `instrumentId`.
      *
-     * Left out, enough of the purchaser's unlocked holdings are selected to
-     * cover the cost. Named `inputUtxos` for consistency with
-     * `token.transfer.create`.
      */
     inputUtxos?: ContractIdString[]
     /** The deadline the registry must settle by. Ten minutes out when left out. */
     executeBefore?: Date
     /**
-     * The paymaster's `TrafficPurchaser` and `ConversionRate` as disclosures.
-     *
-     * Both are signed by the paymaster alone, so a submission naming them has to
-     * carry them; only a party that can read them can produce the blobs, which
-     * makes producing these the paymaster's job rather than the buyer's.
-     *
-     * Required reading without a `paymasterApiUrl`. With one, these are merged
-     * over what the paymaster served and win a collision, so a caller can still
-     * pin a blob it already holds.
+     * The paymaster's `TrafficPurchaser` and `ConversionRate` as disclosures (optional).
      */
     disclosedContracts?: LedgerCommonSchemas['DisclosedContract'][]
 }
@@ -147,9 +117,6 @@ type PurchaseTrafficCommon = {
 /**
  * The paymaster's half of a purchase, stated by the caller.
  *
- * What every call looked like before there was an API to ask. Getting the
- * disclosures is the hard part: only a party that can read the two contracts
- * produces their blobs, so they have to reach the buyer out of band.
  */
 type StatedPaymasterTerms = {
     paymasterApiUrl?: undefined
@@ -182,30 +149,11 @@ type StatedPaymasterTerms = {
 /**
  * The paymaster's half of a purchase, fetched from the paymaster itself.
  *
- * Every field here stays settable, and a value given wins over the one served:
- * pinning a contract id is the only way to buy against a disclosure already in
- * hand, and a paymaster that repriced since would otherwise make that
- * impossible. Nothing is cross-checked against the served answer -- an
- * incoherent set is rejected by the ledger, and `prepare` reports that before
- * anything is signed, on better evidence than a paymaster's own HTTP reply.
  */
 type FetchedPaymasterTerms = {
     /**
      * Base URL of the paymaster's traffic-purchase off-ledger API, e.g.
      * `https://paymaster.example`.
-     *
-     * Two reads under `/registry/traffic-purchase/v1` supply the purchaser
-     * contract, the receiver, the rate and its contract, and -- the point of
-     * the exercise -- the disclosures for both, which a buyer cannot produce
-     * for itself.
-     *
-     * This does not replace `registryUrl`, and does not remove the need for
-     * `sdk.extend({ traffic: ... })`: the token registry is still what prices
-     * the payment.
-     *
-     * Note for a caller holding a `URLInput | undefined`: spread it rather than
-     * assigning it, `...(url === undefined ? {} : { paymasterApiUrl: url })`.
-     * Assigning `undefined` matches neither arm of this union.
      */
     paymasterApiUrl: URLInput
     /** As {@link StatedPaymasterTerms}. Served by the paymaster when left out. */
@@ -218,11 +166,6 @@ type FetchedPaymasterTerms = {
 
 /**
  * What `purchaseTraffic` takes.
- *
- * Two arms, by whether the paymaster has an off-ledger API to ask. Without a
- * `paymasterApiUrl` every field of the paymaster's half has to be stated, which
- * is what the type said before this union existed; with one they are all
- * optional, and anything left out is fetched.
  */
 export type PurchaseTrafficParams = PurchaseTrafficCommon &
     (StatedPaymasterTerms | FetchedPaymasterTerms)
